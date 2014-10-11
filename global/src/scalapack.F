@@ -6,7 +6,7 @@
 #else
 #define INTGR4 integer*4
 #endif
-cedo#define HAVE_ELPA 1
+#define HAVE_ELPA 1
 C     $Id: scalapack.F,v 1.11 2006/10/13 16:15:17 d3g293 Exp $
 ****************************************************************************
 * GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
@@ -3642,6 +3642,7 @@ c***  copy g_a to A and g_b to B using the block cyclic scalapack format
 c     
          call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
      $        dbl_mb(adrA), lda, mpA, nqA)
+         call ga_sync()
 c     
 c***  fill SCALAPACK matrix descriptors
 c     
@@ -3658,16 +3659,16 @@ c
      .        -info8)
 c     
 c     
-
           call get_elpa_row_col_comms(elpa_comm,
      V        myrow2, mycol2, 
      V        elpa_comm_rows, elpa_comm_cols)
  
 
-         call solve_evp_real(n, mout4, 
+         if(.not.solve_evp_real(n, mout4, 
      A        dbl_mb(adra), lda, 
      E        eval, dbl_mb(adrb), ldb, nb, 
-     A        elpa_comm_rows, elpa_comm_cols)
+     A        elpa_comm_rows, elpa_comm_cols))
+     E   call ga_error(' solve_evp_real failed',0)
 
          if(iam.eq.0.and.mout4.ne.n) 
      W        write(6,*) ' computed eval ',mout,' out of ',
@@ -3699,6 +3700,7 @@ c
      A     'ga-evp_real: mpicommfree failed ',mpierr)
 c     
       endif
+      call ga_sync()
       if(maxproc.lt.nnodes.or.dima1.le.nb) then
 c     broadcast evals
          dblsize=ma_sizeof(MT_DBL,1,MT_BYTE)*dima1
