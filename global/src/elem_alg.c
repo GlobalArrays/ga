@@ -1753,12 +1753,13 @@ static void ngai_do_elem2_oper(Integer atype, Integer cndim, Integer *loC, Integ
 
 /*\  generic operation of two patches
 \*/
-static void ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,
-                              g_c, clo, chi, op)
-Integer g_a, *alo, *ahi;    /* patch of g_a */
-Integer g_b, *blo, *bhi;    /* patch of g_b */
-Integer g_c, *clo, *chi;    /* patch of g_c */
-int op; /* operation to be perform between g_a and g_b */
+static void ngai_elem2_patch_(Integer g_a, Integer * alo, Integer * ahi, 
+                              Integer g_b, Integer * blo, Integer * bhi,
+                              Integer g_c, Integer * clo, Integer * chi, int op)
+//Integer g_a, *alo, *ahi;    /* patch of g_a */
+//Integer g_b, *blo, *bhi;    /* patch of g_b */
+//Integer g_c, *clo, *chi;    /* patch of g_c */
+//int op; /* operation to be perform between g_a and g_b */
 {
   Integer i, j;
   Integer compatible;
@@ -2636,8 +2637,8 @@ static void ngai_has_negative_element(Integer atype, Integer andim,
   }
 }
 
-static Integer has_negative_elem(g_a, alo, ahi)
-Integer g_a, *alo, *ahi;    /* patch of g_a */
+static Integer has_negative_elem(Integer g_a, Integer * alo, Integer * ahi)
+//Integer g_a, *alo, *ahi;    /* patch of g_a */
 /*returned value: 1=found; 0 = not found*/
 {
   Integer i;
