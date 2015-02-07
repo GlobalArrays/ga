@@ -646,9 +646,8 @@ None
 
 /*\ Internal utility function to do operation.
 \*/
-static
-void ngai_do_oper_elem(Integer type, Integer ndim, Integer *loA, Integer *hiA,
-                       Integer *ld, void *data_ptr, void *scalar, Integer op)
+static void ngai_do_oper_elem(Integer type, Integer ndim, Integer *loA, Integer *hiA,
+                              Integer *ld, void *data_ptr, void *scalar, Integer op)
 {
   Integer i, j;    
   Integer bvalue[MAXDIM], bunit[MAXDIM], baseld[MAXDIM];
@@ -1654,9 +1653,8 @@ static void do_minimum(void *pA, void *pB, void *pC, Integer nelems, Integer typ
   }
 } 
 
-static
-void ngai_do_elem2_oper(Integer atype, Integer cndim, Integer *loC, Integer *hiC,
-                        Integer *ldC, void *A_ptr, void *B_ptr, void *C_ptr, int op)
+static void ngai_do_elem2_oper(Integer atype, Integer cndim, Integer *loC, Integer *hiC,
+                               Integer *ldC, void *A_ptr, void *B_ptr, void *C_ptr, int op)
 {
   Integer i, j;
   Integer bvalue[MAXDIM], bunit[MAXDIM], baseldC[MAXDIM];
@@ -2294,9 +2292,8 @@ Integer g_b,Integer *blo,Integer *bhi,Integer g_c,Integer *clo,Integer *chi){
 
 }
 
-static
-void ngai_do_elem3_patch(Integer atype, Integer andim, Integer *loA, Integer *hiA,
-                         Integer *ldA, void *A_ptr, Integer op)
+static void ngai_do_elem3_patch(Integer atype, Integer andim, Integer *loA, Integer *hiA,
+                                Integer *ldA, void *A_ptr, Integer op)
 {
   Integer i, j;
   void *tempA = NULL;
@@ -2564,7 +2561,9 @@ static void ngai_elem3_patch_(Integer g_a, Integer *alo, Integer *ahi, int op)
   if(local_sync_end)pnga_sync();
 }
 
-static void ngai_has_negative_element(Integer atype, Integer andim, Integer *loA, Integer *hiA, Integer *ldA, void *A_ptr, Integer *iretval)
+static void ngai_has_negative_element(Integer atype, Integer andim, 
+                                      Integer *loA, Integer *hiA, Integer *ldA, void *A_ptr, 
+                                      Integer *iretval)
 {
   Integer i, j;
   Integer bvalue[MAXDIM], bunit[MAXDIM], baseldA[MAXDIM];
