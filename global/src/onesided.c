@@ -106,31 +106,32 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 
 void pnga_pgroup_sync(Integer grp_id)
 {
-#ifdef CHECK_MA
-    Integer status;
-#endif
- 
 /*    printf("p[%d] calling ga_pgroup_sync on group: %d\n",GAme,*grp_id); */
     if (grp_id > 0) {
 #   ifdef MSG_COMMS_MPI
        /* fence on all processes in this group */
-       { int p; for(p=0;p<PGRP_LIST[grp_id].map_nproc;p++)
-          ARMCI_Fence(ARMCI_Absolute_id(&PGRP_LIST[grp_id].group, p)); }
+       for(int p=0; p<PGRP_LIST[grp_id].map_nproc; p++) {
+          ARMCI_Fence(ARMCI_Absolute_id(&PGRP_LIST[grp_id].group, p));
+       }
        pnga_msg_pgroup_sync(grp_id);
-       if(GA_fence_set)bzero(fence_array,(int)GAnproc);
+       if (GA_fence_set) {
+           bzero(fence_array,(int)GAnproc);
+        }
        GA_fence_set=0;
-#   else
+#else // MSG_COMMS_MPI
        pnga_error("ga_pgroup_sync_(): MPI not defined. ga_msg_pgroup_sync_()  can be called only if GA is built with MPI", 0);
-#   endif
+#endif // MSG_COMMS_MPI
     } else {
-      /* printf("p[%d] calling regular sync in ga_pgroup_sync\n",GAme); */
+       /* printf("p[%d] calling regular sync in ga_pgroup_sync\n",GAme); */
        ARMCI_AllFence();
        pnga_msg_pgroup_sync(grp_id);
-       if(GA_fence_set)bzero(fence_array,(int)GAnproc);
+       if (GA_fence_set) {
+           bzero(fence_array,(int)GAnproc);
+       }
        GA_fence_set=0;
     }
 #ifdef CHECK_MA
-    status = MA_verify_allocator_stuff();
+    Integer status = MA_verify_allocator_stuff();
 #endif
 }
 
@@ -143,21 +144,19 @@ void pnga_pgroup_sync(Integer grp_id)
 
 void pnga_sync()
 {
-#ifdef CHECK_MA
-Integer status;
-#endif
-       
-       if (GA_Default_Proc_Group == -1) {
-	  ARMCI_AllFence();
+    if (GA_Default_Proc_Group == -1) {
+      ARMCI_AllFence();
 	  pnga_msg_sync();
-	  if(GA_fence_set)bzero(fence_array,(int)GAnproc);
+	  if(GA_fence_set) {
+          bzero(fence_array,(int)GAnproc);
+      }
 	  GA_fence_set=0;
-       } else {
-         Integer grp_id = (Integer)GA_Default_Proc_Group;
-         pnga_pgroup_sync(grp_id);
-       }
+    } else {
+          Integer grp_id = (Integer)GA_Default_Proc_Group;
+          pnga_pgroup_sync(grp_id);
+    }
 #ifdef CHECK_MA
-       status = MA_verify_allocator_stuff();
+    Integer status = MA_verify_allocator_stuff();
 #endif
 }
 
@@ -169,13 +168,22 @@ Integer status;
 #   pragma weak wnga_fence = pnga_fence
 #endif
 
-void pnga_fence()
+void pnga_fence(void)
 {
-    int proc;
-    if(GA_fence_set<1)pnga_error("ga_fence: fence not initialized",0);
+    if(GA_fence_set<1) {
+        pnga_error("ga_fence: fence not initialized",0);
+    }
+
+    /* Why does this not set the fence array to zero? */
     GA_fence_set--;
-    for(proc=0;proc<GAnproc;proc++)if(fence_array[proc])ARMCI_Fence(proc);
+
+    for(int proc=0; proc<GAnproc; proc++) {
+        if(fence_array[proc]) {
+            ARMCI_Fence(proc);
+        }
+    }
     bzero(fence_array,(int)GAnproc);
+    return;
 }
 
 /**
@@ -187,15 +195,19 @@ void pnga_fence()
 
 void pnga_init_fence()
 {
+    /* Why is this not setting it to 1? */
     GA_fence_set++;
 }
 
 void gai_init_onesided()
 {
-    _ga_map = (Integer*)malloc((size_t)(GAnproc*2*MAXDIM +1)*sizeof(Integer));
-    if(!_ga_map) pnga_error("ga_init:malloc failed (_ga_map)",0);
+    _ga_map = (Integer*)malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+    if(!_ga_map)
+        pnga_error("ga_init:malloc failed (_ga_map)",0);
+
     fence_array = calloc((size_t)GAnproc,1);
-    if(!fence_array) pnga_error("ga_init:calloc failed",0);
+    if(!fence_array)
+        pnga_error("ga_init:calloc failed",0);
 }
 
 
@@ -235,7 +247,8 @@ void gai_finalize_onesided()
      
 
 
-
+/* Jeff: The following two functions are horrible and should be removed
+ *       or replaced with trivial wrappers to malloc+free. */
 
 /*\ internal malloc that bypasses MA and uses internal buf when possible
 \*/
@@ -254,11 +267,11 @@ void *gai_malloc(int bytes)
        }
        ptr = ga_int_malloc_buf+1;
        mbuf_used++;
-    }else{
+    } else {
         Integer elems = (bytes+sizeof(double)-1)/sizeof(double)+1;
-	ptr=ga_malloc(elems, MT_DBL, "GA malloc temp");
-	/* *((Integer*)ptr)= handle;
-	   ptr = ((double*)ptr)+ 1;*/ /*needs sizeof(double)>=sizeof(Integer)*/
+        ptr=ga_malloc(elems, MT_DBL, "GA malloc temp");
+        /* *((Integer*)ptr)= handle;
+           ptr = ((double*)ptr)+ 1;*/ /*needs sizeof(double)>=sizeof(Integer)*/
     }
     return ptr;
 }
