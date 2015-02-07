@@ -737,8 +737,7 @@ int len, lenmes, tag=32100, i, me=armci_msg_me();
 */
 }
 
-static 
-Integer sgai_match_bin2proc(Integer blo, Integer bhi, Integer plo, Integer phi)
+static Integer sgai_match_bin2proc(Integer blo, Integer bhi, Integer plo, Integer phi)
 {
 int rc=0;
        if(blo == plo) rc=1;
