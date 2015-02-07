@@ -767,10 +767,10 @@ static void sgai_bin_offset(int scope, int *x, int n, int *offset)
 
 static Integer sgai_match_bin2proc(Integer blo, Integer bhi, Integer plo, Integer phi)
 {
-int rc=0;
-       if(blo == plo) rc=1;
-       if(bhi == phi) rc+=2; 
-       return rc; /* 1 - first 2-last 3-last+first */
+    int rc=0;
+    if(blo == plo) rc=1;
+    if(bhi == phi) rc+=2; 
+    return rc; /* 1 - first 2-last 3-last+first */
 }
 
 
