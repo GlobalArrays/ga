@@ -949,38 +949,36 @@ int local_sync_begin,local_sync_end;
 }
 
 
-static 
-void snga_local_transpose(Integer type, char *ptra, Integer n, Integer stride, char *ptrb)
+static void snga_local_transpose(Integer type, char *ptra, Integer n, Integer stride, char *ptrb)
 {
-int i;
     switch(type){
 
        case C_INT:
-            for(i = 0; i< n; i++, ptrb+= stride) 
+            for(Integer i = 0; i< n; i++, ptrb+= stride)
                *(int*)ptrb= ((int*)ptra)[i];
             break;
        case C_DCPL:
-            for(i = 0; i< n; i++, ptrb+= stride) 
+            for(Integer i = 0; i< n; i++, ptrb+= stride)
                *(DoubleComplex*)ptrb= ((DoubleComplex*)ptra)[i];
             break;
        case C_SCPL:
-            for(i = 0; i< n; i++, ptrb+= stride) 
+            for(Integer i = 0; i< n; i++, ptrb+= stride)
                *(SingleComplex*)ptrb= ((SingleComplex*)ptra)[i];
             break;
        case C_DBL:
-            for(i = 0; i< n; i++, ptrb+= stride) 
+            for(Integer i = 0; i< n; i++, ptrb+= stride)
                *(double*)ptrb= ((double*)ptra)[i];
             break;
        case C_FLOAT:
-            for(i = 0; i< n; i++, ptrb+= stride)
+            for(Integer i = 0; i< n; i++, ptrb+= stride)
                *(float*)ptrb= ((float*)ptra)[i];
             break;      
        case C_LONG:
-            for(i = 0; i< n; i++, ptrb+= stride)
+            for(Integer i = 0; i< n; i++, ptrb+= stride)
                *(long*)ptrb= ((long*)ptra)[i];
             break;                                 
        case C_LONGLONG:
-            for(i = 0; i< n; i++, ptrb+= stride)
+            for(Integer i = 0; i< n; i++, ptrb+= stride)
                *(long long*)ptrb= ((long long*)ptra)[i];
             break;                                 
        default: pnga_error("bad type:",type);
