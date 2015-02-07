@@ -148,6 +148,9 @@ Integer *mapALL;
 char** ptr_array;
 #endif
 
+/* moved from below */
+static int num_mutexes=0;
+static int chunk_mutex;
 
 char *GA_name_stack[NAME_STACK_LEN];  /* stack for storing names of GA ops */
 int  GA_stack_size=0;
@@ -3684,8 +3687,6 @@ int i;
 }
 
 
-static int num_mutexes=0;
-static int chunk_mutex;
 /**
  * Create a set of mutexes
  */
