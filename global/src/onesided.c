@@ -95,6 +95,21 @@ extern void armci_read_strided(void*, int, int*, int*, char*);
 extern void armci_write_strided(void*, int, int*, int*, char*);
 extern armci_hdl_t* get_armci_nbhandle(Integer *);
 
+/* moved this stuff up from below */
+
+#define HANDLES_OUTSTANDING 100
+/* Maximum number of outstanding put/notify handles */
+
+typedef struct {
+  Integer *orighdl;
+  Integer firsthdl;
+  Integer elementhdl;
+  void *elem_copy;
+} gai_putn_hdl_t;
+
+static int putn_handles_initted = 0;
+static gai_putn_hdl_t putn_handles[HANDLES_OUTSTANDING];
+
 /***************************************************************************/
 
 /**
@@ -1056,19 +1071,6 @@ void pnga_nbput(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, I
  * (Non-blocking) Put an N-dimensional patch of data into a Global Array and notify the other
                   side with information on another Global Array
  */
-
-#define HANDLES_OUTSTANDING 100
-/* Maximum number of outstanding put/notify handles */
-
-typedef struct {
-  Integer *orighdl;
-  Integer firsthdl;
-  Integer elementhdl;
-  void *elem_copy;
-} gai_putn_hdl_t;
-
-static int putn_handles_initted = 0;
-static gai_putn_hdl_t putn_handles[HANDLES_OUTSTANDING];
 
 static int putn_check_single_elem(Integer g_a, Integer *lon, Integer *hin)
 {
