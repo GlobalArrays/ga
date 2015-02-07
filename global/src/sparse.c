@@ -690,16 +690,16 @@ void pnga_unpack(Integer g_src, Integer g_dst, Integer g_msk,
 
 
 
-#define NWORK 2000
-int workR[NWORK], workL[NWORK];
+const int NWORK 2000;
+//int workR[NWORK], workL[NWORK];
 
 /*\ compute offset for each of n bins for the given processor to contribute its
  *  elements, number of which for each bin is specified in x
 \*/ 
 static void sgai_bin_offset(int scope, int *x, int n, int *offset)
 {
-int root, up, left, right;
-int len, lenmes, tag=32100, i, me=armci_msg_me();
+    int root, up, left, right;
+    int len, lenmes, tag=32100, i, me=armci_msg_me();
 
     if(!x)pnga_error("sgai_bin_offset: NULL pointer", n);
     if(n>NWORK)pnga_error("sgai_bin_offset: >NWORK", n);
@@ -707,34 +707,62 @@ int len, lenmes, tag=32100, i, me=armci_msg_me();
 
     armci_msg_bintree(scope, &root, &up, &left, &right);
 
+    /* move static work arrays here */
+    int * workR = malloc(NWORK*sizeof(int));
+    int * workL = malloc(NWORK*sizeof(int));
+    if(workR==NULL || workL==NULL) {
+        pnga_error("sgai_bin_offset: malloc failed",NWORK);
+    }
+
     /* up-tree phase: collect number of elements */
-    if (left > -1) armci_msg_rcv(tag, workL, len, &lenmes, left);
-    if (right > -1) armci_msg_rcv(tag, workR, len, &lenmes, right);
+    if (left > -1) {
+        armci_msg_rcv(tag, workL, len, &lenmes, left);
+    }
+    if (right > -1) {
+        armci_msg_rcv(tag, workR, len, &lenmes, right);
+    }
 
     /* add number of elements in each bin */
-    if((right > -1) && left>-1) for(i=0;i<n;i++)workL[i] += workR[i] +x[i];
-    else if(left > -1) for(i=0;i<n;i++)workL[i] += x[i];
-    else for(i=0;i<n;i++)workL[i] = x[i]; 
-
+    if ((right > -1) && (left>-1)) {
+        for(i=0;i<n;i++) {
+            workL[i] += workR[i] + x[i];
+        }
+    } else if(left > -1) {
+        for(i=0;i<n;i++) {
+            workL[i] += x[i];
+        }
+    } else {
+        for(i=0;i<n;i++) {
+            workL[i] = x[i]; 
+        }
+    }
     /* now, workL on root contains the number of elements in each bin*/
          
-    if (me != root && up!=-1) armci_msg_snd(tag, workL, len, up);
-
+    if (me != root && up!=-1) {
+        armci_msg_snd(tag, workL, len, up);
+    }
     /* down-tree: compute offset subtracting elements for self and right leaf*/
     if (me != root && up!=-1){
              armci_msg_rcv(tag, workL, len, &lenmes, up);
     }
-    for(i=0; i<n; i++) offset[i] = workL[i]-x[i];
-
-    if (right > -1) armci_msg_snd(tag, offset, len, right);
+    for(i=0; i<n; i++) {
+        offset[i] = workL[i]-x[i];
+    }
+    if (right > -1) {
+        armci_msg_snd(tag, offset, len, right);
+    }
     if (left > -1) {
-            /* we saved num elems for right subtree to adjust offset for left*/
-            for(i=0; i<n; i++) workR[i] = offset[i] -workR[i]; 
-            armci_msg_snd(tag, workR, len, left);
+        /* we saved num elems for right subtree to adjust offset for left*/
+        for(i=0; i<n; i++) 
+            workR[i] = offset[i] -workR[i]; 
+        armci_msg_snd(tag, workR, len, left);
     }
 /*    printf("%d:left=%d right=%d up=%d root=%d off=%d\n",me,left, right,up,root,offset[0]);
     fflush(stdout);
 */
+    free(workL);
+    free(workR);
+    return;
 }
 
 static Integer sgai_match_bin2proc(Integer blo, Integer bhi, Integer plo, Integer phi)
