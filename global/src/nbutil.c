@@ -39,7 +39,7 @@ typedef struct{
 
 
 /*fills up the armci_hdl_t entries in ga_armcihdl_t */
-static armci_hdl_t hdl_array[NUM_HDLS];
+static armci_hdl_t hdl_array[NUM_HDLS]; /* RACE */
 
 
 /*index of the following array goes into ihdl_index. while waiting for a
@@ -48,11 +48,11 @@ static armci_hdl_t hdl_array[NUM_HDLS];
  *if it is, then we complete all the armci handles in the linked list this
  *points to.
 */
-static ga_nbhdl_array_t ga_ihdl_array[NUM_HDLS];
+static ga_nbhdl_array_t ga_ihdl_array[NUM_HDLS]; /* RACE */
 
 
 /*this is the array of linked list elements. */
-static ga_armcihdl_t list_element_array[NUM_HDLS] = {
+static ga_armcihdl_t list_element_array[NUM_HDLS] = {                   /* RACE */
 {&(hdl_array[0]), NULL,NULL,0, -1 },{&(hdl_array[1]), NULL,NULL, 1,-1 }, 
 {&(hdl_array[2]), NULL,NULL,2, -1 },{&(hdl_array[3]), NULL,NULL, 3,-1 },
 {&(hdl_array[4]), NULL,NULL,4, -1 },{&(hdl_array[5]), NULL,NULL, 5,-1 }, 
@@ -69,14 +69,15 @@ static ga_armcihdl_t list_element_array[NUM_HDLS] = {
 
 
 
-static int nextIHAelement=-1; /*oldest ga_ihdl_array element*/
-static int nextLEAelement=-1; /*oldest list_element_array element*/
-static int ihdl_array_avail[NUM_HDLS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
-static int list_ele_avail[NUM_HDLS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+static int nextIHAelement=-1; /* RACE */ /*oldest ga_ihdl_array element*/
+static int nextLEAelement=-1;  /* RACE *//*oldest list_element_array element*/
+static int ihdl_array_avail[NUM_HDLS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}; /* RACE */
+static int list_ele_avail[NUM_HDLS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}; /* RACE */
 
 /*\ a unique tag everytime
 \*/
-static unsigned int ga_nb_tag;
+/* this is just dumb; it will roll over in long-running apps... */
+static unsigned int ga_nb_tag; /* RACE */  
 unsigned int get_next_tag(){
     return((++ga_nb_tag));
 }
@@ -120,7 +121,7 @@ ga_armcihdl_t *listele,*prev,*next;
 /*\ Get the next available list element from the list element array, if 
  *  nothing is available, free element with index nextLEAelement
 \*/
-ga_armcihdl_t* get_armcihdl(){
+ga_armcihdl_t* get_armcihdl(void){
 int i;
 ga_armcihdl_t *ret_handle;
 

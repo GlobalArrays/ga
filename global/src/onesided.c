@@ -81,15 +81,15 @@
 /*uncomment line below to verify consistency of MA in every sync */
 /*#define CHECK_MA yes */
 
-char *fence_array;
-static int GA_fence_set=0;
-Integer *_ga_map;       /* used in get/put/acc */
-int *ProcListPerm;
+char *fence_array; /* RACE */
+static int GA_fence_set=0; /* RACE */
+Integer *_ga_map; /* RACE */      /* used in get/put/acc */
+int *ProcListPerm; /* RACE */
 
-static int GA_prealloc_gatscat = 0;
-static Integer *GA_header;
-static Integer *GA_list;
-static Integer *GA_elems;
+static int GA_prealloc_gatscat = 0; /* RACE */
+static Integer *GA_header; /* RACE */
+static Integer *GA_list; /* RACE */
+static Integer *GA_elems; /* RACE */
 
 extern void armci_read_strided(void*, int, int*, int*, char*);
 extern void armci_write_strided(void*, int, int*, int*, char*);
@@ -107,8 +107,8 @@ typedef struct {
   void *elem_copy;
 } gai_putn_hdl_t;
 
-static int putn_handles_initted = 0;
-static gai_putn_hdl_t putn_handles[HANDLES_OUTSTANDING];
+static int putn_handles_initted = 0; /* RACE */
+static gai_putn_hdl_t putn_handles[HANDLES_OUTSTANDING]; /* RACE */
 
 /***************************************************************************/
 

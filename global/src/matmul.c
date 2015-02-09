@@ -26,13 +26,14 @@
 #define KCHUNK_OPTIMIZATION 0 /* This Opt performing well only for m=1000;n=1000'k=2000 kinda cases and not for the opposite*/
 
 /* Optimization flags: Initialized everytime in pnga_matmul() */
-static short int CYCLIC_DISTR_OPT_FLAG  = SET;
-static short int CONTIG_CHUNKS_OPT_FLAG = SET;
-static short int DIRECT_ACCESS_OPT_FLAG = SET;
+static short int CYCLIC_DISTR_OPT_FLAG  = SET; /* RACE */
+static short int CONTIG_CHUNKS_OPT_FLAG = SET; /* RACE */
+static short int DIRECT_ACCESS_OPT_FLAG = SET; /* RACE */
 
-Integer gNbhdlA[2], gNbhdlB[2], gNbhdlC[2];/* for A and B matrix */
+Integer gNbhdlA[2], gNbhdlB[2], gNbhdlC[2]; /* RACE */ /* for A and B matrix */
 
-static int _gai_matmul_patch_flag = 0;
+static int _gai_matmul_patch_flag = 0; /* RACE */
+
 void gai_matmul_patch_flag(int flag)
 {
     _gai_matmul_patch_flag = flag;
@@ -80,8 +81,7 @@ static void GET_BLOCK(Integer g_x, task_list_t *chunk, void *buf,
     pnga_nbget(g_x, lo, hi, buf, dim_next, nbhdl);
 }
 
-static short int
-gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB, 
+static short int gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB, 
 		  task_list_t *state, Integer istart, Integer jstart,
 		  Integer kstart, Integer iend, Integer jend, Integer kend, 
 		  Integer Ichunk, Integer Jchunk, Integer Kchunk, 
@@ -268,8 +268,7 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     *elems += nbuf*NUM_MATS*sizeof(DoubleComplex)/GAsizeofM(atype);
 }
 
-static DoubleComplex* 
-gai_get_armci_memory(Integer Ichunk, Integer Jchunk, Integer Kchunk,
+static DoubleComplex* gai_get_armci_memory(Integer Ichunk, Integer Jchunk, Integer Kchunk,
 		     short int nbuf, Integer atype) {
 
     DoubleComplex *tmp = NULL;
@@ -486,8 +485,7 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
 }
 
 
-static
-void init_block_info(Integer g_c, Integer *proc_index, Integer *index,
+static void init_block_info(Integer g_c, Integer *proc_index, Integer *index,
                      Integer *blocks, Integer *block_dims, Integer *topology,
                      Integer *iblock) 
 {
@@ -513,8 +511,7 @@ void init_block_info(Integer g_c, Integer *proc_index, Integer *index,
  *   return 0 indicates no more blocks available
  *   return 1 indicates there is a block available
  */
-static
-int get_next_block_info(Integer g_c, Integer *proc_index, Integer *index,
+static int get_next_block_info(Integer g_c, Integer *proc_index, Integer *index,
                         Integer *blocks, Integer *block_dims, Integer*topology,
                         Integer *iblock, Integer *blo, Integer *bhi) 
 {

@@ -98,33 +98,33 @@ static int calc_maplen(int handle);
                     Integer blk[], Integer pedims[]);
 #endif
 
-global_array_t *_ga_main_data_structure;
-global_array_t *GA;
-proc_list_t *_proc_list_main_data_structure;
-proc_list_t *PGRP_LIST;
-static int GAinitialized = 0;
-static int ARMCIinitialized = 0;
-int _ga_sync_begin = 1;
-int _ga_sync_end = 1;
-int _max_global_array = MAX_ARRAYS;
-Integer *GA_proclist;
-int* GA_Proc_list = NULL;
-int* GA_inv_Proc_list=NULL;
-int GA_World_Proc_Group = -1;
-int GA_Default_Proc_Group = -1;
-int ga_armci_world_group=0;
-int GA_Init_Proc_Group = -2;
-Integer GA_Debug_flag = 0;
-int *ProcPermList = NULL;
+global_array_t *_ga_main_data_structure; /* RACE */
+global_array_t *GA; /* RACE */
+proc_list_t *_proc_list_main_data_structure; /* RACE */
+proc_list_t *PGRP_LIST; /* RACE */
+static int GAinitialized = 0; /* RACE */
+static int ARMCIinitialized = 0; /* RACE */
+int _ga_sync_begin = 1; /* RACE */
+int _ga_sync_end = 1; /* RACE */
+int _max_global_array = MAX_ARRAYS; /* RACE */
+Integer *GA_proclist; /* RACE */
+int* GA_Proc_list = NULL; /* RACE */
+int* GA_inv_Proc_list=NULL; /* RACE */
+int GA_World_Proc_Group = -1; /* RACE */
+int GA_Default_Proc_Group = -1; /* RACE */
+int ga_armci_world_group=0; /* RACE */
+int GA_Init_Proc_Group = -2; /* RACE */
+Integer GA_Debug_flag = 0; /* RACE */
+int *ProcPermList = NULL; /* RACE */
 
 /* MA addressing */
-DoubleComplex   *DCPL_MB;           /* double precision complex base address */
-SingleComplex   *SCPL_MB;           /* single precision complex base address */
-DoublePrecision *DBL_MB;            /* double precision base address */
-Integer         *INT_MB;            /* integer base address */
-float           *FLT_MB;            /* float base address */
-int** GA_Update_Flags;
-int* GA_Update_Signal;
+DoubleComplex   *DCPL_MB; /* RACE */           /* double precision complex base address */
+SingleComplex   *SCPL_MB; /* RACE */           /* single precision complex base address */
+DoublePrecision *DBL_MB;  /* RACE */           /* double precision base address */
+Integer         *INT_MB;  /* RACE */           /* integer base address */
+float           *FLT_MB;  /* RACE */           /* float base address */
+int** GA_Update_Flags; /* RACE */
+int* GA_Update_Signal; /* RACE */
 
 typedef struct {
 long id;
@@ -134,33 +134,32 @@ long dummy;
 } getmem_t;
 
 /* set total limit (bytes) for memory usage per processor to "unlimited" */
-static Integer GA_total_memory = -1;
-static Integer GA_memory_limited = 0;
-struct ga_stat_t GAstat;
-struct ga_bytes_t GAbytes ={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
-long   *GAstat_arr;
-static Integer GA_memory_limit=0;
-Integer GAme, GAnproc;
-static Integer MPme;
-Integer *mapALL;
+static Integer GA_total_memory = -1; /* RACE */
+static Integer GA_memory_limited = 0; /* RACE */
+struct ga_stat_t GAstat; /* RACE */
+struct ga_bytes_t GAbytes ={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.}; /* RACE */
+long   *GAstat_arr; /* RACE */
+static Integer GA_memory_limit=0; /* RACE */
+Integer GAme, GAnproc; /* RACE */
+static Integer MPme; /* RACE */
+Integer *mapALL; /* RACE */
 
 #ifdef PERMUTE_PIDS
-char** ptr_array;
+char** ptr_array; /* RACE */
 #endif
 
 /* moved from below */
-static int num_mutexes=0;
-static int chunk_mutex;
+static int num_mutexes=0; /* RACE */
+static int chunk_mutex; /* RACE */
 
-char *GA_name_stack[NAME_STACK_LEN];  /* stack for storing names of GA ops */
-int  GA_stack_size=0;
+char *GA_name_stack[NAME_STACK_LEN]; /* RACE */  /* stack for storing names of GA ops */
+int  GA_stack_size=0; /* RACE */
 
 /* Function prototypes */
-int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
-               int grp_id);
+int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id, int grp_id);
 #ifdef ENABLE_CHECKPOINT
-static int ga_group_is_for_ft=0;
-int ga_spare_procs;
+static int ga_group_is_for_ft=0; /* RACE */
+int ga_spare_procs; /* RACE */
 #endif
 
 
@@ -337,11 +336,11 @@ Integer  off_dbl, off_int, off_dcpl, off_flt,off_scpl;
 
 
 
-extern int *_ga_argc;
-extern char ***_ga_argv;
-extern int _ga_initialize_args;
-extern int _ga_initialize_c;
-extern int _ga_initialize_f;
+extern int *_ga_argc; /* RACE */
+extern char ***_ga_argv; /* RACE */
+extern int _ga_initialize_args; /* RACE */
+extern int _ga_initialize_c; /* RACE */
+extern int _ga_initialize_f; /* RACE */
 
 /**
  *  Initialize library structures in Global Arrays.

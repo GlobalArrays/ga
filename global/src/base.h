@@ -3,18 +3,18 @@
 #include "gaconfig.h"
 #include "typesf2c.h"
 
-extern int _max_global_array;
-extern Integer *_ga_map;
-extern Integer GAme, GAnproc;
-extern Integer *GA_proclist;
-extern int GA_Default_Proc_Group;
-extern int* GA_Proc_list;
-extern int* GA_inv_Proc_list;
-extern int** GA_Update_Flags;
-extern int* GA_Update_Signal;
-extern short int _ga_irreg_flag; 
-extern Integer GA_Debug_flag;
-extern int *ProcListPerm;            /*permuted list of processes */
+extern int _max_global_array; /* RACE */
+extern Integer *_ga_map; /* RACE */
+extern Integer GAme, GAnproc; /* RACE */
+extern Integer *GA_proclist; /* RACE */
+extern int GA_Default_Proc_Group; /* RACE */
+extern int* GA_Proc_list; /* RACE */
+extern int* GA_inv_Proc_list; /* RACE */
+extern int** GA_Update_Flags; /* RACE */
+extern int* GA_Update_Signal; /* RACE */
+extern short int _ga_irreg_flag;  /* RACE */
+extern Integer GA_Debug_flag; /* RACE */
+extern int *ProcListPerm; /* RACE */            /*permuted list of processes */
 
 #define FNAM        31              /* length of array names   */
 #define CACHE_SIZE  512             /* size of the cache inside GA DS*/
@@ -86,8 +86,8 @@ typedef struct {
 #endif
 } global_array_t;
 
-extern global_array_t *_ga_main_data_structure; 
-extern proc_list_t *_proc_list_main_data_structure; 
+extern global_array_t *_ga_main_data_structure;  /* RACE */
+extern proc_list_t *_proc_list_main_data_structure;  /* RACE */
 /*\
  *The following statement had to be moved here because of a problem in the c
  *compiler on SV1. The problem is that when a c file is compiled with a 
@@ -98,8 +98,8 @@ extern proc_list_t *_proc_list_main_data_structure;
  *So to handle that,we cannot initialize global variables to be able to run 
  *on SV1.
 \*/
-extern global_array_t *GA;
-extern proc_list_t *PGRP_LIST;
+extern global_array_t *GA; /* RACE */
+extern proc_list_t *PGRP_LIST; /* RACE */
 
 
 #define ERR_STR_LEN 256               /* length of string for error reporting */
