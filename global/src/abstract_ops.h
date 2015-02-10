@@ -10,8 +10,8 @@
 #   include <stdlib.h>
 #endif
 
-static double __elem_op_var;
-static double __elem_op_var2;
+static double __elem_op_var; /* RACE */
+static double __elem_op_var2; /* RACE */
 
 /* assignment e.g. a = b */
 #define assign_reg(a,b) (a) = (b)
