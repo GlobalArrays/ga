@@ -25,6 +25,7 @@
 
 #ifdef MSG_COMMS_MPI
 extern ARMCI_Group* ga_get_armci_group_(int);
+#endif
 
 /* work arrays used in all routines */
 static Integer dims[MAXDIM], ld[MAXDIM-1], lo[MAXDIM],hi[MAXDIM]; /* RACE */
