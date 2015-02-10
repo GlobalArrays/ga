@@ -61,9 +61,10 @@ static double __elem_op_var2; /* RACE */
                                          /__elem_op_var; \
                               (a).imag = (((b).imag*(c).real-(b).real*(c).imag) \
                                          /__elem_op_var
-# else
-#  error assign_div_cpl is horrible
-# endif
+#else
+# warning assign_div_cpl is horrible
+# define assign_div_cpl(a,b,c) choke me
+#endif
 #endif
 
 /* in-place assignment of a sum e.g. a = a + b written a += b */
@@ -97,7 +98,8 @@ static double __elem_op_var2; /* RACE */
                               (a).imag = __elem_op_var > __elem_op_var2 \
                                        ? (b).imag : (c).imag
 #else
-# error assign_max_cpl is not thread-safe
+# warning assign_max_cpl is not thread-safe
+# define assign_max_cpl(a,b,c) choke me
 #endif
 
 /* assignment of a miniimum of two values e.g. if(b > c) a = b else a = c */
@@ -110,7 +112,8 @@ static double __elem_op_var2; /* RACE */
                               (a).imag = __elem_op_var < __elem_op_var2 \
                                        ? (b).imag : (c).imag
 #else
-# error assign_max_cpl is not thread-safe
+# warning assign_max_cpl is not thread-safe
+#define assign_min_cpl(a,b,c) choke me
 #endif
 
 /* assignment of an absolute value e.g. a = |b| */
