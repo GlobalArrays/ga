@@ -690,7 +690,7 @@ void pnga_unpack(Integer g_src, Integer g_dst, Integer g_msk,
 
 
 
-const int NWORK 2000;
+const int NWORK=2000;
 //int workR[NWORK], workL[NWORK];
 
 /*\ compute offset for each of n bins for the given processor to contribute its
