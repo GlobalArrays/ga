@@ -107,7 +107,6 @@ typedef struct {
   void *elem_copy;
 } gai_putn_hdl_t;
 
-static int putn_handles_initted = 0; /* RACE */
 static gai_putn_hdl_t putn_handles[HANDLES_OUTSTANDING]; /* RACE */
 
 /***************************************************************************/
@@ -1141,6 +1140,7 @@ void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer
   Integer ldn[MAXDIM] = { 1 };
   int pos, intersect;
 
+  static int putn_handles_initted = 0; /* RACE */
   /* Make sure everything has been initialized */
   if (!putn_handles_initted) {
     memset(putn_handles, 0, sizeof(putn_handles));
