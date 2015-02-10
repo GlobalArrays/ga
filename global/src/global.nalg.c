@@ -27,9 +27,6 @@
 extern ARMCI_Group* ga_get_armci_group_(int);
 #endif
 
-/* work arrays used in all routines */
-static Integer dims[MAXDIM], ld[MAXDIM-1], lo[MAXDIM],hi[MAXDIM]; /* RACE */
-
 #define GET_ELEMS(ndim,lo,hi,ld,pelems){\
 int _i;\
       for(_i=0, *pelems = hi[ndim-1]-lo[ndim-1]+1; _i< ndim-1;_i++) {\
@@ -58,6 +55,9 @@ void pnga_zero(Integer g_a)
   void *ptr;
   /*register Integer i;*/
   int local_sync_begin,local_sync_end;
+
+  /* these used to be static globals... */
+  Integer dims[MAXDIM], ld[MAXDIM-1], lo[MAXDIM], hi[MAXDIM];
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -181,6 +181,9 @@ Integer num_blocks_a, num_blocks_b;
 Integer blocks[MAXDIM], block_dims[MAXDIM];
 void *ptr_a, *ptr_b;
 int local_sync_begin,local_sync_end,use_put;
+
+  /* these used to be static globals... */
+  Integer dims[MAXDIM], ld[MAXDIM-1], lo[MAXDIM], hi[MAXDIM];
 
    GA_PUSH_NAME("ga_copy");
 
@@ -386,6 +389,9 @@ Integer bndim, bdims[MAXDIM];
 
 Integer one_arr[MAXDIM]={1,1,1,1,1,1,1};
 
+  /* these used to be static globals... */
+  Integer dims[MAXDIM], ld[MAXDIM-1], lo[MAXDIM], hi[MAXDIM];
+
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 
    GA_PUSH_NAME("ga_dot");
@@ -580,6 +586,9 @@ void pnga_scale(Integer g_a, void* alpha)
   void *ptr;
   int local_sync_begin,local_sync_end;
 
+  /* these used to be static globals... */
+  Integer dims[MAXDIM], ld[MAXDIM-1], lo[MAXDIM], hi[MAXDIM];
+
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   grp_id = pnga_get_pgroup(g_a);
@@ -730,6 +739,9 @@ int local_sync_begin,local_sync_end;
  Integer cndim, cdims[MAXDIM];
 
  Integer one_arr[MAXDIM]={1,1,1,1,1,1,1};
+
+  /* these used to be static globals... */
+  Integer dims[MAXDIM], ld[MAXDIM-1], lo[MAXDIM], hi[MAXDIM];
  
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -931,7 +943,7 @@ void pnga_transpose(Integer g_a, Integer g_b)
 Integer me = pnga_nodeid();
 Integer nproc = pnga_nnodes(); 
 Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
-Integer lo[2],hi[2];
+Integer lo[2],hi[2],ld[1];
 int local_sync_begin,local_sync_end;
 Integer num_blocks_a;
 char *ptr_tmp, *ptr_a;
