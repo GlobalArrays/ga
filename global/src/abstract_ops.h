@@ -96,7 +96,7 @@ static double __elem_op_var2; /* RACE */
                                        ? (b).real : (c).real; \
                               (a).imag = __elem_op_var > __elem_op_var2 \
                                        ? (b).imag : (c).imag
-#elif
+#else
 # error assign_max_cpl is not thread-safe
 #endif
 
@@ -109,7 +109,7 @@ static double __elem_op_var2; /* RACE */
                                        ? (b).real : (c).real; \
                               (a).imag = __elem_op_var < __elem_op_var2 \
                                        ? (b).imag : (c).imag
-#elif
+#else
 # error assign_max_cpl is not thread-safe
 #endif
 
