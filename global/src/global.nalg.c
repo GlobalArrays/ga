@@ -29,7 +29,6 @@ extern ARMCI_Group* ga_get_armci_group_(int);
 /* work arrays used in all routines */
 static Integer dims[MAXDIM], ld[MAXDIM-1]; /* RACE */
 static Integer lo[MAXDIM],hi[MAXDIM]; /* RACE */
-static Integer one_arr[MAXDIM]={1,1,1,1,1,1,1}; /* RACE */
 
 #define GET_ELEMS(ndim,lo,hi,ld,pelems){\
 int _i;\
@@ -385,6 +384,8 @@ Integer num_blocks_a=0, num_blocks_b=0;
 Integer andim, adims[MAXDIM];
 Integer bndim, bdims[MAXDIM];
 
+Integer one_arr[MAXDIM]={1,1,1,1,1,1,1};
+
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 
    GA_PUSH_NAME("ga_dot");
@@ -727,6 +728,8 @@ int local_sync_begin,local_sync_end;
  Integer andim, adims[MAXDIM];
  Integer bndim, bdims[MAXDIM];
  Integer cndim, cdims[MAXDIM];
+
+ Integer one_arr[MAXDIM]={1,1,1,1,1,1,1};
  
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
