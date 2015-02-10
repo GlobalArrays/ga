@@ -27,8 +27,7 @@
 extern ARMCI_Group* ga_get_armci_group_(int);
 
 /* work arrays used in all routines */
-static Integer dims[MAXDIM], ld[MAXDIM-1]; /* RACE */
-static Integer lo[MAXDIM],hi[MAXDIM]; /* RACE */
+static Integer dims[MAXDIM], ld[MAXDIM-1], lo[MAXDIM],hi[MAXDIM]; /* RACE */
 
 #define GET_ELEMS(ndim,lo,hi,ld,pelems){\
 int _i;\
