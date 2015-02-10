@@ -55,7 +55,7 @@ static double __elem_op_var2; /* RACE */
                                          /((c).real*(c).real+(c).imag*(c).imag))
 #else
 # ifdef RACE_CONDITIONS
-/* This is thread-unsafe */
+/* This is thread-unsafe and it is not clear how it can be syntactically correct, either. */
 #define assign_div_cpl(a,b,c) __elem_op_var = ((c).real*(c).real+(c).imag*(c).imag); \
                               (a).real = (((b).real*(c).real+(b).imag*(c).imag) \
                                          /__elem_op_var; \
