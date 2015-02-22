@@ -15,7 +15,7 @@
 
 #define NUM 10
 
-addition_operator(int *x, int nprocs)
+void addition_operator(int *x, int nprocs)
 {
   int i, temp[NUM];
   char *op="min";
@@ -26,7 +26,7 @@ addition_operator(int *x, int nprocs)
   printf("\n");
 }
 
-checking_operator (int rank, int nprocs)
+void checking_operator (int rank, int nprocs)
 {
   
   int x[NUM], i, temp[NUM];
@@ -65,7 +65,7 @@ checking_operator (int rank, int nprocs)
   */
 }
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 
   int rank, nprocs;
@@ -87,5 +87,5 @@ main(int argc, char **argv)
   GA_Terminate();
 
   MPI_Finalize();
-
+  return 0;
 }

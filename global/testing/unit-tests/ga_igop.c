@@ -17,7 +17,7 @@
 
 #if 0
 
-addition_operator(int rank, int nprocs, int n)
+void addition_operator(int rank, int nprocs, int n)
 {
 
   int x[n], i, temp[n];
@@ -94,7 +94,7 @@ addition_operator(int rank, int nprocs, int n)
 }
 }
 
-min_operator(int rank, int nprocs, int n)
+void min_operator(int rank, int nprocs, int n)
 {
   
   int x[n], i, temp[n];
@@ -120,7 +120,7 @@ min_operator(int rank, int nprocs, int n)
     }
 }
 
-absmax_operator(int rank, int nprocs, int n)
+void absmax_operator(int rank, int nprocs, int n)
 {
 
   int x[n], i, temp[n];
@@ -145,7 +145,7 @@ absmax_operator(int rank, int nprocs, int n)
     }
 }
 
-absmin_operator(int rank, int nprocs, int n)
+void absmin_operator(int rank, int nprocs, int n)
 {
   
   int x[n], i, temp[n];
@@ -173,7 +173,7 @@ absmin_operator(int rank, int nprocs, int n)
 #endif
 //-------------------------------------------------------------------------------
 
-checking_operator (int rank, int nprocs)
+void checking_operator (int rank, int nprocs)
 {
   
   int x[NUM], i, temp[NUM];
