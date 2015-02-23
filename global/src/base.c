@@ -383,14 +383,10 @@ int bytes;
     
     GA_Default_Proc_Group = -1;
     /* zero in pointers in GA array */
-    _ga_main_data_structure
-       = (global_array_t *)malloc(sizeof(global_array_t)*MAX_ARRAYS);
-    _proc_list_main_data_structure
-       = (proc_list_t *)malloc(sizeof(proc_list_t)*MAX_ARRAYS);
-    if(!_ga_main_data_structure)
-       pnga_error("ga_init:malloc ga failed",0);
-    if(!_proc_list_main_data_structure)
-       pnga_error("ga_init:malloc proc_list failed",0);
+    _ga_main_data_structure = (global_array_t *)malloc(sizeof(global_array_t)*MAX_ARRAYS);
+    _proc_list_main_data_structure = (proc_list_t *)malloc(sizeof(proc_list_t)*MAX_ARRAYS);
+    if(!_ga_main_data_structure) pnga_error("ga_init:malloc ga failed",0);
+    if(!_proc_list_main_data_structure) pnga_error("ga_init:malloc proc_list failed",0);
     GA = _ga_main_data_structure;
     PGRP_LIST = _proc_list_main_data_structure;
     for(int i=0;i<MAX_ARRAYS; i++) {
