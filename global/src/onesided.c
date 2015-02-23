@@ -302,7 +302,6 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _pinv, _p_handle;                            \
       ga_ownsM(g_handle, proc, _lo, _hi);                                      \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               \
       if(_last==0) ld[0]=_hi[0]- _lo[0]+1+2*(Integer)GA[g_handle].width[0];    \
-      __CRAYX1_PRAGMA("_CRI shortloop");                                       \
       for(_d=0; _d < _last; _d++)            {                                 \
           _w = (Integer)GA[g_handle].width[_d];                                \
           _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                     \
@@ -337,7 +336,6 @@ Integer   _mloc = p* ndim *2;\
 #define gam_ComputePatchIndex(ndim, lo, plo, dims, pidx){                      \
 Integer _d, _factor;                                                           \
           *pidx = plo[0] -lo[0];                                               \
-          __CRAYX1_PRAGMA("_CRI shortloop");                                   \
           for(_d= 0,_factor=1; _d< ndim -1; _d++){                             \
              _factor *= (dims[_d]);                                            \
              *pidx += _factor * (plo[_d+1]-lo[_d+1]);                          \
@@ -533,9 +531,6 @@ static void ngai_gets(char *loc_base_ptr, char *prem,int *stride_rem, char *pbuf
 /**
  *  A common routine called by both non-blocking and blocking GA put calls.
  */
-#ifdef __crayx1
-#pragma _CRI inline pnga_locate_region
-#endif
 void ngai_put_common(Integer g_a, 
                    Integer *lo,
                    Integer *hi,
@@ -552,7 +547,7 @@ void ngai_put_common(Integer g_a,
   Integer use_blocks;
   Integer n_rstrctd;
   Integer *rank_rstrctd;
-#if defined(__crayx1) || defined(DISABLE_NBOPT)
+#if defined(DISABLE_NBOPT)
 #else
   Integer ga_nbhandle;
   int counter=0;
@@ -598,7 +593,7 @@ void ngai_put_common(Integer g_a,
 #endif
 
     if(nbhandle)ga_init_nbhandle(nbhandle);
-#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
+#if !defined(DISABLE_NBOPT)
     else ga_init_nbhandle(&ga_nbhandle);
 #endif
 
@@ -610,9 +605,8 @@ void ngai_put_common(Integer g_a,
     int ProcListPerm[np];
     gaPermuteProcList(np, ProcListPerm);
 
-#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
+#if !defined(DISABLE_NBOPT)
     for(loop=0; loop<num_loops; loop++) {
-      __CRAYX1_PRAGMA("_CRI novector");
 #endif
       for(idx=0; idx<np; idx++){
         Integer ldrem[MAXDIM];
@@ -630,7 +624,7 @@ void ngai_put_common(Integer g_a,
 
         /* check if it is local to SMP */
 
-#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
+#if !defined(DISABLE_NBOPT)
         cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)proc);
         if(loop==0) cond = !cond;
         if(cond) {
@@ -678,7 +672,7 @@ void ngai_put_common(Integer g_a,
           /*casting what ganb_get_armci_handle function returns to armci_hdl is 
             very crucial here as on 64 bit platforms, pointer is 64 bits where 
             as temporary is only 32 bits*/ 
-#if defined(__crayx1) || defined(DISABLE_NBOPT)
+#if defined(DISABLE_NBOPT)
 /*           ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc); */
 	  ngai_puts(buf, pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
 #else
@@ -709,7 +703,7 @@ void ngai_put_common(Integer g_a,
       }
 #endif
     }
-#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
+#if !defined(DISABLE_NBOPT)
     if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
 #endif
   } else {
@@ -730,11 +724,9 @@ void ngai_put_common(Integer g_a,
            over all blocks owned by this processor. */
         for (iproc = 0; iproc<GAnproc; iproc++) {
 
-#ifndef __crayx1
           cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)iproc);
           if(loop==0) cond = !cond;
           if(cond) {
-#endif
             /* Initialize offset for each processor to zero */
             offset = 0;
             for (idx=iproc; idx<blk_tot; idx += GAnproc) {
@@ -806,7 +798,7 @@ void ngai_put_common(Integer g_a,
                 /*casting what ganb_get_armci_handle function returns to armci_hdl is 
                   very crucial here as on 64 bit platforms, pointer is 64 bits where 
                   as temporary is only 32 bits*/ 
-#ifdef __crayx1
+#if 0
 /*                 ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc); */
 		ngai_puts(buf,pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
 #else
@@ -876,7 +868,7 @@ void ngai_put_common(Integer g_a,
            over all blocks owned by this processor. */
         for (iproc = 0; iproc<GAnproc; iproc++) {
 
-#ifndef __crayx1
+#if 1
           cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)iproc);
           if(loop==0) cond = !cond;
           if(cond) {
@@ -987,7 +979,7 @@ void ngai_put_common(Integer g_a,
                 /*casting what ganb_get_armci_handle function returns to armci_hdl is 
                   very crucial here as on 64 bit platforms, pointer is 64 bits where 
                   as temporary is only 32 bits*/ 
-#ifdef __crayx1
+#if 0
 /*                 ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc); */
 		ngai_puts(buf,pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
 #else
@@ -1032,13 +1024,13 @@ void ngai_put_common(Integer g_a,
                 }
               }
             }
-#ifndef __crayx1
+#if 1
           }
 #endif
         }
       }
     }
-#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
+#if !defined(DISABLE_NBOPT)
     if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
 #endif
   }
@@ -1279,8 +1271,7 @@ void ngai_get_common(Integer g_a,
   Integer use_blocks;
   Integer n_rstrctd;
   Integer *rank_rstrctd;
-#if defined(__crayx1) || defined(DISABLE_NBOPT)
-#else
+#ifndef DISABLE_NBOPT
   Integer ga_nbhandle;
   int counter=0;
 #endif
@@ -1326,7 +1317,7 @@ void ngai_get_common(Integer g_a,
 #endif
 
     if(nbhandle)ga_init_nbhandle(nbhandle);
-#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
+#if !defined(DISABLE_NBOPT)
     else ga_init_nbhandle(&ga_nbhandle);
 #endif
 
@@ -1338,9 +1329,8 @@ void ngai_get_common(Integer g_a,
     int ProcListPerm[np];
     gaPermuteProcList(np, ProcListPerm);
 
-#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
+#if !defined(DISABLE_NBOPT)
     for(loop=0; loop<num_loops; loop++) {
-      __CRAYX1_PRAGMA("_CRI novector");
 #endif
       for(idx=0; idx< np; idx++){
         Integer ldrem[MAXDIM];
@@ -1357,7 +1347,7 @@ void ngai_get_common(Integer g_a,
 #endif
 
         /* check if it is local to SMP */
-#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
+#if !defined(DISABLE_NBOPT)
         cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)proc);
         if(loop==0) cond = !cond;
         if(cond) {
@@ -1411,7 +1401,7 @@ void ngai_get_common(Integer g_a,
             GAbytes.getloc += (double)size*elems;
           }
 #endif
-#if defined(__crayx1) || defined(DISABLE_NBOPT)
+#if defined(DISABLE_NBOPT)
 /*           ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc); */
           ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
 #else
@@ -1439,7 +1429,7 @@ void ngai_get_common(Integer g_a,
 #endif
     }
 
-#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
+#if !defined(DISABLE_NBOPT)
     if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
 #endif
   } else {
@@ -1460,7 +1450,7 @@ void ngai_get_common(Integer g_a,
            over all blocks owned by a processor */
         for (iproc = 0; iproc<GAnproc; iproc++) {
 
-#ifndef __crayx1
+#if 1
           cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)iproc);
           if(loop==0) cond = !cond;
           if(cond) {
@@ -1534,7 +1524,7 @@ void ngai_get_common(Integer g_a,
                 /*casting what ganb_get_armci_handle function returns to armci_hdl is 
                   very crucial here as on 64 bit platforms, pointer is 64 bits where 
                   as temporary is only 32 bits*/ 
-#ifdef __crayx1
+#if 0
 /*                 ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc); */
 		ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
 #else
@@ -1568,7 +1558,7 @@ void ngai_get_common(Integer g_a,
               }
               offset += jtot;
             }
-#ifndef __crayx1
+#if 1
           }
 #endif
         }
@@ -1605,7 +1595,7 @@ void ngai_get_common(Integer g_a,
            over all blocks owned by this processor. */
         for (iproc = 0; iproc<GAnproc; iproc++) {
 
-#ifndef __crayx1
+#if 1
           cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)iproc);
           if(loop==0) cond = !cond;
           if(cond) {
@@ -1715,7 +1705,7 @@ void ngai_get_common(Integer g_a,
                 /*casting what ganb_get_armci_handle function returns to armci_hdl is 
                   very crucial here as on 64 bit platforms, pointer is 64 bits where 
                   as temporary is only 32 bits*/ 
-#ifdef __crayx1
+#if 0
 /*                 ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc); */
 		ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
 #else
@@ -1760,14 +1750,14 @@ void ngai_get_common(Integer g_a,
                 }
               }
             }
-#ifndef __crayx1
+#if 1
           }
 #endif
         }
       }
 
     }
-#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
+#if !defined(DISABLE_NBOPT)
     if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
 #endif
   }
@@ -1823,11 +1813,6 @@ void pnga_nbget_field(Integer g_a, Integer *lo, Integer *hi,Integer foff, Intege
 {
   ngai_get_common(g_a,lo,hi,buf,ld,foff,fsize,nbhandle);
 }
-
-#ifdef __crayx1 
-#  pragma _CRI inline ga_get_
-#  pragma _CRI inline ngai_get_common
-#endif
 
 /**
  *  A common routine called by both non-blocking and blocking GA acc calls.
@@ -2141,7 +2126,7 @@ void ngai_acc_common(Integer g_a,
            over all blocks owned by this processor. */
         for (iproc = 0; iproc<GAnproc; iproc++) {
 
-#ifndef __crayx1
+#if 1
           cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)iproc);
           if(loop==0) cond = !cond;
           if(cond) {
@@ -2288,7 +2273,7 @@ void ngai_acc_common(Integer g_a,
                 }
               }
             }
-#ifndef __crayx1
+#if 1
           }
 #endif
         }
