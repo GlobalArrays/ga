@@ -85,10 +85,10 @@ char *fence_array; /* RACE */
 static int GA_fence_set=0; /* RACE */
 Integer *_ga_map; /* RACE */      /* used in get/put/acc */
 
-static int GA_prealloc_gatscat = 0; /* RACE */
-static Integer *GA_header; /* RACE */
-static Integer *GA_list; /* RACE */
-static Integer *GA_elems; /* RACE */
+static int GA_prealloc_gatscat = 0; /* RACE - only used in gather-scatter API */
+static Integer *GA_header; /* RACE - only used in gather-scatter API */
+static Integer *GA_list; /* RACE - only used in gather-scatter API */
+static Integer *GA_elems; /* RACE - only used in gather-scatter API */
 
 extern void armci_read_strided(void*, int, int*, int*, char*);
 extern void armci_write_strided(void*, int, int*, int*, char*);
