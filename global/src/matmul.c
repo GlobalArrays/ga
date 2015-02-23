@@ -1384,10 +1384,11 @@ void pnga_matmul(transa, transb, alpha, beta,
 #endif
 
     /* switch to various matmul algorithms here. more to come */
-    if( GA[GA_OFFSET + g_c].irreg == 1 ||
-	GA[GA_OFFSET + g_b].irreg == 1 ||
-	GA[GA_OFFSET + g_a].irreg == 1 ||
-	_gai_matmul_patch_flag == SET) irregular = SET;
+    if( _gai_matmul_patch_flag == SET  || GA[GA_OFFSET + g_c].irreg == 1 || 
+        GA[GA_OFFSET + g_b].irreg == 1 || GA[GA_OFFSET + g_a].irreg == 1 ) 
+    {
+        irregular = SET;
+    }
 
     /* even ga_dgemm is called, m,n & k might not match GA dimensions */
     pnga_inquire(g_c, &ctype, &rank, dims);
