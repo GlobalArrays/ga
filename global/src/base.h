@@ -4,7 +4,6 @@
 #include "typesf2c.h"
 
 extern int _max_global_array; /* RACE */
-//extern Integer *_ga_map; /* RACE */
 extern Integer GAme, GAnproc; /* RACE */
 extern Integer *GA_proclist; /* RACE */
 extern int GA_Default_Proc_Group; /* RACE */
