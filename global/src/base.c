@@ -2360,8 +2360,6 @@ int nproc,grp_me=GAme;
     /* adjust all addresses if they are not alligned on corresponding nodes*/
 
     /* we need storage for GAnproc*sizeof(Integer) */
-    /* JAD -- fixed bug where _ga_map was reused before gai_getmem was done
-     * with it. Now malloc/free needed memory. */
     adjust = (Integer*)malloc(GAnproc*sizeof(Integer));
 
     diff = (GA_ABS( base - (char *) ptr_arr[grp_me])) % item_size; 
