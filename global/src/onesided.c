@@ -84,8 +84,6 @@
 char *fence_array; /* RACE */
 static int GA_fence_set=0; /* RACE */
 Integer *_ga_map; /* RACE */      /* used in get/put/acc */
-/* ProcListPerm is now a stack array every time it is needed... */
-//int *ProcListPerm; /* RACE */
 
 static int GA_prealloc_gatscat = 0; /* RACE */
 static Integer *GA_header; /* RACE */
