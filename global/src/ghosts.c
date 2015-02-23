@@ -580,9 +580,14 @@ void pnga_update1_ghosts(Integer g_a)
           }
         }
         /* locate processor with this data */
+        Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+        if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
         if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
             GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
             slo_rem, shi_rem, g_a);
+
+        free(_ga_map);
 
         for (ipx = 0; ipx < np; ipx++) {
           /* Get actual coordinates of desired chunk of remote
@@ -703,9 +708,14 @@ void pnga_update1_ghosts(Integer g_a)
           }
         }
         /* locate processor with this data */
+        Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+        if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
         if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
             GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
             slo_rem, shi_rem, g_a);
+
+        free(_ga_map);
 
         for (ipx = 0; ipx < np; ipx++) {
           /* Get actual coordinates of desired chunk of remote
@@ -923,9 +933,15 @@ logical pnga_update2_ghosts(Integer g_a)
       }
     }
     /* Locate remote processor to which data must be sent */
+    Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+    if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
     if (!pnga_locate_region(g_a, tlo_rem, thi_rem, _ga_map,
        GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
        tlo_rem, thi_rem, g_a);
+
+    free(_ga_map);
+
     if (np > 1) {
       fprintf(stderr,"More than one remote processor found\n");
     }
@@ -1166,9 +1182,14 @@ logical pnga_update3_ghosts(Integer g_a)
       get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
                            dims, width);
       /* locate processor with this data */
+      Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rem, shi_rem, g_a);
+
+      //free(_ga_map);
 
       /* Get actual coordinates of desired location of remote
          data as well as the actual coordinates of the local chunk
@@ -1225,9 +1246,14 @@ logical pnga_update3_ghosts(Integer g_a)
       get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
                            dims, width);
       /* locate processor with this data */
+      //Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      //if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rem, shi_rem, g_a);
+
+      free(_ga_map);
 
       /* Get actual coordinates of desired chunk of remote
          data as well as the actual coordinates of the local chunk
@@ -1430,9 +1456,15 @@ logical pnga_set_update4_info(Integer g_a)
       get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
                            dims, width);
       /* locate processor with this data */
+      Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, g_a);
+
+      //free(_ga_map);
+
       *proc_rem_snd = GA_proclist[0];
       if (p_handle >= 0) {
         *proc_rem_snd = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem_snd];
@@ -1465,9 +1497,15 @@ logical pnga_set_update4_info(Integer g_a)
         }
       }
       /* locate processor with this data */
+      //Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      //if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, g_a);
+
+      //free(_ga_map);
+
       *proc_rem_rcv = GA_proclist[0];
       if (p_handle >= 0) {
         *proc_rem_rcv = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem_rcv];
@@ -1552,9 +1590,15 @@ logical pnga_set_update4_info(Integer g_a)
       get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
                            dims, width);
       /* locate processor with this data */
+      //Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      //if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, g_a);
+
+      //free(_ga_map);
+
       *proc_rem_snd = GA_proclist[0];
       if (p_handle >= 0) {
         *proc_rem_snd = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem_snd];
@@ -1587,9 +1631,15 @@ logical pnga_set_update4_info(Integer g_a)
         }
       }
       /* locate processor with this data */
+      //Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      //if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, g_a);
+
+      free(_ga_map);
+
       *proc_rem_rcv = GA_proclist[0];
       if (p_handle >= 0) {
         *proc_rem_rcv = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem_rcv];
@@ -2061,9 +2111,15 @@ logical pnga_update44_ghosts(Integer g_a)
       get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
                            dims, width);
       /* locate processor with this data */
+      Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, g_a);
+
+      //free(_ga_map);
+
       proc_rem_snd = GA_proclist[0];
       if (p_handle >= 0) {
         proc_rem_snd = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem_snd];
@@ -2096,9 +2152,15 @@ logical pnga_update44_ghosts(Integer g_a)
         }
       }
       /* locate processor with this data */
+      //Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      //if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, g_a);
+
+      //free(_ga_map);
+
       proc_rem_rcv = GA_proclist[0];
       if (p_handle >= 0) {
         proc_rem_rcv = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem_rcv];
@@ -2231,9 +2293,15 @@ logical pnga_update44_ghosts(Integer g_a)
       get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
                            dims, width);
       /* locate processor with this data */
+      //Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      //if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, g_a);
+
+      //free(_ga_map);
+
       proc_rem_snd = GA_proclist[0];
       if (p_handle >= 0) {
         proc_rem_snd = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem_snd];
@@ -2266,9 +2334,15 @@ logical pnga_update44_ghosts(Integer g_a)
         }
       }
       /* locate processor with this data */
+      //Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      //if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, g_a);
+
+      free(_ga_map);
+
       proc_rem_rcv = GA_proclist[0];
       if (p_handle >= 0) {
         proc_rem_rcv = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem_rcv];
@@ -2577,9 +2651,14 @@ logical pnga_update55_ghosts(Integer g_a)
       get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
                            dims, width);
       /* locate processor with this data */
+      Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rem, shi_rem, g_a);
+
+      //free(_ga_map);
 
       /* Get actual coordinates of desired location of remote
          data as well as the actual coordinates of the local chunk
@@ -2645,9 +2724,14 @@ logical pnga_update55_ghosts(Integer g_a)
       get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
                            dims, width);
       /* locate processor with this data */
+      //Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      //if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rem, shi_rem, g_a);
+
+      free(_ga_map);
 
       /* Get actual coordinates of desired chunk of remote
          data as well as the actual coordinates of the local chunk
@@ -2833,9 +2917,15 @@ void pnga_update_ghosts_nb(Integer g_a, Integer *nbhandle)
       }
     }
     /* Locate remote processor from which data must be retrieved */
+    Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+    if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
     if (!pnga_locate_region(g_a, tlo_rem, thi_rem, _ga_map,
        GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
        tlo_rem, thi_rem, g_a);
+
+    free(_ga_map);
+
     if (np > 1) {
       fprintf(stderr,"More than one remote processor found\n");
     }
@@ -3015,9 +3105,15 @@ logical pnga_update_ghost_dir(Integer g_a,    /* GA handle */
       }
     }
     /* Locate remote processor to which data must be sent */
+    Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+    if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
     if (!pnga_locate_region(g_a, tlo_rem, thi_rem, _ga_map,
        GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
        tlo_rem, thi_rem, g_a);
+
+    free(_ga_map);
+
     if (np > 1) {
       fprintf(stderr,"More than one remote processor found\n");
     }
@@ -3355,9 +3451,15 @@ logical pnga_set_update5_info(Integer g_a)
 
         get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
                              dims, width);
+
+        Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+        if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
         if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
             GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
             slo_rem, shi_rem, g_a);
+
+        //free(_ga_map);
 
         *proc_rem = (Integer)GA_proclist[0];
         if (p_handle >= 0) {
@@ -3421,9 +3523,14 @@ logical pnga_set_update5_info(Integer g_a)
         get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
                              dims, width);
 
+        //Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+        //if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
         if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
             GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
             slo_rem, shi_rem, g_a);
+
+        free(_ga_map);
 
         *proc_rem = (Integer)GA_proclist[0];
         if (p_handle >= 0) {
@@ -3679,9 +3786,15 @@ logical pnga_update6_ghosts(Integer g_a)
       get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
                            dims, width);
       /* locate processor with this data */
+      Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, g_a);
+
+      //free(_ga_map);
+
       /* find out if this processor is on the same node */
       wproc = GA_proclist[0];
       if (p_handle >= 0) {
@@ -3717,9 +3830,15 @@ logical pnga_update6_ghosts(Integer g_a)
         }
       }
       /* locate processor with this data */
+      //Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      //if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, g_a);
+
+      //free(_ga_map);
+
       wproc = GA_proclist[0];
       if (p_handle >= 0) {
         wproc = PGRP_LIST[p_handle].inv_map_proc_list[wproc];
@@ -3869,9 +3988,15 @@ logical pnga_update6_ghosts(Integer g_a)
       get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
                            dims, width);
       /* locate processor with this data */
+      //Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      //if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, g_a);
+
+      //free(_ga_map);
+
       wproc = GA_proclist[0];
       if (p_handle >= 0) {
         wproc = PGRP_LIST[p_handle].inv_map_proc_list[wproc];
@@ -3906,9 +4031,15 @@ logical pnga_update6_ghosts(Integer g_a)
         }
       }
       /* locate processor with this data */
+      //Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+      //if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
       if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, g_a);
+
+      free(_ga_map);
+
       wproc = GA_proclist[0];
       if (p_handle >= 0) {
         wproc = PGRP_LIST[p_handle].inv_map_proc_list[wproc];
@@ -4174,9 +4305,15 @@ logical pnga_update7_ghosts(Integer g_a)
       }
     }
     /* Locate remote processor to which data must be sent */
+    Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+    if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
+
     if (!pnga_locate_region(g_a, tlo_rem, thi_rem, _ga_map,
        GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
        tlo_rem, thi_rem, g_a);
+
+    free(_ga_map);
+
     if (np > 1) {
       fprintf(stderr,"More than one remote processor found\n");
     }
