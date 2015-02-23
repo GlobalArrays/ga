@@ -2465,7 +2465,11 @@ Integer status;
          if(!status)GA_total_memory +=bytes+extra;
      }else status = 1;
 
+     /* Everything about _ga_map in global scope is thread-unsafe
+      * so we try a stack temporary here instead. */
+     Integer _ga_map[GAnproc*sizeof(char**)];
      ptr_arr=(char**)_ga_map; /* need memory GAnproc*sizeof(char**) */
+
      rc= gai_getmem("ga_getmem", ptr_arr,(Integer)bytes+extra, type, &id, grp_id);
      if(rc)pnga_error("ga_getmem: failed to allocate memory",bytes+extra);
 
