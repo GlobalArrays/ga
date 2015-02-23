@@ -700,6 +700,8 @@ void ngai_put_common(Integer g_a,
       }
 #endif
     }
+    free(_ga_map);
+
 #if !defined(DISABLE_NBOPT)
     if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
 #endif
@@ -1031,8 +1033,6 @@ void ngai_put_common(Integer g_a,
     if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
 #endif
   }
-
-  free(_ga_map); /* try to move this up in the function */
 
   GA_POP_NAME;
 #ifdef PROFILE_OLD
@@ -1431,6 +1431,7 @@ void ngai_get_common(Integer g_a,
       }
 #endif
     }
+    free(_ga_map);
 
 #if !defined(DISABLE_NBOPT)
     if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
@@ -1765,8 +1766,6 @@ void ngai_get_common(Integer g_a,
 #endif
   }
 
-  free(_ga_map); /* try to move this up in the function */
-
   GA_POP_NAME;
 #ifdef PROFILE_OLD
   ga_profile_stop();
@@ -1978,6 +1977,7 @@ void ngai_acc_common(Integer g_a,
         } /* end if(cond) */
       }
     }
+    free(_ga_map);
 #if !defined(DISABLE_NBOPT)
   if(!nbhandle) nga_wait_internal(&ga_nbhandle);
 #endif
@@ -2291,8 +2291,6 @@ void ngai_acc_common(Integer g_a,
   if(!nbhandle) nga_wait_internal(&ga_nbhandle);
 #endif
   }
-
-  free(_ga_map); /* try to move this up in the function */
 
   GA_POP_NAME;
 #ifdef PROFILE_OLD
@@ -4961,6 +4959,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 #endif
       ARMCI_PutS(pbuf, stride_loc, prem, stride_rem, count, nstride-1, proc);
     }
+    free(_ga_map);
   } else {
     Integer offset, l_offset, last, pinv;
     Integer blo[MAXDIM],bhi[MAXDIM];
@@ -5218,7 +5217,6 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       }
     }
   }
-  free(_ga_map); /* try to move this up in the function */
   GA_POP_NAME;
 }
 
@@ -5349,6 +5347,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 #endif
       ARMCI_GetS(prem, stride_rem, pbuf, stride_loc, count, nstride-1, proc);
     }
+    free(_ga_map);
   } else {
     Integer offset, l_offset, last, pinv;
     Integer blo[MAXDIM],bhi[MAXDIM];
@@ -5606,7 +5605,6 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       }
     }
   }
-  free(_ga_map); /* try to move this up in the function */
   GA_POP_NAME;
 }
 
@@ -5729,6 +5727,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, count,
           nstride-1, proc);
     }
+    free(_ga_map);
   } else {
     Integer offset, l_offset, last, pinv;
     Integer blo[MAXDIM],bhi[MAXDIM];
@@ -5988,6 +5987,5 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       }
     }
   }
-  free(_ga_map); /* try to move this up in the function */
   GA_POP_NAME;
 }
