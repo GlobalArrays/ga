@@ -84,7 +84,8 @@
 char *fence_array; /* RACE */
 static int GA_fence_set=0; /* RACE */
 Integer *_ga_map; /* RACE */      /* used in get/put/acc */
-int *ProcListPerm; /* RACE */
+/* ProcListPerm is now a stack array every time it is needed... */
+//int *ProcListPerm; /* RACE */
 
 static int GA_prealloc_gatscat = 0; /* RACE */
 static Integer *GA_header; /* RACE */
@@ -236,7 +237,9 @@ void gai_finalize_onesided()
 
 /*\ prepare permuted list of processes for remote ops
 \*/
-#define gaPermuteProcList(nproc)\
+/* ProcListPerm is a stack array. */
+/* TODO Replace with static inline for debuggability. */
+#define gaPermuteProcList(nproc, ProcListPerm)\
 {\
   if((nproc) ==1) ProcListPerm[0]=0; \
   else{\
@@ -611,7 +614,8 @@ void ngai_put_common(Integer g_a,
         ENABLE_PROFILE_PUT);
 #endif
 
-    gaPermuteProcList(np);
+    int ProcListPerm[np];
+    gaPermuteProcList(np, ProcListPerm);
 
 #if !defined(__crayx1) && !defined(DISABLE_NBOPT)
     for(loop=0; loop<num_loops; loop++) {
@@ -1338,7 +1342,8 @@ void ngai_get_common(Integer g_a,
         ENABLE_PROFILE_GET);
 #endif
 
-    gaPermuteProcList(np);
+    int ProcListPerm[np];
+    gaPermuteProcList(np, ProcListPerm);
 
 #if !defined(__crayx1) && !defined(DISABLE_NBOPT)
     for(loop=0; loop<num_loops; loop++) {
@@ -1898,7 +1903,8 @@ void ngai_acc_common(Integer g_a,
         ENABLE_PROFILE_ACC);
 #endif
 
-    gaPermuteProcList(np);
+    int ProcListPerm[np];
+    gaPermuteProcList(np, ProcListPerm);
 
     for(loop=0; loop<num_loops; loop++) {
       for(idx=0; idx< np; idx++){
@@ -4954,8 +4960,10 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
+    int ProcListPerm[np];
+    gaPermuteProcList(np, ProcListPerm);
+
     /* Loop over all processors containing a portion of patch */
-    gaPermuteProcList(np);
     for (idx=0; idx<np; idx++) {
       Integer ldrem[MAXDIM];
       int stride_rem[2*MAXDIM], stride_loc[2*MAXDIM], count[2*MAXDIM];
@@ -5314,8 +5322,10 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
+    int ProcListPerm[np];
+    gaPermuteProcList(np, ProcListPerm);
+
     /* Loop over all processors containing a portion of patch */
-    gaPermuteProcList(np);
     for (idx=0; idx<np; idx++) {
       Integer ldrem[MAXDIM];
       int stride_rem[2*MAXDIM], stride_loc[2*MAXDIM], count[2*MAXDIM];
@@ -5707,8 +5717,10 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
+    int ProcListPerm[np];
+    gaPermuteProcList(np, ProcListPerm);
+
     /* Loop over all processors containing a portion of patch */
-    gaPermuteProcList(np);
     for (idx=0; idx<np; idx++) {
       Integer ldrem[MAXDIM];
       int stride_rem[2*MAXDIM], stride_loc[2*MAXDIM], count[2*MAXDIM];
