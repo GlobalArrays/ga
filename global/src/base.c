@@ -394,6 +394,7 @@ int bytes;
        GA[i].mapc = (C_Integer*)0;
        GA[i].rstrctd_list = (C_Integer*)0;
        GA[i].rank_rstrctd = (C_Integer*)0;
+       /* TODO initialize mutex here */
 #ifdef ENABLE_CHECKPOINT
        GA[i].record_id = 0;
 #endif
@@ -433,14 +434,18 @@ int bytes;
     gai_init_onesided();
 
     /* set activity status for all arrays to inactive */
-    for(int i=0;i<_max_global_array;i++)GA[i].actv=0;
-    for(int i=0;i<_max_global_array;i++)GA[i].actv_handle=0;
+    for(int i=0;i<_max_global_array;i++) {
+        GA[i].actv=0;
+        GA[i].actv_handle=0;
+    }
 
     /* Create proc list for mirrored arrays */
     PGRP_LIST[0].map_proc_list = (int*)malloc(GAnproc*sizeof(int)*2);
     PGRP_LIST[0].inv_map_proc_list = PGRP_LIST[0].map_proc_list + GAnproc;
-    for (i=0; i<GAnproc; i++) PGRP_LIST[0].map_proc_list[i] = -1;
-    for (i=0; i<GAnproc; i++) PGRP_LIST[0].inv_map_proc_list[i] = -1;
+    for (i=0; i<GAnproc; i++) {
+        PGRP_LIST[0].map_proc_list[i] = -1;
+        PGRP_LIST[0].inv_map_proc_list[i] = -1;
+    }
     nnode = pnga_cluster_nodeid();
     nproc = pnga_cluster_nprocs(nnode);
     zero = 0;
@@ -485,8 +490,7 @@ int bytes;
     Integer tmplist[1000];
     Integer tmpcount;
     tmpcount = GAnproc-ga_spare_procs;
-    for(int i=0;i<tmpcount;i++)
-            tmplist[i]=i;
+    for(int i=0;i<tmpcount;i++) tmplist[i]=i;
     ga_group_is_for_ft=1;
     GA_Default_Proc_Group = pnga_pgroup_create(tmplist,tmpcount);
     ga_group_is_for_ft=0;
@@ -555,9 +559,12 @@ logical pnga_memory_limited()
 
 Integer pnga_inquire_memory()
 {
-Integer i, sum=0;
-    for(int i=0; i<_max_global_array; i++) 
-        if(GA[i].actv) sum += (Integer)GA[i].size; 
+    Integer sum=0;
+    for(int i=0; i<_max_global_array; i++) {
+        if(GA[i].actv) {
+            sum += (Integer)GA[i].size; 
+        }
+    }
     return(sum);
 }
 
@@ -1344,7 +1351,7 @@ ARMCI_Group* ga_get_armci_group_(int grp_id)
 #   pragma weak wnga_create_handle = pnga_create_handle
 #endif
 
-Integer pnga_create_handle()
+Integer pnga_create_handle(void)
 {
   Integer ga_handle, i, g_a;
   /*** Get next free global array handle ***/
@@ -1378,6 +1385,7 @@ Integer pnga_create_handle()
                                    /* then array is not restricted.     */
   GA[ga_handle].actv_handle = 1;
   GA[ga_handle].has_data = 1;
+  /* TODO do something with mutex here? */
   GA_POP_NAME;
   return g_a;
 }
@@ -2828,6 +2836,8 @@ int local_sync_begin,local_sync_end;
        GA[ga_handle].mapc = NULL;
     } 
 
+    /* TODO do something with mutex here */
+
     if(GA[ga_handle].ptr[grp_me]==NULL){
        return TRUE;
     } 
@@ -2921,8 +2931,9 @@ Integer i, handle;
 Integer pnga_verify_handle(Integer g_a)
 {
   return (Integer)
-    ((g_a + GA_OFFSET>= 0) && (g_a + GA_OFFSET< _max_global_array) && 
-             GA[GA_OFFSET + (g_a)].actv);
+    ((g_a + GA_OFFSET>= 0) && 
+     (g_a + GA_OFFSET< _max_global_array) && 
+     (GA[GA_OFFSET + (g_a)].actv));
 }
  
 

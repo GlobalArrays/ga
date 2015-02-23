@@ -76,6 +76,7 @@ typedef struct {
 #ifdef ENABLE_CHECKPOINT
        int record_id;               /* record id for writing ga to disk     */
 #endif
+       /* TODO add a mutex here for locking */
 } global_array_t;
 
 extern global_array_t *_ga_main_data_structure;  /* RACE */
