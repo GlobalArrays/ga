@@ -143,7 +143,7 @@ int main( int argc, char **argv ) {
   NGA_Release(g_a, lo, hi);
 
   /* Test fixed buffer size */
-  NGA_Alloc_gatscat_buf(size_me);
+  //NGA_Alloc_gatscat_buf(size_me); /* Not thread-safe! */
 
   /* Scatter-accumulate values back into GA*/
   GA_Sync();
@@ -162,7 +162,7 @@ int main( int argc, char **argv ) {
   }
   if (me==0) printf("\nCompleted test of NGA_Scatter_acc using fixed buffers\n");
   NGA_Release(g_a, lo, hi);
-  NGA_Free_gatscat_buf();
+  //NGA_Free_gatscat_buf(); /* Not thread-safe! */
 
   GA_Destroy(g_a);
   if(me==0)printf("\nSuccess\n");

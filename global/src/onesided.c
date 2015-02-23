@@ -85,12 +85,6 @@ char *fence_array; /* RACE */
 static int GA_fence_set=0; /* RACE */
 Integer *_ga_map; /* RACE */      /* used in get/put/acc */
 
-/* These are data hazards but not required. */
-//static int GA_prealloc_gatscat = 0; /* RACE - only used in gather-scatter API */
-//static Integer *GA_header; /* RACE - only used in gather-scatter API */
-//static Integer *GA_list; /* RACE - only used in gather-scatter API */
-//static Integer *GA_elems; /* RACE - only used in gather-scatter API */
-
 extern void armci_read_strided(void*, int, int*, int*, char*);
 extern void armci_write_strided(void*, int, int*, int*, char*);
 extern armci_hdl_t* get_armci_nbhandle(Integer *);
@@ -4026,49 +4020,6 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
     GA_POP_NAME;
 }
 
-/**
- *  Preallocate data for internal linked-list arrays for gather/scatter calls.
- *  @param nelems: the maximum number of elements that will be moved in
- *  gather/scatter call using these arrays.
- */
-#if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak wnga_alloc_gatscat_buf = pnga_alloc_gatscat_buf
-#endif
-void pnga_alloc_gatscat_buf(Integer nelems)
-{
-#if 1
-  pnga_error("this function is not thread-safe",nelems);
-#else
-  Integer nprocs = pnga_nnodes();
-  if (GA_prealloc_gatscat)
-    pnga_error("Gather/scatter buffers already allocated",nelems);
-  GA_prealloc_gatscat = nelems;
-  GA_header =(Integer *)ga_malloc(nprocs, MT_F_INT, "ga_gat_header");
-  GA_list =(Integer *)ga_malloc(nelems, MT_F_INT, "ga_gat_list");
-  GA_elems =(Integer *)ga_malloc(nprocs, MT_F_INT, "ga_gat_nelems");
-#endif
-}
-
-/**
- *  Free up preallocate data for internal linked-list arrays for gather/scatter calls.
- */
-#if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak wnga_free_gatscat_buf = pnga_free_gatscat_buf
-#endif
-void pnga_free_gatscat_buf()
-{
-#if 1
-  pnga_error("this function is not thread-safe",0);
-#else
-  if (!GA_prealloc_gatscat)
-    pnga_error("Gather/scatter buffers not allocated",0);
-  GA_prealloc_gatscat = 0;
-  ga_free(GA_elems);
-  ga_free(GA_list);
-  ga_free(GA_header);
-#endif
-}
-
 #define gam_c2f_index(index_c, index_f, ndim)        \
 {                                                    \
   Integer _i;                                        \
@@ -4116,19 +4067,9 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
       nprocs = PGRP_LIST[p_handle].map_nproc;
     }
 
-    /* Avoid thread-unsafe GA_header, GA_list, GA_elems completely */
-    /* if (!GA_prealloc_gatscat) { */
-      header =(Integer *)ga_malloc(nprocs, MT_F_INT, "ga_gat_header");
-      list =(Integer *)ga_malloc(nv, MT_F_INT, "ga_gat_list");
-      nelems =(Integer *)ga_malloc(nprocs, MT_F_INT, "ga_gat_nelems");
-    /* } else {
-      if (GA_prealloc_gatscat < nv)
-        pnga_error("Gather/scatter vector exceeds allocation length ",
-                   GA_prealloc_gatscat);
-      header = (Integer*)GA_header;
-      list = (Integer*)GA_list;
-      nelems = (Integer*)GA_elems;
-    } */
+    header =(Integer *)ga_malloc(nprocs, MT_F_INT, "ga_gat_header");
+    list =(Integer *)ga_malloc(nv, MT_F_INT, "ga_gat_list");
+    nelems =(Integer *)ga_malloc(nprocs, MT_F_INT, "ga_gat_nelems");
 
     ndim = GA[handle].ndim;
     type = GA[handle].type;
@@ -4285,11 +4226,9 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
       }
     }
     free(buf);
-    /* if (!GA_prealloc_gatscat) { */
-      ga_free(nelems);
-      ga_free(list);
-      ga_free(header);
-    /* } */
+    ga_free(nelems);
+    ga_free(list);
+    ga_free(header);
 
     GA_POP_NAME;
 }

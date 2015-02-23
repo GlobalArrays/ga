@@ -1125,11 +1125,6 @@ void FATR nga_access_block_segment_(Integer* g_a, Integer *proc,
   wnga_access_block_segment_idx(*g_a, *proc, index, len);
 }
 
-void FATR nga_alloc_gatscat_buf_(Integer *nelems)
-{
-  wnga_alloc_gatscat_buf(*nelems);
-}
-
 void FATR ga_fence_()
 {
   wnga_fence();
@@ -1138,11 +1133,6 @@ void FATR ga_fence_()
 void FATR nga_fence_()
 {
   wnga_fence();
-}
-
-void FATR nga_free_gatscat_buf_()
-{
-  wnga_free_gatscat_buf();
 }
 
 void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
