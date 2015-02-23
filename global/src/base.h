@@ -141,11 +141,10 @@ extern proc_list_t *PGRP_LIST; /* RACE */
 
 /* this macro finds the block indices for a given block */
 #define gam_find_block_indices(ga_handle,nblock,index) {                       \
-  int _itmp, _i;                                                       \
   int _ndim = GA[ga_handle].ndim;                                              \
-  _itmp = nblock;                                                              \
+  int _itmp = nblock;                                                          \
   index[0] = _itmp%GA[ga_handle].num_blocks[0];                                \
-  for (_i=1; _i<_ndim; _i++) {                                                 \
+  for (int _i=1; _i<_ndim; _i++) {                                             \
     _itmp = (_itmp-index[_i-1])/GA[ga_handle].num_blocks[_i-1];                \
     index[_i] = _itmp%GA[ga_handle].num_blocks[_i];                            \
   }                                                                            \
@@ -154,22 +153,20 @@ extern proc_list_t *PGRP_LIST; /* RACE */
 /* this macro finds the ScaLAPACK indices for a given processor */
 #ifdef COMPACT_SCALAPACK
 #define gam_find_proc_indices(ga_handle,proc,index) {                          \
-  Integer _itmp, _i;                                                           \
   Integer _ndim = GA[ga_handle].ndim;                                          \
-  _itmp = proc;                                                                \
+  int _itmp = proc;                                                            \
   index[0] = _itmp%GA[ga_handle].nblock[0];                                    \
-  for (_i=1; _i<_ndim; _i++) {                                                 \
+  for (int _i=1; _i<_ndim; _i++) {                                             \
     _itmp = (_itmp-index[_i-1])/GA[ga_handle].nblock[_i-1];                    \
     index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
   }                                                                            \
 }
 #else
 #define gam_find_proc_indices(ga_handle,proc,index) {                          \
-  Integer _itmp, _i;                                                           \
   Integer _ndim = GA[ga_handle].ndim;                                          \
-  _itmp = proc;                                                                \
+  int _itmp = proc;                                                            \
   index[_ndim-1] = _itmp%GA[ga_handle].nblock[_ndim-1];                        \
-  for (_i=_ndim-2; _i>=0; _i--) {                                              \
+  for (int _i=_ndim-2; _i>=0; _i--) {                                          \
     _itmp = (_itmp-index[_i+1])/GA[ga_handle].nblock[_i+1];                    \
     index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
   }                                                                            \
