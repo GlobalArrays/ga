@@ -1,6 +1,10 @@
 #if HAVE_CONFIG_H
 #   include "config.fh"
 #endif
+c
+c This file has been converted to use LAPACK circa 2011
+c instead of EISPACK circa 1983 by Jeff Hammond circa 2014.
+c
       subroutine gai_diag_seq(g_a, g_s, g_v, evals)
       implicit none
 #include "mafdecls.fh"
@@ -11,10 +15,16 @@
       double precision evals(*) ! Local array to return evals
 c
       integer n, ierr
-      integer l_fv1, l_fv2
-      MA_ACCESS_INDEX_TYPE k_fv1, k_fv2
-      integer l_a, l_s, l_v
-      MA_ACCESS_INDEX_TYPE k_a, k_s, k_v
+#ifdef USE_EISPACK 
+      integer l_fv1, l_fv2, l_v
+      MA_ACCESS_INDEX_TYPE k_fv1, k_fv2, k_v
+#else
+      integer l_wrk
+      MA_ACCESS_INDEX_TYPE k_wrk
+      integer n2
+#endif
+      integer l_a, l_s
+      MA_ACCESS_INDEX_TYPE k_a, k_s
       integer dim1, dim2, type, me
       logical status
 c
@@ -45,12 +55,19 @@ c
      $        'diag_seq:a', l_a, k_a)
          status=status.and.ma_push_get(MT_DBL, n*n,
      $        'diag_seq:s', l_s, k_s)
+#ifdef USE_EISPACK 
          status=status.and.ma_push_get(MT_DBL, n*n,
      $        'diag_seq:v', l_v, k_v)
          status=status.and.ma_push_get(MT_DBL, n,
      $        'diag_seq:fv1', l_fv1, k_fv1)
          status=status.and.ma_push_get(MT_DBL, n,
      $        'diag_seq:fv2', l_fv2, k_fv2)
+#else
+c LAPACK fails for n=1 without this
+         n2 = max(n*n,3*n-1)
+         status=status.and.ma_push_get(MT_DBL, n2,
+     $        'diag_seq:wrk', l_wrk, k_wrk)
+#endif
          if (.not. status)
      $        call ga_error('ga_diag_seq: insufficient memory', n)
 c     
@@ -59,29 +76,48 @@ c
          call ga_get(g_a, 1, n, 1, n, dbl_mb(k_a), n)
          call ga_get(g_s, 1, n, 1, n, dbl_mb(k_s), n)
 c
-*         write(6,*) ' fock matrix '
-*         call output(dbl_mb(k_a), 1, n, 1, n, n, n, 1)
-*         write(6,*) ' overlap matrix '
-*         call output(dbl_mb(k_s), 1, n, 1, n, n, n, 1)
-c     
+#ifdef DEBUG_MATH_LIBS
+         write(6,*) ' fock matrix '
+         call output(dbl_mb(k_a), 1, n, 1, n, n, n, 1)
+         write(6,*) ' overlap matrix '
+         call output(dbl_mb(k_s), 1, n, 1, n, n, n, 1)
+#endif
+#ifdef USE_EISPACK 
          call rsg(n, n, dbl_mb(k_a), dbl_mb(k_s), evals, 1,
      $        dbl_mb(k_v), dbl_mb(k_fv1), dbl_mb(k_fv2), ierr)
-c
-*         write(6,*) 'eigen vectors '
-*         call output(dbl_mb(k_v), 1, n, 1, n, n, n, 1)
-*         write(6,*) 'eigen values '
-*         call output(evals, 1, n, 1, 1, n, 1, 1)
+#else
+         call dsygv(1,'V','U',n,dbl_mb(k_a),n,dbl_mb(k_s),n,
+     $              evals,dbl_mb(k_wrk),2*n, ierr)
+         if (ierr.ne.0)
+     $       call ga_error('ga_diag_seq: dsygv failed',ierr)
+c We used to copy to preserve code symmetry with EISPACK
+c         call dcopy(n*n, dbl_mb(k_a), 1, dbl_mb(k_v), 1)
+#endif
+#ifdef DEBUG_MATH_LIBS
+         write(6,*) 'eigen vectors '
+         call output(dbl_mb(k_v), 1, n, 1, n, n, n, 1)
+         write(6,*) 'eigen values '
+         call output(evals, 1, n, 1, 1, n, 1, 1)
 *         call forflush(6)
+#endif
 c     
 c     Shove eigen-vectors back into global array
 c     
+#ifdef USE_EISPACK 
          call ga_put(g_v, 1, n, 1, n, dbl_mb(k_v), n)
+#else
+         call ga_put(g_v, 1, n, 1, n, dbl_mb(k_a), n)
+#endif
 c     
 c     Free scratch space
 c     
+#ifdef USE_EISPACK 
          status = ma_pop_stack(l_fv2)
          status = ma_pop_stack(l_fv1)
          status = ma_pop_stack(l_v)
+#else
+         status = ma_pop_stack(l_wrk)
+#endif
          status = ma_pop_stack(l_s)
          status = ma_pop_stack(l_a)
       endif
@@ -103,10 +139,16 @@ c
       double precision evals(*) ! Local array to return evals
 c
       integer n, ierr
-      integer l_fv1, l_fv2
-      MA_ACCESS_INDEX_TYPE k_fv1, k_fv2
-      integer l_a, l_v
-      MA_ACCESS_INDEX_TYPE k_a, k_v
+#ifdef USE_EISPACK 
+      integer l_fv1, l_fv2, l_v
+      MA_ACCESS_INDEX_TYPE k_fv1, k_fv2, k_v
+#else
+      integer l_wrk
+      MA_ACCESS_INDEX_TYPE k_wrk
+      integer n2
+#endif
+      integer l_a
+      MA_ACCESS_INDEX_TYPE k_a
       integer dim1, dim2, type, me
       logical status
 c
@@ -134,12 +176,19 @@ c     allocate scratch space
 c     
          status=ma_push_get(MT_DBL, n*n,
      $        'diag_std_seq:a', l_a, k_a)
+#ifdef USE_EISPACK 
          status=status.and.ma_push_get(MT_DBL, n*n,
      $        'diag_std_seq:v', l_v, k_v)
          status=status.and.ma_push_get(MT_DBL, n,
      $        'diag_std_seq:fv1', l_fv1, k_fv1)
          status=status.and.ma_push_get(MT_DBL, n,
      $        'diag_std_seq:fv2', l_fv2, k_fv2)
+#else
+c LAPACK fails for n=1 without this
+         n2 = max(n*n,3*n-1)
+         status=status.and.ma_push_get(MT_DBL, n2,
+     $        'diag_std_seq:wrk', l_wrk, k_wrk)
+#endif
          if (.not. status)
      $      call ga_error('ga_diag_std_seq: insufficient memory', n)
 c     
@@ -147,19 +196,46 @@ c     Fill local arrays from global arrays
 c     
          call ga_get(g_a, 1, n, 1, n, dbl_mb(k_a), n)
 c     
+#ifdef DEBUG_MATH_LIBS
+         write(6,*) ' input matrix '
+         call output(dbl_mb(k_a), 1, n, 1, n, n, n, 1)
+#endif
+#ifdef USE_EISPACK 
          call rs(n, n, dbl_mb(k_a),  evals, 1,
      $        dbl_mb(k_v), dbl_mb(k_fv1), dbl_mb(k_fv2), ierr)
-c
+#else
+         call dsyev('V',  'L',  n, dbl_mb(k_a), n,   
+     $              evals, dbl_mb(k_wrk), n2,  ierr)
+         if (ierr.ne.0)
+     $       call ga_error('ga_diag_std_seq: dsyev failed',ierr)
+c We used to copy to preserve code symmetry with EISPACK
+c         call dcopy(n*n, dbl_mb(k_a), 1, dbl_mb(k_v), 1)
+#endif
+#ifdef DEBUG_MATH_LIBS
+         write(6,*) 'eigen vectors '
+         call output(dbl_mb(k_v), 1, n, 1, n, n, n, 1)
+         write(6,*) 'eigen values '
+         call output(evals, 1, n, 1, 1, n, 1, 1)
+*         call forflush(6)
+#endif
 c     
 c     Shove eigen-vectors back into global array
 c     
+#ifdef USE_EISPACK 
          call ga_put(g_v, 1, n, 1, n, dbl_mb(k_v), n)
+#else
+         call ga_put(g_v, 1, n, 1, n, dbl_mb(k_a), n)
+#endif
 c     
 c     Free scratch space
 c     
+#ifdef USE_EISPACK 
          status = ma_pop_stack(l_fv2)
          status = ma_pop_stack(l_fv1)
          status = ma_pop_stack(l_v)
+#else
+         status = ma_pop_stack(l_wrk)
+#endif
          status = ma_pop_stack(l_a)
       endif
 c     

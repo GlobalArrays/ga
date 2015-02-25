@@ -1,3 +1,12 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
+c
+c This code is no longer used in ga_diag_seq.F except
+c if EISPACK is explicitly requested.  It is better to
+c rely upon external LAPACK for such functionality.
+c
+#ifdef USE_EISPACK 
 c $Id: rsg.f,v 1.7 2004-07-29 08:37:12 manoj Exp $
       subroutine rsg(nm,n,a,b,w,matz,z,fv1,fv2,ierr)
 c
@@ -1600,3 +1609,4 @@ c
 c
       return
       end
+#endif
