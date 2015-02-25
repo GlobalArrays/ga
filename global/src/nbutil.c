@@ -78,7 +78,9 @@ static int list_ele_avail[NUM_HDLS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}; /
 \*/
 /* this is just dumb; it will roll over in long-running apps... */
 static unsigned int ga_nb_tag; /* RACE */  
-unsigned int get_next_tag(){
+
+unsigned int get_next_tag(void)
+{
     return((++ga_nb_tag));
 }
 
@@ -87,8 +89,9 @@ unsigned int get_next_tag(){
  *  links of the previous and next elements in the linked list
  *  prev==null => this was the element pointed by the head(ie, first element).
 \*/
-static void clear_list_element(int index){
-ga_armcihdl_t *listele,*prev,*next;
+static void clear_list_element(int index)
+{
+    ga_armcihdl_t *listele,*prev,*next;
     if(DEBUG){
        printf("\n%ld:clearing handle %d\n",(long)GAme,index);fflush(stdout);
     }
@@ -121,12 +124,12 @@ ga_armcihdl_t *listele,*prev,*next;
 /*\ Get the next available list element from the list element array, if 
  *  nothing is available, free element with index nextLEAelement
 \*/
-ga_armcihdl_t* get_armcihdl(void){
-int i;
-ga_armcihdl_t *ret_handle;
+ga_armcihdl_t* get_armcihdl(void)
+{
+    ga_armcihdl_t *ret_handle;
 
     /*first see if an element from the list_ele_arr is already available */
-    for(i=0;i<NUM_HDLS;i++)
+    for(int i=0;i<NUM_HDLS;i++)
        if(list_ele_avail[i]){
          list_ele_avail[i]=0;
          ARMCI_INIT_HANDLE(list_element_array[i].handle);
@@ -139,6 +142,7 @@ ga_armcihdl_t *ret_handle;
     /*nothing is available so best element to clear is nextLEAelement(LRU)*/
     if(nextLEAelement==-1)
        nextLEAelement=0;
+
     if(DEBUG){
        printf("\n%ld:have to clear handle %d\n",(long)GAme,nextLEAelement);
        fflush(stdout);
@@ -150,14 +154,17 @@ ga_armcihdl_t *ret_handle;
 
     /*update the LRU element index */
     nextLEAelement = (nextLEAelement+1)%NUM_HDLS;
+
     return(ret_handle);
 }
 
 /*\ Input is the index to the ga_ihdl_array that has the head of the list.
  *  This function waits for all the elements in the list.
 \*/
-static void free_armci_handle_list(int elementtofree){
-ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
+static void free_armci_handle_list(int elementtofree)
+{
+    ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
+
     /*call clear_list_element for every element in the list*/
     while(first!=NULL){
        next=first->next;
@@ -175,8 +182,9 @@ ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
 
 /*\ Add the armci handle list element to the end of the list.
 \*/
-static void add_armcihdl_to_list(ga_armcihdl_t *listelement, int headindex){
-ga_armcihdl_t *first=ga_ihdl_array[headindex].ahandle;
+static void add_armcihdl_to_list(ga_armcihdl_t *listelement, int headindex)
+{
+    ga_armcihdl_t *first=ga_ihdl_array[headindex].ahandle;
 
     ga_ihdl_array[headindex].count++;
     listelement->ga_hdlarr_index = headindex;
@@ -197,17 +205,18 @@ ga_armcihdl_t *first=ga_ihdl_array[headindex].ahandle;
  *  specific=-1 means free the next available one. other values complete the
  *  armci handle list pointed to by head at that "specific" element.
 \*/
-static int get_GAnbhdl_element(int specific){
-int elementtofree,i;
+static int get_GAnbhdl_element(int specific)
+{
+    int elementtofree;
     if(specific!=-1)elementtofree=specific;
     else {
-       for(i=0;i<NUM_HDLS;i++)
+       for(int i=0;i<NUM_HDLS;i++)
          if(ihdl_array_avail[i]){
            ihdl_array_avail[i]=0;
            return(i);
          }
        if(nextIHAelement==-1)  
-         nextIHAelement=0;       
+           nextIHAelement=0;       
        elementtofree=nextIHAelement;
        nextIHAelement = (elementtofree+1)%NUM_HDLS;
     }
@@ -218,9 +227,10 @@ int elementtofree,i;
 
 /*\ called from ga_put/get before a call to every non-blocking armci request. 
 \*/
-armci_hdl_t* get_armci_nbhandle(Integer *nbhandle){
-gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
-ga_armcihdl_t *ret_handle;
+armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
+{
+    gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
+    ga_armcihdl_t *ret_handle;
     if(inbhandle->ihdl_index == (NUM_HDLS+1)){
        inbhandle->ihdl_index = get_GAnbhdl_element(-1);
        inbhandle->ga_nbtag = get_next_tag();
@@ -233,9 +243,10 @@ ga_armcihdl_t *ret_handle;
 
 /*\ the wait routine which is called inside nga_nbwait and ga_nbwait
 \*/ 
-int nga_wait_internal(Integer *nbhandle){
-gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
-int retval = 0;
+int nga_wait_internal(Integer *nbhandle)
+{
+    gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
+    int retval = 0;
     if(inbhandle->ihdl_index==(NUM_HDLS+1))retval=0;
     else if(inbhandle->ga_nbtag !=ga_ihdl_array[inbhandle->ihdl_index].ga_nbtag)
        retval=0;
@@ -246,8 +257,9 @@ int retval = 0;
 }
 
 
-static int test_list_element(int index){
-ga_armcihdl_t *listele;
+static int test_list_element(int index)
+{
+    ga_armcihdl_t *listele;
     if(DEBUG){
        printf("\n%ld:clearing handle %d\n",(long)GAme,index);fflush(stdout);
     }
@@ -256,15 +268,16 @@ ga_armcihdl_t *listele;
     return (ARMCI_Test(listele->handle));
 }
 
-static int test_armci_handle_list(int elementtofree){
-ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
- int done = 1; 
+static int test_armci_handle_list(int elementtofree)
+{
+    ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
+    int done = 1; 
     /*call clear_list_element for every element in the list*/
     while(first!=NULL){
        next=first->next;
        if (test_list_element(first->index) == 0) {
-	 done = 0;
-	 break;
+         done = 0;
+         break;
        }
        first=next;
     }
@@ -273,10 +286,12 @@ ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
 
 /*\ the test routine which is called inside nga_nbtest
 \*/ 
-int nga_test_internal(Integer *nbhandle){
-gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
-int retval = 0;
-    if(inbhandle->ihdl_index==(NUM_HDLS+1))retval=0;
+int nga_test_internal(Integer *nbhandle)
+{
+    gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
+    int retval = 0;
+    if(inbhandle->ihdl_index==(NUM_HDLS+1))
+       retval=0;
     else if(inbhandle->ga_nbtag !=ga_ihdl_array[inbhandle->ihdl_index].ga_nbtag)
        retval=0;
     else
@@ -290,6 +305,6 @@ int retval = 0;
 \*/
 void ga_init_nbhandle(Integer *nbhandle)
 {
-gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
-    inbhandle->ihdl_index=(NUM_HDLS+1);
+    gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
+    inbhandle->ihdl_index  = (NUM_HDLS+1);
 }
