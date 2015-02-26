@@ -77,6 +77,33 @@ static inline unsigned int get_next_tag(void)
     return __sync_add_and_fetch(&ga_nb_tag,1);
 }
 
+static int test_list_element(int index)
+{
+    ga_armcihdl_t *listele;
+    if(DEBUG){
+       printf("\n%ld:clearing handle %d\n",(long)GAme,index);fflush(stdout);
+    }
+    listele = &(list_element_array[index]);
+
+    return (ARMCI_Test(listele->handle));
+}
+
+static int test_armci_handle_list(int elementtofree)
+{
+    ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
+    int done = 1; 
+    /*call clear_list_element for every element in the list*/
+    while(first!=NULL){
+       next=first->next;
+       if (test_list_element(first->index) == 0) {
+         done = 0;
+         break;
+       }
+       first=next;
+    }
+    return (done);
+}
+
 /*\ the only way to complete a list element! 
  *  does the basic list operation: remove element, update previous and next
  *  links of the previous and next elements in the linked list
@@ -113,6 +140,69 @@ static void clear_list_element(int index)
     list_ele_avail[index]=1;
 }
 
+/*\ Input is the index to the ga_ihdl_array that has the head of the list.
+ *  This function waits for all the elements in the list.
+\*/
+static void free_armci_handle_list(int elementtofree)
+{
+    ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
+
+    /*call clear_list_element for every element in the list*/
+    while(first!=NULL){
+       next=first->next;
+       clear_list_element(first->index);
+       first=next;
+    }
+
+    /*reset the head of the list for reuse*/
+    ga_ihdl_array[elementtofree].count=0;
+    ga_ihdl_array[elementtofree].ga_nbtag=0;
+    ga_ihdl_array[elementtofree].ahandle=NULL;
+    ihdl_array_avail[elementtofree]=1;
+}
+      
+/*\ Add the armci handle list element to the end of the list.
+\*/
+static void add_armcihdl_to_list(ga_armcihdl_t *listelement, int headindex)
+{
+    ga_armcihdl_t *first=ga_ihdl_array[headindex].ahandle;
+
+    ga_ihdl_array[headindex].count++;
+    listelement->ga_hdlarr_index = headindex;
+    if(ga_ihdl_array[headindex].ahandle==NULL){
+       ga_ihdl_array[headindex].ahandle=listelement;
+       listelement->previous= NULL;
+       return;
+    }
+    while(first->next!=NULL){
+       first=first->next;
+    }
+    first->next=listelement;
+    listelement->previous=first;
+}
+
+/*\ Complete the list of armci handles associated with a particular GA request.
+ *  specific=-1 means free the next available one. other values complete the
+ *  armci handle list pointed to by head at that "specific" element.
+\*/
+static int get_GAnbhdl_element(int specific)
+{
+    int elementtofree;
+    if(specific!=-1)elementtofree=specific;
+    else {
+       for(int i=0;i<NUM_HDLS;i++)
+         if(ihdl_array_avail[i]){
+           ihdl_array_avail[i]=0;
+           return(i);
+         }
+       if(nextIHAelement==-1)  
+           nextIHAelement=0;       
+       elementtofree=nextIHAelement;
+       nextIHAelement = (elementtofree+1)%NUM_HDLS;
+    }
+    free_armci_handle_list(elementtofree);
+    return(elementtofree);
+}
 
 /*\ Get the next available list element from the list element array, if 
  *  nothing is available, free element with index nextLEAelement
@@ -151,73 +241,6 @@ ga_armcihdl_t* get_armcihdl(void)
     return(ret_handle);
 }
 
-/*\ Input is the index to the ga_ihdl_array that has the head of the list.
- *  This function waits for all the elements in the list.
-\*/
-static void free_armci_handle_list(int elementtofree)
-{
-    ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
-
-    /*call clear_list_element for every element in the list*/
-    while(first!=NULL){
-       next=first->next;
-       clear_list_element(first->index);
-       first=next;
-    }
-
-    /*reset the head of the list for reuse*/
-    ga_ihdl_array[elementtofree].count=0;
-    ga_ihdl_array[elementtofree].ga_nbtag=0;
-    ga_ihdl_array[elementtofree].ahandle=NULL;
-    ihdl_array_avail[elementtofree]=1;
-}
-      
-
-/*\ Add the armci handle list element to the end of the list.
-\*/
-static void add_armcihdl_to_list(ga_armcihdl_t *listelement, int headindex)
-{
-    ga_armcihdl_t *first=ga_ihdl_array[headindex].ahandle;
-
-    ga_ihdl_array[headindex].count++;
-    listelement->ga_hdlarr_index = headindex;
-    if(ga_ihdl_array[headindex].ahandle==NULL){
-       ga_ihdl_array[headindex].ahandle=listelement;
-       listelement->previous= NULL;
-       return;
-    }
-    while(first->next!=NULL){
-       first=first->next;
-    }
-    first->next=listelement;
-    listelement->previous=first;
-}
-
-
-/*\ Complete the list of armci handles associated with a particular GA request.
- *  specific=-1 means free the next available one. other values complete the
- *  armci handle list pointed to by head at that "specific" element.
-\*/
-static int get_GAnbhdl_element(int specific)
-{
-    int elementtofree;
-    if(specific!=-1)elementtofree=specific;
-    else {
-       for(int i=0;i<NUM_HDLS;i++)
-         if(ihdl_array_avail[i]){
-           ihdl_array_avail[i]=0;
-           return(i);
-         }
-       if(nextIHAelement==-1)  
-           nextIHAelement=0;       
-       elementtofree=nextIHAelement;
-       nextIHAelement = (elementtofree+1)%NUM_HDLS;
-    }
-    free_armci_handle_list(elementtofree);
-    return(elementtofree);
-}
-
-
 /*\ called from ga_put/get before a call to every non-blocking armci request. 
 \*/
 armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
@@ -249,33 +272,6 @@ int nga_wait_internal(Integer *nbhandle)
     return(retval);
 }
 
-
-static int test_list_element(int index)
-{
-    ga_armcihdl_t *listele;
-    if(DEBUG){
-       printf("\n%ld:clearing handle %d\n",(long)GAme,index);fflush(stdout);
-    }
-    listele = &(list_element_array[index]);
-
-    return (ARMCI_Test(listele->handle));
-}
-
-static int test_armci_handle_list(int elementtofree)
-{
-    ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
-    int done = 1; 
-    /*call clear_list_element for every element in the list*/
-    while(first!=NULL){
-       next=first->next;
-       if (test_list_element(first->index) == 0) {
-         done = 0;
-         break;
-       }
-       first=next;
-    }
-    return (done);
-}
 
 /*\ the test routine which is called inside nga_nbtest
 \*/ 
