@@ -16,7 +16,6 @@ typedef struct {
     unsigned int ga_nbtag:24;
 }gai_nbhdl_t;
 
-
 /*Each element in the armci handle linked list is of type ga_armcihdl_t*/
 typedef struct struct_armcihdl_t{
     armci_hdl_t* handle;
@@ -25,7 +24,6 @@ typedef struct struct_armcihdl_t{
     int index;
     int ga_hdlarr_index;
 }ga_armcihdl_t;
-
 
 /*We create an array of type ga_nbhdl_array_t. Each of the elements in this
   array is the head of the armcihandle linked list that is associated with
@@ -36,7 +34,6 @@ typedef struct{
     int count;
     int ga_nbtag;
 } ga_nbhdl_array_t;
-
 
 /*fills up the armci_hdl_t entries in ga_armcihdl_t */
 static armci_hdl_t hdl_array[NUM_HDLS]; /* RACE */
@@ -271,7 +268,6 @@ int nga_wait_internal(Integer *nbhandle)
     
     return(retval);
 }
-
 
 /*\ the test routine which is called inside nga_nbtest
 \*/ 
