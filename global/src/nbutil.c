@@ -41,15 +41,12 @@ typedef struct{
 /*fills up the armci_hdl_t entries in ga_armcihdl_t */
 static armci_hdl_t hdl_array[NUM_HDLS]; /* RACE */
 
-
-/*index of the following array goes into ihdl_index. while waiting for a
- *non-bloking ga call, we first check if
- *(list_element_array[inbhandle->ihdl_index].ga_nbtag == inbhandle->ga_nbtag)
- *if it is, then we complete all the armci handles in the linked list this
- *points to.
-*/
+/* index of the following array goes into ihdl_index. while waiting for a
+ * non-bloking ga call, we first check if
+ * (list_element_array[inbhandle->ihdl_index].ga_nbtag == inbhandle->ga_nbtag)
+ * if it is, then we complete all the armci handles in the linked list this
+ * points to.  */
 static ga_nbhdl_array_t ga_ihdl_array[NUM_HDLS]; /* RACE */
-
 
 /*this is the array of linked list elements. */
 static ga_armcihdl_t list_element_array[NUM_HDLS] = {                   /* RACE */
@@ -63,11 +60,6 @@ static ga_armcihdl_t list_element_array[NUM_HDLS] = {                   /* RACE 
 {&(hdl_array[14]),NULL,NULL,14,-1 },{&(hdl_array[15]),NULL,NULL,15,-1 },
 {&(hdl_array[16]),NULL,NULL,16,-1 },{&(hdl_array[17]),NULL,NULL,17,-1 },
 {&(hdl_array[18]),NULL,NULL,18,-1 },{&(hdl_array[19]),NULL,NULL,19,-1 }};
-
-
-
-
-
 
 static int nextIHAelement=-1; /* RACE */ /*oldest ga_ihdl_array element*/
 static int nextLEAelement=-1;  /* RACE *//*oldest list_element_array element*/
