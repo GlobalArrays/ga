@@ -285,7 +285,7 @@ int nga_test_internal(Integer *nbhandle)
     return(retval);
 }
 
-/*\ unlike in ARMCI, user doesnt have to initialize handle in GA.
+/*\ unlike in ARMCI, user does not have to initialize handle in GA.
  *  it is done by the get/put call instead.
 \*/
 void ga_init_nbhandle(Integer *nbhandle)
