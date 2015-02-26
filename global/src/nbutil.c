@@ -71,7 +71,7 @@ static int list_ele_avail[NUM_HDLS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};  
 /* this is just dumb; it will roll over in long-running apps... */
 static unsigned int ga_nb_tag; /* RACE - ATOMIC access only*/  
 
-unsigned int get_next_tag(void)
+static inline unsigned int get_next_tag(void)
 {
     //return((++ga_nb_tag));
     return __sync_add_and_fetch(&ga_nb_tag,1);
