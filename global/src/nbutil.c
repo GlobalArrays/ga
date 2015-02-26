@@ -62,9 +62,9 @@ static ga_armcihdl_t list_element_array[NUM_HDLS] = {                   /* RACE 
 {&(hdl_array[18]),NULL,NULL,18,-1 },{&(hdl_array[19]),NULL,NULL,19,-1 }};
 
 static int nextIHAelement=-1; /* RACE */ /*oldest ga_ihdl_array element*/
-static int nextLEAelement=-1;  /* RACE *//*oldest list_element_array element*/
+static int nextLEAelement=-1; /* RACE */ /*oldest list_element_array element*/
 static int ihdl_array_avail[NUM_HDLS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}; /* RACE */
-static int list_ele_avail[NUM_HDLS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}; /* RACE */
+static int list_ele_avail[NUM_HDLS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};   /* RACE */
 
 /*\ a unique tag everytime
 \*/
