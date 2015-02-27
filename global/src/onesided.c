@@ -149,7 +149,7 @@ void pnga_pgroup_sync(Integer grp_id)
 #   pragma weak wnga_sync = pnga_sync
 #endif
 
-void pnga_sync()
+void pnga_sync(void)
 {
     if (GA_Default_Proc_Group == -1) {
       ARMCI_AllFence();
@@ -200,13 +200,13 @@ void pnga_fence(void)
 #   pragma weak wnga_init_fence = pnga_init_fence
 #endif
 
-void pnga_init_fence()
+void pnga_init_fence(void)
 {
     /* Why is this not setting it to 1? */
     GA_fence_set++;
 }
 
-void gai_init_onesided()
+void gai_init_onesided(void)
 {
     fence_array = calloc((size_t)GAnproc,1);
     if(!fence_array)
@@ -214,7 +214,7 @@ void gai_init_onesided()
 }
 
 
-void gai_finalize_onesided()
+void gai_finalize_onesided(void)
 {
     free(fence_array);
     fence_array = NULL;
