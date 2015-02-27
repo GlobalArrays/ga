@@ -35,6 +35,7 @@ typedef struct{
     int ga_nbtag;
 } ga_nbhdl_array_t;
 
+#if 0
 /*fills up the armci_hdl_t entries in ga_armcihdl_t */
 static armci_hdl_t hdl_array[NUM_HDLS]; /* RACE */
 
@@ -237,11 +238,13 @@ ga_armcihdl_t* get_armcihdl(void)
 
     return(ret_handle);
 }
+#endif
 
 /*\ called from ga_put/get before a call to every non-blocking armci request. 
 \*/
 armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
 {
+#if 0
     gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
     ga_armcihdl_t *ret_handle;
     if(inbhandle->ihdl_index == (NUM_HDLS+1)){
@@ -252,12 +255,16 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
     ret_handle = get_armcihdl(); 
     add_armcihdl_to_list(ret_handle,inbhandle->ihdl_index);
     return(ret_handle->handle);
+#else
+    return NULL;
+#endif
 }
 
 /*\ the wait routine which is called inside nga_nbwait and ga_nbwait
 \*/ 
 int nga_wait_internal(Integer *nbhandle)
 {
+#if 0
     gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
     int retval = 0;
     if(inbhandle->ihdl_index==(NUM_HDLS+1))retval=0;
@@ -267,12 +274,16 @@ int nga_wait_internal(Integer *nbhandle)
        free_armci_handle_list(inbhandle->ihdl_index);
     
     return(retval);
+#else
+    return 0;
+#endif
 }
 
 /*\ the test routine which is called inside nga_nbtest
 \*/ 
 int nga_test_internal(Integer *nbhandle)
 {
+#if 0
     gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
     int retval = 0;
     if(inbhandle->ihdl_index==(NUM_HDLS+1))
@@ -283,6 +294,9 @@ int nga_test_internal(Integer *nbhandle)
        return (test_armci_handle_list(inbhandle->ihdl_index));
     
     return(retval);
+#else
+    return 0;
+#endif
 }
 
 /*\ unlike in ARMCI, user does not have to initialize handle in GA.
@@ -290,6 +304,8 @@ int nga_test_internal(Integer *nbhandle)
 \*/
 void ga_init_nbhandle(Integer *nbhandle)
 {
+#if 0
     gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
     inbhandle->ihdl_index  = (NUM_HDLS+1);
+#endif
 }
