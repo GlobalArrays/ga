@@ -376,13 +376,12 @@ static void ngai_puts(char *loc_base_ptr, char *pbuf, int *stride_loc, char *pre
     ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,nstrides,proc);
   }
   else {
-    int i;
     count -= 1;
     stride_loc -= 1;
     stride_rem -= 1;
     nstrides += 1;
 
-    for(i=1; i<nstrides; i++) {
+    for(int i=1; i<nstrides; i++) {
       stride_loc[i] /= type_size;
       stride_loc[i] *= field_size;
     }
@@ -393,7 +392,7 @@ static void ngai_puts(char *loc_base_ptr, char *pbuf, int *stride_loc, char *pre
     count[1] /= type_size; 
     ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,nstrides,proc);
     count[1] *= type_size; /*restore*/
-    for(i=1; i<nstrides; i++) {
+    for(int i=1; i<nstrides; i++) {
       stride_loc[i] /= field_size;
       stride_loc[i] *= type_size;
     }
@@ -408,13 +407,12 @@ static void ngai_nbputs(char *loc_base_ptr, char *pbuf,int *stride_loc, char *pr
     ARMCI_NbPutS(pbuf,stride_loc,prem,stride_rem,count,nstrides,proc,nbhandle);
   }
   else {
-    int i;
     count -= 1;
     stride_loc -= 1;
     stride_rem -= 1;
     nstrides += 1;
 
-    for(i=1; i<nstrides; i++) {
+    for(int i=1; i<nstrides; i++) {
       stride_loc[i] /= type_size;
       stride_loc[i] *= field_size;
     }
@@ -425,7 +423,7 @@ static void ngai_nbputs(char *loc_base_ptr, char *pbuf,int *stride_loc, char *pr
     count[1] /= type_size; 
     ARMCI_NbPutS(pbuf,stride_loc,prem,stride_rem,count,nstrides,proc, nbhandle);
     count[1] *= type_size; /*restore*/
-    for(i=1; i<nstrides; i++) {
+    for(int i=1; i<nstrides; i++) {
       stride_loc[i] /= field_size;
       stride_loc[i] *= type_size;
     }
@@ -450,7 +448,7 @@ static void ngai_nbgets(char *loc_base_ptr, char *prem,int *stride_rem, char *pb
     count[1] /= type_size; 
     nstrides += 1;
 
-    for(i=1; i<nstrides; i++) {
+    for(int i=1; i<nstrides; i++) {
       stride_loc[i] /= type_size;
       stride_loc[i] *= field_size;
     }
@@ -459,24 +457,24 @@ static void ngai_nbgets(char *loc_base_ptr, char *prem,int *stride_rem, char *pb
 /*       printf("%s: calling armci_nbgets: field_off=%d field_size=%d type_size=%d proc=%d nstrides=%d\n",  */
 /* 	     __FUNCTION__, (int)field_off, (int)field_size, (int)type_size, proc, nstrides); */
 /*       printf("me=%d loc_ptr=%p rem_ptr=%p count=[", pnga_nodeid(), pbuf, prem); */
-/*       for(i=0; i<=nstrides; i++) { */
+/*       for(int i=0; i<=nstrides; i++) { */
 /* 	printf("%d ",count[i]); */
 /*       } */
 /*       printf("]\n"); */
 /*       printf("src_stride_arr=["); */
-/*       for(i=0; i<nstrides; i++) { */
+/*       for(int i=0; i<nstrides; i++) { */
 /* 	printf("%d ",stride_rem[i]); */
 /*       } */
 /*       printf("]\n"); */
 /*       printf("dst_stride_arr=["); */
-/*       for(i=0; i<nstrides; i++) { */
+/*       for(int i=0; i<nstrides; i++) { */
 /* 	printf("%d ",stride_loc[i]); */
 /*       } */
 /*       printf("]\n"); */
 /*     } */
     ARMCI_NbGetS(prem,stride_rem,pbuf,stride_loc,count,nstrides,proc,nbhandle);
     count[1] *= type_size; /*restore*/
-    for(i=1; i<nstrides; i++) {
+    for(int i=1; i<nstrides; i++) {
       stride_loc[i] /= field_size;
       stride_loc[i] *= type_size;
     }
@@ -507,13 +505,13 @@ static void ngai_gets(char *loc_base_ptr, char *prem,int *stride_rem, char *pbuf
     count[1] /= type_size; 
     nstrides += 1;
 
-    for(i=1; i<nstrides; i++) {
+    for(int i=1; i<nstrides; i++) {
       stride_loc[i] /= type_size;
       stride_loc[i] *= field_size;
     }
     ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,nstrides,proc);
     count[1] *= type_size; /*restore*/
-    for(i=1; i<nstrides; i++) {
+    for(int i=1; i<nstrides; i++) {
       stride_loc[i] /= field_size;
       stride_loc[i] *= type_size;
     }
@@ -709,7 +707,7 @@ void ngai_put_common(Integer g_a,
     Integer offset, l_offset, last, pinv;
     Integer blo[MAXDIM],bhi[MAXDIM];
     Integer plo[MAXDIM],phi[MAXDIM];
-    Integer idx, j, jtot, chk, iproc;
+    Integer jtot, chk, iproc;
     Integer idx_buf, ldrem[MAXDIM];
     Integer blk_tot = GA[handle].block_total;
     int check1, check2;
@@ -728,7 +726,7 @@ void ngai_put_common(Integer g_a,
           if(cond) {
             /* Initialize offset for each processor to zero */
             offset = 0;
-            for (idx=iproc; idx<blk_tot; idx += GAnproc) {
+            for (int idx=iproc; idx<blk_tot; idx += GAnproc) {
 
               /* get the block corresponding to the virtual processor proc */
               ga_ownsM(handle, idx, blo, bhi);
@@ -736,7 +734,7 @@ void ngai_put_common(Integer g_a,
               /* check to see if this block overlaps with requested block
                * defined by lo and hi */
               chk = 1;
-              for (j=0; j<ndim; j++) {
+              for (int j=0; j<ndim; j++) {
                 /* check to see if at least one end point of the interval
                  * represented by blo and bhi falls in the interval
                  * represented by lo and hi */
@@ -761,7 +759,7 @@ void ngai_put_common(Integer g_a,
                 jtot = 1;
                 if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
                 l_offset = 0;
-                for (j=0; j<last; j++) {
+                for (int j=0; j<last; j++) {
                   l_offset += (plo[j]-blo[j])*jtot;
                   ldrem[j] = bhi[j]-blo[j]+1;
                   jtot *= ldrem[j];
@@ -827,7 +825,7 @@ void ngai_put_common(Integer g_a,
               }
               /* evaluate offset for block idx */
               jtot = 1;
-              for (j=0; j<ndim; j++) {
+              for (int j=0; j<ndim; j++) {
                 jtot *= bhi[j]-blo[j]+1;
               }
               offset += jtot;
@@ -852,7 +850,7 @@ void ngai_put_common(Integer g_a,
       proc_grid = GA[handle].nblock;
       /*num_blocks = GA[handle].num_blocks;*/
       block_dims = GA[handle].block_dims;
-      for (j=0; j<ndim; j++)  {
+      for (int j=0; j<ndim; j++)  {
         blk_dim[j] = block_dims[j]*proc_grid[j];
         blk_num[j] = GA[handle].dims[j]/blk_dim[j];
         /*blk_size[j] = block_dims[j]*blk_num[j];*/
@@ -889,7 +887,7 @@ void ngai_put_common(Integer g_a,
               /* check to see if this block overlaps with requested block
                * defined by lo and hi */
               chk = 1;
-              for (j=0; j<ndim; j++) {
+              for (int j=0; j<ndim; j++) {
                 /* check to see if at least one end point of the interval
                  * represented by blo and bhi falls in the interval
                  * represented by lo and hi */
@@ -914,7 +912,7 @@ void ngai_put_common(Integer g_a,
                 jtot = 1;
                 if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
                 l_offset = 0;
-                for (j=0; j<last; j++) {
+                for (Integer j=0; j<last; j++) {
                   l_offset += (plo[j]-blo[j])*jtot;
                   ldrem[j] = bhi[j]-blo[j]+1;
                   jtot *= ldrem[j];
@@ -924,6 +922,7 @@ void ngai_put_common(Integer g_a,
 #else
                 l_offset = 0;
                 jtot = 1;
+                Integer j;
                 for (j=0; j<last; j++)  {
                   ldrem[j] = blk_ld[j];
                   blk_jinc = GA[handle].dims[j]%block_dims[j];
@@ -1058,23 +1057,9 @@ void pnga_nbput(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, I
                   side with information on another Global Array
  */
 
-static int putn_check_single_elem(Integer g_a, Integer *lon, Integer *hin)
-{
-  int ndims, i;
-
-  ndims = pnga_ndim(g_a);
-  for (i = 0; i < ndims; i++)
-    if (lon[i] != hin[i])
-      return 0;
-
-  return 1;
-} /* putn_check_single_elem */
-
 static int putn_find_empty_slot(void)
 {
-  int i;
-
-  for (i = 0; i < HANDLES_OUTSTANDING; i++)
+  for (int i = 0; i < HANDLES_OUTSTANDING; i++)
     if (!putn_handles[i].orighdl)
       return i;
 
@@ -1083,11 +1068,9 @@ static int putn_find_empty_slot(void)
 
 static int putn_intersect_coords(Integer g_a, Integer *lo, Integer *hi, Integer *ecoords)
 {
-  int ndims, i;
+  int ndims = pnga_ndim(g_a);
 
-  ndims = pnga_ndim(g_a);
-
-  for (i = 0; i < ndims; i++)
+  for (int i = 0; i < ndims; i++)
     if ((ecoords[i] < lo[i]) || (ecoords[i] > hi[i]))
       return 0;
 
@@ -1098,7 +1081,6 @@ static int putn_verify_element_in_buf(Integer g_a, Integer *lo, Integer *hi, voi
 				      Integer *ld, Integer *ecoords, void *bufn,
 				      Integer elemSize)
 {
-  int i, ndims;
 #if HAVE_STDDEF_H
   ptrdiff_t off = (char *)bufn - (char *)buf;
 #else
@@ -1108,11 +1090,11 @@ static int putn_verify_element_in_buf(Integer g_a, Integer *lo, Integer *hi, voi
 
   off /= elemSize; /* Offset in terms of elements */
 
-  ndims = pnga_ndim(g_a);
+  int ndims = pnga_ndim(g_a);
   eoff = ecoords[0] - lo[0];
 
   /* Check in Fortran ordering */
-  for (i = 1; i < ndims; i++)
+  for (int i = 1; i < ndims; i++)
     eoff += (ecoords[i] - lo[i]) * ld[i - 1];
 
   return (eoff == (Integer)off); /* Must be the same for a correct notify buffer */
@@ -1152,7 +1134,7 @@ void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer
     putn_handles[pos].elem_copy = NULL;
   }
   else {
-    int ret, i;
+    int ret;
     Integer handle = GA_OFFSET + g_a, size;
     void *elem_copy;
     char *elem;
@@ -1167,7 +1149,7 @@ void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer
     memcpy(elem_copy, bufn, size);
 
     elem = bufn;
-    for (i = 0; i < size; i++)
+    for (int i = 0; i < size; i++)
       elem[i] += 1; /* Increment each byte by one, safe? */
 
     putn_handles[pos].elem_copy = elem_copy;
@@ -1985,7 +1967,7 @@ void ngai_acc_common(Integer g_a,
     Integer offset, l_offset, last, pinv;
     Integer blo[MAXDIM],bhi[MAXDIM];
     Integer plo[MAXDIM],phi[MAXDIM];
-    Integer idx, j, jtot, chk, iproc;
+    Integer idx, jtot, chk, iproc;
     Integer idx_buf, ldrem[MAXDIM];
     Integer blk_tot = GA[handle].block_total;
     int check1, check2;
@@ -2015,7 +1997,7 @@ void ngai_acc_common(Integer g_a,
               /* check to see if this block overlaps with requested block
                * defined by lo and hi */
               chk = 1;
-              for (j=0; j<ndim; j++) {
+              for (int j=0; j<ndim; j++) {
                 /* check to see if at least one end point of the interval
                  * represented by blo and bhi falls in the interval
                  * represented by lo and hi */
@@ -2039,7 +2021,7 @@ void ngai_acc_common(Integer g_a,
                 jtot = 1;
                 if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
                 l_offset = 0;
-                for (j=0; j<last; j++) {
+                for (Integer j=0; j<last; j++) {
                   l_offset += (plo[j]-blo[j])*jtot;
                   ldrem[j] = bhi[j]-blo[j]+1;
                   jtot *= ldrem[j];
@@ -2094,7 +2076,7 @@ void ngai_acc_common(Integer g_a,
               }
               /* evaluate offset for block idx */
               jtot = 1;
-              for (j=0; j<ndim; j++) {
+              for (int j=0; j<ndim; j++) {
                 jtot *= bhi[j]-blo[j]+1;
               }
               offset += jtot;
@@ -2119,7 +2101,7 @@ void ngai_acc_common(Integer g_a,
       proc_grid = GA[handle].nblock;
       /*num_blocks = GA[handle].num_blocks;*/
       block_dims = GA[handle].block_dims;
-      for (j=0; j<ndim; j++)  {
+      for (int j=0; j<ndim; j++)  {
         blk_dim[j] = block_dims[j]*proc_grid[j];
         blk_num[j] = GA[handle].dims[j]/blk_dim[j];
         /*blk_size[j] = block_dims[j]*blk_num[j];*/
@@ -2156,7 +2138,7 @@ void ngai_acc_common(Integer g_a,
               /* check to see if this block overlaps with requested block
                * defined by lo and hi */
               chk = 1;
-              for (j=0; j<ndim; j++) {
+              for (int j=0; j<ndim; j++) {
                 /* check to see if at least one end point of the interval
                  * represented by blo and bhi falls in the interval
                  * represented by lo and hi */
@@ -2181,7 +2163,7 @@ void ngai_acc_common(Integer g_a,
                 jtot = 1;
                 if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
                 l_offset = 0;
-                for (j=0; j<last; j++) {
+                for (Integer j=0; j<last; j++) {
                   l_offset += (plo[j]-blo[j])*jtot;
                   ldrem[j] = bhi[j]-blo[j]+1;
                   jtot *= ldrem[j];
@@ -2191,6 +2173,7 @@ void ngai_acc_common(Integer g_a,
 #else
                 l_offset = 0;
                 jtot = 1;
+                Integer j;
                 for (j=0; j<last; j++)  {
                   ldrem[j] = blk_ld[j];
                   blk_jinc = GA[handle].dims[j]%block_dims[j];
@@ -2393,7 +2376,7 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
 {
   char *lptr;
   Integer  handle = GA_OFFSET + g_a;
-  Integer  i/*, p_handle*/, offset, factor, inode;
+  Integer  offset, factor, inode;
   Integer ndim;
   C_Integer *num_blocks, *block_dims;
   int *proc_grid;
@@ -2403,7 +2386,7 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM], blk_inc[MAXDIM];
   Integer blk_ld[MAXDIM],hlf_blk[MAXDIM],blk_jinc;
 #if COMPACT_SCALAPACK
-  Integer j, lo, hi;
+  Integer lo, hi;
   Integer lld[MAXDIM], block_count[MAXDIM], loc_block_dims[MAXDIM];
   Integer ldims[MAXDIM];
 #endif
@@ -2418,7 +2401,7 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   block_dims = GA[handle].block_dims;
   dims = GA[handle].dims;
   ndim = GA[handle].ndim;
-  for (i=0; i<ndim; i++) {
+  for (int i=0; i<ndim; i++) {
     if (index[i] < 0 || index[i] >= num_blocks[i])
       pnga_error("block index outside allowed values",index[i]);
   }
@@ -2432,14 +2415,14 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
  
   /* Find strides of requested block */
 #if COMPACT_SCALAPACK
-  for (i=0; i<last; i++)  {
+  for (int i=0; i<last; i++)  {
     lo = index[i]*block_dims[i]+1;
     hi = (index[i]+1)*block_dims[i];
     if (hi > dims[i]) hi = dims[i]; 
     ld[i] = (hi - lo + 1);
   }
 #else
-  for (i=0; i<last; i++)  {
+  for (int i=0; i<last; i++)  {
     blk_dim[i] = block_dims[i]*proc_grid[i];
     blk_num[i] = GA[handle].dims[i]/blk_dim[i];
     /*blk_size[i] = block_dims[i]*blk_num[i];*/
@@ -2474,13 +2457,13 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
      Find physical dimensions of locally held data and store in 
      lld and set values in ldim, which is used to evaluate the
      offset for the requested block. */
-  for (i=0; i<ndim; i++) {
+  for (int i=0; i<ndim; i++) {
     block_count[i] = 0;
     loc_block_dims[i] = 0;
     lld[i] = 0;
     lo = 0;
     hi = -1;
-    for (j=proc_index[i]; j<num_blocks[i]; j += proc_grid[i]) {
+    for (int j=proc_index[i]; j<num_blocks[i]; j += proc_grid[i]) {
       lo = j*block_dims[i] + 1;
       hi = (j+1)*block_dims[i];
       if (hi > dims[i]) hi = dims[i]; 
@@ -2501,9 +2484,9 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   /* Evaluate offset for requested block. This algorithm has only been tested in
      2D and is otherwise completely incomprehensible. */
   offset = 0;
-  for (i=0; i<ndim; i++) {
+  for (int i=0; i<ndim; i++) {
     factor = 1;
-    for (j=0; j<ndim; j++) {
+    for (int j=0; j<ndim; j++) {
       if (j<i) {
         factor *= lld[j];
       } else {
@@ -2517,7 +2500,7 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   /* Evalauate offset for block */
   offset = 0;
   factor = 1;
-  for (i = 0; i<ndim; i++) {
+  for (int i = 0; i<ndim; i++) {
     offset += ((index[i]-proc_index[i])/proc_grid[i])*block_dims[i]*factor;
     if (i<ndim-1) factor *= ld[i];
   }
@@ -2546,7 +2529,7 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
 {
   char *lptr;
   Integer  handle = GA_OFFSET + g_a;
-  Integer  i, j/*, p_handle*/, nblocks, offset, tsum, inode;
+  Integer  nblocks, offset, tsum, inode;
   Integer ndim, lo[MAXDIM], hi[MAXDIM], index;
 
   GA_PUSH_NAME("nga_access_block_ptr");
@@ -2560,10 +2543,10 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
   if (GA[handle].block_sl_flag == 0) {
     offset = 0;
     inode = index%GAnproc;
-    for (i=inode; i<index; i += GAnproc) {
+    for (int i=inode; i<index; i += GAnproc) {
       ga_ownsM(handle,i,lo,hi); 
       tsum = 1;
-      for (j=0; j<ndim; j++) {
+      for (int j=0; j<ndim; j++) {
         tsum *= (hi[j]-lo[j]+1);
       }
       offset += tsum;
@@ -2571,7 +2554,7 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
     lptr = GA[handle].ptr[inode]+offset*GA[handle].elemsize;
 
     ga_ownsM(handle,index,lo,hi); 
-    for (i=0; i<ndim-1; i++) {
+    for (int i=0; i<ndim-1; i++) {
       ld[i] = hi[i]-lo[i]+1;
     }
   } else {
@@ -2633,11 +2616,11 @@ void pnga_access_block_segment_ptr(Integer g_a, Integer proc, void* ptr, Integer
 void pnga_access_idx(Integer g_a, Integer lo[], Integer hi[],
                      AccessIndex* index, Integer ld[])
 {
-char     *ptr;
-Integer  handle = GA_OFFSET + g_a;
-Integer  ow,i,p_handle;
-unsigned long    elemsize;
-unsigned long    lref=0, lptr;
+   char     *ptr;
+   Integer  handle = GA_OFFSET + g_a;
+   Integer  ow,p_handle;
+   unsigned long    elemsize;
+   unsigned long    lref=0, lptr;
 
    GA_PUSH_NAME("nga_access");
    p_handle = GA[handle].p_handle;
@@ -2652,7 +2635,7 @@ unsigned long    lref=0, lptr;
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme)) 
       pnga_error("cannot access bottom of the patch",ow);
 
-   for (i=0; i<GA[handle].ndim; i++)
+   for (int i=0; i<GA[handle].ndim; i++)
        if(lo[i]>hi[i]) {
            ga_RegionError(GA[handle].ndim, lo, hi, g_a);
        }
@@ -2727,11 +2710,11 @@ unsigned long    lref=0, lptr;
 
 void pnga_access_block_idx(Integer g_a, Integer idx, AccessIndex* index, Integer *ld)
 {
-char     *ptr;
-Integer  handle = GA_OFFSET + g_a;
-Integer  /*p_handle,*/ iblock;
-unsigned long    elemsize;
-unsigned long    lref=0, lptr;
+   char     *ptr;
+   Integer  handle = GA_OFFSET + g_a;
+   Integer  /*p_handle,*/ iblock;
+   unsigned long    elemsize;
+   unsigned long    lref=0, lptr;
 
    GA_PUSH_NAME("nga_access_block");
    /*p_handle = GA[handle].p_handle;*/
@@ -2807,16 +2790,15 @@ unsigned long    lref=0, lptr;
 void pnga_access_block_grid_idx(Integer g_a, Integer* subscript,
                                 AccessIndex *index, Integer *ld)
 {
-char     *ptr;
-Integer  handle = GA_OFFSET + g_a;
-Integer  i,ndim/*,p_handle*/;
-unsigned long    elemsize;
-unsigned long    lref=0, lptr;
+   char     *ptr;
+   Integer  handle = GA_OFFSET + g_a;
+   unsigned long    elemsize;
+   unsigned long    lref=0, lptr;
 
    GA_PUSH_NAME("nga_access_block_grid");
    /*p_handle = GA[handle].p_handle;*/
-   ndim = GA[handle].ndim;
-   for (i=0; i<ndim; i++) 
+   int ndim = GA[handle].ndim;
+   for (int i=0; i<ndim; i++) 
      if (subscript[i]<0 || subscript[i] >= GA[handle].num_blocks[i]) 
        pnga_error("index outside allowed values",subscript[i]);
 
@@ -2886,11 +2868,11 @@ unsigned long    lref=0, lptr;
 void pnga_access_block_segment_idx(Integer g_a, Integer proc,
                                         AccessIndex* index, Integer *len)
 {
-char     *ptr;
-Integer  handle = GA_OFFSET + g_a;
-/*Integer  p_handle;*/
-unsigned long    elemsize;
-unsigned long    lref=0, lptr;
+   char     *ptr;
+   Integer  handle = GA_OFFSET + g_a;
+   /*Integer  p_handle;*/
+   unsigned long    elemsize;
+   unsigned long    lref=0, lptr;
 
    GA_PUSH_NAME("nga_access_block_segment");
    /*p_handle = GA[handle].p_handle;*/
@@ -2982,9 +2964,8 @@ void pnga_release_update(Integer g_a, Integer *lo, Integer *hi)
 void pnga_release_block(Integer g_a, Integer iblock)
 {
   /*
-  Integer i;
   Integer handle = GA_OFFSET + g_a;
-  for (i=0; i<GA[handle].num_rstrctd; i++) {
+  for (int i=0; i<GA[handle].num_rstrctd; i++) {
     printf("p[%d] location: %d rstrctd_list[%d]: %d\n",GAme,*iblock,
         i,GA[handle].rstrctd_list[i]);
   }
@@ -3046,15 +3027,15 @@ void pnga_release_update_block_segment(Integer g_a, Integer iproc)
 void gai_scatter_acc_local(Integer g_a, void *v,Integer *i,Integer *j,
                           Integer nv, void* alpha, Integer proc) 
 {
-void **ptr_src, **ptr_dst;
-char *ptr_ref;
-Integer ldp, item_size, ilo, ihi, jlo, jhi, type;
-Integer lo[2], hi[2];
-Integer handle,p_handle,iproc;
-armci_giov_t desc;
-register Integer k, offset;
-int rc=0;
-int use_blocks;
+  void **ptr_src, **ptr_dst;
+  char *ptr_ref;
+  Integer ldp, item_size, ilo, ihi, jlo, jhi, type;
+  Integer lo[2], hi[2];
+  Integer handle,p_handle,iproc;
+  armci_giov_t desc;
+  Integer offset;
+  int rc=0;
+  int use_blocks;
 
   if (nv < 1) return;
 
@@ -3101,7 +3082,7 @@ int use_blocks;
   if(ptr_src==NULL)pnga_error("malloc failed",nv);
   ptr_dst=ptr_src+ nv;
 
-  for(k=0; k< nv; k++){
+  for(int k=0; k< nv; k++){
      if(i[k] < ilo || i[k] > ihi  || j[k] < jlo || j[k] > jhi){
        char err_string[ERR_STR_LEN];
        sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)>< [%ld:%ld,%ld:%ld]",
@@ -3157,7 +3138,6 @@ int use_blocks;
 
 void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
 {
-    register Integer k;
     Integer kk;
     Integer item_size;
     Integer proc, type=GA[GA_OFFSET + g_a].type;
@@ -3222,18 +3202,18 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
 
     /* initialize the counters and nelem */
     if (!use_blocks) {
-      for(kk=0; kk<nproc; kk++) {
+      for(Integer kk=0; kk<nproc; kk++) {
         count[kk] = 0; nelem[kk] = 0;
       }
     } else {
-      for(kk=0; kk<num_blocks; kk++) {
+      for(Integer kk=0; kk<num_blocks; kk++) {
         count[kk] = 0; nelem[kk] = 0;
       }
     }
     
     /* find proc that owns the (i,j) element; store it in temp:  */
     if (GA[handle].num_rstrctd == 0) {
-      for(k=0; k< nv; k++) {
+      for(Integer k=0; k< nv; k++) {
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
         if(! pnga_locate(g_a, subscrpt, owner+k)){
@@ -3245,7 +3225,7 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
         nelem[iproc]++;
       }
     } else {
-      for(k=0; k< nv; k++) {
+      for(Integer k=0; k< nv; k++) {
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
         if(! pnga_locate(g_a, subscrpt, owner+k)){
@@ -3260,13 +3240,13 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
 
     naproc = 0;
     if (!use_blocks) {
-      for(k=0; k<nproc; k++) if(nelem[k] > 0) {
+      for(Integer k=0; k<nproc; k++) if(nelem[k] > 0) {
         aproc[naproc] = k;
         map[k] = naproc;
         naproc ++;
       }
     } else {
-      for(k=0; k<num_blocks; k++) if(nelem[k] > 0) {
+      for(Integer k=0; k<num_blocks; k++) if(nelem[k] > 0) {
         aproc[naproc] = k;
         map[k] = naproc;
         naproc ++;
@@ -3290,7 +3270,7 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
     ldp = jhi + naproc;
 
     if (!use_blocks) {
-      for(kk=0; kk<naproc; kk++) {
+      for(Integer kk=0; kk<naproc; kk++) {
         iproc = aproc[kk];
         if (GA[handle].num_rstrctd > 0)
                     iproc = GA[handle].rstrctd_list[iproc];
@@ -3305,7 +3285,7 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
             &(ldp[kk]));
       }
     } else {
-      for(kk=0; kk<naproc; kk++) {
+      for(Integer kk=0; kk<naproc; kk++) {
         iproc = aproc[kk];
         pnga_distribution(g_a, iproc, lo, hi);
         ilo[kk] = lo[0];
@@ -3325,12 +3305,12 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
     iproc = owner[GAme];
     GAbytes.scaloc += (double)item_size* nelem[iproc];
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + nv;
-    for(k=1; k<naproc; k++) {
+    for(Integer k=1; k<naproc; k++) {
         ptr_src[k] = ptr_src[k-1] + nelem[aproc[k-1]];
         ptr_dst[k] = ptr_dst[k-1] + nelem[aproc[k-1]];
     }
     
-    for(k=0; k<nv; k++){
+    for(Integer k=0; k<nv; k++){
         Integer this_count;
         proc = owner[k];
         if (GA[handle].num_rstrctd > 0)
@@ -3354,7 +3334,7 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
     
     /* source and destination pointers are ready for all processes */
     if (!use_blocks) {
-      for(k=0; k<naproc; k++) {
+      for(Integer k=0; k<naproc; k++) {
         int rc;
 
         desc.bytes = (int)item_size;
@@ -3374,7 +3354,7 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
       }
     } else {
       if (GA[handle].block_sl_flag == 0) {
-        for(k=0; k<naproc; k++) {
+        for(Integer k=0; k<naproc; k++) {
           int rc;
 
           desc.bytes = (int)item_size;
@@ -3392,7 +3372,7 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
         }
       } else {
         Integer index[MAXDIM];
-        for(k=0; k<naproc; k++) {
+        for(Integer k=0; k<naproc; k++) {
           int rc;
 
           desc.bytes = (int)item_size;
@@ -3432,11 +3412,10 @@ void pnga_scatter_acc2d(g_a, v, i, j, nv, alpha)
      Integer g_a, nv, *i, *j;
      void *v, *alpha;
 {
-register Integer k;
-Integer item_size;
-Integer first, nelem, proc, type=GA[GA_OFFSET + g_a].type;
-Integer *int_ptr;
-Integer subscrpt[2];
+  Integer item_size;
+  Integer first, nelem, proc, type=GA[GA_OFFSET + g_a].type;
+  Integer *int_ptr;
+  Integer subscrpt[2];
 
   if (nv < 1) return;
 
@@ -3447,7 +3426,7 @@ Integer subscrpt[2];
   int_ptr = (Integer*) ga_malloc(nv, MT_F_INT, "ga_scatter_acc--p");
 
   /* find proc that owns the (i,j) element; store it in temp: int_ptr */
-  for(k=0; k< nv; k++) {
+  for(Integer k=0; k< nv; k++) {
     subscrpt[0] = *(i+k);
     subscrpt[1] = *(j+k);
     if(! pnga_locate(g_a, subscrpt, int_ptr+k)){
@@ -3472,7 +3451,7 @@ Integer subscrpt[2];
       nelem = 0;
 
       /* count entries for proc from "first" to last */
-      for(k=first; k< nv; k++){
+      for(Integer k=first; k< nv; k++){
         if(proc == int_ptr[k]) nelem++;
         else break;
       }
@@ -3501,7 +3480,7 @@ Integer subscrpt[2];
 void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
                  Integer nv, double *locbytes, double* totbytes, void *alpha)
 {
-    Integer k, handle=g_a+GA_OFFSET;
+    Integer handle=g_a+GA_OFFSET;
     int  ndim, item_size, type;
     Integer *proc;
     Integer nproc, p_handle, iproc;
@@ -3562,18 +3541,18 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
     
     /* initialize the counters and nelem */
     if (!use_blocks) {
-      for(k=0; k<nproc; k++) count[k] = 0; 
-      for(k=0; k<nproc; k++) nelem[k] = 0;
+      for(Integer k=0; k<nproc; k++) count[k] = 0; 
+      for(Integer k=0; k<nproc; k++) nelem[k] = 0;
     } else {
-      for(k=0; k<num_blocks; k++) count[k] = 0; 
-      for(k=0; k<num_blocks; k++) nelem[k] = 0;
+      for(Integer k=0; k<num_blocks; k++) count[k] = 0; 
+      for(Integer k=0; k<num_blocks; k++) nelem[k] = 0;
     }
 
     /* get the process id that the element should go and count the
      * number of elements for each process
      */
     if (GA[handle].num_rstrctd == 0) {
-      for(k=0; k<nv; k++) {
+      for(Integer k=0; k<nv; k++) {
         if(!pnga_locate(g_a, subscript+k*ndim, proc+k)) {
           gai_print_subscript("invalid subscript",ndim, subscript+k*ndim,"\n");
           pnga_error("failed -element:",k);
@@ -3582,7 +3561,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
         nelem[iproc]++;
       }
     } else {
-      for(k=0; k<nv; k++) {
+      for(Integer k=0; k<nv; k++) {
         if(!pnga_locate(g_a, subscript+k*ndim, proc+k)) {
           gai_print_subscript("invalid subscript",ndim, subscript+k*ndim,"\n");
           pnga_error("failed -element:",k);
@@ -3595,13 +3574,13 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
     /* find the active processes (with which transfer data) */
     naproc = 0;
     if (!use_blocks) {
-      for(k=0; k<nproc; k++) if(nelem[k] > 0) {
+      for(Integer k=0; k<nproc; k++) if(nelem[k] > 0) {
         aproc[naproc] = k;
         map[k] = naproc;
         naproc ++;
       }
     } else {
-      for(k=0; k<num_blocks; k++) if(nelem[k] > 0) {
+      for(Integer k=0; k<num_blocks; k++) if(nelem[k] > 0) {
         aproc[naproc] = k;
         map[k] = naproc;
         naproc ++;
@@ -3624,7 +3603,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
      *         | nelem[0] | nelem[1] |...      | nelem[0] | nelem[1] |...
      */
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + nv;
-    for(k=1; k<naproc; k++) {
+    for(Integer k=1; k<naproc; k++) {
         ptr_src[k] = ptr_src[k-1] + nelem[aproc[k-1]];
         ptr_dst[k] = ptr_dst[k-1] + nelem[aproc[k-1]];
     }
@@ -3645,7 +3624,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */  
         if (!use_blocks) {
-          for(k=0; k<nv; k++){
+          for(Integer k=0; k<nv; k++){
             iproc = proc[k];
             if (GA[handle].num_rstrctd > 0)
               iproc = GA[handle].rank_rstrctd[iproc];
@@ -3661,8 +3640,8 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
           }
         } else {
           Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
-          Integer j, jtot, last, offset;
-          for(k=0; k<nv; k++){
+          Integer jtot, last, offset;
+          for(Integer k=0; k<nv; k++){
             iproc = proc[k];
             ptr_dst[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, iproc, lo, hi);
@@ -3672,7 +3651,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
             offset = 0;
             last = ndim - 1;
             jtot = 1;
-            for (j=0; j<last; j++) {
+            for (Integer j=0; j<last; j++) {
               offset += ((subscript+k*ndim)[j]-lo[j])*jtot;
               jtot *= ld[j];
             }
@@ -3684,7 +3663,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
         
         /* source and destination pointers are ready for all processes */
         if (!use_blocks) {
-          for(k=0; k<naproc; k++) {
+          for(Integer k=0; k<naproc; k++) {
             int rc;
 
             desc.bytes = (int)item_size;
@@ -3704,7 +3683,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
           }
         } else {
           if (GA[handle].block_sl_flag == 0) {
-            for(k=0; k<naproc; k++) {
+            for(Integer k=0; k<naproc; k++) {
               int rc;
 
               desc.bytes = (int)item_size;
@@ -3720,8 +3699,8 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
               if(rc) pnga_error("gather failed in armci",rc);
             }
           } else {
-            Integer j, index[MAXDIM];
-            for(k=0; k<naproc; k++) {
+            Integer index[MAXDIM];
+            for(Integer k=0; k<naproc; k++) {
               int rc;
 
               desc.bytes = (int)item_size;
@@ -3730,7 +3709,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
               desc.ptr_array_len = (int)nelem[aproc[k]];
               iproc = aproc[k];
               gam_find_block_indices(handle, iproc, index);
-              for (j=0; j<ndim; j++) {
+              for (int j=0; j<ndim; j++) {
                 index[j] = index[j]%GA[handle].nblock[j];
               }
               gam_find_proc_from_sl_indices(handle,iproc,index);
@@ -3752,7 +3731,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */
         if (!use_blocks) {
-          for(k=0; k<nv; k++){
+          for(Integer k=0; k<nv; k++){
             iproc = proc[k];
             if (GA[handle].num_rstrctd > 0)
               iproc = GA[handle].rank_rstrctd[iproc];
@@ -3769,7 +3748,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
         } else {
           Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
           Integer j, jtot, last, offset;
-          for(k=0; k<nv; k++){
+          for(Integer k=0; k<nv; k++){
             iproc = proc[k];
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, iproc, lo, hi);
@@ -3791,7 +3770,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
 
         /* source and destination pointers are ready for all processes */
         if (!use_blocks) {
-          for(k=0; k<naproc; k++) {
+          for(Integer k=0; k<naproc; k++) {
             int rc;
 
             desc.bytes = (int)item_size;
@@ -3814,7 +3793,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
           }
         } else {
           if (GA[handle].block_sl_flag == 0) {
-            for(k=0; k<naproc; k++) {
+            for(Integer k=0; k<naproc; k++) {
               int rc;
 
               desc.bytes = (int)item_size;
@@ -3834,7 +3813,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
             }
           } else {
             Integer j, index[MAXDIM];
-            for(k=0; k<naproc; k++) {
+            for(Integer k=0; k<naproc; k++) {
               int rc;
 
               desc.bytes = (int)item_size;
@@ -3868,7 +3847,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */
         if (!use_blocks) {
-          for(k=0; k<nv; k++){
+          for(Integer k=0; k<nv; k++){
             iproc = proc[k];
             if (GA[handle].num_rstrctd > 0)
               iproc = GA[handle].rank_rstrctd[iproc];
@@ -3885,7 +3864,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
         } else {
           Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
           Integer j, jtot, last, offset;
-          for(k=0; k<nv; k++){
+          for(Integer k=0; k<nv; k++){
             iproc = proc[k];
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, iproc, lo, hi);
@@ -3907,7 +3886,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
 
         /* source and destination pointers are ready for all processes */
         if (!use_blocks) {
-          for(k=0; k<naproc; k++) {
+          for(Integer k=0; k<naproc; k++) {
             int rc=0;
 
             desc.bytes = (int)item_size;
@@ -3939,7 +3918,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
           }
         } else {
           if (GA[handle].block_sl_flag == 0) {
-            for(k=0; k<naproc; k++) {
+            for(Integer k=0; k<naproc; k++) {
               int rc=0;
 
               desc.bytes = (int)item_size;
@@ -3969,7 +3948,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
             }
           } else {
             Integer j, index[MAXDIM];
-            for(k=0; k<naproc; k++) {
+            for(Integer k=0; k<naproc; k++) {
               int rc=0;
 
               desc.bytes = (int)item_size;
@@ -4311,7 +4290,7 @@ void FATR  ga_gather000_(g_a, v, i, j, nv)
 int k;
 Integer *sbar = (Integer*)malloc(2*sizeof(Integer)*  (int)nv);
      if(!sbar) pnga_error("gather:malloc failed",nv);
-     for(k=0;k<nv;k++){
+     for(Integer k=0;k<nv;k++){
           sbar[2*k] = i[k];
           sbar[2*k+1] = j[k];
      }
@@ -4330,7 +4309,7 @@ void FATR  ga_scatter000_(g_a, v, i, j, nv)
 int k;
 Integer *sbar = (Integer*)malloc(2*sizeof(Integer)* (int) nv);
      if(!sbar) pnga_error("scatter:malloc failed",nv);
-     for(k=0;k<nv;k++){
+     for(Integer k=0;k<nv;k++){
           sbar[2*k] = i[k];
           sbar[2*k+1] = j[k];
      }
@@ -4413,18 +4392,18 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
    
     if (!use_blocks) {
       /* initialize the counters and nelem */
-      for(kk=0; kk<nproc; kk++) {
+      for(Integer kk=0; kk<nproc; kk++) {
         count[kk] = 0; nelem[kk] = 0;
       }
     } else {
-      for(kk=0; kk<num_blocks; kk++) {
+      for(Integer kk=0; kk<num_blocks; kk++) {
         count[kk] = 0; nelem[kk] = 0;
       }
     }
 
     /* find proc or block that owns the (i,j) element; store it in temp: */
     if (GA[handle].num_rstrctd == 0) {
-      for(k=0; k< nv; k++) {
+      for(Integer k=0; k< nv; k++) {
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
         if(! pnga_locate(g_a, subscrpt, owner+k)){
@@ -4436,7 +4415,7 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
         nelem[iproc]++;
       }
     } else {
-      for(k=0; k< nv; k++) {
+      for(Integer k=0; k< nv; k++) {
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
         if(! pnga_locate(g_a, subscrpt, owner+k)){
@@ -4451,13 +4430,13 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
 
     naproc = 0;
     if (!use_blocks) {
-      for(k=0; k<nproc; k++) if(nelem[k] > 0) {
+      for(Integer k=0; k<nproc; k++) if(nelem[k] > 0) {
         aproc[naproc] = k;
         map[k] = naproc;
         naproc ++;
       }
     } else {
-      for(k=0; k<num_blocks; k++) if(nelem[k] > 0) {
+      for(Integer k=0; k<num_blocks; k++) if(nelem[k] > 0) {
         aproc[naproc] = k;
         map[k] = naproc;
         naproc ++;
@@ -4480,7 +4459,7 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
     ldp = jhi + naproc;
 
     if (!use_blocks) {
-      for(kk=0; kk<naproc; kk++) {
+      for(Integer kk=0; kk<naproc; kk++) {
         iproc = aproc[kk];
         if (GA[handle].num_rstrctd > 0)
           iproc = GA[handle].rstrctd_list[iproc];
@@ -4495,7 +4474,7 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
             &(ldp[kk]));
       }
     } else {
-      for(kk=0; kk<naproc; kk++) {
+      for(Integer kk=0; kk<naproc; kk++) {
         iproc = aproc[kk];
         pnga_distribution(g_a, iproc, lo, hi);
         ilo[kk] = lo[0];
@@ -4517,12 +4496,12 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
     GAbytes.gatloc += (double)item_size * nelem[iproc];
 
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + nv;
-    for(k=1; k<naproc; k++) {
+    for(Integer k=1; k<naproc; k++) {
         ptr_src[k] = ptr_src[k-1] + nelem[aproc[k-1]];
         ptr_dst[k] = ptr_dst[k-1] + nelem[aproc[k-1]];
     }
     
-    for(k=0; k<nv; k++){
+    for(Integer k=0; k<nv; k++){
         Integer this_count;
         proc = owner[k];
         if (GA[handle].num_rstrctd > 0)
@@ -4546,7 +4525,7 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
     }
     /* source and destination pointers are ready for all processes */
     if (!use_blocks) {
-      for(k=0; k<naproc; k++) {
+      for(Integer k=0; k<naproc; k++) {
         int rc;
 
         desc.bytes = (int)item_size;
@@ -4565,7 +4544,7 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
       }
     } else {
       if (GA[handle].block_sl_flag == 0) {
-        for(k=0; k<naproc; k++) {
+        for(Integer k=0; k<naproc; k++) {
           int rc;
 
           desc.bytes = (int)item_size;
@@ -4582,7 +4561,7 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
         }
       } else {
         Integer index[MAXDIM];
-        for(k=0; k<naproc; k++) {
+        for(Integer k=0; k<naproc; k++) {
           int rc;
 
           desc.bytes = (int)item_size;
@@ -4617,11 +4596,11 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
 
 Integer pnga_read_inc(Integer g_a, Integer* subscript, Integer inc)
 {
-char *ptr;
-Integer ldp[MAXDIM], proc, handle=GA_OFFSET+g_a, p_handle, ndim;
-int optype,ivalue;
-long lvalue;
-void *pval;
+    char *ptr;
+    Integer ldp[MAXDIM], proc, handle=GA_OFFSET+g_a, p_handle, ndim;
+    int optype,ivalue;
+    long lvalue;
+    void *pval;
 
     ga_check_handleM(g_a, "nga_read_inc");
     GA_PUSH_NAME("nga_read_inc");
@@ -4713,8 +4692,8 @@ Integer gai_correct_strided_patch(Integer ndim,
                                   Integer *plo,
                                   Integer *phi)
 {
-  Integer i, delta;
-  for (i=0; i<ndim; i++) {
+  Integer delta;
+  for (int i=0; i<ndim; i++) {
     delta = plo[i]-lo[i];
     if (delta%skip[i] != 0) {
       plo[i] = plo[i] - delta%skip[i] + skip[i];
@@ -4738,7 +4717,7 @@ int gai_ComputeCountWithSkip(Integer ndim, Integer *lo, Integer *hi,
 {
 #if 1
   Integer idx;
-  int i, istride = 0;
+  int istride = 0;
   /*
   if (GAme==0) {
     printf("p[%d] ComputeCount lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",GAme,
@@ -4747,7 +4726,7 @@ int gai_ComputeCountWithSkip(Integer ndim, Integer *lo, Integer *hi,
   */
   count[0]=1;
   istride++;
-  for (i=0; i<(int)ndim; i++) {
+  for (int i=0; i<(int)ndim; i++) {
     idx = hi[i] - lo[i];
     if (idx < 0) return 0;
     if (skip[i] > 1) {
@@ -4796,9 +4775,8 @@ void gai_SetStrideWithSkip(Integer ndim, Integer size, Integer *ld,
                           int *stride_loc, Integer *skip)
 {
 #if 1
-  int i;
   stride_rem[0] = stride_loc[0] = (int)size;
-  for (i=0; i<ndim; i++) {
+  for (int i=0; i<ndim; i++) {
     stride_rem[i+1] = stride_rem[i];
     stride_rem[i] *= skip[i];
     stride_rem[i+1] *= (int)ldrem[i];
@@ -4837,13 +4815,13 @@ void gai_SetStrideWithSkip(Integer ndim, Integer size, Integer *ld,
 void gai_ComputePatchIndexWithSkip(Integer ndim, Integer *lo, Integer *plo,
                                    Integer *skip, Integer *ld, Integer *idx_buf)
 {
-  Integer i, delta, inc, factor;
+  Integer delta, inc, factor;
   delta = plo[0] - lo[0];
   inc = delta%skip[0];
   delta -= inc;
   delta /=  skip[0];
   *idx_buf = delta;
-  for (i=0; i<ndim-1; i++) {
+  for (Integer i=0; i<ndim-1; i++) {
     factor = ld[i];
     delta = plo[i+1]-lo[i+1];
     inc = delta%skip[i+1];
@@ -4871,7 +4849,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
      ld[]:   ndim-1 physical dimensions of local buffer */
   Integer p, np, handle = GA_OFFSET + g_a;
   Integer idx, size, nstride, p_handle, nproc;
-  int i, proc, ndim;
+  int proc, ndim;
   int use_blocks;
 
   Integer * _ga_map;
@@ -4883,7 +4861,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   p_handle = GA[handle].p_handle;
 
   /* check values of skips to make sure they are legitimate */
-  for (i = 0; i<ndim; i++) {
+  for (int i = 0; i<ndim; i++) {
     if (skip[i]<1) {
       pnga_error("nga_strided_put: Invalid value of skip along coordinate ",i);
     }
@@ -5238,7 +5216,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
      ld[]:   ndim-1 physical dimensions of local buffer */
   Integer p, np, handle = GA_OFFSET + g_a;
   Integer idx, size, nstride, p_handle, nproc;
-  int i, proc, ndim;
+  int proc, ndim;
   int use_blocks;
 
   Integer * _ga_map;
@@ -5250,7 +5228,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   p_handle = GA[handle].p_handle;
 
   /* check values of skips to make sure they are legitimate */
-  for (i = 0; i<ndim; i++) {
+  for (int i = 0; i<ndim; i++) {
     if (skip[i]<1) {
       pnga_error("nga_strided_get: Invalid value of skip along coordinate ",i);
     }
@@ -5629,7 +5607,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
      alpha:  muliplicative scale factor */
   Integer p, np, handle = GA_OFFSET + g_a;
   Integer idx, size, nstride, type, p_handle, nproc;
-  int i, optype=-1, proc, ndim;
+  int optype=-1, proc, ndim;
   int use_blocks;
 
   Integer * _ga_map;
@@ -5650,7 +5628,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   else pnga_error("nga_strided_acc: type not supported",type);
 
   /* check values of skips to make sure they are legitimate */
-  for (i = 0; i<ndim; i++) {
+  for (int i = 0; i<ndim; i++) {
     if (skip[i]<1) {
       pnga_error("nga_strided_acc: Invalid value of skip along coordinate ",i);
     }
