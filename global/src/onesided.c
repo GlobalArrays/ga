@@ -369,6 +369,7 @@ void pnga_nbwait(Integer *nbhandle)
     nga_wait_internal((Integer *)nbhandle);
 } 
 
+#if 0
 static void ngai_puts(char *loc_base_ptr, char *pbuf, int *stride_loc, char *prem, int *stride_rem,
 		      int *count, int nstrides, int proc, int field_off, 
 		      int field_size, int type_size) {
@@ -398,7 +399,6 @@ static void ngai_puts(char *loc_base_ptr, char *pbuf, int *stride_loc, char *pre
     }
   }
 }
-
 
 static void ngai_nbputs(char *loc_base_ptr, char *pbuf,int *stride_loc, char *prem, int *stride_rem,
 		      int *count, int nstrides, int proc, int field_off, 
@@ -523,6 +523,7 @@ static void ngai_gets(char *loc_base_ptr, char *prem,int *stride_rem, char *pbuf
   }
 #endif
 }
+#endif
 
 /**
  *  A common routine called by both non-blocking and blocking GA put calls.
@@ -673,30 +674,30 @@ void ngai_put_common(Integer g_a,
             very crucial here as on 64 bit platforms, pointer is 64 bits where 
             as temporary is only 32 bits*/ 
 #if defined(DISABLE_NBOPT)
-/*           ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc); */
-	  ngai_puts(buf, pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
+           ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
+           //ngai_puts(buf, pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
 #else
           if(nbhandle)  {
-/*             ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1, */
-/*                 proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle)); */
-            ngai_nbputs(buf,pbuf, stride_loc, prem, stride_rem, count, ndim -1,
-                        proc,field_off, field_size, size, 
-                        (armci_hdl_t*)get_armci_nbhandle(nbhandle));
+             ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1,
+                          proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
+             //ngai_nbputs(buf,pbuf, stride_loc, prem, stride_rem, count, ndim -1,
+             //            proc,field_off, field_size, size, 
+             //            (armci_hdl_t*)get_armci_nbhandle(nbhandle));
 	  }
           else {
             /* do blocking put for local processes. If all processes
                are remote processes then do blocking put for the last one */
             if((loop==0 && counter==(int)np-1) || loop==1) {
-/*               ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc); */
-              ngai_puts(buf, pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
+               ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
+               //ngai_puts(buf, pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
 	    }
             else {
-              ++counter;
-/*               ARMCI_NbPutS(pbuf,stride_loc,prem,stride_rem,count, ndim-1, */
-/*                   proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle)); */
-              ngai_nbputs(buf,pbuf,stride_loc,prem,stride_rem,count, ndim-1,
-                          proc, field_off, field_size, size,
-                          (armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
+               ++counter;
+               ARMCI_NbPutS(pbuf,stride_loc,prem,stride_rem,count, ndim-1,
+                            proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
+               //ngai_nbputs(buf,pbuf,stride_loc,prem,stride_rem,count, ndim-1,
+               //            proc, field_off, field_size, size,
+               //            (armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
             }
           }
         } /* end if(cond) */
@@ -801,24 +802,24 @@ void ngai_put_common(Integer g_a,
                   very crucial here as on 64 bit platforms, pointer is 64 bits where 
                   as temporary is only 32 bits*/ 
 #if 0
-/*                 ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc); */
-		ngai_puts(buf,pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
+                 ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
+                 //ngai_puts(buf,pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
 #else
                 if(nbhandle) {
-/*                   ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1, */
-/*                       proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle)); */
-		  ngai_nbputs(buf,pbuf, stride_loc, prem, stride_rem, count, ndim -1,
-			      proc,field_off, field_size, size, 
-			      (armci_hdl_t*)get_armci_nbhandle(nbhandle));
-		}
+                   ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1,
+                                proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
+                   //ngai_nbputs(buf,pbuf, stride_loc, prem, stride_rem, count, ndim -1,
+                   //            proc,field_off, field_size, size, 
+                   //            (armci_hdl_t*)get_armci_nbhandle(nbhandle));
+                }
                 else {
                   /* do blocking put for local processes. If all processes
                      are remote processes then do blocking put for the last one */
                      /*
-                  if(loop==1)
+                      if(loop==1)
                     */
-/*                     ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc); */
-		  ngai_puts(buf,pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
+                     ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
+                     //ngai_puts(buf,pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
                      /*
                   else {
                     ARMCI_NbPutS(pbuf,stride_loc,prem,stride_rem,count, ndim-1,
@@ -983,24 +984,24 @@ void ngai_put_common(Integer g_a,
                   very crucial here as on 64 bit platforms, pointer is 64 bits where 
                   as temporary is only 32 bits*/ 
 #if 0
-/*                 ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc); */
-		ngai_puts(buf,pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
+                 ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
+                 //ngai_puts(buf,pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
 #else
                 if(nbhandle) {
-/*                   ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1, */
-/*                       proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle)); */
-		  ngai_nbputs(buf,pbuf, stride_loc, prem, stride_rem, count, ndim -1,
-			      proc,field_off, field_size, size, 
-			      (armci_hdl_t*)get_armci_nbhandle(nbhandle));
-		}
+                   ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1,
+                                proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
+                   //ngai_nbputs(buf,pbuf, stride_loc, prem, stride_rem, count, ndim -1,
+                   //       proc,field_off, field_size, size, 
+                   //       (armci_hdl_t*)get_armci_nbhandle(nbhandle));
+                }
                 else {
                   /* do blocking put for local processes. If all processes
                      are remote processes then do blocking put for the last one */
                      /*
                   if(loop==1)
                     */
-/*                     ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc); */
-		  ngai_puts(buf,pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
+                     ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
+                     //ngai_puts(buf,pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
                      /*
                   else {
                     ARMCI_NbPutS(pbuf,stride_loc,prem,stride_rem,count, ndim-1,
@@ -1236,13 +1237,13 @@ void pnga_put_field(Integer g_a, Integer *lo, Integer *hi, Integer foff, Integer
 /*\ A common routine called by both non-blocking and blocking GA Get calls.
 \*/
 void ngai_get_common(Integer g_a,
-                   Integer *lo,
-                   Integer *hi,
-                   void    *buf,
-                   Integer *ld,
-		     Integer field_off,
-		     Integer field_size,
-                   Integer *nbhandle)
+                     Integer *lo,
+                     Integer *hi,
+                     void    *buf,
+                     Integer *ld,
+                     Integer field_off,
+                     Integer field_size,
+                     Integer *nbhandle)
 {
                    /* g_a:   Global array handle
                       lo[]:  Array of lower indices of patch of global array
@@ -1392,26 +1393,26 @@ void ngai_get_common(Integer g_a,
           }
 #endif
 #if defined(DISABLE_NBOPT)
-/*           ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc); */
-          ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
+          ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc);
+          //ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
 #else
           if(nbhandle)  {
-/*             ARMCI_NbGetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1, */
-/*                 proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle)); */
-            ngai_nbgets(buf,prem, stride_rem, pbuf, stride_loc, count, ndim -1,
-                        proc,field_off, field_size, size,
-                        (armci_hdl_t*)get_armci_nbhandle(nbhandle));
+            ARMCI_NbGetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1,
+                         proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
+            //ngai_nbgets(buf,prem, stride_rem, pbuf, stride_loc, count, ndim -1,
+            //            proc,field_off, field_size, size,
+            //            (armci_hdl_t*)get_armci_nbhandle(nbhandle));
 	  } else {
             if((loop==0 && counter==(int)np-1) || loop==1) {
-/*               ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc); */
-	      ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
-	    } else {
-              ++counter;
-/*               ARMCI_NbGetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1, */
-/*                   proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle)); */
-	      ngai_nbgets(buf,prem, stride_rem, pbuf, stride_loc, count, ndim -1,
-                      proc,field_off, field_size, size,
-                      (armci_hdl_t*)get_armci_nbhandle(nbhandle));
+                ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc);
+                // ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
+            } else {
+                ++counter;
+                ARMCI_NbGetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,
+                             proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
+                //ngai_nbgets(buf,prem, stride_rem, pbuf, stride_loc, count, ndim -1,
+                //        proc,field_off, field_size, size,
+                //        (armci_hdl_t*)get_armci_nbhandle(nbhandle));
             }
           }
         } /* end if(cond) */
@@ -1516,29 +1517,29 @@ void ngai_get_common(Integer g_a,
                   very crucial here as on 64 bit platforms, pointer is 64 bits where 
                   as temporary is only 32 bits*/ 
 #if 0
-/*                 ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc); */
-		ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
+                   ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc);
+                   //ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
 #else
                 if(nbhandle) {
-/*                   ARMCI_NbGetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1, */
-/*                       proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle)); */
-		  ngai_nbgets(buf,prem, stride_rem, pbuf, stride_loc, count, ndim -1,
-			      proc,field_off, field_size, size,
-			      (armci_hdl_t*)get_armci_nbhandle(nbhandle));
+                      ARMCI_NbGetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1,
+                                   proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
+                      //ngai_nbgets(buf,prem, stride_rem, pbuf, stride_loc, count, ndim -1,
+                      //        proc,field_off, field_size, size,
+                      //        (armci_hdl_t*)get_armci_nbhandle(nbhandle));
                 } else {
                   /* do blocking put for local processes. If all processes
                      are remote processes then do blocking put for the last one */
                      /*
-                  if(loop==1) 
-                    */
-/*                     ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc); */
-		  ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
+                          if(loop==1) 
+                     */
+                    ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc);
+	             	//ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
                      /*
-                  else {
-                    ARMCI_NbGetS(prem,stride_rem,pbuf,stride_loc,count, ndim-1,
-                        proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
-                  }
-                    */
+                      else {
+                        ARMCI_NbGetS(prem,stride_rem,pbuf,stride_loc,count, ndim-1,
+                            proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
+                      }
+                     */
                 }
 #endif
               }
@@ -1697,23 +1698,23 @@ void ngai_get_common(Integer g_a,
                   very crucial here as on 64 bit platforms, pointer is 64 bits where 
                   as temporary is only 32 bits*/ 
 #if 0
-/*                 ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc); */
-		ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
+                 ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc);
+                 //ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
 #else
                 if(nbhandle)  {
-/*                   ARMCI_NbGetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1, */
-/*                       proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle)); */
-		  ngai_nbgets(buf,prem, stride_rem, pbuf, stride_loc, count, ndim -1,
-                      proc,field_off, field_size, size,
-                      (armci_hdl_t*)get_armci_nbhandle(nbhandle));
+                     ARMCI_NbGetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1,
+                                  proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
+                     //ngai_nbgets(buf,prem, stride_rem, pbuf, stride_loc, count, ndim -1,
+                     //            proc,field_off, field_size, size,
+                     //            (armci_hdl_t*)get_armci_nbhandle(nbhandle));
                 } else {
                   /* do blocking put for local processes. If all processes
                      are remote processes then do blocking put for the last one */
                      /*
                   if(loop==1) 
                     */
-/*                     ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc); */
-		  ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
+                     ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc);
+                     //ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
                      /*
                   else {
                     ARMCI_NbGetS(prem,stride_rem,pbuf,stride_loc,count, ndim-1,
