@@ -986,6 +986,7 @@ logical pnga_update2_ghosts(Integer g_a)
     if (p_handle >= 0) {
       proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem];
     }
+    /* This is thread-safe because no nbhandle is used. */
     ARMCI_NbPutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
           (int)(ndim - 1), (int)proc_rem, NULL); 
   }
@@ -2968,10 +2969,13 @@ void pnga_update_ghosts_nb(Integer g_a, Integer *nbhandle)
     if (p_handle >= 0) {
       proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem];
     }
+    /* This is not thread-safe because an explicit nbhandle is used. */
     ARMCI_NbGetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
         (int)(ndim - 1), (int)proc_rem, 
-        (armci_hdl_t*)get_armci_nbhandle(nbhandle));
+        (armci_hdl_t*)get_armci_nbhandle(nbhandle)); /* RACE */
   }
+
+  fprintf(stderr,"pnga_update_ghosts_nb is not thread-safe.  Good luck!\n");
 
   GA_POP_NAME;
   return;
@@ -4355,9 +4359,10 @@ logical pnga_update7_ghosts(Integer g_a)
     if (p_handle >= 0) {
       proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem];
     }
-    /* put data on remote processor */
-/*    ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
-          (int)(ndim - 1), (int)proc_rem); */
+    /* put (???) data on remote processor */
+    /* ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
+           (int)(ndim - 1), (int)proc_rem); */
+    /* This is thread-safe because no nbhandle is used. */
     ARMCI_NbGetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
           (int)(ndim - 1), (int)proc_rem, NULL);
   }
