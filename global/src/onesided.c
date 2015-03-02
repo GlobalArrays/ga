@@ -449,13 +449,13 @@ static void ngai_gets(char *loc_base_ptr, char *prem,int *stride_rem, char *pbuf
  *  A common routine called by both non-blocking and blocking GA put calls.
  */
 void ngai_put_common(Integer g_a, 
-                   Integer *lo,
-                   Integer *hi,
-                   void    *buf,
-                   Integer *ld,
-		     Integer field_off,
-		     Integer field_size,
-		     Integer *nbhandle) 
+                     Integer *lo,
+                     Integer *hi,
+                     void    *buf,
+                     Integer *ld,
+                     Integer field_off,
+                     Integer field_size,
+                     Integer *nbhandle) 
 {
   Integer  p, np, handle=GA_OFFSET + g_a;
   Integer  idx, elems, size, p_handle;
@@ -603,14 +603,14 @@ void ngai_put_common(Integer g_a,
              //ngai_nbputs(buf,pbuf, stride_loc, prem, stride_rem, count, ndim -1,
              //            proc,field_off, field_size, size, 
              //            (armci_hdl_t*)get_armci_nbhandle(nbhandle));
-	  }
+          }
           else {
             /* do blocking put for local processes. If all processes
                are remote processes then do blocking put for the last one */
             if((loop==0 && counter==(int)np-1) || loop==1) {
                ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
                //ngai_puts(buf, pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
-	    }
+            }
             else {
                ++counter;
                ARMCI_NbPutS(pbuf,stride_loc,prem,stride_rem,count, ndim-1,
