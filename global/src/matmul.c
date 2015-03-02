@@ -30,8 +30,6 @@ static short int CYCLIC_DISTR_OPT_FLAG  = SET; /* RACE */
 static short int CONTIG_CHUNKS_OPT_FLAG = SET; /* RACE */
 static short int DIRECT_ACCESS_OPT_FLAG = SET; /* RACE */
 
-Integer gNbhdlA[2], gNbhdlB[2], gNbhdlC[2]; /* RACE */ /* for A and B matrix */
-
 static int _gai_matmul_patch_flag = 0; /* RACE */
 
 void gai_matmul_patch_flag(int flag)
@@ -598,6 +596,8 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
   Integer iblock=0, proc_index[2], index[2];
   Integer blocks[2], block_dims[2], topology[2];
 
+  Integer gNbhdlA[2], gNbhdlB[2], gNbhdlC[2];
+
   GA_PUSH_NAME("ga_matmul_regular");
   if(irregular) pnga_error("irregular flag set", 0L);
 
@@ -842,6 +842,8 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
   SingleComplex ONE_CF; 
   Integer grp_me, a_grp = pnga_get_pgroup(g_a);
   Integer clo[2], chi[2];
+
+  Integer gNbhdlA[2], gNbhdlB[2], gNbhdlC[2];
 
   GA_PUSH_NAME("ga_matmul_irreg");
   init_task_list(&taskListC);
