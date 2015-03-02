@@ -1,10 +1,4 @@
-/* $Id: onesided.c,v 1.80.2.18 2007/12/18 22:22:27 d3g293 Exp $ */
 /* 
- * module: onesided.c
- * author: Jarek Nieplocha
- * description: implements GA primitive communication operations --
- *              accumulate, scatter, gather, read&increment & synchronization 
- * 
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -31,9 +25,6 @@
 #   include "config.h"
 #endif
  
-/*#define PERMUTE_PIDS */
-/*#define USE_GATSCAT_NEW 1 */
-
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
@@ -59,24 +50,10 @@
 #include "global.h"
 #include "globalp.h"
 #include "base.h"
-#include "armci.h"
-#include "macdecls.h"
 #include "ga-papi.h"
 #include "ga-wapi.h"
 
-#define DEBUG 0
-#define USE_MALLOC 1
-#define INVALID_MA_HANDLE -1 
-#define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
-
-#ifdef PROFILE_OLD
-#include "ga_profile.h"
-#endif
-
-#ifdef ENABLE_UNSAFE_PUT_NOTIFY
-
-#define HANDLES_OUTSTANDING 100
-/* Maximum number of outstanding put/notify handles */
+#ifndef DISABLE_UNSAFE_PUT_NOTIFY
 
 typedef struct {
   Integer *orighdl;
@@ -85,6 +62,8 @@ typedef struct {
   void *elem_copy;
 } gai_putn_hdl_t;
 
+/* Maximum number of outstanding put/notify handles */
+#define HANDLES_OUTSTANDING 100
 static gai_putn_hdl_t putn_handles[HANDLES_OUTSTANDING]; /* RACE */
 
 /**
@@ -223,4 +202,5 @@ void pnga_nbwait_notify(Integer *nbhandle)
 
   putn_handles[i].orighdl = NULL;
 } /* pnga_nbwait_notify */
-#endif // ENABLE_UNSAFE_PUT_NOTIFY
+
+#endif // DISABLE_UNSAFE_PUT_NOTIFY
