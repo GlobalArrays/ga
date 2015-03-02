@@ -86,7 +86,8 @@ void pnga_fence(void)
         }
     }
     bzero(fence_array,(int)GAnproc);
-    return;
+#else
+    ARMCI_AllFence();
 #endif // DISABLE_UNSAFE_GA_FENCE
 }
 
@@ -102,6 +103,8 @@ void pnga_init_fence(void)
 #ifndef DISABLE_UNSAFE_GA_FENCE
     /* Why is this not setting it to 1? */
     GA_fence_set++;
+#else
+    /* NO-OP */
 #endif // DISABLE_UNSAFE_GA_FENCE
 }
 
@@ -111,6 +114,8 @@ void gai_init_onesided(void)
     fence_array = calloc((size_t)GAnproc,1);
     if(!fence_array)
         pnga_error("ga_init:calloc failed",0);
+#else
+    /* NO-OP */
 #endif // DISABLE_UNSAFE_GA_FENCE
 }
 
@@ -119,6 +124,8 @@ void gai_finalize_onesided(void)
 #ifndef DISABLE_UNSAFE_GA_FENCE
     free(fence_array);
     fence_array = NULL;
+#else
+    /* NO-OP */
 #endif // DISABLE_UNSAFE_GA_FENCE
 }
 
@@ -129,6 +136,8 @@ void gai_fence_reset(void)
            bzero(fence_array,(int)GAnproc);
        }
        GA_fence_set=0;
+#else
+    /* NO-OP */
 #endif // DISABLE_UNSAFE_GA_FENCE
 }
 
@@ -137,6 +146,8 @@ void gai_fence_set(int proc)
 #ifndef DISABLE_UNSAFE_GA_FENCE
     if(GA_fence_set)
       fence_array[proc]=1;
+#else
+    /* NO-OP */
 #endif // DISABLE_UNSAFE_GA_FENCE
 }
 
