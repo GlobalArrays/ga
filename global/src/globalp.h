@@ -114,8 +114,13 @@ extern int _ga_sync_end; /* RACE */
 extern int *_ga_argc; /* RACE */
 extern char ***_ga_argv; /* RACE */
 
+#ifndef DISABLE_THREAD_UNSAFE_PROFILING
 #define  GA_PUSH_NAME(name) (GA_name_stack[GA_stack_size++] = (name)) 
 #define  GA_POP_NAME        (GA_stack_size--)
+#else
+#define  GA_PUSH_NAME(name)
+#define  GA_POP_NAME
+#endif
 
 /* periodic operations */
 #define PERIODIC_GET 1
