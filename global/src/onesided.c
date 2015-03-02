@@ -88,20 +88,6 @@ extern void armci_read_strided(void*, int, int*, int*, char*);
 extern void armci_write_strided(void*, int, int*, int*, char*);
 extern armci_hdl_t* get_armci_nbhandle(Integer *);
 
-/* moved this stuff up from below */
-
-#define HANDLES_OUTSTANDING 100
-/* Maximum number of outstanding put/notify handles */
-
-typedef struct {
-  Integer *orighdl;
-  Integer firsthdl;
-  Integer elementhdl;
-  void *elem_copy;
-} gai_putn_hdl_t;
-
-static gai_putn_hdl_t putn_handles[HANDLES_OUTSTANDING]; /* RACE */
-
 /***************************************************************************/
 
 /**
@@ -1058,6 +1044,7 @@ void pnga_nbput(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, I
   ngai_put_common(g_a,lo,hi,buf,ld,0,-1,nbhandle); 
 }
 
+#if JEFF_GIT_MERGE_CONFUSION_SHOULD_THIS_BE_HERE
 /**
  * (Non-blocking) Put an N-dimensional patch of data into a Global Array and notify the other
                   side with information on another Global Array
@@ -1194,6 +1181,7 @@ void pnga_nbwait_notify(Integer *nbhandle)
 
   putn_handles[i].orighdl = NULL;
 } /* pnga_nbwait_notify */
+#endif
 
 /**
  * Put an N-dimensional patch of data into a Global Array
