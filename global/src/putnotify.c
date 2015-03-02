@@ -53,6 +53,10 @@
 #include "ga-papi.h"
 #include "ga-wapi.h"
 
+/* Just a function declaration required because no longer part of onesided.c */
+void ngai_put_common(Integer g_a, Integer *lo, Integer *hi, void    *buf, Integer *ld,
+                     Integer field_off, Integer field_size, Integer *nbhandle);
+
 #ifndef DISABLE_UNSAFE_PUT_NOTIFY
 
 typedef struct {
@@ -80,6 +84,9 @@ static int putn_find_empty_slot(void)
   return -1;
 } /* putn_find_empty_slot */
 
+#endif // DISABLE_UNSAFE_PUT_NOTIFY
+
+/* This function does not have any obvious races.  */
 static int putn_intersect_coords(Integer g_a, Integer *lo, Integer *hi, Integer *ecoords)
 {
   int ndims = pnga_ndim(g_a);
@@ -91,6 +98,7 @@ static int putn_intersect_coords(Integer g_a, Integer *lo, Integer *hi, Integer 
   return 1;
 } /* putn_intersect_coords */
 
+/* This function does not have any obvious races.  */
 static int putn_verify_element_in_buf(Integer g_a, Integer *lo, Integer *hi, void *buf,
 				      Integer *ld, Integer *ecoords, void *bufn,
 				      Integer elemSize)
@@ -114,6 +122,7 @@ static int putn_verify_element_in_buf(Integer g_a, Integer *lo, Integer *hi, voi
   return (eoff == (Integer)off); /* Must be the same for a correct notify buffer */
 } /* putn_verify_element_in_buf */
 
+
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_nbput_notify = pnga_nbput_notify
 #endif
@@ -123,6 +132,7 @@ void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer
   Integer ldn[MAXDIM] = { 1 };
   int pos, intersect;
 
+#ifndef DISABLE_UNSAFE_PUT_NOTIFY
   static int putn_handles_initted = 0; /* RACE */
   /* Make sure everything has been initialized */
   if (!putn_handles_initted) {
@@ -135,6 +145,7 @@ void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer
     pnga_error("Too many outstanding put/notify operations!", 0);
 
   putn_handles[pos].orighdl = nbhandle; /* Store original handle for nbwait_notify */
+#endif // DISABLE_UNSAFE_PUT_NOTIFY
 
   if (g_a == g_b)
     intersect = putn_intersect_coords(g_a, lo, hi, ecoords);
@@ -142,12 +153,17 @@ void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer
     intersect = 0;
 
   if (!intersect) { /* Simpler case */
+#ifndef DISABLE_UNSAFE_PUT_NOTIFY
     ngai_put_common(g_a, lo, hi, buf, ld, 0, -1, &putn_handles[pos].firsthdl);
     ngai_put_common(g_b, ecoords, ecoords, bufn, ldn, 0, -1, &putn_handles[pos].elementhdl);
-
     putn_handles[pos].elem_copy = NULL;
+#else
+    ngai_put_common(g_a, lo, hi, buf, ld, 0, -1, NULL);
+    ngai_put_common(g_b, ecoords, ecoords, bufn, ldn, 0, -1, NULL);
+#endif // DISABLE_UNSAFE_PUT_NOTIFY
   }
   else {
+#ifndef DISABLE_UNSAFE_PUT_NOTIFY
     int ret;
     Integer handle = GA_OFFSET + g_a, size;
     void *elem_copy;
@@ -167,10 +183,11 @@ void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer
       elem[i] += 1; /* Increment each byte by one, safe? */
 
     putn_handles[pos].elem_copy = elem_copy;
-
     ngai_put_common(g_a, lo, hi, buf, ld, 0, -1, &putn_handles[pos].firsthdl);
-    ngai_put_common(g_a, ecoords, ecoords, elem_copy, ldn, 0, -1,
-		    &putn_handles[pos].elementhdl);
+    ngai_put_common(g_a, ecoords, ecoords, elem_copy, ldn, 0, -1, &putn_handles[pos].elementhdl);
+#else
+    pnga_error("pnga_nbput_notify buffer intersect error", intersect);
+#endif // DISABLE_UNSAFE_PUT_NOTIFY
   }
 } /* pnga_nbput_notify */
 
@@ -183,8 +200,8 @@ void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer
 
 void pnga_nbwait_notify(Integer *nbhandle)
 {
+#ifndef DISABLE_UNSAFE_PUT_NOTIFY
   int i;
-
   for (i = 0; i < HANDLES_OUTSTANDING; i++)
     if (putn_handles[i].orighdl == nbhandle)
       break;
@@ -201,6 +218,8 @@ void pnga_nbwait_notify(Integer *nbhandle)
   }
 
   putn_handles[i].orighdl = NULL;
+#else
+  /* Not sure what to do here... */
+#endif // DISABLE_UNSAFE_PUT_NOTIFY
 } /* pnga_nbwait_notify */
 
-#endif // DISABLE_UNSAFE_PUT_NOTIFY
