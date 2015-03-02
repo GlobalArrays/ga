@@ -2,8 +2,8 @@
 
 //__sync_add_and_fetch (type *ptr, type value, ...)
 
-static unsigned int tag1; /* RACE */  
-static unsigned int tag2; /* RACE */  
+static unsigned int tag1;
+static unsigned int tag2;
 
 unsigned int get_next_tag1(void)
 {
