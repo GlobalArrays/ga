@@ -407,6 +407,7 @@ libga_la_SOURCES += global/src/matrix.c
 libga_la_SOURCES += global/src/nbutil.c
 libga_la_SOURCES += global/src/onesided.c
 libga_la_SOURCES += global/src/putnotify.c
+libga_la_SOURCES += global/src/gafence.c
 libga_la_SOURCES += global/src/peigstubs.c
 libga_la_SOURCES += global/src/scalapack.fh
 libga_la_SOURCES += global/src/sclstubs.c
