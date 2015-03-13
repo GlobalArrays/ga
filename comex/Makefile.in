@@ -66,14 +66,18 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS =
-check_PROGRAMS = testing/perf$(EXEEXT) testing/perf_amo$(EXEEXT) \
-	testing/perf_contig$(EXEEXT) testing/perf_strided$(EXEEXT) \
-	testing/shift$(EXEEXT) testing/test$(EXEEXT)
+check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) testing/perf$(EXEEXT) \
+	testing/perf_amo$(EXEEXT) testing/perf_contig$(EXEEXT) \
+	testing/perf_strided$(EXEEXT) testing/shift$(EXEEXT) \
+	testing/test$(EXEEXT)
 DIST_COMMON = $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in $(top_srcdir)/configure \
 	$(top_srcdir)/src-armci/Makefile.inc \
 	$(top_srcdir)/src-dmapp/Makefile.inc \
+	$(top_srcdir)/src-mpi-mt/Makefile.inc \
+	$(top_srcdir)/src-mpi-pr/Makefile.inc \
+	$(top_srcdir)/src-mpi-pt/Makefile.inc \
 	$(top_srcdir)/src-mpi/Makefile.inc \
 	$(top_srcdir)/src-ofa/Makefile.inc \
 	$(top_srcdir)/src-portals4/Makefile.inc build-aux/config.guess \
@@ -107,6 +111,27 @@ DIST_COMMON = $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @COMEX_NETWORK_MPI_TS_TRUE@	src-mpi/comex_impl.h \
 @COMEX_NETWORK_MPI_TS_TRUE@	src-mpi/groups.c src-mpi/groups.h
 @COMEX_NETWORK_MPI_TS_TRUE@am__append_8 = -I$(top_srcdir)/src-mpi
+@COMEX_NETWORK_MPI_MT_TRUE@am__append_9 = src-mpi-mt/comex.c \
+@COMEX_NETWORK_MPI_MT_TRUE@	src-mpi-mt/comex_impl.h \
+@COMEX_NETWORK_MPI_MT_TRUE@	src-mpi-mt/groups.c \
+@COMEX_NETWORK_MPI_MT_TRUE@	src-mpi-mt/groups.h
+@COMEX_NETWORK_MPI_MT_TRUE@am__append_10 = -I$(top_srcdir)/src-mpi-mt
+@COMEX_NETWORK_MPI_PT_TRUE@am__append_11 = src-mpi-pt/comex.c \
+@COMEX_NETWORK_MPI_PT_TRUE@	src-mpi-pt/comex_impl.h \
+@COMEX_NETWORK_MPI_PT_TRUE@	src-mpi-pt/groups.c \
+@COMEX_NETWORK_MPI_PT_TRUE@	src-mpi-pt/groups.h \
+@COMEX_NETWORK_MPI_PT_TRUE@	src-mpi-pt/reg_cache.c \
+@COMEX_NETWORK_MPI_PT_TRUE@	src-mpi-pt/reg_cache.h
+@COMEX_NETWORK_MPI_PT_TRUE@am__append_12 = -I$(top_srcdir)/src-mpi-pt
+@COMEX_NETWORK_MPI_PT_TRUE@am__append_13 = src-mpi-pt/hello
+@COMEX_NETWORK_MPI_PR_TRUE@am__append_14 = src-mpi-pr/comex.c \
+@COMEX_NETWORK_MPI_PR_TRUE@	src-mpi-pr/comex_impl.h \
+@COMEX_NETWORK_MPI_PR_TRUE@	src-mpi-pr/groups.c \
+@COMEX_NETWORK_MPI_PR_TRUE@	src-mpi-pr/groups.h \
+@COMEX_NETWORK_MPI_PR_TRUE@	src-mpi-pr/reg_cache.c \
+@COMEX_NETWORK_MPI_PR_TRUE@	src-mpi-pr/reg_cache.h
+@COMEX_NETWORK_MPI_PR_TRUE@am__append_15 = -I$(top_srcdir)/src-mpi-pr
+@COMEX_NETWORK_MPI_PR_TRUE@am__append_16 = src-mpi-pr/hello
 
 ##############################################################################
 # src-portals4
@@ -125,20 +150,32 @@ DIST_COMMON = $(am__configure_deps) $(am__include_HEADERS_DIST) \
 #
 
 ##############################################################################
+# src-mpi-mt
+#
+
+##############################################################################
+# src-mpi-pt
+#
+
+##############################################################################
+# src-mpi-pr
+#
+
+##############################################################################
 # src-armci
 #
 
 ##############################################################################
 # profiling
 #
-@ENABLE_PROFILING_ARMCI_TRUE@am__append_9 = -I$(top_srcdir)/src-armci
-@ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_10 = libarmci_prof.la
-@ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_11 = src-armci/capi.c
-@ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_12 = tools/armci_prof.c
-@ENABLE_PROFILING_ARMCI_FALSE@am__append_13 = src-armci/capi.c
-@ENABLE_PROFILING_ARMCI_FALSE@am__append_14 = src-armci/parmci.h
-TESTS = $(am__EXEEXT_2) $(PARALLEL_TESTS)
-XFAIL_TESTS = $(am__EXEEXT_2) $(am__EXEEXT_2)
+@ENABLE_PROFILING_ARMCI_TRUE@am__append_17 = -I$(top_srcdir)/src-armci
+@ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_18 = libarmci_prof.la
+@ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_19 = src-armci/capi.c
+@ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_20 = tools/armci_prof.c
+@ENABLE_PROFILING_ARMCI_FALSE@am__append_21 = src-armci/capi.c
+@ENABLE_PROFILING_ARMCI_FALSE@am__append_22 = src-armci/parmci.h
+TESTS = $(am__EXEEXT_4) $(PARALLEL_TESTS)
+XFAIL_TESTS = $(am__EXEEXT_4) $(am__EXEEXT_4)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_sys_weak_alias.m4 \
@@ -241,7 +278,14 @@ am__libcomex_la_SOURCES_DIST = src-portals4/comex.c \
 	src-ofa/openib.h src-ofa/reg_cache.c src-ofa/reg_cache.h \
 	src-ofa/strided.c src-ofa/vector.c src-ofa/wait.c \
 	src-mpi/comex.c src-mpi/comex_impl.h src-mpi/groups.c \
-	src-mpi/groups.h
+	src-mpi/groups.h src-mpi-mt/comex.c src-mpi-mt/comex_impl.h \
+	src-mpi-mt/groups.c src-mpi-mt/groups.h src-mpi-pt/comex.c \
+	src-mpi-pt/comex_impl.h src-mpi-pt/groups.c \
+	src-mpi-pt/groups.h src-mpi-pt/reg_cache.c \
+	src-mpi-pt/reg_cache.h src-mpi-pr/comex.c \
+	src-mpi-pr/comex_impl.h src-mpi-pr/groups.c \
+	src-mpi-pr/groups.h src-mpi-pr/reg_cache.c \
+	src-mpi-pr/reg_cache.h
 @COMEX_NETWORK_PORTALS4_TRUE@am__objects_5 = src-portals4/comex.lo \
 @COMEX_NETWORK_PORTALS4_TRUE@	src-portals4/groups.lo
 @COMEX_NETWORK_DMAPP_TRUE@am__objects_6 = src-dmapp/comex.lo \
@@ -256,8 +300,17 @@ am__libcomex_la_SOURCES_DIST = src-portals4/comex.c \
 @COMEX_NETWORK_OFA_TRUE@	src-ofa/wait.lo
 @COMEX_NETWORK_MPI_TS_TRUE@am__objects_8 = src-mpi/comex.lo \
 @COMEX_NETWORK_MPI_TS_TRUE@	src-mpi/groups.lo
+@COMEX_NETWORK_MPI_MT_TRUE@am__objects_9 = src-mpi-mt/comex.lo \
+@COMEX_NETWORK_MPI_MT_TRUE@	src-mpi-mt/groups.lo
+@COMEX_NETWORK_MPI_PT_TRUE@am__objects_10 = src-mpi-pt/comex.lo \
+@COMEX_NETWORK_MPI_PT_TRUE@	src-mpi-pt/groups.lo \
+@COMEX_NETWORK_MPI_PT_TRUE@	src-mpi-pt/reg_cache.lo
+@COMEX_NETWORK_MPI_PR_TRUE@am__objects_11 = src-mpi-pr/comex.lo \
+@COMEX_NETWORK_MPI_PR_TRUE@	src-mpi-pr/groups.lo \
+@COMEX_NETWORK_MPI_PR_TRUE@	src-mpi-pr/reg_cache.lo
 am_libcomex_la_OBJECTS = $(am__objects_5) $(am__objects_6) \
-	$(am__objects_7) $(am__objects_8)
+	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
+	$(am__objects_10) $(am__objects_11)
 libcomex_la_OBJECTS = $(am_libcomex_la_OBJECTS)
 libcomexi_la_LIBADD =
 am__libcomexi_la_SOURCES_DIST = src-portals4/comex.c \
@@ -271,13 +324,39 @@ am__libcomexi_la_SOURCES_DIST = src-portals4/comex.c \
 	src-ofa/openib.h src-ofa/reg_cache.c src-ofa/reg_cache.h \
 	src-ofa/strided.c src-ofa/vector.c src-ofa/wait.c \
 	src-mpi/comex.c src-mpi/comex_impl.h src-mpi/groups.c \
-	src-mpi/groups.h
-am__objects_9 = $(am__objects_5) $(am__objects_6) $(am__objects_7) \
-	$(am__objects_8)
-am_libcomexi_la_OBJECTS = $(am__objects_9)
+	src-mpi/groups.h src-mpi-mt/comex.c src-mpi-mt/comex_impl.h \
+	src-mpi-mt/groups.c src-mpi-mt/groups.h src-mpi-pt/comex.c \
+	src-mpi-pt/comex_impl.h src-mpi-pt/groups.c \
+	src-mpi-pt/groups.h src-mpi-pt/reg_cache.c \
+	src-mpi-pt/reg_cache.h src-mpi-pr/comex.c \
+	src-mpi-pr/comex_impl.h src-mpi-pr/groups.c \
+	src-mpi-pr/groups.h src-mpi-pr/reg_cache.c \
+	src-mpi-pr/reg_cache.h
+am__objects_12 = $(am__objects_5) $(am__objects_6) $(am__objects_7) \
+	$(am__objects_8) $(am__objects_9) $(am__objects_10) \
+	$(am__objects_11)
+am_libcomexi_la_OBJECTS = $(am__objects_12)
 libcomexi_la_OBJECTS = $(am_libcomexi_la_OBJECTS)
+@COMEX_NETWORK_MPI_PT_TRUE@am__EXEEXT_1 = src-mpi-pt/hello$(EXEEXT)
+@COMEX_NETWORK_MPI_PR_TRUE@am__EXEEXT_2 = src-mpi-pr/hello$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 LIBOBJDIR = compat/
+am__src_mpi_pr_hello_SOURCES_DIST = src-mpi-pr/hello.c
+@COMEX_NETWORK_MPI_PR_TRUE@am_src_mpi_pr_hello_OBJECTS =  \
+@COMEX_NETWORK_MPI_PR_TRUE@	src-mpi-pr/hello.$(OBJEXT)
+src_mpi_pr_hello_OBJECTS = $(am_src_mpi_pr_hello_OBJECTS)
+src_mpi_pr_hello_LDADD = $(LDADD)
+src_mpi_pr_hello_DEPENDENCIES = libcomex.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__src_mpi_pt_hello_SOURCES_DIST = src-mpi-pt/hello.c
+@COMEX_NETWORK_MPI_PT_TRUE@am_src_mpi_pt_hello_OBJECTS =  \
+@COMEX_NETWORK_MPI_PT_TRUE@	src-mpi-pt/hello.$(OBJEXT)
+src_mpi_pt_hello_OBJECTS = $(am_src_mpi_pt_hello_OBJECTS)
+src_mpi_pt_hello_LDADD = $(LDADD)
+src_mpi_pt_hello_DEPENDENCIES = libcomex.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_testing_perf_OBJECTS = testing/perf.$(OBJEXT)
 testing_perf_OBJECTS = $(am_testing_perf_OBJECTS)
 testing_perf_LDADD = $(LDADD)
@@ -342,7 +421,8 @@ am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(libarmci_la_SOURCES) $(libarmci_prof_la_SOURCES) \
 	$(libarmcii_la_SOURCES) $(libcomex_la_SOURCES) \
-	$(libcomexi_la_SOURCES) $(testing_perf_SOURCES) \
+	$(libcomexi_la_SOURCES) $(src_mpi_pr_hello_SOURCES) \
+	$(src_mpi_pt_hello_SOURCES) $(testing_perf_SOURCES) \
 	$(testing_perf_amo_SOURCES) $(testing_perf_contig_SOURCES) \
 	$(testing_perf_strided_SOURCES) $(testing_shift_SOURCES) \
 	$(testing_test_SOURCES)
@@ -350,7 +430,9 @@ DIST_SOURCES = $(am__libarmci_la_SOURCES_DIST) \
 	$(am__libarmci_prof_la_SOURCES_DIST) \
 	$(am__libarmcii_la_SOURCES_DIST) \
 	$(am__libcomex_la_SOURCES_DIST) \
-	$(am__libcomexi_la_SOURCES_DIST) $(testing_perf_SOURCES) \
+	$(am__libcomexi_la_SOURCES_DIST) \
+	$(am__src_mpi_pr_hello_SOURCES_DIST) \
+	$(am__src_mpi_pt_hello_SOURCES_DIST) $(testing_perf_SOURCES) \
 	$(testing_perf_amo_SOURCES) $(testing_perf_contig_SOURCES) \
 	$(testing_perf_strided_SOURCES) $(testing_shift_SOURCES) \
 	$(testing_test_SOURCES)
@@ -455,8 +537,8 @@ rm -f $@-t
 RECHECK_LOGS = $(TEST_LOGS)
 AM_RECURSIVE_TARGETS = check recheck check-html recheck-html
 TEST_SUITE_HTML = $(TEST_SUITE_LOG:.log=.html)
-am__EXEEXT_1 =
-am__EXEEXT_2 = $(am__EXEEXT_1)
+am__EXEEXT_3 =
+am__EXEEXT_4 = $(am__EXEEXT_3)
 TEST_SUITE_LOG = test-suite.log
 TEST_EXTENSIONS = @EXEEXT@ .test
 LOG_COMPILE = $(LOG_COMPILER) $(AM_LOG_FLAGS) $(LOG_FLAGS)
@@ -618,9 +700,9 @@ ACLOCAL_AMFLAGS = -I m4
 # are listed in these variables.  Appended to throughout.  These are the
 # automake variables used.
 include_HEADERS = $(top_srcdir)/src-common/comex.h src-armci/armci.h \
-	src-armci/message.h $(am__append_14)
+	src-armci/message.h $(am__append_22)
 check_LTLIBRARIES = 
-lib_LTLIBRARIES = libcomex.la libarmci.la $(am__append_10)
+lib_LTLIBRARIES = libcomex.la libarmci.la $(am__append_18)
 
 # internal libcomex for possibly rolling up into other libraries
 noinst_LTLIBRARIES = libcomexi.la libarmcii.la
@@ -634,13 +716,15 @@ AM_CFLAGS =
 AM_CPPFLAGS = $(MPI_CPPFLAGS) $(COMEX_NETWORK_CPPFLAGS) \
 	$(BLAS_CPPFLAGS) -I$(top_srcdir)/src-common $(am__append_2) \
 	$(am__append_4) $(am__append_6) $(am__append_8) \
-	$(am__append_9)
+	$(am__append_10) $(am__append_12) $(am__append_15) \
+	$(am__append_17)
 AM_LDFLAGS = $(MPI_LDFLAGS) $(COMEX_NETWORK_LDFLAGS) $(BLAS_LDFLAGS)
 LDADD = libcomex.la $(LTLIBOBJS) $(MPI_LIBS) $(COMEX_NETWORK_LIBS) \
 	$(BLAS_LIBS)
 # later Makefile fragments append to this
 libcomex_la_SOURCES = $(am__append_1) $(am__append_3) $(am__append_5) \
-	$(am__append_7)
+	$(am__append_7) $(am__append_9) $(am__append_11) \
+	$(am__append_14)
 libcomex_la_LIBADD = $(MPI_LIBS) $(COMEX_NETWORK_LIBS)
 libcomexi_la_SOURCES = $(libcomex_la_SOURCES)
 
@@ -649,9 +733,11 @@ libcomexi_la_SOURCES = $(libcomex_la_SOURCES)
 #
 # Important for external tools wanting to know how to link to COMEX.
 SED_NORMALIZE_WHITESPACE = $(SED) 's/ [ ]*/ /g;s/" /"/g;s/ "/"/g'
+@COMEX_NETWORK_MPI_PT_TRUE@src_mpi_pt_hello_SOURCES = src-mpi-pt/hello.c
+@COMEX_NETWORK_MPI_PR_TRUE@src_mpi_pr_hello_SOURCES = src-mpi-pr/hello.c
 libarmci_la_SOURCES = src-armci/armci.c src-armci/groups.c \
 	src-armci/message.c src-armci/iterator.c src-armci/iterator.h \
-	$(am__append_11) $(am__append_12) $(am__append_13)
+	$(am__append_19) $(am__append_20) $(am__append_21)
 libarmci_la_LIBADD = libcomexi.la
 libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
 @ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@libarmci_prof_la_SOURCES = tools/armci_prof.c
@@ -697,7 +783,7 @@ all: $(BUILT_SOURCES) config.h
 .SUFFIXES: .c .html .lo .log .o .obj .test .test$(EXEEXT)
 am--refresh: Makefile
 	@:
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/src-portals4/Makefile.inc $(top_srcdir)/src-dmapp/Makefile.inc $(top_srcdir)/src-ofa/Makefile.inc $(top_srcdir)/src-mpi/Makefile.inc $(top_srcdir)/src-armci/Makefile.inc $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/src-portals4/Makefile.inc $(top_srcdir)/src-dmapp/Makefile.inc $(top_srcdir)/src-ofa/Makefile.inc $(top_srcdir)/src-mpi/Makefile.inc $(top_srcdir)/src-mpi-mt/Makefile.inc $(top_srcdir)/src-mpi-pt/Makefile.inc $(top_srcdir)/src-mpi-pr/Makefile.inc $(top_srcdir)/src-armci/Makefile.inc $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -720,7 +806,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe);; \
 	esac;
-$(top_srcdir)/src-portals4/Makefile.inc $(top_srcdir)/src-dmapp/Makefile.inc $(top_srcdir)/src-ofa/Makefile.inc $(top_srcdir)/src-mpi/Makefile.inc $(top_srcdir)/src-armci/Makefile.inc:
+$(top_srcdir)/src-portals4/Makefile.inc $(top_srcdir)/src-dmapp/Makefile.inc $(top_srcdir)/src-ofa/Makefile.inc $(top_srcdir)/src-mpi/Makefile.inc $(top_srcdir)/src-mpi-mt/Makefile.inc $(top_srcdir)/src-mpi-pt/Makefile.inc $(top_srcdir)/src-mpi-pr/Makefile.inc $(top_srcdir)/src-armci/Makefile.inc:
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck
@@ -887,6 +973,40 @@ src-mpi/comex.lo: src-mpi/$(am__dirstamp) \
 	src-mpi/$(DEPDIR)/$(am__dirstamp)
 src-mpi/groups.lo: src-mpi/$(am__dirstamp) \
 	src-mpi/$(DEPDIR)/$(am__dirstamp)
+src-mpi-mt/$(am__dirstamp):
+	@$(MKDIR_P) src-mpi-mt
+	@: > src-mpi-mt/$(am__dirstamp)
+src-mpi-mt/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src-mpi-mt/$(DEPDIR)
+	@: > src-mpi-mt/$(DEPDIR)/$(am__dirstamp)
+src-mpi-mt/comex.lo: src-mpi-mt/$(am__dirstamp) \
+	src-mpi-mt/$(DEPDIR)/$(am__dirstamp)
+src-mpi-mt/groups.lo: src-mpi-mt/$(am__dirstamp) \
+	src-mpi-mt/$(DEPDIR)/$(am__dirstamp)
+src-mpi-pt/$(am__dirstamp):
+	@$(MKDIR_P) src-mpi-pt
+	@: > src-mpi-pt/$(am__dirstamp)
+src-mpi-pt/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src-mpi-pt/$(DEPDIR)
+	@: > src-mpi-pt/$(DEPDIR)/$(am__dirstamp)
+src-mpi-pt/comex.lo: src-mpi-pt/$(am__dirstamp) \
+	src-mpi-pt/$(DEPDIR)/$(am__dirstamp)
+src-mpi-pt/groups.lo: src-mpi-pt/$(am__dirstamp) \
+	src-mpi-pt/$(DEPDIR)/$(am__dirstamp)
+src-mpi-pt/reg_cache.lo: src-mpi-pt/$(am__dirstamp) \
+	src-mpi-pt/$(DEPDIR)/$(am__dirstamp)
+src-mpi-pr/$(am__dirstamp):
+	@$(MKDIR_P) src-mpi-pr
+	@: > src-mpi-pr/$(am__dirstamp)
+src-mpi-pr/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src-mpi-pr/$(DEPDIR)
+	@: > src-mpi-pr/$(DEPDIR)/$(am__dirstamp)
+src-mpi-pr/comex.lo: src-mpi-pr/$(am__dirstamp) \
+	src-mpi-pr/$(DEPDIR)/$(am__dirstamp)
+src-mpi-pr/groups.lo: src-mpi-pr/$(am__dirstamp) \
+	src-mpi-pr/$(DEPDIR)/$(am__dirstamp)
+src-mpi-pr/reg_cache.lo: src-mpi-pr/$(am__dirstamp) \
+	src-mpi-pr/$(DEPDIR)/$(am__dirstamp)
 libcomex.la: $(libcomex_la_OBJECTS) $(libcomex_la_DEPENDENCIES) $(EXTRA_libcomex_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libcomex_la_OBJECTS) $(libcomex_la_LIBADD) $(LIBS)
 libcomexi.la: $(libcomexi_la_OBJECTS) $(libcomexi_la_DEPENDENCIES) $(EXTRA_libcomexi_la_DEPENDENCIES) 
@@ -946,6 +1066,16 @@ clean-checkPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+src-mpi-pr/hello.$(OBJEXT): src-mpi-pr/$(am__dirstamp) \
+	src-mpi-pr/$(DEPDIR)/$(am__dirstamp)
+src-mpi-pr/hello$(EXEEXT): $(src_mpi_pr_hello_OBJECTS) $(src_mpi_pr_hello_DEPENDENCIES) $(EXTRA_src_mpi_pr_hello_DEPENDENCIES) src-mpi-pr/$(am__dirstamp)
+	@rm -f src-mpi-pr/hello$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(src_mpi_pr_hello_OBJECTS) $(src_mpi_pr_hello_LDADD) $(LIBS)
+src-mpi-pt/hello.$(OBJEXT): src-mpi-pt/$(am__dirstamp) \
+	src-mpi-pt/$(DEPDIR)/$(am__dirstamp)
+src-mpi-pt/hello$(EXEEXT): $(src_mpi_pt_hello_OBJECTS) $(src_mpi_pt_hello_DEPENDENCIES) $(EXTRA_src_mpi_pt_hello_DEPENDENCIES) src-mpi-pt/$(am__dirstamp)
+	@rm -f src-mpi-pt/hello$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(src_mpi_pt_hello_OBJECTS) $(src_mpi_pt_hello_LDADD) $(LIBS)
 testing/$(am__dirstamp):
 	@$(MKDIR_P) testing
 	@: > testing/$(am__dirstamp)
@@ -1001,6 +1131,24 @@ mostlyclean-compile:
 	-rm -f src-dmapp/groups.lo
 	-rm -f src-dmapp/reg_cache.$(OBJEXT)
 	-rm -f src-dmapp/reg_cache.lo
+	-rm -f src-mpi-mt/comex.$(OBJEXT)
+	-rm -f src-mpi-mt/comex.lo
+	-rm -f src-mpi-mt/groups.$(OBJEXT)
+	-rm -f src-mpi-mt/groups.lo
+	-rm -f src-mpi-pr/comex.$(OBJEXT)
+	-rm -f src-mpi-pr/comex.lo
+	-rm -f src-mpi-pr/groups.$(OBJEXT)
+	-rm -f src-mpi-pr/groups.lo
+	-rm -f src-mpi-pr/hello.$(OBJEXT)
+	-rm -f src-mpi-pr/reg_cache.$(OBJEXT)
+	-rm -f src-mpi-pr/reg_cache.lo
+	-rm -f src-mpi-pt/comex.$(OBJEXT)
+	-rm -f src-mpi-pt/comex.lo
+	-rm -f src-mpi-pt/groups.$(OBJEXT)
+	-rm -f src-mpi-pt/groups.lo
+	-rm -f src-mpi-pt/hello.$(OBJEXT)
+	-rm -f src-mpi-pt/reg_cache.$(OBJEXT)
+	-rm -f src-mpi-pt/reg_cache.lo
 	-rm -f src-mpi/comex.$(OBJEXT)
 	-rm -f src-mpi/comex.lo
 	-rm -f src-mpi/groups.$(OBJEXT)
@@ -1053,6 +1201,16 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src-dmapp/$(DEPDIR)/comex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-dmapp/$(DEPDIR)/groups.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-dmapp/$(DEPDIR)/reg_cache.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src-mpi-mt/$(DEPDIR)/comex.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src-mpi-mt/$(DEPDIR)/groups.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src-mpi-pr/$(DEPDIR)/comex.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src-mpi-pr/$(DEPDIR)/groups.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src-mpi-pr/$(DEPDIR)/hello.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src-mpi-pr/$(DEPDIR)/reg_cache.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src-mpi-pt/$(DEPDIR)/comex.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src-mpi-pt/$(DEPDIR)/groups.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src-mpi-pt/$(DEPDIR)/hello.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src-mpi-pt/$(DEPDIR)/reg_cache.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-mpi/$(DEPDIR)/comex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-mpi/$(DEPDIR)/groups.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-ofa/$(DEPDIR)/comex.Plo@am__quote@
@@ -1109,6 +1267,9 @@ clean-libtool:
 	-rm -rf src-armci/.libs src-armci/_libs
 	-rm -rf src-dmapp/.libs src-dmapp/_libs
 	-rm -rf src-mpi/.libs src-mpi/_libs
+	-rm -rf src-mpi-mt/.libs src-mpi-mt/_libs
+	-rm -rf src-mpi-pr/.libs src-mpi-pr/_libs
+	-rm -rf src-mpi-pt/.libs src-mpi-pt/_libs
 	-rm -rf src-ofa/.libs src-ofa/_libs
 	-rm -rf src-portals4/.libs src-portals4/_libs
 	-rm -rf testing/.libs testing/_libs
@@ -1545,6 +1706,12 @@ distclean-generic:
 	-rm -f src-armci/$(am__dirstamp)
 	-rm -f src-dmapp/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src-dmapp/$(am__dirstamp)
+	-rm -f src-mpi-mt/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src-mpi-mt/$(am__dirstamp)
+	-rm -f src-mpi-pr/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src-mpi-pr/$(am__dirstamp)
+	-rm -f src-mpi-pt/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src-mpi-pt/$(am__dirstamp)
 	-rm -f src-mpi/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src-mpi/$(am__dirstamp)
 	-rm -f src-ofa/$(DEPDIR)/$(am__dirstamp)
@@ -1570,7 +1737,7 @@ clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-checkPROGRAMS \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src-armci/$(DEPDIR) src-dmapp/$(DEPDIR) src-mpi/$(DEPDIR) src-ofa/$(DEPDIR) src-portals4/$(DEPDIR) testing/$(DEPDIR) tools/$(DEPDIR)
+	-rm -rf src-armci/$(DEPDIR) src-dmapp/$(DEPDIR) src-mpi-mt/$(DEPDIR) src-mpi-pr/$(DEPDIR) src-mpi-pt/$(DEPDIR) src-mpi/$(DEPDIR) src-ofa/$(DEPDIR) src-portals4/$(DEPDIR) testing/$(DEPDIR) tools/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -1618,7 +1785,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src-armci/$(DEPDIR) src-dmapp/$(DEPDIR) src-mpi/$(DEPDIR) src-ofa/$(DEPDIR) src-portals4/$(DEPDIR) testing/$(DEPDIR) tools/$(DEPDIR)
+	-rm -rf src-armci/$(DEPDIR) src-dmapp/$(DEPDIR) src-mpi-mt/$(DEPDIR) src-mpi-pr/$(DEPDIR) src-mpi-pt/$(DEPDIR) src-mpi/$(DEPDIR) src-ofa/$(DEPDIR) src-portals4/$(DEPDIR) testing/$(DEPDIR) tools/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

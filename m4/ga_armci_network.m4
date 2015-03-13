@@ -140,8 +140,8 @@ AM_CONDITIONAL([HAVE_ARMCI_MSG_INIT],
 AM_CONDITIONAL([HAVE_ARMCI_MSG_FINALIZE],
    [test "x$ac_cv_search_armci_msg_finalize" = x1])
 AS_IF([test "x$happy" = xyes],
-    [ga_armci_network=ARMCI; with_armci=yes; $1],
-    [$2])
+    [ga_armci_network=ARMCI; with_armci=yes; armci_network_external=1; $1],
+    [armci_network_external=0; $2])
 ])dnl
 
 # _GA_ARMCI_NETWORK_BGML([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
@@ -266,16 +266,28 @@ AS_IF([test "x$happy" = xyes],
 AC_DEFUN([_GA_ARMCI_NETWORK_MPI_MT], [
 AC_MSG_NOTICE([searching for MPI_MT...])
 happy=yes
-CPPFLAGS="$CPPFLAGS $GA_MP_CPPFLAGS"
-LDFLAGS="$LDFLAGS $GA_MP_LDFLAGS"
-LIBS="$LIBS $GA_MP_LIBS"
-AS_IF([test "x$happy" = xyes],
-    [AC_CHECK_HEADER([mpi.h], [], [happy=no])])
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([MPI_Init_thread], [mpi mpich.cnk mpich.rts],
-        [], [happy=no])])
 AS_IF([test "x$happy" = xyes],
     [ga_armci_network=MPI_MT; with_mpi_mt=yes; $1],
+    [$2])
+])dnl
+
+# _GA_ARMCI_NETWORK_MPI_PT([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+# ---------------------------------------------------------------------
+AC_DEFUN([_GA_ARMCI_NETWORK_MPI_PT], [
+AC_MSG_NOTICE([searching for MPI_PT...])
+happy=yes
+AS_IF([test "x$happy" = xyes],
+    [ga_armci_network=MPI_PT; with_mpi_pt=yes; $1],
+    [$2])
+])dnl
+
+# _GA_ARMCI_NETWORK_MPI_PR([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+# ---------------------------------------------------------------------
+AC_DEFUN([_GA_ARMCI_NETWORK_MPI_PR], [
+AC_MSG_NOTICE([searching for MPI_PR...])
+happy=yes
+AS_IF([test "x$happy" = xyes],
+    [ga_armci_network=MPI_PR; with_mpi_pr=yes; $1],
     [$2])
 ])dnl
 
@@ -448,7 +460,9 @@ _GA_ARMCI_NETWORK_WITH([dcmf],      [IBM BG/P Deep Computing Message Framework])
 _GA_ARMCI_NETWORK_WITH([dmapp],     [(Comex) Cray DMAPP])
 _GA_ARMCI_NETWORK_WITH([gemini],    [Cray XE Gemini using libonesided])
 _GA_ARMCI_NETWORK_WITH([lapi],      [IBM LAPI])
-_GA_ARMCI_NETWORK_WITH([mpi-mt],    [MPI-2 multi-threading])
+_GA_ARMCI_NETWORK_WITH([mpi-mt],    [(Comex) MPI-2 multi-threading])
+_GA_ARMCI_NETWORK_WITH([mpi-pt],    [(Comex) MPI-2 multi-threading with progress thread])
+_GA_ARMCI_NETWORK_WITH([mpi-pr],    [(Comex) MPI-1 two-sided with progress rank])
 _GA_ARMCI_NETWORK_WITH([mpi-spawn], [MPI-2 dynamic process mgmt])
 _GA_ARMCI_NETWORK_WITH([mpi-ts],    [(Comex) MPI-1 two-sided])
 _GA_ARMCI_NETWORK_WITH([ofa],       [(Comex) Infiniband OpenIB])
@@ -476,6 +490,10 @@ dnl     AS_IF([test "x$ga_armci_network" = x && test "x$with_mpi_ts" != xno],
 dnl         [_GA_ARMCI_NETWORK_MPI_TS()])
 dnl     AS_IF([test "x$ga_armci_network" = x && test "x$with_mpi_mt" != xno],
 dnl         [_GA_ARMCI_NETWORK_MPI_MT()])
+dnl     AS_IF([test "x$ga_armci_network" = x && test "x$with_mpi_pt" != xno],
+dnl         [_GA_ARMCI_NETWORK_MPI_PT()])
+dnl     AS_IF([test "x$ga_armci_network" = x && test "x$with_mpi_pr" != xno],
+dnl         [_GA_ARMCI_NETWORK_MPI_PR()])
 dnl     AS_IF([test "x$ga_armci_network" = x && test "x$with_mpi_spawn" != xno],
 dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_ofa" != xno],
@@ -526,6 +544,12 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
               AS_IF([test "x$ga_armci_network" = xMPI_MT],
                  [_GA_ARMCI_NETWORK_MPI_MT([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=MPI_MT failed])])])
+              AS_IF([test "x$ga_armci_network" = xMPI_PT],
+                 [_GA_ARMCI_NETWORK_MPI_PT([],
+                    [AC_MSG_ERROR([test for ARMCI_NETWORK=MPI_PT failed])])])
+              AS_IF([test "x$ga_armci_network" = xMPI_PR],
+                 [_GA_ARMCI_NETWORK_MPI_PR([],
+                    [AC_MSG_ERROR([test for ARMCI_NETWORK=MPI_PR failed])])])
               AS_IF([test "x$ga_armci_network" = xMPI_SPAWN],
                  [_GA_ARMCI_NETWORK_MPI_SPAWN([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=MPI_SPAWN failed])])])
@@ -555,6 +579,8 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
          _GA_ARMCI_NETWORK_WARN([lapi])
          _GA_ARMCI_NETWORK_WARN([mpi-ts])
          _GA_ARMCI_NETWORK_WARN([mpi-mt])
+         _GA_ARMCI_NETWORK_WARN([mpi-pt])
+         _GA_ARMCI_NETWORK_WARN([mpi-pr])
          _GA_ARMCI_NETWORK_WARN([mpi-spawn])
          _GA_ARMCI_NETWORK_WARN([ofa])
          _GA_ARMCI_NETWORK_WARN([openib])
@@ -577,6 +603,8 @@ _GA_ARMCI_NETWORK_AM_CONDITIONAL([dmapp])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([lapi])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-ts])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-mt])
+_GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-pt])
+_GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-pr])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-spawn])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([ofa])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([openib])
@@ -597,19 +625,23 @@ AM_CONDITIONAL([DCMF_VER_0_3], [test x = x]) # always true
 AS_CASE([$ga_armci_network],
 [DMAPP],    [ARMCI_SRC_DIR=comex],
 [GEMINI],   [ARMCI_SRC_DIR=src-gemini],
-[MPI_MT],   [ARMCI_SRC_DIR=src],
+[MPI_MT],   [ARMCI_SRC_DIR=comex],
+[MPI_PT],   [ARMCI_SRC_DIR=comex],
+[MPI_PR],   [ARMCI_SRC_DIR=comex],
 [MPI_TS],   [ARMCI_SRC_DIR=comex],
 [OFA],      [ARMCI_SRC_DIR=comex],
 [OPENIB],   [ARMCI_SRC_DIR=src],
 [PORTALS4], [ARMCI_SRC_DIR=comex],
 [PORTALS],  [ARMCI_SRC_DIR=src-portals],
-[GEMINI],   [ARMCI_SRC_DIR=src-gemini],
             [ARMCI_SRC_DIR=src])
 AC_SUBST([ARMCI_SRC_DIR])
 AM_CONDITIONAL([ARMCI_SRC_DIR_PORTALS], [test "x$ARMCI_SRC_DIR" = "xsrc-portals"])
 AM_CONDITIONAL([ARMCI_SRC_DIR_GEMINI],  [test "x$ARMCI_SRC_DIR" = "xsrc-gemini"])
 AM_CONDITIONAL([ARMCI_SRC_DIR_COMEX],   [test "x$ARMCI_SRC_DIR" = "xcomex"])
 AM_CONDITIONAL([ARMCI_SRC_DIR_SRC],     [test "x$ARMCI_SRC_DIR" = "xsrc"])
+AS_IF([test "x$ARMCI_SRC_DIR" = "xcomex"], [armci_network_external=1])
+AM_CONDITIONAL([ARMCI_NETWORK_EXTERNAL], [test "x$armci_network_external" = x1])
+AM_CONDITIONAL([ARMCI_NETWORK_COMEX], [test "x$ARMCI_SRC_DIR" = "xcomex"])
 
 # tcgmsg5 requires this
 AS_IF([test x$ga_armci_network = xLAPI],
@@ -659,7 +691,7 @@ AM_CONDITIONAL([HAVE_ARMCI_STRIDE_INFO_INIT],
     [test "x$ga_armci_network" != xARMCI && test "x$ga_armci_network" != xGEMINI && test "x$ga_armci_network" != xPORTALS])
 
 # ugly hack for working around NWChem memory requirements
-# and MPI startup verus the 'classic' ARMCI startup
+# and MPI_PR startup verus the 'classic' ARMCI startup
 delay_tcgmsg_mpi_startup=1
 AS_CASE([$ga_armci_network],
 [ARMCI],        [delay_tcgmsg_mpi_startup=0],
@@ -669,6 +701,9 @@ AS_CASE([$ga_armci_network],
 [DMAPP],        [delay_tcgmsg_mpi_startup=0],
 [LAPI],         [delay_tcgmsg_mpi_startup=1],
 [MPI_TS],       [delay_tcgmsg_mpi_startup=0],
+[MPI_MT],       [delay_tcgmsg_mpi_startup=0],
+[MPI_PT],       [delay_tcgmsg_mpi_startup=0],
+[MPI_PR],       [delay_tcgmsg_mpi_startup=0],
 [MPI_SPAWN],    [delay_tcgmsg_mpi_startup=1],
 [OFA],          [delay_tcgmsg_mpi_startup=0],
 [OPENIB],       [delay_tcgmsg_mpi_startup=1],

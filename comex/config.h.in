@@ -30,6 +30,15 @@
 /* Define to 1 if the network is DMAPP */
 #undef COMEX_NETWORK_DMAPP
 
+/* Define to 1 if the network is MPI_MT */
+#undef COMEX_NETWORK_MPI_MT
+
+/* Define to 1 if the network is MPI_PR */
+#undef COMEX_NETWORK_MPI_PR
+
+/* Define to 1 if the network is MPI_PT */
+#undef COMEX_NETWORK_MPI_PT
+
 /* Define to 1 if the network is MPI_TS */
 #undef COMEX_NETWORK_MPI_TS
 

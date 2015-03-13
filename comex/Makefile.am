@@ -109,6 +109,27 @@ include $(top_srcdir)/src-mpi/Makefile.inc
 endif
 
 ##############################################################################
+# src-mpi-mt
+#
+if COMEX_NETWORK_MPI_MT
+include $(top_srcdir)/src-mpi-mt/Makefile.inc
+endif
+
+##############################################################################
+# src-mpi-pt
+#
+if COMEX_NETWORK_MPI_PT
+include $(top_srcdir)/src-mpi-pt/Makefile.inc
+endif
+
+##############################################################################
+# src-mpi-pr
+#
+if COMEX_NETWORK_MPI_PR
+include $(top_srcdir)/src-mpi-pr/Makefile.inc
+endif
+
+##############################################################################
 # src-armci
 #
 include $(top_srcdir)/src-armci/Makefile.inc
