@@ -32,7 +32,7 @@
 #endif
  
 /*#define PERMUTE_PIDS */
-/*#define USE_GATSCAT_NEW 1 */
+#define USE_GATSCAT_NEW
 
 #if HAVE_STDIO_H
 #   include <stdio.h>

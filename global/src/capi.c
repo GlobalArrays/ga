@@ -29,6 +29,8 @@
 #   include "ga-wapidefs.h"
 #endif
 
+#define USE_GATSCAT_NEW
+
 int *_ga_argc=NULL;
 char ***_ga_argv=NULL;
 int _ga_initialize_args=0;
