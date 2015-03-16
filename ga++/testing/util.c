@@ -18,7 +18,7 @@
 #   define sleep(x) Sleep(1000*(x))
 #endif
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 #  include <mpi.h>
 #else
 #  include <tcgmsg.h>
@@ -427,7 +427,7 @@ Integer FATR util_mitob_(Integer *n)
 
 double FATR util_timer_()
 {
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
        return MPI_Wtime();
 #else
        return tcg_time();

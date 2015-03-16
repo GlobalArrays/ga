@@ -181,7 +181,7 @@ int me, nproc;
     if(me==0)printf("Terminating ..\n");
     GA_Terminate();
 
-#   ifdef MPI
+#   ifdef MSG_COMMS_MPI
       MPI_Finalize();
 #   else
       tcg_pend();

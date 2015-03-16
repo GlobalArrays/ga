@@ -15,7 +15,7 @@
 #if 1 || defined(HITACHI) || defined(CRAY_T3E) || defined(CRAY_XT) || defined(BGML)
 #  define MEMCPY
 #endif
-#if defined(LINUX64) && defined(SGIALTIX) && defined(MPI)
+#if defined(LINUX64) && defined(SGIALTIX) && defined(MSG_COMMS_MPI)
 /* fastbcopy from Wayne Vieira and Gerardo Cisneros */
 #define MEMCPY
 #define armci_copy(src, dst, len) _fastbcopy(src, dst, len)

@@ -57,7 +57,7 @@ void armci_shmalloc_exchange_address(void **ptr_arr)
     }
 }
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 
 extern int ARMCI_Absolute_id(ARMCI_Group *group,int group_rank);
 

@@ -38,7 +38,7 @@
 #define MAX_BLOCKS      256
 #define SAFELIMIT       3
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 #   define CLOCK_ MPI_Wtime
 #else
 #   define CLOCK_ tcg_time
@@ -762,7 +762,7 @@ int main(int argc, char **argv) {
    */
   GA_Terminate();
   
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
   MPI_Finalize();
 #else
   tcg_pend(); 

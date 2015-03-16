@@ -1672,7 +1672,7 @@ void FATR nga_zgop_(Integer *type, DoubleComplex *x, Integer *n, char *op, int l
     wnga_gop(pnga_type_f2c(MT_F_DCPL), x, *n, op);
 }
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 #   include "ga-mpi.h"
 #   define ga_mpi_comm_ F77_FUNC_(ga_mpi_comm,GA_MPI_COMM)
 void FATR ga_mpi_comm_(Integer *fcomm)

@@ -1018,7 +1018,7 @@ void pnga_pgroup_set_default(Integer grp)
 #endif
     GA_Default_Proc_Group = (int)(grp);
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     {
        ARMCI_Group parent_grp;
        if(GA_Default_Proc_Group > 0)
@@ -1046,7 +1046,7 @@ Integer pnga_pgroup_create(Integer *list, Integer count)
     int tmp_count;
     Integer *tmp_list;
     int *tmp2_list;
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     ARMCI_Group *tmpgrp;
 #endif
  
@@ -1125,7 +1125,7 @@ Integer pnga_pgroup_create(Integer *list, Integer count)
     PGRP_LIST[pgrp_handle].parent = GA_Default_Proc_Group;
     PGRP_LIST[pgrp_handle].mirrored = 0;
     PGRP_LIST[pgrp_handle].map_nproc = tmp_count;
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     tmpgrp = &PGRP_LIST[pgrp_handle].group;
 #if ENABLE_CHECKPOINT
     if(ga_group_is_for_ft)
@@ -1140,7 +1140,7 @@ Integer pnga_pgroup_create(Integer *list, Integer count)
     free(tmp2_list);
 
     GA_POP_NAME;
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     return pgrp_handle;
 #else
     return pnga_pgroup_get_default();
@@ -1162,7 +1162,7 @@ logical pnga_pgroup_destroy(Integer grp_id)
    GA_PUSH_NAME("ga_pgroup_destroy_");
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
        ARMCI_Group_free(&PGRP_LIST[grp_id].group);
 #endif
   /* check to make sure there are no GAs that depend on this process group */
@@ -1341,7 +1341,7 @@ Integer pnga_pgroup_split_irreg(Integer grp, Integer mycolor)
   return grp_id;
 }
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 ARMCI_Group* ga_get_armci_group_(int grp_id)
 {
   return &PGRP_LIST[grp_id].group;
@@ -2335,7 +2335,7 @@ int i, nproc,grp_me=GAme;
        bzero(ptr_array,nproc*sizeof(char*));
        /* use ARMCI_Malloc_group for groups if proc group is not world group
 	  or mirror group */
-#  ifdef MPI
+#  ifdef MSG_COMMS_MPI
        if (grp_id > 0)
 	  status = ARMCI_Malloc_group((void**)ptr_array, bytes,
 				      &PGRP_LIST[grp_id].group);
@@ -2350,7 +2350,7 @@ int i, nproc,grp_me=GAme;
        
     /* use ARMCI_Malloc_group for groups if proc group is not world group
        or mirror group */
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     if (grp_id > 0) {
        status = ARMCI_Malloc_group((void**)ptr_arr, (armci_size_t)bytes,
 				   &PGRP_LIST[grp_id].group);
@@ -2392,7 +2392,7 @@ int i, nproc,grp_me=GAme;
 
 int gai_uses_shm(int grp_id) 
 {
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     if(grp_id > 0) return ARMCI_Uses_shm_grp(&PGRP_LIST[grp_id].group);
     else
 #endif
@@ -2440,7 +2440,7 @@ char *ptr = (char*)0;
      }
 #   endif
      
-#   ifdef MPI
+#   ifdef MSG_COMMS_MPI
      if (grp_id > 0) {
         armci_exchange_address_grp((void**)ptr_arr,(int)nproc,
                                    &PGRP_LIST[grp_id].group);
@@ -2843,7 +2843,7 @@ int local_sync_begin,local_sync_end;
     if(gai_uses_shm((int)grp_id)){
 #endif
       /* make sure that we free original (before address allignment) pointer */
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
       if (grp_id > 0){
 	 ARMCI_Free_group(GA[ga_handle].ptr[grp_me] - GA[ga_handle].id,
 			  &PGRP_LIST[grp_id].group);
@@ -4356,7 +4356,7 @@ int ga_recover_arrays(Integer *gas, int num)
 
 Integer pnga_pgroup_absolute_id(Integer grp, Integer pid) 
 {
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
   if(grp == GA_World_Proc_Group) /*a.k.a -1*/
     return pid;
   else

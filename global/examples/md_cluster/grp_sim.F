@@ -35,7 +35,7 @@ c
 c
 c   Initialize message passing
 c
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
       integer ierr
       call mpi_init(ierr)
 #else
@@ -179,7 +179,7 @@ c        write(6,106) itask,me
   300 format('Time for task[',i3,']           : ',f16.4)
   301 format('Time for group[',i3,']          : ',f16.4)
       call ga_terminate()
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 c      write(6,*) 'Calling mpi_finalize'
       call mpi_finalize()
 #else

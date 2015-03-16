@@ -519,6 +519,9 @@
 #undef MPI_MT
 
 /* TODO */
+#undef MPI_PT
+
+/* TODO */
 #undef MPI_SPAWN
 
 /* Use MPI for messaging */
@@ -801,12 +804,3 @@
 /* Define to empty if the keyword `volatile' does not work. Warning: valid
    code using `volatile' can become incorrect without. Disable with care. */
 #undef volatile
-
-/* DO NOT MODIFY THE FOLLOWING PREPROCESSOR DIRECTIVES */
-#ifdef MSG_COMMS_MPI
-#   ifdef __cplusplus
-#       define MPIPP
-#   else
-#       define MPI
-#   endif /* __cplusplus */
-#endif /* MSG_COMMS_MPI */

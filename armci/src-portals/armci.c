@@ -370,7 +370,7 @@ int PARMCI_Init()
     armci_prot_switch_fence = malloc(sizeof(int*)*armci_nproc);
     assert(armci_prot_switch_fence !=NULL);
     armci_init_portals(atbeginbrval);
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     armci_group_init();
 #endif
 #ifndef NEW_MALLOC
@@ -427,7 +427,7 @@ void PARMCI_Finalize()
     armci_group_finalize();
     free(armci_prot_switch_fence);
 #endif
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     MPI_Comm_free(&ARMCI_COMM_WORLD);
 #endif
 }

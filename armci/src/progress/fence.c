@@ -108,7 +108,7 @@ void PARMCI_Barrier()
     bgml_barrier(3);
 #else
     PARMCI_AllFence();
-#  ifdef MPI
+#  ifdef MSG_COMMS_MPI
     MPI_Barrier(ARMCI_COMM_WORLD);
 #  else
     {

@@ -380,7 +380,7 @@ int ARMCI_Ckpt_init(char *filename, ARMCI_Group *grp, int savestack, int savehea
 int ARMCI_Ckpt(int rid);
 void ARMCI_Ckpt_finalize(int rid);
 #define ARMCI_Restart_simulate armci_irecover
-# ifdef MPI
+# ifdef MSG_COMMS_MPI
     ARMCI_Group * ARMCI_Get_ft_group();
 # endif
 #endif

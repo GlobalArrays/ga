@@ -20,7 +20,7 @@
 #define  ARMCI_COLLECTIVES 
 #endif
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 #   include <mpi.h>
 extern MPI_Comm ARMCI_COMM_WORLD;
 #   include "ga-mpi.h"
@@ -40,7 +40,7 @@ void pnga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root)
 #ifdef ARMCI_COLLECTIVES
     int p_grp = (int)pnga_pgroup_get_default();
     if (p_grp > 0) {
-#   ifdef MPI
+#   ifdef MSG_COMMS_MPI
         int aroot = PGRP_LIST[p_grp].inv_map_proc_list[root];
         armci_msg_group_bcast_scope(SCOPE_ALL,buffer, (int)len, aroot,(&(PGRP_LIST[p_grp].group)));
 #   endif
@@ -48,7 +48,7 @@ void pnga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root)
         armci_msg_bcast(buffer, (int)len, (int)root);
     }
 #else
-#   ifdef MPI
+#   ifdef MSG_COMMS_MPI
     MPI_Bcast(buffer, (int)len, MPI_CHAR, (int)root, ARMCI_COMM_WORLD);
 #   else
     tcg_brdcst(type, buffer, len, root);
@@ -78,7 +78,7 @@ void pnga_pgroup_brdcst(Integer grp_id, Integer type, void *buf,
     int p_grp = (int)grp_id;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if (p_grp > 0) {
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
        int aroot = PGRP_LIST[p_grp].inv_map_proc_list[originator];
        armci_msg_group_bcast_scope(SCOPE_ALL,buf,(int)len,aroot,(&(PGRP_LIST[p_grp].group)));
 #endif
@@ -89,7 +89,7 @@ void pnga_pgroup_brdcst(Integer grp_id, Integer type, void *buf,
 }
 
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 MPI_Comm GA_MPI_Comm()
 {
     return GA_MPI_Comm_pgroup(-1);
@@ -121,7 +121,7 @@ MPI_Comm GA_MPI_Comm_pgroup(int p_grp)
 #endif
 void pnga_msg_sync()
 {
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     int p_grp = (int)pnga_pgroup_get_default(); 
     if(p_grp>0)
        armci_msg_group_barrier(&(PGRP_LIST[p_grp].group));
@@ -144,14 +144,14 @@ void pnga_msg_pgroup_sync(Integer grp_id)
 {
     int p_grp = (int)(grp_id);
     if(p_grp>0) {
-#     ifdef MPI       
+#     ifdef MSG_COMMS_MPI       
         armci_msg_group_barrier(&(PGRP_LIST[p_grp].group));
 #     else
         pnga_error("ga_msg_pgroup_sync not implemented",0);
 #     endif
     }
     else {
-#     if defined(MPI) || defined(LAPI)
+#     if defined(MSG_COMMS_MPI) || defined(LAPI)
        armci_msg_barrier();
 #     else
        tcg_synch(GA_TYPE_SYN);
@@ -167,7 +167,7 @@ void pnga_pgroup_gop(Integer p_grp, Integer type, void *x, Integer n, char *op)
 {
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if (p_grp > 0) {
-#if defined(ARMCI_COLLECTIVES) && defined(MPI)
+#if defined(ARMCI_COLLECTIVES) && defined(MSG_COMMS_MPI)
         int group = (int)p_grp;
         switch (type){
             case C_INT:
@@ -213,7 +213,7 @@ void pnga_gop(Integer type, void *x, Integer n, char *op)
     if (p_grp > 0) {
         pnga_pgroup_gop(p_grp, type, x, n, op);
     } else {
-#if defined(ARMCI_COLLECTIVES) || defined(MPI)
+#if defined(ARMCI_COLLECTIVES) || defined(MSG_COMMS_MPI)
         switch (type){
             case C_INT:
                 armci_msg_igop((int*)x, n, op);

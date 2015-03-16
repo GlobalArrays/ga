@@ -444,7 +444,7 @@ extern void armci_global_region_exchange(void *, long);
 #ifdef BGML
 #define   PCLASS 3
 #endif
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 typedef int ARMCI_Datatype;
 
 extern int ATTR_KEY; /* attribute key */
@@ -488,7 +488,7 @@ extern void armci_group_init();
 extern void armci_group_finalize();
 extern ARMCI_iGroup* armci_get_igroup_from_group(ARMCI_Group *group);
  
-#endif /* ifdef MPI */ 
+#endif /* ifdef MSG_COMMS_MPI */ 
 /* -------------------------------------------------------- */
 
 /* ------------ ARMCI Chekcpointing/Recovery -------------- */

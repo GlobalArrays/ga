@@ -4522,10 +4522,6 @@ fi
 
 
 
-# Unless we rename all preprocessor symbols of MPI and MPIPP
-# in the source code, this hack is necessary.
-
-
 #########################################
 # C compiler
 #########################################
@@ -39884,6 +39880,21 @@ $as_echo "#define SERVER_THREAD 1" >>confdefs.h
 
 
 $as_echo "#define MPI_MT 1" >>confdefs.h
+
+     ;; #(
+  MPI_PT) :
+
+
+$as_echo "#define PTHREADS 1" >>confdefs.h
+
+
+$as_echo "#define DATA_SERVER 1" >>confdefs.h
+
+
+$as_echo "#define SERVER_THREAD 1" >>confdefs.h
+
+
+$as_echo "#define MPI_PT 1" >>confdefs.h
 
      ;; #(
   MPI_SPAWN) :

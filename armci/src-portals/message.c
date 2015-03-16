@@ -10,8 +10,8 @@
 #elif defined(TCGMSG)
 #   include <tcgmsg.h>
 #else
-#   ifndef MPI
-#      define MPI
+#   ifndef MSG_COMMS_MPI
+#      define MSG_COMMS_MPI
 #   endif
 #   include <mpi.h>
 #endif
@@ -427,7 +427,7 @@ void parmci_msg_barrier()
 {
 #ifdef BGML
   bgml_barrier (3); /* this is always faster than MPI_Barrier() */
-#elif defined(MPI)
+#elif defined(MSG_COMMS_MPI)
      MPI_Barrier(ARMCI_COMM_WORLD);
 #  elif defined(PVM)
      pvm_barrier(mp_group_name, armci_nproc);
@@ -457,7 +457,7 @@ void armci_msg_init(int *argc, char ***argv)
     }
 #elif defined(BGML)
     /* empty */
-#elif defined(MPI)
+#elif defined(MSG_COMMS_MPI)
     int flag=0;
     MPI_Initialized(&flag);
     if (!flag) {
@@ -481,7 +481,7 @@ int armci_msg_me()
     return BGML_Messager_rank();
 #elif defined(DCMF)
     return DCMF_Messager_rank();
-#elif defined(MPI)
+#elif defined(MSG_COMMS_MPI)
     static int counter = 0;
     if (counter == 0) {
         int me;
@@ -505,7 +505,7 @@ int armci_msg_nproc()
     return BGML_Messager_size();
 #elif defined(DCMF)
     return DCMF_Messager_size();
-#elif defined(MPI)
+#elif defined(MSG_COMMS_MPI)
     static int counter = 0;
     if (counter == 0) {
         int nproc;
@@ -532,7 +532,7 @@ double armci_timer()
     return BGML_Timer();
 #elif defined(DCMF)
     return DCMF_Timer();
-#elif defined(MPI)
+#elif defined(MSG_COMMS_MPI)
 
     return MPI_Wtime();
 #else
@@ -548,7 +548,7 @@ void armci_msg_abort(int code)
     fprintf(stderr,"ARMCI aborting [%d]\n", code);
 #elif defined(DCMF)
     fprintf(stderr,"ARMCI aborting [%d]\n", code);
-#elif defined(MPI)
+#elif defined(MSG_COMMS_MPI)
 #    ifndef BROKEN_MPI_ABORT
     MPI_Abort(ARMCI_COMM_WORLD,code);
 #    endif
@@ -568,7 +568,7 @@ void armci_msg_finalize()
 {
 #if defined(TCGMSG)
     tcg_pend();
-#elif defined(MPI)
+#elif defined(MSG_COMMS_MPI)
     MPI_Finalize();
 #endif
 }
@@ -816,7 +816,7 @@ void armci_msg_brdcst(void* buffer, int len, int root)
 
 #ifdef BGML
    BGTr_Bcast(root, buffer, len, PCLASS);
-# elif defined(MPI)
+# elif defined(MSG_COMMS_MPI)
       MPI_Bcast(buffer, len, MPI_CHAR, root, ARMCI_COMM_WORLD);
 #  elif defined(PVM)
       armci_msg_bcast(buffer, len, root);
@@ -831,14 +831,14 @@ void armci_msg_brdcst(void* buffer, int len, int root)
 
 void armci_msg_snd(int tag, void* buffer, int len, int to)
 {
-#  ifdef MPI
+#  ifdef MSG_COMMS_MPI
       MPI_Send(buffer, len, MPI_CHAR, to, tag, ARMCI_COMM_WORLD);
 #  elif defined(PVM)
       pvm_psend(pvm_gettid(mp_group_name, to), tag, buffer, len, PVM_BYTE);
 # elif defined(BGML)
       /* We don't actually used armci_msg_snd in ARMCI. we use optimized 
        * collectives where
-       * armci_msg_snd is used. If you build Global Arrays, the MPI flag is 
+       * armci_msg_snd is used. If you build Global Arrays, the MSG_COMMS_MPI flag is 
        * set, so that
        * will work fine 
        */
@@ -854,7 +854,7 @@ void armci_msg_snd(int tag, void* buffer, int len, int to)
 \*/
 void armci_msg_rcv(int tag, void* buffer, int buflen, int *msglen, int from)
 {
-#  ifdef MPI
+#  ifdef MSG_COMMS_MPI
       MPI_Status status;
       MPI_Recv(buffer, buflen, MPI_CHAR, from, tag, ARMCI_COMM_WORLD, &status);
       if(msglen) MPI_Get_count(&status, MPI_CHAR, msglen);
@@ -875,7 +875,7 @@ void armci_msg_rcv(int tag, void* buffer, int buflen, int *msglen, int from)
 
 int armci_msg_rcvany(int tag, void* buffer, int buflen, int *msglen)
 {
-#if defined(MPI)
+#if defined(MSG_COMMS_MPI)
       int ierr;
       MPI_Status status;
 
@@ -1889,9 +1889,9 @@ void armci_exchange_address(void *ptr_ar[], int n)
 
 /**
  * ********************* Begin ARMCI Groups Code ****************************
- * NOTE: This part is MPI dependent (i.e. ifdef MPI)
+ * NOTE: This part is MPI dependent (i.e. ifdef MSG_COMMS_MPI)
  */
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 MPI_Comm armci_group_comm(ARMCI_Group *group)
 {
 #ifdef ARMCI_GROUP
@@ -2119,7 +2119,7 @@ void armci_msg_group_fgop(float *x, int n, char* op,ARMCI_Group *group)
 void armci_msg_group_dgop(double *x, int n, char* op,ARMCI_Group *group)
 { armci_msg_group_gop_scope(SCOPE_ALL,x, n, op, ARMCI_DOUBLE,group); }
 
-#  endif /* ifdef MPI */
+#  endif /* ifdef MSG_COMMS_MPI */
 /*********************** End ARMCI Groups Code ****************************/
 
 

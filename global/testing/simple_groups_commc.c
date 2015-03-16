@@ -9,6 +9,7 @@
 #include "ga.h"
 #include "ga-mpi.h"
 #include "macdecls.h"
+#include "mp3.h"
 
 #define n 4
 #define PROC_LIST_SIZE 100

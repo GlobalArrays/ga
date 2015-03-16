@@ -12,6 +12,9 @@
 /* Defined when using DCMF */
 #undef ARMCIX
 
+/* upper bound for ARMCI_DEFAULT_SHMMAX environment variable */
+#undef ARMCI_DEFAULT_SHMMAX_UBOUND
+
 /* Define to 1 if GPC calls are enabled */
 #undef ARMCI_ENABLE_GPC_CALLS
 
@@ -443,6 +446,9 @@
 #undef MPI_MT
 
 /* TODO */
+#undef MPI_PT
+
+/* TODO */
 #undef MPI_SPAWN
 
 /* Use MPI for messaging */
@@ -741,12 +747,3 @@
 /* Define to empty if the keyword `volatile' does not work. Warning: valid
    code using `volatile' can become incorrect without. Disable with care. */
 #undef volatile
-
-/* DO NOT MODIFY THE FOLLOWING PREPROCESSOR DIRECTIVES */
-#ifdef MSG_COMMS_MPI
-#   ifdef __cplusplus
-#       define MPIPP
-#   else
-#       define MPI
-#   endif /* __cplusplus */
-#endif /* MSG_COMMS_MPI */

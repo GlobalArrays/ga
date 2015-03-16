@@ -107,6 +107,12 @@
 #undef HAVE_MMAP
 
 /* Define to 1 if you have AC_func, 0 if you don't */
+#undef HAVE_MPIX_IBARRIER
+
+/* Define to 1 if you have AC_func, 0 if you don't */
+#undef HAVE_MPI_IBARRIER
+
+/* Define to 1 if you have AC_func, 0 if you don't */
 #undef HAVE_MUNMAP
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
@@ -115,8 +121,17 @@
 /* Define to 1 if you have AC_header, 0 if you don't */
 #undef HAVE_PTHREAD_H
 
+/* Define to 1 if you have AC_func, 0 if you don't */
+#undef HAVE_PTHREAD_SETAFFINITY_NP
+
 /* Define to 1 if the system has the type `ptrdiff_t'. */
 #undef HAVE_PTRDIFF_T
+
+/* Define to 1 if you have AC_header, 0 if you don't */
+#undef HAVE_SCHED_H
+
+/* Define to 1 if you have AC_func, 0 if you don't */
+#undef HAVE_SCHED_SETAFFINITY
 
 /* Define to 1 if you have AC_header, 0 if you don't */
 #undef HAVE_SEMAPHORE_H

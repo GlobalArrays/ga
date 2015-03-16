@@ -3,7 +3,6 @@
 #endif
       program main
       implicit none
-#include "mpif.h"
 #include "global.fh"
 #include "ga-mpi.fh"
 #include "mafdecls.fh"

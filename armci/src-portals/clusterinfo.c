@@ -195,7 +195,7 @@ static void process_hostlist(char *names)
                fprintf(stderr,"lead to poor resource utilization.\n\n");
                fprintf(stderr,"Please contact your System Administrator ");
                fprintf(stderr,"or, if you can, modify the ");
-#              if defined(MPI)
+#              if defined(MSG_COMMS_MPI)
                  fprintf(stderr,"MPI");
 #              elif defined(TCGMSG)
                  fprintf(stderr,"TCGMSG");

@@ -57,17 +57,6 @@ GA_ENABLE_PROFILING
 GA_ENABLE_TRACE
 GA_THREAD_SAFE
 
-# Unless we rename all preprocessor symbols of MPI and MPIPP
-# in the source code, this hack is necessary.
-AH_BOTTOM([/* DO NOT MODIFY THE FOLLOWING PREPROCESSOR DIRECTIVES */
-#ifdef MSG_COMMS_MPI
-#   ifdef __cplusplus
-#       define MPIPP
-#   else
-#       define MPI
-#   endif /* __cplusplus */
-#endif /* MSG_COMMS_MPI */])
-
 #########################################
 # C compiler
 #########################################

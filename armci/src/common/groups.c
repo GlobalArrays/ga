@@ -18,8 +18,8 @@
 #   include <assert.h>
 #endif
 
-#ifndef MPI
-#  define MPI
+#ifndef MSG_COMMS_MPI
+#  define MSG_COMMS_MPI
 #endif
 #include "armcip.h"
 #include "message.h"

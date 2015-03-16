@@ -45,7 +45,7 @@
 #include "ga-papi.h"
 #include "ga-wapi.h"
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 extern ARMCI_Group* ga_get_armci_group_(int);
 #endif
 
@@ -1336,7 +1336,7 @@ void pnga_dot_patch(Integer g_a, char *t_a, Integer *alo, Integer *ahi, Integer 
   } else {
     if (a_grp == -1) {
       armci_msg_gop_scope(SCOPE_ALL,retval,alen,"+",ctype);
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     } else {
       armci_msg_group_gop_scope(SCOPE_ALL,retval,alen,"+",ctype,
           ga_get_armci_group_((int)a_grp));

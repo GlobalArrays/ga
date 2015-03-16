@@ -114,7 +114,7 @@ void pnga_pgroup_sync(Integer grp_id)
  
 /*    printf("p[%d] calling ga_pgroup_sync on group: %d\n",GAme,*grp_id); */
     if (grp_id > 0) {
-#   ifdef MPI
+#   ifdef MSG_COMMS_MPI
        /* fence on all processes in this group */
        { int p; for(p=0;p<PGRP_LIST[grp_id].map_nproc;p++)
           ARMCI_Fence(ARMCI_Absolute_id(&PGRP_LIST[grp_id].group, p)); }

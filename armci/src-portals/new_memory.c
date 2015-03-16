@@ -211,7 +211,7 @@ int ARMCI_Uses_shm()
     if(DEBUG_) fprintf(stderr,"%d:uses shmem %d\n",armci_me, uses);
     return uses;
 }
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 
 int ARMCI_Uses_shm_grp(ARMCI_Group *group) 
 {    

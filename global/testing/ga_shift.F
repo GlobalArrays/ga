@@ -28,14 +28,7 @@
 c     
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-c     tbeg = ga_wtime()
-      call mpi_init(ierr)
-#else
-c     tbeg = ga_wtime()
-      call pbeginf
-#endif
+#include "mp3.fh"
 c     t_msg_init = ga_wtime() - tbeg
 c
 c***  Initialize GA
@@ -228,11 +221,7 @@ c
 c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
 c
       stop
       end

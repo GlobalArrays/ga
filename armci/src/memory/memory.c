@@ -129,7 +129,7 @@ void armci_altix_shm_malloc(void *ptr_arr[], armci_size_t bytes)
     ARMCI_PR_DBG("exit",0);
 }
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 void armci_altix_shm_malloc_group(void *ptr_arr[], armci_size_t bytes,
                                   ARMCI_Group *group) {
     long size=bytes;
@@ -470,7 +470,7 @@ void armci_shmem_memctl(armci_meminfo_t *meminfo) {
 
 /****** End: Non-collective memory allocation on shared memory systems *****/
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 /********************************************************************
  * Group Memory Allocation on shared memory systems for ARMCI Groups
 \*/
@@ -675,7 +675,7 @@ void armci_shmem_malloc_group(void *ptr_arr[], armci_size_t bytes,
     free(size_arr);
     ARMCI_PR_DBG("exit",0);
 }
-#endif /* ifdef MPI */
+#endif /* ifdef MSG_COMMS_MPI */
 
 #else
 
@@ -692,7 +692,7 @@ void* armci_shmem_memat(armci_meminfo_t *meminfo) {
 void armci_shmem_memctl(armci_meminfo_t *meminfo) {
   armci_die("armci_shmem_memctl should never be called on this system",0);  
 }
-# ifdef MPI
+# ifdef MSG_COMMS_MPI
   void armci_shmem_malloc_group(void *ptr_arr[], armci_size_t bytes,
                                 ARMCI_Group *group) {
       armci_die("armci_shmem_malloc_group should never be called on this system",0);
@@ -816,7 +816,7 @@ void armci_region_shm_malloc(void *ptr_arr[], size_t bytes)
        else if(ptr_arr[i+armci_clus_first])armci_region_register(i,ptr_arr+i+armci_clus_first,reg_pids[i], bytes);
 }
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 void armci_region_shm_malloc_grp(void *ptr_arr[], size_t bytes, ARMCI_Group *group)
 {
     long size=bytes;
@@ -849,7 +849,7 @@ void armci_region_shm_malloc_grp(void *ptr_arr[], size_t bytes, ARMCI_Group *gro
           armci_region_register(p,ptr_arr+i+grp_clus_first,reg_pids[p], bytes);
        }
 }
-#endif /* ifdef MPI */
+#endif /* ifdef MSG_COMMS_MPI */
 #endif
 
 
@@ -974,7 +974,7 @@ int ARMCI_Uses_shm()
     if(DEBUG_) fprintf(stderr,"%d:uses shmem %d\n",armci_me, uses);
     return uses;
 }
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 
 int ARMCI_Uses_shm_grp(ARMCI_Group *group) 
 {    

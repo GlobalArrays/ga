@@ -22,7 +22,7 @@
 #endif
 #include "ga.h"
 
-#ifndef MPI
+#ifndef MSG_COMMS_MPI
 #  include "tcgmsg.h"
 #else
 #  include "mpi.h"
@@ -47,7 +47,7 @@ static int ganum = 0;
 #endif
 double pnga_timer()
 {
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
        return MPI_Wtime();
 #else
        return tcg_time();

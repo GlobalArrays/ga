@@ -16,7 +16,7 @@ C$Id: ft-scf.F,v 1.1 2005-07-07 17:41:07 vinod Exp $
 c     
 c     initalize the parallel message passing environment
 c     
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
       integer ierr
       call mpi_init(ierr)
 #else
@@ -101,7 +101,7 @@ c
 c     
       call closearrays
       call ga_terminate
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
       call mpi_finalize
 #else
       call pend

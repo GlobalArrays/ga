@@ -378,7 +378,7 @@ int PARMCI_Init()
   # ifdef LIBONESIDED
     armci_onesided_init();
   # endif
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     armci_group_init();
 #endif
 #ifndef NEW_MALLOC
@@ -435,7 +435,7 @@ void PARMCI_Finalize()
     armci_group_finalize();
     free(armci_prot_switch_fence);
 #endif
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     MPI_Comm_free(&ARMCI_COMM_WORLD); /*JD: free at last*/
 #endif
 }

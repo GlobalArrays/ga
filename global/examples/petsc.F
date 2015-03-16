@@ -11,7 +11,7 @@
 c
 c***  Intitialize a message passing library
 c
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
       call mpi_init
 #else
       call pbeginf
@@ -29,7 +29,7 @@ c
 #endif
       call ga_terminate()                                ! terminate GAs 
 c
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
       call mpi_finalize()
 #else
       call pend()

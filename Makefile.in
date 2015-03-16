@@ -8724,6 +8724,10 @@ $(GA_RECURSIVE_TARGETS): all
 check-ga: $(all-am) $(check_LTLIBRARIES) $(check_PROGRAMS) $(MAYBE_PFILES)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 
+.PHONY: recheck-ga
+recheck-ga: $(all-am) $(check_LTLIBRARIES) $(check_PROGRAMS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) recheck
+
 .PHONY: check-ma
 check-ma: $(all-am) $(check_LTLIBRARIES) $(MA_TESTS) $(MAYBE_PFILES)
 	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(MA_TESTS)" XFAIL_TESTS="$(MA_TESTS_XFAIL)" check-TESTS

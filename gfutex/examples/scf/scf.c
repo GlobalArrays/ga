@@ -84,7 +84,7 @@ int main(int argc, char **argv)
   //     functions of special concern are GA_igop and NGA_Read_inc.;
   //;
 #define USE_TRANSFORM 1
-#define MPI 1
+#define MSG_COMMS_MPI 1
 
   int heap, stack;
   double tinit=0.0, tonel=0.0, ttwoel=0.0, tdiag=0.0, tdens=0.0, tprint=0.0;
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 #endif
 
   //     initalize the parallel message passing environment;
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
   MPI_Init(&argc,&argv);
 #else
   //pbeginf();
@@ -315,7 +315,7 @@ int main(int argc, char **argv)
       printf("Note: largest 32-bit int is 2,147,483,647\n");
       printf("Probably due to insufficient int precision in GA.\n");
     }
-#ifndef MPI
+#ifndef MSG_COMMS_MPI
     tcg_stats();
 #endif
   }
@@ -347,7 +347,7 @@ int main(int argc, char **argv)
   fflush(stderr);
 #endif
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
   MPI_Finalize();
 #else
   tcg_pend();
@@ -632,7 +632,7 @@ int nxtask(int nproc) //not used
 
 //     wrapper round nxtval() to increase granularity;
 //     and thus reduce no. of requests to shared counter;
-#ifndef MPI
+#ifndef MSG_COMMS_MPI
       if(nproc>0) 
       {
          if(nleft==0) 

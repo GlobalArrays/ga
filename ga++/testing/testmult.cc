@@ -20,7 +20,7 @@
 #define GA_ABS(a) (((a) >= 0) ? (a) : (-(a)))
 #define TOLERANCE 0.000001
 
-#ifdef MPIPP
+#ifdef MSG_COMMS_MPI
 #include <mpi.h>
 #define CLOCK_ MPI_Wtime
 #else

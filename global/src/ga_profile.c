@@ -52,7 +52,7 @@
 #include "ga-papi.h"
 #include "ga-wapi.h"
 
-#ifndef MPI
+#ifndef MSG_COMMS_MPI
 #  include "tcgmsg.h"
 #   define MP_TIMER tcg_time
 #else

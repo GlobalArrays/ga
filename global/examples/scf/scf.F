@@ -192,7 +192,7 @@ c
             write(6,*)'Note: largest 32-bit integer is 2,147,483,647'   !cste
        write(6,*)'Probably due to insufficient integer precision in GA.'!cste
          endif                                                          !cste
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
          call ga_print_stats()
 #else
          call stats
@@ -201,7 +201,7 @@ c
 c     
       call closearrays
       call ga_terminate
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
       call mpi_finalize
 #else
       call pend
@@ -439,7 +439,7 @@ c     and thus reduce no. of requests to shared counter
 c
       if(nproc.gt.0) then
          if(nleft.eq.0) then
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
             icount = nxtval_ga(nproc) * ichunk
 #else
             icount = nxtval(nproc) * ichunk
@@ -452,7 +452,7 @@ c
       else
           nleft = 0
           nxtask = 0
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
           junk = nxtval_ga(nproc)
 #else
           junk = nxtval(nproc)

@@ -34,7 +34,7 @@ typedef struct {
        int parent;
        int *map_proc_list;
        int *inv_map_proc_list;
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
        ARMCI_Group group;
 #endif
 } proc_list_t;

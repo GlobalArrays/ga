@@ -531,6 +531,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_as_no_i386asm.m4 \
 	$(top_srcdir)/../m4/armci_group.m4 \
 	$(top_srcdir)/../m4/armci_nb_noncont.m4 \
 	$(top_srcdir)/../m4/armci_setup.m4 \
+	$(top_srcdir)/../m4/armci_shmmax.m4 \
 	$(top_srcdir)/../m4/ax_sys_weak_alias.m4 \
 	$(top_srcdir)/../m4/ga_ar.m4 \
 	$(top_srcdir)/../m4/ga_arg_parse.m4 \

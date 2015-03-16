@@ -80,7 +80,7 @@ void PARMCI_Barrier()
 {
     if(armci_nproc==1)return;
     PARMCI_AllFence();
-#  ifdef MPI
+#  ifdef MSG_COMMS_MPI
     MPI_Barrier(ARMCI_COMM_WORLD);
 #  else
     {

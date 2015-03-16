@@ -483,7 +483,7 @@ int PARMCI_Init()
 
     armci_init_clusinfo();
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     armci_group_init();
 #endif
     armci_krmalloc_init_localmem();
@@ -647,13 +647,13 @@ void PARMCI_Finalize()
     armci_msg_gop_finalize();
     ARMCI_Cleanup();
     armci_msg_barrier();
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     armci_group_finalize();
 #endif
 #ifdef ARMCIX
     ARMCIX_Finalize ();
 #endif
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     MPI_Comm_free(&ARMCI_COMM_WORLD); /*SK: free at last*/
 #endif
 }

@@ -1033,7 +1033,7 @@ Integer pnga_cluster_procid(Integer node, Integer loc_proc_id)
             (int)loc_proc_id);
 }
 
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
 #  include <mpi.h>
 #else
 #  include "tcgmsg.h"
@@ -1046,7 +1046,7 @@ Integer pnga_cluster_procid(Integer node, Integer loc_proc_id)
 DoublePrecision pnga_wtime() 
 {
     double wtime=0.0;
-#ifdef MPI
+#ifdef MSG_COMMS_MPI
     wtime = MPI_Wtime();
 #else
     wtime = tcg_time();
