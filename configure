@@ -6800,6 +6800,7 @@ if test "${enable_autodetect+set}" = set; then :
 fi
 
 # First, all of the "--with" stuff is taken care of.
+armci_network_external=0
 armci_network_count=0
 
 
@@ -22493,6 +22494,68 @@ fi
 F2C_DOUBLE_PRECISION_C_TYPE=$ga_cv_f2c_DOUBLE_PRECISION
 
 
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we can safely implement F77_FUNC(srand48)" >&5
+$as_echo_n "checking whether we can safely implement F77_FUNC(srand48)... " >&6; }
+if ${ga_cv_f2c_srand48+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <stdlib.h>
+#define _SRAND48_ F77_FUNC(srand48, SRAND48)
+void _SRAND48_(long *seed)
+{
+    unsigned int aseed = *seed;
+    srandom(aseed);
+}
+
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+
+long seed=6;
+_SRAND48_(&seed);
+
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ga_cv_f2c_srand48=1
+else
+  ga_cv_f2c_srand48=0
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f2c_srand48" >&5
+$as_echo "$ga_cv_f2c_srand48" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define F2C_SRAND48_OK $ga_cv_f2c_srand48
+_ACEOF
 
 
 

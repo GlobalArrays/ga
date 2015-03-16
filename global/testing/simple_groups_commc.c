@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
     int sbuf[1],rbuf[1];
     MPI_Comm comm;
 
-    MPI_Init(&argc, &argv);
+    MP_INIT(argc,argv);
     GA_Initialize();
     me = GA_Nodeid();
 
@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
     }
 
     GA_Terminate();
-    MPI_Finalize();
+    MP_FINALIZE();
 
     return 0;
 }

@@ -48,9 +48,12 @@ int row, i, j;
 /* Note: on all current platforms DoublePrecision = double */
 DoublePrecision buf[N], *max_row=NULL;
 
+MPI_Comm WORLD_COMM;
 MPI_Comm ROW_COMM;
 int ilo,ihi, jlo,jhi, ld, prow, pcol;
 int root=0, grp_me=-1;
+
+     WORLD_COMM = GA_MPI_Comm_pgroup_default();
 
      if(me==0)printf("Creating matrix A\n");
      dims[0]=n; dims[1]=n;
@@ -103,11 +106,11 @@ int root=0, grp_me=-1;
      
      if(me==0)printf("Computing max row elements\n");
      /* create communicator for processes that 'own' A[:,jlo:jhi] */
-     MPI_Barrier(MPI_COMM_WORLD);
+     MPI_Barrier(WORLD_COMM);
      if(pcol < 0 || prow <0)
-    MPI_Comm_split(MPI_COMM_WORLD,MPI_UNDEFINED,MPI_UNDEFINED, &ROW_COMM);
+    MPI_Comm_split(WORLD_COMM,MPI_UNDEFINED,MPI_UNDEFINED, &ROW_COMM);
      else
-    MPI_Comm_split(MPI_COMM_WORLD, (int)pcol, (int)prow, &ROW_COMM);
+    MPI_Comm_split(WORLD_COMM, (int)pcol, (int)prow, &ROW_COMM);
      
      if(ROW_COMM != MPI_COMM_NULL){
     double *ptr;

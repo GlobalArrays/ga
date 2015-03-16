@@ -71,31 +71,35 @@ static MPI_Datatype armci_type_to_mpi_type(int type)
 
 static MPI_Op armci_op_to_mpi_op(char *op)
 {
+    MPI_Op result;
+
     if (strncmp(op, "+", 1) == 0) {
-        return MPI_SUM;
+        result = MPI_SUM;
     }
     else if (strncmp(op, "max", 3) == 0) {
-        return MPI_MAX;
+        result = MPI_MAX;
     }
     else if (strncmp(op, "min", 3) == 0) {
-        return MPI_MIN;
+        result = MPI_MIN;
     }
     else if (strncmp(op, "*", 1) == 0) {
-        return MPI_PROD;
+        result = MPI_PROD;
     }
     else if (strncmp(op, "absmin", 6) == 0) {
-        return MPI_MIN;
+        result = MPI_MIN;
     }
     else if (strncmp(op, "absmax", 6) == 0) {
-        return MPI_MAX;
+        result = MPI_MAX;
     }
     else if (strncmp(op, "or", 2) == 0) {
-        return MPI_BOR;
+        result = MPI_BOR;
     }
     else {
         printf("Unsupported gop operation:%s\n",op);
         assert(0);
     }
+
+    return result;
 }
 
 

@@ -277,6 +277,7 @@ if __name__ == '__main__':
 FILE *fptrace=NULL;
 double first_wtime;
 int me, nproc;
+MPI_Comm comm;
 
 #if HAVE_PROGNAME
 extern const char * PROGNAME;
@@ -434,9 +435,10 @@ static void trace_initialize() {
     char *file_name=NULL;
     struct stat f_stat;
 
-    PMPI_Barrier(MPI_COMM_WORLD);
-    PMPI_Comm_rank(MPI_COMM_WORLD, &me);
-    PMPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    PMPI_Comm_dup(GA_MPI_Comm(), &comm);
+    PMPI_Barrier(comm);
+    PMPI_Comm_rank(comm, &me);
+    PMPI_Comm_size(comm, &nproc);
 
     first_wtime = MPI_Wtime();
     init_lohi_bufs();
@@ -452,14 +454,14 @@ static void trace_initialize() {
 
         if (!profile_dir) {
             fprintf(stderr, "You need to set PNGA_PROFILE_DIR env var\\n");
-            MPI_Abort(MPI_COMM_WORLD, 1);
+            MPI_Abort(comm, 1);
         }
         fprintf(stderr, "PNGA_PROFILE_DIR=%s\\n", profile_dir);
         if (-1 == stat(profile_dir, &f_stat)) {
             perror("stat");
             fprintf(stderr, "Cannot successfully stat to PNGA_PROFILE_DIR.\\n");
             fprintf(stderr, "Check %s profile dir\\n", profile_dir);
-            MPI_Abort(MPI_COMM_WORLD, 1);
+            MPI_Abort(comm, 1);
         }
         file_name = (char *)malloc(strlen(profile_dir)
                 + 1 /* / */
@@ -471,11 +473,11 @@ static void trace_initialize() {
         if (ret) {
             perror("mkdir");
             fprintf(stderr, "%d: profile sub-directory creation failed: pathname=%s: exiting\\n", me, file_name);
-            MPI_Abort(MPI_COMM_WORLD, 1);
+            MPI_Abort(comm, 1);
         }
         free(file_name);
     }
-    PMPI_Barrier(MPI_COMM_WORLD);
+    PMPI_Barrier(comm);
     file_name = (char *)malloc(strlen(profile_dir)
             + 1 /* / */
             + strlen(program_name)

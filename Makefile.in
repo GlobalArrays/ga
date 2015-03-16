@@ -463,6 +463,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/armci_setup.m4 \
 	$(top_srcdir)/m4/ga_f2c_cmdargs.m4 \
 	$(top_srcdir)/m4/ga_f2c_match_types.m4 \
 	$(top_srcdir)/m4/ga_f2c_nomain.m4 \
+	$(top_srcdir)/m4/ga_f2c_rand.m4 \
 	$(top_srcdir)/m4/ga_f2c_string.m4 \
 	$(top_srcdir)/m4/ga_f77_check_sizeof.m4 \
 	$(top_srcdir)/m4/ga_f77_cpp_symbols.m4 \

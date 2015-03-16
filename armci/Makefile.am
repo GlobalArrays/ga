@@ -41,13 +41,19 @@ AM_CPPFLAGS =
 AM_LDFLAGS =
 LDADD =
 
-if ARMCI_NETWORK_ARMCI
+if ARMCI_NETWORK_EXTERNAL
 else
 lib_LTLIBRARIES += libarmci.la
 endif
 libarmci_la_SOURCES =
 nodist_libarmci_la_SOURCES =
 libarmci_la_LIBADD =
+
+if ARMCI_NETWORK_COMEX
+ARMCI_NETWORK_CPPFLAGS += -I$(abs_srcdir)/../comex/src-armci
+ARMCI_NETWORK_LDFLAGS += -L$(abs_builddir)/../comex
+ARMCI_NETWORK_LIBS += $(abs_builddir)/../comex/libarmci.la
+endif
 
 AM_FFLAGS += $(ARMCI_FOPT)
 AM_FFLAGS += $(GA_F_WARN)
@@ -67,7 +73,7 @@ LDFLAGS_BASE += $(GA_MP_LDFLAGS)
 LDFLAGS_BASE += $(ARMCI_NETWORK_LDFLAGS)
 AM_LDFLAGS += $(LDFLAGS_BASE)
 
-if ARMCI_NETWORK_ARMCI
+if ARMCI_NETWORK_EXTERNAL
 LDADD += $(ARMCI_NETWORK_LIBS)
 LDADD += $(GA_MP_LIBS)
 else
@@ -77,7 +83,7 @@ LDADD += $(GA_MP_LIBS)
 LDADD += $(ARMCI_NETWORK_LIBS)
 endif
 
-if ARMCI_NETWORK_ARMCI
+if ARMCI_NETWORK_EXTERNAL
 else
 libarmci_la_LIBADD += $(GA_MP_LIBS)
 libarmci_la_LIBADD += $(ARMCI_NETWORK_LIBS)
@@ -450,6 +456,7 @@ check_PROGRAMS += testing/perf
 check_PROGRAMS += testing/perf2
 check_PROGRAMS += testing/perf_aggr
 check_PROGRAMS += testing/perf_nb
+check_PROGRAMS += testing/perf_strided
 check_PROGRAMS += testing/shmclean
 check_PROGRAMS += testing/shmtest
 check_PROGRAMS += testing/simplelock
@@ -468,7 +475,7 @@ if MSG_COMMS_MPI
 check_PROGRAMS += testing/simple
 check_PROGRAMS += testing/test_groups
 if SYSV
-if ARMCI_NETWORK_ARMCI
+if ARMCI_NETWORK_EXTERNAL
 else
 check_PROGRAMS += testing/ipctest
 endif
@@ -528,7 +535,7 @@ if MSG_COMMS_MPI
 ARMCI_PARALLEL_TESTS += testing/simple$(EXEEXT)
 ARMCI_PARALLEL_TESTS += testing/test_groups$(EXEEXT)
 if SYSV
-if ARMCI_NETWORK_ARMCI
+if ARMCI_NETWORK_EXTERNAL
 else
 #ARMCI_PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
 endif
@@ -557,6 +564,7 @@ testing_msgcheck_SOURCES    = testing/msgcheck.c $(atsrc)
 testing_origptl_SOURCES     = testing/origptl.c $(atsrc)
 testing_perf_aggr_SOURCES   = testing/perf_aggr.c $(atsrc)
 testing_perf_nb_SOURCES     = testing/perf_nb.c $(atsrc)
+testing_perf_strided_SOURCES= testing/perf_strided.c $(atsrc)
 testing_perf_SOURCES        = testing/perf.c $(atsrc)
 testing_perf2_SOURCES       = testing/perf2.c $(atsrc)
 testing_ptltest_SOURCES     = testing/ptltest.c $(atsrc)

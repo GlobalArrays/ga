@@ -531,6 +531,7 @@ void PARMCI_Copy(void *src, void *dst, int n)
 int ARMCI_Uses_shm_grp(ARMCI_Group *group)
 {
     assert(0);
+    return 0;
 }
 
 

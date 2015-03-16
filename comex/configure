@@ -8249,6 +8249,25 @@ fi
 
 done
 
+for ac_header in sched.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sched.h" "ac_cv_header_sched_h" "$ac_includes_default"
+if test "x$ac_cv_header_sched_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SCHED_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SCHED_H 0
+_ACEOF
+
+fi
+
+done
+
 for ac_header in semaphore.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "semaphore.h" "ac_cv_header_semaphore_h" "$ac_includes_default"
@@ -9617,6 +9636,42 @@ _ACEOF
 fi
 done
 
+for ac_func in pthread_setaffinity_np
+do :
+  ac_fn_c_check_func "$LINENO" "pthread_setaffinity_np" "ac_cv_func_pthread_setaffinity_np"
+if test "x$ac_cv_func_pthread_setaffinity_np" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PTHREAD_SETAFFINITY_NP 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PTHREAD_SETAFFINITY_NP 0
+_ACEOF
+
+fi
+done
+
+for ac_func in sched_setaffinity
+do :
+  ac_fn_c_check_func "$LINENO" "sched_setaffinity" "ac_cv_func_sched_setaffinity"
+if test "x$ac_cv_func_sched_setaffinity" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SCHED_SETAFFINITY 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SCHED_SETAFFINITY 0
+_ACEOF
+
+fi
+done
+
 for ac_func in strchr
 do :
   ac_fn_c_check_func "$LINENO" "strchr" "ac_cv_func_strchr"
@@ -9689,6 +9744,50 @@ _ACEOF
 fi
 done
 
+
+# Checks for advanced MPI functions.
+comex_save_LIBS="$LIBS"; LIBS="$LIBS $MPI_LIBS"
+comex_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $MPI_LDFLAGS"
+comex_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $MPI_CPPFLAGS"
+for ac_func in MPI_Ibarrier
+do :
+  ac_fn_c_check_func "$LINENO" "MPI_Ibarrier" "ac_cv_func_MPI_Ibarrier"
+if test "x$ac_cv_func_MPI_Ibarrier" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MPI_IBARRIER 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MPI_IBARRIER 0
+_ACEOF
+
+fi
+done
+
+for ac_func in MPIX_Ibarrier
+do :
+  ac_fn_c_check_func "$LINENO" "MPIX_Ibarrier" "ac_cv_func_MPIX_Ibarrier"
+if test "x$ac_cv_func_MPIX_Ibarrier" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MPIX_IBARRIER 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MPIX_IBARRIER 0
+_ACEOF
+
+fi
+done
+
+LIBS="$comex_save_LIBS"
+LDFLAGS="$comex_save_LDFLAGS"
+CPPFLAGS="$comex_save_CPPFLAGS"
 
 # Checks for C libraries.
 

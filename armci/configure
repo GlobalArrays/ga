@@ -6552,6 +6552,7 @@ if test "${enable_autodetect+set}" = set; then :
 fi
 
 # First, all of the "--with" stuff is taken care of.
+armci_network_external=0
 armci_network_count=0
 
 

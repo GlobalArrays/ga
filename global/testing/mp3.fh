@@ -12,7 +12,7 @@
       call pbeginf
 #   else
       integer ierr
-#       if defined(DCMF) || defined(MPI_MT)
+#       if defined(DCMF) || defined(MPI_MT) || defined(MPI_PT)
       integer required, provided
       required=MPI_THREAD_MULTIPLE
       call mpi_init_thread(required, provided, ierr)

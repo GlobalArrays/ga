@@ -115,6 +115,8 @@ void install_nxtval(int *argc, char **argv[])
         make_tcgmsg_comm();
     }
 
+    me = (int)NODEID_();
+
     ptr_ar = (void **)malloc(sizeof(void *)*(int)NNODES_());
     if(!ptr_ar) {
         Error("malloc failed in install_nxtval", (long)NNODES_());  

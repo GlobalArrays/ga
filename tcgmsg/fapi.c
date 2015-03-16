@@ -275,12 +275,14 @@ void FATR _SND_(Integer *type, void *buf, Integer *lenbuf, Integer *node, Intege
 }
 
 
+#if F2C_SRAND48_OK
 void FATR _SRAND48_(Integer *seed)
 {
     unsigned int aseed = *seed;
 
     srandom(aseed);
 }
+#endif
 
 
 void FATR _STATS_()

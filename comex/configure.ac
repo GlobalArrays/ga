@@ -77,6 +77,7 @@ COMEX_CHECK_HEADERS([errno.h])
 COMEX_CHECK_HEADERS([getopt.h])
 COMEX_CHECK_HEADERS([math.h])
 COMEX_CHECK_HEADERS([pthread.h])
+COMEX_CHECK_HEADERS([sched.h])
 COMEX_CHECK_HEADERS([semaphore.h])
 COMEX_CHECK_HEADERS([stdint.h])
 COMEX_CHECK_HEADERS([stdio.h])
@@ -133,10 +134,22 @@ COMEX_CHECK_FUNCS([bzero])
 COMEX_CHECK_FUNCS([gettimeofday])
 COMEX_CHECK_FUNCS([memset])
 COMEX_CHECK_FUNCS([munmap])
+COMEX_CHECK_FUNCS([pthread_setaffinity_np])
+COMEX_CHECK_FUNCS([sched_setaffinity])
 COMEX_CHECK_FUNCS([strchr])
 COMEX_CHECK_FUNCS([strdup])
 COMEX_CHECK_FUNCS([strncasecmp])
 COMEX_CHECK_FUNCS([strstr])
+
+# Checks for advanced MPI functions.
+comex_save_LIBS="$LIBS"; LIBS="$LIBS $MPI_LIBS"
+comex_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $MPI_LDFLAGS"
+comex_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $MPI_CPPFLAGS"
+COMEX_CHECK_FUNCS([MPI_Ibarrier])
+COMEX_CHECK_FUNCS([MPIX_Ibarrier])
+LIBS="$comex_save_LIBS"
+LDFLAGS="$comex_save_LDFLAGS"
+CPPFLAGS="$comex_save_CPPFLAGS"
 
 # Checks for C libraries.
 COMEX_BLAS

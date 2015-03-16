@@ -136,7 +136,7 @@ void tcgi_alt_pbegin(int *argc, char **argv[])
 
     if(!init){ 
         /* nope */
-#if defined(DCMF) || defined(MPI_MT)
+#if defined(DCMF) || defined(MPI_MT) || defined(MPI_PT)
         int provided;
         MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &provided);
 #else

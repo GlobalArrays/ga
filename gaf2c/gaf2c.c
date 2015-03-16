@@ -91,7 +91,7 @@ void ga_f2c_get_cmd_args(int *argc, char ***argv)
         printf("ga_f2c_get_cmd_args: too many cmd line args");
         armci_msg_abort(1);
     }
-    iargv = malloc(sizeof(char*)*F2C_GETARG_ARGV_MAX);
+    iargv = (char**)malloc(sizeof(char*)*F2C_GETARG_ARGV_MAX);
     if (!iargv) {
         printf("ga_f2c_get_cmd_args: malloc iargv failed");
         armci_msg_abort(1);

@@ -112,8 +112,11 @@ if __name__ == '__main__':
 #include "ga-papi.h"
 #include "typesf2c.h"
 
+static MPI_Comm comm;
 static int me;
 static int nproc;
+static double global_start = 0;
+static double global_stop = 0;
 
 '''
 
@@ -138,7 +141,7 @@ static int nproc;
         func = functions[name]
         if 'terminate' in name:
             continue
-        if 'initialize' in name:
+        if 'initialize' in name and 'initialized' not in name:
             continue
         func = functions[name]
         wnga_name = name.replace('pnga_','wnga_')
@@ -178,9 +181,11 @@ static int nproc;
     print '''%s
 {
     ++count_pnga_initialize;
+    global_start = MPI_Wtime();
     %s;
-    MPI_Comm_rank(MPI_COMM_WORLD, &me);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    MPI_Comm_dup(GA_MPI_Comm(), &comm);
+    MPI_Comm_rank(comm, &me);
+    MPI_Comm_size(comm, &nproc);
 }
 ''' % (func.get_signature(wnga_name), func.get_call())
 
@@ -192,9 +197,11 @@ static int nproc;
     print '''%s
 {
     ++count_pnga_initialize_ltd;
+    global_start = MPI_Wtime();
     %s;
-    MPI_Comm_rank(MPI_COMM_WORLD, &me);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    MPI_Comm_dup(GA_MPI_Comm(), &comm);
+    MPI_Comm_rank(comm, &me);
+    MPI_Comm_size(comm, &nproc);
 }
 ''' % (func.get_signature(wnga_name), func.get_call())
 
@@ -210,7 +217,7 @@ static int nproc;
 '''
     for name in sorted(functions):
         the_code += '''
-        MPI_Reduce(&time_%s, &recvbuf, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&time_%s, &recvbuf, 1, MPI_DOUBLE, MPI_SUM, 0, comm);
         if (me == 0) {
             printf("%s,%%ld,%%lf\\n", count_%s, recvbuf);
         }
@@ -220,9 +227,15 @@ static int nproc;
 {
     ++count_pnga_terminate;
     %s;
+    global_stop = MPI_Wtime();
     /* don't dump info if terminate more than once */
     if (1 == count_pnga_terminate) {
 %s
+        if (me == 0) {
+            printf("global_stop-global_start,0,%%lf\\n",
+                    global_stop-global_start);
+        }
     }
+    MPI_Comm_free(&comm);
 }
 ''' % (func.get_signature(wnga_name), func.get_call(), the_code) 

@@ -13,9 +13,9 @@
       integer n,i,j
       parameter (n=4)
       integer proc_group(0:100),proclist(100),inode,nprocs
-      integer ierr,comm
+      integer comm
       double precision sbuf(1),rbuf(1)
-      call mpi_init(ierr)
+#include "mp3.fh"
       call ga_initialize()
       me = ga_nodeid()
 
@@ -70,6 +70,6 @@ c     use mpi_allreduce on integer types -- that's why we use double
 
       call ga_terminate()
 
-      call mpi_finalize(ierr)
+      call MP_FINALIZE()
 
       end

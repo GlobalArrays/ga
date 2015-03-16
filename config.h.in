@@ -90,6 +90,10 @@
 /* whether the hidden string length comes after all other args */
 #undef F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 
+/* define to 1 if Fortran-callable srand48 does not conflict with system def
+   */
+#undef F2C_SRAND48_OK
+
 /* Define to dummy `main' function (if any) required to link to the Fortran
    libraries. */
 #undef F77_DUMMY_MAIN

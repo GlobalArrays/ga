@@ -452,6 +452,7 @@ AC_ARG_ENABLE([autodetect],
     [AS_HELP_STRING([--enable-autodetect],
         [attempt to locate ARMCI_NETWORK besides SOCKETS])])
 # First, all of the "--with" stuff is taken care of.
+armci_network_external=0
 armci_network_count=0
 _GA_ARMCI_NETWORK_WITH([armci],     [external; path to external ARMCI library])
 _GA_ARMCI_NETWORK_WITH([bgml],      [IBM BG/L])

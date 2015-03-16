@@ -31,16 +31,18 @@ int main(int argc, char **argv)
     int lo[1];
     int hi[1];
     int ld[1]={1};
+    MPI_Comm comm;
 
     MP_INIT(argc,argv);
+    GA_INIT(argc,argv);
 
-    MPI_Comm_rank(MPI_COMM_WORLD,&me);
-    MPI_Comm_size(MPI_COMM_WORLD,&nproc);
+    me = GA_Nodeid();
+    nproc = GA_Nnodes();
+    comm = GA_MPI_Comm_pgroup_default();
 
     printf("%d: Hello world!\n",me);
 
     if (me==0) printf("%d: GA_Initialize\n",me);
-    GA_INIT(argc,argv);
     /*if (me==0) printf("%d: ARMCI_Init\n",me);*/
     /*ARMCI_Init();*/
     /*if (me==0) printf("%d: MA_Init\n",me);*/
@@ -67,7 +69,7 @@ int main(int argc, char **argv)
 
     if (me==0) printf("%d: GA_Allocate\n",me);
     status = GA_Allocate(g_a);
-    if(0 == status) MPI_Abort(MPI_COMM_WORLD,100);
+    if(0 == status) MPI_Abort(comm,100);
 
     if (me==0) printf("%d: GA_Zero\n",me);
     GA_Zero(g_a);
@@ -78,10 +80,10 @@ int main(int argc, char **argv)
     num = 10;
     p1 = malloc(num*sizeof(double));
     /*double* p1 = ARMCI_Malloc_local(num*sizeof(double));*/
-    if (p1==NULL) MPI_Abort(MPI_COMM_WORLD,1000);
+    if (p1==NULL) MPI_Abort(comm,1000);
     p2 = malloc(num*sizeof(double));
     /*double* p2 = ARMCI_Malloc_local(num*sizeof(double));*/
-    if (p2==NULL) MPI_Abort(MPI_COMM_WORLD,2000);
+    if (p2==NULL) MPI_Abort(comm,2000);
 
     for ( i=0 ; i<num ; i++ ) p1[i] = 7.0;
     for ( i=0 ; i<num ; i++ ) p2[i] = 3.0;

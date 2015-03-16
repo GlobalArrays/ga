@@ -40,8 +40,8 @@ static inline void _scale(
 {
 #define SCALE_BLAS(COMEX_TYPE, C_TYPE, LETTER)                              \
     if (op == COMEX_TYPE) {                                                 \
-        const int ONE = 1;                                                  \
-        const int N = bytes/sizeof(C_TYPE);                                 \
+        const BLAS_INT ONE = 1;                                             \
+        const BLAS_INT N = bytes/sizeof(C_TYPE);                            \
         BLAS_##LETTER##COPY(&N, src, &ONE, dst, &ONE);                      \
         BLAS_##LETTER##AXPY(&N, scale, src, &ONE, dst, &ONE);               \
     } else
@@ -91,8 +91,8 @@ static inline void _acc(
 {
 #define ACC_BLAS(COMEX_TYPE, C_TYPE, LETTER)                                \
     if (op == COMEX_TYPE) {                                                 \
-        const int ONE = 1;                                                  \
-        const int N = bytes/sizeof(C_TYPE);                                 \
+        const BLAS_INT ONE = 1;                                             \
+        const BLAS_INT N = bytes/sizeof(C_TYPE);                            \
         BLAS_##LETTER##AXPY(&N, scale, src, &ONE, dst, &ONE);               \
     } else                                                                 
 #define ACC(WHICH, COMEX_TYPE, C_TYPE)                                      \

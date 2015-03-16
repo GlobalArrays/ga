@@ -270,7 +270,7 @@ c
       block_size(2) = 32
 #ifdef USE_SCALAPACK_DISTR
       if (mod(nproc,2).ne.0)
-     +  call ga_error("Available procs must be divisible by 2",0)
+     +  call ga_error("Available procs must be divisible by 2",-1)
       proc_grid(1) = 2
       proc_grid(2) = nproc/2
 #endif
@@ -336,7 +336,7 @@ c     call setdbg(1)
       if (.not. status) then
          write(6,*) ' ga_create failed'
          call ffflush(6)
-         call ga_error('... exiting ',0)
+         call ga_error('... exiting ',-1)
       endif
 c
 c     check if handle is valid. be quiet unless error
@@ -372,7 +372,7 @@ c
             if (b(i,j) .ne. 0.0d0) then
                write(6,*) me,' zero ', i, j, b(i,j)
                call ffflush(6)
-c              call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -428,7 +428,7 @@ c
             if (b(i,j) .ne. a(i,j)) then
                write(6,*) ' put ', me, i, j, a(i,j),b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -484,7 +484,7 @@ c
                if (b(i,j) .ne. a(i,j)) then
                   write(6,*) i, j, b(i,j), a(i,j)
                   call ffflush(6)
-                  call ga_error('... exiting ',0)
+                  call ga_error('... exiting ',-1)
                endif
             enddo
          enddo
@@ -562,7 +562,7 @@ c
             if(MISMATCH(b(i,j),a(i,j)))then
                write(6,*) ' acc ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
-c              call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -597,7 +597,7 @@ c     overlapping accumulate
      +                    p_mirror, g_b)) then
 #  endif
 #endif
-         call ga_error('ga_create failed for second array ',0)
+         call ga_error('ga_create failed for second array ',-1)
       endif
 c
       call ga_zero(g_b)
@@ -618,7 +618,7 @@ c
 #else
             write(6,*)'val=',b(1,1),' expected=',lprocs, x
 #endif
-            call ga_error('overlapping accumulate failed',0)
+            call ga_error('overlapping accumulate failed',-1)
          endif
          if (me.eq.0) then
            write(6,*)
@@ -657,7 +657,7 @@ c
             if(MISMATCH(b(i,j), a(i,j)))then
                write(6,*) ' add ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0) 
+               call ga_error('... exiting ',-1) 
             endif
          enddo
       enddo
@@ -696,7 +696,7 @@ c
       if(MISMATCH(sum1, sum2))then
          write(6,*) ' ddot wrong ', sum1, sum2
          call ffflush(6)
-         call ga_error('... exiting ',0)
+         call ga_error('... exiting ',-1)
       else if (me.eq.0) then
          write(6,*)
          write(6,*) ' ddot is OK '
@@ -718,7 +718,7 @@ c
             if (MISMATCH(b(i,j), a(i,j)))then
                write(6,*) ' dscal ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -744,7 +744,7 @@ c
             if (b(i,j) .ne. a(i,j)) then
                write(6,*) ' copy ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -787,7 +787,7 @@ c
              write(6,*)me,' gather ', ilo,',',jlo,',', a(ilo,jlo)
      &             ,' ',v(loop)
              call ffflush(6)
-             call ga_error('... exiting ',0)
+             call ga_error('... exiting ',-1)
            endif
          enddo
 #else
@@ -806,7 +806,7 @@ c
              write(6,*)me,' gather ', ilo,',',jlo,',', a(ilo,jlo)
      &             ,' ',v(loop)
              call ffflush(6)
-             call ga_error('... exiting ',0)
+             call ga_error('... exiting ',-1)
            endif
          enddo
 #endif
@@ -846,7 +846,7 @@ c          if(v(loop)  .ne. w(loop))then
              write(6,*)me,' scatter ', ilo,',',jlo,',',w(loop) 
      &             ,' ', 1d0 *(ilo+jlo) 
              call ffflush(6)
-             call ga_error('... exiting ',0)
+             call ga_error('... exiting ',-1)
            endif
          enddo 
 #else
@@ -868,7 +868,7 @@ c          if(v(loop)  .ne. w(loop))then
              write(6,927)me,ilo,jlo,w(loop),1d0 *(ilo+jlo),loop
   927        format(i3,' scatter ',i5,',',i5,',',f7.1,',',f7.1,',',i5)
              call ffflush(6)
-             call ga_error('... exiting ',0)
+             call ga_error('... exiting ',-1)
            endif
          enddo 
 #endif
@@ -1012,7 +1012,7 @@ c
          write(6,*)
          write(6,*) ' merge is wrong ',ilo
          write(6,*)
-         call ga_error('... exiting ',0)
+         call ga_error('... exiting ',-1)
       endif
 c
 c    Checking copy between different array configurations
@@ -1037,7 +1037,7 @@ c
 #else
       if (.not. nga_create(MT_DBL, ndim, dims, 'c', chunk, g_c)) then
 #endif
-         call ga_error('ga_create failed for third array ',0)
+         call ga_error('ga_create failed for third array ',-1)
       endif
       call ga_zero(g_c)
       call ga_copy(g_a,g_c)
@@ -1058,7 +1058,7 @@ c
          write(6,*)
          write(6,*) ' Mixed copy (mirrored to normal) is wrong ',ilo
          write(6,*)
-         call ga_error('... exiting ',0)
+         call ga_error('... exiting ',-1)
       endif
       call ga_zero(g_a)
       call ga_copy(g_c,g_a)
@@ -1078,7 +1078,7 @@ c
          write(6,*)
          write(6,*) ' Mixed copy (normal to mirrored) is wrong ',ilo
          write(6,*)
-         call ga_error('... exiting ',0)
+         call ga_error('... exiting ',-1)
       endif
 c
 c   Check the merge to distributed patch function
@@ -1134,7 +1134,7 @@ c            endif
          write(6,*)
          write(6,*) ' merge to distributed patch is wrong ',ilo
          write(6,*)
-         call ga_error('... exiting ',0)
+         call ga_error('... exiting ',-1)
       endif
 #endif
 c
@@ -1248,7 +1248,7 @@ c     call setdbg(1)
 #endif
       if (.not. status) then
          write(6,*) ' ga_create failed'
-         call ga_error('... exiting ',0)
+         call ga_error('... exiting ',-1)
       endif
 #ifdef NEW_API
       g_b = ga_create_handle()
@@ -1266,7 +1266,7 @@ c     call setdbg(1)
      _                            p_mirror, g_b)) then
 #  endif
 #endif
-         call ga_error('ga_create failed for second array ',0)
+         call ga_error('ga_create failed for second array ',-1)
       endif
 
 #ifndef MIRROR
@@ -1295,7 +1295,7 @@ c
             if(b(i,j).ne.(0d0,0d0)) then
                write(6,*) me,' zero ', i, j, b(i,j)
                call ffflush(6)
-c              call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -1344,7 +1344,7 @@ c
             if (b(i,j) .ne. a(i,j)) then
                write(6,*) ' put ', me, i, j, a(i,j),b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -1396,7 +1396,7 @@ c
             do i = ilo, ihi
                if (b(i,j) .ne. a(i,j)) then
                   write(6,*)'error:', i, j, b(i,j), a(i,j)
-                  call ga_error('... exiting ',0)
+                  call ga_error('... exiting ',-1)
                endif
             enddo
          enddo
@@ -1468,7 +1468,7 @@ c
          do i = 1, n
             if (MISMATCHF(b(i,j), a(i,j)))then
                write(6,*) ' acc ', me, i, j, a(i,j), b(i,j)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -1498,7 +1498,7 @@ c        if(error.gt. (1d-8))then
 #else
             write(6,*)'val=',x,' expected=(',lprocs,',',-lprocs,')'
 #endif
-            call ga_error('overlapping accumulate failed',0)
+            call ga_error('overlapping accumulate failed',-1)
          endif
          write(6,*)
          write(6,*) ' overlapping ga_acc is OK'
@@ -1525,7 +1525,7 @@ c
          do i = 1, n
             if (b(i,j) .ne. a(i,j)) then
                write(6,*) ' copy ', me, i, j, a(i,j), b(i,j)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -1552,7 +1552,7 @@ c
             if (MISMATCHF(b(i,j), a(i,j)))then
                write(6,*) ' fscal ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -1597,7 +1597,7 @@ c
              write(6,*)me,' gather ', ilo,',',jlo,',', a(ilo,jlo)
      &             ,' ',v(loop)
              call ffflush(6)
-             call ga_error('... exiting ',0)
+             call ga_error('... exiting ',-1)
            endif
          enddo
        endif
@@ -1673,7 +1673,7 @@ c
             if (MISMATCHF(b(i,j), a(i,j)))then
                write(6,*) ' add ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -1712,7 +1712,7 @@ c
       if (MISMATCHF(sum1, sum2))then
          write(6,*) ' cdot wrong ', sum1, sum2
          call ffflush(6)
-         call ga_error('... exiting ',0)
+         call ga_error('... exiting ',-1)
       else if (me.eq.0) then
          write(6,*)
          write(6,*) ' cdot is OK '
@@ -1787,7 +1787,7 @@ c
       block_size(2) = 32
 #ifdef USE_SCALAPACK_DISTR
       if (mod(nproc,2).ne.0)
-     +  call ga_error("Available procs must be divisible by 2",0)
+     +  call ga_error("Available procs must be divisible by 2",-1)
       proc_grid(1) = 2
       proc_grid(2) = nproc/2
 #endif
@@ -1850,7 +1850,7 @@ c     call setdbg(1)
 #endif
       if (.not. status) then
          write(6,*) ' ga_create failed'
-         call ga_error('... exiting ',0)
+         call ga_error('... exiting ',-1)
       endif
 #ifdef NEW_API
       g_b = ga_create_handle()
@@ -1875,7 +1875,7 @@ c     call setdbg(1)
      _                            p_mirror, g_b)) then
 #  endif
 #endif
-         call ga_error('ga_create failed for second array ',0)
+         call ga_error('ga_create failed for second array ',-1)
       endif
 
 #ifndef MIRROR
@@ -1904,7 +1904,7 @@ c
             if(b(i,j).ne.(0d0,0d0)) then
                write(6,*) me,' zero ', i, j, b(i,j)
                call ffflush(6)
-c              call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -1954,7 +1954,7 @@ c
             if (b(i,j) .ne. a(i,j)) then
                write(6,*) ' put ', me, i, j, a(i,j),b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -2007,7 +2007,7 @@ c
             do i = ilo, ihi
                if (b(i,j) .ne. a(i,j)) then
                   write(6,*)'error:', i, j, b(i,j), a(i,j)
-                  call ga_error('... exiting ',0)
+                  call ga_error('... exiting ',-1)
                endif
             enddo
          enddo
@@ -2079,7 +2079,7 @@ c
          do i = 1, n
             if (MISMATCH(b(i,j), a(i,j)))then
                write(6,*) ' acc ', me, i, j, a(i,j), b(i,j)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -2109,7 +2109,7 @@ c        if(error.gt. (1d-8))then
 #else
             write(6,*)'val=',x,' expected=(',lprocs,',',-lprocs,')'
 #endif
-            call ga_error('overlapping accumulate failed',0)
+            call ga_error('overlapping accumulate failed',-1)
          endif
          write(6,*)
          write(6,*) ' overlapping ga_acc is OK'
@@ -2136,7 +2136,7 @@ c
          do i = 1, n
             if (b(i,j) .ne. a(i,j)) then
                write(6,*) ' copy ', me, i, j, a(i,j), b(i,j)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -2163,7 +2163,7 @@ c
             if (MISMATCH(b(i,j), a(i,j)))then
                write(6,*) ' dscal ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -2208,7 +2208,7 @@ c
              write(6,*)me,' gather ', ilo,',',jlo,',', a(ilo,jlo)
      &             ,' ',v(loop)
              call ffflush(6)
-             call ga_error('... exiting ',0)
+             call ga_error('... exiting ',-1)
            endif
          enddo
        endif
@@ -2284,7 +2284,7 @@ c
             if (MISMATCH(b(i,j), a(i,j)))then
                write(6,*) ' add ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -2323,7 +2323,7 @@ c
       if (MISMATCH(sum1, sum2))then
          write(6,*) ' zdot wrong ', sum1, sum2
          call ffflush(6)
-         call ga_error('... exiting ',0)
+         call ga_error('... exiting ',-1)
       else if (me.eq.0) then
          write(6,*)
          write(6,*) ' zdot is OK '
@@ -2394,7 +2394,7 @@ c
       block_size(2) = 32
 #ifdef USE_SCALAPACK_DISTR
       if (mod(nproc,2).ne.0)
-     +  call ga_error("Available procs must be divisible by 2",0)
+     +  call ga_error("Available procs must be divisible by 2",-1)
       proc_grid(1) = 2
       proc_grid(2) = nproc/2
 #endif
@@ -2449,7 +2449,7 @@ c
 #endif
          write(6,*) ' ga_create failed'
          call ffflush(6)
-         call ga_error('... exiting ',0)
+         call ga_error('... exiting ',-1)
       endif
 c     
 c     Zero the array
@@ -2469,7 +2469,7 @@ c
             if (b(i,j) .ne. 0) then
                write(6,*) ' zero ', me, i, j, b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -2525,7 +2525,7 @@ c
               if (b(i,j) .ne. a(i,j)) then
                  write(6,*) ' put ', me, i, j, a(i,j),b(i,j)
                  call ffflush(6)
-                 call ga_error('... exiting ',0)
+                 call ga_error('... exiting ',-1)
               endif
            enddo
         enddo
@@ -2585,7 +2585,7 @@ c
                if (b(i,j) .ne. a(i,j)) then
                   write(6,*) 'error ', i, j, b(i,j), a(i,j)
                   call ffflush(6)
-                  call ga_error('... exiting ',0)
+                  call ga_error('... exiting ',-1)
                endif
             enddo
          enddo
@@ -2697,7 +2697,7 @@ c***  compute g_a(:,n) = sum (1(:)) for P processors
 c     
       status = ga_create_mutexes(1)
       if (.not. status) then
-         call ga_error('ga_create_mutexes failed ',0)
+         call ga_error('ga_create_mutexes failed ',-1)
       endif
 
       if(n.lt.2)call ga_error('insufficient n to test ga_fence',n)
@@ -2722,7 +2722,7 @@ c
 c     call my_unlock(g_a)
 c
 333   if(.not.ga_destroy_mutexes())
-     $   call ga_error('mutex not destroyed',0)
+     $   call ga_error('mutex not destroyed',-1)
 
       call ga_sync()
       if (me.eq.0) then
@@ -2851,7 +2851,7 @@ c
          do i=1,n
             if(a(i,j).eq.-1)then
                write(6,*)'i=',i,' j=',j, ' not assigned '
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
         enddo
@@ -2924,7 +2924,7 @@ c---------------------------------------------------------------------
       block_size(2) = 32
 #ifdef USE_SCALAPACK_DISTR
       if (mod(nproc,2).ne.0)
-     +  call ga_error("Available procs must be divisible by 2",0)
+     +  call ga_error("Available procs must be divisible by 2",-1)
       proc_grid(1) = 2
       proc_grid(2) = nproc/2
 #endif
@@ -2986,7 +2986,7 @@ cBJP
 #endif
          write(6,*) ' ga_create failed'
          call ffflush(6)
-         call ga_error('... exiting ',0)
+         call ga_error('... exiting ',-1)
       endif
 c
 c     check if handle is valid. be quiet unless error
@@ -3019,7 +3019,7 @@ c
             if (b(i,j) .ne. 0.0) then
                write(6,*) ' zero ', me, i, j, b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -3070,7 +3070,7 @@ c
             if (b(i,j) .ne. a(i,j)) then
                write(6,*) ' put ', me, i, j, a(i,j),b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -3129,7 +3129,7 @@ c
                if (b(i,j) .ne. a(i,j)) then
                   write(6,*) 'error ', i, j, b(i,j), a(i,j)
                   call ffflush(6)
-                  call ga_error('... exiting ',0)
+                  call ga_error('... exiting ',-1)
                endif
             enddo
          enddo
@@ -3205,7 +3205,7 @@ c
             if(MISMATCHF(b(i,j),a(i,j)))then
                write(6,*) ' acc ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -3223,7 +3223,7 @@ c     overlapping accumulate
       if (.not. nga_create_config(MT_REAL, ndim, dims, 'b', chunk,
      +                            p_mirror, g_b)) then
 #endif
-         call ga_error('ga_create failed for second array ',0)
+         call ga_error('ga_create failed for second array ',-1)
       endif
 c
       call ga_zero(g_b)
@@ -3242,7 +3242,7 @@ c
 #else
             write(6,*)'val=',b(1,1),' expected=',lprocs, x
 #endif
-            call ga_error('overlapping accumulate failed',0)
+            call ga_error('overlapping accumulate failed',-1)
          endif
          write(6,*)
          write(6,*) ' overlapping ga_acc is OK'
@@ -3276,7 +3276,7 @@ c
             if(MISMATCHF(b(i,j), a(i,j)))then
                write(6,*) ' add ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
-CCC               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -3315,7 +3315,7 @@ c
       if(MISMATCHF(sum1, sum2))then
          write(6,*) ' fdot wrong ', sum1, sum2
          call ffflush(6)
-            call ga_error('... exiting ',0)
+            call ga_error('... exiting ',-1)
       else if (me.eq.0) then
          write(6,*)
          write(6,*) ' sdot is OK '
@@ -3337,7 +3337,7 @@ c
             if (MISMATCHF(b(i,j), a(i,j)))then
                write(6,*) ' dscal ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
-CCC               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -3363,7 +3363,7 @@ c
             if (b(i,j) .ne. a(i,j)) then
                write(6,*) ' copy ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -3405,7 +3405,7 @@ c
              write(6,*)me,' gather ', ilo,',',jlo,',', a(ilo,jlo)
      &             ,' ',v(loop)
              call ffflush(6)
-             call ga_error('... exiting ',0)
+             call ga_error('... exiting ',-1)
            endif                                     
          enddo
        endif
@@ -3443,7 +3443,7 @@ c          if(v(loop)  .ne. w(loop))then
              write(6,*)me,' scatter ', ilo,',',jlo,',',w(loop)
      &             ,' ', 1.0 *(ilo+jlo)
              call ffflush(6)
-             call ga_error('... exiting ',0)
+             call ga_error('... exiting ',-1)
            endif
          enddo
        endif
@@ -3638,7 +3638,7 @@ c
       call ga_gop(MT_DCPL, zsum, n, '+')
       do i = 1, n 
          if(zsum(i).ne.check(i)) then
-            call ga_error('ga_gop error', 1)
+            call ga_error('ga_gop error', -1)
          endif
       enddo
       call ga_sync()
