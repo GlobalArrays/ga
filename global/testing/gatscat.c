@@ -19,7 +19,7 @@
 int main( int argc, char **argv ) {
   int g_a, g_b, i, j, size, size_me;
   int icnt, idx, jdx, ld;
-  int n=N, type=MT_F_INT, one;
+  int n=N, type=MT_C_INT, one;
   int *values, *ptr;
   int **indices;
   int dims[2]={N,N};
@@ -32,6 +32,7 @@ int main( int argc, char **argv ) {
   double *prealloc_mem;
   MP_INIT(argc,argv);
 
+#if 1
   GA_INIT(argc,argv);                            /* initialize GA */
   me=GA_Nodeid(); 
   nproc=GA_Nnodes();
@@ -166,6 +167,7 @@ int main( int argc, char **argv ) {
   GA_Destroy(g_a);
   if(me==0)printf("\nSuccess\n");
   GA_Terminate();
+#endif
 
   MP_FINALIZE();
 
