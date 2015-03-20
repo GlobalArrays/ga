@@ -6,7 +6,7 @@
 #else
 #define INTGR4 integer*4
 #endif
-#define HAVE_ELPA 1
+cedo#define HAVE_ELPA 1
 C     $Id: scalapack.F,v 1.11 2006/10/13 16:15:17 d3g293 Exp $
 ****************************************************************************
 * GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
@@ -38,17 +38,28 @@ c
 #include "scalapack.fh"
 #include "global.fh"
       INTGR4 zero4
+      integer*4 ga_comm
       parameter(zero4=0)
 c
       if(init)return
 c
 c**** call ga_sync before to enter in BLACS and after
 c     
+#if 0
       call blacs_pinfo(iam, nnodes)
+#else
+      iam=ga_nodeid()
+      nnodes=ga_nnodes()
+#endif
 c
       call FindGrid(nnodes, nprow, npcol)
 c
+#if 0
       call blacs_get (zero4, zero4, icontxt)
+#else
+      call ga_mpi_comm_pgroup_default(ga_comm)
+      icontxt=ga_comm
+#endif
       call blacs_gridinit(icontxt, 'R', nprow, npcol)
       iSLctxt = icontxt
 c
@@ -70,6 +81,7 @@ c
       INTGR4 zero4
       parameter(zero4=0)
       INTGR4 slgetmxproc
+      integer*4 ga_comm
       external slgetmxproc
 c
       if(init2)return
@@ -77,14 +89,25 @@ c
 c**** call ga_sync before to enter in BLACS and after
       call ga_sync()
 c     
+#if 0
       call blacs_pinfo(iam, nnodes)
+#else
+      iam=ga_nodeid()
+      nnodes=ga_nnodes()
+#endif
 c
 c     determine optimal nprocs for eigensolvers based on matrix size n
 c
       maxproc=slgetmxproc(n,nnodes)
       call FindGrid(maxproc, nprow2, npcol2)
 c
+#if 0
       call blacs_get( zero4, zero4, islctxt2 )
+#else
+      call ga_mpi_comm_pgroup_default(ga_comm)
+      islctxt2=ga_comm
+#endif
+
       call blacs_gridinit(islctxt2, 'R', nprow2, npcol2)
 
 
@@ -107,6 +130,7 @@ c
       subroutine SLinit3(g_a)
       implicit none
       INTGR4  icontxt
+      integer*4 ga_comm
 c
 #include "scalapack.fh"
 #include "global.fh"
@@ -131,8 +155,14 @@ c
       endif
 
 c
+#if 0
       call sl_init(icontxt, nprow, npcol)
+#else
+      call ga_mpi_comm_pgroup_default(ga_comm)
+      icontxt=ga_comm
+#endif
       iSLctxt = icontxt
+
 c
       call blacs_gridinfo(iSLctxt, nprow, npcol, myrow, mycol)
 c
@@ -149,6 +179,7 @@ c
 c
       INTGR4 icontxt, n
       INTGR4 slgetmxproc
+      integer*4 ga_comm
       external slgetmxproc
       integer g_a, nblocks(2), ndim, dims(2), type
 c
@@ -167,9 +198,19 @@ c**** call ga_sync before to enter in BLACS and after
         call ga_error('Array does not use processor grid SCALAPACK',0)
       endif
 c
+#if 0
       call blacs_pinfo(iam, nnodes)
+#else
+      iam=ga_nodeid()
+      nnodes=ga_nnodes()
+#endif
       maxproc=slgetmxproc(n,nnodes)
+#if 0
       call sl_init(icontxt, nprow, npcol)
+#else
+      call ga_mpi_comm_pgroup_default(ga_comm)
+      icontxt=ga_comm
+#endif
       islctxt2 = icontxt
 c
       call blacs_gridinfo(iSLctxt2, nprow2, npcol2, myrow2, mycol2)
@@ -3534,8 +3575,10 @@ c
       INTGR4 n
       INTGR4 info,one4,zero4,two4,four4
       INTGR4 mpierr,elpa_comm,elpa_group
+      integer*4 ga_comm
       integer mxproc,i
       parameter(mxproc=100000)
+      integer*4 ga_comm
       INTGR4 group_world, group_members(mxproc)
 
       parameter(one4=1,zero4=0,two4=4,four4=4)
@@ -3584,7 +3627,8 @@ c
       oactive=iam.lt.maxproc
       call ga_zero(g_b)
 celpa
-      call MPI_Comm_group(MPI_COMM_WORLD, group_world, mpierr)
+      call ga_mpi_comm_pgroup_default(ga_comm)
+      call MPI_Comm_group(ga_comm, group_world, mpierr)
       do i=1,maxproc
          group_members(i)=i-1
       enddo
@@ -3592,9 +3636,9 @@ celpa
      C     elpa_group, mpierr)
       if(mpierr.ne.0) call ga_error(
      A     'ga-evp_real: mpigroupincl failed ',mpierr)
-c          write(6,'(I3,A,3I12)') ga_nodeid(), 'comms ',elpa_group,
-c     W         group_world,MPI_COMM_WORLD
-      call mpi_comm_create(MPI_COMM_WORLD, elpa_group, elpa_comm,
+
+
+      call mpi_comm_create(ga_comm, elpa_group, elpa_comm,
      W mpierr)
       call ga_sync()
       if (oactive) then
@@ -3659,6 +3703,7 @@ c
      .        -info8)
 c     
 c     
+
           call get_elpa_row_col_comms(elpa_comm,
      V        myrow2, mycol2, 
      V        elpa_comm_rows, elpa_comm_cols)
