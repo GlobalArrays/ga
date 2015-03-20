@@ -9,6 +9,7 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
+#include "galinalg.fh"
       integer g_a               ! Matrix to diagonalize
       integer g_s               ! Metric
       integer g_v               ! Global matrix to return evecs

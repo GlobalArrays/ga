@@ -110,20 +110,76 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 # Since we gave all linalg routines a gal_ prefix, we can unconditionally
 # compile our internal linalg routines.
 #
-@ENABLE_F77_TRUE@am__append_2 = ma/maf.F LinAlg/lapack+blas/dgetf2.f \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/dgetrf.f \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/dgetrs.f \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/dlacpy.f \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/dlaset.f \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/dlaswp.f \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/ilaenv.f \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/lsame.f \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/xerbla.f \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/cgemm.f \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/dblas.f \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/sgemm.f \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/zaxpy.f \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/zgemm.f
+@ENABLE_F77_TRUE@am__append_2 = ma/maf.F \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_cgemm.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_daxpy.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dcopy.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_ddot.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dgemm.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dgemv.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dger.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dgetf2.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dgetrf.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dgetrs.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_disnan.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlacpy.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlae2.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlaev2.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlaisnan.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlamch.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlanst.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlansy.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlapy2.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlarfb.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlarf.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlarfg.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlarft.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlartg.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlascl.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlaset.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlasr.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlasrt.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlassq.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlaswp.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlatrd.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dnrm2.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dorg2l.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dorg2r.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dorgql.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dorgqr.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dorgtr.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dpotf2.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dpotrf.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dscal.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsteqr.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsterf.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dswap.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsyev.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsygs2.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsygst.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsygv.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsymm.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsymv.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsyr2.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsyr2k.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsyrk.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsytd2.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsytrd.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dtrmm.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dtrmv.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dtrsm.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dtrsv.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_idamax.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_ieeeck.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_iladlc.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_iladlr.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_ilaenv.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_iparmq.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_lsame.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_sgemm.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_xerbla.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_zaxpy.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_zgemm.f
 @ENABLE_F77_TRUE@am__append_3 = ma/testf
 @ENABLE_F77_TRUE@am__append_4 = ma/testf$(EXEEXT)
 @ENABLE_F77_TRUE@am__append_5 = ma/testf$(EXEEXT)
@@ -566,18 +622,59 @@ libga_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__append_62) $(am__DEPENDENCIES_3)
 am__libga_la_SOURCES_DIST = compat/random.c ma/error.c ma/f2c.c \
 	ma/ma.c ma/ma.h ma/memcpy.h ma/string-util.c ma/table.c \
-	ma/maf.F LinAlg/lapack+blas/dgetf2.f \
-	LinAlg/lapack+blas/dgetrf.f LinAlg/lapack+blas/dgetrs.f \
-	LinAlg/lapack+blas/dlacpy.f LinAlg/lapack+blas/dlaset.f \
-	LinAlg/lapack+blas/dlaswp.f LinAlg/lapack+blas/ilaenv.f \
-	LinAlg/lapack+blas/lsame.f LinAlg/lapack+blas/xerbla.f \
-	LinAlg/lapack+blas/cgemm.f LinAlg/lapack+blas/dblas.f \
-	LinAlg/lapack+blas/sgemm.f LinAlg/lapack+blas/zaxpy.f \
-	LinAlg/lapack+blas/zgemm.f LinAlg/lapack+blas/xgemm.c \
-	LinAlg/lapack+blas/xgemm.h LinAlg/lapack+blas/galinalg.h \
-	LinAlg/lapack+blas/galinalg.fh global/src/abstract_ops.h \
-	global/src/base.c global/src/base.h global/src/capi.c \
-	global/src/cnames.h global/src/collect.c \
+	ma/maf.F LinAlg/lapack+blas/gal_cgemm.f \
+	LinAlg/lapack+blas/gal_daxpy.f LinAlg/lapack+blas/gal_dcopy.f \
+	LinAlg/lapack+blas/gal_ddot.f LinAlg/lapack+blas/gal_dgemm.f \
+	LinAlg/lapack+blas/gal_dgemv.f LinAlg/lapack+blas/gal_dger.f \
+	LinAlg/lapack+blas/gal_dgetf2.f \
+	LinAlg/lapack+blas/gal_dgetrf.f \
+	LinAlg/lapack+blas/gal_dgetrs.f \
+	LinAlg/lapack+blas/gal_disnan.f \
+	LinAlg/lapack+blas/gal_dlacpy.f LinAlg/lapack+blas/gal_dlae2.f \
+	LinAlg/lapack+blas/gal_dlaev2.f \
+	LinAlg/lapack+blas/gal_dlaisnan.f \
+	LinAlg/lapack+blas/gal_dlamch.f \
+	LinAlg/lapack+blas/gal_dlanst.f \
+	LinAlg/lapack+blas/gal_dlansy.f \
+	LinAlg/lapack+blas/gal_dlapy2.f \
+	LinAlg/lapack+blas/gal_dlarfb.f LinAlg/lapack+blas/gal_dlarf.f \
+	LinAlg/lapack+blas/gal_dlarfg.f \
+	LinAlg/lapack+blas/gal_dlarft.f \
+	LinAlg/lapack+blas/gal_dlartg.f \
+	LinAlg/lapack+blas/gal_dlascl.f \
+	LinAlg/lapack+blas/gal_dlaset.f LinAlg/lapack+blas/gal_dlasr.f \
+	LinAlg/lapack+blas/gal_dlasrt.f \
+	LinAlg/lapack+blas/gal_dlassq.f \
+	LinAlg/lapack+blas/gal_dlaswp.f \
+	LinAlg/lapack+blas/gal_dlatrd.f LinAlg/lapack+blas/gal_dnrm2.f \
+	LinAlg/lapack+blas/gal_dorg2l.f \
+	LinAlg/lapack+blas/gal_dorg2r.f \
+	LinAlg/lapack+blas/gal_dorgql.f \
+	LinAlg/lapack+blas/gal_dorgqr.f \
+	LinAlg/lapack+blas/gal_dorgtr.f \
+	LinAlg/lapack+blas/gal_dpotf2.f \
+	LinAlg/lapack+blas/gal_dpotrf.f LinAlg/lapack+blas/gal_dscal.f \
+	LinAlg/lapack+blas/gal_dsteqr.f \
+	LinAlg/lapack+blas/gal_dsterf.f LinAlg/lapack+blas/gal_dswap.f \
+	LinAlg/lapack+blas/gal_dsyev.f LinAlg/lapack+blas/gal_dsygs2.f \
+	LinAlg/lapack+blas/gal_dsygst.f LinAlg/lapack+blas/gal_dsygv.f \
+	LinAlg/lapack+blas/gal_dsymm.f LinAlg/lapack+blas/gal_dsymv.f \
+	LinAlg/lapack+blas/gal_dsyr2.f LinAlg/lapack+blas/gal_dsyr2k.f \
+	LinAlg/lapack+blas/gal_dsyrk.f LinAlg/lapack+blas/gal_dsytd2.f \
+	LinAlg/lapack+blas/gal_dsytrd.f LinAlg/lapack+blas/gal_dtrmm.f \
+	LinAlg/lapack+blas/gal_dtrmv.f LinAlg/lapack+blas/gal_dtrsm.f \
+	LinAlg/lapack+blas/gal_dtrsv.f LinAlg/lapack+blas/gal_idamax.f \
+	LinAlg/lapack+blas/gal_ieeeck.f \
+	LinAlg/lapack+blas/gal_iladlc.f \
+	LinAlg/lapack+blas/gal_iladlr.f \
+	LinAlg/lapack+blas/gal_ilaenv.f \
+	LinAlg/lapack+blas/gal_iparmq.f LinAlg/lapack+blas/gal_lsame.f \
+	LinAlg/lapack+blas/gal_sgemm.f LinAlg/lapack+blas/gal_xerbla.f \
+	LinAlg/lapack+blas/gal_zaxpy.f LinAlg/lapack+blas/gal_zgemm.f \
+	LinAlg/lapack+blas/xgemm.c LinAlg/lapack+blas/xgemm.h \
+	LinAlg/lapack+blas/galinalg.h LinAlg/lapack+blas/galinalg.fh \
+	global/src/abstract_ops.h global/src/base.c global/src/base.h \
+	global/src/capi.c global/src/cnames.h global/src/collect.c \
 	global/src/datatypes.c global/src/decomp.c global/src/diag.fh \
 	global/src/DP.c global/src/elem_alg.c global/src/fapi.c \
 	global/src/ga_ckpt.h global/src/gaconfig.h \
@@ -618,20 +715,75 @@ am__libga_la_SOURCES_DIST = compat/random.c ma/error.c ma/f2c.c \
 	tcgmsg/tcgmsg-mpi/sizeof.c tcgmsg/tcgmsg-mpi/sndrcv.h \
 	tcgmsg/tcgmsg-mpi/srftoc.h tcgmsg/tcgmsg-mpi/tcgmsgP.h
 @ENABLE_F77_TRUE@am__objects_1 = ma/maf.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/dgetf2.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/dgetrf.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/dgetrs.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/dlacpy.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/dlaset.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/dlaswp.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/ilaenv.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/lsame.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/xerbla.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/cgemm.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/dblas.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/sgemm.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/zaxpy.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/zgemm.lo
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_cgemm.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_daxpy.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dcopy.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_ddot.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dgemm.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dgemv.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dger.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dgetf2.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dgetrf.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dgetrs.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_disnan.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlacpy.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlae2.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlaev2.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlaisnan.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlamch.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlanst.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlansy.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlapy2.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlarfb.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlarf.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlarfg.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlarft.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlartg.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlascl.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlaset.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlasr.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlasrt.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlassq.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlaswp.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dlatrd.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dnrm2.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dorg2l.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dorg2r.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dorgql.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dorgqr.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dorgtr.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dpotf2.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dpotrf.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dscal.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsteqr.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsterf.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dswap.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsyev.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsygs2.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsygst.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsygv.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsymm.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsymv.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsyr2.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsyr2k.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsyrk.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsytd2.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dsytrd.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dtrmm.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dtrmv.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dtrsm.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dtrsv.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_idamax.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_ieeeck.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_iladlc.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_iladlr.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_ilaenv.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_iparmq.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_lsame.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_sgemm.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_xerbla.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_zaxpy.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_zgemm.lo
 @ENABLE_F77_TRUE@am__objects_2 = global/src/complex.lo \
 @ENABLE_F77_TRUE@	global/src/ga_diag_seq.lo global/src/rsg.lo
 @CRAY_XT_NETWORKS_TRUE@@ENABLE_F77_TRUE@am__objects_3 = global/src/ga_dgemmf.lo
@@ -5089,33 +5241,144 @@ LinAlg/lapack+blas/$(am__dirstamp):
 LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) LinAlg/lapack+blas/$(DEPDIR)
 	@: > LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/dgetf2.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+LinAlg/lapack+blas/gal_cgemm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/dgetrf.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+LinAlg/lapack+blas/gal_daxpy.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/dgetrs.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+LinAlg/lapack+blas/gal_dcopy.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/dlacpy.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+LinAlg/lapack+blas/gal_ddot.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/dlaset.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+LinAlg/lapack+blas/gal_dgemm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/dlaswp.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+LinAlg/lapack+blas/gal_dgemv.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/ilaenv.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+LinAlg/lapack+blas/gal_dger.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/lsame.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+LinAlg/lapack+blas/gal_dgetf2.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/xerbla.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+LinAlg/lapack+blas/gal_dgetrf.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/cgemm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+LinAlg/lapack+blas/gal_dgetrs.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/dblas.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+LinAlg/lapack+blas/gal_disnan.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/sgemm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+LinAlg/lapack+blas/gal_dlacpy.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/zaxpy.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+LinAlg/lapack+blas/gal_dlae2.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/zgemm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+LinAlg/lapack+blas/gal_dlaev2.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlaisnan.lo:  \
+	LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlamch.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlanst.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlansy.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlapy2.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlarfb.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlarf.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlarfg.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlarft.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlartg.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlascl.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlaset.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlasr.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlasrt.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlassq.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlaswp.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dlatrd.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dnrm2.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dorg2l.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dorg2r.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dorgql.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dorgqr.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dorgtr.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dpotf2.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dpotrf.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dscal.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dsteqr.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dsterf.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dswap.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dsyev.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dsygs2.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dsygst.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dsygv.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dsymm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dsymv.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dsyr2.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dsyr2k.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dsyrk.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dsytd2.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dsytrd.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dtrmm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dtrmv.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dtrsm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dtrsv.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_idamax.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_ieeeck.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_iladlc.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_iladlr.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_ilaenv.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_iparmq.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_lsame.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_sgemm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_xerbla.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_zaxpy.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_zgemm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
 LinAlg/lapack+blas/xgemm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
@@ -6694,36 +6957,146 @@ uninstall-binSCRIPTS:
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/cgemm.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/cgemm.lo
-	-rm -f LinAlg/lapack+blas/dblas.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/dblas.lo
-	-rm -f LinAlg/lapack+blas/dgetf2.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/dgetf2.lo
-	-rm -f LinAlg/lapack+blas/dgetrf.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/dgetrf.lo
-	-rm -f LinAlg/lapack+blas/dgetrs.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/dgetrs.lo
-	-rm -f LinAlg/lapack+blas/dlacpy.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/dlacpy.lo
-	-rm -f LinAlg/lapack+blas/dlaset.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/dlaset.lo
-	-rm -f LinAlg/lapack+blas/dlaswp.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/dlaswp.lo
-	-rm -f LinAlg/lapack+blas/ilaenv.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/ilaenv.lo
-	-rm -f LinAlg/lapack+blas/lsame.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/lsame.lo
-	-rm -f LinAlg/lapack+blas/sgemm.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/sgemm.lo
-	-rm -f LinAlg/lapack+blas/xerbla.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/xerbla.lo
+	-rm -f LinAlg/lapack+blas/gal_cgemm.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_cgemm.lo
+	-rm -f LinAlg/lapack+blas/gal_daxpy.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_daxpy.lo
+	-rm -f LinAlg/lapack+blas/gal_dcopy.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dcopy.lo
+	-rm -f LinAlg/lapack+blas/gal_ddot.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_ddot.lo
+	-rm -f LinAlg/lapack+blas/gal_dgemm.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dgemm.lo
+	-rm -f LinAlg/lapack+blas/gal_dgemv.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dgemv.lo
+	-rm -f LinAlg/lapack+blas/gal_dger.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dger.lo
+	-rm -f LinAlg/lapack+blas/gal_dgetf2.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dgetf2.lo
+	-rm -f LinAlg/lapack+blas/gal_dgetrf.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dgetrf.lo
+	-rm -f LinAlg/lapack+blas/gal_dgetrs.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dgetrs.lo
+	-rm -f LinAlg/lapack+blas/gal_disnan.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_disnan.lo
+	-rm -f LinAlg/lapack+blas/gal_dlacpy.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlacpy.lo
+	-rm -f LinAlg/lapack+blas/gal_dlae2.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlae2.lo
+	-rm -f LinAlg/lapack+blas/gal_dlaev2.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlaev2.lo
+	-rm -f LinAlg/lapack+blas/gal_dlaisnan.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlaisnan.lo
+	-rm -f LinAlg/lapack+blas/gal_dlamch.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlamch.lo
+	-rm -f LinAlg/lapack+blas/gal_dlanst.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlanst.lo
+	-rm -f LinAlg/lapack+blas/gal_dlansy.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlansy.lo
+	-rm -f LinAlg/lapack+blas/gal_dlapy2.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlapy2.lo
+	-rm -f LinAlg/lapack+blas/gal_dlarf.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlarf.lo
+	-rm -f LinAlg/lapack+blas/gal_dlarfb.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlarfb.lo
+	-rm -f LinAlg/lapack+blas/gal_dlarfg.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlarfg.lo
+	-rm -f LinAlg/lapack+blas/gal_dlarft.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlarft.lo
+	-rm -f LinAlg/lapack+blas/gal_dlartg.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlartg.lo
+	-rm -f LinAlg/lapack+blas/gal_dlascl.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlascl.lo
+	-rm -f LinAlg/lapack+blas/gal_dlaset.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlaset.lo
+	-rm -f LinAlg/lapack+blas/gal_dlasr.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlasr.lo
+	-rm -f LinAlg/lapack+blas/gal_dlasrt.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlasrt.lo
+	-rm -f LinAlg/lapack+blas/gal_dlassq.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlassq.lo
+	-rm -f LinAlg/lapack+blas/gal_dlaswp.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlaswp.lo
+	-rm -f LinAlg/lapack+blas/gal_dlatrd.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dlatrd.lo
+	-rm -f LinAlg/lapack+blas/gal_dnrm2.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dnrm2.lo
+	-rm -f LinAlg/lapack+blas/gal_dorg2l.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dorg2l.lo
+	-rm -f LinAlg/lapack+blas/gal_dorg2r.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dorg2r.lo
+	-rm -f LinAlg/lapack+blas/gal_dorgql.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dorgql.lo
+	-rm -f LinAlg/lapack+blas/gal_dorgqr.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dorgqr.lo
+	-rm -f LinAlg/lapack+blas/gal_dorgtr.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dorgtr.lo
+	-rm -f LinAlg/lapack+blas/gal_dpotf2.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dpotf2.lo
+	-rm -f LinAlg/lapack+blas/gal_dpotrf.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dpotrf.lo
+	-rm -f LinAlg/lapack+blas/gal_dscal.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dscal.lo
+	-rm -f LinAlg/lapack+blas/gal_dsteqr.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dsteqr.lo
+	-rm -f LinAlg/lapack+blas/gal_dsterf.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dsterf.lo
+	-rm -f LinAlg/lapack+blas/gal_dswap.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dswap.lo
+	-rm -f LinAlg/lapack+blas/gal_dsyev.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dsyev.lo
+	-rm -f LinAlg/lapack+blas/gal_dsygs2.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dsygs2.lo
+	-rm -f LinAlg/lapack+blas/gal_dsygst.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dsygst.lo
+	-rm -f LinAlg/lapack+blas/gal_dsygv.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dsygv.lo
+	-rm -f LinAlg/lapack+blas/gal_dsymm.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dsymm.lo
+	-rm -f LinAlg/lapack+blas/gal_dsymv.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dsymv.lo
+	-rm -f LinAlg/lapack+blas/gal_dsyr2.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dsyr2.lo
+	-rm -f LinAlg/lapack+blas/gal_dsyr2k.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dsyr2k.lo
+	-rm -f LinAlg/lapack+blas/gal_dsyrk.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dsyrk.lo
+	-rm -f LinAlg/lapack+blas/gal_dsytd2.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dsytd2.lo
+	-rm -f LinAlg/lapack+blas/gal_dsytrd.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dsytrd.lo
+	-rm -f LinAlg/lapack+blas/gal_dtrmm.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dtrmm.lo
+	-rm -f LinAlg/lapack+blas/gal_dtrmv.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dtrmv.lo
+	-rm -f LinAlg/lapack+blas/gal_dtrsm.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dtrsm.lo
+	-rm -f LinAlg/lapack+blas/gal_dtrsv.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dtrsv.lo
+	-rm -f LinAlg/lapack+blas/gal_idamax.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_idamax.lo
+	-rm -f LinAlg/lapack+blas/gal_ieeeck.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_ieeeck.lo
+	-rm -f LinAlg/lapack+blas/gal_iladlc.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_iladlc.lo
+	-rm -f LinAlg/lapack+blas/gal_iladlr.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_iladlr.lo
+	-rm -f LinAlg/lapack+blas/gal_ilaenv.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_ilaenv.lo
+	-rm -f LinAlg/lapack+blas/gal_iparmq.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_iparmq.lo
+	-rm -f LinAlg/lapack+blas/gal_lsame.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_lsame.lo
+	-rm -f LinAlg/lapack+blas/gal_sgemm.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_sgemm.lo
+	-rm -f LinAlg/lapack+blas/gal_xerbla.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_xerbla.lo
+	-rm -f LinAlg/lapack+blas/gal_zaxpy.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_zaxpy.lo
+	-rm -f LinAlg/lapack+blas/gal_zgemm.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_zgemm.lo
 	-rm -f LinAlg/lapack+blas/xgemm.$(OBJEXT)
 	-rm -f LinAlg/lapack+blas/xgemm.lo
-	-rm -f LinAlg/lapack+blas/zaxpy.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/zaxpy.lo
-	-rm -f LinAlg/lapack+blas/zgemm.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/zgemm.lo
 	-rm -f compat/random.$(OBJEXT)
 	-rm -f compat/random.lo
 	-rm -f ga++/src/GAServices.$(OBJEXT)

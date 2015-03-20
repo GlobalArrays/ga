@@ -17,6 +17,10 @@
 #else
 #define dgetrf gal_dgetrf
 #define DGETRF GAL_DGETRF
+#define dsyev  gal_dsyev
+#define DSYEV  GAL_DSYEV
+#define dsygv  gal_dsygv
+#define DSYGV  GAL_DSYGV
 #define dtrsm  gal_dtrsm
 #define DTRSM  GAL_DTRSM
 #define lsame  gal_lsame
