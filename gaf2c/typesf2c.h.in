@@ -1,7 +1,7 @@
 #ifndef TYPESF2C_H_
 #define TYPESF2C_H_
 
-#ifdef WIN32
+#if defined(WIN32) &&!defined(__MINGW32__)
 #   define FATR __stdcall
 #else
 #   define FATR 

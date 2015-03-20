@@ -3,7 +3,9 @@
 
 #ifdef WIN32
 #include <io.h>
+#ifndef __MINGW32__
 #include "winutil.h"
+#endif
 #define F_OK 00
 #endif
 

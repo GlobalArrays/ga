@@ -175,7 +175,7 @@ extern INLINE int armci_register_thread(thread_id_t id);
 #endif
 
 #ifndef FATR
-# ifdef WIN32
+# if defined(WIN32) && !defined(__MINGW32__)
 #   define FATR __stdcall
 # else
 #   define FATR 
