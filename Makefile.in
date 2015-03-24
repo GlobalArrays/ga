@@ -195,7 +195,7 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_GPARRAYS_TRUE@@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_9 = tools/gp-wapi.c
 @ENABLE_GPARRAYS_TRUE@am__append_10 = tools/gpwapigen.py
 @ENABLE_F77_TRUE@am__append_11 = global/src/complex.F \
-@ENABLE_F77_TRUE@	global/src/ga_diag_seq.F global/src/rsg.f
+@ENABLE_F77_TRUE@	global/src/ga_diag_seq.F global/src/rsg.F
 @CRAY_XT_NETWORKS_TRUE@@ENABLE_F77_TRUE@am__append_12 = global/src/ga_dgemmf.F
 @ENABLE_F77_TRUE@@ENABLE_PEIGS_TRUE@am__append_13 = global/src/ga_diag.F
 @ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_14 = global/src/scalapack.F
@@ -690,7 +690,7 @@ am__libga_la_SOURCES_DIST = compat/random.c ma/error.c ma/f2c.c \
 	global/src/peigstubs.c global/src/scalapack.fh \
 	global/src/sclstubs.c global/src/select.c global/src/sparse.c \
 	global/src/types.xh global/src/types2.xh global/src/complex.F \
-	global/src/ga_diag_seq.F global/src/rsg.f \
+	global/src/ga_diag_seq.F global/src/rsg.F \
 	global/src/ga_dgemmf.F global/src/ga_diag.F \
 	global/src/scalapack.F global/src/ga_ckpt.c \
 	pario/dra/buffers.c pario/dra/buffers.h pario/dra/capi.c \
