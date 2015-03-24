@@ -361,7 +361,7 @@ void kr_malloc_verify(context_t *ctx) {
 /********************** BEGIN: kr_malloc for ctx_shmem *********************/
 #if defined(SYSV) || defined(MMAP)
 
-#include "shmem.h"
+#include "armci_shmem.h"
 
 extern int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
 				size_t *shmsize);

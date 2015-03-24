@@ -34,7 +34,7 @@
 
 #define DEBUG_ 0
 #if defined(SYSV) || defined(MMAP) ||defined (WIN32)
-#    include "shmem.h"
+#    include "armci_shmem.h"
 #endif
 
 /* global operations are use buffer size of BUF_SIZE doubles */ 

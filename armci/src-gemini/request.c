@@ -6,7 +6,7 @@
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
-#include "shmem.h"
+#include "armci_shmem.h"
 #include "copy.h"
 #include "gpc.h"
 #include <stdio.h>

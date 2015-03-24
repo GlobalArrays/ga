@@ -17,7 +17,7 @@
 #endif
 
 #if (defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN) || defined(HITACHI)) && !(defined(BGML) || defined(DCMF))
-#   include "shmem.h"
+#   include "armci_shmem.h"
 typedef struct {
     long off;
     long idlist[SHMIDLEN];

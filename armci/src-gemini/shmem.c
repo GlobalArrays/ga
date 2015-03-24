@@ -54,7 +54,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "shmem.h"
+#include "armci_shmem.h"
 #include "kr_malloc.h"
 #include "shmlimit.h"
 #include "message.h"

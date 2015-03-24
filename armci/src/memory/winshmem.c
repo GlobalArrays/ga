@@ -109,7 +109,7 @@
 #   include <assert.h>
 #endif
 #include "kr_malloc.h"
-#include "shmem.h"
+#include "armci_shmem.h"
 #include "armcip.h"
 #include "armci.h"
 

@@ -151,7 +151,7 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/semaphores.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/shmalloc.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/shmem.c \
-@ARMCI_NETWORK_PORTALS_TRUE@	src-portals/shmem.h \
+@ARMCI_NETWORK_PORTALS_TRUE@	src-portals/armci_shmem.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/shmlimit.c \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/shmlimit.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/signaltrap.c \
@@ -207,7 +207,7 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/semaphores.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/shmalloc.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/shmem.c \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/shmem.h \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/armci_shmem.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/shmlimit.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/shmlimit.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/signaltrap.c \
@@ -263,7 +263,7 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/request.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/semaphores.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/shmalloc.h \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/shmem.h \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/armci_shmem.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/shmlimit.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/signaltrap.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/spinlock.h \
@@ -624,7 +624,7 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src-portals/request.c src-portals/request.h src-portals/rmw.c \
 	src-portals/rtinfo.c src-portals/semaphores.c \
 	src-portals/semaphores.h src-portals/shmalloc.h \
-	src-portals/shmem.c src-portals/shmem.h src-portals/shmlimit.c \
+	src-portals/shmem.c src-portals/armci_shmem.h src-portals/shmlimit.c \
 	src-portals/shmlimit.h src-portals/signaltrap.c \
 	src-portals/signaltrap.h src-portals/sockets.h \
 	src-portals/spawn.c src-portals/spinlock.h \
@@ -644,7 +644,7 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src-gemini/request.c src-gemini/request.h src-gemini/rmw.c \
 	src-gemini/rtinfo.c src-gemini/semaphores.c \
 	src-gemini/semaphores.h src-gemini/shmalloc.h \
-	src-gemini/shmem.c src-gemini/shmem.h src-gemini/shmlimit.c \
+	src-gemini/shmem.c src-gemini/armci_shmem.h src-gemini/shmlimit.c \
 	src-gemini/shmlimit.h src-gemini/signaltrap.c \
 	src-gemini/signaltrap.h src-gemini/sockets.h \
 	src-gemini/spawn.c src-gemini/spinlock.h src-gemini/strided.c \
@@ -660,7 +660,7 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src/include/kr_malloc.h src/include/locks.h \
 	src/include/memlock.h src/include/request.h \
 	src/include/semaphores.h src/include/shmalloc.h \
-	src/include/shmem.h src/include/shmlimit.h \
+	src/include/armci_shmem.h src/include/shmlimit.h \
 	src/include/signaltrap.h src/include/spinlock.h \
 	src/include/utils.h src/locks/locks.c src/locks/memlock.c \
 	src/locks/mutex.c src/locks/semaphores.c \

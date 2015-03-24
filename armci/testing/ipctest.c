@@ -11,7 +11,7 @@
 #   include <assert.h>
 #endif
 #include "armcip.h"
-#include "shmem.h"
+#include "armci_shmem.h"
 #include "locks.h"
 #include "message.h"
 

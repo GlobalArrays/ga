@@ -67,7 +67,7 @@
 #if HAVE_STDLIB_H
 #   include <stdlib.h>
 #endif
-#include "shmem.h"
+#include "armci_shmem.h"
 #include "kr_malloc.h"
 #include "shmlimit.h"
 #include "message.h"

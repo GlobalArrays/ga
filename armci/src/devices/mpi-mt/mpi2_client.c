@@ -24,7 +24,7 @@
 #include "mpi2.h"
 #include "armcip.h"
 #include "request.h"
-#include "shmem.h"
+#include "armci_shmem.h"
 #include "locks.h"
 
 #include <assert.h>

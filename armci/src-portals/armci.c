@@ -46,7 +46,7 @@
 #include "copy.h"
 #include "memlock.h"
 #include "parmci.h"
-#include "shmem.h"
+#include "armci_shmem.h"
 #include "signaltrap.h"
 
 #ifdef ARMCIX
