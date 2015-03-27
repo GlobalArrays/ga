@@ -14,7 +14,6 @@
 #include "typesf2c.h"
 #include "srftoc.h"
 #include "sndrcv.h"
-#define LEN 255
 
 #define _BRDCST_     F77_FUNC(brdcst, BRDCST)
 #define _DGOP_       F77_FUNC(dgop, DGOP)
@@ -186,11 +185,12 @@ void FATR _PBEGINF_()
 {
     Integer argc = F2C_IARGC();
     Integer i, len;
-    char *argv[LEN], arg[LEN];
+    char arg[F2C_GETARG_ARGLEN_MAX];
+    char **argv = malloc((argc+1) * sizeof(char **)+1);
 
     for (i=0; i<argc; i++) {
-        F2C_GETARG(&i, arg, LEN);
-        for(len = LEN-2; len && (arg[len] == ' '); len--);
+        F2C_GETARG(&i, arg, F2C_GETARG_ARGLEN_MAX);
+        for(len = F2C_GETARG_ARGLEN_MAX-2; len && (arg[len] == ' '); len--);
         len++;
         arg[len] = '\0';
         //printf("%10s, len=%ld\n", arg, (long)len);  fflush(stdout);
@@ -198,6 +198,7 @@ void FATR _PBEGINF_()
     }
 
     tcgi_pbegin(argc, argv);
+    free(argv);
 }
 
 
