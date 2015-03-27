@@ -19587,7 +19587,7 @@ case $ac_f77_v_output in
     ac_f77_v_output=`echo $ac_f77_v_output | sed "\
 	s/-cmdline  *'[^']*'/ /g; s/-cmdline  *\"[^\"]*\"/ /g
 	s/-ignore  *'[^']*'/ /g; s/-ignore  *\"[^\"]*\"/ /g
-	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g"` ;;
+	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g; s/ -lnuma//g"` ;;
 
   # If we are using fort77 (the f2c wrapper) then filter output and delete quotes.
   *fort77*f2c*gcc*)
@@ -19695,7 +19695,7 @@ case $ac_f77_v_output in
     ac_f77_v_output=`echo $ac_f77_v_output | sed "\
 	s/-cmdline  *'[^']*'/ /g; s/-cmdline  *\"[^\"]*\"/ /g
 	s/-ignore  *'[^']*'/ /g; s/-ignore  *\"[^\"]*\"/ /g
-	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g"` ;;
+	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g; s/ -lnuma//g"` ;;
 
   # If we are using fort77 (the f2c wrapper) then filter output and delete quotes.
   *fort77*f2c*gcc*)
@@ -20000,7 +20000,7 @@ case $ac_f77_v_output in
     ac_f77_v_output=`echo $ac_f77_v_output | sed "\
 	s/-cmdline  *'[^']*'/ /g; s/-cmdline  *\"[^\"]*\"/ /g
 	s/-ignore  *'[^']*'/ /g; s/-ignore  *\"[^\"]*\"/ /g
-	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g"` ;;
+	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g; s/ -lnuma//g"` ;;
 
   # If we are using fort77 (the f2c wrapper) then filter output and delete quotes.
   *fort77*f2c*gcc*)
@@ -20108,7 +20108,7 @@ case $ac_f77_v_output in
     ac_f77_v_output=`echo $ac_f77_v_output | sed "\
 	s/-cmdline  *'[^']*'/ /g; s/-cmdline  *\"[^\"]*\"/ /g
 	s/-ignore  *'[^']*'/ /g; s/-ignore  *\"[^\"]*\"/ /g
-	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g"` ;;
+	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g; s/ -lnuma//g"` ;;
 
   # If we are using fort77 (the f2c wrapper) then filter output and delete quotes.
   *fort77*f2c*gcc*)
