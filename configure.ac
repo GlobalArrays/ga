@@ -397,6 +397,7 @@ AC_MSG_NOTICE
 GA_BLAS
 GA_LAPACK
 GA_SCALAPACK
+GA_ELPA
 
 ###############################################################################
 # Checks for programs.

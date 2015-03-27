@@ -510,7 +510,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/armci_setup.m4 \
 	$(top_srcdir)/m4/ga_cross_compiling.m4 \
 	$(top_srcdir)/m4/ga_cxx.m4 \
 	$(top_srcdir)/m4/ga_cxx_namespaces.m4 \
-	$(top_srcdir)/m4/ga_cxx_opt.m4 \
+	$(top_srcdir)/m4/ga_cxx_opt.m4 $(top_srcdir)/m4/ga_elpa.m4 \
 	$(top_srcdir)/m4/ga_enable_checkpoint.m4 \
 	$(top_srcdir)/m4/ga_enable_opt.m4 \
 	$(top_srcdir)/m4/ga_enable_peigs.m4 \
@@ -4029,6 +4029,9 @@ ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
+ELPA_CPPFLAGS = @ELPA_CPPFLAGS@
+ELPA_LDFLAGS = @ELPA_LDFLAGS@
+ELPA_LIBS = @ELPA_LIBS@
 EXEEXT = @EXEEXT@
 F2C_DOUBLE_PRECISION_C_TYPE = @F2C_DOUBLE_PRECISION_C_TYPE@
 F2C_GETARG = @F2C_GETARG@
