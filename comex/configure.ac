@@ -4,8 +4,8 @@
 # Init autoconf
 ###############################################################################
 AC_PREREQ([2.67])
-AC_INIT([Communication Runtime for Exascale (comex)],
-        [1.0],
+AC_INIT([Communication Runtime for Extreme Scale (comex)],
+        [1.1],
         [hpctools@pnl.gov],
         [comex],
         [http://www.emsl.pnl.gov/docs/global/])
