@@ -624,11 +624,12 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src-portals/request.c src-portals/request.h src-portals/rmw.c \
 	src-portals/rtinfo.c src-portals/semaphores.c \
 	src-portals/semaphores.h src-portals/shmalloc.h \
-	src-portals/shmem.c src-portals/armci_shmem.h src-portals/shmlimit.c \
-	src-portals/shmlimit.h src-portals/signaltrap.c \
-	src-portals/signaltrap.h src-portals/sockets.h \
-	src-portals/spawn.c src-portals/spinlock.h \
-	src-portals/strided.c src-portals/utils.h src-portals/vector.c \
+	src-portals/shmem.c src-portals/armci_shmem.h \
+	src-portals/shmlimit.c src-portals/shmlimit.h \
+	src-portals/signaltrap.c src-portals/signaltrap.h \
+	src-portals/sockets.h src-portals/spawn.c \
+	src-portals/spinlock.h src-portals/strided.c \
+	src-portals/utils.h src-portals/vector.c \
 	src-portals/new_memory.c src-portals/groups.c \
 	src-portals/gpc.c src-portals/threads.c src-portals/utils.c \
 	src-gemini/acc.h src-gemini/aggregate.c src-gemini/armci.c \
@@ -644,12 +645,12 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src-gemini/request.c src-gemini/request.h src-gemini/rmw.c \
 	src-gemini/rtinfo.c src-gemini/semaphores.c \
 	src-gemini/semaphores.h src-gemini/shmalloc.h \
-	src-gemini/shmem.c src-gemini/armci_shmem.h src-gemini/shmlimit.c \
-	src-gemini/shmlimit.h src-gemini/signaltrap.c \
-	src-gemini/signaltrap.h src-gemini/sockets.h \
-	src-gemini/spawn.c src-gemini/spinlock.h src-gemini/strided.c \
-	src-gemini/utils.h src-gemini/vector.c src-gemini/gpc.c \
-	src-gemini/threads.c src-gemini/utils.c \
+	src-gemini/shmem.c src-gemini/armci_shmem.h \
+	src-gemini/shmlimit.c src-gemini/shmlimit.h \
+	src-gemini/signaltrap.c src-gemini/signaltrap.h \
+	src-gemini/sockets.h src-gemini/spawn.c src-gemini/spinlock.h \
+	src-gemini/strided.c src-gemini/utils.h src-gemini/vector.c \
+	src-gemini/gpc.c src-gemini/threads.c src-gemini/utils.c \
 	src/collectives/message.c src/common/aggregate.c \
 	src/common/armci.c src/common/ccopy.c src/common/clusterinfo.c \
 	src/common/pack.c src/common/iterator.c src/include/iterator.h \
