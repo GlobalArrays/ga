@@ -720,6 +720,7 @@ F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 F2C_IARGC
 F2C_GETARG
 FLD_NOMAIN
+FFLAG_NO_LOOP_OPT
 FFLAG_INT
 FLIBS
 GA_F_WARN
@@ -750,6 +751,7 @@ MPICXX
 GA_COPT
 PLOTLIB
 C_POINTER_AS_INTEGER
+CFLAG_NO_LOOP_OPT
 HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE
 HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE
 SYSV_FALSE
@@ -15374,6 +15376,40 @@ $as_echo "#define HAVE_UNION_SEMUN 1" >>confdefs.h
 fi
 
 
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -fno-aggressive-loop-optimizations support in C compiler" >&5
+$as_echo_n "checking for -fno-aggressive-loop-optimizations support in C compiler... " >&6; }
+if ${ga_cv_c_gnu_loop_opt+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+    ga_cv_c_gnu_loop_opt=
+    saveCFLAGS="$CFLAGS"
+    CFLAGS="$saveCFLAGS -fno-aggressive-loop-optimizations"
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ga_cv_c_gnu_loop_opt=-fno-aggressive-loop-optimizations
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+    CFLAGS=$saveCFLAGS
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_c_gnu_loop_opt" >&5
+$as_echo "$ga_cv_c_gnu_loop_opt" >&6; }
+    CFLAG_NO_LOOP_OPT=$ga_cv_c_gnu_loop_opt
+
+
+
 # Checks for C type sizes.
 # The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
@@ -21294,6 +21330,34 @@ $as_echo "$as_me: WARNING: INTEGER*8 promotion is not supported" >&2;}
 $as_echo "$as_me: WARNING: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&2;}
 fi
 fi
+
+
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -fno-aggressive-loop-optimizations support in Fortran 77 compiler" >&5
+$as_echo_n "checking for -fno-aggressive-loop-optimizations support in Fortran 77 compiler... " >&6; }
+if ${ga_cv_f77_gnu_loop_opt+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+    ga_cv_f77_gnu_loop_opt=
+    saveFFLAGS="$FFLAGS"
+    FFLAGS="$saveFFLAGS -fno-aggressive-loop-optimizations"
+    cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+      end
+_ACEOF
+if ac_fn_f77_try_link "$LINENO"; then :
+  ga_cv_f77_gnu_loop_opt=-fno-aggressive-loop-optimizations
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+    FFLAGS=$saveFFLAGS
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_gnu_loop_opt" >&5
+$as_echo "$ga_cv_f77_gnu_loop_opt" >&6; }
+    FFLAG_NO_LOOP_OPT=$ga_cv_f77_gnu_loop_opt
+
 
 
 # Checks for Fortran typedefs, structures, and compiler characteristics.
@@ -43617,6 +43681,8 @@ fi
 $as_echo "$as_me:                 FFLAGS=$FFLAGS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:              FFLAG_INT=$FFLAG_INT" >&5
 $as_echo "$as_me:              FFLAG_INT=$FFLAG_INT" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:      FFLAG_NO_LOOP_OPT=$FFLAG_NO_LOOP_OPT" >&5
+$as_echo "$as_me:      FFLAG_NO_LOOP_OPT=$FFLAG_NO_LOOP_OPT" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:                GA_FOPT=$GA_FOPT" >&5
 $as_echo "$as_me:                GA_FOPT=$GA_FOPT" >&6;}
 
@@ -43631,6 +43697,8 @@ $as_echo "$as_me:           unwrapped CC=$ga_cv_mpic_naked" >&6;}
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}:                 CFLAGS=$CFLAGS" >&5
 $as_echo "$as_me:                 CFLAGS=$CFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:      CFLAG_NO_LOOP_OPT=$CFLAG_NO_LOOP_OPT" >&5
+$as_echo "$as_me:      CFLAG_NO_LOOP_OPT=$CFLAG_NO_LOOP_OPT" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:                GA_COPT=$GA_COPT" >&5
 $as_echo "$as_me:                GA_COPT=$GA_COPT" >&6;}
 if test "x$enable_cxx" = xyes; then :

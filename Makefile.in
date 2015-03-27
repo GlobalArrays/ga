@@ -532,7 +532,9 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/armci_setup.m4 \
 	$(top_srcdir)/m4/ga_f77_mismatch_type.m4 \
 	$(top_srcdir)/m4/ga_f77_opt.m4 \
 	$(top_srcdir)/m4/ga_f77_underscore.m4 \
-	$(top_srcdir)/m4/ga_function.m4 $(top_srcdir)/m4/ga_lapack.m4 \
+	$(top_srcdir)/m4/ga_function.m4 \
+	$(top_srcdir)/m4/ga_gnu_loop_opt.m4 \
+	$(top_srcdir)/m4/ga_lapack.m4 \
 	$(top_srcdir)/m4/ga_mpi_test_disable.m4 \
 	$(top_srcdir)/m4/ga_mpi_unwrap.m4 $(top_srcdir)/m4/ga_mpicc.m4 \
 	$(top_srcdir)/m4/ga_mpicc_test.m4 \
@@ -4009,6 +4011,7 @@ CCASDEPMODE = @CCASDEPMODE@
 CCASFLAGS = @CCASFLAGS@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+CFLAG_NO_LOOP_OPT = @CFLAG_NO_LOOP_OPT@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CXX = @CXX@
@@ -4037,6 +4040,7 @@ F77 = @F77@
 F77LINK = @F77LINK@
 FFLAGS = @FFLAGS@
 FFLAG_INT = @FFLAG_INT@
+FFLAG_NO_LOOP_OPT = @FFLAG_NO_LOOP_OPT@
 FGREP = @FGREP@
 FLD_NOMAIN = @FLD_NOMAIN@
 FLIBS = @FLIBS@
@@ -4335,8 +4339,8 @@ CLEANFILES = $(bin_SCRIPTS) config.fh global/src/ga-wapi.h \
 	global/src/ga-wapidefs.h $(am__append_28) $(am__append_40)
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
-AM_FFLAGS = $(GA_FOPT) $(GA_F_WARN) $(FFLAG_INT)
-AM_CFLAGS = $(GA_COPT) $(GA_C_WARN)
+AM_FFLAGS = $(GA_FOPT) $(GA_F_WARN) $(FFLAG_INT) $(FFLAG_NO_LOOP_OPT)
+AM_CFLAGS = $(GA_COPT) $(GA_C_WARN) $(CFLAG_NO_LOOP_OPT)
 AM_CXXFLAGS = $(GA_CXXOPT) $(GA_CXX_WARN)
 
 ##############################################################################

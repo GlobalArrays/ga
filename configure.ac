@@ -149,6 +149,7 @@ GA_PROGNAME
 GA_DISABLE_SYS_WEAK_ALIAS
 GA_SYS_WEAK_ALIAS
 GA_UNION_SEMUN
+GA_GNU_LOOP_OPT
 
 # Checks for C type sizes.
 AC_CHECK_SIZEOF([void*])
@@ -323,6 +324,7 @@ GA_F77_CPP_SYMBOL
 GA_F77_FIXED
 GA_F77_MISMATCH_TYPE
 GA_F77_INTEGER_SIZE
+GA_GNU_LOOP_OPT
 
 # Checks for Fortran typedefs, structures, and compiler characteristics.
 
@@ -549,6 +551,7 @@ AC_MSG_NOTICE([         unwrapped F77=$ga_cv_mpif77_naked])
 ])
 AC_MSG_NOTICE([                FFLAGS=$FFLAGS])
 AC_MSG_NOTICE([             FFLAG_INT=$FFLAG_INT])
+AC_MSG_NOTICE([     FFLAG_NO_LOOP_OPT=$FFLAG_NO_LOOP_OPT])
 AC_MSG_NOTICE([               GA_FOPT=$GA_FOPT])
 ])
 AC_MSG_NOTICE([                    CC=$CC])
@@ -556,6 +559,7 @@ AS_IF([test "x$with_mpi_wrappers" = xyes], [
 AC_MSG_NOTICE([          unwrapped CC=$ga_cv_mpic_naked])
 ])
 AC_MSG_NOTICE([                CFLAGS=$CFLAGS])
+AC_MSG_NOTICE([     CFLAG_NO_LOOP_OPT=$CFLAG_NO_LOOP_OPT])
 AC_MSG_NOTICE([               GA_COPT=$GA_COPT])
 AS_IF([test "x$enable_cxx" = xyes], [
 AC_MSG_NOTICE([                   CXX=$CXX])
