@@ -6,7 +6,6 @@
 #else
 #define INTGR4 integer*4
 #endif
-cedo#define HAVE_ELPA 1
 C     $Id: scalapack.F,v 1.11 2006/10/13 16:15:17 d3g293 Exp $
 ****************************************************************************
 * GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
@@ -38,7 +37,7 @@ c
 #include "scalapack.fh"
 #include "global.fh"
       INTGR4 zero4
-      integer*4 ga_comm
+      integer ga_comm
       parameter(zero4=0)
 c
       if(init)return
@@ -81,7 +80,7 @@ c
       INTGR4 zero4
       parameter(zero4=0)
       INTGR4 slgetmxproc
-      integer*4 ga_comm
+      integer ga_comm
       external slgetmxproc
 c
       if(init2)return
@@ -130,7 +129,7 @@ c
       subroutine SLinit3(g_a)
       implicit none
       INTGR4  icontxt
-      integer*4 ga_comm
+      integer ga_comm
 c
 #include "scalapack.fh"
 #include "global.fh"
@@ -179,7 +178,7 @@ c
 c
       INTGR4 icontxt, n
       INTGR4 slgetmxproc
-      integer*4 ga_comm
+      integer ga_comm
       external slgetmxproc
       integer g_a, nblocks(2), ndim, dims(2), type
 c
@@ -3523,7 +3522,7 @@ c     broadcast evals
       return
       end
 #endif
-#ifdef HAVE_ELPA
+#if HAVE_ELPA
       subroutine ga_evp_real(g_a, g_b, eval, nb8, mout)
       use ELPA1
       implicit none
@@ -3575,10 +3574,10 @@ c
       INTGR4 n
       INTGR4 info,one4,zero4,two4,four4
       INTGR4 mpierr,elpa_comm,elpa_group
-      integer*4 ga_comm
+      integer ga_comm
+      INTGR4 ga_comm4
       integer mxproc,i
       parameter(mxproc=100000)
-      integer*4 ga_comm
       INTGR4 group_world, group_members(mxproc)
 
       parameter(one4=1,zero4=0,two4=4,four4=4)
@@ -3628,7 +3627,8 @@ c
       call ga_zero(g_b)
 celpa
       call ga_mpi_comm_pgroup_default(ga_comm)
-      call MPI_Comm_group(ga_comm, group_world, mpierr)
+      ga_comm4=ga_comm
+      call MPI_Comm_group(ga_comm4, group_world, mpierr)
       do i=1,maxproc
          group_members(i)=i-1
       enddo
@@ -3638,7 +3638,7 @@ celpa
      A     'ga-evp_real: mpigroupincl failed ',mpierr)
 
 
-      call mpi_comm_create(ga_comm, elpa_group, elpa_comm,
+      call mpi_comm_create(ga_comm4, elpa_group, elpa_comm,
      W mpierr)
       call ga_sync()
       if (oactive) then
