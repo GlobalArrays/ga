@@ -4313,9 +4313,9 @@ fi
 
 # Check whether --enable-opt was given.
 if test "${enable_opt+set}" = set; then :
-  enableval=$enable_opt; enable_opt=no
+  enableval=$enable_opt;
 else
-  enable_opt=yes
+  enable_opt=no
 fi
 
 
