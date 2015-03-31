@@ -633,7 +633,9 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
+ac_c_werror_flag=
 ac_header_list=
+ac_f77_werror_flag=
 enable_option_checking=no
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
@@ -15392,8 +15394,11 @@ if ${ga_cv_c_gnu_loop_opt+:} false; then :
 else
 
     ga_cv_c_gnu_loop_opt=
-    saveCFLAGS="$CFLAGS"
-    CFLAGS="$saveCFLAGS -fno-aggressive-loop-optimizations"
+    save_CFLAGS="$CFLAGS"
+    CFLAGS="$save_CFLAGS -fno-aggressive-loop-optimizations"
+    save_ac_c_werror_flag="$ac_c_werror_flag"
+
+ac_c_werror_flag=yes
     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -15410,7 +15415,8 @@ if ac_fn_c_try_link "$LINENO"; then :
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-    CFLAGS=$saveCFLAGS
+    CFLAGS="$save_CFLAGS"
+    ac_c_werror_flag="$save_ac_c_werror_flag"
 
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_c_gnu_loop_opt" >&5
@@ -21348,8 +21354,11 @@ if ${ga_cv_f77_gnu_loop_opt+:} false; then :
 else
 
     ga_cv_f77_gnu_loop_opt=
-    saveFFLAGS="$FFLAGS"
-    FFLAGS="$saveFFLAGS -fno-aggressive-loop-optimizations"
+    save_FFLAGS="$FFLAGS"
+    FFLAGS="$save_FFLAGS -fno-aggressive-loop-optimizations"
+    save_ac_f77_werror_flag="$ac_f77_werror_flag"
+
+ac_f77_werror_flag=yes
     cat > conftest.$ac_ext <<_ACEOF
       program main
 
@@ -21360,7 +21369,8 @@ if ac_fn_f77_try_link "$LINENO"; then :
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-    FFLAGS=$saveFFLAGS
+    FFLAGS="$save_FFLAGS"
+    ac_f77_werror_flag="$save_ac_f77_werror_flag"
 
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_gnu_loop_opt" >&5
