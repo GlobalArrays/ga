@@ -143,10 +143,6 @@ int EAF_Open(const char *fname, int type, int *fd)
   int i=0, j=0, found=0;
   char *ptr;
   long handle, index;
-#ifdef CRAY_XT
-    int myid;
-#   include <mpi.h>
-#endif
     while ((i<EAF_MAX_FILES) && file[i].fname) /* Find first empty slot */
         i++;
     if (i == EAF_MAX_FILES) return EAF_ERR_MAX_OPEN;
@@ -158,20 +154,20 @@ int EAF_Open(const char *fname, int type, int *fd)
 	break;
       }
     }
+#ifdef DEBUG
+    printf(" JJJ %d III %d fname %s filejfname %s found %d type %d\n", j, i, fname, file[j].fname, found, type);
+#endif
       
     if(type > 0) {
       /* check if this file aka MA region labeled by fname is already open with size >=0*/
 #ifdef DEBUG
-      printf(" JJJ %d III %d fname %s filejfname %s found %d \n", j, i, fname, file[j].fname, found);
+      printf(" fname %s type %d found %d \n", fname, type, found);
 #endif
       if(found == 0 ) {
-/* if arg gt 1M then use remainder as size */
-	/* we grab 3/4 of avail mem */
-        if(type > 1000000) {
-	  file[i].size=type-1000000;
-	}else{
-	file[i].size=MA_inquire_avail(MT_CHAR)*8/10;
-	}
+	file[i].size=type*1024*1024;
+#ifdef DEBUG
+	printf("  fname %s type %lf alloc_get size %lf \n", fname, type, file[i].size);
+#endif
 
 	if (!MA_alloc_get(MT_CHAR, file[i].size, fname, &handle, &index))
 	  return EAF_ERR_OPEN;
@@ -206,18 +202,9 @@ int EAF_Open(const char *fname, int type, int *fd)
 #endif
 
       if (!(file[i].elio_fd = elio_open(fname, type, ELIO_PRIVATE))) {
-#ifdef CRAY_XT
-        MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-        /* printf(" %d sleeping for %d usec \n", myid, (myid+1)/4); */
-        usleep((myid+1)/4);
-        if (!(file[i].elio_fd = elio_open(fname, type, ELIO_PRIVATE))) {
-#endif
             free(file[i].fname);
             file[i].fname = 0;
             return ELIO_PENDING_ERR;
-#ifdef CRAY_XT
-        }
-#endif
       }
     }
 
