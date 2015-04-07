@@ -88,7 +88,7 @@ c
      $        dbl_mb(k_v), dbl_mb(k_fv1), dbl_mb(k_fv2), ierr)
 #else
          call dsygv(1,'V','U',n,dbl_mb(k_a),n,dbl_mb(k_s),n,
-     $              evals,dbl_mb(k_wrk),2*n, ierr)
+     $              evals,dbl_mb(k_wrk),n2, ierr)
          if (ierr.ne.0)
      $       call ga_error('ga_diag_seq: dsygv failed',ierr)
 c We used to copy to preserve code symmetry with EISPACK
