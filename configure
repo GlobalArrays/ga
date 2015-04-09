@@ -26134,8 +26134,9 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
     cat > conftest.$ac_ext <<_ACEOF
       program main
       implicit none
+      logical status, SOLVE_EVP_REAL
       external SOLVE_EVP_REAL
-      CALL SOLVE_EVP_REAL ()
+      status=SOLVE_EVP_REAL ()
       end
 _ACEOF
 
@@ -26223,8 +26224,9 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
     cat > conftest.$ac_ext <<_ACEOF
       program main
       implicit none
+      logical status, SOLVE_EVP_REAL
       external SOLVE_EVP_REAL
-      CALL SOLVE_EVP_REAL ()
+      status=SOLVE_EVP_REAL ()
       end
 _ACEOF
 

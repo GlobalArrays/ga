@@ -3,8 +3,9 @@
 # Generate Fortran 77 conftest for ELPA.
 AC_DEFUN([GA_F77_ELPA_TEST], [AC_LANG_CONFTEST([AC_LANG_PROGRAM([],
 [[      implicit none
+      logical status, SOLVE_EVP_REAL
       external SOLVE_EVP_REAL
-      CALL SOLVE_EVP_REAL ()]])])
+      status=SOLVE_EVP_REAL ()]])])
 ])
 
 

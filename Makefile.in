@@ -620,8 +620,9 @@ am__DEPENDENCIES_1 =
 @ARMCI_NETWORK_ARMCI_FALSE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1) \
 @ARMCI_NETWORK_ARMCI_FALSE@	$(am__DEPENDENCIES_1)
 libga_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) $(am__append_61) \
-	$(am__append_62) $(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2) $(am__append_61) $(am__append_62) \
+	$(am__DEPENDENCIES_3)
 am__libga_la_SOURCES_DIST = compat/random.c ma/error.c ma/f2c.c \
 	ma/ma.c ma/ma.h ma/memcpy.h ma/string-util.c ma/table.c \
 	ma/maf.F LinAlg/lapack+blas/gal_cgemm.f \
@@ -1021,7 +1022,8 @@ am__ga___testing_elempatch_SOURCES_DIST = ga++/testing/elempatch.cc
 ga___testing_elempatch_OBJECTS = $(am_ga___testing_elempatch_OBJECTS)
 am__DEPENDENCIES_4 = $(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 @ENABLE_F77_TRUE@am__DEPENDENCIES_5 = $(am__DEPENDENCIES_1)
 @CXX_BINDINGS_TRUE@ga___testing_elempatch_DEPENDENCIES = libga++.la \
 @CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5)
@@ -1078,7 +1080,7 @@ gaf2c_testarg_LDADD = $(LDADD)
 gaf2c_testarg_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 gaf2c_testarg_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(gaf2c_testarg_LDFLAGS) $(LDFLAGS) -o \
@@ -1122,7 +1124,7 @@ global_examples_boltzmann_boltz_LDADD = $(LDADD)
 global_examples_boltzmann_boltz_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_examples_boltzmann_boltz_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) \
@@ -1138,7 +1140,7 @@ global_examples_conjugate_gradient_ga_cg_LDADD = $(LDADD)
 global_examples_conjugate_gradient_ga_cg_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_examples_lennard_jones_lennard_OBJECTS =  \
 	global/examples/lennard-jones/lennard.$(OBJEXT)
 global_examples_lennard_jones_lennard_OBJECTS =  \
@@ -1147,7 +1149,7 @@ global_examples_lennard_jones_lennard_LDADD = $(LDADD)
 global_examples_lennard_jones_lennard_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_examples_md_cluster_grp_sim_OBJECTS =  \
 	global/examples/md_cluster/cell_list.$(OBJEXT) \
 	global/examples/md_cluster/cl_sim.$(OBJEXT) \
@@ -1179,7 +1181,7 @@ global_examples_md_cluster_grp_sim_LDADD = $(LDADD)
 global_examples_md_cluster_grp_sim_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_examples_md_cluster_grp_sim_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=F77 $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(F77LD) $(AM_FFLAGS) $(FFLAGS) \
@@ -1196,7 +1198,7 @@ global_examples_scf_scf_LDADD = $(LDADD)
 global_examples_scf_scf_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_examples_scf_scf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_examples_scf_scf_LDFLAGS) \
@@ -1215,7 +1217,7 @@ global_testing_big_LDADD = $(LDADD)
 global_testing_big_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_bin_SOURCES_DIST = global/testing/bin.F \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1227,7 +1229,7 @@ global_testing_bin_LDADD = $(LDADD)
 global_testing_bin_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_bin_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_bin_LDFLAGS) \
@@ -1243,7 +1245,7 @@ global_testing_blktest_LDADD = $(LDADD)
 global_testing_blktest_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_blktest_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_blktest_LDFLAGS) \
@@ -1259,7 +1261,7 @@ global_testing_d2test_LDADD = $(LDADD)
 global_testing_d2test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_d2test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_d2test_LDFLAGS) \
@@ -1276,7 +1278,7 @@ global_testing_elempatch_LDADD = $(LDADD)
 global_testing_elempatch_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_field_test_SOURCES_DIST =  \
 	global/testing/field-test.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
@@ -1289,7 +1291,7 @@ global_testing_field_test_LDADD = $(LDADD)
 global_testing_field_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_field_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_field_test_LDFLAGS) \
@@ -1305,7 +1307,7 @@ global_testing_g2test_LDADD = $(LDADD)
 global_testing_g2test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_g2test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_g2test_LDFLAGS) \
@@ -1321,7 +1323,7 @@ global_testing_g3test_LDADD = $(LDADD)
 global_testing_g3test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_g3test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_g3test_LDFLAGS) \
@@ -1337,7 +1339,7 @@ global_testing_ga_mpi_LDADD = $(LDADD)
 global_testing_ga_mpi_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_ga_lu_SOURCES_DIST = global/testing/ga_lu.c \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1349,7 +1351,7 @@ global_testing_ga_lu_LDADD = $(LDADD)
 global_testing_ga_lu_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_ga_shift_SOURCES_DIST = global/testing/ga_shift.F \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1362,7 +1364,7 @@ global_testing_ga_shift_LDADD = $(LDADD)
 global_testing_ga_shift_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_ga_shift_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_ga_shift_LDFLAGS) \
@@ -1378,7 +1380,7 @@ global_testing_gatscat_LDADD = $(LDADD)
 global_testing_gatscat_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_getmem_SOURCES_DIST = global/testing/getmem.c \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1390,7 +1392,7 @@ global_testing_getmem_LDADD = $(LDADD)
 global_testing_getmem_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_ghosts_SOURCES_DIST = global/testing/ghosts.F \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1402,7 +1404,7 @@ global_testing_ghosts_LDADD = $(LDADD)
 global_testing_ghosts_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_ghosts_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_ghosts_LDFLAGS) \
@@ -1419,7 +1421,7 @@ global_testing_ipc_clean_LDADD = $(LDADD)
 global_testing_ipc_clean_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_jacobi_SOURCES_DIST = global/testing/jacobi.F \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1431,7 +1433,7 @@ global_testing_jacobi_LDADD = $(LDADD)
 global_testing_jacobi_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_jacobi_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_jacobi_LDFLAGS) \
@@ -1447,7 +1449,7 @@ global_testing_lock_LDADD = $(LDADD)
 global_testing_lock_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_mir_perf2_SOURCES_DIST =  \
 	global/testing/mir_perf2.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
@@ -1460,7 +1462,7 @@ global_testing_mir_perf2_LDADD = $(LDADD)
 global_testing_mir_perf2_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_mir_perf2_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_mir_perf2_LDFLAGS) \
@@ -1476,7 +1478,7 @@ global_testing_mmatrix_LDADD = $(LDADD)
 global_testing_mmatrix_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_mmatrix_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_mmatrix_LDFLAGS) \
@@ -1492,7 +1494,7 @@ global_testing_mtest_LDADD = $(LDADD)
 global_testing_mtest_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_mulmatpatch_SOURCES_DIST =  \
 	global/testing/mulmatpatch.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
@@ -1505,7 +1507,7 @@ global_testing_mulmatpatch_LDADD = $(LDADD)
 global_testing_mulmatpatch_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_mulmatpatch_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_mulmatpatch_LDFLAGS) \
@@ -1522,7 +1524,7 @@ global_testing_mulmatpatchc_LDADD = $(LDADD)
 global_testing_mulmatpatchc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_nb2test_SOURCES_DIST = global/testing/nb2test.F \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1534,7 +1536,7 @@ global_testing_nb2test_LDADD = $(LDADD)
 global_testing_nb2test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_nb2test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_nb2test_LDFLAGS) \
@@ -1550,7 +1552,7 @@ global_testing_ndim_LDADD = $(LDADD)
 global_testing_ndim_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_ndim_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_ndim_LDFLAGS) \
@@ -1563,7 +1565,7 @@ global_testing_nga_onesided_LDADD = $(LDADD)
 global_testing_nga_onesided_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_nga_onesided_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_nga_onesided_LDFLAGS) \
@@ -1576,7 +1578,7 @@ global_testing_nga_patch_LDADD = $(LDADD)
 global_testing_nga_patch_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_nga_patch_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_nga_patch_LDFLAGS) \
@@ -1589,7 +1591,7 @@ global_testing_nga_periodic_LDADD = $(LDADD)
 global_testing_nga_periodic_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_nga_periodic_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_nga_periodic_LDFLAGS) \
@@ -1602,7 +1604,7 @@ global_testing_nga_scatter_LDADD = $(LDADD)
 global_testing_nga_scatter_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_nga_scatter_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_nga_scatter_LDFLAGS) \
@@ -1615,7 +1617,7 @@ global_testing_nga_util_LDADD = $(LDADD)
 global_testing_nga_util_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_nga_util_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_nga_util_LDFLAGS) \
@@ -1628,7 +1630,7 @@ global_testing_ngatest_LDADD = $(LDADD)
 global_testing_ngatest_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_ngatest_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_ngatest_LDFLAGS) \
@@ -1644,7 +1646,7 @@ global_testing_ntestc_LDADD = $(LDADD)
 global_testing_ntestc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_ntestfc_SOURCES_DIST = global/testing/ntestfc.c \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1656,7 +1658,7 @@ global_testing_ntestfc_LDADD = $(LDADD)
 global_testing_ntestfc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_packc_SOURCES_DIST = global/testing/packc.c \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1668,7 +1670,7 @@ global_testing_packc_LDADD = $(LDADD)
 global_testing_packc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_patch_SOURCES_DIST = global/testing/patch.F \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1680,7 +1682,7 @@ global_testing_patch_LDADD = $(LDADD)
 global_testing_patch_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_patch_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_patch_LDFLAGS) \
@@ -1696,7 +1698,7 @@ global_testing_patch2_LDADD = $(LDADD)
 global_testing_patch2_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_patch2_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_patch2_LDFLAGS) \
@@ -1713,7 +1715,7 @@ global_testing_patch_enumc_LDADD = $(LDADD)
 global_testing_patch_enumc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_patch_enumf_SOURCES_DIST =  \
 	global/testing/patch_enumf.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
@@ -1726,7 +1728,7 @@ global_testing_patch_enumf_LDADD = $(LDADD)
 global_testing_patch_enumf_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_patch_enumf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_patch_enumf_LDFLAGS) \
@@ -1742,7 +1744,7 @@ global_testing_perf_LDADD = $(LDADD)
 global_testing_perf_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_perf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_perf_LDFLAGS) \
@@ -1758,7 +1760,7 @@ global_testing_perf2_LDADD = $(LDADD)
 global_testing_perf2_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_perfmod_SOURCES_DIST = global/testing/perfmod.F \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1770,7 +1772,7 @@ global_testing_perfmod_LDADD = $(LDADD)
 global_testing_perfmod_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_perfmod_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_perfmod_LDFLAGS) \
@@ -1786,7 +1788,7 @@ global_testing_perform_LDADD = $(LDADD)
 global_testing_perform_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_perform_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_perform_LDFLAGS) \
@@ -1802,7 +1804,7 @@ global_testing_pg2test_LDADD = $(LDADD)
 global_testing_pg2test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_pg2test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_pg2test_LDFLAGS) \
@@ -1819,7 +1821,7 @@ global_testing_pg2testmatmult_LDADD = $(LDADD)
 global_testing_pg2testmatmult_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_pg2testmatmult_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) \
@@ -1835,7 +1837,7 @@ global_testing_pgtest_LDADD = $(LDADD)
 global_testing_pgtest_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_pgtest_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_pgtest_LDFLAGS) \
@@ -1852,7 +1854,7 @@ global_testing_pgtestmatmult_LDADD = $(LDADD)
 global_testing_pgtestmatmult_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_pgtestmatmult_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_pgtestmatmult_LDFLAGS) \
@@ -1868,7 +1870,7 @@ global_testing_print_LDADD = $(LDADD)
 global_testing_print_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_random_SOURCES_DIST = global/testing/random.F \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1880,7 +1882,7 @@ global_testing_random_LDADD = $(LDADD)
 global_testing_random_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_random_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_random_LDFLAGS) \
@@ -1896,7 +1898,7 @@ global_testing_scan_LDADD = $(LDADD)
 global_testing_scan_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_scan_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_scan_LDFLAGS) \
@@ -1913,7 +1915,7 @@ global_testing_scan_addc_LDADD = $(LDADD)
 global_testing_scan_addc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_scan_copyc_SOURCES_DIST =  \
 	global/testing/scan_copyc.c global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
@@ -1926,7 +1928,7 @@ global_testing_scan_copyc_LDADD = $(LDADD)
 global_testing_scan_copyc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_simple_groups_SOURCES_DIST =  \
 	global/testing/simple_groups.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
@@ -1939,7 +1941,7 @@ global_testing_simple_groups_LDADD = $(LDADD)
 global_testing_simple_groups_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_simple_groups_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_simple_groups_LDFLAGS) \
@@ -1956,7 +1958,7 @@ global_testing_simple_groups_comm_LDADD = $(LDADD)
 global_testing_simple_groups_comm_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_simple_groups_comm_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=F77 $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(F77LD) $(AM_FFLAGS) $(FFLAGS) \
@@ -1974,7 +1976,7 @@ global_testing_simple_groups_commc_LDADD = $(LDADD)
 global_testing_simple_groups_commc_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_sparse_SOURCES_DIST = global/testing/sparse.F \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1986,7 +1988,7 @@ global_testing_sparse_LDADD = $(LDADD)
 global_testing_sparse_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_sparse_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_sparse_LDFLAGS) \
@@ -2003,7 +2005,7 @@ global_testing_sprsmatmult_LDADD = $(LDADD)
 global_testing_sprsmatmult_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_sprsmatmult_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_sprsmatmult_LDFLAGS) \
@@ -2019,7 +2021,7 @@ global_testing_stride_LDADD = $(LDADD)
 global_testing_stride_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_stride_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_stride_LDFLAGS) \
@@ -2035,7 +2037,7 @@ global_testing_test_LDADD = $(LDADD)
 global_testing_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_test_LDFLAGS) \
@@ -2058,7 +2060,7 @@ global_testing_test_mirrored_LDADD = $(LDADD)
 global_testing_test_mirrored_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_test_mirrored_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_test_mirrored_LDFLAGS) \
@@ -2074,7 +2076,7 @@ global_testing_testc_LDADD = $(LDADD)
 global_testing_testc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_testeig_SOURCES_DIST = global/testing/testeig.F \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -2086,7 +2088,7 @@ global_testing_testeig_LDADD = $(LDADD)
 global_testing_testeig_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_testeig_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_testeig_LDFLAGS) \
@@ -2103,7 +2105,7 @@ global_testing_testmatmult_LDADD = $(LDADD)
 global_testing_testmatmult_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_testmatmult_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_testmatmult_LDFLAGS) \
@@ -2120,7 +2122,7 @@ global_testing_testmatmultc_LDADD = $(LDADD)
 global_testing_testmatmultc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_testmult_SOURCES_DIST = global/testing/testmult.c \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -2133,7 +2135,7 @@ global_testing_testmult_LDADD = $(LDADD)
 global_testing_testmult_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_testmultrect_SOURCES_DIST =  \
 	global/testing/testmultrect.c global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
@@ -2146,7 +2148,7 @@ global_testing_testmultrect_LDADD = $(LDADD)
 global_testing_testmultrect_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_testsolve_SOURCES_DIST =  \
 	global/testing/testsolve.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
@@ -2159,7 +2161,7 @@ global_testing_testsolve_LDADD = $(LDADD)
 global_testing_testsolve_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_testsolve_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_testsolve_LDFLAGS) \
@@ -2175,7 +2177,7 @@ global_testing_testspd_LDADD = $(LDADD)
 global_testing_testspd_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_testspd_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_testspd_LDFLAGS) \
@@ -2192,7 +2194,7 @@ global_testing_types_test_LDADD = $(LDADD)
 global_testing_types_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 global_testing_types_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_types_test_LDFLAGS) \
@@ -2207,7 +2209,7 @@ global_testing_unit_tests_ga_abs_value_LDADD = $(LDADD)
 global_testing_unit_tests_ga_abs_value_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_acc_OBJECTS =  \
 	global/testing/unit-tests/ga_acc.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_acc_OBJECTS =  \
@@ -2216,7 +2218,7 @@ global_testing_unit_tests_ga_acc_LDADD = $(LDADD)
 global_testing_unit_tests_ga_acc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_add_OBJECTS =  \
 	global/testing/unit-tests/ga_add.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_add_OBJECTS =  \
@@ -2225,7 +2227,7 @@ global_testing_unit_tests_ga_add_LDADD = $(LDADD)
 global_testing_unit_tests_ga_add_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_add_constant_OBJECTS =  \
 	global/testing/unit-tests/ga_add_constant.$(OBJEXT) \
 	$(am__objects_18)
@@ -2235,7 +2237,7 @@ global_testing_unit_tests_ga_add_constant_LDADD = $(LDADD)
 global_testing_unit_tests_ga_add_constant_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_add_constantpatch_OBJECTS =  \
 	global/testing/unit-tests/ga_add_constantpatch.$(OBJEXT) \
 	$(am__objects_18)
@@ -2245,7 +2247,8 @@ global_testing_unit_tests_ga_add_constantpatch_LDADD = $(LDADD)
 global_testing_unit_tests_ga_add_constantpatch_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_add_diagonal_OBJECTS =  \
 	global/testing/unit-tests/ga_add_diagonal.$(OBJEXT) \
 	$(am__objects_18)
@@ -2255,7 +2258,7 @@ global_testing_unit_tests_ga_add_diagonal_LDADD = $(LDADD)
 global_testing_unit_tests_ga_add_diagonal_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_add_patch_OBJECTS =  \
 	global/testing/unit-tests/ga_add_patch.$(OBJEXT) \
 	$(am__objects_18)
@@ -2265,7 +2268,7 @@ global_testing_unit_tests_ga_add_patch_LDADD = $(LDADD)
 global_testing_unit_tests_ga_add_patch_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_copy_OBJECTS =  \
 	global/testing/unit-tests/ga_copy.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_copy_OBJECTS =  \
@@ -2274,7 +2277,7 @@ global_testing_unit_tests_ga_copy_LDADD = $(LDADD)
 global_testing_unit_tests_ga_copy_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_copy2_OBJECTS =  \
 	global/testing/unit-tests/ga_copy2.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_copy2_OBJECTS =  \
@@ -2283,7 +2286,7 @@ global_testing_unit_tests_ga_copy2_LDADD = $(LDADD)
 global_testing_unit_tests_ga_copy2_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_copy3_OBJECTS =  \
 	global/testing/unit-tests/ga_copy3.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_copy3_OBJECTS =  \
@@ -2292,7 +2295,7 @@ global_testing_unit_tests_ga_copy3_LDADD = $(LDADD)
 global_testing_unit_tests_ga_copy3_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_copypatch_OBJECTS =  \
 	global/testing/unit-tests/ga_copypatch.$(OBJEXT) \
 	$(am__objects_18)
@@ -2302,7 +2305,7 @@ global_testing_unit_tests_ga_copypatch_LDADD = $(LDADD)
 global_testing_unit_tests_ga_copypatch_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_copypatch2_OBJECTS =  \
 	global/testing/unit-tests/ga_copypatch2.$(OBJEXT) \
 	$(am__objects_18)
@@ -2312,7 +2315,7 @@ global_testing_unit_tests_ga_copypatch2_LDADD = $(LDADD)
 global_testing_unit_tests_ga_copypatch2_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create_OBJECTS =  \
 	global/testing/unit-tests/ga_create.$(OBJEXT) \
 	$(am__objects_18)
@@ -2322,7 +2325,7 @@ global_testing_unit_tests_ga_create_LDADD = $(LDADD)
 global_testing_unit_tests_ga_create_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create1_OBJECTS =  \
 	global/testing/unit-tests/ga_create1.$(OBJEXT) \
 	$(am__objects_18)
@@ -2332,7 +2335,7 @@ global_testing_unit_tests_ga_create1_LDADD = $(LDADD)
 global_testing_unit_tests_ga_create1_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create2_OBJECTS =  \
 	global/testing/unit-tests/ga_create2.$(OBJEXT) \
 	$(am__objects_18)
@@ -2342,7 +2345,7 @@ global_testing_unit_tests_ga_create2_LDADD = $(LDADD)
 global_testing_unit_tests_ga_create2_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create3_OBJECTS =  \
 	global/testing/unit-tests/ga_create3.$(OBJEXT) \
 	$(am__objects_18)
@@ -2352,7 +2355,7 @@ global_testing_unit_tests_ga_create3_LDADD = $(LDADD)
 global_testing_unit_tests_ga_create3_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create_handle_OBJECTS =  \
 	global/testing/unit-tests/ga_create_handle.$(OBJEXT) \
 	$(am__objects_18)
@@ -2362,7 +2365,8 @@ global_testing_unit_tests_ga_create_handle_LDADD = $(LDADD)
 global_testing_unit_tests_ga_create_handle_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create_irreg_OBJECTS =  \
 	global/testing/unit-tests/ga_create_irreg.$(OBJEXT) \
 	$(am__objects_18)
@@ -2372,7 +2376,7 @@ global_testing_unit_tests_ga_create_irreg_LDADD = $(LDADD)
 global_testing_unit_tests_ga_create_irreg_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create_irreg2_OBJECTS =  \
 	global/testing/unit-tests/ga_create_irreg2.$(OBJEXT) \
 	$(am__objects_18)
@@ -2382,7 +2386,8 @@ global_testing_unit_tests_ga_create_irreg2_LDADD = $(LDADD)
 global_testing_unit_tests_ga_create_irreg2_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create_irreg3_OBJECTS =  \
 	global/testing/unit-tests/ga_create_irreg3.$(OBJEXT) \
 	$(am__objects_18)
@@ -2392,7 +2397,8 @@ global_testing_unit_tests_ga_create_irreg3_LDADD = $(LDADD)
 global_testing_unit_tests_ga_create_irreg3_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_destroy_OBJECTS =  \
 	global/testing/unit-tests/ga_destroy.$(OBJEXT) \
 	$(am__objects_18)
@@ -2402,7 +2408,7 @@ global_testing_unit_tests_ga_destroy_LDADD = $(LDADD)
 global_testing_unit_tests_ga_destroy_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_dgop_OBJECTS =  \
 	global/testing/unit-tests/ga_dgop.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_dgop_OBJECTS =  \
@@ -2411,7 +2417,7 @@ global_testing_unit_tests_ga_dgop_LDADD = $(LDADD)
 global_testing_unit_tests_ga_dgop_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_dot_OBJECTS =  \
 	global/testing/unit-tests/ga_dot.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_dot_OBJECTS =  \
@@ -2420,7 +2426,7 @@ global_testing_unit_tests_ga_dot_LDADD = $(LDADD)
 global_testing_unit_tests_ga_dot_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_duplicate_OBJECTS =  \
 	global/testing/unit-tests/ga_duplicate.$(OBJEXT) \
 	$(am__objects_18)
@@ -2430,7 +2436,7 @@ global_testing_unit_tests_ga_duplicate_LDADD = $(LDADD)
 global_testing_unit_tests_ga_duplicate_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_divide_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_divide.$(OBJEXT) \
 	$(am__objects_18)
@@ -2440,7 +2446,7 @@ global_testing_unit_tests_ga_elem_divide_LDADD = $(LDADD)
 global_testing_unit_tests_ga_elem_divide_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_dividepatch_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_dividepatch.$(OBJEXT) \
 	$(am__objects_18)
@@ -2450,7 +2456,8 @@ global_testing_unit_tests_ga_elem_dividepatch_LDADD = $(LDADD)
 global_testing_unit_tests_ga_elem_dividepatch_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_maximum_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_maximum.$(OBJEXT) \
 	$(am__objects_18)
@@ -2460,7 +2467,7 @@ global_testing_unit_tests_ga_elem_maximum_LDADD = $(LDADD)
 global_testing_unit_tests_ga_elem_maximum_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_maximumpatch_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_maximumpatch.$(OBJEXT) \
 	$(am__objects_18)
@@ -2470,7 +2477,8 @@ global_testing_unit_tests_ga_elem_maximumpatch_LDADD = $(LDADD)
 global_testing_unit_tests_ga_elem_maximumpatch_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_minimum_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_minimum.$(OBJEXT) \
 	$(am__objects_18)
@@ -2480,7 +2488,7 @@ global_testing_unit_tests_ga_elem_minimum_LDADD = $(LDADD)
 global_testing_unit_tests_ga_elem_minimum_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_minimumpatch_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_minimumpatch.$(OBJEXT) \
 	$(am__objects_18)
@@ -2490,7 +2498,8 @@ global_testing_unit_tests_ga_elem_minimumpatch_LDADD = $(LDADD)
 global_testing_unit_tests_ga_elem_minimumpatch_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_multiply_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_multiply.$(OBJEXT) \
 	$(am__objects_18)
@@ -2500,7 +2509,8 @@ global_testing_unit_tests_ga_elem_multiply_LDADD = $(LDADD)
 global_testing_unit_tests_ga_elem_multiply_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_multiplypatch_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_multiplypatch.$(OBJEXT) \
 	$(am__objects_18)
@@ -2510,7 +2520,8 @@ global_testing_unit_tests_ga_elem_multiplypatch_LDADD = $(LDADD)
 global_testing_unit_tests_ga_elem_multiplypatch_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_fill_OBJECTS =  \
 	global/testing/unit-tests/ga_fill.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_fill_OBJECTS =  \
@@ -2519,7 +2530,7 @@ global_testing_unit_tests_ga_fill_LDADD = $(LDADD)
 global_testing_unit_tests_ga_fill_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_fillpatch_OBJECTS =  \
 	global/testing/unit-tests/ga_fillpatch.$(OBJEXT) \
 	$(am__objects_18)
@@ -2529,7 +2540,7 @@ global_testing_unit_tests_ga_fillpatch_LDADD = $(LDADD)
 global_testing_unit_tests_ga_fillpatch_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_fillpatch1_OBJECTS =  \
 	global/testing/unit-tests/ga_fillpatch1.$(OBJEXT) \
 	$(am__objects_18)
@@ -2539,7 +2550,7 @@ global_testing_unit_tests_ga_fillpatch1_LDADD = $(LDADD)
 global_testing_unit_tests_ga_fillpatch1_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_gather_OBJECTS =  \
 	global/testing/unit-tests/ga_gather.$(OBJEXT) \
 	$(am__objects_18)
@@ -2549,7 +2560,7 @@ global_testing_unit_tests_ga_gather_LDADD = $(LDADD)
 global_testing_unit_tests_ga_gather_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_gather2_OBJECTS =  \
 	global/testing/unit-tests/ga_gather2.$(OBJEXT) \
 	$(am__objects_18)
@@ -2559,7 +2570,7 @@ global_testing_unit_tests_ga_gather2_LDADD = $(LDADD)
 global_testing_unit_tests_ga_gather2_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_gather3_OBJECTS =  \
 	global/testing/unit-tests/ga_gather3.$(OBJEXT) \
 	$(am__objects_18)
@@ -2569,7 +2580,7 @@ global_testing_unit_tests_ga_gather3_LDADD = $(LDADD)
 global_testing_unit_tests_ga_gather3_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_get_OBJECTS =  \
 	global/testing/unit-tests/ga_get.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_get_OBJECTS =  \
@@ -2578,7 +2589,7 @@ global_testing_unit_tests_ga_get_LDADD = $(LDADD)
 global_testing_unit_tests_ga_get_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_get_blockinfo_OBJECTS =  \
 	global/testing/unit-tests/ga_get_blockinfo.$(OBJEXT) \
 	$(am__objects_18)
@@ -2588,7 +2599,8 @@ global_testing_unit_tests_ga_get_blockinfo_LDADD = $(LDADD)
 global_testing_unit_tests_ga_get_blockinfo_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_get_diagonal_OBJECTS =  \
 	global/testing/unit-tests/ga_get_diagonal.$(OBJEXT) \
 	$(am__objects_18)
@@ -2598,7 +2610,7 @@ global_testing_unit_tests_ga_get_diagonal_LDADD = $(LDADD)
 global_testing_unit_tests_ga_get_diagonal_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_igop_OBJECTS =  \
 	global/testing/unit-tests/ga_igop.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_igop_OBJECTS =  \
@@ -2607,7 +2619,7 @@ global_testing_unit_tests_ga_igop_LDADD = $(LDADD)
 global_testing_unit_tests_ga_igop_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_igop2_OBJECTS =  \
 	global/testing/unit-tests/ga_igop2.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_igop2_OBJECTS =  \
@@ -2616,7 +2628,7 @@ global_testing_unit_tests_ga_igop2_LDADD = $(LDADD)
 global_testing_unit_tests_ga_igop2_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_inquire_OBJECTS =  \
 	global/testing/unit-tests/ga_inquire.$(OBJEXT) \
 	$(am__objects_18)
@@ -2626,7 +2638,7 @@ global_testing_unit_tests_ga_inquire_LDADD = $(LDADD)
 global_testing_unit_tests_ga_inquire_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_intialize_OBJECTS =  \
 	global/testing/unit-tests/ga_intialize.$(OBJEXT) \
 	$(am__objects_18)
@@ -2636,7 +2648,7 @@ global_testing_unit_tests_ga_intialize_LDADD = $(LDADD)
 global_testing_unit_tests_ga_intialize_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_lgop_OBJECTS =  \
 	global/testing/unit-tests/ga_lgop.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_lgop_OBJECTS =  \
@@ -2645,7 +2657,7 @@ global_testing_unit_tests_ga_lgop_LDADD = $(LDADD)
 global_testing_unit_tests_ga_lgop_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_median_OBJECTS =  \
 	global/testing/unit-tests/ga_median.$(OBJEXT) \
 	$(am__objects_18)
@@ -2655,7 +2667,7 @@ global_testing_unit_tests_ga_median_LDADD = $(LDADD)
 global_testing_unit_tests_ga_median_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_ndim_OBJECTS =  \
 	global/testing/unit-tests/ga_ndim.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_ndim_OBJECTS =  \
@@ -2664,7 +2676,7 @@ global_testing_unit_tests_ga_ndim_LDADD = $(LDADD)
 global_testing_unit_tests_ga_ndim_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_ndim2_OBJECTS =  \
 	global/testing/unit-tests/ga_ndim2.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_ndim2_OBJECTS =  \
@@ -2673,7 +2685,7 @@ global_testing_unit_tests_ga_ndim2_LDADD = $(LDADD)
 global_testing_unit_tests_ga_ndim2_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_nnodes_OBJECTS =  \
 	global/testing/unit-tests/ga_nnodes.$(OBJEXT) \
 	$(am__objects_18)
@@ -2683,7 +2695,7 @@ global_testing_unit_tests_ga_nnodes_LDADD = $(LDADD)
 global_testing_unit_tests_ga_nnodes_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_nodeid_OBJECTS =  \
 	global/testing/unit-tests/ga_nodeid.$(OBJEXT) \
 	$(am__objects_18)
@@ -2693,7 +2705,7 @@ global_testing_unit_tests_ga_nodeid_LDADD = $(LDADD)
 global_testing_unit_tests_ga_nodeid_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_create_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_create.$(OBJEXT) \
 	$(am__objects_18)
@@ -2703,7 +2715,8 @@ global_testing_unit_tests_ga_pgroup_create_LDADD = $(LDADD)
 global_testing_unit_tests_ga_pgroup_create_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_create2_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_create2.$(OBJEXT) \
 	$(am__objects_18)
@@ -2713,7 +2726,8 @@ global_testing_unit_tests_ga_pgroup_create2_LDADD = $(LDADD)
 global_testing_unit_tests_ga_pgroup_create2_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_create3_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_create3.$(OBJEXT) \
 	$(am__objects_18)
@@ -2723,7 +2737,8 @@ global_testing_unit_tests_ga_pgroup_create3_LDADD = $(LDADD)
 global_testing_unit_tests_ga_pgroup_create3_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_create4_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_create4.$(OBJEXT) \
 	$(am__objects_18)
@@ -2733,7 +2748,8 @@ global_testing_unit_tests_ga_pgroup_create4_LDADD = $(LDADD)
 global_testing_unit_tests_ga_pgroup_create4_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_create5_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_create5.$(OBJEXT) \
 	$(am__objects_18)
@@ -2743,7 +2759,8 @@ global_testing_unit_tests_ga_pgroup_create5_LDADD = $(LDADD)
 global_testing_unit_tests_ga_pgroup_create5_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_destroy_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_destroy.$(OBJEXT) \
 	$(am__objects_18)
@@ -2753,7 +2770,8 @@ global_testing_unit_tests_ga_pgroup_destroy_LDADD = $(LDADD)
 global_testing_unit_tests_ga_pgroup_destroy_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_destroy2_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_destroy2.$(OBJEXT) \
 	$(am__objects_18)
@@ -2763,7 +2781,8 @@ global_testing_unit_tests_ga_pgroup_destroy2_LDADD = $(LDADD)
 global_testing_unit_tests_ga_pgroup_destroy2_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_nnodes_nodeid_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_nnodes_nodeid.$(OBJEXT) \
 	$(am__objects_18)
@@ -2772,7 +2791,8 @@ global_testing_unit_tests_ga_pgroup_nnodes_nodeid_LDADD = $(LDADD)
 global_testing_unit_tests_ga_pgroup_nnodes_nodeid_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_setdefault_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_setdefault.$(OBJEXT) \
 	$(am__objects_18)
@@ -2782,7 +2802,8 @@ global_testing_unit_tests_ga_pgroup_setdefault_LDADD = $(LDADD)
 global_testing_unit_tests_ga_pgroup_setdefault_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_put_OBJECTS =  \
 	global/testing/unit-tests/ga_put.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_put_OBJECTS =  \
@@ -2791,7 +2812,7 @@ global_testing_unit_tests_ga_put_LDADD = $(LDADD)
 global_testing_unit_tests_ga_put_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_put2_OBJECTS =  \
 	global/testing/unit-tests/ga_put2.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_put2_OBJECTS =  \
@@ -2800,7 +2821,7 @@ global_testing_unit_tests_ga_put2_LDADD = $(LDADD)
 global_testing_unit_tests_ga_put2_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_scale_OBJECTS =  \
 	global/testing/unit-tests/ga_scale.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_scale_OBJECTS =  \
@@ -2809,7 +2830,7 @@ global_testing_unit_tests_ga_scale_LDADD = $(LDADD)
 global_testing_unit_tests_ga_scale_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_scale2_OBJECTS =  \
 	global/testing/unit-tests/ga_scale2.$(OBJEXT) \
 	$(am__objects_18)
@@ -2819,7 +2840,7 @@ global_testing_unit_tests_ga_scale2_LDADD = $(LDADD)
 global_testing_unit_tests_ga_scale2_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_scale_cols_OBJECTS =  \
 	global/testing/unit-tests/ga_scale_cols.$(OBJEXT) \
 	$(am__objects_18)
@@ -2829,7 +2850,7 @@ global_testing_unit_tests_ga_scale_cols_LDADD = $(LDADD)
 global_testing_unit_tests_ga_scale_cols_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_scale_patch_OBJECTS =  \
 	global/testing/unit-tests/ga_scale_patch.$(OBJEXT) \
 	$(am__objects_18)
@@ -2839,7 +2860,7 @@ global_testing_unit_tests_ga_scale_patch_LDADD = $(LDADD)
 global_testing_unit_tests_ga_scale_patch_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_scale_rows_OBJECTS =  \
 	global/testing/unit-tests/ga_scale_rows.$(OBJEXT) \
 	$(am__objects_18)
@@ -2849,7 +2870,7 @@ global_testing_unit_tests_ga_scale_rows_LDADD = $(LDADD)
 global_testing_unit_tests_ga_scale_rows_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_scatter_OBJECTS =  \
 	global/testing/unit-tests/ga_scatter.$(OBJEXT) \
 	$(am__objects_18)
@@ -2859,7 +2880,7 @@ global_testing_unit_tests_ga_scatter_LDADD = $(LDADD)
 global_testing_unit_tests_ga_scatter_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_set_data_OBJECTS =  \
 	global/testing/unit-tests/ga_set_data.$(OBJEXT) \
 	$(am__objects_18)
@@ -2869,7 +2890,7 @@ global_testing_unit_tests_ga_set_data_LDADD = $(LDADD)
 global_testing_unit_tests_ga_set_data_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_set_diagonal_OBJECTS =  \
 	global/testing/unit-tests/ga_set_diagonal.$(OBJEXT) \
 	$(am__objects_18)
@@ -2879,7 +2900,7 @@ global_testing_unit_tests_ga_set_diagonal_LDADD = $(LDADD)
 global_testing_unit_tests_ga_set_diagonal_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_set_restricted_OBJECTS =  \
 	global/testing/unit-tests/ga_set_restricted.$(OBJEXT) \
 	$(am__objects_18)
@@ -2889,7 +2910,8 @@ global_testing_unit_tests_ga_set_restricted_LDADD = $(LDADD)
 global_testing_unit_tests_ga_set_restricted_DEPENDENCIES =  \
 	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_solve_OBJECTS =  \
 	global/testing/unit-tests/ga_solve.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_solve_OBJECTS =  \
@@ -2898,7 +2920,7 @@ global_testing_unit_tests_ga_solve_LDADD = $(LDADD)
 global_testing_unit_tests_ga_solve_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_sync_OBJECTS =  \
 	global/testing/unit-tests/ga_sync.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_sync_OBJECTS =  \
@@ -2907,7 +2929,7 @@ global_testing_unit_tests_ga_sync_LDADD = $(LDADD)
 global_testing_unit_tests_ga_sync_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_transpose_OBJECTS =  \
 	global/testing/unit-tests/ga_transpose.$(OBJEXT) \
 	$(am__objects_18)
@@ -2917,7 +2939,7 @@ global_testing_unit_tests_ga_transpose_LDADD = $(LDADD)
 global_testing_unit_tests_ga_transpose_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_transpose2_OBJECTS =  \
 	global/testing/unit-tests/ga_transpose2.$(OBJEXT) \
 	$(am__objects_18)
@@ -2927,7 +2949,7 @@ global_testing_unit_tests_ga_transpose2_LDADD = $(LDADD)
 global_testing_unit_tests_ga_transpose2_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_transpose3_OBJECTS =  \
 	global/testing/unit-tests/ga_transpose3.$(OBJEXT) \
 	$(am__objects_18)
@@ -2937,7 +2959,7 @@ global_testing_unit_tests_ga_transpose3_LDADD = $(LDADD)
 global_testing_unit_tests_ga_transpose3_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_zero_OBJECTS =  \
 	global/testing/unit-tests/ga_zero.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_zero_OBJECTS =  \
@@ -2946,7 +2968,7 @@ global_testing_unit_tests_ga_zero_LDADD = $(LDADD)
 global_testing_unit_tests_ga_zero_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_zerodiagonal_OBJECTS =  \
 	global/testing/unit-tests/ga_zerodiagonal.$(OBJEXT) \
 	$(am__objects_18)
@@ -2956,7 +2978,7 @@ global_testing_unit_tests_ga_zerodiagonal_LDADD = $(LDADD)
 global_testing_unit_tests_ga_zerodiagonal_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_zeropatch_OBJECTS =  \
 	global/testing/unit-tests/ga_zeropatch.$(OBJEXT) \
 	$(am__objects_18)
@@ -2966,7 +2988,7 @@ global_testing_unit_tests_ga_zeropatch_LDADD = $(LDADD)
 global_testing_unit_tests_ga_zeropatch_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_zeropatch2_OBJECTS =  \
 	global/testing/unit-tests/ga_zeropatch2.$(OBJEXT) \
 	$(am__objects_18)
@@ -2976,7 +2998,7 @@ global_testing_unit_tests_ga_zeropatch2_LDADD = $(LDADD)
 global_testing_unit_tests_ga_zeropatch2_DEPENDENCIES = $(LTLIBOBJS) \
 	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_unpackc_SOURCES_DIST = global/testing/unpackc.c \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -2988,7 +3010,7 @@ global_testing_unpackc_LDADD = $(LDADD)
 global_testing_unpackc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_trace_adjust_OBJECTS = global/trace/adjust.$(OBJEXT)
 global_trace_adjust_OBJECTS = $(am_global_trace_adjust_OBJECTS)
 global_trace_adjust_DEPENDENCIES =
@@ -3013,7 +3035,7 @@ gparrays_testing_test_LDADD = $(LDADD)
 gparrays_testing_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 gparrays_testing_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(gparrays_testing_test_LDFLAGS) \
@@ -3026,7 +3048,7 @@ gparrays_testing_testc_LDADD = $(LDADD)
 gparrays_testing_testc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__gparrays_testing_transpose_SOURCES_DIST =  \
 	gparrays/testing/transpose.c
 @ENABLE_GPARRAYS_TRUE@am_gparrays_testing_transpose_OBJECTS =  \
@@ -3037,33 +3059,35 @@ gparrays_testing_transpose_LDADD = $(LDADD)
 gparrays_testing_transpose_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_ma_test_coalesce_OBJECTS = ma/test-coalesce.$(OBJEXT)
 ma_test_coalesce_OBJECTS = $(am_ma_test_coalesce_OBJECTS)
 ma_test_coalesce_LDADD = $(LDADD)
 ma_test_coalesce_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_ma_test_inquire_OBJECTS = ma/test-inquire.$(OBJEXT)
 ma_test_inquire_OBJECTS = $(am_ma_test_inquire_OBJECTS)
 ma_test_inquire_LDADD = $(LDADD)
 ma_test_inquire_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_ma_testc_OBJECTS = ma/testc.$(OBJEXT)
 ma_testc_OBJECTS = $(am_ma_testc_OBJECTS)
 ma_testc_LDADD = $(LDADD)
 ma_testc_DEPENDENCIES = $(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_ma_testf_OBJECTS = ma/testf.$(OBJEXT)
 ma_testf_OBJECTS = $(am_ma_testf_OBJECTS)
 ma_testf_LDADD = $(LDADD)
 ma_testf_DEPENDENCIES = $(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 ma_testf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(F77LD) $(AM_FFLAGS) $(FFLAGS) \
 	$(ma_testf_LDFLAGS) $(LDFLAGS) -o $@
@@ -3074,7 +3098,7 @@ pario_dra_big_LDADD = $(LDADD)
 pario_dra_big_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 pario_dra_big_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_big_LDFLAGS) $(LDFLAGS) -o \
@@ -3085,28 +3109,28 @@ pario_dra_bign_LDADD = $(LDADD)
 pario_dra_bign_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_pario_dra_dbg_read_OBJECTS = pario/dra/dbg_read.$(OBJEXT)
 pario_dra_dbg_read_OBJECTS = $(am_pario_dra_dbg_read_OBJECTS)
 pario_dra_dbg_read_LDADD = $(LDADD)
 pario_dra_dbg_read_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_pario_dra_dbg_write_OBJECTS = pario/dra/dbg_write.$(OBJEXT)
 pario_dra_dbg_write_OBJECTS = $(am_pario_dra_dbg_write_OBJECTS)
 pario_dra_dbg_write_LDADD = $(LDADD)
 pario_dra_dbg_write_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_pario_dra_dra2arviz_OBJECTS = pario/dra/dra2arviz.$(OBJEXT)
 pario_dra_dra2arviz_OBJECTS = $(am_pario_dra_dra2arviz_OBJECTS)
 pario_dra_dra2arviz_LDADD = $(LDADD)
 pario_dra_dra2arviz_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_pario_dra_dra_mxm_OBJECTS = pario/dra/dra_mxm.$(OBJEXT) \
 	$(am__objects_19)
 pario_dra_dra_mxm_OBJECTS = $(am_pario_dra_dra_mxm_OBJECTS)
@@ -3114,7 +3138,7 @@ pario_dra_dra_mxm_LDADD = $(LDADD)
 pario_dra_dra_mxm_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 pario_dra_dra_mxm_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_dra_mxm_LDFLAGS) $(LDFLAGS) \
@@ -3126,7 +3150,7 @@ pario_dra_ntest_LDADD = $(LDADD)
 pario_dra_ntest_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 pario_dra_ntest_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_ntest_LDFLAGS) $(LDFLAGS) \
@@ -3137,14 +3161,14 @@ pario_dra_ntestc_LDADD = $(LDADD)
 pario_dra_ntestc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_pario_dra_perf_OBJECTS = pario/dra/perf.$(OBJEXT) $(am__objects_19)
 pario_dra_perf_OBJECTS = $(am_pario_dra_perf_OBJECTS)
 pario_dra_perf_LDADD = $(LDADD)
 pario_dra_perf_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 pario_dra_perf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_perf_LDFLAGS) $(LDFLAGS) -o \
@@ -3156,7 +3180,7 @@ pario_dra_perf2_LDADD = $(LDADD)
 pario_dra_perf2_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 pario_dra_perf2_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_perf2_LDFLAGS) $(LDFLAGS) \
@@ -3168,7 +3192,7 @@ pario_dra_perf3_LDADD = $(LDADD)
 pario_dra_perf3_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 pario_dra_perf3_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_perf3_LDFLAGS) $(LDFLAGS) \
@@ -3179,21 +3203,21 @@ pario_dra_perfn_LDADD = $(LDADD)
 pario_dra_perfn_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_pario_dra_rate_OBJECTS = pario/dra/rate.$(OBJEXT)
 pario_dra_rate_OBJECTS = $(am_pario_dra_rate_OBJECTS)
 pario_dra_rate_LDADD = $(LDADD)
 pario_dra_rate_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_pario_dra_test_OBJECTS = pario/dra/test.$(OBJEXT) $(am__objects_19)
 pario_dra_test_OBJECTS = $(am_pario_dra_test_OBJECTS)
 pario_dra_test_LDADD = $(LDADD)
 pario_dra_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 pario_dra_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_test_LDFLAGS) $(LDFLAGS) -o \
@@ -3205,7 +3229,7 @@ pario_dra_test_mxm_LDADD = $(LDADD)
 pario_dra_test_mxm_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 pario_dra_test_mxm_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_test_mxm_LDFLAGS) \
@@ -3217,7 +3241,7 @@ pario_dra_time_mxm_LDADD = $(LDADD)
 pario_dra_time_mxm_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 pario_dra_time_mxm_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_time_mxm_LDFLAGS) \
@@ -3228,7 +3252,7 @@ pario_eaf_test_LDADD = $(LDADD)
 pario_eaf_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 pario_eaf_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_eaf_test_LDFLAGS) $(LDFLAGS) -o \
@@ -3239,7 +3263,7 @@ pario_sf_test_LDADD = $(LDADD)
 pario_sf_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 pario_sf_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_sf_test_LDFLAGS) $(LDFLAGS) -o \
@@ -3252,7 +3276,7 @@ tcgmsg_tests_test_LDADD = $(LDADD)
 tcgmsg_tests_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__tcgmsg_tests_test_asyn_SOURCES_DIST = tcgmsg/tests/test_asyn.c
 @MSG_COMMS_MPI_TRUE@am_tcgmsg_tests_test_asyn_OBJECTS =  \
 @MSG_COMMS_MPI_TRUE@	tcgmsg/tests/test_asyn.$(OBJEXT)
@@ -3261,7 +3285,7 @@ tcgmsg_tests_test_asyn_LDADD = $(LDADD)
 tcgmsg_tests_test_asyn_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__tcgmsg_tests_testf_SOURCES_DIST = tcgmsg/tests/testf.F
 @MSG_COMMS_MPI_TRUE@am_tcgmsg_tests_testf_OBJECTS =  \
 @MSG_COMMS_MPI_TRUE@	tcgmsg/tests/testf.$(OBJEXT)
@@ -3270,7 +3294,7 @@ tcgmsg_tests_testf_LDADD = $(LDADD)
 tcgmsg_tests_testf_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 tcgmsg_tests_testf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(tcgmsg_tests_testf_LDFLAGS) \
@@ -4261,9 +4285,9 @@ libga_la_SOURCES = compat/random.c ma/error.c ma/f2c.c ma/ma.c ma/ma.h \
 	tcgmsg/fapi.c $(am__append_51)
 
 # As of ga-5-2 libarmci is no longer rolled up into libga.
-libga_la_LIBADD = $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) \
-	$(am__append_60) $(am__append_61) $(am__append_62) \
-	$(am__append_63)
+libga_la_LIBADD = $(ELPA_LIBS) $(SCALAPACK_LIBS) $(LAPACK_LIBS) \
+	$(BLAS_LIBS) $(am__append_60) $(am__append_61) \
+	$(am__append_62) $(am__append_63)
 nodist_libga_la_SOURCES = config.fh $(am__append_8) $(am__append_9) \
 	global/src/ga-wapidefs.h $(am__append_42)
 
@@ -4349,10 +4373,10 @@ AM_CXXFLAGS = $(GA_CXXOPT) $(GA_CXX_WARN)
 ##############################################################################
 # global/testing
 #
-AM_CPPFLAGS = $(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) \
-	$(BLAS_CPPFLAGS) $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) \
-	-I$(top_build_prefix)ma -I$(top_srcdir)/ma \
-	-I$(top_srcdir)/LinAlg/lapack+blas \
+AM_CPPFLAGS = $(ELPA_CPPFLAGS) $(SCALAPACK_CPPFLAGS) \
+	$(LAPACK_CPPFLAGS) $(BLAS_CPPFLAGS) $(GA_MP_CPPFLAGS) \
+	$(ARMCI_NETWORK_CPPFLAGS) -I$(top_build_prefix)ma \
+	-I$(top_srcdir)/ma -I$(top_srcdir)/LinAlg/lapack+blas \
 	-I$(top_build_prefix)global/src -I$(top_srcdir)/global/src \
 	-I$(top_srcdir)/global/testing -I$(top_srcdir)/pario/dra \
 	-I$(top_srcdir)/pario/eaf -I$(top_srcdir)/pario/elio \
@@ -4361,12 +4385,14 @@ AM_CPPFLAGS = $(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) \
 	-I$(top_srcdir)/tcgmsg $(am__append_52) $(am__append_55) \
 	$(am__append_56) $(am__append_57) $(am__append_58) \
 	$(am__append_59)
-AM_LDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
-	$(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) $(am__append_1)
-FLDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
-	$(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS)
-LDADD = $(LTLIBOBJS) libga.la $(SCALAPACK_LIBS) $(LAPACK_LIBS) \
-	$(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
+AM_LDFLAGS = $(ELPA_LDFLAGS) $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) \
+	$(BLAS_LDFLAGS) $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) \
+	$(am__append_1)
+FLDFLAGS = $(ELPA_LDFLAGS) $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) \
+	$(BLAS_LDFLAGS) $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS)
+LDADD = $(LTLIBOBJS) libga.la $(ELPA_LIBS) $(SCALAPACK_LIBS) \
+	$(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) \
+	$(ARMCI_NETWORK_LIBS)
 
 # Certain trickery when turning Fortran support on or off.
 @ENABLE_F77_TRUE@MAYBE_DUMMY_F_LINK = dummy.f
@@ -8964,21 +8990,21 @@ flags:
 	@echo '# GA libraries are installed in $(libdir)' 
 	@echo '# GA headers are installed in $(includedir)' 
 	@echo '#'
-	@echo 'CPPFLAGS="$(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) $(BLAS_CPPFLAGS) $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) -I$(includedir)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo 'CPPFLAGS="$(ELPA_CPPFLAGS) $(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) $(BLAS_CPPFLAGS) $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) -I$(includedir)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo '#'
-	@echo 'LDFLAGS="$(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) -L$(libdir)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo 'LDFLAGS="$(ELPA_LDFLAGS) $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) -L$(libdir)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo '#'
 	@echo '# For Fortran Programs: '
 	@echo 'FFLAGS="$(AM_FFLAGS)"' | $(SED_NORMALIZE_WHITESPACE)
-	@echo 'LIBS="-lga $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo 'LIBS="-lga $(ELPA_LIBS) $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo '#'
 	@echo '# For C Programs: '
 	@echo 'CFLAGS="$(AM_CFLAGS)"' | $(SED_NORMALIZE_WHITESPACE)
-	@echo 'LIBS="-lga $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo 'LIBS="-lga $(ELPA_LIBS) $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
 @CXX_BINDINGS_TRUE@	@echo '#'
 @CXX_BINDINGS_TRUE@	@echo '# For C++ Programs: '
 @CXX_BINDINGS_TRUE@	@echo 'CXXFLAGS="$(AM_CXXFLAGS)"' | $(SED_NORMALIZE_WHITESPACE)
-@CXX_BINDINGS_TRUE@	@echo 'LIBS="-lga++ -lga $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
+@CXX_BINDINGS_TRUE@	@echo 'LIBS="-lga++ -lga $(ELPA_LIBS) $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo '# =========================================================================== '
 
 config.fh: config.h
