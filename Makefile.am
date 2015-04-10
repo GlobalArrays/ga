@@ -525,6 +525,7 @@ check_PROGRAMS += global/testing/ipc_clean
 endif
 
 # TODO somehow unit tests depend on MPI -- need to fix
+if ENABLE_UNIT_TESTS
 if MSG_COMMS_MPI
 check_PROGRAMS += global/testing/unit-tests/ga_abs_value
 check_PROGRAMS += global/testing/unit-tests/ga_acc
@@ -606,6 +607,7 @@ check_PROGRAMS += global/testing/unit-tests/ga_zero
 check_PROGRAMS += global/testing/unit-tests/ga_zerodiagonal
 check_PROGRAMS += global/testing/unit-tests/ga_zeropatch2
 check_PROGRAMS += global/testing/unit-tests/ga_zeropatch
+endif
 endif
 
 GLOBAL_SERIAL_TESTS =

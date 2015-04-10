@@ -861,6 +861,8 @@ MPICC
 THREAD_LIBRARY
 THREAD_SAFE_FALSE
 THREAD_SAFE_TRUE
+ENABLE_UNIT_TESTS_FALSE
+ENABLE_UNIT_TESTS_TRUE
 ENABLE_TRACE_FALSE
 ENABLE_TRACE_TRUE
 ENABLE_PROFILING_FALSE
@@ -1022,6 +1024,7 @@ enable_opt
 enable_peigs
 enable_profiling
 enable_trace
+enable_unit_tests
 enable_thread_safety
 enable_dependency_tracking
 enable_autodetect
@@ -1736,6 +1739,7 @@ Optional Features:
   --enable-peigs          enable Parallel Eigensystem Solver interface
   --enable-profiling      enable profiling
   --enable-trace          enable tracing
+  --enable-unit-tests     build the unfinished unit tests
   --enable-thread-safety  **unsupported** turn on thread safety
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
@@ -4510,6 +4514,23 @@ fi
 else
   ENABLE_TRACE_TRUE='#'
   ENABLE_TRACE_FALSE=
+fi
+
+
+
+# Check whether --enable-unit-tests was given.
+if test "${enable_unit_tests+set}" = set; then :
+  enableval=$enable_unit_tests;
+else
+  enable_unit_tests=no
+fi
+
+ if test "x$enable_unit_tests" = xyes; then
+  ENABLE_UNIT_TESTS_TRUE=
+  ENABLE_UNIT_TESTS_FALSE='#'
+else
+  ENABLE_UNIT_TESTS_TRUE='#'
+  ENABLE_UNIT_TESTS_FALSE=
 fi
 
 
@@ -40875,6 +40896,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_TRACE_TRUE}" && test -z "${ENABLE_TRACE_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_TRACE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_UNIT_TESTS_TRUE}" && test -z "${ENABLE_UNIT_TESTS_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_UNIT_TESTS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${THREAD_SAFE_TRUE}" && test -z "${THREAD_SAFE_FALSE}"; then
