@@ -2,10 +2,13 @@
 # ----------------
 # Generate Fortran 77 conftest for ELPA.
 AC_DEFUN([GA_F77_ELPA_TEST], [AC_LANG_CONFTEST([AC_LANG_PROGRAM([],
-[[      implicit none
-      logical status, SOLVE_EVP_REAL
-      external SOLVE_EVP_REAL
-      status=SOLVE_EVP_REAL ()]])])
+[[      use ELPA1
+      implicit none
+      logical status
+      integer i4
+      double precision dscal8,darray8(2)
+      status = SOLVE_EVP_REAL(i4,i4,darray8,i4,
+     C     darray8,darray8,i4,i4,i4,i4)]])])
 ])
 
 
@@ -75,6 +78,11 @@ ga_save_CPPFLAGS="$CPPFLAGS"
 LDFLAGS="$ELPA_LDFLAGS $SCALAPACK_LDFLAGS $LAPACK_LDFLAGS $BLAS_LDFLAGS $GA_MP_LDFLAGS $LDFLAGS"
 CPPFLAGS="$ELPA_CPPFLAGS $SCALAPACK_CPPFLAGS $LAPACK_CPPFLAGS $BLAS_CPPFLAGS $GA_MP_CPPFLAGS $CPPFLAGS"
 
+# ELPA fortran test uses a module and needs CPPFLAGS
+# but CPPFLAGS isn't used with *.f non-preprocessed extension
+ga_save_FFLAGS="$FFLAGS"
+FFLAGS="$ELPA_CPPFLAGS $FFLAGS"
+
 AC_MSG_NOTICE([Attempting to locate ELPA library])
 
 # First, check environment/command-line variables.
@@ -98,6 +106,7 @@ AS_IF([test $ga_elpa_ok = no],
 
 CPPFLAGS="$ga_save_CPPFLAGS"
 LDFLAGS="$ga_save_LDFLAGS"
+FFLAGS="$ga_save_FFLAGS"
 
 AC_SUBST([ELPA_LIBS])
 AC_SUBST([ELPA_LDFLAGS])
