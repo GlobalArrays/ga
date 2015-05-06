@@ -3573,12 +3573,13 @@ c
       INTGR4 m
       INTGR4 n
       INTGR4 info,one4,zero4,two4,four4
-      INTGR4 mpierr,elpa_comm,elpa_group
       integer ga_comm
-      INTGR4 ga_comm4
       integer mxproc,i
       parameter(mxproc=100000)
-      INTGR4 group_world, group_members(mxproc)
+c mpi args should integer*4
+      integer*4 group_world,group_members(mxproc),
+     C     ga_comm4,mpierr,elpa_group
+      INTGR4 elpa_comm
 
       parameter(one4=1,zero4=0,two4=4,four4=4)
       integer info8,dblsize
