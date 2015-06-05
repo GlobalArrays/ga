@@ -705,16 +705,6 @@ static void sgai_norm_infinity_block(Integer g_a, void *ptr,
   DoubleComplex *zsum = NULL;
   SingleComplex *csum = NULL;
 
-  /*
-  if (ndim == 1)
-    dim2 = 1;
-  else if (ndim == 2)
-    dim2 = dims[1];
-
-  size = GAsizeof(type);
-  nelem = dim2;
-  */
-
   switch (type)
   {
     case C_INT:
@@ -741,14 +731,13 @@ static void sgai_norm_infinity_block(Integer g_a, void *ptr,
 
   if(ndim<=0)
     pnga_error("ga_norm_infinity: wrong dimension", ndim);
-  else if(ndim == 1){
+  else if(ndim == 1) {
     iloA=lo[0];
     ihiA=hi[0];
     jloA=1;
     jhiA=1;
   }
-  else if(ndim == 2)
-  {
+  else if(ndim == 2) {
     iloA=lo[0];
     ihiA=hi[0];
     jloA=lo[1];
@@ -760,11 +749,6 @@ static void sgai_norm_infinity_block(Integer g_a, void *ptr,
   /* determine subset of my patch to access */
   if (ihiA > 0 && jhiA > 0)
   {
-    /* lo[0] = iloA; */
-    /* lo[1] = jloA; */
-    /* hi[0] = ihiA; */
-    /* hi[1] = jhiA; */
-
     switch (type)
     {
       int *pi;
@@ -773,51 +757,68 @@ static void sgai_norm_infinity_block(Integer g_a, void *ptr,
       float *pf;
       DoubleComplex *pz;
       SingleComplex *pc;
+      DoubleComplex zval;
+      SingleComplex cval;
+      double dtemp;
+      float ftemp;
       case C_INT:
       pi = (int *) ptr;
-      for (i = 0; i < ihiA - iloA + 1; i++)
-        for (j = 0; j < jhiA - jloA + 1; j++)
-          isum[iloA + i - 1] += GA_ABS (pi[j * ld + i]);
+      *isum = GA_ABS(pi[0]);
+      for (j = 0; j < jhiA - jloA + 1; j++) {
+        for (i = 0; i < ihiA - iloA + 1; i++)
+          if (GA_ABS(pi[j*ld + i]) > *isum) *isum = GA_ABS(pi[j*ld+i]);
+      } 
       break;
       case C_LONG:
       pl = (long *) ptr;
-      for (i = 0; i < ihiA - iloA + 1; i++)
-        for (j = 0; j < jhiA - jloA + 1; j++)
-          lsum[iloA + i - 1] += GA_ABS (pl[j * ld + i]);
+      *lsum = GA_ABS(pl[0]);
+      for (j = 0; j < jhiA - jloA + 1; j++)
+        for (i = 0; i < ihiA - iloA + 1; i++)
+          if (GA_ABS(pl[j*ld + i]) > *lsum) *lsum = GA_ABS(pl[j*ld+i]);
       break;
       case C_DCPL:
       pz = (DoubleComplex *) ptr;
-      for (i = 0; i < ihiA - iloA + 1; i++)
-        for (j = 0; j < jhiA - jloA + 1; j++)
+      zval = pz[0];
+      dtemp =
+        sqrt (zval.real * zval.real + zval.imag * zval.imag);
+      (*zsum).real = dtemp;
+      for (j = 0; j < jhiA - jloA + 1; j++)
+        for (i = 0; i < ihiA - iloA + 1; i++)
         {
-          DoubleComplex zval = pz[j * ld + i];
-          double temp =
+          zval = pz[j * ld + i];
+          dtemp =
             sqrt (zval.real * zval.real + zval.imag * zval.imag);
-          (zsum[iloA + i - 1]).real += temp;
+          if (dtemp > (*zsum).real) (*zsum).real = dtemp;
         }
       break;
       case C_SCPL:
       pc = (SingleComplex *) ptr;
-      for (i = 0; i < ihiA - iloA + 1; i++)
-        for (j = 0; j < jhiA - jloA + 1; j++)
+      cval =  pc[0];
+      ftemp =
+        sqrt (cval.real * cval.real + cval.imag * cval.imag);
+      (*csum).real = ftemp;
+      for (j = 0; j < jhiA - jloA + 1; j++)
+        for (i = 0; i < ihiA - iloA + 1; i++)
         {
-          SingleComplex cval = pc[j * ld + i];
-          float  temp =
+          cval = pc[j * ld + i];
+          ftemp =
             sqrt (cval.real * cval.real + cval.imag * cval.imag);
-          (csum[iloA + i - 1]).real += temp;
+          if (ftemp > (*csum).real) (*csum).real = ftemp;
         }
       break;
       case C_FLOAT:
       pf = (float *) ptr;
-      for (i = 0; i < ihiA - iloA + 1; i++)
-        for (j = 0; j < jhiA - jloA + 1; j++)
-          fsum[iloA + i - 1] += GA_ABS (pf[j * ld + i]);
+      *fsum = pf[0];
+      for (j = 0; j < jhiA - jloA + 1; j++)
+        for (i = 0; i < ihiA - iloA + 1; i++)
+          if (GA_ABS(pf[j*ld+i]) > *fsum) *fsum = GA_ABS(pf[j*ld+i]);
       break;
       case C_DBL:
       pd = (double *) ptr;
+      *dsum = pd[0];
       for (i = 0; i < ihiA - iloA + 1; i++)
         for (j = 0; j < jhiA - jloA + 1; j++)
-          dsum[iloA + i - 1] += GA_ABS (pd[j * ld + i]);
+          if (GA_ABS(pd[j*ld+i]) > *dsum) *dsum = GA_ABS(pd[j*ld+i]);
       break;
       default:
       pnga_error("sgai_norm_infinity_block: wrong data type ", type);
@@ -830,19 +831,25 @@ static void sgai_norm_infinity_block(Integer g_a, void *ptr,
 #endif
 void pnga_norm_infinity(Integer g_a, double *nm)
 {
-  Integer dim1/*, dim2*/, type, size, nelem;
+  Integer type;
   Integer me = pnga_nodeid (), i, j, nproc = pnga_nnodes();
   Integer ndim, dims[MAXDIM], lo[2], hi[2], ld;
   Integer num_blocks_a;
   int local_sync_begin,local_sync_end;
-  int imax, *isum = NULL;
-  long lmax, *lsum = NULL;
-  double dmax, zmax, *dsum = NULL;
-  float fmax, cmax,*fsum = NULL;
-  DoubleComplex *zsum = NULL;
-  SingleComplex *csum = NULL;
-  void *buf = NULL;                    /*temporary buffer */
+  int isum = 0;
+  long lsum = 0;
+  double dsum = 0.0;
+  float fsum = 0.0;
+  float fval;
+  double dval;
+  DoubleComplex zsum;
+  SingleComplex csum;
+  void *buf = NULL;
   void *ptr = NULL;
+  zsum.real = 0.0;
+  zsum.imag = 0.0;
+  csum.real = 0.0;
+  csum.imag = 0.0;
 
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
@@ -852,52 +859,33 @@ void pnga_norm_infinity(Integer g_a, double *nm)
   pnga_check_handle (g_a, "ga_norm_infinity_");
   GA_PUSH_NAME ("ga_norm_infinity_");
 
-  /*  pnga_inquire (g_a, &type, &dim1, &dim2); */
   pnga_inquire (g_a, &type, &ndim, dims);
 
-  dim1 = dims[0];
   if(ndim<=0)
     pnga_error("ga_norm_infinity: wrong dimension", ndim);
-  /*
-  else if(ndim == 1)
-    dim2 = 1;
-  else if(ndim==2)  
-    dim2 = dims[1];
-  */
   else if (ndim >= 3)
     pnga_error("ga_norm_infinity: wrong dimension", ndim);
 
 
-  /*allocate a temporary buffer of size equal to the number of rows */
-  size = GAsizeof (type);
-  nelem = dim1;
-  buf = malloc (nelem * size);
-
-  if (buf == NULL)
-    pnga_error("ga_norm_infinity_: no more memory for the buffer.\n", 0);
-
-  /*zero the buffer */
-  memset (buf, 0, nelem * size);
-
   switch (type)
   {
     case C_INT:
-      isum = (int *) buf;
+      buf = (void*)(&isum);
       break;
     case C_LONG:
-      lsum = (long *) buf;
+      buf = (void*)(&lsum);
       break;
     case C_FLOAT:
-      fsum = (float *) buf;
+      buf = (void*)(&fsum);
       break;
     case C_DBL:
-      dsum = (double *) buf;
+      buf = (void*)(&dsum);
       break;
     case C_DCPL:
-      zsum = (DoubleComplex *) buf;
+      buf = (void*)(&zsum);
       break;
     case C_SCPL:
-      csum = (SingleComplex *) buf;
+      buf = (void*)(&csum);
       break;
     default:
       pnga_error("ga_norm_infinity_: wrong data type:", type);
@@ -961,22 +949,26 @@ void pnga_norm_infinity(Integer g_a, double *nm)
   switch (type)
   {
     case C_INT:
-      armci_msg_igop (isum, nelem, "+");
+      armci_msg_igop (&isum, 1, "max");
       break;
     case C_DBL:
-      armci_msg_dgop (dsum, nelem, "+");
+      armci_msg_dgop (&dsum, 1, "max");
       break;
     case C_DCPL:
-      armci_msg_dgop ((double *) zsum, 2 * nelem, "+");
+      dval = zsum.real;
+      armci_msg_dgop (&dval, 1, "max");
+      zsum.real = dval;
       break;
     case C_FLOAT:
-      armci_msg_fgop (fsum, nelem, "+");
+      armci_msg_fgop (&fsum, 1, "max");
       break;
     case C_SCPL:
-      armci_msg_fgop ((float *) csum, 2 * nelem, "+");
+      fval = csum.real;
+      armci_msg_fgop (&fval, 1, "max");
+      csum.real = fval;
       break;
     case C_LONG:
-      armci_msg_lgop (lsum, nelem, "+");
+      armci_msg_lgop (&lsum, 1, "max");
       break;
     default:
       pnga_error("ga_norm_infinity_: wrong data type ", type);
@@ -986,54 +978,26 @@ void pnga_norm_infinity(Integer g_a, double *nm)
   switch (type)
   {
     case C_INT:
-      imax = ((int *) buf)[0];
-      for (j = 1; j < nelem; j++)
-        if (imax < ((int *) buf)[j])
-          imax = ((int *) buf)[j];
-      *((double *) nm) = (double) imax;
+      *nm = (double)isum;
       break;
     case C_LONG:
-      lmax = ((long *) buf)[0];
-      for (j = 1; j < nelem; j++)
-        if (lmax < ((long *) buf)[j])
-          lmax = ((long *) buf)[j];
-      *((double *) nm) = (double) lmax;
+      *nm = (double)lsum;
       break;
     case C_FLOAT:
-      fmax = ((float *) buf)[0];
-      for (j = 1; j < nelem; j++)
-        if (fmax < ((float *) buf)[j])
-          fmax = ((float *) buf)[j];
-      *((double *) nm) = (double) fmax;
+      *nm = (double)fsum;
       break;
     case C_DBL:
-      dmax = ((double *) buf)[0];
-      for (j = 1; j < nelem; j++)
-        if (dmax < ((double *) buf)[j])
-          dmax = ((double *) buf)[j];
-      *((double *) nm) = dmax;
+      *nm = (double)dsum;
       break;
     case C_DCPL:
-      zmax = (((DoubleComplex *) buf)[0]).real;
-      for (j = 1; j < nelem; j++)
-        if (zmax < (((DoubleComplex *) buf)[j]).real)
-          zmax = (((DoubleComplex *) buf)[j]).real;
-      *((double *) nm) = zmax;
+      *nm = (double)(zsum.real);
       break;
     case C_SCPL:
-      cmax = (((SingleComplex *) buf)[0]).real;
-      for (j = 1; j < nelem; j++)
-        if (cmax < (((SingleComplex *) buf)[j]).real)
-          cmax = (((SingleComplex *) buf)[j]).real;
-      *((double *) nm) = (double) cmax;
+      *nm = (double)(csum.real);
       break;
     default:
       pnga_error("ga_norm_infinity_:wrong data type.", type);
   }
-
-  /*free the memory allocated to buf */
-  free (buf);
-  buf = NULL;
 
   GA_POP_NAME;
   if (local_sync_end)pnga_sync();
@@ -1044,7 +1008,6 @@ static void sgai_norm1_block(Integer g_a, void *ptr,
                      Integer type,
                      Integer ndim, Integer *dims, void *buf)
 {
-  /*Integer size, nelem, dim2;*/
   Integer iloA=0, ihiA=0, jloA=0, jhiA=0;
   Integer i, j;
   int *isum = NULL;
@@ -1053,16 +1016,6 @@ static void sgai_norm1_block(Integer g_a, void *ptr,
   float *fsum = NULL;
   DoubleComplex *zsum = NULL;
   SingleComplex *csum = NULL;
-
-  /*
-  if(ndim == 1) 
-    dim2 = 1;
-  else if(ndim == 2) 
-    dim2 = dims[1];
-
-  size = GAsizeof (type);
-  nelem = dim2;
-  */
 
   switch (type)
   {
@@ -1109,11 +1062,6 @@ static void sgai_norm1_block(Integer g_a, void *ptr,
   /* determine subset of my patch to access */
   if (ihiA > 0 && jhiA > 0)
   {
-    /* lo[0] = iloA; */
-    /* lo[1] = jloA; */
-    /* hi[0] = ihiA; */
-    hi[1] = jhiA;
-
     switch (type)
     {
       int *pi;
@@ -1123,55 +1071,61 @@ static void sgai_norm1_block(Integer g_a, void *ptr,
       DoubleComplex *pz;
       SingleComplex *pc;
       case C_INT:
-      pi = (int *) ptr;
-      for (j = 0; j < jhiA - jloA + 1; j++)
+        pi = (int *) ptr;
+        *isum = 0;
         for (i = 0; i < ihiA - iloA + 1; i++)
-          isum[jloA + j - 1 ] += GA_ABS (pi[j * ld + i]);
-      break;
+          for (j = 0; j < jhiA - jloA + 1; j++)
+            *isum += GA_ABS (pi[j * ld + i]);
+        break;
       case C_LONG:
-      pl = (long *) ptr;
-      for (j = 0; j < jhiA - jloA + 1; j++)
+        pl = (long *) ptr;
+        *lsum = 0;
         for (i = 0; i < ihiA - iloA + 1; i++)
-          lsum[jloA + j  - 1] += GA_ABS (pl[j * ld + i]);
-      break;
+          for (j = 0; j < jhiA - jloA + 1; j++)
+            *lsum += GA_ABS (pl[j * ld + i]);
+        break;
       case C_DCPL:
-      pz = (DoubleComplex *) ptr;
-      for (j = 0; j < jhiA - jloA + 1; j++)
+        pz = (DoubleComplex *) ptr;
+        (*zsum).real = 0.0;
+        (*zsum).imag = 0.0;
         for (i = 0; i < ihiA - iloA + 1; i++)
-        {
-          DoubleComplex zval = pz[j * ld + i];
-          double temp =
-            sqrt (zval.real * zval.real + zval.imag * zval.imag);
-          (zsum[jloA + j  - 1 ]).real += temp;
-        }
-      break;
-
+          for (j = 0; j < jhiA - jloA + 1; j++)
+          {
+            DoubleComplex zval = pz[j * ld + i];
+            double temp =
+              sqrt (zval.real * zval.real + zval.imag * zval.imag);
+            (*zsum).real += temp;
+          }
+        break;
       case C_SCPL:
-      pc = (SingleComplex *) ptr;
-      for (j = 0; j < jhiA - jloA + 1; j++)
+        pc = (SingleComplex *) ptr;
+        (*csum).real = 0.0;
+        (*csum).imag = 0.0;
         for (i = 0; i < ihiA - iloA + 1; i++)
-        {
-          SingleComplex cval = pc[j * ld + i];
-          float temp =
-            sqrt (cval.real * cval.real + cval.imag * cval.imag);
-          (csum[jloA + j  - 1 ]).real += temp;
-        }
-      break;
-
+          for (j = 0; j < jhiA - jloA + 1; j++)
+          {
+            SingleComplex cval = pc[j * ld + i];
+            float temp =
+              sqrt (cval.real * cval.real + cval.imag * cval.imag);
+            (*csum).real += temp;
+          }
+        break;
       case C_FLOAT:
-      pf = (float *) ptr;
-      for (j = 0; j < jhiA - jloA + 1; j++)
+        pf = (float *) ptr;
+        *fsum = 0.0;
         for (i = 0; i < ihiA - iloA + 1; i++)
-          fsum[jloA + j  - 1 ] += GA_ABS (pf[j * ld + i]);
-      break;
+          for (j = 0; j < jhiA - jloA + 1; j++)
+            *fsum += GA_ABS (pf[j * ld + i]);
+        break;
       case C_DBL:
-      pd = (double *) ptr;
-      for (j = 0; j < jhiA - jloA + 1; j++)
+        pd = (double *) ptr;
+        *dsum = 0.0;
         for (i = 0; i < ihiA - iloA + 1; i++)
-          dsum[jloA + j - 1 ] += GA_ABS (pd[j * ld + i]);
-      break;
+          for (j = 0; j < jhiA - jloA + 1; j++)
+            *dsum += GA_ABS (pd[j * ld + i]);
+        break;
       default:
-      pnga_error("sgai_norm1_block: wrong data type ", type);
+        pnga_error("sgai_norm1_block: wrong data type ", type);
     }
   }
 }
@@ -1181,19 +1135,25 @@ static void sgai_norm1_block(Integer g_a, void *ptr,
 #endif
 void pnga_norm1(Integer g_a, double *nm)
 {
-  Integer /*dim1=0,*/ dim2=0, type=0, size=0, nelem=0;
+  Integer type=0;
   Integer me = pnga_nodeid (), i, j, nproc = pnga_nnodes();
   Integer ndim, dims[MAXDIM], lo[2], hi[2], ld; 
   Integer num_blocks_a;
   int local_sync_begin,local_sync_end;
-  int imax, *isum = NULL;
-  long lmax, *lsum = NULL;
-  double dmax, zmax, *dsum = NULL;
-  float fmax, cmax, *fsum = NULL;
-  DoubleComplex *zsum = NULL;
-  SingleComplex *csum = NULL;
+  int isum = 0;
+  long lsum = 0;
+  double dsum = 0.0;
+  float fsum = 0.0;
+  double dval;
+  float fval;
+  DoubleComplex zsum;
+  SingleComplex csum;
   void *buf = NULL;                    /*temporary buffer */
   void *ptr = NULL;
+  zsum.real = 0.0;
+  zsum.imag = 0.0;
+  csum.real = 0.0;
+  csum.imag = 0.0;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -1205,46 +1165,28 @@ void pnga_norm1(Integer g_a, double *nm)
   pnga_inquire (g_a, &type, &ndim, dims);
 
 
-  /*dim1 = dims[0];*/
-  if(ndim<=0)
+  if(ndim<=0 || ndim > 2)
     pnga_error("ga_norm1: wrong dimension", ndim);
-  else if(ndim == 1) 
-    dim2 = 1;
-  else if(ndim == 2) 
-    dim2 = dims[1];
-  else
-    pnga_error("ga_norm1: wrong dimension", ndim);
-
-  /*allocate a temporary buffer of size equal to the number of columns */
-  size = GAsizeof (type);
-  nelem = dim2;
-  buf = malloc (nelem * size);
-
-  if (buf == NULL)
-    pnga_error("ga_norm1: no more memory for the buffer.\n", 0);
-
-  /*zero the buffer */
-  memset (buf, 0, nelem * size);
 
   switch (type)
   {
     case C_INT:
-      isum = (int *) buf;
+      buf = (void*)(&isum);
       break;
     case C_LONG:
-      lsum = (long *) buf;
+      buf = (void*)(&lsum);
       break;
     case C_FLOAT:
-      fsum = (float *) buf;
+      buf = (void*)(&fsum);
       break;
     case C_DBL:
-      dsum = (double *) buf;
+      buf = (void*)(&dsum);
       break;
     case C_DCPL:
-      zsum = (DoubleComplex *) buf;
+      buf = (void*)(&zsum);
       break;
     case C_SCPL:
-      csum = (SingleComplex *) buf;
+      buf = (void*)(&csum);
       break;
     default:
       pnga_error("ga_norm1_: wrong data type:", type);
@@ -1307,22 +1249,26 @@ void pnga_norm1(Integer g_a, double *nm)
   switch (type)
   {
     case C_INT:
-      armci_msg_igop (isum, nelem, "+");
+      armci_msg_igop (&isum, 1, "+");
       break;
     case C_DBL:
-      armci_msg_dgop (dsum, nelem, "+");
+      armci_msg_dgop (&dsum, 1, "+");
       break;
     case C_DCPL:
-      armci_msg_dgop ((double *) zsum, 2 * nelem, "+");
+      dval = zsum.real;
+      armci_msg_dgop (&dval, 1, "+");
+      zsum.real = dval;
       break;
     case C_FLOAT:
-      armci_msg_fgop (fsum, nelem, "+");
+      armci_msg_fgop (&fsum, 1, "+");
       break;
     case C_SCPL:
-      armci_msg_fgop ((float *) csum, 2 * nelem, "+");
+      fval = csum.real;
+      armci_msg_fgop (&fval, 1, "+");
+      csum.real = fval;
       break;
     case C_LONG:
-      armci_msg_lgop (lsum, nelem, "+");
+      armci_msg_lgop (&lsum, 1, "+");
       break;
     default:
       pnga_error("ga_norm1_: wrong data type ", type);
@@ -1332,55 +1278,26 @@ void pnga_norm1(Integer g_a, double *nm)
   switch (type)
   {
     case C_INT:
-      imax = ((int *) buf)[0];
-      for (j = 1; j < nelem; j++)
-        if (imax < ((int *) buf)[j])
-          imax = ((int *) buf)[j];
-      *((double *) nm) = (double) imax;
+      *nm = (double)isum;
       break;
     case C_LONG:
-      lmax = ((long *) buf)[0];
-      for (j = 1; j < nelem; j++)
-        if (lmax < ((long *) buf)[j])
-          lmax = ((long *) buf)[j];
-      *((double *) nm) = (double) lmax;
+      *nm = (double)lsum;
       break;
     case C_FLOAT:
-      fmax = ((float *) buf)[0];
-      for (j = 1; j < nelem; j++)
-        if (fmax < ((float *) buf)[j])
-          fmax = ((float *) buf)[j];
-      *((double *) nm) = (double) fmax;
+      *nm = (double)fsum;
       break;
     case C_DBL:
-      dmax = ((double *) buf)[0];
-      for (j = 1; j < nelem; j++)
-        if (dmax < ((double *) buf)[j])
-          dmax = ((double *) buf)[j];
-      *((double *) nm) = dmax;
+      *nm = (double)dsum;
       break;
     case C_DCPL:
-      zmax = (((DoubleComplex *) buf)[0]).real;
-      for (j = 1; j < nelem; j++)
-        if (zmax < (((DoubleComplex *) buf)[j]).real)
-          zmax = (((DoubleComplex *) buf)[j]).real;
-      *((double *) nm) = zmax;
+      *nm = (double)(zsum.real);
       break;
     case C_SCPL:
-      cmax = (((SingleComplex *) buf)[0]).real;
-      for (j = 1; j < nelem; j++)
-        if (cmax < (((SingleComplex *) buf)[j]).real)
-          cmax = (((SingleComplex *) buf)[j]).real;
-      *((double *) nm) = (double) cmax;
+      *nm = (double)(csum.real);
       break;
     default:
       pnga_error("ga_norm1_:wrong data type.", type);
   }
-
-
-  /*free the memory allocated to buf */
-  free (buf);
-  buf = NULL;
 
   GA_POP_NAME;
   if(local_sync_end)pnga_sync();
