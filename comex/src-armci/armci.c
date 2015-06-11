@@ -213,26 +213,69 @@ void* PARMCI_Malloc_local(armci_size_t bytes)
 
 void* PARMCI_Memat(armci_meminfo_t *meminfo, long offset)
 {
-    assert(0);
-    return NULL;
+    void *ptr=NULL;
+    int rank;
+
+    comex_group_rank(COMEX_GROUP_WORLD, &rank);
+
+    if(meminfo==NULL) comex_error("PARMCI_Memat: Invalid arg #1 (NULL ptr)",0);
+
+    if(meminfo->cpid==rank) { ptr = meminfo->addr; return ptr; }
+
+    ptr = meminfo->addr;
+
+    return ptr;
 }
 
 
 void PARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg)
 {
-    assert(0);
+    void *myptr=NULL;
+    void *armci_ptr=NULL; /* legal ARCMI ptr used in ARMCI data xfer ops*/
+    size_t size = bytes;
+    int rank;
+
+    comex_group_rank(COMEX_GROUP_WORLD, &rank);
+
+    if(size<=0) comex_error("PARMCI_Memget: size must be > 0", (int)size);
+    if(meminfo==NULL) comex_error("PARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
+    if(memflg!=0) comex_error("PARMCI_Memget: Invalid memflg", memflg);
+
+    armci_ptr = myptr = comex_malloc_local(size);
+    if(size) if(!myptr) comex_error("PARMCI_Memget failed", (int)size);
+
+    /* fill the meminfo structure */
+    meminfo->armci_addr = armci_ptr;
+    meminfo->addr       = myptr;
+    meminfo->size       = size;
+    meminfo->cpid       = rank;
+    /* meminfo->attr       = NULL; */
 }
 
 
 void PARMCI_Memdt(armci_meminfo_t *meminfo, long offset)
 {
-    assert(0);
 }
 
 
 void PARMCI_Memctl(armci_meminfo_t *meminfo)
 {
-    assert(0);
+    int rank;
+
+    comex_group_rank(COMEX_GROUP_WORLD, &rank);
+
+    if(meminfo==NULL) armci_die("PARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
+
+    /* only the creator can delete the segment */
+    if(meminfo->cpid == rank)
+    {
+        void *ptr = meminfo->addr;
+        comex_free_local(ptr);
+    }
+
+    meminfo->addr       = NULL;
+    meminfo->armci_addr = NULL;
+    /* if(meminfo->attr!=NULL) free(meminfo->attr); */
 }
 
 
