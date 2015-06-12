@@ -244,6 +244,15 @@ void ARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak ARMCI_Memctl
+#endif
+void ARMCI_Memctl(armci_meminfo_t *meminfo)
+{
+    PARMCI_Memctl(meminfo);
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak ARMCI_NbAccS
 #endif
 int ARMCI_NbAccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)

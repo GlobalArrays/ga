@@ -264,7 +264,7 @@ void PARMCI_Memctl(armci_meminfo_t *meminfo)
 
     comex_group_rank(COMEX_GROUP_WORLD, &rank);
 
-    if(meminfo==NULL) armci_die("PARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
+    if(meminfo==NULL) comex_error("PARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
 
     /* only the creator can delete the segment */
     if(meminfo->cpid == rank)
