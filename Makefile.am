@@ -509,6 +509,9 @@ check_PROGRAMS += global/testing/field_test
 if HAVE_SCALAPACK
 check_PROGRAMS += global/testing/testspd
 endif # HAVE_SCALAPACK
+if MSG_COMMS_MPI
+check_PROGRAMS += global/testing/simple_groups_comm
+endif
 else # !ENABLE_F77
 if HAVE_LAPACK
 check_PROGRAMS += global/testing/ga_lu
@@ -517,7 +520,6 @@ endif # ENABLE_F77
 if MSG_COMMS_MPI
 check_PROGRAMS += global/testing/ga-mpi
 check_PROGRAMS += global/testing/lock
-check_PROGRAMS += global/testing/simple_groups_comm
 check_PROGRAMS += global/testing/simple_groups_commc
 endif
 if SYSV
@@ -674,6 +676,9 @@ GLOBAL_PARALLEL_TESTS += global/testing/test$(EXEEXT)
 if HAVE_SCALAPACK
 GLOBAL_PARALLEL_TESTS += global/testing/testspd$(EXEEXT)
 endif
+if MSG_COMMS_MPI
+GLOBAL_PARALLEL_TESTS += global/testing/simple_groups_comm$(EXEEXT)
+endif
 else
 if HAVE_LAPACK
 GLOBAL_PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT)
@@ -682,7 +687,6 @@ endif
 if MSG_COMMS_MPI
 GLOBAL_PARALLEL_TESTS += global/testing/ga-mpi$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/lock$(EXEEXT)
-GLOBAL_PARALLEL_TESTS += global/testing/simple_groups_comm$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/simple_groups_commc$(EXEEXT)
 endif
 if SYSV

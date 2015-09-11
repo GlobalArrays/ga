@@ -95,13 +95,14 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 	global/testing/unpackc$(EXEEXT) $(am__EXEEXT_3) \
 	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
 	$(am__EXEEXT_7) $(am__EXEEXT_8) $(am__EXEEXT_9) \
+	$(am__EXEEXT_10) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__EXEEXT_10) pario/dra/bign$(EXEEXT) \
+	$(am__EXEEXT_11) pario/dra/bign$(EXEEXT) \
 	pario/dra/dbg_read$(EXEEXT) pario/dra/dbg_write$(EXEEXT) \
 	pario/dra/dra2arviz$(EXEEXT) pario/dra/ntestc$(EXEEXT) \
 	pario/dra/perfn$(EXEEXT) pario/dra/rate$(EXEEXT) \
-	$(am__EXEEXT_11) $(am__EXEEXT_12) $(am__EXEEXT_13) \
-	$(am__EXEEXT_14) $(am__EXEEXT_15) $(am__EXEEXT_16)
+	$(am__EXEEXT_12) $(am__EXEEXT_13) $(am__EXEEXT_14) \
+	$(am__EXEEXT_15) $(am__EXEEXT_16) $(am__EXEEXT_17)
 @ENABLE_F77_TRUE@am__append_1 = $(FLD_NOMAIN)
 
 ##############################################################################
@@ -230,15 +231,15 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/types_test \
 @ENABLE_F77_TRUE@	global/testing/field_test
 @ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_18 = global/testing/testspd
-@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_19 = global/testing/ga_lu
-@MSG_COMMS_MPI_TRUE@am__append_20 = global/testing/ga-mpi \
+@ENABLE_F77_TRUE@@MSG_COMMS_MPI_TRUE@am__append_19 = global/testing/simple_groups_comm
+@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_20 = global/testing/ga_lu
+@MSG_COMMS_MPI_TRUE@am__append_21 = global/testing/ga-mpi \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock \
-@MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_comm \
 @MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_commc
-@SYSV_TRUE@am__append_21 = global/testing/ipc_clean
+@SYSV_TRUE@am__append_22 = global/testing/ipc_clean
 
 # TODO somehow unit tests depend on MPI -- need to fix
-@ENABLE_UNIT_TESTS_TRUE@@MSG_COMMS_MPI_TRUE@am__append_22 = global/testing/unit-tests/ga_abs_value \
+@ENABLE_UNIT_TESTS_TRUE@@MSG_COMMS_MPI_TRUE@am__append_23 = global/testing/unit-tests/ga_abs_value \
 @ENABLE_UNIT_TESTS_TRUE@@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_acc \
 @ENABLE_UNIT_TESTS_TRUE@@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_add \
 @ENABLE_UNIT_TESTS_TRUE@@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_add_constant \
@@ -322,7 +323,7 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 #GLOBAL_PARALLEL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
 #GLOBAL_PARALLEL_TESTS += global/testing/pgtestmatmult$(EXEEXT) # needs 8 procs exactly
 #GLOBAL_PARALLEL_TESTS += global/testing/random$(EXEEXT) # takes too long
-@ENABLE_F77_TRUE@am__append_23 = global/testing/bin$(EXEEXT) \
+@ENABLE_F77_TRUE@am__append_24 = global/testing/bin$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/blktest$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g3test$(EXEEXT) \
@@ -353,37 +354,37 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testmatmult$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testsolve$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/test$(EXEEXT)
-@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_24 = global/testing/testspd$(EXEEXT)
-@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_25 = global/testing/ga_lu$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_26 = global/testing/ga-mpi$(EXEEXT) \
+@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_25 = global/testing/testspd$(EXEEXT)
+@ENABLE_F77_TRUE@@MSG_COMMS_MPI_TRUE@am__append_26 = global/testing/simple_groups_comm$(EXEEXT)
+@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_27 = global/testing/ga_lu$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_28 = global/testing/ga-mpi$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT) \
-@MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_comm$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_commc$(EXEEXT)
-@HAVE_M4_TRUE@am__append_27 = $(GLOBAL_TESTING_M4_DEPS) \
+@HAVE_M4_TRUE@am__append_29 = $(GLOBAL_TESTING_M4_DEPS) \
 @HAVE_M4_TRUE@	global/testing/README
-@HAVE_M4_TRUE@am__append_28 = global/testing/nga-onesided.F \
+@HAVE_M4_TRUE@am__append_30 = global/testing/nga-onesided.F \
 @HAVE_M4_TRUE@	global/testing/nga-patch.F \
 @HAVE_M4_TRUE@	global/testing/nga-periodic.F \
 @HAVE_M4_TRUE@	global/testing/nga-scatter.F \
 @HAVE_M4_TRUE@	global/testing/nga-util.F \
 @HAVE_M4_TRUE@	global/testing/ngatest.F
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_29 =  \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_31 =  \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-onesided \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-patch \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-periodic \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-util \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/ngatest
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_30 = global/testing/nga-onesided$(EXEEXT) \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_32 = global/testing/nga-onesided$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-patch$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-periodic$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-util$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/ngatest$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_31 = global/testing/ffflush.F \
+@ENABLE_F77_TRUE@am__append_33 = global/testing/ffflush.F \
 @ENABLE_F77_TRUE@	global/testing/testblas.F
-@ENABLE_F77_TRUE@am__append_32 = global/examples/boltzmann/boltz \
+@ENABLE_F77_TRUE@am__append_34 = global/examples/boltzmann/boltz \
 @ENABLE_F77_TRUE@	global/examples/conjugate_gradient/ga_cg \
 @ENABLE_F77_TRUE@	global/examples/md_cluster/grp_sim \
 @ENABLE_F77_TRUE@	global/examples/scf/scf pario/dra/big \
@@ -392,57 +393,57 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	pario/dra/perf3 pario/dra/test \
 @ENABLE_F77_TRUE@	pario/dra/test_mxm pario/dra/time_mxm \
 @ENABLE_F77_TRUE@	pario/eaf/test pario/sf/test
-@ENABLE_F77_TRUE@am__append_33 = global/examples/boltzmann/boltz$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_35 = global/examples/boltzmann/boltz$(EXEEXT)
 
 ##############################################################################
 # global/X
 #
-@ENABLE_XREGION_TRUE@@NO_X_FALSE@am__append_34 = global/X/xregion
+@ENABLE_XREGION_TRUE@@NO_X_FALSE@am__append_36 = global/X/xregion
 
 ##############################################################################
 # ga++/src
 #
-@CXX_BINDINGS_TRUE@am__append_35 = libga++.la
-@CXX_BINDINGS_TRUE@am__append_36 = ga++/src/ga++.h \
+@CXX_BINDINGS_TRUE@am__append_37 = libga++.la
+@CXX_BINDINGS_TRUE@am__append_38 = ga++/src/ga++.h \
 @CXX_BINDINGS_TRUE@	ga++/src/GAServices.h \
 @CXX_BINDINGS_TRUE@	ga++/src/GlobalArray.h ga++/src/init_term.h \
 @CXX_BINDINGS_TRUE@	ga++/src/PGroup.h ga++/src/services.h
-@CXX_BINDINGS_TRUE@am__append_37 = -I$(top_srcdir)/ga++/src
+@CXX_BINDINGS_TRUE@am__append_39 = -I$(top_srcdir)/ga++/src
 
 ##############################################################################
 # ga++/testing
 #
-@CXX_BINDINGS_TRUE@am__append_38 = ga++/testing/elempatch \
+@CXX_BINDINGS_TRUE@am__append_40 = ga++/testing/elempatch \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest ga++/testing/ntestc \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc ga++/testing/testmult
-@ENABLE_GPARRAYS_TRUE@am__append_39 = gparrays/src/gp-wapi.h \
+@ENABLE_GPARRAYS_TRUE@am__append_41 = gparrays/src/gp-wapi.h \
 @ENABLE_GPARRAYS_TRUE@	gparrays/src/gp-wapidefs.h
-@ENABLE_GPARRAYS_TRUE@am__append_40 = gparrays/src/gp-wapi.h \
+@ENABLE_GPARRAYS_TRUE@am__append_42 = gparrays/src/gp-wapi.h \
 @ENABLE_GPARRAYS_TRUE@	gparrays/src/gp-wapidefs.h
-@ENABLE_GPARRAYS_TRUE@am__append_41 = gparrays/src/gpbase.c \
+@ENABLE_GPARRAYS_TRUE@am__append_43 = gparrays/src/gpbase.c \
 @ENABLE_GPARRAYS_TRUE@	gparrays/src/gpbase.h \
 @ENABLE_GPARRAYS_TRUE@	gparrays/src/gpcapi.c \
 @ENABLE_GPARRAYS_TRUE@	gparrays/src/gpfapi.c \
 @ENABLE_GPARRAYS_TRUE@	gparrays/src/gponesided.c \
 @ENABLE_GPARRAYS_TRUE@	gparrays/src/gp-papi.h
-@ENABLE_GPARRAYS_TRUE@am__append_42 = gparrays/src/gp-wapidefs.h
-@ENABLE_GPARRAYS_TRUE@am__append_43 = gparrays/src/gp.h \
+@ENABLE_GPARRAYS_TRUE@am__append_44 = gparrays/src/gp-wapidefs.h
+@ENABLE_GPARRAYS_TRUE@am__append_45 = gparrays/src/gp.h \
 @ENABLE_GPARRAYS_TRUE@	gparrays/src/gp-papi.h
-@ENABLE_GPARRAYS_TRUE@am__append_44 = gparrays/src/gp-wapi.h
-@ENABLE_F77_TRUE@@ENABLE_GPARRAYS_TRUE@am__append_45 = gparrays/testing/test
-@ENABLE_GPARRAYS_TRUE@am__append_46 = gparrays/testing/testc \
+@ENABLE_GPARRAYS_TRUE@am__append_46 = gparrays/src/gp-wapi.h
+@ENABLE_F77_TRUE@@ENABLE_GPARRAYS_TRUE@am__append_47 = gparrays/testing/test
+@ENABLE_GPARRAYS_TRUE@am__append_48 = gparrays/testing/testc \
 @ENABLE_GPARRAYS_TRUE@	gparrays/testing/transpose
-@ENABLE_GPARRAYS_TRUE@am__append_47 =  \
+@ENABLE_GPARRAYS_TRUE@am__append_49 =  \
 @ENABLE_GPARRAYS_TRUE@	-I$(top_build_prefix)gparrays/src \
 @ENABLE_GPARRAYS_TRUE@	-I$(top_srcdir)/gparrays/src
-@ENABLE_F77_TRUE@am__append_48 = gaf2c/farg.F
-@ENABLE_F77_TRUE@am__append_49 = gaf2c/testarg
-@ENABLE_F77_TRUE@am__append_50 = gaf2c/testarg$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_50 = gaf2c/farg.F
+@ENABLE_F77_TRUE@am__append_51 = gaf2c/testarg
+@ENABLE_F77_TRUE@am__append_52 = gaf2c/testarg$(EXEEXT)
 
 ##############################################################################
 # tcgmsg/tcgmsg-mpi
 #
-@MSG_COMMS_MPI_TRUE@am__append_51 = tcgmsg/tcgmsg-mpi/checkbyte.c \
+@MSG_COMMS_MPI_TRUE@am__append_53 = tcgmsg/tcgmsg-mpi/checkbyte.c \
 @MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/clustercheck.c \
 @MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/collect.c \
 @MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/drand48.c \
@@ -460,30 +461,30 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/sndrcv.h \
 @MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/srftoc.h \
 @MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/tcgmsgP.h
-@MSG_COMMS_MPI_TRUE@am__append_52 = -I$(top_srcdir)/tcgmsg/tcgmsg-mpi
-@MSG_COMMS_MPI_TRUE@am__append_53 = tcgmsg/tests/test_asyn \
+@MSG_COMMS_MPI_TRUE@am__append_54 = -I$(top_srcdir)/tcgmsg/tcgmsg-mpi
+@MSG_COMMS_MPI_TRUE@am__append_55 = tcgmsg/tests/test_asyn \
 @MSG_COMMS_MPI_TRUE@	tcgmsg/tests/test
-@ENABLE_F77_TRUE@@MSG_COMMS_MPI_TRUE@am__append_54 = tcgmsg/tests/testf
+@ENABLE_F77_TRUE@@MSG_COMMS_MPI_TRUE@am__append_56 = tcgmsg/tests/testf
 
 ##############################################################################
 # armci
 # if TCGMSG is coming from ARMCI
-@ARMCI_NETWORK_ARMCI_FALSE@@MSG_COMMS_TCGMSG4_TRUE@am__append_55 = -I$(top_srcdir)/armci/tcgmsg
-@ARMCI_NETWORK_ARMCI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@am__append_56 = -I$(top_srcdir)/armci/tcgmsg
-@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_57 = -I$(top_srcdir)/armci/src-portals \
+@ARMCI_NETWORK_ARMCI_FALSE@@MSG_COMMS_TCGMSG4_TRUE@am__append_57 = -I$(top_srcdir)/armci/tcgmsg
+@ARMCI_NETWORK_ARMCI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@am__append_58 = -I$(top_srcdir)/armci/tcgmsg
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_59 = -I$(top_srcdir)/armci/src-portals \
 @ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_PORTALS_TRUE@	-I$(top_srcdir)/armci/tcgmsg
-@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_58 = -I$(top_srcdir)/armci/src-gemini \
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_60 = -I$(top_srcdir)/armci/src-gemini \
 @ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/tcgmsg
-@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_59 = -I$(top_srcdir)/armci/src/include \
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_61 = -I$(top_srcdir)/armci/src/include \
 @ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/tcgmsg
-@ARMCI_NETWORK_ARMCI_TRUE@am__append_60 = $(ARMCI_NETWORK_LIBS) \
+@ARMCI_NETWORK_ARMCI_TRUE@am__append_62 = $(ARMCI_NETWORK_LIBS) \
 @ARMCI_NETWORK_ARMCI_TRUE@	$(GA_MP_LIBS)
-@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_TRUE@am__append_61 = comex/libarmci.la
-@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_FALSE@am__append_62 = armci/libarmci.la
-@ARMCI_NETWORK_ARMCI_FALSE@am__append_63 = $(GA_MP_LIBS) \
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_TRUE@am__append_63 = comex/libarmci.la
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_FALSE@am__append_64 = armci/libarmci.la
+@ARMCI_NETWORK_ARMCI_FALSE@am__append_65 = $(GA_MP_LIBS) \
 @ARMCI_NETWORK_ARMCI_FALSE@	$(ARMCI_NETWORK_LIBS)
-TESTS = $(am__EXEEXT_18) $(am__EXEEXT_19)
-XFAIL_TESTS = $(am__EXEEXT_20) $(am__EXEEXT_21)
+TESTS = $(am__EXEEXT_19) $(am__EXEEXT_20)
+XFAIL_TESTS = $(am__EXEEXT_21) $(am__EXEEXT_22)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -621,7 +622,7 @@ am__DEPENDENCIES_1 =
 @ARMCI_NETWORK_ARMCI_FALSE@	$(am__DEPENDENCIES_1)
 libga_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_2) $(am__append_61) $(am__append_62) \
+	$(am__DEPENDENCIES_2) $(am__append_63) $(am__append_64) \
 	$(am__DEPENDENCIES_3)
 am__libga_la_SOURCES_DIST = compat/random.c ma/error.c ma/f2c.c \
 	ma/ma.c ma/ma.h ma/memcpy.h ma/string-util.c ma/table.c \
@@ -894,13 +895,13 @@ libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_F77_TRUE@	global/testing/types_test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/field_test$(EXEEXT)
 @ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__EXEEXT_4 = global/testing/testspd$(EXEEXT)
-@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__EXEEXT_5 = global/testing/ga_lu$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__EXEEXT_6 = global/testing/ga-mpi$(EXEEXT) \
+@ENABLE_F77_TRUE@@MSG_COMMS_MPI_TRUE@am__EXEEXT_5 = global/testing/simple_groups_comm$(EXEEXT)
+@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__EXEEXT_6 = global/testing/ga_lu$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__EXEEXT_7 = global/testing/ga-mpi$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT) \
-@MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_comm$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_commc$(EXEEXT)
-@SYSV_TRUE@am__EXEEXT_7 = global/testing/ipc_clean$(EXEEXT)
-@ENABLE_UNIT_TESTS_TRUE@@MSG_COMMS_MPI_TRUE@am__EXEEXT_8 = global/testing/unit-tests/ga_abs_value$(EXEEXT) \
+@SYSV_TRUE@am__EXEEXT_8 = global/testing/ipc_clean$(EXEEXT)
+@ENABLE_UNIT_TESTS_TRUE@@MSG_COMMS_MPI_TRUE@am__EXEEXT_9 = global/testing/unit-tests/ga_abs_value$(EXEEXT) \
 @ENABLE_UNIT_TESTS_TRUE@@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_acc$(EXEEXT) \
 @ENABLE_UNIT_TESTS_TRUE@@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_add$(EXEEXT) \
 @ENABLE_UNIT_TESTS_TRUE@@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_add_constant$(EXEEXT) \
@@ -980,13 +981,13 @@ libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_UNIT_TESTS_TRUE@@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_zerodiagonal$(EXEEXT) \
 @ENABLE_UNIT_TESTS_TRUE@@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_zeropatch2$(EXEEXT) \
 @ENABLE_UNIT_TESTS_TRUE@@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_zeropatch$(EXEEXT)
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__EXEEXT_9 = global/testing/nga-onesided$(EXEEXT) \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__EXEEXT_10 = global/testing/nga-onesided$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-patch$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-periodic$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-util$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/ngatest$(EXEEXT)
-@ENABLE_F77_TRUE@am__EXEEXT_10 =  \
+@ENABLE_F77_TRUE@am__EXEEXT_11 =  \
 @ENABLE_F77_TRUE@	global/examples/boltzmann/boltz$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/examples/conjugate_gradient/ga_cg$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/examples/md_cluster/grp_sim$(EXEEXT) \
@@ -1002,18 +1003,18 @@ libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_F77_TRUE@	pario/dra/time_mxm$(EXEEXT) \
 @ENABLE_F77_TRUE@	pario/eaf/test$(EXEEXT) \
 @ENABLE_F77_TRUE@	pario/sf/test$(EXEEXT)
-@CXX_BINDINGS_TRUE@am__EXEEXT_11 = ga++/testing/elempatch$(EXEEXT) \
+@CXX_BINDINGS_TRUE@am__EXEEXT_12 = ga++/testing/elempatch$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/ntestc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/testmult$(EXEEXT)
-@ENABLE_F77_TRUE@@ENABLE_GPARRAYS_TRUE@am__EXEEXT_12 = gparrays/testing/test$(EXEEXT)
-@ENABLE_GPARRAYS_TRUE@am__EXEEXT_13 = gparrays/testing/testc$(EXEEXT) \
+@ENABLE_F77_TRUE@@ENABLE_GPARRAYS_TRUE@am__EXEEXT_13 = gparrays/testing/test$(EXEEXT)
+@ENABLE_GPARRAYS_TRUE@am__EXEEXT_14 = gparrays/testing/testc$(EXEEXT) \
 @ENABLE_GPARRAYS_TRUE@	gparrays/testing/transpose$(EXEEXT)
-@ENABLE_F77_TRUE@am__EXEEXT_14 = gaf2c/testarg$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__EXEEXT_15 = tcgmsg/tests/test_asyn$(EXEEXT) \
+@ENABLE_F77_TRUE@am__EXEEXT_15 = gaf2c/testarg$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__EXEEXT_16 = tcgmsg/tests/test_asyn$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	tcgmsg/tests/test$(EXEEXT)
-@ENABLE_F77_TRUE@@MSG_COMMS_MPI_TRUE@am__EXEEXT_16 = tcgmsg/tests/testf$(EXEEXT)
+@ENABLE_F77_TRUE@@MSG_COMMS_MPI_TRUE@am__EXEEXT_17 = tcgmsg/tests/testf$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 LIBOBJDIR = compat/
 am__ga___testing_elempatch_SOURCES_DIST = ga++/testing/elempatch.cc
@@ -3956,13 +3957,13 @@ cat $@-t >>$@;						\
 rm -f $@-t
 RECHECK_LOGS = $(TEST_LOGS)
 TEST_SUITE_HTML = $(TEST_SUITE_LOG:.log=.html)
-am__EXEEXT_17 =
-am__EXEEXT_18 = $(MA_SERIAL_TESTS) $(am__EXEEXT_17) $(am__EXEEXT_17)
-am__EXEEXT_19 = $(am__EXEEXT_17) $(GLOBAL_PARALLEL_TESTS) \
+am__EXEEXT_18 =
+am__EXEEXT_19 = $(MA_SERIAL_TESTS) $(am__EXEEXT_18) $(am__EXEEXT_18)
+am__EXEEXT_20 = $(am__EXEEXT_18) $(GLOBAL_PARALLEL_TESTS) \
 	$(CXX_PARALLEL_TESTS)
-am__EXEEXT_20 = $(MA_SERIAL_TESTS_XFAIL) $(am__EXEEXT_17) \
-	$(am__EXEEXT_17)
-am__EXEEXT_21 = $(am__EXEEXT_17) $(am__EXEEXT_17) $(am__EXEEXT_17)
+am__EXEEXT_21 = $(MA_SERIAL_TESTS_XFAIL) $(am__EXEEXT_18) \
+	$(am__EXEEXT_18)
+am__EXEEXT_22 = $(am__EXEEXT_18) $(am__EXEEXT_18) $(am__EXEEXT_18)
 TEST_SUITE_LOG = test-suite.log
 TEST_EXTENSIONS = @EXEEXT@ .test
 LOG_COMPILE = $(LOG_COMPILER) $(AM_LOG_FLAGS) $(LOG_FLAGS)
@@ -4219,14 +4220,14 @@ include_HEADERS = ma/error.h ma/macdecls.h ma/macommon.h ma/maf2c.fh \
 	global/src/global.fh global/src/ga-papi.h $(am__append_16) \
 	pario/dra/dra.fh pario/dra/dra.h pario/eaf/eaf.fh \
 	pario/eaf/eaf.h pario/elio/chemio.h pario/elio/elio.h \
-	pario/sf/coms.h pario/sf/sf.fh pario/sf/sf.h $(am__append_36) \
-	$(am__append_43) gaf2c/typesf2c.h gaf2c/farg.h \
+	pario/sf/coms.h pario/sf/sf.fh pario/sf/sf.h $(am__append_38) \
+	$(am__append_45) gaf2c/typesf2c.h gaf2c/farg.h \
 	tcgmsg/tcgmsg.fh tcgmsg/tcgmsg.h tcgmsg/tcgmsg-mpi/msgtypesc.h \
 	tcgmsg/tcgmsg-mpi/msgtypesf.h
-nodist_include_HEADERS = global/src/ga-wapi.h $(am__append_44)
+nodist_include_HEADERS = global/src/ga-wapi.h $(am__append_46)
 bin_SCRIPTS = tools/ga-config
 check_LTLIBRARIES = 
-lib_LTLIBRARIES = libga.la $(am__append_6) $(am__append_35)
+lib_LTLIBRARIES = libga.la $(am__append_6) $(am__append_37)
 
 ##############################################################################
 # compat
@@ -4280,16 +4281,16 @@ libga_la_SOURCES = compat/random.c ma/error.c ma/f2c.c ma/ma.c ma/ma.h \
 	pario/eaf/eaf.c pario/eaf/eaf_f2c.c pario/eaf/eafP.h \
 	pario/elio/elio.c pario/elio/eliop.h pario/elio/pablo.h \
 	pario/elio/stat.c pario/sf/sf_capi.c pario/sf/sff2c.h \
-	pario/sf/sf_fortran.c pario/sf/shared.files.c $(am__append_41) \
-	gaf2c/gaf2c.c gaf2c/drand.c $(am__append_48) tcgmsg/capi.c \
-	tcgmsg/fapi.c $(am__append_51)
+	pario/sf/sf_fortran.c pario/sf/shared.files.c $(am__append_43) \
+	gaf2c/gaf2c.c gaf2c/drand.c $(am__append_50) tcgmsg/capi.c \
+	tcgmsg/fapi.c $(am__append_53)
 
 # As of ga-5-2 libarmci is no longer rolled up into libga.
 libga_la_LIBADD = $(ELPA_LIBS) $(SCALAPACK_LIBS) $(LAPACK_LIBS) \
-	$(BLAS_LIBS) $(am__append_60) $(am__append_61) \
-	$(am__append_62) $(am__append_63)
+	$(BLAS_LIBS) $(am__append_62) $(am__append_63) \
+	$(am__append_64) $(am__append_65)
 nodist_libga_la_SOURCES = config.fh $(am__append_8) $(am__append_9) \
-	global/src/ga-wapidefs.h $(am__append_42)
+	global/src/ga-wapidefs.h $(am__append_44)
 
 ##############################################################################
 # global
@@ -4317,7 +4318,7 @@ nodist_libga_la_SOURCES = config.fh $(am__append_8) $(am__append_9) \
 # However, it is still distributed with GA.
 EXTRA_DIST = README LinAlg/lapack+blas/README global/README \
 	$(am__append_10) tools/wapigen.py tools/wapigen_counts.py \
-	tools/wapigen_trace.py $(am__append_27) \
+	tools/wapigen_trace.py $(am__append_29) \
 	global/examples/boltzmann/README \
 	global/examples/lennard-jones/README \
 	global/examples/md_cluster/atom.inp \
@@ -4360,10 +4361,10 @@ EXTRA_DIST = README LinAlg/lapack+blas/README global/README \
 # and works with all Fortran compilers.
 #
 BUILT_SOURCES = config.fh global/src/ga-wapi.h \
-	global/src/ga-wapidefs.h $(am__append_39)
+	global/src/ga-wapidefs.h $(am__append_41)
 MOSTLYCLEANFILES = 
 CLEANFILES = $(bin_SCRIPTS) config.fh global/src/ga-wapi.h \
-	global/src/ga-wapidefs.h $(am__append_28) $(am__append_40)
+	global/src/ga-wapidefs.h $(am__append_30) $(am__append_42)
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
 AM_FFLAGS = $(GA_FOPT) $(GA_F_WARN) $(FFLAG_INT) $(FFLAG_NO_LOOP_OPT)
@@ -4380,11 +4381,11 @@ AM_CPPFLAGS = $(ELPA_CPPFLAGS) $(SCALAPACK_CPPFLAGS) \
 	-I$(top_build_prefix)global/src -I$(top_srcdir)/global/src \
 	-I$(top_srcdir)/global/testing -I$(top_srcdir)/pario/dra \
 	-I$(top_srcdir)/pario/eaf -I$(top_srcdir)/pario/elio \
-	-I$(top_srcdir)/pario/sf $(am__append_37) $(am__append_47) \
+	-I$(top_srcdir)/pario/sf $(am__append_39) $(am__append_49) \
 	-I$(top_build_prefix)gaf2c -I$(top_srcdir)/gaf2c \
-	-I$(top_srcdir)/tcgmsg $(am__append_52) $(am__append_55) \
-	$(am__append_56) $(am__append_57) $(am__append_58) \
-	$(am__append_59)
+	-I$(top_srcdir)/tcgmsg $(am__append_54) $(am__append_57) \
+	$(am__append_58) $(am__append_59) $(am__append_60) \
+	$(am__append_61)
 AM_LDFLAGS = $(ELPA_LDFLAGS) $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) \
 	$(BLAS_LDFLAGS) $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) \
 	$(am__append_1)
@@ -4446,11 +4447,11 @@ GLOBAL_PARALLEL_TESTS = global/testing/elempatch$(EXEEXT) \
 	global/testing/testmatmultc$(EXEEXT) \
 	global/testing/testmult$(EXEEXT) \
 	global/testing/testmultrect$(EXEEXT) \
-	global/testing/unpackc$(EXEEXT) $(am__append_23) \
-	$(am__append_24) $(am__append_25) $(am__append_26) \
-	$(am__append_30) \
+	global/testing/unpackc$(EXEEXT) $(am__append_24) \
+	$(am__append_25) $(am__append_26) $(am__append_27) \
+	$(am__append_28) $(am__append_32) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_33)
+	$(am__append_35)
 GLOBAL_PARALLEL_TESTS_XFAIL = 
 GLOBAL_TESTS = $(GLOBAL_SERIAL_TESTS) $(GLOBAL_PARALLEL_TESTS)
 GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
@@ -4563,7 +4564,7 @@ GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
 @HAVE_M4_TRUE@	global/testing/ngatest.m4 \
 @HAVE_M4_TRUE@	global/testing/nga-util.m4
 gtsrc = global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c $(am__append_31)
+	global/testing/util.c $(am__append_33)
 global_testing_big_SOURCES = global/testing/big.c $(gtsrc)
 global_testing_bin_SOURCES = global/testing/bin.F $(gtsrc)
 global_testing_blktest_SOURCES = global/testing/blktest.F $(gtsrc)
@@ -5042,7 +5043,7 @@ pario_sf_test_LDFLAGS = $(FLDFLAGS)
 @ENABLE_GPARRAYS_TRUE@nodist_EXTRA_gparrays_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 @ENABLE_GPARRAYS_TRUE@nodist_EXTRA_gparrays_testing_transpose_SOURCES = $(MAYBE_DUMMY_F_LINK)
 @ENABLE_GPARRAYS_TRUE@gparrays_testing_test_LDFLAGS = $(FLDFLAGS)
-GAF2C_SERIAL_TESTS = $(am__append_50)
+GAF2C_SERIAL_TESTS = $(am__append_52)
 GAF2C_SERIAL_TESTS_XFAIL = 
 GAF2C_PARALLEL_TESTS = 
 GAF2C_PARALLEL_TESTS_XFAIL = 
@@ -8536,12 +8537,12 @@ global/testing/test.log: global/testing/test$(EXEEXT)
 	@p='global/testing/test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/testspd.log: global/testing/testspd$(EXEEXT)
 	@p='global/testing/testspd$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/simple_groups_comm.log: global/testing/simple_groups_comm$(EXEEXT)
+	@p='global/testing/simple_groups_comm$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/ga-mpi.log: global/testing/ga-mpi$(EXEEXT)
 	@p='global/testing/ga-mpi$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/lock.log: global/testing/lock$(EXEEXT)
 	@p='global/testing/lock$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-global/testing/simple_groups_comm.log: global/testing/simple_groups_comm$(EXEEXT)
-	@p='global/testing/simple_groups_comm$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/simple_groups_commc.log: global/testing/simple_groups_commc$(EXEEXT)
 	@p='global/testing/simple_groups_commc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/nga-onesided.log: global/testing/nga-onesided$(EXEEXT)
