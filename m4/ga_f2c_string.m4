@@ -26,7 +26,7 @@ void $SUB($1)
 void fix_c_string_for_f(char *s, int len)
 {
     int i;
-    for (i=strlen(s); i < len; i++) {
+    for (i=(int)strlen(s); i < len; i++) {
         s[i] = ' ';
     }
 }
