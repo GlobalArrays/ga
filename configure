@@ -40543,13 +40543,19 @@ esac
 fi
 
 # Create proper types for our access functions.
+if test "x$ac_cv_sizeof_voidp" = "x$ac_cv_sizeof_int"; then :
+  ga_access_index_type_c="int"
+elif test "x$ac_cv_sizeof_voidp" = "x$ac_cv_sizeof_long"; then :
+  ga_access_index_type_c="long"
+elif test "x$ac_cv_sizeof_voidp" = "x$ac_cv_sizeof_long_long"; then :
+  ga_access_index_type_c="long long"
+fi
 if test "x$ac_cv_sizeof_voidp" = "x8"; then :
   ga_access_index_type="integer*8"
-     ga_access_index_type_c="long"
 else
   ga_access_index_type="integer"
-     ga_access_index_type_c="int"
 fi
+
 GA_ACCESS_INDEX_TYPE=$ga_access_index_type
 
 MA_ACCESS_INDEX_TYPE=$ga_access_index_type

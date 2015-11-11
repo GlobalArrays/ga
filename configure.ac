@@ -482,11 +482,16 @@ AS_IF([test "x$ga_cv_target" = xLINUX64],
             [AC_DEFINE([NOUSE_MMAP], [1], [Set some mallopt options])])])
 
 # Create proper types for our access functions.
+AS_IF([test "x$ac_cv_sizeof_voidp" = "x$ac_cv_sizeof_int"],
+      [ga_access_index_type_c="int"],
+      [test "x$ac_cv_sizeof_voidp" = "x$ac_cv_sizeof_long"],
+      [ga_access_index_type_c="long"],
+      [test "x$ac_cv_sizeof_voidp" = "x$ac_cv_sizeof_long_long"],
+      [ga_access_index_type_c="long long"])
 AS_IF([test "x$ac_cv_sizeof_voidp" = "x8"],
-    [ga_access_index_type="integer*8"
-     ga_access_index_type_c="long"],
-    [ga_access_index_type="integer"
-     ga_access_index_type_c="int"])
+      [ga_access_index_type="integer*8"],
+      [ga_access_index_type="integer"])
+
 AC_SUBST([GA_ACCESS_INDEX_TYPE], [$ga_access_index_type])
 AC_SUBST([MA_ACCESS_INDEX_TYPE], [$ga_access_index_type])
 AC_SUBST([MA_ACCESS_INDEX_TYPE_C], [$ga_access_index_type_c])
