@@ -814,7 +814,7 @@ void pnga_copy_patch(char *trans,
     }
   }
   GA_POP_NAME;
-  ARMCI_AllFence();
+  /* ARMCI_AllFence(); */
   if(local_sync_end) {
     if (anproc <= bnproc) {
       pnga_pgroup_sync(a_grp);
