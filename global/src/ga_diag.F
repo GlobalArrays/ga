@@ -180,7 +180,7 @@ c
          do k = 1, n
             if( int_mb(-1+adrma+k) .eq. int_mb(adrls + myproc))then
                myelem = n-k+1
-               call ga_get(g_a,k,n,k,k,dbl_mb(adra+istart),1)
+               call ga_get(g_a,k,n,k,k,dbl_mb(adra+istart),n-k+1)
                istart = istart + myelem
             endif
          enddo
@@ -246,7 +246,7 @@ c
          istart = 0
          do k = 1, n
             if( int_mb(-1+adrmz+k) .eq. int_mb(adrls + myproc))then
-               call ga_put(g_v,1,n,k,k,dbl_mb(adrz+istart),1)
+               call ga_put(g_v,1,n,k,k,dbl_mb(adrz+istart),n)
                istart = istart + n
             endif
          enddo
@@ -480,8 +480,8 @@ c
          do k = 1, n
             if( int_mb(-1+adrma+k) .eq. int_mb(adrls + myproc))then
                myelem = n-k+1
-               call ga_get(g_a,k,n,k,k,dbl_mb(adra+istart),1)
-               call ga_get(g_s,k,n,k,k,dbl_mb(adrb+istart),1)
+               call ga_get(g_a,k,n,k,k,dbl_mb(adra+istart),n-k+1)
+               call ga_get(g_s,k,n,k,k,dbl_mb(adrb+istart),n-k+1)
                istart = istart + myelem
             endif
          enddo
@@ -535,7 +535,7 @@ c
          istart = 0
          do k = 1, n
             if( int_mb(-1+adrmz+k) .eq. int_mb(adrls + myproc))then
-               call ga_put(g_v,1,n,k,k,dbl_mb(adrz+istart),1)
+               call ga_put(g_v,1,n,k,k,dbl_mb(adrz+istart),n)
                istart = istart + n
             endif
          enddo
@@ -820,9 +820,9 @@ c
          do k = 1, n
             if( int_mb(-1+adrma+k) .eq. int_mb(adrls + myproc))then
                myelem = n-k+1
-               call ga_get(g_a,k,n,k,k,dbl_mb(adra+istart),1)
+               call ga_get(g_a,k,n,k,k,dbl_mb(adra+istart),n-k+1)
                if(first_time)
-     %            call ga_get(g_s,k,n,k,k,dbl_mb(adrb+istart),1)
+     %            call ga_get(g_s,k,n,k,k,dbl_mb(adrb+istart),n-k+1)
                istart = istart + myelem
             endif
          enddo
@@ -872,7 +872,7 @@ c
          istart = 0
          do k = 1, n
             if( int_mb(-1+adrmz+k) .eq. int_mb(adrls + myproc))then
-               call ga_put(g_v,1,n,k,k,dbl_mb(adrz+istart),1)
+               call ga_put(g_v,1,n,k,k,dbl_mb(adrz+istart),n)
                istart = istart + n
             endif
          enddo
