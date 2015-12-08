@@ -229,6 +229,12 @@
 /* Define to 1 if you have the `sem_open' function. */
 #undef SEM_OPEN
 
+/* Define to 1 if you have the `shm_open' function. */
+#undef SHM_OPEN
+
+/* Define to 1 if you have the `shm_unlink' function. */
+#undef SHM_UNLINK
+
 /* The size of `char', as computed by sizeof. */
 #undef SIZEOF_CHAR
 

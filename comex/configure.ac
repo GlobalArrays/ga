@@ -130,6 +130,8 @@ AC_CHECK_SIZEOF([double])
 AC_FUNC_MMAP
 COMEX_SEARCH_LIBS([sqrt], [m])
 COMEX_SEARCH_LIBS([sem_open], [rt])
+COMEX_SEARCH_LIBS([shm_open], [rt])
+COMEX_SEARCH_LIBS([shm_unlink], [rt])
 COMEX_CHECK_FUNCS([bzero])
 COMEX_CHECK_FUNCS([gettimeofday])
 COMEX_CHECK_FUNCS([memset])

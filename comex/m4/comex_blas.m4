@@ -46,7 +46,7 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          scopy=scopy
          zcopy=zcopy
          COMEX_C_BLAS_TEST()
-         AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
+         AC_LINK_IFELSE([], [comex_blas_ok=yes])])
     AS_IF([test "x$comex_blas_ok" = xno],
         [caxpy=caxpy_
          daxpy=daxpy_
@@ -57,7 +57,7 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          scopy=scopy_
          zcopy=zcopy_
          COMEX_C_BLAS_TEST()
-         AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
+         AC_LINK_IFELSE([], [comex_blas_ok=yes])])
     AS_IF([test "x$comex_blas_ok" = xno],
         [caxpy=caxpy__
          daxpy=daxpy__
@@ -68,7 +68,7 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          scopy=scopy__
          zcopy=zcopy__
          COMEX_C_BLAS_TEST()
-         AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
+         AC_LINK_IFELSE([], [comex_blas_ok=yes])])
     AS_IF([test "x$comex_blas_ok" = xno],
         [caxpy=CGEMM
          daxpy=DGEMM
@@ -79,7 +79,7 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          scopy=SCOPY
          zcopy=ZCOPY
          COMEX_C_BLAS_TEST()
-         AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
+         AC_LINK_IFELSE([], [comex_blas_ok=yes])])
     AS_IF([test "x$comex_blas_ok" = xno],
         [caxpy=CGEMM_
          daxpy=DGEMM_
@@ -90,7 +90,7 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          scopy=SCOPY_
          zcopy=ZCOPY_
          COMEX_C_BLAS_TEST()
-         AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
+         AC_LINK_IFELSE([], [comex_blas_ok=yes])])
     AS_IF([test "x$comex_blas_ok" = xno],
         [caxpy=CGEMM__
          daxpy=DGEMM__
@@ -101,7 +101,7 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          scopy=SCOPY__
          zcopy=ZCOPY__
          COMEX_C_BLAS_TEST()
-         AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
+         AC_LINK_IFELSE([], [comex_blas_ok=yes])])
     AS_IF([test "x$comex_blas_ok" = xno],
         [caxpy=NOTFOUND
          daxpy=NOTFOUND
@@ -110,7 +110,8 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          ccopy=NOTFOUND
          dcopy=NOTFOUND
          scopy=NOTFOUND
-         zcopy=NOTFOUND])
+         zcopy=NOTFOUND
+         BLAS_LIBS=])
     AC_LANG_POP([C])
 ])dnl
 
