@@ -466,15 +466,18 @@ int bytes;
 
     /* Allocate memory for update flags and signal*/
     bytes = 2*MAXDIM*sizeof(int);
-    GA_Update_Flags = (int**)malloc(GAnproc*sizeof(void*));
-    if (!GA_Update_Flags)
+    GA_Update_Flags = (int**)ARMCI_Malloc_local(GAnproc*sizeof(int*));
+    if (GA_Update_Flags) {
+      for (i=0; i<GAnproc; i++) {
+        GA_Update_Flags[i] = (int*)ARMCI_Malloc_local(2*MAXDIM*sizeof(int));
+      }
+    } else {
       pnga_error("ga_init: Failed to initialize GA_Update_Flags",(int)GAme);
-    if (ARMCI_Malloc((void**)GA_Update_Flags, (armci_size_t) bytes))
-      pnga_error("ga_init:Failed to initialize memory for update flags",GAme);
+    }
     if(GA_Update_Flags[GAme]==NULL)pnga_error("ga_init:ARMCIMalloc failed",GAme);
 
     bytes = sizeof(int);
-    GA_Update_Signal = ARMCI_Malloc_local((armci_size_t) bytes);
+    GA_Update_Signal = (int*)ARMCI_Malloc_local((armci_size_t) bytes);
 
     /* Zero update flags */
     for (i=0; i<2*MAXDIM; i++) GA_Update_Flags[GAme][i] = 0;
@@ -2909,6 +2912,10 @@ Integer i, handle;
     free(mapALL);
     free(_ga_main_data_structure);
     free(_proc_list_main_data_structure);
+    for (i=0; i<GAnproc; i++) {
+      ARMCI_Free_local(GA_Update_Flags[i]);
+    }
+    ARMCI_Free_local(GA_Update_Flags);
     ARMCI_Free_local(GA_Update_Signal);
 
     pnga_sync();
