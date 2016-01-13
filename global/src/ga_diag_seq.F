@@ -16,7 +16,7 @@ c
       double precision evals(*) ! Local array to return evals
 c
       integer n, ierr
-#ifdef USE_EISPACK 
+#ifdef ENABLE_EISPACK 
       integer l_fv1, l_fv2, l_v
       MA_ACCESS_INDEX_TYPE k_fv1, k_fv2, k_v
 #else
@@ -56,7 +56,7 @@ c
      $        'diag_seq:a', l_a, k_a)
          status=status.and.ma_push_get(MT_DBL, n*n,
      $        'diag_seq:s', l_s, k_s)
-#ifdef USE_EISPACK 
+#ifdef ENABLE_EISPACK 
          status=status.and.ma_push_get(MT_DBL, n*n,
      $        'diag_seq:v', l_v, k_v)
          status=status.and.ma_push_get(MT_DBL, n,
@@ -83,7 +83,7 @@ c
          write(6,*) ' overlap matrix '
          call output(dbl_mb(k_s), 1, n, 1, n, n, n, 1)
 #endif
-#ifdef USE_EISPACK 
+#ifdef ENABLE_EISPACK 
          call rsg(n, n, dbl_mb(k_a), dbl_mb(k_s), evals, 1,
      $        dbl_mb(k_v), dbl_mb(k_fv1), dbl_mb(k_fv2), ierr)
 #else
@@ -104,7 +104,7 @@ c         call dcopy(n*n, dbl_mb(k_a), 1, dbl_mb(k_v), 1)
 c     
 c     Shove eigen-vectors back into global array
 c     
-#ifdef USE_EISPACK 
+#ifdef ENABLE_EISPACK 
          call ga_put(g_v, 1, n, 1, n, dbl_mb(k_v), n)
 #else
          call ga_put(g_v, 1, n, 1, n, dbl_mb(k_a), n)
@@ -112,7 +112,7 @@ c
 c     
 c     Free scratch space
 c     
-#ifdef USE_EISPACK 
+#ifdef ENABLE_EISPACK 
          status = ma_pop_stack(l_fv2)
          status = ma_pop_stack(l_fv1)
          status = ma_pop_stack(l_v)
@@ -140,7 +140,7 @@ c
       double precision evals(*) ! Local array to return evals
 c
       integer n, ierr
-#ifdef USE_EISPACK 
+#ifdef ENABLE_EISPACK 
       integer l_fv1, l_fv2, l_v
       MA_ACCESS_INDEX_TYPE k_fv1, k_fv2, k_v
 #else
@@ -177,7 +177,7 @@ c     allocate scratch space
 c     
          status=ma_push_get(MT_DBL, n*n,
      $        'diag_std_seq:a', l_a, k_a)
-#ifdef USE_EISPACK 
+#ifdef ENABLE_EISPACK 
          status=status.and.ma_push_get(MT_DBL, n*n,
      $        'diag_std_seq:v', l_v, k_v)
          status=status.and.ma_push_get(MT_DBL, n,
@@ -201,7 +201,7 @@ c
          write(6,*) ' input matrix '
          call output(dbl_mb(k_a), 1, n, 1, n, n, n, 1)
 #endif
-#ifdef USE_EISPACK 
+#ifdef ENABLE_EISPACK 
          call rs(n, n, dbl_mb(k_a),  evals, 1,
      $        dbl_mb(k_v), dbl_mb(k_fv1), dbl_mb(k_fv2), ierr)
 #else
@@ -222,7 +222,7 @@ c         call dcopy(n*n, dbl_mb(k_a), 1, dbl_mb(k_v), 1)
 c     
 c     Shove eigen-vectors back into global array
 c     
-#ifdef USE_EISPACK 
+#ifdef ENABLE_EISPACK 
          call ga_put(g_v, 1, n, 1, n, dbl_mb(k_v), n)
 #else
          call ga_put(g_v, 1, n, 1, n, dbl_mb(k_a), n)
@@ -230,7 +230,7 @@ c
 c     
 c     Free scratch space
 c     
-#ifdef USE_EISPACK 
+#ifdef ENABLE_EISPACK 
          status = ma_pop_stack(l_fv2)
          status = ma_pop_stack(l_fv1)
          status = ma_pop_stack(l_v)

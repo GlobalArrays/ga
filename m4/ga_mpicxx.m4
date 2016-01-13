@@ -64,8 +64,9 @@ AS_IF([test x$with_mpi_wrappers = xyes],
         [x*:x*], 
 [AS_IF([test "x$CXX" != "x$MPICXX"],
 [AC_MSG_WARN([MPI compilers desired, MPICXX and CXX are set, and MPICXX!=CXX.])
- AC_MSG_WARN([Choosing MPICXX over CXX.])
- AC_MSG_WARN([CXX will be tested first during MPI compiler unwrapping.])])
+ AC_MSG_WARN([Choosing MPICXX as main compiler.])
+ AC_MSG_WARN([CXX will be assumed as the unwrapped MPI compiler.])])
+ ga_cv_mpicxx_naked="$CXX"
  CXX="$MPICXX"],
 [AC_MSG_ERROR([CXX/MPICXX case failure])])])
 ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC bgxlC_r bgxlC openCC sunCC crayc++ g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"

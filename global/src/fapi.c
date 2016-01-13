@@ -1678,7 +1678,7 @@ void FATR nga_zgop_(Integer *type, DoubleComplex *x, Integer *n, char *op, int l
 void FATR ga_mpi_comm_(Integer *fcomm)
 {
     MPI_Comm ccomm;
-    GA_MPI_Comm(&ccomm);
+    ccomm = GA_MPI_Comm();
     *fcomm = (Integer)(MPI_Comm_c2f(ccomm));
 }
 #define ga_mpi_comm_pgroup_ F77_FUNC_(ga_mpi_comm_pgroup,GA_MPI_COMM_PGROUP)

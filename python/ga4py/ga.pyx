@@ -712,7 +712,8 @@ def add(int g_a, int g_b, int g_c, alpha=None, beta=None, alo=None, ahi=None,
     cdef long double    ldalpha, ldbeta
     cdef SingleComplex  fcalpha, fcbeta
     cdef DoubleComplex  dcalpha, dcbeta
-    cdef void          *valpha, *vbeta
+    cdef void          *valpha
+    cdef void          *vbeta
     if alpha is None:
         alpha = 1
     valpha = _convert_multiplier(gtype, alpha,
@@ -2392,7 +2393,8 @@ def matmul_patch(bint transa, bint transb, alpha, beta,
     cdef long double    ldalpha, ldbeta
     cdef SingleComplex  fcalpha, fcbeta
     cdef DoubleComplex  dcalpha, dcbeta
-    cdef void          *valpha, *vbeta
+    cdef void          *valpha
+    cdef void          *vbeta
     cdef char char_transa = 'N'
     cdef char char_transb = 'N'
     if alpha is None:
@@ -2781,7 +2783,8 @@ def enum(int g_a, lo=None, hi=None, start=None, inc=None):
     cdef long double    ldstart, ldinc
     cdef SingleComplex  fcstart, fcinc
     cdef DoubleComplex  dcstart, dcinc
-    cdef void          *vstart=NULL, *vinc=NULL
+    cdef void          *vstart=NULL
+    cdef void          *vinc=NULL
     if lo is not None:
         c_lo = lo
     if hi is not None:

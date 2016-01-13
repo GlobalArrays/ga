@@ -4306,11 +4306,12 @@ $as_echo "$as_me: WARNING: meant to set MPICC instead of or in addition to CC?" 
     if test "x$CC" != "x$MPICC"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired, MPICC and CC are set, and MPICC!=CC." >&5
 $as_echo "$as_me: WARNING: MPI compilers desired, MPICC and CC are set, and MPICC!=CC." >&2;}
- { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPICC over CC." >&5
-$as_echo "$as_me: WARNING: Choosing MPICC over CC." >&2;}
- { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CC will be tested first during MPI compiler unwrapping." >&5
-$as_echo "$as_me: WARNING: CC will be tested first during MPI compiler unwrapping." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPICC as main compiler." >&5
+$as_echo "$as_me: WARNING: Choosing MPICC as main compiler." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CC will be assumed as the unwrapped MPI compiler." >&5
+$as_echo "$as_me: WARNING: CC will be assumed as the unwrapped MPI compiler." >&2;}
 fi
+ ga_cv_mpic_naked="$CC"
  CC="$MPICC" ;; #(
   *) :
     as_fn_error $? "CC/MPICC case failure" "$LINENO" 5 ;;
@@ -6083,11 +6084,12 @@ $as_echo "$as_me: WARNING: meant to set MPICXX instead of or in addition to CXX?
     if test "x$CXX" != "x$MPICXX"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired, MPICXX and CXX are set, and MPICXX!=CXX." >&5
 $as_echo "$as_me: WARNING: MPI compilers desired, MPICXX and CXX are set, and MPICXX!=CXX." >&2;}
- { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPICXX over CXX." >&5
-$as_echo "$as_me: WARNING: Choosing MPICXX over CXX." >&2;}
- { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CXX will be tested first during MPI compiler unwrapping." >&5
-$as_echo "$as_me: WARNING: CXX will be tested first during MPI compiler unwrapping." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPICXX as main compiler." >&5
+$as_echo "$as_me: WARNING: Choosing MPICXX as main compiler." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CXX will be assumed as the unwrapped MPI compiler." >&5
+$as_echo "$as_me: WARNING: CXX will be assumed as the unwrapped MPI compiler." >&2;}
 fi
+ ga_cv_mpicxx_naked="$CXX"
  CXX="$MPICXX" ;; #(
   *) :
     as_fn_error $? "CXX/MPICXX case failure" "$LINENO" 5 ;;

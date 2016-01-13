@@ -82,8 +82,8 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 	global/testing/gatscat$(EXEEXT) global/testing/getmem$(EXEEXT) \
 	global/testing/mtest$(EXEEXT) \
 	global/testing/mulmatpatchc$(EXEEXT) \
-	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
-	global/testing/packc$(EXEEXT) \
+	global/testing/normc$(EXEEXT) global/testing/ntestc$(EXEEXT) \
+	global/testing/ntestfc$(EXEEXT) global/testing/packc$(EXEEXT) \
 	global/testing/patch_enumc$(EXEEXT) \
 	global/testing/perf2$(EXEEXT) global/testing/print$(EXEEXT) \
 	global/testing/scan_addc$(EXEEXT) \
@@ -114,6 +114,7 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@am__append_2 = ma/maf.F \
 @ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_cgemm.f \
 @ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_daxpy.f \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dcabs1.f \
 @ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dcopy.f \
 @ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_ddot.f \
 @ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dgemm.f \
@@ -512,6 +513,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/armci_setup.m4 \
 	$(top_srcdir)/m4/ga_cxx_namespaces.m4 \
 	$(top_srcdir)/m4/ga_cxx_opt.m4 $(top_srcdir)/m4/ga_elpa.m4 \
 	$(top_srcdir)/m4/ga_enable_checkpoint.m4 \
+	$(top_srcdir)/m4/ga_enable_eispack.m4 \
 	$(top_srcdir)/m4/ga_enable_opt.m4 \
 	$(top_srcdir)/m4/ga_enable_peigs.m4 \
 	$(top_srcdir)/m4/ga_enable_profile.m4 \
@@ -627,10 +629,10 @@ libga_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 am__libga_la_SOURCES_DIST = compat/random.c ma/error.c ma/f2c.c \
 	ma/ma.c ma/ma.h ma/memcpy.h ma/string-util.c ma/table.c \
 	ma/maf.F LinAlg/lapack+blas/gal_cgemm.f \
-	LinAlg/lapack+blas/gal_daxpy.f LinAlg/lapack+blas/gal_dcopy.f \
-	LinAlg/lapack+blas/gal_ddot.f LinAlg/lapack+blas/gal_dgemm.f \
-	LinAlg/lapack+blas/gal_dgemv.f LinAlg/lapack+blas/gal_dger.f \
-	LinAlg/lapack+blas/gal_dgetf2.f \
+	LinAlg/lapack+blas/gal_daxpy.f LinAlg/lapack+blas/gal_dcabs1.f \
+	LinAlg/lapack+blas/gal_dcopy.f LinAlg/lapack+blas/gal_ddot.f \
+	LinAlg/lapack+blas/gal_dgemm.f LinAlg/lapack+blas/gal_dgemv.f \
+	LinAlg/lapack+blas/gal_dger.f LinAlg/lapack+blas/gal_dgetf2.f \
 	LinAlg/lapack+blas/gal_dgetrf.f \
 	LinAlg/lapack+blas/gal_dgetrs.f \
 	LinAlg/lapack+blas/gal_disnan.f \
@@ -721,6 +723,7 @@ am__libga_la_SOURCES_DIST = compat/random.c ma/error.c ma/f2c.c \
 @ENABLE_F77_TRUE@am__objects_1 = ma/maf.lo \
 @ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_cgemm.lo \
 @ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_daxpy.lo \
+@ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dcabs1.lo \
 @ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dcopy.lo \
 @ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_ddot.lo \
 @ENABLE_F77_TRUE@	LinAlg/lapack+blas/gal_dgemm.lo \
@@ -1636,6 +1639,18 @@ global_testing_ngatest_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_ngatest_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am__global_testing_normc_SOURCES_DIST = global/testing/normc.c \
+	global/testing/testutil.fh global/testing/testutil.h \
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.F
+am_global_testing_normc_OBJECTS = global/testing/normc.$(OBJEXT) \
+	$(am__objects_15)
+global_testing_normc_OBJECTS = $(am_global_testing_normc_OBJECTS)
+global_testing_normc_LDADD = $(LDADD)
+global_testing_normc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__global_testing_ntestc_SOURCES_DIST = global/testing/ntestc.c \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -3413,6 +3428,8 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(nodist_global_testing_nga_scatter_SOURCES) \
 	$(nodist_global_testing_nga_util_SOURCES) \
 	$(nodist_global_testing_ngatest_SOURCES) \
+	$(global_testing_normc_SOURCES) \
+	$(nodist_EXTRA_global_testing_normc_SOURCES) \
 	$(global_testing_ntestc_SOURCES) \
 	$(nodist_EXTRA_global_testing_ntestc_SOURCES) \
 	$(global_testing_ntestfc_SOURCES) \
@@ -3696,6 +3713,7 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_mulmatpatchc_SOURCES_DIST) \
 	$(am__global_testing_nb2test_SOURCES_DIST) \
 	$(am__global_testing_ndim_SOURCES_DIST) \
+	$(am__global_testing_normc_SOURCES_DIST) \
 	$(am__global_testing_ntestc_SOURCES_DIST) \
 	$(am__global_testing_ntestfc_SOURCES_DIST) \
 	$(am__global_testing_packc_SOURCES_DIST) \
@@ -4437,8 +4455,8 @@ GLOBAL_SERIAL_TESTS_XFAIL =
 GLOBAL_PARALLEL_TESTS = global/testing/elempatch$(EXEEXT) \
 	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
 	global/testing/mulmatpatchc$(EXEEXT) \
-	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
-	global/testing/packc$(EXEEXT) \
+	global/testing/normc$(EXEEXT) global/testing/ntestc$(EXEEXT) \
+	global/testing/ntestfc$(EXEEXT) global/testing/packc$(EXEEXT) \
 	global/testing/patch_enumc$(EXEEXT) \
 	global/testing/print$(EXEEXT) \
 	global/testing/scan_addc$(EXEEXT) \
@@ -4589,6 +4607,7 @@ global_testing_mulmatpatch_SOURCES = global/testing/mulmatpatch.F $(gtsrc)
 global_testing_mulmatpatchc_SOURCES = global/testing/mulmatpatchc.c $(gtsrc)
 global_testing_nb2test_SOURCES = global/testing/nb2test.F $(gtsrc)
 global_testing_ndim_SOURCES = global/testing/ndim.F $(gtsrc)
+global_testing_normc_SOURCES = global/testing/normc.c $(gtsrc)
 global_testing_ntestc_SOURCES = global/testing/ntestc.c $(gtsrc)
 global_testing_ntestfc_SOURCES = global/testing/ntestfc.c $(gtsrc)
 global_testing_packc_SOURCES = global/testing/packc.c $(gtsrc)
@@ -4769,6 +4788,7 @@ nodist_EXTRA_global_testing_ipc_clean_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_lock_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_mtest_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_mulmatpatchc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_normc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ntestc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ntestfc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_packc_SOURCES = $(MAYBE_DUMMY_F_LINK)
@@ -5278,6 +5298,8 @@ LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp):
 LinAlg/lapack+blas/gal_cgemm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
 LinAlg/lapack+blas/gal_daxpy.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/gal_dcabs1.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
 LinAlg/lapack+blas/gal_dcopy.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
@@ -6088,6 +6110,11 @@ global/testing/ngatest.$(OBJEXT): global/testing/$(am__dirstamp) \
 global/testing/ngatest$(EXEEXT): $(global_testing_ngatest_OBJECTS) $(global_testing_ngatest_DEPENDENCIES) $(EXTRA_global_testing_ngatest_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/ngatest$(EXEEXT)
 	$(AM_V_F77LD)$(global_testing_ngatest_LINK) $(global_testing_ngatest_OBJECTS) $(global_testing_ngatest_LDADD) $(LIBS)
+global/testing/normc.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/normc$(EXEEXT): $(global_testing_normc_OBJECTS) $(global_testing_normc_DEPENDENCIES) $(EXTRA_global_testing_normc_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/normc$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_normc_OBJECTS) $(global_testing_normc_LDADD) $(LIBS)
 global/testing/ntestc.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/ntestc$(EXEEXT): $(global_testing_ntestc_OBJECTS) $(global_testing_ntestc_DEPENDENCIES) $(EXTRA_global_testing_ntestc_DEPENDENCIES) global/testing/$(am__dirstamp)
@@ -6995,6 +7022,8 @@ mostlyclean-compile:
 	-rm -f LinAlg/lapack+blas/gal_cgemm.lo
 	-rm -f LinAlg/lapack+blas/gal_daxpy.$(OBJEXT)
 	-rm -f LinAlg/lapack+blas/gal_daxpy.lo
+	-rm -f LinAlg/lapack+blas/gal_dcabs1.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/gal_dcabs1.lo
 	-rm -f LinAlg/lapack+blas/gal_dcopy.$(OBJEXT)
 	-rm -f LinAlg/lapack+blas/gal_dcopy.lo
 	-rm -f LinAlg/lapack+blas/gal_ddot.$(OBJEXT)
@@ -7317,6 +7346,7 @@ mostlyclean-compile:
 	-rm -f global/testing/nga-scatter.$(OBJEXT)
 	-rm -f global/testing/nga-util.$(OBJEXT)
 	-rm -f global/testing/ngatest.$(OBJEXT)
+	-rm -f global/testing/normc.$(OBJEXT)
 	-rm -f global/testing/ntestc.$(OBJEXT)
 	-rm -f global/testing/ntestfc.$(OBJEXT)
 	-rm -f global/testing/packc.$(OBJEXT)
@@ -7628,6 +7658,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/lock.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/mtest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/mulmatpatchc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/normc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ntestc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ntestfc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/packc.Po@am__quote@
@@ -8449,6 +8480,8 @@ global/testing/mtest.log: global/testing/mtest$(EXEEXT)
 	@p='global/testing/mtest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/mulmatpatchc.log: global/testing/mulmatpatchc$(EXEEXT)
 	@p='global/testing/mulmatpatchc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/normc.log: global/testing/normc$(EXEEXT)
+	@p='global/testing/normc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/ntestc.log: global/testing/ntestc$(EXEEXT)
 	@p='global/testing/ntestc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/ntestfc.log: global/testing/ntestfc$(EXEEXT)

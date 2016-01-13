@@ -3705,9 +3705,11 @@ c
 c     
 c     
 
-          call get_elpa_row_col_comms(elpa_comm,
+           mpierr=get_elpa_row_col_comms(elpa_comm,
      V        myrow2, mycol2, 
      V        elpa_comm_rows, elpa_comm_cols)
+           if(mpierr.ne.0) call ga_error(
+     A     'ga-evp_real: get_elpa_row_col failed ',mpierr)
  
 
          if(.not.solve_evp_real(n, mout4, 

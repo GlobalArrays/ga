@@ -6,12 +6,8 @@
  * Error handling module.
  */
 
-#if HAVE_STDIO_H
-#   include <stdio.h>
-#endif
-#if HAVE_STDLIB_H
-#   include <stdlib.h>
-#endif
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "error.h"
 #include "scope.h"

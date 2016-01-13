@@ -513,14 +513,14 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
         [_GA_ARMCI_NETWORK_ARMCI()])
      AS_IF([test "x$ga_armci_network" = x],
         [AC_MSG_WARN([!!!])
-         AC_MSG_WARN([No ARMCI_NETWORK detected, defaulting to SOCKETS])
+         AC_MSG_WARN([No ARMCI_NETWORK detected, defaulting to MPI_TS])
          AC_MSG_WARN([!!!])
-         ga_armci_network=SOCKETS; with_sockets=yes])],
+         ga_armci_network=MPI_TS; with_mpi_ts=yes])],
     [# Not autodetecting
      # Check whether multiple armci networks were selected by user.
      AS_CASE([$armci_network_count],
-        [0], [AC_MSG_WARN([No ARMCI_NETWORK specified, defaulting to SOCKETS])
-              ga_armci_network=SOCKETS; with_sockets=yes],
+        [0], [AC_MSG_WARN([No ARMCI_NETWORK specified, defaulting to MPI_TS])
+              ga_armci_network=MPI_TS; with_mpi_ts=yes],
         [1], [AS_IF([test "x$ga_armci_network" = xARMCI],
                  [_GA_ARMCI_NETWORK_ARMCI([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=ARMCI failed])])])

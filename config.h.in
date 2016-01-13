@@ -78,6 +78,9 @@
 /* Define if checkpointing is enabled */
 #undef ENABLE_CHECKPOINT
 
+/* Define to 1 if EISPACK is enabled */
+#undef ENABLE_EISPACK
+
 /* Define to 1 if using Fortran */
 #undef ENABLE_F77
 

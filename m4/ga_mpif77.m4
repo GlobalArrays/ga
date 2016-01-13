@@ -104,8 +104,9 @@ AS_IF([test x$with_mpi_wrappers = xyes],
         [x*:x*], 
 [AS_IF([test "x$F77" != "x$MPIF77"],
 [AC_MSG_WARN([MPI compilers desired, MPIF77 and F77 are set, and MPIF77!=F77.])
- AC_MSG_WARN([Choosing MPIF77 over F77.])
- AC_MSG_WARN([F77 will be tested first during MPI compiler unwrapping.])])
+ AC_MSG_WARN([Choosing MPIF77 as main compiler.])
+ AC_MSG_WARN([F77 will be assumed as the unwrapped MPI compiler.])])
+ ga_cv_mpif77_naked="$F77"
  F77="$MPIF77"],
 [AC_MSG_ERROR([F77/MPIF77 case failure])])])
 ga_mpif95="mpif95 mpxlf95_r mpxlf95 ftn"

@@ -1,6 +1,5 @@
 # cython: profile=True
 cimport mpi4py.MPI as MPI
-from mpi4py.mpi_c cimport *
 import mpi4py.MPI as MPI
 
 from ga4py import ga
@@ -2219,7 +2218,8 @@ class ndarray(object):
     def __int__(self, *args, **kwargs):
         if self.size != 1:
             raise TypeError, "only length-1 arrays can be converted to Python scalars"
-        return np.dtype(np.int32).type(self.allget())
+        t=np.dtype(np.int32)
+        return t.type(self.allget())
 
     def __invert__(self):
         return invert(self)
@@ -2789,10 +2789,20 @@ class ufunc(object):
             # optimize the 1d reduction
             nda = a.access()
             value = self.func.identity
-            if nda is not None:
-                value = self.func.reduce(nda)
-            everything = comm().allgather(value)
-            self.func.reduce(everything, out=out)
+            if self.func is np.subtract:
+                value = 0
+                if nda is not None:
+                    value = self.func.reduce(nda)
+                    p = ga.locate(a.handle, 0)
+                    if p != me():
+                        value = value - nda[0] - nda[0]
+                everything = comm().allgather(value)
+                np.add.reduce(everything, out=out)
+            else:
+                if nda is not None:
+                    value = self.func.reduce(nda)
+                everything = comm().allgather(value)
+                self.func.reduce(everything, out=out)
         elif out.ndim == 1 and 'OLD_REDUCE' in os.environ:
             # optimize the 2d reduction
             ndout = out.access()
@@ -2847,7 +2857,10 @@ class ufunc(object):
                 #print_sync("nda m=%s" % str(m))
                 #print_sync("nda p=%s" % str(p))
                 buf = np.ndarray((len(p),hi-lo), dtype=out.dtype)
-                buf[:] = self.func.identity
+                value = self.func.identity
+                if value is None and self.func is np.subtract:
+                    value = 0
+                buf[:] = value
                 for i in range(len(p)):
                     rlo,rhi = m[i]
                     #print_sync("rlo,rhi=%s,%s" % (rlo,rhi))
@@ -3353,7 +3366,7 @@ def from_ga(g_a):
     shape = ga.inquire_dims(g_a)
     return ndarray(shape, dtype, base=g_a)
 
-cdef extern MPI_Comm GA_MPI_Comm_pgroup_default()
+cdef extern MPI.MPI_Comm GA_MPI_Comm_pgroup_default()
 def comm():
     """Returns the MPI_Comm instance associated with the process group."""
     cdef MPI.Comm communicator = MPI.Comm()

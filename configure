@@ -867,6 +867,8 @@ ENABLE_TRACE_FALSE
 ENABLE_TRACE_TRUE
 ENABLE_PROFILING_FALSE
 ENABLE_PROFILING_TRUE
+ENABLE_EISPACK_FALSE
+ENABLE_EISPACK_TRUE
 ENABLE_PEIGS_FALSE
 ENABLE_PEIGS_TRUE
 ENABLE_CHECKPOINT_FALSE
@@ -1022,6 +1024,7 @@ enable_warnings
 enable_checkpoint
 enable_opt
 enable_peigs
+enable_eispack
 enable_profiling
 enable_trace
 enable_unit_tests
@@ -1737,6 +1740,7 @@ Optional Features:
   --enable-checkpoint     enable checkpointing
   --disable-opt           don't use hard-coded optimization flags
   --enable-peigs          enable Parallel Eigensystem Solver interface
+  --enable-eispack        enable Matrix Eigensystem Routines (EISPACK)
   --enable-profiling      enable profiling
   --enable-trace          enable tracing
   --enable-unit-tests     build the unfinished unit tests
@@ -4473,6 +4477,31 @@ else
 fi
 
 
+# Check whether --enable-eispack was given.
+if test "${enable_eispack+set}" = set; then :
+  enableval=$enable_eispack;
+else
+  enable_eispack=no
+fi
+
+if test "x$enable_eispack" = xno; then :
+
+$as_echo "#define ENABLE_EISPACK 0" >>confdefs.h
+
+else
+
+$as_echo "#define ENABLE_EISPACK 1" >>confdefs.h
+
+fi
+ if test x$enable_eispack = xyes; then
+  ENABLE_EISPACK_TRUE=
+  ENABLE_EISPACK_FALSE='#'
+else
+  ENABLE_EISPACK_TRUE='#'
+  ENABLE_EISPACK_FALSE=
+fi
+
+
 # Check whether --enable-profiling was given.
 if test "${enable_profiling+set}" = set; then :
   enableval=$enable_profiling;
@@ -4663,11 +4692,12 @@ $as_echo "$as_me: WARNING: meant to set MPICC instead of or in addition to CC?" 
     if test "x$CC" != "x$MPICC"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired, MPICC and CC are set, and MPICC!=CC." >&5
 $as_echo "$as_me: WARNING: MPI compilers desired, MPICC and CC are set, and MPICC!=CC." >&2;}
- { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPICC over CC." >&5
-$as_echo "$as_me: WARNING: Choosing MPICC over CC." >&2;}
- { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CC will be tested first during MPI compiler unwrapping." >&5
-$as_echo "$as_me: WARNING: CC will be tested first during MPI compiler unwrapping." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPICC as main compiler." >&5
+$as_echo "$as_me: WARNING: Choosing MPICC as main compiler." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CC will be assumed as the unwrapped MPI compiler." >&5
+$as_echo "$as_me: WARNING: CC will be assumed as the unwrapped MPI compiler." >&2;}
 fi
+ ga_cv_mpic_naked="$CC"
  CC="$MPICC" ;; #(
   *) :
     as_fn_error $? "CC/MPICC case failure" "$LINENO" 5 ;;
@@ -11005,20 +11035,20 @@ fi
      if test "x$ga_armci_network" = x; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: !!!" >&5
 $as_echo "$as_me: WARNING: !!!" >&2;}
-         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: No ARMCI_NETWORK detected, defaulting to SOCKETS" >&5
-$as_echo "$as_me: WARNING: No ARMCI_NETWORK detected, defaulting to SOCKETS" >&2;}
+         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: No ARMCI_NETWORK detected, defaulting to MPI_TS" >&5
+$as_echo "$as_me: WARNING: No ARMCI_NETWORK detected, defaulting to MPI_TS" >&2;}
          { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: !!!" >&5
 $as_echo "$as_me: WARNING: !!!" >&2;}
-         ga_armci_network=SOCKETS; with_sockets=yes
+         ga_armci_network=MPI_TS; with_mpi_ts=yes
 fi
 else
   # Not autodetecting
      # Check whether multiple armci networks were selected by user.
      case $armci_network_count in #(
   0) :
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: No ARMCI_NETWORK specified, defaulting to SOCKETS" >&5
-$as_echo "$as_me: WARNING: No ARMCI_NETWORK specified, defaulting to SOCKETS" >&2;}
-              ga_armci_network=SOCKETS; with_sockets=yes ;; #(
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: No ARMCI_NETWORK specified, defaulting to MPI_TS" >&5
+$as_echo "$as_me: WARNING: No ARMCI_NETWORK specified, defaulting to MPI_TS" >&2;}
+              ga_armci_network=MPI_TS; with_mpi_ts=yes ;; #(
   1) :
     if test "x$ga_armci_network" = xARMCI; then :
 
@@ -17278,11 +17308,12 @@ $as_echo "$as_me: WARNING: meant to set MPICXX instead of or in addition to CXX?
     if test "x$CXX" != "x$MPICXX"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired, MPICXX and CXX are set, and MPICXX!=CXX." >&5
 $as_echo "$as_me: WARNING: MPI compilers desired, MPICXX and CXX are set, and MPICXX!=CXX." >&2;}
- { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPICXX over CXX." >&5
-$as_echo "$as_me: WARNING: Choosing MPICXX over CXX." >&2;}
- { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CXX will be tested first during MPI compiler unwrapping." >&5
-$as_echo "$as_me: WARNING: CXX will be tested first during MPI compiler unwrapping." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPICXX as main compiler." >&5
+$as_echo "$as_me: WARNING: Choosing MPICXX as main compiler." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CXX will be assumed as the unwrapped MPI compiler." >&5
+$as_echo "$as_me: WARNING: CXX will be assumed as the unwrapped MPI compiler." >&2;}
 fi
+ ga_cv_mpicxx_naked="$CXX"
  CXX="$MPICXX" ;; #(
   *) :
     as_fn_error $? "CXX/MPICXX case failure" "$LINENO" 5 ;;
@@ -18578,11 +18609,12 @@ $as_echo "$as_me: WARNING: meant to set MPIF77 instead of or in addition to F77?
     if test "x$F77" != "x$MPIF77"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired, MPIF77 and F77 are set, and MPIF77!=F77." >&5
 $as_echo "$as_me: WARNING: MPI compilers desired, MPIF77 and F77 are set, and MPIF77!=F77." >&2;}
- { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPIF77 over F77." >&5
-$as_echo "$as_me: WARNING: Choosing MPIF77 over F77." >&2;}
- { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: F77 will be tested first during MPI compiler unwrapping." >&5
-$as_echo "$as_me: WARNING: F77 will be tested first during MPI compiler unwrapping." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPIF77 as main compiler." >&5
+$as_echo "$as_me: WARNING: Choosing MPIF77 as main compiler." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: F77 will be assumed as the unwrapped MPI compiler." >&5
+$as_echo "$as_me: WARNING: F77 will be assumed as the unwrapped MPI compiler." >&2;}
 fi
+ ga_cv_mpif77_naked="$F77"
  F77="$MPIF77" ;; #(
   *) :
     as_fn_error $? "F77/MPIF77 case failure" "$LINENO" 5 ;;
@@ -40906,6 +40938,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_PEIGS_TRUE}" && test -z "${ENABLE_PEIGS_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_PEIGS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_EISPACK_TRUE}" && test -z "${ENABLE_EISPACK_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_EISPACK\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_PROFILING_TRUE}" && test -z "${ENABLE_PROFILING_FALSE}"; then

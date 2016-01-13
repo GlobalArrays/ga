@@ -57,8 +57,9 @@ AS_IF([test x$with_mpi_wrappers = xyes],
         [x*:x*], 
 [AS_IF([test "x$CC" != "x$MPICC"],
 [AC_MSG_WARN([MPI compilers desired, MPICC and CC are set, and MPICC!=CC.])
- AC_MSG_WARN([Choosing MPICC over CC.])
- AC_MSG_WARN([CC will be tested first during MPI compiler unwrapping.])])
+ AC_MSG_WARN([Choosing MPICC as main compiler.])
+ AC_MSG_WARN([CC will be assumed as the unwrapped MPI compiler.])])
+ ga_cv_mpic_naked="$CC"
  CC="$MPICC"],
 [AC_MSG_ERROR([CC/MPICC case failure])])])
 ga_cc="bgxlc_r bgxlc xlc_r xlc pgcc pathcc icc sxcc fcc opencc suncc craycc gcc cc ecc cl ccc"
