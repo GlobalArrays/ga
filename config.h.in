@@ -525,13 +525,22 @@
 #undef MELLANOX
 
 /* TODO */
+#undef MPI3
+
+/* TODO */
 #undef MPI_MT
+
+/* TODO */
+#undef MPI_PR
 
 /* TODO */
 #undef MPI_PT
 
 /* TODO */
 #undef MPI_SPAWN
+
+/* TODO */
+#undef MPI_TS
 
 /* Use MPI for messaging */
 #undef MSG_COMMS_MPI

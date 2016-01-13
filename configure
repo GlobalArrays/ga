@@ -799,6 +799,8 @@ ARMCI_NETWORK_OPENIB_FALSE
 ARMCI_NETWORK_OPENIB_TRUE
 ARMCI_NETWORK_OFA_FALSE
 ARMCI_NETWORK_OFA_TRUE
+ARMCI_NETWORK_MPI3_FALSE
+ARMCI_NETWORK_MPI3_TRUE
 ARMCI_NETWORK_MPI_SPAWN_FALSE
 ARMCI_NETWORK_MPI_SPAWN_TRUE
 ARMCI_NETWORK_MPI_PR_FALSE
@@ -1043,6 +1045,7 @@ with_mpi_pt
 with_mpi_pr
 with_mpi_spawn
 with_mpi_ts
+with_mpi3
 with_ofa
 with_openib
 with_portals4
@@ -1791,6 +1794,7 @@ Optional Packages:
                           progress rank
   --with-mpi-spawn[=ARG]  select armci network as MPI-2 dynamic process mgmt
   --with-mpi-ts[=ARG]     select armci network as (Comex) MPI-1 two-sided
+  --with-mpi3[=ARG]       select armci network as (Comex) MPI-3 one-sided
   --with-ofa[=ARG]        select armci network as (Comex) Infiniband OpenIB
   --with-openib[=ARG]     select armci network as Infiniband OpenIB
   --with-portals4[=ARG]   select armci network as (Comex) Portals4
@@ -8628,6 +8632,153 @@ fi
 
 
 
+# Check whether --with-mpi3 was given.
+if test "${with_mpi3+set}" = set; then :
+  withval=$with_mpi3;
+fi
+
+
+
+if test "x$with_mpi3" != x; then :
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_mpi3 ; do
+    case $arg in #(
+  yes) :
+     ;; #(
+  no) :
+     ;; #(
+  -l*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  -L*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -WL*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -Wl*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -I*) :
+    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *lib) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi3 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi3 not parsed" >&2;}
+fi ;; #(
+  *lib/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi3 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi3 not parsed" >&2;}
+fi ;; #(
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi3 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi3 not parsed" >&2;}
+fi ;; #(
+  *lib64/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi3 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi3 not parsed" >&2;}
+fi ;; #(
+  *include) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi3 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi3 not parsed" >&2;}
+fi ;; #(
+  *include/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi3 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi3 not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi3 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi3 not parsed" >&2;}
+fi ;; #(
+  *include64/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi3 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi3 not parsed" >&2;}
+fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *) :
+    ga_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$ga_arg_parse_ok" = xno; then :
+  if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
+elif test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
+fi
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
+elif test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
+fi
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$ga_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
+esac
+fi
+# warn user that $arg fell through
+     if test "x$ga_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi3 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi3 not parsed" >&2;}
+fi
+done
+fi
+if test "x$with_mpi3" != xno && test "x$with_mpi3" != x; then :
+  ga_armci_network=MPI3
+     as_fn_arith $armci_network_count + 1 && armci_network_count=$as_val
+fi
+
+
+
+
+
 # Check whether --with-ofa was given.
 if test "${with_ofa+set}" = set; then :
   withval=$with_ofa;
@@ -12186,6 +12337,18 @@ else
 fi
 
 fi
+              if test "x$ga_armci_network" = xMPI3; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for MPI3..." >&5
+$as_echo "$as_me: searching for MPI3..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  ga_armci_network=MPI3; with_mpi3=yes;
+else
+  as_fn_error $? "test for ARMCI_NETWORK=MPI3 failed" "$LINENO" 5
+fi
+
+fi
               if test "x$ga_armci_network" = xMPI_SPAWN; then :
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: searching for MPI_SPAWN..." >&5
@@ -12961,6 +13124,14 @@ fi
 
 
 
+if test "x$with_mpi3" != x && test "x$with_mpi3" != xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-mpi3=$with_mpi3" >&5
+$as_echo "$as_me: WARNING: --with-mpi3=$with_mpi3" >&2;}
+fi
+
+
+
+
 if test "x$with_ofa" != x && test "x$with_ofa" != xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-ofa=$with_ofa" >&5
 $as_echo "$as_me: WARNING: --with-ofa=$with_ofa" >&2;}
@@ -13173,6 +13344,20 @@ fi
 
 
 
+ if test "x$with_mpi3" != x && test "x$with_mpi3" != xno; then
+  ARMCI_NETWORK_MPI3_TRUE=
+  ARMCI_NETWORK_MPI3_FALSE='#'
+else
+  ARMCI_NETWORK_MPI3_TRUE='#'
+  ARMCI_NETWORK_MPI3_FALSE=
+fi
+
+
+
+
+
+
+
  if test "x$with_ofa" != x && test "x$with_ofa" != xno; then
   ARMCI_NETWORK_OFA_TRUE=
   ARMCI_NETWORK_OFA_FALSE='#'
@@ -13297,6 +13482,8 @@ case $ga_armci_network in #(
   MPI_PR) :
     ARMCI_SRC_DIR=comex ;; #(
   MPI_TS) :
+    ARMCI_SRC_DIR=comex ;; #(
+  MPI3) :
     ARMCI_SRC_DIR=comex ;; #(
   OFA) :
     ARMCI_SRC_DIR=comex ;; #(
@@ -13523,6 +13710,8 @@ case $ga_armci_network in #(
     delay_tcgmsg_mpi_startup=0 ;; #(
   MPI_SPAWN) :
     delay_tcgmsg_mpi_startup=1 ;; #(
+  MPI3) :
+    delay_tcgmsg_mpi_startup=0 ;; #(
   OFA) :
     delay_tcgmsg_mpi_startup=0 ;; #(
   OPENIB) :
@@ -19691,7 +19880,7 @@ case $ac_f77_v_output in
     ac_f77_v_output=`echo $ac_f77_v_output | sed "\
 	s/-cmdline  *'[^']*'/ /g; s/-cmdline  *\"[^\"]*\"/ /g
 	s/-ignore  *'[^']*'/ /g; s/-ignore  *\"[^\"]*\"/ /g
-	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g; s/ -lnuma//g"` ;;
+	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g"` ;;
 
   # If we are using fort77 (the f2c wrapper) then filter output and delete quotes.
   *fort77*f2c*gcc*)
@@ -19799,7 +19988,7 @@ case $ac_f77_v_output in
     ac_f77_v_output=`echo $ac_f77_v_output | sed "\
 	s/-cmdline  *'[^']*'/ /g; s/-cmdline  *\"[^\"]*\"/ /g
 	s/-ignore  *'[^']*'/ /g; s/-ignore  *\"[^\"]*\"/ /g
-	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g; s/ -lnuma//g"` ;;
+	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g"` ;;
 
   # If we are using fort77 (the f2c wrapper) then filter output and delete quotes.
   *fort77*f2c*gcc*)
@@ -20104,7 +20293,7 @@ case $ac_f77_v_output in
     ac_f77_v_output=`echo $ac_f77_v_output | sed "\
 	s/-cmdline  *'[^']*'/ /g; s/-cmdline  *\"[^\"]*\"/ /g
 	s/-ignore  *'[^']*'/ /g; s/-ignore  *\"[^\"]*\"/ /g
-	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g; s/ -lnuma//g"` ;;
+	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g"` ;;
 
   # If we are using fort77 (the f2c wrapper) then filter output and delete quotes.
   *fort77*f2c*gcc*)
@@ -20212,7 +20401,7 @@ case $ac_f77_v_output in
     ac_f77_v_output=`echo $ac_f77_v_output | sed "\
 	s/-cmdline  *'[^']*'/ /g; s/-cmdline  *\"[^\"]*\"/ /g
 	s/-ignore  *'[^']*'/ /g; s/-ignore  *\"[^\"]*\"/ /g
-	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g; s/ -lnuma//g"` ;;
+	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g"` ;;
 
   # If we are using fort77 (the f2c wrapper) then filter output and delete quotes.
   *fort77*f2c*gcc*)
@@ -40396,6 +40585,21 @@ $as_echo "#define ALLOW_PIN 1" >>confdefs.h
 $as_echo "#define MELLANOX 1" >>confdefs.h
 
      ;; #(
+  MPI_TS) :
+
+
+$as_echo "#define PTHREADS 1" >>confdefs.h
+
+
+$as_echo "#define DATA_SERVER 1" >>confdefs.h
+
+
+$as_echo "#define SERVER_THREAD 1" >>confdefs.h
+
+
+$as_echo "#define MPI_TS 1" >>confdefs.h
+
+     ;; #(
   MPI_MT) :
 
 
@@ -40424,6 +40628,36 @@ $as_echo "#define SERVER_THREAD 1" >>confdefs.h
 
 
 $as_echo "#define MPI_PT 1" >>confdefs.h
+
+     ;; #(
+  MPI_PR) :
+
+
+$as_echo "#define PTHREADS 1" >>confdefs.h
+
+
+$as_echo "#define DATA_SERVER 1" >>confdefs.h
+
+
+$as_echo "#define SERVER_THREAD 1" >>confdefs.h
+
+
+$as_echo "#define MPI_PR 1" >>confdefs.h
+
+     ;; #(
+  MPI3) :
+
+
+$as_echo "#define PTHREADS 1" >>confdefs.h
+
+
+$as_echo "#define DATA_SERVER 1" >>confdefs.h
+
+
+$as_echo "#define SERVER_THREAD 1" >>confdefs.h
+
+
+$as_echo "#define MPI3 1" >>confdefs.h
 
      ;; #(
   MPI_SPAWN) :
@@ -41066,6 +41300,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ARMCI_NETWORK_MPI_SPAWN_TRUE}" && test -z "${ARMCI_NETWORK_MPI_SPAWN_FALSE}"; then
   as_fn_error $? "conditional \"ARMCI_NETWORK_MPI_SPAWN\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ARMCI_NETWORK_MPI3_TRUE}" && test -z "${ARMCI_NETWORK_MPI3_FALSE}"; then
+  as_fn_error $? "conditional \"ARMCI_NETWORK_MPI3\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ARMCI_NETWORK_OFA_TRUE}" && test -z "${ARMCI_NETWORK_OFA_FALSE}"; then
