@@ -26,8 +26,8 @@
 #define USE_MPI_REQUESTS
 
 /*
-#define USE_MPI_FLUSH_LOCAL
 #define USE_MPI_WIN_ALLOC
+#define USE_MPI_FLUSH_LOCAL
 */
 
 #ifdef USE_MPI_FLUSH_LOCAL
@@ -702,6 +702,10 @@ int comex_puts(
     MPI_Request request;
     MPI_Status status;
 #endif
+    /* If data is contiguous, use comex_put */
+    if (stride_levels == 0) {
+      return comex_put(src_ptr, dst_ptr, count[0], proc, group);
+    }
     reg_win = reg_win_find(proc, dst_ptr, 0);
     ptr = reg_win->buf;
     displ = (MPI_Aint)(dst_ptr) - (MPI_Aint)(ptr);
@@ -829,6 +833,10 @@ int comex_gets(
     MPI_Request request;
     MPI_Status status;
 #endif
+    /* If data is contiguous, use comex_get */
+    if (stride_levels == 0) {
+      return comex_get(src_ptr, dst_ptr, count[0], proc, group);
+    }
     reg_win = reg_win_find(proc, src_ptr, 0);
     ptr = reg_win->buf;
     displ = (MPI_Aint)(src_ptr) - (MPI_Aint)(ptr);
@@ -1076,6 +1084,11 @@ int comex_accs(
     MPI_Status status;
 #endif
 
+    /* If data is contiguous, use comex_acc */
+    if (stride_levels == 0) {
+      return comex_acc(datatype, scale, src_ptr,
+          dst_ptr, count[0], proc, group);
+    }
     reg_win = reg_win_find(proc, dst_ptr, 0);
     ptr = reg_win->buf;
     displ = (MPI_Aint)(dst_ptr) - (MPI_Aint)(ptr);
