@@ -106,6 +106,7 @@ void ga_f2c_get_cmd_args(int *argc, char ***argv)
     }
     *argc = iargc;
     *argv = iargv;
+    iargv[iargc] = 0;
 }
 
 

@@ -197,6 +197,7 @@ void FATR _PBEGINF_()
         argv[i] = strdup(arg);
     }
 
+    argv[argc] = 0;
     tcgi_pbegin(argc, argv);
     free(argv);
 }
