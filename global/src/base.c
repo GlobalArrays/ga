@@ -3871,6 +3871,7 @@ void pnga_merge_mirrored(Integer g_a)
   char *zptr=NULL, *bptr=NULL, *nptr=NULL;
   Integer bytes, total;
   int local_sync_begin, local_sync_end;
+  long bigint;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
@@ -3892,6 +3893,7 @@ void pnga_merge_mirrored(Integer g_a)
   width = GA[handle].width;
   type = GA[handle].type;
   ndim = GA[handle].ndim;
+  bigint = 2147483647L/GAsizeof(type);
 
   /* Check whether or not all nodes contain the same number
      of processors. */
@@ -3958,7 +3960,20 @@ void pnga_merge_mirrored(Integer g_a)
         default: pnga_error("type not supported",type);
       }
       /* now that gap data has been zeroed, do a global sum on data */
-      armci_msg_gop_scope(SCOPE_MASTERS, zptr, total, "+", atype);
+      {
+        int i, len;
+        int nsteps = (int) ceil(((double)total)/((double)bigint));
+        long istart=0;
+        /* printf("%ld total %ld bigint %ld  nsteps %d \n",GAme,total,bigint,nsteps); */
+        for (i=0; i < nsteps; i++){
+
+          len=bigint;
+          if (istart+len-1 > total) len=((long)(total - istart)) + 1;
+          /* printf("%ld step %d of %d  len= %d total=%ld istart= %ld\n",GAme,(i+1),nsteps,len,total,istart); */
+          armci_msg_gop_scope(SCOPE_MASTERS, zptr+istart*GAsizeof(type), len, "+", atype);
+          istart+=len;
+        }
+      }
     } 
   } else {
     Integer _ga_tmp;
