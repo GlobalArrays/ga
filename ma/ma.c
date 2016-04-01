@@ -1376,7 +1376,7 @@ private void list_verify(list, block_type, preamble, blocks,
             /* print preamble if necessary */
             if (first_bad_block && (preamble != (char *)NULL))
             {
-                (void)printf(preamble);
+                (void)printf("%s",preamble);
                 first_bad_block = MA_FALSE;
             }
 
@@ -1400,7 +1400,7 @@ private void list_verify(list, block_type, preamble, blocks,
             /* print preamble if necessary */
             if (first_bad_block && (preamble != (char *)NULL))
             {
-                (void)printf(preamble);
+                (void)printf("%s",preamble);
                 first_bad_block = MA_FALSE;
             }
 
@@ -1425,7 +1425,7 @@ private void list_verify(list, block_type, preamble, blocks,
             /* print preamble if necessary */
             if (first_bad_block && (preamble != (char *)NULL))
             {
-                (void)printf(preamble);
+                (void)printf("%s",preamble);
                 first_bad_block = MA_FALSE;
             }
 

@@ -292,12 +292,12 @@ extern proc_list_t *PGRP_LIST;
 
 #define ga_RegionError(ndim, lo, hi, val){                           \
   int _d, _l;                                                        \
-  char *str= "cannot locate region: ";                               \
+  const char *str= "cannot locate region: ";                         \
   char err_string[ERR_STR_LEN];                                      \
-  sprintf(err_string, str);                                          \
+  sprintf(err_string, "%s", str);                                    \
   _d=0;                                                              \
   _l = strlen(str);                                                  \
-  sprintf(err_string+_l, GA[val+GA_OFFSET].name);                    \
+  sprintf(err_string+_l, "%s", GA[val+GA_OFFSET].name);              \
   _l = strlen(err_string);                                           \
   sprintf(err_string+_l, " [%ld:%ld ",(long)lo[_d],(long)hi[_d]);    \
   _l=strlen(err_string);                                             \
@@ -306,7 +306,7 @@ extern proc_list_t *PGRP_LIST;
     sprintf(err_string+_l, ",%ld:%ld ",(long)lo[_d],(long)hi[_d]);   \
     _l=strlen(err_string);                                           \
   }                                                                  \
-  sprintf(err_string+_l, "]");                                       \
+  sprintf(err_string+_l, "%s", "]");                                 \
   _l=strlen(err_string);                                             \
   pnga_error(err_string, val);                                       \
 }
