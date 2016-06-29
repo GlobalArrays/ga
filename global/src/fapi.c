@@ -3320,12 +3320,7 @@ int      alen, blen;
     wnga_matmul(transa, transb, alpha, beta, *g_a, *ailo, *aihi, *ajlo, *ajhi, *g_b, *bilo, *bihi, *bjlo, *bjhi, *g_c, *cilo, *cihi, *cjlo, *cjhi);
 }
 
-/* use ga_dgemm in ga_dgemmf.F as accumulate is sloooow in CRAY_XT */
-#ifdef CRAY_XT
-#   define GA_DGEMM ga_dgemm_DISABLE 
-#else
 #   define GA_DGEMM ga_dgemm_
-#endif
 
 #define  SET_GEMM_INDICES\
       Integer ailo = 1;\

@@ -128,11 +128,7 @@ void pnga_msg_sync()
     else
        armci_msg_barrier();
 #else
-#  ifdef LAPI
-     armci_msg_barrier();
-#  else
      tcg_synch(GA_TYPE_SYN);
-#  endif
 #endif
 }
 
@@ -151,7 +147,7 @@ void pnga_msg_pgroup_sync(Integer grp_id)
 #     endif
     }
     else {
-#     if defined(MSG_COMMS_MPI) || defined(LAPI)
+#     if defined(MSG_COMMS_MPI)
        armci_msg_barrier();
 #     else
        tcg_synch(GA_TYPE_SYN);
