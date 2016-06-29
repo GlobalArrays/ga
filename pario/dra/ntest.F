@@ -411,11 +411,7 @@ c
 
       subroutine init_char(str, len, char)
       integer len, i
-#if defined(CRAY_T3D) || defined(CRAY_T3E)
-      character*1 str(len)
-#else
       character*(*) str
-#endif
       character*1 char
       do i = 1, len -1 
          str(i:i+1) = char

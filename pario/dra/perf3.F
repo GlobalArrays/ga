@@ -16,13 +16,7 @@ c
 
 c#define MULTFILES 1
 
-#ifdef SOLARIS
-#  if MULTFILES
-#    define USEMULTFILES 1
-#  endif
-#else
 #  define USEMULTFILES 1
-#endif
 
       program io
 #include "mafdecls.fh"
@@ -33,11 +27,7 @@ c#define MULTFILES 1
       integer stack, heap
       double precision max_sz, max_disk, max_mem 
       data max_arrays, max_sz, max_disk, max_mem /10,1d8,1d10, 1d6/
-#if   defined(IBM)|| defined(CRAY_T3E)
-      data stack, heap /70000000, 4000000/
-#else
       data stack, heap /1200000, 800000/
-#endif
 c
 #include "mp3.fh"
       call ga_initialize()
