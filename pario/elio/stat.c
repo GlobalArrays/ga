@@ -97,11 +97,8 @@ int  elio_stat(char *fname, stat_t *statinfo)
     if(!S_ISREG(ufs_stat.st_mode) && !S_ISDIR(ufs_stat.st_mode))
         ELIO_ERROR(TYPEFAIL, 1);
     
-#   if defined(CRAY) || defined(NEC)
+#   if defined(CRAY)
     if(statfs(fname, &ufs_statfs, sizeof(ufs_statfs), 0) != 0)
-#   elif defined (CATAMOUNT)
-        statinfo->avail =2*1024*1024*128; 
-        return(ELIO_OK);
 #   else
         if(STATVFS(fname, &ufs_statfs) != 0)
 #   endif

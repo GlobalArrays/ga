@@ -26,10 +26,10 @@ extern void GA_Error(char*, int);
 #endif
 
 
-#if (defined(CRAY) && !defined(__crayx1)) || defined(NEC)
+#if (defined(CRAY) && !defined(__crayx1))
 #        include <sys/statfs.h>
 #        define  STATVFS statfs
-#elif defined(__FreeBSD__) || defined(MACX)
+#elif defined(__FreeBSD__)
 #        include <sys/param.h>
 #        include <sys/mount.h>
 #        define  STATVFS statfs
@@ -38,7 +38,7 @@ extern void GA_Error(char*, int);
 #        define  STATVFS _stat 
 #        define  S_ISDIR(mode) ((mode&S_IFMT) == S_IFDIR)
 #        define  S_ISREG(mode) ((mode&S_IFMT) == S_IFREG)
-#elif defined(CYGNUS) ||  defined(LINUX)  ||  defined(CYGWIN) || defined(BGL) || defined(BGP) || defined(BGQ) || defined(HPUX)
+#elif defined(LINUX)  ||  defined(CYGWIN) || defined(BGQ)
 #        include <sys/vfs.h>
 #        define  STATVFS statfs
 #        define NO_F_FRSIZE 
@@ -71,7 +71,7 @@ extern int                   elio_pending_error;
 
 
 #if !defined(PRINT_AND_ABORT)
-#   if defined(SUN) && !defined(SOLARIS)
+#   if defined(SUN)
       extern int fprintf();
       extern void fflush();
 #   endif

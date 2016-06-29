@@ -42,7 +42,7 @@
 #undef CRAY
 #endif
 
-#if  defined(AIX) || defined(DECOSF) || defined(SGITFP) || defined(SGI64) || defined(SGI_N32) || defined(CRAY) || defined(LINUXAIO)
+#if  defined(AIX) || defined(DECOSF) || defined(SGI64) || defined(CRAY) || defined(LINUXAIO)
      /* systems with Asynchronous I/O */
 #else
 #    ifndef NOAIO
@@ -831,7 +831,7 @@ Fd_t  elio_open(const char* fname, int type, int mode)
                    ELIO_ERROR_NULL(MODEFAIL, type);
    }
 
-#if defined(WIN32) || defined(CYGNUS)
+#if defined(WIN32)
    ptype |= O_BINARY;
 #endif
 
@@ -977,13 +977,7 @@ int elio_fsync(Fd_t fd)
     /* printf("syncing extent %d name %s\n", fd->extent, fd->name); */
     /*   if(ELIO_FSYNC(fd->fd)==-1 || (status != ELIO_OK)) */
 #ifndef WIN32
-#if !defined(__INTERIX) 
-#ifdef CATAMOUNT
-      status = fsync((Fd_t) fd->next);
-#else
     sync();
-#endif
-#endif
 #endif
     if(ELIO_FSYNC(fd->fd)==-1 )
       ELIO_ERROR(FSYNCFAIL, 0);

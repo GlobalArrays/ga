@@ -27,11 +27,7 @@ typedef struct {
   struct fd_struct *next;    /* Next extent */
 } fd_struct;            /* file descriptor type definition */
 typedef fd_struct* Fd_t;
-#if defined(IBM) || defined(SOLARIS) || defined(HPUX)
-typedef unsigned long long avail_t;
-#else
 typedef unsigned long avail_t;
-#endif
 
 typedef struct{
   int   fs;
