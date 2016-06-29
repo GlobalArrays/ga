@@ -230,13 +230,8 @@ void FATR eaf_errmsg_(Integer *code,  char *msg, int msglen)
 
 double FATR eaf_util_random_(Integer* seed)
 {
-#ifdef NEC
-  if(*seed) srand((unsigned) *seed);
-  return ((double) rand())*4.6566128752458e-10;
-#else
   if(*seed) srandom((unsigned) *seed);
   return ((double) random())*4.6566128752458e-10;
-#endif
 }
 
 
