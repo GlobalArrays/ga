@@ -1,0 +1,32 @@
+#cmakedefine COMEX_NETWORK_MPI3
+#cmakedefine COMEX_NETWORK_MPI_MT
+#cmakedefine COMEX_NETWORK_MPI_PR
+#cmakedefine COMEX_NETWORK_MPI_PT
+#cmakedefine COMEX_NETWORK_MPI_TS
+
+#cmakedefine01 HAVE_BLAS
+
+#define BLAS_CAXPY ${CM_BLAS_CAXPY}
+#define BLAS_DAXPY ${CM_BLAS_DAXPY}
+#define BLAS_SAXPY ${CM_BLAS_SAXPY}
+#define BLAS_ZAXPY ${CM_BLAS_ZAXPY}
+#define BLAS_CCOPY ${CM_BLAS_CCOPY}
+#define BLAS_DCOPY ${CM_BLAS_DCOPY}
+#define BLAS_SCOPY ${CM_BLAS_SCOPY}
+#define BLAS_ZCOPY ${CM_BLAS_ZCOPY}
+
+#cmakedefine01 HAVE_PTHREAD_SETAFFINITY_NP
+#cmakedefine01 HAVE_SCHED_SETAFFINITY
+#cmakedefine01 HAVE_SYS_WEAK_ALIAS_PRAGMA
+
+#cmakedefine NDEBUG
+
+#define SIZEOF_INT ${CM_SIZEOF_INT}
+#define SIZEOF_LONG ${CM_SIZEOF_LONG}
+#define SIZEOF_LONG_LONG ${CM_SIZEOF_LONG_LONG}
+#define BLAS_SIZE ${CM_BLAS_SIZE}
+
+#ifndef __cplusplus
+#cmakedefine inline ${inline}
+#endif
+#cmakedefine restrict ${restrict}
