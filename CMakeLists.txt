@@ -143,6 +143,9 @@ option (F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS "Set F77 macros" ON)
 if (ENABLE_FORTRAN)
   include( FortranCInterface )
   FortranCInterface_HEADER(${CMAKE_SOURCE_DIR}/f2c_cmake.h MACRO_NAMESPACE F77_FUNC_)
+else()
+  CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/f2c_dummy.h.in
+                ${CMAKE_SOURCE_DIR}/f2c_cmake.h )
 endif()
 
 # check size of different variables
@@ -376,7 +379,5 @@ add_subdirectory(comex)
 if (ENABLE_CXX)
   add_subdirectory(ga++/src)
 endif()
-if (ENABLE_FORTRAN)
-  add_subdirectory(ma)
-endif()
+add_subdirectory(ma)
 add_subdirectory(pario)
