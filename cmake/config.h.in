@@ -30,6 +30,8 @@
 #cmakedefine01 STATS
 #cmakedefine USE_MALLOC
 
+#cmakedefine01 HAVE_SYS_WEAK_ALIAS_PRAGMA
+
 #cmakedefine MPI3
 #cmakedefine MPI_MT
 #cmakedefine MPI_PR

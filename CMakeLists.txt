@@ -57,10 +57,10 @@ option (MPI_TS "use MPI 2-sided protocol for communication" ON)
 option (MPI_PR "use MPI progress ranks protocol for communication" OFF)
 option (MPI3 "use MPI RMA protocols for communication" OFF)
 option (ENABLE_CXX "Build C++ interface" OFF)
-if (GA_RUNTIME STREQUAL 'MPI_PROGRESS')
+if (GA_RUNTIME STREQUAL MPI_PROGRESS)
   set (MPI_TS OFF)
   set (MPI_PR ON)
-elseif (GA_RUNTIME STREQUAL 'MPI_RMA')
+elseif (GA_RUNTIME STREQUAL MPI_RMA)
   set (MPI_TS OFF)
   set (MPI3 ON)
 endif()
@@ -75,8 +75,8 @@ if (ENABLE_FORTRAN)
     DEPENDS config.h
     COMMAND ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.pl < config.h
   )
-  option (F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS "Fortran/C interface property" ON)
 endif()
+option (F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS "Fortran/C interface property" ON)
 
 INCLUDE( CheckCSourceCompiles )
 # Check for restrict keyword
@@ -145,16 +145,6 @@ if (ENABLE_FORTRAN)
   FortranCInterface_HEADER(${CMAKE_SOURCE_DIR}/f2c_cmake.h MACRO_NAMESPACE F77_FUNC_)
 endif()
 
-# Hardwire these settings. No way to check for Fortran integer size in CMake
-# (that we can find)
-set (CM_SIZEOF_F77_DOUBLE 8)
-set (CM_SIZEOF_F77_REAL 4)
-set (CM_SIZEOF_F77_INTEGER 4)
-if (ENABLE_I8)
-  set (CM_SIZEOF_F77_INTEGER 8)
-endif()
-
-set (CM_BLAS_SIZE ${CM_SIZEOF_F77_INTEGER})
 # check size of different variables
 include(CheckTypeSize)
 check_type_size("int" CM_SIZEOF_INT)
@@ -190,7 +180,13 @@ set (DECOSF 0)
 # check for numerical libraries. These should set variables BLAS_FOUND and
 # LAPACK_FOUND
 find_package(BLAS)
+if (BLAS_FOUND)
+  set(HAVE_BLAS 1)
+endif()
 find_package(LAPACK)
+if (LAPACK_FOUND)
+  set(HAVE_LAPACK 1)
+endif()
 
 # check for availability of functions by seeing if small programs compile
 CHECK_C_SOURCE_COMPILES(
@@ -202,6 +198,35 @@ return 0;
 }
 "
     HAVE_PAUSE )
+
+# check for availability of long double C-type
+CHECK_C_SOURCE_COMPILES(
+"
+int main(int argc, char *argv[])
+{
+long double x;
+return 0;
+}
+"
+    HAVE_LONG_DOUBLE )
+
+CHECK_C_SOURCE_COMPILES(
+"
+extern void weakf(int c);
+#pragma weak weakf = __weakf
+void __weakf(int c) {}
+int main(int argc, char **argv) {
+  weakf(0);
+  return(0);
+}
+"
+   HAVE_SYS_WEAK_ALIAS_PRAGMA )
+
+if (HAVE_LONG_DOUBLE)
+  set(MA_LONG_DOUBLE "long double")
+else()
+  set(MA_LONG_DOUBLE "struct {double dummy[2];}")
+endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL Linux)
   set(LINUX 1)
@@ -223,12 +248,69 @@ set (HAVE_ARMCI_GROUP_COMM 1)
 set (HAVE_ARMCI_GROUP_COMM_MEMBER 0)
 set (HAVE_ARMCI_INITIALIZED 1)
 
-CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/config.h.in
-                ${CMAKE_SOURCE_DIR}/config.h )
-
 # suppress any checks to see if test codes run. Only check for compilation.
 # use for cross-compilation situations
 option (CHECK_COMPILATION_ONLY "Check compilation only" OFF)
+
+if (ENABLE_FORTRAN)
+  if (Fortran_COMPILER_NAME MATCHES "gfortran.*")
+     set (F77_GETARG GETARG)
+     set (F77_GETARG_ARGS "i,s")
+     set (F77_GETARG_DECLS "intrinsic GETARG")
+     set (F77_IARGC IARGC)
+  elseif (Fortran_COMPILER_NAME MATCHES "ifort.*")
+     set (F77_GETARG GETARG)
+     set (F77_GETARG_ARGS "i,s")
+     set (F77_GETARG_DECLS "GETARG")
+     set (F77_IARGC IARGC)
+  elseif (Fortran_COMPILER_NAME MATCHES "g77.*")
+     set (F77_GETARG GETARG)
+     set (F77_GETARG_ARGS "i,s")
+     set (F77_GETARG_DECLS "intrinsic GETARG")
+     set (F77_IARGC IARGC)
+  else()
+     set (F77_GETARG GETARG)
+     set (F77_GETARG_ARGS "i,s")
+     set (F77_GETARG_DECLS "external GETARG")
+     set (F77_IARGC IARGC)
+  endif()
+else()
+# need to set these variable even if only compiling C/C++
+   set (F77_GETARG GETARG)
+   set (F77_GETARG_ARGS "i,s")
+   set (F77_GETARG_DECLS "external GETARG")
+   set (F77_IARGC IARGC)
+endif() 
+
+# Hardwire these settings. No way to check for Fortran integer size in CMake
+# (that we can find)
+set (CM_SIZEOF_F77_DOUBLE 8)
+set (CM_SIZEOF_F77_REAL 4)
+set (CM_SIZEOF_F77_INTEGER 4)
+set (F2C_INTEGER_C_TYPE int)
+set (F2C_REAL_C_TYPE float)
+set (F2C_DOUBLE_PRECISION_C_TYPE double)
+if (ENABLE_I8)
+  set (CM_SIZEOF_F77_INTEGER 8)
+  set (F2C_INTEGER_C_TYPE long)
+endif()
+set (C_POINTER_AS_INTEGER int)
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set (C_POINTER_AS_INTEGER long)
+endif()
+set (CM_BLAS_SIZE ${CM_SIZEOF_F77_INTEGER})
+
+# -------------------------------------------------------------
+# Create include files from templates
+# -------------------------------------------------------------
+CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/config.h.in
+                ${CMAKE_SOURCE_DIR}/config.h )
+CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/farg.h.in
+                ${CMAKE_SOURCE_DIR}/gaf2c/farg.h )
+CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/typesf2c.h.in
+                ${CMAKE_SOURCE_DIR}/gaf2c/typesf2c.h )
+CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/matypes.h.in
+                ${CMAKE_SOURCE_DIR}/ma/matypes.h )
 
 # -------------------------------------------------------------
 # MPI compiler
