@@ -375,7 +375,7 @@ add_dependencies(ga machine_files)
 # Global Arrays library installation
 # -------------------------------------------------------------
 
-target_link_libraries(ga)
+target_link_libraries(ga ${LAPACK_LIBRARIES})
 
 install (TARGETS
   ga
