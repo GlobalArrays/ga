@@ -59,7 +59,7 @@ if (ENABLE_FORTRAN)
       sf/sf.fh
       sf/sff2c.h)
   set(SF_FORTRAN_FILES
-      sf_fortran.c)
+      sf/sf_fortran.c)
 endif()
 
 set(DRA_HEADERS
