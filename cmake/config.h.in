@@ -18,6 +18,9 @@
 #cmakedefine01 HAVE_WINDOWS_H
 
 #cmakedefine01 ENABLE_FORTRAN
+#cmakedefine01 NOFORT
+
+#cmakedefine NOUSE_MMAP
 
 #cmakedefine NDEBUG
 
