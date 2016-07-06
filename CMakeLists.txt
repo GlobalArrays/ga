@@ -383,6 +383,14 @@ install (TARGETS
 )
 
 # -------------------------------------------------------------
+# Global Arrays header installation
+# -------------------------------------------------------------
+install(FILES
+  gaf2c/typesf2c.h
+  DESTINATION include
+)
+
+# -------------------------------------------------------------
 # Subdirectories
 # -------------------------------------------------------------
 add_subdirectory(global/src)
