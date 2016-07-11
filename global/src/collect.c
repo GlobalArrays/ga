@@ -5,6 +5,9 @@
 #if HAVE_STRING_H
 #   include "string.h"
 #endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
 
 /* $Id: collect.c,v 1.23.2.5 2007-08-03 19:52:28 manoj Exp $ */
 #include "typesf2c.h"
@@ -37,23 +40,38 @@ extern MPI_Comm armci_group_comm(ARMCI_Group *group);
 #endif
 void pnga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root)
 {
+  long bigint = 2147483647L;
+  int i, nsteps;//= (int) ceil(((double)len)/((double)bigint));
+  long len_small;
+  void *buffer_ptr;
+  long istart=0;
+  /*          printf("%ld len %ld bigint %ld  \n",GAme,len,bigint); */
+    nsteps = (int) ceil(((double)len)/((double)bigint));
+    /*          printf("%ld len %ld bigint %ld  nsteps %d \n",GAme,len,bigint,nsteps); */
+  for (i=0; i < nsteps; i++){
+    len_small=bigint;
+    buffer_ptr=buffer+istart;
+    if (istart+len_small > len) len_small=((long)(len - istart));
+    /*               printf("%ld step %d of %d  len= %d total=%ld istart= %ld\n",GAme,(i+1),nsteps,len_small,len,istart); */
 #ifdef ARMCI_COLLECTIVES
     int p_grp = (int)pnga_pgroup_get_default();
     if (p_grp > 0) {
 #   ifdef MSG_COMMS_MPI
         int aroot = PGRP_LIST[p_grp].inv_map_proc_list[root];
-        armci_msg_group_bcast_scope(SCOPE_ALL,buffer, (int)len, aroot,(&(PGRP_LIST[p_grp].group)));
+        armci_msg_group_bcast_scope(SCOPE_ALL,buffer_ptr, (int)len_small, aroot,(&(PGRP_LIST[p_grp].group)));
 #   endif
     } else {
-        armci_msg_bcast(buffer, (int)len, (int)root);
+      armci_msg_bcast(buffer_ptr, (int)len_small, (int)root);
     }
 #else
 #   ifdef MSG_COMMS_MPI
-    MPI_Bcast(buffer, (int)len, MPI_CHAR, (int)root, ARMCI_COMM_WORLD);
+    MPI_Bcast(buffer_ptr, (int)len_small, MPI_CHAR, (int)root, ARMCI_COMM_WORLD);
 #   else
-    tcg_brdcst(type, buffer, len, root);
+    tcg_brdcst(type, buffer_ptr, len_small, root);
 #   endif
 #endif
+          istart+=len_small;
+  }
 }
 
 
