@@ -7,7 +7,7 @@ AC_DEFUN([GA_F77_ELPA_TEST], [AC_LANG_CONFTEST([AC_LANG_PROGRAM([],
       logical status
       integer i4
       double precision dscal8,darray8(2)
-      status = SOLVE_EVP_REAL(i4,i4,darray8,i4,
+      call SOLVE_EVP_REAL(i4,i4,darray8,i4,
      C     darray8,darray8,i4,i4,i4,i4)]])])
 ])
 
