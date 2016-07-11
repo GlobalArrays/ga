@@ -1,18 +1,6 @@
 #if HAVE_CONFIG_H
 #   include "config.fh"
 #endif
-c
-c                                   NOTICE
-c
-c   This software is being made available for internal testing and
-c   evaluation purposes only. This software is a pre-release test version
-c   which has not yet been authenticated and cleared for publication. Adherence
-c   to this notice may be necessary for the author, Battelle Memorial
-c   Institute, to successfully assert copyright in and commercialize this
-c   software. This software is not intended for duplication or distribution
-c   to third parties without the permission of the Manager of Software
-c   Products at Pacific Northwest Laboratory, Richland, Washington,  99352.
-c
       subroutine rdpar
 #include "common.fh"
       double precision x,ran1
