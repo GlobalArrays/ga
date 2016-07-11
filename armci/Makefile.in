@@ -96,9 +96,9 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 	$(am__EXEEXT_11) $(am__EXEEXT_12) $(am__EXEEXT_13) \
 	$(am__EXEEXT_14) $(am__EXEEXT_15) $(am__EXEEXT_16)
 @ARMCI_NETWORK_EXTERNAL_FALSE@am__append_1 = libarmci.la
-@ARMCI_NETWORK_COMEX_TRUE@am__append_2 = -I$(abs_srcdir)/../comex/src-armci
-@ARMCI_NETWORK_COMEX_TRUE@am__append_3 = -L$(abs_builddir)/../comex
-@ARMCI_NETWORK_COMEX_TRUE@am__append_4 = $(abs_builddir)/../comex/libarmci.la
+@ARMCI_NETWORK_COMEX_TRUE@am__append_2 = -I$(abs_srcdir)/../comex/src-armci $(BLAS_CPPFLAGS)
+@ARMCI_NETWORK_COMEX_TRUE@am__append_3 = -L$(abs_builddir)/../comex $(BLAS_LDFLAGS)
+@ARMCI_NETWORK_COMEX_TRUE@am__append_4 = $(abs_builddir)/../comex/libarmci.la $(BLAS_LIBS)
 @MSG_COMMS_MPI_FALSE@am__append_5 = -I$(top_srcdir)/tcgmsg
 @ARMCI_NETWORK_EXTERNAL_TRUE@am__append_6 = $(ARMCI_NETWORK_LIBS) \
 @ARMCI_NETWORK_EXTERNAL_TRUE@	$(GA_MP_LIBS)
@@ -492,7 +492,9 @@ TESTS = $(am__EXEEXT_17) $(am__EXEEXT_18)
 XFAIL_TESTS = $(am__EXEEXT_20) $(am__EXEEXT_20)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_as_no_i386asm.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/../comex/m4/comex_arg_parse.m4 \
+	$(top_srcdir)/../comex/m4/comex_blas.m4 \
+	$(top_srcdir)/../m4/armci_as_no_i386asm.m4 \
 	$(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/armci_cxx_opt.m4 \
 	$(top_srcdir)/../m4/armci_enable_gpc.m4 \
@@ -572,11 +574,13 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-am__DEPENDENCIES_2 = $(am__append_4)
-@ARMCI_NETWORK_EXTERNAL_FALSE@am__DEPENDENCIES_3 =  \
+@ARMCI_NETWORK_COMEX_TRUE@am__DEPENDENCIES_2 = $(abs_builddir)/../comex/libarmci.la \
+@ARMCI_NETWORK_COMEX_TRUE@	$(am__DEPENDENCIES_1)
+am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2)
+@ARMCI_NETWORK_EXTERNAL_FALSE@am__DEPENDENCIES_4 =  \
 @ARMCI_NETWORK_EXTERNAL_FALSE@	$(am__DEPENDENCIES_1) \
-@ARMCI_NETWORK_EXTERNAL_FALSE@	$(am__DEPENDENCIES_2)
-libarmci_la_DEPENDENCIES = $(am__DEPENDENCIES_3)
+@ARMCI_NETWORK_EXTERNAL_FALSE@	$(am__DEPENDENCIES_3)
+libarmci_la_DEPENDENCIES = $(am__DEPENDENCIES_4)
 am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src-portals/aggregate.c src-portals/armci.c \
 	src-portals/armcip.h src-portals/armci_portals.c \
@@ -957,15 +961,15 @@ am_examples_benchmarks_RandomAccess_simple_simple_OBJECTS =  \
 examples_benchmarks_RandomAccess_simple_simple_OBJECTS =  \
 	$(am_examples_benchmarks_RandomAccess_simple_simple_OBJECTS)
 examples_benchmarks_RandomAccess_simple_simple_LDADD = $(LDADD)
-@ARMCI_NETWORK_EXTERNAL_TRUE@am__DEPENDENCIES_4 =  \
-@ARMCI_NETWORK_EXTERNAL_TRUE@	$(am__DEPENDENCIES_2) \
+@ARMCI_NETWORK_EXTERNAL_TRUE@am__DEPENDENCIES_5 =  \
+@ARMCI_NETWORK_EXTERNAL_TRUE@	$(am__DEPENDENCIES_3) \
 @ARMCI_NETWORK_EXTERNAL_TRUE@	$(am__DEPENDENCIES_1)
-@ARMCI_NETWORK_EXTERNAL_FALSE@am__DEPENDENCIES_5 = libarmci.la \
+@ARMCI_NETWORK_EXTERNAL_FALSE@am__DEPENDENCIES_6 = libarmci.la \
 @ARMCI_NETWORK_EXTERNAL_FALSE@	$(LTLIBOBJS) \
 @ARMCI_NETWORK_EXTERNAL_FALSE@	$(am__DEPENDENCIES_1) \
-@ARMCI_NETWORK_EXTERNAL_FALSE@	$(am__DEPENDENCIES_2)
+@ARMCI_NETWORK_EXTERNAL_FALSE@	$(am__DEPENDENCIES_3)
 examples_benchmarks_RandomAccess_simple_simple_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_SOURCES_DIST =  \
 	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket.c \
@@ -978,7 +982,7 @@ examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_OBJECTS = $(am_examples_b
 examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_LDADD =  \
 	$(LDADD)
 examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_benchmarks_cg_armci_sharedmemory_cg_SOURCES_DIST =  \
 	examples/benchmarks/cg/armci_sharedmemory/cg.c \
@@ -996,7 +1000,7 @@ examples_benchmarks_cg_armci_sharedmemory_cg_OBJECTS =  \
 	$(am_examples_benchmarks_cg_armci_sharedmemory_cg_OBJECTS)
 examples_benchmarks_cg_armci_sharedmemory_cg_LDADD = $(LDADD)
 examples_benchmarks_cg_armci_sharedmemory_cg_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_benchmarks_lu_armci_blocking_lu_SOURCES_DIST =  \
 	examples/benchmarks/lu/armci_blocking/lu.c \
@@ -1010,7 +1014,7 @@ examples_benchmarks_lu_armci_blocking_lu_OBJECTS =  \
 	$(am_examples_benchmarks_lu_armci_blocking_lu_OBJECTS)
 examples_benchmarks_lu_armci_blocking_lu_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_blocking_lu_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_benchmarks_lu_armci_blocking_lu_b_bc_SOURCES_DIST =  \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc.c \
@@ -1024,7 +1028,7 @@ examples_benchmarks_lu_armci_blocking_lu_b_bc_OBJECTS =  \
 	$(am_examples_benchmarks_lu_armci_blocking_lu_b_bc_OBJECTS)
 examples_benchmarks_lu_armci_blocking_lu_b_bc_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_blocking_lu_b_bc_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_benchmarks_lu_armci_blocking_lu_block_SOURCES_DIST =  \
 	examples/benchmarks/lu/armci_blocking/lu-block.c \
@@ -1038,7 +1042,7 @@ examples_benchmarks_lu_armci_blocking_lu_block_OBJECTS =  \
 	$(am_examples_benchmarks_lu_armci_blocking_lu_block_OBJECTS)
 examples_benchmarks_lu_armci_blocking_lu_block_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_blocking_lu_block_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_benchmarks_lu_armci_multithreaded_lu_block_th_SOURCES_DIST =  \
 	examples/benchmarks/lu/armci_multithreaded/lu-block-th.c \
@@ -1051,7 +1055,7 @@ examples_benchmarks_lu_armci_multithreaded_lu_block_th_OBJECTS = $(am_examples_b
 examples_benchmarks_lu_armci_multithreaded_lu_block_th_LDADD =  \
 	$(LDADD)
 examples_benchmarks_lu_armci_multithreaded_lu_block_th_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_benchmarks_lu_armci_nonblocking_lu_nb_get_SOURCES_DIST =  \
 	examples/benchmarks/lu/armci_nonblocking/lu_nb_get.c \
@@ -1064,7 +1068,7 @@ am_examples_benchmarks_lu_armci_nonblocking_lu_nb_get_OBJECTS =  \
 examples_benchmarks_lu_armci_nonblocking_lu_nb_get_OBJECTS = $(am_examples_benchmarks_lu_armci_nonblocking_lu_nb_get_OBJECTS)
 examples_benchmarks_lu_armci_nonblocking_lu_nb_get_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_nonblocking_lu_nb_get_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_benchmarks_lu_armci_nonblocking_lu_nb_put_SOURCES_DIST =  \
 	examples/benchmarks/lu/armci_nonblocking/lu_nb_put.c \
@@ -1077,7 +1081,7 @@ am_examples_benchmarks_lu_armci_nonblocking_lu_nb_put_OBJECTS =  \
 examples_benchmarks_lu_armci_nonblocking_lu_nb_put_OBJECTS = $(am_examples_benchmarks_lu_armci_nonblocking_lu_nb_put_OBJECTS)
 examples_benchmarks_lu_armci_nonblocking_lu_nb_put_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_nonblocking_lu_nb_put_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_benchmarks_lu_pthreads_lu_thread_SOURCES_DIST =  \
 	examples/benchmarks/lu/pthreads/barrier.c \
@@ -1104,7 +1108,7 @@ examples_features_aggregation_simple_simple_OBJECTS =  \
 	$(am_examples_features_aggregation_simple_simple_OBJECTS)
 examples_features_aggregation_simple_simple_LDADD = $(LDADD)
 examples_features_aggregation_simple_simple_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_SOURCES_DIST = examples/features/aggregation/sparse_matvecmul/sparse_matvecmul.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
@@ -1114,7 +1118,7 @@ examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_OBJECTS = $(am_e
 examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_LDADD =  \
 	$(LDADD)
 examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_features_concurrency_multidma_multidma_SOURCES_DIST =  \
 	examples/features/concurrency/multidma/multidma.c \
@@ -1126,7 +1130,7 @@ examples_features_concurrency_multidma_multidma_OBJECTS =  \
 	$(am_examples_features_concurrency_multidma_multidma_OBJECTS)
 examples_features_concurrency_multidma_multidma_LDADD = $(LDADD)
 examples_features_concurrency_multidma_multidma_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_features_concurrency_simple_comdegree_SOURCES_DIST =  \
 	examples/features/concurrency/simple/comdegree.c \
@@ -1138,7 +1142,7 @@ examples_features_concurrency_simple_comdegree_OBJECTS =  \
 	$(am_examples_features_concurrency_simple_comdegree_OBJECTS)
 examples_features_concurrency_simple_comdegree_LDADD = $(LDADD)
 examples_features_concurrency_simple_comdegree_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_features_gpc_hashtable_test_hashtable_SOURCES_DIST =  \
 	examples/features/gpc/hashtable/DistHashmap.cc \
@@ -1163,10 +1167,10 @@ am_examples_features_gpc_hashtable_test_hashtable_OBJECTS =  \
 	$(am__objects_34)
 examples_features_gpc_hashtable_test_hashtable_OBJECTS =  \
 	$(am_examples_features_gpc_hashtable_test_hashtable_OBJECTS)
-am__DEPENDENCIES_6 = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+am__DEPENDENCIES_7 = $(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 examples_features_gpc_hashtable_test_hashtable_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_6)
+	$(am__DEPENDENCIES_7)
 examples_features_gpc_hashtable_test_hashtable_LINK = $(LIBTOOL) \
 	$(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1182,7 +1186,7 @@ examples_features_non_blocking_overlap_overlap_OBJECTS =  \
 	$(am_examples_features_non_blocking_overlap_overlap_OBJECTS)
 examples_features_non_blocking_overlap_overlap_LDADD = $(LDADD)
 examples_features_non_blocking_overlap_overlap_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_features_non_blocking_simple_simple_SOURCES_DIST =  \
 	examples/features/non-blocking/simple/simple.c \
@@ -1194,7 +1198,7 @@ examples_features_non_blocking_simple_simple_OBJECTS =  \
 	$(am_examples_features_non_blocking_simple_simple_OBJECTS)
 examples_features_non_blocking_simple_simple_LDADD = $(LDADD)
 examples_features_non_blocking_simple_simple_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_features_notification_simple_testnotify_SOURCES_DIST =  \
 	examples/features/notification/simple/testnotify.c \
@@ -1205,7 +1209,7 @@ am_examples_features_notification_simple_testnotify_OBJECTS =  \
 examples_features_notification_simple_testnotify_OBJECTS = $(am_examples_features_notification_simple_testnotify_OBJECTS)
 examples_features_notification_simple_testnotify_LDADD = $(LDADD)
 examples_features_notification_simple_testnotify_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_features_proc_affinity_computation_impact_computation_impact_SOURCES_DIST = examples/features/proc_affinity/computation_impact/computation_impact.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
@@ -1213,7 +1217,7 @@ am_examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS
 	$(am__objects_34)
 examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS = $(am_examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS)
 examples_features_proc_affinity_computation_impact_computation_impact_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_6)
+	$(am__DEPENDENCIES_7) $(am__DEPENDENCIES_1)
 examples_features_proc_affinity_computation_impact_computation_impact_LINK =  \
 	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -1229,7 +1233,7 @@ examples_features_proc_affinity_simple_simple_OBJECTS =  \
 	$(am_examples_features_proc_affinity_simple_simple_OBJECTS)
 examples_features_proc_affinity_simple_simple_LDADD = $(LDADD)
 examples_features_proc_affinity_simple_simple_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_features_symmetric_memory_simple_simple_SOURCES_DIST =  \
 	examples/features/symmetric_memory/simple/simple.c \
@@ -1240,7 +1244,7 @@ am_examples_features_symmetric_memory_simple_simple_OBJECTS =  \
 examples_features_symmetric_memory_simple_simple_OBJECTS = $(am_examples_features_symmetric_memory_simple_simple_OBJECTS)
 examples_features_symmetric_memory_simple_simple_LDADD = $(LDADD)
 examples_features_symmetric_memory_simple_simple_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__examples_simpleApps_transp1D_c_SOURCES_DIST =  \
 	examples/simpleApps/transp1D-c.c testing/rpl_armci_msg_init.c \
@@ -1250,182 +1254,182 @@ am_examples_simpleApps_transp1D_c_OBJECTS =  \
 examples_simpleApps_transp1D_c_OBJECTS =  \
 	$(am_examples_simpleApps_transp1D_c_OBJECTS)
 examples_simpleApps_transp1D_c_LDADD = $(LDADD)
-examples_simpleApps_transp1D_c_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+examples_simpleApps_transp1D_c_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__parallel_SOURCES_DIST = tcgmsg/ipcv4.0/parallel.c
 @MSG_COMMS_TCGMSG4_TRUE@am_parallel_OBJECTS =  \
 @MSG_COMMS_TCGMSG4_TRUE@	tcgmsg/ipcv4.0/parallel.$(OBJEXT)
 parallel_OBJECTS = $(am_parallel_OBJECTS)
 parallel_LDADD = $(LDADD)
-parallel_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+parallel_DEPENDENCIES = $(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__testing_clone_SOURCES_DIST = testing/clone.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_clone_OBJECTS = testing/clone.$(OBJEXT) $(am__objects_34)
 testing_clone_OBJECTS = $(am_testing_clone_OBJECTS)
 testing_clone_LDADD = $(LDADD)
-testing_clone_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_clone_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_fork_SOURCES_DIST = testing/fork.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_fork_OBJECTS = testing/fork.$(OBJEXT) $(am__objects_34)
 testing_fork_OBJECTS = $(am_testing_fork_OBJECTS)
 testing_fork_LDADD = $(LDADD)
-testing_fork_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_fork_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_fttest_SOURCES_DIST = testing/fttest.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_fttest_OBJECTS = testing/fttest.$(OBJEXT) $(am__objects_34)
 testing_fttest_OBJECTS = $(am_testing_fttest_OBJECTS)
 testing_fttest_LDADD = $(LDADD)
-testing_fttest_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_fttest_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_gpctest_SOURCES_DIST = testing/gpctest.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_gpctest_OBJECTS = testing/gpctest.$(OBJEXT) \
 	$(am__objects_34)
 testing_gpctest_OBJECTS = $(am_testing_gpctest_OBJECTS)
 testing_gpctest_LDADD = $(LDADD)
-testing_gpctest_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_gpctest_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_ipctest_SOURCES_DIST = testing/ipctest.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_ipctest_OBJECTS = testing/ipctest.$(OBJEXT) \
 	$(am__objects_34)
 testing_ipctest_OBJECTS = $(am_testing_ipctest_OBJECTS)
 testing_ipctest_LDADD = $(LDADD)
-testing_ipctest_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_ipctest_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_msgcheck_SOURCES_DIST = testing/msgcheck.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_msgcheck_OBJECTS = testing/msgcheck.$(OBJEXT) \
 	$(am__objects_34)
 testing_msgcheck_OBJECTS = $(am_testing_msgcheck_OBJECTS)
 testing_msgcheck_LDADD = $(LDADD)
-testing_msgcheck_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_msgcheck_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_origptl_SOURCES_DIST = testing/origptl.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_origptl_OBJECTS = testing/origptl.$(OBJEXT) \
 	$(am__objects_34)
 testing_origptl_OBJECTS = $(am_testing_origptl_OBJECTS)
 testing_origptl_LDADD = $(LDADD)
-testing_origptl_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_origptl_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_perf_SOURCES_DIST = testing/perf.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_perf_OBJECTS = testing/perf.$(OBJEXT) $(am__objects_34)
 testing_perf_OBJECTS = $(am_testing_perf_OBJECTS)
 testing_perf_LDADD = $(LDADD)
-testing_perf_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_perf_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_perf2_SOURCES_DIST = testing/perf2.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_perf2_OBJECTS = testing/perf2.$(OBJEXT) $(am__objects_34)
 testing_perf2_OBJECTS = $(am_testing_perf2_OBJECTS)
 testing_perf2_LDADD = $(LDADD)
-testing_perf2_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_perf2_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_perf_aggr_SOURCES_DIST = testing/perf_aggr.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_perf_aggr_OBJECTS = testing/perf_aggr.$(OBJEXT) \
 	$(am__objects_34)
 testing_perf_aggr_OBJECTS = $(am_testing_perf_aggr_OBJECTS)
 testing_perf_aggr_LDADD = $(LDADD)
-testing_perf_aggr_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_perf_aggr_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_perf_nb_SOURCES_DIST = testing/perf_nb.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_perf_nb_OBJECTS = testing/perf_nb.$(OBJEXT) \
 	$(am__objects_34)
 testing_perf_nb_OBJECTS = $(am_testing_perf_nb_OBJECTS)
 testing_perf_nb_LDADD = $(LDADD)
-testing_perf_nb_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_perf_nb_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_perf_strided_SOURCES_DIST = testing/perf_strided.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_perf_strided_OBJECTS = testing/perf_strided.$(OBJEXT) \
 	$(am__objects_34)
 testing_perf_strided_OBJECTS = $(am_testing_perf_strided_OBJECTS)
 testing_perf_strided_LDADD = $(LDADD)
-testing_perf_strided_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_perf_strided_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_ptltest_SOURCES_DIST = testing/ptltest.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_ptltest_OBJECTS = testing/ptltest.$(OBJEXT) \
 	$(am__objects_34)
 testing_ptltest_OBJECTS = $(am_testing_ptltest_OBJECTS)
 testing_ptltest_LDADD = $(LDADD)
-testing_ptltest_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_ptltest_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_shmclean_SOURCES_DIST = testing/shmclean.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_shmclean_OBJECTS = testing/shmclean.$(OBJEXT) \
 	$(am__objects_34)
 testing_shmclean_OBJECTS = $(am_testing_shmclean_OBJECTS)
 testing_shmclean_LDADD = $(LDADD)
-testing_shmclean_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_shmclean_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_shmtest_SOURCES_DIST = testing/shmtest.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_shmtest_OBJECTS = testing/shmtest.$(OBJEXT) \
 	$(am__objects_34)
 testing_shmtest_OBJECTS = $(am_testing_shmtest_OBJECTS)
 testing_shmtest_LDADD = $(LDADD)
-testing_shmtest_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_shmtest_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_simple_SOURCES_DIST = testing/simple.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_simple_OBJECTS = testing/simple.$(OBJEXT) $(am__objects_34)
 testing_simple_OBJECTS = $(am_testing_simple_OBJECTS)
 testing_simple_LDADD = $(LDADD)
-testing_simple_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_simple_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_simplelock_SOURCES_DIST = testing/simplelock.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_simplelock_OBJECTS = testing/simplelock.$(OBJEXT) \
 	$(am__objects_34)
 testing_simplelock_OBJECTS = $(am_testing_simplelock_OBJECTS)
 testing_simplelock_LDADD = $(LDADD)
-testing_simplelock_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_simplelock_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_te_SOURCES_DIST = testing/te.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_te_OBJECTS = testing/te.$(OBJEXT) $(am__objects_34)
 testing_te_OBJECTS = $(am_testing_te_OBJECTS)
 testing_te_LDADD = $(LDADD)
-testing_te_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+testing_te_DEPENDENCIES = $(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_1)
 am__testing_test_SOURCES_DIST = testing/test.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_test_OBJECTS = testing/test.$(OBJEXT) $(am__objects_34)
 testing_test_OBJECTS = $(am_testing_test_OBJECTS)
 testing_test_LDADD = $(LDADD)
-testing_test_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_test_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_test2_SOURCES_DIST = testing/test2.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_test2_OBJECTS = testing/test2.$(OBJEXT) $(am__objects_34)
 testing_test2_OBJECTS = $(am_testing_test2_OBJECTS)
 testing_test2_LDADD = $(LDADD)
-testing_test2_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_test2_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_test_groups_SOURCES_DIST = testing/test_groups.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_test_groups_OBJECTS = testing/test_groups.$(OBJEXT) \
 	$(am__objects_34)
 testing_test_groups_OBJECTS = $(am_testing_test_groups_OBJECTS)
 testing_test_groups_LDADD = $(LDADD)
-testing_test_groups_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_test_groups_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_test_mt_SOURCES_DIST = testing/test_mt.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_test_mt_OBJECTS = testing/test_mt.$(OBJEXT) \
 	$(am__objects_34)
 testing_test_mt_OBJECTS = $(am_testing_test_mt_OBJECTS)
 testing_test_mt_LDADD = $(LDADD)
-testing_test_mt_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_test_mt_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_testitr_SOURCES_DIST = testing/testitr.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 @HAVE_ARMCI_MSG_INIT_FALSE@am__objects_35 = testing/testing_testitr-rpl_armci_msg_init.$(OBJEXT)
@@ -1435,16 +1439,16 @@ am_testing_testitr_OBJECTS =  \
 	testing/testing_testitr-testitr.$(OBJEXT) $(am__objects_37)
 testing_testitr_OBJECTS = $(am_testing_testitr_OBJECTS)
 testing_testitr_LDADD = $(LDADD)
-testing_testitr_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_testitr_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 am__testing_testnotify_SOURCES_DIST = testing/testnotify.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_testnotify_OBJECTS = testing/testnotify.$(OBJEXT) \
 	$(am__objects_34)
 testing_testnotify_OBJECTS = $(am_testing_testnotify_OBJECTS)
 testing_testnotify_LDADD = $(LDADD)
-testing_testnotify_DEPENDENCIES = $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1)
+testing_testnotify_DEPENDENCIES = $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__depfiles_maybe = depfiles
@@ -1724,6 +1728,9 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BLAS_CPPFLAGS = @BLAS_CPPFLAGS@
+BLAS_LDFLAGS = @BLAS_LDFLAGS@
+BLAS_LIBS = @BLAS_LIBS@
 CC = @CC@
 CCAS = @CCAS@
 CCASDEPMODE = @CCASDEPMODE@
@@ -1855,7 +1862,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 
 # The usual aclocal nonsense to get include paths right.
-ACLOCAL_AMFLAGS = -I m4 -I ../m4
+ACLOCAL_AMFLAGS = -I m4 -I ../m4 -I ../comex/m4
 
 # All public headers, installed programs, test programs, and example programs
 # are listed in these variables.  Appended to throughout.  These are the

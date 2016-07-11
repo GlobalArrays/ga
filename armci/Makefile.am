@@ -18,7 +18,7 @@
 #
 
 # The usual aclocal nonsense to get include paths right.
-ACLOCAL_AMFLAGS = -I m4 -I ../m4
+ACLOCAL_AMFLAGS = -I m4 -I ../m4 -I ../comex/m4
 
 # All public headers, installed programs, test programs, and example programs
 # are listed in these variables.  Appended to throughout.  These are the
@@ -50,9 +50,9 @@ nodist_libarmci_la_SOURCES =
 libarmci_la_LIBADD =
 
 if ARMCI_NETWORK_COMEX
-ARMCI_NETWORK_CPPFLAGS += -I$(abs_srcdir)/../comex/src-armci
-ARMCI_NETWORK_LDFLAGS += -L$(abs_builddir)/../comex
-ARMCI_NETWORK_LIBS += $(abs_builddir)/../comex/libarmci.la
+ARMCI_NETWORK_CPPFLAGS += -I$(abs_srcdir)/../comex/src-armci $(BLAS_CPPFLAGS)
+ARMCI_NETWORK_LDFLAGS += -L$(abs_builddir)/../comex $(BLAS_LDFLAGS)
+ARMCI_NETWORK_LIBS += $(abs_builddir)/../comex/libarmci.la $(BLAS_LIBS)
 endif
 
 AM_FFLAGS += $(ARMCI_FOPT)

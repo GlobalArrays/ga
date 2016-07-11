@@ -27,6 +27,33 @@
 /* Define to 1 on BlueGene/P systems */
 #undef BGP
 
+/* Define to name of caxpy routine to call from C */
+#undef BLAS_CAXPY
+
+/* Define to name of ccopy routine to call from C */
+#undef BLAS_CCOPY
+
+/* Define to name of daxpy routine to call from C */
+#undef BLAS_DAXPY
+
+/* Define to name of dcopy routine to call from C */
+#undef BLAS_DCOPY
+
+/* Define to name of saxpy routine to call from C */
+#undef BLAS_SAXPY
+
+/* Define to name of scopy routine to call from C */
+#undef BLAS_SCOPY
+
+/* Define to sizeof(INTEGER) used to compile BLAS */
+#undef BLAS_SIZE
+
+/* Define to name of zaxpy routine to call from C */
+#undef BLAS_ZAXPY
+
+/* Define to name of zcopy routine to call from C */
+#undef BLAS_ZCOPY
+
 /* Define to 1 on Cray XT systems using Catamount */
 #undef CATAMOUNT
 
@@ -113,6 +140,9 @@
 
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
+
+/* Define to 1 if using external BLAS library */
+#undef HAVE_BLAS
 
 /* Define to 1 if you have the `bzero' function. */
 #undef HAVE_BZERO

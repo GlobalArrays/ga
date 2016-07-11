@@ -231,8 +231,15 @@ ARMCI_AS_NO_I386ASM
 # to many of them requiring Fortran. An enthusiastic user of the lone test
 # program can still build it if they are highly motivated -- but the build will
 # not be automated.
+#
+# The ARMCI tests are still supported when building a compatible
+# libarmci from the comex sources. Depending on how comex is configured,
+# this may add BLAS as a dependency. The COMEX_BLAS test will add the
+# HAVE_BLAS automake condition, however HAVE_LAPACK will remain forced
+# to false in order to disable automatically building the lone test as
+# described above.
 ###############################################################################
-AM_CONDITIONAL([HAVE_BLAS], [test 0 = 1])
+COMEX_BLAS
 AM_CONDITIONAL([HAVE_LAPACK], [test 0 = 1])
 
 ###############################################################################

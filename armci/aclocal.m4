@@ -1088,6 +1088,8 @@ AC_SUBST([am__tar])
 AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
+m4_include([../comex/m4/comex_arg_parse.m4])
+m4_include([../comex/m4/comex_blas.m4])
 m4_include([../m4/armci_as_no_i386asm.m4])
 m4_include([../m4/armci_c_opt.m4])
 m4_include([../m4/armci_cxx_opt.m4])
