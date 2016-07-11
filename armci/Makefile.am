@@ -169,51 +169,10 @@ libarmci_la_SOURCES += src/xfer/vector.c
 if MSG_COMMS_MPI
 libarmci_la_SOURCES += src/common/groups.c
 endif
-if ARMCI_NETWORK_BGML
-AM_CPPFLAGS += -I$(top_srcdir)/src/devices/bgml
-libarmci_la_SOURCES += src/devices/bgml/bgmlacc.h
-libarmci_la_SOURCES += src/devices/bgml/bgml.c
-libarmci_la_SOURCES += src/devices/bgml/bgmldefs.h
-libarmci_la_SOURCES += src/devices/bgml/bgml.h
-endif
 if ARMCI_NETWORK_CRAY_SHMEM
 AM_CPPFLAGS += -I$(top_srcdir)/src/devices/cray-shmem
 libarmci_la_SOURCES += src/memory/shmalloc.c
 endif
-if ARMCI_NETWORK_DCMF
-AM_CPPFLAGS += -I$(top_srcdir)/src/devices/dcmf
-libarmci_la_SOURCES += src/devices/dcmf/armcix.h
-if DCMF_VER_2
-libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_acc.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_fence.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_get.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_impl.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_lock.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_put.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_rmw.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_wait.c
-endif
-if DCMF_VER_0_2
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_acc.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_fence.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_get.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_impl.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_lock.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_put.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_rmw.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_wait.c
-endif
-if DCMF_VER_0_3
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_acc.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_fence.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_get.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_impl.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_lock.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_put.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_rmw.c
-libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_wait.c
-endif
-endif # ARMCI_NETWORK_DCMF
 if ARMCI_NETWORK_LAPI
 AM_CPPFLAGS += -I$(top_srcdir)/src/devices/lapi
 libarmci_la_SOURCES += src/common/async.c

@@ -9,14 +9,8 @@
 /* TODO */
 #undef ALLOW_PIN
 
-/* Defined when using DCMF */
-#undef ARMCIX
-
 /* Define to 1 on BlueGene/L systems */
 #undef BGL
-
-/* TODO */
-#undef BGML
 
 /* Define to 1 on BlueGene/P systems */
 #undef BGP
@@ -59,9 +53,6 @@
 
 /* TODO */
 #undef DATA_SERVER
-
-/* Defined when using DCMF */
-#undef DCMF
 
 /* Define to 1 on DEC OSF */
 #undef DECOSF
@@ -578,9 +569,6 @@
 /* Set some mallopt options */
 #undef NOUSE_MMAP
 
-/* Disables use of shared memory */
-#undef NO_SHM
-
 /* TODO */
 #undef OPENIB
 
@@ -715,9 +703,6 @@
 
 /* turn on thread safety */
 #undef THREAD_SAFE
-
-/* TODO */
-#undef USE_MALLOC
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE

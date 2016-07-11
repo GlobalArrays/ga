@@ -7,20 +7,10 @@
 AC_DEFUN([ARMCI_SETUP],
 [AC_REQUIRE([GA_ARMCI_NETWORK])
 AS_CASE([$ga_armci_network],
-[BGML], [
-    AC_DEFINE([NO_SHM], [1], [Disables use of shared memory])
-    AC_DEFINE([USE_MALLOC], [1], [TODO])
-    AC_DEFINE([BGML], [1], [TODO])
-    ],
 [CRAY_SHMEM], [
     AC_DEFINE([CLUSTER], [1], [TODO])
     AC_DEFINE([CRAY_XT], [1], [TODO])
     AC_DEFINE([CRAY_SHMEM], [1], [TODO])
-    ],
-[DCMF], [
-    AC_DEFINE([NO_SHM], [1], [Disables use of shared memory])
-    AC_DEFINE([ARMCIX], [1], [Defined when using DCMF])
-    AC_DEFINE([DCMF], [1], [Defined when using DCMF])
     ],
 [ELAN3], [
     AC_DEFINE([PTHREADS], [1], [TODO])
