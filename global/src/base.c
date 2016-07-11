@@ -3968,7 +3968,7 @@ void pnga_merge_mirrored(Integer g_a)
         for (i=0; i < nsteps; i++){
 
           len=bigint;
-          if (istart+len-1 > total) len=((long)(total - istart)) + 1;
+          if (istart+len > total) len=((long)(total - istart));
           /* printf("%ld step %d of %d  len= %d total=%ld istart= %ld\n",GAme,(i+1),nsteps,len,total,istart); */
           armci_msg_gop_scope(SCOPE_MASTERS, zptr+istart*GAsizeof(type), len, "+", atype);
           istart+=len;
