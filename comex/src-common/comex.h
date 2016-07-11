@@ -1,6 +1,6 @@
 /* comex header file */
 #ifndef _COMEX_H
-#define _COMEX_H   
+#define _COMEX_H
 
 #include <mpi.h>
 
@@ -23,7 +23,7 @@ typedef int comex_group_t;
 
 #define COMEX_GROUP_WORLD 0
 #define COMEX_GROUP_NULL -1
- 
+
 #define COMEX_SUCCESS 0
 #define COMEX_FAILURE 1
 

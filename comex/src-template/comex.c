@@ -50,7 +50,7 @@ typedef struct {
 int comex_init()
 {
     int status;
-    
+
     if (initialized) {
         return 0;
     }
@@ -61,11 +61,11 @@ int comex_init()
     status = MPI_Initialized(&init_flag);
     assert(MPI_SUCCESS == status);
     assert(init_flag);
-    
+
     /* Duplicate the World Communicator */
     status = MPI_Comm_dup(MPI_COMM_WORLD, &(l_state.world_comm));
     assert(MPI_SUCCESS == status);
-    assert(l_state.world_comm); 
+    assert(l_state.world_comm);
 
     /* My Rank */
     status = MPI_Comm_rank(l_state.world_comm, &(l_state.rank));
@@ -74,7 +74,7 @@ int comex_init()
     /* World Size */
     status = MPI_Comm_size(l_state.world_comm, &(l_state.size));
     assert(MPI_SUCCESS == status);
-    
+
     /* groups */
     comex_group_init();
 
@@ -88,13 +88,13 @@ int comex_init()
 int comex_init_args(int *argc, char ***argv)
 {
     int init_flag;
-    
+
     MPI_Initialized(&init_flag);
-    
+
     if(!init_flag) {
         MPI_Init(argc, argv);
     }
-    
+
     return comex_init();
 }
 
@@ -109,7 +109,7 @@ void comex_error(char *msg, int code)
 {
     fprintf(stderr,"[%d] Received an Error in Communication: (%d) %s\n",
             l_state.rank, code, msg);
-    
+
     MPI_Abort(l_state.world_comm, code);
 }
 
@@ -199,8 +199,8 @@ int comex_puts(
                 dst_bvalue[j] = 0;
             }
         }
-        
-        status = comex_put((char *)src_ptr + src_idx, 
+
+        status = comex_put((char *)src_ptr + src_idx,
                 (char *)dst_ptr + dst_idx, count[0], proc, group);
         assert(status == COMEX_SUCCESS);
     }
@@ -252,7 +252,7 @@ int comex_gets(
         }
 
         dst_idx = 0;
-        
+
         for(j=1; j<=stride_levels; j++) {
             dst_idx += dst_bvalue[j] * dst_stride_ar[j-1];
             if((i+1) % dst_bunit[j] == 0) {
@@ -262,12 +262,12 @@ int comex_gets(
                 dst_bvalue[j] = 0;
             }
         }
-        
-        status = comex_get((char *)src_ptr + src_idx, 
+
+        status = comex_get((char *)src_ptr + src_idx,
                 (char *)dst_ptr + dst_idx, count[0], proc, group);
         assert(status == COMEX_SUCCESS);
     }
-    
+
     return COMEX_SUCCESS;
 }
 
@@ -408,7 +408,7 @@ int comex_accv(
         int proc, comex_group_t group)
 {
     int i;
-    
+
     skip_lock = 1;
     acquire_remote_lock(proc);
 
@@ -482,7 +482,7 @@ int comex_finalize()
 
     /* Make sure that all outstanding operations are done */
     comex_wait_all(COMEX_GROUP_WORLD);
-    
+
     /* groups */
     comex_group_finalize();
 
@@ -564,7 +564,7 @@ int comex_nbacc(
 int comex_nbputs(
         void *src, int *src_stride,
         void *dst, int *dst_stride,
-        int *count, int stride_levels, 
+        int *count, int stride_levels,
         int proc, comex_group_t group,
         comex_request_t *hdl)
 {
@@ -576,9 +576,9 @@ int comex_nbputs(
 int comex_nbgets(
         void *src, int *src_stride,
         void *dst, int *dst_stride,
-        int *count, int stride_levels, 
+        int *count, int stride_levels,
         int proc, comex_group_t group,
-        comex_request_t *hdl) 
+        comex_request_t *hdl)
 {
     return comex_gets(src, src_stride, dst, dst_stride,
             count, stride_levels, proc, group);
@@ -667,7 +667,7 @@ int comex_rmw(
     else  {
         assert(0);
     }
-    
+
     return COMEX_SUCCESS;
 }
 
@@ -715,7 +715,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 
     /* preconditions */
     assert(ptrs);
-   
+
     igroup = comex_get_igroup_from_group(group);
     comm = igroup->comm;
     assert(comm != MPI_COMM_NULL);
@@ -724,7 +724,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 
     /* allocate and register segment */
     ptrs[comm_rank] = comex_malloc_local(sizeof(char)*size);
-  
+
     /* exchange buffer address */
     /* @TODO: Consider using MPI_IN_PLACE? */
     memcpy(&src_buf, &ptrs[comm_rank], sizeof(void *));

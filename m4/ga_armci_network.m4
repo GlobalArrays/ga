@@ -400,6 +400,16 @@ AS_IF([test "x$happy" = xyes],
                      [ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $ac_cv_search_gethugepagesize"])])])
 ])dnl
 
+# _GA_ARMCI_NETWORK_OFI([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+# -------------------------------------------------------------------
+AC_DEFUN([_GA_ARMCI_NETWORK_OFI], [
+AC_MSG_NOTICE([searching for OFI...])
+happy=yes
+AS_IF([test "x$happy" = xyes],
+    [ga_armci_network=OFI; with_ofi=yes; $1],
+    [$2])
+])dnl
+
 # _GA_ARMCI_NETWORK_GEMINI([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 # ------------------------------------------------------------------
 # TODO when gemini headers and libraries become available, fix this
@@ -481,6 +491,7 @@ _GA_ARMCI_NETWORK_WITH([ofa],       [(Comex) Infiniband OpenIB])
 _GA_ARMCI_NETWORK_WITH([openib],    [Infiniband OpenIB])
 _GA_ARMCI_NETWORK_WITH([portals4],  [(Comex) Portals4])
 _GA_ARMCI_NETWORK_WITH([portals],   [Cray XT portals])
+_GA_ARMCI_NETWORK_WITH([ofi],       [(Comex) OFI])
 _GA_ARMCI_NETWORK_WITH([sockets],   [Ethernet TCP/IP])
 # Temporarily add ARMCI_NETWORK_CPPFLAGS to CPPFLAGS.
 ga_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $ARMCI_NETWORK_CPPFLAGS"
@@ -524,6 +535,8 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
         [_GA_ARMCI_NETWORK_GEMINI()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_armci" != xno],
         [_GA_ARMCI_NETWORK_ARMCI()])
+     AS_IF([test "x$ga_armci_network" = x && test "x$with_ofi" != xno],
+        [_GA_ARMCI_NETWORK_OFI()])
      AS_IF([test "x$ga_armci_network" = x],
         [AC_MSG_WARN([!!!])
          AC_MSG_WARN([No ARMCI_NETWORK detected, defaulting to MPI_TS])
@@ -585,6 +598,9 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
               AS_IF([test "x$ga_armci_network" = xGEMINI],
                  [_GA_ARMCI_NETWORK_GEMINI([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=GEMINI failed])])])
+              AS_IF([test "x$ga_armci_network" = xOFI],
+                 [_GA_ARMCI_NETWORK_OFI([],
+                    [AC_MSG_ERROR([test for ARMCI_NETWORK=OFI failed])])])
              ],
         [AC_MSG_WARN([too many armci networks specified: $armci_network_count])
          AC_MSG_WARN([the following were specified:])
@@ -605,6 +621,7 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
          _GA_ARMCI_NETWORK_WARN([portals4])
          _GA_ARMCI_NETWORK_WARN([portals])
          _GA_ARMCI_NETWORK_WARN([gemini])
+         _GA_ARMCI_NETWORK_WARN([ofi])
          _GA_ARMCI_NETWORK_WARN([sockets])
          AC_MSG_ERROR([please select only one armci network])])])
 # Remove ARMCI_NETWORK_CPPFLAGS from CPPFLAGS.
@@ -630,6 +647,7 @@ _GA_ARMCI_NETWORK_AM_CONDITIONAL([openib])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([gemini])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([portals4])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([portals])
+_GA_ARMCI_NETWORK_AM_CONDITIONAL([ofi])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([sockets])
 AC_SUBST([ARMCI_NETWORK_LDFLAGS])
 AC_SUBST([ARMCI_NETWORK_LIBS])
@@ -652,7 +670,9 @@ AS_CASE([$ga_armci_network],
 [OFA],      [ARMCI_SRC_DIR=comex],
 [OPENIB],   [ARMCI_SRC_DIR=src],
 [PORTALS4], [ARMCI_SRC_DIR=comex],
+[OFI],      [ARMCI_SRC_DIR=comex],
 [PORTALS],  [ARMCI_SRC_DIR=src-portals],
+[OFI],      [ARMCI_SRC_DIR=comex],
             [ARMCI_SRC_DIR=src])
 AC_SUBST([ARMCI_SRC_DIR])
 AM_CONDITIONAL([ARMCI_SRC_DIR_PORTALS], [test "x$ARMCI_SRC_DIR" = "xsrc-portals"])
@@ -731,6 +751,7 @@ AS_CASE([$ga_armci_network],
 [GEMINI],       [delay_tcgmsg_mpi_startup=1],
 [PORTALS4],     [delay_tcgmsg_mpi_startup=0],
 [PORTALS],      [delay_tcgmsg_mpi_startup=1],
+[OFI],          [delay_tcgmsg_mpi_startup=0],
 [SOCKETS],      [delay_tcgmsg_mpi_startup=1])
 AC_DEFINE_UNQUOTED([NEED_DELAY_TCGMSG_MPI_STARTUP],
     [$delay_tcgmsg_mpi_startup],
