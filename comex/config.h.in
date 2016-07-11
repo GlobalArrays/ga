@@ -48,6 +48,9 @@
 /* Define to 1 if the network is OFA */
 #undef COMEX_NETWORK_OFA
 
+/* Define to 1 if the network is OFI */
+#undef COMEX_NETWORK_OFI
+
 /* Define to 1 if the network is PORTALS4 */
 #undef COMEX_NETWORK_PORTALS4
 
@@ -129,6 +132,12 @@
 
 /* Define to 1 if the system has the type `ptrdiff_t'. */
 #undef HAVE_PTRDIFF_T
+
+/* Define to 1 if you have the <rdma/fabric.h> header file. */
+#undef HAVE_RDMA_FABRIC_H
+
+/* Define to 1 if you have the <rdma/fi_domain.h> header file. */
+#undef HAVE_RDMA_FI_DOMAIN_H
 
 /* Define to 1 if you have AC_header, 0 if you don't */
 #undef HAVE_SCHED_H
