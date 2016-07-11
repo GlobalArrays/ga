@@ -26385,7 +26385,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
       logical status
       integer i4
       double precision dscal8,darray8(2)
-      call SOLVE_EVP_REAL(i4,i4,darray8,i4,
+      status = SOLVE_EVP_REAL(i4,i4,darray8,i4,
      C     darray8,darray8,i4,i4,i4,i4)
       end
 _ACEOF
@@ -26478,7 +26478,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
       logical status
       integer i4
       double precision dscal8,darray8(2)
-      call SOLVE_EVP_REAL(i4,i4,darray8,i4,
+      status = SOLVE_EVP_REAL(i4,i4,darray8,i4,
      C     darray8,darray8,i4,i4,i4,i4)
       end
 _ACEOF
