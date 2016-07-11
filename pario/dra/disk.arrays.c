@@ -1660,7 +1660,7 @@ Integer FATR dra_probe_(
             /* last op depends on aligned or unaligned transfer */
             if (bi->align == 0) { /* unaligned read */
                 /* last op is a ga move */
-                if (NGA_NbTest(ga_movhdl) == 0) { /* ga op not complete */
+                if (pnga_nbtest(ga_movhdl) == 0) { /* ga op not complete */
                     k = 0;
                 }
                 else { /* ga op complete, free this buf */
@@ -1678,9 +1678,9 @@ Integer FATR dra_probe_(
                     k = 0;
                 else { /* disk read done, initiate/test ga move */
                     /* callback=OFF means ga move done/being done */
-                    if (bi->callback == OFF && NGA_NbTest(ga_movhdl) == 0)
+                    if (bi->callback == OFF && pnga_nbtest(ga_movhdl) == 0)
                         k = 0;
-                    else if (bi->callback == OFF && NGA_NbTest(ga_movhdl) ==1) {
+                    else if (bi->callback == OFF && pnga_nbtest(ga_movhdl) ==1) {
                         free_buf(&buf_ctxt, bufs[i]);
                     }
                     else if (bi->callback == ON) {/* need to call callback */
