@@ -178,15 +178,17 @@ check_PROGRAMS += testing/test
 
 COMEX_SERIAL_TESTS =
 COMEX_SERIAL_TESTS_XFAIL =
+COMEX_DUAL_TESTS =
+COMEX_DUAL_TESTS_XFAIL =
 COMEX_PARALLEL_TESTS =
 COMEX_PARALLEL_TESTS_XFAIL =
-COMEX_TESTS = $(COMEX_SERIAL_TESTS) $(COMEX_PARALLEL_TESTS)
-COMEX_TESTS_XFAIL = $(COMEX_SERIAL_TESTS_XFAIL) $(COMEX_PARALLEL_TESTS_XFAIL)
+COMEX_TESTS = $(COMEX_SERIAL_TESTS) $(COMEX_DUAL_TESTS) $(COMEX_PARALLEL_TESTS)
+COMEX_TESTS_XFAIL = $(COMEX_SERIAL_TESTS_XFAIL) $(COMEX_DUAL_TESTS_XFAIL) $(COMEX_PARALLEL_TESTS_XFAIL)
 
-COMEX_PARALLEL_TESTS += testing/perf$(EXEEXT)
+COMEX_DUAL_TESTS += testing/perf$(EXEEXT)
+COMEX_DUAL_TESTS += testing/perf_contig$(EXEEXT)
+COMEX_DUAL_TESTS += testing/perf_strided$(EXEEXT)
 COMEX_PARALLEL_TESTS += testing/perf_amo$(EXEEXT)
-COMEX_PARALLEL_TESTS += testing/perf_contig$(EXEEXT)
-COMEX_PARALLEL_TESTS += testing/perf_strided$(EXEEXT)
 COMEX_PARALLEL_TESTS += testing/shift$(EXEEXT)
 COMEX_PARALLEL_TESTS += testing/test$(EXEEXT)
 
@@ -221,6 +223,12 @@ SERIAL_TESTS += $(COMEX_SERIAL_TESTS)
 SERIAL_TESTS_XFAIL =
 SERIAL_TESTS_XFAIL += $(COMEX_SERIAL_TESTS_XFAIL)
 
+DUAL_TESTS =
+DUAL_TESTS += $(COMEX_DUAL_TESTS)
+
+DUAL_TESTS_XFAIL =
+DUAL_TESTS_XFAIL += $(COMEX_DUAL_TESTS_XFAIL)
+
 PARALLEL_TESTS =
 PARALLEL_TESTS += $(COMEX_PARALLEL_TESTS)
 
@@ -229,15 +237,17 @@ PARALLEL_TESTS_XFAIL += $(COMEX_PARALLEL_TESTS_XFAIL)
 
 TESTS =
 TESTS += $(SERIAL_TESTS)
+TESTS += $(DUAL_TESTS)
 TESTS += $(PARALLEL_TESTS)
 
 XFAIL_TESTS =
 XFAIL_TESTS += $(SERIAL_TESTS_XFAIL)
+XFAIL_TESTS += $(DUAL_TESTS_XFAIL)
 XFAIL_TESTS += $(PARALLEL_TESTS_XFAIL)
 
 if CROSS_COMPILING
-maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; eval $$maybe_mpiexec
+maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; elif echo "$(DUAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/2/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; eval $$maybe_mpiexec
 else
 LOG_COMPILER = \
-maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; eval $$maybe_mpiexec
+maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; elif echo "$(DUAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/2/'; elif echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi`; eval $$maybe_mpiexec
 endif # CROSS_COMPILING

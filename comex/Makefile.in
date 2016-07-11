@@ -779,12 +779,14 @@ libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
 @ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@libarmci_prof_la_SOURCES = tools/armci_prof.c
 COMEX_SERIAL_TESTS = 
 COMEX_SERIAL_TESTS_XFAIL = 
-COMEX_PARALLEL_TESTS = testing/perf$(EXEEXT) testing/perf_amo$(EXEEXT) \
-	testing/perf_contig$(EXEEXT) testing/perf_strided$(EXEEXT) \
+COMEX_DUAL_TESTS = testing/perf$(EXEEXT) testing/perf_contig$(EXEEXT) \
+	testing/perf_strided$(EXEEXT)
+COMEX_DUAL_TESTS_XFAIL = 
+COMEX_PARALLEL_TESTS = testing/perf_amo$(EXEEXT) \
 	testing/shift$(EXEEXT) testing/test$(EXEEXT)
 COMEX_PARALLEL_TESTS_XFAIL = 
-COMEX_TESTS = $(COMEX_SERIAL_TESTS) $(COMEX_PARALLEL_TESTS)
-COMEX_TESTS_XFAIL = $(COMEX_SERIAL_TESTS_XFAIL) $(COMEX_PARALLEL_TESTS_XFAIL)
+COMEX_TESTS = $(COMEX_SERIAL_TESTS) $(COMEX_DUAL_TESTS) $(COMEX_PARALLEL_TESTS)
+COMEX_TESTS_XFAIL = $(COMEX_SERIAL_TESTS_XFAIL) $(COMEX_DUAL_TESTS_XFAIL) $(COMEX_PARALLEL_TESTS_XFAIL)
 testing_perf_SOURCES = testing/perf.c
 testing_perf_amo_SOURCES = testing/perf_amo.c
 testing_perf_contig_SOURCES = testing/perf_contig.c
@@ -806,11 +808,13 @@ SED__v_0 = @echo "  SED   " $@;
 #
 SERIAL_TESTS = $(COMEX_SERIAL_TESTS)
 SERIAL_TESTS_XFAIL = $(COMEX_SERIAL_TESTS_XFAIL)
+DUAL_TESTS = $(COMEX_DUAL_TESTS)
+DUAL_TESTS_XFAIL = $(COMEX_DUAL_TESTS_XFAIL)
 PARALLEL_TESTS = $(COMEX_PARALLEL_TESTS)
 PARALLEL_TESTS_XFAIL = $(COMEX_PARALLEL_TESTS_XFAIL)
-@CROSS_COMPILING_TRUE@maybe_mpiexec = `if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; eval $$maybe_mpiexec
+@CROSS_COMPILING_TRUE@maybe_mpiexec = `if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; elif echo "$(DUAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/2/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; eval $$maybe_mpiexec
 @CROSS_COMPILING_FALSE@LOG_COMPILER = \
-@CROSS_COMPILING_FALSE@maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; eval $$maybe_mpiexec
+@CROSS_COMPILING_FALSE@maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; elif echo "$(DUAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/2/'; elif echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi`; eval $$maybe_mpiexec
 
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -1554,12 +1558,12 @@ check-html recheck-html:
 	exit $$rv
 testing/perf.log: testing/perf$(EXEEXT)
 	@p='testing/perf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing/perf_amo.log: testing/perf_amo$(EXEEXT)
-	@p='testing/perf_amo$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/perf_contig.log: testing/perf_contig$(EXEEXT)
 	@p='testing/perf_contig$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/perf_strided.log: testing/perf_strided$(EXEEXT)
 	@p='testing/perf_strided$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/perf_amo.log: testing/perf_amo$(EXEEXT)
+	@p='testing/perf_amo$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/shift.log: testing/shift$(EXEEXT)
 	@p='testing/shift$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/test.log: testing/test$(EXEEXT)
