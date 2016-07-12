@@ -64,7 +64,11 @@ endif()
 # -------------------------------------------------------------
 # figure out what BLAS library looks like
 # -------------------------------------------------------------
+if (NOT DEFINED ENABLE_BLAS)
+option (ENABLE_BLAS "Include external BLAS" ON)
+endif()
 INCLUDE( CheckCSourceCompiles )
+if (ENABLE_BLAS)
 set (CMAKE_REQUIRED_LIBRARIES blas)
 CHECK_C_SOURCE_COMPILES(
 "
@@ -209,6 +213,7 @@ return 0;
 }
 "
     BLAS_6_SIGNATURE )
+endif()
 
 # set blas symbols
 if (BLAS_1_SIGNATURE)
