@@ -58,7 +58,7 @@ int reg_cache_destroy(int nprocs)
     return 0;
 }
 
-struct _reg_entry_t* reg_cache_find(int rank, void *buf, int len)
+struct _reg_entry_t* reg_cache_find(int rank, void *buf, size_t len)
 {
     struct _reg_entry_t *runner = reg_cache[rank]->next;
 
@@ -74,7 +74,7 @@ struct _reg_entry_t* reg_cache_find(int rank, void *buf, int len)
     return NULL;
 }
 
-int reg_cache_insert(int rank, void *buf, int len, int lkey, int rkey, struct ibv_mr *mr)
+int reg_cache_insert(int rank, void *buf, size_t len, int lkey, int rkey, struct ibv_mr *mr)
 {
     struct _reg_entry_t *node, *runner = (struct _reg_entry_t *)(reg_cache[rank]);
 

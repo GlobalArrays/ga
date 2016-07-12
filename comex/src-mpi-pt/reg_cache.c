@@ -36,9 +36,9 @@ static reg_return_t seg_intersects(void *reg_addr, size_t reg_len,
 static reg_return_t seg_contains(void *reg_addr, size_t reg_len,
                                  void *oth_addr, size_t oth_len);
 static reg_return_t reg_entry_intersects(reg_entry_t *reg_entry,
-                                         void *buf, int len);
+                                         void *buf, size_t len);
 static reg_return_t reg_entry_contains(reg_entry_t *reg_entry,
-                                       void *buf, int len);
+                                       void *buf, size_t len);
 
 #define TEST_FOR_INTERSECTION 0
 #define TEST_FOR_CONTAINMENT 1
@@ -190,7 +190,7 @@ seg_contains(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len)
  * @return RR_SUCCESS on success
  */
 STATIC reg_return_t
-reg_entry_intersects(reg_entry_t *reg_entry, void *buf, int len)
+reg_entry_intersects(reg_entry_t *reg_entry, void *buf, size_t len)
 {
 #if DEBUG
     printf("[%d] reg_entry_intersects(reg_entry=%p, buf=%p, len=%d)\n",
@@ -221,7 +221,7 @@ reg_entry_intersects(reg_entry_t *reg_entry, void *buf, int len)
  * @return RR_SUCCESS on success
  */
 STATIC reg_return_t
-reg_entry_contains(reg_entry_t *reg_entry, void *buf, int len)
+reg_entry_contains(reg_entry_t *reg_entry, void *buf, size_t len)
 {
 #if DEBUG
     printf("[%d] reg_entry_contains(reg_entry=%p, buf=%p, len=%d)\n",
@@ -377,7 +377,7 @@ reg_cache_destroy()
  * @return the reg cache entry, or NULL on failure
  */
 reg_entry_t*
-reg_cache_find(int rank, void *buf, int len)
+reg_cache_find(int rank, void *buf, size_t len)
 {
     reg_entry_t *entry = NULL;
     reg_entry_t *runner = NULL;
@@ -443,7 +443,7 @@ reg_cache_find(int rank, void *buf, int len)
  * @return the reg cache entry, or NULL on failure
  */
 reg_entry_t*
-reg_cache_find_intersection(int rank, void *buf, int len)
+reg_cache_find_intersection(int rank, void *buf, size_t len)
 {
     reg_entry_t *entry = NULL;
     reg_entry_t *runner = NULL;
@@ -491,7 +491,7 @@ reg_cache_find_intersection(int rank, void *buf, int len)
  * @return RR_SUCCESS on success
  */
 reg_entry_t*
-reg_cache_insert(int rank, void *buf, int len, const char *name, void *mapped)
+reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped)
 {
     reg_entry_t *node = NULL;
 
