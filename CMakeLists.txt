@@ -47,13 +47,24 @@ option (ENABLE_F77 "Build Fortran interface" OFF)
 if (ENABLE_F77)
   set(ENABLE_FORTRAN ON)
 endif()
+if (ENABLE_FORTRAN)
+  set(ENABLE_F77 ON)
+endif()
 
 if (ENABLE_FORTRAN)
-  enable_language(C CXX Fortran)
-  set(NOFORT 1)
-else()
-  enable_language(C CXX)
+  if (ENABLE_CXX)
+    enable_language(C CXX Fortran)
+  else()
+    enable_language(C Fortran)
+  endif()
   set(NOFORT 0)
+else()
+  if (ENABLE_CXX)
+    enable_language(C CXX)
+  else()
+    enable_language(C)
+  endif()
+  set(NOFORT 1)
 endif()
 
 add_definitions (-DHAVE_CONFIG_H=1)
@@ -84,6 +95,7 @@ if (ENABLE_FORTRAN)
   )
 endif()
 option (F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS "Fortran/C interface property" ON)
+option (ENABLE_BLAS "Include external BLAS and LAPACK" ON)
 
 INCLUDE( CheckCSourceCompiles )
 # Check for restrict keyword
@@ -189,6 +201,7 @@ set (DECOSF 0)
 
 # check for numerical libraries. These should set variables BLAS_FOUND and
 # LAPACK_FOUND
+if (ENABLE_BLAS)
 find_package(BLAS)
 if (BLAS_FOUND)
   set(HAVE_BLAS 1)
@@ -196,6 +209,9 @@ endif()
 find_package(LAPACK)
 if (LAPACK_FOUND)
   set(HAVE_LAPACK 1)
+endif()
+else()
+  set(HAVE_BLAS 0)
 endif()
 
 # check for availability of functions by seeing if small programs compile
@@ -365,8 +381,10 @@ add_library(ga
   $<TARGET_OBJECTS:eaf>
   $<TARGET_OBJECTS:elio>
   $<TARGET_OBJECTS:sf>
+  $<TARGET_OBJECTS:gaf2c>
   $<TARGET_OBJECTS:armci_comex>
   $<TARGET_OBJECTS:ga_src>
+  $<TARGET_OBJECTS:linalg>
 )
 
 add_dependencies(ga machine_files)
@@ -375,19 +393,13 @@ add_dependencies(ga machine_files)
 # Global Arrays library installation
 # -------------------------------------------------------------
 
+set (CMAKE_REQUIRED_LIBRARIES lapack blas)
+message(STATUS "LAPACK_LIBRARIES: ${LAPACK_LIBRARIES}")
 target_link_libraries(ga ${LAPACK_LIBRARIES})
 
 install (TARGETS
   ga
   DESTINATION lib
-)
-
-# -------------------------------------------------------------
-# Global Arrays header installation
-# -------------------------------------------------------------
-install(FILES
-  gaf2c/typesf2c.h
-  DESTINATION include
 )
 
 # -------------------------------------------------------------
@@ -400,3 +412,5 @@ if (ENABLE_CXX)
 endif()
 add_subdirectory(ma)
 add_subdirectory(pario)
+add_subdirectory(gaf2c)
+add_subdirectory(LinAlg/lapack+blas)

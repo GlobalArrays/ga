@@ -67,6 +67,7 @@ set(GA_FILES
   collect.c
   ghosts.c
   capi.c
+  fapi.c
   datatypes.c
   decomp.c
   DP.c
