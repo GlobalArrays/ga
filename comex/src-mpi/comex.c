@@ -1311,7 +1311,7 @@ int comex_barrier(comex_group_t comex_group)
 
 void comex_error(char *msg, int code)
 {
-    fprintf(stderr, msg);
+    fprintf(stderr, "%s", msg);
     fprintf(stderr,"Received an Error in Communication\n");
     MPI_Abort(l_state.world_comm, code);
 }
