@@ -26,6 +26,7 @@
       integer          ga_get_pgroup_size
       logical          ga_has_ghosts
       integer          ga_idot
+      logical          ga_initialized
       integer          ga_inquire_memory
       integer          ga_is_mirrored
       integer          ga_llt_solve
@@ -100,6 +101,7 @@
       logical          nga_has_ghosts
       integer          nga_idot
       integer          nga_idot_patch
+      logical          nga_initialized
       integer          nga_inquire_memory
       integer          nga_is_mirrored
       integer          nga_llt_solve
@@ -170,6 +172,7 @@
       external ga_get_pgroup_size
       external ga_has_ghosts
       external ga_idot
+      external ga_initialized
       external ga_inquire_memory
       external ga_is_mirrored
       external ga_llt_solve
@@ -245,6 +248,7 @@
       external nga_has_ghosts
       external nga_idot
       external nga_idot_patch
+      external nga_initialized
       external nga_inquire_memory
       external nga_is_mirrored
       external nga_llt_solve

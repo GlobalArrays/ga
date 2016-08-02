@@ -79,6 +79,7 @@ extern void          GA_Init_fence(void);
 extern void          GA_Initialize_args(int *argc, char ***argv);
 extern void          GA_Initialize_ltd(size_t limit);
 extern void          GA_Initialize(void);
+extern int           GA_Initialized(void);
 extern size_t        GA_Inquire_memory(void);
 extern char*         GA_Inquire_name(int g_a);
 extern int           GA_Is_mirrored(int g_a);
@@ -232,6 +233,7 @@ extern int           NGA_Idot_patch(int g_a, char t_a, int alo[], int ahi[], int
 extern void          NGA_Igop(int x[], int n, char *op);
 extern void          NGA_Init_fence(void);
 extern void          NGA_Initialize(void);
+extern int           NGA_Initialized(void);
 extern void          NGA_Initialize_ltd(size_t limit);
 extern void          NGA_Inquire(int g_a, int *type, int *ndim, int dims[]);
 extern size_t        NGA_Inquire_memory(void);
