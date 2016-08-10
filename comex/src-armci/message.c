@@ -29,7 +29,10 @@ static MPI_Datatype MPI_LONGLONG_INT;
 static MPI_Comm wc()
 {
     MPI_Comm comm;
+    /*
     assert(COMEX_SUCCESS == comex_group_comm(COMEX_GROUP_WORLD, &comm));
+    */
+    comex_group_comm(COMEX_GROUP_WORLD, &comm);
     return comm;
 }
 
@@ -37,7 +40,10 @@ static MPI_Comm wc()
 MPI_Comm armci_group_comm(ARMCI_Group *group)
 {
     MPI_Comm comm;
+    /*
     assert(COMEX_SUCCESS == comex_group_comm(*group, &comm));
+    */
+    comex_group_comm(*group, &comm);
     return comm;
 }
 
@@ -133,7 +139,10 @@ static void do_abs(void *x, int n, int type)
 static MPI_Comm get_comm(ARMCI_Group *group)
 {
     MPI_Comm comm;
+    /*
     assert(COMEX_SUCCESS == comex_group_comm(*group, &comm));
+    */
+    comex_group_comm(*group, &comm);
     return comm;
 }
 
