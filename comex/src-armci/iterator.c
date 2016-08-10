@@ -159,9 +159,10 @@ void armci_write_strided(
         void *ptr, int stride_levels, int stride_arr[], int count[], char *buf)
 {
   const int seg_size = count[0];
-  int off=0;
-  assert(count[0]>0);
+  int off;
   stride_info_t sitr;
+  off=0;
+  assert(count[0]>0);
   armci_stride_info_init(&sitr,ptr,stride_levels,stride_arr,count);
   while(armci_stride_info_has_more(&sitr)) {
     char *sptr = armci_stride_info_seg_ptr(&sitr);
@@ -177,9 +178,10 @@ void armci_read_strided(
         void *ptr, int stride_levels, int stride_arr[], int count[], char *buf)
 {
   const int seg_size = count[0];
-  int off=0;
-  assert(count[0]>0);
+  int off;
   stride_info_t sitr;
+  off=0;
+  assert(count[0]>0);
   armci_stride_info_init(&sitr,ptr,stride_levels,stride_arr,count);
   while(armci_stride_info_has_more(&sitr)) {
     char *dptr = armci_stride_info_seg_ptr(&sitr);
