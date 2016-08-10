@@ -1146,7 +1146,7 @@ static int putn_verify_element_in_buf(Integer g_a, Integer *lo, Integer *hi, voi
 				      Integer elemSize)
 {
   int i, ndims;
-#ifdef HAVE_STDDEF_H
+#if HAVE_STDDEF_H
   ptrdiff_t off = (char *)bufn - (char *)buf;
 #else
   Integer off = (char *)bufn - (char *)buf;

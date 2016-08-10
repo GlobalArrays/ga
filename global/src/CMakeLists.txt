@@ -105,14 +105,14 @@ add_custom_target(machine_files
 add_custom_command(
   TARGET machine_files
   DEPENDS ga-papi.h
-  COMMAND ${PROJECT_SOURCE_DIR}/tools/ga_papi_to_wapi.pl < ${CMAKE_CURRENT_SOURCE_DIR}/ga-papi.h >
+  COMMAND perl ${PROJECT_SOURCE_DIR}/tools/ga_papi_to_wapi.pl < ${CMAKE_CURRENT_SOURCE_DIR}/ga-papi.h >
 ${CMAKE_CURRENT_SOURCE_DIR}/ga-wapi.h
 )
 
 add_custom_command(
   TARGET machine_files
   DEPENDS ga-papi.h
-  COMMAND ${PROJECT_SOURCE_DIR}/tools/ga_papi_to_wapidefs.pl < ${CMAKE_CURRENT_SOURCE_DIR}/ga-papi.h >
+  COMMAND perl ${PROJECT_SOURCE_DIR}/tools/ga_papi_to_wapidefs.pl < ${CMAKE_CURRENT_SOURCE_DIR}/ga-papi.h >
 ${CMAKE_CURRENT_SOURCE_DIR}/ga-wapidefs.h
 )
   
