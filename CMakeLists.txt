@@ -67,6 +67,8 @@ else()
   set(NOFORT 1)
 endif()
 
+find_package(MPI)
+
 add_definitions (-DHAVE_CONFIG_H=1)
 
 # add user configuration options
@@ -414,3 +416,4 @@ add_subdirectory(ma)
 add_subdirectory(pario)
 add_subdirectory(gaf2c)
 add_subdirectory(LinAlg/lapack+blas)
+add_subdirectory(global/testing)

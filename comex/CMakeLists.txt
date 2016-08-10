@@ -61,6 +61,8 @@ elseif (MPI3)
   include_directories(AFTER src-mpi3)
 endif()
 
+find_package(MPI)
+
 # -------------------------------------------------------------
 # figure out what BLAS library looks like
 # -------------------------------------------------------------
