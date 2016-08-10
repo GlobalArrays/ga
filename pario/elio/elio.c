@@ -36,6 +36,10 @@
 
 #include "eliop.h"
 
+#if defined(WIN32)
+#undef ERROR
+#endif
+
 #include "../sf/coms.h"
 
 #if defined(CRAY) && defined(__crayx1)

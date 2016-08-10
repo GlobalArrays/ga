@@ -4,14 +4,20 @@
 #ifdef WIN32
 #include <io.h>
 #ifndef __MINGW32__
-#include "winutil.h"
+/* #include "winutil.h" */
 #endif
 #define F_OK 00
 #endif
 
 #include <errno.h>
+
+#if HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#if HAVE_STRING_H
 #include <string.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "typesf2c.h"
