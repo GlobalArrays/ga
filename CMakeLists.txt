@@ -32,7 +32,7 @@
 # file: CMakeLists.txt
 # -------------------------------------------------------------
 
-cmake_minimum_required (VERSION 2.6.4)
+cmake_minimum_required (VERSION 2.8.8)
 project (GlobalArrays)
 
 #set (GlobalArrays_VERSION_MAJOR 5)
@@ -93,7 +93,7 @@ if (ENABLE_FORTRAN)
   add_custom_command(
     OUTPUT config.fh
     DEPENDS config.h
-    COMMAND ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.pl < config.h
+    COMMAND perl ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.pl < config.h
   )
 endif()
 option (F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS "Fortran/C interface property" ON)
@@ -195,6 +195,12 @@ check_include_files("string.h" HAVE_STRING_H)
 check_include_files("sys/types.h" HAVE_SYS_TYPES_H)
 check_include_files("unistd.h" HAVE_UNISTD_H)
 check_include_files("windows.h" HAVE_WINDOWS_H)
+
+# set some flags for M$ Visual C
+if (MSVC)
+  add_definitions(/D NOMINMAX /D _CRT_SECURE_NO_WARNINGS /D _CRT_NONSTDC_NO_WARNINGS)
+endif()
+   
 
 # hardwire various GA configuration parameters. Use convention that parameters
 # are defined and set to 0 if not used
@@ -355,18 +361,6 @@ include_directories(AFTER ${MPI_INCLUDE_PATH})
 #  set (CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 #endif()
 
-# This is here for cmake version 2.6 
-if (NOT MPI_LIBRARY OR NOT MPI_EXTRA_LIBRARY)
-# Punt if MPI_LIBRARY or MPI_EXTRA_LIBRARY not found
-  set(MPI_CXX_LIBRARIES "")
-else()
-  if (NOT MPI_CXX_LIBRARIES)
-   set(MPI_CXX_LIBRARIES 
-     ${MPI_LIBRARY} 
-     ${MPI_EXTRA_LIBRARY}
-   )
-  endif()
-endif()
 message(STATUS "MPI_CXX_LIBRARIES: ${MPI_CXX_LIBRARIES}")
 
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
