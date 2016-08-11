@@ -383,8 +383,6 @@ add_library(ga
   $<TARGET_OBJECTS:linalg>
 )
 
-add_dependencies(ga machine_files)
-
 # -------------------------------------------------------------
 # Global Arrays library installation
 # -------------------------------------------------------------

@@ -93,30 +93,23 @@ set(GA_FILES
   ${GA_FORTRAN_INTERFACE_C_FILES}
 )
 
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/ga-wapi.h
+  COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/ga-papi.h" -D OUTPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/ga-wapi.h" -P ${PROJECT_SOURCE_DIR}/tools/ga_papi_to_wapi.cmake
+  DEPENDS ga-papi.h
+)
+
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/ga-wapidefs.h
+  COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/ga-papi.h" -D OUTPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/ga-wapidefs.h" -P ${PROJECT_SOURCE_DIR}/tools/ga_papi_to_wapidefs.cmake
+  DEPENDS ga-papi.h
+)
+
 add_library(ga_src OBJECT
+  ${CMAKE_CURRENT_SOURCE_DIR}/ga-wapi.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/ga-wapidefs.h
   ${GA_FILES}
 )
-
-add_custom_target(machine_files
-  DEPENDS
-  ${CMAKE_CURRENT_SOURCE_DIR} ga-papi.h
-)
-
-add_custom_command(
-  TARGET machine_files
-  DEPENDS ga-papi.h
-  COMMAND perl ${PROJECT_SOURCE_DIR}/tools/ga_papi_to_wapi.pl < ${CMAKE_CURRENT_SOURCE_DIR}/ga-papi.h >
-${CMAKE_CURRENT_SOURCE_DIR}/ga-wapi.h
-)
-
-add_custom_command(
-  TARGET machine_files
-  DEPENDS ga-papi.h
-  COMMAND perl ${PROJECT_SOURCE_DIR}/tools/ga_papi_to_wapidefs.pl < ${CMAKE_CURRENT_SOURCE_DIR}/ga-papi.h >
-${CMAKE_CURRENT_SOURCE_DIR}/ga-wapidefs.h
-)
-  
-add_dependencies(ga machine_files)
 
 # -------------------------------------------------------------
 # Global Arrays header installation
