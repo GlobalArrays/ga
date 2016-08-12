@@ -2207,24 +2207,32 @@ Real FATR nga_sdot_(Integer *g_a, Integer *g_b)
     return sum;
 }            
 
-void FATR gai_zdot_(Integer *g_a, Integer *g_b, DoubleComplex *sum)
+DoubleComplex FATR ga_zdot_(Integer *g_a, Integer *g_b)
 {
-    wnga_dot(pnga_type_f2c(MT_F_DCPL), *g_a, *g_b, sum);
+    DoubleComplex sum;
+    wnga_dot(pnga_type_f2c(MT_F_DCPL), *g_a, *g_b, &sum);
+    return sum;
 }
 
-void FATR ngai_zdot_(Integer *g_a, Integer *g_b, DoubleComplex *sum)
+DoubleComplex FATR nga_zdot_(Integer *g_a, Integer *g_b)
 {
-    wnga_dot(pnga_type_f2c(MT_F_DCPL), *g_a, *g_b, sum);
+    DoubleComplex sum;
+    wnga_dot(pnga_type_f2c(MT_F_DCPL), *g_a, *g_b, &sum);
+    return sum;
 }
 
-void gai_cdot_(Integer *g_a, Integer *g_b, SingleComplex *sum)
+SingleComplex ga_cdot_(Integer *g_a, Integer *g_b)
 {
-    wnga_dot(pnga_type_f2c(MT_F_SCPL), *g_a, *g_b, sum);
+    SingleComplex sum;
+    wnga_dot(pnga_type_f2c(MT_F_SCPL), *g_a, *g_b, &sum);
+    return sum;
 }
 
-void ngai_cdot_(Integer *g_a, Integer *g_b, SingleComplex *sum)
+SingleComplex nga_cdot_(Integer *g_a, Integer *g_b)
 {
-    wnga_dot(pnga_type_f2c(MT_F_SCPL), *g_a, *g_b, sum);
+    SingleComplex sum;
+    wnga_dot(pnga_type_f2c(MT_F_SCPL), *g_a, *g_b, &sum);
+    return sum;
 }
 
 void FATR ga_scale_(Integer *g_a, void* alpha)
