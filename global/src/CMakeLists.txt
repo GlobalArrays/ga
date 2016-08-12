@@ -34,10 +34,10 @@
 
 if (ENABLE_FORTRAN)
   set(GA_FORTRAN_INTERFACE_C_FILES
-#fapi.c
+    fapi.c
   )
   set(GA_FORTRAN_INTERFACE_H_FILES
-#cnames.h
+    cnames.h
   )
 endif()
 

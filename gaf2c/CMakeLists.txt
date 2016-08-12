@@ -54,7 +54,7 @@ install (FILES
 # -------------------------------------------------------------
 
 if (ENABLE_FORTRAN)
-  set(FORTRAN_FILES f2c.c)
+  set(FORTRAN_FILES gaf2c.c farg.F)
 endif()
 
 add_library(gaf2c OBJECT

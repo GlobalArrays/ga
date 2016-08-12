@@ -62,7 +62,7 @@ install (FILES
 # -------------------------------------------------------------
 
 if (ENABLE_FORTRAN)
-  set(FORTRAN_FILES f2c.c)
+  set(FORTRAN_FILES f2c.c maf.F)
 endif()
 
 add_library(ma OBJECT

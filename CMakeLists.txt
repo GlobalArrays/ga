@@ -91,9 +91,9 @@ option (ENABLE_ARMCI_MEM_OPTION "User option for managing memory" ON)
 option (ENABLE_I8 "Use 8 byte Fortran integers" OFF)
 if (ENABLE_FORTRAN)
   add_custom_command(
-    OUTPUT config.fh
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/config.fh
+    COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/config.h" -D OUTPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/config.fh" -P ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.cmake
     DEPENDS config.h
-    COMMAND perl ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.pl < config.h
   )
 endif()
 option (F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS "Fortran/C interface property" ON)
