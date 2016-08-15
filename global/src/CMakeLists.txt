@@ -39,6 +39,9 @@ if (ENABLE_FORTRAN)
   set(GA_FORTRAN_INTERFACE_H_FILES
     cnames.h
   )
+  set (GA_FORTRAN_INTERFACE_F_FILES
+    complex.F
+  )
 endif()
 
 set(target_libraries
@@ -91,6 +94,7 @@ set(GA_FILES
   select.c
   sparse.c
   ${GA_FORTRAN_INTERFACE_C_FILES}
+  ${GA_FORTRAN_INTERFACE_F_FILES}
 )
 
 add_custom_command(
