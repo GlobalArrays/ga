@@ -477,7 +477,9 @@ int bytes;
     GA_Update_Signal = ARMCI_Malloc_local((armci_size_t) bytes);
 
     /* Zero update flags */
-    for (i=0; i<2*MAXDIM; i++) GA_Update_Flags[GAme][i] = 0;
+    for (i=0; i<2*MAXDIM; i++) {
+		GA_Update_Flags[GAme][i] = 0;
+	}
 
     /* set MA error function */
     MA_set_error_callback(ARMCI_Error);

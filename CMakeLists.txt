@@ -89,13 +89,6 @@ option (NDEBUG "Debug option used by developers" OFF)
 option (ENABLE_ARMCI_MEM_OPTION "User option for managing memory" ON)
 
 option (ENABLE_I8 "Use 8 byte Fortran integers" OFF)
-if (ENABLE_FORTRAN)
-  add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/config.fh
-    COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/config.h" -D OUTPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/config.fh" -P ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.cmake
-    DEPENDS config.h
-  )
-endif()
 option (F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS "Fortran/C interface property" ON)
 option (ENABLE_BLAS "Include external BLAS and LAPACK" ON)
 
@@ -196,12 +189,15 @@ check_include_files("sys/types.h" HAVE_SYS_TYPES_H)
 check_include_files("unistd.h" HAVE_UNISTD_H)
 check_include_files("windows.h" HAVE_WINDOWS_H)
 
+# check for certain functions
+include(CheckFunctionExists)
+check_function_exists("bzero" HAVE_BZERO)
+
 # set some flags for M$ Visual C
 if (MSVC)
   add_definitions(/D NOMINMAX /D _CRT_SECURE_NO_WARNINGS /D _CRT_NONSTDC_NO_WARNINGS)
 endif()
    
-
 # hardwire various GA configuration parameters. Use convention that parameters
 # are defined and set to 0 if not used
 set (CYGWIN 0)
@@ -220,6 +216,14 @@ if (LAPACK_FOUND)
 endif()
 else()
   set(HAVE_BLAS 0)
+endif()
+
+message(status "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
+message(status "LAPACK_LIBRARIES: ${LAPACK_LIBRARIES}")
+if (HAVE_BLAS)
+set(linalg_lib
+   ${BLAS_LIBRARIES}
+   ${LAPACK_LIBRARIES})
 endif()
 
 # check for availability of functions by seeing if small programs compile
@@ -349,6 +353,16 @@ CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/typesf2c.h.in
                 ${CMAKE_SOURCE_DIR}/gaf2c/typesf2c.h )
 CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/matypes.h.in
                 ${CMAKE_SOURCE_DIR}/ma/matypes.h )
+
+if (ENABLE_FORTRAN)
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/config.fh
+    COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/config.h" -D OUTPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/config.fh" -P ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.cmake
+    DEPENDS config.h
+  )
+  set (GA_CONFIG_FH
+       ${CMAKE_CURRENT_SOURCE_DIR}/config.fh)
+endif()
 
 # -------------------------------------------------------------
 # MPI compiler

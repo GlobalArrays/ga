@@ -17,6 +17,13 @@
 #cmakedefine01 HAVE_UNISTD_H
 #cmakedefine01 HAVE_WINDOWS_H
 
+#cmakedefine01 HAVE_BZERO
+#if !HAVE_BZERO
+#define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
+#endif
+
+
+
 #cmakedefine01 ENABLE_FORTRAN
 #cmakedefine01 NOFORT
 

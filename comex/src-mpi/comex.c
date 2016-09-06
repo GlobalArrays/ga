@@ -2137,7 +2137,7 @@ int comex_malloc(void **ptrs, size_t size, comex_group_t group)
   
     /* exchange buffer address */
     comex_barrier(group); /* end ARMCI epoch, enter MPI epoch */
-    rc = MPI_Allgather(MPI_IN_PLACE, 0, MPI_LONG, ptrs, 1, MPI_LONG, comm);
+    rc = MPI_Allgather(MPI_IN_PLACE, 0, MPI_CHAR, ptrs, SIZEOF_VOIDP, MPI_CHAR, comm);
     assert(MPI_SUCCESS == rc);
 #if DEBUG
     {

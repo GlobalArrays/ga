@@ -45,16 +45,17 @@ void pnga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root)
   long len_small;
   void *buffer_ptr;
   long istart=0;
+  int p_grp;
   /*          printf("%ld len %ld bigint %ld  \n",GAme,len,bigint); */
     nsteps = (int) ceil(((double)len)/((double)bigint));
     /*          printf("%ld len %ld bigint %ld  nsteps %d \n",GAme,len,bigint,nsteps); */
   for (i=0; i < nsteps; i++){
     len_small=bigint;
-    buffer_ptr=buffer+istart;
+    buffer_ptr=(char *)buffer+istart;
     if (istart+len_small > len) len_small=((long)(len - istart));
     /*               printf("%ld step %d of %d  len= %d total=%ld istart= %ld\n",GAme,(i+1),nsteps,len_small,len,istart); */
 #ifdef ARMCI_COLLECTIVES
-    int p_grp = (int)pnga_pgroup_get_default();
+    p_grp = (int)pnga_pgroup_get_default();
     if (p_grp > 0) {
 #   ifdef MSG_COMMS_MPI
         int aroot = PGRP_LIST[p_grp].inv_map_proc_list[root];
