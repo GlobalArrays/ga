@@ -72,3 +72,7 @@ add_library(ma OBJECT
   table.c
   ${FORTRAN_FILES}
 )
+
+if (ENABLE_FORTRAN)
+  ADD_DEPENDENCIES(ga_src GenerateConfigFH)
+endif()

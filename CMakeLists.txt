@@ -218,14 +218,14 @@ else()
   set(HAVE_BLAS 0)
 endif()
 
-message(status "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
-message(status "LAPACK_LIBRARIES: ${LAPACK_LIBRARIES}")
+message(STATUS "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
+message(STATUS "LAPACK_LIBRARIES: ${LAPACK_LIBRARIES}")
 if (HAVE_BLAS)
 set(linalg_lib
    ${BLAS_LIBRARIES}
    ${LAPACK_LIBRARIES})
 endif()
-
+    
 # check for availability of functions by seeing if small programs compile
 CHECK_C_SOURCE_COMPILES(
 "
@@ -291,27 +291,31 @@ set (HAVE_ARMCI_INITIALIZED 1)
 option (CHECK_COMPILATION_ONLY "Check compilation only" OFF)
 
 if (ENABLE_FORTRAN)
-  if (Fortran_COMPILER_NAME MATCHES "gfortran.*")
+  message(STATUS "CMAKE_Fortran_COMPILER: ${CMAKE_Fortran_COMPILER}")
+  if (CMAKE_Fortran_COMPILER MATCHES "gfortran.*")
+     set (F90_MODULE )
      set (F77_GETARG GETARG)
      set (F77_GETARG_ARGS "i,s")
      set (F77_GETARG_DECLS "intrinsic GETARG")
      set (F77_IARGC IARGC)
      set (F77_FLUSH flush)
      set (HAVE_F77_FLUSH 1)
-  elseif (Fortran_COMPILER_NAME MATCHES "ifort.*")
+  elseif (CMAKE_Fortran_COMPILER MATCHES "ifort.*")
+     set (F90_MODULE )
      set (F77_GETARG GETARG)
      set (F77_GETARG_ARGS "i,s")
      set (F77_GETARG_DECLS "GETARG")
      set (F77_IARGC IARGC)
      set (F77_FLUSH flush)
      set (HAVE_F77_FLUSH 1)
-  elseif (Fortran_COMPILER_NAME MATCHES "pgf90.*")
+  elseif (CMAKE_Fortran_COMPILER MATCHES "pgf90.*")
+     set (F90_MODULE )
      set (F77_GETARG GETARG)
      set (F77_GETARG_ARGS "i,s")
      set (F77_GETARG_DECLS "GETARG")
      set (F77_IARGC IARGC)
-     set (F77_GETARG_DECLS "external GETARG")
-     set (F77_IARGC IARGC)
+     set (F77_FLUSH flush)
+     set (HAVE_F77_FLUSH 1)
   endif()
 else()
 # need to set these variable even if only compiling C/C++
@@ -355,13 +359,16 @@ CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/matypes.h.in
                 ${CMAKE_SOURCE_DIR}/ma/matypes.h )
 
 if (ENABLE_FORTRAN)
+message(STATUS "CMAKE_COMMAND:${CMAKE_COMMAND}")
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/config.fh
-    COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/config.h" -D OUTPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/config.fh" -P ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.cmake
-    DEPENDS config.h
+    COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/config.h" -D OUTPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/config.fh" -P ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.cmake DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/config.h
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/config.h
   )
-  set (GA_CONFIG_FH
-       ${CMAKE_CURRENT_SOURCE_DIR}/config.fh)
+  add_custom_target(
+    GenerateConfigFH ALL
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/config.fh
+  )
 endif()
 
 # -------------------------------------------------------------

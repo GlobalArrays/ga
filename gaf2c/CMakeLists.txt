@@ -63,3 +63,7 @@ add_library(gaf2c OBJECT
   drand.c
   ${FORTRAN_FILES}
 )
+
+if (ENABLE_FORTRAN)
+  ADD_DEPENDENCIES(ga_src GenerateConfigFH)
+endif()

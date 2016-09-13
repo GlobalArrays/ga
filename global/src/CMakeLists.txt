@@ -115,6 +115,10 @@ add_library(ga_src OBJECT
   ${GA_FILES}
 )
 
+if(ENABLE_FORTRAN)
+  ADD_DEPENDENCIES(ga_src GenerateConfigFH)
+endif()
+
 # -------------------------------------------------------------
 # Global Arrays header installation
 # -------------------------------------------------------------
