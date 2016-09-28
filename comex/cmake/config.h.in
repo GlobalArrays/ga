@@ -1,8 +1,8 @@
-#cmakedefine COMEX_NETWORK_MPI3
-#cmakedefine COMEX_NETWORK_MPI_MT
-#cmakedefine COMEX_NETWORK_MPI_PR
-#cmakedefine COMEX_NETWORK_MPI_PT
-#cmakedefine COMEX_NETWORK_MPI_TS
+#cmakedefine01 COMEX_NETWORK_MPI3
+#cmakedefine01 COMEX_NETWORK_MPI_MT
+#cmakedefine01 COMEX_NETWORK_MPI_PR
+#cmakedefine01 COMEX_NETWORK_MPI_PT
+#cmakedefine01 COMEX_NETWORK_MPI_TS
 
 #cmakedefine01 HAVE_BLAS
 
@@ -15,6 +15,19 @@
 #define BLAS_SCOPY ${CM_BLAS_SCOPY}
 #define BLAS_ZCOPY ${CM_BLAS_ZCOPY}
 
+#cmakedefine01 HAVE_ASSERT_H
+#cmakedefine01 HAVE_BZERO
+#cmakedefine01 HAVE_MATH_H
+#cmakedefine01 HAVE_STDIO_H
+#cmakedefine01 HAVE_STDLIB_H
+#cmakedefine01 HAVE_STRCHR
+#cmakedefine01 HAVE_STRING_H
+#cmakedefine01 HAVE_UNISTD_H
+
+
+
+#define FUNCTION_NAME ${CM_FUNCTION_NAME}
+
 #cmakedefine01 HAVE_PTHREAD_SETAFFINITY_NP
 #cmakedefine01 HAVE_SCHED_SETAFFINITY
 #cmakedefine01 HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -24,6 +37,7 @@
 #define SIZEOF_INT ${CM_SIZEOF_INT}
 #define SIZEOF_LONG ${CM_SIZEOF_LONG}
 #define SIZEOF_LONG_LONG ${CM_SIZEOF_LONG_LONG}
+#define SIZEOF_VOIDP ${CMAKE_SIZEOF_VOID_P}
 #define BLAS_SIZE ${CM_BLAS_SIZE}
 
 #ifndef __cplusplus

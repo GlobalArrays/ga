@@ -35,7 +35,7 @@
 option (COMEX_NETWORK_MPI_TS "use MPI 2-sided protocol for communication" OFF)
 option (COMEX_NETWORK_MPI_PR "use MPI progress ranks protocol for communication" OFF)
 option (COMEX_NETWORK_MPI3 "use MPI RMA protocols for communication" OFF)
-include_directories(AFTER src-common)
+include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR} src-common)
 if (MPI_TS)
   set(COMEX_DEVICE
     src-mpi/comex.c
@@ -62,6 +62,43 @@ elseif (MPI3)
 endif()
 
 find_package(MPI)
+
+add_definitions (-DHAVE_CONFIG_H=1)
+
+# -------------------------------------------------------------
+# Check for variable sizes, include files and functions
+# -------------------------------------------------------------
+
+# check size of different variables
+include(CheckTypeSize)
+check_type_size("int" CM_SIZEOF_INT)
+check_type_size("double" CM_SIZEOF_DOUBLE)
+check_type_size("float" CM_SIZEOF_FLOAT)
+check_type_size("long" CM_SIZEOF_LONG)
+check_type_size("long double" CM_SIZEOF_LONG_DOUBLE)
+check_type_size("long long" CM_SIZEOF_LONG_LONG)
+check_type_size("short" CM_SIZEOF_SHORT)
+
+# check for standard C/C++ include files
+include(CheckIncludeFiles)
+check_include_files("assert.h" HAVE_ASSERT_H)
+check_include_files("limits.h" HAVE_LIMITS_H)
+check_include_files("linux/limits.h" HAVE_LINUX_LIMITS_H)
+check_include_files("malloc.h" HAVE_MALLOC_H)
+check_include_files("math.h" HAVE_MATH_H)
+check_include_files("stddef.h" HAVE_STDDEF_H)
+check_include_files("stdint.h" HAVE_STDINT_H)
+check_include_files("stdio.h" HAVE_STDIO_H)
+check_include_files("stdlib.h" HAVE_STDLIB_H)
+check_include_files("strings.h" HAVE_STRINGS_H)
+check_include_files("string.h" HAVE_STRING_H)
+check_include_files("sys/types.h" HAVE_SYS_TYPES_H)
+check_include_files("unistd.h" HAVE_UNISTD_H)
+check_include_files("windows.h" HAVE_WINDOWS_H)
+
+# check for certain functions
+include(CheckFunctionExists)
+check_function_exists("bzero" HAVE_BZERO)
 
 # -------------------------------------------------------------
 # figure out what BLAS library looks like
@@ -228,23 +265,23 @@ if (BLAS_1_SIGNATURE)
   set(CM_BLAS_SCOPY scopy)
   set(CM_BLAS_ZCOPY zcopy)
 elseif (BLAS_2_SIGNATURE)
-  set(CM_BLAS_CAXPY _caxpy)
-  set(CM_BLAS_DAXPY _daxpy)
-  set(CM_BLAS_SAXPY _saxpy)
-  set(CM_BLAS_ZAXPY _zaxpy)
-  set(CM_BLAS_CCOPY _ccopy)
-  set(CM_BLAS_DCOPY _dcopy)
-  set(CM_BLAS_SCOPY _scopy)
-  set(CM_BLAS_ZCOPY _zcopy)
+  set(CM_BLAS_CAXPY caxpy_)
+  set(CM_BLAS_DAXPY daxpy_)
+  set(CM_BLAS_SAXPY saxpy_)
+  set(CM_BLAS_ZAXPY zaxpy_)
+  set(CM_BLAS_CCOPY ccopy_)
+  set(CM_BLAS_DCOPY dcopy_)
+  set(CM_BLAS_SCOPY scopy_)
+  set(CM_BLAS_ZCOPY zcopy_)
 elseif (BLAS_3_SIGNATURE)
-  set(CM_BLAS_CAXPY __caxpy)
-  set(CM_BLAS_DAXPY __daxpy)
-  set(CM_BLAS_SAXPY __saxpy)
-  set(CM_BLAS_ZAXPY __zaxpy)
-  set(CM_BLAS_CCOPY __ccopy)
-  set(CM_BLAS_DCOPY __dcopy)
-  set(CM_BLAS_SCOPY __scopy)
-  set(CM_BLAS_ZCOPY __zcopy)
+  set(CM_BLAS_CAXPY caxpy__)
+  set(CM_BLAS_DAXPY daxpy__)
+  set(CM_BLAS_SAXPY saxpy__)
+  set(CM_BLAS_ZAXPY zaxpy__)
+  set(CM_BLAS_CCOPY ccopy__)
+  set(CM_BLAS_DCOPY dcopy__)
+  set(CM_BLAS_SCOPY scopy__)
+  set(CM_BLAS_ZCOPY zcopy__)
 elseif (BLAS_4_SIGNATURE)
   set(CM_BLAS_CAXPY CAXPY)
   set(CM_BLAS_DAXPY DAXPY)
@@ -255,32 +292,32 @@ elseif (BLAS_4_SIGNATURE)
   set(CM_BLAS_SCOPY SCOPY)
   set(CM_BLAS_ZCOPY ZCOPY)
 elseif (BLAS_5_SIGNATURE)
-  set(CM_BLAS_CAXPY _CAXPY)
-  set(CM_BLAS_DAXPY _DAXPY)
-  set(CM_BLAS_SAXPY _SAXPY)
-  set(CM_BLAS_ZAXPY _ZAXPY)
-  set(CM_BLAS_CCOPY _CCOPY)
-  set(CM_BLAS_DCOPY _DCOPY)
-  set(CM_BLAS_SCOPY _SCOPY)
-  set(CM_BLAS_ZCOPY _ZCOPY)
+  set(CM_BLAS_CAXPY CAXPY_)
+  set(CM_BLAS_DAXPY DAXPY_)
+  set(CM_BLAS_SAXPY SAXPY_)
+  set(CM_BLAS_ZAXPY ZAXPY_)
+  set(CM_BLAS_CCOPY CCOPY_)
+  set(CM_BLAS_DCOPY DCOPY_)
+  set(CM_BLAS_SCOPY SCOPY_)
+  set(CM_BLAS_ZCOPY ZCOPY_)
 elseif (BLAS_6_SIGNATURE)
-  set(CM_BLAS_CAXPY __CAXPY)
-  set(CM_BLAS_DAXPY __DAXPY)
-  set(CM_BLAS_SAXPY __SAXPY)
-  set(CM_BLAS_ZAXPY __ZAXPY)
-  set(CM_BLAS_CCOPY __CCOPY)
-  set(CM_BLAS_DCOPY __DCOPY)
-  set(CM_BLAS_SCOPY __SCOPY)
-  set(CM_BLAS_ZCOPY __ZCOPY)
+  set(CM_BLAS_CAXPY CAXPY__)
+  set(CM_BLAS_DAXPY DAXPY__)
+  set(CM_BLAS_SAXPY SAXPY__)
+  set(CM_BLAS_ZAXPY ZAXPY__)
+  set(CM_BLAS_CCOPY CCOPY__)
+  set(CM_BLAS_DCOPY DCOPY__)
+  set(CM_BLAS_SCOPY SCOPY__)
+  set(CM_BLAS_ZCOPY ZCOPY__)
 else()
-  set(CM_BLAS_CAXPY _caxpy)
-  set(CM_BLAS_DAXPY _daxpy)
-  set(CM_BLAS_SAXPY _saxpy)
-  set(CM_BLAS_ZAXPY _zaxpy)
-  set(CM_BLAS_CCOPY _ccopy)
-  set(CM_BLAS_DCOPY _dcopy)
-  set(CM_BLAS_SCOPY _scopy)
-  set(CM_BLAS_ZCOPY _zcopy)
+  set(CM_BLAS_CAXPY caxpy_)
+  set(CM_BLAS_DAXPY daxpy_)
+  set(CM_BLAS_SAXPY saxpy_)
+  set(CM_BLAS_ZAXPY zaxpy_)
+  set(CM_BLAS_CCOPY ccopy_)
+  set(CM_BLAS_DCOPY dcopy_)
+  set(CM_BLAS_SCOPY scopy_)
+  set(CM_BLAS_ZCOPY zcopy_)
 endif()
 
 # check for weak alias pragma
@@ -297,12 +334,51 @@ int main(int argc, char **argv) {
 "
    HAVE_SYS_WEAK_ALIAS_PRAGMA )
 
+# Check for  FUNCTION_NAME
+
+CHECK_C_SOURCE_COMPILES(
+"
+#include <stdio.h>
+int sub(int i) {
+  printf(\"%s\", __func__);
+}
+int main(int argc, char *argv[])
+{
+  sub(0);
+  return 0;
+}
+"
+    FUNCTION_1_SIGNATURE )
+
+CHECK_C_SOURCE_COMPILES(
+"
+#include <stdio.h>
+int sub(int i) {
+  printf(\"%s\", __FUNCTION__);
+}
+int main(int argc, char *argv[])
+{
+  sub(0);
+  return 0;
+}
+"
+    FUNCTION_2_SIGNATURE )
+if (FUNCTION_1_SIGNATURE)
+  set(CM_FUNCTION_NAME __func__)
+elseif(FUNCTION_2_SIGNATURE)
+  set(CM_FUNCTION_NAME __FUNCTION__)
+else()
+  set(CM_FUNCTION_NAME __func__)
+endif()
+
 # check for availability of some functions
 include(CheckFunctionExists)
 CHECK_FUNCTION_EXISTS(sched_setaffinity
      HAVE_SCHED_SETAFFINITY)
 CHECK_FUNCTION_EXISTS(pthread_setaffinity_np
      HAVE_PTHREAD_SETAFFINITY_NP)
+
+
 
 # generate config.h header file
 CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h.in
