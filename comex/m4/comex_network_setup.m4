@@ -228,6 +228,30 @@ AS_IF([test "x$happy" = xyes],
     [$2])
 ])dnl
 
+# _COMEX_NETWORK_OFI([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+# -------------------------------------------------------------------
+AC_DEFUN([_COMEX_NETWORK_OFI], [
+AC_MSG_NOTICE([searching for OFI...])
+happy=yes
+AS_IF([test "x$happy" = xyes],
+    [AC_CHECK_HEADERS([rdma/fabric.h rdma/fi_domain.h], [], [happy=no])])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([fi_getinfo], [fabric], [], [happy=no])])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([fi_freeinfo], [fabric], [], [happy=no])])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([fi_dupinfo], [fabric], [], [happy=no])])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([fi_fabric], [fabric], [], [happy=no])])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([fi_strerror], [fabric], [], [happy=no])])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([fi_tostr], [fabric], [], [happy=no])])
+AS_IF([test "x$happy" = xyes],
+    [comex_network=OFI; with_ofi=yes; $1],
+    [$2])
+])dnl
+
 # COMEX_NETWORK_SETUP
 # -------------------
 # This macro allows user to choose the comex network but also allows the

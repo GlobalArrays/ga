@@ -143,9 +143,14 @@ DIST_COMMON = $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @COMEX_NETWORK_OFI_TRUE@	src-ofi/comex_impl.h \
 @COMEX_NETWORK_OFI_TRUE@	src-ofi/datatype.h src-ofi/groups.c \
 @COMEX_NETWORK_OFI_TRUE@	src-ofi/groups.h src-ofi/mutex.h \
+@COMEX_NETWORK_OFI_TRUE@	src-ofi/ofi.h src-ofi/request.h \
+@COMEX_NETWORK_OFI_TRUE@	src-ofi/comex.c src-ofi/comex_impl.h \
+@COMEX_NETWORK_OFI_TRUE@	src-ofi/datatype.h src-ofi/groups.c \
+@COMEX_NETWORK_OFI_TRUE@	src-ofi/groups.h src-ofi/mutex.h \
 @COMEX_NETWORK_OFI_TRUE@	src-ofi/ofi.h src-ofi/request.h
-@COMEX_NETWORK_OFI_TRUE@am__append_20 = -lfabric
-@COMEX_NETWORK_OFI_TRUE@am__append_21 = -I$(top_srcdir)/src-ofi
+@COMEX_NETWORK_OFI_TRUE@am__append_20 = -lfabric -lfabric
+@COMEX_NETWORK_OFI_TRUE@am__append_21 = -I$(top_srcdir)/src-ofi \
+@COMEX_NETWORK_OFI_TRUE@	-I$(top_srcdir)/src-ofi
 
 ##############################################################################
 # src-portals4
@@ -177,6 +182,10 @@ DIST_COMMON = $(am__configure_deps) $(am__include_HEADERS_DIST) \
 
 ##############################################################################
 # src-mpi3
+#
+
+##############################################################################
+# src-ofi
 #
 
 ##############################################################################
@@ -338,6 +347,7 @@ am__libcomex_la_SOURCES_DIST = src-portals4/comex.c \
 @COMEX_NETWORK_MPI3_TRUE@	src-mpi3/groups.lo \
 @COMEX_NETWORK_MPI3_TRUE@	src-mpi3/reg_win.lo
 @COMEX_NETWORK_OFI_TRUE@am__objects_13 = src-ofi/comex.lo \
+@COMEX_NETWORK_OFI_TRUE@	src-ofi/groups.lo src-ofi/comex.lo \
 @COMEX_NETWORK_OFI_TRUE@	src-ofi/groups.lo
 am_libcomex_la_OBJECTS = $(am__objects_5) $(am__objects_6) \
 	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
@@ -823,7 +833,7 @@ all: $(BUILT_SOURCES) config.h
 .SUFFIXES: .c .html .lo .log .o .obj .test .test$(EXEEXT)
 am--refresh: Makefile
 	@:
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/src-portals4/Makefile.inc $(top_srcdir)/src-dmapp/Makefile.inc $(top_srcdir)/src-ofa/Makefile.inc $(top_srcdir)/src-mpi/Makefile.inc $(top_srcdir)/src-mpi-mt/Makefile.inc $(top_srcdir)/src-mpi-pt/Makefile.inc $(top_srcdir)/src-mpi-pr/Makefile.inc $(top_srcdir)/src-mpi3/Makefile.inc $(top_srcdir)/src-ofi/Makefile.inc $(top_srcdir)/src-armci/Makefile.inc $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/src-portals4/Makefile.inc $(top_srcdir)/src-dmapp/Makefile.inc $(top_srcdir)/src-ofa/Makefile.inc $(top_srcdir)/src-mpi/Makefile.inc $(top_srcdir)/src-mpi-mt/Makefile.inc $(top_srcdir)/src-mpi-pt/Makefile.inc $(top_srcdir)/src-mpi-pr/Makefile.inc $(top_srcdir)/src-mpi3/Makefile.inc $(top_srcdir)/src-ofi/Makefile.inc $(top_srcdir)/src-ofi/Makefile.inc $(top_srcdir)/src-armci/Makefile.inc $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -846,7 +856,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe);; \
 	esac;
-$(top_srcdir)/src-portals4/Makefile.inc $(top_srcdir)/src-dmapp/Makefile.inc $(top_srcdir)/src-ofa/Makefile.inc $(top_srcdir)/src-mpi/Makefile.inc $(top_srcdir)/src-mpi-mt/Makefile.inc $(top_srcdir)/src-mpi-pt/Makefile.inc $(top_srcdir)/src-mpi-pr/Makefile.inc $(top_srcdir)/src-mpi3/Makefile.inc $(top_srcdir)/src-ofi/Makefile.inc $(top_srcdir)/src-armci/Makefile.inc:
+$(top_srcdir)/src-portals4/Makefile.inc $(top_srcdir)/src-dmapp/Makefile.inc $(top_srcdir)/src-ofa/Makefile.inc $(top_srcdir)/src-mpi/Makefile.inc $(top_srcdir)/src-mpi-mt/Makefile.inc $(top_srcdir)/src-mpi-pt/Makefile.inc $(top_srcdir)/src-mpi-pr/Makefile.inc $(top_srcdir)/src-mpi3/Makefile.inc $(top_srcdir)/src-ofi/Makefile.inc $(top_srcdir)/src-ofi/Makefile.inc $(top_srcdir)/src-armci/Makefile.inc:
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck

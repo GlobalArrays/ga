@@ -144,6 +144,13 @@ include $(top_srcdir)/src-ofi/Makefile.inc
 endif
 
 ##############################################################################
+# src-ofi
+#
+if COMEX_NETWORK_OFI
+include $(top_srcdir)/src-ofi/Makefile.inc
+endif
+
+##############################################################################
 # src-armci
 #
 include $(top_srcdir)/src-armci/Makefile.inc

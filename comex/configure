@@ -678,6 +678,8 @@ HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE
 COMEX_NETWORK_CPPFLAGS
 COMEX_NETWORK_LIBS
 COMEX_NETWORK_LDFLAGS
+COMEX_NETWORK_OFI_FALSE
+COMEX_NETWORK_OFI_TRUE
 COMEX_NETWORK_DMAPP_FALSE
 COMEX_NETWORK_DMAPP_TRUE
 COMEX_NETWORK_PORTALS4_FALSE
@@ -810,6 +812,7 @@ with_mpi3
 with_ofa
 with_portals4
 with_dmapp
+with_ofi
 enable_assert
 enable_weak
 with_blas
@@ -1494,6 +1497,7 @@ Optional Packages:
   --with-ofa[=ARG]        select comex network as Infiniband OpenIB
   --with-portals4[=ARG]   select comex network as Portals4
   --with-dmapp[=ARG]      select comex network as Cray DMAPP
+  --with-ofi[=ARG]        select comex network as OFI
   --with-blas[=ARG]       use external BLAS library; attempt to detect
                           sizeof(INTEGER)
   --with-blas4[=ARG]      use external BLAS library compiled with
@@ -6529,6 +6533,153 @@ fi
 
 
 
+
+
+# Check whether --with-ofi was given.
+if test "${with_ofi+set}" = set; then :
+  withval=$with_ofi;
+fi
+
+
+
+if test "x$with_ofi" != x; then :
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "comex_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_ofi ; do
+    case $arg in #(
+  yes) :
+     ;; #(
+  no) :
+     ;; #(
+  -l*) :
+    COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $arg" ;; #(
+  -L*) :
+    COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS $arg" ;; #(
+  -WL*) :
+    COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS $arg" ;; #(
+  -Wl*) :
+    COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS $arg" ;; #(
+  -I*) :
+    COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS $arg" ;; #(
+  *.a) :
+    COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $arg" ;; #(
+  *lib) :
+    if test -d $arg; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofi not parsed" >&2;}
+fi ;; #(
+  *lib/) :
+    if test -d $arg; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofi not parsed" >&2;}
+fi ;; #(
+  *lib64) :
+    if test -d $arg; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofi not parsed" >&2;}
+fi ;; #(
+  *lib64/) :
+    if test -d $arg; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofi not parsed" >&2;}
+fi ;; #(
+  *include) :
+    if test -d $arg; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofi not parsed" >&2;}
+fi ;; #(
+  *include/) :
+    if test -d $arg; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofi not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofi not parsed" >&2;}
+fi ;; #(
+  *include64/) :
+    if test -d $arg; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofi not parsed" >&2;}
+fi ;; #(
+  -mkl*) :
+    COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $arg" ;; #(
+  *) :
+    comex_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$comex_arg_parse_ok" = xno; then :
+  if test "x$comex_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg/lib64"; comex_arg_parse_ok=yes
+elif test -d $arg/lib; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg/lib"; comex_arg_parse_ok=yes
+fi
+             if test -d $arg/include64; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg/include64"; comex_arg_parse_ok=yes
+elif test -d $arg/include; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg/include"; comex_arg_parse_ok=yes
+fi
+else
+  if test -d $arg/lib; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg/lib"; comex_arg_parse_ok=yes
+fi
+             if test -d $arg/include; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg/include"; comex_arg_parse_ok=yes
+fi
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$comex_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg"; comex_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg"; comex_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
+esac
+fi
+# warn user that $arg fell through
+     if test "x$comex_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofi not parsed" >&2;}
+fi
+done
+fi
+if test "x$with_ofi" != xno && test "x$with_ofi" != x; then :
+  comex_network=OFI
+     as_fn_arith $comex_network_count + 1 && comex_network_count=$as_val
+fi
+
+
+
 # Temporarily add COMEX_NETWORK_CPPFLAGS to CPPFLAGS.
 comex_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $COMEX_NETWORK_CPPFLAGS"
 # Temporarily add COMEX_NETWORK_LDFLAGS to LDFLAGS.
@@ -6884,6 +7035,393 @@ fi
 fi
 if test "x$happy" = xyes; then :
   comex_network=DMAPP; with_dmapp=yes;
+fi
+
+fi
+     if test "x$comex_network" = x && test "x$with_ofi" != xno; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for OFI..." >&5
+$as_echo "$as_me: searching for OFI..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  for ac_header in rdma/fabric.h rdma/fi_domain.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+else
+  happy=no
+fi
+
+done
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fi_getinfo" >&5
+$as_echo_n "checking for library containing fi_getinfo... " >&6; }
+if ${ac_cv_search_fi_getinfo+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char fi_getinfo ();
+int
+main ()
+{
+return fi_getinfo ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' fabric; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_fi_getinfo=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_fi_getinfo+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_fi_getinfo+:} false; then :
+
+else
+  ac_cv_search_fi_getinfo=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fi_getinfo" >&5
+$as_echo "$ac_cv_search_fi_getinfo" >&6; }
+ac_res=$ac_cv_search_fi_getinfo
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fi_freeinfo" >&5
+$as_echo_n "checking for library containing fi_freeinfo... " >&6; }
+if ${ac_cv_search_fi_freeinfo+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char fi_freeinfo ();
+int
+main ()
+{
+return fi_freeinfo ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' fabric; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_fi_freeinfo=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_fi_freeinfo+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_fi_freeinfo+:} false; then :
+
+else
+  ac_cv_search_fi_freeinfo=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fi_freeinfo" >&5
+$as_echo "$ac_cv_search_fi_freeinfo" >&6; }
+ac_res=$ac_cv_search_fi_freeinfo
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fi_dupinfo" >&5
+$as_echo_n "checking for library containing fi_dupinfo... " >&6; }
+if ${ac_cv_search_fi_dupinfo+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char fi_dupinfo ();
+int
+main ()
+{
+return fi_dupinfo ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' fabric; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_fi_dupinfo=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_fi_dupinfo+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_fi_dupinfo+:} false; then :
+
+else
+  ac_cv_search_fi_dupinfo=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fi_dupinfo" >&5
+$as_echo "$ac_cv_search_fi_dupinfo" >&6; }
+ac_res=$ac_cv_search_fi_dupinfo
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fi_fabric" >&5
+$as_echo_n "checking for library containing fi_fabric... " >&6; }
+if ${ac_cv_search_fi_fabric+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char fi_fabric ();
+int
+main ()
+{
+return fi_fabric ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' fabric; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_fi_fabric=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_fi_fabric+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_fi_fabric+:} false; then :
+
+else
+  ac_cv_search_fi_fabric=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fi_fabric" >&5
+$as_echo "$ac_cv_search_fi_fabric" >&6; }
+ac_res=$ac_cv_search_fi_fabric
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fi_strerror" >&5
+$as_echo_n "checking for library containing fi_strerror... " >&6; }
+if ${ac_cv_search_fi_strerror+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char fi_strerror ();
+int
+main ()
+{
+return fi_strerror ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' fabric; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_fi_strerror=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_fi_strerror+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_fi_strerror+:} false; then :
+
+else
+  ac_cv_search_fi_strerror=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fi_strerror" >&5
+$as_echo "$ac_cv_search_fi_strerror" >&6; }
+ac_res=$ac_cv_search_fi_strerror
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fi_tostr" >&5
+$as_echo_n "checking for library containing fi_tostr... " >&6; }
+if ${ac_cv_search_fi_tostr+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char fi_tostr ();
+int
+main ()
+{
+return fi_tostr ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' fabric; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_fi_tostr=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_fi_tostr+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_fi_tostr+:} false; then :
+
+else
+  ac_cv_search_fi_tostr=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fi_tostr" >&5
+$as_echo "$ac_cv_search_fi_tostr" >&6; }
+ac_res=$ac_cv_search_fi_tostr
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  comex_network=OFI; with_ofi=yes;
 fi
 
 fi
@@ -7685,6 +8223,395 @@ else
 fi
 
 fi
+              if test "x$comex_network" = xOFI; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for OFI..." >&5
+$as_echo "$as_me: searching for OFI..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  for ac_header in rdma/fabric.h rdma/fi_domain.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+else
+  happy=no
+fi
+
+done
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fi_getinfo" >&5
+$as_echo_n "checking for library containing fi_getinfo... " >&6; }
+if ${ac_cv_search_fi_getinfo+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char fi_getinfo ();
+int
+main ()
+{
+return fi_getinfo ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' fabric; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_fi_getinfo=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_fi_getinfo+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_fi_getinfo+:} false; then :
+
+else
+  ac_cv_search_fi_getinfo=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fi_getinfo" >&5
+$as_echo "$ac_cv_search_fi_getinfo" >&6; }
+ac_res=$ac_cv_search_fi_getinfo
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fi_freeinfo" >&5
+$as_echo_n "checking for library containing fi_freeinfo... " >&6; }
+if ${ac_cv_search_fi_freeinfo+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char fi_freeinfo ();
+int
+main ()
+{
+return fi_freeinfo ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' fabric; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_fi_freeinfo=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_fi_freeinfo+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_fi_freeinfo+:} false; then :
+
+else
+  ac_cv_search_fi_freeinfo=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fi_freeinfo" >&5
+$as_echo "$ac_cv_search_fi_freeinfo" >&6; }
+ac_res=$ac_cv_search_fi_freeinfo
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fi_dupinfo" >&5
+$as_echo_n "checking for library containing fi_dupinfo... " >&6; }
+if ${ac_cv_search_fi_dupinfo+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char fi_dupinfo ();
+int
+main ()
+{
+return fi_dupinfo ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' fabric; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_fi_dupinfo=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_fi_dupinfo+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_fi_dupinfo+:} false; then :
+
+else
+  ac_cv_search_fi_dupinfo=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fi_dupinfo" >&5
+$as_echo "$ac_cv_search_fi_dupinfo" >&6; }
+ac_res=$ac_cv_search_fi_dupinfo
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fi_fabric" >&5
+$as_echo_n "checking for library containing fi_fabric... " >&6; }
+if ${ac_cv_search_fi_fabric+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char fi_fabric ();
+int
+main ()
+{
+return fi_fabric ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' fabric; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_fi_fabric=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_fi_fabric+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_fi_fabric+:} false; then :
+
+else
+  ac_cv_search_fi_fabric=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fi_fabric" >&5
+$as_echo "$ac_cv_search_fi_fabric" >&6; }
+ac_res=$ac_cv_search_fi_fabric
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fi_strerror" >&5
+$as_echo_n "checking for library containing fi_strerror... " >&6; }
+if ${ac_cv_search_fi_strerror+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char fi_strerror ();
+int
+main ()
+{
+return fi_strerror ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' fabric; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_fi_strerror=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_fi_strerror+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_fi_strerror+:} false; then :
+
+else
+  ac_cv_search_fi_strerror=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fi_strerror" >&5
+$as_echo "$ac_cv_search_fi_strerror" >&6; }
+ac_res=$ac_cv_search_fi_strerror
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fi_tostr" >&5
+$as_echo_n "checking for library containing fi_tostr... " >&6; }
+if ${ac_cv_search_fi_tostr+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char fi_tostr ();
+int
+main ()
+{
+return fi_tostr ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' fabric; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_fi_tostr=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_fi_tostr+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_fi_tostr+:} false; then :
+
+else
+  ac_cv_search_fi_tostr=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fi_tostr" >&5
+$as_echo "$ac_cv_search_fi_tostr" >&6; }
+ac_res=$ac_cv_search_fi_tostr
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  comex_network=OFI; with_ofi=yes;
+else
+  as_fn_error $? "test for COMEX_NETWORK=OFI failed" "$LINENO" 5
+fi
+
+fi
               ;; #(
   *) :
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: too many comex networks specified: $comex_network_count" >&5
@@ -7752,6 +8679,14 @@ fi
 if test "x$with_dmapp" != x && test "x$with_dmapp" != xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-dmapp=$with_dmapp" >&5
 $as_echo "$as_me: WARNING: --with-dmapp=$with_dmapp" >&2;}
+fi
+
+
+
+
+if test "x$with_ofi" != x && test "x$with_ofi" != xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-ofi=$with_ofi" >&5
+$as_echo "$as_me: WARNING: --with-ofi=$with_ofi" >&2;}
 fi
 
 
@@ -7879,6 +8814,20 @@ fi
 
 
 
+ if test "x$with_ofi" != x && test "x$with_ofi" != xno; then
+  COMEX_NETWORK_OFI_TRUE=
+  COMEX_NETWORK_OFI_FALSE='#'
+else
+  COMEX_NETWORK_OFI_TRUE='#'
+  COMEX_NETWORK_OFI_FALSE=
+fi
+
+
+
+
+
+
+
 if test "x$with_mpi_ts" != x && test "x$with_mpi_ts" != xno; then :
 
 $as_echo "#define COMEX_NETWORK_MPI_TS 1" >>confdefs.h
@@ -7991,6 +8940,21 @@ $as_echo "#define COMEX_NETWORK_DMAPP 1" >>confdefs.h
 else
 
 $as_echo "#define COMEX_NETWORK_DMAPP 0" >>confdefs.h
+
+fi
+
+
+
+
+
+
+if test "x$with_ofi" != x && test "x$with_ofi" != xno; then :
+
+$as_echo "#define COMEX_NETWORK_OFI 1" >>confdefs.h
+
+else
+
+$as_echo "#define COMEX_NETWORK_OFI 0" >>confdefs.h
 
 fi
 
@@ -23280,6 +24244,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COMEX_NETWORK_DMAPP_TRUE}" && test -z "${COMEX_NETWORK_DMAPP_FALSE}"; then
   as_fn_error $? "conditional \"COMEX_NETWORK_DMAPP\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COMEX_NETWORK_OFI_TRUE}" && test -z "${COMEX_NETWORK_OFI_FALSE}"; then
+  as_fn_error $? "conditional \"COMEX_NETWORK_OFI\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE}" && test -z "${HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE}"; then
