@@ -4287,6 +4287,7 @@ c     broadcast evals
       return
       end
 #endif
+#ifdef USE_PXERBLA
       SUBROUTINE PXERBLA( ICTXT, SRNAME, INFO )
 *
 *  -- ScaLAPACK auxiliary routine (version 2.0) --
@@ -4353,3 +4354,4 @@ c     broadcast evals
 *
       END
 
+#endif
