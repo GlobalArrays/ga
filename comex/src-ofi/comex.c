@@ -1248,7 +1248,7 @@ static int list_strides(
     for (i=0; i<n1dim; i++) {
         src_idx = 0;
         for (j=1; j<=stride_levels; j++) {
-            src_idx += src_bvalue[j] * src_stride_ar[j-1];
+	  src_idx += (long) src_bvalue[j] * (long) src_stride_ar[j-1];
             if ((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -1260,7 +1260,7 @@ static int list_strides(
         dst_idx = 0;
 
         for (j=1; j<=stride_levels; j++) {
-            dst_idx += dst_bvalue[j] * dst_stride_ar[j-1];
+	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride_ar[j-1];
             if ((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
@@ -3566,7 +3566,7 @@ static int comex_nbaccs_emu(
     {
         src_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-            src_idx += src_bvalue[j] * src_stride_ar[j-1];
+	  src_idx += (long) src_bvalue[j] * (long) src_stride_ar[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -3578,7 +3578,7 @@ static int comex_nbaccs_emu(
         dst_idx = 0;
 
         for(j=1; j<=stride_levels; j++) {
-            dst_idx += dst_bvalue[j] * dst_stride_ar[j-1];
+	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride_ar[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }

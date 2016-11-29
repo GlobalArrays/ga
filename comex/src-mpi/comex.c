@@ -813,7 +813,7 @@ int comex_puts(
         src_idx = 0;
         dst_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-            src_idx += src_bvalue[j] * src_stride_ar[j-1];
+	  src_idx += (long) src_bvalue[j] * (long) src_stride_ar[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -823,7 +823,7 @@ int comex_puts(
         }
 
         for(j=1; j<=stride_levels; j++) {
-            dst_idx += dst_bvalue[j] * dst_stride_ar[j-1];
+	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride_ar[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
@@ -886,7 +886,7 @@ int comex_gets(
     for(i=0; i<n1dim; i++) {
         src_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-            src_idx += src_bvalue[j] * src_stride_ar[j-1];
+	  src_idx += (long) src_bvalue[j] * (long) src_stride_ar[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -898,7 +898,7 @@ int comex_gets(
         dst_idx = 0;
         
         for(j=1; j<=stride_levels; j++) {
-            dst_idx += dst_bvalue[j] * dst_stride_ar[j-1];
+	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride_ar[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
@@ -976,7 +976,7 @@ int comex_accs(
         src_idx = 0;
         dst_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-            src_idx += src_bvalue[j] * src_stride_ar[j-1];
+	  src_idx += (long) src_bvalue[j] * (long) src_stride_ar[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -986,7 +986,7 @@ int comex_accs(
         }
 
         for(j=1; j<=stride_levels; j++) {
-            dst_idx += dst_bvalue[j] * dst_stride_ar[j-1];
+	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride_ar[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }

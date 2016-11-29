@@ -38,16 +38,19 @@
 #define PREPROCESS_STRIDED(tmp_count)
 #define POSTPROCESS_STRIDED(tmp_count)
 #else
+#define BIGINT 2147483647
 #define PREPROCESS_STRIDED(tmp_count) {					\
     tmp_count=0;							\
     if(stride_levels)							\
       for(;stride_levels;stride_levels--)if(count[stride_levels]>1)break; \
-    if(stride_levels&&(count[0]==src_stride_arr[0]&&count[0]==dst_stride_arr[0])){ \
-      tmp_count=seg_count[1];						\
-      count = seg_count+1;						\
-      seg_count[1] = seg_count[0] * seg_count[1];			\
-      stride_levels --;							\
-      src_stride_arr ++;  dst_stride_arr++ ;				\
+    if((long) seg_count[1]* (long) seg_count[0] < BIGINT){		\
+      if(stride_levels&&(count[0]==src_stride_arr[0]&&count[0]==dst_stride_arr[0])){ \
+	tmp_count=seg_count[1];						\
+	count = seg_count+1;						\
+	seg_count[1] = seg_count[0] * seg_count[1];			\
+	stride_levels --;						\
+	src_stride_arr ++;  dst_stride_arr++ ;				\
+      }									\
     }									\
   }
 #define POSTPROCESS_STRIDED(tmp_count) if(tmp_count)seg_count[1]=tmp_count

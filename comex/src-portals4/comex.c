@@ -1887,7 +1887,7 @@ static inline void nb_puts(
         src_idx = 0;
         dst_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-            src_idx += src_bvalue[j] * src_stride[j-1];
+	  src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -1897,7 +1897,7 @@ static inline void nb_puts(
         }
 
         for(j=1; j<=stride_levels; j++) {
-            dst_idx += dst_bvalue[j] * dst_stride[j-1];
+	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
@@ -1949,7 +1949,7 @@ static inline void nb_gets(
     for(i=0; i<n1dim; i++) {
         src_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-            src_idx += src_bvalue[j] * src_stride[j-1];
+	  src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -1961,7 +1961,7 @@ static inline void nb_gets(
         dst_idx = 0;
         
         for(j=1; j<=stride_levels; j++) {
-            dst_idx += dst_bvalue[j] * dst_stride[j-1];
+	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
@@ -2018,7 +2018,7 @@ static inline void nb_accs(
         src_idx = 0;
         dst_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-            src_idx += src_bvalue[j] * src_stride[j-1];
+	  src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -2028,7 +2028,7 @@ static inline void nb_accs(
         }
 
         for(j=1; j<=stride_levels; j++) {
-            dst_idx += dst_bvalue[j] * dst_stride[j-1];
+	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }

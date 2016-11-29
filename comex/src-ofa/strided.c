@@ -65,7 +65,7 @@ int comex_nbputs(void *src_ptr, int src_stride_ar[/*stride_levels*/],
         dst_idx = 0;
         for(j=1; j<=stride_levels; j++)
         {
-            src_idx += src_bvalue[j] * src_stride_ar[j-1];
+	  src_idx += (long) src_bvalue[j] * (long) src_stride_ar[j-1];
             if((i+1) % src_bunit[j] == 0)
                 src_bvalue[j]++;
             if(src_bvalue[j] > (count[j]-1))
@@ -74,7 +74,7 @@ int comex_nbputs(void *src_ptr, int src_stride_ar[/*stride_levels*/],
 
         for(j=1; j<=stride_levels; j++)
         {
-            dst_idx += dst_bvalue[j] * dst_stride_ar[j-1];
+	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride_ar[j-1];
             if((i+1) % dst_bunit[j] == 0)
                 dst_bvalue[j]++;
             if(dst_bvalue[j] > (count[j]-1))
@@ -125,7 +125,7 @@ int comex_nbgets(void *src_ptr, int src_stride_ar[/*stride_levels*/],
         src_idx = 0;
         for(j=1; j<=stride_levels; j++)
         {
-            src_idx += src_bvalue[j] * src_stride_ar[j-1];
+	  src_idx += (long) src_bvalue[j] * (long) src_stride_ar[j-1];
             if((i+1) % src_bunit[j] == 0)
                 src_bvalue[j]++;
             if(src_bvalue[j] > (count[j]-1))
@@ -136,7 +136,7 @@ int comex_nbgets(void *src_ptr, int src_stride_ar[/*stride_levels*/],
 
         for(j=1; j<=stride_levels; j++)
         {
-            dst_idx += dst_bvalue[j] * dst_stride_ar[j-1];
+	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride_ar[j-1];
             if((i+1) % dst_bunit[j] == 0)
                 dst_bvalue[j]++;
             if(dst_bvalue[j] > (count[j]-1))
@@ -202,7 +202,7 @@ int comex_nbaccs(int datatype, void *scale,
     for(i=0; i<n1dim; i++) {
         src_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-            src_idx += src_bvalue[j] * src_stride_ar[j-1];
+	  src_idx += (long) src_bvalue[j] * (long) src_stride_ar[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -214,7 +214,7 @@ int comex_nbaccs(int datatype, void *scale,
         dst_idx = 0;
 
         for(j=1; j<=stride_levels; j++) {
-            dst_idx += dst_bvalue[j] * dst_stride_ar[j-1];
+	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride_ar[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
