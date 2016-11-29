@@ -224,37 +224,13 @@ AS_IF([test "x$happy" = xyes],
 AS_IF([test "x$happy" = xyes],
     [AC_SEARCH_LIBS([fi_tostr], [fabric], [], [happy=no])])
 AS_IF([test "x$happy" = xyes], 
-    [AS_CASE([$ac_cv_search_fi_fabric], 
+    [AS_CASE([$ac_cv_search_fi_getinfo], 
             ["none required"], [], 
             [no], [], 
             [# add missing lib to COMEX_NETWORK_LIBS if not there 
              AS_CASE([$COMEX_NETWORK_LIBS], 
-                     [*$ac_cv_search_fi_fabric*], [], 
-                     [COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $ac_cv_search_fi_fabric"])])]) 
-AS_IF([test "x$happy" = xyes],
-    [comex_network=OFI; with_ofi=yes; $1],
-    [$2])
-])dnl
-
-# _COMEX_NETWORK_OFI([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
-# -------------------------------------------------------------------
-AC_DEFUN([_COMEX_NETWORK_OFI], [
-AC_MSG_NOTICE([searching for OFI...])
-happy=yes
-AS_IF([test "x$happy" = xyes],
-    [AC_CHECK_HEADERS([rdma/fabric.h rdma/fi_domain.h], [], [happy=no])])
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([fi_getinfo], [fabric], [], [happy=no])])
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([fi_freeinfo], [fabric], [], [happy=no])])
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([fi_dupinfo], [fabric], [], [happy=no])])
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([fi_fabric], [fabric], [], [happy=no])])
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([fi_strerror], [fabric], [], [happy=no])])
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([fi_tostr], [fabric], [], [happy=no])])
+                     [*$ac_cv_search_fi_getinfo*], [], 
+                     [COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $ac_cv_search_fi_getinfo"])])]) 
 AS_IF([test "x$happy" = xyes],
     [comex_network=OFI; with_ofi=yes; $1],
     [$2])

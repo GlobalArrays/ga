@@ -7421,6 +7421,22 @@ fi
 
 fi
 if test "x$happy" = xyes; then :
+  case $ac_cv_search_fi_getinfo in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    # add missing lib to COMEX_NETWORK_LIBS if not there
+             case $COMEX_NETWORK_LIBS in #(
+  *$ac_cv_search_fi_getinfo*) :
+     ;; #(
+  *) :
+    COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $ac_cv_search_fi_getinfo" ;;
+esac ;;
+esac
+fi
+if test "x$happy" = xyes; then :
   comex_network=OFI; with_ofi=yes;
 fi
 
@@ -8604,6 +8620,22 @@ else
   happy=no
 fi
 
+fi
+if test "x$happy" = xyes; then :
+  case $ac_cv_search_fi_getinfo in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    # add missing lib to COMEX_NETWORK_LIBS if not there
+             case $COMEX_NETWORK_LIBS in #(
+  *$ac_cv_search_fi_getinfo*) :
+     ;; #(
+  *) :
+    COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $ac_cv_search_fi_getinfo" ;;
+esac ;;
+esac
 fi
 if test "x$happy" = xyes; then :
   comex_network=OFI; with_ofi=yes;
