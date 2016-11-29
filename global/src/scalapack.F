@@ -3948,6 +3948,7 @@ c         lwork=max(lwork,n)
 c         lwork=2*max(lwork,mpa*(nb+nqa))
 c         write(0,*) ga_nodeid(), ' lw orig new ',dumm,lwork
          lrwork=dumm1
+         lrwork=max(lrwork,lwork)
          liwork=dumm2
 
 c     
