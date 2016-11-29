@@ -1387,10 +1387,10 @@ c**** otherwise just save the hA MA handle
                   hsA = hA
                endif
             endif
-         endif
-      else
-         if (.not.use_direct) then
-            status = ma_pop_stack(hA)
+         else
+            if (.not.use_direct) then
+               status = ma_pop_stack(hA)
+            endif
          endif
       endif
 c
