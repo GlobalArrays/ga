@@ -70,10 +70,10 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          COMEX_C_BLAS_TEST()
          AC_LINK_IFELSE([], [comex_blas_ok=yes])])
     AS_IF([test "x$comex_blas_ok" = xno],
-        [caxpy=CGEMM
-         daxpy=DGEMM
-         saxpy=SGEMM
-         zaxpy=ZGEMM
+        [caxpy=CAXPY
+         daxpy=DAXPY
+         saxpy=SAXPY
+         zaxpy=ZAXPY
          ccopy=CCOPY
          dcopy=DCOPY
          scopy=SCOPY
@@ -81,10 +81,10 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          COMEX_C_BLAS_TEST()
          AC_LINK_IFELSE([], [comex_blas_ok=yes])])
     AS_IF([test "x$comex_blas_ok" = xno],
-        [caxpy=CGEMM_
-         daxpy=DGEMM_
-         saxpy=SGEMM_
-         zaxpy=ZGEMM_
+        [caxpy=CAXPY_
+         daxpy=DAXPY_
+         saxpy=SAXPY_
+         zaxpy=ZAXPY_
          ccopy=CCOPY_
          dcopy=DCOPY_
          scopy=SCOPY_
@@ -92,10 +92,10 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          COMEX_C_BLAS_TEST()
          AC_LINK_IFELSE([], [comex_blas_ok=yes])])
     AS_IF([test "x$comex_blas_ok" = xno],
-        [caxpy=CGEMM__
-         daxpy=DGEMM__
-         saxpy=SGEMM__
-         zaxpy=ZGEMM__
+        [caxpy=CAXPY__
+         daxpy=DAXPY__
+         saxpy=SAXPY__
+         zaxpy=ZAXPY__
          ccopy=CCOPY__
          dcopy=DCOPY__
          scopy=SCOPY__
