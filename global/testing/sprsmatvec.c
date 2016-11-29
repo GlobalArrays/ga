@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 
@@ -122,9 +123,9 @@ double ran3(int *idum) {
   if (idum < 0 || iff == 0) {
     iff = 1;
     *idum = 1;
-    srand(iabs(idum));
+    srand(abs(idum));
   }
-  randnum = ((double)rand())/((double)MAX_RAND);
+  randnum = ((double)rand())/((double)RAND_MAX);
   return randnum;
 }
 
