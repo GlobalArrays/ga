@@ -422,10 +422,10 @@ _GA_ARMCI_NETWORK_WITH([mpi-spawn], [MPI-2 dynamic process mgmt])
 _GA_ARMCI_NETWORK_WITH([mpi-ts],    [(Comex) MPI-1 two-sided])
 _GA_ARMCI_NETWORK_WITH([mpi3],      [(Comex) MPI-3 one-sided])
 _GA_ARMCI_NETWORK_WITH([ofa],       [(Comex) Infiniband OpenIB])
+_GA_ARMCI_NETWORK_WITH([ofi],       [(Comex) OFI])
 _GA_ARMCI_NETWORK_WITH([openib],    [Infiniband OpenIB])
 _GA_ARMCI_NETWORK_WITH([portals4],  [(Comex) Portals4])
 _GA_ARMCI_NETWORK_WITH([portals],   [Cray XT portals])
-_GA_ARMCI_NETWORK_WITH([ofi],       [(Comex) OFI])
 _GA_ARMCI_NETWORK_WITH([sockets],   [Ethernet TCP/IP])
 # Temporarily add ARMCI_NETWORK_CPPFLAGS to CPPFLAGS.
 ga_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $ARMCI_NETWORK_CPPFLAGS"
@@ -583,11 +583,10 @@ AS_CASE([$ga_armci_network],
 [MPI_TS],   [ARMCI_SRC_DIR=comex],
 [MPI3],     [ARMCI_SRC_DIR=comex],
 [OFA],      [ARMCI_SRC_DIR=comex],
+[OFI],      [ARMCI_SRC_DIR=comex],
 [OPENIB],   [ARMCI_SRC_DIR=src],
 [PORTALS4], [ARMCI_SRC_DIR=comex],
-[OFI],      [ARMCI_SRC_DIR=comex],
 [PORTALS],  [ARMCI_SRC_DIR=src-portals],
-[OFI],      [ARMCI_SRC_DIR=comex],
             [ARMCI_SRC_DIR=src])
 AC_SUBST([ARMCI_SRC_DIR])
 AM_CONDITIONAL([ARMCI_SRC_DIR_PORTALS], [test "x$ARMCI_SRC_DIR" = "xsrc-portals"])
@@ -660,11 +659,11 @@ AS_CASE([$ga_armci_network],
 [MPI_SPAWN],    [delay_tcgmsg_mpi_startup=1],
 [MPI3],         [delay_tcgmsg_mpi_startup=0],
 [OFA],          [delay_tcgmsg_mpi_startup=0],
+[OFI],          [delay_tcgmsg_mpi_startup=0],
 [OPENIB],       [delay_tcgmsg_mpi_startup=1],
 [GEMINI],       [delay_tcgmsg_mpi_startup=1],
 [PORTALS4],     [delay_tcgmsg_mpi_startup=0],
 [PORTALS],      [delay_tcgmsg_mpi_startup=1],
-[OFI],          [delay_tcgmsg_mpi_startup=0],
 [SOCKETS],      [delay_tcgmsg_mpi_startup=1])
 AC_DEFINE_UNQUOTED([NEED_DELAY_TCGMSG_MPI_STARTUP],
     [$delay_tcgmsg_mpi_startup],

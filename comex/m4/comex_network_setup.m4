@@ -223,6 +223,14 @@ AS_IF([test "x$happy" = xyes],
     [AC_SEARCH_LIBS([fi_strerror], [fabric], [], [happy=no])])
 AS_IF([test "x$happy" = xyes],
     [AC_SEARCH_LIBS([fi_tostr], [fabric], [], [happy=no])])
+AS_IF([test "x$happy" = xyes], 
+    [AS_CASE([$ac_cv_search_fi_fabric], 
+            ["none required"], [], 
+            [no], [], 
+            [# add missing lib to COMEX_NETWORK_LIBS if not there 
+             AS_CASE([$COMEX_NETWORK_LIBS], 
+                     [*$ac_cv_search_fi_fabric*], [], 
+                     [COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $ac_cv_search_fi_fabric"])])]) 
 AS_IF([test "x$happy" = xyes],
     [comex_network=OFI; with_ofi=yes; $1],
     [$2])

@@ -148,8 +148,7 @@ DIST_COMMON = $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @COMEX_NETWORK_OFI_TRUE@	src-ofi/datatype.h src-ofi/groups.c \
 @COMEX_NETWORK_OFI_TRUE@	src-ofi/groups.h src-ofi/mutex.h \
 @COMEX_NETWORK_OFI_TRUE@	src-ofi/ofi.h src-ofi/request.h
-@COMEX_NETWORK_OFI_TRUE@am__append_20 = -lfabric -lfabric
-@COMEX_NETWORK_OFI_TRUE@am__append_21 = -I$(top_srcdir)/src-ofi \
+@COMEX_NETWORK_OFI_TRUE@am__append_20 = -I$(top_srcdir)/src-ofi \
 @COMEX_NETWORK_OFI_TRUE@	-I$(top_srcdir)/src-ofi
 
 ##############################################################################
@@ -199,12 +198,12 @@ DIST_COMMON = $(am__configure_deps) $(am__include_HEADERS_DIST) \
 ##############################################################################
 # profiling
 #
-@ENABLE_PROFILING_ARMCI_TRUE@am__append_22 = -I$(top_srcdir)/src-armci
-@ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_23 = libarmci_prof.la
-@ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_24 = src-armci/capi.c
-@ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_25 = tools/armci_prof.c
-@ENABLE_PROFILING_ARMCI_FALSE@am__append_26 = src-armci/capi.c
-@ENABLE_PROFILING_ARMCI_FALSE@am__append_27 = src-armci/parmci.h
+@ENABLE_PROFILING_ARMCI_TRUE@am__append_21 = -I$(top_srcdir)/src-armci
+@ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_22 = libarmci_prof.la
+@ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_23 = src-armci/capi.c
+@ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_24 = tools/armci_prof.c
+@ENABLE_PROFILING_ARMCI_FALSE@am__append_25 = src-armci/capi.c
+@ENABLE_PROFILING_ARMCI_FALSE@am__append_26 = src-armci/parmci.h
 TESTS = $(am__EXEEXT_4) $(DUAL_TESTS) $(PARALLEL_TESTS)
 XFAIL_TESTS = $(am__EXEEXT_4) $(am__EXEEXT_4) $(am__EXEEXT_4)
 subdir = .
@@ -650,7 +649,7 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
-LIBS = @LIBS@ $(am__append_20)
+LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
@@ -746,9 +745,9 @@ ACLOCAL_AMFLAGS = -I m4
 # are listed in these variables.  Appended to throughout.  These are the
 # automake variables used.
 include_HEADERS = $(top_srcdir)/src-common/comex.h src-armci/armci.h \
-	src-armci/message.h $(am__append_27)
+	src-armci/message.h $(am__append_26)
 check_LTLIBRARIES = 
-lib_LTLIBRARIES = libcomex.la libarmci.la $(am__append_23)
+lib_LTLIBRARIES = libcomex.la libarmci.la $(am__append_22)
 
 # internal libcomex for possibly rolling up into other libraries
 noinst_LTLIBRARIES = libcomexi.la libarmcii.la
@@ -763,7 +762,7 @@ AM_CPPFLAGS = $(MPI_CPPFLAGS) $(COMEX_NETWORK_CPPFLAGS) \
 	$(BLAS_CPPFLAGS) -I$(top_srcdir)/src-common $(am__append_2) \
 	$(am__append_4) $(am__append_6) $(am__append_8) \
 	$(am__append_10) $(am__append_12) $(am__append_15) \
-	$(am__append_18) $(am__append_21) $(am__append_22)
+	$(am__append_18) $(am__append_20) $(am__append_21)
 AM_LDFLAGS = $(MPI_LDFLAGS) $(COMEX_NETWORK_LDFLAGS) $(BLAS_LDFLAGS)
 LDADD = libcomex.la $(LTLIBOBJS) $(MPI_LIBS) $(COMEX_NETWORK_LIBS) \
 	$(BLAS_LIBS)
@@ -783,7 +782,7 @@ SED_NORMALIZE_WHITESPACE = $(SED) 's/ [ ]*/ /g;s/" /"/g;s/ "/"/g'
 @COMEX_NETWORK_MPI_PR_TRUE@src_mpi_pr_hello_SOURCES = src-mpi-pr/hello.c
 libarmci_la_SOURCES = src-armci/armci.c src-armci/groups.c \
 	src-armci/message.c src-armci/iterator.c src-armci/iterator.h \
-	$(am__append_24) $(am__append_25) $(am__append_26)
+	$(am__append_23) $(am__append_24) $(am__append_25)
 libarmci_la_LIBADD = libcomexi.la
 libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
 @ENABLE_PROFILING_ARMCI_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@libarmci_prof_la_SOURCES = tools/armci_prof.c

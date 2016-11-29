@@ -7,6 +7,4 @@ libcomex_la_SOURCES += src-ofi/mutex.h
 libcomex_la_SOURCES += src-ofi/ofi.h
 libcomex_la_SOURCES += src-ofi/request.h
 
-LIBS += -lfabric
-
 AM_CPPFLAGS += -I$(top_srcdir)/src-ofi
