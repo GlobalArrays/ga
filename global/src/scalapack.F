@@ -1378,7 +1378,7 @@ c**** If the SL A array was allocated
             if (elemA.ne.0) then
 c**** and hsA==-1 or info>0 (i.e. fact. cannot be completed)
 c**** then deallocate the SL A MA array
-               if ((hsA.eq.-1).or.(info.gt.0)) then
+               if (hsA.eq.-1) then
                   if (.not.use_direct) then
                     status = ma_pop_stack(hA)
                   endif
@@ -1387,6 +1387,10 @@ c**** otherwise just save the hA MA handle
                   hsA = hA
                endif
             endif
+         endif
+      else
+         if (.not.use_direct) then
+            status = ma_pop_stack(hA)
          endif
       endif
 c
