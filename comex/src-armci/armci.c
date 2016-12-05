@@ -14,6 +14,46 @@
 extern int ARMCI_Default_Proc_Group;
 MPI_Comm ARMCI_COMM_WORLD;
 
+/**
+ * This function checks to see if the data copy is contiguous for both the src
+ * and destination buffers. If it is, then a contiguous operation can be used
+ * instead of a strided operation. This function is intended for arrays of
+ * dimension greater than 1 (contiguous operations can always be used for 1
+ * dimensional arrays). This operation does not identify all contiguous cases,
+ * since no information is available about the last dimension.
+ * src_stride: physical dimensions of source buffer
+ * dst_stride: physical dimensions of destination buffer
+ * count: number of elements being moved in each dimension
+ * n_stride: number of strides (array dimension minus one)
+ */
+int armci_check_contiguous(int *src_stride, int *dst_stride,
+    int *count, int n_stride)
+{
+  int i;
+  int ret = 1;
+  int stridelen = 1;
+  /* NOTE: The count array contains the length of the final dimension and could
+   * be used to evaluate some corner cases that are not picked up by this
+   * algorithm
+   */
+  for (i=0; i<n_stride; i++) {
+    stridelen *= count[i];
+    if (stridelen < src_stride[i] || stridelen < dst_stride[i]) {
+      ret = 0;
+      break;
+    }
+  }
+  return ret;
+}
+
+/**
+ * Dummy function for use in debugging
+ */
+int armci_checkt_contiguous(int *src_stride, int *dst_stride,
+    int *count, int n_stride)
+{
+  return 0;
+}
 
 static void convert_giov(armci_giov_t *a, comex_giov_t *b, int len)
 {
@@ -27,6 +67,8 @@ static void convert_giov(armci_giov_t *a, comex_giov_t *b, int len)
 }
 
 
+
+
 int PARMCI_Acc(int optype, void *scale, void *src, void *dst, int bytes, int proc)
 {
     return comex_acc(optype, scale, src, dst, bytes, proc, COMEX_GROUP_WORLD);
@@ -35,7 +77,18 @@ int PARMCI_Acc(int optype, void *scale, void *src, void *dst, int bytes, int pro
 
 int PARMCI_AccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc)
 {
-    return comex_accs(optype, scale, src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, COMEX_GROUP_WORLD);
+  int iret;
+  /* check if data is contiguous */
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+    int i;
+    int lcount = 1;
+    for (i=0; i<=stride_levels; i++) lcount *= count[i];
+    iret = comex_acc(optype, scale, src_ptr, dst_ptr, lcount, proc, COMEX_GROUP_WORLD);
+  } else {
+    iret = comex_accs(optype, scale, src_ptr, src_stride_arr, dst_ptr,
+        dst_stride_arr, count, stride_levels, proc, COMEX_GROUP_WORLD);
+  }
+  return iret;
 }
 
 
@@ -114,7 +167,18 @@ int PARMCI_Get(void *src, void *dst, int bytes, int proc)
 
 int PARMCI_GetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc)
 {
-    return comex_gets(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, COMEX_GROUP_WORLD);
+  int iret;
+  /* check if data is contiguous */
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+    int i;
+    int lcount = 1;
+    for (i=0; i<=stride_levels; i++) lcount *= count[i];
+    iret = comex_get(src_ptr, dst_ptr, lcount, proc, COMEX_GROUP_WORLD);
+  } else {
+    iret = comex_gets(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
+        count, stride_levels, proc, COMEX_GROUP_WORLD);
+  }
+  return iret;
 }
 
 
@@ -282,7 +346,19 @@ void PARMCI_Memctl(armci_meminfo_t *meminfo)
 
 int PARMCI_NbAccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)
 {
-    return comex_nbaccs(optype, scale, src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, COMEX_GROUP_WORLD, nb_handle);
+  int iret;
+  /* check if data is contiguous */
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+    int i;
+    int lcount = 1;
+    for (i=0; i<=stride_levels; i++) lcount *= count[i];
+    iret = comex_nbacc(optype, scale, src_ptr, dst_ptr, lcount, proc,
+        COMEX_GROUP_WORLD, nb_handle);
+  } else {
+    iret = comex_nbaccs(optype, scale, src_ptr, src_stride_arr, dst_ptr,
+        dst_stride_arr, count, stride_levels, proc, COMEX_GROUP_WORLD, nb_handle);
+  }
+  return iret;
 }
 
 
@@ -305,7 +381,19 @@ int PARMCI_NbGet(void *src, void *dst, int bytes, int proc, armci_hdl_t *nb_hand
 
 int PARMCI_NbGetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)
 {
-    return comex_nbgets(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, COMEX_GROUP_WORLD, nb_handle);
+  int iret;
+  /* check if data is contiguous */
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+    int i;
+    int lcount = 1;
+    for (i=0; i<=stride_levels; i++) lcount *= count[i];
+    iret = comex_nbget(src_ptr, dst_ptr, lcount, proc,
+        COMEX_GROUP_WORLD, nb_handle);
+  } else {
+    iret = comex_nbgets(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
+        count, stride_levels, proc, COMEX_GROUP_WORLD, nb_handle);
+  }
+  return iret;
 }
 
 
@@ -328,7 +416,19 @@ int PARMCI_NbPut(void *src, void *dst, int bytes, int proc, armci_hdl_t *nb_hand
 
 int PARMCI_NbPutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)
 {
-    return comex_nbputs(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, COMEX_GROUP_WORLD, nb_handle);
+  int iret;
+  /* check if data is contiguous */
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+    int i;
+    int lcount = 1;
+    for (i=0; i<=stride_levels; i++) lcount *= count[i];
+    iret = comex_nbput(src_ptr, dst_ptr, lcount, proc,
+        COMEX_GROUP_WORLD, nb_handle);
+  } else {
+    iret = comex_nbputs(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
+        count, stride_levels, proc, COMEX_GROUP_WORLD, nb_handle);
+  }
+  return iret;
 }
 
 
@@ -375,7 +475,18 @@ int PARMCI_Put(void *src, void *dst, int bytes, int proc)
 
 int PARMCI_PutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc)
 {
-    return comex_puts(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, COMEX_GROUP_WORLD);
+  int iret;
+  /* check if data is contiguous */
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+    int i;
+    int lcount = 1;
+    for (i=0; i<=stride_levels; i++) lcount *= count[i];
+    iret = comex_put(src_ptr, dst_ptr, lcount, proc, COMEX_GROUP_WORLD);
+  } else {
+    iret = comex_puts(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
+        count, stride_levels, proc, COMEX_GROUP_WORLD);
+  }
+  return iret;
 }
 
 
