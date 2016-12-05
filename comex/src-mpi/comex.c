@@ -1483,6 +1483,18 @@ int comex_nbget(
 }
 
 
+int comex_nbacc(
+        int datatype, void *scale,
+        void *src, void *dst, int bytes,
+        int proc, comex_group_t group,
+        comex_request_t *hdl)
+{
+    int rc;
+    rc = comex_acc(datatype, scale, src, dst, bytes, proc, group);
+    return rc;
+}
+
+
 int comex_wait_proc(int proc, comex_group_t group)
 {
     comex_wait_all(group);
