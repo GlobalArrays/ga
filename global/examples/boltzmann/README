@@ -4,11 +4,10 @@ described in BJ Palmer and DR Rector, Journal of Computational Physics, vol.
 161, pp. 1-20 (2000). The temperature has been set to a constant for this
 simulation, eliminating the need for the second distribution and an ideal gas
 has been used for equation of state. The output from the simulation is sent to
-the file bltz.gmv and can be viewed using the General Mesh Viewer program
-developed at Los Alamos National Laboratory. More information on this program
-can be obtained from the web page at:
-
-    http://www-xdiv.lanl.gov/XCM/gmv/GMVHome.html
+the file bltz.dat can be viewed using the TecPlot visualization program, or any
+program that can read TecPlot formatted files. The printdat.F routine also has
+code (currently commented out) that can be used to generate results using the
+format employed by the General Mesh Viewer program.
 
 The global arrays used in the code are all declared in the file main.F and
 then passed by reference to the subroutines. The output file is created by the
