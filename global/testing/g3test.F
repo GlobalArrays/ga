@@ -14,6 +14,7 @@ c vector boxes lack arithmetic precision
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF
 
+c Mirrored arrays do not work with ghost cells
 c#define MIRROR
 
       program main
@@ -40,7 +41,7 @@ c#define MIRROR
       double precision t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13
       double precision t14,t15,t16,t17,t18,t19,t20,t21,tmp
       logical status, safe_put, safe_get, has_data(0:MAXPROC-1)
-      parameter (heap=nmax*nmax*nmax*4, fudge=100, stack=100*100)
+      parameter (heap=100*nmax*nmax*nmax*4, fudge=100, stack=1000*100)
 c     
 c***  Intitialize a message passing library
 c
