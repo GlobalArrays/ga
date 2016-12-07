@@ -16,7 +16,7 @@ c
 #include "global.fh"
 c
       double precision rho0, ux0, uy0, t_rho, pi
-      integer i, j, ii, jj, gtmp, me
+      integer i, j, ii, jj, me
       integer ld(NDIM)
 c
 c   Set simulation parameters
@@ -47,7 +47,6 @@ c   Find low and high indices of locally held data
 c
       me = ga_nodeid()
       call nga_distribution(g_fg, me, lo, hi)
-      call nga_access(g_fg, lo, hi, gtmp, ld)
 c
 c   Initialize boundary array
 c

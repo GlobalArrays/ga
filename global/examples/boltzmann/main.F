@@ -6,15 +6,16 @@
 c
 #include "common"
 c
+#include "mafdecls.fh"
+#include "global.fh"
+c
       integer i, j, gdim, type
       integer gdims(NDIM+1), gwidth(NDIM+1)
       integer pdims(NDIM+1), mcnt, mapc(5000)
-      integer g_fg, g_fld, g_bc, ptr_fg, ptr_fld, ptr_bc
+      integer g_fg, g_fld, g_bc
+      GA_ACCESS_INDEX_TYPE ptr_fg, ptr_fld, ptr_bc
       integer ld_fg(NDIM+1), ld_fld(NDIM+1), ld_bc(NDIM)
       integer heap, stack, me, nproc
-c
-#include "mafdecls.fh"
-#include "global.fh"
 c
 c  Initialize a message passing library
 c

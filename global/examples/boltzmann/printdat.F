@@ -57,6 +57,10 @@ c
       endif
 c
       if (ga_nodeid().eq.0) then
+#if 0
+c
+c   Write out results in GMV format
+c
         open(unit=7,file='bltz.gmv',status='unknown')
 c
 c   Write out header type information
@@ -137,18 +141,112 @@ c
         write(7,800)
         write(7,900)
         close(7)
+c
+c  GMV write format statements
+c
+  100   format('gmvinput ascii')
+  200   format('nodes       -1',3i10)
+  300   format('    ',5f12.4)
+  400   format('variable')
+  500   format('rho                           1')
+  600   format('ux                            1')
+  700   format('uy                            1')
+  800   format('endvars')
+  900   format('endgmv')
+ 1000   format('cells     0')
+ 1100   format('vorticity                     1')
+#else
+c
+c   Write out results in TecPlot format
+c
+        open(unit=7,file='bltz.dat',status='unknown')
+        write(7,'(a)') 'TITLE = "Lattice Boltzmann Simulation"'
+        write(7,'(a)') 'VARIABLES = "X" "Y" "RHO" "UX" "UY" "VORTICITY"'
+        write(7,'(a,i8,a,i8,a)') 'ZONE I=',icnt1,' J=',icnt2,
+     +                           ' DATAPACKING=BLOCK'
+        do j=1,icnt2
+          write(7,100) ((dble(i-1)*dx),i=1,icnt1)
+        end do
+        write(7,'(a)') ' '
+        do j=1,icnt2
+          write(7,100) ((dble(j-1)*dy),i=1,icnt1)
+        end do
+        write(7,'(a)') ' '
+        jcnt = 0
+        glo(3) = 1
+        ghi(3) = 1
+        do i = 1, imax
+          glo(2) = (i-1)*10 + 1
+          ghi(2) = i*10
+          if (ghi(2).gt.size(2)) ghi(2) = size(2)
+          if (ghi(2).ge.glo(2)) then
+            call nga_get(g_fld, glo, ghi, buffer, bld)
+            do k = 1, ghi(2)-glo(2)+1
+              jcnt = jcnt + 1
+              if (mod((jcnt-1),inc2).eq.0) then
+                write(7,100) (buffer(j,k,1),j=1,size(1),inc1)
+              endif
+            end do
+          endif
+        end do
+        write(7,'(a)') ' '
+        jcnt = 0
+        glo(3) = 2
+        ghi(3) = 2
+        do i = 1, imax
+          glo(2) = (i-1)*10 + 1
+          ghi(2) = i*10
+          if (ghi(2).gt.size(2)) ghi(2) = size(2)
+          if (ghi(2).ge.glo(2)) then
+            call nga_get(g_fld, glo, ghi, buffer, bld)
+            do k = 1, ghi(2)-glo(2)+1
+              jcnt = jcnt + 1
+              if (mod((jcnt-1),inc2).eq.0) then
+                write(7,100) (buffer(j,k,1),j=1,size(1),inc1)
+              endif
+            end do
+          endif
+        end do
+        write(7,'(a)') ' '
+        jcnt = 0
+        glo(3) = 3
+        ghi(3) = 3
+        do i = 1, imax
+          glo(2) = (i-1)*10 + 1
+          ghi(2) = i*10
+          if (ghi(2).gt.size(2)) ghi(2) = size(2)
+          if (ghi(2).ge.glo(2)) then
+            call nga_get(g_fld, glo, ghi, buffer, bld)
+            do k = 1, ghi(2)-glo(2)+1
+              jcnt = jcnt + 1
+              if (mod((jcnt-1),inc2).eq.0) then
+                write(7,100) (buffer(j,k,1),j=1,size(1),inc1)
+              endif
+            end do
+          endif
+        end do
+        write(7,'(a)') ' '
+        jcnt = 0
+        glo(3) = 6
+        ghi(3) = 6
+        do i = 1, imax
+          glo(2) = (i-1)*10 + 1
+          ghi(2) = i*10
+          if (ghi(2).gt.size(2)) ghi(2) = size(2)
+          if (ghi(2).ge.glo(2)) then
+            call nga_get(g_fld, glo, ghi, buffer, bld)
+            do k = 1, ghi(2)-glo(2)+1
+              jcnt = jcnt + 1
+              if (mod((jcnt-1),inc2).eq.0) then
+                write(7,100) (buffer(j,k,1),j=1,size(1),inc1)
+              endif
+            end do
+          endif
+        end do
+        close(7)
+  100   format('    ',5f12.4)
+#endif
       endif
 c
-  100 format('gmvinput ascii')
-  200 format('nodes       -1',3i10)
-  300 format('    ',5f12.4)
-  400 format('variable')
-  500 format('rho                           1')
-  600 format('ux                            1')
-  700 format('uy                            1')
-  800 format('endvars')
-  900 format('endgmv')
- 1000 format('cells     0')
- 1100 format('vorticity                     1')
       return
       end
