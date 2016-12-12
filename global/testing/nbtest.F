@@ -19,8 +19,9 @@ c $Id: nbtest.F,v 1.64.2.11 2007-04-06 22:37:35 d3g293 Exp $
       integer nbhdl(2)
       GA_ACCESS_INDEX_TYPE g_ptr, ioff
       logical status, ok, ok2
-      integer i_put, i_get, i_nbput, i_nbget
-      double precision t_put, t_get, t_nbput, t_nbget, t_wput, t_wget
+      integer i_put, i_get, i_acc, i_nbput, i_nbget, i_nbacc
+      double precision t_put, t_get, t_acc, t_nbput, t_nbget, t_nbacc
+      double precision t_wput, t_wget, t_wacc
       double precision tst
       parameter (heap=200*200*4, fudge=100, stack=200*200)
 c     
@@ -39,13 +40,16 @@ c
       me = ga_nodeid()
 c     we can also use GA_set_memory_limit BEFORE first ga_create call
 c
-      ma_heap = heap/nproc + fudge 
+      ma_heap = heap + fudge 
       ma_heap = 2*ma_heap
-      print *, 'util_mdtob(', ma_heap, ')=', util_mdtob(ma_heap)
+      if (me.eq.0) then
+        print *, 'util_mdtob(', ma_heap, ')=', util_mdtob(ma_heap)
+        print *
+      endif
       call GA_set_memory_limit(util_mdtob(ma_heap))
 c
       if(ga_nodeid().eq.0)then
-         print *,' GA initialized on ',nproc,' processors'
+         print *,'GA initialized on ',nproc,' processors'
          call ffflush(6)
       endif
 c
@@ -59,14 +63,19 @@ c   Initialize all timing variables
 c
       i_put = 0
       i_get = 0
+      i_acc = 0
       i_nbput = 0
       i_nbget = 0
+      i_nbacc = 0
       t_put = 0.0d00
       t_get = 0.0d00
+      t_acc = 0.0d00
       t_nbput = 0.0d00
       t_nbget = 0.0d00
+      t_nbacc = 0.0d00
       t_wput = 0.0d00
       t_wget = 0.0d00
+      t_wacc = 0.0d00
 c
 c     Uncomment the below line to register external memory allocator
 c     for dynamic arrays inside GA routines.
@@ -93,7 +102,12 @@ c
       chunk(1) = BLOCK_DIM
       chunk(2) = BLOCK_DIM
       call nga_set_chunk(g_a, chunk)
-      status = ga_allocate(g_a)
+      if (.not.ga_allocate(g_a)) then
+        n = dims(1)*dims(2)
+        write(6,'(a,i16)')
+     +    'Failure to initialize global array of size ',n
+        call ga_error('GA_Allocate failure',-1) 
+      endif
       call ga_zero(g_a)
 c
 c   Initialize entire GA from process 0 using blocking puts
@@ -212,7 +226,72 @@ c
         endif
       endif
 c
-c   Redo test using non-blocking puts and gets
+c   Double all values in the GA using accumulate
+c
+      if (me.eq.0) then
+c
+c   Loop over all processors
+c
+        do n = 0, nproc-1
+c
+c   Calculate process grid coordinates
+c
+          ii = mod(n,pdims(1))
+          jj = (n-ii)/pdims(1)
+c
+c   Calculate lower and upper indices of the block held by process n
+c
+          lo(1) = ii*BLOCK_DIM + 1
+          lo(2) = jj*BLOCK_DIM + 1
+          hi(1) = (ii+1)*BLOCK_DIM
+          hi(2) = (jj+1)*BLOCK_DIM
+c
+c   Fill buffer with correct values
+c
+          do j = lo(2), hi(2)
+            jj = j-lo(2)+1
+            do i = lo(1), hi(1)
+              ii = i-lo(1)+1
+              buf(ii,jj) = (j-1)*dims(1)+(i-1)
+            end do
+          end do
+c
+c   Accumulate buffer to GA
+c
+          tst = ga_wtime()
+          call nga_acc(g_a,lo,hi,buf,ld,1)
+          t_acc = t_acc + ga_wtime() - tst
+          i_acc = i_acc + 1
+        end do
+      endif
+      call ga_sync
+c
+c   Check values on each process for correctness
+c
+      ok = .true.
+      call nga_distribution(g_a,me,lo,hi)
+      call nga_access(g_a,lo,hi,g_ptr,ld)
+      ioff = 0
+      do j = lo(2), hi(2)
+        do i = lo(1), hi(1)
+          n = int_mb(g_ptr+ioff)
+          if (n.ne.2*((j-1)*dims(1)+(i-1))) ok = .false.
+          ioff = ioff+1
+        end do
+      end do
+      call nga_release(g_a, lo, hi)
+c
+      if (ok) then
+        if (me.eq.0) then
+          write(6,*)
+          write(6,'(a)') 'OK for simple ACC test'
+          write(6,*)
+        endif
+      else
+        write(6,'(a,i4)') 'Error found in ACC test on process ',me
+      endif
+c
+c   Redo test using non-blocking puts, gets and accumulates
 c
       call ga_zero(g_a)
       if (me.eq.0) then
@@ -419,36 +498,146 @@ c
         endif
       endif
 c
+c   Double all values in the GA using accumulate
+c
+      if (me.eq.0) then
+c
+c   Initialize puts by doing calculation for process 0
+c
+        lo(1) = 1
+        lo(2) = 1
+        hi(1) = BLOCK_DIM
+        hi(2) = BLOCK_DIM
+c
+c   Fill first buffer with data
+c
+        do j = lo(2), hi(2)
+          jj = j-lo(2)+1
+          do i = lo(1), hi(1)
+            ii = i-lo(1)+1
+            nbbuf(ii,jj,1) = (j-1)*dims(1)+(i-1)
+          end do
+        end do
+c
+c   Start the first put
+c
+        tst = ga_wtime()
+        call nga_nbacc(g_a,lo,hi,nbbuf(1,1,1),ld,1,nbhdl(1))
+        t_nbacc = t_nbacc + ga_wtime() - tst
+        i_nbacc = i_nbacc + 1
+c
+c   Loop over all processors
+c
+        do n = 1, nproc-1
+c
+c   Calculate process grid coordinates
+c
+          ii = mod(n,pdims(1))
+          jj = (n-ii)/pdims(1)
+c
+c   Calculate lower and upper indices of the block held by process n
+c
+          lo(1) = ii*BLOCK_DIM + 1
+          lo(2) = jj*BLOCK_DIM + 1
+          hi(1) = (ii+1)*BLOCK_DIM
+          hi(2) = (jj+1)*BLOCK_DIM
+c
+c   Fill buffer with correct values
+c
+          ibuf = mod(n,2)+1
+          do j = lo(2), hi(2)
+            jj = j-lo(2)+1
+            do i = lo(1), hi(1)
+              ii = i-lo(1)+1
+              nbbuf(ii,jj,ibuf) = (j-1)*dims(1)+(i-1)
+            end do
+          end do
+c
+c   Copy buffer to GA
+c
+          tst = ga_wtime()
+          call nga_nbacc(g_a,lo,hi,nbbuf(1,1,ibuf),ld,1,nbhdl(ibuf))
+          t_nbacc = t_nbacc + ga_wtime() - tst
+          i_nbacc = i_nbacc + 1
+          tst = ga_wtime()
+          call nga_nbwait(nbhdl(mod(n-1,2)+1))
+          t_wacc = t_wacc + ga_wtime() - tst
+        end do
+        tst = ga_wtime()
+        call nga_nbwait(nbhdl(mod(nproc-1,2)+1))
+        t_wacc = t_wacc + ga_wtime() - tst
+      endif
+      call ga_sync
+c
+c   Check values on each process for correctness
+c
+      ok = .true.
+      call nga_distribution(g_a,me,lo,hi)
+      call nga_access(g_a,lo,hi,g_ptr,ld)
+      ioff = 0
+      do j = lo(2), hi(2)
+        do i = lo(1), hi(1)
+          n = int_mb(g_ptr+ioff)
+          if (n.ne.2*((j-1)*dims(1)+(i-1))) ok = .false.
+          ioff = ioff+1
+        end do
+      end do
+      call nga_release(g_a, lo, hi)
+c
+      if (ok) then
+        if (me.eq.0) then
+          write(6,*)
+          write(6,'(a)') 'OK for Non-Blocking ACC test'
+          write(6,*)
+        endif
+      else
+        write(6,'(a,i4)')
+     +      'Error found in Non-Blocking ACC test on process ',me
+      endif
+c
 c   Print out timing numbers. Start by summing timers over all
 c   processors
 c
       call ga_igop(1,i_put,1,'+')
       call ga_igop(2,i_get,1,'+')
-      call ga_igop(3,i_nbput,1,'+')
-      call ga_igop(4,i_nbget,1,'+')
+      call ga_igop(3,i_acc,1,'+')
+      call ga_igop(4,i_nbput,1,'+')
+      call ga_igop(5,i_nbget,1,'+')
+      call ga_igop(6,i_nbacc,1,'+')
       call ga_dgop(1,t_put,1,'+')
       call ga_dgop(2,t_get,1,'+')
-      call ga_dgop(3,t_nbput,1,'+')
-      call ga_dgop(4,t_nbget,1,'+')
-      call ga_dgop(5,t_wput,1,'+')
-      call ga_dgop(6,t_wget,1,'+')
+      call ga_dgop(3,t_acc,1,'+')
+      call ga_dgop(4,t_nbput,1,'+')
+      call ga_dgop(5,t_nbget,1,'+')
+      call ga_dgop(6,t_nbacc,1,'+')
+      call ga_dgop(7,t_wput,1,'+')
+      call ga_dgop(8,t_wget,1,'+')
+      call ga_dgop(9,t_wacc,1,'+')
       if (me.eq.0) then
         write(6,'(a,f16.8)') 'Average time for blocking PUT:      ',
      +                     t_put/dble(i_put)
         write(6,'(a,f16.8)') 'Average time for blocking GET:      ',
      +                     t_get/dble(i_get)
+        write(6,'(a,f16.8)') 'Average time for blocking ACC:      ',
+     +                     t_acc/dble(i_acc)
         write(6,'(a,f16.8)') 'Average time for non-blocking PUT:  ',
      +                     t_nbput/dble(i_nbput)
         write(6,'(a,f16.8)') 'Average time for non-blocking GET:  ',
      +                     t_nbget/dble(i_nbget)
+        write(6,'(a,f16.8)') 'Average time for non-blocking ACC:  ',
+     +                     t_nbacc/dble(i_nbacc)
         write(6,'(a,f16.8)') 'Average time for wait on PUT:       ',
      +                     t_wput/dble(i_nbput)
         write(6,'(a,f16.8)') 'Average time for wait on GET:       ',
      +                     t_wget/dble(i_nbget)
+        write(6,'(a,f16.8)') 'Average time for wait on ACC:       ',
+     +                     t_wacc/dble(i_nbacc)
         write(6,'(a,f16.8)') 'Aggregate time on non-blocking PUT: ',
      +                     (t_nbput+t_wput)/dble(i_nbput)
         write(6,'(a,f16.8)') 'Aggregate time on non-blocking GET: ',
      +                     (t_nbget+t_wget)/dble(i_nbget)
+        write(6,'(a,f16.8)') 'Aggregate time on non-blocking ACC: ',
+     +                     (t_nbacc+t_wacc)/dble(i_nbacc)
       endif
       
 c
