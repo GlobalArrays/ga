@@ -20,8 +20,9 @@ c $Id: nbtest.F,v 1.64.2.11 2007-04-06 22:37:35 d3g293 Exp $
       GA_ACCESS_INDEX_TYPE g_ptr, ioff
       logical status, ok, ok2
       integer i_put, i_get, i_acc, i_nbput, i_nbget, i_nbacc
+      integer i_putw, i_getw, i_accw
       double precision t_put, t_get, t_acc, t_nbput, t_nbget, t_nbacc
-      double precision t_wput, t_wget, t_wacc
+      double precision t_wput, t_wget, t_wacc, t_putw, t_getw, t_accw
       double precision tst
       parameter (heap=200*200*4, fudge=100, stack=200*200)
 c     
@@ -67,6 +68,9 @@ c
       i_nbput = 0
       i_nbget = 0
       i_nbacc = 0
+      i_putw = 0
+      i_getw = 0
+      i_accw = 0
       t_put = 0.0d00
       t_get = 0.0d00
       t_acc = 0.0d00
@@ -76,6 +80,9 @@ c
       t_wput = 0.0d00
       t_wget = 0.0d00
       t_wacc = 0.0d00
+      t_putw = 0.0d00
+      t_getw = 0.0d00
+      t_accw = 0.0d00
 c
 c     Uncomment the below line to register external memory allocator
 c     for dynamic arrays inside GA routines.
@@ -298,6 +305,7 @@ c
 c
 c   Initialize puts by doing calculation for process 0
 c
+        tst = ga_wtime()
         lo(1) = 1
         lo(2) = 1
         hi(1) = BLOCK_DIM
@@ -312,6 +320,8 @@ c
             nbbuf(ii,jj,1) = (j-1)*dims(1)+(i-1)
           end do
         end do
+        t_putw = t_putw + ga_wtime() - tst
+        i_putw = i_putw + 1
 c
 c   Start the first put
 c
@@ -331,6 +341,7 @@ c
 c
 c   Calculate lower and upper indices of the block held by process n
 c
+          tst = ga_wtime()
           lo(1) = ii*BLOCK_DIM + 1
           lo(2) = jj*BLOCK_DIM + 1
           hi(1) = (ii+1)*BLOCK_DIM
@@ -346,6 +357,8 @@ c
               nbbuf(ii,jj,ibuf) = (j-1)*dims(1)+(i-1)
             end do
           end do
+          t_putw = t_putw + ga_wtime() - tst
+          i_putw = i_putw + 1
 c
 c   Copy buffer to GA
 c
@@ -446,6 +459,7 @@ c
 c
 c   check buffer for correct values
 c
+          tst = ga_wtime()
           ok2 = .true.
           ibuf = mod(n-1,2)+1
           ii = mod(n-1,pdims(1))
@@ -466,17 +480,13 @@ c
             write(6,'(a,i4)') 'Error found in GET test on process ',n
             ok = .false.
           endif
+          t_getw = t_getw + ga_wtime() - tst
+          i_getw = i_getw + 1
         end do
         tst = ga_wtime()
         call nga_nbwait(nbhdl(mod(n-1,2)+1))
         t_wget = t_wget + ga_wtime() - tst
-        if (ok) then
-          if (me.eq.0) then
-            write(6,*)
-            write(6,'(a)') 'OK for Non-Blocking GET test'
-            write(6,*)
-          endif
-        endif
+        tst = ga_wtime()
         ok2 = .true.
         ibuf = mod(nproc-1,2)+1
         ii = mod(n-1,pdims(1))
@@ -496,6 +506,15 @@ c
           write(6,'(a,i4)') 'Error found in GET test on process ',n
           ok = .false.
         endif
+        if (ok) then
+          if (me.eq.0) then
+            write(6,*)
+            write(6,'(a)') 'OK for Non-Blocking GET test'
+            write(6,*)
+          endif
+        endif
+        t_getw = t_getw + ga_wtime() - tst
+        i_getw = i_getw + 1
       endif
 c
 c   Double all values in the GA using accumulate
@@ -504,6 +523,7 @@ c
 c
 c   Initialize puts by doing calculation for process 0
 c
+        tst = ga_wtime()
         lo(1) = 1
         lo(2) = 1
         hi(1) = BLOCK_DIM
@@ -518,6 +538,8 @@ c
             nbbuf(ii,jj,1) = (j-1)*dims(1)+(i-1)
           end do
         end do
+        t_accw = t_accw + ga_wtime() - tst
+        i_accw = i_accw + 1
 c
 c   Start the first put
 c
@@ -537,6 +559,7 @@ c
 c
 c   Calculate lower and upper indices of the block held by process n
 c
+          tst = ga_wtime()
           lo(1) = ii*BLOCK_DIM + 1
           lo(2) = jj*BLOCK_DIM + 1
           hi(1) = (ii+1)*BLOCK_DIM
@@ -552,6 +575,8 @@ c
               nbbuf(ii,jj,ibuf) = (j-1)*dims(1)+(i-1)
             end do
           end do
+          t_accw = t_accw + ga_wtime() - tst
+          i_accw = i_accw + 1
 c
 c   Copy buffer to GA
 c
@@ -604,6 +629,9 @@ c
       call ga_igop(4,i_nbput,1,'+')
       call ga_igop(5,i_nbget,1,'+')
       call ga_igop(6,i_nbacc,1,'+')
+      call ga_igop(7,i_putw,1,'+')
+      call ga_igop(8,i_getw,1,'+')
+      call ga_igop(9,i_accw,1,'+')
       call ga_dgop(1,t_put,1,'+')
       call ga_dgop(2,t_get,1,'+')
       call ga_dgop(3,t_acc,1,'+')
@@ -613,6 +641,9 @@ c
       call ga_dgop(7,t_wput,1,'+')
       call ga_dgop(8,t_wget,1,'+')
       call ga_dgop(9,t_wacc,1,'+')
+      call ga_dgop(1,t_putw,1,'+')
+      call ga_dgop(2,t_getw,1,'+')
+      call ga_dgop(3,t_accw,1,'+')
       if (me.eq.0) then
         write(6,'(a,f16.8)') 'Average time for blocking PUT:      ',
      +                     t_put/dble(i_put)
@@ -638,6 +669,12 @@ c
      +                     (t_nbget+t_wget)/dble(i_nbget)
         write(6,'(a,f16.8)') 'Aggregate time on non-blocking ACC: ',
      +                     (t_nbacc+t_wacc)/dble(i_nbacc)
+        write(6,'(a,f16.8)') 'Average time in PUT work:           ',
+     +                     t_putw/dble(i_putw)
+        write(6,'(a,f16.8)') 'Average time in GET work:           ',
+     +                     t_getw/dble(i_getw)
+        write(6,'(a,f16.8)') 'Average time in ACC work:           ',
+     +                     t_accw/dble(i_accw)
       endif
       
 c
