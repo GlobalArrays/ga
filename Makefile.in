@@ -213,8 +213,9 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/mir_perf2 \
 @ENABLE_F77_TRUE@	global/testing/mmatrix \
 @ENABLE_F77_TRUE@	global/testing/mulmatpatch \
-@ENABLE_F77_TRUE@	global/testing/nb2test global/testing/ndim \
-@ENABLE_F77_TRUE@	global/testing/patch global/testing/patch2 \
+@ENABLE_F77_TRUE@	global/testing/nbtest global/testing/nb2test \
+@ENABLE_F77_TRUE@	global/testing/ndim global/testing/patch \
+@ENABLE_F77_TRUE@	global/testing/patch2 \
 @ENABLE_F77_TRUE@	global/testing/patch_enumf \
 @ENABLE_F77_TRUE@	global/testing/perfmod global/testing/perform \
 @ENABLE_F77_TRUE@	global/testing/perf \
@@ -336,6 +337,7 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/mir_perf2$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/mmatrix$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/mulmatpatch$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/nbtest$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/nb2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/ndim$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/patch$(EXEEXT) \
@@ -873,6 +875,7 @@ libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_F77_TRUE@	global/testing/mir_perf2$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/mmatrix$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/mulmatpatch$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/nbtest$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/nb2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/ndim$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/patch$(EXEEXT) \
@@ -1545,6 +1548,22 @@ global_testing_nb2test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 global_testing_nb2test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_nb2test_LDFLAGS) \
+	$(LDFLAGS) -o $@
+am__global_testing_nbtest_SOURCES_DIST = global/testing/nbtest.F \
+	global/testing/testutil.fh global/testing/testutil.h \
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.F
+am_global_testing_nbtest_OBJECTS = global/testing/nbtest.$(OBJEXT) \
+	$(am__objects_15)
+global_testing_nbtest_OBJECTS = $(am_global_testing_nbtest_OBJECTS)
+global_testing_nbtest_LDADD = $(LDADD)
+global_testing_nbtest_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+global_testing_nbtest_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(global_testing_nbtest_LDFLAGS) \
 	$(LDFLAGS) -o $@
 am__global_testing_ndim_SOURCES_DIST = global/testing/ndim.F \
 	global/testing/testutil.fh global/testing/testutil.h \
@@ -3435,6 +3454,7 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(global_testing_mulmatpatchc_SOURCES) \
 	$(nodist_EXTRA_global_testing_mulmatpatchc_SOURCES) \
 	$(global_testing_nb2test_SOURCES) \
+	$(global_testing_nbtest_SOURCES) \
 	$(global_testing_ndim_SOURCES) \
 	$(nodist_global_testing_nga_onesided_SOURCES) \
 	$(nodist_global_testing_nga_patch_SOURCES) \
@@ -3728,6 +3748,7 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_mulmatpatch_SOURCES_DIST) \
 	$(am__global_testing_mulmatpatchc_SOURCES_DIST) \
 	$(am__global_testing_nb2test_SOURCES_DIST) \
+	$(am__global_testing_nbtest_SOURCES_DIST) \
 	$(am__global_testing_ndim_SOURCES_DIST) \
 	$(am__global_testing_normc_SOURCES_DIST) \
 	$(am__global_testing_ntestc_SOURCES_DIST) \
@@ -4622,6 +4643,7 @@ global_testing_mmatrix_SOURCES = global/testing/mmatrix.F $(gtsrc)
 global_testing_mtest_SOURCES = global/testing/mtest.c $(gtsrc)
 global_testing_mulmatpatch_SOURCES = global/testing/mulmatpatch.F $(gtsrc)
 global_testing_mulmatpatchc_SOURCES = global/testing/mulmatpatchc.c $(gtsrc)
+global_testing_nbtest_SOURCES = global/testing/nbtest.F $(gtsrc)
 global_testing_nb2test_SOURCES = global/testing/nb2test.F $(gtsrc)
 global_testing_ndim_SOURCES = global/testing/ndim.F $(gtsrc)
 global_testing_normc_SOURCES = global/testing/normc.c $(gtsrc)
@@ -4764,6 +4786,7 @@ global_testing_jacobi_LDFLAGS = $(FLDFLAGS)
 global_testing_mir_perf2_LDFLAGS = $(FLDFLAGS)
 global_testing_mmatrix_LDFLAGS = $(FLDFLAGS)
 global_testing_mulmatpatch_LDFLAGS = $(FLDFLAGS)
+global_testing_nbtest_LDFLAGS = $(FLDFLAGS)
 global_testing_nb2test_LDFLAGS = $(FLDFLAGS)
 global_testing_ndim_LDFLAGS = $(FLDFLAGS)
 global_testing_nga_onesided_LDFLAGS = $(FLDFLAGS)
@@ -6094,6 +6117,11 @@ global/testing/nb2test.$(OBJEXT): global/testing/$(am__dirstamp) \
 global/testing/nb2test$(EXEEXT): $(global_testing_nb2test_OBJECTS) $(global_testing_nb2test_DEPENDENCIES) $(EXTRA_global_testing_nb2test_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/nb2test$(EXEEXT)
 	$(AM_V_F77LD)$(global_testing_nb2test_LINK) $(global_testing_nb2test_OBJECTS) $(global_testing_nb2test_LDADD) $(LIBS)
+global/testing/nbtest.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/nbtest$(EXEEXT): $(global_testing_nbtest_OBJECTS) $(global_testing_nbtest_DEPENDENCIES) $(EXTRA_global_testing_nbtest_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/nbtest$(EXEEXT)
+	$(AM_V_F77LD)$(global_testing_nbtest_LINK) $(global_testing_nbtest_OBJECTS) $(global_testing_nbtest_LDADD) $(LIBS)
 global/testing/ndim.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/ndim$(EXEEXT): $(global_testing_ndim_OBJECTS) $(global_testing_ndim_DEPENDENCIES) $(EXTRA_global_testing_ndim_DEPENDENCIES) global/testing/$(am__dirstamp)
@@ -7363,6 +7391,7 @@ mostlyclean-compile:
 	-rm -f global/testing/mulmatpatch.$(OBJEXT)
 	-rm -f global/testing/mulmatpatchc.$(OBJEXT)
 	-rm -f global/testing/nb2test.$(OBJEXT)
+	-rm -f global/testing/nbtest.$(OBJEXT)
 	-rm -f global/testing/ndim.$(OBJEXT)
 	-rm -f global/testing/nga-onesided.$(OBJEXT)
 	-rm -f global/testing/nga-patch.$(OBJEXT)
@@ -8554,6 +8583,8 @@ global/testing/mmatrix.log: global/testing/mmatrix$(EXEEXT)
 	@p='global/testing/mmatrix$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/mulmatpatch.log: global/testing/mulmatpatch$(EXEEXT)
 	@p='global/testing/mulmatpatch$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/nbtest.log: global/testing/nbtest$(EXEEXT)
+	@p='global/testing/nbtest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/nb2test.log: global/testing/nb2test$(EXEEXT)
 	@p='global/testing/nb2test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/ndim.log: global/testing/ndim$(EXEEXT)
