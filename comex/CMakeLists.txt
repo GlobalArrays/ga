@@ -35,6 +35,8 @@
 option (COMEX_NETWORK_MPI_TS "use MPI 2-sided protocol for communication" OFF)
 option (COMEX_NETWORK_MPI_PR "use MPI progress ranks protocol for communication" OFF)
 option (COMEX_NETWORK_MPI3 "use MPI RMA protocols for communication" OFF)
+option (COMEX_NETWORK_MPI_MT "use MPI multi-threading protocol for communication" OFF)
+option (COMEX_NETWORK_MPI_PT "use MPI progress threads protocol for communication" OFF)
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR} src-common)
 if (MPI_TS)
   set(COMEX_DEVICE
@@ -59,6 +61,21 @@ elseif (MPI3)
   )
   set (COMEX_NETWORK_MPI3 ON)
   include_directories(AFTER src-mpi3)
+elseif (MPI_MT)
+  set(COMEX_DEVICE
+    src-mpi-mt/comex.c
+    src-mpi-mt/groups.c
+  )
+  set (COMEX_NETWORK_MPI_MT ON)
+  include_directories(AFTER src-mpi-mt)
+elseif (MPI_PT)
+  set(COMEX_DEVICE
+    src-mpi-pt/comex.c
+    src-mpi-pt/groups.c
+    src-mpi-pt/reg_cache.c
+  )
+  set (COMEX_NETWORK_MPI_PT ON)
+  include_directories(AFTER src-mpi-pt)
 endif()
 
 find_package(MPI)

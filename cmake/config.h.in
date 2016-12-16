@@ -58,13 +58,11 @@
 
 #cmakedefine01 F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 
-#define F77_FUNC(name,NAME) F77_FUNC_GLOBAL(name,NAME)
-#define F77_FUNC_(name,NAME) F77_FUNC_GLOBAL_(name,NAME)
+/*#define F77_FUNC(name,NAME) F77_FUNC_GLOBAL(name,NAME)*/
+/*#define F77_FUNC_(name,NAME) F77_FUNC_GLOBAL_(name,NAME)*/
 
-/*
 #define F77_FUNC(name,NAME) name ## _
 #define F77_FUNC_(name,NAME) name ## _
-*/
 
 #define FXX_MODULE ${F90_MODULE}
 #define F77_GETARG ${F77_GETARG}
