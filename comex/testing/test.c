@@ -292,6 +292,35 @@ void init(double *a, int ndim, int elems, int dims[])
   }
 }
 
+/*\ initialize complex array: real parts are a[i,j,k,..]=i+100*j+10000*k+ ...
+ *  all imaginary parts are 1
+\*/
+void cplx_init(double *a, int ndim, int elems, int dims[])
+{
+  int idx[MAXDIMS];
+  int i, dim;
+
+  for (i = 0; i < elems; i++) {
+    int Index = i;
+    double field, val;
+
+    for (dim = 0; dim < ndim; dim++) {
+      idx[dim] = Index % dims[dim];
+      Index /= dims[dim];
+    }
+
+    field = 1.;
+    val = 0.;
+    for (dim = 0; dim < ndim; dim++) {
+      val += field * idx[dim];
+      field *= BASE;
+    }
+    a[2*i] = val;
+    a[2*i+1] = 1.0;
+    /* printf("(%d,%d,%d)=%6.0f",idx[0],idx[1],idx[2],val); */
+  }
+}
+
 
 /*\ compute Index from subscript
  *  assume that first subscript component changes first
@@ -387,6 +416,74 @@ void compare_patches(double eps, int ndim, double *patch1, int lo1[], int hi1[],
   }*/
 }
 
+void compare_cplx_patches(double eps, int ndim, double *patch1, int lo1[], int hi1[],
+                     int dims1[], double *patch2, int lo2[], int hi2[],
+                     int dims2[])
+
+{
+  int i, j, elems = 1;
+  int subscr1[MAXDIMS], subscr2[MAXDIMS];
+  double rdiff, idiff, max;
+  int offset1, offset2;
+
+  for (i = 0; i < ndim; i++) { /* count # of elements & verify consistency of both patches */
+    int diff = hi1[i] - lo1[i];
+    assert(diff == (hi2[i] - lo2[i]));
+    assert(diff < dims1[i]);
+    assert(diff < dims2[i]);
+    elems *= diff + 1;
+    subscr1[i] = lo1[i];
+    subscr2[i] = lo2[i];
+  }
+
+
+  /* compare element values in both patches */
+  offset1 = Index(ndim, subscr1, dims1);
+  offset2 = Index(ndim, subscr2, dims2);
+  for (j = 0; j < elems; j++) {
+    int idx1, idx2;
+
+    idx1 = Index(ndim, subscr1, dims1);  /* calculate element Index from a subscript */
+    idx2 = Index(ndim, subscr2, dims2);
+
+    idx1 -= offset1;
+    idx2 -= offset2;
+
+    rdiff = patch1[2*idx1] - patch2[2*idx2];
+    idiff = patch1[2*idx1+1] - patch2[2*idx2+1];
+    max  = COMEX_MAX(COMEX_ABS(patch1[2*idx1]), COMEX_ABS(patch2[2*idx2]));
+    max  = COMEX_MAX(COMEX_ABS(patch1[2*idx1+1]), max);
+    max  = COMEX_MAX(COMEX_ABS(patch2[2*idx2+1]), max);
+    if (max == 0. || max < eps) {
+      max = 1.;
+    }
+
+    if (eps < (COMEX_ABS(rdiff)+COMEX_ABS(idiff)) / max) {
+      char msg[48];
+      sprintf(msg, "(proc=%d): (%f,%f)", me, patch1[2*idx1],patch1[2*idx1+1]);
+      print_subscript("ERROR: a", ndim, subscr1, msg);
+      sprintf(msg, "(%f,%f)\n", patch2[2*idx2],patch2[2*idx2+1]);
+      print_subscript(" b", ndim, subscr2, msg);
+      fflush(stdout);
+      sleep(1);
+      comex_error("Bailing out", 0);
+    }
+
+    { /* update subscript for the patches */
+      update_subscript(ndim, subscr1, lo1, hi1);
+      update_subscript(ndim, subscr2, lo2, hi2);
+    }
+  }
+
+
+
+  /* make sure we reached upper limit */
+  /*for(i=0;i<ndim;i++){
+    assert(subscr1[i]==hi1[i]);
+    assert(subscr2[i]==hi2[i]);
+  }*/
+}
+
 
 void scale_patch(double alpha, int ndim, double *patch1, int lo1[], int hi1[], int dims1[])
 {
@@ -408,6 +505,36 @@ void scale_patch(double alpha, int ndim, double *patch1, int lo1[], int hi1[], i
     idx1 = Index(ndim, subscr1, dims1);  /* calculate element Index from a subscript */
     idx1 -= offset1;
     patch1[idx1] *= alpha;
+    update_subscript(ndim, subscr1, lo1, hi1);
+  }
+}
+
+void scale_cplx_patch(double *alpha, int ndim, double *patch1, int lo1[], int hi1[], int dims1[])
+{
+  int i, j, elems = 1;
+  int subscr1[MAXDIMS];
+  int offset1;
+
+  for (i = 0; i < ndim; i++) { /* count # of elements in patch */
+    int diff = hi1[i] - lo1[i];
+    assert(diff < dims1[i]);
+    elems *= diff + 1;
+    subscr1[i] = lo1[i];
+  }
+
+  /* scale element values in both patches */
+  offset1 = Index(ndim, subscr1, dims1);
+  for (j = 0; j < elems; j++) {
+    int idx1;
+    double tmp;
+    idx1 = Index(ndim, subscr1, dims1);  /* calculate element Index from a subscript */
+    idx1 -= offset1;
+    tmp = patch1[2*idx1];
+    printf("p[%d] scale idx: %d ar: %f ai: %f pr: %f pi: %f\n",
+        me,idx1,alpha[0],alpha[1],patch1[2*idx1],patch1[2*idx1+1]);
+    patch1[2*idx1] = alpha[0]*patch1[2*idx1]-alpha[1]*patch1[2*idx1+1];
+    patch1[2*idx1+1] = alpha[1]*tmp+alpha[0]*patch1[2*idx1+1];
+    printf("p[%d] rpatch: %f ipatch: %f\n",me,patch1[2*idx1],patch1[2*idx1+1]);
     update_subscript(ndim, subscr1, lo1, hi1);
   }
 }
@@ -1051,6 +1178,112 @@ void test_acc(int ndim)
   free(a);
 }
 
+void test_cplx_acc(int ndim)
+{
+  int dim, elems;
+  int i, proc;
+  void *b[MAXPROC];
+  void *a, *c;
+  double alpha[2], scale[2];
+  int idx1, idx2;
+  int *proclist = work;
+
+  alpha[0] = 0.0;
+  alpha[1] = 0.1;
+
+  elems = 1;
+  strideA[0] = 2*sizeof(double);
+  strideB[0] = 2*sizeof(double);
+  for (i = 0; i < ndim; i++) {
+    strideA[i] *= dimsA[i];
+    strideB[i] *= dimsB[i];
+    if (i < ndim - 1) {
+      strideA[i+1] = strideA[i];
+      strideB[i+1] = strideB[i];
+    }
+    elems *= dimsA[i];
+
+    /* set up patch coordinates: same on every processor */
+    loA[i] = 0;
+    hiA[i] = loA[i] + 1;
+    loB[i] = dimsB[i] - 2;
+    hiB[i] = loB[i] + 1;
+    count[i] = hiA[i] - loA[i] + 1;
+  }
+
+  /* create shared and local arrays */
+  create_array(b, 2*sizeof(double), ndim, dimsB);
+  a = malloc(2*sizeof(double) * elems);
+  assert(a);
+  c = malloc(2*sizeof(double) * elems);
+  assert(c);
+
+  cplx_init(a, ndim, elems, dimsA);
+
+  if (me == 0) {
+    printf("--------array[%d", dimsA[0]);
+    for (dim = 1; dim < ndim; dim++) {
+      printf(",%d", dimsA[dim]);
+    }
+    printf("]--------\n");
+  }
+
+  GetPermutedProcList(proclist);
+
+  idx1 = Index(ndim, loA, dimsA);
+  idx2 = Index(ndim, loB, dimsB);
+  count[0]   *= 2*sizeof(double); /* convert range to bytes at stride level zero */
+
+  /* initialize all elements of array b to zero */
+  elems = 1;
+  for (i = 0; i < ndim; i++) {
+    elems *= dimsB[i];
+  }
+  for (i = 0; i < elems; i++) {
+    ((double *)b[me])[2*i] = 0.;
+    ((double *)b[me])[2*i+1] = 0.;
+  }
+
+  sleep(1);
+
+  if (me == 0) {
+    print_range("patch", ndim, loA, hiA, " -> ");
+    print_range("patch", ndim, loB, hiB, "\n");
+    fflush(stdout);
+  }
+
+  comex_fence_all(COMEX_GROUP_WORLD);
+  comex_barrier(COMEX_GROUP_WORLD);
+  for (i = 0; i < TIMES * nproc; i++) {
+    proc = proclist[i%nproc];
+    (void)comex_accs(COMEX_ACC_DCP, alpha, (double *)a + 2*idx1, strideA,
+                     (double *)b[proc] + 2*idx2, strideB, count, ndim - 1, proc, COMEX_GROUP_WORLD);
+  }
+
+  /*  sleep(9);*/
+  comex_fence_all(COMEX_GROUP_WORLD);
+  comex_barrier(COMEX_GROUP_WORLD);
+
+  /* copy my patch into local array c */
+  (void)comex_gets((double *)b[me] + 2*idx2, strideB, (double *)c + 2*idx1, strideA,  count, ndim - 1, me, COMEX_GROUP_WORLD);
+
+  scale[0] = alpha[0] * TIMES * nproc;
+  scale[1] = alpha[1] * TIMES * nproc;
+
+  scale_cplx_patch(scale, ndim, (double *)a + idx1, loA, hiA, dimsA);
+
+  compare_cplx_patches(.0001, ndim, (double *)a + idx1, loA, hiA, dimsA, (double *)c + idx1, loA, hiA, dimsA);
+  comex_barrier(COMEX_GROUP_WORLD);
+
+  if (0 == me) {
+    printf(" OK\n\n");
+    fflush(stdout);
+  }
+
+  free(c);
+  destroy_array(b);
+  free(a);
+}
 
 /*************************** vector interface *********************************\
  * tests vector interface for transfers of triangular sections of a 2-D array *
@@ -1656,6 +1889,14 @@ int main(int argc, char *argv[])
   }
   for (ndim = 1; ndim <= MAXDIMS; ndim++) {
     test_acc(ndim);
+  }
+  if (me == 0) {
+    printf("\nTesting complex atomic accumulate\n");
+    fflush(stdout);
+    sleep(1);
+  }
+  for (ndim = 1; ndim <= MAXDIMS; ndim++) {
+    test_cplx_acc(ndim);
   }
   comex_fence_all(COMEX_GROUP_WORLD);
   comex_barrier(COMEX_GROUP_WORLD);
