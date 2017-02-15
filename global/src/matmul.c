@@ -2228,6 +2228,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	     tmplo[aipos]=i0; tmphi[aipos]=i1;
 	     tmplo[ajpos]=j0; tmphi[ajpos]=j1;
 	     tmpld[aipos]=i1-i0+1;
+	     tmpld[ajpos]=j1-j0+1;
 	     pnga_get(g_a,tmplo,tmphi,a,tmpld);
 	     
 	     if(get_new_B) {
@@ -2247,6 +2248,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	       tmplo[bipos]=i0; tmphi[bipos]=i1;
 	       tmplo[bjpos]=j0; tmphi[bjpos]=j1;
 	       tmpld[bipos]=i1-i0+1;
+	       tmpld[bjpos]=j1-j0+1;
 	       pnga_get(g_b,tmplo,tmphi,b,tmpld);
 	       get_new_B = FALSE;
 	     }
@@ -2292,6 +2294,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 		  tmplo[cipos]=i0; tmphi[cipos]=i1;
 		  tmplo[cjpos]=j0; tmphi[cjpos]=j1;
 		  tmpld[cipos]=i1-i0+1;
+		  tmpld[cjpos]=j1-j0+1;
 		  if(atype == C_FLOAT || atype == C_SCPL) 
 		    pnga_acc(g_c,tmplo,tmphi,(float *)c,tmpld, &ONE_CF);
 		  else
