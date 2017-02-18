@@ -47,21 +47,21 @@ int main(int argc, char **argv)
     printf("\n\n");
 
     if (0 == me) {
-        printf("#PNNL armci Put Strided Test\n");
+        printf("#PNNL ComEx Put Strided Test\n");
     }
-//    strided_test(MAX_MESSAGE_SIZE, PUTS);
+    strided_test(MAX_MESSAGE_SIZE, PUTS);
     printf("\n\n");
 
 
     if (0 == me) {
-        printf("#PNNL armci Get Strided Test\n");
+        printf("#PNNL ComEx Get Strided Test\n");
     }
-//    strided_test(MAX_MESSAGE_SIZE, GETS);
+    strided_test(MAX_MESSAGE_SIZE, GETS);
     printf("\n\n");
     
    
     if (0 == me) {
-        printf("#PNNL armci Accumulate Strided Test\n");
+        printf("#PNNL ComEx Accumulate Strided Test\n");
     }
     strided_test(MAX_MESSAGE_SIZE, ACCS);
     printf("\n\n");
