@@ -41,6 +41,12 @@ project (GlobalArrays)
 # This project uses C,C++ and Fortran
 #enable_language(CC)
 #enable_language(CXX)
+
+# where to look for special .cmake files
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake-modules")
+message(status "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
+include(GlobalArrays)
+
 option (ENABLE_FORTRAN "Build Fortran interface" OFF)
 option (ENABLE_F77 "Build Fortran interface" OFF)
 
@@ -66,6 +72,9 @@ else()
   endif()
   set(NOFORT 1)
 endif()
+
+# turn testing on
+enable_testing()
 
 find_package(MPI)
 
@@ -354,6 +363,9 @@ if (CMAKE_SIZEOF_VOID_P EQUAL 8)
   if (CMAKE_SYSTEM_NAME EQUAL "Linux")
     set(NOUSE_MMAP 1)
   endif()
+  set(GA_FORTRAN_ACCESS_INDEX integer*8)
+else()
+  set(GA_FORTRAN_ACCESS_INDEX integer*4)
 endif()
 set (CM_BLAS_SIZE ${CM_SIZEOF_F77_INTEGER})
 
@@ -368,6 +380,10 @@ CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/typesf2c.h.in
                 ${CMAKE_SOURCE_DIR}/gaf2c/typesf2c.h )
 CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/matypes.h.in
                 ${CMAKE_SOURCE_DIR}/ma/matypes.h )
+CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/mafdecls.fh.in
+                ${CMAKE_SOURCE_DIR}/ma/mafdecls.fh )
+CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/global.fh.in
+                ${CMAKE_SOURCE_DIR}/global/src/global.fh )
 
 if (ENABLE_FORTRAN)
 message(STATUS "CMAKE_COMMAND:${CMAKE_COMMAND}")
@@ -421,7 +437,7 @@ add_library(ga
 
 set (CMAKE_REQUIRED_LIBRARIES lapack blas)
 message(STATUS "LAPACK_LIBRARIES: ${LAPACK_LIBRARIES}")
-target_link_libraries(ga ${LAPACK_LIBRARIES})
+target_link_libraries(ga ${LAPACK_LIBRARIES} ${GA_EXTRA_LIBS})
 
 install (TARGETS
   ga
