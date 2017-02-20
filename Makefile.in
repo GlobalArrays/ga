@@ -4184,11 +4184,6 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL = @PERL@
 PLOTLIB = @PLOTLIB@
-PYTHON = @PYTHON@
-PYTHON_EXEC_PREFIX = @PYTHON_EXEC_PREFIX@
-PYTHON_PLATFORM = @PYTHON_PLATFORM@
-PYTHON_PREFIX = @PYTHON_PREFIX@
-PYTHON_VERSION = @PYTHON_VERSION@
 RANLIB = @RANLIB@
 SCALAPACK_CPPFLAGS = @SCALAPACK_CPPFLAGS@
 SCALAPACK_LDFLAGS = @SCALAPACK_LDFLAGS@
@@ -4247,13 +4242,9 @@ mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
 pdfdir = @pdfdir@
-pkgpyexecdir = @pkgpyexecdir@
-pkgpythondir = @pkgpythondir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
-pyexecdir = @pyexecdir@
-pythondir = @pythondir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -4362,16 +4353,6 @@ nodist_libga_la_SOURCES = config.fh $(am__append_8) $(am__append_9) \
 # NOTE: While we don't build the tcgmsg examples, we include everything in the
 # distribution anyway.
 #
-
-##############################################################################
-# tascel
-# The tascel directory is not automatically configured nor added to SUBDIRS.
-# However, it is still distributed with GA.
-
-##############################################################################
-# gfutex
-# The gfutex directory is not automatically configured nor added to SUBDIRS.
-# However, it is still distributed with GA.
 EXTRA_DIST = README LinAlg/lapack+blas/README global/README \
 	$(am__append_10) tools/wapigen.py tools/wapigen_counts.py \
 	tools/wapigen_trace.py $(am__append_29) \
@@ -4406,7 +4387,7 @@ EXTRA_DIST = README LinAlg/lapack+blas/README global/README \
 	tcgmsg/examples/runit.grid tcgmsg/examples/scfblas.f \
 	tcgmsg/examples/scf.f tcgmsg/examples/timer.f \
 	tcgmsg/examples/trace.out tcgmsg/examples/xpix.shar \
-	tcgmsg/tcgmsg-mpi/README tascel gfutex
+	tcgmsg/tcgmsg-mpi/README
 
 ##############################################################################
 # config
@@ -5143,10 +5124,6 @@ M4__v_0 = @echo "  M4    " $@;
 SED_V = $(SED__v_$(V))
 SED__v_ = $(SED__v_$(AM_DEFAULT_VERBOSITY))
 SED__v_0 = @echo "  SED   " $@;
-# python
-PYTHON_V = $(PYTHON__v_$(V))
-PYTHON__v_ = $(PYTHON__v_$(AM_DEFAULT_VERBOSITY))
-PYTHON__v_0 = @echo "  PYTHON" $@;
 # cp
 CP = cp
 CP_V = $(CP__v_$(V))
@@ -8723,9 +8700,6 @@ distdir: $(DISTFILES)
 	      || exit 1; \
 	  fi; \
 	done
-	$(MAKE) $(AM_MAKEFLAGS) \
-	  top_distdir="$(top_distdir)" distdir="$(distdir)" \
-	  dist-hook
 	-test -n "$(am__skip_mode_fix)" \
 	|| find "$(distdir)" -type d ! -perm -755 \
 		-exec chmod u+rwx,go+rx {} \; -o \
@@ -9051,16 +9025,16 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	check-TESTS check-am check-html clean clean-binPROGRAMS \
 	clean-checkLTLIBRARIES clean-checkPROGRAMS clean-generic \
 	clean-libLTLIBRARIES clean-libtool clean-local ctags \
-	ctags-recursive dist dist-all dist-bzip2 dist-gzip dist-hook \
-	dist-lzip dist-lzma dist-shar dist-tarZ dist-xz dist-zip \
-	distcheck distclean distclean-compile distclean-generic \
-	distclean-hdr distclean-libtool distclean-tags distcleancheck \
-	distdir distuninstallcheck dvi dvi-am html html-am info \
-	info-am install install-am install-binPROGRAMS \
-	install-binSCRIPTS install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-includeHEADERS install-info \
-	install-info-am install-libLTLIBRARIES install-man \
+	ctags-recursive dist dist-all dist-bzip2 dist-gzip dist-lzip \
+	dist-lzma dist-shar dist-tarZ dist-xz dist-zip distcheck \
+	distclean distclean-compile distclean-generic distclean-hdr \
+	distclean-libtool distclean-tags distcleancheck distdir \
+	distuninstallcheck dvi dvi-am html html-am info info-am \
+	install install-am install-binPROGRAMS install-binSCRIPTS \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-includeHEADERS install-info install-info-am \
+	install-libLTLIBRARIES install-man \
 	install-nodist_includeHEADERS install-pdf install-pdf-am \
 	install-ps install-ps-am install-strip installcheck \
 	installcheck-am installdirs installdirs-am maintainer-clean \
@@ -9133,14 +9107,6 @@ global/src/ga-wapidefs.h: $(PAPI_H)
 @HAVE_M4_TRUE@	$(M4_V) \
 @HAVE_M4_TRUE@	$(M4) -I$(top_srcdir)/global/testing $< > $@ 
 
-##############################################################################
-# python
-#
-
-@HAVE_PYTHON_TRUE@python: install
-@HAVE_PYTHON_TRUE@	(cd $(top_srcdir)/python && $(PYTHON) setup.py build_ext -L$(libdir) -I$(includedir)) || exit 1
-@HAVE_PYTHON_TRUE@	(cd $(top_srcdir)/python && $(PYTHON) setup.py install) || exit 1
-
 @ENABLE_GPARRAYS_TRUE@gparrays/src/gp-wapi.h: $(GPPAPI_H)
 @ENABLE_GPARRAYS_TRUE@	@-rm -f $@
 @ENABLE_GPARRAYS_TRUE@	$(SED_V) \
@@ -9165,14 +9131,6 @@ global/src/ga-wapidefs.h: $(PAPI_H)
 @ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_TRUE@	($(am__cd) comex && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
 @ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_FALSE@armci/libarmci.la:
 @ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_FALSE@	($(am__cd) armci && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
-dist-hook: tascel-dist-hook
-.PHONY: tascel-dist-hook
-tascel-dist-hook:
-	rm -rf $(distdir)/tascel/autom4te.cache
-dist-hook: gfutex-dist-hook
-.PHONY: gfutex-dist-hook
-gfutex-dist-hook:
-	rm -rf $(distdir)/gfutex/autom4te.cache
 
 ##############################################################################
 # the end

@@ -1516,17 +1516,6 @@ ga___testing_testmult_LDFLAGS  = $(FLDFLAGS)
 endif # CXX_BINDINGS
 
 ##############################################################################
-# python
-#
-if HAVE_PYTHON
-
-python: install
-	(cd $(top_srcdir)/python && $(PYTHON) setup.py build_ext -L$(libdir) -I$(includedir)) || exit 1
-	(cd $(top_srcdir)/python && $(PYTHON) setup.py install) || exit 1
-
-endif
-
-##############################################################################
 # gparrays
 #
 if ENABLE_GPARRAYS
@@ -1813,26 +1802,6 @@ libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 endif
 
 ##############################################################################
-# tascel
-# The tascel directory is not automatically configured nor added to SUBDIRS.
-# However, it is still distributed with GA.
-EXTRA_DIST += tascel
-dist-hook: tascel-dist-hook
-.PHONY: tascel-dist-hook
-tascel-dist-hook:
-	rm -rf $(distdir)/tascel/autom4te.cache
-
-##############################################################################
-# gfutex
-# The gfutex directory is not automatically configured nor added to SUBDIRS.
-# However, it is still distributed with GA.
-EXTRA_DIST += gfutex
-dist-hook: gfutex-dist-hook
-.PHONY: gfutex-dist-hook
-gfutex-dist-hook:
-	rm -rf $(distdir)/gfutex/autom4te.cache
-
-##############################################################################
 # the end
 #
 .PHONY: checkprogs checkprogs-recursive checkprogs-am
@@ -1877,10 +1846,6 @@ M4__v_0 = @echo "  M4    " $@;
 SED_V = $(SED__v_$(V))
 SED__v_ = $(SED__v_$(AM_DEFAULT_VERBOSITY))
 SED__v_0 = @echo "  SED   " $@;
-# python
-PYTHON_V = $(PYTHON__v_$(V))
-PYTHON__v_ = $(PYTHON__v_$(AM_DEFAULT_VERBOSITY))
-PYTHON__v_0 = @echo "  PYTHON" $@;
 # cp
 CP = cp
 CP_V = $(CP__v_$(V))

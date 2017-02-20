@@ -411,9 +411,6 @@ AC_MSG_NOTICE
 AC_PROG_GREP
 AC_PROG_SED
 
-AM_PATH_PYTHON([],[],[:])
-AM_CONDITIONAL([HAVE_PYTHON], [test "x$PYTHON" != x])
-
 AC_PATH_PROG([M4], [m4], [notfound])
 AM_CONDITIONAL([HAVE_M4], [test "x$M4" != xnotfound])
 
