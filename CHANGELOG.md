@@ -7,8 +7,79 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
+## 5.5 - 2016-08
+- Added
+  - Port for libfabric (--with-ofi) via ComEx. This adds native support for Intel Omnipath.
+- Fixed
+  - Numerous bug fixes.
+
+## 5.4 - 2016-04
+- Fixed
+  - Numerous bug fixes.
+  - Performed license/copyright audit of source files.
+- Removed
+  - BGML and DCMF ports. Use MPI multithreading instead.
+
+## 5.4b - 2015-05
+- Added
+  - Port for MPI progress ranks (--with-mpi-pr) via ComEx.
+  - Port for MPI multithreading with progress threads (--with-mpi-pt) via ComEx.
+  - Port for MPI multithreading (--with-mpi-mt) via ComEx.
+- Changed
+  - Default network interface from SOCKETS to MPI two-sided (--with-mpi-ts) via ComEx.
+- Improved
+  - ScaLAPACK and ELPA integration.
+- Removed
+  - Replaced EISPACK with LAPACK/BLAS.
+
+## 5.3 - 2014-04
+- Fixed
+  - Bug where incorrect BLAS integer size was used in ComEx.
+  - Incompatibilities between this and the 5.2 release with respect to NWChem.
+- Testing
+  - Validated this software with the NWChem 6.3 sources.
+
+## 5.3b - 2013-12
+- Added
+  - Port for Portals4 (configure --with-portals4).  When linking to the Portals4 reference implementation, it is highly recommended that the ummunotify driver is installed. Otherwise, memory registration errors and/or dropped messages may occur. This behavior can be verified using the PTL_DEBUG=1 and PTL_LOG_LEVEL=2 Portals4 environment variables.
+  - ARMCI profiling to ComEx.
+- Changed
+  - autotool scripts now latest versions.
+
+## 5.2 - 2012-08
+- Added
+  - The Communications Runtime for Extreme Scale (ComEx) software to the GA release bundle. ComEx provides the following features to GA:
+      - Port for Cray XE and XC (configure --with-dmapp).
+      - Port for MPI-1 two-sided (configure --with-mpi-ts).
+  - Support for externally linkable ARMCI (configure --with-armci=...)
+  - Ability for users to select a different IB device using the ARMCI_OPENIB_DEVICE environment variable.
+  - Ability for users to specify upper bound on ARMCI shared memory. Added ARMCI_DEFAULT_SHMMAX_UBOUND which is set and parsed at configure time.
+- Changed
+  - How users link their applications. You now need "-lga -larmci" since libarmci is possibly an external dependency (see above).
+- Fixed
+  - Support for Intel/QLogic IB thanks to patches from Dean Luick, Intel.
+- Improved
+  - BLAS library parsing for ACML and MKL ('-mkl').
+  - ScaLAPACK integration thanks to Edo Apra.
+
+## 5.1.1 - 2012-10
+- Added
+  - A wrapper for fsync to SF library.
+  - MA_ACCESS_INDEX_TYPE to ma library.
+  - Missing Python C sources.
+- Changed
+  - Atomic operations.
+- Fixed
+  - Numerous bugs for compilation on IBM AIX, as well as IBM xl compilers.
+  - Many warnings reported by Intel compilers.
+  - Integer overflow for indexing large arrays during accumulate.
+  - Bug in GA_Zgemm64.
+  - Ghosts hanging.
+- Removed
+  - A few debugging print statements from pario.
+
 ## 5.1 - 2012-02
--Added 
+- Added 
   - Unified "NGA" prefix for all functions.
   - New profiling interface and weak symbol interposition support.
   - Support for struct data types using the new NGA_Register_type(), NGA_Get_field() and NGA_Put_field() functions.
