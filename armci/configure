@@ -851,6 +851,8 @@ SGI_FALSE
 SGI_TRUE
 NEC_FALSE
 NEC_TRUE
+MINGW_FALSE
+MINGW_TRUE
 MACX_FALSE
 MACX_TRUE
 LINUX_FALSE
@@ -3241,6 +3243,8 @@ if test "x$ga_cv_target_base" = xUNKNOWN; then :
     ga_cv_target_base=MACX ;; #(
   *apple*) :
     ga_cv_target_base=MACX ;; #(
+  *mingw32*) :
+    ga_cv_target_base=MINGW ;; #(
   *superux*) :
     ga_cv_target_base=NEC ;; #(
   *solaris*) :
@@ -3429,6 +3433,14 @@ fi
 else
   MACX_TRUE='#'
   MACX_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = MINGW; then
+  MINGW_TRUE=
+  MINGW_FALSE='#'
+else
+  MINGW_TRUE='#'
+  MINGW_FALSE=
 fi
 
  if test "$ga_cv_target_base" = NEC; then
@@ -32996,6 +33008,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MACX_TRUE}" && test -z "${MACX_FALSE}"; then
   as_fn_error $? "conditional \"MACX\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MINGW_TRUE}" && test -z "${MINGW_FALSE}"; then
+  as_fn_error $? "conditional \"MINGW\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${NEC_TRUE}" && test -z "${NEC_FALSE}"; then

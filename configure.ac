@@ -4,9 +4,9 @@
 # Init autoconf
 ###############################################################################
 AC_PREREQ([2.67])
-AC_INIT([Global Arrays (GA)], [5.4],
+AC_INIT([Global Arrays (GA)], [5.6],
         [hpctools@pnl.gov], [ga],
-        [http://www.emsl.pnl.gov/docs/global/])
+        [http://hpc.pnl.gov/globalarrays/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_LIBOBJ_DIR([compat])
@@ -18,6 +18,23 @@ AC_CONFIG_SRCDIR([global/src/ga.h])
 ###############################################################################
 GA_TARGET
 GA_CROSS_COMPILING
+
+# This lets us use PACKAGE_VERSION in Makefiles
+AC_SUBST([PACKAGE_VERSION])
+
+# Libtool -version-info (ABI version)
+#
+# Don't change this unless you know exactly what you're doing and have read and
+# understand:
+# http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
+#
+# Changes:
+#
+# ga version 5.6.0: 1:0:0 (ABI version 1)
+#
+# libga -version-info current:revision:age
+LTVER="1:0:0"
+AC_SUBST([LTVER])
 
 ###############################################################################
 # Init automake

@@ -73,6 +73,7 @@ AS_IF([test "x$ga_cv_target_base" = xUNKNOWN],
         [*linux*],          [ga_cv_target_base=LINUX],
         [*darwin*],         [ga_cv_target_base=MACX],
         [*apple*],          [ga_cv_target_base=MACX],
+        [*mingw32*],        [ga_cv_target_base=MINGW],
         [*superux*],        [ga_cv_target_base=NEC],
         [*solaris*],        [ga_cv_target_base=SOLARIS])])
 ])dnl
@@ -112,6 +113,7 @@ AM_CONDITIONAL([INTERIX],      [test "$ga_cv_target_base" = INTERIX])
 AM_CONDITIONAL([LAPI],         [test "$ga_cv_target_base" = LAPI])
 AM_CONDITIONAL([LINUX],        [test "$ga_cv_target_base" = LINUX])
 AM_CONDITIONAL([MACX],         [test "$ga_cv_target_base" = MACX])
+AM_CONDITIONAL([MINGW],        [test "$ga_cv_target_base" = MINGW])
 AM_CONDITIONAL([NEC],          [test "$ga_cv_target_base" = NEC])
 AM_CONDITIONAL([SGI],          [test "$ga_cv_target_base" = SGI])
 AM_CONDITIONAL([SGI_N32],      [test "$ga_cv_target_base" = SGI_N32])

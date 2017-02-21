@@ -490,14 +490,14 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 TESTS = $(am__EXEEXT_19) $(am__EXEEXT_20)
 XFAIL_TESTS = $(am__EXEEXT_21) $(am__EXEEXT_22)
 subdir = .
-DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
+DIST_COMMON = $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in $(top_srcdir)/configure \
 	$(top_srcdir)/gaf2c/farg.h.in \
 	$(top_srcdir)/gaf2c/typesf2c.h.in \
 	$(top_srcdir)/global/src/global.fh.in \
 	$(top_srcdir)/ma/mafdecls.fh.in $(top_srcdir)/ma/matypes.h.in \
-	$(top_srcdir)/tools/ga-config.in INSTALL NEWS \
+	$(top_srcdir)/tools/ga-config.in INSTALL \
 	build-aux/config.guess build-aux/config.sub build-aux/depcomp \
 	build-aux/install-sh build-aux/ltmain.sh build-aux/missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -852,6 +852,9 @@ am__objects_12 =
 nodist_libga_la_OBJECTS = $(am__objects_10) $(am__objects_11) \
 	$(am__objects_12)
 libga_la_OBJECTS = $(am_libga_la_OBJECTS) $(nodist_libga_la_OBJECTS)
+libga_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(F77LD) $(AM_FFLAGS) $(FFLAGS) \
+	$(libga_la_LDFLAGS) $(LDFLAGS) -o $@
 libwapi_la_LIBADD =
 am__libwapi_la_SOURCES_DIST = tools/ga-wapi.c tools/gp-wapi.c
 @ENABLE_GPARRAYS_TRUE@@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__objects_13 = tools/gp-wapi.lo
@@ -4155,6 +4158,7 @@ LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
+LTVER = @LTVER@
 M4 = @M4@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
@@ -4431,6 +4435,8 @@ FLDFLAGS = $(ELPA_LDFLAGS) $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) \
 LDADD = $(LTLIBOBJS) libga.la $(ELPA_LIBS) $(SCALAPACK_LIBS) \
 	$(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) \
 	$(ARMCI_NETWORK_LIBS)
+@MINGW_FALSE@libga_la_LDFLAGS = $(AM_LDFLAGS) -version-info @LTVER@
+@MINGW_TRUE@libga_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined -avoid-version -version-info @LTVER@
 
 # Certain trickery when turning Fortran support on or off.
 @ENABLE_F77_TRUE@MAYBE_DUMMY_F_LINK = dummy.f
@@ -5661,7 +5667,7 @@ tools/ga-wapi.lo: tools/$(am__dirstamp) \
 tools/gp-wapi.lo: tools/$(am__dirstamp) \
 	tools/$(DEPDIR)/$(am__dirstamp)
 libga.la: $(libga_la_OBJECTS) $(libga_la_DEPENDENCIES) $(EXTRA_libga_la_DEPENDENCIES) 
-	$(AM_V_F77LD)$(F77LINK) -rpath $(libdir) $(libga_la_OBJECTS) $(libga_la_LIBADD) $(LIBS)
+	$(AM_V_F77LD)$(libga_la_LINK) -rpath $(libdir) $(libga_la_OBJECTS) $(libga_la_LIBADD) $(LIBS)
 libwapi.la: $(libwapi_la_OBJECTS) $(libwapi_la_DEPENDENCIES) $(EXTRA_libwapi_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) $(am_libwapi_la_rpath) $(libwapi_la_OBJECTS) $(libwapi_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)

@@ -48,6 +48,12 @@ AM_LDFLAGS =
 FLDFLAGS =
 LDADD =
 
+if MINGW
+libga_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined -avoid-version -version-info @LTVER@
+else
+libga_la_LDFLAGS = $(AM_LDFLAGS) -version-info @LTVER@
+endif
+
 AM_FFLAGS += $(GA_FOPT)
 AM_FFLAGS += $(GA_F_WARN)
 AM_FFLAGS += $(FFLAG_INT)
