@@ -7,6 +7,14 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
+## 5.6 - 2017-02-27
+- Added
+  - Port for MPI-3 one-sided (--with-mpi3).
+  - CMake build.
+  - More complete test coverage.
+- Changed
+  - Initial shared library versioning.
+  
 ## 5.5 - 2016-08
 - Added
   - Port for libfabric (--with-ofi) via ComEx. This adds native support for Intel Omnipath.
