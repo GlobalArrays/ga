@@ -4,8 +4,10 @@
 # Init autoconf
 ###############################################################################
 AC_PREREQ([2.67])
-AC_INIT([Global Arrays (GA)], [5.6],
-        [hpctools@pnl.gov], [ga],
+AC_INIT([Global Arrays (GA)],
+        [m4_esyscmd([./version.sh])],
+        [hpctools@pnl.gov],
+        [ga],
         [http://hpc.pnl.gov/globalarrays/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([config.h])
