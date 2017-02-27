@@ -1,5 +1,7 @@
 # GLOBAL ARRAYS
 
+Travis: [![Build Status](https://travis-ci.org/GlobalArrays/ga.svg?branch=master)](https://travis-ci.org/GlobalArrays/ga)
+
 ## DISCLAIMER
 
 This material was prepared as an account of work sponsored by an agency of the United States Government.  Neither the United States Government nor the United States Department of Energy, nor Battelle, nor any of their employees, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, SOFTWARE, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY OWNED RIGHTS.
