@@ -13,9 +13,8 @@ export CFLAGS="-std=c99"
 export MPICC=mpicc
 
 case "$os" in
-    Darwin)
-        ;;
-    Linux)
+    Darwin|Linux)
+       export PATH=$TRAVIS_ROOT/bin:$PATH
        export PATH=$TRAVIS_ROOT/mpich/bin:$PATH
        export PATH=$TRAVIS_ROOT/open-mpi/bin:$PATH
        ;;
@@ -35,7 +34,7 @@ case "$MPI_IMPL" in
 esac
 
 # Configure and build
-./autogen.sh
+./autogen.sh $TRAVIS_ROOT
 ./configure --disable-static
 
 # Run unit tests

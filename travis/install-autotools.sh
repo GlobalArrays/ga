@@ -6,6 +6,10 @@ set -x
 os=`uname`
 TOP="$1"
 
+if [ ! -d ${TOP} ] ; then
+    mkdir ${TOP}
+fi
+
 case "$os" in
     Darwin|Linux)
         MAKE_JNUM=2

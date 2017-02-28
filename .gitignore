@@ -49,3 +49,4 @@ ltmain.sh
 libtool.m4
 config.h.in~
 *~
+autotools
