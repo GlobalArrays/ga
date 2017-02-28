@@ -11,14 +11,8 @@ MPI_IMPL="$2"
 export CFLAGS="-std=c99"
 #export MPICH_CC=$CC
 export MPICC=mpicc
-
-case "$os" in
-    Darwin|Linux)
-       export PATH=$TRAVIS_ROOT/bin:$PATH
-       export PATH=$TRAVIS_ROOT/mpich/bin:$PATH
-       export PATH=$TRAVIS_ROOT/open-mpi/bin:$PATH
-       ;;
-esac
+# export autotools path
+export PATH=$TRAVIS_ROOT/bin:$PATH
 
 # Capture details of build
 case "$MPI_IMPL" in

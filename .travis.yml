@@ -20,16 +20,13 @@ env:
 before_install:
   - export TRAVIS_ROOT=$HOME/travis
   - mkdir $TRAVIS_ROOT
-  - sh ./travis/install-autotools.sh $TRAVIS_ROOT > install-autotools.log 2>&1
-  - sh ./travis/install-fortran.sh $TRAVIS_ROOT > install-fortran.log 2>&1
+  - sh ./travis/install-autotools.sh $TRAVIS_ROOT
+  - sh ./travis/install-fortran.sh $TRAVIS_ROOT
 install:
-  - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL > install-mpi.log 2>&1
+  - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
 script:
   - sh ./travis/build-run.sh $TRAVIS_ROOT $MPI_IMPL
 after_failure:
-  - cat ./install-autotools.log
-  - cat ./install-fortran.log
-  - cat ./install-mpi.log
   - cat ./config.log
   - cat ./test-suite.log
   - find . -name "*.log" -exec head -n 100 {} ";"
