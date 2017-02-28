@@ -38,4 +38,6 @@ esac
 ./configure --disable-static
 
 # Run unit tests
-make check
+make V=0
+make V=0 checkprogs
+make V=0 check

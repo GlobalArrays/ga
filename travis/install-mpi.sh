@@ -40,7 +40,7 @@ case "$os" in
                     tar -xzf mpich-3.2.tar.gz
                     cd mpich-3.2
                     mkdir build && cd build
-                    ../configure CFLAGS="-w" --prefix=$TRAVIS_ROOT/mpich --disable-fortran --disable-static
+                    ../configure CFLAGS="-w" --prefix=$TRAVIS_ROOT/mpich --disable-static
                     make -j4
                     make install
                 else
@@ -66,7 +66,6 @@ case "$os" in
                                 --without-lsf --without-slurm \
                                 --without-pvfs2 --without-plfs \
                                 --without-cuda --disable-oshmem \
-                                --disable-mpi-fortran --disable-oshmem-fortran \
                                 --disable-libompitrace \
                                 --disable-mpi-io  --disable-io-romio \
                                 --disable-static \

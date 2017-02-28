@@ -45,6 +45,9 @@ case "$os" in
           fi
         fi
 
+        # refresh the path
+        export PATH=${TOP}:$PATH
+
         cd ${TOP}
         TOOL=autoconf
         TDIR=${TOOL}-${AUTOCONF_VERSION}
@@ -65,12 +68,15 @@ case "$os" in
           echo ${BIN} already exists! Skipping build.
         else
           cd ${TOP}/${TDIR}
-          ./configure --prefix=${TOP} M4=${TOP}/bin/m4 && make -j ${MAKE_JNUM} && make install
+          ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
           if [ "x$?" != "x0" ] ; then
             echo FAILURE 3
             exit
           fi
         fi
+
+        # refresh the path
+        export PATH=${TOP}:$PATH
 
         cd ${TOP}
         TOOL=automake
@@ -92,12 +98,15 @@ case "$os" in
           echo ${BIN} already exists! Skipping build.
         else
           cd ${TOP}/${TDIR}
-          ./configure --prefix=${TOP} M4=${TOP}/bin/m4 && make -j ${MAKE_JNUM} && make install
+          ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
           if [ "x$?" != "x0" ] ; then
             echo FAILURE 4
             exit
           fi
         fi
+
+        # refresh the path
+        export PATH=${TOP}:$PATH
 
         cd ${TOP}
         TOOL=libtool
@@ -119,12 +128,16 @@ case "$os" in
           echo ${BIN} already exists! Skipping build.
         else
           cd ${TOP}/${TDIR}
-          ./configure --prefix=${TOP} M4=${TOP}/bin/m4 && make -j ${MAKE_JNUM} && make install
+          ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
           if [ "x$?" != "x0" ] ; then
             echo FAILURE 2
             exit
           fi
         fi
+
+        # refresh the path
+        export PATH=${TOP}:$PATH
+
         ;;
 esac
 
