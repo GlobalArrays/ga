@@ -1,28 +1,28 @@
-sudo: required
+sudo: false
 language: c
 os:
-  # osx starts faster because homebrew installs beat building from source
   - osx
   - linux
 compiler:
-  # nothing in ARMCI-MPI should be compiler-dependent...
   - clang
   - gcc
+addons:
+  apt:
+    packages:
+      - gfortran
 matrix:
   allow_failures:
     - env: MPI_IMPL=openmpi
 env:
-  #
-  # Test the default config since that is what Debian users will get.
-  #
   - MPI_IMPL=mpich
   - MPI_IMPL=openmpi
 before_install:
   - export TRAVIS_ROOT=$HOME/travis
   - mkdir $TRAVIS_ROOT
   - sh ./travis/install-autotools.sh $TRAVIS_ROOT
-  - sh ./travis/install-fortran.sh $TRAVIS_ROOT
 install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gfortran; fi
   - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
 script:
   - sh ./travis/build-run.sh $TRAVIS_ROOT $MPI_IMPL
