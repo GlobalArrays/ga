@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 set -x
@@ -9,8 +9,6 @@ TOP="$1"
 if [ ! -d ${TOP} ] ; then
     mkdir ${TOP}
 fi
-
-function version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 
 case "$os" in
     Darwin|Linux)
@@ -23,17 +21,24 @@ case "$os" in
         AUTOMAKE_VERSION=1.11
 
         # we need m4 at least version 1.4.13
+        TOOL=m4
         M4_OKAY=no
         if m4 --version >/dev/null ; then
-            M4_VERSION_FOUND=$(m4 --version | head -n1 | cut -d' ' -f 4)
-            if version_gt $M4_VERSION_FOUND $M4_VERSION_MIN ; then
+            M4_VERSION_FOUND=`m4 --version | head -n1 | cut -d' ' -f 4`
+            rm -f m4.conftest
+            cat > m4.conftest <<END
+$M4_VERSION_FOUND
+$M4_VERSION_MIN
+END
+            M4_VERSION_TOP=`sort -V m4.conftest | head -n 1`
+            rm -f m4.conftest
+            if [ "x$M4_VERSION_TOP" = "x$M4_VERSION_MIN" ] ; then
                 M4_OKAY=yes
             fi
         fi
 
         if [ "x$M4_OKAY" = "xno" ] ; then
             cd ${TOP}
-            TOOL=m4
             TDIR=${TOOL}-${M4_VERSION}
             FILE=${TDIR}.tar.gz
             BIN=${TOP}/bin/${TOOL}
