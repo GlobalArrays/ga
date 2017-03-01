@@ -50,3 +50,4 @@ libtool.m4
 config.h.in~
 *~
 autotools
+bld*
