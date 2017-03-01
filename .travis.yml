@@ -1,4 +1,4 @@
-sudo: false
+sudo: required
 language: c
 os:
   # osx starts faster because homebrew installs beat building from source

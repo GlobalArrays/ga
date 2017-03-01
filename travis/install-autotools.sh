@@ -10,43 +10,59 @@ if [ ! -d ${TOP} ] ; then
     mkdir ${TOP}
 fi
 
+function version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
+
 case "$os" in
     Darwin|Linux)
         MAKE_JNUM=2
         M4_VERSION=1.4.17
+        M4_VERSION_FOUND=
+        M4_VERSION_MIN=1.4.12
         LIBTOOL_VERSION=2.4.6
         AUTOCONF_VERSION=2.69
         AUTOMAKE_VERSION=1.11
 
-        cd ${TOP}
-        TOOL=m4
-        TDIR=${TOOL}-${M4_VERSION}
-        FILE=${TDIR}.tar.gz
-        BIN=${TOP}/bin/${TOOL}
-        if [ -f ${FILE} ] ; then
-          echo ${FILE} already exists! Using existing copy.
-        else
-          wget http://ftp.gnu.org/gnu/${TOOL}/${FILE}
-        fi
-        if [ -d ${TDIR} ] ; then
-          echo ${TDIR} already exists! Using existing copy.
-        else
-          echo Unpacking ${FILE}
-          tar -xzf ${FILE}
-        fi
-        if [ -f ${BIN} ] ; then
-          echo ${BIN} already exists! Skipping build.
-        else
-          cd ${TOP}/${TDIR}
-          ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
-          if [ "x$?" != "x0" ] ; then
-            echo FAILURE 1
-            exit
-          fi
+        # we need m4 at least version 1.4.13
+        M4_OKAY=no
+        if m4 --version >/dev/null ; then
+            M4_VERSION_FOUND=$(m4 --version | head -n1 | cut -d' ' -f 4)
+            if version_gt $M4_VERSION_FOUND $M4_VERSION_MIN ; then
+                M4_OKAY=yes
+            fi
         fi
 
-        # refresh the path
-        export PATH=${TOP}:$PATH
+        if [ "x$M4_OKAY" = "xno" ] ; then
+            cd ${TOP}
+            TOOL=m4
+            TDIR=${TOOL}-${M4_VERSION}
+            FILE=${TDIR}.tar.gz
+            BIN=${TOP}/bin/${TOOL}
+            if [ -f ${FILE} ] ; then
+                echo ${FILE} already exists! Using existing copy.
+            else
+                wget http://ftp.gnu.org/gnu/${TOOL}/${FILE}
+            fi
+            if [ -d ${TDIR} ] ; then
+                echo ${TDIR} already exists! Using existing copy.
+            else
+                echo Unpacking ${FILE}
+                tar -xzf ${FILE}
+            fi
+            if [ -f ${BIN} ] ; then
+                echo ${BIN} already exists! Skipping build.
+            else
+                cd ${TOP}/${TDIR}
+                ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
+                if [ "x$?" != "x0" ] ; then
+                    echo FAILURE 1
+                    exit
+                fi
+            fi
+            # refresh the path
+            export PATH=${TOP}:$PATH
+        else
+            echo "${TOOL} found and is sufficiently new ($M4_VERSION_FOUND)"
+        fi
 
         cd ${TOP}
         TOOL=autoconf
