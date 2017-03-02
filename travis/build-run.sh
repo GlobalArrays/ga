@@ -14,6 +14,8 @@ export MPICC=mpicc
 # export autotools path
 export PATH=$TRAVIS_ROOT/bin:$PATH
 
+MAKE_JNUM=4
+
 # Capture details of build
 case "$MPI_IMPL" in
     mpich)
@@ -47,9 +49,9 @@ esac
 
 # Configure and build
 ./autogen.sh $TRAVIS_ROOT
-./configure --disable-static
+./configure
 
 # Run unit tests
-make V=0
-make V=0 checkprogs
+make V=0 -j ${MAKE_JNUM}
+make V=0 checkprogs -j ${MAKE_JNUM}
 make V=0 check
