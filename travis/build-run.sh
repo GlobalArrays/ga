@@ -17,10 +17,28 @@ export PATH=$TRAVIS_ROOT/bin:$PATH
 # Capture details of build
 case "$MPI_IMPL" in
     mpich)
+        case "$os" in
+            Darwin)
+                echo "Mac"
+            ;;
+            Linux)
+                echo "Linux"
+                export PATH=$TRAVIS_ROOT/mpich/bin:$PATH
+            ;;
+        esac
         mpichversion
         mpicc -show
         ;;
     openmpi)
+        case "$os" in
+            Darwin)
+                echo "Mac"
+            ;;
+            Linux)
+                echo "Linux"
+                export PATH=$TRAVIS_ROOT/open-mpi/bin:$PATH
+            ;;
+        esac
         # this is missing with Mac build it seems
         #ompi_info --arch --config
         mpicc --showme:command
