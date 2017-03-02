@@ -22,7 +22,7 @@ before_install:
   - sh ./travis/install-autotools.sh $TRAVIS_ROOT
 install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gfortran; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc; fi
   - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
 script:
   - sh ./travis/build-run.sh $TRAVIS_ROOT $MPI_IMPL
