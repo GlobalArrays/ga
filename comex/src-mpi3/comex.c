@@ -1872,7 +1872,7 @@ int comex_finalize()
 
     /* destroy the communicators */
 #if 0
-    MPI_Comm_free(&l_state.world_comm);
+    ierr = MPI_Comm_free(&l_state.world_comm);
     translate_mpi_error(ierr,"comex_finalize:MPI_Comm_free");
 #endif
 
@@ -1908,7 +1908,7 @@ int comex_wait(comex_request_t* hdl)
   translate_mpi_error(ierr,"comex_wait:MPI_Win_flush_local");
 #else
   MPI_Status status;
-  MPI_Wait(&(nb_list[*hdl]->request),&status);
+  ierr = MPI_Wait(&(nb_list[*hdl]->request),&status);
   translate_mpi_error(ierr,"comex_wait:MPI_Wait");
 #endif
   delete_nb_request(hdl);
@@ -2037,13 +2037,13 @@ int comex_nbget(
     }
     get_nb_request(hdl, &req);
 #ifdef USE_MPI_FLUSH_LOCAL
-    MPI_Get(dst, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
+    ierr = MPI_Get(dst, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
         reg_win->win);
     translate_mpi_error(ierr,"comex_nbget:MPI_Get");
     req->remote_proc = lproc;
     req->win = reg_win->win;
 #else
-    MPI_Rget(dst, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
+    ierr = MPI_Rget(dst, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_nbget:MPI_Rget");
 #endif
@@ -2895,7 +2895,7 @@ int comex_destroy_mutexes()
   int i, ierr;
   if (_mutex_list == NULL) return COMEX_SUCCESS;
   for (i=0; i<_mutex_total; i++) {
-    MPI_Win_free(&_mutex_list[i]);
+    ierr = MPI_Win_free(&_mutex_list[i]);
     translate_mpi_error(ierr,"comex_destroy_mutexes:MPI_Win_free");
     if (_mutex_buf[i] != NULL) MPI_Free_mem(_mutex_buf[i]);
   }
