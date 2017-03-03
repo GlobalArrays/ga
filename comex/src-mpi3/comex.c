@@ -60,7 +60,7 @@ int _mutex_total;
 static int nb_max_outstanding = COMEX_MAX_NB_OUTSTANDING;
 
 typedef struct request_link {
-  request_link *next;
+  struct request_link *next;
   MPI_Request request;
   MPI_Win win;
   int id;
@@ -68,8 +68,6 @@ typedef struct request_link {
   int remote_proc;
 #endif
 } nb_t;
-
-static nb_t **nb_list = NULL;
 
 /* needed for complex accumulate */
 typedef struct {
@@ -84,7 +82,7 @@ typedef struct {
 
 /* Find an available non-blocking handle */
 #ifdef USE_MPI_REQUESTS
-static *_nb_list = NULL;
+static nb_t *_nb_list = NULL;
 #if 0
 void get_nb_request(comex_request_t *handle, nb_t **req)
 {
@@ -101,6 +99,10 @@ void get_nb_request(comex_request_t *handle, nb_t **req)
   }
 }
 #endif
+/**
+ * Create a new non-blocking request and return both an integer handle and the
+ * request data structure to the calling program
+ */
 void get_nb_request(comex_request_t *handle, nb_t **req)
 {
   int maxID = 0;
@@ -111,28 +113,51 @@ void get_nb_request(comex_request_t *handle, nb_t **req)
     prev_req = curr_req;
     curr_req = curr_req->next;
   }
+  maxID++;
   *req = (nb_t*)malloc(sizeof(nb_t));
   (*req)->id = maxID;
+  (*req)->next = NULL;
   *handle = maxID;
-  if (prev_req) prev_req->next = *req;
+  if (prev_req) {
+    prev_req->next = *req;
+  } else {
+    _nb_list = *req;
+  }
 }
 
-void delete_nb_request(nb_t *req)
+/**
+ * Delete a non-blocking request and remove it from the link list
+ */
+void delete_nb_request(comex_request_t *handle)
 {
   nb_t *curr_req = _nb_list;
   nb_t *prev_req = NULL;
-  while (curr_req != req) {
-    prev_req = req;
+  while (curr_req != NULL) {
+    if (curr_req->id == *handle) break;
+    prev_req = curr_req;
     curr_req = curr_req->next;
   }
   if (curr_req == NULL) {
     printf("Could not find request handle for delete\n");
   } else {
     if (prev_req != NULL) {
-      prev_req->next = req->next;
+      prev_req->next = curr_req->next;
     }
-    free(req);
+    if (_nb_list == curr_req) _nb_list = curr_req->next;
+    free(curr_req);
   }
+}
+
+/**
+ * Recover a non-blocking request from the handle
+ */
+nb_t* find_nb_request(comex_request_t *handle) {
+  nb_t *curr_req = _nb_list;
+  while (curr_req != NULL) {
+    if (curr_req->id == *handle) return curr_req;
+    curr_req = curr_req->next;
+  }
+  return NULL;
 }
 #endif
 
@@ -201,7 +226,7 @@ int comex_init()
     /* World Size */
     status = MPI_Comm_size(l_state.world_comm, &(l_state.size));
     assert(MPI_SUCCESS == status);
-    
+
     /* groups */
     comex_group_init();
 
@@ -1877,13 +1902,6 @@ int comex_finalize()
 #endif
 
     /* Clean up request list */
-#ifdef USE_MPI_REQUESTS
-    for (i=0; i<nb_max_outstanding; i++) {
-      free(nb_list[i]);
-    }
-    free(nb_list);
-#endif
-
     return COMEX_SUCCESS;
 }
 
@@ -1899,16 +1917,17 @@ int comex_wait_proc(int proc, comex_group_t group)
 int comex_wait(comex_request_t* hdl)
 {
   int ierr;
+  nb_t *req = find_nb_request(hdl);
 #ifndef USE_MPI_DATATYPES
   return COMEX_SUCCESS;
 #endif
 #ifdef USE_MPI_REQUESTS
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Win_flush_local(nb_list[*hdl]->remote_proc,nb_list[*hdl]->win);
+  ierr = MPI_Win_flush_local(req->remote_proc,req->win);
   translate_mpi_error(ierr,"comex_wait:MPI_Win_flush_local");
 #else
   MPI_Status status;
-  MPI_Wait(&(nb_list[*hdl]->request),&status);
+  MPI_Wait(&(req->request),&status);
   translate_mpi_error(ierr,"comex_wait:MPI_Wait");
 #endif
   delete_nb_request(hdl);
@@ -1928,7 +1947,8 @@ int comex_test(comex_request_t* hdl, int *status)
     int flag;
     int ret, ierr;
     MPI_Status stat;
-    ierr = MPI_Test(&(nb_list[*hdl]->request),&flag,&stat);
+    nb_t *req = find_nb_request(hdl);
+    ierr = MPI_Test(&(req->request),&flag,&stat);
     translate_mpi_error(ierr,"comex_test:MPI_Test");
     if (flag) {
       *status = 0;
