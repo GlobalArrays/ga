@@ -12,7 +12,7 @@ fi
 
 case "$os" in
     Darwin|Linux)
-        MAKE_JNUM=2
+        MAKE_JNUM=4
         M4_VERSION=1.4.17
         M4_VERSION_FOUND=
         M4_VERSION_MIN=1.4.12

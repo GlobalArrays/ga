@@ -9,6 +9,8 @@ os=`uname`
 TRAVIS_ROOT="$1"
 MPI_IMPL="$2"
 
+MAKE_JNUM=4
+
 # this is where updated Autotools will be for Linux
 export PATH=$TRAVIS_ROOT/bin:$PATH
 
@@ -42,7 +44,7 @@ case "$os" in
                     cd mpich-3.2
                     mkdir build && cd build
                     ../configure CFLAGS="-w" --prefix=$TRAVIS_ROOT/mpich
-                    make -j4
+                    make -j ${MAKE_JNUM}
                     make install
                 else
                     echo "MPICH already installed"
@@ -67,7 +69,7 @@ case "$os" in
                                 --disable-libompitrace \
                                 --disable-mpi-io  --disable-io-romio \
                                 --enable-mpi-thread-multiple
-                    make -j4
+                    make -j ${MAKE_JNUM}
                     make install
                 else
                     echo "Open-MPI already installed"
