@@ -83,22 +83,6 @@ typedef struct {
 /* Find an available non-blocking handle */
 #ifdef USE_MPI_REQUESTS
 static nb_t *_nb_list = NULL;
-#if 0
-void get_nb_request(comex_request_t *handle, nb_t **req)
-{
-  int i;
-  for (i=0; i<nb_max_outstanding; i++) {
-    if (nb_list[i]->active == 0) break;
-  }
-  if (i<nb_max_outstanding) {
-    *handle = i;
-    *req = nb_list[i];
-  } else {
-    i = -1;
-    req = NULL;
-  }
-}
-#endif
 /**
  * Create a new non-blocking request and return both an integer handle and the
  * request data structure to the calling program
@@ -1927,7 +1911,8 @@ int comex_wait(comex_request_t* hdl)
   translate_mpi_error(ierr,"comex_wait:MPI_Win_flush_local");
 #else
   MPI_Status status;
-  ierr = MPI_Wait(&(nb_list[*hdl]->request),&status);
+
+  ierr = MPI_Wait(&(req->request),&status);
   translate_mpi_error(ierr,"comex_wait:MPI_Wait");
 #endif
   delete_nb_request(hdl);
