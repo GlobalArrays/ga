@@ -1918,8 +1918,8 @@ int comex_wait(comex_request_t* hdl)
   delete_nb_request(hdl);
 #else
   /* Non-blocking functions not implemented */
-  return COMEX_SUCCESS;
 #endif
+  return COMEX_SUCCESS;
 }
 
 

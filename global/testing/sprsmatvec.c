@@ -4,6 +4,8 @@
 
 #include "macdecls.h"
 #include "ga.h"
+#include "mp3.h"
+
 #define USE_HYPRE 0
 #define IMAX 200
 #define JMAX 200
@@ -819,7 +821,7 @@ int main(int argc, char **argv) {
  *  Intitialize a message passing library
  */
   one = 1;
-  ierr = MPI_Init(&argc, &argv);
+  MP_INIT(argc,argv);
 /**
  *    Initialize GA
  *
@@ -1312,5 +1314,5 @@ int main(int argc, char **argv) {
 /**
  *  Tidy up after message-passing library
  */
-  ierr = MPI_Finalize();
+  MP_FINALIZE();
 }

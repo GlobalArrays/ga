@@ -8,6 +8,7 @@
 #if HAVE_MATH_H
 #   include <math.h>
 #endif
+#include <stdlib.h>
 
 #include "ga.h"
 #include "macdecls.h"

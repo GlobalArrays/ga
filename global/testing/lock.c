@@ -9,6 +9,7 @@
 #include "mpi.h"
 #include "macdecls.h"
 #include "ga.h"
+#include "ga-mpi.h"
 #include "armci.h"
 #include "mp3.h"
 
