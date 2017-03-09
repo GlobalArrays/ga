@@ -1923,8 +1923,14 @@ else
 if CROSS_COMPILING
 maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; eval $$maybe_mpiexec
 else
+if ARMCI_NETWORK_MPI_PR
+NPROCS1=$(shell expr $(NPROCS) + 1)
+LOG_COMPILER = \
+maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS1)/'; else echo "$(MPIEXEC)"; fi; fi`; eval $$maybe_mpiexec
+else
 LOG_COMPILER = \
 maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; eval $$maybe_mpiexec
+endif # COMEX_NETWORK_MPI_PR
 endif # CROSS_COMPILING
 endif # MSG_COMMS_TCGMSG5
 endif # MSG_COMMS_TCGMSG4

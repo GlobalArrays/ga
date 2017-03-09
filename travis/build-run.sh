@@ -49,7 +49,7 @@ esac
 
 # Configure and build
 ./autogen.sh $TRAVIS_ROOT
-./configure
+./configure --with-mpi-pr
 
 # Run unit tests
 make V=0 -j ${MAKE_JNUM}
