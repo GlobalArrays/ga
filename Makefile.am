@@ -629,6 +629,9 @@ GLOBAL_PARALLEL_TESTS_XFAIL =
 GLOBAL_TESTS = $(GLOBAL_SERIAL_TESTS) $(GLOBAL_PARALLEL_TESTS)
 GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
 
+TRAVIS_TESTS =
+TRAVIS_TESTS += global/testing/test$(EXEEXT)
+
 #GLOBAL_PARALLEL_TESTS += global/testing/big$(EXEEXT) # needs lots of memory
 GLOBAL_PARALLEL_TESTS += global/testing/elempatch$(EXEEXT)
 #GLOBAL_PARALLEL_TESTS += global/testing/gatscat$(EXEEXT) # broken
@@ -1934,6 +1937,10 @@ endif # COMEX_NETWORK_MPI_PR
 endif # CROSS_COMPILING
 endif # MSG_COMMS_TCGMSG5
 endif # MSG_COMMS_TCGMSG4
+
+.PHONY: check-travis
+check-travis: $(all-am) $(check_LTLIBRARIES) $(TRAVIS_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(TRAVIS_TESTS)" check-TESTS
 
 .PHONY: check-ga
 check-ga: $(all-am) $(check_LTLIBRARIES) $(check_PROGRAMS) $(MAYBE_PFILES)
