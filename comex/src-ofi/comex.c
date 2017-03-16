@@ -19,6 +19,7 @@
 #include <stdarg.h>
 #include <complex.h>
 #include <pthread.h>
+#include <sys/uio.h>
 
 /* 3rd party headers */
 #include <mpi.h>
@@ -99,9 +100,9 @@ static int* am_mutex_waiter = 0;
 static uint32_t reply_tag = 0;
 #define GETTAG() (++reply_tag)
 
-static pthread_spinlock_t mutex_spin;
-static pthread_spinlock_t acc_spin;
-static pthread_spinlock_t poll_spin;
+static fastlock_t mutex_lock;
+static fastlock_t acc_lock;
+static fastlock_t poll_lock;
 static int poll(int* items_processed);
 static pthread_t tid = 0;
 
@@ -491,6 +492,12 @@ void tune_ofi_provider()
         }
     }
 
+    char var[256];
+    sprintf(var, "%d", l_state.local_size);
+    setenv("MPI_LOCALNRANKS", var, 0);
+    sprintf(var, "%d", l_state.local_proc);
+    setenv("MPI_LOCALRANKID", var, 0);
+
     setenv("IPATH_NO_CPUAFFINITY", "1", 0);
     setenv("HFI_NO_CPUAFFINITY", "1", 0);
 }
@@ -525,18 +532,37 @@ static int init_ep(struct fi_info* hints, ofi_ep_t* ep, int suppress_fail)
     /* Open fabric                  */
     /* ---------------------------- */
     OFI_CALL(ret, CALL_TABLE_FUNCTION(&ld_table, fi_fabric(provider->fabric_attr, &ep->fabric, NULL)));
-    OFI_CHKANDJUMP(ret, "fi_fabric('%s')",
-                   provider->fabric_attr->prov_name);
+    if(ret < 0)
+    {
+        if(!suppress_fail)
+            OFI_CHKANDJUMP(ret, "fi_fabric('%s')", provider->fabric_attr->prov_name);
+        else
+            goto fn_fail;
+    }
 
     /* ---------------------------- */
     /* Open domain                  */
     /* ---------------------------- */
-    OFI_CHKANDJUMP(fi_domain(ep->fabric, provider, &ep->domain, NULL), "fi_domain:");
+    OFI_CALL(ret, fi_domain(ep->fabric, provider, &ep->domain, NULL));
+    if(ret < 0)
+    {
+        if(!suppress_fail)
+            OFI_CHKANDJUMP(ret, "fi_domain");
+        else
+            goto fn_fail_dom;
+    }
 
     /* ----------------------------- */
     /* Open endpoint                 */
     /* ----------------------------- */
-    OFI_CHKANDJUMP(fi_endpoint(ep->domain, provider, &ep->endpoint, NULL), "fi_endpoint:");
+    OFI_CALL(ret, fi_endpoint(ep->domain, provider, &ep->endpoint, NULL));
+    if(ret < 0)
+    {
+        if(!suppress_fail)
+            OFI_CHKANDJUMP(ret, "fi_endpoint");
+        else
+            goto fn_fail_ep;
+    }
 
     /* -------------------------------- */
     /* Open Completion Queue            */
@@ -573,6 +599,10 @@ static int init_ep(struct fi_info* hints, ofi_ep_t* ep, int suppress_fail)
 fn_success:
     return COMEX_SUCCESS;
 
+fn_fail_ep:
+    fi_close(&ep->domain->fid);
+fn_fail_dom:
+    fi_close(&ep->fabric->fid);
 fn_fail:
     if(provider)
         OFI_VCALL(CALL_TABLE_FUNCTION(&ld_table, fi_freeinfo(provider)));
@@ -614,10 +644,10 @@ do                                         \
     type* dst = (type*)_dst;               \
     type* src = (type*)_src;               \
     int cnt = (_len) / sizeof(type);       \
-    pthread_spin_lock(&acc_spin);          \
+    fastlock_acquire(&acc_lock);          \
     for(i = 0; i < cnt; i++, dst++, src++) \
        *dst += *src;                       \
-    pthread_spin_unlock(&acc_spin);        \
+    fastlock_release(&acc_lock);          \
 } while(0)
 
 static void acc_completion(request_t* request)
@@ -771,7 +801,7 @@ static void atomics_completion(request_t* request)
         case OFI_MUTEX_AM_LOCK:
             assert(am_mutex_locked);
             assert(am_mutex_waiter);
-            pthread_spin_lock(&mutex_spin);
+            fastlock_acquire(&mutex_lock);
 
             if(am_mutex_locked[header.mutex.num] == PROC_NONE)
             { /* mutex is not locked */
@@ -793,7 +823,7 @@ static void atomics_completion(request_t* request)
                 } while(idx != PROC_NONE);
             }
 
-            pthread_spin_unlock(&mutex_spin);
+            fastlock_release(&mutex_lock);
             if(proc != PROC_NONE)
             {
                 int v = 0;
@@ -806,12 +836,12 @@ static void atomics_completion(request_t* request)
         case OFI_MUTEX_AM_UNLOCK:
             assert(am_mutex_locked);
             assert(am_mutex_waiter);
-            pthread_spin_lock(&mutex_spin);
+            fastlock_acquire(&mutex_lock);
             assert(am_mutex_locked[header.mutex.num] == header.proto.proc);
             am_mutex_locked[header.mutex.num] = am_mutex_waiter[header.proto.proc];
             am_mutex_waiter[header.proto.proc] = PROC_NONE;
             proc = am_mutex_locked[header.mutex.num];
-            pthread_spin_unlock(&mutex_spin);
+            fastlock_release(&mutex_lock);
             if(proc != PROC_NONE) /* notify new owner of mutex */
             {
                 int v = 0;
@@ -846,19 +876,26 @@ static int init_ofi()
     if(load_ofi(&ld_table) != COMEX_SUCCESS)
         goto fn_fail;
 
-    struct fi_info* hints = fi_allocinfo_p();
-    hints->mode                          = FI_CONTEXT;
-    hints->ep_attr->type                 = FI_EP_RDM;   /* Reliable datagram */
-    hints->caps                          = DESIRED_PROVIDER_CAPS;
-    hints->domain_attr->threading        = FI_THREAD_ENDPOINT;
-    hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
-    hints->domain_attr->data_progress    = FI_PROGRESS_AUTO;
-    hints->domain_attr->mr_mode          = FI_MR_BASIC;
-    hints->tx_attr->op_flags            |= FI_COMPLETION | FI_TRANSMIT_COMPLETE;
-    hints->tx_attr->msg_order           |= FI_ORDER_SAW;
-    hints->rx_attr->msg_order           |= FI_ORDER_SAW;
+    struct fi_info* hints_saw = fi_allocinfo_p();
+    hints_saw->mode                          = FI_CONTEXT;
+    hints_saw->ep_attr->type                 = FI_EP_RDM;   /* Reliable datagram */
+    hints_saw->caps                          = DESIRED_PROVIDER_CAPS;
+    hints_saw->domain_attr->threading        = FI_THREAD_ENDPOINT;
+    hints_saw->domain_attr->control_progress = FI_PROGRESS_AUTO;
+    hints_saw->domain_attr->data_progress    = FI_PROGRESS_AUTO;
+    hints_saw->domain_attr->mr_mode          = FI_MR_BASIC;
 
-    hints->fabric_attr->prov_name = getenv("COMEX_OFI_PROVIDER");
+    char* prov_name = getenv("COMEX_OFI_PROVIDER");
+    hints_saw->fabric_attr->prov_name = prov_name ? strdup(prov_name) : 0;
+
+    struct fi_info* hints_remcon = CALL_TABLE_FUNCTION(&ld_table, fi_dupinfo(hints_saw));
+
+    hints_saw->tx_attr->op_flags            |= FI_COMPLETION | FI_TRANSMIT_COMPLETE;
+    hints_saw->tx_attr->msg_order           |= FI_ORDER_SAW;
+    hints_saw->rx_attr->msg_order           |= FI_ORDER_SAW;
+
+    hints_remcon->tx_attr->op_flags         |= FI_COMPLETION | FI_DELIVERY_COMPLETE;
+
 
     /* ------------------------------------------------------------------------ */
     /* Set default settings before any ofi-provider is inited                   */
@@ -868,23 +905,51 @@ static int init_ofi()
 
     /* first try to initialize requested endpoint with all desired capabilities */
 
-    if(init_ep(hints, &ofi_data.ep_rma, 1) == COMEX_SUCCESS)
-    { /* great!!! we got provider with all required caps */
+    int init_done;
+
+    /* first try to get provider where delivery complete supported */
+    init_done = (init_ep(hints_remcon, &ofi_data.ep_rma, 1) == COMEX_SUCCESS);
+
+    if(init_done)
+    {
         ofi_data.ep_atomics = ofi_data.ep_rma;
     }
     else
+    {
+        if(init_done = (init_ep(hints_saw, &ofi_data.ep_rma, 1) == COMEX_SUCCESS))
+        { /* great!!! we got provider with all required caps */
+            ofi_data.ep_atomics = ofi_data.ep_rma;
+        }
+    }
+
+    if(!init_done)
     { /* ok, try to use different providers for RMA & atomics */
-        hints->caps = RMA_PROVIDER_CAPS;
-        COMEX_CHKANDJUMP(init_ep(hints, &ofi_data.ep_rma, 0), "failed to create endpoint");
+        hints_saw->caps = RMA_PROVIDER_CAPS;
+        hints_remcon->caps = RMA_PROVIDER_CAPS;
+
+        init_done = (init_ep(hints_remcon, &ofi_data.ep_rma, 1) == COMEX_SUCCESS);
+        if(!init_done)
+            init_done = (init_ep(hints_saw, &ofi_data.ep_rma, 1) == COMEX_SUCCESS);
+        COMEX_CHKANDJUMP(init_done, "failed to create endpoint");
+
         if(async_progress) /* when async progress used all atomics are implemented using p2p */
             ofi_data.ep_atomics = ofi_data.ep_rma;
         else
         {
-            hints->caps = ATOMICS_PROVIDER_CAPS;
-            hints->fabric_attr->prov_name = 0;
-            COMEX_CHKANDJUMP(init_ep(hints, &ofi_data.ep_atomics, 0), "failed to create endpoint");
+            hints_remcon->caps = ATOMICS_PROVIDER_CAPS;
+            hints_saw->caps = ATOMICS_PROVIDER_CAPS;
+            hints_remcon->fabric_attr->prov_name = 0;
+            hints_saw->fabric_attr->prov_name = 0;
+
+            init_done = (init_ep(hints_remcon, &ofi_data.ep_atomics, 0) == COMEX_SUCCESS);
+            if(!init_done)
+                init_done = (init_ep(hints_saw, &ofi_data.ep_atomics, 0) == COMEX_SUCCESS);
+            COMEX_CHKANDJUMP(init_done, "failed to create endpoint");
         }
     }
+
+    CALL_TABLE_FUNCTION(&ld_table, fi_freeinfo(hints_saw));
+    CALL_TABLE_FUNCTION(&ld_table, fi_freeinfo(hints_remcon));
 
     /* ----------------------------- */
     /* Get provider limitations      */
@@ -1005,7 +1070,7 @@ static int poll(int* items_processed)
     else if (ret == -FI_EAGAIN) {}
     else if (ret < 0)
     {
-        assert(0); /* should bit be here */
+        assert(0); /* should not be here */
     }
 
 fn_success:
@@ -1056,6 +1121,21 @@ int comex_init()
     /* World Size */
     status = MPI_Comm_size(l_state.world_comm, &(l_state.size));
     assert(MPI_SUCCESS == status);
+
+    /* Evaluate local-proc information: local comm & rank */
+    MPI_Comm local_comm;
+    status = MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &local_comm);
+    assert(MPI_SUCCESS == status);
+    assert(local_comm);
+
+    /* Local Proc Number */
+    status = MPI_Comm_rank(local_comm, &(l_state.local_proc));
+    assert(MPI_SUCCESS == status);
+
+    /* Local Size */
+    status = MPI_Comm_size(local_comm, &(l_state.local_size));
+    assert(MPI_SUCCESS == status);
+    MPI_Comm_free(&local_comm);
 
     /* groups */
     comex_group_init();
@@ -1248,7 +1328,7 @@ static int list_strides(
     for (i=0; i<n1dim; i++) {
         src_idx = 0;
         for (j=1; j<=stride_levels; j++) {
-	  src_idx += (long) src_bvalue[j] * (long) src_stride_ar[j-1];
+            src_idx += src_bvalue[j] * src_stride_ar[j-1];
             if ((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -1260,7 +1340,7 @@ static int list_strides(
         dst_idx = 0;
 
         for (j=1; j<=stride_levels; j++) {
-	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride_ar[j-1];
+            dst_idx += dst_bvalue[j] * dst_stride_ar[j-1];
             if ((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
@@ -1562,7 +1642,7 @@ int comex_finalize()
 {
     /* it's okay to call multiple times -- extra calls are no-ops */
     if (!initialized) {
-        return;
+        return COMEX_SUCCESS;
     }
 
     initialized = 0;
@@ -3566,7 +3646,7 @@ static int comex_nbaccs_emu(
     {
         src_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-	  src_idx += (long) src_bvalue[j] * (long) src_stride_ar[j-1];
+            src_idx += src_bvalue[j] * src_stride_ar[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -3578,7 +3658,7 @@ static int comex_nbaccs_emu(
         dst_idx = 0;
 
         for(j=1; j<=stride_levels; j++) {
-	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride_ar[j-1];
+            dst_idx += dst_bvalue[j] * dst_stride_ar[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
