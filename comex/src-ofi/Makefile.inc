@@ -6,5 +6,6 @@ libcomex_la_SOURCES += src-ofi/groups.h
 libcomex_la_SOURCES += src-ofi/mutex.h
 libcomex_la_SOURCES += src-ofi/ofi.h
 libcomex_la_SOURCES += src-ofi/request.h
+libcomex_la_SOURCES += src-ofi/fi_lock.h
 
 AM_CPPFLAGS += -I$(top_srcdir)/src-ofi
