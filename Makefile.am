@@ -1070,6 +1070,14 @@ global_testing_testsolve_LDFLAGS          = $(FLDFLAGS)
 global_testing_testspd_LDFLAGS            = $(FLDFLAGS)
 global_testing_types_test_LDFLAGS         = $(FLDFLAGS)
 
+if F77_INTEL_NO_INLINE
+global_testing_nga_scatter_FFLAGS         = $(AM_FFLAGS) -fno-inline
+global_testing_nga_onesided_FFLAGS        = $(AM_FFLAGS) -fno-inline
+else
+global_testing_nga_scatter_FFLAGS         = $(AM_FFLAGS)
+global_testing_nga_onesided_FFLAGS        = $(AM_FFLAGS)
+endif
+
 nodist_EXTRA_global_testing_big_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_elempatch_SOURCES           = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ga_lu_SOURCES               = $(MAYBE_DUMMY_F_LINK)

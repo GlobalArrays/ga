@@ -371,6 +371,26 @@ GA_F2C_SRAND48
 
 GA_F77_OPT
 
+# The ifort compiler breaks two of our tests if inlining is allowed.
+AC_DEFUN([GA_CHECK_COMPILE_FLAG], [
+AS_VAR_PUSHDEF([CACHEVAR],[ga_cv_check_[]_AC_LANG_ABBREV[]flags_$4_$1])dnl
+AC_CACHE_CHECK([whether _AC_LANG compiler accepts $1], CACHEVAR, [
+  ga_check_save_flags=$[]_AC_LANG_PREFIX[]FLAGS
+  _AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS $4 $1"
+  AC_COMPILE_IFELSE([m4_default([$5],[AC_LANG_PROGRAM()])],
+    [AS_VAR_SET(CACHEVAR,[yes])],
+    [AS_VAR_SET(CACHEVAR,[no])])
+  _AC_LANG_PREFIX[]FLAGS=$ga_check_save_flags])
+AS_VAR_IF(CACHEVAR,yes,
+  [m4_default([$2], :)],
+  [m4_default([$3], :)])
+AS_VAR_POPDEF([CACHEVAR])dnl
+])
+F77_NO_INLINE=no
+GA_CHECK_COMPILE_FLAG([-fno-inline], [F77_NO_INLINE=yes])
+AM_CONDITIONAL([F77_INTEL_NO_INLINE],
+               [test "x$F77_NO_INLINE$ga_cv_f77_compiler_vendor" = xyesintel])
+
 FFLAGS="$ga_save_FFLAGS"
 
 else
