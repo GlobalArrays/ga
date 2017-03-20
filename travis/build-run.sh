@@ -35,6 +35,9 @@ case "$MPI_IMPL" in
         case "$os" in
             Darwin)
                 echo "Mac"
+                # Open MPI 2.0.x / v2.1.x won't startup otherwise
+                # https://www.open-mpi.org/faq/?category=osx
+                export TMPDIR=/tmp
             ;;
             Linux)
                 echo "Linux"
@@ -54,4 +57,4 @@ esac
 # Run unit tests
 make V=0 -j ${MAKE_JNUM}
 make V=0 checkprogs -j ${MAKE_JNUM}
-make V=0 check
+make V=0 check-travis
