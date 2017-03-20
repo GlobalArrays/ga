@@ -119,14 +119,16 @@ int comex_group_comm(comex_group_t group, MPI_Comm *comm)
 }
 
 
-int comex_group_translate_world(comex_group_t group, int group_rank, int *world_rank)
+int comex_group_translate_world(comex_group_t group, int group_rank,
+    int *world_rank)
 {
     if (COMEX_GROUP_WORLD == group) {
         *world_rank = group_rank;
     }
     else {
         comex_igroup_t *igroup = comex_get_igroup_from_group(group);
-        comex_igroup_t *world_igroup = comex_get_igroup_from_group(COMEX_GROUP_WORLD);
+        comex_igroup_t *world_igroup
+          = comex_get_igroup_from_group(COMEX_GROUP_WORLD);
         int status = MPI_Group_translate_ranks(
                 igroup->group, 1, &group_rank, world_igroup->group, world_rank);
         if (status != MPI_SUCCESS) {
@@ -192,6 +194,8 @@ int comex_group_free(comex_group_t id)
     /* remove the group from the linked list */
     if (previous_group_list_item != NULL) {
         previous_group_list_item->next = current_group_list_item->next;
+    } else {
+      group_list = current_group_list_item->next;
     }
     /* free the group */
     comex_igroup_finalize(current_group_list_item);
