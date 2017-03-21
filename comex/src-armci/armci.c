@@ -32,16 +32,46 @@ int armci_check_contiguous(int *src_stride, int *dst_stride,
   int i;
   int ret = 1;
   int stridelen = 1;
-  /* NOTE: The count array contains the length of the final dimension and could
-   * be used to evaluate some corner cases that are not picked up by this
-   * algorithm
+  int gap = 0;
+  int src_ld[7], dst_ld[7];
+  /**
+   * Calculate physical dimensions of buffers from stride arrays
+   */
+  src_ld[0] = src_stride[0];
+  dst_ld[0] = dst_stride[0];
+  for (i=1; i<n_stride; i++) {
+    src_ld[i] = src_stride[i]/src_stride[i-1];
+    dst_ld[i] = dst_stride[i]/dst_stride[i-1];
+  }
+  /* NOTE: The count array contains the length of the final dimension and can
+   * be used to evaluate some corner cases
    */
   for (i=0; i<n_stride; i++) {
     stridelen *= count[i];
-    if (stridelen < src_stride[i] || stridelen < dst_stride[i]) {
+    if ((count[i] < src_ld[i] || count[i] < dst_ld[i])
+        && gap == 1) {
+      /* Data is definitely strided in memory */
+      ret = 0;
+      break;
+    } else if ((count[i] < src_ld[i] || count[i] < dst_ld[i]) &&
+        gap == 0) {
+      /* First dimension that doesn't match physical dimension */
+      gap = 1;
+    } else if (count[i] != 1 && gap == 1) {
+      /* Found a mismatch between requested block and physical dimensions
+       * indicating a possible stride in memory
+       * */
       ret = 0;
       break;
     }
+  }
+  /**
+   * Everything looks good up to this point but need to verify that last
+   * dimension is 1 if a mismatch between requested block and physical
+   * array dimensions has been found previously
+   */
+  if (gap == 1 && ret == 1 && n_stride > 0) {
+    if (count[n_stride] != 1) ret = 0;
   }
   return ret;
 }
