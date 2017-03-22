@@ -24,15 +24,8 @@ license to reproduce, prepare derivative works, perform publicly and
 display publicly by or for the US Government, including the right to
 distribute to other US Government contractors.
 
-The primary current source of funding for development of GA is the DoE-2000
-ACTS project. GA is a part of the ACTS toolkit:
-
-    http://acts.nersc.gov 
-
-FOR THE IMPATIENT
+Getting Started
 =================
-
-The command::
 
     ./configure && make && make install
 
@@ -43,15 +36,15 @@ Please refer to the INSTALL file for generic build instructions.  That is a
 good place to start if you are new to using "configure; make; make install"
 types of builds.  Detailed instructions are covered later in this file.
 
-QUESTIONS/HELP/SUPPORT/BUG-REPORT
+Questions/help/support/bug-report
 =================================
 
-email: hpctools@pnl.gov
+email: hpctools@googlegroups.com
 
 If you encounter any problems, please first refer to the file NOTES located in
 the same directory and see the GA support webpage:
 
-    http://www.emsl.pnl.gov/docs/global/support.html
+https://github.com/GlobalArrays/ga/wiki
 
 Please don't hesitate to send us an email.  An archive of emails is available
 at:
@@ -64,13 +57,13 @@ WHERE IS THE DOCUMENTATION?
 The GA webpage has the most current versions of the Fortran and C documentation
 and the User's Manual in the HTML format:
 
-    http://www.emsl.pnl.gov/docs/global/
+https://github.com/GlobalArrays/ga/wiki
 
 ABOUT THIS SOFTWARE
 ===================
 
-This directory contains the Global Arrays (GA), Aggregate Remote Memory Copy
-Interface (ARMCI) run-time library, and Memory Allocator (MA), parallel I/O
+This directory contains the Global Arrays (GA), Communication Runtime for Extreme Scale
+ (ComEx) run-time library, and Memory Allocator (MA), parallel I/O
 libraries (DRA,EAF,SF), TCGMSG, and TCGMSG-MPI packages bundled together. 
 
 Global Arrays is a portable Non-Uniform Memory Access (NUMA) shared-memory
@@ -78,7 +71,7 @@ programming environment for distributed and shared memory computers. It
 augments the message-passing model by providing a shared-memory like access to
 distributed dense arrays.
 
-ARMCI provides one-sided remote memory operations used by GA.
+ComEx provides one-sided remote memory operations used by GA.
 
 DRA (Disk Resident Arrays) is a parallel I/O library that maintains dense 2-dim
 arrays on disk. 
