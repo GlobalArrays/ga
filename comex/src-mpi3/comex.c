@@ -25,7 +25,9 @@
 #define USE_PRIOR_MPI_WIN_FLUSH
 */
 
+/*
 #define USE_MPI_DATATYPES
+*/
 
 #define USE_MPI_REQUESTS
 /*
