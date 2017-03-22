@@ -13,7 +13,7 @@ This software and its documentation were produced with United States Government 
 The primary current source of funding for development of GA is the Exascale Computing Project.
 https://exascaleproject.org/
 
-## FOR THE IMPATIENT
+## GETTING STARTED
 
 The command::
 
@@ -65,9 +65,9 @@ Please refer to the INSTALL file for generic build instructions.  That is a good
 
 #### Configuration Options
 
-There are many options available when configuring GA.  Although configure can be safely run within this distributions' root folder, we recommend performing an out-of-source (aka VPATH) build.  This will cleanly separate the generated Makefiles and compiled object files and libraries from the source code.  This will allow, for example, one build using sockets versus another build using OpenIB for the communication layer to use the same source tree e.g.:
+There are many options available when configuring GA.  Although configure can be safely run within this distributions' root folder, we recommend performing an out-of-source (aka VPATH) build.  This will cleanly separate the generated Makefiles and compiled object files and libraries from the source code.  This will allow, for example, one build using MPI two-sided versus another build using OpenIB for the communication layer to use the same source tree e.g.:
 ```
-mkdir bld_mpi_sockets && cd bld_mpi_sockets && ../configure
+mkdir bld_mpi_ts && cd bld_mpi_ts && ../configure
 mkdir bld_mpi_openib  && cd bld_mpi_openib  && ../configure --with-openib
 ```
 Regardless of your choice to perform a VPATH build, the following should hopefully elucidate the myriad options to configure.  Only the options requiring additional details are documented here. `./configure --help` will certainly list more options in addition to limited documentation.
@@ -230,7 +230,7 @@ Running "make check" will build most test and example programs (See "make checkp
 ```
 All tests have a per-test log file containing the output of the test.  So if the test is global/testing/test.x, the log file would be global/testing/test.log.  The output of failed tests is collected in the top-level log summary test-suite.log.
 
-The test suite will recurse into the ARMCI directory and run the ARMCI test suite first.  If the ARMCI test suite fails, the GA test suite will not run (the assumption here is that you should fix bugs in the dependent library first.)  To run only the GA test suite, type "make check-ga" with the appropriate MPIEXEC variable.
+The test suite will recurse into the ComEx directory and run the ComEx test suite first.  If the ComEx test suite fails, the GA test suite will not run (the assumption here is that you should fix bugs in the dependent library first.)  To run only the GA test suite, type "make check-ga" with the appropriate MPIEXEC variable.
 
 #### Performance Tuning
 
