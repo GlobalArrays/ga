@@ -1,7 +1,10 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
       program test_patch
       implicit none
-#include "global.fh"
 #include "mafdecls.fh"
+#include "global.fh"
 #include "testutil.fh"
       integer g_r
       integer g_2e3c
