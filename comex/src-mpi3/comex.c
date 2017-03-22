@@ -557,10 +557,6 @@ void strided_to_subarray_dtype(int *stride_array, int *count, int levels,
       data exchange, not the origin of the local array, so all starts should
       be zero */
    for (i=0; i<levels; i++) {
-     /**
-      * For ACC operations, count has already been scaled by type size but the
-      * stride arrays are still in bytes
-      */
      array_of_sizes[i] = stride_array[i]/stride;
      array_of_starts[i] = 0;
      array_of_subsizes[i] = count[i];
