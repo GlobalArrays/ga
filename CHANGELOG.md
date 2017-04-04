@@ -1,4 +1,6 @@
 # Change Log
+The format is based on [Keep a Changelog](http://keepachangelog.com/).
+
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
@@ -7,13 +9,20 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
-## 5.6 - 2017-02-27
+## 5.6 - 2017-04-04
 - Added
   - Port for MPI-3 one-sided (--with-mpi3).
   - CMake build.
   - More complete test coverage.
 - Changed
   - Initial shared library versioning.
+- Fixed
+  - Updates to ComEx/OFI provided by Intel.
+  - ComEx/MPI-PR added uid and pid to shmem name.
+- Closed Pull Requests
+  - [\#6]  Comex/OFI: updated initialization of OmniPath provider
+  - [\#10] comex/ofi: fixed EP initialization
+  - [\#11] COMEX/OFI: added readme file for comex/ofi provider
   
 ## 5.5 - 2016-08
 - Added
@@ -218,4 +227,17 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
 - Optimized one-sided non-blocking operations
 - Supports various platforms (Crays, IBM SPs, SGI Altix, ...) and interconnects (Myrinet, Quadrics, Infiniband, ...)
 
-[Unreleased]: https://github.com/jeffdaily/parasail/compare/v5.6...develop
+[Unreleased]: https://github.com/GlobalArrays/ga/compare/v5.6...develop
+
+[\#11]: https://github.com/GlobalArrays/ga/issues/11
+[\#10]: https://github.com/GlobalArrays/ga/issues/10
+[\#9]: https://github.com/GlobalArrays/ga/issues/9
+[\#8]: https://github.com/GlobalArrays/ga/issues/8
+[\#7]: https://github.com/GlobalArrays/ga/issues/7
+[\#6]: https://github.com/GlobalArrays/ga/issues/6
+[\#5]: https://github.com/GlobalArrays/ga/issues/5
+[\#4]: https://github.com/GlobalArrays/ga/issues/4
+[\#3]: https://github.com/GlobalArrays/ga/issues/3
+[\#2]: https://github.com/GlobalArrays/ga/issues/2
+[\#1]: https://github.com/GlobalArrays/ga/issues/1
+
