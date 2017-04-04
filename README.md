@@ -15,6 +15,8 @@ https://exascaleproject.org/
 
 ## GETTING STARTED
 
+If the `configure` script is not present, run `./autogen.sh`.  It will install the necessary versions of autoconf, automake, and libtool into an `autotools` subdirectory and then run `autoreconf` automatically to generate the `configure` script.
+
 The command::
 
     ./configure && make && make install
