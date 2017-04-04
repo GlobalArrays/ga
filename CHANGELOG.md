@@ -229,12 +229,12 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
 
 [Unreleased]: https://github.com/GlobalArrays/ga/compare/v5.6...develop
 
-[\#11]: https://github.com/GlobalArrays/ga/issues/11
-[\#10]: https://github.com/GlobalArrays/ga/issues/10
+[\#11]: https://github.com/GlobalArrays/ga/pull/11
+[\#10]: https://github.com/GlobalArrays/ga/pull/10
 [\#9]: https://github.com/GlobalArrays/ga/issues/9
 [\#8]: https://github.com/GlobalArrays/ga/issues/8
 [\#7]: https://github.com/GlobalArrays/ga/issues/7
-[\#6]: https://github.com/GlobalArrays/ga/issues/6
+[\#6]: https://github.com/GlobalArrays/ga/pull/6
 [\#5]: https://github.com/GlobalArrays/ga/issues/5
 [\#4]: https://github.com/GlobalArrays/ga/issues/4
 [\#3]: https://github.com/GlobalArrays/ga/issues/3
