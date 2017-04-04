@@ -20,12 +20,11 @@ case "$os" in
         brew update
         case "$MPI_IMPL" in
             mpich)
-                brew install mpich
+                brew install mpich | brew upgrade mpich
                 ;;
             openmpi)
-                # Homebrew is at 1.10.2, which is broken for STRIDED/IOV=DIRECT.
                 brew info open-mpi
-                brew install openmpi
+                brew install open-mpi | brew upgrade open-mpi
                 ;;
             *)
                 echo "Unknown MPI implementation: $MPI_IMPL"
