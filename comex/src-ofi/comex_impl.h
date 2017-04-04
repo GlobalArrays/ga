@@ -122,9 +122,10 @@ do                      \
   {                                       \
       if (unlikely(ret != COMEX_SUCCESS)) \
       {                                   \
-          err_printf("(%u) %s: " fmt,     \
+          err_printf("(%u) %s:%d: " fmt,  \
           (unsigned)getpid(),             \
-          __FUNCTION__, ##__VA_ARGS__);   \
+          __FUNCTION__, __LINE__,         \
+          ##__VA_ARGS__);                 \
           goto fn_fail;                   \
       }                                   \
   } while (0)

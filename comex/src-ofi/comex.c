@@ -930,7 +930,7 @@ static int init_ofi()
         init_done = (init_ep(hints_remcon, &ofi_data.ep_rma, 1) == COMEX_SUCCESS);
         if(!init_done)
             init_done = (init_ep(hints_saw, &ofi_data.ep_rma, 1) == COMEX_SUCCESS);
-        COMEX_CHKANDJUMP(init_done, "failed to create endpoint");
+        EXPR_CHKANDJUMP(init_done, "failed to create endpoint");
 
         if(async_progress) /* when async progress used all atomics are implemented using p2p */
             ofi_data.ep_atomics = ofi_data.ep_rma;
@@ -944,7 +944,7 @@ static int init_ofi()
             init_done = (init_ep(hints_remcon, &ofi_data.ep_atomics, 0) == COMEX_SUCCESS);
             if(!init_done)
                 init_done = (init_ep(hints_saw, &ofi_data.ep_atomics, 0) == COMEX_SUCCESS);
-            COMEX_CHKANDJUMP(init_done, "failed to create endpoint");
+            EXPR_CHKANDJUMP(init_done, "failed to create endpoint");
         }
     }
 
