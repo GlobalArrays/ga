@@ -1,0 +1,41 @@
+COMEX/OFI provider
+------------------
+
+COMEX/OFI is provider implemented to enable InfiniBand (and
+other) interconnects. It works on top of OFI library (called
+also libfabric):
+Web: https://github.com/ofiwg/libfabric
+
+Tricks
+------
+COMEX/OFI provider supports set of environment variables to
+configure internal engines:
+
+COMEX_OFI_LIBRARY
+-----------------
+COMEX_OFI_LIBRARY=path-to-libfabric.so
+Example: export COMEX_OFI_LIBRARY=/usr/local/lib/libfabric.so
+Description: set path to libfabric.so, useful when libfabric.so is
+             installed to non-default location
+
+COMEX_OFI_PROVIDER
+------------------
+COMEX_OFI_PROVIDER=provider-name
+Example: export COMEX_OFI_PROVIDER=psm2
+Description: set OFI provider name. By default OFI select provider
+             using information about available hardware. But in some
+             cases user may force selection of specific provider
+             setting variable COMEX_OFI_PROVIDER. List of available
+             providers may be obtained using application "fi_info"
+             which is part of libfabric package
+
+COMEX_OFI_ASYNC_PROGRESS
+------------------------
+COMEX_OFI_ASYNC_PROGRESS=0 or 1, default: 0
+Example: export COMEX_OFI_ASYNC_PROGRESS=1
+Description: enable processing of atomic operations in asynchronous
+             mode. Some OFI providers have no built-in support of
+             atomic operations (like remote add/sub/exchange). Such
+             operations may be implemented using point-2-point calls.
+             To enable such emulation of atomics set variable
+             COMEX_OFI_ASYNC_PROGRESS=1
