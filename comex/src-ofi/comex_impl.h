@@ -66,25 +66,27 @@
     } while (0)
 
 
+#include "fi_lock.h"
+
 #define OFI_LOCK_INIT()                \
 do                                     \
 {                                      \
-    pthread_spin_init(&poll_spin, 0);  \
-    pthread_spin_init(&mutex_spin, 0); \
-    pthread_spin_init(&acc_spin, 0);   \
+    fastlock_init(&poll_lock);        \
+    fastlock_init(&mutex_lock);       \
+    fastlock_init(&acc_lock);         \
 } while(0)
 
 #define OFI_LOCK_DESTROY()             \
 do                                     \
 {                                      \
-    pthread_spin_destroy(&poll_spin);  \
-    pthread_spin_destroy(&mutex_spin); \
-    pthread_spin_destroy(&acc_spin);   \
+    fastlock_destroy(&poll_lock);     \
+    fastlock_destroy(&mutex_lock);    \
+    fastlock_destroy(&acc_lock);      \
 } while(0)
 
-#define OFI_LOCK() pthread_spin_lock(&poll_spin)
-#define OFI_TRYLOCK() (!pthread_spin_trylock(&poll_spin))
-#define OFI_UNLOCK() pthread_spin_unlock(&poll_spin);
+#define OFI_LOCK() fastlock_acquire(&poll_lock)
+#define OFI_TRYLOCK() (!fastlock_tryacquire(&poll_lock))
+#define OFI_UNLOCK() fastlock_release(&poll_lock);
 #define OFI_CALL(ret, func) \
 do                          \
 {                           \
@@ -120,9 +122,10 @@ do                      \
   {                                       \
       if (unlikely(ret != COMEX_SUCCESS)) \
       {                                   \
-          err_printf("(%u) %s: " fmt,     \
+          err_printf("(%u) %s:%d: " fmt,  \
           (unsigned)getpid(),             \
-          __FUNCTION__, ##__VA_ARGS__);   \
+          __FUNCTION__, __LINE__,         \
+          ##__VA_ARGS__);                 \
           goto fn_fail;                   \
       }                                   \
   } while (0)
@@ -229,6 +232,9 @@ typedef struct {
     MPI_Comm world_comm;
     int proc;
     int size;
+
+    int local_proc;
+    int local_size;
 } local_state;
 extern local_state l_state;
 

@@ -66,7 +66,8 @@ typedef enum {
     OP_UNLOCK,
     OP_QUIT,
     OP_MALLOC,
-    OP_FREE
+    OP_FREE,
+    OP_NULL
 } op_t;
 
 
@@ -963,7 +964,7 @@ STATIC char* _generate_shm_name(int rank)
     name = malloc(SHM_NAME_SIZE*sizeof(char));
     COMEX_ASSERT(name);
     snprintf_retval = snprintf(name, SHM_NAME_SIZE,
-            "/cmx%07u%08u", counter, urank);
+            "/cmx%09u%09u%07u%08u", getuid(), getpid(), counter, urank);
     COMEX_ASSERT(snprintf_retval < (int)SHM_NAME_SIZE);
     name[SHM_NAME_SIZE-1] = '\0';
     ++counter;
@@ -1410,7 +1411,7 @@ int comex_rmw(
     int payload_int = 0;
     long payload_long = 0;
     int length = 0;
-    int op = 0;
+    op_t op = OP_NULL;
     long extra_long = (long)extra;
     int world_rank = 0;
     int master_rank = 0;
@@ -2325,6 +2326,9 @@ STATIC void _put_packed_handler(header_t *header, int proc)
     void *mapped_offset = NULL;
     char *packed_buffer = NULL;
     stride_t *stride = NULL;
+#if DEBUG
+    int i=0;
+#endif
 
 #if DEBUG
     printf("[%d] _put_packed_handler rem=%p loc=%p rem_rank=%d len=%d\n",
@@ -2344,7 +2348,6 @@ STATIC void _put_packed_handler(header_t *header, int proc)
 #if DEBUG
     printf("[%d] _put_packed_handler stride_levels=%d, count[0]=%d\n",
             g_state.rank, stride->stride_levels, stride->count[0]);
-    int i=0;
     for (i=0; i<stride->stride_levels; ++i) {
         printf("[%d] stride[%d]=%d count[%d+1]=%d\n",
                 g_state.rank, i, stride->stride[i], i, stride->count[i+1]);
@@ -4130,7 +4133,7 @@ STATIC void nb_acc(int datatype, void *scale,
         int master_rank = -1;
         int message_size = 0;
         int scale_size = 0;
-        op_t operation = 0;
+        op_t operation = OP_NULL;
 
         switch (datatype) {
             case COMEX_ACC_INT:
@@ -4640,7 +4643,7 @@ STATIC void nb_accs_packed(
     {
         header_t *header = NULL;
         int scale_size = 0;
-        op_t operation = 0;
+        op_t operation = OP_NULL;
         int master_rank = -1;
 
         switch (datatype) {
@@ -4984,7 +4987,7 @@ STATIC void nb_accv_packed(
     {
         header_t *header = NULL;
         int scale_size = 0;
-        op_t operation = 0;
+        op_t operation = OP_NULL;
         int master_rank = g_state.master[proc];
 
         switch (datatype) {

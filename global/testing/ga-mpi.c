@@ -28,6 +28,7 @@
 #include <mpi.h>
 
 #include "ga.h"
+#include "ga-mpi.h"
 #include "globalp.h"
 #include "macdecls.h"
 #include "mp3.h"

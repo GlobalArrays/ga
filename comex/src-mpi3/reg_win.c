@@ -24,8 +24,10 @@
 #define STATIC static inline
 
 /* the static members in this module */
-static reg_entry_t **reg_win = NULL; /**< list of windows (one per process) */
-static int reg_nprocs = 0; /**< number of windows (one per process) */
+static reg_entry_t **reg_win = NULL; /* list of windows on each process. This
+                                        array contains the starting node in a
+                                        linked list */
+static int reg_nprocs = 0; /* number of windows (one per process) */
 
 
 /* the static functions in this module */
@@ -505,16 +507,17 @@ reg_win_find_intersection(int rank, void *buf, int len)
 
 
 /**
- * Create a new registration entry based on the given members.
+ * Create a new registration entry based on the given members. This new
+ * entry contains the buffer location on the remote processor, size of the
+ * buffer, the MPI window that the buffer belongs to and the group associated
+ * with the window
+ * @param rank processor rank for which buffer location applies
+ * @param buf pointer to memory allocation
+ * @param len size of memory allocation
+ * @param win MPI window for memory allocation
+ * @param group group associated with memory allocation
  *
- * @pre 0 <= rank && rank < reg_nprocs
- * @pre NULL != buf
- * @pre 0 <= len
- * @pre reg_win_init() was previously called
- * @pre NULL == reg_win_find(rank, buf, 0)
- * @pre NULL == reg_win_find_intersection(rank, buf, 0)
- *
- * @return RR_SUCCESS on success
+ * @return return new entry in linked list
  */
 reg_entry_t*
 reg_win_insert(int rank, void *buf, int len, MPI_Win win, comex_igroup_t *group)
@@ -550,8 +553,7 @@ reg_win_insert(int rank, void *buf, int len, MPI_Win win, comex_igroup_t *group)
     /* push new entry to tail of linked list */
     if (NULL == reg_win[rank]) {
         reg_win[rank] = node;
-    }
-    else {
+    } else {
         reg_entry_t *runner = reg_win[rank];
         while (runner->next) {
             runner = runner->next;

@@ -48,6 +48,12 @@ AM_LDFLAGS =
 FLDFLAGS =
 LDADD =
 
+if MINGW
+libga_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined -avoid-version -version-info @LTVER@
+else
+libga_la_LDFLAGS = $(AM_LDFLAGS) -version-info @LTVER@
+endif
+
 AM_FFLAGS += $(GA_FOPT)
 AM_FFLAGS += $(GA_F_WARN)
 AM_FFLAGS += $(FFLAG_INT)
@@ -623,6 +629,9 @@ GLOBAL_PARALLEL_TESTS_XFAIL =
 GLOBAL_TESTS = $(GLOBAL_SERIAL_TESTS) $(GLOBAL_PARALLEL_TESTS)
 GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
 
+TRAVIS_TESTS =
+TRAVIS_TESTS += global/testing/test$(EXEEXT)
+
 #GLOBAL_PARALLEL_TESTS += global/testing/big$(EXEEXT) # needs lots of memory
 GLOBAL_PARALLEL_TESTS += global/testing/elempatch$(EXEEXT)
 #GLOBAL_PARALLEL_TESTS += global/testing/gatscat$(EXEEXT) # broken
@@ -1060,6 +1069,14 @@ global_testing_testmatmult_LDFLAGS        = $(FLDFLAGS)
 global_testing_testsolve_LDFLAGS          = $(FLDFLAGS)
 global_testing_testspd_LDFLAGS            = $(FLDFLAGS)
 global_testing_types_test_LDFLAGS         = $(FLDFLAGS)
+
+if F77_INTEL_NO_INLINE
+global_testing_nga_scatter_FFLAGS         = $(AM_FFLAGS) -fno-inline
+global_testing_nga_onesided_FFLAGS        = $(AM_FFLAGS) -fno-inline
+else
+global_testing_nga_scatter_FFLAGS         = $(AM_FFLAGS)
+global_testing_nga_onesided_FFLAGS        = $(AM_FFLAGS)
+endif
 
 nodist_EXTRA_global_testing_big_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_elempatch_SOURCES           = $(MAYBE_DUMMY_F_LINK)
@@ -1516,17 +1533,6 @@ ga___testing_testmult_LDFLAGS  = $(FLDFLAGS)
 endif # CXX_BINDINGS
 
 ##############################################################################
-# python
-#
-if HAVE_PYTHON
-
-python: install
-	(cd $(top_srcdir)/python && $(PYTHON) setup.py build_ext -L$(libdir) -I$(includedir)) || exit 1
-	(cd $(top_srcdir)/python && $(PYTHON) setup.py install) || exit 1
-
-endif
-
-##############################################################################
 # gparrays
 #
 if ENABLE_GPARRAYS
@@ -1813,26 +1819,6 @@ libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 endif
 
 ##############################################################################
-# tascel
-# The tascel directory is not automatically configured nor added to SUBDIRS.
-# However, it is still distributed with GA.
-EXTRA_DIST += tascel
-dist-hook: tascel-dist-hook
-.PHONY: tascel-dist-hook
-tascel-dist-hook:
-	rm -rf $(distdir)/tascel/autom4te.cache
-
-##############################################################################
-# gfutex
-# The gfutex directory is not automatically configured nor added to SUBDIRS.
-# However, it is still distributed with GA.
-EXTRA_DIST += gfutex
-dist-hook: gfutex-dist-hook
-.PHONY: gfutex-dist-hook
-gfutex-dist-hook:
-	rm -rf $(distdir)/gfutex/autom4te.cache
-
-##############################################################################
 # the end
 #
 .PHONY: checkprogs checkprogs-recursive checkprogs-am
@@ -1877,10 +1863,6 @@ M4__v_0 = @echo "  M4    " $@;
 SED_V = $(SED__v_$(V))
 SED__v_ = $(SED__v_$(AM_DEFAULT_VERBOSITY))
 SED__v_0 = @echo "  SED   " $@;
-# python
-PYTHON_V = $(PYTHON__v_$(V))
-PYTHON__v_ = $(PYTHON__v_$(AM_DEFAULT_VERBOSITY))
-PYTHON__v_0 = @echo "  PYTHON" $@;
 # cp
 CP = cp
 CP_V = $(CP__v_$(V))
@@ -1952,11 +1934,21 @@ else
 if CROSS_COMPILING
 maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; eval $$maybe_mpiexec
 else
+if ARMCI_NETWORK_MPI_PR
+NPROCS1=$(shell expr $(NPROCS) + 1)
+LOG_COMPILER = \
+maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS1)/'; else echo "$(MPIEXEC)"; fi; fi`; eval $$maybe_mpiexec
+else
 LOG_COMPILER = \
 maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; eval $$maybe_mpiexec
+endif # COMEX_NETWORK_MPI_PR
 endif # CROSS_COMPILING
 endif # MSG_COMMS_TCGMSG5
 endif # MSG_COMMS_TCGMSG4
+
+.PHONY: check-travis
+check-travis: $(all-am) $(check_LTLIBRARIES) $(TRAVIS_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(TRAVIS_TESTS)" check-TESTS
 
 .PHONY: check-ga
 check-ga: $(all-am) $(check_LTLIBRARIES) $(check_PROGRAMS) $(MAYBE_PFILES)

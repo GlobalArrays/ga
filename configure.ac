@@ -4,9 +4,11 @@
 # Init autoconf
 ###############################################################################
 AC_PREREQ([2.67])
-AC_INIT([Global Arrays (GA)], [5.4],
-        [hpctools@pnl.gov], [ga],
-        [http://www.emsl.pnl.gov/docs/global/])
+AC_INIT([Global Arrays (GA)],
+        [m4_esyscmd([./version.sh])],
+        [hpctools@pnl.gov],
+        [ga],
+        [http://hpc.pnl.gov/globalarrays/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_LIBOBJ_DIR([compat])
@@ -18,6 +20,23 @@ AC_CONFIG_SRCDIR([global/src/ga.h])
 ###############################################################################
 GA_TARGET
 GA_CROSS_COMPILING
+
+# This lets us use PACKAGE_VERSION in Makefiles
+AC_SUBST([PACKAGE_VERSION])
+
+# Libtool -version-info (ABI version)
+#
+# Don't change this unless you know exactly what you're doing and have read and
+# understand:
+# http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
+#
+# Changes:
+#
+# ga version 5.6.0: 1:0:0 (ABI version 1)
+#
+# libga -version-info current:revision:age
+LTVER="1:0:0"
+AC_SUBST([LTVER])
 
 ###############################################################################
 # Init automake
@@ -352,6 +371,26 @@ GA_F2C_SRAND48
 
 GA_F77_OPT
 
+# The ifort compiler breaks two of our tests if inlining is allowed.
+AC_DEFUN([GA_CHECK_COMPILE_FLAG], [
+AS_VAR_PUSHDEF([CACHEVAR],[ga_cv_check_[]_AC_LANG_ABBREV[]flags_$4_$1])dnl
+AC_CACHE_CHECK([whether _AC_LANG compiler accepts $1], CACHEVAR, [
+  ga_check_save_flags=$[]_AC_LANG_PREFIX[]FLAGS
+  _AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS $4 $1"
+  AC_COMPILE_IFELSE([m4_default([$5],[AC_LANG_PROGRAM()])],
+    [AS_VAR_SET(CACHEVAR,[yes])],
+    [AS_VAR_SET(CACHEVAR,[no])])
+  _AC_LANG_PREFIX[]FLAGS=$ga_check_save_flags])
+AS_VAR_IF(CACHEVAR,yes,
+  [m4_default([$2], :)],
+  [m4_default([$3], :)])
+AS_VAR_POPDEF([CACHEVAR])dnl
+])
+F77_NO_INLINE=no
+GA_CHECK_COMPILE_FLAG([-fno-inline], [F77_NO_INLINE=yes])
+AM_CONDITIONAL([F77_INTEL_NO_INLINE],
+               [test "x$F77_NO_INLINE$ga_cv_f77_compiler_vendor" = xyesintel])
+
 FFLAGS="$ga_save_FFLAGS"
 
 else
@@ -410,9 +449,6 @@ AC_MSG_NOTICE
 
 AC_PROG_GREP
 AC_PROG_SED
-
-AM_PATH_PYTHON([],[],[:])
-AM_CONDITIONAL([HAVE_PYTHON], [test "x$PYTHON" != x])
 
 AC_PATH_PROG([M4], [m4], [notfound])
 AM_CONDITIONAL([HAVE_M4], [test "x$M4" != xnotfound])

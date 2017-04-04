@@ -12,7 +12,7 @@ c#   define LMAX 9173031
 c#   define LMAX 97031
 c#   define LMAX 9031
 #endif
-#define MAXVEC 50000000
+#define MAXVEC 5000000
 
 #define bb_a(ib) bb_v(bb_i + (ib))
 #define cc_a(ib) cc_v(cc_i + (ib))
