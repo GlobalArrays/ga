@@ -417,6 +417,7 @@ libga_la_SOURCES += global/src/scalapack.fh
 libga_la_SOURCES += global/src/sclstubs.c
 libga_la_SOURCES += global/src/select.c
 libga_la_SOURCES += global/src/sparse.c
+libga_la_SOURCES += global/src/thread-safe.c
 libga_la_SOURCES += global/src/types.xh
 libga_la_SOURCES += global/src/types2.xh
 nodist_libga_la_SOURCES += global/src/ga-wapidefs.h

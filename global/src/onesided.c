@@ -63,6 +63,7 @@
 #include "macdecls.h"
 #include "ga-papi.h"
 #include "ga-wapi.h"
+#include "thread-safe.h"
 
 #define DEBUG 0
 #define USE_MALLOC 1
@@ -143,6 +144,7 @@ void pnga_pgroup_sync(Integer grp_id)
 
 void pnga_sync()
 {
+GA_Internal_Threadsafe_Lock();
 #ifdef CHECK_MA
 Integer status;
 #endif
@@ -159,6 +161,7 @@ Integer status;
 #ifdef CHECK_MA
        status = MA_verify_allocator_stuff();
 #endif
+GA_Internal_Threadsafe_Unlock();
 }
 
 
@@ -401,7 +404,9 @@ Integer pnga_nbtest(Integer *nbhandle)
 
 void pnga_nbwait(Integer *nbhandle) 
 {
-    nga_wait_internal((Integer *)nbhandle);
+  //GA_Internal_Threadsafe_Lock();
+  nga_wait_internal((Integer *)nbhandle);
+  //GA_Internal_Threadsafe_Unlock();
 } 
 
 static void ngai_puts(char *loc_base_ptr, char *pbuf, int *stride_loc, char *prem, int *stride_rem,
@@ -1084,7 +1089,9 @@ void ngai_put_common(Integer g_a,
 
 void pnga_nbput(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer *nbhandle)
 {
+  GA_Internal_Threadsafe_Lock();
   ngai_put_common(g_a,lo,hi,buf,ld,0,-1,nbhandle); 
+  GA_Internal_Threadsafe_Unlock();
 }
 
 /**
@@ -1262,7 +1269,10 @@ void pnga_nbwait_notify(Integer *nbhandle)
 
 void pnga_put(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld)
 {
+
+  GA_Internal_Threadsafe_Lock();
   ngai_put_common(g_a,lo,hi,buf,ld,0,-1,NULL); 
+  GA_Internal_Threadsafe_Unlock();
 }
 
 /**
@@ -1824,7 +1834,9 @@ void ngai_get_common(Integer g_a,
 void pnga_get(Integer g_a, Integer *lo, Integer *hi,
               void *buf, Integer *ld)
 {
+  GA_Internal_Threadsafe_Lock();
   ngai_get_common(g_a,lo,hi,buf,ld,0,-1,(Integer *)NULL);
+  GA_Internal_Threadsafe_Unlock();
 }
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -1834,7 +1846,9 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
 void pnga_nbget(Integer g_a, Integer *lo, Integer *hi,
                void *buf, Integer *ld, Integer *nbhandle)
 {
+  GA_Internal_Threadsafe_Lock();
   ngai_get_common(g_a,lo,hi,buf,ld,0,-1,nbhandle);
+  GA_Internal_Threadsafe_Unlock();
 }
 
 /**
@@ -4705,6 +4719,7 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
 
 Integer pnga_read_inc(Integer g_a, Integer* subscript, Integer inc)
 {
+GA_Internal_Threadsafe_Lock();
 char *ptr;
 Integer ldp[MAXDIM], proc, handle=GA_OFFSET+g_a, p_handle, ndim;
 int optype,ivalue;
@@ -4785,10 +4800,11 @@ void *pval;
 
    GA_POP_NAME;
 
-    if(GA[handle].type==C_INT)
-         return (Integer) ivalue;
-    else
-         return (Integer) lvalue;
+   GA_Internal_Threadsafe_Unlock();
+   if(GA[handle].type==C_INT)
+       return (Integer) ivalue;
+   else
+       return (Integer) lvalue;
 }
 
 /**
