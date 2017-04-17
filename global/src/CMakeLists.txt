@@ -38,6 +38,7 @@ if (ENABLE_FORTRAN)
   )
   set(GA_FORTRAN_INTERFACE_H_FILES
     cnames.h
+    global.fh
   )
   set (GA_FORTRAN_INTERFACE_F_FILES
     complex.F
