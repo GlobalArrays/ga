@@ -36,9 +36,19 @@ include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}
                     ${PROJECT_SOURCE_DIR}/gaf2c
 )
 
+if (NOT MSVC)
+set(ctargetlibs ${MPI_C_LIBRARIES} m)
+else()
+set(ctargetlibs ${MPI_C_LIBRARIES})
+endif()
+
 # -------------------------------------------------------------
 # MA header installation
 # -------------------------------------------------------------
+
+if (ENABLE_FORTRAN)
+  set(FORTRAN_HEADERS maf2c.fh mafdecls.fh)
+endif()
 
 set(MA_HEADERS
   ma.h
@@ -50,6 +60,7 @@ set(MA_HEADERS
   scope.h
   string-util.h
   table.h
+  ${FORTRAN_HEADERS}
 )
 
 install (FILES
@@ -76,3 +87,16 @@ add_library(ma OBJECT
 if (ENABLE_FORTRAN)
   ADD_DEPENDENCIES(ga_src GenerateConfigFH)
 endif()
+
+# -------------------------------------------------------------
+# Build MA tests
+# -------------------------------------------------------------
+
+add_executable(testf.x testf.F)
+add_executable(test-coalesce.x test-coalesce.c)
+add_executable(test-inquire.x test-inquire.c)
+#add_executable(testc.x testc.c)
+target_link_libraries(testf.x ga ${ctargetlibs})
+target_link_libraries(test-coalesce.x ga ${ctargetlibs})
+target_link_libraries(test-inquire.x ga ${ctargetlibs})
+#target_link_libraries(testc.x ga ${ctargetlibs})
