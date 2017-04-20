@@ -2369,7 +2369,9 @@ void pnga_acc(Integer g_a,
               Integer *ld,
               void    *alpha)
 {
+    GA_Internal_Threadsafe_Lock();
     ngai_acc_common(g_a,lo,hi,buf,ld,alpha,NULL);
+    GA_Internal_Threadsafe_Unlock();
 }
 
 /**
@@ -2388,7 +2390,9 @@ void pnga_nbacc(Integer g_a,
                 void    *alpha,
                 Integer *nbhndl)
 {
+    GA_Internal_Threadsafe_Lock();
     ngai_acc_common(g_a,lo,hi,buf,ld,alpha,nbhndl);
+    GA_Internal_Threadsafe_Unlock();
 }
 
 /**
