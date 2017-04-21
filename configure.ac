@@ -14,7 +14,6 @@ AC_CONFIG_HEADER([config.h])
 AC_CONFIG_LIBOBJ_DIR([compat])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([global/src/ga.h])
-
 ###############################################################################
 # Must occur before automake init
 ###############################################################################
@@ -110,6 +109,8 @@ GA_TARGET64
 
 # Establish the underlying network infrastructure (SOCKETS, OPENIB, etc)
 GA_ARMCI_NETWORK
+
+AC_OPENMP
 
 # Checks for C header files.
 AC_HEADER_ASSERT
@@ -279,7 +280,7 @@ CXXFLAGS="$ga_save_CXXFLAGS"
 
 ])
 
-# conditionals must be defined unconditionally
+
 AM_CONDITIONAL([CXX_NAMESPACES], [test x$ga_cv_cxx_namespaces = xyes])
 
 AC_LANG_POP([C++])

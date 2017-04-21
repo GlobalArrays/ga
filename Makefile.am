@@ -121,7 +121,7 @@ endif
 	@echo '# GA libraries are installed in $(libdir)' 
 	@echo '# GA headers are installed in $(includedir)' 
 	@echo '#'
-	@echo 'CPPFLAGS="$(ELPA_CPPFLAGS) $(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) $(BLAS_CPPFLAGS) $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) -I$(includedir)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo 'CPPFLAGS="$(ELPA_CPPFLAGS) $(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) $(BLAS_CPPFLAGS) $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) -I$(includedir)"' | $(SED_NORMALIZE_WHITESPACE) 
 	@echo '#'
 	@echo 'LDFLAGS="$(ELPA_LDFLAGS) $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) -L$(libdir)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo '#'
@@ -478,6 +478,7 @@ check_PROGRAMS += global/testing/testmatmultc
 check_PROGRAMS += global/testing/testmult
 check_PROGRAMS += global/testing/testmultrect
 check_PROGRAMS += global/testing/unpackc
+check_PROGRAMS += global/testing/threadsafec
 if ENABLE_F77
 check_PROGRAMS += global/testing/bin
 check_PROGRAMS += global/testing/blktest
@@ -652,6 +653,7 @@ GLOBAL_PARALLEL_TESTS += global/testing/testmatmultc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmult$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmultrect$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/unpackc$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/threadsafec$(EXEEXT)
 if ENABLE_F77
 GLOBAL_PARALLEL_TESTS += global/testing/bin$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/blktest$(EXEEXT)
@@ -933,6 +935,7 @@ global_testing_testsolve_SOURCES           = global/testing/testsolve.F $(gtsrc)
 global_testing_testspd_SOURCES             = global/testing/testspd.F $(gtsrc)
 global_testing_types_test_SOURCES          = global/testing/types-test.F $(gtsrc)
 global_testing_unpackc_SOURCES             = global/testing/unpackc.c $(gtsrc)
+global_testing_threadsafec_SOURCES         = global/testing/thread-safe.cpp $(gtsrc)
 nodist_global_testing_nga_onesided_SOURCES = global/testing/nga-onesided.F $(gtsrc)
 nodist_global_testing_nga_patch_SOURCES    = global/testing/nga-patch.F $(gtsrc)
 nodist_global_testing_nga_periodic_SOURCES = global/testing/nga-periodic.F $(gtsrc)
@@ -1070,6 +1073,8 @@ global_testing_testmatmult_LDFLAGS        = $(FLDFLAGS)
 global_testing_testsolve_LDFLAGS          = $(FLDFLAGS)
 global_testing_testspd_LDFLAGS            = $(FLDFLAGS)
 global_testing_types_test_LDFLAGS         = $(FLDFLAGS)
+global_testing_threadsafec_LDFLAGS        = $(MAYBE_FLIBS) $(AM_LDFLAGS) $(OPENMP_CFLAGS)
+global_testing_threadsafec_CPPFLAGS       = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 
 if F77_INTEL_NO_INLINE
 global_testing_nga_scatter_FFLAGS         = $(AM_FFLAGS) -fno-inline
@@ -1105,6 +1110,7 @@ nodist_EXTRA_global_testing_testmatmultc_SOURCES        = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmult_SOURCES            = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmultrect_SOURCES        = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_unpackc_SOURCES             = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_threadsafec_SOURCES         = $(MAYBE_DUMMY_F_LINK)
 
 global_testing_test_mirrored_CPPFLAGS = $(AM_CPPFLAGS) -DMIRROR=1
 
