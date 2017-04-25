@@ -26,9 +26,9 @@
 */
 
 /*
-#define USE_MPI_DATATYPES
 */
 
+#define USE_MPI_DATATYPES
 #define USE_MPI_REQUESTS
 /*
 #define USE_MPI_FLUSH_LOCAL
@@ -1797,9 +1797,11 @@ int comex_fence_proc(int proc, comex_group_t group)
 int comex_barrier(comex_group_t group)
 {
     MPI_Comm comm;
+    int ierr;
 
     comex_fence_all(group);
-    assert(COMEX_SUCCESS == comex_group_comm(group, &comm));
+    ierr = comex_group_comm(group, &comm);
+    assert(COMEX_SUCCESS == ierr);
     MPI_Barrier(comm);
 
     return COMEX_SUCCESS;
@@ -3080,7 +3082,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     comex_igroup_t *igroup = NULL;
     reg_entry_t *reg_entries = NULL;
     MPI_Comm comm = MPI_COMM_NULL;
-    int i;
+    int i, ierr;
     int comm_rank = -1;
     int comm_size = -1;
     int tsize;
@@ -3142,8 +3144,8 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     for (i=0; i<comm_size; ++i) {
       ptrs[i] = reg_entries[i].buf;
       int world_rank;
-      assert(COMEX_SUCCESS ==
-          comex_group_translate_world(group,i,&world_rank));
+      ierr = comex_group_translate_world(group,i,&world_rank);
+      assert(COMEX_SUCCESS == ierr);
       if (i != comm_rank) {
         reg_entries[i].win = reg_entries[comm_rank].win;
       }
@@ -3205,7 +3207,7 @@ int comex_free(void *ptr, comex_group_t group)
     int comm_rank, world_rank;
     int comm_size;
     void **allgather_ptrs = NULL;
-    int i;
+    int i, ierr;
     reg_entry_t *reg_win;
 
     /* preconditions */
@@ -3238,8 +3240,8 @@ int comex_free(void *ptr, comex_group_t group)
     /* Get rid of pointers for this window */
     for (i=0; i < comm_size; i++) {
       int world_rank;
-      assert(COMEX_SUCCESS ==
-          comex_group_translate_world(group, i, &world_rank));
+      ierr = comex_group_translate_world(group, i, &world_rank);
+      assert(COMEX_SUCCESS == ierr);
       /* probably should use rank for communicator, not world rank*/
       reg_win_delete(world_rank,allgather_ptrs[i]);
     }
