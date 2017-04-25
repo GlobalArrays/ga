@@ -9,13 +9,43 @@ else
     AUTOTOOLS_DIR="$1"
 fi
 
-# this is where updated Autotools will be for Linux
-# we force the use of specific Autotools versions
-if [ ! -d "$AUTOTOOLS_DIR" ]; then
-    sh ./travis/install-autotools.sh "$AUTOTOOLS_DIR"
-fi
+# This is where updated Autotools will be for Linux.
+# We force the use of specific Autotools versions.
+sh ./travis/install-autotools.sh "$AUTOTOOLS_DIR"
 
 export PATH="$AUTOTOOLS_DIR/bin":$PATH
 
 autoreconf=${AUTORECONF:-autoreconf}
 $autoreconf ${autoreconf_args:-"-vif"}
+
+# patch to configure script for PGF90 and -lnuma
+for conffile in configure comex/configure armci/configure
+do
+    # check whether patch is needed
+    if grep lnuma $conffile > /dev/null
+    then
+        echo "patch already applied to $conffile"
+    else
+        echo "patching $conffile"
+        # OSX sed doesn't do in-place easily, the following should work anywhere
+        rm -f $conffile.tmp
+        sed '/\-cmdline.*-ignore/aac_f77_v_output=`echo $ac_f77_v_output | sed "s/ -lnuma//g"`' $conffile > $conffile.tmp
+        mv $conffile.tmp $conffile
+    fi
+done
+
+# overwrite config.guess and config.sub with latest
+for dir in build-aux comex/build-aux armci/build-aux
+do
+    cp $AUTOTOOLS_DIR/bin/config.guess $dir
+    cp $AUTOTOOLS_DIR/bin/config.sub $dir
+done
+
+# patch ltmain.sh for special intel -mkl flag
+for dir in build-aux comex/build-aux armci/build-aux
+do
+    rm -f $dir/ltmain.sh.tmp
+    sed 's/\(-[m6][t4]|\)/-mkl*|\1/' $dir/ltmain.sh > $dir/ltmain.sh.tmp
+    mv $dir/ltmain.sh.tmp $dir/ltmain.sh
+done
+
