@@ -65,6 +65,8 @@
 #include "ga-wapi.h"
 #include "thread-safe.h"
 
+/* #define USE_ARMCI_GROUP_FENCE */
+
 #define DEBUG 0
 #define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 
@@ -108,30 +110,36 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 void pnga_pgroup_sync(Integer grp_id)
 {
 #ifdef CHECK_MA
-    Integer status;
+  Integer status;
 #endif
- 
-/*    printf("p[%d] calling ga_pgroup_sync on group: %d\n",GAme,*grp_id); */
-    if (grp_id > 0) {
+
+  /*    printf("p[%d] calling ga_pgroup_sync on group: %d\n",GAme,*grp_id); */
+#ifdef USE_ARMCI_GROUP_FENCE
+    int grp = (int)grp_id;
+    ARMCI_GroupFence(&grp);
+    pnga_msg_pgroup_sync(grp_id);
+#else
+  if (grp_id > 0) {
 #   ifdef MSG_COMMS_MPI
-       /* fence on all processes in this group */
-       { int p; for(p=0;p<PGRP_LIST[grp_id].map_nproc;p++)
-          ARMCI_Fence(ARMCI_Absolute_id(&PGRP_LIST[grp_id].group, p)); }
-       pnga_msg_pgroup_sync(grp_id);
-       if(GA_fence_set)bzero(fence_array,(int)GAnproc);
-       GA_fence_set=0;
+    /* fence on all processes in this group */
+    { int p; for(p=0;p<PGRP_LIST[grp_id].map_nproc;p++)
+      ARMCI_Fence(ARMCI_Absolute_id(&PGRP_LIST[grp_id].group, p)); }
+    pnga_msg_pgroup_sync(grp_id);
+    if(GA_fence_set)bzero(fence_array,(int)GAnproc);
+    GA_fence_set=0;
 #   else
-       pnga_error("ga_pgroup_sync_(): MPI not defined. ga_msg_pgroup_sync_()  can be called only if GA is built with MPI", 0);
+    pnga_error("ga_pgroup_sync_(): MPI not defined. ga_msg_pgroup_sync_()  can be called only if GA is built with MPI", 0);
 #   endif
-    } else {
-      /* printf("p[%d] calling regular sync in ga_pgroup_sync\n",GAme); */
-       ARMCI_AllFence();
-       pnga_msg_pgroup_sync(grp_id);
-       if(GA_fence_set)bzero(fence_array,(int)GAnproc);
-       GA_fence_set=0;
-    }
+  } else {
+    /* printf("p[%d] calling regular sync in ga_pgroup_sync\n",GAme); */
+    ARMCI_AllFence();
+    pnga_msg_pgroup_sync(grp_id);
+    if(GA_fence_set)bzero(fence_array,(int)GAnproc);
+    GA_fence_set=0;
+  }
+#endif
 #ifdef CHECK_MA
-    status = MA_verify_allocator_stuff();
+  status = MA_verify_allocator_stuff();
 #endif
 }
 
@@ -144,24 +152,35 @@ void pnga_pgroup_sync(Integer grp_id)
 
 void pnga_sync()
 {
-GA_Internal_Threadsafe_Lock();
+  GA_Internal_Threadsafe_Lock();
 #ifdef CHECK_MA
-Integer status;
+  Integer status;
 #endif
-       
-       if (GA_Default_Proc_Group == -1) {
-	  ARMCI_AllFence();
-	  pnga_msg_sync();
-	  if(GA_fence_set)bzero(fence_array,(int)GAnproc);
-	  GA_fence_set=0;
-       } else {
-         Integer grp_id = (Integer)GA_Default_Proc_Group;
-         pnga_pgroup_sync(grp_id);
-       }
+
+#ifdef USE_ARMCI_GROUP_FENCE
+  if (GA_Default_Proc_Group == -1) {
+    int grp_id = (int)GA_Default_Proc_Group;
+    ARMCI_GroupFence(&grp_id);
+    pnga_msg_sync();
+  } else {
+    int grp_id = (int)GA_Default_Proc_Group;
+    pnga_pgroup_sync(grp_id);
+  }
+#else
+  if (GA_Default_Proc_Group == -1) {
+    ARMCI_AllFence();
+    pnga_msg_sync();
+    if(GA_fence_set)bzero(fence_array,(int)GAnproc);
+    GA_fence_set=0;
+  } else {
+    Integer grp_id = (Integer)GA_Default_Proc_Group;
+    pnga_pgroup_sync(grp_id);
+  }
+#endif
 #ifdef CHECK_MA
-       status = MA_verify_allocator_stuff();
+  status = MA_verify_allocator_stuff();
 #endif
-GA_Internal_Threadsafe_Unlock();
+  GA_Internal_Threadsafe_Unlock();
 }
 
 
@@ -2369,9 +2388,7 @@ void pnga_acc(Integer g_a,
               Integer *ld,
               void    *alpha)
 {
-    GA_Internal_Threadsafe_Lock();
     ngai_acc_common(g_a,lo,hi,buf,ld,alpha,NULL);
-    GA_Internal_Threadsafe_Unlock();
 }
 
 /**
@@ -2390,9 +2407,7 @@ void pnga_nbacc(Integer g_a,
                 void    *alpha,
                 Integer *nbhndl)
 {
-    GA_Internal_Threadsafe_Lock();
     ngai_acc_common(g_a,lo,hi,buf,ld,alpha,nbhndl);
-    GA_Internal_Threadsafe_Unlock();
 }
 
 /**
