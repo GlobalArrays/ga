@@ -65,7 +65,9 @@
 #include "ga-wapi.h"
 #include "thread-safe.h"
 
-/* #define USE_ARMCI_GROUP_FENCE */
+/*
+#define USE_ARMCI_GROUP_FENCE
+*/
 
 #define DEBUG 0
 #define USE_MALLOC 1
@@ -163,7 +165,7 @@ void pnga_sync()
     ARMCI_GroupFence(&grp_id);
     pnga_msg_sync();
   } else {
-    int grp_id = (int)GA_Default_Proc_Group;
+    int grp_id = (Integer)GA_Default_Proc_Group;
     pnga_pgroup_sync(grp_id);
   }
 #else
