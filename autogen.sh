@@ -31,6 +31,8 @@ do
         rm -f $conffile.tmp
         sed '/\-cmdline.*-ignore/aac_f77_v_output=`echo $ac_f77_v_output | sed "s/ -lnuma//g"`' $conffile > $conffile.tmp
         mv $conffile.tmp $conffile
+        # sed might change file permissions
+        chmod ug+xr $conffile
     fi
 done
 
@@ -39,6 +41,9 @@ for dir in build-aux comex/build-aux armci/build-aux
 do
     cp $AUTOTOOLS_DIR/bin/config.guess $dir
     cp $AUTOTOOLS_DIR/bin/config.sub $dir
+    # ensure these are executable scripts
+    chmod ug+xr $dir/config.guess
+    chmod ug+xr $dir/config.sub
 done
 
 # patch ltmain.sh for special intel -mkl flag
@@ -47,5 +52,7 @@ do
     rm -f $dir/ltmain.sh.tmp
     sed 's/\(-[m6][t4]|\)/-mkl*|\1/' $dir/ltmain.sh > $dir/ltmain.sh.tmp
     mv $dir/ltmain.sh.tmp $dir/ltmain.sh
+    # sed might change file permissions
+    chmod ug+xr $dir/ltmain.sh
 done
 
