@@ -254,6 +254,7 @@ typedef int armci_hdl_t;
 
 typedef int ARMCI_Group;
  
+extern void ARMCI_GroupFence(ARMCI_Group *group);
 extern void ARMCI_Group_create(int n, int *pid_list, ARMCI_Group *group_out);
 extern void ARMCI_Group_create_child(int n, int *pid_list,
         ARMCI_Group *group_out, ARMCI_Group *group_parent);

@@ -46,6 +46,15 @@ void ARMCI_AllFence()
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak ARMCI_GroupFence
+#endif
+void ARMCI_GroupFence(ARMCI_Group *group)
+{
+    PARMCI_GroupFence(group);
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak ARMCI_Barrier
 #endif
 void ARMCI_Barrier()

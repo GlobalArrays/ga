@@ -7,6 +7,7 @@ extern int    PARMCI_Acc(int optype, void *scale, void *src, void* dst, int byte
 extern int    PARMCI_AccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc);
 extern int    PARMCI_AccV(int op, void *scale, armci_giov_t * darr, int len, int proc);
 extern void   PARMCI_AllFence();
+extern void   PARMCI_GroupFence(ARMCI_Group *group);
 extern void   PARMCI_Barrier();
 extern int    PARMCI_Create_mutexes(int num);
 extern int    PARMCI_Destroy_mutexes();

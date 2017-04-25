@@ -110,6 +110,16 @@ void PARMCI_AllFence()
 }
 
 
+void PARMCI_GroupFence(ARMCI_Group *group)
+{
+  if (*group > 0) {
+    assert(COMEX_SUCCESS == comex_fence_all(*group));
+  } else {
+    assert(COMEX_SUCCESS == comex_fence_all(COMEX_GROUP_WORLD));
+  }
+}
+
+
 void PARMCI_Barrier()
 {
     assert(COMEX_SUCCESS == comex_barrier(ARMCI_Default_Proc_Group));
