@@ -64,7 +64,7 @@ END
                 fi
             fi
             # refresh the path
-            export PATH=${TOP}:$PATH
+            export PATH=${TOP}/bin:$PATH
         else
             echo "${TOOL} found and is sufficiently new ($M4_VERSION_FOUND)"
         fi
@@ -97,7 +97,7 @@ END
         fi
 
         # refresh the path
-        export PATH=${TOP}:$PATH
+        export PATH=${TOP}/bin:$PATH
 
         cd ${TOP}
         TOOL=automake
@@ -127,7 +127,7 @@ END
         fi
 
         # refresh the path
-        export PATH=${TOP}:$PATH
+        export PATH=${TOP}/bin:$PATH
 
         cd ${TOP}
         TOOL=libtool
@@ -157,7 +157,7 @@ END
         fi
 
         # refresh the path
-        export PATH=${TOP}:$PATH
+        export PATH=${TOP}/bin:$PATH
 
         ;;
 esac
