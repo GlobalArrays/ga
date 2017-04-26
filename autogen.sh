@@ -29,7 +29,9 @@ do
         echo "patching $conffile"
         # OSX sed doesn't do in-place easily, the following should work anywhere
         rm -f $conffile.tmp
-        sed '/cmdline.*ignore/a ac_f77_v_output=`echo $ac_f77_v_output | sed "s/ -lnuma//g"`' $conffile > $conffile.tmp
+        sed '/cmdline.*ignore/a\
+ac_f77_v_output=`echo $ac_f77_v_output | sed "s/ -lnuma//g"`\
+' $conffile > $conffile.tmp
         mv $conffile.tmp $conffile
         # sed might change file permissions
         chmod ug+xr $conffile
