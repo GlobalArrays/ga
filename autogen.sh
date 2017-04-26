@@ -29,7 +29,7 @@ do
         echo "patching $conffile"
         # OSX sed doesn't do in-place easily, the following should work anywhere
         rm -f $conffile.tmp
-        sed '/\-cmdline.*-ignore/aac_f77_v_output=`echo $ac_f77_v_output | sed "s/ -lnuma//g"`' $conffile > $conffile.tmp
+        sed '/cmdline.*ignore/a ac_f77_v_output=`echo $ac_f77_v_output | sed "s/ -lnuma//g"`' $conffile > $conffile.tmp
         mv $conffile.tmp $conffile
         # sed might change file permissions
         chmod ug+xr $conffile
@@ -50,7 +50,7 @@ done
 for dir in build-aux comex/build-aux armci/build-aux
 do
     rm -f $dir/ltmain.sh.tmp
-    sed 's/\(-[m6][t4]|\)/-mkl*|\1/' $dir/ltmain.sh > $dir/ltmain.sh.tmp
+    sed 's/\([m6][t4]|\)/mkl*|-\1/' $dir/ltmain.sh > $dir/ltmain.sh.tmp
     mv $dir/ltmain.sh.tmp $dir/ltmain.sh
     # sed might change file permissions
     chmod ug+xr $dir/ltmain.sh
