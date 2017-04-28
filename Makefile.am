@@ -630,7 +630,11 @@ GLOBAL_TESTS = $(GLOBAL_SERIAL_TESTS) $(GLOBAL_PARALLEL_TESTS)
 GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
 
 TRAVIS_TESTS =
+if ENABLE_F77
 TRAVIS_TESTS += global/testing/test$(EXEEXT)
+else
+TRAVIS_TESTS += global/testing/testc$(EXEEXT)
+endif
 
 #GLOBAL_PARALLEL_TESTS += global/testing/big$(EXEEXT) # needs lots of memory
 GLOBAL_PARALLEL_TESTS += global/testing/elempatch$(EXEEXT)
