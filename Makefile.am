@@ -423,7 +423,9 @@ nodist_libga_la_SOURCES += global/src/ga-wapidefs.h
 if ENABLE_F77
 libga_la_SOURCES += global/src/complex.F
 libga_la_SOURCES += global/src/ga_diag_seq.F
+if ENABLE_EISPACK
 libga_la_SOURCES += global/src/rsg.F
+endif
 if CRAY_XT_NETWORKS
 libga_la_SOURCES += global/src/ga_dgemmf.F
 endif # CRAY_XT_NETWORKS
