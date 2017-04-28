@@ -15,7 +15,22 @@ matrix:
     - env: MPI_IMPL=openmpi
 env:
   - MPI_IMPL=mpich
+    PORT=mpi-ts
+  - MPI_IMPL=mpich
+    PORT=mpi-mt
+  - MPI_IMPL=mpich
+    PORT=mpi-pt
+  - MPI_IMPL=mpich
+    PORT=mpi-pr
+  - MPI_IMPL=mpich
+    PORT=mpi3
+  - MPI_IMPL=mpich
+    PORT=openib
   - MPI_IMPL=openmpi
+  - MPI_IMPL=mpich
+    CONFIG_OPTS="--disable-f77 --enable-cxx"
+  - MPI_IMPL=mpich
+    CONFIG_OPTS="--disable-static --enable-shared"
 before_install:
   - export TRAVIS_ROOT=$HOME/travis
   - mkdir $TRAVIS_ROOT
