@@ -19,6 +19,21 @@ case "$os" in
         AUTOCONF_VERSION=2.69
         AUTOMAKE_VERSION=1.11.6
 
+        # check whether we can reach ftp.gnu.org
+        TIMEOUT=timeout
+        if [ "x$os" = "xDarwin" ] ; then
+            TIMEOUT=gtimeout
+        fi
+        FTP_OK=yes
+        if ! $TIMEOUT 2 bash -c "</dev/tcp/ftp.gnu.org/21" ; then
+            FTP_OK=no
+            # can we reach our backup URL?
+            if ! $TIMEOUT 2 bash -c "</dev/tcp/github.com/443" ; then
+                echo FAILURE 0
+                exit 1
+            fi
+        fi
+
         ##########################################
         ### m4
         ##########################################
@@ -37,10 +52,14 @@ case "$os" in
             TDIR=${TOOL}-${TOOL_VERSION}
             FILE=${TDIR}.tar.gz
             BIN=${TOP}/bin/${TOOL}
+            URL=http://ftp.gnu.org/gnu/${TOOL}/${FILE}
+            if [ "x$FTP_OK" = "xno" ] ; then
+                URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
+            fi
             if [ -f ${FILE} ] ; then
                 echo ${FILE} already exists! Using existing copy.
             else
-                wget http://ftp.gnu.org/gnu/${TOOL}/${FILE}
+                wget -O ${FILE} ${URL}
             fi
             if [ -d ${TDIR} ] ; then
                 echo ${TDIR} already exists! Using existing copy.
@@ -83,8 +102,12 @@ case "$os" in
             TDIR=${TOOL}-${TOOL_VERSION}
             FILE=${TDIR}.tar.gz
             BIN=${TOP}/bin/${TOOL}
+            URL=http://ftp.gnu.org/gnu/${TOOL}/${FILE}
+            if [ "x$FTP_OK" = "xno" ] ; then
+                URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
+            fi
             if [ ! -f ${FILE} ] ; then
-                wget http://ftp.gnu.org/gnu/${TOOL}/${FILE}
+                wget -O ${FILE} ${URL}
             else
                 echo ${FILE} already exists! Using existing copy.
             fi
@@ -129,8 +152,12 @@ case "$os" in
             TDIR=${TOOL}-${TOOL_VERSION}
             FILE=${TDIR}.tar.gz
             BIN=${TOP}/bin/${TOOL}
+            URL=http://ftp.gnu.org/gnu/${TOOL}/${FILE}
+            if [ "x$FTP_OK" = "xno" ] ; then
+                URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
+            fi
             if [ ! -f ${FILE} ] ; then
-                wget http://ftp.gnu.org/gnu/${TOOL}/${FILE}
+                wget -O ${FILE} ${URL}
             else
                 echo ${FILE} already exists! Using existing copy.
             fi
@@ -175,8 +202,12 @@ case "$os" in
             TDIR=${TOOL}-${TOOL_VERSION}
             FILE=${TDIR}.tar.gz
             BIN=${TOP}/bin/${TOOL}
+            URL=http://ftp.gnu.org/gnu/${TOOL}/${FILE}
+            if [ "x$FTP_OK" = "xno" ] ; then
+                URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
+            fi
             if [ ! -f ${FILE} ] ; then
-                wget http://ftp.gnu.org/gnu/${TOOL}/${FILE}
+                wget -O ${FILE} ${URL}
             else
                 echo ${FILE} already exists! Using existing copy.
             fi

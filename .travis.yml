@@ -23,6 +23,7 @@ before_install:
 install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install coreutils; fi
   - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
 script:
   - sh ./travis/build-run.sh $TRAVIS_ROOT $MPI_IMPL
