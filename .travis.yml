@@ -24,8 +24,6 @@ env:
     PORT=mpi-pr
   - MPI_IMPL=mpich
     PORT=mpi3
-  - MPI_IMPL=mpich
-    PORT=openib
   - MPI_IMPL=openmpi
   - MPI_IMPL=mpich
     CONFIG_OPTS="--disable-f77 --enable-cxx"
@@ -43,6 +41,5 @@ install:
 script:
   - sh ./travis/build-run.sh $TRAVIS_ROOT $MPI_IMPL
 after_failure:
-  - cat ./config.log
   - cat ./test-suite.log
   - find . -name "*.log" -exec head -n 100 {} ";"
