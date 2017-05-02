@@ -953,18 +953,18 @@ STATIC void unpack(char *packed_buffer,
 STATIC char* _generate_shm_name(int rank)
 {
     int snprintf_retval = 0;
-    /* /cmxXXXXXXXPPPPPP  */
-    /* 00000000011111111112 */
-    /* 12345678901234567890 */
+    /* /cmxUUUUUUUUUUPPPPPPPPPPCCCCCCN */
+    /* 0000000001111111111222222222233 */
+    /* 1234567890123456789012345678901 */
     char *name = NULL;
     static unsigned int counter = 0;
-    unsigned int urank = rank;
 
     COMEX_ASSERT(rank >= 0);
     name = malloc(SHM_NAME_SIZE*sizeof(char));
     COMEX_ASSERT(name);
     snprintf_retval = snprintf(name, SHM_NAME_SIZE,
-            "/cmx%09u%09u%07u%08u", getuid(), getpid(), counter, urank);
+            "/cmx%010u%010u%06u", getuid(), getpid(), counter);
+    fprintf(stderr, "snprintf_retval=%d uid=%d pid=%d name=%s\n", snprintf_retval, getuid(), getpid(), name);
     COMEX_ASSERT(snprintf_retval < (int)SHM_NAME_SIZE);
     name[SHM_NAME_SIZE-1] = '\0';
     ++counter;
