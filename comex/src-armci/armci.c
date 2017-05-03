@@ -37,7 +37,13 @@ int armci_check_contiguous(int *src_stride, int *dst_stride,
    * algorithm
    */
   for (i=0; i<n_stride; i++) {
-    stridelen *= count[i];
+    /* check for overflow */
+    int tmp = stridelen * count[i];
+    if (stridelen != 0 && tmp / stridelen != count[i]) {
+      ret = 0;
+      break;
+    }
+    stridelen = tmp;
     if (stridelen < src_stride[i] || stridelen < dst_stride[i]) {
       ret = 0;
       break;
