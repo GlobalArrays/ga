@@ -2116,8 +2116,6 @@ int comex_unlock(int mutex, int proc)
     header->length = mutex;
     header->notify_address = NULL;
 
-    fence_array[proc] = 1;
-
     _mq_push(proc, (char*)header, sizeof(header_t));
     _make_progress_if_needed();
 
