@@ -1824,6 +1824,17 @@ libga_la_LIBADD += $(GA_MP_LIBS)
 libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 endif
 
+# if --disable-f77 is used, we must override linker choice
+if ENABLE_F77
+libga_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 $(AM_LIBTOOLFLAGS) \
+    $(LIBTOOLFLAGS) --mode=link $(F77LD) $(AM_FFLAGS) $(FFLAGS) \
+    $(libga_la_LDFLAGS) $(LDFLAGS) -o $@
+else
+libga_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+    $(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+    $(libga_la_LDFLAGS) $(LDFLAGS) -o $@
+endif
+
 ##############################################################################
 # the end
 #
