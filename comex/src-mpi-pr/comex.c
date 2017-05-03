@@ -964,7 +964,6 @@ STATIC char* _generate_shm_name(int rank)
     COMEX_ASSERT(name);
     snprintf_retval = snprintf(name, SHM_NAME_SIZE,
             "/cmx%010u%010u%06u", getuid(), getpid(), counter);
-    fprintf(stderr, "snprintf_retval=%d uid=%d pid=%d name=%s\n", snprintf_retval, getuid(), getpid(), name);
     COMEX_ASSERT(snprintf_retval < (int)SHM_NAME_SIZE);
     name[SHM_NAME_SIZE-1] = '\0';
     ++counter;
