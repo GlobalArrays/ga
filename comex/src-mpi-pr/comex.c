@@ -1621,6 +1621,7 @@ int comex_unlock(int mutex, int proc)
     world_rank = _get_world_rank(igroup, proc);
     master_rank = g_state.master[world_rank];
 
+    fence_array[master_rank] = 1;
     header = malloc(sizeof(header_t));
     COMEX_ASSERT(header);
     header->operation = OP_UNLOCK;

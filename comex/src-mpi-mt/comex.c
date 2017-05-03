@@ -1399,6 +1399,7 @@ int comex_unlock(int mutex, int proc)
     igroup = comex_get_igroup_from_group(COMEX_GROUP_WORLD);
     world_rank = _get_world_rank(igroup, proc);
 
+    fence_array[world_rank] = 1;
     header = malloc(sizeof(header_t));
     COMEX_ASSERT(header);
     header->operation = OP_UNLOCK;
