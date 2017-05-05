@@ -240,6 +240,13 @@ case "$os" in
             echo "${TOOL} found and is exactly needed version ($TOOL_VERSION_FOUND)"
         fi
 
+        # if none of the above tools needed installing, the bin
+        # directory would not get created for the config scripts
+        cd ${TOP}
+        if [ ! -d ./bin ] ; then
+            mkdir ./bin
+        fi
+
         ##########################################
         ### config.guess
         ##########################################
