@@ -24,13 +24,20 @@ case "$os" in
         if [ "x$os" = "xDarwin" ] ; then
             TIMEOUT=gtimeout
         fi
+        # do we have a working timeout command?
+        HAVE_TIMEOUT=yes
+        if ! $TIMEOUT --version > /dev/null ; then
+            HAVE_TIMEOUT=no
+        fi
         FTP_OK=yes
-        if ! $TIMEOUT 2 bash -c "</dev/tcp/ftp.gnu.org/21" ; then
-            FTP_OK=no
-            # can we reach our backup URL?
-            if ! $TIMEOUT 2 bash -c "</dev/tcp/github.com/443" ; then
-                echo FAILURE 0
-                exit 1
+        if [ "x$HAVE_TIMEOUT" = xyes ] ; then
+            if ! $TIMEOUT 2 bash -c "</dev/tcp/ftp.gnu.org/21" ; then
+                FTP_OK=no
+                # can we reach our backup URL?
+                if ! $TIMEOUT 2 bash -c "</dev/tcp/github.com/443" ; then
+                    echo FAILURE 0
+                    exit 1
+                fi
             fi
         fi
 
