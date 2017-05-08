@@ -45,6 +45,17 @@ if (ENABLE_FORTRAN)
   )
 endif()
 
+if (ENABLE_SCALAPACK)
+  set (GA_FORTRAN_INTERFACE_H_FILES
+       ${GA_FORTRAN_INTERFACE_H_FILES} scalapack.fh)
+  set (GA_FORTRAN_INTERFACE_F_FILES
+       ${GA_FORTRAN_INTERFACE_F_FILES} scalapack.F)
+  if (HAVE_LAPACK OR ENABLE_EISPACK)
+    set (GA_FORTRAN_INTERFACE_F_FILES
+         ${GA_FORTRAN_INTERFACE_F_FILES} ga_diag_seq.F)
+  endif()
+endif()
+
 set(target_libraries
     ma
     elio

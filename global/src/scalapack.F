@@ -1270,7 +1270,8 @@ c****
       integer     hsA          ! (input/output)
 c****
       logical status
-      integer hA, adrA
+      integer hA
+      MA_ACCESS_INDEX_TYPE adrA
       integer dimA18, dimA28, typeA
       INTGR4 dimA1, dimA2
       INTGR4 mpA, nqA
