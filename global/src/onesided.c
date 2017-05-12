@@ -425,9 +425,9 @@ Integer pnga_nbtest(Integer *nbhandle)
 
 void pnga_nbwait(Integer *nbhandle) 
 {
-  //GA_Internal_Threadsafe_Lock();
+  GA_Internal_Threadsafe_Lock();
   nga_wait_internal((Integer *)nbhandle);
-  //GA_Internal_Threadsafe_Unlock();
+  GA_Internal_Threadsafe_Unlock();
 } 
 
 static void ngai_puts(char *loc_base_ptr, char *pbuf, int *stride_loc, char *prem, int *stride_rem,
@@ -1911,6 +1911,7 @@ void ngai_acc_common(Integer g_a,
                    void    *alpha,
                    Integer *nbhandle)
 {
+  GA_Internal_Threadsafe_Lock();
   Integer  p, np, handle=GA_OFFSET + g_a;
   Integer  idx, elems, size, type, p_handle, ga_nbhandle;
   int optype=-1, proc, loop, ndim, cond;
@@ -2373,6 +2374,7 @@ void ngai_acc_common(Integer g_a,
 #ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
+  GA_Internal_Threadsafe_Unlock();
 }
 
 /**

@@ -27,11 +27,8 @@ int main(int argc, char * argv[])
     int local_buffer[dims[0]][dims[1]];
     int local_buffer2[dims[0]*dims[1]];
   
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    int ranks;
-    MPI_Comm_size(MPI_COMM_WORLD, &ranks);
+    int rank = GA_Nodeid();
+    int ranks = GA_Nnodes();
 
     for(int i =0; i<dims[0]; i++)
     {
@@ -44,16 +41,23 @@ int main(int argc, char * argv[])
     
     int handle = NGA_Create(C_INT, 2, dims, "test", NULL);
     
-    if(rank == 0)
-        NGA_Put(handle, lo, hi, local_buffer, ld);
-    NGA_Sync(); 
-    
     int thread_count = 4; 
     
     if( char * env_threads = std::getenv("OMP_NUM_THREADS"))
         thread_count = atoi(env_threads);
+    else
+        omp_set_num_threads(thread_count);
 
     printf("[%d]Testing %d threads.\n", rank, thread_count);
+    
+    printf("[%d]Testing write1 from 0.\n", rank);
+    if(rank == 0)
+        NGA_Put(handle, lo, hi, local_buffer, ld);
+    NGA_Sync(); 
+    
+    
+    printf("[%d]Testing read1.\n", rank);
+    
     #pragma omp parallel for
     for(int j =0; j< thread_count; j++)
     {
@@ -70,7 +74,7 @@ int main(int argc, char * argv[])
                 if(local_buffer_read[i][k] != i*dims[1]+k)
                 {
                     return_code = 1;
-                    printf("[%d][%d][%d] error %d expected %d\n", rank, thread_id, j, local_buffer_read[i][k], i*dims[1]+k);
+                    printf("[%d][%d][%d] write1/read1 error %d expected %d\n", rank, thread_id, j, local_buffer_read[i][k], i*dims[1]+k);
                 }
             }
         }
@@ -101,8 +105,8 @@ int main(int argc, char * argv[])
         stop = start+(div);
     }
     
-    printf("%d %d %d Testing %d %d threads.\n", rank, div, rem, start, stop);
 
+    printf("[%d]Testing write2 all nodes/threads.\n", rank);
     #pragma omp parallel for
     for(int i =start; i< stop; i++)
     {
@@ -117,7 +121,7 @@ int main(int argc, char * argv[])
     hi[1] = dims[1]-1;
     ld[0] = dims[1];
     
-    printf("%d Testing %d threads.\n", rank, thread_count);
+    printf("[%d]Testing read2.\n", rank);
     #pragma omp parallel for
     for(int j =0; j< thread_count; j++)
     {
@@ -133,7 +137,7 @@ int main(int argc, char * argv[])
                 if(local_buffer_read[i][k] != i*dims[1]+k+1)
                 {
                     return_code = 1;
-                    printf("[%d][%d][%d] error %d at [%d][%d] expected %d\n", rank, thread_id, j, local_buffer_read[i][k], i, k, i*dims[1]+k+1);
+                    printf("[%d][%d][%d] write2/read2 error %d at [%d][%d] expected %d\n", rank, thread_id, j, local_buffer_read[i][k], i, k, i*dims[1]+k+1);
                 }
             }
         }
@@ -150,8 +154,8 @@ int main(int argc, char * argv[])
         }
     }
     
+    printf("[%d]Testing nb write1.\n", rank);
     ga_nbhdl_t wait_handle[dims[0]][dims[1]];
-    printf("[%d] nb write\n", rank);
     #pragma omp parallel for
     for(int i =start; i< stop; i++)
     {
@@ -159,7 +163,6 @@ int main(int argc, char * argv[])
         int lo[2] = {i/dims[0], i%dims[0]};
         NGA_NbPut(handle, lo, lo, &local_buffer[i/dims[0]][i%dims[0]], ld, &wait_handle[i/dims[0]][i%dims[0]]);
     }
-    printf("[%d] nb write wait\n", rank);
     #pragma omp parallel for
     for(int i =start; i< stop; i++)
         NGA_NbWait(&wait_handle[i/dims[0]][i%dims[0]]);
@@ -170,10 +173,9 @@ int main(int argc, char * argv[])
     hi[1] = dims[1]-1;
     ld[0] = dims[1];
     
-    printf("%d Testing %d threads.\n", rank, thread_count);
     ga_nbhdl_t wait_handle_read[thread_count];
     int * local_buffer_read = new int[thread_count*dims[0]*dims[1]];
-    printf("[%d] nb read\n", rank);
+    printf("[%d]Testing nb read1.\n", rank);
     #pragma omp parallel for
     for(int j =0; j< thread_count; j++)
     {
@@ -181,7 +183,6 @@ int main(int argc, char * argv[])
         
         NGA_NbGet(handle, lo, hi, &local_buffer_read[thread_id*dims[0]*dims[1]], ld, &wait_handle_read[thread_id]);
     }
-    printf("[%d] nb wait\n", rank);
     #pragma omp parallel for
     for(int j =0; j< thread_count; j++)
     {
@@ -194,7 +195,7 @@ int main(int argc, char * argv[])
                 if(local_buffer_read[thread_id*dims[0]*dims[1]+i*dims[1]+k] != i*dims[1]+k+2)
                 {
                     return_code = 1;
-                    printf("[%d][%d][%d] error %d at [%d][%d] expected %d\n", rank, thread_id, j, local_buffer_read[thread_id*dims[0]*dims[1]+i*dims[1]+k], i, k, i*dims[1]+k+2);
+                    printf("[%d][%d][%d] nb write1/read1 error %d at [%d][%d] expected %d\n", rank, thread_id, j, local_buffer_read[thread_id*dims[0]*dims[1]+i*dims[1]+k], i, k, i*dims[1]+k+2);
                 }
             }
         }
@@ -215,6 +216,7 @@ int main(int argc, char * argv[])
     int correct = thread_count*ranks-1;
     int success = false;
     
+    printf("[%d]Testing read inc1.\n", rank);
     //Check if summation is correct at end (do not introduce overhead for other calls)
     #pragma omp parallel for
     for(int j =0; j< thread_count; j++)
@@ -256,7 +258,7 @@ int main(int argc, char * argv[])
 
     if(success != 1)
     {
-        printf("[%d]Error atomic inc failed\n", rank);
+        printf("[%d]Error read inc1 failed\n", rank);
         return_code = 1;
     }
 
@@ -300,6 +302,7 @@ int main(int argc, char * argv[])
         }
     }
 
+    printf("[%d]Testing nb acc1.\n", rank);
     #pragma omp parallel for
     for(int j =0; j< thread_count; j++)
     {
@@ -312,8 +315,6 @@ int main(int argc, char * argv[])
         NGA_NbWait(&wait_handle_read[j]);
     NGA_Sync();
     
-    printf("%d Testing %d threads.\n", rank, thread_count);
-    printf("[%d] nb read\n", rank);
     #pragma omp parallel for
     for(int j =0; j< thread_count; j++)
     {
@@ -321,7 +322,6 @@ int main(int argc, char * argv[])
         
         NGA_NbGet(handle, lo, hi, &local_buffer_read[thread_id*dims[0]*dims[1]], ld, &wait_handle_read[thread_id]);
     }
-    printf("[%d] nb wait\n", rank);
     #pragma omp parallel for
     for(int j =0; j< thread_count; j++)
     {
@@ -336,7 +336,7 @@ int main(int argc, char * argv[])
                 if(local_buffer_read[thread_id*dims[0]*dims[1]+i*dims[1]+k] != thread_count*(ranks*i*dims[1]+ ranks*k))
                 {
                     return_code = 1;
-                    printf("[%d][%d][%d] error %d at [%d][%d] expected %d\n", rank, thread_id, j, local_buffer_read[thread_id*dims[0]*dims[1]+i*dims[1]+k], i, k, thread_count*ranks*i*dims[1]+ thread_count*ranks*k);
+                    printf("[%d][%d][%d] nb acc1 error %d at [%d][%d] expected %d\n", rank, thread_id, j, local_buffer_read[thread_id*dims[0]*dims[1]+i*dims[1]+k], i, k, thread_count*ranks*i*dims[1]+ thread_count*ranks*k);
                 }
             }
         }
