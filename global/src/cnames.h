@@ -2263,6 +2263,7 @@
 #define ga_supdate_ghosts_ F77_FUNC_(ga_supdate_ghosts,GA_SUPDATE_GHOSTS)
 #define ga_zupdate_ghosts_ F77_FUNC_(ga_zupdate_ghosts,GA_ZUPDATE_GHOSTS)
 #define nga_update_ghosts_  F77_FUNC_(nga_update_ghosts, NGA_UPDATE_GHOSTS)
+#define nga_update_ghosts_nb_  F77_FUNC_(nga_update_ghosts_nb, NGA_UPDATE_GHOSTS)
 #define nga_cupdate_ghosts_ F77_FUNC_(nga_cupdate_ghosts,NGA_CUPDATE_GHOSTS)
 #define nga_dupdate_ghosts_ F77_FUNC_(nga_dupdate_ghosts,NGA_DUPDATE_GHOSTS)
 #define nga_iupdate_ghosts_ F77_FUNC_(nga_iupdate_ghosts,NGA_IUPDATE_GHOSTS)
