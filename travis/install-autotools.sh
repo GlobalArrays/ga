@@ -10,6 +10,10 @@ if [ ! -d ${TOP} ] ; then
     mkdir ${TOP}
 fi
 
+if [ ! -d ${TOP}/bin ] ; then
+    mkdir ${TOP}/bin
+fi
+
 case "$os" in
     Darwin|Linux)
         MAKE_JNUM=4
@@ -39,6 +43,26 @@ case "$os" in
                     exit 1
                 fi
             fi
+        fi
+
+        ##########################################
+        ### config.guess
+        ##########################################
+        cd ${TOP}/bin
+        if [ -f config.guess ] ; then
+            echo "config.guess already exists! Using existing copy."
+        else
+            wget -O config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
+        fi
+
+        ##########################################
+        ### config.guess
+        ##########################################
+        cd ${TOP}/bin
+        if [ -f config.sub ] ; then
+            echo "config.sub already exists! Using existing copy."
+        else
+            wget -O config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
         fi
 
         ##########################################
@@ -78,6 +102,8 @@ case "$os" in
                 echo ${BIN} already exists! Skipping build.
             else
                 cd ${TOP}/${TDIR}
+                cp ${TOP}/bin/config.guess ./build-aux/config.guess
+                cp ${TOP}/bin/config.sub ./build-aux/config.sub
                 ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
                 if [ "x$?" != "x0" ] ; then
                     echo FAILURE 1
@@ -128,6 +154,8 @@ case "$os" in
                 echo ${BIN} already exists! Skipping build.
             else
                 cd ${TOP}/${TDIR}
+                cp ${TOP}/bin/config.guess ./build-aux/config.guess
+                cp ${TOP}/bin/config.sub ./build-aux/config.sub
                 ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
                 if [ "x$?" != "x0" ] ; then
                     echo FAILURE 3
@@ -178,6 +206,8 @@ case "$os" in
                 echo ${BIN} already exists! Skipping build.
             else
                 cd ${TOP}/${TDIR}
+                cp ${TOP}/bin/config.guess ./lib/config.guess
+                cp ${TOP}/bin/config.sub ./lib/config.sub
                 ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
                 if [ "x$?" != "x0" ] ; then
                     echo FAILURE 4
@@ -228,6 +258,8 @@ case "$os" in
                 echo ${BIN} already exists! Skipping build.
             else
                 cd ${TOP}/${TDIR}
+                cp ${TOP}/bin/config.guess ./build-aux/config.guess
+                cp ${TOP}/bin/config.sub ./build-aux/config.sub
                 ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
                 if [ "x$?" != "x0" ] ; then
                     echo FAILURE 2
@@ -238,33 +270,6 @@ case "$os" in
             export PATH=${TOP}/bin:$PATH
         else
             echo "${TOOL} found and is exactly needed version ($TOOL_VERSION_FOUND)"
-        fi
-
-        # if none of the above tools needed installing, the bin
-        # directory would not get created for the config scripts
-        cd ${TOP}
-        if [ ! -d ./bin ] ; then
-            mkdir ./bin
-        fi
-
-        ##########################################
-        ### config.guess
-        ##########################################
-        cd ${TOP}/bin
-        if [ -f config.guess ] ; then
-            echo "config.guess already exists! Using existing copy."
-        else
-            wget -O config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
-        fi
-
-        ##########################################
-        ### config.guess
-        ##########################################
-        cd ${TOP}/bin
-        if [ -f config.sub ] ; then
-            echo "config.sub already exists! Using existing copy."
-        else
-            wget -O config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
         fi
 
         ;;
