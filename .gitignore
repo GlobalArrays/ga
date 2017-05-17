@@ -51,3 +51,4 @@ config.h.in~
 *~
 autotools
 bld*
+build-aux
