@@ -870,7 +870,7 @@ gtsrc += global/testing/testutil.h
 gtsrc += global/testing/util.c
 if ENABLE_F77
 gtsrc += global/testing/ffflush.F
-gtsrc += global/testing/testblas.F
+testblassrc = global/testing/testblas.F
 endif
 
 global_testing_big_SOURCES                 = global/testing/big.c $(gtsrc)
@@ -893,7 +893,7 @@ global_testing_lock_SOURCES                = global/testing/lock.c $(gtsrc)
 global_testing_mir_perf2_SOURCES           = global/testing/mir_perf2.F $(gtsrc)
 global_testing_mmatrix_SOURCES             = global/testing/mmatrix.F $(gtsrc)
 global_testing_mtest_SOURCES               = global/testing/mtest.c $(gtsrc)
-global_testing_mulmatpatch_SOURCES         = global/testing/mulmatpatch.F $(gtsrc)
+global_testing_mulmatpatch_SOURCES         = global/testing/mulmatpatch.F $(gtsrc) $(testblassrc)
 global_testing_mulmatpatchc_SOURCES        = global/testing/mulmatpatchc.c $(gtsrc)
 global_testing_nbtest_SOURCES              = global/testing/nbtest.F $(gtsrc)
 global_testing_nb2test_SOURCES             = global/testing/nb2test.F $(gtsrc)
@@ -902,7 +902,7 @@ global_testing_normc_SOURCES               = global/testing/normc.c $(gtsrc)
 global_testing_ntestc_SOURCES              = global/testing/ntestc.c $(gtsrc)
 global_testing_ntestfc_SOURCES             = global/testing/ntestfc.c $(gtsrc)
 global_testing_packc_SOURCES               = global/testing/packc.c $(gtsrc)
-global_testing_patch_SOURCES               = global/testing/patch.F $(gtsrc)
+global_testing_patch_SOURCES               = global/testing/patch.F $(gtsrc) $(testblassrc)
 global_testing_patch2_SOURCES              = global/testing/patch2.F $(gtsrc)
 global_testing_patch_enumc_SOURCES         = global/testing/patch_enumc.c $(gtsrc)
 global_testing_patch_enumf_SOURCES         = global/testing/patch_enumf.F $(gtsrc)
@@ -911,7 +911,7 @@ global_testing_perf2_SOURCES               = global/testing/perf2.c $(gtsrc)
 global_testing_perfmod_SOURCES             = global/testing/perfmod.F $(gtsrc)
 global_testing_perform_SOURCES             = global/testing/perform.F $(gtsrc)
 global_testing_pg2test_SOURCES             = global/testing/pg2test.F $(gtsrc)
-global_testing_pg2testmatmult_SOURCES      = global/testing/pg2testmatmult.F $(gtsrc)
+global_testing_pg2testmatmult_SOURCES      = global/testing/pg2testmatmult.F $(gtsrc) $(testblassrc)
 global_testing_pgtest_SOURCES              = global/testing/pgtest.F $(gtsrc)
 global_testing_pgtestmatmult_SOURCES       = global/testing/pgtestmatmult.F $(gtsrc)
 global_testing_print_SOURCES               = global/testing/print.c $(gtsrc)

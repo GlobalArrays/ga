@@ -288,16 +288,21 @@ AS_IF([test $ga_blas_ok = no],
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# IBM ESSL library (requires generic BLAS lib, too)
+# IBM ESSL library (might require generic BLAS lib, too)
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in IBM ESSL library])
      # add -lessl to BLAS_LIBS if missing from LIBS
      AS_CASE([$LIBS], [*essl*], [], [BLAS_LIBS="-lessl"])
-     # add -lblas to BLAS_LIBS if missing from LIBS
-     AS_CASE([$LIBS], [*blas*], [], [BLAS_LIBS="$BLAS_LIBS -lblas"])
      LIBS="$BLAS_LIBS $LIBS"
      GA_RUN_BLAS_TEST()
      LIBS="$ga_save_LIBS"
+     AS_IF([test $ga_blas_ok = no],
+        [# add both -lessl and -lblas to BLAS_LIBS if missing from LIBS
+         AS_CASE([$LIBS], [*essl*], [], [BLAS_LIBS="-lessl"])
+         AS_CASE([$LIBS], [*blas*], [], [BLAS_LIBS="$BLAS_LIBS -lblas"])
+         LIBS="$BLAS_LIBS $LIBS"
+         GA_RUN_BLAS_TEST()
+         LIBS="$ga_save_LIBS"])
      AC_MSG_RESULT([$ga_blas_ok])])
 
 # Generic BLAS library
