@@ -36,6 +36,7 @@ typedef struct ofi_ep_t
     struct fid_cq     *cq;       /* completion queue */
     struct fid_av     *av;       /* address vector   */
     peer_t*           peers;
+    enum fi_mr_mode   mr_mode;
 } ofi_ep_t;
 
 typedef struct ofi_data_t
@@ -46,6 +47,7 @@ typedef struct ofi_data_t
     int               rma_iov_limit;
     ssize_t           max_bytes_in_atomic[COMEX_DTYPES_COUNT]; /* bytes in one atomic operation per comex datatype */
     int               max_buffered_send;
+    uint64_t          mr_counter;
 } ofi_data_t;
 extern ofi_data_t ofi_data;
 
@@ -131,6 +133,5 @@ static inline int unload_ofi(fi_loadable_methods_t* table)
 #define load_ofi(table) COMEX_SUCCESS
 #define unload_ofi(table) COMEX_SUCCESS
 #endif /* GA_OFI_STATIC_LINK */
-
 
 #endif /* _COMEX_OFI_H_ */

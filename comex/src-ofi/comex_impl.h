@@ -238,14 +238,6 @@ typedef struct {
 } local_state;
 extern local_state l_state;
 
-typedef enum flush_type_t
-{
-    flush_default  = 0,
-    flush_transmit = 1,
-    flush_receive  = 2,
-    flush_all      = 3
-} flush_type_t;
-
 typedef struct local_window_t
 {
     struct fid_mr*         mr_rma;
@@ -299,13 +291,11 @@ typedef struct acc_data_t
     int                   proc;
 } acc_data_t;
 
-typedef enum ofi_proto_e
+typedef enum op_type_t
 {
-    ofi_proto_rmw_add,
-    ofi_proto_rmw_add_long,
-    ofi_proto_rmw_swap,
-    ofi_proto_rmw_swap_long
-} ofi_proto_e;
+    ot_rma,
+    ot_atomic
+} op_type_t;
 
 typedef struct ofi_proto_t
 {

@@ -236,30 +236,70 @@ static comex_nbaccv_t* comex_nbaccv_f = comex_nbaccv_emu;
 
 static int mr_reg_count = 0;
 
-#define mr_regv(domain, iov, count, mrs)                                                  \
+#define mr_regv(iov, count, mrs, op_type)                                                 \
 do                                                                                        \
 {                                                                                         \
     struct fi_context ctx;                                                                \
     int i;                                                                                \
     for(i = 0; i < count; i++)                                                            \
     {                                                                                     \
-        COMEX_CHKANDJUMP(mr_reg(domain, iov[i].iov_base, iov[i].iov_len,                  \
-            MR_ACCESS_PERMISSIONS, 0, 0, 0, &(mrs)[i], &ctx), "fi_mr_reg error:");        \
+        COMEX_CHKANDJUMP(mr_reg(iov[i].iov_base, iov[i].iov_len, MR_ACCESS_PERMISSIONS,   \
+                                &(mrs)[i], &ctx, op_type),                                \
+                                "fi_mr_reg error:");                                      \
     }                                                                                     \
 } while(0)
 
-static inline int
-mr_reg(struct fid_domain *domain, const void *buf, size_t len,
-        uint64_t access, uint64_t offset, uint64_t requested_key,
-        uint64_t flags, struct fid_mr **mr, void *context)
+static inline ofi_ep_t* get_ep(op_type_t op_type)
 {
-    OFI_RETRY(fi_mr_reg(domain, buf, len, access, offset,
-              requested_key, flags, mr, context), "fi_mr_reg error:");
+    assert(op_type == ot_rma || op_type == ot_atomic);
+    return (op_type == ot_rma) ? &(ofi_data.ep_rma) : &(ofi_data.ep_atomics);
+}
+
+static inline int mr_reg(const void* buf, size_t len,
+                         uint64_t access, struct fid_mr** mr,
+                         void *context, op_type_t op_type)
+{
+    ofi_ep_t* ep = get_ep(op_type);
+
+    uint64_t key = 0;
+    if (FI_MR_SCALABLE == ep->mr_mode)
+    {
+        /**
+         * the key should be specified explicitly in case of scalable mr
+         * use simple counter to get unique value
+         */
+        key = __sync_fetch_and_add(&ofi_data.mr_counter, 1);
+    }
+
+    OFI_RETRY(fi_mr_reg(ep->domain, /* In:  domain object */
+                        buf,        /* In:  lower memory address */
+                        len,        /* In:  length */
+                        access,     /* In:  access rights */
+                        0ULL,       /* In:  offset (not used) */
+                        key,        /* In:  requested key */
+                        0ULL,       /* In:  flags */
+                        mr,         /* Out: memregion object */
+                        context),   /* In:  context */
+                        "fi_mr_reg error:");
     __sync_fetch_and_add(&mr_reg_count, 1);
     return COMEX_SUCCESS;
 
 fn_fail:
     return COMEX_FAILURE;
+}
+
+static inline uint64_t get_remote_addr(uint64_t base_addr, void* ptr, op_type_t op_type)
+{
+    assert(base_addr <= (uint64_t)ptr);
+    ofi_ep_t* ep = get_ep(op_type);
+
+    if (FI_MR_SCALABLE == ep->mr_mode)
+    {
+        /* returns offset inside of memory region */
+        return ((uint64_t)ptr - base_addr);
+    }
+    else
+        return (uint64_t)ptr;
 }
 
 static inline int mr_unreg(struct fid* mr)
@@ -528,6 +568,10 @@ static int init_ep(struct fi_info* hints, ofi_ep_t* ep, int suppress_fail)
     }
 #endif /* DEBUG */
 
+    ep->mr_mode = provider->domain_attr->mr_mode;
+    printf("init_ep: prov_name: %s, mr_mode %d\n", provider->fabric_attr->prov_name, ep->mr_mode);
+    EXPR_CHKANDJUMP(((ep->mr_mode == FI_MR_BASIC) || (ep->mr_mode == FI_MR_SCALABLE)), "unsupported mr mode");
+
     /* ---------------------------- */
     /* Open fabric                  */
     /* ---------------------------- */
@@ -615,7 +659,7 @@ static volatile int atomics_thread_complete = 0;
 
 static pthread_t atomics_pthread = 0;
 
-static void* atomics_thread(void* __data)
+static void* atomics_thread_func(void* __data)
 {
     while(!atomics_thread_complete)
     {
@@ -776,8 +820,9 @@ static void atomics_completion(request_t* request)
                 if(header.acc.len > ofi_data.max_buffered_send && buffer&&0)
                 { /* allocate region to receive data */
                     struct fi_context context;
-                    COMEX_CHKANDJUMP(mr_reg(ofi_data.ep_rma.domain, buffer, total,
-                              MR_ACCESS_PERMISSIONS, 0, 0, 0, &parent->mr_single, &context), "fi_mr_reg failed:");
+                    COMEX_CHKANDJUMP(mr_reg(buffer, total, MR_ACCESS_PERMISSIONS,
+                                            &parent->mr_single, &context, ot_rma),
+                                            "fi_mr_reg failed:");
                 }
                 for(i = 0; i < header.acc.count; i++)
                 {
@@ -883,7 +928,6 @@ static int init_ofi()
     hints_saw->domain_attr->threading        = FI_THREAD_ENDPOINT;
     hints_saw->domain_attr->control_progress = FI_PROGRESS_AUTO;
     hints_saw->domain_attr->data_progress    = FI_PROGRESS_AUTO;
-    hints_saw->domain_attr->mr_mode          = FI_MR_BASIC;
 
     char* prov_name = getenv("COMEX_OFI_PROVIDER");
     hints_saw->fabric_attr->prov_name = prov_name ? strdup(prov_name) : 0;
@@ -966,6 +1010,19 @@ static int init_ofi()
     enum fi_datatype ofi_dtype = FI_DATATYPE_LAST;
     size_t max_elems_in_atomic = 0;
 
+#ifdef USE_ATOMIC_EMULATION
+    native_atomics = comex_var_bool("COMEX_OFI_NATIVE_ATOMICS");
+    if(native_atomics)
+    {
+        comex_acc_f    = comex_acc_native;
+        comex_accs_f   = comex_accs_native;
+        comex_accv_f   = comex_accv_native;
+        comex_nbacc_f  = comex_nbacc_native;
+        comex_nbaccs_f = comex_nbaccs_native;
+        comex_nbaccv_f = comex_nbaccv_native;
+    }
+#endif /* USE_ATOMIC_EMULATION */
+
     if(native_atomics)
     {
         for (comex_dtype = COMEX_ACC_INT; comex_dtype <= COMEX_ACC_LNG; comex_dtype++)
@@ -991,13 +1048,15 @@ static int init_ofi()
     if(async_progress || async_progress_thread)
     {
         tid = pthread_self();
-        pthread_create(&atomics_pthread, 0, atomics_thread, 0);
+        pthread_create(&atomics_pthread, 0, atomics_thread_func, 0);
     }
 
     if(async_progress)
     { /* prepost rmw request */
         PREPOST_ATOMICS();
     }
+
+    ofi_data.mr_counter = 0;
 
 fn_success:
     return COMEX_SUCCESS;
@@ -1089,19 +1148,6 @@ int comex_init()
         return 0;
     }
     initialized = 1;
-
-#ifdef USE_ATOMIC_EMULATION
-    native_atomics = comex_var_bool("COMEX_OFI_NATIVE_ATOMICS");
-    if(native_atomics)
-    {
-        comex_acc_f    = comex_acc_native;
-        comex_accs_f   = comex_accs_native;
-        comex_accv_f   = comex_accv_native;
-        comex_nbacc_f  = comex_nbacc_native;
-        comex_nbaccs_f = comex_nbaccs_native;
-        comex_nbaccv_f = comex_nbaccv_native;
-    }
-#endif /* USE_ATOMIC_EMULATION */
 
     /* Assert MPI has been initialized */
     int init_flag;
@@ -2087,7 +2133,7 @@ static int iov_acc(int datatype, void * scale,
                 ioc->count = rma_ioc->count = (bytes_in_chunk % datasize) ?
                                               (bytes_in_chunk / datasize + 1) :
                                               (bytes_in_chunk / datasize);
-                rma_ioc->addr = (uint64_t)dst;
+                rma_ioc->addr = get_remote_addr(wnd->ptr, dst, ot_atomic);
                 ioc->addr = src;
                 rma_ioc->key = wnd->key_atomics;
                 m->iov_count = m->rma_iov_count = iov_in_msg;
@@ -2133,6 +2179,7 @@ int nb_getput(
     ofi_window_t* wnd = 0;
     COMEX_CHKANDJUMP(lookup_window(is_get_op ? src : dst, bytes, proc, group, &wnd),
                      "failed to lookup window");
+    assert(wnd);
 
     request->group = group;
     request->proc = proc;
@@ -2141,31 +2188,52 @@ int nb_getput(
     { /* we have to register buffer */
         struct fi_context context;
         request->dtor = req_dtor;
-        COMEX_CHKANDJUMP(mr_reg(ofi_data.ep_rma.domain, is_get_op ? dst : src, bytes,
-                    MR_ACCESS_PERMISSIONS, 0, 0, 0, &request->mr_single, &context), "fi_mr_reg failed:");
+        COMEX_CHKANDJUMP(mr_reg(is_get_op ? dst : src, bytes, MR_ACCESS_PERMISSIONS,
+                                &request->mr_single, &context, ot_rma),
+                                "fi_mr_reg failed:");
 
         if(!is_get_op)
-            OFI_RETRY(fi_write(ofi_data.ep_rma.endpoint, src, bytes,
-                        fi_mr_desc(request->mr_single),
-                        wnd->peer_rma->fi_addr, (uint64_t)dst, wnd->key_rma, request),
-                      "fi_write error:");
+            OFI_RETRY(fi_write(ofi_data.ep_rma.endpoint,
+                               src,
+                               bytes,
+                               fi_mr_desc(request->mr_single),
+                               wnd->peer_rma->fi_addr,
+                               get_remote_addr(wnd->ptr, dst, ot_rma),
+                               wnd->key_rma,
+                               request),
+                               "fi_write error:");
     }
 
     if (is_get_op)
-        OFI_RETRY(fi_read(ofi_data.ep_rma.endpoint, dst, bytes,
-                    request->mr_single ? fi_mr_desc(request->mr_single) : 0,
-                    wnd->peer_rma->fi_addr, (uint64_t)src, wnd->key_rma, request),
-                  "fi_read error:");
+        OFI_RETRY(fi_read(ofi_data.ep_rma.endpoint,
+                          dst,
+                          bytes,
+                          request->mr_single ? fi_mr_desc(request->mr_single) : 0,
+                          wnd->peer_rma->fi_addr,
+                          get_remote_addr(wnd->ptr, src, ot_rma),
+                          wnd->key_rma,
+                          request),
+                          "fi_read error:");
     else if(bytes <= ofi_data.max_buffered_send)
     {
-        OFI_RETRY(fi_inject_write(ofi_data.ep_rma.endpoint, src, bytes,
-                    wnd->peer_rma->fi_addr, (uint64_t)dst, wnd->key_rma),
-                  "fi_inject_write error:");
+        OFI_RETRY(fi_inject_write(ofi_data.ep_rma.endpoint,
+                                  src,
+                                  bytes,
+                                  wnd->peer_rma->fi_addr,
+                                  get_remote_addr(wnd->ptr, dst, ot_rma),
+                                  wnd->key_rma),
+                                  "fi_inject_write error:");
         complete_request(request);
-        /*OFI_RETRY(fi_write(ofi_data.ep_rma.endpoint, src, bytes,*/
-                    /*0,*/
-                    /*wnd->peer_rma->fi_addr, (uint64_t)dst, wnd->key_rma, request),*/
-                  /*"fi_write error:");*/
+        /*OFI_RETRY(fi_write(ofi_data.ep_rma.endpoint,
+                             src,
+                             bytes,
+                             0,
+                             wnd->peer_rma->fi_addr,
+                             get_remote_addr(wnd->ptr, dst, ot_rma),
+                             wnd->key_rma,
+                             request),
+                             "fi_write error:");
+        */
     }
 
     if (handle)
@@ -2254,12 +2322,18 @@ do                                                                \
     OFI_RETRY(fi_readmsg(endpoint, msg, 0), "fi_readmsg error:"); \
 } while (0)
 
-#define REG_MR(msg, request)                                                              \
+#define REG_LOCAL_MR(msg, request, op_type)                                               \
 do                                                                                        \
 {                                                                                         \
+    ofi_ep_t* ep = get_ep(op_type);                                                       \
+    if (FI_MR_SCALABLE == ep->mr_mode)                                                    \
+    {                                                                                     \
+        /* skip registration of local buffers in case of scalable mr */                   \
+        break;                                                                            \
+    }                                                                                     \
     (request)->mrs = (struct fid_mr**)malloc((msg)->iov_count * sizeof(*(request)->mrs)); \
     EXPR_CHKANDJUMP((request)->mrs, "failed to allocate memory");                         \
-    mr_regv(ofi_data.ep_rma.domain, (msg)->msg_iov, (msg)->iov_count, (request)->mrs);    \
+    mr_regv((msg)->msg_iov, (msg)->iov_count, (request)->mrs, ot_rma);                    \
     (request)->mr_count = (msg)->iov_count;                                               \
     (request)->dtor = req_dtor;                                                           \
                                                                                           \
@@ -2308,14 +2382,15 @@ static inline int getputs_stride(size_t src_idx, size_t dst_idx, void* data)
     struct fi_rma_iov* rmaelem = (struct fi_rma_iov*)msg->rma_iov + msg->rma_iov_count;
 
     iovelem->iov_base = context->is_get_op ? (char*)context->dst + dst_idx : (char*)context->src + src_idx;
-    rmaelem->addr = (uint64_t)(context->is_get_op ? (char*)context->src + src_idx : (char*)context->dst + dst_idx);
+    void* raw_remote_addr = (context->is_get_op ? (char*)context->src + src_idx : (char*)context->dst + dst_idx);
+    rmaelem->addr = get_remote_addr(context->wnd->ptr, raw_remote_addr, ot_rma);
 
     iovelem->iov_len = context->count[0];
     rmaelem->len = context->count[0];
 
-    assert(rmaelem->addr >= context->wnd->ptr);
+    assert((uint64_t)raw_remote_addr >= context->wnd->ptr);
     assert(rmaelem->len > 0);
-    assert(rmaelem->addr + rmaelem->len <= context->wnd->ptr + context->wnd->size);
+    assert((uint64_t)raw_remote_addr + rmaelem->len <= context->wnd->ptr + context->wnd->size);
 
     rmaelem->key = context->wnd->key_rma;
     msg->addr = context->wnd->peer_rma->fi_addr;
@@ -2326,7 +2401,7 @@ static inline int getputs_stride(size_t src_idx, size_t dst_idx, void* data)
 
     if (msg->iov_count >= ofi_data.rma_iov_limit)
     {
-        REG_MR(msg, (request_t*)msg->context);
+        REG_LOCAL_MR(msg, (request_t*)msg->context, ot_rma);
 
         if (context->is_get_op)
             GET_MSG(ofi_data.ep_rma.endpoint, msg);
@@ -2411,6 +2486,7 @@ static int nb_getputs(
 
     COMEX_CHKANDJUMP(lookup_window(is_get_op ? src : dst, count[0], proc, group, &wnd),
                      "failed to lookup window");
+    assert(wnd);
 
     strided_context_t context = {.src = src, .dst = dst, .count = count,
         .proc = proc, .group = group, .request = parent_req, .ops = 0,
@@ -2425,7 +2501,7 @@ static int nb_getputs(
     if (context.msg) /* not all operation are scheduled */
     {
         struct fi_msg_rma* msg = context.msg;
-        REG_MR(msg, (request_t*)msg->context);
+        REG_LOCAL_MR(msg, (request_t*)msg->context, ot_rma);
         if (is_get_op)
             GET_MSG(ofi_data.ep_rma.endpoint, msg);
         else
@@ -2638,27 +2714,29 @@ static int nb_getputv(
                 child_req->cmpl = complete_getput;
             }
 
+            ofi_window_t* wnd = 0;
+            void* raw_remote_addr = (is_get_op ? iov[i].src[j] : iov[i].dst[j]);
+            int iov_len = iov[i].bytes;
+            COMEX_CHKANDJUMP(lookup_window(raw_remote_addr, iov_len, proc, group, &wnd),
+                             "failed to lookup window");
+            assert(wnd);
+
             assert(msg);
             struct iovec* iovelem = (struct iovec*)msg->msg_iov + msg->iov_count;
             struct fi_rma_iov* rmaelem = (struct fi_rma_iov*)msg->rma_iov + msg->rma_iov_count;
 
             iovelem->iov_base = is_get_op ? iov[i].dst[j] : iov[i].src[j];
-            rmaelem->addr = (uint64_t)(is_get_op ? iov[i].src[j] : iov[i].dst[j]);
+            rmaelem->addr = get_remote_addr(wnd->ptr, raw_remote_addr, ot_rma);
 
-            iovelem->iov_len = iov[i].bytes;
-            rmaelem->len = iov[i].bytes;
+            iovelem->iov_len = iov_len;
+            rmaelem->len = iov_len;
 
-            ofi_window_t* wnd = 0;
-            COMEX_CHKANDJUMP(lookup_window((void*)rmaelem->addr, rmaelem->len, proc, group, &wnd),
-                             "failed to lookup window");
-
-            assert(wnd);
             rmaelem->key = wnd->key_rma;
             msg->addr = wnd->peer_rma->fi_addr;
 
-            assert(rmaelem->addr >= wnd->ptr);
+            assert((uint64_t)raw_remote_addr >= wnd->ptr);
             assert(rmaelem->len > 0);
-            assert(rmaelem->addr + rmaelem->len <= wnd->ptr + wnd->size);
+            assert((uint64_t)raw_remote_addr + rmaelem->len <= wnd->ptr + wnd->size);
 
             msg->iov_count++;
             msg->rma_iov_count++;
@@ -2666,7 +2744,7 @@ static int nb_getputv(
 
             if (msg->iov_count >= ofi_data.rma_iov_limit)
             {
-                REG_MR(msg, (request_t*)msg->context);
+                REG_LOCAL_MR(msg, (request_t*)msg->context, ot_rma);
 
                 if (is_get_op)
                     GET_MSG(ofi_data.ep_rma.endpoint, msg);
@@ -2680,7 +2758,7 @@ static int nb_getputv(
 
     if (msg)
     {
-        REG_MR(msg, (request_t*)msg->context);
+        REG_LOCAL_MR(msg, (request_t*)msg->context, ot_rma);
         if (is_get_op)
             GET_MSG(ofi_data.ep_rma.endpoint, msg);
         else
@@ -2851,6 +2929,7 @@ int comex_rmw(
 
     COMEX_CHKANDJUMP(lookup_window(prem, sizeof(extra), proc, group, &window),
                      "failed to lookup window");
+    assert(window);
 
     if(async_progress)
     {
@@ -2877,33 +2956,73 @@ int comex_rmw(
         {
             case COMEX_FETCH_AND_ADD:
             {
-                OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint, &extra, 1, 0, ploc, 0, window->peer_atomics->fi_addr,
-                          (uint64_t)prem, window->key_atomics, FI_INT32, FI_SUM, &request),
-                          "fi_fetch_atomic error:");
+                OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint,
+                                          &extra,
+                                          1,
+                                          0,
+                                          ploc,
+                                          0,
+                                          window->peer_atomics->fi_addr,
+                                          get_remote_addr(window->ptr, prem, ot_atomic),
+                                          window->key_atomics,
+                                          FI_INT32,
+                                          FI_SUM,
+                                          &request),
+                                          "fi_fetch_atomic error:");
             }
             break;
             case COMEX_FETCH_AND_ADD_LONG:
             {
                 long tmp = (long)extra;
-                OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint, &tmp, 1, 0, ploc, 0, window->peer_atomics->fi_addr,
-                          (uint64_t)prem, window->key_atomics, FI_INT64, FI_SUM, &request),
-                          "fi_fetch_atomic error:");
+                OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint,
+                                          &tmp,
+                                          1,
+                                          0,
+                                          ploc,
+                                          0,
+                                          window->peer_atomics->fi_addr,
+                                          get_remote_addr(window->ptr, prem, ot_atomic),
+                                          window->key_atomics,
+                                          FI_INT64,
+                                          FI_SUM,
+                                          &request),
+                                          "fi_fetch_atomic error:");
             }
             break;
             case COMEX_SWAP:
             {
                 int tmp = *(int*)ploc;
-                OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint, &tmp, 1, 0, ploc, 0, window->peer_atomics->fi_addr,
-                          (uint64_t)prem, window->key_atomics, FI_INT32, FI_ATOMIC_WRITE, &request),
-                          "fi_fetch_atomic error:");
+                OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint,
+                                          &tmp,
+                                          1,
+                                          0,
+                                          ploc,
+                                          0,
+                                          window->peer_atomics->fi_addr,
+                                          get_remote_addr(window->ptr, prem, ot_atomic),
+                                          window->key_atomics,
+                                          FI_INT32,
+                                          FI_ATOMIC_WRITE,
+                                          &request),
+                                          "fi_fetch_atomic error:");
             }
             break;
             case COMEX_SWAP_LONG:
             {
                 long tmp = *(long*)ploc;
-                OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint, &tmp, 1, 0, ploc, 0, window->peer_atomics->fi_addr,
-                          (uint64_t)prem, window->key_atomics, FI_INT64, FI_ATOMIC_WRITE, &request),
-                          "fi_fetch_atomic error");
+                OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint,
+                                          &tmp,
+                                          1,
+                                          0,
+                                          ploc,
+                                          0,
+                                          window->peer_atomics->fi_addr,
+                                          get_remote_addr(window->ptr, prem, ot_atomic),
+                                          window->key_atomics,
+                                          FI_INT64,
+                                          FI_ATOMIC_WRITE,
+                                          &request),
+                                          "fi_fetch_atomic error");
             }
             break;
             default:
@@ -2981,8 +3100,9 @@ static int create_mutexes(mutex_t** mtx, int num)
         local_mutex.tail[i] = PROC_NONE;
 
     struct fi_context context;
-    COMEX_CHKANDJUMP(mr_reg(ofi_data.ep_atomics.domain, mutex->data, buflen,
-            MR_ACCESS_PERMISSIONS, 0, 0, 0, &mutex->mr, &context), "failed to register memory:");
+    COMEX_CHKANDJUMP(mr_reg(mutex->data, buflen, MR_ACCESS_PERMISSIONS,
+                            &mutex->mr, &context, ot_atomic),
+                            "failed to register memory:");
 
     OFI_CALL(local_mutex.key, fi_mr_key(mutex->mr));
     /*MUTEX_MR_KEY(mutex->mr, local_mutex.key);*/
@@ -3078,20 +3198,40 @@ static int lock_mutex(mutex_t* mutex, int mtx, int proc)
 
     /* trying to lock mutex */
     int prev = PROC_NONE;
-    OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint, &my_proc, 1, 0, &prev, 0, ofi_data.ep_atomics.peers[proc].fi_addr,
-                              (uint64_t)(mutex->mcs_mutex[proc].tail + mtx), mutex->mcs_mutex[proc].key,
-                              FI_INT32, FI_ATOMIC_WRITE, &request),
-              "failed to process atomic ops:");
+    OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint,
+                              &my_proc,
+                              1,
+                              0,
+                              &prev,
+                              0,
+                              ofi_data.ep_atomics.peers[proc].fi_addr,
+                              get_remote_addr((uint64_t)mutex->mcs_mutex[proc].tail,
+                                              mutex->mcs_mutex[proc].tail + mtx,
+                                              ot_atomic),
+                              mutex->mcs_mutex[proc].key,
+                              FI_INT32,
+                              FI_ATOMIC_WRITE,
+                              &request),
+                              "failed to process atomic ops:");
     WAIT_COMPLETION_AND_RESET(&request);
     /*MUTEX_FOP_ATOMIC(mutex, proc, &my_proc, &prev, mtx, MUTEX_OP_WRITE);*/
 
     if (prev != PROC_NONE)
     { /* mutex was locked by another proc. write to prev's 'elem' object current
          proc & wait for notification from it */
-        OFI_RETRY(fi_atomic(ofi_data.ep_atomics.endpoint, &my_proc, 1, 0, ofi_data.ep_atomics.peers[prev].fi_addr,
-                            (uint64_t)(mutex->mcs_mutex[prev].elem + elem_index),
-                            mutex->mcs_mutex[prev].key, FI_INT32, FI_ATOMIC_WRITE, &request),
-                  "failed to process atomic ops:");
+        OFI_RETRY(fi_atomic(ofi_data.ep_atomics.endpoint,
+                            &my_proc,
+                            1,
+                            0,
+                            ofi_data.ep_atomics.peers[prev].fi_addr,
+                            get_remote_addr((uint64_t)mutex->mcs_mutex[prev].tail,
+                                            mutex->mcs_mutex[prev].elem + elem_index,
+                                            ot_atomic),
+                            mutex->mcs_mutex[prev].key,
+                            FI_INT32,
+                            FI_ATOMIC_WRITE,
+                            &request),
+                            "failed to process atomic ops:");
         WAIT_COMPLETION_AND_RESET(&request);
 
         int _buf;
@@ -3131,10 +3271,21 @@ static int unlock_mutex(mutex_t* mutex, int mtx, int proc)
     int next = PROC_NONE;
     /* read local 'next' value using atomic to prevent condition races:
      * same value may be processed by remote host at same time */
-    OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint, &my_proc, 1, 0, &next, 0, ofi_data.ep_atomics.peers[my_proc].fi_addr,
-                              (uint64_t)(mutex->mcs_mutex[my_proc].elem + elem_index), mutex->mcs_mutex[my_proc].key,
-                              FI_INT32, FI_ATOMIC_READ, &request),
-              "failed to process atomic ops:");
+    OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint,
+                              &my_proc,
+                              1,
+                              0,
+                              &next,
+                              0,
+                              ofi_data.ep_atomics.peers[my_proc].fi_addr,
+                              get_remote_addr((uint64_t)mutex->mcs_mutex[my_proc].tail,
+                                              mutex->mcs_mutex[my_proc].elem + elem_index,
+                                              ot_atomic),
+                              mutex->mcs_mutex[my_proc].key,
+                              FI_INT32,
+                              FI_ATOMIC_READ,
+                              &request),
+                              "failed to process atomic ops:");
     WAIT_COMPLETION_AND_RESET(&request);
     /*MUTEX_READ(mutex, my_proc, &next, MUTEX_ELEM_IDX(mutex->mcs_mutex[my_proc], elem_index));*/
 
@@ -3142,10 +3293,23 @@ static int unlock_mutex(mutex_t* mutex, int mtx, int proc)
     { /* check if somebody is waiting for mutex unlock */
         int no_proc = PROC_NONE;
         int tail = PROC_NONE;
-        OFI_RETRY(fi_compare_atomic(ofi_data.ep_atomics.endpoint, &no_proc, 1, 0, &my_proc, 0, &tail, 0,
-                                    ofi_data.ep_atomics.peers[proc].fi_addr, (uint64_t)(mutex->mcs_mutex[proc].tail + mtx),
-                                    mutex->mcs_mutex[proc].key, FI_INT32, FI_CSWAP, &request),
-                  "failed to process atomic ops:");
+        OFI_RETRY(fi_compare_atomic(ofi_data.ep_atomics.endpoint,
+                                    &no_proc,
+                                    1,
+                                    0,
+                                    &my_proc,
+                                    0,
+                                    &tail,
+                                    0,
+                                    ofi_data.ep_atomics.peers[proc].fi_addr,
+                                    get_remote_addr((uint64_t)mutex->mcs_mutex[proc].tail,
+                                                    mutex->mcs_mutex[proc].tail + mtx,
+                                                    ot_atomic),
+                                    mutex->mcs_mutex[proc].key,
+                                    FI_INT32,
+                                    FI_CSWAP,
+                                    &request),
+                                    "failed to process atomic ops:");
         WAIT_COMPLETION_AND_RESET(&request);
         /*MUTEX_CSWAP(mutex, proc, &no_proc, &my_proc, &tail, mtx);*/
 
@@ -3155,11 +3319,21 @@ static int unlock_mutex(mutex_t* mutex, int mtx, int proc)
             /*printf("[%d] reading from %d -> %d\n", l_state.proc, my_proc, MUTEX_ELEM_IDX(mutex->mcs_mutex[my_proc], elem_index));*/
             while (next == PROC_NONE)
             {
-                OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint, &my_proc, 1, 0, &next, 0,
+                OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint,
+                                          &my_proc,
+                                          1,
+                                          0,
+                                          &next,
+                                          0,
                                           ofi_data.ep_atomics.peers[my_proc].fi_addr,
-                                          (uint64_t)(mutex->mcs_mutex[my_proc].elem + elem_index), mutex->mcs_mutex[my_proc].key,
-                                          FI_INT32, FI_ATOMIC_READ, &request),
-                          "failed to process atomic ops:");
+                                          get_remote_addr((uint64_t)mutex->mcs_mutex[my_proc].tail,
+                                                          mutex->mcs_mutex[my_proc].elem + elem_index,
+                                                          ot_atomic),
+                                          mutex->mcs_mutex[my_proc].key,
+                                          FI_INT32,
+                                          FI_ATOMIC_READ,
+                                          &request),
+                                          "failed to process atomic ops:");
                 WAIT_COMPLETION_AND_RESET(&request);
                 /*MUTEX_READ(mutex, my_proc, &next, MUTEX_ELEM_IDX(mutex->mcs_mutex[my_proc], elem_index));*/
             }
@@ -3342,19 +3516,21 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     EXPR_CHKANDJUMP(l_wnd, "failed to allocate local window");
     memset(l_wnd, 0, sizeof(*l_wnd));
 
-    if(size)
+    if (size)
     {
         l_wnd->ptr = comex_malloc_local(size);
         EXPR_CHKANDJUMP(l_wnd->ptr, "failed to allocate local window buffer");
 
         struct fi_context context;
-        COMEX_CHKANDJUMP(mr_reg(ofi_data.ep_rma.domain, l_wnd->ptr, size, MR_ACCESS_PERMISSIONS,
-                0, 0, 0, &l_wnd->mr_rma, &context), "failed to register memory:");
+        COMEX_CHKANDJUMP(mr_reg(l_wnd->ptr, size, MR_ACCESS_PERMISSIONS,
+                                &l_wnd->mr_rma, &context, ot_rma),
+                                "failed to register memory:");
 
         if(dual_provider())
         {
-            COMEX_CHKANDJUMP(mr_reg(ofi_data.ep_atomics.domain, l_wnd->ptr, size, MR_ACCESS_PERMISSIONS,
-                    0, 0, 0, &l_wnd->mr_atomics, &context), "failed to register memory:");
+            COMEX_CHKANDJUMP(mr_reg(l_wnd->ptr, size, MR_ACCESS_PERMISSIONS,
+                                    &l_wnd->mr_atomics, &context, ot_atomic),
+                                    "failed to register memory:");
         }
         else
             l_wnd->mr_atomics = l_wnd->mr_rma;
@@ -3363,7 +3539,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     wnd_data_t my_wnd_data = {.ptr = (uint64_t)l_wnd->ptr,
                               .size = size,
                               .local_proc = 0};
-    if(size)
+    if (size)
     {
         OFI_CALL(my_wnd_data.key_rma, fi_mr_key(l_wnd->mr_rma));
         OFI_CALL(my_wnd_data.key_atomics, fi_mr_key(l_wnd->mr_atomics));
@@ -3629,11 +3805,6 @@ static int comex_nbaccs_emu(
         { /* chunk used in comaring because in case if chunk is small data is sent by inject */
             get_buf = (char *)malloc(total);
             request->data = get_buf;
-
-            /*struct fi_context context;*/
-            /*OFI_RETRY(fi_mr_reg(ofi_data.ep_rma.domain, request->data, total,*/
-                        /*MR_ACCESS_PERMISSIONS, 0, 0, 0, &request->mr_single, &context), "fi_mr_reg failed:");*/
-            /*desc = fi_mr_desc(request->mr_single);*/
         }
         else
         { /* if chunk is small - use same buffer for all packets (use inject call) */
