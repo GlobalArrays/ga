@@ -5,6 +5,7 @@
 #ifndef REQUEST_H_
 #define REQUEST_H_
 
+#include "comex.h"
 #include "comex_impl.h"
 
 #define sizeofa(x) (sizeof(x) / sizeof(*(x)))

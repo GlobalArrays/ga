@@ -1,6 +1,8 @@
 #ifndef DATATYPE_H_
 #define DATATYPE_H_
 
+#include "log.h"
+
 #define COMEX_DTYPES_COUNT (COMEX_ACC_LNG - COMEX_ACC_OFF)
 
 // comex datatype index starting from 0
@@ -36,8 +38,9 @@ do                                                                 \
           datasize = sizeof(SingleComplex);                        \
           break;                                                   \
       default:                                                     \
+          COMEX_OFI_LOG(WARN, "incorrect comex_datatype: %d",      \
+                        comex_dtype);                              \
           assert(0);                                               \
-          err_printf("incorrect comex_datatype: %d", comex_dtype); \
           goto fn_fail;                                            \
           break;                                                   \
   }                                                                \
@@ -76,8 +79,8 @@ static inline int scale_is_1(int datatype, void* scale)
         return (((SingleComplex*)scale)->real == 1.0f &&
                 ((SingleComplex*)scale)->imag == 0.0f);
     default:
+        COMEX_OFI_LOG(WARN, "scale_is_1: incorrect data type: %d", datatype);
         assert(0);
-        err_printf("scale_is_1: incorrect data type: %d", datatype);
         return 1;
     }
 }

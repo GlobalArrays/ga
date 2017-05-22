@@ -170,51 +170,14 @@ do                      \
       }                                     \
   } while (0)
 
-#define PAUSE()                                               \
-do                                                            \
-{                                                             \
-    if((async_progress || async_progress_thread) &&           \
-        !pthread_equal(pthread_self(), tid))                  \
-        sched_yield();                                        \
+#define PAUSE()                              \
+do                                           \
+{                                            \
+    if(env_data.async_progress &&            \
+        !pthread_equal(pthread_self(), tid)) \
+        sched_yield();                       \
 } while(0)
 /*#define PAUSE() sched_yield()*/
-
-static int comex_var_bool(const char* var)
-{
-    const char* val = getenv(var);
-    if(val &&
-      (val[0] == 'y' || val[0] == 'Y' ||
-       val[0] == 't' || val[0] == 'T' ||
-      (val[0] >= '1' && val[0] <= '9')))
-        return 1;
-    return 0;
-}
-
-static void print_backtrace(void)
-{
-    int j, nptrs;
-    void *buffer[100];
-    char **strings;
-
-    nptrs = backtrace(buffer, 100);
-    printf("backtrace() returned %d addresses\n", nptrs);
-    fflush(stdout);
-
-    strings = backtrace_symbols(buffer, nptrs);
-    if (strings == NULL)
-    {
-        perror("backtrace_symbols");
-        exit(EXIT_FAILURE);
-    }
-
-    for (j = 0; j < nptrs; j++)
-    {
-        printf("%s\n", strings[j]);
-        fflush(stdout);
-    }
-
-    free(strings);
-}
 
 static void err_printf(const char *fmt, ...)
 {
@@ -224,7 +187,6 @@ static void err_printf(const char *fmt, ...)
     va_end(list);
     fprintf(stderr, "\n");
     fflush(stderr);
-    //print_backtrace();
 }
 
 /* Struct declaration */

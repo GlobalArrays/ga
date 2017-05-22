@@ -6,8 +6,6 @@
 #   include "config.h"
 #endif
 
-/*#define COMEX_WND_DEBUG*/
-
 /* C and/or system headers */
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +33,9 @@
 #include "comex.h"
 #include "comex_impl.h"
 #include "datatype.h"
+#include "env.h"
 #include "groups.h"
+#include "log.h"
 #include "mutex.h"
 #include "ofi.h"
 
@@ -44,8 +44,6 @@
 #ifndef ATOMIC_NATIVE_ONLY
 #  define USE_ATOMIC_EMULATION
 #endif /* ATOMIC_NO_EMULATION */
-
-/*#define DEBUG 1*/
 
 #define WAIT_COMPLETION_AND_RESET(_request)  \
 do {                                         \
@@ -70,11 +68,6 @@ struct request_cache_t* request_cache = 0;
 /* static state */
 static int  initialized=0;  /* for comex_initialized(), 0=false */
 static char skip_lock=0;    /* don't acquire or release lock */
-
-static int async_progress = 0;
-static int async_progress_thread = 0;
-static int force_sync_mode = 0;
-static int native_atomics = 1;
 
 /* static function declarations */
 static inline int wait_request(request_t* request);
@@ -560,16 +553,12 @@ static int init_ep(struct fi_info* hints, ofi_ep_t* ep, int suppress_fail)
     OFI_CHKANDJUMP(ret, "fi_getinfo:");
     EXPR_CHKANDJUMP(provider, "no provider found with desired capabilities");
 
-#ifdef DEBUG
-    {
-        err_printf("Using provider '%s.%d'\n",
-                provider->fabric_attr->prov_name,
-                provider->fabric_attr->prov_version);
-    }
-#endif /* DEBUG */
+    COMEX_OFI_LOG(INFO, "Using provider '%s.%d'",
+                  provider->fabric_attr->prov_name,
+                  provider->fabric_attr->prov_version);
 
     ep->mr_mode = provider->domain_attr->mr_mode;
-    printf("init_ep: prov_name: %s, mr_mode %d\n", provider->fabric_attr->prov_name, ep->mr_mode);
+    COMEX_OFI_LOG(INFO, "prov_name: %s, mr_mode %d", provider->fabric_attr->prov_name, ep->mr_mode);
     EXPR_CHKANDJUMP(((ep->mr_mode == FI_MR_BASIC) || (ep->mr_mode == FI_MR_SCALABLE)), "unsupported mr mode");
 
     /* ---------------------------- */
@@ -911,12 +900,7 @@ static int init_ofi()
 {
     OFI_LOCK_INIT();
 
-    async_progress = comex_var_bool("COMEX_OFI_ASYNC_PROGRESS");
-    async_progress_thread = comex_var_bool("COMEX_OFI_FORCE_ASYNC_THREAD");
-    force_sync_mode = comex_var_bool("COMEX_OFI_FORCE_SYNC");
-    /* WARNING!!! async progress is really experimental feature!!!
-     * it may crash your application. enable it only in case if
-     * you know what are you doing */
+    parse_env_vars();
 
     if(load_ofi(&ld_table) != COMEX_SUCCESS)
         goto fn_fail;
@@ -928,9 +912,7 @@ static int init_ofi()
     hints_saw->domain_attr->threading        = FI_THREAD_ENDPOINT;
     hints_saw->domain_attr->control_progress = FI_PROGRESS_AUTO;
     hints_saw->domain_attr->data_progress    = FI_PROGRESS_AUTO;
-
-    char* prov_name = getenv("COMEX_OFI_PROVIDER");
-    hints_saw->fabric_attr->prov_name = prov_name ? strdup(prov_name) : 0;
+    hints_saw->fabric_attr->prov_name        = env_data.provider ? strdup(env_data.provider) : 0;
 
     struct fi_info* hints_remcon = CALL_TABLE_FUNCTION(&ld_table, fi_dupinfo(hints_saw));
 
@@ -976,7 +958,7 @@ static int init_ofi()
             init_done = (init_ep(hints_saw, &ofi_data.ep_rma, 1) == COMEX_SUCCESS);
         EXPR_CHKANDJUMP(init_done, "failed to create endpoint");
 
-        if(async_progress) /* when async progress used all atomics are implemented using p2p */
+        if (env_data.async_progress) /* when async progress used all atomics are implemented using p2p */
             ofi_data.ep_atomics = ofi_data.ep_rma;
         else
         {
@@ -1011,8 +993,7 @@ static int init_ofi()
     size_t max_elems_in_atomic = 0;
 
 #ifdef USE_ATOMIC_EMULATION
-    native_atomics = comex_var_bool("COMEX_OFI_NATIVE_ATOMICS");
-    if(native_atomics)
+    if (env_data.native_atomics)
     {
         comex_acc_f    = comex_acc_native;
         comex_accs_f   = comex_accs_native;
@@ -1023,7 +1004,7 @@ static int init_ofi()
     }
 #endif /* USE_ATOMIC_EMULATION */
 
-    if(native_atomics)
+    if (env_data.native_atomics)
     {
         for (comex_dtype = COMEX_ACC_INT; comex_dtype <= COMEX_ACC_LNG; comex_dtype++)
         {
@@ -1045,14 +1026,14 @@ static int init_ofi()
         }
     }
 
-    if(async_progress || async_progress_thread)
+    if (env_data.async_progress)
     {
         tid = pthread_self();
         pthread_create(&atomics_pthread, 0, atomics_thread_func, 0);
     }
 
-    if(async_progress)
-    { /* prepost rmw request */
+    if (env_data.async_progress)
+    {   /* prepost rmw request */
         PREPOST_ATOMICS();
     }
 
@@ -1066,22 +1047,24 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-#define CQ_CHKANDJUMP(cq, ret)                                            \
-do                                                                        \
-{                                                                         \
-    if(ret < 0 && ret != -FI_EAGAIN)                                      \
-    {                                                                     \
-        struct fi_cq_err_entry error;                                     \
-        err_printf("cq_read: error available");                           \
-        int err = fi_cq_readerr(cq, (void *)&error, 0);                   \
-        if (err < 0)                                                      \
-        {                                                                 \
-            err_printf("cq_read_err: can't retrieve error... (%d)", ret); \
-            goto fn_fail;                                                 \
-        }                                                                 \
-        err_printf("cq_read_err: error is %d (ret=%d)", error.err, ret);  \
-        goto fn_fail;                                                     \
-    }                                                                     \
+#define CQ_CHKANDJUMP(cq, ret)                                               \
+do                                                                           \
+{                                                                            \
+    if (ret < 0 && ret != -FI_EAGAIN)                                        \
+    {                                                                        \
+        struct fi_cq_err_entry error;                                        \
+        COMEX_OFI_LOG(INFO, "cq_read: error available");                     \
+        int err = fi_cq_readerr(cq, (void *)&error, 0);                      \
+        if (err < 0)                                                         \
+        {                                                                    \
+            COMEX_OFI_LOG(INFO, "cq_read_err: can't retrieve error... (%d)", \
+                          ret);                                              \
+            goto fn_fail;                                                    \
+        }                                                                    \
+        COMEX_OFI_LOG(INFO, "cq_read_err: error is %d (ret=%d)",             \
+                      error.err, ret);                                       \
+        goto fn_fail;                                                        \
+    }                                                                        \
 } while(0)
 
 static int poll(int* items_processed)
@@ -1235,8 +1218,8 @@ int comex_initialized()
 
 void comex_error(char *msg, int code)
 {
-    err_printf("[%d] Received an Error in Communication: (%d) %s\n",
-            l_state.proc, code, msg);
+    COMEX_OFI_LOG(ERROR, "[%d] Received an Error in Communication: (%d) %s",
+                  l_state.proc, code, msg);
     MPI_Abort(l_state.world_comm, code);
 }
 
@@ -1270,12 +1253,11 @@ static int lookup_window(void* ptr, int size, int proc, comex_group_t group, ofi
             *res = ofi_wnd_cache = wnd;
             return COMEX_SUCCESS;
         }
-#ifdef COMEX_WND_DEBUG
-        else if(wnd->world_proc == proc && wnd->ptr <= (uint64_t)ptr && wnd->ptr + (uint64_t)wnd->size > (uint64_t)ptr)
+        else if (wnd->world_proc == proc && wnd->ptr <= (uint64_t)ptr && wnd->ptr + (uint64_t)wnd->size > (uint64_t)ptr)
         {
-            err_printf("(%d) WARNING: found candidate window: missing %d bytes tail (length: %d, expected: %d:%d)\n", getpid(), (int)(((long)ptr + size) - ((long)wnd->ptr + wnd->size)), wnd->size, (int)((long)ptr - (long)wnd->ptr), size);
+            COMEX_OFI_LOG(INFO, "WARNING: found candidate window: missing %d bytes tail (length: %d, expected: %d:%d)",
+                          (int)(((long)ptr + size) - ((long)wnd->ptr + wnd->size)), wnd->size, (int)((long)ptr - (long)wnd->ptr), size);
         }
-#endif /* COMEX_WND_DEBUG */
         wnd = wnd->next;
     }
 
@@ -1623,7 +1605,7 @@ static int finalize_ep(ofi_ep_t* ep)
         OFI_CALL(ret, fi_close((struct fid*)ep->domain));
         if (ret == -FI_EBUSY)
         {
-            /*err_printf("warning: domain is busy!");*/
+            COMEX_OFI_LOG(WARN, "domain is busy");
             COMEX_CHKANDJUMP(destroy_all_windows(), "failed to destroy all windows");
             OFI_CALL(ret, fi_close((struct fid*)ep->domain));
         }
@@ -1660,7 +1642,7 @@ static int finalize_ofi()
         pthread_join(atomics_pthread, 0);
     }
 
-    if(async_progress)
+    if (env_data.async_progress)
     {
         OFI_CHKANDJUMP(fi_cancel((fid_t)ofi_data.ep_tagged.endpoint, &atomics_preposted_request), "fi_cancel failed");
         struct fi_cq_err_entry err;
@@ -2035,7 +2017,7 @@ static int iov_acc(int datatype, void * scale,
             SCALE(float complex);
             break;
         default:
-            err_printf("iov_acc: incorrect data type: %d", datatype);
+            COMEX_OFI_LOG(WARN, "iov_acc: incorrect data type: %d", datatype);
             return 1;
         }
     }
@@ -2240,11 +2222,11 @@ int nb_getput(
         *handle = (comex_request_t)request->index;
 
 fn_success:
-    if(force_sync_mode)
+    if (env_data.force_sync)
     {
-        if(request)
+        if (request)
             wait_request(request);
-        if(handle)
+        if (handle)
             *handle = HANDLE_UNDEFINED;
     }
     return COMEX_SUCCESS;
@@ -2474,18 +2456,13 @@ static int nb_getputs(
     parent_req->group = group;
     parent_req->proc = proc;
 
-#ifdef COMEX_WND_DEBUG
-    if(lookup_window(is_get_op ? src : dst, count[0], proc, group, &wnd) != COMEX_SUCCESS)
+    if (lookup_window(is_get_op ? src : dst, count[0], proc, group, &wnd) != COMEX_SUCCESS)
     {
-        err_printf("(%d) Failed to lookup window: length: %d\n", getpid(), count[0]);
+        COMEX_OFI_LOG(INFO, "Failed to lookup window: length: %d", count[0]);
         int i;
         for(i = 0; i <= stride_levels; i++)
-            printf("  (%d) %d: count = %d, stride: %d\n", getpid(), i, count[i], ((is_get_op) ? src_stride : dst_stride)[i]);
+            COMEX_OFI_LOG(DEBUG, " %d: count = %d, stride: %d\n", i, count[i], ((is_get_op) ? src_stride : dst_stride)[i]);
     }
-#endif /* COMEX_WND_DEBUG */
-
-    COMEX_CHKANDJUMP(lookup_window(is_get_op ? src : dst, count[0], proc, group, &wnd),
-                     "failed to lookup window");
     assert(wnd);
 
     strided_context_t context = {.src = src, .dst = dst, .count = count,
@@ -2523,11 +2500,11 @@ static int nb_getputs(
     /*}*/
 
 fn_success:
-    if(force_sync_mode)
+    if (env_data.force_sync)
     {
-        if(parent_req)
+        if (parent_req)
             wait_request(parent_req);
-        if(handle)
+        if (handle)
             *handle = HANDLE_UNDEFINED;
     }
     return COMEX_SUCCESS;
@@ -2775,11 +2752,11 @@ static int nb_getputv(
     decrement_request_cnt(parent_req);
 
 fn_success:
-    if(force_sync_mode)
+    if (env_data.force_sync)
     {
-        if(parent_req)
+        if (parent_req)
             wait_request(parent_req);
-        if(handle)
+        if (handle)
             *handle = HANDLE_UNDEFINED;
     }
     return COMEX_SUCCESS;
@@ -2931,7 +2908,7 @@ int comex_rmw(
                      "failed to lookup window");
     assert(window);
 
-    if(async_progress)
+    if (env_data.async_progress)
     {
         ofi_atomics_t header = {.rmw = {.proto.proc = l_state.proc, .proto.op = op, .proto.tag = GETTAG(),
                                 .src = (op == COMEX_SWAP) ? *(int*)ploc :
@@ -3449,7 +3426,7 @@ fn_fail:
 
 int comex_lock(int mtx, int proc)
 {
-    if(async_progress)
+    if (env_data.async_progress)
         return lock_am_mutex(mtx, proc);
     else
         return lock_mutex(global_mutex, mtx, proc);
@@ -3457,7 +3434,7 @@ int comex_lock(int mtx, int proc)
 
 int comex_unlock(int mtx, int proc)
 {
-    if(async_progress)
+    if (env_data.async_progress)
         return unlock_am_mutex(mtx, proc);
     else
         return unlock_mutex(global_mutex, mtx, proc);
@@ -3465,7 +3442,7 @@ int comex_unlock(int mtx, int proc)
 
 int comex_create_mutexes(int num)
 {
-    if(async_progress)
+    if (env_data.async_progress)
         COMEX_CHKANDJUMP(create_am_mutexes(num), "failed to create mutexes");
     else
     {
@@ -3484,7 +3461,7 @@ fn_fail:
 
 int comex_destroy_mutexes()
 {
-    if(async_progress)
+    if (env_data.async_progress)
         COMEX_CHKANDJUMP(destroy_am_mutexes(), "failed to destroy mutexes");
     else
     {
@@ -3679,7 +3656,7 @@ fn_fail:
 
 static void acquire_remote_lock(int proc)
 {
-    if(async_progress)
+    if (env_data.async_progress)
         assert(0);
     lock_mutex(local_mutex, 0, proc);
 }
@@ -3687,7 +3664,7 @@ static void acquire_remote_lock(int proc)
 
 static void release_remote_lock(int proc)
 {
-    if(async_progress)
+    if (env_data.async_progress)
         assert(0);
     unlock_mutex(local_mutex, 0, proc);
 }
@@ -3756,13 +3733,14 @@ static int comex_nbaccs_emu(
         dst_bunit[i] = dst_bunit[i-1] * count[i-1];
     }
 
-    if (!async_progress && 0 == skip_lock) {
+    if (!env_data.async_progress && 0 == skip_lock)
+    {
         // grab the atomics lock
         acquire_remote_lock(proc);
     }
 
-    if(!async_progress)
-    { /* use common buffer to acc */
+    if (!env_data.async_progress)
+    {   /* use common buffer to acc */
         get_buf = (char *)malloc(sizeof(char) * count[0]);
         EXPR_CHKANDJUMP(get_buf, "failed to allocate memory\n");
     }
@@ -3838,7 +3816,7 @@ static int comex_nbaccs_emu(
             }
         }
 
-        if(!async_progress)
+        if (!env_data.async_progress)
         {
             // Get the remote data in a temp buffer
             COMEX_CHKANDJUMP(comex_get((char *)dst_ptr + dst_idx, get_buf, count[0], proc, group),
@@ -3907,22 +3885,23 @@ static int comex_nbaccs_emu(
         }
     }
 
-    if(request)
+    if (request)
     {
         decrement_request_cnt(request);
         if(request->data)
             get_buf = 0; /* buffer will be removed by request */
     }
 
-    if (!async_progress && 0 == skip_lock) {
+    if (!env_data.async_progress && 0 == skip_lock)
+    {
         // ungrab the lock
         release_remote_lock(proc);
     }
 
 fn_exit:
-    if(get_buf)
+    if (get_buf)
         free(get_buf);
-    if(force_sync_mode)
+    if (env_data.force_sync)
     {
         if(request)
             wait_request(request);
@@ -4008,7 +3987,7 @@ static int comex_nbaccv_emu(
     if(hdl)
         *hdl = HANDLE_UNDEFINED;
 
-    if(!async_progress)
+    if (!env_data.async_progress)
     {
         skip_lock = 1;
         acquire_remote_lock(proc);
@@ -4039,7 +4018,7 @@ static int comex_nbaccv_emu(
 fn_exit:
     if(reqs)
         free(reqs);
-    if(!async_progress)
+    if (!env_data.async_progress)
     {
         skip_lock = 0;
         release_remote_lock(proc);
