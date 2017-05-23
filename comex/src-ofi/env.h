@@ -5,10 +5,11 @@
 
 typedef struct env_data_t
 {
-    int log_level;
-    int native_atomics;
-    int async_progress;
-    int force_sync;
+    int   log_level;
+    int   native_atomics;
+    int   emulation_type;
+    int   progress_thread;
+    int   force_sync;
     char* provider;
     char* library_path;
 } env_data_t __attribute__ ((aligned (CACHELINE_SIZE)));

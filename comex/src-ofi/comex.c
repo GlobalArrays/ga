@@ -66,8 +66,8 @@ ofi_data_t ofi_data;
 struct request_cache_t* request_cache = 0;
 
 /* static state */
-static int  initialized=0;  /* for comex_initialized(), 0=false */
-static char skip_lock=0;    /* don't acquire or release lock */
+static int  initialized = 0;  /* for comex_initialized(), 0=false */
+static char skip_lock = 0;    /* don't acquire or release lock */
 
 /* static function declarations */
 static inline int wait_request(request_t* request);
@@ -644,13 +644,13 @@ fn_fail:
 
 static ofi_atomics_t atomics_header;
 static request_t atomics_preposted_request;
-static volatile int atomics_thread_complete = 0;
+static volatile int progress_thread_complete = 0;
 
-static pthread_t atomics_pthread = 0;
+static pthread_t progress_thread = 0;
 
-static void* atomics_thread_func(void* __data)
+static void* progress_thread_func(void* __data)
 {
-    while(!atomics_thread_complete)
+    while (!progress_thread_complete)
     {
         poll(0);
         PAUSE();
@@ -741,7 +741,7 @@ static void atomics_completion(request_t* request)
     /* re-post rmw request */
     PREPOST_ATOMICS();
 
-    switch(header.proto.op)
+    switch (header.proto.op)
     {
         case COMEX_FETCH_AND_ADD:
         {
@@ -936,31 +936,34 @@ static int init_ofi()
     /* first try to get provider where delivery complete supported */
     init_done = (init_ep(hints_remcon, &ofi_data.ep_rma, 1) == COMEX_SUCCESS);
 
-    if(init_done)
+    if (init_done)
     {
         ofi_data.ep_atomics = ofi_data.ep_rma;
     }
     else
     {
-        if(init_done = (init_ep(hints_saw, &ofi_data.ep_rma, 1) == COMEX_SUCCESS))
-        { /* great!!! we got provider with all required caps */
+        if (init_done = (init_ep(hints_saw, &ofi_data.ep_rma, 1) == COMEX_SUCCESS))
+        {   /* great!!! we got provider with all required caps */
             ofi_data.ep_atomics = ofi_data.ep_rma;
         }
     }
 
-    if(!init_done)
-    { /* ok, try to use different providers for RMA & atomics */
+    if (!init_done)
+    {   /* ok, try to use different providers for RMA & atomics */
         hints_saw->caps = RMA_PROVIDER_CAPS;
         hints_remcon->caps = RMA_PROVIDER_CAPS;
 
         init_done = (init_ep(hints_remcon, &ofi_data.ep_rma, 1) == COMEX_SUCCESS);
-        if(!init_done)
+        if (!init_done)
             init_done = (init_ep(hints_saw, &ofi_data.ep_rma, 1) == COMEX_SUCCESS);
         EXPR_CHKANDJUMP(init_done, "failed to create endpoint");
 
-        if (env_data.async_progress) /* when async progress used all atomics are implemented using p2p */
+        if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
+        {
+            /* in case when emulated atomics are performed on target side use only p2p api */
             ofi_data.ep_atomics = ofi_data.ep_rma;
-        else
+        }
+        else /* native or emulated on origin side (acc over rma, rmw over atomic) */
         {
             hints_remcon->caps = ATOMICS_PROVIDER_CAPS;
             hints_saw->caps = ATOMICS_PROVIDER_CAPS;
@@ -968,10 +971,16 @@ static int init_ofi()
             hints_saw->fabric_attr->prov_name = 0;
 
             init_done = (init_ep(hints_remcon, &ofi_data.ep_atomics, 0) == COMEX_SUCCESS);
-            if(!init_done)
+            if (!init_done)
                 init_done = (init_ep(hints_saw, &ofi_data.ep_atomics, 0) == COMEX_SUCCESS);
             EXPR_CHKANDJUMP(init_done, "failed to create endpoint");
         }
+    }
+
+    if (l_state.proc == 0)
+    {
+        COMEX_OFI_LOG(INFO, "rma_ep name: %s", ofi_data.ep_rma.provider->fabric_attr->prov_name);
+        COMEX_OFI_LOG(INFO, "atomics_ep name: %s", ofi_data.ep_atomics.provider->fabric_attr->prov_name);
     }
 
     CALL_TABLE_FUNCTION(&ld_table, fi_freeinfo(hints_saw));
@@ -1002,6 +1011,15 @@ static int init_ofi()
         comex_nbaccs_f = comex_nbaccs_native;
         comex_nbaccv_f = comex_nbaccv_native;
     }
+    else
+    {
+        comex_acc_f    = comex_acc_emu;
+        comex_accs_f   = comex_accs_emu;
+        comex_accv_f   = comex_accv_emu;
+        comex_nbacc_f  = comex_nbacc_emu;
+        comex_nbaccs_f = comex_nbaccs_emu;
+        comex_nbaccv_f = comex_nbaccv_emu;
+    }
 #endif /* USE_ATOMIC_EMULATION */
 
     if (env_data.native_atomics)
@@ -1026,14 +1044,15 @@ static int init_ofi()
         }
     }
 
-    if (env_data.async_progress)
+    if (env_data.progress_thread)
     {
         tid = pthread_self();
-        pthread_create(&atomics_pthread, 0, atomics_thread_func, 0);
+        pthread_create(&progress_thread, 0, progress_thread_func, 0);
     }
 
-    if (env_data.async_progress)
-    {   /* prepost rmw request */
+    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
+    {   
+        /* prepost rmw request */
         PREPOST_ATOMICS();
     }
 
@@ -1636,13 +1655,13 @@ static int finalize_ofi()
 {
     int ret = 0;
 
-    if(atomics_pthread)
+    if (progress_thread)
     {
-        atomics_thread_complete = 1;
-        pthread_join(atomics_pthread, 0);
+        progress_thread_complete = 1;
+        pthread_join(progress_thread, 0);
     }
 
-    if (env_data.async_progress)
+    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
     {
         OFI_CHKANDJUMP(fi_cancel((fid_t)ofi_data.ep_tagged.endpoint, &atomics_preposted_request), "fi_cancel failed");
         struct fi_cq_err_entry err;
@@ -2908,7 +2927,7 @@ int comex_rmw(
                      "failed to lookup window");
     assert(window);
 
-    if (env_data.async_progress)
+    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
     {
         ofi_atomics_t header = {.rmw = {.proto.proc = l_state.proc, .proto.op = op, .proto.tag = GETTAG(),
                                 .src = (op == COMEX_SWAP) ? *(int*)ploc :
@@ -3426,7 +3445,7 @@ fn_fail:
 
 int comex_lock(int mtx, int proc)
 {
-    if (env_data.async_progress)
+    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
         return lock_am_mutex(mtx, proc);
     else
         return lock_mutex(global_mutex, mtx, proc);
@@ -3434,7 +3453,7 @@ int comex_lock(int mtx, int proc)
 
 int comex_unlock(int mtx, int proc)
 {
-    if (env_data.async_progress)
+    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
         return unlock_am_mutex(mtx, proc);
     else
         return unlock_mutex(global_mutex, mtx, proc);
@@ -3442,7 +3461,7 @@ int comex_unlock(int mtx, int proc)
 
 int comex_create_mutexes(int num)
 {
-    if (env_data.async_progress)
+    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
         COMEX_CHKANDJUMP(create_am_mutexes(num), "failed to create mutexes");
     else
     {
@@ -3461,7 +3480,7 @@ fn_fail:
 
 int comex_destroy_mutexes()
 {
-    if (env_data.async_progress)
+    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
         COMEX_CHKANDJUMP(destroy_am_mutexes(), "failed to destroy mutexes");
     else
     {
@@ -3656,7 +3675,7 @@ fn_fail:
 
 static void acquire_remote_lock(int proc)
 {
-    if (env_data.async_progress)
+    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
         assert(0);
     lock_mutex(local_mutex, 0, proc);
 }
@@ -3664,7 +3683,7 @@ static void acquire_remote_lock(int proc)
 
 static void release_remote_lock(int proc)
 {
-    if (env_data.async_progress)
+    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
         assert(0);
     unlock_mutex(local_mutex, 0, proc);
 }
@@ -3696,6 +3715,9 @@ static int comex_nbaccs_emu(
         int proc, comex_group_t group,
         comex_request_t* comex_request)
 {
+    assert(env_data.native_atomics == 0);
+    assert(env_data.emulation_type == et_origin || env_data.emulation_type == et_target);
+
     int i, j;
     size_t src_idx, dst_idx;  /* index offset of current block position to ptr */
     int n1dim;  /* number of 1 dim block */
@@ -3733,19 +3755,21 @@ static int comex_nbaccs_emu(
         dst_bunit[i] = dst_bunit[i-1] * count[i-1];
     }
 
-    if (!env_data.async_progress && 0 == skip_lock)
+    if (env_data.emulation_type == et_origin && 0 == skip_lock)
     {
         // grab the atomics lock
         acquire_remote_lock(proc);
     }
 
-    if (!env_data.async_progress)
-    {   /* use common buffer to acc */
+    if (env_data.emulation_type == et_origin)
+    {   
+        /* use common buffer to acc */
         get_buf = (char *)malloc(sizeof(char) * count[0]);
         EXPR_CHKANDJUMP(get_buf, "failed to allocate memory\n");
     }
-    else
-    { /* use p2p way for atomics: send header to allow pre-post request */
+    else if (env_data.emulation_type == et_target)
+    {
+        /* use p2p way for atomics: send header to allow pre-post request */
         VALIDATE_GROUP_AND_PROC(group, proc);
         comex_group_translate_world(group, proc, &world_proc);
         EXPR_CHKANDJUMP((world_proc != PROC_NONE), "invalid world proc");
@@ -3780,12 +3804,14 @@ static int comex_nbaccs_emu(
                   "failed to send tagged:");
 
         if(chunk > ofi_data.max_buffered_send)
-        { /* chunk used in comaring because in case if chunk is small data is sent by inject */
+        {   
+            /* chunk used in comaring because in case if chunk is small data is sent by inject */
             get_buf = (char *)malloc(total);
             request->data = get_buf;
         }
         else
-        { /* if chunk is small - use same buffer for all packets (use inject call) */
+        {   
+            /* if chunk is small - use same buffer for all packets (use inject call) */
             get_buf = (char *)malloc(chunk);
         }
         EXPR_CHKANDJUMP(get_buf, "failed to allocate memory\n");
@@ -3816,7 +3842,7 @@ static int comex_nbaccs_emu(
             }
         }
 
-        if (!env_data.async_progress)
+        if (env_data.emulation_type == et_origin)
         {
             // Get the remote data in a temp buffer
             COMEX_CHKANDJUMP(comex_get((char *)dst_ptr + dst_idx, get_buf, count[0], proc, group),
@@ -3829,8 +3855,9 @@ static int comex_nbaccs_emu(
             COMEX_CHKANDJUMP(comex_put(get_buf, (char *)dst_ptr + dst_idx, count[0], proc, group),
                     "comex_accs_emu: failed to put data");
         }
-        else
-        { /* use p2p way for atomics: send header to allow pre-post request */
+        else if (env_data.emulation_type == et_target)
+        {   
+            /* use p2p way for atomics: send header to allow pre-post request */
             ofi_atomics_t _hdr = {
                 .acc = {.proto.proc = l_state.proc, .proto.op = datatype, .proto.tag = header.proto.tag,
                 .len = count[0], .posted = count[0],
@@ -3892,7 +3919,7 @@ static int comex_nbaccs_emu(
             get_buf = 0; /* buffer will be removed by request */
     }
 
-    if (!env_data.async_progress && 0 == skip_lock)
+    if (env_data.emulation_type == et_origin && 0 == skip_lock)
     {
         // ungrab the lock
         release_remote_lock(proc);
@@ -3987,7 +4014,7 @@ static int comex_nbaccv_emu(
     if(hdl)
         *hdl = HANDLE_UNDEFINED;
 
-    if (!env_data.async_progress)
+    if (env_data.emulation_type == et_origin)
     {
         skip_lock = 1;
         acquire_remote_lock(proc);
@@ -4018,7 +4045,7 @@ static int comex_nbaccv_emu(
 fn_exit:
     if(reqs)
         free(reqs);
-    if (!env_data.async_progress)
+    if (env_data.emulation_type == et_origin)
     {
         skip_lock = 0;
         release_remote_lock(proc);

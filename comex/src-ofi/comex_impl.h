@@ -173,7 +173,7 @@ do                      \
 #define PAUSE()                              \
 do                                           \
 {                                            \
-    if(env_data.async_progress &&            \
+    if (env_data.progress_thread &&          \
         !pthread_equal(pthread_self(), tid)) \
         sched_yield();                       \
 } while(0)
@@ -258,6 +258,12 @@ typedef enum op_type_t
     ot_rma,
     ot_atomic
 } op_type_t;
+
+typedef enum emulation_type_t
+{
+    et_origin = 0,
+    et_target
+} emulation_type_t;
 
 typedef struct ofi_proto_t
 {
