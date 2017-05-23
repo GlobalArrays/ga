@@ -60,32 +60,32 @@ char solve_evp_real_2stage ();
 # GA_RUN_ELPA_TEST
 # ----------------
 # Test the linker.
-#  Sets ga_elpa_ok=yes on success.
+# Clears ELPA_LIBS on failure.  Sets ga_elpa_ok=yes on success.
 AC_DEFUN([GA_RUN_ELPA_TEST], [
 AS_IF([test "x$enable_f77" = xno],
    [AC_LANG_PUSH([C])
     GA_C_ELPA_TEST()
-    AC_LINK_IFELSE([], [ga_elpa_ok=yes])
+    AC_LINK_IFELSE([], [ga_elpa_ok=yes], [ELPA_LIBS=])
     AC_LANG_POP([C])],
    [AC_LANG_PUSH([Fortran 77])
     GA_F77_ELPA_TEST()
-    AC_LINK_IFELSE([], [ga_elpa_ok=yes])
+    AC_LINK_IFELSE([], [ga_elpa_ok=yes], [ELPA_LIBS=])
     AC_LANG_POP([Fortran 77])])
 ])dnl
 
-# GA_RUN_ELPA_TEST
+# GA_RUN_ELPA_2STAGE_TEST
 # ----------------
 # Test the linker.
-# Clears ELPA_LIBS on failure.  Sets ga_elpa_ok=yes on success.
+#  Sets ga_elpa_ok=yes on success.
 AC_DEFUN([GA_RUN_ELPA_2STAGE_TEST], [
 AS_IF([test "x$enable_f77" = xno],
    [AC_LANG_PUSH([C])
     GA_C_ELPA_2STAGE_TEST()
-    AC_LINK_IFELSE([], [ga_elpa_2stage_ok=yes], [ELPA_LIBS=])
+    AC_LINK_IFELSE([], [ga_elpa_2stage_ok=yes])
     AC_LANG_POP([C])],
    [AC_LANG_PUSH([Fortran 77])
     GA_F77_ELPA_2STAGE_TEST()
-    AC_LINK_IFELSE([], [ga_elpa_2stage_ok=yes], [ELPA_LIBS=])
+    AC_LINK_IFELSE([], [ga_elpa_2stage_ok=yes])
     AC_LANG_POP([Fortran 77])])
 ])dnl
 
@@ -110,6 +110,7 @@ ga_elpa_ok=no
 ga_elpa_2stage_ok=no
 
 AS_IF([test "x$with_elpa" = xno], [ga_elpa_ok=skip])
+AS_IF([test "x$with_elpa" = xno], [ga_elpa_2stage_ok=skip])
 
 # Parse --with-elpa argument. Clear previous values first.
 ELPA_LIBS=
@@ -135,26 +136,26 @@ AC_MSG_NOTICE([Attempting to locate ELPA library])
 # First, check environment/command-line variables.
 # If failed, erase ELPA_LIBS but maintain ELPA_LDFLAGS and
 # ELPA_CPPFLAGS.
+AS_IF([test $ga_elpa_2stage_ok = no],
+    [AC_MSG_CHECKING([for ELPA 2stage with user-supplied flags])
+     LIBS="$ELPA_LIBS $SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
+     GA_RUN_ELPA_2STAGE_TEST()
+     LIBS="$ga_save_LIBS"
+     AC_MSG_RESULT([$ga_elpa_2stage_ok])])
+
+# ga_elpa_2stage_ok = yes implies ga_elpa_ok = yes
+AS_IF([test $ga_elpa_2stage_ok = yes],  [ga_elpa_ok=yes])
+
 AS_IF([test $ga_elpa_ok = no],
     [AC_MSG_CHECKING([for ELPA with user-supplied flags])
      LIBS="$ELPA_LIBS $SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
      GA_RUN_ELPA_TEST()
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_elpa_ok])])
-AS_IF([test $ga_elpa_ok = no],
-    [AC_MSG_CHECKING([for ELPA 2stage with user-supplied flags])
-     LIBS="$ELPA_LIBS $SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
-     GA_RUN_ELPA_2STAGE_TEST()
-     LIBS="$ga_save_LIBS"
-     AC_MSG_RESULT([$ga_elpa_2stage_ok])])
-# ga_elpa_2stage_ok = yes implies ga_elpa_ok = yes
-AS_IF([test $ga_elpa_2stage_ok = yes],  [ga_elpa_ok=yes])
 
-# ga_elpa_2stage_ok = yes implies ga_elpa_ok = yes
-AS_IF([test $ga_elpa_2stage_ok = yes],  [ga_elpa_ok=yes])
 
 # Generic ELPA library?
-AS_IF([test $ga_elpa_2stage_ok = no],
+AS_IF([test $ga_elpa_ok = no],
     [AC_MSG_CHECKING([for ELPA in generic library])
      ELPA_LIBS="-lelpa"
      LIBS="$ELPA_LIBS $SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
@@ -193,8 +194,4 @@ AS_IF([test $ga_elpa_2stage_ok = yes],
 AC_DEFINE_UNQUOTED([HAVE_ELPA_2STAGE], [$have_elpa_2stage],
     [Define to 1 if you have ELPA library with 2STAGE alg.])
 AM_CONDITIONAL([HAVE_ELPA_2STAGE], [test $ga_elpa_2stage_ok = yes])
-#set HAVE_ELPA=1 when HAVE_ELPA_2STAGE=1
-#AC_DEFINE_UNQUOTED([HAVE_ELPA], [$have_elpa_2stage],
-#    [Define to 1 if you have ELPA library with 2STAGE alg.])
-#AM_CONDITIONAL([HAVE_ELPA], [test $ga_elpa_2stage_ok = yes])
 ])dnl GA_ELPA
