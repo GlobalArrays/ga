@@ -146,9 +146,11 @@ AS_IF([test $ga_elpa_ok = no],
      GA_RUN_ELPA_2STAGE_TEST()
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_elpa_2stage_ok])])
+# ga_elpa_2stage_ok = yes implies ga_elpa_ok = yes
+AS_IF([test $ga_elpa_2stage_ok = yes],  [ga_elpa_ok=yes])
 
 # Generic ELPA library?
-AS_IF([test $ga_elpa_2stage_ok = no],
+AS_IF([test $ga_elpa_stage_ok = no],
     [AC_MSG_CHECKING([for ELPA in generic library])
      ELPA_LIBS="-lelpa"
      LIBS="$ELPA_LIBS $SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
@@ -166,8 +168,6 @@ AC_SUBST([ELPA_CPPFLAGS])
 AS_IF([test "x$elpa_size" = x8],
     [AC_DEFINE([ELPA_I8], [1], [ELPA is using 8-byte integers])])
 
-# ga_elpa_2stage_ok = yes implies ga_elpa_ok = yes
-AS_IF([test $ga_elpa_2stage_ok = yes],  [ga_elpa_ok=yes])
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 AS_IF([test $ga_elpa_ok = yes],
