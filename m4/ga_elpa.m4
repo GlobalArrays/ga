@@ -108,6 +108,7 @@ AC_ARG_WITH([elpa8],
 
 ga_elpa_ok=no
 ga_elpa_2stage_ok=no
+
 AS_IF([test "x$with_elpa" = xno], [ga_elpa_ok=skip])
 
 # Parse --with-elpa argument. Clear previous values first.
@@ -146,6 +147,9 @@ AS_IF([test $ga_elpa_ok = no],
      GA_RUN_ELPA_2STAGE_TEST()
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_elpa_2stage_ok])])
+# ga_elpa_2stage_ok = yes implies ga_elpa_ok = yes
+AS_IF([test $ga_elpa_2stage_ok = yes],  [ga_elpa_ok=yes])
+
 # ga_elpa_2stage_ok = yes implies ga_elpa_ok = yes
 AS_IF([test $ga_elpa_2stage_ok = yes],  [ga_elpa_ok=yes])
 
