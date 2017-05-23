@@ -28,19 +28,64 @@ char solve_evp_real ();
 ]])])
 ])
 
+## Generate Fortran 77 conftest for ELPA 2STAGE Algo.
+AC_DEFUN([GA_F77_ELPA_2STAGE_TEST], [AC_LANG_CONFTEST([AC_LANG_PROGRAM([],
+[[      use ELPA1
+      use ELPA2
+      implicit none
+      logical status
+      integer i4
+      double precision dscal8,darray8(2)
+      status = SOLVE_EVP_REAL_2STAGE(i4,i4,darray8,i4,
+     C     darray8,darray8,i4,i4,i4,i4,i4,i4)]])])
+])
+
+
+# GA_C_ELPA_TEST
+# --------------
+# Generate C conftest for ELPA.
+AC_DEFUN([GA_C_ELPA_2STAGE_TEST], [AC_LANG_CONFTEST([AC_LANG_PROGRAM(
+[#ifdef __cplusplus
+extern "C" {
+#endif
+char solve_evp_real_2stage ();
+#ifdef __cplusplus
+}
+#endif
+],
+[[char result = solve_evp_real_2stage ();
+]])])
+])
+
 # GA_RUN_ELPA_TEST
 # ----------------
 # Test the linker.
-# Clears ELPA_LIBS on failure.  Sets ga_elpa_ok=yes on success.
+#  Sets ga_elpa_ok=yes on success.
 AC_DEFUN([GA_RUN_ELPA_TEST], [
 AS_IF([test "x$enable_f77" = xno],
    [AC_LANG_PUSH([C])
     GA_C_ELPA_TEST()
-    AC_LINK_IFELSE([], [ga_elpa_ok=yes], [ELPA_LIBS=])
+    AC_LINK_IFELSE([], [ga_elpa_ok=yes])
     AC_LANG_POP([C])],
    [AC_LANG_PUSH([Fortran 77])
     GA_F77_ELPA_TEST()
-    AC_LINK_IFELSE([], [ga_elpa_ok=yes], [ELPA_LIBS=])
+    AC_LINK_IFELSE([], [ga_elpa_ok=yes])
+    AC_LANG_POP([Fortran 77])])
+])dnl
+
+# GA_RUN_ELPA_TEST
+# ----------------
+# Test the linker.
+# Clears ELPA_LIBS on failure.  Sets ga_elpa_ok=yes on success.
+AC_DEFUN([GA_RUN_ELPA_2STAGE_TEST], [
+AS_IF([test "x$enable_f77" = xno],
+   [AC_LANG_PUSH([C])
+    GA_C_ELPA_2STAGE_TEST()
+    AC_LINK_IFELSE([], [ga_elpa_2stage_ok=yes], [ELPA_LIBS=])
+    AC_LANG_POP([C])],
+   [AC_LANG_PUSH([Fortran 77])
+    GA_F77_ELPA_2STAGE_TEST()
+    AC_LINK_IFELSE([], [ga_elpa_2stage_ok=yes], [ELPA_LIBS=])
     AC_LANG_POP([Fortran 77])])
 ])dnl
 
@@ -62,6 +107,8 @@ AC_ARG_WITH([elpa8],
     [elpa_size=8; with_elpa="$with_elpa8"])
 
 ga_elpa_ok=no
+ga_elpa_2stage_ok=no
+
 AS_IF([test "x$with_elpa" = xno], [ga_elpa_ok=skip])
 
 # Parse --with-elpa argument. Clear previous values first.
@@ -94,9 +141,20 @@ AS_IF([test $ga_elpa_ok = no],
      GA_RUN_ELPA_TEST()
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_elpa_ok])])
+AS_IF([test $ga_elpa_ok = no],
+    [AC_MSG_CHECKING([for ELPA 2stage with user-supplied flags])
+     LIBS="$ELPA_LIBS $SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
+     GA_RUN_ELPA_2STAGE_TEST()
+     LIBS="$ga_save_LIBS"
+     AC_MSG_RESULT([$ga_elpa_2stage_ok])])
+# ga_elpa_2stage_ok = yes implies ga_elpa_ok = yes
+AS_IF([test $ga_elpa_2stage_ok = yes],  [ga_elpa_ok=yes])
+
+# ga_elpa_2stage_ok = yes implies ga_elpa_ok = yes
+AS_IF([test $ga_elpa_2stage_ok = yes],  [ga_elpa_ok=yes])
 
 # Generic ELPA library?
-AS_IF([test $ga_elpa_ok = no],
+AS_IF([test $ga_elpa_2stage_ok = no],
     [AC_MSG_CHECKING([for ELPA in generic library])
      ELPA_LIBS="-lelpa"
      LIBS="$ELPA_LIBS $SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
@@ -114,6 +172,7 @@ AC_SUBST([ELPA_CPPFLAGS])
 AS_IF([test "x$elpa_size" = x8],
     [AC_DEFINE([ELPA_I8], [1], [ELPA is using 8-byte integers])])
 
+
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 AS_IF([test $ga_elpa_ok = yes],
     [have_elpa=1
@@ -124,4 +183,18 @@ AS_IF([test $ga_elpa_ok = yes],
 AC_DEFINE_UNQUOTED([HAVE_ELPA], [$have_elpa],
     [Define to 1 if you have ELPA library.])
 AM_CONDITIONAL([HAVE_ELPA], [test $ga_elpa_ok = yes])
+# Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
+AS_IF([test $ga_elpa_2stage_ok = yes],
+    [have_elpa_2stage=1
+     $1],
+    [AC_MSG_WARN([ELPA 2stage library not found, interfaces won't be defined])
+     have_elpa_2stage=0
+     $2])
+AC_DEFINE_UNQUOTED([HAVE_ELPA_2STAGE], [$have_elpa_2stage],
+    [Define to 1 if you have ELPA library with 2STAGE alg.])
+AM_CONDITIONAL([HAVE_ELPA_2STAGE], [test $ga_elpa_2stage_ok = yes])
+#set HAVE_ELPA=1 when HAVE_ELPA_2STAGE=1
+#AC_DEFINE_UNQUOTED([HAVE_ELPA], [$have_elpa_2stage],
+#    [Define to 1 if you have ELPA library with 2STAGE alg.])
+#AM_CONDITIONAL([HAVE_ELPA], [test $ga_elpa_2stage_ok = yes])
 ])dnl GA_ELPA
