@@ -55,6 +55,8 @@ do {                                         \
     reset_request((_request));               \
 } while (0)
 
+#define IS_TARGET_ATOMICS_EMULATION() ((env_data.native_atomics == 0 && env_data.emulation_type == et_target) ? 1 : 0)
+
 #ifndef GA_OFI_STATIC_LINK
 fi_loadable_methods_t ld_table = {0};
 #endif /* GA_OFI_STATIC_LINK */
@@ -642,10 +644,12 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-static ofi_atomics_t atomics_header;
-static request_t atomics_preposted_request;
-static volatile int progress_thread_complete = 0;
+#define PREPOST_ATOMICS_COUNT 64
+static ofi_atomics_t atomics_headers[PREPOST_ATOMICS_COUNT];
+static request_t atomics_requests[PREPOST_ATOMICS_COUNT];
+static int completed_atomics_count = 0;
 
+static volatile int progress_thread_complete = 0;
 static pthread_t progress_thread = 0;
 
 static void* progress_thread_func(void* __data)
@@ -659,15 +663,28 @@ static void* progress_thread_func(void* __data)
     return 0;
 }
 
-#define PREPOST_ATOMICS()                                                                         \
-do                                                                                                \
-{                                                                                                 \
-    init_request(&atomics_preposted_request);                                                     \
-    atomics_preposted_request.data = &atomics_header;                                             \
-    atomics_preposted_request.cmpl = atomics_completion;                                          \
-    OFI_RETRY(fi_trecv(ofi_data.ep_tagged.endpoint, &atomics_header, sizeof(atomics_header), \
-                       0, FI_ADDR_UNSPEC, ATOMICS_PROTO_TAGMASK, ATOMICS_PROTO_IGNOREMASK,   \
-                       &atomics_preposted_request), "fi_trecv: failed to prepost request");  \
+#define PREPOST_ATOMICS()                                          \
+do                                                                 \
+{                                                                  \
+    completed_atomics_count = 0;                                   \
+    int req_idx;                                                   \
+    for (req_idx = 0; req_idx < PREPOST_ATOMICS_COUNT; req_idx++)  \
+    {                                                              \
+        request_t* req = &atomics_requests[req_idx];               \
+        ofi_atomics_t* header = &atomics_headers[req_idx];         \
+        init_request(req);                                         \
+        req->data = header;                                        \
+        req->cmpl = target_emulated_atomics_completion;            \
+        OFI_RETRY(fi_trecv(ofi_data.ep_tagged.endpoint,            \
+                           header,                                 \
+                           sizeof(*header),                        \
+                           0,                                      \
+                           FI_ADDR_UNSPEC,                         \
+                           ATOMICS_PROTO_TAGMASK,                  \
+                           ATOMICS_PROTO_IGNOREMASK,               \
+                           req),                                   \
+                           "fi_trecv: failed to prepost request"); \
+    }                                                              \
 } while(0)
 
 #define ADD(_dst, _src, _len, type)        \
@@ -683,7 +700,7 @@ do                                         \
     fastlock_release(&acc_lock);          \
 } while(0)
 
-static void acc_completion(request_t* request)
+static void chunk_acc_completion(request_t* request)
 {
     ofi_atomics_t* header = request->data;
     assert(header);
@@ -716,7 +733,7 @@ fn_fail:
     return;
 }
 
-static void acc_cmpl(request_t* request)
+static void full_acc_completion(request_t* request)
 {
     ofi_atomics_t* header = request->data;
     assert(header);
@@ -730,16 +747,19 @@ fn_fail:
     return;
 }
 
-static void atomics_completion(request_t* request)
+static void target_emulated_atomics_completion(request_t* request)
 {
     int proc = PROC_NONE;
 
     assert(request);
     ofi_atomics_t header = *(ofi_atomics_t*)request->data;
-    request_t r = *request;
+    request->state = rs_complete;
 
-    /* re-post rmw request */
-    PREPOST_ATOMICS();
+    if (__sync_add_and_fetch(&completed_atomics_count, 1) == PREPOST_ATOMICS_COUNT)
+    {
+        /* re-post atomics requests */
+        PREPOST_ATOMICS();
+    }
 
     switch (header.proto.op)
     {
@@ -794,7 +814,7 @@ static void atomics_completion(request_t* request)
 
                 parent = alloc_request();
                 parent->dtor = req_dtor;
-                parent->cmpl = acc_cmpl;
+                parent->cmpl = full_acc_completion;
                 parent->data = (char*)malloc(total);
                 EXPR_CHKANDJUMP(parent->data, "failed to allocate data");
                 parent->flags |= rf_auto_free;
@@ -821,7 +841,7 @@ static void atomics_completion(request_t* request)
                     set_parent_request(parent, request);
                     request->data = buffer;
                     buffer += chunk;
-                    request->cmpl = acc_completion;
+                    request->cmpl = chunk_acc_completion;
                     OFI_RETRY(fi_trecv(ofi_data.ep_tagged.endpoint, request->data, chunk,
                                        parent->mr_single ? fi_mr_desc(parent->mr_single) : 0,
                                        ofi_data.ep_tagged.peers[header.proto.proc].fi_addr,
@@ -902,6 +922,13 @@ static int init_ofi()
 
     parse_env_vars();
 
+    if (IS_TARGET_ATOMICS_EMULATION())
+    {
+        env_data.progress_thread = 1;
+        if (l_state.proc == 0)
+            COMEX_OFI_LOG(INFO, "enable progress thread to handle preposted requests in target atomics emulation");
+    }
+
     if(load_ofi(&ld_table) != COMEX_SUCCESS)
         goto fn_fail;
 
@@ -958,7 +985,7 @@ static int init_ofi()
             init_done = (init_ep(hints_saw, &ofi_data.ep_rma, 1) == COMEX_SUCCESS);
         EXPR_CHKANDJUMP(init_done, "failed to create endpoint");
 
-        if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
+        if (IS_TARGET_ATOMICS_EMULATION())
         {
             /* in case when emulated atomics are performed on target side use only p2p api */
             ofi_data.ep_atomics = ofi_data.ep_rma;
@@ -1050,9 +1077,9 @@ static int init_ofi()
         pthread_create(&progress_thread, 0, progress_thread_func, 0);
     }
 
-    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
+    if (IS_TARGET_ATOMICS_EMULATION())
     {   
-        /* prepost rmw request */
+        /* prepost atomics requests */
         PREPOST_ATOMICS();
     }
 
@@ -1661,15 +1688,23 @@ static int finalize_ofi()
         pthread_join(progress_thread, 0);
     }
 
-    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
+    if (IS_TARGET_ATOMICS_EMULATION())
     {
-        OFI_CHKANDJUMP(fi_cancel((fid_t)ofi_data.ep_tagged.endpoint, &atomics_preposted_request), "fi_cancel failed");
-        struct fi_cq_err_entry err;
-        fi_cq_readerr(ofi_data.ep_tagged.cq, &err, 0);
+        int req_idx;
+        for (req_idx = 0; req_idx < PREPOST_ATOMICS_COUNT; req_idx++)
+        {
+            request_t* req = &atomics_requests[req_idx];
+            if (req->state == rs_complete) continue;
+
+            assert(req->state == rs_progress);
+            OFI_CHKANDJUMP(fi_cancel((fid_t)ofi_data.ep_tagged.endpoint, &atomics_requests[req_idx]), "fi_cancel failed");
+            struct fi_cq_err_entry err;
+            fi_cq_readerr(ofi_data.ep_tagged.cq, &err, 0);
+        }
     }
 
     if(dual_provider())
-        COMEX_CHKANDJUMP(finalize_ep(&ofi_data.ep_atomics), "failed to finalize ep_rma");
+        COMEX_CHKANDJUMP(finalize_ep(&ofi_data.ep_atomics), "failed to finalize ep_atomics");
 
     COMEX_CHKANDJUMP(finalize_ep(&ofi_data.ep_rma), "failed to finalize ep_rma");
 
@@ -2927,7 +2962,7 @@ int comex_rmw(
                      "failed to lookup window");
     assert(window);
 
-    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
+    if (IS_TARGET_ATOMICS_EMULATION())
     {
         ofi_atomics_t header = {.rmw = {.proto.proc = l_state.proc, .proto.op = op, .proto.tag = GETTAG(),
                                 .src = (op == COMEX_SWAP) ? *(int*)ploc :
@@ -3445,7 +3480,7 @@ fn_fail:
 
 int comex_lock(int mtx, int proc)
 {
-    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
+    if (IS_TARGET_ATOMICS_EMULATION())
         return lock_am_mutex(mtx, proc);
     else
         return lock_mutex(global_mutex, mtx, proc);
@@ -3453,7 +3488,7 @@ int comex_lock(int mtx, int proc)
 
 int comex_unlock(int mtx, int proc)
 {
-    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
+    if (IS_TARGET_ATOMICS_EMULATION())
         return unlock_am_mutex(mtx, proc);
     else
         return unlock_mutex(global_mutex, mtx, proc);
@@ -3461,7 +3496,7 @@ int comex_unlock(int mtx, int proc)
 
 int comex_create_mutexes(int num)
 {
-    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
+    if (IS_TARGET_ATOMICS_EMULATION())
         COMEX_CHKANDJUMP(create_am_mutexes(num), "failed to create mutexes");
     else
     {
@@ -3480,7 +3515,7 @@ fn_fail:
 
 int comex_destroy_mutexes()
 {
-    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
+    if (IS_TARGET_ATOMICS_EMULATION())
         COMEX_CHKANDJUMP(destroy_am_mutexes(), "failed to destroy mutexes");
     else
     {
@@ -3675,16 +3710,14 @@ fn_fail:
 
 static void acquire_remote_lock(int proc)
 {
-    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
-        assert(0);
+    assert(!IS_TARGET_ATOMICS_EMULATION());
     lock_mutex(local_mutex, 0, proc);
 }
 
 
 static void release_remote_lock(int proc)
 {
-    if (env_data.native_atomics == 0 && env_data.emulation_type == et_target)
-        assert(0);
+    assert(!IS_TARGET_ATOMICS_EMULATION());
     unlock_mutex(local_mutex, 0, proc);
 }
 

@@ -33,12 +33,7 @@ void parse_env_vars()
         COMEX_OFI_LOG(INFO, "COMEX_OFI_LOG_LEVEL: %d", env_data.log_level);
         COMEX_OFI_LOG(INFO, "COMEX_OFI_NATIVE_ATOMICS: %d", env_data.native_atomics);
         COMEX_OFI_LOG(INFO, "COMEX_OFI_ATOMICS_EMULATION_TYPE: %d", env_data.emulation_type);
-
-        /* WARNING!!! async progress is really experimental feature!!!
-         * it may crash your application. enable it only in case if
-         * you know what are you doing */
         COMEX_OFI_LOG(INFO, "COMEX_OFI_PROGRESS_THREAD: %d", env_data.progress_thread);
-
         COMEX_OFI_LOG(INFO, "COMEX_OFI_FORCE_SYNC: %d", env_data.force_sync);
         COMEX_OFI_LOG(INFO, "COMEX_OFI_PROVIDER: %s", env_data.provider);
         COMEX_OFI_LOG(INFO, "COMEX_OFI_LIBRARY: %s", env_data.library_path);
