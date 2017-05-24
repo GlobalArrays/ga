@@ -1113,58 +1113,53 @@ do                                                                           \
     }                                                                        \
 } while(0)
 
+#define CQ_READ(cq)                                                 \
+  do                                                                \
+  {                                                                 \
+      if (OFI_TRYLOCK())                                            \
+      {                                                             \
+          locked = 1;                                               \
+          ret = fi_cq_read(cq, entries, env_data.cq_entries_count); \
+          CQ_CHKANDJUMP(cq, ret);                                   \
+          OFI_UNLOCK();                                             \
+          locked = 0;                                               \
+      }                                                             \
+  } while (0)
+
 static int poll(int* items_processed)
 {
-    int locked = 0;
-    struct fi_cq_tagged_entry entry;
-    memset(&entry, 0, sizeof(entry));
-
     ssize_t ret = 0;
+    int locked = 0;
+    struct fi_cq_tagged_entry entries[env_data.cq_entries_count];
+    memset(entries, 0, sizeof(entries));
 
-    if(OFI_TRYLOCK())
-    {
-        locked = 1;
-        ret = fi_cq_read(ofi_data.ep_rma.cq, &entry, 1);
-        CQ_CHKANDJUMP(ofi_data.ep_rma.cq, ret);
-        OFI_UNLOCK();
-        locked = 0;
-    }
-    if(ret <= 0 && dual_provider())
-    {
-        if(OFI_TRYLOCK())
-        {
-            locked = 1;
-            ret = fi_cq_read(ofi_data.ep_atomics.cq, &entry, 1);
-            CQ_CHKANDJUMP(ofi_data.ep_atomics.cq, ret);
-            OFI_UNLOCK();
-            locked = 0;
-        }
-    }
+    CQ_READ(ofi_data.ep_rma.cq);
+    if (ret <= 0 && dual_provider())
+        CQ_READ(ofi_data.ep_atomics.cq);
 
     if (items_processed)
         *items_processed = 0;
 
     if (ret > 0)
     {
-        request_t* request = (request_t*)entry.op_context;
-
-        if(request && request->magic == REQUEST_MAGIC)
+        int idx;
+        for (idx = 0; idx < ret; idx++)
         {
-            complete_request(request);
-            if (items_processed)
-                *items_processed = (int)ret;
+            request_t* request = (request_t*)entries[idx].op_context;
+            if (request && request->magic == REQUEST_MAGIC)
+                complete_request(request);
         }
+
+        if (items_processed)
+            *items_processed = (int)ret;
     }
     else if (ret == -FI_EAGAIN) {}
-    else if (ret < 0)
-    {
-        assert(0); /* should not be here */
-    }
+    else if (ret < 0) { assert(0); /* should not be here */ }
 
 fn_success:
     return COMEX_SUCCESS;
 fn_fail:
-    if(locked)
+    if (locked)
         OFI_UNLOCK();
     return COMEX_FAILURE;
 }

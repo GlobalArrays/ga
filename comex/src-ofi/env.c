@@ -13,6 +13,7 @@ env_data_t env_data = { ERROR,     /* log_level */
                         1,         /* native_atomics */
                         et_target, /* emulation_type */
                         0,         /* progress_thread */
+                        8,         /* cq_entries_count */
                         0,         /* force_sync */
                         NULL,      /* provider */
                         NULL       /* library_path */ };
@@ -23,6 +24,7 @@ void parse_env_vars()
     env_to_int("COMEX_OFI_NATIVE_ATOMICS", &(env_data.native_atomics));
     env_to_int("COMEX_OFI_ATOMICS_EMULATION_TYPE", &(env_data.emulation_type));
     env_to_int("COMEX_OFI_PROGRESS_THREAD", &(env_data.progress_thread));
+    env_to_int("COMEX_OFI_CQ_ENTRIES_COUNT", &(env_data.cq_entries_count));
     env_to_int("COMEX_OFI_FORCE_SYNC", &(env_data.force_sync));
     env_data.provider = getenv("COMEX_OFI_PROVIDER");
     env_data.library_path = getenv("COMEX_OFI_LIBRARY");
@@ -34,6 +36,7 @@ void parse_env_vars()
         COMEX_OFI_LOG(INFO, "COMEX_OFI_NATIVE_ATOMICS: %d", env_data.native_atomics);
         COMEX_OFI_LOG(INFO, "COMEX_OFI_ATOMICS_EMULATION_TYPE: %d", env_data.emulation_type);
         COMEX_OFI_LOG(INFO, "COMEX_OFI_PROGRESS_THREAD: %d", env_data.progress_thread);
+        COMEX_OFI_LOG(INFO, "COMEX_OFI_CQ_ENTRIES_COUNT: %d", env_data.cq_entries_count);
         COMEX_OFI_LOG(INFO, "COMEX_OFI_FORCE_SYNC: %d", env_data.force_sync);
         COMEX_OFI_LOG(INFO, "COMEX_OFI_PROVIDER: %s", env_data.provider);
         COMEX_OFI_LOG(INFO, "COMEX_OFI_LIBRARY: %s", env_data.library_path);

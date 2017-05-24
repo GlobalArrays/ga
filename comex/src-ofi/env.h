@@ -9,6 +9,7 @@ typedef struct env_data_t
     int   native_atomics;
     int   emulation_type;
     int   progress_thread;
+    int   cq_entries_count;
     int   force_sync;
     char* provider;
     char* library_path;
