@@ -48,7 +48,8 @@ typedef enum request_state
 } request_state;
 
 typedef struct request_t
-{ /* linked list of received messages */
+{
+    /* linked list of received messages */
     struct fi_context context;  /* OFI context */
     int               magic;    /* magic */
     int               index;    /* request index */
@@ -261,4 +262,3 @@ static inline void complete_request(request_t* request)
 }
 
 #endif /* REQUEST_H_ */
-

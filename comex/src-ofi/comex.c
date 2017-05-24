@@ -102,114 +102,114 @@ static int poll(int* items_processed);
 static pthread_t tid = 0;
 
 static  int comex_acc_native(
-        int datatype, void *scale,
-        void *src_ptr, void *dst_ptr, int bytes,
+        int datatype, void* scale,
+        void* src_ptr, void* dst_ptr, int bytes,
         int proc, comex_group_t group);
 
 static  int comex_accs_native(
-        int datatype, void *scale,
-        void *src_ptr, int *src_stride_ar,
-        void *dst_ptr, int *dst_stride_ar,
-        int *count, int stride_levels,
+        int datatype, void* scale,
+        void* src_ptr, int* src_stride_ar,
+        void* dst_ptr, int* dst_stride_ar,
+        int* count, int stride_levels,
         int proc, comex_group_t group);
 
 static  int comex_accv_native(
-        int datatype, void *scale,
-        comex_giov_t *iov, int iov_len,
+        int datatype, void* scale,
+        comex_giov_t* iov, int iov_len,
         int proc, comex_group_t group);
 
 static  int comex_nbacc_native(
-        int datatype, void *scale,
-        void *src_ptr, void *dst_ptr, int bytes,
+        int datatype, void* scale,
+        void* src_ptr, void* dst_ptr, int bytes,
         int proc, comex_group_t group,
-        comex_request_t *handle);
+        comex_request_t* handle);
 
 static  int comex_nbaccs_native(
-        int datatype, void *scale,
-        void *src, int *src_stride,
-        void *dst, int *dst_stride,
-        int *count, int stride_levels,
+        int datatype, void* scale,
+        void* src, int* src_stride,
+        void* dst, int* dst_stride,
+        int* count, int stride_levels,
         int proc, comex_group_t group,
-        comex_request_t *handle);
+        comex_request_t* handle);
 
 static  int comex_nbaccv_native(
-        int datatype, void *scale,
-        comex_giov_t *iov, int iov_len,
+        int datatype, void* scale,
+        comex_giov_t* iov, int iov_len,
         int proc, comex_group_t group,
         comex_request_t* handle);
 
 #ifdef USE_ATOMIC_EMULATION
 static  int comex_acc_emu(
-        int datatype, void *scale,
-        void *src_ptr, void *dst_ptr, int bytes,
+        int datatype, void* scale,
+        void* src_ptr, void* dst_ptr, int bytes,
         int proc, comex_group_t group);
 
 static  int comex_accs_emu(
-        int datatype, void *scale,
-        void *src_ptr, int *src_stride_ar,
-        void *dst_ptr, int *dst_stride_ar,
-        int *count, int stride_levels,
+        int datatype, void* scale,
+        void* src_ptr, int* src_stride_ar,
+        void* dst_ptr, int* dst_stride_ar,
+        int* count, int stride_levels,
         int proc, comex_group_t group);
 
 static  int comex_accv_emu(
-        int datatype, void *scale,
-        comex_giov_t *iov, int iov_len,
+        int datatype, void* scale,
+        comex_giov_t* iov, int iov_len,
         int proc, comex_group_t group);
 
 static  int comex_nbacc_emu(
-        int datatype, void *scale,
-        void *src_ptr, void *dst_ptr, int bytes,
+        int datatype, void* scale,
+        void* src_ptr, void* dst_ptr, int bytes,
         int proc, comex_group_t group,
-        comex_request_t *handle);
+        comex_request_t* handle);
 
 static  int comex_nbaccs_emu(
-        int datatype, void *scale,
-        void *src, int *src_stride,
-        void *dst, int *dst_stride,
-        int *count, int stride_levels,
+        int datatype, void* scale,
+        void* src, int* src_stride,
+        void* dst, int* dst_stride,
+        int* count, int stride_levels,
         int proc, comex_group_t group,
         comex_request_t *handle);
 
 static  int comex_nbaccv_emu(
-        int datatype, void *scale,
+        int datatype, void* scale,
         comex_giov_t *iov, int iov_len,
         int proc, comex_group_t group,
         comex_request_t* handle);
 
 
 typedef int (comex_acc_t)(
-        int datatype, void *scale,
-        void *src_ptr, void *dst_ptr, int bytes,
+        int datatype, void* scale,
+        void* src_ptr, void* dst_ptr, int bytes,
         int proc, comex_group_t group);
 
 typedef int (comex_accs_t)(
-        int datatype, void *scale,
-        void *src_ptr, int *src_stride_ar,
-        void *dst_ptr, int *dst_stride_ar,
-        int *count, int stride_levels,
+        int datatype, void* scale,
+        void* src_ptr, int* src_stride_ar,
+        void* dst_ptr, int* dst_stride_ar,
+        int* count, int stride_levels,
         int proc, comex_group_t group);
 
 typedef int (comex_accv_t)(
-        int datatype, void *scale,
+        int datatype, void* scale,
         comex_giov_t *iov, int iov_len,
         int proc, comex_group_t group);
 
 typedef int (comex_nbacc_t)(
-        int datatype, void *scale,
-        void *src_ptr, void *dst_ptr, int bytes,
+        int datatype, void* scale,
+        void* src_ptr, void* dst_ptr, int bytes,
         int proc, comex_group_t group,
         comex_request_t *handle);
 
 typedef int (comex_nbaccs_t)(
-        int datatype, void *scale,
-        void *src, int *src_stride,
-        void *dst, int *dst_stride,
-        int *count, int stride_levels,
+        int datatype, void* scale,
+        void* src, int* src_stride,
+        void* dst, int* dst_stride,
+        int* count, int stride_levels,
         int proc, comex_group_t group,
         comex_request_t *handle);
 
 typedef int (comex_nbaccv_t)(
-        int datatype, void *scale,
+        int datatype, void* scale,
         comex_giov_t *iov, int iov_len,
         int proc, comex_group_t group,
         comex_request_t* handle);
@@ -229,19 +229,21 @@ static comex_nbaccv_t* comex_nbaccv_f = comex_nbaccv_emu;
 #define comex_nbaccv_f comex_nbaccv_native
 #endif /* USE_ATOMIC_EMULATION */
 
-static int mr_reg_count = 0;
-
-#define mr_regv(iov, count, mrs, op_type)                                                 \
-do                                                                                        \
-{                                                                                         \
-    struct fi_context ctx;                                                                \
-    int i;                                                                                \
-    for(i = 0; i < count; i++)                                                            \
-    {                                                                                     \
-        COMEX_CHKANDJUMP(mr_reg(iov[i].iov_base, iov[i].iov_len, MR_ACCESS_PERMISSIONS,   \
-                                &(mrs)[i], &ctx, op_type),                                \
-                                "fi_mr_reg error:");                                      \
-    }                                                                                     \
+#define mr_regv(iov, count, mrs, op_type)             \
+do                                                    \
+{                                                     \
+    struct fi_context ctx;                            \
+    int i;                                            \
+    for (i = 0; i < count; i++)                       \
+    {                                                 \
+        COMEX_CHKANDJUMP(mr_reg(iov[i].iov_base,      \
+                               iov[i].iov_len,        \
+                               MR_ACCESS_PERMISSIONS, \
+                               &(mrs)[i],             \
+                               &ctx,                  \
+                               op_type),              \
+                               "fi_mr_reg error:");   \
+    }                                                 \
 } while(0)
 
 static inline ofi_ep_t* get_ep(op_type_t op_type)
@@ -252,7 +254,7 @@ static inline ofi_ep_t* get_ep(op_type_t op_type)
 
 static inline int mr_reg(const void* buf, size_t len,
                          uint64_t access, struct fid_mr** mr,
-                         void *context, op_type_t op_type)
+                         void* context, op_type_t op_type)
 {
     ofi_ep_t* ep = get_ep(op_type);
 
@@ -276,7 +278,6 @@ static inline int mr_reg(const void* buf, size_t len,
                         mr,         /* Out: memregion object */
                         context),   /* In:  context */
                         "fi_mr_reg error:");
-    __sync_fetch_and_add(&mr_reg_count, 1);
     return COMEX_SUCCESS;
 
 fn_fail:
@@ -300,7 +301,6 @@ static inline uint64_t get_remote_addr(uint64_t base_addr, void* ptr, op_type_t 
 static inline int mr_unreg(struct fid* mr)
 {
     OFI_CHKANDJUMP(fi_close(mr), "failed to unregister memory");
-    __sync_sub_and_fetch(&mr_reg_count, 1);
     return COMEX_SUCCESS;
 fn_fail:
     return COMEX_FAILURE;
@@ -310,21 +310,20 @@ static inline void req_dtor(request_t* request)
 {
     assert(request);
     assert(request->state == rs_complete);
-    if(request->mr_count && request->mrs)
+    if (request->mr_count && request->mrs)
     {
         int i;
-        for(i = 0; i < request->mr_count; i++)
-            if(request->mrs[i])
+        for (i = 0; i < request->mr_count; i++)
+            if (request->mrs[i])
                 COMEX_CHKANDJUMP(mr_unreg(&request->mrs[i]->fid), "failed to unregister memory");
         free(request->mrs);
     }
-    if(request->mr_single)
+
+    if (request->mr_single)
         COMEX_CHKANDJUMP(mr_unreg(&request->mr_single->fid), "failed to unregister memory");
 
     if (request->data && !(request->flags & rf_no_free_data))
-    {
         free(request->data);
-    }
 
 fn_fail:
     return;
@@ -348,10 +347,8 @@ void complete_acc(request_t* request)
         struct fi_msg_atomic* msg = (struct fi_msg_atomic*)data->msg;
         if (msg)
         {
-            if (msg->msg_iov)
-                free((void*)msg->msg_iov);
-            if (msg->rma_iov)
-                free((void*)msg->rma_iov);
+            if (msg->msg_iov) free((void*)msg->msg_iov);
+            if (msg->rma_iov) free((void*)msg->rma_iov);
             free(msg);
         }
 
@@ -365,6 +362,7 @@ void complete_acc(request_t* request)
         request->data = 0;
     }
 }
+
 void complete_getput(request_t* request)
 {
     assert(request);
@@ -375,10 +373,8 @@ void complete_getput(request_t* request)
         assert(msg->context);
         if (msg && msg->context)
         {
-            if (msg->msg_iov)
-                free((void*)msg->msg_iov);
-            if (msg->rma_iov)
-                free((void*)msg->rma_iov);
+            if (msg->msg_iov) free((void*)msg->msg_iov);
+            if (msg->rma_iov) free((void*)msg->rma_iov);
         }
 
         free(request->data);
@@ -409,11 +405,9 @@ fn_success:
     return COMEX_SUCCESS;
 
 fn_fail:
-    if (buf)
-        free(buf);
+    if (buf) free(buf);
     return COMEX_FAILURE;
 }
-
 
 static int connect_all(ofi_ep_t* ep)
 {
@@ -446,8 +440,9 @@ static int connect_all(ofi_ep_t* ep)
     char* names = 0;
     proc_name_t* my_name = 0;
     name_length_t my_name_len = {l_state.proc, name_len};
-    COMEX_CHKANDJUMP(exchange_with_all(&my_name_len, sizeof(my_name_len), COMEX_GROUP_WORLD,
-                     (void**)&lengths), "failed to exchange name_len");
+    COMEX_CHKANDJUMP(exchange_with_all(&my_name_len, sizeof(my_name_len),
+                                       COMEX_GROUP_WORLD, (void**)&lengths),
+                                       "failed to exchange name_len");
 
     for (i = 0; i < group_size; i++)
     {
@@ -465,7 +460,7 @@ static int connect_all(ofi_ep_t* ep)
     memcpy(my_name->name, name, my_name_len.length);
 
     COMEX_CHKANDJUMP(exchange_with_all(my_name, sizeof_procname, COMEX_GROUP_WORLD, (void**)&names),
-                     "failed to exchange proc name");
+                                       "failed to exchange proc name");
 
     ep->peers = malloc(sizeof(*(ep->peers)) * group_size);
     EXPR_CHKANDJUMP(ep->peers, "failed to allocate peer's data");
@@ -480,25 +475,24 @@ static int connect_all(ofi_ep_t* ep)
         peer->proc = proc_name->proc;
         struct fi_context av_context;
         int ret;
-        OFI_CALL(ret, fi_av_insert(ep->av, proc_name->name, 1, &peer->fi_addr,
-            0, &av_context));
+        OFI_CALL(ret, fi_av_insert(ep->av,
+                                   proc_name->name,
+                                   1,
+                                   &peer->fi_addr,
+                                   0,
+                                   &av_context));
         OFI_CHKANDJUMP(ret, "failed to fi_av_insert:");
     }
 
 fn_success:
-    if (lengths)
-        free(lengths);
-    if (names)
-        free(names);
+    if (lengths) free(lengths);
+    if (names) free(names);
     return COMEX_SUCCESS;
 
 fn_fail:
-    if (my_name)
-        free(my_name);
-    if (lengths)
-        free(lengths);
-    if (names)
-        free(names);
+    if (my_name) free(my_name);
+    if (lengths) free(lengths);
+    if (names) free(names);
     return COMEX_FAILURE;
 }
 
@@ -512,9 +506,8 @@ void tune_ofi_provider()
     const char * psms[PSM_COUNT] = {"PSM", "PSM2"};
     const char * prefixes[PREFIX_COUNT] = {"OFI", "FI"};
 
-    int prefix_idx = 0;
-
-    for (; prefix_idx < PREFIX_COUNT; prefix_idx++)
+    int prefix_idx;
+    for (prefix_idx = 0; prefix_idx < PREFIX_COUNT; prefix_idx++)
     {
         int psm_idx = 0;
         for (; psm_idx < PSM_COUNT; psm_idx++)
@@ -543,13 +536,14 @@ static int init_ep(struct fi_info* hints, ofi_ep_t* ep, int suppress_fail)
 
     struct fi_info* provider = 0;
     int ret;
-    OFI_CALL(ret, CALL_TABLE_FUNCTION(&ld_table, fi_getinfo(OFI_VERSION,
-            NULL,
-            NULL,
-            0ULL,
-            hints,
-            &provider)));
-    if(ret < 0 && suppress_fail)
+    OFI_CALL(ret, CALL_TABLE_FUNCTION(&ld_table,
+                                      fi_getinfo(OFI_VERSION,
+                                                 NULL,
+                                                 NULL,
+                                                 0ULL,
+                                                 hints,
+                                                 &provider)));
+    if (ret < 0 && suppress_fail)
         goto fn_fail;
 
     OFI_CHKANDJUMP(ret, "fi_getinfo:");
@@ -567,36 +561,30 @@ static int init_ep(struct fi_info* hints, ofi_ep_t* ep, int suppress_fail)
     /* Open fabric                  */
     /* ---------------------------- */
     OFI_CALL(ret, CALL_TABLE_FUNCTION(&ld_table, fi_fabric(provider->fabric_attr, &ep->fabric, NULL)));
-    if(ret < 0)
+    if (ret < 0)
     {
-        if(!suppress_fail)
-            OFI_CHKANDJUMP(ret, "fi_fabric('%s')", provider->fabric_attr->prov_name);
-        else
-            goto fn_fail;
+        if (!suppress_fail) OFI_CHKANDJUMP(ret, "fi_fabric('%s')", provider->fabric_attr->prov_name);
+        else goto fn_fail;
     }
 
     /* ---------------------------- */
     /* Open domain                  */
     /* ---------------------------- */
     OFI_CALL(ret, fi_domain(ep->fabric, provider, &ep->domain, NULL));
-    if(ret < 0)
+    if (ret < 0)
     {
-        if(!suppress_fail)
-            OFI_CHKANDJUMP(ret, "fi_domain");
-        else
-            goto fn_fail_dom;
+        if(!suppress_fail) OFI_CHKANDJUMP(ret, "fi_domain");
+        else goto fn_fail_dom;
     }
 
     /* ----------------------------- */
     /* Open endpoint                 */
     /* ----------------------------- */
     OFI_CALL(ret, fi_endpoint(ep->domain, provider, &ep->endpoint, NULL));
-    if(ret < 0)
+    if (ret < 0)
     {
-        if(!suppress_fail)
-            OFI_CHKANDJUMP(ret, "fi_endpoint");
-        else
-            goto fn_fail_ep;
+        if (!suppress_fail) OFI_CHKANDJUMP(ret, "fi_endpoint");
+        else goto fn_fail_ep;
     }
 
     /* -------------------------------- */
@@ -639,7 +627,7 @@ fn_fail_ep:
 fn_fail_dom:
     fi_close(&ep->fabric->fid);
 fn_fail:
-    if(provider)
+    if (provider)
         OFI_VCALL(CALL_TABLE_FUNCTION(&ld_table, fi_freeinfo(provider)));
     return COMEX_FAILURE;
 }
@@ -659,7 +647,6 @@ static void* progress_thread_func(void* __data)
         poll(0);
         PAUSE();
     }
-
     return 0;
 }
 
@@ -687,17 +674,17 @@ do                                                                 \
     }                                                              \
 } while(0)
 
-#define ADD(_dst, _src, _len, type)        \
-do                                         \
-{                                          \
-    int i;                                 \
-    type* dst = (type*)_dst;               \
-    type* src = (type*)_src;               \
-    int cnt = (_len) / sizeof(type);       \
-    fastlock_acquire(&acc_lock);          \
-    for(i = 0; i < cnt; i++, dst++, src++) \
-       *dst += *src;                       \
-    fastlock_release(&acc_lock);          \
+#define ADD(_dst, _src, _len, type)         \
+do                                          \
+{                                           \
+    int i;                                  \
+    type* dst = (type*)_dst;                \
+    type* src = (type*)_src;                \
+    int cnt = (_len) / sizeof(type);        \
+    fastlock_acquire(&acc_lock);            \
+    for (i = 0; i < cnt; i++, dst++, src++) \
+        *dst += *src;                       \
+    fastlock_release(&acc_lock);            \
 } while(0)
 
 static void chunk_acc_completion(request_t* request)
@@ -705,29 +692,30 @@ static void chunk_acc_completion(request_t* request)
     ofi_atomics_t* header = request->data;
     assert(header);
     EXPR_CHKANDJUMP(header, "incorrect header");
-    switch(header->proto.op)
+
+    switch (header->proto.op)
     {
-    case COMEX_ACC_DBL:
-        ADD(header->acc.addr, header->acc.data, header->acc.posted, double);
-        break;
-    case COMEX_ACC_FLT:
-        ADD(header->acc.addr, header->acc.data, header->acc.posted, float);
-        break;
-    case COMEX_ACC_INT:
-        ADD(header->acc.addr, header->acc.data, header->acc.posted, int);
-        break;
-    case COMEX_ACC_LNG:
-        ADD(header->acc.addr, header->acc.data, header->acc.posted, long);
-        break;
-    case COMEX_ACC_DCP:
-        ADD(header->acc.addr, header->acc.data, header->acc.posted, double complex);
-        break;
-    case COMEX_ACC_CPL:
-        ADD(header->acc.addr, header->acc.data, header->acc.posted, float complex);
-        break;
-    default:
-        assert(0);
-        break;
+        case COMEX_ACC_DBL:
+            ADD(header->acc.addr, header->acc.data, header->acc.posted, double);
+            break;
+        case COMEX_ACC_FLT:
+            ADD(header->acc.addr, header->acc.data, header->acc.posted, float);
+            break;
+        case COMEX_ACC_INT:
+            ADD(header->acc.addr, header->acc.data, header->acc.posted, int);
+            break;
+        case COMEX_ACC_LNG:
+            ADD(header->acc.addr, header->acc.data, header->acc.posted, long);
+            break;
+        case COMEX_ACC_DCP:
+            ADD(header->acc.addr, header->acc.data, header->acc.posted, double complex);
+            break;
+        case COMEX_ACC_CPL:
+            ADD(header->acc.addr, header->acc.data, header->acc.posted, float complex);
+            break;
+        default:
+            assert(0);
+            break;
     }
 fn_fail:
     return;
@@ -739,10 +727,12 @@ static void full_acc_completion(request_t* request)
     assert(header);
     EXPR_CHKANDJUMP(header, "incorrect header");
     int v;
-    OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint, &v, sizeof(v),
-                ofi_data.ep_tagged.peers[header->proto.proc].fi_addr,
-                ATOMICS_ACC_CMPL_TAGMASK | header->proto.tag),
-            "fi_tinject: failed");
+    OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint,
+                         &v,
+                         sizeof(v),
+                         ofi_data.ep_tagged.peers[header->proto.proc].fi_addr,
+                         ATOMICS_ACC_CMPL_TAGMASK | header->proto.tag),
+                         "fi_tinject: failed");
 fn_fail:
     return;
 }
@@ -766,37 +756,45 @@ static void target_emulated_atomics_completion(request_t* request)
         case COMEX_FETCH_AND_ADD:
         {
             int v = __sync_fetch_and_add((int*)header.rmw.addr, header.rmw.extra);
-            OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint, &v, sizeof(v),
-                        ofi_data.ep_tagged.peers[header.proto.proc].fi_addr,
-                        ATOMICS_DATA_TAGMASK | header.proto.tag),
-                    "fi_tinject: failed");
+            OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint,
+                                 &v,
+                                 sizeof(v),
+                                 ofi_data.ep_tagged.peers[header.proto.proc].fi_addr,
+                                 ATOMICS_DATA_TAGMASK | header.proto.tag),
+                                 "fi_tinject: failed");
         }
         break;
         case COMEX_FETCH_AND_ADD_LONG:
         {
             uint64_t v = __sync_fetch_and_add((uint64_t*)header.rmw.addr, (uint64_t)header.rmw.extra);
-            OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint, &v, sizeof(v),
-                        ofi_data.ep_tagged.peers[header.proto.proc].fi_addr,
-                        ATOMICS_DATA_TAGMASK | header.proto.tag),
-                    "fi_tinject: failed");
+            OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint,
+                                 &v,
+                                 sizeof(v),
+                                 ofi_data.ep_tagged.peers[header.proto.proc].fi_addr,
+                                 ATOMICS_DATA_TAGMASK | header.proto.tag),
+                                 "fi_tinject: failed");
         }
         break;
         case COMEX_SWAP:
         {
             int v = __sync_lock_test_and_set((int*)header.rmw.addr, (int)header.rmw.src);
-            OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint, &v, sizeof(v),
-                        ofi_data.ep_tagged.peers[header.proto.proc].fi_addr,
-                        ATOMICS_DATA_TAGMASK | header.proto.tag),
-                    "fi_tinject: failed");
+            OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint,
+                                 &v,
+                                 sizeof(v),
+                                 ofi_data.ep_tagged.peers[header.proto.proc].fi_addr,
+                                 ATOMICS_DATA_TAGMASK | header.proto.tag),
+                                 "fi_tinject: failed");
         }
         break;
         case COMEX_SWAP_LONG:
         {
             uint64_t v = __sync_lock_test_and_set((uint64_t*)header.rmw.addr, header.rmw.src);
-            OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint, &v, sizeof(v),
-                        ofi_data.ep_tagged.peers[header.proto.proc].fi_addr,
-                        ATOMICS_DATA_TAGMASK | header.proto.tag),
-                    "fi_tinject: failed");
+            OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint,
+                                 &v,
+                                 sizeof(v),
+                                 ofi_data.ep_tagged.peers[header.proto.proc].fi_addr,
+                                 ATOMICS_DATA_TAGMASK | header.proto.tag),
+                                 "fi_tinject: failed");
         }
         break;
         case COMEX_ACC_DBL:
@@ -805,89 +803,100 @@ static void target_emulated_atomics_completion(request_t* request)
         case COMEX_ACC_LNG:
         case COMEX_ACC_DCP:
         case COMEX_ACC_CPL:
+        {
+            int i;
+            request_t* parent = 0;
+            size_t chunk = (size_t)header.acc.len + sizeof(header);
+            size_t total = (size_t)header.acc.count * chunk + sizeof(header);
+            char* buffer = 0;
+
+            parent = alloc_request();
+            parent->dtor = req_dtor;
+            parent->cmpl = full_acc_completion;
+            parent->data = (char*)malloc(total);
+            EXPR_CHKANDJUMP(parent->data, "failed to allocate data");
+            parent->flags |= rf_auto_free;
+            increment_request_cnt(parent);
+
+            /* after all accs are completed - reply packet will be sent.
+             * save data for reply packet into buffer. */
+            ofi_atomics_t* reply_header = parent->data;
+            *reply_header = header;
+            buffer = reply_header->acc.data;
+
+            if (header.acc.len > ofi_data.max_buffered_send && buffer && 0)
             {
-                int i;
-                request_t* parent = 0;
-                size_t chunk = (size_t)header.acc.len + sizeof(header);
-                size_t total = (size_t)header.acc.count * chunk + sizeof(header);
-                char* buffer = 0;
-
-                parent = alloc_request();
-                parent->dtor = req_dtor;
-                parent->cmpl = full_acc_completion;
-                parent->data = (char*)malloc(total);
-                EXPR_CHKANDJUMP(parent->data, "failed to allocate data");
-                parent->flags |= rf_auto_free;
-                increment_request_cnt(parent);
-
-                /* after all accs are completed - reply packet will be sent.
-                 * save data for reply packet into buffer. */
-                ofi_atomics_t* reply_header = parent->data;
-                *reply_header = header;
-                buffer = reply_header->acc.data;
-
-                if(header.acc.len > ofi_data.max_buffered_send && buffer&&0)
-                { /* allocate region to receive data */
-                    struct fi_context context;
-                    COMEX_CHKANDJUMP(mr_reg(buffer, total, MR_ACCESS_PERMISSIONS,
-                                            &parent->mr_single, &context, ot_rma),
-                                            "fi_mr_reg failed:");
-                }
-                for(i = 0; i < header.acc.count; i++)
-                {
-                    request_t* request = alloc_request();
-                    request->dtor = req_dtor;
-                    request->flags |= rf_no_free_data; /* data will be removed by parent */
-                    set_parent_request(parent, request);
-                    request->data = buffer;
-                    buffer += chunk;
-                    request->cmpl = chunk_acc_completion;
-                    OFI_RETRY(fi_trecv(ofi_data.ep_tagged.endpoint, request->data, chunk,
-                                       parent->mr_single ? fi_mr_desc(parent->mr_single) : 0,
-                                       ofi_data.ep_tagged.peers[header.proto.proc].fi_addr,
-                                       ATOMICS_ACC_DATA_TAGMASK | header.proto.tag, 0,
-                                       request), "fi_trecv: failed to prepost request");
-                }
-                assert(parent->state == rs_progress);
-                decrement_request_cnt(parent);
+                /* allocate region to receive data */
+                struct fi_context context;
+                COMEX_CHKANDJUMP(mr_reg(buffer, total, MR_ACCESS_PERMISSIONS,
+                                        &parent->mr_single, &context, ot_rma),
+                                        "fi_mr_reg failed:");
             }
-            break;
+
+            for (i = 0; i < header.acc.count; i++)
+            {
+                request_t* request = alloc_request();
+                request->dtor = req_dtor;
+                request->flags |= rf_no_free_data; /* data will be removed by parent */
+                set_parent_request(parent, request);
+                request->data = buffer;
+                buffer += chunk;
+                request->cmpl = chunk_acc_completion;
+                OFI_RETRY(fi_trecv(ofi_data.ep_tagged.endpoint,
+                                   request->data,
+                                   chunk,
+                                   parent->mr_single ? fi_mr_desc(parent->mr_single) : 0,
+                                   ofi_data.ep_tagged.peers[header.proto.proc].fi_addr,
+                                   ATOMICS_ACC_DATA_TAGMASK | header.proto.tag, 0,
+                                   request),
+                                   "fi_trecv: failed to prepost request");
+            }
+            assert(parent->state == rs_progress);
+            decrement_request_cnt(parent);
+        }
+        break;
         case OFI_MUTEX_AM_LOCK:
+        {
             assert(am_mutex_locked);
             assert(am_mutex_waiter);
             fastlock_acquire(&mutex_lock);
 
-            if(am_mutex_locked[header.mutex.num] == PROC_NONE)
-            { /* mutex is not locked */
+            if (am_mutex_locked[header.mutex.num] == PROC_NONE)
+            {
+                /* mutex is not locked */
                 proc = header.proto.proc;
                 am_mutex_locked[header.mutex.num] = header.proto.proc;
             }
             else
-            { /* mutex is locked. add rank to waiters list */
+            {
+                /* mutex is locked. add rank to waiters list */
                 int idx = am_mutex_locked[header.mutex.num];
                 do
                 {
-                    if(am_mutex_waiter[idx] == PROC_NONE)
+                    if (am_mutex_waiter[idx] == PROC_NONE)
                     {
                         am_mutex_waiter[idx] = header.proto.proc;
                         idx = PROC_NONE;
                     }
-                    else
-                        idx = am_mutex_waiter[idx];
-                } while(idx != PROC_NONE);
+                    else idx = am_mutex_waiter[idx];
+                } while (idx != PROC_NONE);
             }
 
             fastlock_release(&mutex_lock);
-            if(proc != PROC_NONE)
+            if (proc != PROC_NONE)
             {
                 int v = 0;
-                OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint, &v, sizeof(v),
-                            ofi_data.ep_tagged.peers[header.proto.proc].fi_addr,
-                            ATOMICS_MUTEX_TAGMASK | header.proto.proc),
-                        "fi_tinject: failed");
+                OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint,
+                                     &v,
+                                     sizeof(v),
+                                     ofi_data.ep_tagged.peers[header.proto.proc].fi_addr,
+                                     ATOMICS_MUTEX_TAGMASK | header.proto.proc),
+                                     "fi_tinject: failed");
             }
-            break;
+        }
+        break;
         case OFI_MUTEX_AM_UNLOCK:
+        {
             assert(am_mutex_locked);
             assert(am_mutex_waiter);
             fastlock_acquire(&mutex_lock);
@@ -896,17 +905,20 @@ static void target_emulated_atomics_completion(request_t* request)
             am_mutex_waiter[header.proto.proc] = PROC_NONE;
             proc = am_mutex_locked[header.mutex.num];
             fastlock_release(&mutex_lock);
-            if(proc != PROC_NONE) /* notify new owner of mutex */
+            if (proc != PROC_NONE) /* notify new owner of mutex */
             {
                 int v = 0;
-                OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint, &v, sizeof(v),
-                            ofi_data.ep_tagged.peers[proc].fi_addr,
-                            ATOMICS_MUTEX_TAGMASK | proc),
-                        "fi_tinject: failed");
+                OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint,
+                                     &v,
+                                     sizeof(v),
+                                     ofi_data.ep_tagged.peers[proc].fi_addr,
+                                     ATOMICS_MUTEX_TAGMASK | proc),
+                                     "fi_tinject: failed");
             }
-            break;
+        }
+        break;
         default:
-            EXPR_CHKANDJUMP(0, "(%d) incorrect atomic operation type: %d", getpid(), header.proto.op);
+            COMEX_OFI_LOG(ERROR, "incorrect atomic operation type: %d", header.proto.op);
             break;
     }
 fn_success:
@@ -942,7 +954,6 @@ static int init_ofi()
 
     hints_remcon->tx_attr->op_flags         |= FI_COMPLETION | FI_DELIVERY_COMPLETE;
 
-
     /* ------------------------------------------------------------------------ */
     /* Set default settings before any ofi-provider is inited                   */
     /* (before any call of fi_getinfo and fi_fabric)                            */
@@ -957,19 +968,19 @@ static int init_ofi()
     init_done = (init_ep(hints_remcon, &ofi_data.ep_rma, 1) == COMEX_SUCCESS);
 
     if (init_done)
-    {
         ofi_data.ep_atomics = ofi_data.ep_rma;
-    }
     else
     {
         if (init_done = (init_ep(hints_saw, &ofi_data.ep_rma, 1) == COMEX_SUCCESS))
-        {   /* great!!! we got provider with all required caps */
+        {
+            /* great!!! we got provider with all required caps */
             ofi_data.ep_atomics = ofi_data.ep_rma;
         }
     }
 
     if (!init_done)
-    {   /* ok, try to use different providers for RMA & atomics */
+    {
+        /* ok, try to use different providers for RMA & atomics */
         hints_saw->caps = RMA_PROVIDER_CAPS;
         hints_remcon->caps = RMA_PROVIDER_CAPS;
 
@@ -1052,9 +1063,7 @@ static int init_ofi()
             OFI_CALL(ret, fi_atomicvalid(ofi_data.ep_atomics.endpoint, ofi_dtype, FI_SUM, &max_elems_in_atomic));
 
             if (ret < 0)
-            {
                 ofi_data.max_bytes_in_atomic[COMEX_DTYPE_IDX(comex_dtype)] = -1;
-            }
             else
             {
                 size_t comex_dtype_size = 0;
@@ -1070,11 +1079,9 @@ static int init_ofi()
         pthread_create(&progress_thread, 0, progress_thread_func, 0);
     }
 
+    /* prepost atomics requests */
     if (IS_TARGET_ATOMICS_EMULATION())
-    {   
-        /* prepost atomics requests */
         PREPOST_ATOMICS();
-    }
 
     ofi_data.mr_counter = 0;
 
@@ -1093,7 +1100,7 @@ do                                                                           \
     {                                                                        \
         struct fi_cq_err_entry error;                                        \
         COMEX_OFI_LOG(INFO, "cq_read: error available");                     \
-        int err = fi_cq_readerr(cq, (void *)&error, 0);                      \
+        int err = fi_cq_readerr(cq, (void*)&error, 0);                       \
         if (err < 0)                                                         \
         {                                                                    \
             COMEX_OFI_LOG(INFO, "cq_read_err: can't retrieve error... (%d)", \
@@ -1152,8 +1159,7 @@ static int poll(int* items_processed)
 fn_success:
     return COMEX_SUCCESS;
 fn_fail:
-    if (locked)
-        OFI_UNLOCK();
+    if (locked) OFI_UNLOCK();
     return COMEX_FAILURE;
 }
 
@@ -1161,9 +1167,7 @@ int comex_init()
 {
     int status;
 
-    if (initialized) {
-        return 0;
-    }
+    if (initialized) return 0;
     initialized = 1;
 
     /* Assert MPI has been initialized */
@@ -1225,8 +1229,7 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
-int comex_init_args(int *argc, char ***argv)
+int comex_init_args(int* argc, char*** argv)
 {
     int init_flag;
 
@@ -1243,12 +1246,10 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_initialized()
 {
     return initialized;
 }
-
 
 void comex_error(char *msg, int code)
 {
@@ -1256,7 +1257,6 @@ void comex_error(char *msg, int code)
                   l_state.proc, code, msg);
     MPI_Abort(l_state.world_comm, code);
 }
-
 
 static int lookup_window(void* ptr, int size, int proc, comex_group_t group, ofi_window_t** res)
 {
@@ -1299,9 +1299,8 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_put(
-        void *src, void *dst, int bytes,
+        void* src, void* dst, int bytes,
         int proc, comex_group_t group)
 {
     comex_request_t handle;
@@ -1317,9 +1316,8 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_get(
-        void *src, void *dst, int bytes,
+        void* src, void* dst, int bytes,
         int proc, comex_group_t group)
 {
     comex_request_t handle;
@@ -1334,10 +1332,9 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 static int comex_acc_native(
-        int datatype, void *scale,
-        void *src_ptr, void *dst_ptr, int bytes,
+        int datatype, void* scale,
+        void* src_ptr, void* dst_ptr, int bytes,
         int proc, comex_group_t group)
 {
     comex_request_t handle;
@@ -1353,11 +1350,10 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 static int list_strides(
-        int *src_stride_ar,
-        int *dst_stride_ar,
-        int *count, int stride_levels,
+        int* src_stride_ar,
+        int* dst_stride_ar,
+        int* count, int stride_levels,
         int (*callback)(size_t src_idx, size_t dst_idx, void* data), void* data)
 {
     int i, j;
@@ -1370,7 +1366,8 @@ static int list_strides(
 
     /* number of n-element of the first dimension */
     n1dim = 1;
-    for (i=1; i<=stride_levels; i++) {
+    for (i = 1; i <= stride_levels; i++)
+    {
         n1dim *= count[i];
     }
 
@@ -1380,33 +1377,41 @@ static int list_strides(
     src_bvalue[0] = 0; src_bvalue[1] = 0; src_bunit[0] = 1; src_bunit[1] = 1;
     dst_bvalue[0] = 0; dst_bvalue[1] = 0; dst_bunit[0] = 1; dst_bunit[1] = 1;
 
-    for (i=2; i<=stride_levels; i++) {
+    for (i = 2; i <= stride_levels; i++)
+    {
         src_bvalue[i] = 0;
         dst_bvalue[i] = 0;
-        src_bunit[i] = src_bunit[i-1] * count[i-1];
-        dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+        src_bunit[i] = src_bunit[i - 1] * count[i - 1];
+        dst_bunit[i] = dst_bunit[i - 1] * count[i - 1];
     }
 
-    for (i=0; i<n1dim; i++) {
+    for (i = 0; i < n1dim; i++)
+    {
         src_idx = 0;
-        for (j=1; j<=stride_levels; j++) {
-            src_idx += src_bvalue[j] * src_stride_ar[j-1];
-            if ((i+1) % src_bunit[j] == 0) {
+        for (j = 1; j <= stride_levels; j++)
+        {
+            src_idx += src_bvalue[j] * src_stride_ar[j - 1];
+            if ((i + 1) % src_bunit[j] == 0)
+            {
                 src_bvalue[j]++;
             }
-            if (src_bvalue[j] > (count[j]-1)) {
+            if (src_bvalue[j] > (count[j] - 1))
+            {
                 src_bvalue[j] = 0;
             }
         }
 
         dst_idx = 0;
 
-        for (j=1; j<=stride_levels; j++) {
-            dst_idx += dst_bvalue[j] * dst_stride_ar[j-1];
-            if ((i+1) % dst_bunit[j] == 0) {
+        for (j = 1; j <= stride_levels; j++)
+        {
+            dst_idx += dst_bvalue[j] * dst_stride_ar[j - 1];
+            if ((i + 1) % dst_bunit[j] == 0)
+            {
                 dst_bvalue[j]++;
             }
-            if (dst_bvalue[j] > (count[j]-1)) {
+            if (dst_bvalue[j] > (count[j] - 1))
+            {
                 dst_bvalue[j] = 0;
             }
         }
@@ -1422,11 +1427,10 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_puts(
-        void *src_ptr, int *src_stride_ar,
-        void *dst_ptr, int *dst_stride_ar,
-        int *count, int stride_levels,
+        void* src_ptr, int* src_stride_ar,
+        void* dst_ptr, int* dst_stride_ar,
+        int* count, int stride_levels,
         int proc, comex_group_t group)
 {
     comex_request_t handle;
@@ -1446,11 +1450,10 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_gets(
-        void *src_ptr, int *src_stride_ar,
-        void *dst_ptr, int *dst_stride_ar,
-        int *count, int stride_levels,
+        void* src_ptr, int* src_stride_ar,
+        void* dst_ptr, int* dst_stride_ar,
+        int* count, int stride_levels,
         int proc, comex_group_t group)
 {
     comex_request_t handle;
@@ -1470,12 +1473,11 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 static int comex_accs_native(
-        int datatype, void *scale,
-        void *src_ptr, int *src_stride_ar,
-        void *dst_ptr, int *dst_stride_ar,
-        int *count, int stride_levels,
+        int datatype, void* scale,
+        void* src_ptr, int* src_stride_ar,
+        void* dst_ptr, int* dst_stride_ar,
+        int* count, int stride_levels,
         int proc, comex_group_t group)
 {
     comex_request_t handle;
@@ -1495,7 +1497,6 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_putv(
         comex_giov_t *iov, int iov_len,
         int proc, comex_group_t group)
@@ -1511,7 +1512,6 @@ fn_success:
 fn_fail:
     return COMEX_FAILURE;
 }
-
 
 int comex_getv(
         comex_giov_t *iov, int iov_len,
@@ -1530,9 +1530,8 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 static int comex_accv_native(
-        int datatype, void *scale,
+        int datatype, void* scale,
         comex_giov_t *iov, int iov_len,
         int proc, comex_group_t group)
 {
@@ -1552,7 +1551,6 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_fence_all(comex_group_t group)
 {
     COMEX_CHKANDJUMP(comex_wait_all(group),
@@ -1565,7 +1563,6 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_fence_proc(int proc, comex_group_t group)
 {
     COMEX_CHKANDJUMP(comex_wait_all(group),
@@ -1577,7 +1574,6 @@ fn_success:
 fn_fail:
     return COMEX_FAILURE;
 }
-
 
 /* comex_barrier is comex_fence_all + MPI_Barrier */
 int comex_barrier(comex_group_t group)
@@ -1595,19 +1591,15 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
-void * comex_malloc_local(size_t size)
+void* comex_malloc_local(size_t size)
 {
     return malloc(size);
 }
 
-
-int comex_free_local(void *ptr)
+int comex_free_local(void* ptr)
 {
     assert(ptr);
-    if (ptr)
-        free(ptr);
-
+    if (ptr) free(ptr);
     return COMEX_SUCCESS;
 }
 
@@ -1691,7 +1683,7 @@ static int finalize_ofi()
         }
     }
 
-    if(dual_provider())
+    if (dual_provider())
         COMEX_CHKANDJUMP(finalize_ep(&ofi_data.ep_atomics), "failed to finalize ep_atomics");
 
     COMEX_CHKANDJUMP(finalize_ep(&ofi_data.ep_rma), "failed to finalize ep_rma");
@@ -1707,13 +1699,10 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_finalize()
 {
     /* it's okay to call multiple times -- extra calls are no-ops */
-    if (!initialized) {
-        return COMEX_SUCCESS;
-    }
+    if (!initialized) return COMEX_SUCCESS;
 
     initialized = 0;
 
@@ -1737,7 +1726,6 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_wait_proc(int proc, comex_group_t group)
 {
     request_cache_t* cache = request_cache;
@@ -1745,7 +1733,8 @@ int comex_wait_proc(int proc, comex_group_t group)
     {
         int i;
         if (group != COMEX_GROUP_WORLD)
-        {   /* wait for requests for specific group */
+        {
+            /* wait for requests for specific group */
             for (i = 0; i < sizeofa(cache->request); i++)
             {
                 request_t* request = cache->request + i;
@@ -1761,7 +1750,8 @@ int comex_wait_proc(int proc, comex_group_t group)
             }
         }
         else
-        {   /* wait all */
+        {
+            /* wait all */
             for (i = 0; i < sizeofa(cache->request); i++)
             {
                 request_t* request = cache->request + i;
@@ -1781,7 +1771,6 @@ fn_success:
 fn_fail:
     return COMEX_FAILURE;
 }
-
 
 static inline int wait_request(request_t* request)
 {
@@ -1811,7 +1800,6 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_wait(comex_request_t* handle)
 {
     assert(handle);
@@ -1830,9 +1818,8 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 /* *status == 1 - request is in progress */
-int comex_test(comex_request_t* handle, int *status)
+int comex_test(comex_request_t* handle, int* status)
 {
     assert(handle);
     assert(status);
@@ -1858,7 +1845,6 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_wait_all(comex_group_t group)
 {
     request_cache_t* cache = request_cache;
@@ -1866,7 +1852,8 @@ int comex_wait_all(comex_group_t group)
     {
         int i;
         if (group != COMEX_GROUP_WORLD)
-        {   /* wait for requests for specific group */
+        {
+            /* wait for requests for specific group */
             for (i = 0; i < sizeofa(cache->request); i++)
             {
                 request_t* request = cache->request + i;
@@ -1879,7 +1866,8 @@ int comex_wait_all(comex_group_t group)
             }
         }
         else
-        {   /* wait all */
+        {
+            /* wait all */
             for (i = 0; i < sizeofa(cache->request); i++)
             {
                 request_t* request = cache->request + i;
@@ -1900,7 +1888,6 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 #define SCALE(type)                                                  \
 do                                                                   \
 {                                                                    \
@@ -1911,24 +1898,23 @@ do                                                                   \
                 *ptr = ((type*)iov[i].src[j])[k] * *(type*)scale;    \
 } while (0)
 
-static int iov_acc(int datatype, void * scale,
+static int iov_acc(int datatype, void*  scale,
                    int proc, comex_group_t group,
                    comex_giov_t *iov, int iov_len,
                    comex_request_t * handle)
 {
     VALIDATE_GROUP_AND_PROC(group, proc);
 
-    if (handle)
-        *handle = HANDLE_UNDEFINED;
+    if (handle) *handle = HANDLE_UNDEFINED;
 
     request_t* parent_req = alloc_request();
     EXPR_CHKANDJUMP(parent_req, "failed to allocate parent request");
 
-    if(!handle)
-        parent_req->flags |= rf_auto_free;
+    if (!handle) parent_req->flags |= rf_auto_free;
     else
-    { /* create user's request. we can't use parent request because it
-         can't have completion callback */
+    {
+        /* create user's request. we can't use parent request because it
+           can't have completion callback */
         request_t* user = alloc_request();
         user->group = group;
         user->proc = proc;
@@ -2017,9 +2003,8 @@ static int iov_acc(int datatype, void * scale,
     }
     ofi_msg_count++;
 
-
-    if (!middle_len) /* no data to process? just exit */
-        goto fn_success;
+    /* no data to process? just exit */
+    if (!middle_len) goto fn_success;
 
     acc_data = malloc(sizeof(*acc_data));
     EXPR_CHKANDJUMP(acc_data, "failed to allocate acc_data");
@@ -2030,7 +2015,8 @@ static int iov_acc(int datatype, void * scale,
     parent_req->cmpl = complete_acc;
 
     if (!scale_is_1(datatype, scale))
-    { /* create local scaled buffer */
+    {
+        /* create local scaled buffer */
         int i;
         int j;
         int k;
@@ -2038,29 +2024,29 @@ static int iov_acc(int datatype, void * scale,
         acc_data->middle = middle = malloc(middle_len);
         switch (datatype)
         {
-        case COMEX_ACC_INT:
-            SCALE(int);
-            break;
-        case COMEX_ACC_DBL:
-            SCALE(double);
-            break;
-        case COMEX_ACC_FLT:
-            SCALE(float);
-            break;
-        case COMEX_ACC_LNG:
-            SCALE(long);
-            break;
-        case COMEX_ACC_DCP:
-            assert(sizeof(DoubleComplex) == sizeof(double complex));
-            SCALE(double complex);
-            break;
-        case COMEX_ACC_CPL:
-            assert(sizeof(SingleComplex) == sizeof(float complex));
-            SCALE(float complex);
-            break;
-        default:
-            COMEX_OFI_LOG(WARN, "iov_acc: incorrect data type: %d", datatype);
-            return 1;
+            case COMEX_ACC_INT:
+                SCALE(int);
+                break;
+            case COMEX_ACC_DBL:
+                SCALE(double);
+                break;
+            case COMEX_ACC_FLT:
+                SCALE(float);
+                break;
+            case COMEX_ACC_LNG:
+                SCALE(long);
+                break;
+            case COMEX_ACC_DCP:
+                assert(sizeof(DoubleComplex) == sizeof(double complex));
+                SCALE(double complex);
+                break;
+            case COMEX_ACC_CPL:
+                assert(sizeof(SingleComplex) == sizeof(float complex));
+                SCALE(float complex);
+                break;
+            default:
+                COMEX_OFI_LOG(WARN, "iov_acc: incorrect data type: %d", datatype);
+                return 1;
         }
     }
 
@@ -2163,15 +2149,12 @@ static int iov_acc(int datatype, void * scale,
                 m->iov_count = m->rma_iov_count = iov_in_msg;
             }
 
-            if (sbuf)
-                sbuf += iov[iov_idx].bytes;
+            if (sbuf) sbuf += iov[iov_idx].bytes;
         }
     }
 
-    if (m) /* send tail of data */
-    {
-        OFI_RETRY(fi_atomicmsg(ofi_data.ep_atomics.endpoint, m, 0), "failed to fi_atomicmsg:");
-    }
+    /* send tail of data */
+    if (m) OFI_RETRY(fi_atomicmsg(ofi_data.ep_atomics.endpoint, m, 0), "failed to fi_atomicmsg:");
 
     decrement_request_cnt(parent_req);
 
@@ -2187,15 +2170,13 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int nb_getput(
-        void *src, void *dst, int bytes,
+        void* src, void* dst, int bytes,
         int proc, comex_group_t group,
         comex_request_t *handle, int is_get_op)
 {
     VALIDATE_GROUP_AND_PROC(group, proc);
-    if (handle)
-        *handle = HANDLE_UNDEFINED;
+    if (handle) *handle = HANDLE_UNDEFINED;
 
     request_t* request = alloc_request();
     EXPR_CHKANDJUMP(request, "failed to allocate request");
@@ -2208,15 +2189,16 @@ int nb_getput(
     request->group = group;
     request->proc = proc;
 
-    if(bytes > ofi_data.max_buffered_send)
-    { /* we have to register buffer */
+    if (bytes > ofi_data.max_buffered_send)
+    {
+        /* we have to register buffer */
         struct fi_context context;
         request->dtor = req_dtor;
         COMEX_CHKANDJUMP(mr_reg(is_get_op ? dst : src, bytes, MR_ACCESS_PERMISSIONS,
                                 &request->mr_single, &context, ot_rma),
                                 "fi_mr_reg failed:");
 
-        if(!is_get_op)
+        if (!is_get_op)
             OFI_RETRY(fi_write(ofi_data.ep_rma.endpoint,
                                src,
                                bytes,
@@ -2238,7 +2220,7 @@ int nb_getput(
                           wnd->key_rma,
                           request),
                           "fi_read error:");
-    else if(bytes <= ofi_data.max_buffered_send)
+    else if (bytes <= ofi_data.max_buffered_send)
     {
         OFI_RETRY(fi_inject_write(ofi_data.ep_rma.endpoint,
                                   src,
@@ -2260,16 +2242,13 @@ int nb_getput(
         */
     }
 
-    if (handle)
-        *handle = (comex_request_t)request->index;
+    if (handle) *handle = (comex_request_t)request->index;
 
 fn_success:
     if (env_data.force_sync)
     {
-        if (request)
-            wait_request(request);
-        if (handle)
-            *handle = HANDLE_UNDEFINED;
+        if (request) wait_request(request);
+        if (handle)  *handle = HANDLE_UNDEFINED;
     }
     return COMEX_SUCCESS;
 
@@ -2280,7 +2259,7 @@ fn_fail:
 }
 
 int comex_nbput(
-        void *src, void *dst, int bytes,
+        void* src, void* dst, int bytes,
         int proc, comex_group_t group,
         comex_request_t *handle)
 {
@@ -2294,9 +2273,8 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_nbget(
-        void *src, void *dst, int bytes,
+        void* src, void* dst, int bytes,
         int proc, comex_group_t group,
         comex_request_t *handle)
 {
@@ -2310,10 +2288,9 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 static int comex_nbacc_native(
-        int datatype, void *scale,
-        void *src_ptr, void *dst_ptr, int bytes,
+        int datatype, void* scale,
+        void* src_ptr, void* dst_ptr, int bytes,
         int proc, comex_group_t group,
         comex_request_t *handle)
 {
@@ -2332,7 +2309,6 @@ fn_success:
 fn_fail:
     return COMEX_FAILURE;
 }
-
 
 #define PUT_MSG(endpoint, msg)                                      \
 do                                                                  \
@@ -2438,8 +2414,10 @@ static inline int getputs_stride(size_t src_idx, size_t dst_idx, void* data)
 fn_success:
     return COMEX_SUCCESS;
 fn_fail:
-    if (msg) /* in case if context defined - then msg will be destroyed */
-    {        /* by request completion callback */
+    if (msg)
+    {
+        /* in case if context defined - then msg will be destroyed */
+        /* by request completion callback */
         if (msg->context)
         {
             complete_request((request_t*)msg->context);
@@ -2447,10 +2425,8 @@ fn_fail:
         }
         else
         {
-            if (msg->msg_iov)
-                free((void*)msg->msg_iov);
-            if (msg->rma_iov)
-                free((void*)msg->rma_iov);
+            if (msg->msg_iov) free((void*)msg->msg_iov);
+            if (msg->rma_iov) free((void*)msg->rma_iov);
             free(msg);
         }
     }
@@ -2466,31 +2442,28 @@ fn_fail:
  * stride_levels - count of dimensions -1 (0 for row, 1 for matrix, ...)
  */
 static int nb_getputs(
-        void *src, int *src_stride,
-        void *dst, int *dst_stride,
-        int *count, int stride_levels,
+        void* src, int* src_stride,
+        void* dst, int* dst_stride,
+        int* count, int stride_levels,
         int proc, comex_group_t group,
         comex_request_t *handle, int is_get_op)
 {
     VALIDATE_GROUP_AND_PROC(group, proc);
-    if (handle)
-        *handle = HANDLE_UNDEFINED;
+    if (handle) *handle = HANDLE_UNDEFINED;
 
     ofi_window_t* wnd = 0;
-
-    int total = count[0];     /* total count of bytes to process */
+    int total = count[0]; /* total count of bytes to process */
 
     if (stride_levels > 0)
     {
         int i;
-        for(i = 1; i <= stride_levels; i++)
+        for (i = 1; i <= stride_levels; i++)
             total *= count[i];
 
         int * stride = (is_get_op) ? src_stride : dst_stride;
     }
 
-    if (total == 0)
-        goto fn_success;
+    if (total == 0) goto fn_success;
 
     request_t* parent_req = alloc_request();
     EXPR_CHKANDJUMP(parent_req, "failed to allocate parent request");
@@ -2502,7 +2475,7 @@ static int nb_getputs(
     {
         COMEX_OFI_LOG(INFO, "Failed to lookup window: length: %d", count[0]);
         int i;
-        for(i = 0; i <= stride_levels; i++)
+        for (i = 0; i <= stride_levels; i++)
             COMEX_OFI_LOG(DEBUG, " %d: count = %d, stride: %d\n", i, count[i], ((is_get_op) ? src_stride : dst_stride)[i]);
     }
     assert(wnd);
@@ -2528,7 +2501,7 @@ static int nb_getputs(
         FREE_DESC(msg);
     }
 
-    if(!handle)
+    if (!handle)
         parent_req->flags |= rf_auto_free;
     else
         *handle = parent_req->index;
@@ -2544,24 +2517,20 @@ static int nb_getputs(
 fn_success:
     if (env_data.force_sync)
     {
-        if (parent_req)
-            wait_request(parent_req);
-        if (handle)
-            *handle = HANDLE_UNDEFINED;
+        if (parent_req) wait_request(parent_req);
+        if (handle) *handle = HANDLE_UNDEFINED;
     }
     return COMEX_SUCCESS;
 
 fn_fail:
-    if (parent_req)
-        free_request(parent_req);
+    if (parent_req) free_request(parent_req);
     return COMEX_FAILURE;
 }
 
-
 int comex_nbputs(
-        void *src, int *src_stride,
-        void *dst, int *dst_stride,
-        int *count, int stride_levels,
+        void* src, int* src_stride,
+        void* dst, int* dst_stride,
+        int* count, int stride_levels,
         int proc, comex_group_t group,
         comex_request_t *handle)
 {
@@ -2575,11 +2544,10 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_nbgets(
-        void *src, int *src_stride,
-        void *dst, int *dst_stride,
-        int *count, int stride_levels,
+        void* src, int* src_stride,
+        void* dst, int* dst_stride,
+        int* count, int stride_levels,
         int proc, comex_group_t group,
         comex_request_t *handle)
 {
@@ -2593,12 +2561,11 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 static int comex_nbaccs_native(
-        int datatype, void *scale,
-        void *src, int *src_stride,
-        void *dst, int *dst_stride,
-        int *count, int stride_levels,
+        int datatype, void* scale,
+        void* src, int* src_stride,
+        void* dst, int* dst_stride,
+        int* count, int stride_levels,
         int proc, comex_group_t group,
         comex_request_t *handle)
 {
@@ -2608,19 +2575,18 @@ static int comex_nbaccs_native(
     int iov_len = 1;
     int i;
 
-    for (i = 1; i <= stride_levels; i++) {
+    for (i = 1; i <= stride_levels; i++)
         iov_len *= count[i];
-    }
     EXPR_CHKANDJUMP(iov_len, "incorrect iov_len");
 
     comex_giov_t * iov = malloc(sizeof(comex_giov_t) * iov_len);
     EXPR_CHKANDJUMP(iov, "failed to allocate iov array");
     memset(iov, 0, sizeof(*iov));
 
-    void ** src_array = malloc(sizeof(void*) * iov_len);
+    void** src_array = malloc(sizeof(void*) * iov_len);
     EXPR_CHKANDJUMP(src_array, "failed to allocate src array");
 
-    void ** dst_array = malloc(sizeof(void*) * iov_len);
+    void** dst_array = malloc(sizeof(void*) * iov_len);
     EXPR_CHKANDJUMP(dst_array, "failed to allocate dst array");
 
     int add_to_iov(size_t src_idx, size_t dst_idx, void* data)
@@ -2666,16 +2632,12 @@ fn_fail:
     goto fn_clean;
 
 fn_clean:
-    if (iov)
-        free(iov);
-    if (src_array)
-        free(src_array);
-    if (dst_array)
-        free(dst_array);
+    if (iov) free(iov);
+    if (src_array) free(src_array);
+    if (dst_array) free(dst_array);
 
     return ret;
 }
-
 
 static int nb_getputv(
         comex_giov_t *iov, int iov_len,
@@ -2688,15 +2650,14 @@ static int nb_getputv(
     struct fi_msg_rma* msg = 0;
 
     VALIDATE_GROUP_AND_PROC(group, proc);
-    if (handle)
-        *handle = HANDLE_UNDEFINED;
+    if (handle) *handle = HANDLE_UNDEFINED;
 
     /* calculate common count of iov elements */
     for (i = 0; i < iov_len; i++)
         count += iov[i].count;
 
-    if (!count) /* no data to process? just exit */
-        goto fn_success;
+    /* no data to process? just exit */
+    if (!count) goto fn_success;
 
     request_t* parent_req = alloc_request();
     EXPR_CHKANDJUMP(parent_req, "failed to allocate parent request");
@@ -2796,16 +2757,16 @@ static int nb_getputv(
 fn_success:
     if (env_data.force_sync)
     {
-        if (parent_req)
-            wait_request(parent_req);
-        if (handle)
-            *handle = HANDLE_UNDEFINED;
+        if (parent_req) wait_request(parent_req);
+        if (handle) *handle = HANDLE_UNDEFINED;
     }
     return COMEX_SUCCESS;
 
 fn_fail:
-    if (msg) /* in case if context defined - them msg will be destroyed */
-    {       /* by request completion callback */
+    if (msg)
+    {
+        /* in case if context defined - them msg will be destroyed */
+        /* by request completion callback */
         if (msg->context)
         {
             complete_request((request_t*)msg->context);
@@ -2813,16 +2774,13 @@ fn_fail:
         }
         else
         {
-            if (msg->msg_iov)
-                free((void*)msg->msg_iov);
-            if (msg->rma_iov)
-                free((void*)msg->rma_iov);
+            if (msg->msg_iov) free((void*)msg->msg_iov);
+            if (msg->rma_iov) free((void*)msg->rma_iov);
             free(msg);
         }
     }
 
-    if (parent_req)
-        free_request(parent_req);
+    if (parent_req) free_request(parent_req);
     return COMEX_FAILURE;
 }
 
@@ -2840,7 +2798,6 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 int comex_nbgetv(
         comex_giov_t *iov, int iov_len,
         int proc, comex_group_t group,
@@ -2856,9 +2813,8 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 static int comex_nbaccv_native(
-        int datatype, void *scale,
+        int datatype, void* scale,
         comex_giov_t *iov, int iov_len,
         int proc, comex_group_t group,
         comex_request_t* handle)
@@ -2874,18 +2830,18 @@ fn_fail:
 }
 
 int comex_acc(
-        int datatype, void *scale,
-        void *src_ptr, void *dst_ptr, int bytes,
+        int datatype, void* scale,
+        void* src_ptr, void* dst_ptr, int bytes,
         int proc, comex_group_t group)
 {
     return comex_acc_f(datatype, scale, src_ptr, dst_ptr, bytes, proc, group);
 }
 
 int comex_accs(
-        int datatype, void *scale,
-        void *src_ptr, int *src_stride_ar,
-        void *dst_ptr, int *dst_stride_ar,
-        int *count, int stride_levels,
+        int datatype, void* scale,
+        void* src_ptr, int* src_stride_ar,
+        void* dst_ptr, int* dst_stride_ar,
+        int* count, int stride_levels,
         int proc, comex_group_t group)
 {
     return comex_accs_f(datatype, scale,
@@ -2895,7 +2851,7 @@ int comex_accs(
 }
 
 int comex_accv(
-        int datatype, void *scale,
+        int datatype, void* scale,
         comex_giov_t *iov, int iov_len,
         int proc, comex_group_t group)
 {
@@ -2903,8 +2859,8 @@ int comex_accv(
 }
 
 int comex_nbacc(
-        int datatype, void *scale,
-        void *src_ptr, void *dst_ptr, int bytes,
+        int datatype, void* scale,
+        void* src_ptr, void* dst_ptr, int bytes,
         int proc, comex_group_t group,
         comex_request_t *handle)
 {
@@ -2912,10 +2868,10 @@ int comex_nbacc(
 }
 
 int comex_nbaccs(
-        int datatype, void *scale,
-        void *src, int *src_stride,
-        void *dst, int *dst_stride,
-        int *count, int stride_levels,
+        int datatype, void* scale,
+        void* src, int* src_stride,
+        void* dst, int* dst_stride,
+        int* count, int stride_levels,
         int proc, comex_group_t group,
         comex_request_t *handle)
 {
@@ -2926,7 +2882,7 @@ int comex_nbaccs(
 }
 
 int comex_nbaccv(
-        int datatype, void *scale,
+        int datatype, void* scale,
         comex_giov_t *iov, int iov_len,
         int proc, comex_group_t group,
         comex_request_t* handle)
@@ -2939,7 +2895,7 @@ int comex_nbaccv(
    prem - pointer to dst
  */
 int comex_rmw(
-        int op, void *ploc, void *prem, int extra,
+        int op, void* ploc, void* prem, int extra,
         int proc, comex_group_t group)
 {
     request_t request;
@@ -2952,20 +2908,34 @@ int comex_rmw(
 
     if (IS_TARGET_ATOMICS_EMULATION())
     {
-        ofi_atomics_t header = {.rmw = {.proto.proc = l_state.proc, .proto.op = op, .proto.tag = GETTAG(),
-                                .src = (op == COMEX_SWAP) ? *(int*)ploc :
-                                       (op == COMEX_SWAP_LONG) ? *(uint64_t*)ploc : 0,
-                                .extra = extra,
-                            .addr = (uint64_t)prem}};
+        ofi_atomics_t header = {
+                                   .rmw =
+                                   {
+                                       .proto.proc = l_state.proc,
+                                       .proto.op = op,
+                                       .proto.tag = GETTAG(),
+                                       .src = (op == COMEX_SWAP) ? *(int*)ploc : (op == COMEX_SWAP_LONG) ? *(uint64_t*)ploc : 0,
+                                       .extra = extra,
+                                       .addr = (uint64_t)prem
+                                   }
+                               };
 
-        OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint, &header, sizeof(header),
-                           window->peer_tagged->fi_addr, ATOMICS_PROTO_TAGMASK),
-                  "failed to send tagged:");
+        OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint,
+                             &header,
+                             sizeof(header),
+                             window->peer_tagged->fi_addr,
+                             ATOMICS_PROTO_TAGMASK),
+                             "failed to send tagged:");
 
-        OFI_RETRY(fi_trecv(ofi_data.ep_tagged.endpoint, ploc,
-                    (op == COMEX_FETCH_AND_ADD || op == COMEX_SWAP) ? sizeof(int) : sizeof(uint64_t),
-                    0, window->peer_tagged->fi_addr, ATOMICS_DATA_TAGMASK | header.proto.tag, 0, &request),
-                  "failed to send tagged:");
+        OFI_RETRY(fi_trecv(ofi_data.ep_tagged.endpoint,
+                           ploc,
+                           (op == COMEX_FETCH_AND_ADD || op == COMEX_SWAP) ? sizeof(int) : sizeof(uint64_t),
+                           0,
+                           window->peer_tagged->fi_addr,
+                           ATOMICS_DATA_TAGMASK | header.proto.tag,
+                           0,
+                           &request),
+                           "failed to send tagged:");
 
         COMEX_CHKANDJUMP(wait_request(&request), "failed to wait request");
     }
@@ -3083,9 +3053,7 @@ static int create_mutexes(mutex_t** mtx, int num)
     int i;
     int count = 0;
     for (i = 0; i < group_size; i++)
-    {
         count += global[i].count;
-    }
 
     mutex = malloc(sizeof(*mutex));
     EXPR_CHKANDJUMP(mutex, "failed to allocate mutex object");
@@ -3104,7 +3072,13 @@ static int create_mutexes(mutex_t** mtx, int num)
      * allocated 'count' elements for elem + 'num' elements for
      * tail.
      * add data is allocated as solid array */
-    mcs_mutex_t local_mutex = {.proc = l_state.proc, .count = num, .key = 0, .tail = 0, .elem = 0};
+    mcs_mutex_t local_mutex = {
+                                  .proc = l_state.proc,
+                                  .count = num,
+                                  .key = 0,
+                                  .tail = 0,
+                                  .elem = 0
+                              };
     /*mcs_mutex_t local_mutex = {.proc = l_state.proc, .count = num, .key = 0, .tail = 0, .elem_idx = 0};*/
     size_t buflen = (count + num) * sizeof(*local_mutex.tail);
     mutex->data = malloc(buflen);
@@ -3148,31 +3122,23 @@ static int create_mutexes(mutex_t** mtx, int num)
     *mtx = mutex;
 
 fn_success:
-    if (global)
-        free(global);
-    if (unsorted)
-        free(unsorted);
+    if (global) free(global);
+    if (unsorted) free(unsorted);
     return COMEX_SUCCESS;
 
 fn_fail:
-    if (global)
-        free(global);
+    if (global) free(global);
     if (mutex)
     {
-        if (mutex->mr)
-            OFI_VCALL(fi_close((struct fid*)(mutex->mr)));
-        if (mutex->elem_offset)
-            free(mutex->elem_offset);
-        if (mutex->mcs_mutex)
-            free(mutex->mcs_mutex);
+        if (mutex->mr) OFI_VCALL(fi_close((struct fid*)(mutex->mr)));
+        if (mutex->elem_offset) free(mutex->elem_offset);
+        if (mutex->mcs_mutex) free(mutex->mcs_mutex);
         free(mutex);
         mutex = 0;
     }
-    if (unsorted)
-        free(unsorted);
+    if (unsorted) free(unsorted);
     return COMEX_FAILURE;
 }
-
 
 static int destroy_mutexes(mutex_t* mutex)
 {
@@ -3195,7 +3161,6 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 static int lock_mutex(mutex_t* mutex, int mtx, int proc)
 {
     assert(mutex);
@@ -3204,7 +3169,7 @@ static int lock_mutex(mutex_t* mutex, int mtx, int proc)
     int my_proc = l_state.proc;
     int elem_index = ELEM_INDEX(mutex, proc, mtx);
 
-    void * buf = 0;
+    void* buf = 0;
 
     /* reset 'elem' element of current proc
      * using direct access because writing to this value is not
@@ -3236,8 +3201,9 @@ static int lock_mutex(mutex_t* mutex, int mtx, int proc)
     /*MUTEX_FOP_ATOMIC(mutex, proc, &my_proc, &prev, mtx, MUTEX_OP_WRITE);*/
 
     if (prev != PROC_NONE)
-    { /* mutex was locked by another proc. write to prev's 'elem' object current
-         proc & wait for notification from it */
+    {
+        /* mutex was locked by another proc. write to prev's 'elem' object current
+           proc & wait for notification from it */
         OFI_RETRY(fi_atomic(ofi_data.ep_atomics.endpoint,
                             &my_proc,
                             1,
@@ -3255,22 +3221,25 @@ static int lock_mutex(mutex_t* mutex, int mtx, int proc)
 
         int _buf;
         buf = ofi_data.msg_prefix_size ? malloc(sizeof(int) + ofi_data.msg_prefix_size) : &_buf;
-        OFI_RETRY(fi_trecv(ofi_data.ep_tagged.endpoint, buf, sizeof(int) + ofi_data.msg_prefix_size,
-                    0, ofi_data.ep_tagged.peers[prev].fi_addr,
-                           mutex->tagmask | mtx, 0, &request),
-                  "failed to receive tagged:");
+        OFI_RETRY(fi_trecv(ofi_data.ep_tagged.endpoint,
+                           buf,
+                           sizeof(int) + ofi_data.msg_prefix_size,
+                           0,
+                           ofi_data.ep_tagged.peers[prev].fi_addr,
+                           mutex->tagmask | mtx,
+                           0,
+                           &request),
+                           "failed to receive tagged:");
         WAIT_COMPLETION_AND_RESET(&request);
 
-        if(ofi_data.msg_prefix_size)
-            free(buf);
+        if (ofi_data.msg_prefix_size) free(buf);
     }
 
 fn_success:
     return COMEX_SUCCESS;
 
 fn_fail:
-    if (buf)
-        free(buf);
+    if (buf) free(buf);
     return COMEX_FAILURE;
 }
 
@@ -3309,7 +3278,8 @@ static int unlock_mutex(mutex_t* mutex, int mtx, int proc)
     /*MUTEX_READ(mutex, my_proc, &next, MUTEX_ELEM_IDX(mutex->mcs_mutex[my_proc], elem_index));*/
 
     if (next == PROC_NONE)
-    { /* check if somebody is waiting for mutex unlock */
+    {
+        /* check if somebody is waiting for mutex unlock */
         int no_proc = PROC_NONE;
         int tail = PROC_NONE;
         OFI_RETRY(fi_compare_atomic(ofi_data.ep_atomics.endpoint,
@@ -3364,11 +3334,13 @@ static int unlock_mutex(mutex_t* mutex, int mtx, int proc)
     {
         int _data;
         void* data = ofi_data.msg_prefix_size ? malloc(sizeof(int) + ofi_data.msg_prefix_size) : &_data;
-        OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint, data, sizeof(int) + ofi_data.msg_prefix_size,
-                           ofi_data.ep_tagged.peers[next].fi_addr, mutex->tagmask | mtx),
-                  "failed to send tagged:");
-        if(ofi_data.msg_prefix_size)
-            free(data);
+        OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint,
+                             data,
+                             sizeof(int) + ofi_data.msg_prefix_size,
+                             ofi_data.ep_tagged.peers[next].fi_addr,
+                             mutex->tagmask | mtx),
+                             "failed to send tagged:");
+        if (ofi_data.msg_prefix_size) free(data);
         /* do not wait for operation completed, use dtor callback to clean buffer instead */
     }
 
@@ -3429,17 +3401,32 @@ static int lock_am_mutex(int num, int proc)
     request_t request;
     init_request(&request);
 
-    ofi_atomics_t header = {.mutex = {.proto.proc = l_state.proc, .proto.op = OFI_MUTEX_AM_LOCK,
-                            .num = num}};
+    ofi_atomics_t header = {
+                               .mutex =
+                               {
+                                   .proto.proc = l_state.proc,
+                                   .proto.op = OFI_MUTEX_AM_LOCK,
+                                   .num = num
+                               }
+                           };
 
-    OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint, &header, sizeof(header),
-                       ofi_data.ep_tagged.peers[proc].fi_addr, ATOMICS_PROTO_TAGMASK),
-              "failed to send tagged:");
+    OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint,
+                         &header,
+                         sizeof(header),
+                         ofi_data.ep_tagged.peers[proc].fi_addr,
+                         ATOMICS_PROTO_TAGMASK),
+                         "failed to send tagged:");
 
     int v;
-    OFI_RETRY(fi_trecv(ofi_data.ep_tagged.endpoint, &v, sizeof(v),
-                0, ofi_data.ep_tagged.peers[proc].fi_addr, ATOMICS_MUTEX_TAGMASK | l_state.proc, 0, &request),
-              "failed to send tagged:");
+    OFI_RETRY(fi_trecv(ofi_data.ep_tagged.endpoint,
+                       &v,
+                       sizeof(v),
+                       0,
+                       ofi_data.ep_tagged.peers[proc].fi_addr,
+                       ATOMICS_MUTEX_TAGMASK | l_state.proc,
+                       0,
+                       &request),
+                       "failed to send tagged:");
 
     COMEX_CHKANDJUMP(wait_request(&request), "failed to wait request");
 
@@ -3452,12 +3439,21 @@ fn_fail:
 
 static int unlock_am_mutex(int num, int proc)
 {
-    ofi_atomics_t header = {.mutex = {.proto.proc = l_state.proc, .proto.op = OFI_MUTEX_AM_UNLOCK,
-                            .num = num}};
+    ofi_atomics_t header = {
+                               .mutex =
+                               {
+                                   .proto.proc = l_state.proc,
+                                   .proto.op = OFI_MUTEX_AM_UNLOCK,
+                                   .num = num
+                               }
+                           };
 
-    OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint, &header, sizeof(header),
-                       ofi_data.ep_tagged.peers[proc].fi_addr, ATOMICS_PROTO_TAGMASK),
-              "failed to send tagged:");
+    OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint,
+                         &header,
+                         sizeof(header),
+                         ofi_data.ep_tagged.peers[proc].fi_addr,
+                         ATOMICS_PROTO_TAGMASK),
+                         "failed to send tagged:");
 
 fn_success:
     return COMEX_SUCCESS;
@@ -3519,7 +3515,7 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
+int comex_malloc(void* ptrs[], size_t size, comex_group_t group)
 {
     typedef struct wnd_data_t
     {
@@ -3545,7 +3541,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
                                 &l_wnd->mr_rma, &context, ot_rma),
                                 "failed to register memory:");
 
-        if(dual_provider())
+        if (dual_provider())
         {
             COMEX_CHKANDJUMP(mr_reg(l_wnd->ptr, size, MR_ACCESS_PERMISSIONS,
                                     &l_wnd->mr_atomics, &context, ot_atomic),
@@ -3555,9 +3551,11 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
             l_wnd->mr_atomics = l_wnd->mr_rma;
     }
 
-    wnd_data_t my_wnd_data = {.ptr = (uint64_t)l_wnd->ptr,
-                              .size = size,
-                              .local_proc = 0};
+    wnd_data_t my_wnd_data = {
+                                 .ptr = (uint64_t)l_wnd->ptr,
+                                 .size = size,
+                                 .local_proc = 0
+                             };
     if (size)
     {
         OFI_CALL(my_wnd_data.key_rma, fi_mr_key(l_wnd->mr_rma));
@@ -3605,37 +3603,31 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     comex_barrier(group);
 
 fn_success:
-    if (all_wnd_data)
-        free(all_wnd_data);
+    if (all_wnd_data) free(all_wnd_data);
     return COMEX_SUCCESS;
 
 fn_fail:
     if (l_wnd)
     {
         REMOVE_FROM_LIST(local_wnd, l_wnd, local_window_t);
-        if (l_wnd->ptr)
-            free(l_wnd->ptr);
-        if (l_wnd->mr_rma)
-            OFI_VCALL(fi_close((struct fid*)l_wnd->mr_rma));
-        if (l_wnd->mr_atomics)
-            OFI_VCALL(fi_close((struct fid*)l_wnd->mr_atomics));
+        if (l_wnd->ptr) free(l_wnd->ptr);
+        if (l_wnd->mr_rma) OFI_VCALL(fi_close((struct fid*)l_wnd->mr_rma));
+        if (l_wnd->mr_atomics) OFI_VCALL(fi_close((struct fid*)l_wnd->mr_atomics));
         free(l_wnd);
     }
-    if (all_wnd_data)
-        free(all_wnd_data);
+    if (all_wnd_data) free(all_wnd_data);
     return COMEX_FAILURE;
 }
 
 
-int comex_free(void *ptr, comex_group_t group)
+int comex_free(void* ptr, comex_group_t group)
 {
     COMEX_CHKANDJUMP(comex_barrier(group), "failed to barrier");
 
     local_window_t* local = local_wnd;
     while (local)
     {
-        if (ptr == local->ptr)
-            break;
+        if (ptr == local->ptr) break;
         local = local->next;
     }
 
@@ -3659,11 +3651,11 @@ int comex_free(void *ptr, comex_group_t group)
             ofi = ofi->next;
     }
 
-    if(ptr)
+    if (ptr)
     {
         int ret;
         COMEX_CHKANDJUMP(mr_unreg(&local->mr_rma->fid), "fi_close memory region:");
-        if(dual_provider())
+        if (dual_provider())
             COMEX_CHKANDJUMP(mr_unreg(&local->mr_atomics->fid), "fi_close memory region:");
 
         comex_free_local(ptr);
@@ -3695,20 +3687,17 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-
 static void acquire_remote_lock(int proc)
 {
     assert(!IS_TARGET_ATOMICS_EMULATION());
     lock_mutex(local_mutex, 0, proc);
 }
 
-
 static void release_remote_lock(int proc)
 {
     assert(!IS_TARGET_ATOMICS_EMULATION());
     unlock_mutex(local_mutex, 0, proc);
 }
-
 
 #ifdef USE_ATOMIC_EMULATION
 
@@ -3720,19 +3709,19 @@ do                                          \
     type* src = (type*)(_src);              \
     type* dst = (type*)(_dst);              \
     type  scl = *(type*)(_scale);           \
-    for(i = 0; i < cnt; i++, src++, dst++)  \
+    for (i = 0; i < cnt; i++, src++, dst++) \
         *dst = (*src) * scl;                \
 } while(0)
 
 static inline void acc_emu(
-        int datatype, int count, void *get_buf,
-        void *src_ptr, size_t src_idx, void *scale);
+        int datatype, int count, void* get_buf,
+        void* src_ptr, size_t src_idx, void* scale);
 
 static int comex_nbaccs_emu(
-        int datatype, void *scale,
-        void *src_ptr, int *src_stride_ar,
-        void *dst_ptr, int *dst_stride_ar,
-        int *count, int stride_levels,
+        int datatype, void* scale,
+        void* src_ptr, int* src_stride_ar,
+        void* dst_ptr, int* dst_stride_ar,
+        int* count, int stride_levels,
         int proc, comex_group_t group,
         comex_request_t* comex_request)
 {
@@ -3744,7 +3733,7 @@ static int comex_nbaccs_emu(
     int n1dim;  /* number of 1 dim block */
     size_t src_bvalue[7], src_bunit[7];
     size_t dst_bvalue[7], dst_bunit[7];
-    void *get_buf = 0;
+    void* get_buf = 0;
     int result = COMEX_SUCCESS;
     int world_proc = PROC_NONE;
 
@@ -3753,27 +3742,35 @@ static int comex_nbaccs_emu(
 
     request_t* request = 0;
 
-    if(comex_request)
-        *comex_request = HANDLE_UNDEFINED;
+    if (comex_request) *comex_request = HANDLE_UNDEFINED;
 
     /* number of n-element of the first dimension */
     n1dim = 1;
-    for(i=1; i<=stride_levels; i++)
+    for (i = 1; i <= stride_levels; i++)
         n1dim *= count[i];
 
-    ofi_atomics_t header = {.acc = {.proto.proc = l_state.proc, .proto.op = datatype, .proto.tag = GETTAG(),
-                     .count = n1dim, .len = count[0], .posted = 0}};
+    ofi_atomics_t header = {
+                               .acc =
+                               {
+                                   .proto.proc = l_state.proc,
+                                   .proto.op = datatype,
+                                   .proto.tag = GETTAG(),
+                                   .count = n1dim,
+                                   .len = count[0],
+                                   .posted = 0
+                               }
+                           };
 
     /* calculate the destination indices */
     src_bvalue[0] = 0; src_bvalue[1] = 0; src_bunit[0] = 1; src_bunit[1] = 1;
     dst_bvalue[0] = 0; dst_bvalue[1] = 0; dst_bunit[0] = 1; dst_bunit[1] = 1;
 
-    for(i=2; i<=stride_levels; i++)
+    for (i = 2; i <= stride_levels; i++)
     {
         src_bvalue[i] = 0;
         dst_bvalue[i] = 0;
-        src_bunit[i] = src_bunit[i-1] * count[i-1];
-        dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+        src_bunit[i] = src_bunit[i - 1] * count[i - 1];
+        dst_bunit[i] = dst_bunit[i - 1] * count[i - 1];
     }
 
     if (env_data.emulation_type == et_origin && 0 == skip_lock)
@@ -3783,7 +3780,7 @@ static int comex_nbaccs_emu(
     }
 
     if (env_data.emulation_type == et_origin)
-    {   
+    {
         /* use common buffer to acc */
         get_buf = (char *)malloc(sizeof(char) * count[0]);
         EXPR_CHKANDJUMP(get_buf, "failed to allocate memory\n");
@@ -3795,9 +3792,12 @@ static int comex_nbaccs_emu(
         comex_group_translate_world(group, proc, &world_proc);
         EXPR_CHKANDJUMP((world_proc != PROC_NONE), "invalid world proc");
 
-        OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint, &header, sizeof(header),
-                           ofi_data.ep_tagged.peers[world_proc].fi_addr, ATOMICS_PROTO_TAGMASK),
-                  "failed to send tagged:");
+        OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint,
+                             &header,
+                             sizeof(header),
+                             ofi_data.ep_tagged.peers[world_proc].fi_addr,
+                             ATOMICS_PROTO_TAGMASK),
+                             "failed to send tagged:");
 
         /* allocate buffer for all acc data  & register it */
         chunk = sizeof(ofi_atomics_t) + (sizeof(char) * count[0]);
@@ -3811,54 +3811,63 @@ static int comex_nbaccs_emu(
 
         request->dtor = req_dtor;
         increment_request_cnt(request);
-        if(comex_request)
-            *comex_request = request->index;
-        else
-            request->flags |= rf_auto_free;
+        if (comex_request) *comex_request = request->index;
+        else request->flags |= rf_auto_free;
 
         request_t* complete = alloc_request();
         EXPR_CHKANDJUMP(complete, "failed to allocate request");
         set_parent_request(request, complete);
-        OFI_RETRY(fi_trecv(ofi_data.ep_tagged.endpoint, &complete->inplace, sizeof(complete->inplace),
-                    0, ofi_data.ep_tagged.peers[world_proc].fi_addr,
-                    ATOMICS_ACC_CMPL_TAGMASK | header.proto.tag, 0, complete),
-                  "failed to send tagged:");
+        OFI_RETRY(fi_trecv(ofi_data.ep_tagged.endpoint,
+                           &complete->inplace,
+                           sizeof(complete->inplace),
+                           0,
+                           ofi_data.ep_tagged.peers[world_proc].fi_addr,
+                           ATOMICS_ACC_CMPL_TAGMASK | header.proto.tag,
+                           0,
+                           complete),
+                           "failed to send tagged:");
 
-        if(chunk > ofi_data.max_buffered_send)
-        {   
+        if (chunk > ofi_data.max_buffered_send)
+        {
             /* chunk used in comaring because in case if chunk is small data is sent by inject */
             get_buf = (char *)malloc(total);
             request->data = get_buf;
         }
         else
-        {   
+        {
             /* if chunk is small - use same buffer for all packets (use inject call) */
             get_buf = (char *)malloc(chunk);
         }
         EXPR_CHKANDJUMP(get_buf, "failed to allocate memory\n");
     }
 
-    for(i = 0; i < n1dim; i++)
+    for (i = 0; i < n1dim; i++)
     {
         src_idx = 0;
-        for(j=1; j<=stride_levels; j++) {
-            src_idx += src_bvalue[j] * src_stride_ar[j-1];
-            if((i+1) % src_bunit[j] == 0) {
+        for (j = 1; j <= stride_levels; j++)
+        {
+            src_idx += src_bvalue[j] * src_stride_ar[j - 1];
+            if ((i + 1) % src_bunit[j] == 0)
+            {
                 src_bvalue[j]++;
             }
-            if(src_bvalue[j] > (count[j]-1)) {
+            if (src_bvalue[j] > (count[j] - 1))
+            {
                 src_bvalue[j] = 0;
             }
         }
 
         dst_idx = 0;
 
-        for(j=1; j<=stride_levels; j++) {
-            dst_idx += dst_bvalue[j] * dst_stride_ar[j-1];
-            if((i+1) % dst_bunit[j] == 0) {
+        for(j = 1; j <= stride_levels; j++)
+        {
+            dst_idx += dst_bvalue[j] * dst_stride_ar[j - 1];
+            if ((i + 1) % dst_bunit[j] == 0)
+            {
                 dst_bvalue[j]++;
             }
-            if(dst_bvalue[j] > (count[j]-1)) {
+            if(dst_bvalue[j] > (count[j] - 1))
+            {
                 dst_bvalue[j] = 0;
             }
         }
@@ -3877,58 +3886,72 @@ static int comex_nbaccs_emu(
                     "comex_accs_emu: failed to put data");
         }
         else if (env_data.emulation_type == et_target)
-        {   
+        {
             /* use p2p way for atomics: send header to allow pre-post request */
             ofi_atomics_t _hdr = {
-                .acc = {.proto.proc = l_state.proc, .proto.op = datatype, .proto.tag = header.proto.tag,
-                .len = count[0], .posted = count[0],
-                .addr = (uint64_t)((char *)dst_ptr + dst_idx), .count = 0}};
+                                     .acc =
+                                     {
+                                         .proto.proc = l_state.proc,
+                                         .proto.op = datatype,
+                                         .proto.tag = header.proto.tag,
+                                         .len = count[0],
+                                         .posted = count[0],
+                                         .addr = (uint64_t)((char *)dst_ptr + dst_idx),
+                                         .count = 0
+                                     }
+                                 };
             ofi_atomics_t* hdr = get_buf;
             *hdr = _hdr;
 
-            switch(datatype)
+            switch (datatype)
             {
-            case COMEX_ACC_DBL:
-                CALC(hdr->acc.data, (char*)src_ptr + src_idx, scale, count[0], double);
-                break;
-            case COMEX_ACC_FLT:
-                CALC(hdr->acc.data, (char*)src_ptr + src_idx, scale, count[0], float);
-                break;
-            case COMEX_ACC_INT:
-                CALC(hdr->acc.data, (char*)src_ptr + src_idx, scale, count[0], int);
-                break;
-            case COMEX_ACC_LNG:
-                CALC(hdr->acc.data, (char*)src_ptr + src_idx, scale, count[0], long);
-                break;
-            case COMEX_ACC_DCP:
-                CALC(hdr->acc.data, (char*)src_ptr + src_idx, scale, count[0], double complex);
-                break;
-            case COMEX_ACC_CPL:
-                CALC(hdr->acc.data, (char*)src_ptr + src_idx, scale, count[0], float complex);
-                break;
-            default:
-                EXPR_CHKANDJUMP(0, "incorrect datatype: %d\n", datatype);
-                break;
+                case COMEX_ACC_DBL:
+                    CALC(hdr->acc.data, (char*)src_ptr + src_idx, scale, count[0], double);
+                    break;
+                case COMEX_ACC_FLT:
+                    CALC(hdr->acc.data, (char*)src_ptr + src_idx, scale, count[0], float);
+                    break;
+                case COMEX_ACC_INT:
+                    CALC(hdr->acc.data, (char*)src_ptr + src_idx, scale, count[0], int);
+                    break;
+                case COMEX_ACC_LNG:
+                    CALC(hdr->acc.data, (char*)src_ptr + src_idx, scale, count[0], long);
+                    break;
+                case COMEX_ACC_DCP:
+                    CALC(hdr->acc.data, (char*)src_ptr + src_idx, scale, count[0], double complex);
+                    break;
+                case COMEX_ACC_CPL:
+                    CALC(hdr->acc.data, (char*)src_ptr + src_idx, scale, count[0], float complex);
+                    break;
+                default:
+                    EXPR_CHKANDJUMP(0, "incorrect datatype: %d\n", datatype);
+                    break;
             }
 
-            if(chunk > ofi_data.max_buffered_send)
+            if (chunk > ofi_data.max_buffered_send)
             {
                 request_t* child = alloc_request();
                 EXPR_CHKANDJUMP(child, "failed to allocate request");
                 set_parent_request(request, child);
 
-                OFI_RETRY(fi_tsend(ofi_data.ep_tagged.endpoint, hdr, chunk,
-                            desc, ofi_data.ep_tagged.peers[world_proc].fi_addr,
-                            ATOMICS_ACC_DATA_TAGMASK | header.proto.tag, child),
-                          "failed to send tagged:");
+                OFI_RETRY(fi_tsend(ofi_data.ep_tagged.endpoint,
+                                   hdr,
+                                   chunk,
+                                   desc,
+                                   ofi_data.ep_tagged.peers[world_proc].fi_addr,
+                                   ATOMICS_ACC_DATA_TAGMASK | header.proto.tag,
+                                   child),
+                                   "failed to send tagged:");
                 get_buf += chunk;
             }
             else
             {
-                OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint, hdr, chunk,
-                                   ofi_data.ep_tagged.peers[world_proc].fi_addr,
-                                   ATOMICS_ACC_DATA_TAGMASK | header.proto.tag),
-                          "failed to send tagged:");
+                OFI_RETRY(fi_tinject(ofi_data.ep_tagged.endpoint,
+                                     hdr,
+                                     chunk,
+                                     ofi_data.ep_tagged.peers[world_proc].fi_addr,
+                                     ATOMICS_ACC_DATA_TAGMASK | header.proto.tag),
+                                     "failed to send tagged:");
             }
         }
     }
@@ -3936,8 +3959,7 @@ static int comex_nbaccs_emu(
     if (request)
     {
         decrement_request_cnt(request);
-        if(request->data)
-            get_buf = 0; /* buffer will be removed by request */
+        if(request->data) get_buf = 0; /* buffer will be removed by request */
     }
 
     if (env_data.emulation_type == et_origin && 0 == skip_lock)
@@ -3947,14 +3969,11 @@ static int comex_nbaccs_emu(
     }
 
 fn_exit:
-    if (get_buf)
-        free(get_buf);
+    if (get_buf) free(get_buf);
     if (env_data.force_sync)
     {
-        if(request)
-            wait_request(request);
-        if(comex_request)
-            *comex_request = HANDLE_UNDEFINED;
+        if (request) wait_request(request);
+        if (comex_request) *comex_request = HANDLE_UNDEFINED;
     }
     return result;
 
@@ -3965,8 +3984,8 @@ fn_fail:
 }
 
 static int comex_acc_emu(
-        int datatype, void *scale,
-        void *src_ptr, void *dst_ptr, int bytes,
+        int datatype, void* scale,
+        void* src_ptr, void* dst_ptr, int bytes,
         int proc, comex_group_t group)
 {
     return comex_accs_emu(
@@ -3978,8 +3997,8 @@ static int comex_acc_emu(
 }
 
 static int comex_nbacc_emu(
-        int datatype, void *scale,
-        void *src_ptr, void *dst_ptr, int bytes,
+        int datatype, void* scale,
+        void* src_ptr, void* dst_ptr, int bytes,
         int proc, comex_group_t group,
         comex_request_t *hdl)
 {
@@ -3992,10 +4011,10 @@ static int comex_nbacc_emu(
 }
 
 int comex_accs_emu(
-        int datatype, void *scale,
-        void *src, int *src_stride,
-        void *dst, int *dst_stride,
-        int *count, int stride_levels,
+        int datatype, void* scale,
+        void* src, int* src_stride,
+        void* dst, int* dst_stride,
+        int* count, int stride_levels,
         int proc, comex_group_t group)
 {
     comex_request_t hdl;
@@ -4009,7 +4028,7 @@ fn_fail:
 }
 
 int comex_accv_emu(
-        int datatype, void *scale,
+        int datatype, void* scale,
         comex_giov_t *iov, int iov_len,
         int proc, comex_group_t group)
 {
@@ -4022,7 +4041,7 @@ fn_fail:
 }
 
 static int comex_nbaccv_emu(
-        int datatype, void *scale,
+        int datatype, void* scale,
         comex_giov_t *iov, int iov_len,
         int proc, comex_group_t group,
         comex_request_t* hdl)
@@ -4032,8 +4051,7 @@ static int comex_nbaccv_emu(
     int result = COMEX_SUCCESS;
     comex_request_t* reqs = 0;
 
-    if(hdl)
-        *hdl = HANDLE_UNDEFINED;
+    if (hdl) *hdl = HANDLE_UNDEFINED;
 
     if (env_data.emulation_type == et_origin)
     {
@@ -4042,30 +4060,32 @@ static int comex_nbaccv_emu(
     }
 
     int count = 0;
-    for (i=0; i<iov_len; ++i)
+    for (i = 0; i < iov_len; ++i)
         count += iov[i].count;
 
     reqs = (comex_request_t*)malloc(count * sizeof(*reqs));
     EXPR_CHKANDJUMP(reqs, "failed to llocate data");
 
-    for (i=0, n = 0; i<iov_len; ++i) {
+    for (i = 0, n = 0; i < iov_len; ++i)
+    {
         int j;
-        void **src = iov[i].src;
-        void **dst = iov[i].dst;
+        void** src = iov[i].src;
+        void** dst = iov[i].dst;
         int bytes = iov[i].bytes;
         int limit = iov[i].count;
-        for (j=0; j<limit; ++j, n++) {
+        for (j = 0; j < limit; ++j, n++)
+        {
             comex_request_t h = HANDLE_UNDEFINED;
             COMEX_CHKANDJUMP(comex_nbacc_emu(datatype, scale, src[j], dst[j], bytes, proc, group, &reqs[n]),
-                    "comex_accv_emu: failed to acc");
+                             "comex_accv_emu: failed to acc");
         }
     }
-    for(i = 0; i < count; i++)
+
+    for (i = 0; i < count; i++)
         comex_wait(&reqs[i]);
 
 fn_exit:
-    if(reqs)
-        free(reqs);
+    if (reqs) free(reqs);
     if (env_data.emulation_type == et_origin)
     {
         skip_lock = 0;
@@ -4079,8 +4099,8 @@ fn_fail:
 }
 
 static inline void acc_emu(
-        int datatype, int count, void *get_buf,
-        void *src_ptr, size_t src_idx, void *scale)
+        int datatype, int count, void* get_buf,
+        void* src_ptr, size_t src_idx, void* scale)
 {
 #define EQ_ONE_REG(A) ((A) == 1.0)
 #define EQ_ONE_CPL(A) ((A).real == 1.0 && (A).imag == 0.0)
@@ -4089,24 +4109,32 @@ static inline void acc_emu(
 #define IADD_SCALE_REG(A,B,C) (A) += (B) * (C)
 #define IADD_SCALE_CPL(A,B,C) (A).real += ((B).real*(C).real) - ((B).imag*(C).imag);\
                               (A).imag += ((B).real*(C).imag) + ((B).imag*(C).real);
-#define ACC(WHICH, COMEX_TYPE, C_TYPE)                                  \
-    if (datatype == COMEX_TYPE) {                                       \
-        int m;                                                          \
-        int m_lim = count/sizeof(C_TYPE);                               \
-        C_TYPE *iterator = (C_TYPE *)get_buf;                           \
-        C_TYPE *value = (C_TYPE *)((char *)src_ptr + src_idx);          \
-        C_TYPE calc_scale = *(C_TYPE *)scale;                           \
-        if (EQ_ONE_##WHICH(calc_scale)) {                               \
-            for (m = 0 ; m < m_lim; ++m) {                              \
-                IADD_##WHICH(iterator[m], value[m]);                    \
-            }                                                           \
-        }                                                               \
-        else {                                                          \
-            for (m = 0 ; m < m_lim; ++m) {                              \
-                IADD_SCALE_##WHICH(iterator[m], value[m], calc_scale);  \
-            }                                                           \
-        }                                                               \
-    } else
+
+#define ACC(WHICH, COMEX_TYPE, C_TYPE)                                 \
+    if (datatype == COMEX_TYPE)                                        \
+    {                                                                  \
+        int m;                                                         \
+        int m_lim = count / sizeof(C_TYPE);                            \
+        C_TYPE* iterator = (C_TYPE*)get_buf;                           \
+        C_TYPE* value = (C_TYPE*)((char*)src_ptr + src_idx);           \
+        C_TYPE calc_scale = *(C_TYPE*)scale;                           \
+        if (EQ_ONE_##WHICH(calc_scale))                                \
+        {                                                              \
+            for (m = 0 ; m < m_lim; ++m)                               \
+            {                                                          \
+                IADD_##WHICH(iterator[m], value[m]);                   \
+            }                                                          \
+        }                                                              \
+        else                                                           \
+        {                                                              \
+            for (m = 0 ; m < m_lim; ++m)                               \
+            {                                                          \
+                IADD_SCALE_##WHICH(iterator[m], value[m], calc_scale); \
+            }                                                          \
+        }                                                              \
+    }                                                                  \
+    else
+
     ACC(REG, COMEX_ACC_DBL, double)
     ACC(REG, COMEX_ACC_FLT, float)
     ACC(REG, COMEX_ACC_INT, int)

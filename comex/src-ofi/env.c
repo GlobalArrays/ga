@@ -1,3 +1,7 @@
+/*
+ *  * Copyright (c) 2016 Intel Corporation.  All rights reserved.
+ */
+
 #include <stddef.h>
 
 #include "comex.h"
@@ -69,15 +73,13 @@ int env_to_int(const char* env_name, int* val)
         const char* p;
         int sign = 1, value = 0;
         p = val_ptr;
-        while (*p && IS_SPACE(*p))
-            p++;
+        while (*p && IS_SPACE(*p)) p++;
         if (*p == '-')
         {
             p++;
             sign = -1;
         }
-        if (*p == '+')
-            p++;
+        if (*p == '+') p++;
 
         while (*p && isdigit(*p))
             value = 10 * value + (*p++ - '0');

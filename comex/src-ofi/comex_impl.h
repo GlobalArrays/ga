@@ -68,40 +68,40 @@
 
 #include "fi_lock.h"
 
-#define OFI_LOCK_INIT()                \
-do                                     \
-{                                      \
-    fastlock_init(&poll_lock);        \
-    fastlock_init(&mutex_lock);       \
-    fastlock_init(&acc_lock);         \
-} while(0)
+#define OFI_LOCK_INIT()           \
+  do                              \
+  {                               \
+      fastlock_init(&poll_lock);  \
+      fastlock_init(&mutex_lock); \
+      fastlock_init(&acc_lock);   \
+  } while(0)
 
-#define OFI_LOCK_DESTROY()             \
-do                                     \
-{                                      \
-    fastlock_destroy(&poll_lock);     \
-    fastlock_destroy(&mutex_lock);    \
-    fastlock_destroy(&acc_lock);      \
-} while(0)
+#define OFI_LOCK_DESTROY()           \
+  do                                 \
+  {                                  \
+      fastlock_destroy(&poll_lock);  \
+      fastlock_destroy(&mutex_lock); \
+      fastlock_destroy(&acc_lock);   \
+  } while(0)
 
 #define OFI_LOCK() fastlock_acquire(&poll_lock)
 #define OFI_TRYLOCK() (!fastlock_tryacquire(&poll_lock))
 #define OFI_UNLOCK() fastlock_release(&poll_lock);
 #define OFI_CALL(ret, func) \
-do                          \
-{                           \
-    OFI_LOCK();             \
-    ret = func;             \
-    OFI_UNLOCK();           \
-} while(0)
+  do                        \
+  {                         \
+      OFI_LOCK();           \
+      ret = func;           \
+      OFI_UNLOCK();         \
+  } while(0)
 
 #define OFI_VCALL(func) \
-do                      \
-{                       \
-    OFI_LOCK();         \
-    func;               \
-    OFI_UNLOCK();       \
-} while(0)
+  do                    \
+  {                     \
+      OFI_LOCK();       \
+      func;             \
+      OFI_UNLOCK();     \
+  } while(0)
 
 /* Logging macroses */
 #define EXPR_CHKANDJUMP(ret, fmt, ...)  \
@@ -147,7 +147,8 @@ do                      \
   } while (0)
 
 #define OFI_RETRY(func, ...)                       \
-    do{                                            \
+    do                                             \
+    {                                              \
         ssize_t _ret;                              \
         do {                                       \
             OFI_CALL(_ret, func);                  \
@@ -190,11 +191,11 @@ static void err_printf(const char *fmt, ...)
 }
 
 /* Struct declaration */
-typedef struct {
+typedef struct
+{
     MPI_Comm world_comm;
     int proc;
     int size;
-
     int local_proc;
     int local_size;
 } local_state;

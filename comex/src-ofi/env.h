@@ -1,3 +1,7 @@
+/*
+ *  * Copyright (c) 2016 Intel Corporation.  All rights reserved.
+ */
+
 #ifndef ENV_H_
 #define ENV_H_
 

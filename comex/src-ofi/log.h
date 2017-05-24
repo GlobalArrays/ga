@@ -1,3 +1,7 @@
+/*
+ *  * Copyright (c) 2016 Intel Corporation.  All rights reserved.
+ */
+
 #ifndef LOG_H_
 #define LOG_H_
 
