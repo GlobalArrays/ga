@@ -15,11 +15,16 @@ if [ ! -d ${TOP}/bin ] ; then
 fi
 
 download=""
-type wget 1>/dev/null 2>&1 && download="wget -O"
-type curl 1>/dev/null 2>&1 && download="curl -o"
-if test "x${download}" = x ; then
- echo "failed to determine download agent"
- exit 1
+if wget --version > /dev/null ; then
+    download="wget -O"
+else
+    if curl --version > /dev/null ; then
+        download="curl -o"
+    fi
+fi
+if [ "x${download}" = x ] ; then
+    echo "failed to determine download agent"
+    exit 1
 fi
 
 case "$os" in
