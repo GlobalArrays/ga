@@ -14,6 +14,14 @@ if [ ! -d ${TOP}/bin ] ; then
     mkdir ${TOP}/bin
 fi
 
+download=""
+type wget 1>/dev/null 2>&1 && download="wget -O"
+type curl 1>/dev/null 2>&1 && download="curl -o"
+if test "x${download}" = x ; then
+ echo "failed to determine download agent"
+ exit 1
+fi
+
 case "$os" in
     Darwin|Linux)
         MAKE_JNUM=4
@@ -52,7 +60,7 @@ case "$os" in
         if [ -f config.guess ] ; then
             echo "config.guess already exists! Using existing copy."
         else
-            wget -O config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
+            ${download} config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
         fi
 
         ##########################################
@@ -62,7 +70,7 @@ case "$os" in
         if [ -f config.sub ] ; then
             echo "config.sub already exists! Using existing copy."
         else
-            wget -O config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
+            ${download} config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
         fi
 
         ##########################################
@@ -90,7 +98,7 @@ case "$os" in
             if [ -f ${FILE} ] ; then
                 echo ${FILE} already exists! Using existing copy.
             else
-                wget -O ${FILE} ${URL}
+                ${download} ${FILE} ${URL}
             fi
             if [ -d ${TDIR} ] ; then
                 echo ${TDIR} already exists! Using existing copy.
@@ -140,7 +148,7 @@ case "$os" in
                 URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
             fi
             if [ ! -f ${FILE} ] ; then
-                wget -O ${FILE} ${URL}
+                ${download} ${FILE} ${URL}
             else
                 echo ${FILE} already exists! Using existing copy.
             fi
@@ -192,7 +200,7 @@ case "$os" in
                 URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
             fi
             if [ ! -f ${FILE} ] ; then
-                wget -O ${FILE} ${URL}
+                ${download} ${FILE} ${URL}
             else
                 echo ${FILE} already exists! Using existing copy.
             fi
@@ -244,7 +252,7 @@ case "$os" in
                 URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
             fi
             if [ ! -f ${FILE} ] ; then
-                wget -O ${FILE} ${URL}
+                ${download} ${FILE} ${URL}
             else
                 echo ${FILE} already exists! Using existing copy.
             fi
