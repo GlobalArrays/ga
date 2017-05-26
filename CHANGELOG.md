@@ -10,6 +10,8 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
 ## [5.6.1] - 2017-05-26
+- Known Bugs
+  - [\#48] Message sizes exceeding 2GB may not work correctly
 - Added
   - New ELPA 2016 eigensolver 2stage interface
 - Changed
