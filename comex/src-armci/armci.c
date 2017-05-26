@@ -388,8 +388,8 @@ int PARMCI_NbGet(void *src, void *dst, int bytes, int proc, armci_hdl_t *nb_hand
 int PARMCI_NbGetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)
 {
   int iret;
-  /* check if data is contiguous */
-  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+  /* Disable check if data is contiguous. See https://github.com/GlobalArrays/ga/issues/46 */
+  if (armci_checkt_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
