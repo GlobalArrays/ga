@@ -32,8 +32,8 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
 - Closed Pull Requests
   - [\#34] Fix installation of autotools if not present
   - [\#53] new ELPA 2016 eigensolver 2stage interface
-  - [\#54] curl for download when wget not installed
-  - [\#55] new ELPA 2016 eigensolver interface for the Hotfix/5.6.1 branch
+  - [\#54] new ELPA 2016 eigensolver interface for the Hotfix/5.6.1 branch
+  - [\#55] curl for download when wget not installed
 - Closed Issues
   - [\#1] Incorporating GAMESS Patch
   - [\#5] Compiler error with --with-ofi
