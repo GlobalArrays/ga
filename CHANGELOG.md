@@ -16,8 +16,6 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
   - autogen.sh unconditionally runs install-autotools.sh
   - install-autotools.sh downloads latest config.guess and config.sub
   - Additional LAPACK symbols are now tested for during configure
-- Deprecated
-- Removed
 - Fixed
   - comex_fence_proc() fixed for MPI-MT, MPI-PT, MPI-PR ports
   - configure --disable-fortran now works again
