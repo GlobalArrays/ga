@@ -39,6 +39,7 @@ libcomex_la_SOURCES =
 libcomex_la_LIBADD =
 libcomex_la_LIBADD += $(MPI_LIBS)
 libcomex_la_LIBADD += $(COMEX_NETWORK_LIBS)
+libcomex_la_LIBADD += $(BLAS_LIBS)
 include_HEADERS += $(top_srcdir)/src-common/comex.h
 
 AM_CPPFLAGS += $(MPI_CPPFLAGS)

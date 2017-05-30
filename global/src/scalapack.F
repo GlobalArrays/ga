@@ -3542,6 +3542,9 @@ c     broadcast evals
 #if HAVE_ELPA
       subroutine ga_evp_real(g_a, g_b, eval, nb8, mout)
       use ELPA1
+#if HAVE_ELPA_2STAGE
+      use ELPA2
+#endif
       implicit none
 #include "mpif.h"
 #include "mafdecls.fh"
@@ -3704,7 +3707,9 @@ c***  copy g_a to A and g_b to B using the block cyclic scalapack format
 c     
          call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
      $        dbl_mb(adrA), lda, mpA, nqA)
+         endif
          call ga_sync()
+         if(oactive) then
 c     
 c***  fill SCALAPACK matrix descriptors
 c     
@@ -3721,18 +3726,29 @@ c
      .        -info8)
 c     
 c     
-
+#if HAVE_ELPA_2STAGE
+           mpierr=get_elpa_communicators (elpa_comm, 
+#else
            mpierr=get_elpa_row_col_comms(elpa_comm,
+#endif
      V        myrow2, mycol2, 
      V        elpa_comm_rows, elpa_comm_cols)
            if(mpierr.ne.0) call ga_error(
      A     'ga-evp_real: get_elpa_row_col failed ',mpierr)
  
-
+#if HAVE_ELPA_2STAGE
+         if(.not.solve_evp_real_2stage(n, mout4, 
+     A        dbl_mb(adra), lda, 
+     E        eval, dbl_mb(adrb), ldb, nb, 
+     C          nqa,
+     A        elpa_comm_rows, elpa_comm_cols,
+     F        elpa_comm))
+#else
          if(.not.solve_evp_real(n, mout4, 
      A        dbl_mb(adra), lda, 
      E        eval, dbl_mb(adrb), ldb, nb, 
      A        elpa_comm_rows, elpa_comm_cols))
+#endif
      E   call ga_error(' solve_evp_real failed',0)
 
          if(iam.eq.0.and.mout4.ne.n) 
@@ -3757,14 +3773,13 @@ c
          if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
 
          if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
-           call MPI_Group_free( elpa_group, mpierr)
-         if(mpierr.ne.0) call ga_error(
-     A     'ga-evp_real: mpigroupfree failed ',mpierr)
            call MPI_comm_free( elpa_comm, mpierr)
          if(mpierr.ne.0) call ga_error(
      A     'ga-evp_real: mpicommfree failed ',mpierr)
-c     
-      endif
+      endif ! oactive
+      call MPI_Group_free( elpa_group, mpierr)
+      if(mpierr.ne.0) call ga_error(
+     A     'ga-evp_real: mpigroupfree failed ',mpierr)
       call ga_sync()
       if(maxproc.lt.nnodes.or.dima1.le.nb) then
 c     broadcast evals

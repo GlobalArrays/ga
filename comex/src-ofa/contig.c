@@ -75,3 +75,11 @@ int comex_nbget(void *src, void *dst, int bytes,
     return 0;
 }
 
+int comex_nbacc(int datatype, void *scale, void *src_ptr, void *dst_ptr,
+        int bytes, int proc, comex_group_t group, comex_request_t *hdl)
+{
+    int rc;
+    rc = comex_acc(datatype, scale, src_ptr, dst_ptr, bytes, proc, group);
+    return 0;
+}
+

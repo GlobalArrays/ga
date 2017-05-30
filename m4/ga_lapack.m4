@@ -4,7 +4,11 @@
 AC_DEFUN([GA_F77_LAPACK_TEST], [AC_LANG_CONFTEST([AC_LANG_PROGRAM([],
 [[      implicit none
       external DGETRS
-      CALL DGETRS ()]])])
+      external DSYGV
+      external LSAME
+      CALL DGETRS ()
+      CALL DSYGV ()
+      CALL LSAME ()]])])
 ])
 
 
@@ -15,12 +19,16 @@ AC_DEFUN([GA_C_LAPACK_TEST], [AC_LANG_CONFTEST([AC_LANG_PROGRAM(
 [#ifdef __cplusplus
 extern "C" {
 #endif
-char dgetrs ();
+char $dgetrs ();
+char $dsygv ();
+char $lsame ();
 #ifdef __cplusplus
 }
 #endif
 ],
-[[char result = dgetrs ();
+[[char result = $dgetrs ();
+  char result = $dsygv ();
+  char result = $lsame ();
 ]])])
 ])
 
@@ -44,6 +52,8 @@ GA_ARG_PARSE([with_lapack], [LAPACK_LIBS], [LAPACK_LDFLAGS], [LAPACK_CPPFLAGS])
 
 # Get fortran linker name of LAPACK function to check for.
 AC_F77_FUNC(dgetrs)
+AC_F77_FUNC(dsygv)
+AC_F77_FUNC(lsame)
 
 ga_save_LIBS="$LIBS"
 ga_save_LDFLAGS="$LDFLAGS"

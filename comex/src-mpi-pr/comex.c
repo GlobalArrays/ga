@@ -768,12 +768,41 @@ int comex_fence_all(comex_group_t group)
 
 int comex_fence_proc(int proc, comex_group_t group)
 {
+    int world_rank = -1;
+    int master_rank = -1;
+    comex_igroup_t *igroup = NULL;
+
 #if DEBUG
     printf("[%d] comex_fence_proc(proc=%d, group=%d)\n",
             g_state.rank, proc, group);
 #endif
 
-    comex_wait_all(COMEX_GROUP_WORLD);
+    CHECK_GROUP(group,proc);
+    igroup = comex_get_igroup_from_group(group);
+    world_rank = _get_world_rank(igroup, proc);
+    master_rank = g_state.master[world_rank];
+
+    if (fence_array[master_rank]) {
+        header_t *header = NULL;
+        nb_t *nb = NULL;
+
+        nb = nb_wait_for_handle();
+
+        /* prepost recv for acknowledgment */
+        nb_recv(NULL, 0, master_rank, nb);
+
+        /* post send of fence request */
+        header = malloc(sizeof(header_t));
+        COMEX_ASSERT(header);
+        header->operation = OP_FENCE;
+        header->remote_address = NULL;
+        header->local_address = NULL;
+        header->length = 0;
+        header->rank = 0;
+        nb_send_header(header, sizeof(header_t), master_rank, nb);
+        nb_wait_for_all(nb);
+        fence_array[master_rank] = 0;
+    }
 
     return COMEX_SUCCESS;
 }
@@ -953,18 +982,17 @@ STATIC void unpack(char *packed_buffer,
 STATIC char* _generate_shm_name(int rank)
 {
     int snprintf_retval = 0;
-    /* /cmxXXXXXXXPPPPPP  */
-    /* 00000000011111111112 */
-    /* 12345678901234567890 */
+    /* /cmxUUUUUUUUUUPPPPPPPPPPCCCCCCN */
+    /* 0000000001111111111222222222233 */
+    /* 1234567890123456789012345678901 */
     char *name = NULL;
     static unsigned int counter = 0;
-    unsigned int urank = rank;
 
     COMEX_ASSERT(rank >= 0);
     name = malloc(SHM_NAME_SIZE*sizeof(char));
     COMEX_ASSERT(name);
     snprintf_retval = snprintf(name, SHM_NAME_SIZE,
-            "/cmx%09u%09u%07u%08u", getuid(), getpid(), counter, urank);
+            "/cmx%010u%010u%06u", getuid(), getpid(), counter);
     COMEX_ASSERT(snprintf_retval < (int)SHM_NAME_SIZE);
     name[SHM_NAME_SIZE-1] = '\0';
     ++counter;
@@ -1622,6 +1650,7 @@ int comex_unlock(int mutex, int proc)
     world_rank = _get_world_rank(igroup, proc);
     master_rank = g_state.master[world_rank];
 
+    fence_array[master_rank] = 1;
     header = malloc(sizeof(header_t));
     COMEX_ASSERT(header);
     header->operation = OP_UNLOCK;

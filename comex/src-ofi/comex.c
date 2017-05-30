@@ -1881,7 +1881,7 @@ static int iov_acc(int datatype, void * scale,
 
     acc_data_t* acc_data = 0;
 
-    int max_bytes_in_atomic = ofi_data.max_bytes_in_atomic[COMEX_DTYPE_IDX(datatype)];
+    ssize_t max_bytes_in_atomic = ofi_data.max_bytes_in_atomic[COMEX_DTYPE_IDX(datatype)];
     EXPR_CHKANDJUMP(max_bytes_in_atomic > 0, "datatype is not supported: %d", datatype);
 
     /* calculate common count of iov elements & common length of data to send */
@@ -1929,7 +1929,7 @@ static int iov_acc(int datatype, void * scale,
     {
         for (iov_column = 0; iov_column < iov[iov_idx].count; iov_column++)
         {
-            int bytes_to_send = iov[iov_idx].bytes;
+            ssize_t bytes_to_send = iov[iov_idx].bytes;
             for (; bytes_to_send > 0;
                 bytes_to_send -= max_bytes_in_atomic)
             {
@@ -2039,7 +2039,7 @@ static int iov_acc(int datatype, void * scale,
                              "failed to lookup window");
             assert(wnd);
 
-            int bytes_to_send = iov[iov_idx].bytes;
+            ssize_t bytes_to_send = iov[iov_idx].bytes;
             char* src = sbuf ? sbuf : iov[iov_idx].src[iov_column];
             char* dst = iov[iov_idx].dst[iov_column];
 

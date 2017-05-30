@@ -44,7 +44,7 @@ typedef struct ofi_data_t
     ofi_ep_t          ep_atomics;
     int               msg_prefix_size;
     int               rma_iov_limit;
-    int               max_bytes_in_atomic[COMEX_DTYPES_COUNT]; /* bytes in one atomic operation per comex datatype */
+    ssize_t           max_bytes_in_atomic[COMEX_DTYPES_COUNT]; /* bytes in one atomic operation per comex datatype */
     int               max_buffered_send;
 } ofi_data_t;
 extern ofi_data_t ofi_data;

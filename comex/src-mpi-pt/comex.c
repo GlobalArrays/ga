@@ -777,12 +777,44 @@ int comex_fence_all(comex_group_t group)
 
 int comex_fence_proc(int proc, comex_group_t group)
 {
+    int world_proc = -1;
+    comex_igroup_t *igroup = NULL;
+
 #if DEBUG
     printf("[%d] comex_fence_proc(proc=%d, group=%d)\n",
             g_state.rank, proc, group);
 #endif
 
-    comex_wait_all(COMEX_GROUP_WORLD);
+    CHECK_GROUP(group,proc);
+    igroup = comex_get_igroup_from_group(group);
+    world_proc = _get_world_rank(igroup, proc);
+
+    /* optimize by only sending to procs which we have outstanding messages */
+    if (fence_array[world_proc]) {
+        int p_master = g_state.master[world_proc];
+        header_t *header = NULL;
+        nb_t *nb = NULL;
+
+        nb = nb_wait_for_handle();
+
+        /* because we only fence to masters */
+        COMEX_ASSERT(p_master == world_proc);
+
+        /* prepost recv for acknowledgment */
+        nb_recv(NULL, 0, p_master, nb);
+
+        /* post send of fence request */
+        header = malloc(sizeof(header_t));
+        COMEX_ASSERT(header);
+        header->operation = OP_FENCE;
+        header->remote_address = NULL;
+        header->local_address = NULL;
+        header->length = 0;
+        header->rank = 0;
+        nb_send_header(header, sizeof(header_t), p_master, nb);
+        nb_wait_for_all(nb);
+        fence_array[world_proc] = 0;
+    }
 
     return COMEX_SUCCESS;
 }
@@ -1633,6 +1665,7 @@ int comex_unlock(int mutex, int proc)
     world_rank = _get_world_rank(igroup, proc);
     master_rank = g_state.master[world_rank];
 
+    fence_array[master_rank] = 1;
     header = malloc(sizeof(header_t));
     COMEX_ASSERT(header);
     header->operation = OP_UNLOCK;
@@ -1734,6 +1767,10 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
             printf("[%d] comex_malloc found self at %d\n",
                     g_state.rank, i);
 #endif
+            if (is_notifier) {
+                /* does this need to be a memcpy?? */
+                reg_entries_local[reg_entries_local_count++] = reg_entries[i];
+            }
             continue; /* we already registered our own memory */
         }
         if (g_state.hostid[reg_entries[i].rank]
@@ -2042,6 +2079,12 @@ int comex_free(void *ptr, comex_group_t group)
 #if DEBUG && DEBUG_VERBOSE
             printf("[%d] comex_free found self at %d\n", g_state.rank, i);
 #endif
+            if (is_notifier) {
+                /* does this need to be a memcpy? */
+                rank_ptrs[reg_entries_local_count].rank = world_ranks[i];
+                rank_ptrs[reg_entries_local_count].ptr = ptrs[i];
+                reg_entries_local_count++;
+            }
         }
         else if (NULL == ptrs[i]) {
 #if DEBUG && DEBUG_VERBOSE

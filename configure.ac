@@ -32,9 +32,10 @@ AC_SUBST([PACKAGE_VERSION])
 # Changes:
 #
 # ga version 5.6.0: 1:0:0 (ABI version 1)
+# ga version 5.6.1: 1:1:0 (ABI version 1)
 #
 # libga -version-info current:revision:age
-LTVER="1:0:0"
+LTVER="1:1:0"
 AC_SUBST([LTVER])
 
 ###############################################################################
@@ -420,6 +421,7 @@ AC_DEFINE([F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS], [1],
 AC_SUBST([F2C_INTEGER_C_TYPE], [long])
 AC_SUBST([F2C_REAL_C_TYPE], [float])
 AC_SUBST([F2C_DOUBLE_PRECISION_C_TYPE], [double])
+AM_CONDITIONAL([F77_INTEL_NO_INLINE], [test "xno" = "xyes"])
 
 fi
 

@@ -11,7 +11,7 @@
 #define COMEX_MAX_STRIDE_LEVEL 8
 #define COMEX_TAG 27624
 #define COMEX_STATIC_BUFFER_SIZE (2u*1048576u)
-#define SHM_NAME_SIZE 38
+#define SHM_NAME_SIZE 31
 #define UNLOCKED -1
 
 /* performance or correctness related settings */

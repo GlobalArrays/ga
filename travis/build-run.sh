@@ -52,7 +52,11 @@ esac
 
 # Configure and build
 ./autogen.sh $TRAVIS_ROOT
-./configure
+if [ "x$PORT" = x ] ; then
+    ./configure $CONFIG_OPTS
+else
+    ./configure --with-${PORT} $CONFIG_OPTS
+fi
 
 # Run unit tests
 make V=0 -j ${MAKE_JNUM}
