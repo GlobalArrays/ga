@@ -9,7 +9,49 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
-## 5.6 - 2017-04-04
+## [5.6.1] - 2017-05-26
+- Known Bugs
+  - [\#48] Message sizes exceeding 2GB may not work correctly
+- Added
+  - New ELPA 2016 eigensolver 2stage interface
+- Changed
+  - autogen.sh unconditionally runs install-autotools.sh
+  - install-autotools.sh downloads latest config.guess and config.sub
+  - Additional LAPACK symbols are now tested for during configure
+- Fixed
+  - comex_fence_proc() fixed for MPI-MT, MPI-PT, MPI-PR ports
+  - configure --disable-fortran now works again
+  - ComEx openib port was missing comex_nbacc symbol
+  - Added $(BLAS_LIBS) to libcomex LIBADD to capture BLAS library dependency
+  - EISPACK no longer enabled by default; --enable-eispack now works correctly
+  - Shared memory name limit on OSX is now followed
+  - comex_unlock() race condition
+  - install-autotools.sh properly updates $PATH during build
+  - install-autotools.sh alternate download location when FTP is blocked
+  - patches to generated configure scripts for -lnuma
+  - CMake build did not install some fortran headers
+  - TravisCI: don't fail when brew install is a no-op
+- Closed Pull Requests
+  - [\#34] Fix installation of autotools if not present
+  - [\#53] new ELPA 2016 eigensolver 2stage interface
+  - [\#54] new ELPA 2016 eigensolver interface for the Hotfix/5.6.1 branch
+  - [\#55] curl for download when wget not installed
+- Closed Issues
+  - [\#1] Incorporating GAMESS Patch
+  - [\#5] Compiler error with --with-ofi
+  - [\#9] Adding documentation for GA compilation on Windows
+  - [\#25] CMake not building MA fortran wrappers
+  - [\#30] Disable Fortran not working
+  - [\#33] GA 5.6 release - autotools are downloaded and built even when latest versions exist
+  - [\#38] #ifdef ENABLE_EISPACK should be #if ENABLE_EISPACK
+  - [\#39] libcomex missing optional BLAS dependency
+  - [\#41] develop branch and m4 version on cascade
+  - [\#44] Comex OpenIB missing library symbol
+  - [\#49] autogen.sh fails when only automake needs to be built
+  - [\#50] install-autotools.sh on osx might choke if no timeout tool
+  - [\#56] comex_fence_proc() is no-op in MT, PT, PR
+
+## [5.6] - 2017-04-04
 - Added
   - Port for MPI-3 one-sided (--with-mpi3).
   - CMake build.
@@ -23,7 +65,7 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
   - [\#6]  Comex/OFI: updated initialization of OmniPath provider
   - [\#10] comex/ofi: fixed EP initialization
   - [\#11] COMEX/OFI: added readme file for comex/ofi provider
-  
+
 ## 5.5 - 2016-08
 - Added
   - Port for libfabric (--with-ofi) via ComEx. This adds native support for Intel Omnipath.
@@ -96,7 +138,7 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
   - A few debugging print statements from pario.
 
 ## 5.1 - 2012-02
-- Added 
+- Added
   - Unified "NGA" prefix for all functions.
   - New profiling interface and weak symbol interposition support.
   - Support for struct data types using the new NGA_Register_type(), NGA_Get_field() and NGA_Put_field() functions.
@@ -227,8 +269,56 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
 - Optimized one-sided non-blocking operations
 - Supports various platforms (Crays, IBM SPs, SGI Altix, ...) and interconnects (Myrinet, Quadrics, Infiniband, ...)
 
-[Unreleased]: https://github.com/GlobalArrays/ga/compare/v5.6...develop
+[Unreleased]: https://github.com/GlobalArrays/ga/compare/v5.6.1...develop
+[5.6.1]: https://github.com/GlobalArrays/ga/compare/v5.6...v5.6.1
+[5.6]: https://github.com/GlobalArrays/ga/releases/tag/v5.6
 
+[\#57]: https://github.com/GlobalArrays/ga/issues/57
+[\#56]: https://github.com/GlobalArrays/ga/issues/56
+[\#55]: https://github.com/GlobalArrays/ga/pull/55
+[\#54]: https://github.com/GlobalArrays/ga/pull/54
+[\#53]: https://github.com/GlobalArrays/ga/pull/53
+[\#52]: https://github.com/GlobalArrays/ga/issues/52
+[\#51]: https://github.com/GlobalArrays/ga/issues/51
+[\#50]: https://github.com/GlobalArrays/ga/issues/50
+[\#49]: https://github.com/GlobalArrays/ga/issues/49
+[\#48]: https://github.com/GlobalArrays/ga/issues/48
+[\#47]: https://github.com/GlobalArrays/ga/issues/47
+[\#46]: https://github.com/GlobalArrays/ga/issues/46
+[\#45]: https://github.com/GlobalArrays/ga/issues/45
+[\#44]: https://github.com/GlobalArrays/ga/issues/44
+[\#43]: https://github.com/GlobalArrays/ga/issues/43
+[\#42]: https://github.com/GlobalArrays/ga/issues/42
+[\#41]: https://github.com/GlobalArrays/ga/issues/41
+[\#40]: https://github.com/GlobalArrays/ga/issues/40
+[\#39]: https://github.com/GlobalArrays/ga/issues/39
+[\#38]: https://github.com/GlobalArrays/ga/issues/38
+[\#37]: https://github.com/GlobalArrays/ga/pull/37
+[\#36]: https://github.com/GlobalArrays/ga/issues/36
+[\#35]: https://github.com/GlobalArrays/ga/issues/35
+[\#34]: https://github.com/GlobalArrays/ga/pull/34
+[\#33]: https://github.com/GlobalArrays/ga/issues/33
+[\#32]: https://github.com/GlobalArrays/ga/issues/32
+[\#31]: https://github.com/GlobalArrays/ga/issues/31
+[\#30]: https://github.com/GlobalArrays/ga/issues/30
+[\#29]: https://github.com/GlobalArrays/ga/issues/29
+[\#28]: https://github.com/GlobalArrays/ga/issues/28
+[\#27]: https://github.com/GlobalArrays/ga/issues/27
+[\#26]: https://github.com/GlobalArrays/ga/issues/26
+[\#25]: https://github.com/GlobalArrays/ga/issues/25
+[\#24]: https://github.com/GlobalArrays/ga/issues/24
+[\#23]: https://github.com/GlobalArrays/ga/issues/23
+[\#22]: https://github.com/GlobalArrays/ga/issues/22
+[\#21]: https://github.com/GlobalArrays/ga/issues/21
+[\#20]: https://github.com/GlobalArrays/ga/issues/20
+[\#19]: https://github.com/GlobalArrays/ga/issues/19
+[\#18]: https://github.com/GlobalArrays/ga/issues/18
+[\#17]: https://github.com/GlobalArrays/ga/issues/17
+[\#16]: https://github.com/GlobalArrays/ga/issues/16
+[\#15]: https://github.com/GlobalArrays/ga/issues/15
+[\#14]: https://github.com/GlobalArrays/ga/issues/14
+[\#13]: https://github.com/GlobalArrays/ga/issues/13
+[\#12]: https://github.com/GlobalArrays/ga/issues/12
 [\#11]: https://github.com/GlobalArrays/ga/pull/11
 [\#10]: https://github.com/GlobalArrays/ga/pull/10
 [\#9]: https://github.com/GlobalArrays/ga/issues/9
@@ -236,7 +326,7 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
 [\#7]: https://github.com/GlobalArrays/ga/issues/7
 [\#6]: https://github.com/GlobalArrays/ga/pull/6
 [\#5]: https://github.com/GlobalArrays/ga/issues/5
-[\#4]: https://github.com/GlobalArrays/ga/issues/4
+[\#4]: https://github.com/GlobalArrays/ga/pull/4
 [\#3]: https://github.com/GlobalArrays/ga/issues/3
 [\#2]: https://github.com/GlobalArrays/ga/issues/2
 [\#1]: https://github.com/GlobalArrays/ga/issues/1
