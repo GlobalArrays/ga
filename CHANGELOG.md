@@ -51,6 +51,7 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
   - [\#49] autogen.sh fails when only automake needs to be built
   - [\#50] install-autotools.sh on osx might choke if no timeout tool
   - [\#56] comex_fence_proc() is no-op in MT, PT, PR
+  - [\#57] process groups sometimes fail for MPI-PT port
 
 ## [5.6] - 2017-04-04
 - Added
