@@ -2941,6 +2941,12 @@ int comex_rmw(
     }
     else
     {
+        union atomics_param_t
+        {
+            int int_value;
+            long long_value;
+        } param;
+
         switch (op)
         {
             case COMEX_FETCH_AND_ADD:
@@ -2962,9 +2968,9 @@ int comex_rmw(
             break;
             case COMEX_FETCH_AND_ADD_LONG:
             {
-                long tmp = (long)extra;
+                param.long_value = (long)extra;
                 OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint,
-                                          &tmp,
+                                          &(param.long_value),
                                           1,
                                           0,
                                           ploc,
@@ -2980,9 +2986,9 @@ int comex_rmw(
             break;
             case COMEX_SWAP:
             {
-                int tmp = *(int*)ploc;
+                param.int_value = *(int*)ploc;
                 OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint,
-                                          &tmp,
+                                          &(param.int_value),
                                           1,
                                           0,
                                           ploc,
@@ -2998,9 +3004,9 @@ int comex_rmw(
             break;
             case COMEX_SWAP_LONG:
             {
-                long tmp = *(long*)ploc;
+                param.long_value = *(long*)ploc;
                 OFI_RETRY(fi_fetch_atomic(ofi_data.ep_atomics.endpoint,
-                                          &tmp,
+                                          &(param.long_value),
                                           1,
                                           0,
                                           ploc,
