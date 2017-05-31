@@ -9,7 +9,15 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
-## [5.6.1] - 2017-05-26
+- Known Bugs
+- Added
+- Changed
+  - GA is now thread safe
+- Fixed
+- Closed Pull Requests
+- Closed Issues
+
+## [5.6.1] - 2017-05-30
 - Known Bugs
   - [\#48] Message sizes exceeding 2GB may not work correctly
 - Added
@@ -271,10 +279,11 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
 - Optimized one-sided non-blocking operations
 - Supports various platforms (Crays, IBM SPs, SGI Altix, ...) and interconnects (Myrinet, Quadrics, Infiniband, ...)
 
-[Unreleased]: https://github.com/GlobalArrays/ga/compare/v5.6.1...develop
+[Unreleased]: https://github.com/GlobalArrays/ga/compare/master...develop
 [5.6.1]: https://github.com/GlobalArrays/ga/compare/v5.6...v5.6.1
 [5.6]: https://github.com/GlobalArrays/ga/releases/tag/v5.6
 
+[\#58]: https://github.com/GlobalArrays/ga/pull/58
 [\#57]: https://github.com/GlobalArrays/ga/issues/57
 [\#56]: https://github.com/GlobalArrays/ga/issues/56
 [\#55]: https://github.com/GlobalArrays/ga/pull/55
