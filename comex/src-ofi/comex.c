@@ -555,7 +555,7 @@ static int init_ep(struct fi_info* hints, ofi_ep_t* ep, int suppress_fail)
     OFI_CHKANDJUMP(ret, "fi_getinfo:");
     EXPR_CHKANDJUMP(provider, "no provider found with desired capabilities");
 
-    COMEX_OFI_LOG(INFO, "Using provider '%s.%d'",
+    COMEX_OFI_LOG(INFO, "using provider '%s.%d'",
                   provider->fabric_attr->prov_name,
                   provider->fabric_attr->prov_version);
 
@@ -922,14 +922,7 @@ static int init_ofi()
 
     parse_env_vars();
 
-    if (IS_TARGET_ATOMICS_EMULATION())
-    {
-        env_data.progress_thread = 1;
-        if (l_state.proc == 0)
-            COMEX_OFI_LOG(INFO, "enable progress thread to handle preposted requests in target atomics emulation");
-    }
-
-    if(load_ofi(&ld_table) != COMEX_SUCCESS)
+    if (load_ofi(&ld_table) != COMEX_SUCCESS)
         goto fn_fail;
 
     struct fi_info* hints_saw = fi_allocinfo_p();
