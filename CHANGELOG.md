@@ -36,6 +36,7 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
   - [\#53] new ELPA 2016 eigensolver 2stage interface
   - [\#54] new ELPA 2016 eigensolver interface for the Hotfix/5.6.1 branch
   - [\#55] curl for download when wget not installed
+  - [\#58] comex/ofi: max_bytes_in_atomic may not fit in int
 - Closed Issues
   - [\#1] Incorporating GAMESS Patch
   - [\#5] Compiler error with --with-ofi
@@ -50,6 +51,7 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
   - [\#49] autogen.sh fails when only automake needs to be built
   - [\#50] install-autotools.sh on osx might choke if no timeout tool
   - [\#56] comex_fence_proc() is no-op in MT, PT, PR
+  - [\#57] process groups sometimes fail for MPI-PT port
 
 ## [5.6] - 2017-04-04
 - Added

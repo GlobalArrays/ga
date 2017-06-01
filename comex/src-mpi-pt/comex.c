@@ -1767,6 +1767,10 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
             printf("[%d] comex_malloc found self at %d\n",
                     g_state.rank, i);
 #endif
+            if (is_notifier) {
+                /* does this need to be a memcpy?? */
+                reg_entries_local[reg_entries_local_count++] = reg_entries[i];
+            }
             continue; /* we already registered our own memory */
         }
         if (g_state.hostid[reg_entries[i].rank]
@@ -2075,6 +2079,12 @@ int comex_free(void *ptr, comex_group_t group)
 #if DEBUG && DEBUG_VERBOSE
             printf("[%d] comex_free found self at %d\n", g_state.rank, i);
 #endif
+            if (is_notifier) {
+                /* does this need to be a memcpy? */
+                rank_ptrs[reg_entries_local_count].rank = world_ranks[i];
+                rank_ptrs[reg_entries_local_count].ptr = ptrs[i];
+                reg_entries_local_count++;
+            }
         }
         else if (NULL == ptrs[i]) {
 #if DEBUG && DEBUG_VERBOSE
