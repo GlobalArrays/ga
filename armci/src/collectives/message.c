@@ -989,6 +989,31 @@ static void ldoop(int n, char *op, long *x, long* work)
       *x |= *work;
       x++; work++;
     }
+  /* these are new */
+  else if ((strncmp(op, "&&", 2) == 0) || (strncmp(op, "land", 4) == 0)) {
+    while(n--) {
+      *x &&= *work;
+      x++; work++;
+    }
+  }
+  else if ((strncmp(op, "||", 2) == 0) || (strncmp(op, "lor", 3) == 0)) {
+    while(n--) {
+      *x ||= *work;
+      x++; work++;
+    }
+  }
+  else if ((strncmp(op, "&", 1) == 0) || (strncmp(op, "band", 4) == 0)) {
+    while(n--) {
+      *x &= *work;
+      x++; work++;
+    }
+  }
+  else if ((strncmp(op, "|", 1) == 0) || (strncmp(op, "bor", 3) == 0)) {
+    while(n--) {
+      *x |= *work;
+      x++; work++;
+    }
+  }
   else
     armci_die("ldoop: unknown operation requested", n);
 }
