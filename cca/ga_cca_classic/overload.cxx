@@ -79,7 +79,8 @@ GA::GlobalArray::operator==(const GA::GlobalArray &g_a) const {
     NGA_Release(g_a.mHandle, blo, bhi);
   }
   
-  GA_Lgop(&isEqual, 1, (char *)"*");
+  /* GA_Lgop(&isEqual, 1, (char *)"*"); */
+  GA_Lgop(&isEqual, 1, (char *)"&&");
   if(isEqual == TRUE) return TRUE;
   else return FALSE;
 }

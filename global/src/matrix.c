@@ -405,7 +405,8 @@ void pnga_median_patch(
 
     if (!pnga_comp_patch (andim, loA, hiA, mndim, loM, hiM)) compatible = 1;
     else compatible = 0;
-    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
+    /* pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*"); */
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "&&");
     if (!compatible) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_a
@@ -422,7 +423,8 @@ void pnga_median_patch(
 
     if (!pnga_comp_patch (bndim, loB, hiB, mndim, loM, hiM)) compatible = 1;
     else compatible = 0;
-    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
+    /* pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*"); */
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "&&");
     if (!compatible) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_a
@@ -439,7 +441,8 @@ void pnga_median_patch(
 
     if (!pnga_comp_patch (cndim, loC, hiC, mndim, loM, hiM)) compatible = 1;
     else compatible = 0;
-    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
+    /* pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*"); */
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "&&");
     if (!compatible) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_a

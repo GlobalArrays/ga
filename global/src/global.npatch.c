@@ -1105,7 +1105,8 @@ void pnga_dot_patch(Integer g_a, char *t_a, Integer *alo, Integer *ahi, Integer 
     if(pnga_comp_patch(andim, loA, hiA, bndim, loB, hiB) &&
         pnga_comp_patch(andim, alo, ahi, bndim, blo, bhi)) compatible = 1;
     else compatible = 0;
-    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
+    /* pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*"); */
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "&&");
     if(!(compatible && (transp=='n'))) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_a
@@ -2411,11 +2412,13 @@ void *alpha, *beta;
     if(pnga_comp_patch(andim, loA, hiA, cndim, loC, hiC) &&
        pnga_comp_patch(andim, alo, ahi, cndim, clo, chi)) compatible_a = 1;
     else compatible_a = 0;
-    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible_a, 1, "*");
+    /* pnga_gop(pnga_type_f2c(MT_F_INT), &compatible_a, 1, "*"); */
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible_a, 1, "&&");
     if(pnga_comp_patch(bndim, loB, hiB, cndim, loC, hiC) &&
        pnga_comp_patch(bndim, blo, bhi, cndim, clo, chi)) compatible_b = 1;
     else compatible_b = 0;
-    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible_b, 1, "*");
+    /* pnga_gop(pnga_type_f2c(MT_F_INT), &compatible_b, 1, "*"); */
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible_b, 1, "&&");
     if (compatible_a && compatible_b) {
       if(andim > bndim) cndim = bndim;
       if(andim < bndim) cndim = andim;

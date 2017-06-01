@@ -701,7 +701,8 @@ void do_work()
     idx = 0;
   }
 
-  GA_Igop(&idx,1,"*");
+  /* GA_Igop(&idx,1,"*"); */
+  GA_Igop(&idx,1,"&&");
   if (idx == 1 && me == 0) {
     printf("\nCompleted check of GP_Set_irreg_distr\n");
   } else if (me == 0) {
@@ -732,7 +733,8 @@ void do_work()
            me, hi3[2], dims3[2]-1);
     idx = 0;
   }
-  GA_Igop(&idx,1,"*");
+  /* GA_Igop(&idx,1,"*"); */
+  GA_Igop(&idx,1,"&&");
   if (idx == 1 && me == 0) {
     printf("\nCompleted check of GP_Set_chunk\n");
   } else if (me == 0) {
