@@ -41,83 +41,128 @@ void BRDCST_(long *type, void *buf, long *len, long *originator)
 /**
  * implements x = op(x,work) for integer datatype
  *  x[n], work[n] -  arrays of n integers
- */ 
-static void idoop(long n, char *op, long *x, long *work)
+ */
+static void idoop(long n, char *op, long * x, long * work)
 {
-    if (strncmp(op,"+",1) == 0)
-        while(n--)
-            *x++ += *work++;
-    else if (strncmp(op,"*",1) == 0)
-        while(n--)
-            *x++ *= *work++;
-    else if (strncmp(op,"max",3) == 0)
-        while(n--) {
-            *x = TCG_MAX(*x, *work);
-            x++; work++;
-        }
-    else if (strncmp(op,"min",3) == 0)
-        while(n--) {
-            *x = TCG_MIN(*x, *work);
-            x++; work++;
-        }
-    else if (strncmp(op,"absmax",6) == 0)
-        while(n--) {
-            register long x1 = TCG_ABS(*x), x2 = TCG_ABS(*work);
-            *x = TCG_MAX(x1, x2);
-            x++; work++;
-        }
-    else if (strncmp(op,"absmin",6) == 0)
-        while(n--) {
-            register long x1 = TCG_ABS(*x), x2 = TCG_ABS(*work);
-            *x = TCG_MIN(x1, x2);
-            x++; work++;
-        }
-    else if (strncmp(op,"or",2) == 0)
-        while(n--) {
-            *x |= *work;
-            x++; work++;
-        }
-    else
-        Error("idoop: unknown operation requested", (long) n);
+  if (strncmp(op,"+",1) == 0) {
+    while(n--) {
+      *x++ += *work++;
+    }
+  }
+  else if (strncmp(op,"*",1) == 0) {
+    while(n--) {
+      *x++ *= *work++;
+    }
+  }
+  else if (strncmp(op,"max",3) == 0) {
+    while(n--) {
+      *x = TCG_MAX(*x, *work);
+      x++; work++;
+    }
+  }
+  else if (strncmp(op,"min",3) == 0) {
+    while(n--) {
+      *x = TCG_MIN(*x, *work);
+      x++; work++;
+    }
+  }
+  else if (strncmp(op,"absmax",6) == 0) {
+    while(n--) {
+      register long x1 = TCG_ABS(*x), x2 = TCG_ABS(*work);
+      *x = TCG_MAX(x1, x2);
+      x++; work++;
+    }
+  }
+  else if (strncmp(op,"absmin",6) == 0) {
+    while(n--) {
+      register long x1 = TCG_ABS(*x), x2 = TCG_ABS(*work);
+      *x = TCG_MIN(x1, x2);
+      x++; work++;
+    }
+  }
+  else if (strncmp(op,"or",2) == 0) {
+    while(n--) {
+      *x |= *work;
+      x++; work++;
+    }
+  }
+  /* these are new */
+  else if ((strncmp(op, "&&", 2) == 0) || (strncmp(op, "land", 4) == 0)) {
+    while(n--) {
+      *x &&= *work;
+      x++; work++;
+    }
+  }
+  else if ((strncmp(op, "||", 2) == 0) || (strncmp(op, "lor", 3) == 0)) {
+    while(n--) {
+      *x ||= *work;
+      x++; work++;
+    }
+  }
+  else if ((strncmp(op, "&", 1) == 0) || (strncmp(op, "band", 4) == 0)) {
+    while(n--) {
+      *x &= *work;
+      x++; work++;
+    }
+  }
+  else if ((strncmp(op, "|", 1) == 0) || (strncmp(op, "bor", 3) == 0)) {
+    while(n--) {
+      *x |= *work;
+      x++; work++;
+    }
+  }
+  else {
+    Error("idoop: unknown operation requested", n);
+  }
 }
+
 
 
 /**
  * implements x = op(x,work) for double datatype
  *  x[n], work[n] -  arrays of n doubles
- */ 
+ */
 static void ddoop(long n, char *op, double *x, double *work)
 {
-    if (strncmp(op,"+",1) == 0)
-        while(n--)
-            *x++ += *work++;
-    else if (strncmp(op,"*",1) == 0)
-        while(n--)
-            *x++ *= *work++;
-    else if (strncmp(op,"max",3) == 0)
-        while(n--) {
-            *x = TCG_MAX(*x, *work);
-            x++; work++;
-        }
-    else if (strncmp(op,"min",3) == 0)
-        while(n--) {
-            *x = TCG_MIN(*x, *work);
-            x++; work++;
-        }
-    else if (strncmp(op,"absmax",6) == 0)
-        while(n--) {
-            register double x1 = TCG_ABS(*x), x2 = TCG_ABS(*work);
-            *x = TCG_MAX(x1, x2);
-            x++; work++;
-        }
-    else if (strncmp(op,"absmin",6) == 0)
-        while(n--) {
-            register double x1 = TCG_ABS(*x), x2 = TCG_ABS(*work);
-            *x = TCG_MIN(x1, x2);
-            x++; work++;
-        }
-    else
-        Error("ddoop: unknown operation requested", (long) n);
+    if (strncmp(op,"+",1) == 0) {
+      while(n--) {
+        *x++ += *work++;
+      }
+    }
+    else if (strncmp(op,"*",1) == 0) {
+      while(n--) {
+        *x++ *= *work++;
+      }
+    }
+    else if (strncmp(op,"max",3) == 0) {
+      while(n--) {
+        *x = TCG_MAX(*x, *work);
+        x++; work++;
+      }
+    }
+    else if (strncmp(op,"min",3) == 0) {
+      while(n--) {
+        *x = TCG_MIN(*x, *work);
+        x++; work++;
+      }
+    }
+    else if (strncmp(op,"absmax",6) == 0) {
+      while(n--) {
+        register double x1 = TCG_ABS(*x), x2 = TCG_ABS(*work);
+        *x = TCG_MAX(x1, x2);
+        x++; work++;
+      }
+    }
+    else if (strncmp(op,"absmin",6) == 0) {
+      while(n--) {
+        register double x1 = TCG_ABS(*x), x2 = TCG_ABS(*work);
+        *x = TCG_MIN(x1, x2);
+        x++; work++;
+      }
+    }
+    else {
+      Error("ddoop: unknown operation requested", (long) n);
+    }
 }
 
 
