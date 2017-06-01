@@ -1055,6 +1055,31 @@ static void ldoop2(int n, char *op, long *x, long* work, long* work2)
       *x = *work | *work2;
       x++; work++; work2++;
     }
+  /* these are new */
+  else if ((strncmp(op, "&&", 2) == 0) || (strncmp(op, "land", 4) == 0)) {
+    while(n--) {
+      *x = *work && *work2;
+      x++; work++; work2++;
+    }
+  }
+  else if ((strncmp(op, "||", 2) == 0) || (strncmp(op, "lor", 3) == 0)) {
+    while(n--) {
+      *x = *work || *work2;
+      x++; work++; work2++;
+    }
+  }
+  else if ((strncmp(op, "&", 1) == 0) || (strncmp(op, "band", 4) == 0)) {
+    while(n--) {
+      *x = *work & *work2;
+      x++; work++; work2++;
+    }
+  }
+  else if ((strncmp(op, "|", 1) == 0) || (strncmp(op, "bor", 3) == 0)) {
+    while(n--) {
+      *x = *work | *work2;
+      x++; work++; work2++;
+    }
+  }
   else
     armci_die("ldoop2: unknown operation requested", n);
 }
@@ -1096,6 +1121,31 @@ static void lldoop(int n, char *op, long long *x, long long* work)
       *x |= *work;
       x++; work++;
     }
+  /* these are new */
+  else if ((strncmp(op, "&&", 2) == 0) || (strncmp(op, "land", 4) == 0)) {
+    while(n--) {
+      *x &&= *work;
+      x++; work++;
+    }
+  }
+  else if ((strncmp(op, "||", 2) == 0) || (strncmp(op, "lor", 3) == 0)) {
+    while(n--) {
+      *x ||= *work;
+      x++; work++;
+    }
+  }
+  else if ((strncmp(op, "&", 1) == 0) || (strncmp(op, "band", 4) == 0)) {
+    while(n--) {
+      *x &= *work;
+      x++; work++;
+    }
+  }
+  else if ((strncmp(op, "|", 1) == 0) || (strncmp(op, "bor", 3) == 0)) {
+    while(n--) {
+      *x |= *work;
+      x++; work++;
+    }
+  }
   else
     armci_die("lldoop: unknown operation requested", n);
 }
@@ -1138,6 +1188,31 @@ static void lldoop2(int n, char *op, long long *x, long long* work,
       *x = *work | *work2;
       x++; work++; work2++;
     }
+  /* these are new */
+  else if ((strncmp(op, "&&", 2) == 0) || (strncmp(op, "land", 4) == 0)) {
+    while(n--) {
+      *x = *work && *work2;
+      x++; work++; work2++;
+    }
+  }
+  else if ((strncmp(op, "||", 2) == 0) || (strncmp(op, "lor", 3) == 0)) {
+    while(n--) {
+      *x = *work || *work2;
+      x++; work++; work2++;
+    }
+  }
+  else if ((strncmp(op, "&", 1) == 0) || (strncmp(op, "band", 4) == 0)) {
+    while(n--) {
+      *x = *work & *work2;
+      x++; work++; work2++;
+    }
+  }
+  else if ((strncmp(op, "|", 1) == 0) || (strncmp(op, "bor", 3) == 0)) {
+    while(n--) {
+      *x = *work | *work2;
+      x++; work++; work2++;
+    }
+  }
   else
     armci_die("ldoop2: unknown operation requested", n);
 }
@@ -1179,6 +1254,31 @@ static void idoop(int n, char *op, int *x, int* work)
       *x |= *work;
       x++; work++;
     }
+  /* these are new */
+  else if ((strncmp(op, "&&", 2) == 0) || (strncmp(op, "land", 4) == 0)) {
+    while(n--) {
+      *x &&= *work;
+      x++; work++;
+    }
+  }
+  else if ((strncmp(op, "||", 2) == 0) || (strncmp(op, "lor", 3) == 0)) {
+    while(n--) {
+      *x ||= *work;
+      x++; work++;
+    }
+  }
+  else if ((strncmp(op, "&", 1) == 0) || (strncmp(op, "band", 4) == 0)) {
+    while(n--) {
+      *x &= *work;
+      x++; work++;
+    }
+  }
+  else if ((strncmp(op, "|", 1) == 0) || (strncmp(op, "bor", 3) == 0)) {
+    while(n--) {
+      *x |= *work;
+      x++; work++;
+    }
+  }
   else
     armci_die("idoop: unknown operation requested", n);
 }
@@ -1220,6 +1320,31 @@ static void idoop2(int n, char *op, int *x, int* work, int* work2)
       *x = *work | *work2;
       x++; work++; work2++;
     }
+  /* these are new */
+  else if ((strncmp(op, "&&", 2) == 0) || (strncmp(op, "land", 4) == 0)) {
+    while(n--) {
+      *x = *work && *work2;
+      x++; work++; work2++;
+    }
+  }
+  else if ((strncmp(op, "||", 2) == 0) || (strncmp(op, "lor", 3) == 0)) {
+    while(n--) {
+      *x = *work || *work2;
+      x++; work++; work2++;
+    }
+  }
+  else if ((strncmp(op, "&", 1) == 0) || (strncmp(op, "band", 4) == 0)) {
+    while(n--) {
+      *x = *work & *work2;
+      x++; work++; work2++;
+    }
+  }
+  else if ((strncmp(op, "|", 1) == 0) || (strncmp(op, "bor", 3) == 0)) {
+    while(n--) {
+      *x = *work | *work2;
+      x++; work++; work2++;
+    }
+  }
   else
     armci_die("idoop2: unknown operation requested", n);
 }
