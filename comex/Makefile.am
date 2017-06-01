@@ -53,13 +53,14 @@ AM_LDFLAGS += $(BLAS_LDFLAGS)
 
 LDADD += libcomex.la
 LDADD += $(LTLIBOBJS)
-LDADD += $(MPI_LIBS)
-LDADD += $(COMEX_NETWORK_LIBS)
-LDADD += $(BLAS_LIBS)
 
 # internal libcomex for possibly rolling up into other libraries
 noinst_LTLIBRARIES += libcomexi.la
 libcomexi_la_SOURCES = $(libcomex_la_SOURCES)
+libcomexi_la_LIBADD =
+libcomexi_la_LIBADD += $(MPI_LIBS)
+libcomexi_la_LIBADD += $(COMEX_NETWORK_LIBS)
+libcomexi_la_LIBADD += $(BLAS_LIBS)
 
 ##############################################################################
 # compiler and linker flags
@@ -73,12 +74,12 @@ flags:
 	@echo ' COMEX libraries are installed in $(libdir)' 
 	@echo ' COMEX headers are installed in $(includedir)' 
 	@echo ' '
-	@echo ' CPPFLAGS="$(MPI_CPPFLAGS) $(COMEX_NETWORK_CPPFLAGS) -I$(includedir)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo ' CPPFLAGS="$(MPI_CPPFLAGS) $(COMEX_NETWORK_CPPFLAGS) $(BLAS_CPPFLAGS) -I$(includedir)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo ' '
-	@echo ' LDFLAGS="$(MPI_LDFLAGS) $(COMEX_NETWORK_LDFLAGS) -L$(libdir)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo ' LDFLAGS="$(MPI_LDFLAGS) $(COMEX_NETWORK_LDFLAGS) $(BLAS_LDFLAGS) -L$(libdir)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo ' '
 	@echo ' For C/C++ Programs: '
-	@echo ' LIBS="-lcomex $(MPI_LIBS) $(COMEX_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo ' LIBS="-lcomex $(MPI_LIBS) $(COMEX_NETWORK_LIBS) $(BLAS_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo ' =========================================================================== '
 
 ##############################################################################
