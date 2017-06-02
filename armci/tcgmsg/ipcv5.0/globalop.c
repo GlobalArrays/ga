@@ -166,8 +166,7 @@ static void ddoop(long n, char *op, double *x, double *work)
 }
 
 
-void DGOP_(
-        long *type, double *x, long *n, char *op, int oplen)
+void DGOP_(long *type, double *x, long *n, char *op, int oplen)
 {
     long me=NODEID_(), nproc=NNODES_(), len, lenmes, from, root=0;
     double *work = _gops_work, *origx = x;

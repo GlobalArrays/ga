@@ -142,18 +142,13 @@ static void ddoop(long n, char * op, double * x, double * work)
   }
 }
 
-/*ARGSUSED*/
-void DGOP_(ptype, x, pn, op, len)
-     double *x;
-     long *ptype, *pn;
-     char *op;
-     int len;
 /*
   Global summation optimized for networks of clusters of processes.
 
   This routine is directly callable from C only.  There is a
   wrapper that makes fortran work (see bottom of this file).
 */
+void DGOP_(long * ptype, double * x, long * pn, char * op, int len)
 {
   long me = NODEID_();
   long master = SR_clus_info[SR_clus_id].masterid;
@@ -229,17 +224,13 @@ void DGOP_(ptype, x, pn, op, len)
   BRDCST_(&type, (char *) tmp, &nb, &zero);
 }
 
-void IGOP_(ptype, x, pn, op, len)
-     long *x;
-     long *ptype, *pn;
-     char *op;
-     int len;
 /*
   Global summation optimized for networks of clusters of processes.
 
   This routine is directly callable from C only.  There is a
   wrapper that makes fortran work (see the bottom of this file).
 */
+void IGOP_(long * ptype, long * x, long * pn, char * op, int len)
 {
   long me = NODEID_();
   long master = SR_clus_info[SR_clus_id].masterid;
@@ -328,13 +319,9 @@ struct char_desc {
 };
 #endif
 
-/*ARGSUSED*/
 #if defined(CRAY) || defined(CRAY)
 #ifdef ARDENT
-void dgop_(ptype, x, pn, arg)
-     long *ptype, *pn;
-     double *x;
-     struct char_desc *arg;
+void dgop_(long * ptype, double * x, long * pn, struct char_desc * arg)
 {
   char *op = arg->string;
   int len_op = arg->len;
@@ -353,22 +340,15 @@ void dgop_(ptype, x, pn, arg)
 #endif
 /* This crap to handle FORTRAN character strings */
 
-/*ARGSUSED*/
 #if defined(CRAY) || defined(CRAY)
 #ifdef ARDENT
-void igop_(ptype, x, pn, arg)
-     long *ptype, *pn;
-     long *x;
-     struct char_desc *arg;
+void igop_(long * ptype, long * x, long * pn, struct char_desc * arg)
 {
   char *op = arg->string;
   int len_op = arg->len;
 #endif
 #if defined(CRAY)
-void igop_(wrap_ptype, x, wrap_pn, arg)
-     long *wrap_ptype, *wrap_pn;
-     long *x;
-     _fcd arg;
+void igop_(long * wrap_ptype, long * x, long * wrap_pn, _fcd arg)
 {
   long ptype, pn;
   ptype = (long) *ptype;
