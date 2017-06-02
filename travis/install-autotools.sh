@@ -14,6 +14,10 @@ if [ ! -d ${TOP}/bin ] ; then
     mkdir ${TOP}/bin
 fi
 
+if [ ! -d ${TOP}/m4 ] ; then
+    mkdir ${TOP}/m4
+fi
+
 download=""
 if wget --version > /dev/null ; then
     download="wget -O"
@@ -56,6 +60,16 @@ case "$os" in
                     exit 1
                 fi
             fi
+        fi
+
+        ##########################################
+        ### ax_pthread.m4
+        ##########################################
+        cd ${TOP}/m4
+        if [ -f ax_pthread.m4 ] ; then
+            echo "ax_pthread.m4 already exists! Using existing copy."
+        else
+            ${download} ax_pthread.m4 'http://git.savannah.gnu.org/gitweb/?p=autoconf-archive.git;a=blob_plain;f=m4/ax_pthread.m4'
         fi
 
         ##########################################
@@ -231,6 +245,16 @@ case "$os" in
             export PATH=${TOP}/bin:$PATH
         else
             echo "${TOOL} found and is exactly needed version ($TOOL_VERSION_FOUND)"
+        fi
+
+        ##########################################
+        ### third party m4 files
+        ##########################################
+
+        # Do we have write permissions to the aclocal directory?
+        aclocal_dir=`aclocal --print 2>/dev/null`
+        if ! cp ${TOP}/m4/*.m4 ${aclocal_dir} ; then
+            echo FAILURE 5
         fi
 
         ##########################################
