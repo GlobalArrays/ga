@@ -239,6 +239,7 @@ int PARMCI_Init()
 {
     int rc = comex_init();
     assert(COMEX_SUCCESS == comex_group_comm(COMEX_GROUP_WORLD, &ARMCI_COMM_WORLD));
+    ARMCI_Default_Proc_Group = 0;
     return rc;
 }
 
@@ -247,6 +248,7 @@ int PARMCI_Init_args(int *argc, char ***argv)
 {
     int rc = comex_init_args(argc, argv);
     assert(COMEX_SUCCESS == comex_group_comm(COMEX_GROUP_WORLD, &ARMCI_COMM_WORLD));
+    ARMCI_Default_Proc_Group = 0;
     return rc;
 }
 
