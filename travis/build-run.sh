@@ -5,7 +5,8 @@ set -ev
 
 os=`uname`
 TRAVIS_ROOT="$1"
-MPI_IMPL="$2"
+PORT="$2"
+MPI_IMPL="$3"
 
 # Environment variables
 export CFLAGS="-std=c99"
@@ -52,11 +53,17 @@ esac
 
 # Configure and build
 ./autogen.sh $TRAVIS_ROOT
-if [ "x$PORT" = x ] ; then
-    ./configure $CONFIG_OPTS
-else
-    ./configure --with-${PORT} $CONFIG_OPTS
-fi
+case "x$PORT" in
+    xofi)
+        ./configure --with-ofi=$TRAVIS_ROOT/libfabric
+        ;;
+    x)
+        ./configure $CONFIG_OPTS
+        ;;
+    x*)
+        ./configure --with-${PORT} $CONFIG_OPTS
+        ;;
+esac
 
 # Run unit tests
 make V=0 -j ${MAKE_JNUM}
