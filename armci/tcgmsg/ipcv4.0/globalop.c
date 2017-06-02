@@ -99,10 +99,7 @@ static void idoop(long n, char * op, long * x, long * work)
   }
 }
 
-static void ddoop(n, op, x, work)
-     long n;
-     char *op;
-     double *x, *work;
+static void ddoop(long n, char * op, double * x, double * work)
 {
   if (strncmp(op,"+",1) == 0) {
     while(n--) {
