@@ -25,9 +25,12 @@ env:
   - MPI_IMPL=mpich
     PORT=mpi3
   - MPI_IMPL=openmpi
+    PORT=mpi-ts
   - MPI_IMPL=mpich
+    PORT=mpi-ts
     CONFIG_OPTS="--disable-f77 --enable-cxx"
   - MPI_IMPL=mpich
+    PORT=mpi-ts
     CONFIG_OPTS="--disable-static --enable-shared"
   - MPI_IMPL=mpich
     PORT=ofi
