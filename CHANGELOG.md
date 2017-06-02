@@ -13,7 +13,7 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
 - Known Bugs
   - [\#48] Message sizes exceeding 2GB may not work correctly
 - Added
-  - New ELPA 2016 eigensolver 2stage interface
+  - New ELPA 2015 and 2016 eigensolver interfaces
 - Changed
   - autogen.sh unconditionally runs install-autotools.sh
   - install-autotools.sh downloads latest config.guess and config.sub
