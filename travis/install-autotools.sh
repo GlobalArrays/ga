@@ -134,7 +134,7 @@ case "$os" in
                 ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
                 if [ "x$?" != "x0" ] ; then
                     echo FAILURE 1
-                    exit
+                    exit 1
                 fi
             fi
             # refresh the path
@@ -186,7 +186,7 @@ case "$os" in
                 ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
                 if [ "x$?" != "x0" ] ; then
                     echo FAILURE 3
-                    exit
+                    exit 1
                 fi
             fi
             # refresh the path
@@ -238,7 +238,7 @@ case "$os" in
                 ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
                 if [ "x$?" != "x0" ] ; then
                     echo FAILURE 4
-                    exit
+                    exit 1
                 fi
             fi
             # refresh the path
@@ -251,10 +251,13 @@ case "$os" in
         ### third party m4 files
         ##########################################
 
-        # Do we have write permissions to the aclocal directory?
         aclocal_dir=`aclocal --print 2>/dev/null`
-        if ! cp ${TOP}/m4/*.m4 ${aclocal_dir} ; then
+        if [ ! -d ${aclocal_dir} ] ; then
+            mkdir -p ${aclocal_dir}
+        fi
+        if ! cp ${TOP}/m4/*.m4 ${aclocal_dir}/ ; then
             echo FAILURE 5
+            exit 5
         fi
 
         ##########################################
@@ -300,7 +303,7 @@ case "$os" in
                 ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
                 if [ "x$?" != "x0" ] ; then
                     echo FAILURE 2
-                    exit
+                    exit 1
                 fi
             fi
             # refresh the path
