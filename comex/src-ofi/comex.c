@@ -971,7 +971,8 @@ static int init_ofi()
         ofi_data.ep_atomics = ofi_data.ep_rma;
     else
     {
-        if (init_done = (init_ep(hints_saw, &ofi_data.ep_rma, 1) == COMEX_SUCCESS))
+        init_done = (init_ep(hints_saw, &ofi_data.ep_rma, 1) == COMEX_SUCCESS);
+        if (init_done)
         {
             /* great!!! we got provider with all required caps */
             ofi_data.ep_atomics = ofi_data.ep_rma;
@@ -1103,11 +1104,11 @@ do                                                                           \
         int err = fi_cq_readerr(cq, (void*)&error, 0);                       \
         if (err < 0)                                                         \
         {                                                                    \
-            COMEX_OFI_LOG(INFO, "cq_read_err: can't retrieve error... (%d)", \
+            COMEX_OFI_LOG(INFO, "cq_read_err: can't retrieve error... (%ld)",\
                           ret);                                              \
             goto fn_fail;                                                    \
         }                                                                    \
-        COMEX_OFI_LOG(INFO, "cq_read_err: error is %d (ret=%d)",             \
+        COMEX_OFI_LOG(INFO, "cq_read_err: error is %d (ret=%ld)",            \
                       error.err, ret);                                       \
         goto fn_fail;                                                        \
     }                                                                        \
@@ -1289,7 +1290,7 @@ static int lookup_window(void* ptr, int size, int proc, comex_group_t group, ofi
         }
         else if (wnd->world_proc == proc && wnd->ptr <= (uint64_t)ptr && wnd->ptr + (uint64_t)wnd->size > (uint64_t)ptr)
         {
-            COMEX_OFI_LOG(INFO, "WARNING: found candidate window: missing %d bytes tail (length: %d, expected: %d:%d)",
+            COMEX_OFI_LOG(INFO, "WARNING: found candidate window: missing %d bytes tail (length: %lu, expected: %d:%d)",
                           (int)(((long)ptr + size) - ((long)wnd->ptr + wnd->size)), wnd->size, (int)((long)ptr - (long)wnd->ptr), size);
         }
         wnd = wnd->next;

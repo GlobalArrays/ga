@@ -37,25 +37,25 @@ typedef enum log_level_t
             {                                                                          \
                 case ERROR:                                                            \
                 {                                                                      \
-                    printf("%s: ERROR: (%ld): %s:%u " fmt "\n", time_buf, GET_TID(),   \
+                    printf("%s: ERROR: (%d): %s:%u " fmt "\n", time_buf, GET_TID(),    \
                             __FUNCTION__, __LINE__, ##__VA_ARGS__);                    \
                     print_backtrace();                                                 \
                     break;                                                             \
                 }                                                                      \
                 case WARN:                                                             \
                 {                                                                      \
-                    printf("WARNING: (%ld): " fmt "\n", GET_TID(), ##__VA_ARGS__);     \
+                    printf("WARNING: (%d): " fmt "\n", GET_TID(), ##__VA_ARGS__);      \
                     break;                                                             \
                 }                                                                      \
                 case INFO:                                                             \
                 {                                                                      \
-                    printf("(%ld):" fmt "\n", GET_TID(), ##__VA_ARGS__);               \
+                    printf("(%d):" fmt "\n", GET_TID(), ##__VA_ARGS__);                \
                     break;                                                             \
                 }                                                                      \
                 case DEBUG:                                                            \
                 case TRACE:                                                            \
                 {                                                                      \
-                    printf("%s: (%ld): %s:%u " fmt "\n", time_buf, GET_TID(),          \
+                    printf("%s: (%d): %s:%u " fmt "\n", time_buf, GET_TID(),           \
                             __FUNCTION__, __LINE__, ##__VA_ARGS__);                    \
                     break;                                                             \
                 }                                                                      \
