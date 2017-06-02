@@ -8,7 +8,11 @@ c It has to be executed on four processors.                              |
 c remote operations access data on processes 1,2,3 in the round-robin way|
 c------------------------------------------------------------------------
 c
+#if defined(__xlc__) || defined(__xlC__) || defined(__IBMC__)
+#define SLEEP sleep_
+#else
 #define SLEEP sleep
+#endif
       program perf
       implicit none
 #include "mafdecls.fh"
@@ -572,23 +576,3 @@ c
       time_put = seconds/count
       end
 
-
-      subroutine my_sleep(seconds)
-      implicit none
-#include "global.fh"
-#include "testutil.fh"
-c
-      double precision  ts, te, work
-      integer seconds, loop
-      common  /sleep_block/ work
-c
-      ts = util_timer()
-      work = 0.
-100   continue
-         do loop= 1, 500
-            work = work + 1.
-         enddo
-         te = util_timer()
-      if(te - ts .lt. real(seconds)) goto 100
-*     print *, work, ts, te 
-      end
