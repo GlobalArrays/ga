@@ -11,7 +11,3 @@ libarmci_la_LIBADD = libcomexi.la
 
 include_HEADERS += src-armci/armci.h
 include_HEADERS += src-armci/message.h
-
-noinst_LTLIBRARIES += libarmcii.la
-
-libarmcii_la_SOURCES = $(libarmci_la_SOURCES)

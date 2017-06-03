@@ -14,6 +14,10 @@ if [ ! -d ${TOP}/bin ] ; then
     mkdir ${TOP}/bin
 fi
 
+if [ ! -d ${TOP}/m4 ] ; then
+    mkdir ${TOP}/m4
+fi
+
 download=""
 if wget --version > /dev/null ; then
     download="wget -O"
@@ -56,6 +60,16 @@ case "$os" in
                     exit 1
                 fi
             fi
+        fi
+
+        ##########################################
+        ### ax_pthread.m4
+        ##########################################
+        cd ${TOP}/m4
+        if [ -f ax_pthread.m4 ] ; then
+            echo "ax_pthread.m4 already exists! Using existing copy."
+        else
+            ${download} ax_pthread.m4 'http://git.savannah.gnu.org/gitweb/?p=autoconf-archive.git;a=blob_plain;f=m4/ax_pthread.m4'
         fi
 
         ##########################################
@@ -120,7 +134,7 @@ case "$os" in
                 ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
                 if [ "x$?" != "x0" ] ; then
                     echo FAILURE 1
-                    exit
+                    exit 1
                 fi
             fi
             # refresh the path
@@ -172,7 +186,7 @@ case "$os" in
                 ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
                 if [ "x$?" != "x0" ] ; then
                     echo FAILURE 3
-                    exit
+                    exit 1
                 fi
             fi
             # refresh the path
@@ -224,13 +238,26 @@ case "$os" in
                 ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
                 if [ "x$?" != "x0" ] ; then
                     echo FAILURE 4
-                    exit
+                    exit 1
                 fi
             fi
             # refresh the path
             export PATH=${TOP}/bin:$PATH
         else
             echo "${TOOL} found and is exactly needed version ($TOOL_VERSION_FOUND)"
+        fi
+
+        ##########################################
+        ### third party m4 files
+        ##########################################
+
+        aclocal_dir=`aclocal --print 2>/dev/null`
+        if [ ! -d ${aclocal_dir} ] ; then
+            mkdir -p ${aclocal_dir}
+        fi
+        if ! cp ${TOP}/m4/*.m4 ${aclocal_dir}/ ; then
+            echo FAILURE 5
+            exit 5
         fi
 
         ##########################################
@@ -276,7 +303,7 @@ case "$os" in
                 ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
                 if [ "x$?" != "x0" ] ; then
                     echo FAILURE 2
-                    exit
+                    exit 1
                 fi
             fi
             # refresh the path

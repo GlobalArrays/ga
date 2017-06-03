@@ -15,6 +15,30 @@ sh ./travis/install-autotools.sh "$AUTOTOOLS_DIR"
 
 export PATH="$AUTOTOOLS_DIR/bin":$PATH
 
+# do we have a third party m4 directory?
+if [ -d $AUTOTOOLS_DIR/m4 ] ; then
+    # do we have any third party m4 files?
+    if [ "$(ls -A "$AUTOTOOLS_DIR/m4" 2>/dev/null)" ] ; then
+        # do we have write permissions to the aclocal directory?
+        aclocal_dir=`aclocal --print 2>/dev/null`
+        if ! cp $AUTOTOOLS_DIR/m4/*.m4 ${aclocal_dir} ; then
+            # last resort, copy to GA m4 direcory
+            if ! cp $AUTOTOOLS_DIR/m4/*.m4 ./m4 ; then
+                echo "failed to copy m4 files to GA m4 dir"
+                exit 5
+            else
+                echo "copied third party m4 files to GA dir"
+            fi
+        else
+            echo "copied third party m4 files to aclocal dir"
+        fi
+    else
+        echo "no third party m4 files found"
+    fi
+else
+    echo "no third party m4 directory found"
+fi
+
 autoreconf=${AUTORECONF:-autoreconf}
 $autoreconf ${autoreconf_args:-"-vif"}
 
