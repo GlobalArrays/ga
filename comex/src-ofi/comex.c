@@ -1009,12 +1009,6 @@ static int init_ofi()
         }
     }
 
-    if (l_state.proc == 0)
-    {
-        COMEX_OFI_LOG(INFO, "rma_ep name: %s", ofi_data.ep_rma.provider->fabric_attr->prov_name);
-        COMEX_OFI_LOG(INFO, "atomics_ep name: %s", ofi_data.ep_atomics.provider->fabric_attr->prov_name);
-    }
-
     CALL_TABLE_FUNCTION(&ld_table, fi_freeinfo(hints_saw));
     CALL_TABLE_FUNCTION(&ld_table, fi_freeinfo(hints_remcon));
 
@@ -1071,6 +1065,22 @@ static int init_ofi()
                 COMEX_DTYPE_SIZEOF(comex_dtype, comex_dtype_size);
                 ofi_data.max_bytes_in_atomic[COMEX_DTYPE_IDX(comex_dtype)] = max_elems_in_atomic * comex_dtype_size;
             }
+        }
+    }
+
+    if (l_state.proc == 0)
+    {
+        COMEX_OFI_LOG(INFO, "rma_ep: %s", ofi_data.ep_rma.provider->fabric_attr->prov_name);
+        COMEX_OFI_LOG(INFO, "atomics_ep: %s", ofi_data.ep_atomics.provider->fabric_attr->prov_name);
+        COMEX_OFI_LOG(INFO, "msg_prefix_size: %d", ofi_data.msg_prefix_size);
+        COMEX_OFI_LOG(INFO, "rma_iov_limit: %d", ofi_data.rma_iov_limit);
+        COMEX_OFI_LOG(INFO, "max_buffered_send: %d", ofi_data.max_buffered_send);
+
+        if (env_data.native_atomics)
+        {
+            for (comex_dtype = COMEX_ACC_INT; comex_dtype <= COMEX_ACC_LNG; comex_dtype++)
+                COMEX_OFI_LOG(INFO, "max_bytes_in_atomic: datatype %d, bytes %zd",
+                              comex_dtype, ofi_data.max_bytes_in_atomic[COMEX_DTYPE_IDX(comex_dtype)]);
         }
     }
 
@@ -2562,6 +2572,28 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
+int add_to_iov_callback(size_t src_idx, size_t dst_idx, void* data)
+{
+    assert(data);
+    strided_context_t* ctx = (strided_context_t*)data;
+
+    int iov_idx = ctx->cur_iov_idx;
+    EXPR_CHKANDJUMP(iov_idx < ctx->iov_len, "incorrect iov_idx");
+
+    ctx->src_array[iov_idx] = ((char*)ctx->src + src_idx);
+    ctx->dst_array[iov_idx] = ((char*)ctx->dst + dst_idx);
+    ctx->iov[iov_idx].bytes = ctx->count[0];
+    ctx->iov[iov_idx].count = 1;
+    ctx->iov[iov_idx].src = &(ctx->src_array[iov_idx]);
+    ctx->iov[iov_idx].dst = &(ctx->dst_array[iov_idx]);
+    ctx->cur_iov_idx++;
+
+fn_success:
+    return COMEX_SUCCESS;
+fn_fail:
+    return COMEX_FAILURE;
+}
+
 static int comex_nbaccs_native(
         int datatype, void* scale,
         void* src, int* src_stride,
@@ -2580,7 +2612,7 @@ static int comex_nbaccs_native(
         iov_len *= count[i];
     EXPR_CHKANDJUMP(iov_len, "incorrect iov_len");
 
-    comex_giov_t * iov = malloc(sizeof(comex_giov_t) * iov_len);
+    comex_giov_t* iov = malloc(sizeof(comex_giov_t) * iov_len);
     EXPR_CHKANDJUMP(iov, "failed to allocate iov array");
     memset(iov, 0, sizeof(*iov));
 
@@ -2590,35 +2622,23 @@ static int comex_nbaccs_native(
     void** dst_array = malloc(sizeof(void*) * iov_len);
     EXPR_CHKANDJUMP(dst_array, "failed to allocate dst array");
 
-    int add_to_iov(size_t src_idx, size_t dst_idx, void* data)
-    {
-        assert(data);
-        strided_context_t* context = (strided_context_t*)data;
-        int iov_idx = context->cur_iov_idx;
-        EXPR_CHKANDJUMP(iov_idx < iov_len, "incorrect iov_idx");
+    strided_context_t context = {
+                                    .datatype = datatype,
+                                    .scale = scale,
+                                    .src = src,
+                                    .dst = dst,
+                                    .count = count,
+                                    .proc = proc,
+                                    .group = group,
+                                    .ops = 0,
+                                    .cur_iov_idx = 0,
+                                    .src_array = src_array,
+                                    .dst_array = dst_array,
+                                    .iov = iov,
+                                    .iov_len = iov_len
+                                };
 
-        src_array[iov_idx] = ((char*)context->src + src_idx);
-        dst_array[iov_idx] = ((char*)context->dst + dst_idx);
-
-        iov[iov_idx].bytes = context->count[0];
-        iov[iov_idx].count = 1;
-        iov[iov_idx].src = &(src_array[iov_idx]);
-        iov[iov_idx].dst = &(dst_array[iov_idx]);
-
-        context->cur_iov_idx++;
-
-    fn_success:
-        return COMEX_SUCCESS;
-    fn_fail:
-        return COMEX_FAILURE;
-    }
-
-    strided_context_t context = {.datatype = datatype, .scale = scale,
-        .src = src, .dst = dst, .count = count,
-        .proc = proc, .group = group, .ops = 0,
-        .cur_iov_idx = 0};
-
-    COMEX_CHKANDJUMP(list_strides(src_stride, dst_stride, count, stride_levels, add_to_iov, &context),
+    COMEX_CHKANDJUMP(list_strides(src_stride, dst_stride, count, stride_levels, add_to_iov_callback, &context),
                     "failed to list strides");
 
     COMEX_CHKANDJUMP(iov_acc(datatype, scale, proc, group, iov, iov_len, handle),

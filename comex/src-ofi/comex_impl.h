@@ -236,7 +236,11 @@ typedef struct strided_context_t
     int                is_get_op;
     struct fi_msg_rma* msg;
     ofi_window_t*      wnd;
-    int cur_iov_idx;
+    int                cur_iov_idx;
+    void**             src_array;
+    void**             dst_array;
+    comex_giov_t*      iov;
+    int                iov_len;
 } strided_context_t;
 
 #define ATOMICS_PROTO_TAGMASK    (779L << 32)
