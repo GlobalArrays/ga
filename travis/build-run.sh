@@ -56,6 +56,9 @@ esac
 case "x$PORT" in
     xofi)
         ./configure --with-ofi=$TRAVIS_ROOT/libfabric
+        if [[ "$os" == "Darwin" ]]; then
+            export COMEX_OFI_LIBRARY=$TRAVIS_ROOT/libfabric/lib/libfabric.dylib
+        fi
         ;;
     x)
         ./configure $CONFIG_OPTS
