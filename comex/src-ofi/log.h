@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <execinfo.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/syscall.h>
@@ -25,8 +26,6 @@ typedef enum log_level_t
     TRACE
 } log_level_t;
 
-#define GET_TID() syscall(SYS_gettid)
-
 #define COMEX_OFI_LOG(log_lvl, fmt, ...)                                               \
   do {                                                                                 \
         if (log_lvl <= env_data.log_level)                                             \
@@ -37,25 +36,25 @@ typedef enum log_level_t
             {                                                                          \
                 case ERROR:                                                            \
                 {                                                                      \
-                    printf("%s: ERROR: (%d): %s:%u " fmt "\n", time_buf, GET_TID(),    \
+                    printf("%s: ERROR: (%d): %s:%u " fmt "\n", time_buf, get_tid(),    \
                             __FUNCTION__, __LINE__, ##__VA_ARGS__);                    \
                     print_backtrace();                                                 \
                     break;                                                             \
                 }                                                                      \
                 case WARN:                                                             \
                 {                                                                      \
-                    printf("WARNING: (%d): " fmt "\n", GET_TID(), ##__VA_ARGS__);      \
+                    printf("WARNING: (%d): " fmt "\n", get_tid(), ##__VA_ARGS__);      \
                     break;                                                             \
                 }                                                                      \
                 case INFO:                                                             \
                 {                                                                      \
-                    printf("(%d):" fmt "\n", GET_TID(), ##__VA_ARGS__);                \
+                    printf("(%d):" fmt "\n", get_tid(), ##__VA_ARGS__);                \
                     break;                                                             \
                 }                                                                      \
                 case DEBUG:                                                            \
                 case TRACE:                                                            \
                 {                                                                      \
-                    printf("%s: (%d): %s:%u " fmt "\n", time_buf, GET_TID(),           \
+                    printf("%s: (%d): %s:%u " fmt "\n", time_buf, get_tid(),           \
                             __FUNCTION__, __LINE__, ##__VA_ARGS__);                    \
                     break;                                                             \
                 }                                                                      \
@@ -67,6 +66,17 @@ typedef enum log_level_t
             fflush(stdout);                                                            \
         }                                                                              \
   } while (0)
+
+static int get_tid()
+{
+#if defined(__APPLE__) && defined(__MACH__)
+    uint64_t tid;
+    pthread_threadid_np(pthread_self(), &tid);
+    return (int)tid;
+#else
+    return (int)syscall(SYS_gettid);
+#endif
+}
 
 static void get_time(char* buf, size_t buf_size)
 {

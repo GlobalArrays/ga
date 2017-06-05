@@ -10,7 +10,12 @@
 #include "env.h"
 #include "log.h"
 
+#if defined(__APPLE__) && defined(__MACH__)
+#define DEFAULT_OFI_LIB "libfabric.dylib"
+#else
 #define DEFAULT_OFI_LIB "libfabric.so"
+#endif
+
 #define IS_SPACE(c)     ((c==0x20 || c==0x09 || c==0x0a || c==0x0b || c==0x0c || c==0x0d) ? 8 : 0)
 
 env_data_t env_data = { ERROR,     /* log_level */
