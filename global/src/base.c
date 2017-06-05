@@ -2045,9 +2045,11 @@ logical pnga_allocate(Integer g_a)
   if(GA_memory_limited){
      status = (GA_total_memory >= 0) ? 1 : 0;
      if (p_handle > 0) {
-        pnga_pgroup_gop(p_handle,pnga_type_f2c(MT_F_INT), &status, 1, "*");
+        /* pnga_pgroup_gop(p_handle,pnga_type_f2c(MT_F_INT), &status, 1, "*"); */
+        pnga_pgroup_gop(p_handle,pnga_type_f2c(MT_F_INT), &status, 1, "&&");
      } else {
-        pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "*");
+        /* pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "*"); */
+        pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "&&");
      }
   }else status = 1;
 
@@ -2482,7 +2484,8 @@ Integer status;
      if(GA_memory_limited){
          GA_total_memory -= bytes+extra;
          status = (GA_total_memory >= 0) ? 1 : 0;
-         pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "*");
+         /* pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "*"); */
+         pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "&&");
          if(!status)GA_total_memory +=bytes+extra;
      }else status = 1;
 
@@ -2675,10 +2678,12 @@ logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
   if(GA_memory_limited){
     status = (GA_total_memory >= 0) ? 1 : 0;
     if (grp_id > 0) {
-      pnga_pgroup_gop(grp_id, pnga_type_f2c(MT_F_INT), &status, 1, "*");
+      /* pnga_pgroup_gop(grp_id, pnga_type_f2c(MT_F_INT), &status, 1, "*"); */
+      pnga_pgroup_gop(grp_id, pnga_type_f2c(MT_F_INT), &status, 1, "&&");
       status = (Integer)status;
     } else {
-      pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "*");
+      /* pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "*"); */
+      pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "&&");
     }
   }else status = 1;
 
