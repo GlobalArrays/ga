@@ -43,41 +43,41 @@ void IGOP_(long *ptype, long *x, long *pn, char *op, int oplen)
     while (nleft) {
         int ierr = MPI_SUCCESS;
         int ndo = TCG_MIN(nleft, buflen);
-        MPI_Op op;
+        MPI_Op mop;
 
         if (strncmp(op,"+",1) == 0) {
-            op = MPI_SUM;
+            mop = MPI_SUM;
         }
         else if (strncmp(op,"*",1) == 0) {
-            op = MPI_PROD;
+            mop = MPI_PROD;
         }
         else if (strncmp(op,"max",3) == 0 || strncmp(op,"absmax",6) == 0) {
-            op = MPI_MAX;
+            mop = MPI_MAX;
         }
         else if (strncmp(op,"min",3) == 0 || strncmp(op,"absmin",6) == 0) {
-            op = MPI_MIN;
+            mop = MPI_MIN;
         }
         else if (strncmp(op,"or",2) == 0) {
-            op = MPI_BOR;
+            mop = MPI_BOR;
         }
         /* these are new */
         else if ((strncmp(op, "&&", 2) == 0) || (strncmp(op, "land", 4) == 0)) {
-            op = MPI_LAND;
+            mop = MPI_LAND;
         }
         else if ((strncmp(op, "||", 2) == 0) || (strncmp(op, "lor", 3) == 0)) {
-            op = MPI_LOR;
+            mop = MPI_LOR;
         }
         else if ((strncmp(op, "&", 1) == 0) || (strncmp(op, "band", 4) == 0)) {
-            op = MPI_BAND;
+            mop = MPI_BAND;
         }
         else if ((strncmp(op, "|", 1) == 0) || (strncmp(op, "bor", 3) == 0)) {
-            op = MPI_BOR;
+            mop = MPI_BOR;
         }
         else {
             Error("IGOP: unknown operation requested", (long) *pn);
         }
 
-        ierr = MPI_Allreduce(x, work, ndo, TCG_INT, op, TCGMSG_Comm);
+        ierr = MPI_Allreduce(x, work, ndo, TCG_INT, mop, TCGMSG_Comm);
         tcgmsg_test_statusM("IGOP: MPI_Allreduce:", ierr  );
 
         n = ndo;
@@ -114,40 +114,40 @@ void DGOP_(long *ptype, double *x, long *pn, char *op, int oplen)
     while (nleft) {
         int ierr = MPI_SUCCESS;
         int ndo = TCG_MIN(nleft, buflen);
-        MPI_Op op;
+        MPI_Op mop;
 
         if (strncmp(op,"+",1) == 0) {
-            op = MPI_SUM;
+            mop = MPI_SUM;
         }
         else if (strncmp(op,"*",1) == 0) {
-            op = MPI_PROD;
+            mop = MPI_PROD;
         }
         else if (strncmp(op,"max",3) == 0 || strncmp(op,"absmax",6) == 0) {
-            op = MPI_MAX;
+            mop = MPI_MAX;
         }
         else if (strncmp(op,"min",3) == 0 || strncmp(op,"absmin",6) == 0) {
-            op = MPI_MIN;
+            mop = MPI_MIN;
         }
         else if (strncmp(op,"or",2) == 0) {
-            op = MPI_BOR;
+            mop = MPI_BOR;
         }
         /* these are new */
         else if ((strncmp(op, "&&", 2) == 0) || (strncmp(op, "land", 4) == 0)) {
-            op = MPI_LAND;
+            mop = MPI_LAND;
         }
         else if ((strncmp(op, "||", 2) == 0) || (strncmp(op, "lor", 3) == 0)) {
-            op = MPI_LOR;
+            mop = MPI_LOR;
         }
         else if ((strncmp(op, "&", 1) == 0) || (strncmp(op, "band", 4) == 0)) {
-            op = MPI_BAND;
+            mop = MPI_BAND;
         }
         else if ((strncmp(op, "|", 1) == 0) || (strncmp(op, "bor", 3) == 0)) {
-            op = MPI_BOR;
+            mop = MPI_BOR;
         }
         else {
             Error("DGOP: unknown operation requested", (long) *pn);
         }
-        ierr = MPI_Allreduce(x, work, ndo, TCG_DBL, op, TCGMSG_Comm);
+        ierr = MPI_Allreduce(x, work, ndo, TCG_DBL, mop, TCGMSG_Comm);
         tcgmsg_test_statusM("DGOP: MPI_Allreduce:", ierr  );
 
         n = ndo;
