@@ -100,6 +100,19 @@ static MPI_Op armci_op_to_mpi_op(char *op)
     else if (strncmp(op, "or", 2) == 0) {
         result = MPI_BOR;
     }
+    /* these are new */
+    else if ((strncmp(op, "&&", 2) == 0) || (strncmp(op, "land", 4) == 0)) {
+        result = MPI_LAND;
+    }
+    else if ((strncmp(op, "||", 2) == 0) || (strncmp(op, "lor", 3) == 0)) {
+        result = MPI_LOR;
+    }
+    else if ((strncmp(op, "&", 1) == 0) || (strncmp(op, "band", 4) == 0)) {
+        result = MPI_BAND;
+    }
+    else if ((strncmp(op, "|", 1) == 0) || (strncmp(op, "bor", 3) == 0)) {
+        result = MPI_BOR;
+    }
     else {
         printf("Unsupported gop operation:%s\n",op);
         assert(0);
