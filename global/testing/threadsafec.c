@@ -398,52 +398,11 @@ int main(int argc, char * argv[])
       buf = (int*)malloc(BLOCK_DIM*BLOCK_DIM*sizeof(int));
       buft = (int*)malloc(BLOCK_DIM*BLOCK_DIM*sizeof(int));
       /* Read and transpose data */
-      while (task < tx*ty) {
-        ity = task%ty;
-        itx = (task-ity)/ty;
-        tlo[0] = itx*BLOCK_DIM;
-        tlo[1] = ity*BLOCK_DIM;
-        thi[0] = tlo[0] + BLOCK_DIM - 1;
-        if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
-        thi[1] = tlo[1] + BLOCK_DIM - 1;
-        if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
-        ld[0] = thi[0]-tlo[0]+1;
-        ld[1] = thi[1]-tlo[1]+1;
-        lld = thi[1]-tlo[1]+1;
-
-        /* Get data from g_src */
-        NGA_Get(g_src, tlo, thi, buf, &lld);
-
-        /* Evaluate transpose of local bloack */
-        icnt = 0;
-        for (m=0; m<ld[0]; m++) {
-          for (n=0; n<ld[1]; n++) {
-            offset = n*ld[0]+m;
-            buft[offset] = buf[icnt]; 
-            icnt++;
-          }
-        }
-        
-        /* Find transposed block location */
-        tmp = ity;
-        ity = itx;
-        itx = tmp;
-        tlo[0] = itx*BLOCK_DIM;
-        tlo[1] = ity*BLOCK_DIM;
-        thi[0] = tlo[0] + BLOCK_DIM - 1;
-        if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
-        thi[1] = tlo[1] + BLOCK_DIM - 1;
-        if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
-        lld = thi[1]-tlo[1]+1;
-        NGA_Put(g_dest, tlo, thi, buft, &lld);
-        task = NGA_Read_inc(g_count, &zero, inc);
-      }
-      /* Read and accumulate transposed data */
       while (task < 2*tx*ty) {
-        k = task - tx*ty;
+        k = task;
+        if (k>=tx*ty) k -= tx*ty;
         ity = k%ty;
         itx = (k-ity)/ty;
-        printf("task: %d k: %d itx: %d ity: %d\n",task,k,itx,ity);
         tlo[0] = itx*BLOCK_DIM;
         tlo[1] = ity*BLOCK_DIM;
         thi[0] = tlo[0] + BLOCK_DIM - 1;
