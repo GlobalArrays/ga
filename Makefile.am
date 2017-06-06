@@ -479,8 +479,8 @@ check_PROGRAMS += global/testing/testc
 check_PROGRAMS += global/testing/testmatmultc
 check_PROGRAMS += global/testing/testmult
 check_PROGRAMS += global/testing/testmultrect
-check_PROGRAMS += global/testing/unpackc
 check_PROGRAMS += global/testing/threadsafec
+check_PROGRAMS += global/testing/unpackc
 if ENABLE_F77
 check_PROGRAMS += global/testing/bin
 check_PROGRAMS += global/testing/blktest
@@ -658,8 +658,8 @@ GLOBAL_PARALLEL_TESTS += global/testing/testc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmatmultc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmult$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmultrect$(EXEEXT)
-GLOBAL_PARALLEL_TESTS += global/testing/unpackc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/threadsafec$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/unpackc$(EXEEXT)
 if ENABLE_F77
 GLOBAL_PARALLEL_TESTS += global/testing/bin$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/blktest$(EXEEXT)
@@ -939,9 +939,9 @@ global_testing_testmult_SOURCES            = global/testing/testmult.c $(gtsrc)
 global_testing_testmultrect_SOURCES        = global/testing/testmultrect.c $(gtsrc)
 global_testing_testsolve_SOURCES           = global/testing/testsolve.F $(gtsrc)
 global_testing_testspd_SOURCES             = global/testing/testspd.F $(gtsrc)
+global_testing_threadsafec_SOURCES         = global/testing/threadsafec.c $(gtsrc)
 global_testing_types_test_SOURCES          = global/testing/types-test.F $(gtsrc)
 global_testing_unpackc_SOURCES             = global/testing/unpackc.c $(gtsrc)
-global_testing_threadsafec_SOURCES         = global/testing/thread-safe.cpp $(gtsrc)
 nodist_global_testing_nga_onesided_SOURCES = global/testing/nga-onesided.F $(gtsrc)
 nodist_global_testing_nga_patch_SOURCES    = global/testing/nga-patch.F $(gtsrc)
 nodist_global_testing_nga_periodic_SOURCES = global/testing/nga-periodic.F $(gtsrc)
@@ -1034,6 +1034,10 @@ global_testing_unit_tests_ga_zerodiagonal_SOURCES         = global/testing/unit-
 global_testing_unit_tests_ga_zeropatch2_SOURCES           = global/testing/unit-tests/ga_zeropatch2.c $(UNIT_TEST_EXTRA_SRC)
 global_testing_unit_tests_ga_zeropatch_SOURCES            = global/testing/unit-tests/ga_zeropatch.c $(UNIT_TEST_EXTRA_SRC)
 
+global_testing_threadsafec_CFLAGS         = $(AM_CFLAGS) $(OPENMP_CFLAGS)
+
+global_testing_threadsafec_CPPFLAGS       = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
+
 global_testing_bin_LDFLAGS                = $(FLDFLAGS)
 global_testing_blktest_LDFLAGS            = $(FLDFLAGS)
 global_testing_d2test_LDFLAGS             = $(FLDFLAGS)
@@ -1078,9 +1082,8 @@ global_testing_test_mirrored_LDFLAGS      = $(FLDFLAGS)
 global_testing_testmatmult_LDFLAGS        = $(FLDFLAGS)
 global_testing_testsolve_LDFLAGS          = $(FLDFLAGS)
 global_testing_testspd_LDFLAGS            = $(FLDFLAGS)
+global_testing_threadsafec_LDFLAGS        = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
 global_testing_types_test_LDFLAGS         = $(FLDFLAGS)
-global_testing_threadsafec_LDFLAGS        = $(MAYBE_FLIBS) $(AM_LDFLAGS) $(OPENMP_CFLAGS)
-global_testing_threadsafec_CPPFLAGS       = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 
 if F77_INTEL_NO_INLINE
 global_testing_nga_scatter_FFLAGS         = $(AM_FFLAGS) -fno-inline
@@ -1115,8 +1118,8 @@ nodist_EXTRA_global_testing_testc_SOURCES               = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmatmultc_SOURCES        = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmult_SOURCES            = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmultrect_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unpackc_SOURCES             = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_threadsafec_SOURCES         = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unpackc_SOURCES             = $(MAYBE_DUMMY_F_LINK)
 
 global_testing_test_mirrored_CPPFLAGS = $(AM_CPPFLAGS) -DMIRROR=1
 
@@ -1510,6 +1513,7 @@ check_PROGRAMS += ga++/testing/mtest
 check_PROGRAMS += ga++/testing/ntestc
 check_PROGRAMS += ga++/testing/testc
 check_PROGRAMS += ga++/testing/testmult
+check_PROGRAMS += ga++/testing/threadsafecpp
 
 CXX_SERIAL_TESTS =
 CXX_SERIAL_TESTS_XFAIL =
@@ -1523,25 +1527,28 @@ CXX_PARALLEL_TESTS += ga++/testing/mtest$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/ntestc$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/testc$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/testmult$(EXEEXT)
+CXX_PARALLEL_TESTS += ga++/testing/threadsafecpp$(EXEEXT)
 
-ga___testing_elempatch_SOURCES = ga++/testing/elempatch.cc
-ga___testing_mtest_SOURCES     = ga++/testing/mtest.cc
-ga___testing_ntestc_SOURCES    = ga++/testing/ntestc.cc \
-                                 ga++/testing/util.c
-ga___testing_testc_SOURCES     = ga++/testing/testc.cc
-ga___testing_testmult_SOURCES  = ga++/testing/testmult.cc
+ga___testing_elempatch_SOURCES      = ga++/testing/elempatch.cc
+ga___testing_mtest_SOURCES          = ga++/testing/mtest.cc
+ga___testing_ntestc_SOURCES         = ga++/testing/ntestc.cc \
+                                      ga++/testing/util.c
+ga___testing_testc_SOURCES          = ga++/testing/testc.cc
+ga___testing_testmult_SOURCES       = ga++/testing/testmult.cc
+ga___testing_threadsafecpp_SOURCES  = ga++/testing/thread-safe.cc
 
-ga___testing_elempatch_LDADD   = libga++.la $(LDADD) $(MAYBE_FLIBS)
-ga___testing_mtest_LDADD       = libga++.la $(LDADD) $(MAYBE_FLIBS)
-ga___testing_ntestc_LDADD      = libga++.la $(LDADD) $(MAYBE_FLIBS)
-ga___testing_testc_LDADD       = libga++.la $(LDADD) $(MAYBE_FLIBS)
-ga___testing_testmult_LDADD    = libga++.la $(LDADD) $(MAYBE_FLIBS)
+ga___testing_threadsafecpp_CXXFLAGS = $(AM_CXXFLAGS) $(OPENMP_CXXFLAGS)
 
-ga___testing_elempatch_LDFLAGS = $(FLDFLAGS)
-ga___testing_mtest_LDFLAGS     = $(FLDFLAGS)
-ga___testing_ntestc_LDFLAGS    = $(FLDFLAGS)
-ga___testing_testc_LDFLAGS     = $(FLDFLAGS)
-ga___testing_testmult_LDFLAGS  = $(FLDFLAGS)
+ga___testing_threadsafecpp_CPPFLAGS = $(AM_CPPFLAGS) $(OPENMP_CXXFLAGS)
+
+ga___testing_threadsafecpp_LDFLAGS  = $(AM_LDFLAGS) $(OPENMP_CXXFLAGS)
+
+ga___testing_elempatch_LDADD        = libga++.la $(LDADD) $(MAYBE_FLIBS)
+ga___testing_mtest_LDADD            = libga++.la $(LDADD) $(MAYBE_FLIBS)
+ga___testing_ntestc_LDADD           = libga++.la $(LDADD) $(MAYBE_FLIBS)
+ga___testing_testc_LDADD            = libga++.la $(LDADD) $(MAYBE_FLIBS)
+ga___testing_testmult_LDADD         = libga++.la $(LDADD) $(MAYBE_FLIBS)
+ga___testing_threadsafecpp_LDADD    =            $(LDADD) $(MAYBE_FLIBS)
 
 endif # CXX_BINDINGS
 

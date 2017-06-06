@@ -3,6 +3,7 @@
 #include "ga.h"
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
 #if defined(_OPENMP)
 #include "omp.h"
 #endif
@@ -26,6 +27,7 @@ int main(int argc, char * argv[])
     int ld[1] = {dims[1]};
     int local_buffer[dims[0]][dims[1]];
     int local_buffer2[dims[0]*dims[1]];
+    char name[20];
   
     int rank = GA_Nodeid();
     int ranks = GA_Nnodes();
@@ -39,7 +41,8 @@ int main(int argc, char * argv[])
         }
     }
     
-    int handle = NGA_Create(C_INT, 2, dims, "test", NULL);
+    strcpy(name, "test");
+    int handle = NGA_Create(C_INT, 2, dims, name, NULL);
     
     int thread_count = 4; 
     
@@ -80,7 +83,8 @@ int main(int argc, char * argv[])
         }
     }
     
-    handle = NGA_Create(C_INT, 2, dims, "test1", NULL);
+    strcpy(name, "test1");
+    handle = NGA_Create(C_INT, 2, dims, name, NULL);
     
     for(int i =0; i<dims[0]; i++)
     {
@@ -144,7 +148,8 @@ int main(int argc, char * argv[])
     }
     
     
-    handle = NGA_Create(C_INT, 2, dims, "test2", NULL);
+    strcpy(name, "test2");
+    handle = NGA_Create(C_INT, 2, dims, name, NULL);
     
     for(int i =0; i<dims[0]; i++)
     {
@@ -204,9 +209,11 @@ int main(int argc, char * argv[])
     int dim_atomic[1] = {1};
     int lohi_atomic[1] = {0};
     ld[0] = 1;
-    handle = NGA_Create(C_INT, 1, dim_atomic, "test3", NULL);
+    strcpy(name, "test3");
+    handle = NGA_Create(C_INT, 1, dim_atomic, name, NULL);
     dims[0] = thread_count*ranks;
-    int handle_correct = NGA_Create(C_INT, 1, dims, "test_correct", NULL);
+    strcpy(name, "test_correct");
+    int handle_correct = NGA_Create(C_INT, 1, dims, name, NULL);
     int * res_array = new int[dims[0]];
     int atomic = 0; 
     
@@ -273,7 +280,8 @@ int main(int argc, char * argv[])
     
     dims[0] = x;
     dims[1] = y;
-    handle = NGA_Create(C_INT, 2, dims, "test3", NULL);
+    strcpy(name, "test3");
+    handle = NGA_Create(C_INT, 2, dims, name, NULL);
     
     long scale = 1;
     lo[0] = 0;

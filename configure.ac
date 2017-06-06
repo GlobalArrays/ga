@@ -269,6 +269,7 @@ AS_IF([test "x$with_mpi" != xno], [GA_MPICXX_TEST])
 # Checks for C++ header files.
 
 # Checks for C++ typedefs, structures, and compiler characteristics.
+AC_OPENMP
 GA_CXX_NAMESPACES
 
 # Checks for C++ type sizes.
@@ -350,6 +351,7 @@ GA_F77_INTEGER_SIZE
 GA_GNU_LOOP_OPT
 
 # Checks for Fortran typedefs, structures, and compiler characteristics.
+AC_OPENMP
 
 # Checks for Fortran type sizes.
 ga_save_FFLAGS="$FFLAGS"; FFLAGS="$FFLAGS $FFLAG_INT"

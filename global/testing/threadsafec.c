@@ -1,9 +1,9 @@
-#include "mpi.h"
 #include <stdio.h>
-#include "ga.h"
-#include <algorithm>
-#include <cstdlib>
+#include <stdlib.h>
 #include <math.h>
+
+#include "mpi.h"
+#include "ga.h"
 #if defined(_OPENMP)
 #include "omp.h"
 #endif
@@ -97,6 +97,7 @@ int main(int argc, char * argv[])
     int zero = 0, one = 1;
     int *ptr;
     int next, nextx, nexty;
+    char *env_threads;
 
     /* Use a different array size if specified in arguments */
     if(argc >= 3)
@@ -137,7 +138,7 @@ int main(int argc, char * argv[])
     ty = y/BLOCK_DIM;
     if (ty*BLOCK_DIM < y) ty++;
 
-    if( char * env_threads = std::getenv("OMP_NUM_THREADS"))
+    if(env_threads = getenv("OMP_NUM_THREADS"))
         thread_count = atoi(env_threads);
     else
         omp_set_num_threads(thread_count);
