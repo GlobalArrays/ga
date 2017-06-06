@@ -72,13 +72,13 @@ static void idoop(long n, char * op, long * x, long * work)
   /* these are new */
   else if ((strncmp(op, "&&", 2) == 0) || (strncmp(op, "land", 4) == 0)) {
     while(n--) {
-      *x &&= *work;
+      *x = *x && *work;
       x++; work++;
     }
   }
   else if ((strncmp(op, "||", 2) == 0) || (strncmp(op, "lor", 3) == 0)) {
     while(n--) {
-      *x ||= *work;
+      *x = *x || *work;
       x++; work++;
     }
   }
