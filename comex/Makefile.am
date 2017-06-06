@@ -52,7 +52,6 @@ AM_LDFLAGS += $(COMEX_NETWORK_LDFLAGS)
 AM_LDFLAGS += $(BLAS_LDFLAGS)
 
 LDADD += libcomex.la
-LDADD += $(LTLIBOBJS)
 
 # internal libcomex for possibly rolling up into other libraries
 noinst_LTLIBRARIES += libcomexi.la

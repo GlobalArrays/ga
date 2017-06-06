@@ -15,6 +15,8 @@ matrix:
     - env: MPI_IMPL=openmpi
 env:
   - MPI_IMPL=mpich
+    PORT=sockets
+  - MPI_IMPL=mpich
     PORT=mpi-ts
   - MPI_IMPL=mpich
     PORT=mpi-mt

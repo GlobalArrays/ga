@@ -11,7 +11,6 @@ AC_INIT([Communication Runtime for Extreme Scale (comex)],
         [http://www.emsl.pnl.gov/docs/global/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([config.h])
-AC_CONFIG_LIBOBJ_DIR([compat])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src-common/comex.h])
 

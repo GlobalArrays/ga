@@ -81,6 +81,7 @@ if ENABLE_F77
 AM_LDFLAGS += $(FLD_NOMAIN)
 endif
 
+# Same as AM_LDFLAGS, but without the possible 'nomain' flag.
 FLDFLAGS += $(ELPA_LDFLAGS)
 FLDFLAGS += $(SCALAPACK_LDFLAGS)
 FLDFLAGS += $(LAPACK_LDFLAGS)
@@ -88,18 +89,10 @@ FLDFLAGS += $(BLAS_LDFLAGS)
 FLDFLAGS += $(GA_MP_LDFLAGS)
 FLDFLAGS += $(ARMCI_NETWORK_LDFLAGS)
 
-LDADD += $(LTLIBOBJS)
 LDADD += libga.la
-LDADD += $(ELPA_LIBS)
-LDADD += $(SCALAPACK_LIBS)
-LDADD += $(LAPACK_LIBS)
-LDADD += $(BLAS_LIBS)
-LDADD += $(GA_MP_LIBS)
-LDADD += $(ARMCI_NETWORK_LIBS)
 
 # Certain trickery when turning Fortran support on or off.
 if ENABLE_F77
-MAYBE_DUMMY_F_LINK = dummy.f
 MAYBE_FLIBS = $(FLIBS)
 endif
 
@@ -224,10 +217,6 @@ ma_test_coalesce_SOURCES = ma/test-coalesce.c
 ma_test_inquire_SOURCES  = ma/test-inquire.c
 
 ma_testf_LDFLAGS = $(FLDFLAGS)
-
-nodist_EXTRA_ma_testc_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_ma_test_coalesce_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_ma_test_inquire_SOURCES  = $(MAYBE_DUMMY_F_LINK)
 
 ##############################################################################
 # LinAlg/lapack+blas
@@ -1093,116 +1082,7 @@ global_testing_nga_scatter_FFLAGS         = $(AM_FFLAGS)
 global_testing_nga_onesided_FFLAGS        = $(AM_FFLAGS)
 endif
 
-nodist_EXTRA_global_testing_big_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_elempatch_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ga_lu_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ga_mpi_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_gatscat_SOURCES             = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_getmem_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ipc_clean_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_lock_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_mtest_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_mulmatpatchc_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_normc_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ntestc_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ntestfc_SOURCES             = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_packc_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_patch_enumc_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_perf2_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_print_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_scan_addc_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_scan_copyc_SOURCES          = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_sprsmatvec_SOURCES          = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_simple_groups_commc_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_testc_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_testmatmultc_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_testmult_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_testmultrect_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_threadsafec_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unpackc_SOURCES             = $(MAYBE_DUMMY_F_LINK)
-
 global_testing_test_mirrored_CPPFLAGS = $(AM_CPPFLAGS) -DMIRROR=1
-
-nodist_EXTRA_global_testing_unit_tests_ga_abs_value_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_acc_SOURCES                  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_add_SOURCES                  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_add_constant_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_add_constantpatch_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_add_diagonal_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_add_patch_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_copy2_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_copy3_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_copy_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_copypatch2_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_copypatch_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create1_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create2_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create3_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create_handle_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create_irreg2_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create_irreg3_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create_irreg_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_destroy_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_dgop_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_dot_SOURCES                  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_duplicate_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_divide_SOURCES          = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_dividepatch_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_maximum_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_maximumpatch_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_minimum_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_minimumpatch_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_multiply_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_multiplypatch_SOURCES   = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_fill_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_fillpatch1_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_fillpatch_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_gather2_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_gather3_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_gather_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_get_blockinfo_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_get_SOURCES                  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_get_diagonal_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_igop2_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_igop_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_inquire_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_intialize_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_lgop_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_median_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_ndim2_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_ndim_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_nnodes_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_nodeid_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create2_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create3_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create4_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create5_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_destroy2_SOURCES      = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_destroy_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_nnodes_nodeid_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_setdefault_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_put2_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_put_SOURCES                  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_scale2_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_scale_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_scale_cols_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_scale_patch_SOURCES          = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_scale_rows_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_scatter_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_set_data_SOURCES             = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_set_diagonal_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_set_restricted_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_solve_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_sync_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_transpose2_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_transpose3_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_transpose_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_zero_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_zerodiagonal_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_zeropatch2_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_zeropatch_SOURCES            = $(MAYBE_DUMMY_F_LINK)
 
 ##############################################################################
 # global/examples
@@ -1247,7 +1127,6 @@ global/examples/conjugate_gradient/read_input.c
 
 global_examples_lennard_jones_lennard_SOURCES = \
 global/examples/lennard-jones/lennard.c
-nodist_EXTRA_global_examples_lennard_jones_lennard_SOURCES = $(MAYBE_DUMMY_F_LINK)
 
 global_examples_md_cluster_grp_sim_SOURCES = \
 global/examples/md_cluster/cell_list.F       \
@@ -1453,14 +1332,6 @@ pario_dra_time_mxm_SOURCES  = pario/dra/time_mxm.F $(dtsrc)
 pario_eaf_test_SOURCES      = pario/eaf/test.F $(dtsrc)
 pario_sf_test_SOURCES       = pario/sf/test.F $(dtsrc)
 
-nodist_EXTRA_pario_dra_bign_SOURCES      = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_dra_dbg_read_SOURCES  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_dra_dbg_write_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_dra_dra2arviz_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_dra_ntestc_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_dra_perfn_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_dra_rate_SOURCES      = $(MAYBE_DUMMY_F_LINK)
-
 pario_dra_big_LDFLAGS       = $(FLDFLAGS)
 pario_dra_dra_mxm_LDFLAGS   = $(FLDFLAGS)
 pario_dra_ntest_LDFLAGS     = $(FLDFLAGS)
@@ -1489,6 +1360,8 @@ libga___la_SOURCES += ga++/src/PGroup.cc
 libga___la_SOURCES += ga++/src/init_term.cc
 libga___la_SOURCES += ga++/src/overload.cc
 libga___la_SOURCES += ga++/src/services.cc
+
+libga___la_LIBADD = libga.la
 
 include_HEADERS += ga++/src/ga++.h
 include_HEADERS += ga++/src/GAServices.h
@@ -1543,12 +1416,11 @@ ga___testing_threadsafecpp_CPPFLAGS = $(AM_CPPFLAGS) $(OPENMP_CXXFLAGS)
 
 ga___testing_threadsafecpp_LDFLAGS  = $(AM_LDFLAGS) $(OPENMP_CXXFLAGS)
 
-ga___testing_elempatch_LDADD        = libga++.la $(LDADD) $(MAYBE_FLIBS)
-ga___testing_mtest_LDADD            = libga++.la $(LDADD) $(MAYBE_FLIBS)
-ga___testing_ntestc_LDADD           = libga++.la $(LDADD) $(MAYBE_FLIBS)
-ga___testing_testc_LDADD            = libga++.la $(LDADD) $(MAYBE_FLIBS)
-ga___testing_testmult_LDADD         = libga++.la $(LDADD) $(MAYBE_FLIBS)
-ga___testing_threadsafecpp_LDADD    =            $(LDADD) $(MAYBE_FLIBS)
+ga___testing_elempatch_LDADD        = libga++.la
+ga___testing_mtest_LDADD            = libga++.la
+ga___testing_ntestc_LDADD           = libga++.la
+ga___testing_testc_LDADD            = libga++.la
+ga___testing_testmult_LDADD         = libga++.la
 
 endif # CXX_BINDINGS
 
@@ -1606,9 +1478,6 @@ check_PROGRAMS += gparrays/testing/transpose
 gparrays_testing_test_SOURCES      = gparrays/testing/test.F
 gparrays_testing_testc_SOURCES     = gparrays/testing/testc.c
 gparrays_testing_transpose_SOURCES = gparrays/testing/transpose.c
-
-nodist_EXTRA_gparrays_testing_testc_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_gparrays_testing_transpose_SOURCES = $(MAYBE_DUMMY_F_LINK)
 
 gparrays_testing_test_LDFLAGS  = $(FLDFLAGS)
 
@@ -1756,9 +1625,6 @@ tcgmsg_tests_test_SOURCES      = tcgmsg/tests/test.c
 
 tcgmsg_tests_testf_LDFLAGS     = $(FLDFLAGS)
 
-nodist_EXTRA_tcgmsg_tests_test_asyn_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_tcgmsg_tests_test_SOURCES      = $(MAYBE_DUMMY_F_LINK)
-
 endif # MSG_COMMS_MPI
 
 EXTRA_DIST += tcgmsg/tcgmsg-mpi/README
@@ -1834,9 +1700,8 @@ libga_la_LIBADD += comex/libarmci.la
 else
 libga_la_LIBADD += armci/libarmci.la
 endif
-libga_la_LIBADD += $(GA_MP_LIBS)
-libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 endif
+libga_la_LIBADD += $(MAYBE_FLIBS)
 
 # if --disable-f77 is used, we must override linker choice
 if ENABLE_F77
