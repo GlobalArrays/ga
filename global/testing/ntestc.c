@@ -13,9 +13,6 @@
 #include "ga.h"
 #include "mp3.h"
 
-/* utilities for GA test programs */
-#include "testutil.h"
-
 #define N 10            /* first dimension  */
 #define NDIM 4          /* number of dimensions */
 #define BASE 0
@@ -23,6 +20,19 @@
 
 /*#define NEW_API*/
 
+/*\ print subscript of ndim dimensional array with two strings before and after
+\*/
+void print_subscript(char *pre,int ndim, int subscript[], char* post)
+{
+    int i;
+
+    printf("%s [",pre);
+    for(i=0;i<ndim;i++){
+        printf("%d",subscript[i]);
+        if(i==ndim-1)printf("] %s",post);
+        else printf(",");
+    }
+}
 
 /*\ fill n-dimensional array section with value
 \*/

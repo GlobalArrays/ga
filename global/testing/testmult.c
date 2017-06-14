@@ -16,9 +16,6 @@
 #include "ga.h"
 #include "mp3.h"
 
-/* utilities for GA test programs */
-#include "testutil.h"
-
 #define N 400          /* first dimension  */
 #define BASE 0
 #define PERMUTE_ 
