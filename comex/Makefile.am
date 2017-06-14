@@ -40,25 +40,12 @@ libcomex_la_LIBADD =
 libcomex_la_LIBADD += $(MPI_LIBS)
 libcomex_la_LIBADD += $(COMEX_NETWORK_LIBS)
 libcomex_la_LIBADD += $(BLAS_LIBS)
-if COMEX_NETWORK_MPI_PT
-libcomex_la_LIBADD += $(PTHREAD_LIBS)
-endif
-if COMEX_NETWORK_MPI_PR
-libcomex_la_LIBADD += $(PTHREAD_LIBS)
-endif
 include_HEADERS += $(top_srcdir)/src-common/comex.h
 
 AM_CPPFLAGS += $(MPI_CPPFLAGS)
 AM_CPPFLAGS += $(COMEX_NETWORK_CPPFLAGS)
 AM_CPPFLAGS += $(BLAS_CPPFLAGS)
 AM_CPPFLAGS += -I$(top_srcdir)/src-common
-
-if COMEX_NETWORK_MPI_PT
-AM_CFLAGS += $(PTHREAD_CFLAGS)
-endif
-if COMEX_NETWORK_MPI_PR
-AM_CFLAGS += $(PTHREAD_CFLAGS)
-endif
 
 AM_LDFLAGS += $(MPI_LDFLAGS)
 AM_LDFLAGS += $(COMEX_NETWORK_LDFLAGS)
@@ -74,12 +61,6 @@ libcomexi_la_LIBADD =
 libcomexi_la_LIBADD += $(MPI_LIBS)
 libcomexi_la_LIBADD += $(COMEX_NETWORK_LIBS)
 libcomexi_la_LIBADD += $(BLAS_LIBS)
-if COMEX_NETWORK_MPI_PT
-libcomexi_la_LIBADD += $(PTHREAD_LIBS)
-endif
-if COMEX_NETWORK_MPI_PR
-libcomexi_la_LIBADD += $(PTHREAD_LIBS)
-endif
 
 ##############################################################################
 # compiler and linker flags
