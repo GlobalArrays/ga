@@ -7,7 +7,6 @@
 #include <ga++.h>
 
 /* utilities for GA test programs */
-#include "testutil.h"
 #if HAVE_MATH_H
 #   include <math.h>
 #endif

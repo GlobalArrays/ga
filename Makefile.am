@@ -1329,8 +1329,7 @@ CXX_PARALLEL_TESTS += ga++/testing/threadsafecpp$(EXEEXT)
 
 ga___testing_elempatch_SOURCES      = ga++/testing/elempatch.cc
 ga___testing_mtest_SOURCES          = ga++/testing/mtest.cc
-ga___testing_ntestc_SOURCES         = ga++/testing/ntestc.cc \
-                                      ga++/testing/util.c
+ga___testing_ntestc_SOURCES         = ga++/testing/ntestc.cc
 ga___testing_testc_SOURCES          = ga++/testing/testc.cc
 ga___testing_testmult_SOURCES       = ga++/testing/testmult.cc
 ga___testing_threadsafecpp_SOURCES  = ga++/testing/thread-safe.cc
