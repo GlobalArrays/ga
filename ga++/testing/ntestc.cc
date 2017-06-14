@@ -6,7 +6,6 @@
 #include <cstdlib>
 #include <cstdio>
 using namespace std;
-#include "testutil.h"
 #include "ga++.h"
 
 #define N     10    // First dimension
@@ -15,6 +14,20 @@ using namespace std;
 #define PERMUTE_
 
 #define GA_DATA_TYPE MT_F_REAL
+
+/*\ print subscript of ndim dimensional array with two strings before and after
+\*/
+void print_subscript(char *pre,int ndim, int subscript[], char* post)
+{
+    int i;
+
+    printf("%s [",pre);
+    for(i=0;i<ndim;i++){
+        printf("%d",subscript[i]);
+        if(i==ndim-1)printf("] %s",post);
+        else printf(",");
+    }
+}
 
 void
 fillPatch(double *ptr, int dim[], int ld[], int ndim, double val) {
