@@ -45,7 +45,6 @@ AM_CFLAGS =
 AM_CXXFLAGS =
 AM_CPPFLAGS =
 AM_LDFLAGS =
-FLDFLAGS =
 LDADD =
 
 if MINGW
@@ -77,17 +76,6 @@ AM_LDFLAGS += $(LAPACK_LDFLAGS)
 AM_LDFLAGS += $(BLAS_LDFLAGS)
 AM_LDFLAGS += $(GA_MP_LDFLAGS)
 AM_LDFLAGS += $(ARMCI_NETWORK_LDFLAGS)
-if ENABLE_F77
-AM_LDFLAGS += $(FLD_NOMAIN)
-endif
-
-# Same as AM_LDFLAGS, but without the possible 'nomain' flag.
-FLDFLAGS += $(ELPA_LDFLAGS)
-FLDFLAGS += $(SCALAPACK_LDFLAGS)
-FLDFLAGS += $(LAPACK_LDFLAGS)
-FLDFLAGS += $(BLAS_LDFLAGS)
-FLDFLAGS += $(GA_MP_LDFLAGS)
-FLDFLAGS += $(ARMCI_NETWORK_LDFLAGS)
 
 LDADD += libga.la
 
@@ -215,8 +203,6 @@ ma_testf_SOURCES         = ma/testf.F
 ma_testc_SOURCES         = ma/testc.c
 ma_test_coalesce_SOURCES = ma/test-coalesce.c
 ma_test_inquire_SOURCES  = ma/test-inquire.c
-
-ma_testf_LDFLAGS = $(FLDFLAGS)
 
 ##############################################################################
 # LinAlg/lapack+blas
@@ -1026,52 +1012,7 @@ global_testing_threadsafec_CFLAGS         = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 
 global_testing_threadsafec_CPPFLAGS       = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 
-global_testing_bin_LDFLAGS                = $(FLDFLAGS)
-global_testing_blktest_LDFLAGS            = $(FLDFLAGS)
-global_testing_d2test_LDFLAGS             = $(FLDFLAGS)
-global_testing_field_test_LDFLAGS         = $(FLDFLAGS)
-global_testing_g2test_LDFLAGS             = $(FLDFLAGS)
-global_testing_g3test_LDFLAGS             = $(FLDFLAGS)
-global_testing_ga_shift_LDFLAGS           = $(FLDFLAGS)
-global_testing_ghosts_LDFLAGS             = $(FLDFLAGS)
-global_testing_jacobi_LDFLAGS             = $(FLDFLAGS)
-global_testing_mir_perf2_LDFLAGS          = $(FLDFLAGS)
-global_testing_mmatrix_LDFLAGS            = $(FLDFLAGS)
-global_testing_mulmatpatch_LDFLAGS        = $(FLDFLAGS)
-global_testing_nbtest_LDFLAGS             = $(FLDFLAGS)
-global_testing_nb2test_LDFLAGS            = $(FLDFLAGS)
-global_testing_ndim_LDFLAGS               = $(FLDFLAGS)
-global_testing_nga_onesided_LDFLAGS       = $(FLDFLAGS)
-global_testing_nga_patch_LDFLAGS          = $(FLDFLAGS)
-global_testing_nga_periodic_LDFLAGS       = $(FLDFLAGS)
-global_testing_nga_scatter_LDFLAGS        = $(FLDFLAGS)
-global_testing_ngatest_LDFLAGS            = $(FLDFLAGS)
-global_testing_nga_util_LDFLAGS           = $(FLDFLAGS)
-global_testing_patch_enumf_LDFLAGS        = $(FLDFLAGS)
-global_testing_patch_LDFLAGS              = $(FLDFLAGS)
-global_testing_patch2_LDFLAGS             = $(FLDFLAGS)
-global_testing_perf_LDFLAGS               = $(FLDFLAGS)
-global_testing_perfmod_LDFLAGS            = $(FLDFLAGS)
-global_testing_perform_LDFLAGS            = $(FLDFLAGS)
-global_testing_pg2test_LDFLAGS            = $(FLDFLAGS)
-global_testing_pg2testmatmult_LDFLAGS     = $(FLDFLAGS)
-global_testing_pgtest_LDFLAGS             = $(FLDFLAGS)
-global_testing_pgtestmatmult_LDFLAGS      = $(FLDFLAGS)
-global_testing_random_LDFLAGS             = $(FLDFLAGS)
-global_testing_scan_LDFLAGS               = $(FLDFLAGS)
-global_testing_simple_groups_LDFLAGS      = $(FLDFLAGS)
-global_testing_simple_groups_comm_LDFLAGS = $(FLDFLAGS)
-global_testing_sparse_LDFLAGS             = $(FLDFLAGS)
-global_testing_sprsmatmult_LDFLAGS        = $(FLDFLAGS)
-global_testing_stride_LDFLAGS             = $(FLDFLAGS)
-global_testing_testeig_LDFLAGS            = $(FLDFLAGS)
-global_testing_test_LDFLAGS               = $(FLDFLAGS)
-global_testing_test_mirrored_LDFLAGS      = $(FLDFLAGS)
-global_testing_testmatmult_LDFLAGS        = $(FLDFLAGS)
-global_testing_testsolve_LDFLAGS          = $(FLDFLAGS)
-global_testing_testspd_LDFLAGS            = $(FLDFLAGS)
 global_testing_threadsafec_LDFLAGS        = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
-global_testing_types_test_LDFLAGS         = $(FLDFLAGS)
 
 if F77_INTEL_NO_INLINE
 global_testing_nga_scatter_FFLAGS         = $(AM_FFLAGS) -fno-inline
@@ -1114,7 +1055,6 @@ global/examples/boltzmann/properties.F    \
 global/examples/boltzmann/setup.F         \
 global/examples/boltzmann/timestep.F      \
 global/examples/boltzmann/vorticity.F
-global_examples_boltzmann_boltz_LDFLAGS = $(FLDFLAGS)
 global_examples_boltzmann_boltz_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/global/examples/boltzmann
 
 global_examples_conjugate_gradient_ga_cg_SOURCES = \
@@ -1153,7 +1093,6 @@ global/examples/md_cluster/shuffle.F         \
 global/examples/md_cluster/sort.F            \
 global/examples/md_cluster/tstats.F          \
 global/examples/md_cluster/update.F
-global_examples_md_cluster_grp_sim_LDFLAGS = $(FLDFLAGS)
 
 global_examples_scf_scf_SOURCES = \
 global/examples/scf/cscf.h        \
@@ -1162,7 +1101,6 @@ global/examples/scf/integ.F       \
 global/examples/scf/output.F      \
 global/examples/scf/scf.F         \
 global/examples/scf/timer.F
-global_examples_scf_scf_LDFLAGS = $(FLDFLAGS)
 
 EXTRA_DIST += global/examples/boltzmann/README
 EXTRA_DIST += global/examples/lennard-jones/README
@@ -1331,18 +1269,6 @@ pario_dra_time_mxm_SOURCES  = pario/dra/time_mxm.F $(dtsrc)
 pario_eaf_test_SOURCES      = pario/eaf/test.F $(dtsrc)
 pario_sf_test_SOURCES       = pario/sf/test.F $(dtsrc)
 
-pario_dra_big_LDFLAGS       = $(FLDFLAGS)
-pario_dra_dra_mxm_LDFLAGS   = $(FLDFLAGS)
-pario_dra_ntest_LDFLAGS     = $(FLDFLAGS)
-pario_dra_perf_LDFLAGS      = $(FLDFLAGS)
-pario_dra_perf2_LDFLAGS     = $(FLDFLAGS)
-pario_dra_perf3_LDFLAGS     = $(FLDFLAGS)
-pario_dra_test_LDFLAGS      = $(FLDFLAGS)
-pario_dra_test_mxm_LDFLAGS  = $(FLDFLAGS)
-pario_dra_time_mxm_LDFLAGS  = $(FLDFLAGS)
-pario_eaf_test_LDFLAGS      = $(FLDFLAGS)
-pario_sf_test_LDFLAGS       = $(FLDFLAGS)
-
 EXTRA_DIST += pario/dra/README
 
 ##############################################################################
@@ -1478,8 +1404,6 @@ gparrays_testing_test_SOURCES      = gparrays/testing/test.F
 gparrays_testing_testc_SOURCES     = gparrays/testing/testc.c
 gparrays_testing_transpose_SOURCES = gparrays/testing/transpose.c
 
-gparrays_testing_test_LDFLAGS  = $(FLDFLAGS)
-
 AM_CPPFLAGS += -I$(top_build_prefix)gparrays/src
 AM_CPPFLAGS += -I$(top_srcdir)/gparrays/src
 
@@ -1516,7 +1440,6 @@ GAF2C_SERIAL_TESTS += gaf2c/testarg$(EXEEXT)
 endif
 
 gaf2c_testarg_SOURCES = gaf2c/testarg.c gaf2c/testargf.f
-gaf2c_testarg_LDFLAGS = $(FLDFLAGS)
 
 ##############################################################################
 # tcgmsg
@@ -1621,8 +1544,6 @@ endif
 tcgmsg_tests_test_asyn_SOURCES = tcgmsg/tests/test_asyn.c
 tcgmsg_tests_testf_SOURCES     = tcgmsg/tests/testf.F
 tcgmsg_tests_test_SOURCES      = tcgmsg/tests/test.c
-
-tcgmsg_tests_testf_LDFLAGS     = $(FLDFLAGS)
 
 endif # MSG_COMMS_MPI
 
