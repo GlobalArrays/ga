@@ -654,7 +654,8 @@ int main (int argc, char *argv[])
 
     /* generate random pairs of processors */
 #define HALFSIZE    (size / 2)
-    assert(p_srcs = malloc(sizeof(int) * size));
+    p_srcs = malloc(sizeof(int) * size);
+    assert(p_srcs);
     for (i = 0; i < size; i++) p_srcs[i] = -1;
     p_dsts = p_srcs + HALFSIZE;
 
@@ -684,7 +685,8 @@ int main (int argc, char *argv[])
     /* allocate memory for statisticis */
 #define MSG_OFF (STATS_COUNT * size)
 #define OPS_OFF (MSG_OFF * MSG_COUNT)
-    assert(stats_all = malloc(OPS_COUNT * OPS_OFF * sizeof(double)));
+    stats_all = malloc(OPS_COUNT * OPS_OFF * sizeof(double));
+    assert(stats_all);
 
     for (i = 0; i < OPS_COUNT; i++)
         for (j = 0; j < MSG_COUNT; j++) {

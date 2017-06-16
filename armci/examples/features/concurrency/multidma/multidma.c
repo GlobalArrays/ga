@@ -370,7 +370,8 @@ int main (int argc, char *argv[])
 
     /* generate random pairs of processors */
 #define HALFSIZE    (size / 2)
-    assert(p_srcs = malloc(sizeof(int) * size));
+    p_srcs = malloc(sizeof(int) * size);
+    assert(p_srcs);
     for (i = 0; i < size; i++) p_srcs[i] = -1;
     p_dsts = p_srcs + HALFSIZE;
 
@@ -397,7 +398,8 @@ int main (int argc, char *argv[])
 
     /* allocate memory tatistics */
     l = sizeof(struct stats) + 2 * sizeof(double) * (size + SML_MSGS);
-    assert(st = malloc(l));
+    st = malloc(l);
+    assert(st);
     st->size = l;
     st->nb_put_a = (double *)(((char *)st) + sizeof(struct stats));
     st->nb_get_a = st->nb_put_a + SML_MSGS;

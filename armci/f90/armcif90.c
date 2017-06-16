@@ -260,8 +260,10 @@ void ARMCI_Put_farrays(void* dv_src, array_slice_t* src_slc,
     return;
   }
 #if 0
-  assert(addr_src = g_save_addr);
-  assert(addr_dst = g_save_addr);
+  addr_src = g_save_addr;
+  assert(addr_src);
+  addr_dst = g_save_add;
+  assert(addr_dst);
 #endif
   /*
   ad_src = GET_ARR_DSC_FROM_ARRAY(addr_src);
@@ -434,8 +436,10 @@ ARMCI_NbPut_farrays(void* dv_src, array_slice_t* src_slc,
   }
 
 #if 0
-  assert(addr_src = g_save_addr);
-  assert(addr_dst = g_save_addr);
+  addr_src = g_save_addr;
+  assert(addr_src);
+  addr_dst = g_save_add;
+  assert(addr_dst);
 #endif
   /*
    ad_src = GET_ARR_DSC_FROM_ARRAY(addr_src);
@@ -630,8 +634,10 @@ void ARMCI_Get_farrays(void* dv_src, array_slice_t* src_slc,
     return;
   }
 #if 0
-  assert(addr_src = g_save_addr);
-  assert(addr_dst = g_save_addr);
+  addr_src = g_save_addr;
+  assert(addr_src);
+  addr_dst = g_save_add;
+  assert(addr_dst);
 #endif
 
   ad_src = GET_ARR_DSC_FROM_ARRAY(addr_src);
@@ -798,8 +804,10 @@ void ARMCI_NbGet_farrays(void* dv_src, array_slice_t* src_slc,
     return;
   }
 #if 0
-  assert(addr_src = g_save_addr);
-  assert(addr_dst = g_save_addr);
+  addr_src = g_save_addr;
+  assert(addr_src);
+  addr_dst = g_save_add;
+  assert(addr_dst);
 #endif
 
   ad_src = GET_ARR_DSC_FROM_ARRAY(addr_src);
