@@ -475,6 +475,7 @@ check_PROGRAMS += global/testing/print
 check_PROGRAMS += global/testing/scan_addc
 check_PROGRAMS += global/testing/scan_copyc
 check_PROGRAMS += global/testing/sprsmatvec
+check_PROGRAMS += global/testing/testabstract_ops
 check_PROGRAMS += global/testing/testc
 check_PROGRAMS += global/testing/testmatmultc
 check_PROGRAMS += global/testing/testmult
@@ -639,6 +640,7 @@ TRAVIS_TESTS += global/testing/test$(EXEEXT)
 else
 TRAVIS_TESTS += global/testing/testc$(EXEEXT)
 endif
+GLOBAL_SERIAL_TESTS += global/testing/testabstract_ops$(EXEEXT)
 
 #GLOBAL_PARALLEL_TESTS += global/testing/big$(EXEEXT) # needs lots of memory
 GLOBAL_PARALLEL_TESTS += global/testing/elempatch$(EXEEXT)
@@ -931,6 +933,7 @@ global_testing_sprsmatmult_SOURCES         = global/testing/sprsmatmult.F $(gtsr
 global_testing_stride_SOURCES              = global/testing/stride.F $(gtsrc)
 global_testing_test_SOURCES                = global/testing/test.F $(gtsrc)
 global_testing_test_mirrored_SOURCES       = global/testing/test.F $(gtsrc)
+global_testing_testabstract_ops_SOURCES    = global/testing/testabstract_ops.c $(gtsrc)
 global_testing_testc_SOURCES               = global/testing/testc.c $(gtsrc)
 global_testing_testeig_SOURCES             = global/testing/testeig.F $(gtsrc)
 global_testing_testmatmult_SOURCES         = global/testing/testmatmult.F $(gtsrc)
@@ -1035,6 +1038,7 @@ global_testing_unit_tests_ga_zeropatch2_SOURCES           = global/testing/unit-
 global_testing_unit_tests_ga_zeropatch_SOURCES            = global/testing/unit-tests/ga_zeropatch.c $(UNIT_TEST_EXTRA_SRC)
 
 global_testing_threadsafec_CFLAGS         = $(AM_CFLAGS) $(OPENMP_CFLAGS)
+global_testing_testabstract_ops_CFLAGS    = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 
 global_testing_threadsafec_CPPFLAGS       = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 
@@ -1079,6 +1083,7 @@ global_testing_stride_LDFLAGS             = $(FLDFLAGS)
 global_testing_testeig_LDFLAGS            = $(FLDFLAGS)
 global_testing_test_LDFLAGS               = $(FLDFLAGS)
 global_testing_test_mirrored_LDFLAGS      = $(FLDFLAGS)
+global_testing_testabstract_ops_LDFLAGS   = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
 global_testing_testmatmult_LDFLAGS        = $(FLDFLAGS)
 global_testing_testsolve_LDFLAGS          = $(FLDFLAGS)
 global_testing_testspd_LDFLAGS            = $(FLDFLAGS)
@@ -1114,6 +1119,7 @@ nodist_EXTRA_global_testing_scan_addc_SOURCES           = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_scan_copyc_SOURCES          = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_sprsmatvec_SOURCES          = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_simple_groups_commc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_testabstract_ops_SOURCES    = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testc_SOURCES               = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmatmultc_SOURCES        = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmult_SOURCES            = $(MAYBE_DUMMY_F_LINK)
