@@ -100,6 +100,7 @@ int main(int argc, char * argv[])
     int *ptr;
     int next, nextx, nexty;
     char *env_threads;
+    int provided;
 
     /* Use a different array size if specified in arguments */
     if(argc >= 3)
@@ -113,7 +114,10 @@ int main(int argc, char * argv[])
         block_y = atoi(argv[4]);
     }
 
-    MPI_Init(&argc, &argv);
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+    if (provided < MPI_THREAD_MULTIPLE) {
+      printf("MPI_THREAD_MULTIPLE not provided\n");
+    }
     GA_Initialize();
 
     nproc = GA_Nnodes();
