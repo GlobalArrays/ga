@@ -9,7 +9,7 @@
 #endif
 
 #define DEFAULT_DIM 500
-#define BLOCK_DIM 20
+#define BLOCK_DIM 27
 
 #define MAX_FACTOR 256
 /**
@@ -83,6 +83,8 @@ int main(int argc, char * argv[])
 #if defined(_OPENMP)
     int x = DEFAULT_DIM;
     int y = DEFAULT_DIM;
+    int block_x = BLOCK_DIM;
+    int block_y = BLOCK_DIM;
     int g_src, g_dest, g_count;
     int me, nproc;
     int px, py, ipx, ipy;
@@ -105,6 +107,11 @@ int main(int argc, char * argv[])
         x = atoi(argv[1]);
         y = atoi(argv[2]);
     }
+    if(argc >= 5)
+    {
+        block_x = atoi(argv[3]);
+        block_y = atoi(argv[4]);
+    }
 
     MPI_Init(&argc, &argv);
     GA_Initialize();
@@ -119,6 +126,7 @@ int main(int argc, char * argv[])
     if (me==0) {
       printf("\nTest running of %d processors\n",nproc);
       printf("\n  Array dimension is %d X %d\n",x,y);
+      printf("\n  Block dimension is %d X %d\n",block_x,block_y);
       printf("\n  Processor grid is %d X %d\n\n",px,py);
     }
 
@@ -133,10 +141,10 @@ int main(int argc, char * argv[])
     GA_Zero(g_dest);
     GA_Zero(g_count);
 
-    tx = x/BLOCK_DIM;
-    if (tx*BLOCK_DIM < x) tx++;
-    ty = y/BLOCK_DIM;
-    if (ty*BLOCK_DIM < y) ty++;
+    tx = x/block_x;
+    if (tx*block_x < x) tx++;
+    ty = y/block_y;
+    if (ty*block_y < y) ty++;
 
     if(env_threads = getenv("OMP_NUM_THREADS"))
         thread_count = atoi(env_threads);
@@ -169,19 +177,19 @@ int main(int argc, char * argv[])
       id = omp_get_thread_num();
       inc = 1;
       task = NGA_Read_inc(g_count, &zero, inc);
-      buf = (int*)malloc(BLOCK_DIM*BLOCK_DIM*sizeof(int));
+      buf = (int*)malloc(block_x*block_y*sizeof(int));
       while (task < tx*ty) {
         ity = task%ty;
         itx = (task-ity)/ty;
-        tlo[0] = itx*BLOCK_DIM;
-        tlo[1] = ity*BLOCK_DIM;
+        tlo[0] = itx*block_x;
+        tlo[1] = ity*block_y;
         /*
         printf("j: %d k: %d tlo[0]: %d tlo[1]: %d xinc: %d yinc: %d\n",
         j,k,tlo[0],tlo[1],xinc,yinc);
         */
-        thi[0] = tlo[0] + BLOCK_DIM - 1;
+        thi[0] = tlo[0] + block_x - 1;
         if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
-        thi[1] = tlo[1] + BLOCK_DIM - 1;
+        thi[1] = tlo[1] + block_y - 1;
         if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
         lld = thi[1]-tlo[1]+1;
 
@@ -245,16 +253,16 @@ int main(int argc, char * argv[])
       long task, inc; 
       inc = 1;
       id = omp_get_thread_num();
-      buf = (int*)malloc(BLOCK_DIM*BLOCK_DIM*sizeof(int));
+      buf = (int*)malloc(block_x*block_y*sizeof(int));
       task = NGA_Read_inc(g_count, &zero, inc);
       while (task < tx*ty) {
         ity = task%ty;
         itx = (task-ity)/ty;
-        tlo[0] = itx*BLOCK_DIM;
-        tlo[1] = ity*BLOCK_DIM;
-        thi[0] = tlo[0] + BLOCK_DIM - 1;
+        tlo[0] = itx*block_x;
+        tlo[1] = ity*block_y;
+        thi[0] = tlo[0] + block_x - 1;
         if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
-        thi[1] = tlo[1] + BLOCK_DIM - 1;
+        thi[1] = tlo[1] + block_y - 1;
         if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
         lld = thi[1]-tlo[1]+1;
         NGA_Get(g_src, tlo, thi, buf, &lld);
@@ -306,15 +314,15 @@ int main(int argc, char * argv[])
       id = omp_get_thread_num();
       inc = 1;
       task = NGA_Read_inc(g_count, &zero, inc);
-      buf = (int*)malloc(BLOCK_DIM*BLOCK_DIM*sizeof(int));
+      buf = (int*)malloc(block_x*block_y*sizeof(int));
       while (task < tx*ty) {
         ity = task%ty;
         itx = (task-ity)/ty;
-        tlo[0] = itx*BLOCK_DIM;
-        tlo[1] = ity*BLOCK_DIM;
-        thi[0] = tlo[0] + BLOCK_DIM - 1;
+        tlo[0] = itx*block_x;
+        tlo[1] = ity*block_y;
+        thi[0] = tlo[0] + block_x - 1;
         if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
-        thi[1] = tlo[1] + BLOCK_DIM - 1;
+        thi[1] = tlo[1] + block_y - 1;
         if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
         lld = thi[1]-tlo[1]+1;
 
@@ -357,7 +365,6 @@ int main(int argc, char * argv[])
     
     /* Sync all processors*/
     NGA_Sync(); 
-
     /* Testing random work pattern */
     if (me==0) {
       printf("\n[%d]Testing ran1 from 0.\n", me);
@@ -396,19 +403,19 @@ int main(int argc, char * argv[])
       id = omp_get_thread_num();
       inc = 1;
       task = NGA_Read_inc(g_count, &zero, inc);
-      buf = (int*)malloc(BLOCK_DIM*BLOCK_DIM*sizeof(int));
-      buft = (int*)malloc(BLOCK_DIM*BLOCK_DIM*sizeof(int));
+      buf = (int*)malloc(block_x*block_y*sizeof(int));
+      buft = (int*)malloc(block_x*block_y*sizeof(int));
       /* Read and transpose data */
       while (task < 2*tx*ty) {
         k = task;
         if (k>=tx*ty) k -= tx*ty;
         ity = k%ty;
         itx = (k-ity)/ty;
-        tlo[0] = itx*BLOCK_DIM;
-        tlo[1] = ity*BLOCK_DIM;
-        thi[0] = tlo[0] + BLOCK_DIM - 1;
+        tlo[0] = itx*block_x;
+        tlo[1] = ity*block_y;
+        thi[0] = tlo[0] + block_x - 1;
         if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
-        thi[1] = tlo[1] + BLOCK_DIM - 1;
+        thi[1] = tlo[1] + block_y - 1;
         if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
         ld[0] = thi[0]-tlo[0]+1;
         ld[1] = thi[1]-tlo[1]+1;
@@ -431,11 +438,11 @@ int main(int argc, char * argv[])
         tmp = ity;
         ity = itx;
         itx = tmp;
-        tlo[0] = itx*BLOCK_DIM;
-        tlo[1] = ity*BLOCK_DIM;
-        thi[0] = tlo[0] + BLOCK_DIM - 1;
+        tlo[0] = itx*block_y;
+        tlo[1] = ity*block_x;
+        thi[0] = tlo[0] + block_y - 1;
         if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
-        thi[1] = tlo[1] + BLOCK_DIM - 1;
+        thi[1] = tlo[1] + block_x - 1;
         if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
         lld = thi[1]-tlo[1]+1;
         NGA_Acc(g_dest, tlo, thi, buft, &lld, &one);
