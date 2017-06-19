@@ -115,13 +115,13 @@ int main(int argc, char * argv[])
     }
 
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-    if (provided < MPI_THREAD_MULTIPLE) {
-      printf("MPI_THREAD_MULTIPLE not provided\n");
-    }
     GA_Initialize();
 
     nproc = GA_Nnodes();
     me = GA_Nodeid();
+    if (provided < MPI_THREAD_MULTIPLE && me==0) {
+      printf("\nMPI_THREAD_MULTIPLE not provided\n");
+    }
 
     /* Find processor grid dimensions and processor grid coordinates */
     grid_factor(nproc, &px, &py);
