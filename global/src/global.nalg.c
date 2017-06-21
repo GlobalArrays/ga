@@ -58,6 +58,7 @@ void pnga_zero(Integer g_a)
   Integer ndim, type, me, elems, p_handle;
   Integer num_blocks;
   void *ptr;
+  Integer _dims[MAXDIM];
   /*register Integer i;*/
   int local_sync_begin,local_sync_end;
 
@@ -74,7 +75,7 @@ void pnga_zero(Integer g_a)
 
   num_blocks = pnga_total_blocks(g_a);
 
-  pnga_inquire(g_a, &type, &ndim, dims);
+  pnga_inquire(g_a, &type, &ndim, _dims);
   if (num_blocks < 0) {
     pnga_distribution(g_a, me, lo, hi);
 
@@ -176,6 +177,7 @@ static void snga_copy_old(Integer g_a, Integer g_b)
 {
 Integer  ndim, ndimb, type, typeb, me, elems=0, elemsb=0;
 Integer dimsb[MAXDIM];
+Integer _dims[MAXDIM];
 void *ptr_a, *ptr_b;
 
    me = pnga_nodeid();
@@ -184,14 +186,14 @@ void *ptr_a, *ptr_b;
 
    if(g_a == g_b) pnga_error("arrays have to be different ", 0L);
 
-   pnga_inquire(g_a,  &type, &ndim, dims);
+   pnga_inquire(g_a,  &type, &ndim, _dims);
    pnga_inquire(g_b,  &typeb, &ndimb, dimsb);
 
    if(type != typeb) pnga_error("types not the same", g_b);
 
    if(!pnga_compare_distr(g_a,g_b))
 
-      pnga_copy_patch("n",g_a, one_arr, dims, g_b, one_arr, dimsb);
+      pnga_copy_patch("n",g_a, one_arr, _dims, g_b, one_arr, dimsb);
 
    else {
 
@@ -251,6 +253,7 @@ int local_sync_begin,local_sync_end,use_put;
 
    GA_PUSH_NAME("ga_copy");
 
+   Integer _dims[MAXDIM];
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    a_grp = pnga_get_pgroup(g_a);
@@ -281,13 +284,13 @@ int local_sync_begin,local_sync_end,use_put;
 
    if(g_a == g_b) pnga_error("arrays have to be different ", 0L);
 
-   pnga_inquire(g_a,  &type, &ndim, dims);
+   pnga_inquire(g_a,  &type, &ndim, _dims);
    pnga_inquire(g_b,  &typeb, &ndimb, dimsb);
 
    if(type != typeb) pnga_error("types not the same", g_b);
    if(ndim != ndimb) pnga_error("dimensions not the same", ndimb);
 
-   for(i=0; i< ndim; i++)if(dims[i]!=dimsb[i]) 
+   for(i=0; i< ndim; i++)if(_dims[i]!=dimsb[i]) 
                           pnga_error("dimensions not the same",i);
 
    if ((pnga_is_mirrored(g_a) && pnga_is_mirrored(g_b)) ||
@@ -324,7 +327,7 @@ int local_sync_begin,local_sync_end,use_put;
              for (i = 0; i < ndim; i++) {
                lo[i] = index[i]*block_dims[i]+1;
                hi[i] = (index[i] + 1)*block_dims[i];
-               if (hi[i] > dims[i]) hi[i] = dims[i];
+               if (hi[i] > _dims[i]) hi[i] = _dims[i];
                if (hi[i] < lo[i]) chk = 0;
              }
              if (chk) {
@@ -371,7 +374,7 @@ int local_sync_begin,local_sync_end,use_put;
              for (i = 0; i < ndim; i++) {
                lo[i] = index[i]*block_dims[i]+1;
                hi[i] = (index[i] + 1)*block_dims[i];
-               if (hi[i] > dims[i]) hi[i] = dims[i];
+               if (hi[i] > _dims[i]) hi[i] = _dims[i];
                if (hi[i] < lo[i]) chk = 0;
              }
              if (chk) {
@@ -448,6 +451,7 @@ int alen=0;
 Integer a_grp=0, b_grp=0;
 Integer num_blocks_a=0, num_blocks_b=0;
 
+Integer _dims[MAXDIM];
 Integer andim, adims[MAXDIM];
 Integer bndim, bdims[MAXDIM];
 
@@ -486,7 +490,7 @@ Integer bndim, bdims[MAXDIM];
    }
    
    pnga_pgroup_sync(a_grp);
-   pnga_inquire(g_a,  &type, &ndim, dims);
+   pnga_inquire(g_a,  &type, &ndim, _dims);
    if(type != Type) pnga_error("type not correct", g_a);
    pnga_distribution(g_a, me, lo, hi);
    if(lo[0]>0){
@@ -502,7 +506,7 @@ Integer bndim, bdims[MAXDIM];
      elemsb = elems;
      ptr_b = ptr_a;
    }else {  
-     pnga_inquire(g_b,  &type, &ndim, dims);
+     pnga_inquire(g_b,  &type, &ndim, _dims);
      if(type != Type) pnga_error("type not correct", g_b);
      pnga_distribution(g_b, me, lo, hi);
      if(lo[0]>0){
@@ -644,6 +648,7 @@ void pnga_scale(Integer g_a, void* alpha)
   Integer num_blocks;
   void *ptr;
   int local_sync_begin,local_sync_end;
+  Integer _dims[MAXDIM];
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -656,7 +661,7 @@ void pnga_scale(Integer g_a, void* alpha)
   GA_PUSH_NAME("ga_scale");
   num_blocks = pnga_total_blocks(g_a);
 
-  pnga_inquire(g_a, &type, &ndim, dims);
+  pnga_inquire(g_a, &type, &ndim, _dims);
   if (num_blocks < 0) {
     pnga_distribution(g_a, me, lo, hi);
     if (pnga_has_ghosts(g_a)) {
@@ -789,7 +794,8 @@ register Integer i;
 void *ptr_a, *ptr_b, *ptr_c;
 Integer a_grp, b_grp, c_grp;
 int local_sync_begin,local_sync_end;
-
+ 
+ Integer _dims[MAXDIM];
  Integer andim, adims[MAXDIM];
  Integer bndim, bdims[MAXDIM];
  Integer cndim, cdims[MAXDIM];
@@ -825,7 +831,7 @@ int local_sync_begin,local_sync_end;
    }
 
    pnga_pgroup_sync(a_grp);
-   pnga_inquire(g_c,  &typeC, &ndim, dims);
+   pnga_inquire(g_c,  &typeC, &ndim, _dims);
    pnga_distribution(g_c, me, lo, hi);
    if (  lo[0]>0 ){
      pnga_access_ptr(g_c, lo, hi, &ptr_c, ld);
@@ -836,7 +842,7 @@ int local_sync_begin,local_sync_end;
      ptr_a  = ptr_c;
      elemsa = elems;
    }else { 
-     pnga_inquire(g_a,  &type, &ndim, dims);
+     pnga_inquire(g_a,  &type, &ndim, _dims);
      if(type != typeC) pnga_error("types not consistent", g_a);
      pnga_distribution(g_a, me, lo, hi);
      if (  lo[0]>0 ){
@@ -849,7 +855,7 @@ int local_sync_begin,local_sync_end;
      ptr_b  = ptr_c;
      elemsb = elems;
    }else {
-     pnga_inquire(g_b,  &type, &ndim, dims);
+     pnga_inquire(g_b,  &type, &ndim, _dims);
      if(type != typeC) pnga_error("types not consistent", g_b);
      pnga_distribution(g_b, me, lo, hi);
      if (  lo[0]>0 ){
