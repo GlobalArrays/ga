@@ -650,7 +650,7 @@ int main(int argc, char * argv[])
       int lld;
       long task, inc; 
       int id;
-      ga_nbhdl_t* accid;
+      ga_nbhdl_t* accid = (ga_nbhdl_t*) malloc(sizeof(ga_nbhdl_t*));
       id = omp_get_thread_num();
       inc = 1;
       task = NGA_Read_inc(g_count, &zero, inc);
@@ -712,6 +712,18 @@ int main(int argc, char * argv[])
     if (me==0) {
       printf("\n[%d]Testing non-blocking-ran1 from 0.\n", me);
     }
+    /* Reinitialize source array */
+    NGA_Distribution(g_src,me,glo,ghi);
+    NGA_Access(g_src,glo,ghi,&ptr,gld);
+    icnt = 0;
+    for (i=glo[0]; i<=ghi[0]; i++) {
+      for (j=glo[1]; j<=ghi[1]; j++) {
+        ptr[icnt] = i*dims[1]+j;
+        icnt++;
+      }
+    }
+    NGA_Release(g_src,glo,ghi);
+
 
 
     /* Mimic random work. */
