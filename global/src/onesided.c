@@ -376,11 +376,16 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _pinv, _p_handle;                            \
 }
 
 
-#define gam_GetRangeFromMap(p, ndim, plo, phi){\
+#define gam_GetRangeFromMap(p, ndim, plo, phi, pntr){\
+Integer   _mloc = p* ndim *2;\
+          *plo  = pntr+ _mloc;\
+          *phi  = *plo + ndim;\
+}
+/*#define gam_GetRangeFromMap(p, ndim, plo, phi){\
 Integer   _mloc = p* ndim *2;\
           *plo  = (Integer*)_ga_map + _mloc;\
           *phi  = *plo + ndim;\
-}
+}*/
 
 /* compute index of point subscripted by plo relative to point
    subscripted by lo, for a block with dimensions dims */
@@ -604,6 +609,8 @@ void ngai_put_common(Integer g_a,
   Integer use_blocks;
   Integer n_rstrctd;
   Integer *rank_rstrctd;
+  Integer *_ga_map_replacement= (Integer*)malloc((size_t)(GAnproc*2*MAXDIM +1)*sizeof(Integer));
+
 #if defined(__crayx1) || defined(DISABLE_NBOPT)
 #else
   Integer ga_nbhandle;
@@ -639,7 +646,7 @@ void ngai_put_common(Integer g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
+    if(!pnga_locate_region(g_a, lo, hi, _ga_map_replacement, GA_proclist, &np ))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
 #ifndef NO_GA_STATS
@@ -689,7 +696,7 @@ void ngai_put_common(Integer g_a,
           /* Find  visible portion of patch held by processor p and
              return the result in plo and phi. Also get actual processor
              index corresponding to p and store the result in proc. */
-          gam_GetRangeFromMap(p, ndim, &plo, &phi);
+          gam_GetRangeFromMap(p, ndim, &plo, &phi,_ga_map_replacement);
           proc = (int)GA_proclist[p];
 
           if (n_rstrctd == 0) {
@@ -1347,6 +1354,7 @@ void ngai_get_common(Integer g_a,
   Integer use_blocks;
   Integer n_rstrctd;
   Integer *rank_rstrctd;
+  Integer *_ga_map_replacement= (Integer*)malloc((size_t)(GAnproc*2*MAXDIM +1)*sizeof(Integer));
 #if defined(__crayx1) || defined(DISABLE_NBOPT)
 #else
   Integer ga_nbhandle;
@@ -1382,7 +1390,7 @@ void ngai_get_common(Integer g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
+    if(!pnga_locate_region(g_a, lo, hi, _ga_map_replacement, GA_proclist, &np ))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
     /* get total size of patch */
@@ -1433,7 +1441,7 @@ void ngai_get_common(Integer g_a,
           /* Find  visible portion of patch held by processor p and
              return the result in plo and phi. Also get actual processor
              index corresponding to p and store the result in proc. */
-          gam_GetRangeFromMap(p, ndim, &plo, &phi);
+          gam_GetRangeFromMap(p, ndim, &plo, &phi,_ga_map_replacement);
           proc = (int)GA_proclist[p];
 
           /* get pointer prem to location indexed by plo. Also get
@@ -1919,6 +1927,7 @@ void ngai_acc_common(Integer g_a,
   Integer use_blocks;
   Integer n_rstrctd;
   Integer *rank_rstrctd;
+  Integer *_ga_map_replacement= (Integer*)malloc((size_t)(GAnproc*2*MAXDIM +1)*sizeof(Integer));
 
 
   GA_PUSH_NAME("nga_acc_common");
@@ -1950,7 +1959,7 @@ void ngai_acc_common(Integer g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
+    if(!pnga_locate_region(g_a, lo, hi, _ga_map_replacement, GA_proclist, &np ))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
 #ifndef NO_GA_STATS
@@ -1994,7 +2003,7 @@ void ngai_acc_common(Integer g_a,
           /* Find  visible portion of patch held by processor p and
              return the result in plo and phi. Also get actual processor
              index corresponding to p and store the result in proc. */
-          gam_GetRangeFromMap(p, ndim, &plo, &phi);
+          gam_GetRangeFromMap(p, ndim, &plo, &phi,_ga_map_replacement);
           proc = (int)GA_proclist[p];
 
           /* get pointer prem to location indexed by plo. Also get
@@ -5000,6 +5009,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   Integer idx, size, nstride, p_handle, nproc;
   int i, proc, ndim;
   int use_blocks;
+  Integer *_ga_map_replacement= (Integer*)malloc((size_t)(GAnproc*2*MAXDIM +1)*sizeof(Integer));
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -5024,7 +5034,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
+    if (!pnga_locate_region(g_a, lo, hi, _ga_map_replacement, GA_proclist, &np))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
     /* Loop over all processors containing a portion of patch */
@@ -5039,7 +5049,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       /* find visible portion of patch held by processor p and return
          the result in plo and phi. Also, get actual processor index
          corresponding to p and store the result in proc. */
-      gam_GetRangeFromMap(p, ndim, &plo, &phi);
+      gam_GetRangeFromMap(p, ndim, &plo, &phi,_ga_map_replacement);
       proc = (int)GA_proclist[(int)p];
 
       /* Correct ranges to account for skips in original patch. If no
@@ -5360,6 +5370,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   Integer idx, size, nstride, p_handle, nproc;
   int i, proc, ndim;
   int use_blocks;
+  Integer *_ga_map_replacement= (Integer*)malloc((size_t)(GAnproc*2*MAXDIM +1)*sizeof(Integer));
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -5384,7 +5395,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
+    if (!pnga_locate_region(g_a, lo, hi, _ga_map_replacement, GA_proclist, &np))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
     /* Loop over all processors containing a portion of patch */
@@ -5399,7 +5410,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       /* find visible portion of patch held by processor p and return
          the result in plo and phi. Also, get actual processor index
          corresponding to p and store the result in proc. */
-      gam_GetRangeFromMap(p, ndim, &plo, &phi);
+      gam_GetRangeFromMap(p, ndim, &plo, &phi,_ga_map_replacement);
       proc = (int)GA_proclist[(int)p];
 
       /* Correct ranges to account for skips in original patch. If no
@@ -5744,6 +5755,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   Integer idx, size, nstride, type, p_handle, nproc;
   int i, optype=-1, proc, ndim;
   int use_blocks;
+  Integer *_ga_map_replacement= (Integer*)malloc((size_t)(GAnproc*2*MAXDIM +1)*sizeof(Integer));
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -5777,7 +5789,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
+    if (!pnga_locate_region(g_a, lo, hi, _ga_map_replacement, GA_proclist, &np))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
     /* Loop over all processors containing a portion of patch */
@@ -5792,7 +5804,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       /* find visible portion of patch held by processor p and return
          the result in plo and phi. Also, get actual processor index
          corresponding to p and store the result in proc. */
-      gam_GetRangeFromMap(p, ndim, &plo, &phi);
+      gam_GetRangeFromMap(p, ndim, &plo, &phi,_ga_map_replacement);
       proc = (int)GA_proclist[(int)p];
 
       /* Correct ranges to account for skips in original patch. If no
