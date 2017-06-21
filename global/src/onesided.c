@@ -1110,9 +1110,9 @@ void ngai_put_common(Integer g_a,
 
 void pnga_nbput(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer *nbhandle)
 {
-//  GA_Internal_Threadsafe_Lock();
+  GA_Internal_Threadsafe_Lock();
   ngai_put_common(g_a,lo,hi,buf,ld,0,-1,nbhandle); 
-//  GA_Internal_Threadsafe_Unlock();
+  GA_Internal_Threadsafe_Unlock();
 }
 
 /**
@@ -1291,9 +1291,9 @@ void pnga_nbwait_notify(Integer *nbhandle)
 void pnga_put(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld)
 {
 
-//  GA_Internal_Threadsafe_Lock();
+  GA_Internal_Threadsafe_Lock();
   ngai_put_common(g_a,lo,hi,buf,ld,0,-1,NULL); 
-//  GA_Internal_Threadsafe_Unlock();
+  GA_Internal_Threadsafe_Unlock();
 }
 
 /**
@@ -1855,9 +1855,9 @@ void ngai_get_common(Integer g_a,
 void pnga_get(Integer g_a, Integer *lo, Integer *hi,
               void *buf, Integer *ld)
 {
-//  GA_Internal_Threadsafe_Lock();
+  GA_Internal_Threadsafe_Lock();
   ngai_get_common(g_a,lo,hi,buf,ld,0,-1,(Integer *)NULL);
-//  GA_Internal_Threadsafe_Unlock();
+  GA_Internal_Threadsafe_Unlock();
 }
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -1867,9 +1867,9 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
 void pnga_nbget(Integer g_a, Integer *lo, Integer *hi,
                void *buf, Integer *ld, Integer *nbhandle)
 {
-//  GA_Internal_Threadsafe_Lock();
+  GA_Internal_Threadsafe_Lock();
   ngai_get_common(g_a,lo,hi,buf,ld,0,-1,nbhandle);
-//  GA_Internal_Threadsafe_Unlock();
+  GA_Internal_Threadsafe_Unlock();
 }
 
 /**
