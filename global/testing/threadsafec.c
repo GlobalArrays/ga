@@ -101,6 +101,7 @@ int main(int argc, char * argv[])
     int next, nextx, nexty;
     char *env_threads;
     int provided;
+    ga_nbhdl_t* nb_hdl;
 
     /* Use a different array size if specified in arguments */
     if(argc >= 3)
@@ -494,6 +495,11 @@ int main(int argc, char * argv[])
     if (me==0) {
       printf("\n[%d]Testing non-blocking-write1 from 0.\n", me);
     }
+
+    /* Test nonblocking operations */
+    /* Create array visible to all threads that can hold non-blocking
+     * handles */
+    nb_hdl = (ga_nbhdl_t*) malloc(tx*ty*sizeof(ga_nbhdl_t));
     GA_Zero(g_count);
     ok = 1;
     GA_Zero(g_src); 
@@ -510,7 +516,6 @@ int main(int argc, char * argv[])
       int offset;
       int *buf;
       int lld;
-      ga_nbhdl_t* putid = (ga_nbhdl_t*) malloc(sizeof(ga_nbhdl_t));
       long task, inc; 
       int id;
       id = omp_get_thread_num();
@@ -539,13 +544,23 @@ int main(int argc, char * argv[])
             buf[offset] = m*dims[1]+n;
           }
         }
-        NGA_NbPut(g_src, tlo, thi, buf, &lld, putid);
+        NGA_NbPut(g_src, tlo, thi, buf, &lld, &nb_hdl[task]);
+        icnt++;
+        /*
         NGA_NbWait(putid);
+        */
         task = NGA_Read_inc(g_count, &zero, inc);
       }
       free(buf);
-      free(putid);
+      /* Call wait on all outstanding tasks. Don't bother to reinitialize
+         global counter */
+      while (task < 2*tx*ty) {
+        k = task - tx*ty;
+        NGA_NbWait(&nb_hdl[k]);
+        task = NGA_Read_inc(g_count, &zero, inc);
+      }
     }
+    free(nb_hdl);
     /* Sync all processors at end of initialization loop */
     NGA_Sync(); 
 
