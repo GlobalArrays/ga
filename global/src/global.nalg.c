@@ -59,6 +59,9 @@ void pnga_zero(Integer g_a)
   Integer num_blocks;
   void *ptr;
   Integer _dims[MAXDIM];
+  Integer _ld[MAXDIM-1];
+  Integer _lo[MAXDIM];
+  Integer _hi[MAXDIM];
   /*register Integer i;*/
   int local_sync_begin,local_sync_end;
 
@@ -77,16 +80,16 @@ void pnga_zero(Integer g_a)
 
   pnga_inquire(g_a, &type, &ndim, _dims);
   if (num_blocks < 0) {
-    pnga_distribution(g_a, me, lo, hi);
+    pnga_distribution(g_a, me, _lo, _hi);
 
-    if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
+    if ( _lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
 
       if (pnga_has_ghosts(g_a)) {
-        pnga_zero_patch(g_a,lo,hi);
+        pnga_zero_patch(g_a,_lo,_hi);
         return;
       }
-      pnga_access_ptr(g_a, lo, hi, &ptr, ld);
-      GET_ELEMS(ndim,lo,hi,ld,&elems);
+      pnga_access_ptr(g_a, _lo, _hi, &ptr, _ld);
+      GET_ELEMS(ndim,_lo,_hi,_ld,&elems);
 
       /* switch (type){ */
 /*         int *ia; */
@@ -123,7 +126,7 @@ void pnga_zero(Integer g_a)
       memset(ptr, 0, GAsizeofM(type)*elems);
 
       /* release access to the data */
-      pnga_release_update(g_a, lo, hi);
+      pnga_release_update(g_a, _lo, _hi);
     } 
   } else {
     pnga_access_block_segment_ptr(g_a, me, &ptr, &elems);
@@ -178,6 +181,9 @@ static void snga_copy_old(Integer g_a, Integer g_b)
 Integer  ndim, ndimb, type, typeb, me, elems=0, elemsb=0;
 Integer dimsb[MAXDIM];
 Integer _dims[MAXDIM];
+Integer _ld[MAXDIM-1];
+Integer _lo[MAXDIM];
+Integer _hi[MAXDIM];
 void *ptr_a, *ptr_b;
 
    me = pnga_nodeid();
@@ -199,23 +205,23 @@ void *ptr_a, *ptr_b;
 
      pnga_sync();
 
-     pnga_distribution(g_a, me, lo, hi);
-     if(lo[0]>0){
-        pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+     pnga_distribution(g_a, me, _lo, _hi);
+     if(_lo[0]>0){
+        pnga_access_ptr(g_a, _lo, _hi, &ptr_a, _ld);
         if (pnga_has_ghosts(g_a)) {
-          GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
+          GET_ELEMS_W_GHOSTS(ndim,_lo,_hi,_ld,&elems);
         } else {
-          GET_ELEMS(ndim,lo,hi,ld,&elems);
+          GET_ELEMS(ndim,_lo,_hi,_ld,&elems);
         }
      }
 
-     pnga_distribution(g_b, me, lo, hi);
-     if(lo[0]>0){
-        pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
+     pnga_distribution(g_b, me, _lo, _hi);
+     if(_lo[0]>0){
+        pnga_access_ptr(g_b, _lo, _hi, &ptr_b, _ld);
         if (pnga_has_ghosts(g_b)) {
-          GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
+          GET_ELEMS_W_GHOSTS(ndim,_lo,_hi,_ld,&elems);
         } else {
-          GET_ELEMS(ndim,lo,hi,ld,&elems);
+          GET_ELEMS(ndim,_lo,_hi,_ld,&elems);
         }
      }
   
@@ -223,8 +229,8 @@ void *ptr_a, *ptr_b;
 
      if(elems>0){
         ARMCI_Copy(ptr_a, ptr_b, (int)elems*GAsizeofM(type));
-        pnga_release(g_a,lo,hi);
-        pnga_release(g_b,lo,hi);
+        pnga_release(g_a,_lo,_hi);
+        pnga_release(g_b,_lo,_hi);
      }
 
      pnga_sync();
@@ -254,6 +260,9 @@ int local_sync_begin,local_sync_end,use_put;
    GA_PUSH_NAME("ga_copy");
 
    Integer _dims[MAXDIM];
+   Integer _ld[MAXDIM-1];
+   Integer _lo[MAXDIM];
+   Integer _hi[MAXDIM];
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    a_grp = pnga_get_pgroup(g_a);
@@ -300,18 +309,18 @@ int local_sync_begin,local_sync_end,use_put;
 
      if (use_put) {
        if (num_blocks_a < 0) {
-         pnga_distribution(g_a, me_a, lo, hi);
-         if(lo[0]>0){
-           pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-           pnga_put(g_b, lo, hi, ptr_a, ld);
+         pnga_distribution(g_a, me_a, _lo, _hi);
+         if(_lo[0]>0){
+           pnga_access_ptr(g_a, _lo, _hi, &ptr_a, _ld);
+           pnga_put(g_b, _lo, _hi, ptr_a, _ld);
          }
        } else {
          if (!pnga_uses_proc_grid(g_a)) {
            for (i=me_a; i<num_blocks_a; i += anproc) {
-             pnga_distribution(g_a, i, lo, hi);
-             if (lo[0]>0) {
-               pnga_access_block_ptr(g_a, i, &ptr_a, ld);
-               pnga_put(g_b, lo, hi, ptr_a, ld);
+             pnga_distribution(g_a, i, _lo, _hi);
+             if (_lo[0]>0) {
+               pnga_access_block_ptr(g_a, i, &ptr_a, _ld);
+               pnga_put(g_b, _lo, _hi, ptr_a, _ld);
              }
            }
          } else {
@@ -325,14 +334,14 @@ int local_sync_begin,local_sync_end,use_put;
              /* find bounding coordinates of block */
              chk = 1;
              for (i = 0; i < ndim; i++) {
-               lo[i] = index[i]*block_dims[i]+1;
-               hi[i] = (index[i] + 1)*block_dims[i];
-               if (hi[i] > _dims[i]) hi[i] = _dims[i];
-               if (hi[i] < lo[i]) chk = 0;
+               _lo[i] = index[i]*block_dims[i]+1;
+               _hi[i] = (index[i] + 1)*block_dims[i];
+               if (_hi[i] > _dims[i]) _hi[i] = _dims[i];
+               if (_hi[i] < _lo[i]) chk = 0;
              }
              if (chk) {
-               pnga_access_block_grid_ptr(g_a, index, &ptr_a, ld);
-               pnga_put(g_b, lo, hi, ptr_a, ld);
+               pnga_access_block_grid_ptr(g_a, index, &ptr_a, _ld);
+               pnga_put(g_b, _lo, _hi, ptr_a, _ld);
              }
              /* increment index to get next block on processor */
              index[0] += topology[0];
@@ -347,18 +356,18 @@ int local_sync_begin,local_sync_end,use_put;
        }
      } else {
        if (num_blocks_b < 0) {
-         pnga_distribution(g_b, me_b, lo, hi);
-         if(lo[0]>0){
-           pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-           pnga_get(g_a, lo, hi, ptr_b, ld);
+         pnga_distribution(g_b, me_b, _lo, _hi);
+         if(_lo[0]>0){
+           pnga_access_ptr(g_b, _lo, _hi, &ptr_b, _ld);
+           pnga_get(g_a, _lo, _hi, ptr_b, _ld);
          }
        } else {
          if (!pnga_uses_proc_grid(g_a)) {
            for (i=me_b; i<num_blocks_b; i += bnproc) {
-             pnga_distribution(g_b, i, lo, hi);
-             if (lo[0]>0) {
-               pnga_access_block_ptr(g_b, i, &ptr_b, ld);
-               pnga_get(g_a, lo, hi, ptr_b, ld);
+             pnga_distribution(g_b, i, _lo, _hi);
+             if (_lo[0]>0) {
+               pnga_access_block_ptr(g_b, i, &ptr_b, _ld);
+               pnga_get(g_a, _lo, _hi, ptr_b, _ld);
              }
            }
          } else {
@@ -372,14 +381,14 @@ int local_sync_begin,local_sync_end,use_put;
              /* find bounding coordinates of block */
              chk = 1;
              for (i = 0; i < ndim; i++) {
-               lo[i] = index[i]*block_dims[i]+1;
-               hi[i] = (index[i] + 1)*block_dims[i];
-               if (hi[i] > _dims[i]) hi[i] = _dims[i];
-               if (hi[i] < lo[i]) chk = 0;
+               _lo[i] = index[i]*block_dims[i]+1;
+               _hi[i] = (index[i] + 1)*block_dims[i];
+               if (_hi[i] > _dims[i]) _hi[i] = _dims[i];
+               if (_hi[i] < _lo[i]) chk = 0;
              }
              if (chk) {
-               pnga_access_block_grid_ptr(g_b, index, &ptr_b, ld);
-               pnga_get(g_a, lo, hi, ptr_b, ld);
+               pnga_access_block_grid_ptr(g_b, index, &ptr_b, _ld);
+               pnga_get(g_a, _lo, _hi, ptr_b, _ld);
              }
              /* increment index to get next block on processor */
              index[0] += topology[0];
@@ -398,19 +407,19 @@ int local_sync_begin,local_sync_end,use_put;
      if (pnga_is_mirrored(g_a)) {
        /* Source array is mirrored and destination
           array is distributed. Assume source array is consistent */
-       pnga_distribution(g_b, me_b, lo, hi);
-       if (lo[0]>0) {
-         pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-         pnga_get(g_a, lo, hi, ptr_b, ld);
+       pnga_distribution(g_b, me_b, _lo, _hi);
+       if (_lo[0]>0) {
+         pnga_access_ptr(g_b, _lo, _hi, &ptr_b, _ld);
+         pnga_get(g_a, _lo, _hi, ptr_b, _ld);
        } 
      } else {
        /* source array is distributed and destination
           array is mirrored */
        pnga_zero(g_b);
-       pnga_distribution(g_a, me_a, lo, hi);
-       if (lo[0] > 0) {
-         pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-         pnga_put(g_b, lo, hi, ptr_a, ld);
+       pnga_distribution(g_a, me_a, _lo, _hi);
+       if (_lo[0] > 0) {
+         pnga_access_ptr(g_a, _lo, _hi, &ptr_a, _ld);
+         pnga_put(g_b, _lo, _hi, ptr_a, _ld);
        }
        pnga_merge_mirrored(g_b);
      }
@@ -452,6 +461,9 @@ Integer a_grp=0, b_grp=0;
 Integer num_blocks_a=0, num_blocks_b=0;
 
 Integer _dims[MAXDIM];
+Integer _ld[MAXDIM-1];
+Integer _lo[MAXDIM];
+Integer _hi[MAXDIM];
 Integer andim, adims[MAXDIM];
 Integer bndim, bdims[MAXDIM];
 
@@ -492,13 +504,13 @@ Integer bndim, bdims[MAXDIM];
    pnga_pgroup_sync(a_grp);
    pnga_inquire(g_a,  &type, &ndim, _dims);
    if(type != Type) pnga_error("type not correct", g_a);
-   pnga_distribution(g_a, me, lo, hi);
-   if(lo[0]>0){
-      pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+   pnga_distribution(g_a, me, _lo, _hi);
+   if(_lo[0]>0){
+      pnga_access_ptr(g_a, _lo, _hi, &ptr_a, _ld);
       if (pnga_has_ghosts(g_a)) {
-        GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
+        GET_ELEMS_W_GHOSTS(ndim,_lo,_hi,_ld,&elems);
       } else {
-        GET_ELEMS(ndim,lo,hi,ld,&elems);
+        GET_ELEMS(ndim,_lo,_hi,_ld,&elems);
       }
    }
 
@@ -508,13 +520,13 @@ Integer bndim, bdims[MAXDIM];
    }else {  
      pnga_inquire(g_b,  &type, &ndim, _dims);
      if(type != Type) pnga_error("type not correct", g_b);
-     pnga_distribution(g_b, me, lo, hi);
-     if(lo[0]>0){
-        pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
+     pnga_distribution(g_b, me, _lo, _hi);
+     if(_lo[0]>0){
+        pnga_access_ptr(g_b, _lo, _hi, &ptr_b, _ld);
         if (pnga_has_ghosts(g_b)) {
-          GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elemsb);
+          GET_ELEMS_W_GHOSTS(ndim,_lo,_hi,_ld,&elemsb);
         } else {
-          GET_ELEMS(ndim,lo,hi,ld,&elemsb);
+          GET_ELEMS(ndim,_lo,_hi,_ld,&elemsb);
         }
      }
    }
@@ -604,8 +616,8 @@ Integer bndim, bdims[MAXDIM];
    
       /* release access to the data */
       if(elems>0){
-         pnga_release(g_a, lo, hi);
-         if(g_a != g_b)pnga_release(g_b, lo, hi);
+         pnga_release(g_a, _lo, _hi);
+         if(g_a != g_b)pnga_release(g_b, _lo, _hi);
       }
 
     /*convert from C data type to ARMCI type */
@@ -649,6 +661,9 @@ void pnga_scale(Integer g_a, void* alpha)
   void *ptr;
   int local_sync_begin,local_sync_end;
   Integer _dims[MAXDIM];
+  Integer _ld[MAXDIM-1];
+  Integer _lo[MAXDIM];
+  Integer _hi[MAXDIM];
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -663,16 +678,16 @@ void pnga_scale(Integer g_a, void* alpha)
 
   pnga_inquire(g_a, &type, &ndim, _dims);
   if (num_blocks < 0) {
-    pnga_distribution(g_a, me, lo, hi);
+    pnga_distribution(g_a, me, _lo, _hi);
     if (pnga_has_ghosts(g_a)) {
-      pnga_scale_patch(g_a, lo, hi, alpha);
+      pnga_scale_patch(g_a, _lo, _hi, alpha);
       return;
     }
 
-    if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
+    if ( _lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
 
-      pnga_access_ptr(g_a, lo, hi, &ptr, ld);
-      GET_ELEMS(ndim,lo,hi,ld,&elems);
+      pnga_access_ptr(g_a, _lo, _hi, &ptr, _ld);
+      GET_ELEMS(ndim,_lo,_hi,_ld,&elems);
 
       switch (type){
         int *ia;
@@ -724,7 +739,7 @@ void pnga_scale(Integer g_a, void* alpha)
       }
 
       /* release access to the data */
-      pnga_release_update(g_a, lo, hi);
+      pnga_release_update(g_a, _lo, _hi);
     }
   } else {
     pnga_access_block_segment_ptr(g_a, me, &ptr, &elems);
@@ -796,6 +811,9 @@ Integer a_grp, b_grp, c_grp;
 int local_sync_begin,local_sync_end;
  
  Integer _dims[MAXDIM];
+ Integer _ld[MAXDIM-1];
+ Integer _lo[MAXDIM];
+ Integer _hi[MAXDIM];
  Integer andim, adims[MAXDIM];
  Integer bndim, bdims[MAXDIM];
  Integer cndim, cdims[MAXDIM];
@@ -832,10 +850,10 @@ int local_sync_begin,local_sync_end;
 
    pnga_pgroup_sync(a_grp);
    pnga_inquire(g_c,  &typeC, &ndim, _dims);
-   pnga_distribution(g_c, me, lo, hi);
-   if (  lo[0]>0 ){
-     pnga_access_ptr(g_c, lo, hi, &ptr_c, ld);
-     GET_ELEMS(ndim,lo,hi,ld,&elems);
+   pnga_distribution(g_c, me, _lo, _hi);
+   if (  _lo[0]>0 ){
+     pnga_access_ptr(g_c, _lo, _hi, &ptr_c, _ld);
+     GET_ELEMS(ndim,_lo,_hi,_ld,&elems);
    }
 
    if(g_a == g_c){
@@ -844,10 +862,10 @@ int local_sync_begin,local_sync_end;
    }else { 
      pnga_inquire(g_a,  &type, &ndim, _dims);
      if(type != typeC) pnga_error("types not consistent", g_a);
-     pnga_distribution(g_a, me, lo, hi);
-     if (  lo[0]>0 ){
-       pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-       GET_ELEMS(ndim,lo,hi,ld,&elemsa);
+     pnga_distribution(g_a, me, _lo, _hi);
+     if (  _lo[0]>0 ){
+       pnga_access_ptr(g_a, _lo, _hi, &ptr_a, _ld);
+       GET_ELEMS(ndim,_lo,_hi,_ld,&elemsa);
      }
    }
 
@@ -857,17 +875,17 @@ int local_sync_begin,local_sync_end;
    }else {
      pnga_inquire(g_b,  &type, &ndim, _dims);
      if(type != typeC) pnga_error("types not consistent", g_b);
-     pnga_distribution(g_b, me, lo, hi);
-     if (  lo[0]>0 ){
-       pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-       GET_ELEMS(ndim,lo,hi,ld,&elemsb);
+     pnga_distribution(g_b, me, _lo, _hi);
+     if (  _lo[0]>0 ){
+       pnga_access_ptr(g_b, _lo, _hi, &ptr_b, _ld);
+       GET_ELEMS(ndim,_lo,_hi,_ld,&elemsb);
      }
    }
 
    if(elems!= elemsb)pnga_error("inconsistent number of elements a",elems-elemsb);
    if(elems!= elemsa)pnga_error("inconsistent number of elements b",elems-elemsa);
 
-   if (  lo[0]>0 ){
+   if (  _lo[0]>0 ){
 
        /* operation on the "local" piece of data */
        switch(type){
@@ -944,9 +962,9 @@ int local_sync_begin,local_sync_end;
        }
 
        /* release access to the data */
-       pnga_release_update(g_c, lo, hi);
-       if(g_c != g_a)pnga_release(g_a, lo, hi);
-       if(g_c != g_b)pnga_release(g_b, lo, hi);
+       pnga_release_update(g_c, _lo, _hi);
+       if(g_c != g_a)pnga_release(g_a, _lo, _hi);
+       if(g_c != g_b)pnga_release(g_b, _lo, _hi);
    }
 
 
@@ -1000,6 +1018,7 @@ int i;
 void pnga_transpose(Integer g_a, Integer g_b)
 {
 Integer me = pnga_nodeid();
+Integer _ld[MAXDIM-1];
 Integer nproc = pnga_nnodes(); 
 Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
 Integer lo[2],hi[2];
@@ -1040,13 +1059,13 @@ char *ptr_tmp, *ptr_a;
         ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
 
         /* get access to local data */
-        pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+        pnga_access_ptr(g_a, lo, hi, &ptr_a, _ld);
 
         for(i = 0; i < ncol; i++){
           char *ptr = ptr_tmp + i*size;
 
           snga_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
-          ptr_a += ld[0]*size;
+          ptr_a += _ld[0]*size;
         }
 
         pnga_release(g_a, lo, hi); 
@@ -1070,7 +1089,7 @@ char *ptr_tmp, *ptr_a;
       if (!pnga_uses_proc_grid(g_a)) {
         for (idx = me; idx < num_blocks_a; idx += nproc) {
           pnga_distribution(g_a, idx, lo, hi);
-          pnga_access_block_ptr(g_a, idx, &ptr_a, ld);
+          pnga_access_block_ptr(g_a, idx, &ptr_a, _ld);
 
           nrow   = hi[0] -lo[0]+1;
           ncol   = hi[1] -lo[1]+1; 
@@ -1081,7 +1100,7 @@ char *ptr_tmp, *ptr_a;
             char *ptr = ptr_tmp + i*size;
 
             snga_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
-            ptr_a += ld[0]*size;
+            ptr_a += _ld[0]*size;
           }
           pnga_put(g_b, lob, hib, ptr_tmp ,&ncol);
 
@@ -1106,7 +1125,7 @@ char *ptr_tmp, *ptr_a;
         }
 
         if (ichk) {
-          pnga_access_block_grid_ptr(g_a, index, &ptr_a, ld);
+          pnga_access_block_grid_ptr(g_a, index, &ptr_a, _ld);
           while (index[andim-1] < blocks[andim-1]) {
             /* find bounding coordinates of block */
             chk = 1;
@@ -1117,7 +1136,7 @@ char *ptr_tmp, *ptr_a;
               if (hi[i] < lo[i]) chk = 0;
             }
             if (chk) {
-              pnga_access_block_grid_ptr(g_a, index, &ptr_a, ld);
+              pnga_access_block_grid_ptr(g_a, index, &ptr_a, _ld);
               nrow   = hi[0] -lo[0]+1;
               ncol   = hi[1] -lo[1]+1; 
               nelem  = nrow*ncol;
@@ -1126,7 +1145,7 @@ char *ptr_tmp, *ptr_a;
               for(i = 0; i < ncol; i++){
                 char *ptr = ptr_tmp + i*size;
                 snga_local_transpose(atype, ptr_a, nrow, block_dims[0]*size, ptr);
-                ptr_a += ld[0]*size;
+                ptr_a += _ld[0]*size;
               }
               pnga_put(g_b, lob, hib, ptr_tmp ,&block_dims[0]);
               pnga_release_update_block_grid(g_a, index);
