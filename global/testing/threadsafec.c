@@ -516,19 +516,19 @@ int main(int argc, char * argv[])
       id = omp_get_thread_num();
       inc = 1;
       task = NGA_Read_inc(g_count, &zero, inc);
-      buf = (int*)malloc(BLOCK_DIM*BLOCK_DIM*sizeof(int));
+      buf = (int*)malloc(block_x*block_y*sizeof(int));
       while (task < tx*ty) {
         ity = task%ty;
         itx = (task-ity)/ty;
-        tlo[0] = itx*BLOCK_DIM;
-        tlo[1] = ity*BLOCK_DIM;
+        tlo[0] = itx*block_x;
+        tlo[1] = ity*block_y;
         /*
         printf("j: %d k: %d tlo[0]: %d tlo[1]: %d xinc: %d yinc: %d\n",
         j,k,tlo[0],tlo[1],xinc,yinc);
         */
-        thi[0] = tlo[0] + BLOCK_DIM - 1;
+        thi[0] = tlo[0] + block_x - 1;
         if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
-        thi[1] = tlo[1] + BLOCK_DIM - 1;
+        thi[1] = tlo[1] + block_y - 1;
         if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
         lld = thi[1]-tlo[1]+1;
 
@@ -594,16 +594,16 @@ int main(int argc, char * argv[])
       inc = 1;
       ga_nbhdl_t* getid=(ga_nbhdl_t*)malloc(sizeof(ga_nbhdl_t));
       id = omp_get_thread_num();
-      buf = (int*)malloc(BLOCK_DIM*BLOCK_DIM*sizeof(int));
+      buf = (int*)malloc(block_x*block_y*sizeof(int));
       task = NGA_Read_inc(g_count, &zero, inc);
       while (task < tx*ty) {
         ity = task%ty;
         itx = (task-ity)/ty;
-        tlo[0] = itx*BLOCK_DIM;
-        tlo[1] = ity*BLOCK_DIM;
-        thi[0] = tlo[0] + BLOCK_DIM - 1;
+        tlo[0] = itx*block_x;
+        tlo[1] = ity*block_y;
+        thi[0] = tlo[0] + block_x - 1;
         if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
-        thi[1] = tlo[1] + BLOCK_DIM - 1;
+        thi[1] = tlo[1] + block_y - 1;
         if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
         lld = thi[1]-tlo[1]+1;
         NGA_NbGet(g_src, tlo, thi, buf, &lld,getid);
@@ -654,15 +654,15 @@ int main(int argc, char * argv[])
       id = omp_get_thread_num();
       inc = 1;
       task = NGA_Read_inc(g_count, &zero, inc);
-      buf = (int*)malloc(BLOCK_DIM*BLOCK_DIM*sizeof(int));
+      buf = (int*)malloc(block_x*block_y*sizeof(int));
       while (task < tx*ty) {
         ity = task%ty;
         itx = (task-ity)/ty;
-        tlo[0] = itx*BLOCK_DIM;
-        tlo[1] = ity*BLOCK_DIM;
-        thi[0] = tlo[0] + BLOCK_DIM - 1;
+        tlo[0] = itx*block_x;
+        tlo[1] = ity*block_y;
+        thi[0] = tlo[0] + block_x - 1;
         if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
-        thi[1] = tlo[1] + BLOCK_DIM - 1;
+        thi[1] = tlo[1] + block_y - 1;
         if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
         lld = thi[1]-tlo[1]+1;
 
@@ -749,19 +749,19 @@ int main(int argc, char * argv[])
       task = NGA_Read_inc(g_count, &zero, inc);
       ga_nbhdl_t* gethdl=(ga_nbhdl_t*)malloc(sizeof(ga_nbhdl_t));
       ga_nbhdl_t* acchdl=(ga_nbhdl_t*)malloc(sizeof(ga_nbhdl_t));
-      buf = (int*)malloc(BLOCK_DIM*BLOCK_DIM*sizeof(int));
-      buft = (int*)malloc(BLOCK_DIM*BLOCK_DIM*sizeof(int));
+      buf = (int*)malloc(block_x*block_y*sizeof(int));
+      buft = (int*)malloc(block_x*block_y*sizeof(int));
       /* Read and transpose data */
       while (task < 2*tx*ty) {
         k = task;
         if (k>=tx*ty) k -= tx*ty;
         ity = k%ty;
         itx = (k-ity)/ty;
-        tlo[0] = itx*BLOCK_DIM;
-        tlo[1] = ity*BLOCK_DIM;
-        thi[0] = tlo[0] + BLOCK_DIM - 1;
+        tlo[0] = itx*block_x;
+        tlo[1] = ity*block_y;
+        thi[0] = tlo[0] + block_x - 1;
         if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
-        thi[1] = tlo[1] + BLOCK_DIM - 1;
+        thi[1] = tlo[1] + block_y - 1;
         if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
         ld[0] = thi[0]-tlo[0]+1;
         ld[1] = thi[1]-tlo[1]+1;
@@ -784,11 +784,11 @@ int main(int argc, char * argv[])
         tmp = ity;
         ity = itx;
         itx = tmp;
-        tlo[0] = itx*BLOCK_DIM;
-        tlo[1] = ity*BLOCK_DIM;
-        thi[0] = tlo[0] + BLOCK_DIM - 1;
+        tlo[0] = itx*block_y;
+        tlo[1] = ity*block_x;
+        thi[0] = tlo[0] + block_y - 1;
         if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
-        thi[1] = tlo[1] + BLOCK_DIM - 1;
+        thi[1] = tlo[1] + block_x - 1;
         if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
         lld = thi[1]-tlo[1]+1;
         NGA_NbAcc(g_dest, tlo, thi, buft, &lld, &one,acchdl);
