@@ -478,6 +478,351 @@ int main(int argc, char * argv[])
     } else if (!ok) {
       printf("\nran1 test failed on process %d\n",me);
     }
+    GA_Zero(g_src);
+    GA_Zero(g_dest);
+    /* Reinitialize source array */
+    NGA_Distribution(g_src,me,glo,ghi);
+    NGA_Access(g_src,glo,ghi,&ptr,gld);
+    icnt = 0;
+    for (i=glo[0]; i<=ghi[0]; i++) {
+      for (j=glo[1]; j<=ghi[1]; j++) {
+        ptr[icnt] = i*dims[1]+j;
+        icnt++;
+      }
+    }
+    NGA_Release(g_src,glo,ghi);
+    if (me==0) {
+      printf("\n[%d]Testing non-blocking-write1 from 0.\n", me);
+    }
+    GA_Zero(g_count);
+    ok = 1;
+    GA_Zero(g_src); 
+    /* Fill global array with data by having each thread write
+     * blocks to it */
+    #pragma omp parallel num_threads(thread_count)
+    {
+      /* declare variables local to each thread */
+      int lo[2], hi[2], tlo[2], thi[2];
+      int ld[2];
+      int k, m, n;
+      int xinc, yinc;
+      int itx, ity;
+      int offset;
+      int *buf;
+      int lld;
+      ga_nbhdl_t* putid = (ga_nbhdl_t*) malloc(sizeof(ga_nbhdl_t));
+      long task, inc; 
+      int id;
+      id = omp_get_thread_num();
+      inc = 1;
+      task = NGA_Read_inc(g_count, &zero, inc);
+      buf = (int*)malloc(block_x*block_y*sizeof(int));
+      while (task < tx*ty) {
+        ity = task%ty;
+        itx = (task-ity)/ty;
+        tlo[0] = itx*block_x;
+        tlo[1] = ity*block_y;
+        /*
+        printf("j: %d k: %d tlo[0]: %d tlo[1]: %d xinc: %d yinc: %d\n",
+        j,k,tlo[0],tlo[1],xinc,yinc);
+        */
+        thi[0] = tlo[0] + block_x - 1;
+        if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
+        thi[1] = tlo[1] + block_y - 1;
+        if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
+        lld = thi[1]-tlo[1]+1;
+
+        /* Fill a portion of local buffer with correct values */
+        for (m=tlo[0]; m<=thi[0]; m++) {
+          for (n=tlo[1]; n<=thi[1]; n++) {
+            offset = (m-tlo[0])*lld + (n-tlo[1]);
+            buf[offset] = m*dims[1]+n;
+          }
+        }
+        NGA_NbPut(g_src, tlo, thi, buf, &lld, putid);
+        NGA_NbWait(putid);
+        task = NGA_Read_inc(g_count, &zero, inc);
+      }
+      free(buf);
+      free(putid);
+    }
+    /* Sync all processors at end of initialization loop */
+    NGA_Sync(); 
+
+    /* Each process determines if it is holding the correct data */
+    NGA_Distribution(g_src,me,glo,ghi);
+    NGA_Access(g_src,glo,ghi,&ptr,gld);
+    ok = 1;
+    icnt = 0;
+    for (i=glo[0]; i<=ghi[0]; i++) {
+      for (j=glo[1]; j<=ghi[1]; j++) {
+        if (ptr[icnt] != i*dims[1]+j) {
+          ok = 0;
+          printf("p[%d] (write1) mismatch at point [%d,%d] actual: %d expected: %d\n",
+              me,i,j,ptr[icnt],i*dims[1]+j);
+        }
+        icnt++;
+      }
+    }
+    NGA_Release(g_src,glo,ghi);
+    if (me==0 && ok) {
+      printf("\nnon-blocking-write1 test OK\n");
+    } else if (!ok) {
+      printf("\nwrite1 test failed on process %d\n",me);
+    }
+    /* Move data from remote processor to local buffer */
+   if (me==0) {
+      printf("\n[%d]Testing non-blocking-read1 from 0.\n", me);
+    }
+
+    /* Threads grab data from global array and copy them into a local
+     * buffer and verify that data is correct. */
+    GA_Zero(g_count);
+    ok = 1;
+    #pragma omp parallel num_threads(thread_count)
+    {
+      /* declare variables local to each thread */
+      int lo[2], hi[2], tlo[2], thi[2];
+      int ld[2];
+      int k, m, n;
+      int itx, ity;
+      int offset;
+      int *buf;
+      int lld;
+      int id;
+      long task, inc; 
+      inc = 1;
+      ga_nbhdl_t* getid=(ga_nbhdl_t*)malloc(sizeof(ga_nbhdl_t));
+      id = omp_get_thread_num();
+      buf = (int*)malloc(block_x*block_y*sizeof(int));
+      task = NGA_Read_inc(g_count, &zero, inc);
+      while (task < tx*ty) {
+        ity = task%ty;
+        itx = (task-ity)/ty;
+        tlo[0] = itx*block_x;
+        tlo[1] = ity*block_y;
+        thi[0] = tlo[0] + block_x - 1;
+        if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
+        thi[1] = tlo[1] + block_y - 1;
+        if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
+        lld = thi[1]-tlo[1]+1;
+        NGA_NbGet(g_src, tlo, thi, buf, &lld,getid);
+        NGA_NbWait(getid);
+
+        /* check that values in buffer are correct */
+        for (m=tlo[0]; m<=thi[0]; m++) {
+          for (n=tlo[1]; n<=thi[1]; n++) {
+            offset = (m-tlo[0])*lld + (n-tlo[1]);
+            if (buf[offset] != m*dims[1]+n) {
+              ok = 0;
+              printf("Read mismatch for [%d,%d] expected: %d actual: %d\n",
+                  m,n,m*dims[1]+n,lld);
+            }
+          }
+        }
+        task = NGA_Read_inc(g_count, &zero, inc);
+      }
+      free(buf);
+      free(getid);
+    }
+    /* Sync all processors at end of initialization loop */
+    NGA_Sync(); 
+    if (me==0 && ok) {
+      printf("\nnon-blocking-read1 test OK\n");
+    } else if (!ok) {
+      printf("\nread1 test failed on process %d\n",me);
+    }
+    GA_Zero(g_count);
+    if (me==0) {
+      printf("\n[%d]Testing non-blocking-acc1 from 0.\n", me);
+    }
+
+    #pragma omp parallel num_threads(thread_count)
+    {
+      /* declare variables local to each thread */
+      int lo[2], hi[2], tlo[2], thi[2];
+      int ld[2];
+      int k, m, n;
+      int xinc, yinc;
+      int itx, ity;
+      int offset;
+      int *buf;
+      int lld;
+      long task, inc; 
+      int id;
+      ga_nbhdl_t* accid = (ga_nbhdl_t*) malloc(sizeof(ga_nbhdl_t*));
+      id = omp_get_thread_num();
+      inc = 1;
+      task = NGA_Read_inc(g_count, &zero, inc);
+      buf = (int*)malloc(block_x*block_y*sizeof(int));
+      while (task < tx*ty) {
+        ity = task%ty;
+        itx = (task-ity)/ty;
+        tlo[0] = itx*block_x;
+        tlo[1] = ity*block_y;
+        thi[0] = tlo[0] + block_x - 1;
+        if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
+        thi[1] = tlo[1] + block_y - 1;
+        if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
+        lld = thi[1]-tlo[1]+1;
+
+        /* Accumulate values to a portion of global array */
+        for (m=tlo[0]; m<=thi[0]; m++) {
+          for (n=tlo[1]; n<=thi[1]; n++) {
+            offset = (m-tlo[0])*lld + (n-tlo[1]);
+            buf[offset] = m*dims[1]+n;
+          }
+        }
+        NGA_NbAcc(g_src, tlo, thi, buf, &lld, &one,accid);
+        NGA_NbWait(accid);
+        task = NGA_Read_inc(g_count, &zero, inc);
+      }
+      free(buf);
+    }
+    /* Sync all processors at end of initialization loop */
+    NGA_Sync(); 
+
+    /* Check local buffer for correct values */
+    NGA_Distribution(g_src,me,glo,ghi);
+    ok = 1;
+    NGA_Access(g_src,glo,ghi,&ptr,gld);
+    icnt = 0;
+    for (i=glo[0]; i<=ghi[0]; i++) {
+      for (j=glo[1]; j<=ghi[1]; j++) {
+        if (ptr[icnt] != 2*(i*dims[1]+j)) {
+          ok = 0;
+          printf("p[%d] (Acc1) mismatch at point [%d,%d] actual: %d expected: %d\n",
+              me,i,j,ptr[icnt],i*dims[1]+j);
+        }
+        icnt++;
+      }
+    }
+    NGA_Release(g_src,glo,ghi);
+    if (me==0 && ok) {
+      printf("\nnon-blocking-acc1 test OK\n");
+    } else if (!ok) {
+      printf("\nacc1 test failed on process %d\n",me);
+    }
+    
+    /* Sync all processors*/
+    NGA_Sync(); 
+
+
+    /* Testing random work pattern */
+    if (me==0) {
+      printf("\n[%d]Testing non-blocking-ran1 from 0.\n", me);
+    }
+    /* Reinitialize source array */
+    NGA_Distribution(g_src,me,glo,ghi);
+    NGA_Access(g_src,glo,ghi,&ptr,gld);
+    icnt = 0;
+    for (i=glo[0]; i<=ghi[0]; i++) {
+      for (j=glo[1]; j<=ghi[1]; j++) {
+        ptr[icnt] = i*dims[1]+j;
+        icnt++;
+      }
+    }
+    NGA_Release(g_src,glo,ghi);
+
+
+
+    /* Mimic random work. */
+    GA_Zero(g_dest);
+    GA_Zero(g_count);
+
+    #pragma omp parallel num_threads(thread_count)
+    {
+      /* declare variables local to each thread */
+      int tlo[2], thi[2];
+      int ld[2];
+      int k, m, n;
+      int xinc, yinc;
+      int itx, ity;
+      int offset, icnt;
+      int *buf, *buft;
+      int lld;
+      long task, inc; 
+      int id;
+      int tmp;
+      id = omp_get_thread_num();
+      inc = 1;
+      task = NGA_Read_inc(g_count, &zero, inc);
+      ga_nbhdl_t* gethdl=(ga_nbhdl_t*)malloc(sizeof(ga_nbhdl_t));
+      ga_nbhdl_t* acchdl=(ga_nbhdl_t*)malloc(sizeof(ga_nbhdl_t));
+      buf = (int*)malloc(block_x*block_y*sizeof(int));
+      buft = (int*)malloc(block_x*block_y*sizeof(int));
+      /* Read and transpose data */
+      while (task < 2*tx*ty) {
+        k = task;
+        if (k>=tx*ty) k -= tx*ty;
+        ity = k%ty;
+        itx = (k-ity)/ty;
+        tlo[0] = itx*block_x;
+        tlo[1] = ity*block_y;
+        thi[0] = tlo[0] + block_x - 1;
+        if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
+        thi[1] = tlo[1] + block_y - 1;
+        if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
+        ld[0] = thi[0]-tlo[0]+1;
+        ld[1] = thi[1]-tlo[1]+1;
+        lld = thi[1]-tlo[1]+1;
+
+        /* Get data from g_src */
+        NGA_NbGet(g_src, tlo, thi, buf, &lld, gethdl);
+        NGA_NbWait(gethdl);
+        /* Evaluate transpose of local bloack */
+        icnt = 0;
+        for (m=0; m<ld[0]; m++) {
+          for (n=0; n<ld[1]; n++) {
+            offset = n*ld[0]+m;
+            buft[offset] = buf[icnt]; 
+            icnt++;
+          }
+        }
+        
+        /* Find transposed block location */
+        tmp = ity;
+        ity = itx;
+        itx = tmp;
+        tlo[0] = itx*block_y;
+        tlo[1] = ity*block_x;
+        thi[0] = tlo[0] + block_y - 1;
+        if (thi[0] >= dims[0]) thi[0] = dims[0]-1;
+        thi[1] = tlo[1] + block_x - 1;
+        if (thi[1] >= dims[1]) thi[1] = dims[1]-1;
+        lld = thi[1]-tlo[1]+1;
+        NGA_NbAcc(g_dest, tlo, thi, buft, &lld, &one,acchdl);
+        NGA_NbWait(acchdl);
+        task = NGA_Read_inc(g_count, &zero, inc);
+      }
+      free(buf);
+      free(buft);
+      free(gethdl);
+      free(acchdl);
+    }
+    GA_Sync();
+
+    /* Check local buffer for correct values */
+    NGA_Distribution(g_dest,me,glo,ghi);
+    ok = 1;
+    NGA_Access(g_dest,glo,ghi,&ptr,gld);
+    icnt = 0;
+    for (i=glo[0]; i<=ghi[0]; i++) {
+      for (j=glo[1]; j<=ghi[1]; j++) {
+        if (ptr[icnt] != 2*(j*dims[0]+i)) {
+          ok = 0;
+          printf("p[%d] (Ran1) mismatch at point [%d,%d] actual: %d expected: %d\n",
+              me,i,j,ptr[icnt],2*(j*dims[0]+i));
+        }
+        icnt++;
+      }
+    }
+    NGA_Release(g_dest,glo,ghi);
+    if (me==0 && ok) {
+      printf("\nnon-blocking-ran1 test OK\n");
+    } else if (!ok) {
+      printf("\nnon-blocking-ran1 test failed on process %d\n",me);
+    }
 
 
     GA_Destroy(g_src);
