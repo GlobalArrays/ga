@@ -689,9 +689,6 @@ int main(int argc, char * argv[])
         NGA_Acc(g_ntime,&me,&me,&one,&one,&one);
         NGA_Acc(g_elems,&me,&me,&bsize,&one,&one);
         icnt++;
-        /*
-        NGA_NbWait(putid);
-        */
         delta_t = GA_Wtime();
         task = NGA_Read_inc(g_count, &zero, inc);
         delta_t = GA_Wtime()-delta_t;
@@ -791,7 +788,6 @@ int main(int argc, char * argv[])
         bsize = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
         delta_t = GA_Wtime();
         NGA_NbGet(g_src, tlo, thi, buf, &lld,&nb_hdl[task]);
-        //NGA_NbWait(getid);
         delta_t = GA_Wtime()-delta_t;
         NGA_Acc(g_time,&me,&me,&delta_t,&one,&rone);
         NGA_Acc(g_ntime,&me,&me,&one,&one,&one);
@@ -895,7 +891,6 @@ int main(int argc, char * argv[])
         }
         delta_t = GA_Wtime();
         NGA_NbAcc(g_src, tlo, thi, buf, &lld, &one,accid);
-        //NGA_NbWait(accid);
         delta_t = GA_Wtime()-delta_t;
         NGA_Acc(g_time,&me,&me,&delta_t,&one,&rone);
         NGA_Acc(g_ntime,&me,&me,&one,&one,&one);
