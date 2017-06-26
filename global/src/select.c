@@ -156,7 +156,6 @@ void pnga_select_elem(Integer g_a, char* op, void* val, Integer *subscript)
   me = pnga_nodeid();
 
   pnga_check_handle(g_a, "ga_select_elem");
-  GA_PUSH_NAME("ga_elem_op");
 
   if (strncmp(op,"min",3) == 0);
   else if (strncmp(op,"max",3) == 0);
@@ -295,5 +294,4 @@ void pnga_select_elem(Integer g_a, char* op, void* val, Integer *subscript)
   }
 
   for(i = 0; i < ndim; i++) subscript[i]= info.subscr[i];
-  GA_POP_NAME;
 }

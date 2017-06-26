@@ -61,7 +61,6 @@ void pnga_symmetrize(Integer g_a) {
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  GA_PUSH_NAME("ga_symmetrize");
   
   num_blocks_a = pnga_total_blocks(g_a);
 
@@ -117,6 +116,5 @@ void pnga_symmetrize(Integer g_a) {
     pnga_add(&half, g_a, &half, g_b, g_a);
     pnga_destroy(g_b);
   }
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }

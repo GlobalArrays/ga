@@ -733,7 +733,6 @@ static void gai_oper_elem(Integer g_a, Integer *lo, Integer *hi, void *scalar, I
 
   pnga_check_handle(g_a, "gai_oper_elem");
 
-  GA_PUSH_NAME("gai_oper_elem");
 
   pnga_inquire(g_a,  &type, &ndim, dims);
   num_blocks = pnga_total_blocks(g_a);
@@ -917,7 +916,6 @@ static void gai_oper_elem(Integer g_a, Integer *lo, Integer *hi, void *scalar, I
       }
     }
   }
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
 
@@ -1782,7 +1780,6 @@ int op; /* operation to be perform between g_a and g_b */
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
   pnga_check_handle(g_a, "gai_elem2_patch_");
-  GA_PUSH_NAME("ngai_elem2_patch_");
 
   pnga_inquire(g_a, &atype, &andim, adims);
   pnga_inquire(g_b, &btype, &bndim, bdims);
@@ -2095,7 +2092,6 @@ int op; /* operation to be perform between g_a and g_b */
   if(A_created) pnga_destroy(g_A);
   if(B_created) pnga_destroy(g_B);
 
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
 
@@ -2379,7 +2375,6 @@ static void ngai_elem3_patch_(Integer g_a, Integer *alo, Integer *ahi, int op)
   if(local_sync_begin)pnga_sync();
 
   pnga_check_handle(g_a, "gai_elem3_patch_");
-  GA_PUSH_NAME("ngai_elem3_patch_");
 
   pnga_inquire(g_a, &atype, &andim, adims);
   num_blocks = pnga_total_blocks(g_a);
@@ -2562,7 +2557,6 @@ static void ngai_elem3_patch_(Integer g_a, Integer *alo, Integer *ahi, int op)
     }
   }
 
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
 
@@ -2655,7 +2649,6 @@ Integer g_a, *alo, *ahi;    /* patch of g_a */
 
   pnga_sync();
   pnga_check_handle(g_a, "has_negative_elem");
-  GA_PUSH_NAME("has_negative_elem");
 
   pnga_inquire(g_a, &atype, &andim, adims);
   num_blocks = pnga_total_blocks(g_a);
@@ -2838,7 +2831,6 @@ Integer g_a, *alo, *ahi;    /* patch of g_a */
     }
   }
 
-  GA_POP_NAME;
   pnga_sync();
   return iretval; /*negative element is not found in g_a*/
 }
@@ -2904,7 +2896,6 @@ void pnga_step_bound_info_patch(
      pnga_check_handle(g_xxll, "pnga_step_bound_info_patch");
      pnga_check_handle(g_xxuu, "pnga_step_bound_info_patch");
 
-     GA_PUSH_NAME("pnga_step_bound_info_patch");
 
      /* get chaacteristics of the input ga patches */
 
@@ -3220,7 +3211,6 @@ void pnga_step_bound_info_patch(
      pnga_destroy(g_R); 
      pnga_destroy(g_S); 
      pnga_destroy(g_T); 
-     GA_POP_NAME;
      if(local_sync_end)pnga_sync();
 }
 
@@ -3270,7 +3260,6 @@ void pnga_step_max_patch(g_a,  alo, ahi, g_b,  blo, bhi, result)
   pnga_check_handle(g_a, "ga_step_max_patch_");
   pnga_check_handle(g_b, "ga_step_max_patch_");
 
-  GA_PUSH_NAME("ga_step_max_patch_");
 
   /* get chacteristics of the input ga patches */
 
@@ -3403,7 +3392,6 @@ void pnga_step_max_patch(g_a,  alo, ahi, g_b,  blo, bhi, result)
     }
     pnga_destroy(g_c);
   }
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
 

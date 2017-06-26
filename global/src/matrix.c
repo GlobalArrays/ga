@@ -320,7 +320,6 @@ void pnga_median_patch(
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  GA_PUSH_NAME ("pnga_median_patch");
 
   pnga_inquire (g_a, &atype, &andim, adims);
   pnga_inquire (g_b, &btype, &bndim, bdims);
@@ -643,7 +642,6 @@ void pnga_median_patch(
     pnga_destroy (g_B);
   if (c_temp_created)
     pnga_destroy (g_C);
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
 
@@ -860,7 +858,6 @@ void pnga_norm_infinity(Integer g_a, double *nm)
   if(local_sync_begin)pnga_sync();
 
   pnga_check_handle (g_a, "ga_norm_infinity_");
-  GA_PUSH_NAME ("ga_norm_infinity_");
 
   pnga_inquire (g_a, &type, &ndim, dims);
 
@@ -1002,7 +999,6 @@ void pnga_norm_infinity(Integer g_a, double *nm)
       pnga_error("ga_norm_infinity_:wrong data type.", type);
   }
 
-  GA_POP_NAME;
   if (local_sync_end)pnga_sync();
 }
 
@@ -1163,7 +1159,6 @@ void pnga_norm1(Integer g_a, double *nm)
   if(local_sync_begin)pnga_sync();
 
   pnga_check_handle (g_a, "ga_norm1_");
-  GA_PUSH_NAME ("ga_norm1_");
 
   pnga_inquire (g_a, &type, &ndim, dims);
 
@@ -1302,7 +1297,6 @@ void pnga_norm1(Integer g_a, double *nm)
       pnga_error("ga_norm1_:wrong data type.", type);
   }
 
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
 
@@ -1443,7 +1437,6 @@ void pnga_get_diag(Integer g_a, Integer g_v)
 
   pnga_check_handle (g_a, "ga_get_diag_");
   pnga_check_handle (g_v, "ga_get_diag_");
-  GA_PUSH_NAME ("ga_get_diag_");
 
   pnga_inquire (g_a, &atype, &andim, adims);
   dim1 = adims[0];
@@ -1522,7 +1515,6 @@ void pnga_get_diag(Integer g_a, Integer g_v)
     }
   }
 
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
 
@@ -1663,7 +1655,6 @@ void pnga_add_diagonal(Integer g_a, Integer g_v)
 
   pnga_check_handle (g_a, "ga_add_diagonal_");
   pnga_check_handle (g_v, "ga_add_diagonal_");
-  GA_PUSH_NAME ("ga_add_diagonal_");
 
   pnga_inquire(g_a, &atype, &andim, adims);
   dim1 = adims[0];
@@ -1741,7 +1732,6 @@ void pnga_add_diagonal(Integer g_a, Integer g_v)
       }
     }
   }
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
 
@@ -1886,7 +1876,6 @@ void pnga_set_diagonal(Integer g_a, Integer g_v)
 
   pnga_check_handle (g_a, "ga_set_diagonal_");
   pnga_check_handle (g_v, "ga_set_diagonal_");
-  GA_PUSH_NAME ("ga_set_diagonal_");
 
   pnga_inquire (g_a, &atype, &andim, adims);
   dim1 = adims[0];
@@ -1967,7 +1956,6 @@ void pnga_set_diagonal(Integer g_a, Integer g_v)
 
   }
 
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
 
@@ -2082,7 +2070,6 @@ void pnga_shift_diagonal(Integer g_a, void *c)
   if(local_sync_begin)pnga_sync();
 
   pnga_check_handle (g_a, "ga_shift_diagonal_");
-  GA_PUSH_NAME ("ga_shift_diagonal_");
 
   pnga_inquire (g_a, &atype, &andim, adims);
   /*dim1 = adims[0];*/
@@ -2144,7 +2131,6 @@ void pnga_shift_diagonal(Integer g_a, void *c)
     }
   }
 
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
 
@@ -2226,7 +2212,6 @@ void pnga_zero_diagonal(Integer g_a)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  GA_PUSH_NAME ("ga_zero_diagonal_");
 
   pnga_inquire (g_a, &atype, &andim, adims);
   /*dim1 = adims[0];*/
@@ -2331,7 +2316,6 @@ void pnga_zero_diagonal(Integer g_a)
       }
     }
   }
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
 
@@ -2441,7 +2425,6 @@ void pnga_scale_rows(Integer g_a, Integer g_v)
 
   pnga_check_handle (g_a, "ga_scale_rows_");
   pnga_check_handle (g_v, "ga_scale_rows_");
-  GA_PUSH_NAME ("ga_scale_rows_");
 
   pnga_inquire (g_a, &atype, &andim, adims);
   dim1 = adims[0];
@@ -2531,7 +2514,6 @@ void pnga_scale_rows(Integer g_a, Integer g_v)
       }
     }
   }
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
 
@@ -2642,7 +2624,6 @@ void pnga_scale_cols(Integer g_a, Integer g_v)
 
   pnga_check_handle (g_a, "ga_scale_cols_");
   pnga_check_handle (g_v, "ga_scale_cols_");
-  GA_PUSH_NAME ("ga_scale_cols_");
 
   pnga_inquire(g_a, &atype, &andim, adims);
   /*dim1 = adims[0];*/
@@ -2732,6 +2713,5 @@ void pnga_scale_cols(Integer g_a, Integer g_v)
       }
     }
   }
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }

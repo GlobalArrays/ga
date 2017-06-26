@@ -71,7 +71,6 @@ void pnga_zero(Integer g_a)
   me = pnga_pgroup_nodeid(p_handle);
 
   pnga_check_handle(g_a, "ga_zero");
-  GA_PUSH_NAME("ga_zero");
 
   num_blocks = pnga_total_blocks(g_a);
 
@@ -165,74 +164,9 @@ void pnga_zero(Integer g_a)
     pnga_release_update_block_segment(g_a, me);
   }
   if(local_sync_end)pnga_pgroup_sync(p_handle);
-  GA_POP_NAME;
 }
 
 
-
-#if 0
-/*\ COPY ONE GLOBAL ARRAY INTO ANOTHER
-\*/
-static void snga_copy_old(Integer g_a, Integer g_b)
-{
-Integer  ndim, ndimb, type, typeb, me, elems=0, elemsb=0;
-Integer dimsb[MAXDIM];
-Integer _dims[MAXDIM];
-void *ptr_a, *ptr_b;
-
-   me = pnga_nodeid();
-
-   GA_PUSH_NAME("ga_copy");
-
-   if(g_a == g_b) pnga_error("arrays have to be different ", 0L);
-
-   pnga_inquire(g_a,  &type, &ndim, _dims);
-   pnga_inquire(g_b,  &typeb, &ndimb, dimsb);
-
-   if(type != typeb) pnga_error("types not the same", g_b);
-
-   if(!pnga_compare_distr(g_a,g_b))
-
-      pnga_copy_patch("n",g_a, one_arr, _dims, g_b, one_arr, dimsb);
-
-   else {
-
-     pnga_sync();
-
-     pnga_distribution(g_a, me, lo, hi);
-     if(lo[0]>0){
-        pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-        if (pnga_has_ghosts(g_a)) {
-          GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
-        } else {
-          GET_ELEMS(ndim,lo,hi,ld,&elems);
-        }
-     }
-
-     pnga_distribution(g_b, me, lo, hi);
-     if(lo[0]>0){
-        pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-        if (pnga_has_ghosts(g_b)) {
-          GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
-        } else {
-          GET_ELEMS(ndim,lo,hi,ld,&elems);
-        }
-     }
-  
-     if(elems!= elemsb)pnga_error("inconsistent number of elements",elems-elemsb);
-
-     if(elems>0){
-        ARMCI_Copy(ptr_a, ptr_b, (int)elems*GAsizeofM(type));
-        pnga_release(g_a,lo,hi);
-        pnga_release(g_b,lo,hi);
-     }
-
-     pnga_sync();
-   }
-
-   GA_POP_NAME;
-}
-#endif
 
 
 
@@ -251,7 +185,6 @@ Integer blocks[MAXDIM], block_dims[MAXDIM];
 void *ptr_a, *ptr_b;
 int local_sync_begin,local_sync_end,use_put;
 
-   GA_PUSH_NAME("ga_copy");
 
    Integer _dims[MAXDIM];
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
@@ -426,7 +359,6 @@ int local_sync_begin,local_sync_end,use_put;
        pnga_pgroup_sync(b_grp);
      }
    }
-   GA_POP_NAME;
 }
 
 
@@ -457,7 +389,6 @@ Integer bndim, bdims[MAXDIM];
 
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 
-   GA_PUSH_NAME("ga_dot");
    a_grp = pnga_get_pgroup(g_a);
    b_grp = pnga_get_pgroup(g_b);
    if (a_grp != b_grp)
@@ -472,7 +403,6 @@ Integer bndim, bdims[MAXDIM];
      pnga_inquire(g_b, &type, &bndim, bdims);
      pnga_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
          value);
-     GA_POP_NAME;
      return;
    }
 
@@ -485,7 +415,6 @@ Integer bndim, bdims[MAXDIM];
        pnga_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
                       value);
        
-       GA_POP_NAME;
        return;
    }
    
@@ -633,7 +562,6 @@ Integer bndim, bdims[MAXDIM];
      }
    }
     
-   GA_POP_NAME;
 
 }
 
@@ -658,7 +586,6 @@ void pnga_scale(Integer g_a, void* alpha)
   me = pnga_pgroup_nodeid(grp_id);
 
   pnga_check_handle(g_a, "ga_scale");
-  GA_PUSH_NAME("ga_scale");
   num_blocks = pnga_total_blocks(g_a);
 
   pnga_inquire(g_a, &type, &ndim, _dims);
@@ -779,7 +706,6 @@ void pnga_scale(Integer g_a, void* alpha)
     /* release access to the data */
     pnga_release_update_block_segment(g_a, me);
   }
-  GA_POP_NAME;
   if(local_sync_end)pnga_pgroup_sync(grp_id); 
 }
 
@@ -803,7 +729,6 @@ int local_sync_begin,local_sync_end;
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 
-   GA_PUSH_NAME("ga_add");
    a_grp = pnga_get_pgroup(g_a);
    b_grp = pnga_get_pgroup(g_b);
    c_grp = pnga_get_pgroup(g_c);
@@ -826,7 +751,6 @@ int local_sync_begin,local_sync_end;
        pnga_add_patch(alpha, g_a, one_arr, adims, beta, g_b, one_arr, bdims,
                       g_c, one_arr, cdims);
        
-       GA_POP_NAME;
        return;
    }
 
@@ -950,7 +874,6 @@ int local_sync_begin,local_sync_end;
    }
 
 
-   GA_POP_NAME;
    if(local_sync_end)pnga_pgroup_sync(a_grp);
 }
 
@@ -1007,7 +930,6 @@ int local_sync_begin,local_sync_end;
 Integer num_blocks_a;
 char *ptr_tmp, *ptr_a;
 
-    GA_PUSH_NAME("ga_transpose");
     
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -1146,5 +1068,4 @@ char *ptr_tmp, *ptr_a;
     }
 
     if(local_sync_end)pnga_sync();
-    GA_POP_NAME;
 }
