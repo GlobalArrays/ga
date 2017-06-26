@@ -145,7 +145,6 @@ int main(int argc, char * argv[])
     int next, nextx, nexty;
     char *env_threads;
     int provided;
-    ga_nbhdl_t* nb_hdl;
     int g_time, g_ntime, g_elems;
     int g_ritime, g_rinc;
 
@@ -625,7 +624,6 @@ int main(int argc, char * argv[])
     /* Test nonblocking operations */
     /* Create array visible to all threads that can hold non-blocking
      * handles */
-    nb_hdl = (ga_nbhdl_t*) malloc(tx*ty*sizeof(ga_nbhdl_t));
     GA_Zero(g_count);
     ok = 1;
     GA_Zero(g_src); 
@@ -649,6 +647,8 @@ int main(int argc, char * argv[])
       int id;
       double delta_t;
       int bsize;
+      int icnt = 0;
+      ga_nbhdl_t* nb_hdl = (ga_nbhdl_t*) malloc(tx*ty*sizeof(ga_nbhdl_t));
       id = omp_get_thread_num();
       inc = 1;
       delta_t = GA_Wtime();
@@ -681,7 +681,7 @@ int main(int argc, char * argv[])
           }
         }
         delta_t = GA_Wtime();
-        NGA_NbPut(g_src, tlo, thi, buf, &lld, &nb_hdl[task]);
+        NGA_NbPut(g_src, tlo, thi, buf, &lld, &nb_hdl[icnt]);
         delta_t = GA_Wtime()-delta_t;
         NGA_Acc(g_time,&me,&me,&delta_t,&one,&rone);
         NGA_Acc(g_ntime,&me,&me,&one,&one,&one);
@@ -697,10 +697,10 @@ int main(int argc, char * argv[])
         NGA_Acc(g_rinc,&me,&me,&one,&one,&one);
       }
       free(buf);
+      free(nb_hdl);
       /* Call wait on all outstanding tasks. Don't bother to reinitialize
          global counter */
-      while (task < 2*tx*ty) {
-        k = task - tx*ty;
+      for (k=0; k<icnt; k++) {
         delta_t = GA_Wtime();
         NGA_NbWait(&nb_hdl[k]);
         delta_t = GA_Wtime()-delta_t;
@@ -712,7 +712,6 @@ int main(int argc, char * argv[])
         NGA_Acc(g_rinc,&me,&me,&one,&one,&one);
       }
     }
-    free(nb_hdl);
     /* Sync all processors at end of initialization loop */
     NGA_Sync(); 
 
