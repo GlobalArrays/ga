@@ -39,6 +39,7 @@ typedef enum {
     OP_PUT_IOV,
     OP_GET,
     OP_GET_PACKED,
+    OP_GET_DATATYPE,
     OP_GET_IOV,
     OP_ACC_INT,
     OP_ACC_DBL,
@@ -174,6 +175,7 @@ STATIC const char *str_mpi_retval(int retval);
 
 /* server fuctions */
 STATIC void server_send(void *buf, int count, int dest);
+STATIC void server_send_datatype(void *buf, MPI_Datatype dt, int dest);
 STATIC void server_recv(void *buf, int count, int source);
 STATIC void server_recv_datatype(void *buf, MPI_Datatype dt, int source);
 STATIC void _progress_server();
@@ -183,6 +185,7 @@ STATIC void _put_datatype_handler(header_t *header, int proc);
 STATIC void _put_iov_handler(header_t *header, int proc);
 STATIC void _get_handler(header_t *header, int proc);
 STATIC void _get_packed_handler(header_t *header, int proc);
+STATIC void _get_datatype_handler(header_t *header, int proc);
 STATIC void _get_iov_handler(header_t *header, int proc);
 STATIC void _acc_handler(header_t *header, char *scale, int proc);
 STATIC void _acc_packed_handler(header_t *header, int proc);
@@ -203,6 +206,7 @@ STATIC void nb_send_datatype(void *buf, MPI_Datatype dt, int dest, nb_t *nb);
 STATIC void nb_send_header(void *buf, int count, int dest, nb_t *nb);
 STATIC void nb_send_buffer(void *buf, int count, int dest, nb_t *nb);
 STATIC void nb_recv_packed(void *buf, int count, int source, nb_t *nb, stride_t *stride);
+STATIC void nb_recv_datatype(void *buf, MPI_Datatype dt, int source, nb_t *nb);
 STATIC void nb_recv_iov(void *buf, int count, int source, nb_t *nb, comex_giov_t *iov);
 STATIC void nb_recv(void *buf, int count, int source, nb_t *nb);
 STATIC int nb_get_handle_index();
@@ -231,6 +235,9 @@ STATIC void nb_gets(
         void *src, int *src_stride, void *dst, int *dst_stride,
         int *count, int stride_levels, int proc, nb_t *nb);
 STATIC void nb_gets_packed(
+        void *src, int *src_stride, void *dst, int *dst_stride,
+        int *count, int stride_levels, int proc, nb_t *nb);
+STATIC void nb_gets_datatype(
         void *src, int *src_stride, void *dst, int *dst_stride,
         int *count, int stride_levels, int proc, nb_t *nb);
 STATIC void nb_accs(
@@ -2240,6 +2247,9 @@ STATIC void _progress_server()
             case OP_GET_PACKED:
                 _get_packed_handler(header, source);
                 break;
+            case OP_GET_DATATYPE:
+                _get_datatype_handler(header, source);
+                break;
             case OP_GET_IOV:
                 _get_iov_handler(header, source);
                 break;
@@ -2627,6 +2637,53 @@ STATIC void _get_packed_handler(header_t *header, int proc)
 
     free(stride_src);
     free(packed_buffer);
+}
+
+
+STATIC void _get_datatype_handler(header_t *header, int proc)
+{
+    MPI_Datatype src_type;
+    reg_entry_t *reg_entry = NULL;
+    void *mapped_offset = NULL;
+    stride_t *stride_src = NULL;
+    int ierr;
+
+#if DEBUG
+    printf("[%d] _get_datatype_handler proc=%d\n", g_state.rank, proc);
+#endif
+#if DEBUG
+    printf("[%d] header rem=%p loc=%p rem_rank=%d len=%d\n",
+            g_state.rank,
+            header->remote_address,
+            header->local_address,
+            header->rank,
+            header->length);
+#endif
+
+    assert(OP_GET_DATATYPE == header->operation);
+
+    stride_src = malloc(sizeof(stride_t));
+    COMEX_ASSERT(stride_src);
+    server_recv(stride_src, sizeof(stride_t), proc);
+    COMEX_ASSERT(stride_src->stride_levels >= 0);
+    COMEX_ASSERT(stride_src->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+
+    reg_entry = reg_cache_find(
+            header->rank, header->remote_address, header->length);
+    COMEX_ASSERT(reg_entry);
+    mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
+
+    strided_to_subarray_dtype(stride_src->stride, stride_src->count,
+            stride_src->stride_levels, MPI_BYTE, &src_type);
+    ierr = MPI_Type_commit(&src_type);
+    translate_mpi_error(ierr,"_get_datatype_handler:MPI_Type_commit");
+
+    server_send_datatype(mapped_offset, src_type, proc);
+
+    ierr = MPI_Type_free(&src_type);
+    translate_mpi_error(ierr,"_get_datatype_handler:MPI_Type_free");
+
+    free(stride_src);
 }
 
 
@@ -3697,6 +3754,21 @@ STATIC void server_send(void *buf, int count, int dest)
 }
 
 
+STATIC void server_send_datatype(void *buf, MPI_Datatype dt, int dest)
+{
+    int retval = 0;
+
+#if DEBUG
+    printf("[%d] server_send_datatype(buf=%p, ..., dest=%d)\n",
+            g_state.rank, buf, dest);
+#endif
+
+    retval = MPI_Send(buf, 1, dt, dest, COMEX_TAG, g_state.comm);
+
+    CHECK_MPI_RETVAL(retval);
+}
+
+
 STATIC void server_recv(void *buf, int count, int source)
 {
     int retval = 0;
@@ -3840,6 +3912,44 @@ STATIC void nb_recv_packed(void *buf, int count, int source, nb_t *nb, stride_t 
     nb->recv_tail = message;
 
     retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG, g_state.comm,
+            &(message->request));
+    CHECK_MPI_RETVAL(retval);
+}
+
+
+STATIC void nb_recv_datatype(void *buf, MPI_Datatype dt, int source, nb_t *nb)
+{
+    int retval = 0;
+    message_t *message = NULL;
+
+    COMEX_ASSERT(NULL != buf);
+    COMEX_ASSERT(NULL != nb);
+
+#if DEBUG
+    printf("[%d] nb_recv_datatype(buf=%p, count=%d, source=%d, nb=%p)\n",
+            g_state.rank, buf, count, source, nb);
+#endif
+
+    nb->recv_size += 1;
+    nb_count_event += 1;
+    nb_count_recv += 1;
+
+    message = (message_t*)malloc(sizeof(message_t));
+    message->next = NULL;
+    message->message = buf;
+    message->need_free = 0;
+    message->stride = NULL;
+    message->iov = NULL;
+
+    if (NULL == nb->recv_head) {
+        nb->recv_head = message;
+    }
+    if (NULL != nb->recv_tail) {
+        nb->recv_tail->next = message;
+    }
+    nb->recv_tail = message;
+
+    retval = MPI_Irecv(buf, 1, dt, source, COMEX_TAG, g_state.comm,
             &(message->request));
     CHECK_MPI_RETVAL(retval);
 }
@@ -4588,6 +4698,17 @@ STATIC void nb_gets(
         return;
     }
 
+#if ENABLE_GET_DATATYPE
+#if ENABLE_GET_SELF
+    /* if not a strided get from self, use packed algorithm */
+    if (g_state.rank != proc)
+#endif
+    {
+        nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
+        return;
+    }
+#endif
+
 #if ENABLE_GET_PACKED
 #if ENABLE_GET_SELF
     /* if not a strided get from self, use packed algorithm */
@@ -4730,6 +4851,77 @@ STATIC void nb_gets_packed(
         nb_recv_packed(packed_buffer, recv_size, master_rank, nb, stride_dst);
         nb_send_header(header, sizeof(header_t), master_rank, nb);
         nb_send_header(stride_src, sizeof(stride_t), master_rank, nb);
+    }
+}
+
+
+STATIC void nb_gets_datatype(
+        void *src, int *src_stride, void *dst, int *dst_stride,
+        int *count, int stride_levels, int proc, nb_t *nb)
+{
+    MPI_Datatype dst_type;
+    int i;
+    stride_t *stride_src = NULL;
+
+#if DEBUG
+    printf("[%d] nb_gets_datatype(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
+            g_state.rank, src, src_stride, dst, dst_stride,
+            count[0], stride_levels, proc, nb);
+#endif
+
+    COMEX_ASSERT(proc >= 0);
+    COMEX_ASSERT(proc < g_state.size);
+    COMEX_ASSERT(NULL != src);
+    COMEX_ASSERT(NULL != dst);
+    COMEX_ASSERT(NULL != count);
+    COMEX_ASSERT(NULL != nb);
+    COMEX_ASSERT(count[0] > 0);
+    COMEX_ASSERT(stride_levels >= 0);
+    COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
+
+    /* copy src info into structure */
+    stride_src = malloc(sizeof(stride_t));
+    COMEX_ASSERT(stride_src);
+    stride_src->ptr = src;
+    stride_src->stride_levels = stride_levels;
+    stride_src->count[0] = count[0];
+    for (i=0; i<stride_levels; ++i) {
+        stride_src->stride[i] = src_stride[i];
+        stride_src->count[i+1] = count[i+1];
+    }
+    for (/*no init*/; i<COMEX_MAX_STRIDE_LEVEL; ++i) {
+        stride_src->stride[i] = -1;
+        stride_src->count[i+1] = -1;
+    }
+
+    COMEX_ASSERT(stride_src->stride_levels >= 0);
+    COMEX_ASSERT(stride_src->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+
+    {
+        header_t *header = NULL;
+        int master_rank = -1;
+        int ierr;
+
+        master_rank = g_state.master[proc];
+
+        header = malloc(sizeof(header_t));
+        COMEX_ASSERT(header);
+        header->operation = OP_GET_DATATYPE;
+        header->remote_address = src;
+        header->local_address = dst;
+        header->rank = proc;
+        header->length = 0;
+
+        strided_to_subarray_dtype(dst_stride, count, stride_levels, MPI_BYTE, &dst_type);
+        ierr = MPI_Type_commit(&dst_type);
+        translate_mpi_error(ierr,"nb_gets_datatype:MPI_Type_commit");
+
+        nb_recv_datatype(dst, dst_type, master_rank, nb);
+        nb_send_header(header, sizeof(header_t), master_rank, nb);
+        nb_send_header(stride_src, sizeof(stride_t), master_rank, nb);
+
+        ierr = MPI_Type_free(&dst_type);
+        translate_mpi_error(ierr,"nb_gets_datatype:MPI_Type_free");
     }
 }
 
