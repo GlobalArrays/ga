@@ -58,16 +58,16 @@ void armci_mpi2_debug(int rank, const char *format, ...)
 #endif
 
 #if MPI_SPAWN_DEBUG
-static inline int MPI_Check (int status)
+static inline int CHECK_Mpi (int status)
 {
     if(status != MPI_SUCCESS) 
     {
        armci_mpi2_debug(armci_me, "MPI Check failed.\n");
-       armci_die("MPI_Check failed.", 0);
+       armci_die("CHECK_Mpi failed.", 0);
     }
 }
 #else
-# define MPI_Check(x) x
+# define CHECK_Mpi(x) x
 #endif
 
 
@@ -132,14 +132,14 @@ void armci_mpi_strided(int op, void *ptr, int stride_levels, int stride_arr[],
 
         if(op == SEND) 
         {
-           MPI_Check(
+           CHECK_Mpi(
               MPI_Send(((char*)ptr)+idx, count[0], MPI_BYTE, proc,
                        ARMCI_MPI_SPAWN_DATA_TAG, comm)
               );
         }
         else /* ( op == RECV) */
         {
-           MPI_Check(
+           CHECK_Mpi(
               MPI_Recv(((char*)ptr)+idx, count[0], MPI_BYTE, proc,
                        ARMCI_MPI_SPAWN_DATA_TAG, comm, &status)
               );
@@ -167,19 +167,19 @@ void armci_mpi_strided2(int op, void *ptr, int stride_levels, int stride_arr[],
     for(i=1; i<=stride_levels; i++) 
     {
        stride *= stride_arr[i-1];
-       MPI_Check( MPI_Type_hvector(count[i], count[i-1], stride,
+       CHECK_Mpi( MPI_Type_hvector(count[i], count[i-1], stride,
                                   type[i-1], &type[i]) );
     }
-    MPI_Check( MPI_Type_commit(&type[stride_levels]) );
+    CHECK_Mpi( MPI_Type_commit(&type[stride_levels]) );
     
     if(op == SEND) 
     {
-       MPI_Check( MPI_Send(ptr, 1, type[stride_levels], proc,
+       CHECK_Mpi( MPI_Send(ptr, 1, type[stride_levels], proc,
                            ARMCI_MPI_SPAWN_VDATA_TAG, comm) );
     }
     else /* ( op == RECV) */
     {
-       MPI_Check( MPI_Recv(ptr, 1, type[stride_levels], proc,
+       CHECK_Mpi( MPI_Recv(ptr, 1, type[stride_levels], proc,
                            ARMCI_MPI_SPAWN_VDATA_TAG, comm, &status) );
     }
 }
@@ -205,7 +205,7 @@ int armci_send_req_msg (int proc, void *buf, int bytes)
    * ARMCI's ordering semantics.
    */
   ((request_header_t*)buf)->tag = _armci_mpi_tag[server];
-  MPI_Check(
+  CHECK_Mpi(
      MPI_Send(buf, bytes, MPI_BYTE, server, ARMCI_MPI_SPAWN_TAG,
               MPI_COMM_CLIENT2SERVER)
      );
@@ -215,7 +215,7 @@ int armci_send_req_msg (int proc, void *buf, int bytes)
      _armci_mpi_tag[server] = ARMCI_MPI_SPAWN_TAG_BEGIN;
   
 #else
-  MPI_Check(
+  CHECK_Mpi(
      MPI_Send(buf, bytes, MPI_BYTE, server, ARMCI_MPI_SPAWN_TAG,
               MPI_COMM_CLIENT2SERVER)
      );
@@ -281,7 +281,7 @@ char *armci_ReadFromDirect (int proc, request_header_t *msginfo, int len)
     if( !(server >= 0 && server < armci_nserver) )
        armci_die("armci_ReadFromDirect: Invalid server.", 0);
     
-    MPI_Check(
+    CHECK_Mpi(
        MPI_Recv(msginfo + 1, len, MPI_BYTE, server, ARMCI_MPI_SPAWN_TAG,
                 MPI_COMM_CLIENT2SERVER, &status)
        );
@@ -361,7 +361,7 @@ static void armci_gather_hostnames(char **hostname_arr)
     
     
     MPI_Get_processor_name(hostname, &namelen);
-    MPI_Check(
+    CHECK_Mpi(
        MPI_Allgather(hostname,  MPI_MAX_PROCESSOR_NAME, MPI_CHAR,
                      hostnames, MPI_MAX_PROCESSOR_NAME, MPI_CHAR,
                      ARMCI_COMM_WORLD)
@@ -376,7 +376,7 @@ static void armci_gather_hostnames(char **hostname_arr)
        is_master = 0;
     }
 
-    MPI_Check(MPI_Allgather(&is_master, 1, MPI_INT, master_arr, 1, MPI_INT,
+    CHECK_Mpi(MPI_Allgather(&is_master, 1, MPI_INT, master_arr, 1, MPI_INT,
                             ARMCI_COMM_WORLD));
 
     {
@@ -475,7 +475,7 @@ static void armci_mpi2_spawn()
      * 3. MPI_Comm_spawn_multiple(): This is a collective call.
      * Intercommunicator "ds_intercomm" contains only new dataserver processes.
      */
-    MPI_Check(
+    CHECK_Mpi(
        MPI_Comm_spawn_multiple(armci_nserver, command_arr, MPI_ARGVS_NULL,
                                size_arr, info_arr, ARMCI_ROOT, ARMCI_COMM_WORLD,
                                &MPI_COMM_CLIENT2SERVER, MPI_ERRCODES_IGNORE)
