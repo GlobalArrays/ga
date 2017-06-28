@@ -2440,7 +2440,7 @@ int comex_nbaccs(
       int nvar = bufsize/sizeof(int);
       buf = (int*)packbuf;
       for (i=0; i<nvar; i++) buf[i] = iscale*buf[i];
-      count[0] = count[0]/sizeof(int);
+      new_count[0] = new_count[0]/sizeof(int);
       strided_to_subarray_dtype(new_strides, new_count, stride_levels,
           MPI_INT, &src_type);
       strided_to_subarray_dtype(dst_stride, new_count, stride_levels,
@@ -2451,7 +2451,7 @@ int comex_nbaccs(
       int nvar = bufsize/sizeof(long);
       buf = (long*)packbuf;
       for (i=0; i<nvar; i++) buf[i] = lscale*buf[i];
-      count[0] = count[0]/sizeof(long);
+      new_count[0] = new_count[0]/sizeof(long);
       strided_to_subarray_dtype(new_strides, new_count, stride_levels,
           MPI_LONG, &src_type);
       strided_to_subarray_dtype(dst_stride, new_count, stride_levels,
@@ -2462,7 +2462,7 @@ int comex_nbaccs(
       int nvar = bufsize/sizeof(float);
       buf = (float*)packbuf;
       for (i=0; i<nvar; i++) buf[i] = fscale*buf[i];
-      count[0] = count[0]/sizeof(float);
+      new_count[0] = new_count[0]/sizeof(float);
       strided_to_subarray_dtype(new_strides, new_count, stride_levels,
           MPI_FLOAT, &src_type);
       strided_to_subarray_dtype(dst_stride, new_count, stride_levels,
@@ -2473,7 +2473,7 @@ int comex_nbaccs(
       int nvar = bufsize/sizeof(double);
       buf = (double*)packbuf;
       for (i=0; i<nvar; i++) buf[i] = dscale*buf[i];
-      count[0] = count[0]/sizeof(double);
+      new_count[0] = new_count[0]/sizeof(double);
       strided_to_subarray_dtype(new_strides, new_count, stride_levels,
           MPI_DOUBLE, &src_type);
       strided_to_subarray_dtype(dst_stride, new_count, stride_levels,
@@ -2488,7 +2488,7 @@ int comex_nbaccs(
         buf[2*i] = crscale*buf[2*i]-ciscale*buf[2*i+1];
         buf[2*i+1] = ciscale*buf[2*i]+crscale*buf[2*i+1];
       }
-      count[0] = count[0]/sizeof(float);
+      new_count[0] = new_count[0]/sizeof(float);
       strided_to_subarray_dtype(new_strides, new_count, stride_levels,
           MPI_FLOAT, &src_type);
       strided_to_subarray_dtype(dst_stride, new_count, stride_levels,
@@ -2503,7 +2503,7 @@ int comex_nbaccs(
         buf[2*i] = crscale*buf[2*i]-ciscale*buf[2*i+1];
         buf[2*i+1] = ciscale*buf[2*i]+crscale*buf[2*i+1];
       }
-      count[0] = count[0]/sizeof(double);
+      new_count[0] = new_count[0]/sizeof(double);
       strided_to_subarray_dtype(new_strides, new_count, stride_levels,
           MPI_DOUBLE, &src_type);
       strided_to_subarray_dtype(dst_stride, new_count, stride_levels,
