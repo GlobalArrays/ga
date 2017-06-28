@@ -28,8 +28,6 @@ extern ARMCI_Group* ga_get_armci_group_(int);
 #endif
 
 /* work arrays used in all routines */
-static Integer dims[MAXDIM], ld[MAXDIM-1];
-static Integer lo[MAXDIM],hi[MAXDIM];
 static Integer one_arr[MAXDIM]={1,1,1,1,1,1,1};
 
 #define GET_ELEMS(ndim,lo,hi,ld,pelems){\
@@ -172,73 +170,6 @@ void pnga_zero(Integer g_a)
 }
 
 
-
-#if 0
-/*\ COPY ONE GLOBAL ARRAY INTO ANOTHER
-\*/
-static void snga_copy_old(Integer g_a, Integer g_b)
-{
-Integer  ndim, ndimb, type, typeb, me, elems=0, elemsb=0;
-Integer dimsb[MAXDIM];
-Integer _dims[MAXDIM];
-Integer _ld[MAXDIM-1];
-Integer _lo[MAXDIM];
-Integer _hi[MAXDIM];
-void *ptr_a, *ptr_b;
-
-   me = pnga_nodeid();
-
-   GA_PUSH_NAME("ga_copy");
-
-   if(g_a == g_b) pnga_error("arrays have to be different ", 0L);
-
-   pnga_inquire(g_a,  &type, &ndim, _dims);
-   pnga_inquire(g_b,  &typeb, &ndimb, dimsb);
-
-   if(type != typeb) pnga_error("types not the same", g_b);
-
-   if(!pnga_compare_distr(g_a,g_b))
-
-      pnga_copy_patch("n",g_a, one_arr, _dims, g_b, one_arr, dimsb);
-
-   else {
-
-     pnga_sync();
-
-     pnga_distribution(g_a, me, _lo, _hi);
-     if(_lo[0]>0){
-        pnga_access_ptr(g_a, _lo, _hi, &ptr_a, _ld);
-        if (pnga_has_ghosts(g_a)) {
-          GET_ELEMS_W_GHOSTS(ndim,_lo,_hi,_ld,&elems);
-        } else {
-          GET_ELEMS(ndim,_lo,_hi,_ld,&elems);
-        }
-     }
-
-     pnga_distribution(g_b, me, _lo, _hi);
-     if(_lo[0]>0){
-        pnga_access_ptr(g_b, _lo, _hi, &ptr_b, _ld);
-        if (pnga_has_ghosts(g_b)) {
-          GET_ELEMS_W_GHOSTS(ndim,_lo,_hi,_ld,&elems);
-        } else {
-          GET_ELEMS(ndim,_lo,_hi,_ld,&elems);
-        }
-     }
-  
-     if(elems!= elemsb)pnga_error("inconsistent number of elements",elems-elemsb);
-
-     if(elems>0){
-        ARMCI_Copy(ptr_a, ptr_b, (int)elems*GAsizeofM(type));
-        pnga_release(g_a,_lo,_hi);
-        pnga_release(g_b,_lo,_hi);
-     }
-
-     pnga_sync();
-   }
-
-   GA_POP_NAME;
-}
-#endif
 
 
 
@@ -976,7 +907,7 @@ int local_sync_begin,local_sync_end;
 static 
 void snga_local_transpose(Integer type, char *ptra, Integer n, Integer stride, char *ptrb)
 {
-int i;
+Integer i;
     switch(type){
 
        case C_INT:
