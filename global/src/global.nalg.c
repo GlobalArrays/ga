@@ -72,7 +72,6 @@ void pnga_zero(Integer g_a)
   me = pnga_pgroup_nodeid(p_handle);
 
   pnga_check_handle(g_a, "ga_zero");
-  GA_PUSH_NAME("ga_zero");
 
   num_blocks = pnga_total_blocks(g_a);
 
@@ -166,7 +165,6 @@ void pnga_zero(Integer g_a)
     pnga_release_update_block_segment(g_a, me);
   }
   if(local_sync_end)pnga_pgroup_sync(p_handle);
-  GA_POP_NAME;
 }
 
 
@@ -188,7 +186,6 @@ Integer blocks[MAXDIM], block_dims[MAXDIM];
 void *ptr_a, *ptr_b;
 int local_sync_begin,local_sync_end,use_put;
 
-   GA_PUSH_NAME("ga_copy");
 
    Integer _dims[MAXDIM];
    Integer _ld[MAXDIM-1];
@@ -366,7 +363,6 @@ int local_sync_begin,local_sync_end,use_put;
        pnga_pgroup_sync(b_grp);
      }
    }
-   GA_POP_NAME;
 }
 
 
@@ -400,7 +396,6 @@ Integer bndim, bdims[MAXDIM];
 
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 
-   GA_PUSH_NAME("ga_dot");
    a_grp = pnga_get_pgroup(g_a);
    b_grp = pnga_get_pgroup(g_b);
    if (a_grp != b_grp)
@@ -415,7 +410,6 @@ Integer bndim, bdims[MAXDIM];
      pnga_inquire(g_b, &type, &bndim, bdims);
      pnga_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
          value);
-     GA_POP_NAME;
      return;
    }
 
@@ -428,7 +422,6 @@ Integer bndim, bdims[MAXDIM];
        pnga_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
                       value);
        
-       GA_POP_NAME;
        return;
    }
    
@@ -576,7 +569,6 @@ Integer bndim, bdims[MAXDIM];
      }
    }
     
-   GA_POP_NAME;
 
 }
 
@@ -604,7 +596,6 @@ void pnga_scale(Integer g_a, void* alpha)
   me = pnga_pgroup_nodeid(grp_id);
 
   pnga_check_handle(g_a, "ga_scale");
-  GA_PUSH_NAME("ga_scale");
   num_blocks = pnga_total_blocks(g_a);
 
   pnga_inquire(g_a, &type, &ndim, _dims);
@@ -725,7 +716,6 @@ void pnga_scale(Integer g_a, void* alpha)
     /* release access to the data */
     pnga_release_update_block_segment(g_a, me);
   }
-  GA_POP_NAME;
   if(local_sync_end)pnga_pgroup_sync(grp_id); 
 }
 
@@ -752,7 +742,6 @@ int local_sync_begin,local_sync_end;
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 
-   GA_PUSH_NAME("ga_add");
    a_grp = pnga_get_pgroup(g_a);
    b_grp = pnga_get_pgroup(g_b);
    c_grp = pnga_get_pgroup(g_c);
@@ -775,7 +764,6 @@ int local_sync_begin,local_sync_end;
        pnga_add_patch(alpha, g_a, one_arr, adims, beta, g_b, one_arr, bdims,
                       g_c, one_arr, cdims);
        
-       GA_POP_NAME;
        return;
    }
 
@@ -899,7 +887,6 @@ int local_sync_begin,local_sync_end;
    }
 
 
-   GA_POP_NAME;
    if(local_sync_end)pnga_pgroup_sync(a_grp);
 }
 
@@ -957,7 +944,6 @@ int local_sync_begin,local_sync_end;
 Integer num_blocks_a;
 char *ptr_tmp, *ptr_a;
 
-    GA_PUSH_NAME("ga_transpose");
     
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -1096,5 +1082,4 @@ char *ptr_tmp, *ptr_a;
     }
 
     if(local_sync_end)pnga_sync();
-    GA_POP_NAME;
 }

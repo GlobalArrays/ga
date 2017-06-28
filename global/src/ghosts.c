@@ -108,7 +108,6 @@ Integer  i, lo[MAXDIM], hi[MAXDIM];
 Integer ndim = GA[handle].ndim;
 Integer me = pnga_nodeid();
 
-   GA_PUSH_NAME("pnga_access_ghost_ptr");
 
    pnga_distribution(g_a, me, lo, hi);
 
@@ -120,7 +119,6 @@ Integer me = pnga_nodeid();
    *(char**)ptr = lptr; 
    for (i=0; i < ndim; i++)
      dims[i] = hi[i] - lo[i] + 1 + 2*(Integer)GA[handle].width[i];
-   GA_POP_NAME;
 }
 
 /*\  PROVIDE INDEX TO LOCALLY HELD DATA, ACCOUNTING FOR
@@ -139,7 +137,6 @@ Integer tmp_sub[MAXDIM];
 unsigned long    elemsize=0;
 unsigned long    lref=0, lptr=0;
 Integer me = pnga_nodeid();
-   GA_PUSH_NAME("nga_access_ghost_element");
    /* Indices conform to Fortran convention. Shift them down 1 so that
       gam_LocationWithGhosts works. */
    for (i=0; i<GA[handle].ndim; i++) tmp_sub[i] = subscript[i] - 1;
@@ -197,7 +194,6 @@ Integer me = pnga_nodeid();
    (*index) ++ ;
 
    FLUSH_CACHE;
-   GA_POP_NAME;
 }
 
 /*\  PROVIDE POINTER TO LOCALLY HELD DATA, ACCOUNTING FOR 
@@ -214,14 +210,12 @@ void pnga_access_ghost_element_ptr(Integer g_a, void *ptr,
   Integer i; 
   Integer tmp_sub[MAXDIM]; 
   Integer me = pnga_nodeid(); 
-  GA_PUSH_NAME("nga_access_ghost_element_ptr"); 
   /* Indices conform to Fortran convention. Shift them down 1 so that 
      gam_LocationWithGhosts works. */ 
   for (i=0; i<GA[handle].ndim; i++) tmp_sub[i] = subscript[i] - 1; 
   gam_LocationWithGhosts(me, handle, tmp_sub, &lptr, ld); 
  
   *(char**)ptr = lptr; 
-  GA_POP_NAME; 
 } 
  
 /*\ PROVIDE ACCESS TO LOCAL PATCH OF A GLOBAL ARRAY WITH GHOST CELLS
@@ -237,7 +231,6 @@ Integer  handle = GA_OFFSET + g_a;
 unsigned long    elemsize=0;
 unsigned long    lref=0, lptr=0;
 
-   GA_PUSH_NAME("nga_access_ghosts");
    pnga_access_ghost_ptr(g_a, dims, &ptr, ld);
 
    /*
@@ -294,7 +287,6 @@ unsigned long    lref=0, lptr=0;
    (*index) ++ ;
    FLUSH_CACHE;
 
-   GA_POP_NAME;
 }
 
 /*\ RELEASE ACCESS TO A GHOST ELEMENT
@@ -504,7 +496,6 @@ void pnga_update1_ghosts(Integer g_a)
   /* if global array has no ghost cells, just return */
   if (!pnga_has_ghosts(g_a)) return;
 
-  GA_PUSH_NAME("ga_update1_ghosts");
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -783,7 +774,6 @@ void pnga_update1_ghosts(Integer g_a)
       increment[idx] = 2*nwidth;
   }
 
-  GA_POP_NAME;
 }
 
 /*\ UTILITY FUNCTION TO MAKE SURE GHOST CELLS WIDTHS ARE
@@ -856,7 +846,6 @@ logical pnga_update2_ghosts(Integer g_a)
      the corresponding value in width[]). */
   if (!gai_check_ghost_distr(g_a)) return FALSE;
 
-  GA_PUSH_NAME("ga_update2_ghosts");
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[me];
   /* obtain range of data that is held by local processor */
@@ -975,7 +964,6 @@ logical pnga_update2_ghosts(Integer g_a)
   }
 
   ARMCI_WaitAll();
-  GA_POP_NAME;
   return TRUE;
 }
 
@@ -1150,7 +1138,6 @@ logical pnga_update3_ghosts(Integer g_a)
      than the corresponding value in width[]. */
   if (!gai_check_ghost_distr(g_a)) return FALSE;
 
-  GA_PUSH_NAME("ga_update3_ghosts");
 
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[me];
@@ -1285,7 +1272,6 @@ logical pnga_update3_ghosts(Integer g_a)
     increment[idx] = 2*nwidth;
   }
 
-  GA_POP_NAME;
   return TRUE;
 }
 
@@ -1724,7 +1710,6 @@ logical pnga_update4_ghosts(Integer g_a)
     width[i] = (Integer)GA[handle].width[i];
   }
 
-  GA_PUSH_NAME("ga_update4_ghosts");
   msgcnt = 0;
 
   /* Get indices of processor in virtual grid */
@@ -1920,7 +1905,6 @@ logical pnga_update4_ghosts(Integer g_a)
 
   ga_free(rcv_ptr_orig);
   ga_free(snd_ptr_orig);
-  GA_POP_NAME;
   return TRUE;
 }
 
@@ -2023,7 +2007,6 @@ logical pnga_update44_ghosts(Integer g_a)
      than the corresponding value in width[]. */
   if (!gai_check_ghost_distr(g_a)) return FALSE;
 
-  GA_PUSH_NAME("ga_update4_ghosts");
   msgcnt = 0;
 
   /* obtain range of data that is held by local processor */
@@ -2405,7 +2388,6 @@ logical pnga_update44_ghosts(Integer g_a)
 
   ga_free(rcv_ptr_orig);
   ga_free(snd_ptr_orig);
-  GA_POP_NAME;
   return TRUE;
 }
 
@@ -2557,7 +2539,6 @@ logical pnga_update55_ghosts(Integer g_a)
      than the corresponding value in width[]. */
   if (!gai_check_ghost_distr(g_a)) return FALSE;
 
-  GA_PUSH_NAME("ga_update55_ghosts");
 
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[GAme];
@@ -2723,7 +2704,6 @@ logical pnga_update55_ghosts(Integer g_a)
     GA_Update_Flags[GAme][idx] = 0;
   }
 
-  GA_POP_NAME;
   return TRUE;
 }
 
@@ -2773,7 +2753,6 @@ void pnga_update_ghosts_nb(Integer g_a, Integer *nbhandle)
   /* Create non-blocking handle */
   ga_init_nbhandle(nbhandle);
 
-  GA_PUSH_NAME("ga_update_ghosts_nb");
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[me];
   /* obtain range of data that is held by local processor */
@@ -2883,7 +2862,6 @@ void pnga_update_ghosts_nb(Integer g_a, Integer *nbhandle)
         (armci_hdl_t*)get_armci_nbhandle(nbhandle));
   }
 
-  GA_POP_NAME;
   return;
 }
 
@@ -2954,7 +2932,6 @@ logical pnga_update_ghost_dir(Integer g_a,    /* GA handle */
     }
   }
 
-  GA_PUSH_NAME("nga_update_ghost_dir");
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[GAme];
   /* obtain range of data that is held by local processor */
@@ -3067,7 +3044,6 @@ logical pnga_update_ghost_dir(Integer g_a,    /* GA handle */
           (int)(ndim - 1), (int)proc_rem);
   }
 
-  GA_POP_NAME;
   if(local_sync_end)pnga_pgroup_sync(p_handle);
   return TRUE;
 }
@@ -3149,7 +3125,6 @@ logical pnga_update5_ghosts(Integer g_a)
 
   if (!gai_check_ghost_distr(g_a)) return FALSE;
 
-  GA_PUSH_NAME("pnga_update5_ghosts");
 
   /* loop over dimensions for sequential update using shift algorithm */
   msgcnt = 0;
@@ -3243,7 +3218,6 @@ logical pnga_update5_ghosts(Integer g_a)
     }
   }
 #endif 
-  GA_POP_NAME;
   if(local_sync_end)pnga_pgroup_sync(p_handle);
   return TRUE;
 }
@@ -3637,7 +3611,6 @@ logical pnga_update6_ghosts(Integer g_a)
      than the corresponding value in width[]. */
   if (!gai_check_ghost_distr(g_a)) return FALSE;
 
-  GA_PUSH_NAME("ga_update6_ghosts");
   msgcnt = 0;
 
   /* Get pointer to local memory */
@@ -4068,7 +4041,6 @@ logical pnga_update6_ghosts(Integer g_a)
     GA_Update_Flags[GAme][idx] = 0;
   }
 
-  GA_POP_NAME;
   return TRUE;
 }
 
@@ -4113,7 +4085,6 @@ logical pnga_update7_ghosts(Integer g_a)
      the corresponding value in width[]). */
   if (!gai_check_ghost_distr(g_a)) return FALSE;
 
-  GA_PUSH_NAME("ga_update7_ghosts");
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[me];
   /* obtain range of data that is held by local processor */
@@ -4226,7 +4197,6 @@ logical pnga_update7_ghosts(Integer g_a)
   }
 
   ARMCI_WaitAll();
-  GA_POP_NAME;
   return TRUE;
 }
 
@@ -4254,7 +4224,6 @@ void pnga_nbget_ghost_dir(Integer g_a,
   char *ptr_loc;
   Integer me = pnga_nodeid();
   /*Integer p_handle;*/
-  GA_PUSH_NAME("nga_nbget_ghost_dir");
   ndim = GA[handle].ndim;
   /*p_handle = GA[handle].p_handle;*/
   /* check mask to see that it corresponds to a valid direction */
@@ -4307,7 +4276,6 @@ void pnga_nbget_ghost_dir(Integer g_a,
   gam_LocationWithGhosts(me, handle, subscript, &ptr_loc, ld);
   /* get data */
   pnga_nbget(g_a,lo_rem,hi_rem,ptr_loc,ld,nbhandle);  
-  GA_POP_NAME;
 }
 
 /*\ SET PRECOMPUTED INFO FOR UPDATING GHOST CELLS

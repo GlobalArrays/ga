@@ -613,7 +613,7 @@ void ngai_put_common(Integer g_a,
   int _stride_rem[MAXDIM+1], _stride_loc[MAXDIM+1], _count[MAXDIM+1];
   int *stride_rem=&_stride_rem[1], *stride_loc=&_stride_loc[1], *count=&_count[1];
 
-  GA_PUSH_NAME("ngai_put_common");
+ 
 
   ga_check_handleM(g_a, "ngai_put_common");
 
@@ -1094,7 +1094,6 @@ void ngai_put_common(Integer g_a,
 #endif
   }
 
-  GA_POP_NAME;
 #ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
@@ -1356,7 +1355,6 @@ void ngai_get_common(Integer g_a,
   int _stride_rem[MAXDIM+1], _stride_loc[MAXDIM+1], _count[MAXDIM+1];
   int *stride_rem=&_stride_rem[1], *stride_loc=&_stride_loc[1], *count=&_count[1];
 
-  GA_PUSH_NAME("nga_get_common");
 
   ga_check_handleM(g_a, "nga_get_common");
 
@@ -1839,7 +1837,6 @@ void ngai_get_common(Integer g_a,
 #endif
   }
 
-  GA_POP_NAME;
 #ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
@@ -1921,7 +1918,7 @@ void ngai_acc_common(Integer g_a,
   Integer *rank_rstrctd;
 
 
-  GA_PUSH_NAME("nga_acc_common");
+  
 
   ga_check_handleM(g_a, "nga_acc_common");
 
@@ -2370,7 +2367,6 @@ void ngai_acc_common(Integer g_a,
 #endif
   }
 
-  GA_POP_NAME;
 #ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
@@ -2428,7 +2424,7 @@ char *lptr;
 Integer  handle = GA_OFFSET + g_a;
 Integer  ow,i,p_handle;
 
-   GA_PUSH_NAME("nga_access_ptr");
+   
    p_handle = GA[handle].p_handle;
    if (!pnga_locate(g_a,lo,&ow)) pnga_error("locate top failed",0);
    if (p_handle != -1)
@@ -2454,7 +2450,6 @@ Integer  ow,i,p_handle;
    }
    gam_Location(ow,handle, lo, &lptr, ld);
    *(char**)ptr = lptr; 
-   GA_POP_NAME;
 }
 
 /*\ RETURN A POINTER TO BEGINNING OF LOCAL DATA BLOCK
@@ -2487,7 +2482,7 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   Integer ldims[MAXDIM];
 #endif
 
-  GA_PUSH_NAME("nga_access_block_grid_ptr");
+  
   /*p_handle = GA[handle].p_handle;*/
   if (!GA[handle].block_sl_flag) {
     pnga_error("Array is not using ScaLAPACK data distribution",0);
@@ -2605,7 +2600,6 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   lptr = GA[handle].ptr[inode]+offset*GA[handle].elemsize;
 
   *(char**)ptr = lptr; 
-  GA_POP_NAME;
 }
 
 /**
@@ -2628,7 +2622,7 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
   Integer  i, j/*, p_handle*/, nblocks, offset, tsum, inode;
   Integer ndim, lo[MAXDIM], hi[MAXDIM], index;
 
-  GA_PUSH_NAME("nga_access_block_ptr");
+  
   /*p_handle = GA[handle].p_handle;*/
   nblocks = GA[handle].block_total;
   ndim = GA[handle].ndim;
@@ -2662,7 +2656,6 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
   }
   *(char**)ptr = lptr; 
 
-  GA_POP_NAME;
 }
 
 /**
@@ -2685,7 +2678,7 @@ void pnga_access_block_segment_ptr(Integer g_a, Integer proc, void* ptr, Integer
   /*Integer  p_handle, nblocks;*/
   Integer /*ndim,*/ index;
 
-  GA_PUSH_NAME("ga_access_block_segment_ptr");
+  
   /*p_handle = GA[handle].p_handle;*/
   /*nblocks = GA[handle].block_total;*/
   /*ndim = GA[handle].ndim;*/
@@ -2699,7 +2692,6 @@ void pnga_access_block_segment_ptr(Integer g_a, Integer proc, void* ptr, Integer
 
   *len = GA[handle].size/GA[handle].elemsize;
   *(char**)ptr = lptr; 
-  GA_POP_NAME;
 }
 
 /**
@@ -2718,7 +2710,7 @@ Integer  ow,i,p_handle;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
-   GA_PUSH_NAME("nga_access");
+   
    p_handle = GA[handle].p_handle;
    if(!pnga_locate(g_a,lo,&ow))pnga_error("locate top failed",0);
    if (p_handle != -1)
@@ -2795,7 +2787,6 @@ unsigned long    lref=0, lptr;
    (*index) ++ ;
    FLUSH_CACHE;
 
-   GA_POP_NAME;
 }
 
 /*\ PROVIDE ACCESS TO AN INDIVIDUAL DATA BLOCK OF A GLOBAL ARRAY
@@ -2812,7 +2803,7 @@ Integer  /*p_handle,*/ iblock;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
-   GA_PUSH_NAME("nga_access_block");
+   
    /*p_handle = GA[handle].p_handle;*/
    iblock = idx;
    if (iblock < 0 || iblock >= GA[handle].block_total)
@@ -2872,7 +2863,6 @@ unsigned long    lref=0, lptr;
    (*index) ++ ;
    FLUSH_CACHE;
 
-   GA_POP_NAME;
 }
 
 /**
@@ -2892,7 +2882,7 @@ Integer  i,ndim/*,p_handle*/;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
-   GA_PUSH_NAME("nga_access_block_grid");
+   
    /*p_handle = GA[handle].p_handle;*/
    ndim = GA[handle].ndim;
    for (i=0; i<ndim; i++) 
@@ -2953,7 +2943,6 @@ unsigned long    lref=0, lptr;
    (*index) ++ ;
    FLUSH_CACHE;
 
-   GA_POP_NAME;
 }
 
 /*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
@@ -2971,7 +2960,7 @@ Integer  handle = GA_OFFSET + g_a;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
-   GA_PUSH_NAME("nga_access_block_segment");
+   
    /*p_handle = GA[handle].p_handle;*/
 
    /*
@@ -3028,7 +3017,6 @@ unsigned long    lref=0, lptr;
    (*index) ++ ;
    FLUSH_CACHE;
 
-   GA_POP_NAME;
 }
 
 /**
@@ -3137,7 +3125,7 @@ int use_blocks;
 
   if (nv < 1) return;
 
-  GA_PUSH_NAME("ga_scatter_local");
+  
   handle = GA_OFFSET + g_a;
   p_handle = GA[handle].p_handle;
   use_blocks = GA[handle].block_flag;
@@ -3223,7 +3211,6 @@ int use_blocks;
 
   gai_free(ptr_src);
 
-  GA_POP_NAME;
 }
 
 /**
@@ -3263,7 +3250,7 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
     if (nv < 1) return;
     
     ga_check_handleM(g_a, "ga_scatter");
-    GA_PUSH_NAME("ga_scatter");
+    
     GAstat.numsca++;
     /* determine how many processors are associated with array */
     p_handle = GA[handle].p_handle;
@@ -3496,7 +3483,6 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
     gai_free(buf2);
     gai_free(buf1);
 
-    GA_POP_NAME;
 }
 
 /**
@@ -3520,7 +3506,7 @@ Integer subscrpt[2];
   if (nv < 1) return;
 
   ga_check_handleM(g_a, "ga_scatter_acc");
-  GA_PUSH_NAME("ga_scatter_acc");
+  
   GAstat.numsca++;
 
   int_ptr = (Integer*) ga_malloc(nv, MT_F_INT, "ga_scatter_acc--p");
@@ -3568,7 +3554,6 @@ Integer subscrpt[2];
 
   ga_free(int_ptr);
 
-  GA_POP_NAME;
 }
 
 #define SCATTER -99
@@ -3598,7 +3583,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
     int use_blocks;
     Integer num_blocks=0;
     
-    GA_PUSH_NAME("gai_gatscat");
+    
 
     proc=(Integer *)ga_malloc(nv, MT_F_INT, "ga_gat-p");
 
@@ -4089,7 +4074,6 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
     gai_free(buf2); gai_free(buf1);
     
     ga_free(proc);
-    GA_POP_NAME;
 }
 
 /**
@@ -4157,7 +4141,7 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
     int *nblock;
     armci_giov_t desc;
 
-    GA_PUSH_NAME("gai_gatscat_new");
+    
 
     me = pnga_nodeid();
     num_rstrctd = GA[handle].num_rstrctd;
@@ -4348,7 +4332,6 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
       ga_free(header);
     }
 
-    GA_POP_NAME;
 }
 
 /**
@@ -4363,7 +4346,7 @@ void pnga_gather(Integer g_a, void* v, void *subscript, Integer c_flag, Integer 
 
   if (nv < 1) return;
   ga_check_handleM(g_a, "nga_gather");
-  GA_PUSH_NAME("nga_gather");
+  
   GAstat.numgat++;
 
 #ifdef USE_GATSCAT_NEW
@@ -4372,7 +4355,6 @@ void pnga_gather(Integer g_a, void* v, void *subscript, Integer c_flag, Integer 
   gai_gatscat(GATHER,g_a,v,subscript,nv,&GAbytes.gattot,&GAbytes.gatloc, NULL);
 #endif
 
-  GA_POP_NAME;
 }
 
 /**
@@ -4388,7 +4370,7 @@ void pnga_scatter(Integer g_a, void* v, void *subscript, Integer c_flag, Integer
 
   if (nv < 1) return;
   ga_check_handleM(g_a, "nga_scatter");
-  GA_PUSH_NAME("nga_scatter");
+  
   GAstat.numsca++;
 
 #ifdef USE_GATSCAT_NEW
@@ -4397,7 +4379,6 @@ void pnga_scatter(Integer g_a, void* v, void *subscript, Integer c_flag, Integer
   gai_gatscat(SCATTER,g_a,v,subscript,nv,&GAbytes.scatot,&GAbytes.scaloc, NULL);
 #endif
 
-  GA_POP_NAME;
 }
 
 /**
@@ -4414,7 +4395,7 @@ void pnga_scatter_acc(Integer g_a, void* v, void *subscript, Integer c_flag,
 
   if (nv < 1) return;
   ga_check_handleM(g_a, "nga_scatter_acc");
-  GA_PUSH_NAME("nga_scatter_acc");
+  
   GAstat.numsca++;
 
 #ifdef USE_GATSCAT_NEW
@@ -4425,7 +4406,6 @@ void pnga_scatter_acc(Integer g_a, void* v, void *subscript, Integer c_flag,
               &GAbytes.scaloc, alpha);
 #endif
 
-  GA_POP_NAME;
 }
 
 #if 000
@@ -4499,7 +4479,7 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
     if (nv < 1) return;
 
     ga_check_handleM(g_a, "ga_gather");
-    GA_PUSH_NAME("ga_gather");
+    
     GAstat.numgat++;
 
     /* determine how many processors are associated with array */
@@ -4730,7 +4710,6 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
 
     gai_free(buf2);
     gai_free(buf1);
-    GA_POP_NAME;
 }
 
 /**
@@ -4750,7 +4729,7 @@ long lvalue;
 void *pval;
 
     ga_check_handleM(g_a, "nga_read_inc");
-    GA_PUSH_NAME("nga_read_inc");
+    
     /* BJP printf("p[%d] g_a: %d subscript: %d inc: %d\n",GAme, g_a, subscript[0], inc); */
 
     if(GA[handle].type!=C_INT && GA[handle].type!=C_LONG &&
@@ -4821,7 +4800,6 @@ void *pval;
 
     ARMCI_Rmw(optype, pval, (int*)ptr, (int)inc, (int)proc);
 
-   GA_POP_NAME;
 
    GA_Internal_Threadsafe_Unlock();
    if(GA[handle].type==C_INT)
@@ -5014,7 +4992,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     }
   }
 
-  GA_PUSH_NAME("nga_strided_put");
+  
 
   if (!use_blocks) {
     /* Locate the processors containing some portion of the patch
@@ -5337,7 +5315,6 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       }
     }
   }
-  GA_POP_NAME;
 }
 
 /**
@@ -5374,7 +5351,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     }
   }
 
-  GA_PUSH_NAME("nga_strided_get");
+ 
 
   if (!use_blocks) {
     /* Locate the processors containing some portion of the patch
@@ -5718,7 +5695,6 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       }
     }
   }
-  GA_POP_NAME;
 }
 
 /**
@@ -5767,7 +5743,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     }
   }
 
-  GA_PUSH_NAME("nga_strided_acc");
+ 
 
   if (!use_blocks) {
     /* Locate the processors containing some portion of the patch
@@ -6093,5 +6069,4 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       }
     }
   }
-  GA_POP_NAME;
 }
