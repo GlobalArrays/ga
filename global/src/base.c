@@ -421,7 +421,6 @@ int bytes;
     GAnproc = (Integer)armci_msg_nproc();
 
     /* Allocate arrays used by library */
-    ProcListPerm = (int*)malloc(GAnproc*sizeof(int));
 #ifdef PERMUTE_PIDS
     ptr_array = (char**)malloc(GAnproc*sizeof(char*));
 #endif
@@ -2924,7 +2923,6 @@ Integer i, handle;
     GA_memory_limited = 0;
     gai_finalize_onesided();
     free(GA_proclist);
-    free(ProcListPerm);
 #ifdef PERMUTE_PIDS
     free(ptr_array);
 #endif
