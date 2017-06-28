@@ -24,7 +24,7 @@
 int trueEverywhere(int flag)
 {
   int tflag, nprocs;
-  if (tflag) tflag = 1;
+  if (flag) tflag = 1;
   else tflag = 0;
   nprocs = GA_Nnodes();
   GA_Igop(&tflag,1,"+");
