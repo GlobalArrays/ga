@@ -1663,8 +1663,6 @@ void nga_vfill_patch(Integer *g_a, Integer *lo, Integer *hi)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)GA_Sync(); 
 
-  GA_PUSH_NAME("nga_vfill_patch");
-
   pnga_inquire(*g_a,  &type, &ndim, dims);
 
   /* get limits of VISIBLE patch */ 
@@ -1782,7 +1780,6 @@ void nga_vfill_patch(Integer *g_a, Integer *lo, Integer *hi)
     /* release access to the data */
     pnga_release_update(*g_a, loA, hiA);
   }
-  GA_POP_NAME;
   if(local_sync_end)GA_Sync();
 }
 /*\ Utility function to actually set positive/negative values
@@ -1912,8 +1909,6 @@ void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi)
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)GA_Sync(); 
-
-  GA_PUSH_NAME("nga_pnfill_patch");
 
   pnga_inquire(*g_a,  &type, &ndim, dims);
 
@@ -2095,7 +2090,6 @@ void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi)
       }
     }
   }
-  GA_POP_NAME;
   if(local_sync_end)GA_Sync();
 }
 

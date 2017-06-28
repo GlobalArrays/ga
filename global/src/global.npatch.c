@@ -1343,6 +1343,348 @@ void pnga_dot_patch(Integer g_a, char *t_a, Integer *alo, Integer *ahi, Integer 
   }
 
   if(temp_created) pnga_destroy(g_B);
+}
+
+
+/*****************************************************************************
+ * ngai_Xdot_patch routines
+ ****************************************************************************/
+
+
+/*\
+ *  Set all values in patch to value stored in *val
+\*/
+static void snga_set_patch_value(
+        Integer type, Integer ndim, Integer *loA, Integer *hiA,
+        Integer *ld, void *data_ptr, void *val)
+{
+  Integer n1dim, i, j, idx;
+  Integer bvalue[MAXDIM], bunit[MAXDIM], baseld[MAXDIM];
+  /* number of n-element of the first dimension */
+  n1dim = 1; for(i=1; i<ndim; i++) n1dim *= (hiA[i] - loA[i] + 1);
+
+  /* calculate the destination indices */
+  bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
+  /* baseld[0] = ld[0]
+   * baseld[1] = ld[0] * ld[1]
+   * baseld[2] = ld[0] * ld[1] * ld[2] .....
+   */
+  baseld[0] = ld[0]; baseld[1] = baseld[0] *ld[1];
+  for(i=2; i<ndim; i++) {
+    bvalue[i] = 0;
+    bunit[i] = bunit[i-1] * (hiA[i-1] - loA[i-1] + 1);
+    baseld[i] = baseld[i-1] * ld[i];
+  }
+
+  switch (type){
+    case C_INT:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseld[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+        }
+        for(j=0; j<(hiA[0]-loA[0]+1); j++)
+          ((int *)data_ptr)[idx+j] = *(int*)val;
+      }
+      break;
+    case C_DCPL:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseld[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+        }
+
+        for(j=0; j<(hiA[0]-loA[0]+1); j++) {
+          DoubleComplex tmp = *(DoubleComplex *)val;
+          ((DoubleComplex *)data_ptr)[idx+j].real = tmp.real;
+          ((DoubleComplex *)data_ptr)[idx+j].imag = tmp.imag;
+        }
+      }
+      break;
+    case C_SCPL:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseld[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+        }
+
+        for(j=0; j<(hiA[0]-loA[0]+1); j++) {
+          SingleComplex tmp = *(SingleComplex *)val;
+          ((SingleComplex *)data_ptr)[idx+j].real = tmp.real;
+          ((SingleComplex *)data_ptr)[idx+j].imag = tmp.imag;
+        }
+      }
+      break;
+    case C_DBL:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseld[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+        }
+
+        for(j=0; j<(hiA[0]-loA[0]+1); j++) 
+          ((double*)data_ptr)[idx+j] =
+            *(double*)val;
+      }
+      break;
+    case C_FLOAT:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseld[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+        }
+        for(j=0; j<(hiA[0]-loA[0]+1); j++)
+          ((float *)data_ptr)[idx+j] = *(float*)val;
+      }
+      break;     
+    case C_LONG:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseld[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+        }
+        for(j=0; j<(hiA[0]-loA[0]+1); j++)
+          ((long *)data_ptr)[idx+j] = *(long*)val;
+      } 
+      break;                          
+    case C_LONGLONG:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseld[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+        }
+        for(j=0; j<(hiA[0]-loA[0]+1); j++)
+          ((long long*)data_ptr)[idx+j] = *(long long*)val;
+      } 
+      break;                          
+    default: pnga_error(" wrong data type ",type);
+  }
+
+}
+
+
+/*\ FILL IN ARRAY WITH VALUE 
+\*/
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_fill_patch = pnga_fill_patch
+#endif
+void pnga_fill_patch(Integer g_a, Integer *lo, Integer *hi, void* val)
+{
+  Integer i;
+  Integer ndim, dims[MAXDIM], type;
+  Integer loA[MAXDIM], hiA[MAXDIM], ld[MAXDIM];
+  void *data_ptr;
+  Integer num_blocks, nproc;
+  Integer me= pnga_nodeid();
+  int local_sync_begin,local_sync_end;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)pnga_sync(); 
+
+
+  pnga_inquire(g_a,  &type, &ndim, dims);
+  num_blocks = pnga_total_blocks(g_a);
+
+  if (num_blocks < 0) {
+    /* get limits of VISIBLE patch */ 
+    pnga_distribution(g_a, me, loA, hiA);
+
+    /*  determine subset of my local patch to access  */
+    /*  Output is in loA and hiA */
+    if(pnga_patch_intersect(lo, hi, loA, hiA, ndim)){
+
+      /* get data_ptr to corner of patch */
+      /* ld are leading dimensions INCLUDING ghost cells */
+      pnga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
+
+      /* set all values in patch to *val */
+      snga_set_patch_value(type, ndim, loA, hiA, ld, data_ptr, val);
+
+      /* release access to the data */
+      pnga_release_update(g_a, loA, hiA);
+    }
+  } else {
+    Integer offset, j, jtmp, chk;
+    Integer loS[MAXDIM];
+    nproc = pnga_nnodes();
+    /* using simple block-cyclic data distribution */
+    if (!pnga_uses_proc_grid(g_a)){
+      for (i=me; i<num_blocks; i += nproc) {
+        /* get limits of patch */ 
+        pnga_distribution(g_a, i, loA, hiA);
+
+        /* loA is changed by pnga_patch_intersect, so
+           save a copy */
+        for (j=0; j<ndim; j++) {
+          loS[j] = loA[j];
+        }
+
+        /*  determine subset of my local patch to access  */
+        /*  Output is in loA and hiA */
+        if(pnga_patch_intersect(lo, hi, loA, hiA, ndim)){
+
+          /* get data_ptr to corner of patch */
+          /* ld are leading dimensions for block */
+          pnga_access_block_ptr(g_a, i, &data_ptr, ld);
+
+          /* Check for partial overlap */
+          chk = 1;
+          for (j=0; j<ndim; j++) {
+            if (loS[j] < loA[j]) {
+              chk=0;
+              break;
+            }
+          }
+          if (!chk) {
+            /* Evaluate additional offset for pointer */
+            offset = 0;
+            jtmp = 1;
+            for (j=0; j<ndim-1; j++) {
+              offset += (loA[j]-loS[j])*jtmp;
+              jtmp *= ld[j];
+            }
+            offset += (loA[ndim-1]-loS[ndim-1])*jtmp;
+            switch (type){
+              case C_INT:
+                data_ptr = (void*)((int*)data_ptr + offset);
+                break;
+              case C_DCPL:
+                data_ptr = (void*)((double*)data_ptr + 2*offset);
+                break;
+              case C_SCPL:
+                data_ptr = (void*)((float*)data_ptr + 2*offset);
+                break;
+              case C_DBL:
+                data_ptr = (void*)((double*)data_ptr + offset);
+                break;
+              case C_FLOAT:
+                data_ptr = (void*)((float*)data_ptr + offset);
+                break;     
+              case C_LONG:
+                data_ptr = (void*)((long*)data_ptr + offset);
+                break;                          
+              case C_LONGLONG:
+                data_ptr = (void*)((long long*)data_ptr + offset);
+                break;                          
+              default: pnga_error(" wrong data type ",type);
+            }
+          }
+
+          /* set all values in patch to *val */
+          snga_set_patch_value(type, ndim, loA, hiA, ld, data_ptr, val);
+
+          /* release access to the data */
+          pnga_release_update_block(g_a, i);
+        }
+      }
+    } else {
+      /* using scalapack block-cyclic data distribution */
+      Integer proc_index[MAXDIM], index[MAXDIM];
+      Integer topology[MAXDIM];
+      Integer blocks[MAXDIM], block_dims[MAXDIM];
+      pnga_get_proc_index(g_a, me, proc_index);
+      pnga_get_proc_index(g_a, me, index);
+      pnga_get_block_info(g_a, blocks, block_dims);
+      pnga_get_proc_grid(g_a, topology);
+      while (index[ndim-1] < blocks[ndim-1]) {
+        /* find bounding coordinates of block */
+        chk = 1;
+        for (i = 0; i < ndim; i++) {
+          loA[i] = index[i]*block_dims[i]+1;
+          hiA[i] = (index[i] + 1)*block_dims[i];
+          if (hiA[i] > dims[i]) hiA[i] = dims[i];
+          if (hiA[i] < loA[i]) chk = 0;
+        }
+
+        /* loA is changed by pnga_patch_intersect, so
+           save a copy */
+        for (j=0; j<ndim; j++) {
+          loS[j] = loA[j];
+        }
+
+        /*  determine subset of my local patch to access  */
+        /*  Output is in loA and hiA */
+        if(pnga_patch_intersect(lo, hi, loA, hiA, ndim)){
+
+          /* get data_ptr to corner of patch */
+          /* ld are leading dimensions for block */
+          pnga_access_block_grid_ptr(g_a, index, &data_ptr, ld);
+
+          /* Check for partial overlap */
+          chk = 1;
+          for (j=0; j<ndim; j++) {
+            if (loS[j] < loA[j]) {
+              chk=0;
+              break;
+            }
+          }
+          if (!chk) {
+            /* Evaluate additional offset for pointer */
+            offset = 0;
+            jtmp = 1;
+            for (j=0; j<ndim-1; j++) {
+              offset += (loA[j]-loS[j])*jtmp;
+              jtmp *= ld[j];
+            }
+            offset += (loA[ndim-1]-loS[ndim-1])*jtmp;
+            switch (type){
+              case C_INT:
+                data_ptr = (void*)((int*)data_ptr + offset);
+                break;
+              case C_DCPL:
+                data_ptr = (void*)((double*)data_ptr + 2*offset);
+                break;
+              case C_SCPL:
+                data_ptr = (void*)((float*)data_ptr + 2*offset);
+                break;
+              case C_DBL:
+                data_ptr = (void*)((double*)data_ptr + offset);
+                break;
+              case C_FLOAT:
+                data_ptr = (void*)((float*)data_ptr + offset);
+                break;     
+              case C_LONG:
+                data_ptr = (void*)((long*)data_ptr + offset);
+                break;                          
+              case C_LONGLONG:
+                data_ptr = (void*)((long long*)data_ptr + offset);
+                break;                          
+              default: pnga_error(" wrong data type ",type);
+            }
+          }
+
+          /* set all values in patch to *val */
+          snga_set_patch_value(type, ndim, loA, hiA, ld, data_ptr, val);
+
+          /* release access to the data */
+          pnga_release_update_block_grid(g_a, index);
+        }
+        /* increment index to get next block on processor */
+        index[0] += topology[0];
+        for (i = 0; i < ndim; i++) {
+          if (index[i] >= blocks[i] && i<ndim-1) {
+            index[i] = proc_index[i];
+            index[i+1] += topology[i+1];
+          }
+        }
+      }
+    }
+  }
   if(local_sync_end)pnga_sync();
 }
 
