@@ -28,8 +28,6 @@ extern ARMCI_Group* ga_get_armci_group_(int);
 #endif
 
 /* work arrays used in all routines */
-static Integer dims[MAXDIM], ld[MAXDIM-1];
-static Integer lo[MAXDIM],hi[MAXDIM];
 static Integer one_arr[MAXDIM]={1,1,1,1,1,1,1};
 
 #define GET_ELEMS(ndim,lo,hi,ld,pelems){\
