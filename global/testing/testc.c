@@ -81,7 +81,7 @@ double buf[N], err, alpha, beta;
 
      if(me==0){ /* node 0 is checking the result */
 
-        NGA_Get(g_a, lo, hi, buf,&ONE);
+        NGA_Get(g_a, lo, hi, buf, &n);
         for(i=0; i<n; i++) if(buf[i] != (double)nproc*i)
            GA_Error("failed: column=",i);
         printf("OK\n\n");
