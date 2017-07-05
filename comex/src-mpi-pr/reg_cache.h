@@ -15,12 +15,12 @@ typedef enum _reg_return_t {
  * A registered contiguous memory region.
  */
 typedef struct _reg_entry_t {
-    int rank;                   /**< rank where this region lives */
+    struct _reg_entry_t *next;  /**< next memory region in list */
     void *buf;                  /**< starting address of region */
     size_t len;                 /**< length of region */
-    char name[SHM_NAME_SIZE];   /**< name of region */
     void *mapped;               /**< starting address of mmap'd region */
-    struct _reg_entry_t *next;  /**< next memory region in list */
+    int rank;                   /**< rank where this region lives */
+    char name[SHM_NAME_SIZE];   /**< name of region */
 } reg_entry_t;
 
 /* functions

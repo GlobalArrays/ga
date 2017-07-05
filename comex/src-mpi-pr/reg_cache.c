@@ -607,12 +607,12 @@ reg_return_t reg_cache_nullify(reg_entry_t *node)
             g_state.rank, node);
 #endif
 
-    node->rank = -1;
+    node->next = NULL;
     node->buf = NULL;
     node->len = 0;
-    (void)memset(node->name, 0, SHM_NAME_SIZE);
     node->mapped = NULL;
-    node->next = NULL;
+    node->rank = -1;
+    (void)memset(node->name, 0, SHM_NAME_SIZE);
 
     return RR_SUCCESS;
 }
