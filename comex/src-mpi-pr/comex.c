@@ -30,14 +30,22 @@
 #define PAUSE_ON_ERROR 0
 #define STATIC static inline
 
+#if USE_MEMSET_AFTER_MALLOC
+#define MAYBE_MEMSET(a,b,c) (void)memset(a,b,c)
+#else
+#define MAYBE_MEMSET(a,b,c) ((void)0)
+#endif
+
 /* data structures */
 
 typedef enum {
     OP_PUT = 0,
     OP_PUT_PACKED,
+    OP_PUT_DATATYPE,
     OP_PUT_IOV,
     OP_GET,
     OP_GET_PACKED,
+    OP_GET_DATATYPE,
     OP_GET_IOV,
     OP_ACC_INT,
     OP_ACC_DBL,
@@ -99,6 +107,7 @@ typedef struct message_link {
     struct message_link *next;
     void *message;
     MPI_Request request;
+    MPI_Datatype datatype;
     int need_free;
     stride_t *stride;
     comex_giov_t *iov;
@@ -173,13 +182,17 @@ STATIC const char *str_mpi_retval(int retval);
 
 /* server fuctions */
 STATIC void server_send(void *buf, int count, int dest);
+STATIC void server_send_datatype(void *buf, MPI_Datatype dt, int dest);
 STATIC void server_recv(void *buf, int count, int source);
+STATIC void server_recv_datatype(void *buf, MPI_Datatype dt, int source);
 STATIC void _progress_server();
 STATIC void _put_handler(header_t *header, int proc);
 STATIC void _put_packed_handler(header_t *header, int proc);
+STATIC void _put_datatype_handler(header_t *header, int proc);
 STATIC void _put_iov_handler(header_t *header, int proc);
 STATIC void _get_handler(header_t *header, int proc);
 STATIC void _get_packed_handler(header_t *header, int proc);
+STATIC void _get_datatype_handler(header_t *header, int proc);
 STATIC void _get_iov_handler(header_t *header, int proc);
 STATIC void _acc_handler(header_t *header, char *scale, int proc);
 STATIC void _acc_packed_handler(header_t *header, int proc);
@@ -196,9 +209,11 @@ STATIC void _free_handler(header_t *header, char *payload, int proc);
 
 /* worker functions */
 STATIC void nb_send_common(void *buf, int count, int dest, nb_t *nb, int need_free);
+STATIC void nb_send_datatype(void *buf, MPI_Datatype dt, int dest, nb_t *nb);
 STATIC void nb_send_header(void *buf, int count, int dest, nb_t *nb);
 STATIC void nb_send_buffer(void *buf, int count, int dest, nb_t *nb);
 STATIC void nb_recv_packed(void *buf, int count, int source, nb_t *nb, stride_t *stride);
+STATIC void nb_recv_datatype(void *buf, MPI_Datatype dt, int source, nb_t *nb);
 STATIC void nb_recv_iov(void *buf, int count, int source, nb_t *nb, comex_giov_t *iov);
 STATIC void nb_recv(void *buf, int count, int source, nb_t *nb);
 STATIC int nb_get_handle_index();
@@ -218,10 +233,18 @@ STATIC void nb_puts(
 STATIC void nb_puts_packed(
         void *src, int *src_stride, void *dst, int *dst_stride,
         int *count, int stride_levels, int proc, nb_t *nb);
+STATIC void nb_puts_datatype(
+        void *src_ptr, int *src_stride_ar,
+        void *dst_ptr, int *dst_stride_ar,
+        int *count, int stride_levels,
+        int proc, nb_t *nb);
 STATIC void nb_gets(
         void *src, int *src_stride, void *dst, int *dst_stride,
         int *count, int stride_levels, int proc, nb_t *nb);
 STATIC void nb_gets_packed(
+        void *src, int *src_stride, void *dst, int *dst_stride,
+        int *count, int stride_levels, int proc, nb_t *nb);
+STATIC void nb_gets_datatype(
         void *src, int *src_stride, void *dst, int *dst_stride,
         int *count, int stride_levels, int proc, nb_t *nb);
 STATIC void nb_accs(
@@ -261,6 +284,8 @@ STATIC void* _shm_create(const char *name, size_t size);
 STATIC void* _shm_attach(const char *name, size_t size);
 STATIC void* _shm_map(int fd, size_t size);
 STATIC int _set_affinity(int cpu);
+STATIC void translate_mpi_error(int ierr, const char* location);
+STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels, MPI_Datatype base_type, MPI_Datatype *type);
 
 
 int comex_init()
@@ -279,6 +304,8 @@ int comex_init()
     CHECK_MPI_RETVAL(status);
     assert(init_flag);
     
+    /*MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);*/
+
     /* env vars */
     {
         char *value = NULL;
@@ -325,7 +352,7 @@ int comex_init()
     _malloc_semaphore();
 
 #if DEBUG
-    printf("[%d] comex_init() before progress server\n", g_state.rank);
+    fprintf(stderr, "[%d] comex_init() before progress server\n", g_state.rank);
 #endif
 
 #if PAUSE_ON_ERROR
@@ -360,7 +387,7 @@ int comex_init()
     }
 
 #if DEBUG
-    printf("[%d] comex_init() before barrier\n", g_state.rank);
+    fprintf(stderr, "[%d] comex_init() before barrier\n", g_state.rank);
 #endif
 
     /* Synch - Sanity Check */
@@ -368,7 +395,7 @@ int comex_init()
     MPI_Barrier(group_list->comm);
 
 #if DEBUG
-    printf("[%d] comex_init() success\n", g_state.rank);
+    fprintf(stderr, "[%d] comex_init() success\n", g_state.rank);
 #endif
 
     return COMEX_SUCCESS;
@@ -396,7 +423,7 @@ int comex_initialized()
 {
 #if DEBUG
     if (initialized) {
-        printf("[%d] comex_initialized()\n", g_state.rank);
+        fprintf(stderr, "[%d] comex_initialized()\n", g_state.rank);
     }
 #endif
 
@@ -407,7 +434,7 @@ int comex_initialized()
 int comex_finalize()
 {
 #if DEBUG
-    printf("[%d] comex_finalize()\n", g_state.rank);
+    fprintf(stderr, "[%d] comex_finalize()\n", g_state.rank);
 #endif
 
     /* it's okay to call multiple times -- extra calls are no-ops */
@@ -436,6 +463,7 @@ int comex_finalize()
         my_master = g_state.master[g_state.rank];
         header = malloc(sizeof(header_t));
         COMEX_ASSERT(header);
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = OP_QUIT;
         header->remote_address = NULL;
         header->local_address = NULL;
@@ -454,11 +482,11 @@ int comex_finalize()
 
     /* destroy the groups */
 #if DEBUG
-    printf("[%d] before comex_group_finalize()\n", g_state.rank);
+    fprintf(stderr, "[%d] before comex_group_finalize()\n", g_state.rank);
 #endif
     comex_group_finalize();
 #if DEBUG
-    printf("[%d] after comex_group_finalize()\n", g_state.rank);
+    fprintf(stderr, "[%d] after comex_group_finalize()\n", g_state.rank);
 #endif
 
 #if DEBUG_TO_FILE
@@ -472,7 +500,7 @@ int comex_finalize()
 void comex_error(char *msg, int code)
 {
 #if DEBUG
-    printf("[%d] Received an Error in Communication: (%d) %s\n",
+    fprintf(stderr, "[%d] Received an Error in Communication: (%d) %s\n",
             g_state.rank, code, msg);
 #if DEBUG_TO_FILE
     fclose(comex_trace_file);
@@ -692,7 +720,7 @@ int comex_fence_all(comex_group_t group)
     nb_t *nb = NULL;
 
 #if DEBUG
-    printf("[%d] comex_fence_all(group=%d)\n", g_state.rank, group);
+    fprintf(stderr, "[%d] comex_fence_all(group=%d)\n", g_state.rank, group);
 #endif
     /* NOTE: We always fence on the world group */
 
@@ -704,7 +732,7 @@ int comex_fence_all(comex_group_t group)
     }
 
 #if DEBUG
-    printf("[%d] comex_fence_all(group=%d) count_before=%d\n",
+    fprintf(stderr, "[%d] comex_fence_all(group=%d) count_before=%d\n",
             g_state.rank, group, count_before);
 #endif
 
@@ -715,7 +743,7 @@ int comex_fence_all(comex_group_t group)
 
 #if NEED_ASM_VOLATILE_MEMORY
 #if DEBUG
-    printf("[%d] comex_fence_all asm volatile (\"\" : : : \"memory\"); \n",
+    fprintf(stderr, "[%d] comex_fence_all asm volatile (\"\" : : : \"memory\"); \n",
             g_state.rank, group);
 #endif
     asm volatile ("" : : : "memory"); 
@@ -737,6 +765,7 @@ int comex_fence_all(comex_group_t group)
             /* post send of fence request */
             header = malloc(sizeof(header_t));
             COMEX_ASSERT(header);
+            MAYBE_MEMSET(header, 0, sizeof(header_t));
             header->operation = OP_FENCE;
             header->remote_address = NULL;
             header->local_address = NULL;
@@ -756,7 +785,7 @@ int comex_fence_all(comex_group_t group)
     }
 
 #if DEBUG
-    printf("[%d] comex_fence_all(group=%d) count_after=%d\n",
+    fprintf(stderr, "[%d] comex_fence_all(group=%d) count_after=%d\n",
             g_state.rank, group, count_after);
 #endif
 
@@ -773,7 +802,7 @@ int comex_fence_proc(int proc, comex_group_t group)
     comex_igroup_t *igroup = NULL;
 
 #if DEBUG
-    printf("[%d] comex_fence_proc(proc=%d, group=%d)\n",
+    fprintf(stderr, "[%d] comex_fence_proc(proc=%d, group=%d)\n",
             g_state.rank, proc, group);
 #endif
 
@@ -794,6 +823,7 @@ int comex_fence_proc(int proc, comex_group_t group)
         /* post send of fence request */
         header = malloc(sizeof(header_t));
         COMEX_ASSERT(header);
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = OP_FENCE;
         header->remote_address = NULL;
         header->local_address = NULL;
@@ -817,7 +847,7 @@ int comex_barrier(comex_group_t group)
 #if DEBUG
     static int count=-1;
     ++count;
-    printf("[%d] comex_barrier(%d) count=%d\n", g_state.rank, group, count);
+    fprintf(stderr, "[%d] comex_barrier(%d) count=%d\n", g_state.rank, group, count);
 #endif
 
     comex_fence_all(group);
@@ -842,7 +872,7 @@ STATIC int packed_size(int *src_stride, int *count, int stride_levels)
     COMEX_ASSERT(count[0] > 0);
 
 #if DEBUG
-    printf("[%d] packed_size(src_stride=%p, count[0]=%d, stride_levels=%d)\n",
+    fprintf(stderr, "[%d] packed_size(src_stride=%p, count[0]=%d, stride_levels=%d)\n",
             g_state.rank, src_stride, count[0], stride_levels);
 #endif
 
@@ -878,7 +908,7 @@ STATIC char* pack(
     COMEX_ASSERT(NULL != size);
 
 #if DEBUG
-    printf("[%d] pack(src=%p, src_stride=%p, count[0]=%d, stride_levels=%d)\n",
+    fprintf(stderr, "[%d] pack(src=%p, src_stride=%p, count[0]=%d, stride_levels=%d)\n",
             g_state.rank, src, src_stride, count[0], stride_levels);
 #endif
 
@@ -941,7 +971,7 @@ STATIC void unpack(char *packed_buffer,
     COMEX_ASSERT(count[0] > 0);
 
 #if DEBUG
-    printf("[%d] unpack(dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d)\n",
+    fprintf(stderr, "[%d] unpack(dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d)\n",
             g_state.rank, dst, dst_stride, count[0], stride_levels);
 #endif
 
@@ -997,7 +1027,7 @@ STATIC char* _generate_shm_name(int rank)
     name[SHM_NAME_SIZE-1] = '\0';
     ++counter;
 #if DEBUG
-    printf("[%d] _generate_shm_name(%d)=%s\n",
+    fprintf(stderr, "[%d] _generate_shm_name(%d)=%s\n",
             g_state.rank, rank, name);
 #endif
 
@@ -1029,7 +1059,7 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
     reg_entry_t *reg_entry = NULL;
 
 #if DEBUG
-    printf("[%d] _comex_malloc_local(size=%lu)\n",
+    fprintf(stderr, "[%d] _comex_malloc_local(size=%lu)\n",
             g_state.rank, (long unsigned)size);
 #endif
 
@@ -1041,7 +1071,7 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
     name = _generate_shm_name(g_state.rank);
     memory = _shm_create(name, size);
 #if DEBUG && DEBUG_VERBOSE
-    printf("[%d] _comex_malloc_local registering "
+    fprintf(stderr, "[%d] _comex_malloc_local registering "
             "rank=%d mem=%p size=%lu name=%s mapped=%p\n",
             g_state.rank, g_state.rank, memory,
             (long unsigned)size, name, memory);
@@ -1066,7 +1096,7 @@ int comex_free_local(void *ptr)
     reg_entry_t *reg_entry = NULL;
 
 #if DEBUG
-    printf("[%d] comex_free_local(ptr=%p)\n", g_state.rank, ptr);
+    fprintf(stderr, "[%d] comex_free_local(ptr=%p)\n", g_state.rank, ptr);
 #endif
 
     if (NULL == ptr) {
@@ -1447,7 +1477,7 @@ int comex_rmw(
     nb_t *nb = NULL;
 
 #if DEBUG
-    printf("[%d] comex_rmw(%d, %p, %p, %d, %d)\n",
+    fprintf(stderr, "[%d] comex_rmw(%d, %p, %p, %d, %d)\n",
             g_state.rank, comex_op, ploc, prem, extra, proc);
 #endif
 
@@ -1483,6 +1513,7 @@ int comex_rmw(
     /* create and prepare the header */
     message = malloc(sizeof(header_t) + length);
     COMEX_ASSERT(message);
+    MAYBE_MEMSET(message, 0, sizeof(header_t) + length);
     header = (header_t*)message;
     header->operation = op;
     header->remote_address = prem;
@@ -1516,8 +1547,10 @@ int comex_create_mutexes(int num)
     /* always on the world group */
     int my_master = g_state.master[g_state.rank];
 
+    int status = 0;
+
 #if DEBUG
-    printf("[%d] comex_create_mutexes(num=%d)\n",
+    fprintf(stderr, "[%d] comex_create_mutexes(num=%d)\n",
             g_state.rank, num);
 #endif
 
@@ -1528,8 +1561,9 @@ int comex_create_mutexes(int num)
     num_mutexes = (int*)malloc(group_list->size * sizeof(int));
     /* exchange of mutex counts */
     num_mutexes[group_list->rank] = num;
-    MPI_Allgather(MPI_IN_PLACE, 1, MPI_INT,
+    status = MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
             num_mutexes, 1, MPI_INT, group_list->comm);
+    COMEX_ASSERT(MPI_SUCCESS == status);
 
     /* every process sends their own create message to their master */
     {
@@ -1538,6 +1572,7 @@ int comex_create_mutexes(int num)
 
         header = malloc(sizeof(header_t));
         COMEX_ASSERT(header);
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = OP_CREATE_MUTEXES;
         header->remote_address = NULL;
         header->local_address = NULL;
@@ -1561,7 +1596,7 @@ int comex_destroy_mutexes()
     int my_master = g_state.master[g_state.rank];
 
 #if DEBUG
-    printf("[%d] comex_destroy_mutexes()\n", g_state.rank);
+    fprintf(stderr, "[%d] comex_destroy_mutexes()\n", g_state.rank);
 #endif
 
     /* preconditions */
@@ -1578,6 +1613,7 @@ int comex_destroy_mutexes()
         header_t *header = NULL;
 
         header = malloc(sizeof(header_t));
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = OP_DESTROY_MUTEXES;
         header->remote_address = NULL;
         header->local_address = NULL;
@@ -1606,7 +1642,7 @@ int comex_lock(int mutex, int proc)
     nb_t *nb = NULL;
 
 #if DEBUG
-    printf("[%d] comex_lock mutex=%d proc=%d\n",
+    fprintf(stderr, "[%d] comex_lock mutex=%d proc=%d\n",
             g_state.rank, mutex, proc);
 #endif
 
@@ -1617,6 +1653,7 @@ int comex_lock(int mutex, int proc)
 
     header = malloc(sizeof(header_t));
     COMEX_ASSERT(header);
+    MAYBE_MEMSET(header, 0, sizeof(header_t));
     header->operation = OP_LOCK;
     header->remote_address = NULL;
     header->local_address = NULL;
@@ -1642,7 +1679,7 @@ int comex_unlock(int mutex, int proc)
     nb_t *nb = NULL;
 
 #if DEBUG
-    printf("[%d] comex_unlock mutex=%d proc=%d\n", g_state.rank, mutex, proc);
+    fprintf(stderr, "[%d] comex_unlock mutex=%d proc=%d\n", g_state.rank, mutex, proc);
 #endif
 
     CHECK_GROUP(COMEX_GROUP_WORLD,proc);
@@ -1653,6 +1690,7 @@ int comex_unlock(int mutex, int proc)
     fence_array[master_rank] = 1;
     header = malloc(sizeof(header_t));
     COMEX_ASSERT(header);
+    MAYBE_MEMSET(header, 0, sizeof(header_t));
     header->operation = OP_UNLOCK;
     header->remote_address = NULL;
     header->local_address = NULL;
@@ -1671,19 +1709,21 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 {
     comex_igroup_t *igroup = NULL;
     reg_entry_t *reg_entries = NULL;
+    reg_entry_t my_reg;
     size_t size_entries = 0;
     int my_master = -1;
     int my_world_rank = -1;
-    int i;
+    int i = 0;
     int is_notifier = 0;
     int reg_entries_local_count = 0;
     reg_entry_t *reg_entries_local = NULL;
+    int status = 0;
 
     /* preconditions */
     COMEX_ASSERT(ptrs);
    
 #if DEBUG
-    printf("[%d] comex_malloc(ptrs=%p, size=%lu, group=%d)\n",
+    fprintf(stderr, "[%d] comex_malloc(ptrs=%p, size=%lu, group=%d)\n",
             g_state.rank, ptrs, (long unsigned)size, group);
 #endif
 
@@ -1695,7 +1735,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     my_master = g_state.master[my_world_rank];
 
 #if DEBUG && DEBUG_VERBOSE
-    printf("[%d] comex_malloc my_master=%d\n", g_state.rank, my_master);
+    fprintf(stderr, "[%d] comex_malloc my_master=%d\n", g_state.rank, my_master);
 #endif
 
 #if MASTER_IS_SMALLEST_SMP_RANK
@@ -1710,31 +1750,35 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     /* allocate space for registration cache entries */
     size_entries = sizeof(reg_entry_t) * igroup->size;
     reg_entries = malloc(size_entries);
+    MAYBE_MEMSET(reg_entries, 0, sizeof(reg_entry_t)*igroup->size);
 
 #if DEBUG && DEBUG_VERBOSE
-    printf("[%d] comex_malloc allocated reg entries\n",
+    fprintf(stderr, "[%d] comex_malloc allocated reg entries\n",
             g_state.rank);
 #endif
 
     /* allocate and register segment */
+    MAYBE_MEMSET(&my_reg, 0, sizeof(reg_entry_t));
     if (0 == size) {
-        reg_cache_nullify(&reg_entries[igroup->rank]);
+        reg_cache_nullify(&my_reg);
     }
     else {
-        reg_entries[igroup->rank] = *_comex_malloc_local(sizeof(char)*size);
+        my_reg = *_comex_malloc_local(sizeof(char)*size);
     }
 
 #if DEBUG && DEBUG_VERBOSE
-    printf("[%d] comex_malloc allocated and registered local shmem\n",
+    fprintf(stderr, "[%d] comex_malloc allocated and registered local shmem\n",
             g_state.rank);
 #endif
 
     /* exchange buffer address via reg entries */
-    MPI_Allgather(MPI_IN_PLACE, sizeof(reg_entry_t), MPI_BYTE, reg_entries,
-            sizeof(reg_entry_t), MPI_BYTE, igroup->comm);
+    reg_entries[igroup->rank] = my_reg;
+    status = MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
+            reg_entries, sizeof(reg_entry_t), MPI_BYTE, igroup->comm);
+    COMEX_ASSERT(MPI_SUCCESS == status);
 
 #if DEBUG && DEBUG_VERBOSE
-    printf("[%d] comex_malloc allgather reg entries\n",
+    fprintf(stderr, "[%d] comex_malloc allgather reg entries\n",
             g_state.rank);
 #endif
 
@@ -1743,14 +1787,14 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
         if (NULL == reg_entries[i].buf) {
             /* a proc did not allocate (size==0) */
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] comex_malloc found NULL buf at %d\n",
+            fprintf(stderr, "[%d] comex_malloc found NULL buf at %d\n",
                     g_state.rank, i);
 #endif
         }
         else if (g_state.rank == reg_entries[i].rank) {
             /* we already registered our own memory, but PR hasn't */
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] comex_malloc found self at %d\n",
+            fprintf(stderr, "[%d] comex_malloc found self at %d\n",
                     g_state.rank, i);
 #endif
             if (is_notifier) {
@@ -1764,7 +1808,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
             /* open remote shared memory object */
             void *memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] comex_malloc registering "
+            fprintf(stderr, "[%d] comex_malloc registering "
                     "rank=%d buf=%p len=%lu name=%s map=%p\n",
                     g_state.rank,
                     reg_entries[i].rank,
@@ -1849,7 +1893,7 @@ void _malloc_semaphore()
     int i = 0;
 
 #if DEBUG
-    printf("[%d] _malloc_semaphore()\n", g_state.rank);
+    fprintf(stderr, "[%d] _malloc_semaphore()\n", g_state.rank);
 #endif
 
     status = MPI_Type_contiguous(SHM_NAME_SIZE, MPI_CHAR, &shm_name_type);
@@ -1903,6 +1947,7 @@ void _malloc_semaphore()
     (void)memcpy(&names[SHM_NAME_SIZE*g_state.rank], name, SHM_NAME_SIZE);
     status = MPI_Allgather(MPI_IN_PLACE, 1, shm_name_type,
             names, 1, shm_name_type, g_state.comm);
+    COMEX_ASSERT(MPI_SUCCESS == status);
 
     /* create/open remote semaphores and store in cache */
     for (i=0; i<g_state.size; ++i) {
@@ -1931,6 +1976,9 @@ void _malloc_semaphore()
     sem_name = name;
 
     free(names);
+
+    status = MPI_Type_free(&shm_name_type);
+    COMEX_ASSERT(MPI_SUCCESS == status);
 }
 
 
@@ -1940,7 +1988,7 @@ void _free_semaphore()
     int retval;
 
 #if DEBUG
-    printf("[%d] _free_semaphore()\n", g_state.rank);
+    fprintf(stderr, "[%d] _free_semaphore()\n", g_state.rank);
 #endif
 
     for (i=0; i<g_state.size; ++i) {
@@ -2012,11 +2060,12 @@ int comex_free(void *ptr, comex_group_t group)
     int is_notifier = 0;
     int reg_entries_local_count = 0;
     rank_ptr_t *rank_ptrs = NULL;
+    int status = 0;
 
     comex_barrier(group);
 
 #if DEBUG
-    printf("[%d] comex_free(ptr=%p, group=%d)\n", g_state.rank, ptr, group);
+    fprintf(stderr, "[%d] comex_free(ptr=%p, group=%d)\n", g_state.rank, ptr, group);
 #endif
 
     igroup = comex_get_igroup_from_group(group);
@@ -2025,7 +2074,7 @@ int comex_free(void *ptr, comex_group_t group)
     my_master = g_state.master[my_world_rank];
 
 #if DEBUG && DEBUG_VERBOSE
-    printf("[%d] comex_free my_master=%d\n", g_state.rank, my_master);
+    fprintf(stderr, "[%d] comex_free my_master=%d\n", g_state.rank, my_master);
 #endif
 
 #if MASTER_IS_SMALLEST_SMP_RANK
@@ -2043,23 +2092,24 @@ int comex_free(void *ptr, comex_group_t group)
     ptrs[igroup->rank] = ptr;
 
 #if DEBUG && DEBUG_VERBOSE
-    printf("[%d] comex_free ptrs allocated and assigned\n",
+    fprintf(stderr, "[%d] comex_free ptrs allocated and assigned\n",
             g_state.rank);
 #endif
 
     /* exchange of pointers */
-    MPI_Allgather(MPI_IN_PLACE, sizeof(void *), MPI_BYTE,
+    status = MPI_Allgather(MPI_IN_PLACE, sizeof(void *), MPI_BYTE,
             ptrs, sizeof(void *), MPI_BYTE, igroup->comm);
+    COMEX_ASSERT(MPI_SUCCESS == status);
 
 #if DEBUG && DEBUG_VERBOSE
-    printf("[%d] comex_free ptrs exchanged\n", g_state.rank);
+    fprintf(stderr, "[%d] comex_free ptrs exchanged\n", g_state.rank);
 #endif
 
     /* remove all pointers from registration cache */
     for (i=0; i<igroup->size; ++i) {
         if (i == igroup->rank) {
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] comex_free found self at %d\n", g_state.rank, i);
+            fprintf(stderr, "[%d] comex_free found self at %d\n", g_state.rank, i);
 #endif
             if (is_notifier) {
                 /* does this need to be a memcpy? */
@@ -2070,7 +2120,7 @@ int comex_free(void *ptr, comex_group_t group)
         }
         else if (NULL == ptrs[i]) {
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] comex_free found NULL at %d\n", g_state.rank, i);
+            fprintf(stderr, "[%d] comex_free found NULL at %d\n", g_state.rank, i);
 #endif
         }
         else if (g_state.hostid[world_ranks[i]]
@@ -2080,7 +2130,7 @@ int comex_free(void *ptr, comex_group_t group)
             int retval = 0;
 
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] comex_free same hostid at %d\n", g_state.rank, i);
+            fprintf(stderr, "[%d] comex_free same hostid at %d\n", g_state.rank, i);
 #endif
 
             /* find the registered memory */
@@ -2088,7 +2138,7 @@ int comex_free(void *ptr, comex_group_t group)
             COMEX_ASSERT(reg_entry);
 
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] comex_free found reg entry\n", g_state.rank);
+            fprintf(stderr, "[%d] comex_free found reg entry\n", g_state.rank);
 #endif
 
             /* unmap the memory */
@@ -2099,14 +2149,14 @@ int comex_free(void *ptr, comex_group_t group)
             }
 
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] comex_free unmapped mapped memory in reg entry\n",
+            fprintf(stderr, "[%d] comex_free unmapped mapped memory in reg entry\n",
                     g_state.rank);
 #endif
 
             reg_cache_delete(world_ranks[i], ptrs[i]);
 
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] comex_free deleted reg cache entry\n", g_state.rank);
+            fprintf(stderr, "[%d] comex_free deleted reg cache entry\n", g_state.rank);
 #endif
 
             if (is_notifier) {
@@ -2121,7 +2171,7 @@ int comex_free(void *ptr, comex_group_t group)
             reg_cache_delete(world_ranks[i], ptrs[i]);
 
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] comex_free deleted reg cache entry\n", g_state.rank);
+            fprintf(stderr, "[%d] comex_free deleted reg cache entry\n", g_state.rank);
 #endif
 #endif
         }
@@ -2174,7 +2224,7 @@ STATIC void _progress_server()
     char *static_buffer = NULL;
 
 #if DEBUG
-    printf("[%d] _progress_server()\n", g_state.rank);
+    fprintf(stderr, "[%d] _progress_server()\n", g_state.rank);
 #endif
 
     {
@@ -2204,7 +2254,7 @@ STATIC void _progress_server()
         MPI_Get_count(&recv_status, MPI_CHAR, &length);
         source = recv_status.MPI_SOURCE;
 #   if DEBUG
-        printf("[%d] progress MPI_Recv source=%d length=%d\n",
+        fprintf(stderr, "[%d] progress MPI_Recv source=%d length=%d\n",
                 g_state.rank, source, length);
 #   endif
         header = (header_t*)static_buffer;
@@ -2217,6 +2267,9 @@ STATIC void _progress_server()
             case OP_PUT_PACKED:
                 _put_packed_handler(header, source);
                 break;
+            case OP_PUT_DATATYPE:
+                _put_datatype_handler(header, source);
+                break;
             case OP_PUT_IOV:
                 _put_iov_handler(header, source);
                 break;
@@ -2225,6 +2278,9 @@ STATIC void _progress_server()
                 break;
             case OP_GET_PACKED:
                 _get_packed_handler(header, source);
+                break;
+            case OP_GET_DATATYPE:
+                _get_datatype_handler(header, source);
                 break;
             case OP_GET_IOV:
                 _get_iov_handler(header, source);
@@ -2284,7 +2340,7 @@ STATIC void _progress_server()
                 _free_handler(header, payload, source);
                 break;
             default:
-                printf("[%d] header operation not recognized: %d\n",
+                fprintf(stderr, "[%d] header operation not recognized: %d\n",
                         g_state.rank, header->operation);
                 COMEX_ASSERT(0);
         }
@@ -2307,11 +2363,11 @@ STATIC void _progress_server()
 
     // destroy the communicators
 #if DEBUG
-    printf("[%d] before comex_group_finalize()\n", g_state.rank);
+    fprintf(stderr, "[%d] before comex_group_finalize()\n", g_state.rank);
 #endif
     comex_group_finalize();
 #if DEBUG
-    printf("[%d] after comex_group_finalize()\n", g_state.rank);
+    fprintf(stderr, "[%d] after comex_group_finalize()\n", g_state.rank);
 #endif
 
 #if DEBUG_TO_FILE
@@ -2331,7 +2387,7 @@ STATIC void _put_handler(header_t *header, int proc)
     int retval = 0;
 
 #if DEBUG
-    printf("[%d] _put_handler rem=%p loc=%p rem_rank=%d len=%d\n",
+    fprintf(stderr, "[%d] _put_handler rem=%p loc=%p rem_rank=%d len=%d\n",
             g_state.rank,
             header->remote_address,
             header->local_address,
@@ -2360,7 +2416,7 @@ STATIC void _put_packed_handler(header_t *header, int proc)
 #endif
 
 #if DEBUG
-    printf("[%d] _put_packed_handler rem=%p loc=%p rem_rank=%d len=%d\n",
+    fprintf(stderr, "[%d] _put_packed_handler rem=%p loc=%p rem_rank=%d len=%d\n",
             g_state.rank,
             header->remote_address,
             header->local_address,
@@ -2375,10 +2431,10 @@ STATIC void _put_packed_handler(header_t *header, int proc)
     COMEX_ASSERT(stride->stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
 #if DEBUG
-    printf("[%d] _put_packed_handler stride_levels=%d, count[0]=%d\n",
+    fprintf(stderr, "[%d] _put_packed_handler stride_levels=%d, count[0]=%d\n",
             g_state.rank, stride->stride_levels, stride->count[0]);
     for (i=0; i<stride->stride_levels; ++i) {
-        printf("[%d] stride[%d]=%d count[%d+1]=%d\n",
+        fprintf(stderr, "[%d] stride[%d]=%d count[%d+1]=%d\n",
                 g_state.rank, i, stride->stride[i], i, stride->count[i+1]);
     }
 #endif
@@ -2407,6 +2463,59 @@ STATIC void _put_packed_handler(header_t *header, int proc)
 }
 
 
+STATIC void _put_datatype_handler(header_t *header, int proc)
+{
+    MPI_Datatype dst_type;
+    reg_entry_t *reg_entry = NULL;
+    void *mapped_offset = NULL;
+    stride_t *stride = NULL;
+    int ierr;
+#if DEBUG
+    int i=0;
+#endif
+
+#if DEBUG
+    fprintf(stderr, "[%d] _put_datatype_handler rem=%p loc=%p rem_rank=%d len=%d\n",
+            g_state.rank,
+            header->remote_address,
+            header->local_address,
+            header->rank,
+            header->length);
+#endif
+
+    stride = malloc(sizeof(stride_t));
+    COMEX_ASSERT(stride);
+    server_recv(stride, sizeof(stride_t), proc);
+    COMEX_ASSERT(stride->stride_levels >= 0);
+    COMEX_ASSERT(stride->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+
+#if DEBUG
+    fprintf(stderr, "[%d] _put_datatype_handler stride_levels=%d, count[0]=%d\n",
+            g_state.rank, stride->stride_levels, stride->count[0]);
+    for (i=0; i<stride->stride_levels; ++i) {
+        fprintf(stderr, "[%d] stride[%d]=%d count[%d+1]=%d\n",
+                g_state.rank, i, stride->stride[i], i, stride->count[i+1]);
+    }
+#endif
+
+    reg_entry = reg_cache_find(
+            header->rank, header->remote_address, stride->count[0]);
+    COMEX_ASSERT(reg_entry);
+    mapped_offset = _get_offset_memory(
+            reg_entry, header->remote_address);
+
+    strided_to_subarray_dtype(stride->stride, stride->count,
+            stride->stride_levels, MPI_BYTE, &dst_type);
+    ierr = MPI_Type_commit(&dst_type);
+    translate_mpi_error(ierr,"_put_datatype_handler:MPI_Type_commit");
+
+    server_recv_datatype(mapped_offset, dst_type, proc);
+
+    ierr = MPI_Type_free(&dst_type);
+    translate_mpi_error(ierr,"_put_datatype_handler:MPI_Type_free");
+}
+
+
 STATIC void _put_iov_handler(header_t *header, int proc)
 {
     reg_entry_t *reg_entry = NULL;
@@ -2422,10 +2531,10 @@ STATIC void _put_iov_handler(header_t *header, int proc)
     void **dst = NULL;
 
 #if DEBUG
-    printf("[%d] _put_iov_handler proc=%d\n", g_state.rank, proc);
+    fprintf(stderr, "[%d] _put_iov_handler proc=%d\n", g_state.rank, proc);
 #endif
 #if DEBUG
-    printf("[%d] _put_iov_handler header rem=%p loc=%p rem_rank=%d len=%d\n",
+    fprintf(stderr, "[%d] _put_iov_handler header rem=%p loc=%p rem_rank=%d len=%d\n",
             g_state.rank,
             header->remote_address,
             header->local_address,
@@ -2456,7 +2565,7 @@ STATIC void _put_iov_handler(header_t *header, int proc)
     COMEX_ASSERT(iov_off == header->length);
 
 #if DEBUG
-    printf("[%d] _put_iov_handler limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
+    fprintf(stderr, "[%d] _put_iov_handler limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
             g_state.rank, limit, bytes, src[0], dst[0]);
 #endif
 
@@ -2497,10 +2606,10 @@ STATIC void _get_handler(header_t *header, int proc)
     void *mapped_offset = NULL;
 
 #if DEBUG
-    printf("[%d] _get_handler proc=%d\n", g_state.rank, proc);
+    fprintf(stderr, "[%d] _get_handler proc=%d\n", g_state.rank, proc);
 #endif
 #if DEBUG
-    printf("[%d] header rem=%p loc=%p rem_rank=%d len=%d\n",
+    fprintf(stderr, "[%d] header rem=%p loc=%p rem_rank=%d len=%d\n",
             g_state.rank,
             header->remote_address,
             header->local_address,
@@ -2528,10 +2637,10 @@ STATIC void _get_packed_handler(header_t *header, int proc)
     stride_t *stride_src = NULL;
 
 #if DEBUG
-    printf("[%d] _get_packed_handler proc=%d\n", g_state.rank, proc);
+    fprintf(stderr, "[%d] _get_packed_handler proc=%d\n", g_state.rank, proc);
 #endif
 #if DEBUG
-    printf("[%d] header rem=%p loc=%p rem_rank=%d len=%d\n",
+    fprintf(stderr, "[%d] header rem=%p loc=%p rem_rank=%d len=%d\n",
             g_state.rank,
             header->remote_address,
             header->local_address,
@@ -2563,6 +2672,63 @@ STATIC void _get_packed_handler(header_t *header, int proc)
 }
 
 
+STATIC void _get_datatype_handler(header_t *header, int proc)
+{
+    MPI_Datatype src_type;
+    reg_entry_t *reg_entry = NULL;
+    void *mapped_offset = NULL;
+    stride_t *stride_src = NULL;
+    int ierr;
+
+#if DEBUG
+    int i;
+    fprintf(stderr, "[%d] _get_datatype_handler proc=%d\n", g_state.rank, proc);
+#endif
+#if DEBUG
+    fprintf(stderr, "[%d] header rem=%p loc=%p rem_rank=%d len=%d\n",
+            g_state.rank,
+            header->remote_address,
+            header->local_address,
+            header->rank,
+            header->length);
+#endif
+
+    assert(OP_GET_DATATYPE == header->operation);
+
+    stride_src = malloc(sizeof(stride_t));
+    COMEX_ASSERT(stride_src);
+    server_recv(stride_src, sizeof(stride_t), proc);
+    COMEX_ASSERT(stride_src->stride_levels >= 0);
+    COMEX_ASSERT(stride_src->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+
+#if DEBUG
+    for (i=0; i<stride_src->stride_levels; ++i) {
+        fprintf(stderr, "\tstride[%d]=%d\n", i, stride_src->stride[i]);
+    }
+    for (i=0; i<stride_src->stride_levels+1; ++i) {
+        fprintf(stderr, "\tcount[%d]=%d\n", i, stride_src->count[i]);
+    }
+#endif
+
+    reg_entry = reg_cache_find(
+            header->rank, header->remote_address, header->length);
+    COMEX_ASSERT(reg_entry);
+    mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
+
+    strided_to_subarray_dtype(stride_src->stride, stride_src->count,
+            stride_src->stride_levels, MPI_BYTE, &src_type);
+    ierr = MPI_Type_commit(&src_type);
+    translate_mpi_error(ierr,"_get_datatype_handler:MPI_Type_commit");
+
+    server_send_datatype(mapped_offset, src_type, proc);
+
+    ierr = MPI_Type_free(&src_type);
+    translate_mpi_error(ierr,"_get_datatype_handler:MPI_Type_free");
+
+    free(stride_src);
+}
+
+
 STATIC void _get_iov_handler(header_t *header, int proc)
 {
     reg_entry_t *reg_entry = NULL;
@@ -2578,10 +2744,10 @@ STATIC void _get_iov_handler(header_t *header, int proc)
     void **dst = NULL;
 
 #if DEBUG
-    printf("[%d] _get_iov_handler proc=%d\n", g_state.rank, proc);
+    fprintf(stderr, "[%d] _get_iov_handler proc=%d\n", g_state.rank, proc);
 #endif
 #if DEBUG
-    printf("[%d] _get_iov_handler header rem=%p loc=%p rem_rank=%d len=%d\n",
+    fprintf(stderr, "[%d] _get_iov_handler header rem=%p loc=%p rem_rank=%d len=%d\n",
             g_state.rank,
             header->remote_address,
             header->local_address,
@@ -2612,7 +2778,7 @@ STATIC void _get_iov_handler(header_t *header, int proc)
     COMEX_ASSERT(iov_off == header->length);
 
 #if DEBUG
-    printf("[%d] _get_iov_handler limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
+    fprintf(stderr, "[%d] _get_iov_handler limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
             g_state.rank, limit, bytes, src[0], dst[0]);
 #endif
 
@@ -2655,7 +2821,7 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
     char *acc_buffer = NULL;
 
 #if DEBUG
-    printf("[%d] _acc_handler\n", g_state.rank);
+    fprintf(stderr, "[%d] _acc_handler\n", g_state.rank);
 #endif
 
     switch (header->operation) {
@@ -2721,7 +2887,7 @@ STATIC void _acc_packed_handler(header_t *header, int proc)
     stride_t *stride = NULL;
 
 #if DEBUG
-    printf("[%d] _acc_packed_handler\n", g_state.rank);
+    fprintf(stderr, "[%d] _acc_packed_handler\n", g_state.rank);
 #endif
 
     switch (header->operation) {
@@ -2796,7 +2962,7 @@ STATIC void _acc_packed_handler(header_t *header, int proc)
         COMEX_ASSERT(count[0] > 0);
 
 #if DEBUG
-        printf("[%d] unpack(dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d)\n",
+        fprintf(stderr, "[%d] unpack(dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d)\n",
                 g_state.rank, dst, dst_stride, count[0], stride_levels);
 #endif
 
@@ -2861,10 +3027,10 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
     int acc_type = 0;
 
 #if DEBUG
-    printf("[%d] _acc_iov_handler proc=%d\n", g_state.rank, proc);
+    fprintf(stderr, "[%d] _acc_iov_handler proc=%d\n", g_state.rank, proc);
 #endif
 #if DEBUG
-    printf("[%d] _acc_iov_handler header rem=%p loc=%p rem_rank=%d len=%d\n",
+    fprintf(stderr, "[%d] _acc_iov_handler header rem=%p loc=%p rem_rank=%d len=%d\n",
             g_state.rank,
             header->remote_address,
             header->local_address,
@@ -2873,7 +3039,7 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
 #endif
 
 #if DEBUG
-    printf("[%d] _acc_iov_handler limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
+    fprintf(stderr, "[%d] _acc_iov_handler limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
             g_state.rank, limit, bytes, src[0], dst[0]);
 #endif
 
@@ -2964,7 +3130,7 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
 STATIC void _fence_handler(header_t *header, int proc)
 {
 #if DEBUG
-    printf("[%d] _fence_handler proc=%d\n", g_state.rank, proc);
+    fprintf(stderr, "[%d] _fence_handler proc=%d\n", g_state.rank, proc);
 #endif
 
     /* preconditions */
@@ -2972,7 +3138,7 @@ STATIC void _fence_handler(header_t *header, int proc)
 
 #if NEED_ASM_VOLATILE_MEMORY
 #if DEBUG
-    printf("[%d] _fence_handler asm volatile (\"\" : : : \"memory\"); \n",
+    fprintf(stderr, "[%d] _fence_handler asm volatile (\"\" : : : \"memory\"); \n",
             g_state.rank);
 #endif
     asm volatile ("" : : : "memory"); 
@@ -2991,10 +3157,10 @@ STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc)
     long *value_long = NULL;
 
 #if DEBUG
-    printf("[%d] _fetch_and_add_handler proc=%d\n", g_state.rank, proc);
+    fprintf(stderr, "[%d] _fetch_and_add_handler proc=%d\n", g_state.rank, proc);
 #endif
 #if DEBUG
-    printf("[%d] header rem=%p loc=%p rank=%d len=%d\n",
+    fprintf(stderr, "[%d] header rem=%p loc=%p rank=%d len=%d\n",
             g_state.rank,
             header->remote_address,
             header->local_address,
@@ -3037,7 +3203,7 @@ STATIC void _swap_handler(header_t *header, char *payload, int proc)
     long *value_long = NULL;
 
 #if DEBUG
-    printf("[%d] _swap_handler rem=%p loc=%p rank=%d len=%d\n",
+    fprintf(stderr, "[%d] _swap_handler rem=%p loc=%p rank=%d len=%d\n",
             g_state.rank,
             header->remote_address,
             header->local_address,
@@ -3078,7 +3244,7 @@ STATIC void _mutex_create_handler(header_t *header, int proc)
     int num = header->length;
 
 #if DEBUG
-    printf("[%d] _mutex_create_handler proc=%d num=%d\n",
+    fprintf(stderr, "[%d] _mutex_create_handler proc=%d num=%d\n",
             g_state.rank, proc, num);
 #endif
 
@@ -3099,7 +3265,7 @@ STATIC void _mutex_destroy_handler(header_t *header, int proc)
     int num = header->length;
 
 #if DEBUG
-    printf("[%d] _mutex_destroy_handler proc=%d\n", g_state.rank, proc);
+    fprintf(stderr, "[%d] _mutex_destroy_handler proc=%d\n", g_state.rank, proc);
 #endif
 
     for (i=0; i<num; ++i) {
@@ -3120,7 +3286,7 @@ STATIC void _lock_handler(header_t *header, int proc)
     int rank = header->rank;
 
 #if DEBUG
-    printf("[%d] _lock_handler id=%d in rank=%d req by proc=%d\n",
+    fprintf(stderr, "[%d] _lock_handler id=%d in rank=%d req by proc=%d\n",
             g_state.rank, id, rank, proc);
 #endif
 
@@ -3133,7 +3299,7 @@ STATIC void _lock_handler(header_t *header, int proc)
     else {
         lock_t *lock = NULL;
 #if DEBUG
-        printf("[%d] _lq_push rank=%d req_by=%d id=%d\n",
+        fprintf(stderr, "[%d] _lq_push rank=%d req_by=%d id=%d\n",
                 g_state.rank, rank, proc, id);
 #endif
         lock = malloc(sizeof(lock_t));
@@ -3162,7 +3328,7 @@ STATIC void _unlock_handler(header_t *header, int proc)
     int rank = header->rank;
 
 #if DEBUG
-    printf("[%d] _unlock_handler id=%d in rank=%d req by proc=%d\n",
+    fprintf(stderr, "[%d] _unlock_handler id=%d in rank=%d req by proc=%d\n",
             g_state.rank, id, rank, proc);
 #endif
 
@@ -3194,7 +3360,7 @@ STATIC void _malloc_handler(
     reg_entry_t *reg_entries = (reg_entry_t*)payload;
 
 #if DEBUG
-    printf("[%d] _malloc_handler proc=%d\n", g_state.rank, proc);
+    fprintf(stderr, "[%d] _malloc_handler proc=%d\n", g_state.rank, proc);
 #endif
 
     COMEX_ASSERT(header);
@@ -3202,14 +3368,14 @@ STATIC void _malloc_handler(
     n = header->length;
 
 #if DEBUG && DEBUG_VERBOSE
-    printf("[%d] _malloc_handler preconditions complete\n", g_state.rank);
+    fprintf(stderr, "[%d] _malloc_handler preconditions complete\n", g_state.rank);
 #endif
 
     /* insert reg entries into local registration cache */
     for (i=0; i<n; ++i) {
         if (NULL == reg_entries[i].buf) {
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] _malloc_handler found NULL at %d\n", g_state.rank, i);
+            fprintf(stderr, "[%d] _malloc_handler found NULL at %d\n", g_state.rank, i);
 #endif
         }
         else if (g_state.hostid[reg_entries[i].rank]
@@ -3218,7 +3384,7 @@ STATIC void _malloc_handler(
             /* attach to remote shared memory object */
             void *memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] _malloc_handler registering "
+            fprintf(stderr, "[%d] _malloc_handler registering "
                     "rank=%d buf=%p len=%lu name=%s, mapped=%p\n",
                     g_state.rank,
                     reg_entries[i].rank,
@@ -3249,7 +3415,7 @@ STATIC void _malloc_handler(
     }
 
 #if DEBUG && DEBUG_VERBOSE
-    printf("[%d] _malloc_handler finished registrations\n", g_state.rank);
+    fprintf(stderr, "[%d] _malloc_handler finished registrations\n", g_state.rank);
 #endif
 
     server_send(NULL, 0, proc); /* ack */
@@ -3263,19 +3429,19 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
     rank_ptr_t *rank_ptrs = (rank_ptr_t*)payload;
 
 #if DEBUG
-    printf("[%d] _free_handler proc=%d\n", g_state.rank, proc);
+    fprintf(stderr, "[%d] _free_handler proc=%d\n", g_state.rank, proc);
 #endif
 
     /* remove all pointers from registration cache */
     for (i=0; i<n; ++i) {
         if (g_state.rank == rank_ptrs[i].rank) {
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] comex_free found self at %d\n", g_state.rank, i);
+            fprintf(stderr, "[%d] comex_free found self at %d\n", g_state.rank, i);
 #endif
         }
         else if (NULL == rank_ptrs[i].ptr) {
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] _free_handler found NULL at %d\n", g_state.rank, i);
+            fprintf(stderr, "[%d] _free_handler found NULL at %d\n", g_state.rank, i);
 #endif
         }
         else if (g_state.hostid[rank_ptrs[i].rank]
@@ -3285,7 +3451,7 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
             int retval = 0;
 
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] _free_handler same hostid at %d\n", g_state.rank, i);
+            fprintf(stderr, "[%d] _free_handler same hostid at %d\n", g_state.rank, i);
 #endif
 
             /* find the registered memory */
@@ -3293,7 +3459,7 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
             COMEX_ASSERT(reg_entry);
 
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] _free_handler found reg entry\n", g_state.rank);
+            fprintf(stderr, "[%d] _free_handler found reg entry\n", g_state.rank);
 #endif
 
             /* unmap the memory */
@@ -3304,14 +3470,14 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
             }
 
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] _free_handler unmapped mapped memory in reg entry\n",
+            fprintf(stderr, "[%d] _free_handler unmapped mapped memory in reg entry\n",
                     g_state.rank);
 #endif
 
             reg_cache_delete(rank_ptrs[i].rank, rank_ptrs[i].ptr);
 
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] _free_handler deleted reg cache entry\n",
+            fprintf(stderr, "[%d] _free_handler deleted reg cache entry\n",
                     g_state.rank);
 #endif
 
@@ -3321,7 +3487,7 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
             reg_cache_delete(rank_ptrs[i].rank, rank_ptrs[i].ptr);
 
 #if DEBUG && DEBUG_VERBOSE
-            printf("[%d] _free_handler deleted reg cache entry\n",
+            fprintf(stderr, "[%d] _free_handler deleted reg cache entry\n",
                     g_state.rank);
 #endif
 #endif
@@ -3338,12 +3504,12 @@ STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory)
 
     COMEX_ASSERT(reg_entry);
 #if DEBUG_VERBOSE
-    printf("[%d] _get_offset_memory reg_entry->buf=%p memory=%p\n",
+    fprintf(stderr, "[%d] _get_offset_memory reg_entry->buf=%p memory=%p\n",
             g_state.rank, reg_entry->buf, memory);
 #endif
     offset = ((char*)memory) - ((char*)reg_entry->buf);
 #if DEBUG_VERBOSE
-    printf("[%d] _get_offset_memory ptrdiff=%lu\n",
+    fprintf(stderr, "[%d] _get_offset_memory ptrdiff=%lu\n",
             g_state.rank, (unsigned long)offset);
 #endif
     return (void*)((char*)(reg_entry->mapped)+offset);
@@ -3451,7 +3617,7 @@ STATIC void* _shm_create(const char *name, size_t size)
     int retval = 0;
 
 #if DEBUG
-    printf("[%d] _shm_create(%s, %lu)\n",
+    fprintf(stderr, "[%d] _shm_create(%s, %lu)\n",
             g_state.rank, name, (unsigned long)size);
 #endif
 
@@ -3504,7 +3670,7 @@ STATIC void* _shm_attach(const char *name, size_t size)
     int retval = 0;
 
 #if DEBUG
-    printf("[%d] _shm_attach(%s, %lu)\n",
+    fprintf(stderr, "[%d] _shm_attach(%s, %lu)\n",
             g_state.rank, name, (unsigned long)size);
 #endif
 
@@ -3619,12 +3785,27 @@ STATIC void server_send(void *buf, int count, int dest)
     int retval = 0;
 
 #if DEBUG
-    printf("[%d] server_send(buf=%p, count=%d, dest=%d)\n",
+    fprintf(stderr, "[%d] server_send(buf=%p, count=%d, dest=%d)\n",
             g_state.rank, buf, count, dest);
 #endif
 
     retval = MPI_Send(buf, count, MPI_CHAR, dest,
             COMEX_TAG, g_state.comm);
+
+    CHECK_MPI_RETVAL(retval);
+}
+
+
+STATIC void server_send_datatype(void *buf, MPI_Datatype dt, int dest)
+{
+    int retval = 0;
+
+#if DEBUG
+    fprintf(stderr, "[%d] server_send_datatype(buf=%p, ..., dest=%d)\n",
+            g_state.rank, buf, dest);
+#endif
+
+    retval = MPI_Send(buf, 1, dt, dest, COMEX_TAG, g_state.comm);
 
     CHECK_MPI_RETVAL(retval);
 }
@@ -3649,6 +3830,20 @@ STATIC void server_recv(void *buf, int count, int source)
 }
 
 
+STATIC void server_recv_datatype(void *buf, MPI_Datatype dt, int source)
+{
+    int retval = 0;
+    MPI_Status status;
+
+    retval = MPI_Recv(buf, 1, dt, source,
+            COMEX_TAG, g_state.comm, &status);
+
+    CHECK_MPI_RETVAL(retval);
+    COMEX_ASSERT(status.MPI_SOURCE == source);
+    COMEX_ASSERT(status.MPI_TAG == COMEX_TAG);
+}
+
+
 STATIC void nb_send_common(void *buf, int count, int dest, nb_t *nb, int need_free)
 {
     int retval = 0;
@@ -3666,6 +3861,7 @@ STATIC void nb_send_common(void *buf, int count, int dest, nb_t *nb, int need_fr
     message->need_free = need_free;
     message->stride = NULL;
     message->iov = NULL;
+    message->datatype = MPI_DATATYPE_NULL;
 
     if (NULL == nb->send_head) {
         nb->send_head = message;
@@ -3676,6 +3872,39 @@ STATIC void nb_send_common(void *buf, int count, int dest, nb_t *nb, int need_fr
     nb->send_tail = message;
 
     retval = MPI_Isend(buf, count, MPI_CHAR, dest, COMEX_TAG, g_state.comm,
+            &(message->request));
+    CHECK_MPI_RETVAL(retval);
+}
+
+
+STATIC void nb_send_datatype(void *buf, MPI_Datatype dt, int dest, nb_t *nb)
+{
+    int retval = 0;
+    message_t *message = NULL;
+
+    COMEX_ASSERT(NULL != nb);
+
+    nb->send_size += 1;
+    nb_count_event += 1;
+    nb_count_send += 1;
+
+    message = (message_t*)malloc(sizeof(message_t));
+    message->next = NULL;
+    message->message = buf;
+    message->need_free = 0;
+    message->stride = NULL;
+    message->iov = NULL;
+    message->datatype = dt;
+
+    if (NULL == nb->send_head) {
+        nb->send_head = message;
+    }
+    if (NULL != nb->send_tail) {
+        nb->send_tail->next = message;
+    }
+    nb->send_tail = message;
+
+    retval = MPI_Isend(buf, 1, dt, dest, COMEX_TAG, g_state.comm,
             &(message->request));
     CHECK_MPI_RETVAL(retval);
 }
@@ -3703,7 +3932,7 @@ STATIC void nb_recv_packed(void *buf, int count, int source, nb_t *nb, stride_t 
     COMEX_ASSERT(NULL != nb);
 
 #if DEBUG
-    printf("[%d] nb_recv_packed(buf=%p, count=%d, source=%d, nb=%p)\n",
+    fprintf(stderr, "[%d] nb_recv_packed(buf=%p, count=%d, source=%d, nb=%p)\n",
             g_state.rank, buf, count, source, nb);
 #endif
 
@@ -3717,6 +3946,7 @@ STATIC void nb_recv_packed(void *buf, int count, int source, nb_t *nb, stride_t 
     message->need_free = 1;
     message->stride = stride;
     message->iov = NULL;
+    message->datatype = MPI_DATATYPE_NULL;
 
     if (NULL == nb->recv_head) {
         nb->recv_head = message;
@@ -3732,6 +3962,45 @@ STATIC void nb_recv_packed(void *buf, int count, int source, nb_t *nb, stride_t 
 }
 
 
+STATIC void nb_recv_datatype(void *buf, MPI_Datatype dt, int source, nb_t *nb)
+{
+    int retval = 0;
+    message_t *message = NULL;
+
+    COMEX_ASSERT(NULL != buf);
+    COMEX_ASSERT(NULL != nb);
+
+#if DEBUG
+    fprintf(stderr, "[%d] nb_recv_datatype(buf=%p, count=%d, source=%d, nb=%p)\n",
+            g_state.rank, buf, count, source, nb);
+#endif
+
+    nb->recv_size += 1;
+    nb_count_event += 1;
+    nb_count_recv += 1;
+
+    message = (message_t*)malloc(sizeof(message_t));
+    message->next = NULL;
+    message->message = buf;
+    message->need_free = 0;
+    message->stride = NULL;
+    message->iov = NULL;
+    message->datatype = dt;
+
+    if (NULL == nb->recv_head) {
+        nb->recv_head = message;
+    }
+    if (NULL != nb->recv_tail) {
+        nb->recv_tail->next = message;
+    }
+    nb->recv_tail = message;
+
+    retval = MPI_Irecv(buf, 1, dt, source, COMEX_TAG, g_state.comm,
+            &(message->request));
+    CHECK_MPI_RETVAL(retval);
+}
+
+
 STATIC void nb_recv_iov(void *buf, int count, int source, nb_t *nb, comex_giov_t *iov)
 {
     int retval = 0;
@@ -3740,7 +4009,7 @@ STATIC void nb_recv_iov(void *buf, int count, int source, nb_t *nb, comex_giov_t
     COMEX_ASSERT(NULL != nb);
 
 #if DEBUG
-    printf("[%d] nb_recv_iov(buf=%p, count=%d, source=%d, nb=%p)\n",
+    fprintf(stderr, "[%d] nb_recv_iov(buf=%p, count=%d, source=%d, nb=%p)\n",
             g_state.rank, buf, count, source, nb);
 #endif
 
@@ -3754,6 +4023,7 @@ STATIC void nb_recv_iov(void *buf, int count, int source, nb_t *nb, comex_giov_t
     message->need_free = 1;
     message->stride = NULL;
     message->iov = iov;
+    message->datatype = MPI_DATATYPE_NULL;
 
     if (NULL == nb->recv_head) {
         nb->recv_head = message;
@@ -3778,7 +4048,7 @@ STATIC void nb_recv(void *buf, int count, int source, nb_t *nb)
     COMEX_ASSERT(NULL != nb);
 
 #if DEBUG
-    printf("[%d] nb_recv(buf=%p, count=%d, source=%d, nb=%p)\n",
+    fprintf(stderr, "[%d] nb_recv(buf=%p, count=%d, source=%d, nb=%p)\n",
             g_state.rank, buf, count, source, nb);
 #endif
 
@@ -3792,6 +4062,7 @@ STATIC void nb_recv(void *buf, int count, int source, nb_t *nb)
     message->need_free = 0;
     message->stride = NULL;
     message->iov = NULL;
+    message->datatype = MPI_DATATYPE_NULL;
 
     if (NULL == nb->recv_head) {
         nb->recv_head = message;
@@ -3852,7 +4123,7 @@ STATIC nb_t* nb_wait_for_handle()
 STATIC void nb_wait_for_send(nb_t *nb)
 {
 #if DEBUG
-    printf("[%d] nb_wait_for_send(nb=%p)\n", g_state.rank, nb);
+    fprintf(stderr, "[%d] nb_wait_for_send(nb=%p)\n", g_state.rank, nb);
 #endif
 
     COMEX_ASSERT(NULL != nb);
@@ -3868,7 +4139,7 @@ STATIC void nb_wait_for_send(nb_t *nb)
 STATIC void nb_wait_for_send1(nb_t *nb)
 {
 #if DEBUG
-    printf("[%d] nb_wait_for_send1(nb=%p)\n", g_state.rank, nb);
+    fprintf(stderr, "[%d] nb_wait_for_send1(nb=%p)\n", g_state.rank, nb);
 #endif
 
     COMEX_ASSERT(NULL != nb);
@@ -3884,6 +4155,11 @@ STATIC void nb_wait_for_send1(nb_t *nb)
 
         if (nb->send_head->need_free) {
             free(nb->send_head->message);
+        }
+
+        if (MPI_DATATYPE_NULL != nb->send_head->datatype) {
+            retval = MPI_Type_free(&nb->send_head->datatype);
+            CHECK_MPI_RETVAL(retval);
         }
 
         message_to_free = nb->send_head;
@@ -3905,7 +4181,7 @@ STATIC void nb_wait_for_send1(nb_t *nb)
 STATIC void nb_wait_for_recv(nb_t *nb)
 {
 #if DEBUG
-    printf("[%d] nb_wait_for_recv(nb=%p)\n", g_state.rank, nb);
+    fprintf(stderr, "[%d] nb_wait_for_recv(nb=%p)\n", g_state.rank, nb);
 #endif
 
     COMEX_ASSERT(NULL != nb);
@@ -3919,7 +4195,7 @@ STATIC void nb_wait_for_recv(nb_t *nb)
 STATIC void nb_wait_for_recv1(nb_t *nb)
 {
 #if DEBUG
-    printf("[%d] nb_wait_for_recv1(nb=%p)\n", g_state.rank, nb);
+    fprintf(stderr, "[%d] nb_wait_for_recv1(nb=%p)\n", g_state.rank, nb);
 #endif
 
     COMEX_ASSERT(NULL != nb);
@@ -3964,6 +4240,11 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
             free(nb->recv_head->message);
         }
 
+        if (MPI_DATATYPE_NULL != nb->recv_head->datatype) {
+            retval = MPI_Type_free(&nb->recv_head->datatype);
+            CHECK_MPI_RETVAL(retval);
+        }
+
         message_to_free = nb->recv_head;
         nb->recv_head = nb->recv_head->next;
         free(message_to_free);
@@ -3983,7 +4264,7 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
 STATIC void nb_wait_for_all(nb_t *nb)
 {
 #if DEBUG
-    printf("[%d] nb_wait_for_all(nb=%p)\n", g_state.rank, nb);
+    fprintf(stderr, "[%d] nb_wait_for_all(nb=%p)\n", g_state.rank, nb);
 #endif
 
     COMEX_ASSERT(NULL != nb);
@@ -4061,6 +4342,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
         fence_array[master_rank] = 1;
         header = malloc(sizeof(header_t));
         header->operation = OP_PUT;
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->remote_address = dst;
         header->local_address = src;
         header->rank = proc;
@@ -4109,6 +4391,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         master_rank = g_state.master[proc];
         header = malloc(sizeof(header_t));
         COMEX_ASSERT(header);
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = OP_GET;
         header->remote_address = src;
         header->local_address = dst;
@@ -4224,7 +4507,7 @@ STATIC void nb_puts(
     int dst_bvalue[7], dst_bunit[7];
 
 #if DEBUG
-    printf("[%d] nb_puts(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
+    fprintf(stderr, "[%d] nb_puts(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
             g_state.rank, src, src_stride, dst, dst_stride,
             count[0], stride_levels, proc, nb);
 #endif
@@ -4234,6 +4517,17 @@ STATIC void nb_puts(
         nb_put(src, dst, count[0], proc, nb);
         return;
     }
+
+#if ENABLE_PUT_DATATYPE
+#if ENABLE_PUT_SELF
+    /* if not a strided put to self, use packed algorithm */
+    if (g_state.rank != proc)
+#endif
+    {
+        nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
+        return;
+    }
+#endif
 
 #if ENABLE_PUT_PACKED
 #if ENABLE_PUT_SELF
@@ -4268,7 +4562,7 @@ STATIC void nb_puts(
         src_idx = 0;
         dst_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-	  src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+            src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -4278,7 +4572,7 @@ STATIC void nb_puts(
         }
 
         for(j=1; j<=stride_levels; j++) {
-	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+            dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
@@ -4303,7 +4597,7 @@ STATIC void nb_puts_packed(
     stride_t *stride = NULL;
 
 #if DEBUG
-    printf("[%d] nb_puts_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
+    fprintf(stderr, "[%d] nb_puts_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
             g_state.rank, src, src_stride, dst, dst_stride,
             count[0], stride_levels, proc, nb);
 #endif
@@ -4320,6 +4614,7 @@ STATIC void nb_puts_packed(
     /* copy dst info into structure */
     stride = malloc(sizeof(stride_t));
     COMEX_ASSERT(stride);
+    MAYBE_MEMSET(stride, 0, sizeof(stride_t));
     stride->stride_levels = stride_levels;
     stride->count[0] = count[0];
     for (i=0; i<stride_levels; ++i) {
@@ -4335,10 +4630,10 @@ STATIC void nb_puts_packed(
     COMEX_ASSERT(stride->stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
 #if DEBUG
-    printf("[%d] nb_puts_packed stride_levels=%d, count[0]=%d\n",
+    fprintf(stderr, "[%d] nb_puts_packed stride_levels=%d, count[0]=%d\n",
             g_state.rank, stride_levels, count[0]);
     for (i=0; i<stride_levels; ++i) {
-        printf("[%d] stride[%d]=%d count[%d+1]=%d\n",
+        fprintf(stderr, "[%d] stride[%d]=%d count[%d+1]=%d\n",
                 g_state.rank, i, stride->stride[i], i, stride->count[i+1]);
     }
 #endif
@@ -4356,6 +4651,8 @@ STATIC void nb_puts_packed(
         /* only fence on the master */
         fence_array[master_rank] = 1;
         header = malloc(sizeof(header_t));
+        COMEX_ASSERT(header);
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = OP_PUT_PACKED;
         header->remote_address = dst;
         header->local_address = NULL;
@@ -4364,6 +4661,85 @@ STATIC void nb_puts_packed(
         nb_send_header(header, sizeof(header_t), master_rank, nb);
         nb_send_header(stride, sizeof(stride_t), master_rank, nb);
         nb_send_header(packed_buffer, packed_index, master_rank, nb);
+    }
+}
+
+
+STATIC void nb_puts_datatype(
+        void *src_ptr, int *src_stride_ar,
+        void *dst_ptr, int *dst_stride_ar,
+        int *count, int stride_levels,
+        int proc, nb_t *nb)
+{
+    MPI_Datatype src_type;
+    int ierr;
+    int i;
+    stride_t *stride = NULL;
+
+#if DEBUG
+    fprintf(stderr, "[%d] nb_puts_datatype(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
+            g_state.rank, src_ptr, src_stride_ar, dst_ptr, dst_stride_ar,
+            count[0], stride_levels, proc, nb);
+#endif
+
+    COMEX_ASSERT(proc >= 0);
+    COMEX_ASSERT(proc < g_state.size);
+    COMEX_ASSERT(NULL != src_ptr);
+    COMEX_ASSERT(NULL != dst_ptr);
+    COMEX_ASSERT(NULL != count);
+    COMEX_ASSERT(NULL != nb);
+    COMEX_ASSERT(stride_levels >= 0);
+    COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
+
+    /* copy dst info into structure */
+    stride = malloc(sizeof(stride_t));
+    COMEX_ASSERT(stride);
+    MAYBE_MEMSET(stride, 0, sizeof(stride_t));
+    stride->stride_levels = stride_levels;
+    stride->count[0] = count[0];
+    for (i=0; i<stride_levels; ++i) {
+        stride->stride[i] = dst_stride_ar[i];
+        stride->count[i+1] = count[i+1];
+    }
+    for (/*no init*/; i<COMEX_MAX_STRIDE_LEVEL; ++i) {
+        stride->stride[i] = -1;
+        stride->count[i+1] = -1;
+    }
+
+    COMEX_ASSERT(stride->stride_levels >= 0);
+    COMEX_ASSERT(stride->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+
+#if DEBUG
+    fprintf(stderr, "[%d] nb_puts_datatype stride_levels=%d, count[0]=%d\n",
+            g_state.rank, stride_levels, count[0]);
+    for (i=0; i<stride_levels; ++i) {
+        fprintf(stderr, "[%d] stride[%d]=%d count[%d+1]=%d\n",
+                g_state.rank, i, stride->stride[i], i, stride->count[i+1]);
+    }
+#endif
+
+    strided_to_subarray_dtype(src_stride_ar, count, stride_levels,
+            MPI_BYTE, &src_type);
+    ierr = MPI_Type_commit(&src_type);
+    translate_mpi_error(ierr,"nb_puts_datatype:MPI_Type_commit");
+
+    {
+        header_t *header = NULL;
+        int master_rank = -1;
+
+        master_rank = g_state.master[proc];
+        /* only fence on the master */
+        fence_array[master_rank] = 1;
+        header = malloc(sizeof(header_t));
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
+        header->operation = OP_PUT_DATATYPE;
+        header->remote_address = dst_ptr;
+        header->local_address = NULL;
+        header->rank = proc;
+        header->length = 0;
+        nb_send_header(header, sizeof(header_t), master_rank, nb);
+        nb_send_header(stride, sizeof(stride_t), master_rank, nb);
+        nb_send_datatype(src_ptr, src_type, master_rank, nb);
     }
 }
 
@@ -4383,6 +4759,17 @@ STATIC void nb_gets(
         nb_get(src, dst, count[0], proc, nb);
         return;
     }
+
+#if ENABLE_GET_DATATYPE
+#if ENABLE_GET_SELF
+    /* if not a strided get from self, use packed algorithm */
+    if (g_state.rank != proc)
+#endif
+    {
+        nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
+        return;
+    }
+#endif
 
 #if ENABLE_GET_PACKED
 #if ENABLE_GET_SELF
@@ -4451,7 +4838,7 @@ STATIC void nb_gets_packed(
     stride_t *stride_dst = NULL;
 
 #if DEBUG
-    printf("[%d] nb_gets_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
+    fprintf(stderr, "[%d] nb_gets_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
             g_state.rank, src, src_stride, dst, dst_stride,
             count[0], stride_levels, proc, nb);
 #endif
@@ -4512,6 +4899,7 @@ STATIC void nb_gets_packed(
 
         header = malloc(sizeof(header_t));
         COMEX_ASSERT(header);
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = OP_GET_PACKED;
         header->remote_address = src;
         header->local_address = dst;
@@ -4524,6 +4912,87 @@ STATIC void nb_gets_packed(
         packed_buffer = malloc(recv_size);
         COMEX_ASSERT(packed_buffer);
         nb_recv_packed(packed_buffer, recv_size, master_rank, nb, stride_dst);
+        nb_send_header(header, sizeof(header_t), master_rank, nb);
+        nb_send_header(stride_src, sizeof(stride_t), master_rank, nb);
+    }
+}
+
+
+STATIC void nb_gets_datatype(
+        void *src, int *src_stride, void *dst, int *dst_stride,
+        int *count, int stride_levels, int proc, nb_t *nb)
+{
+    MPI_Datatype dst_type;
+    int i;
+    stride_t *stride_src = NULL;
+
+#if DEBUG
+    fprintf(stderr, "[%d] nb_gets_datatype(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
+            g_state.rank, src, src_stride, dst, dst_stride,
+            count[0], stride_levels, proc, nb);
+#endif
+#if DEBUG
+    for (i=0; i<stride_levels; ++i) {
+        fprintf(stderr, "\tsrc_stride[%d]=%d\n", i, src_stride[i]);
+    }
+    for (i=0; i<stride_levels; ++i) {
+        fprintf(stderr, "\tdst_stride[%d]=%d\n", i, dst_stride[i]);
+    }
+    for (i=0; i<stride_levels+1; ++i) {
+        fprintf(stderr, "\tcount[%d]=%d\n", i, count[i]);
+    }
+#endif
+
+    COMEX_ASSERT(proc >= 0);
+    COMEX_ASSERT(proc < g_state.size);
+    COMEX_ASSERT(NULL != src);
+    COMEX_ASSERT(NULL != dst);
+    COMEX_ASSERT(NULL != count);
+    COMEX_ASSERT(NULL != nb);
+    COMEX_ASSERT(count[0] > 0);
+    COMEX_ASSERT(stride_levels >= 0);
+    COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
+
+    /* copy src info into structure */
+    stride_src = malloc(sizeof(stride_t));
+    COMEX_ASSERT(stride_src);
+    MAYBE_MEMSET(stride_src, 0, sizeof(header_t));
+    stride_src->ptr = src;
+    stride_src->stride_levels = stride_levels;
+    stride_src->count[0] = count[0];
+    for (i=0; i<stride_levels; ++i) {
+        stride_src->stride[i] = src_stride[i];
+        stride_src->count[i+1] = count[i+1];
+    }
+    for (/*no init*/; i<COMEX_MAX_STRIDE_LEVEL; ++i) {
+        stride_src->stride[i] = -1;
+        stride_src->count[i+1] = -1;
+    }
+
+    COMEX_ASSERT(stride_src->stride_levels >= 0);
+    COMEX_ASSERT(stride_src->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+
+    {
+        header_t *header = NULL;
+        int master_rank = -1;
+        int ierr;
+
+        master_rank = g_state.master[proc];
+
+        header = malloc(sizeof(header_t));
+        COMEX_ASSERT(header);
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
+        header->operation = OP_GET_DATATYPE;
+        header->remote_address = src;
+        header->local_address = dst;
+        header->rank = proc;
+        header->length = 0;
+
+        strided_to_subarray_dtype(dst_stride, count, stride_levels, MPI_BYTE, &dst_type);
+        ierr = MPI_Type_commit(&dst_type);
+        translate_mpi_error(ierr,"nb_gets_datatype:MPI_Type_commit");
+
+        nb_recv_datatype(dst, dst_type, master_rank, nb);
         nb_send_header(header, sizeof(header_t), master_rank, nb);
         nb_send_header(stride_src, sizeof(stride_t), master_rank, nb);
     }
@@ -4620,7 +5089,7 @@ STATIC void nb_accs_packed(
     stride_t *stride = NULL;
 
 #if DEBUG
-    printf("[%d] nb_accs_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
+    fprintf(stderr, "[%d] nb_accs_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
             g_state.rank, src, src_stride, dst, dst_stride,
             count[0], stride_levels, proc, nb);
 #endif
@@ -4656,10 +5125,10 @@ STATIC void nb_accs_packed(
     COMEX_ASSERT(stride->stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
 #if DEBUG
-    printf("[%d] nb_accs_packed stride_levels=%d, count[0]=%d\n",
+    fprintf(stderr, "[%d] nb_accs_packed stride_levels=%d, count[0]=%d\n",
             g_state.rank, stride_levels, count[0]);
     for (i=0; i<stride_levels; ++i) {
-        printf("[%d] stride[%d]=%d count[%d+1]=%d\n",
+        fprintf(stderr, "[%d] stride[%d]=%d count[%d+1]=%d\n",
                 g_state.rank, i, stride->stride[i], i, stride->count[i+1]);
     }
 #endif
@@ -4710,6 +5179,7 @@ STATIC void nb_accs_packed(
 
         header = malloc(sizeof(header_t));
         COMEX_ASSERT(header);
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = operation;
         header->remote_address = dst;
         header->local_address = NULL;
@@ -4768,7 +5238,7 @@ STATIC void nb_putv_packed(comex_giov_t *iov, int proc, nb_t *nb)
     limit = iov->count;
 
 #if DEBUG
-    printf("[%d] nb_putv_packed limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
+    fprintf(stderr, "[%d] nb_putv_packed limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
             g_state.rank, limit, bytes, src[0], dst[0]);
 #endif
 
@@ -4811,6 +5281,7 @@ STATIC void nb_putv_packed(comex_giov_t *iov, int proc, nb_t *nb)
 
         header = malloc(sizeof(header_t));
         COMEX_ASSERT(header);
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = OP_PUT_IOV;
         header->remote_address = NULL;
         header->local_address = NULL;
@@ -4867,7 +5338,7 @@ STATIC void nb_getv_packed(comex_giov_t *iov, int proc, nb_t *nb)
     limit = iov->count;
 
 #if DEBUG
-    printf("[%d] nb_getv_packed limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
+    fprintf(stderr, "[%d] nb_getv_packed limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
             g_state.rank, limit, bytes, src[0], dst[0]);
 #endif
 
@@ -4902,7 +5373,7 @@ STATIC void nb_getv_packed(comex_giov_t *iov, int proc, nb_t *nb)
     (void)memcpy(iov_copy->dst, iov->dst, sizeof(void*)*iov->count);
 
 #if DEBUG
-    printf("[%d] nb_getv_packed limit=%d bytes=%d src[0]=%p dst[0]=%p copy\n",
+    fprintf(stderr, "[%d] nb_getv_packed limit=%d bytes=%d src[0]=%p dst[0]=%p copy\n",
             g_state.rank, iov_copy->count, iov_copy->bytes,
             iov_copy->src[0], iov_copy->dst[0]);
 #endif
@@ -4918,6 +5389,7 @@ STATIC void nb_getv_packed(comex_giov_t *iov, int proc, nb_t *nb)
 
         header = malloc(sizeof(header_t));
         COMEX_ASSERT(header);
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = OP_GET_IOV;
         header->remote_address = NULL;
         header->local_address = NULL;
@@ -4979,7 +5451,7 @@ STATIC void nb_accv_packed(
     limit = iov->count;
 
 #if DEBUG
-    printf("[%d] nb_accv_packed limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
+    fprintf(stderr, "[%d] nb_accv_packed limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
             g_state.rank, limit, bytes, src[0], dst[0]);
 #endif
 
@@ -5052,6 +5524,7 @@ STATIC void nb_accv_packed(
 
         header = malloc(sizeof(header_t));
         COMEX_ASSERT(header);
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = operation;
         header->remote_address = NULL;
         header->local_address = NULL;
@@ -5061,6 +5534,97 @@ STATIC void nb_accv_packed(
         nb_send_buffer(scale, scale_size, master_rank, nb);
         nb_send_header(iov_buf, iov_size, master_rank, nb);
         nb_send_header(packed_buffer, packed_size, master_rank, nb);
+    }
+}
+
+/**
+ * Utility function to catch and translate MPI errors. Returns silently if
+ * no error detected.
+ * @param ierr: Error code from MPI call
+ * @param location: User specified string to indicate location of error
+ */
+STATIC void translate_mpi_error(int ierr, const char* location)
+{
+  if (ierr == MPI_SUCCESS) return;
+  char err_string[MPI_MAX_ERROR_STRING];
+  int len;
+  fprintf(stderr,"p[%d] Error in %s\n",g_state.rank,location);
+  MPI_Error_string(ierr,err_string,&len);
+  fprintf(stderr,"p[%d] MPI_Error: %s\n",g_state.rank,err_string);
+}
+
+
+/**
+ * No checking for data consistency. Assume correctness has already been
+ * established elsewhere. Individual elements are assumed to be one byte in size
+ * stride_array: physical dimensions of array
+ * count: number of elements along each array dimension
+ * levels: number of stride levels (should be one less than array dimension)
+ * type: MPI_Datatype returned to calling program
+ */
+STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels, MPI_Datatype base_type, MPI_Datatype *type)
+{
+    int ndims = levels+1;
+    int i = 0;
+    int ierr = 0;
+    int array_of_sizes[7];
+    int array_of_starts[7];
+    int array_of_subsizes[7];
+    int stride = 0;
+
+    ierr = MPI_Type_size(base_type,&stride);
+    translate_mpi_error(ierr,"strided_to_subarray_dtype:MPI_Type_size");
+
+    /* the pointer to the local buffer points to the first data element
+     * in data exchange, not the origin of the local array, so all starts
+     * should be zero */
+    for (i=0; i<levels; i++) {
+        array_of_sizes[i] = stride_array[i]/stride;
+        array_of_starts[i] = 0;
+        array_of_subsizes[i] = count[i];
+        if (array_of_sizes[i] < array_of_subsizes[i]) {
+            fprintf(stderr, "p[%d] ERROR [strided_to_subarray_dtype]\n"
+                    "stride: %d\n"
+                    "stride_array[%d]: %d\n"
+                    "array_of_sizes[%d]: %d\n"
+                    "array_of_subsizes[%d]: %d\n",
+                    g_state.rank,
+                    stride,
+                    i,stride_array[i],
+                    i,array_of_sizes[i],
+                    i,array_of_subsizes[i]);
+        }
+        stride = stride_array[i];
+    }
+    array_of_sizes[levels] = count[levels];
+    array_of_starts[levels] = 0;
+    array_of_subsizes[levels] = count[levels];
+#if DEBUG
+    for (i=0; i<ndims; i++) {
+        fprintf(stderr, "p[%d] ndims: %d sizes[%d]: %d subsizes[%d]: %d starts[%d]: %d\n",
+                g_state.rank,
+                ndims,
+                i,array_of_sizes[i],
+                i,array_of_subsizes[i],
+                i,array_of_starts[i]);
+    }
+#endif
+
+    ierr = MPI_Type_create_subarray(ndims, array_of_sizes,
+            array_of_subsizes, array_of_starts, MPI_ORDER_FORTRAN,
+            base_type, type);
+    if (MPI_SUCCESS != ierr) {
+        fprintf(stderr, "p[%d] Error forming MPI_Datatype for one-sided strided operation."
+                " Check that stride dimensions are compatible with local block"
+                " dimensions\n",g_state.rank);
+        for (i=0; i<levels; i++) {
+            fprintf(stderr, "p[%d] count[%d]: %d stride[%d]: %d\n",
+                    g_state.rank,
+                    i,count[i],
+                    i,stride_array[i]);
+        }
+        fprintf(stderr, "p[%d] count[%d]: %d\n",g_state.rank,i,count[i]);
+        translate_mpi_error(ierr,"strided_to_subarray_dtype:MPI_Type_create_subarray");
     }
 }
 

@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include "thread-safe.h"
 
 #if defined(PTHREADS) && defined(THREAD_SAFE)
