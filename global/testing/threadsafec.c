@@ -244,7 +244,10 @@ int main(int argc, char * argv[])
       NGA_Acc(g_ritime,&me,&me,&delta_t,&one,&rone);
       NGA_Acc(g_rinc,&me,&me,&one,&one,&one);
       buf = (int*)malloc(block_x*block_y*sizeof(int));
-      while (task < tx*ty) {
+      #pragma omp for
+      for(int z = 0; z < tx*ty;z++) 
+      {
+        task = z;
         ity = task%ty;
         itx = (task-ity)/ty;
         tlo[0] = itx*block_x;
@@ -632,6 +635,8 @@ int main(int argc, char * argv[])
     GA_Zero(g_time);
     GA_Zero(g_ntime);
     GA_Zero(g_elems);
+    ga_nbhdl_t* nb_hdl = (ga_nbhdl_t*) malloc(tx*ty*sizeof(ga_nbhdl_t));
+    long task;
     #pragma omp parallel num_threads(thread_count)
     {
       /* declare variables local to each thread */
@@ -643,12 +648,11 @@ int main(int argc, char * argv[])
       int offset;
       int *buf;
       int lld;
-      long task, inc; 
+      long  inc; 
       int id;
       double delta_t;
       int bsize;
       int icnt = 0;
-      ga_nbhdl_t* nb_hdl = (ga_nbhdl_t*) malloc(tx*ty*sizeof(ga_nbhdl_t));
       id = omp_get_thread_num();
       inc = 1;
       delta_t = GA_Wtime();
@@ -657,7 +661,10 @@ int main(int argc, char * argv[])
       NGA_Acc(g_ritime,&me,&me,&delta_t,&one,&rone);
       NGA_Acc(g_rinc,&me,&me,&one,&one,&one);
       buf = (int*)malloc(block_x*block_y*sizeof(int));
-      while (task < tx*ty) {
+      #pragma omp for
+      for(int z = 0; z < tx*ty;z++) 
+      {
+        task = z;
         ity = task%ty;
         itx = (task-ity)/ty;
         tlo[0] = itx*block_x;
@@ -681,7 +688,7 @@ int main(int argc, char * argv[])
           }
         }
         delta_t = GA_Wtime();
-        NGA_NbPut(g_src, tlo, thi, buf, &lld, &nb_hdl[icnt]);
+        NGA_NbPut(g_src, tlo, thi, buf, &lld, &nb_hdl[z]);
         delta_t = GA_Wtime()-delta_t;
         NGA_Acc(g_time,&me,&me,&delta_t,&one,&rone);
         NGA_Acc(g_ntime,&me,&me,&one,&one,&one);
@@ -697,12 +704,18 @@ int main(int argc, char * argv[])
         NGA_Acc(g_rinc,&me,&me,&one,&one,&one);
       }
       free(buf);
-      free(nb_hdl);
       /* Call wait on all outstanding tasks. Don't bother to reinitialize
          global counter */
-      for (k=0; k<icnt; k++) {
+      #pragma omp single
+      {
+        task = 0;
+      }
+      #pragma omp for
+      for(int z = 0; z < tx*ty;z++) 
+      {
+        task = z;
         delta_t = GA_Wtime();
-        NGA_NbWait(&nb_hdl[k]);
+        NGA_NbWait(&nb_hdl[z]);
         delta_t = GA_Wtime()-delta_t;
         NGA_Acc(g_time,&me,&me,&delta_t,&one,&rone);
         delta_t = GA_Wtime();
@@ -712,6 +725,7 @@ int main(int argc, char * argv[])
         NGA_Acc(g_rinc,&me,&me,&one,&one,&one);
       }
     }
+      free(nb_hdl);
     /* Sync all processors at end of initialization loop */
     NGA_Sync(); 
 
