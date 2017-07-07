@@ -63,8 +63,13 @@ void add_hdl(Integer *nbhandle)
   while(temp->next != NULL)
     temp = temp->next;
   temp->next = (ga_armcihdl_t*) malloc(sizeof(ga_armcihdl_t));
-  temp->next->index = *nbhandle;
-  temp->next->prev= temp;
+  ga_armcihdl_t *save = temp;
+  temp = temp->next;
+  temp->handle = (armci_hdl_t*) malloc(sizeof(armci_hdl_t)); 
+  temp->index = *nbhandle;
+  temp->next = NULL;
+  temp->prev= save;
+  
 }
 
 ga_armcihdl_t *get_hdl(Integer *nbhandle)
@@ -85,8 +90,10 @@ void remove_hdl(Integer *nbhandle)
     temp = temp->next;
   if(temp->index == *nbhandle)
   {
+    if(temp->next != NULL)
+      temp->next->prev=temp->prev;
     temp->prev->next=temp->next;
-    temp->next->prev=temp->prev;
+    free(temp->handle);
     free(temp);
   }
 }
