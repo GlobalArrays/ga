@@ -9,6 +9,7 @@
 #endif
 #define DEBUG 0
 #include <pthread.h>
+#include <limits.h>
 
 typedef struct struct_armcihdl_t{
     armci_hdl_t* handle;
@@ -18,8 +19,10 @@ typedef struct struct_armcihdl_t{
 }ga_armcihdl_t;
 
 static ga_armcihdl_t head={NULL,NULL,NULL,0};
+static ga_armcihdl_t *tail=&head;
 pthread_mutex_t mutex;
 static unsigned next_hdl = 1; 
+static int loop_flag = 0;
 
 void add_hdl(Integer *nbhandle);
 ga_armcihdl_t *get_hdl(Integer *nbhandle);
@@ -51,7 +54,15 @@ void ga_init_nbhandle(Integer *nbhandle)
 {
   pthread_mutex_lock(&mutex);
     *nbhandle = next_hdl;
+    if(next_hdl == UINT_MAX)
+     {
+       loop_flag = 1;
+       next_hdl = 0;
+     }
     next_hdl++;
+    if(loop_flag)
+      if(get_hdl(nbhandle))
+        nga_wait_internal(nbhandle);
     add_hdl(nbhandle);
   pthread_mutex_unlock(&mutex);
   ARMCI_INIT_HANDLE(get_hdl(nbhandle)->handle);
@@ -59,16 +70,13 @@ void ga_init_nbhandle(Integer *nbhandle)
 
 void add_hdl(Integer *nbhandle)
 {
-  ga_armcihdl_t *temp = &head;
-  while(temp->next != NULL)
-    temp = temp->next;
-  temp->next = (ga_armcihdl_t*) malloc(sizeof(ga_armcihdl_t));
-  ga_armcihdl_t *save = temp;
-  temp = temp->next;
+  ga_armcihdl_t *temp = (ga_armcihdl_t*) malloc(sizeof(ga_armcihdl_t));
   temp->handle = (armci_hdl_t*) malloc(sizeof(armci_hdl_t)); 
   temp->index = *nbhandle;
   temp->next = NULL;
-  temp->prev= save;
+  temp->prev= tail;
+  tail->next=temp;
+  tail = temp;
 }
 
 ga_armcihdl_t *get_hdl(Integer *nbhandle)
@@ -99,6 +107,8 @@ void remove_hdl(Integer *nbhandle)
   {
     if(temp->next != NULL)
       temp->next->prev=temp->prev;
+    else
+      tail = tail->prev;
     temp->prev->next=temp->next;
     free(temp->handle);
     free(temp);
