@@ -18,8 +18,8 @@ typedef struct struct_armcihdl_t{
 }ga_armcihdl_t;
 
 static ga_armcihdl_t head={NULL,NULL,NULL,0};
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-static int next_hdl = 1; 
+pthread_mutex_t mutex;
+static unsigned next_hdl = 1; 
 
 void add_hdl(Integer *nbhandle);
 ga_armcihdl_t *get_hdl(Integer *nbhandle);
@@ -69,22 +69,29 @@ void add_hdl(Integer *nbhandle)
   temp->index = *nbhandle;
   temp->next = NULL;
   temp->prev= save;
-  
 }
 
 ga_armcihdl_t *get_hdl(Integer *nbhandle)
 {
+  pthread_mutex_lock(&mutex);
   ga_armcihdl_t *temp = &head;
   while(temp->next != NULL && temp->index != *nbhandle)
     temp = temp->next;
   if(temp->index == *nbhandle)
+  {
+  pthread_mutex_unlock(&mutex);
     return temp;
+  }
   else
+  {
+  pthread_mutex_unlock(&mutex);
     return 0; 
+  }
 }
 
 void remove_hdl(Integer *nbhandle)
 {
+  pthread_mutex_lock(&mutex);
   ga_armcihdl_t *temp = &head;
   while(temp->next != NULL && temp->index != *nbhandle)
     temp = temp->next;
@@ -96,4 +103,5 @@ void remove_hdl(Integer *nbhandle)
     free(temp->handle);
     free(temp);
   }
+  pthread_mutex_unlock(&mutex);
 }
