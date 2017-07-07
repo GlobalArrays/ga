@@ -1100,7 +1100,7 @@ void ngai_put_common(Integer g_a,
 #ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
-  free(Proc_List);
+  free(ProcList);
 }
 
 
@@ -1847,7 +1847,7 @@ void ngai_get_common(Integer g_a,
 #ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
-  free(Proc_List);
+  free(ProcList);
 }
 
 /**
