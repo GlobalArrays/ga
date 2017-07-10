@@ -74,7 +74,6 @@ static int calc_maplen(int handle);
 #define FLEN        80              /* length of Fortran strings */
 
 /*uncomment line below to verify consistency of MA in every sync */
-/*#define CHECK_MA yes */
 
 /*uncomment line below to verify if MA base address is alligned wrt datatype*/
 #if !(defined(LINUX) || defined(CRAY) || defined(CYGWIN))

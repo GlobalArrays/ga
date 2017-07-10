@@ -83,7 +83,6 @@
 #define DISABLE_NBOPT /* disables Non-Blocking OPTimization */
 
 /*uncomment line below to verify consistency of MA in every sync */
-/*#define CHECK_MA yes */
 
 char *fence_array;
 static int GA_fence_set=0;
@@ -110,9 +109,6 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 
 void pnga_pgroup_sync(Integer grp_id)
 {
-#ifdef CHECK_MA
-  Integer status;
-#endif
 
   /*    printf("p[%d] calling ga_pgroup_sync on group: %d\n",GAme,*grp_id); */
 #ifdef USE_ARMCI_GROUP_FENCE
@@ -139,9 +135,6 @@ void pnga_pgroup_sync(Integer grp_id)
     GA_fence_set=0;
   }
 #endif
-#ifdef CHECK_MA
-  status = MA_verify_allocator_stuff();
-#endif
 }
 
 /**
@@ -154,9 +147,6 @@ void pnga_pgroup_sync(Integer grp_id)
 void pnga_sync()
 {
   GA_Internal_Threadsafe_Lock();
-#ifdef CHECK_MA
-  Integer status;
-#endif
 
 #ifdef USE_ARMCI_GROUP_FENCE
   if (GA_Default_Proc_Group == -1) {
@@ -177,9 +167,6 @@ void pnga_sync()
     Integer grp_id = (Integer)GA_Default_Proc_Group;
     pnga_pgroup_sync(grp_id);
   }
-#endif
-#ifdef CHECK_MA
-  status = MA_verify_allocator_stuff();
 #endif
   GA_Internal_Threadsafe_Unlock();
 }

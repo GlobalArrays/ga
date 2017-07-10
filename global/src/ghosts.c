@@ -70,7 +70,6 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 
 
 /*uncomment line below to verify consistency of MA in every sync */
-/*#define CHECK_MA yes */
 
 /***************************************************************************/
 
