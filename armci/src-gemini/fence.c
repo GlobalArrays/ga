@@ -7,7 +7,7 @@
 #include "armci.h"
 #include "copy.h"
 #include <stdio.h>
-#elif defined(TCGMSG)
+#if defined(TCGMSG)
 #   include <sndrcv.h>
 #elif defined(BGML)
 #   include "bgml.h"

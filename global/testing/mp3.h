@@ -1,4 +1,4 @@
-#elif defined(MSG_COMMS_TCGMSG) || defined(MSG_COMMS_TCGMSG5) || defined(MSG_COMMS_TCGMSGMPI)
+#if defined(MSG_COMMS_TCGMSG) || defined(MSG_COMMS_TCGMSG5) || defined(MSG_COMMS_TCGMSGMPI)
 #   include <tcgmsg.h>
 #   define MP_BARRIER()         tcg_synch(30000)
 #   define MP_INIT(argc,argv)   tcg_pbegin((argc),(argv))
