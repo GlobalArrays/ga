@@ -3242,7 +3242,6 @@ logical pnga_update5_ghosts(Integer g_a)
   return TRUE;
 }
 
-/*#define UPDATE_SAMENODE_GHOSTS_FIRST*/
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_set_update5_info = pnga_set_update5_info
@@ -3265,9 +3264,6 @@ logical pnga_set_update5_info(Integer g_a)
   char **ptr_loc, **ptr_rem,*cache;
   Integer handle = GA_OFFSET + g_a;
   int cache_size;
-#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
-  int scope;
-#endif
   Integer me = pnga_nodeid();
   Integer p_handle;
 
@@ -3333,9 +3329,6 @@ logical pnga_set_update5_info(Integer g_a)
       return FALSE;
     }
   } 
-#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
-  for(scope=0;scope < 2; scope ++)
-#endif
     for (idx=0; idx < ndim; idx++) {
       nwidth = width[idx];
       if (nwidth != 0) {  
@@ -3358,10 +3351,6 @@ logical pnga_set_update5_info(Integer g_a)
           *proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem];
         }
 
-#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
-        if(scope == 0 && ARMCI_Same_node(*proc_rem))
-          goto do_negative;
-#endif
 
         cache = (char *)(proc_rem+1);
 
@@ -3400,9 +3389,6 @@ logical pnga_set_update5_info(Integer g_a)
           *proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem];
         }
 
-#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
-        do_negative:
-#endif
 
        /*BJP proc_rem++; */
         ptr_rem = (char **)cache;
@@ -3424,10 +3410,6 @@ logical pnga_set_update5_info(Integer g_a)
           *proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem];
         }
 
-#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
-        if(scope == 0 && ARMCI_Same_node(*proc_rem))
-          continue;
-#endif
 
         cache = (char *)(proc_rem+1);
 
