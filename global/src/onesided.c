@@ -869,7 +869,7 @@ void ngai_put_common(Integer g_a,
                   }
                     */
                 }
-#endif
+#endif 
               }
               /* evaluate offset for block idx */
               jtot = 1;
@@ -885,8 +885,6 @@ void ngai_put_common(Integer g_a,
     /* GA uses ScaLAPACK block cyclic data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer itmp;
-#if COMPACT_SCALAPACK
-#else
       Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
       Integer blk_inc[MAXDIM], blk_jinc;
       Integer blk_ld[MAXDIM],hlf_blk[MAXDIM];
@@ -906,7 +904,6 @@ void ngai_put_common(Integer g_a,
         blk_ld[j] = blk_num[j]*block_dims[j];
         hlf_blk[j] = blk_inc[j]/block_dims[j];
       }
-#endif
       for(loop=0; loop<num_loops; loop++) {
         /* Loop through all blocks owned by this processor. Decompose
            this loop into a loop over all processors and then a loop
@@ -956,18 +953,6 @@ void ngai_put_common(Integer g_a,
 
                 /* evaluate offset within block */
                 last = ndim - 1;
-#if COMPACT_SCALAPACK
-                jtot = 1;
-                if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-                l_offset = 0;
-                for (j=0; j<last; j++) {
-                  l_offset += (plo[j]-blo[j])*jtot;
-                  ldrem[j] = bhi[j]-blo[j]+1;
-                  jtot *= ldrem[j];
-                }
-                l_offset += (plo[last]-blo[last])*jtot;
-                l_offset += offset;
-#else
                 l_offset = 0;
                 jtot = 1;
                 for (j=0; j<last; j++)  {
@@ -994,7 +979,6 @@ void ngai_put_common(Integer g_a,
                 }
                 l_offset += (plo[last]-blo[last]
                     + ((blo[last]-1)/blk_dim[j])*block_dims[last])*jtot;
-#endif
 
                 /* get pointer to data on remote block */
                 pinv = iproc;
@@ -1629,9 +1613,6 @@ void ngai_get_common(Integer g_a,
     } else {
       /* GA uses ScaLAPACK block cyclic data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
-#if COMPACT_SCALAPACK
-      Integer itmp;
-#else
       Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
       Integer blk_inc[MAXDIM], blk_jinc;
       Integer blk_ld[MAXDIM], hlf_blk[MAXDIM];
@@ -1651,7 +1632,6 @@ void ngai_get_common(Integer g_a,
         blk_ld[j] = blk_num[j]*block_dims[j];
         hlf_blk[j] = blk_inc[j]/block_dims[j];
       }
-#endif
       for(loop=0; loop<num_loops; loop++) {
         /* Loop through all blocks owned by this processor. Decompose
            this loop into a loop over all processors and then a loop
@@ -1700,18 +1680,6 @@ void ngai_get_common(Integer g_a,
 
                 /* evaluate offset within block */
                 last = ndim - 1;
-#if COMPACT_SCALAPACK
-                jtot = 1;
-                if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-                l_offset = 0;
-                for (j=0; j<last; j++) {
-                  l_offset += (plo[j]-blo[j])*jtot;
-                  ldrem[j] = bhi[j]-blo[j]+1;
-                  jtot *= ldrem[j];
-                }
-                l_offset += (plo[last]-blo[last])*jtot;
-                l_offset += offset;
-#else
                 l_offset = 0;
                 jtot = 1;
                 for (j=0; j<last; j++)  {
@@ -1738,7 +1706,6 @@ void ngai_get_common(Integer g_a,
                 }
                 l_offset += (plo[last]-blo[last]
                     + ((blo[last]-1)/blk_dim[j])*block_dims[last])*jtot;
-#endif
 
                 /* get pointer to data on remote block */
                 pinv = iproc;
@@ -1795,14 +1762,6 @@ void ngai_get_common(Integer g_a,
                 }
 #endif
               }
-#if COMPACT_SCALAPACK
-              /* increment offset to account for all elements on this block */
-              itmp = 1;
-              for (idx = 0; idx < ndim; idx++) {
-                itmp *= (bhi[idx] - blo[idx] + 1);
-              }
-              offset += itmp;
-#endif
               
               /* increment block indices to get the next block on processor iproc */
               index[0] += GA[handle].nblock[0];
@@ -2169,9 +2128,6 @@ void ngai_acc_common(Integer g_a,
     } else {
       /* GA uses ScaLAPACK block cyclic data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
-#if COMPACT_SCALAPACK
-      Integer itmp;
-#else
       Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
       Integer blk_inc[MAXDIM], blk_jinc;
       Integer blk_ld[MAXDIM],hlf_blk[MAXDIM];
@@ -2191,7 +2147,6 @@ void ngai_acc_common(Integer g_a,
         blk_ld[j] = blk_num[j]*block_dims[j];
         hlf_blk[j] = blk_inc[j]/block_dims[j];
       }
-#endif
       for(loop=0; loop<num_loops; loop++) {
         /* Loop through all blocks owned by this processor. Decompose
            this loop into a loop over all processors and then a loop
@@ -2241,18 +2196,6 @@ void ngai_acc_common(Integer g_a,
 
                 /* evaluate offset within block */
                 last = ndim - 1;
-#if COMPACT_SCALAPACK
-                jtot = 1;
-                if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-                l_offset = 0;
-                for (j=0; j<last; j++) {
-                  l_offset += (plo[j]-blo[j])*jtot;
-                  ldrem[j] = bhi[j]-blo[j]+1;
-                  jtot *= ldrem[j];
-                }
-                l_offset += (plo[last]-blo[last])*jtot;
-                l_offset += offset;
-#else
                 l_offset = 0;
                 jtot = 1;
                 for (j=0; j<last; j++)  {
@@ -2279,7 +2222,6 @@ void ngai_acc_common(Integer g_a,
                 }
                 l_offset += (plo[last]-blo[last]
                     + ((blo[last]-1)/blk_dim[j])*block_dims[last])*jtot;
-#endif
 
                 /* get pointer to data on remote block */
                 pinv = iproc;
@@ -2328,13 +2270,6 @@ void ngai_acc_common(Integer g_a,
               }
 
               /* increment offset to account for all elements on this block */
-#if COMPACT_SCALAPACK
-              itmp = 1;
-              for (idx = 0; idx < ndim; idx++) {
-                itmp *= (bhi[idx] - blo[idx] + 1);
-              }
-              offset += itmp;
-#endif
               
               /* increment block indices to get the next block on processor iproc */
               index[0] += GA[handle].nblock[0];
@@ -2467,11 +2402,6 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   Integer proc_index[MAXDIM];
   Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM], blk_inc[MAXDIM];
   Integer blk_ld[MAXDIM],hlf_blk[MAXDIM],blk_jinc;
-#if COMPACT_SCALAPACK
-  Integer j, lo, hi;
-  Integer lld[MAXDIM], block_count[MAXDIM], loc_block_dims[MAXDIM];
-  Integer ldims[MAXDIM];
-#endif
 
   GA_PUSH_NAME("nga_access_block_grid_ptr");
   /*p_handle = GA[handle].p_handle;*/
@@ -2496,14 +2426,6 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   last = ndim-1;
  
   /* Find strides of requested block */
-#if COMPACT_SCALAPACK
-  for (i=0; i<last; i++)  {
-    lo = index[i]*block_dims[i]+1;
-    hi = (index[i]+1)*block_dims[i];
-    if (hi > dims[i]) hi = dims[i]; 
-    ld[i] = (hi - lo + 1);
-  }
-#else
   for (i=0; i<last; i++)  {
     blk_dim[i] = block_dims[i]*proc_grid[i];
     blk_num[i] = GA[handle].dims[i]/blk_dim[i];
@@ -2529,56 +2451,7 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
     }
     ld[i] += blk_jinc;
   }
-#endif
  
-#if COMPACT_SCALAPACK
-  /* Find dimensions of local block grid stored on processor inode
-     and store results in loc_block_dims. Also find the local grid
-     index of block relative to local block grid and store result
-     in block_count.
-     Find physical dimensions of locally held data and store in 
-     lld and set values in ldim, which is used to evaluate the
-     offset for the requested block. */
-  for (i=0; i<ndim; i++) {
-    block_count[i] = 0;
-    loc_block_dims[i] = 0;
-    lld[i] = 0;
-    lo = 0;
-    hi = -1;
-    for (j=proc_index[i]; j<num_blocks[i]; j += proc_grid[i]) {
-      lo = j*block_dims[i] + 1;
-      hi = (j+1)*block_dims[i];
-      if (hi > dims[i]) hi = dims[i]; 
-      if (i<last) lld[i] += (hi - lo + 1);
-      if (j<index[i]) block_count[i]++;
-      loc_block_dims[i]++;
-    }
-    if (index[i] < num_blocks[i] - 1 || i == 0) {
-      ldims[i] = block_dims[i];
-    } else {
-      lo = index[i]*block_dims[i] + 1;
-      hi = (index[i]+1)*block_dims[i];
-      if (hi > dims[i]) hi = dims[i];
-      ldims[i] = hi - lo + 1;
-    }
-  }
-
-  /* Evaluate offset for requested block. This algorithm has only been tested in
-     2D and is otherwise completely incomprehensible. */
-  offset = 0;
-  for (i=0; i<ndim; i++) {
-    factor = 1;
-    for (j=0; j<ndim; j++) {
-      if (j<i) {
-        factor *= lld[j];
-      } else {
-        factor *= ldims[j];
-        ldims[j] = block_dims[j];
-      }
-    }
-    offset += block_count[i]*factor;
-  }
-#else
   /* Evalauate offset for block */
   offset = 0;
   factor = 1;
@@ -2586,7 +2459,6 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
     offset += ((index[i]-proc_index[i])/proc_grid[i])*block_dims[i]*factor;
     if (i<ndim-1) factor *= ld[i];
   }
-#endif
 
   lptr = GA[handle].ptr[inode]+offset*GA[handle].elemsize;
 
@@ -5157,9 +5029,6 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     } else {
       /* GA uses ScaLAPACK block cyclic data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
-#if COMPACT_SCALAPACK
-      Integer itmp;
-#else
       Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
       Integer blk_inc[MAXDIM], blk_jinc;
       Integer blk_ld[MAXDIM],hlf_blk[MAXDIM];
@@ -5179,7 +5048,6 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
         blk_ld[j] = blk_num[j]*block_dims[j];
         hlf_blk[j] = blk_inc[j]/block_dims[j];
       }
-#endif
         /* Loop through all blocks owned by this processor. Decompose
            this loop into a loop over all processors and then a loop
            over all blocks owned by this processor. */
@@ -5226,18 +5094,6 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
             /* evaluate offset within block */
             last = ndim - 1;
-#if COMPACT_SCALAPACK
-            jtot = 1;
-            if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-            l_offset = 0;
-            for (j=0; j<last; j++) {
-              l_offset += (plo[j]-blo[j])*jtot;
-              ldrem[j] = bhi[j]-blo[j]+1;
-              jtot *= ldrem[j];
-            }
-            l_offset += (plo[last]-blo[last])*jtot;
-            l_offset += offset;
-#else
             l_offset = 0;
             jtot = 1;
             for (j=0; j<last; j++)  {
@@ -5264,7 +5120,6 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
             }
             l_offset += (plo[last]-blo[last]
                 + ((blo[last]-1)/blk_dim[j])*block_dims[last])*jtot;
-#endif
 
             /* get pointer to data on remote block */
             pinv = iproc;
@@ -5295,13 +5150,6 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
           }
           /* increment offset to account for all elements on this block */
-#if COMPACT_SCALAPACK
-          itmp = 1;
-          for (idx = 0; idx < ndim; idx++) {
-            itmp *= (bhi[idx] - blo[idx] + 1);
-          }
-          offset += itmp;
-#endif
 
           /* increment block indices to get the next block on processor iproc */
           index[0] += GA[handle].nblock[0];
@@ -5538,9 +5386,6 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     } else {
       /* GA uses ScaLAPACK block cyclic data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
-#if COMPACT_SCALAPACK
-      Integer itmp;
-#else
       Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
       Integer blk_inc[MAXDIM], blk_jinc;
       Integer blk_ld[MAXDIM],hlf_blk[MAXDIM];
@@ -5560,7 +5405,6 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
         blk_ld[j] = blk_num[j]*block_dims[j];
         hlf_blk[j] = blk_inc[j]/block_dims[j];
       }
-#endif
         /* Loop through all blocks owned by this processor. Decompose
            this loop into a loop over all processors and then a loop
            over all blocks owned by this processor. */
@@ -5607,18 +5451,6 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
             /* evaluate offset within block */
             last = ndim - 1;
-#if COMPACT_SCALAPACK
-            jtot = 1;
-            if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-            l_offset = 0;
-            for (j=0; j<last; j++) {
-              l_offset += (plo[j]-blo[j])*jtot;
-              ldrem[j] = bhi[j]-blo[j]+1;
-              jtot *= ldrem[j];
-            }
-            l_offset += (plo[last]-blo[last])*jtot;
-            l_offset += offset;
-#else
             l_offset = 0;
             jtot = 1;
             for (j=0; j<last; j++)  {
@@ -5645,7 +5477,6 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
             }
             l_offset += (plo[last]-blo[last]
                 + ((blo[last]-1)/blk_dim[j])*block_dims[last])*jtot;
-#endif
 
             /* get pointer to data on remote block */
             pinv = iproc;
@@ -5676,13 +5507,6 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
           }
           /* increment offset to account for all elements on this block */
-#if COMPACT_SCALAPACK
-          itmp = 1;
-          for (idx = 0; idx < ndim; idx++) {
-            itmp *= (bhi[idx] - blo[idx] + 1);
-          }
-          offset += itmp;
-#endif
 
           /* increment block indices to get the next block on processor iproc */
           index[0] += GA[handle].nblock[0];
@@ -5912,9 +5736,6 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     } else {
       /* GA uses ScaLAPACK block cyclic data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
-#if COMPACT_SCALAPACK
-      Integer itmp;
-#else
       Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
       Integer blk_inc[MAXDIM], blk_jinc;
       Integer blk_ld[MAXDIM],hlf_blk[MAXDIM];
@@ -5934,7 +5755,6 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
         blk_ld[j] = blk_num[j]*block_dims[j];
         hlf_blk[j] = blk_inc[j]/block_dims[j];
       }
-#endif
         /* Loop through all blocks owned by this processor. Decompose
            this loop into a loop over all processors and then a loop
            over all blocks owned by this processor. */
@@ -5981,18 +5801,6 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
             /* evaluate offset within block */
             last = ndim - 1;
-#if COMPACT_SCALAPACK
-            jtot = 1;
-            if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-            l_offset = 0;
-            for (j=0; j<last; j++) {
-              l_offset += (plo[j]-blo[j])*jtot;
-              ldrem[j] = bhi[j]-blo[j]+1;
-              jtot *= ldrem[j];
-            }
-            l_offset += (plo[last]-blo[last])*jtot;
-            l_offset += offset;
-#else
             l_offset = 0;
             jtot = 1;
             for (j=0; j<last; j++)  {
@@ -6019,7 +5827,6 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
             }
             l_offset += (plo[last]-blo[last]
                 + ((blo[last]-1)/blk_dim[j])*block_dims[last])*jtot;
-#endif
 
             /* get pointer to data on remote block */
             pinv = iproc;
@@ -6051,13 +5858,6 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
           }
           /* increment offset to account for all elements on this block */
-#if COMPACT_SCALAPACK
-          itmp = 1;
-          for (idx = 0; idx < ndim; idx++) {
-            itmp *= (bhi[idx] - blo[idx] + 1);
-          }
-          offset += itmp;
-#endif
 
           /* increment block indices to get the next block on processor iproc */
           index[0] += GA[handle].nblock[0];
