@@ -335,11 +335,7 @@ void pnga_error(char *string, Integer icode)
 extern void Error();
 #endif
 
-#ifdef CRAY_T3D 
-#  define FOUT stdout
-#else
-#  define FOUT stderr
-#endif
+#define FOUT stderr
 #define ERR_LEN 400
     int level;
     char error_buffer[ERR_LEN];

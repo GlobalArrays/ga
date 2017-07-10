@@ -3493,11 +3493,7 @@ void pnga_update_ghosts(Integer g_a)
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if(local_sync_begin)pnga_pgroup_sync(GA[handle].p_handle);
 
-#ifdef CRAY_T3D
-   if (!pnga_update5_ghosts(g_a))
-#else
    if (!pnga_update4_ghosts(g_a))
-#endif
    {
      pnga_update1_ghosts(g_a);
    }
@@ -4316,11 +4312,7 @@ logical pnga_set_ghost_info(Integer g_a)
     free(GA[handle].cache);
   GA[handle].cache = NULL;
   if (GA[handle].actv == 1) {
-#ifdef CRAY_T3D
-    return pnga_set_update5_info(g_a);
-#else
     return pnga_set_update4_info(g_a);
-#endif
   }
   return TRUE;
 }
