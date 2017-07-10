@@ -74,7 +74,6 @@
 #define INVALID_MA_HANDLE -1 
 #define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
 
-#define BYTE_ADDRESSABLE_MEMORY
 
 #ifdef PROFILE_OLD
 #include "ga_profile.h"
@@ -2780,7 +2779,6 @@ unsigned long    lref=0, lptr;
         break;        
    }
 
-#ifdef BYTE_ADDRESSABLE_MEMORY
    /* check the allignment */
    lptr = (unsigned long)ptr;
    if( lptr%elemsize != lref%elemsize ){ 
@@ -2789,7 +2787,6 @@ unsigned long    lref=0, lptr;
        pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
-#endif
 
    /* adjust index for Fortran addressing */
    (*index) ++ ;
@@ -2857,7 +2854,6 @@ unsigned long    lref=0, lptr;
         break;        
    }
 
-#ifdef BYTE_ADDRESSABLE_MEMORY
    /* check the allignment */
    lptr = (unsigned long)ptr;
    if( lptr%elemsize != lref%elemsize ){ 
@@ -2866,7 +2862,6 @@ unsigned long    lref=0, lptr;
        pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
-#endif
 
    /* adjust index for Fortran addressing */
    (*index) ++ ;
@@ -2938,7 +2933,6 @@ unsigned long    lref=0, lptr;
         break;        
    }
 
-#ifdef BYTE_ADDRESSABLE_MEMORY
    /* check the allignment */
    lptr = (unsigned long)ptr;
    if( lptr%elemsize != lref%elemsize ){ 
@@ -2947,7 +2941,6 @@ unsigned long    lref=0, lptr;
        pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
-#endif
 
    /* adjust index for Fortran addressing */
    (*index) ++ ;
@@ -3013,7 +3006,6 @@ unsigned long    lref=0, lptr;
         break;        
    }
 
-#ifdef BYTE_ADDRESSABLE_MEMORY
    /* check the allignment */
    lptr = (unsigned long)ptr;
    if( lptr%elemsize != lref%elemsize ){ 
@@ -3022,7 +3014,6 @@ unsigned long    lref=0, lptr;
        pnga_error("nga_access_block_segment: MA addressing problem: base address misallignment",
                  handle);
    }
-#endif
 
    /* adjust index for Fortran addressing */
    (*index) ++ ;
