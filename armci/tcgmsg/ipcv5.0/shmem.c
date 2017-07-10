@@ -65,13 +65,6 @@ extern void Error(const char *, long);
 #   include <sys/shm.h>
 #endif
 
-#ifdef SUN
-extern int shmget(key_t, int, int);
-extern int shmdt(void *);
-extern int shmctl(int, int, struct shmid_ds *);
-extern void *shmat(int, const void *, int);
-#endif
-
 
 char *CreateSharedRegion(long *id, long *size)
 {

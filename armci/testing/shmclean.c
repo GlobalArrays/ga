@@ -25,9 +25,6 @@
 #   include <stdio.h>
 #endif
 
-#ifdef SUN
-char *shmat();
-#endif
 
 #define MAXID 1000000
 int main(int argc, char **argv)
