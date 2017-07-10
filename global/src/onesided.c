@@ -337,7 +337,6 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _pinv, _p_handle;                            \
       ga_ownsM(g_handle, proc, _lo, _hi);                                      \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               \
       if(_last==0) ld[0]=_hi[0]- _lo[0]+1+2*(Integer)GA[g_handle].width[0];    \
-      __CRAYX1_PRAGMA("_CRI shortloop");                                       \
       for(_d=0; _d < _last; _d++)            {                                 \
           _w = (Integer)GA[g_handle].width[_d];                                \
           _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                     \
@@ -372,7 +371,6 @@ Integer   _mloc = p* ndim *2;\
 #define gam_ComputePatchIndex(ndim, lo, plo, dims, pidx){                      \
 Integer _d, _factor;                                                           \
           *pidx = plo[0] -lo[0];                                               \
-          __CRAYX1_PRAGMA("_CRI shortloop");                                   \
           for(_d= 0,_factor=1; _d< ndim -1; _d++){                             \
              _factor *= (dims[_d]);                                            \
              *pidx += _factor * (plo[_d+1]-lo[_d+1]);                          \
@@ -648,7 +646,6 @@ void ngai_put_common(Integer g_a,
 
 #if !defined(__crayx1) && !defined(DISABLE_NBOPT)
     for(loop=0; loop<num_loops; loop++) {
-      __CRAYX1_PRAGMA("_CRI novector");
 #endif
       for(idx=0; idx<np; idx++){
         Integer ldrem[MAXDIM];
@@ -1376,7 +1373,6 @@ void ngai_get_common(Integer g_a,
 
 #if !defined(__crayx1) && !defined(DISABLE_NBOPT)
     for(loop=0; loop<num_loops; loop++) {
-      __CRAYX1_PRAGMA("_CRI novector");
 #endif
       for(idx=0; idx< np; idx++){
         Integer ldrem[MAXDIM];
