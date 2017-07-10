@@ -29,7 +29,6 @@
 #   include "ga-wapidefs.h"
 #endif
 
-#define USE_GATSCAT_NEW
 
 int *_ga_argc=NULL;
 char ***_ga_argv=NULL;
@@ -2734,19 +2733,7 @@ void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
     int idx, i;
     Integer a = (Integer)g_a;
     Integer nv = (Integer)n;
-#ifndef USE_GATSCAT_NEW
-    Integer ndim = wnga_ndim(a);
-    Integer *_subs_array;
-    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
-    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
-    for(idx=0; idx<n; idx++)
-        for(i=0; i<ndim; i++)
-            _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
-    wnga_scatter(a, v, _subs_array, 0, nv);
-    free(_subs_array);
-#else
     wnga_scatter(a, v, subsArray, 1, nv);
-#endif
 }
 
 void NGA_Scatter_flat(int g_a, void *v, int subsArray[], int n)
@@ -2776,19 +2763,7 @@ void NGA_Scatter64(int g_a, void *v, int64_t* subsArray[], int64_t n)
     int i;
     Integer a = (Integer)g_a;
     Integer nv = (Integer)n;
-#ifndef USE_GATSCAT_NEW
-    Integer ndim = wnga_ndim(a);
-    Integer *_subs_array;
-    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
-    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
-    for(idx=0; idx<n; idx++)
-        for(i=0; i<ndim; i++)
-            _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
-    wnga_scatter(a, v, _subs_array, 0, nv);
-    free(_subs_array);
-#else
     wnga_scatter(a, v, subsArray, 1, nv);
-#endif
 }
 
 void NGA_Scatter_flat64(int g_a, void *v, int64_t subsArray[], int64_t n)
@@ -2817,19 +2792,7 @@ void NGA_Scatter_acc(int g_a, void *v, int* subsArray[], int n, void *alpha)
     int idx, i;
     Integer a = (Integer)g_a;
     Integer nv = (Integer)n;
-#ifndef USE_GATSCAT_NEW
-    Integer ndim = wnga_ndim(a);
-    Integer *_subs_array;
-    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
-    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
-    for(idx=0; idx<n; idx++)
-        for(i=0; i<ndim; i++)
-            _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
-    wnga_scatter_acc(a, v, _subs_array, 0, nv, alpha);
-    free(_subs_array);
-#else
     wnga_scatter_acc(a, v, subsArray, 1, nv, alpha);
-#endif
 }
 
 void NGA_Scatter_acc_flat(int g_a, void *v, int subsArray[], int n, void *alpha)
@@ -2858,19 +2821,7 @@ void NGA_Scatter_acc64(int g_a, void *v, int64_t* subsArray[], int64_t n, void *
     int i;
     Integer a = (Integer)g_a;
     Integer nv = (Integer)n;
-#ifndef USE_GATSCAT_NEW
-    Integer ndim = wnga_ndim(a);
-    Integer *_subs_array;
-    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
-    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
-    for(idx=0; idx<n; idx++)
-        for(i=0; i<ndim; i++)
-            _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
-    wnga_scatter_acc(a, v, _subs_array, 0, nv, alpha);
-    free(_subs_array);
-#else
     wnga_scatter_acc(a, v, subsArray, 1, nv, alpha);
-#endif
 }
 
 void NGA_Scatter_acc_flat64(int g_a, void *v, int64_t subsArray[], int64_t n, void *alpha)
@@ -2898,21 +2849,7 @@ void NGA_Gather(int g_a, void *v, int* subsArray[], int n)
     int idx, i;
     Integer a = (Integer)g_a;
     Integer nv = (Integer)n;
-#ifndef USE_GATSCAT_NEW
-    Integer ndim = wnga_ndim(a);
-    Integer *_subs_array;
-    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
-    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
-
-    /* adjust the indices for fortran interface */
-    for(idx=0; idx<n; idx++)
-        for(i=0; i<ndim; i++)
-            _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
-    wnga_gather(a, v, _subs_array, 0, nv);
-    free(_subs_array);
-#else
     wnga_gather(a, v, subsArray, 1, nv);
-#endif
 }
 
 
@@ -2943,21 +2880,7 @@ void NGA_Gather64(int g_a, void *v, int64_t* subsArray[], int64_t n)
     int i;
     Integer a = (Integer)g_a;
     Integer nv = (Integer)n;
-#ifndef USE_GATSCAT_NEW
-    Integer ndim = wnga_ndim(a);
-    Integer *_subs_array;
-    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
-    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
-
-    /* adjust the indices for fortran interface */
-    for(idx=0; idx<n; idx++)
-        for(i=0; i<ndim; i++)
-            _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
-    wnga_gather(a, v, _subs_array, 0, nv);
-    free(_subs_array);
-#else
     wnga_gather(a, v, subsArray, 1, nv);
-#endif
 }
 
 
