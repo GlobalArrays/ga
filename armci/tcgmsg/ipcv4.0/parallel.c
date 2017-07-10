@@ -15,7 +15,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || \
+#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || \
     defined(AIX) || defined(NEXT)    || defined(LINUX)
 #include <sys/wait.h>
 #endif
@@ -43,10 +43,6 @@ extern char *strdup();
 extern void NextValueServer();
 extern void Error();
 extern int WaitAll(long nchild);
-
-#if (defined(SUN) && !defined(SOLARIS))
-    extern char *sprintf();
-#endif
 
 
 static char *ProcgrpFile(argc, argv)
@@ -237,7 +233,6 @@ static long RemoteCreate(remote_hostname, remote_username,
 
       sleep(1); /* So that parallel can make the sockets */
 
-#ifndef SUN
     if (proc_id != 0)    	/* Close all uneeded files */
       (void) fclose(stdin);
 #ifdef SPARC64_GP
@@ -246,7 +241,6 @@ static long RemoteCreate(remote_hostname, remote_username,
     for (i=3; i<64; i++)
 #endif
       (void) close(i);
-#endif
 
     /* Overlay the desired executable */
 

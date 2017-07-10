@@ -14,7 +14,7 @@
 #else
 #include <string.h>
 #endif
-#if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || \
+#if defined(ALLIANT) || defined(ENCORE) || \
                     defined(SEQUENT) || defined(AIX)    || \
                     defined(NEXT)    || defined(LINUX)
 #include <sys/wait.h>

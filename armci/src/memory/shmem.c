@@ -88,9 +88,6 @@ static  int logpagesize=0;
 static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #endif
 
-#if defined(SUN)
-  extern char *shmat();
-#endif
 
 #define SHM_UNIT (1024)
 
@@ -111,7 +108,7 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #endif
 
 /* on some platforms with tiny shmmax can try to glue multiple regions */
-#if (defined(SUN) || defined(SOLARIS)) && !defined(SHMMAX_SEARCH_NO_FORK)
+#if (defined(SOLARIS)) && !defined(SHMMAX_SEARCH_NO_FORK)
 #    define MULTIPLE_REGIONS
 #endif
 
@@ -122,8 +119,8 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
  */
 #define _SHMMAX 4*1024
 
-#if defined(SUN)||defined(SOLARIS)
-#  undef _SHMMAX
+#if defined(solaris)
+#  undef _shmmax
 #  define _SHMMAX (1024)  /* memory in KB */
 #elif defined(SGI64) || defined(AIX) || defined(CONVEX)
 #  undef _SHMMAX

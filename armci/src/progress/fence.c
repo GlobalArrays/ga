@@ -8,8 +8,6 @@
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
-#if defined(PVM)
-#   include <pvm3.h>
 #elif defined(TCGMSG)
 #   include <sndrcv.h>
 static void tcg_synch(long type)

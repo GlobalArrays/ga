@@ -110,7 +110,7 @@ int  elio_stat(char *fname, stat_t *statinfo)
       
 #   else
       /* get number of available blocks */
-#     if defined(CRAY) || defined(NEC)
+#     if defined(CRAY) 
           /* f_bfree == f_bavail -- naming changes */
 
 #        ifdef CRAY

@@ -45,14 +45,7 @@ void (*armci_sig_chld_orig)();
 static int status=0;
 int armci_shmlimit_caught_sigchld=0;
 
-#if defined(SUN) && !defined(SOLARIS)
-static void SigChldHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 static void SigChldHandler(sig)
-#endif
      int sig;
 {
 #ifdef DISABLED

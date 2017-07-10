@@ -68,10 +68,8 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 #define INVALID_MA_HANDLE -1 
 #define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
 
-#define BYTE_ADDRESSABLE_MEMORY
 
 /*uncomment line below to verify consistency of MA in every sync */
-/*#define CHECK_MA yes */
 
 /***************************************************************************/
 
@@ -182,7 +180,6 @@ Integer me = pnga_nodeid();
         break;        
    }
 
-#ifdef BYTE_ADDRESSABLE_MEMORY
    /* check the allignment */
    lptr = (unsigned long)ptr;
    if( lptr%elemsize != lref%elemsize ){ 
@@ -191,7 +188,6 @@ Integer me = pnga_nodeid();
        pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
-#endif
 
    /* adjust index for Fortran addressing */
    (*index) ++ ;
@@ -279,7 +275,6 @@ unsigned long    lref=0, lptr=0;
 
    }
 
-#ifdef BYTE_ADDRESSABLE_MEMORY
    /* check the allignment */
    lptr = (unsigned long)ptr;
    if( lptr%elemsize != lref%elemsize ){ 
@@ -288,7 +283,6 @@ unsigned long    lref=0, lptr=0;
        pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
-#endif
 
    /* adjust index for Fortran addressing */
    (*index) ++ ;
@@ -3248,7 +3242,6 @@ logical pnga_update5_ghosts(Integer g_a)
   return TRUE;
 }
 
-/*#define UPDATE_SAMENODE_GHOSTS_FIRST*/
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_set_update5_info = pnga_set_update5_info
@@ -3271,9 +3264,6 @@ logical pnga_set_update5_info(Integer g_a)
   char **ptr_loc, **ptr_rem,*cache;
   Integer handle = GA_OFFSET + g_a;
   int cache_size;
-#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
-  int scope;
-#endif
   Integer me = pnga_nodeid();
   Integer p_handle;
 
@@ -3339,9 +3329,6 @@ logical pnga_set_update5_info(Integer g_a)
       return FALSE;
     }
   } 
-#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
-  for(scope=0;scope < 2; scope ++)
-#endif
     for (idx=0; idx < ndim; idx++) {
       nwidth = width[idx];
       if (nwidth != 0) {  
@@ -3364,10 +3351,6 @@ logical pnga_set_update5_info(Integer g_a)
           *proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem];
         }
 
-#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
-        if(scope == 0 && ARMCI_Same_node(*proc_rem))
-          goto do_negative;
-#endif
 
         cache = (char *)(proc_rem+1);
 
@@ -3406,9 +3389,6 @@ logical pnga_set_update5_info(Integer g_a)
           *proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem];
         }
 
-#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
-        do_negative:
-#endif
 
        /*BJP proc_rem++; */
         ptr_rem = (char **)cache;
@@ -3430,10 +3410,6 @@ logical pnga_set_update5_info(Integer g_a)
           *proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem];
         }
 
-#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
-        if(scope == 0 && ARMCI_Same_node(*proc_rem))
-          continue;
-#endif
 
         cache = (char *)(proc_rem+1);
 
@@ -3499,11 +3475,7 @@ void pnga_update_ghosts(Integer g_a)
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if(local_sync_begin)pnga_pgroup_sync(GA[handle].p_handle);
 
-#ifdef CRAY_T3D
-   if (!pnga_update5_ghosts(g_a))
-#else
    if (!pnga_update4_ghosts(g_a))
-#endif
    {
      pnga_update1_ghosts(g_a);
    }
@@ -4322,11 +4294,7 @@ logical pnga_set_ghost_info(Integer g_a)
     free(GA[handle].cache);
   GA[handle].cache = NULL;
   if (GA[handle].actv == 1) {
-#ifdef CRAY_T3D
-    return pnga_set_update5_info(g_a);
-#else
     return pnga_set_update4_info(g_a);
-#endif
   }
   return TRUE;
 }

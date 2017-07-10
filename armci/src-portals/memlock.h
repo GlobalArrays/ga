@@ -23,7 +23,7 @@ extern int *armci_use_memlock_table;
 
 #if defined(LAPI) || defined(FUJITSU) || defined(PTHREADS) || defined(QUADRICS)\
     || defined(PORTALS) || defined(HITACHI) || (defined(LINUX64)&&defined(__GNUC__)&&defined(__alpha__))\
-                  || defined(CYGWIN) || defined(__crayx1) || defined(NEC)
+                  || defined(CYGWIN) || defined(__crayx1) 
 #  define ARMCI_LOCKMEM armci_lockmem_
 #  define ARMCI_UNLOCKMEM armci_unlockmem_
 #else

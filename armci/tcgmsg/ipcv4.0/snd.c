@@ -27,10 +27,6 @@
 #   endif
 #endif
 
-#if (defined(SUN) && !defined(SOLARIS))
-    extern char *sprintf();
-#endif
-
 extern void Error();
 
 #include "sndrcv.h"

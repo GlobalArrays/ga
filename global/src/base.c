@@ -66,7 +66,6 @@ static int calc_maplen(int handle);
 #ifdef PROFILE_OLD
 #include "ga_profile.h"
 #endif
-/*#define AVOID_MA_STORAGE 1*/ 
 #define DEBUG 0
 #define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 
@@ -75,7 +74,6 @@ static int calc_maplen(int handle);
 #define FLEN        80              /* length of Fortran strings */
 
 /*uncomment line below to verify consistency of MA in every sync */
-/*#define CHECK_MA yes */
 
 /*uncomment line below to verify if MA base address is alligned wrt datatype*/
 #if !(defined(LINUX) || defined(CRAY) || defined(CYGWIN))
@@ -171,7 +169,6 @@ int ga_spare_procs;
 #define ga_ComputeIndexM(_index, _ndim, _subscript, _dims)                     \
 {                                                                              \
   Integer  _i, _factor=1;                                                      \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0,*(_index)=0; _i<_ndim; _i++){                                       \
       *(_index) += _subscript[_i]*_factor;                                     \
       if(_i<_ndim-1)_factor *= _dims[_i];                                      \
@@ -184,7 +181,6 @@ int ga_spare_procs;
 #define ga_UpdateSubscriptM(_ndim, _subscript, _lo, _hi, _dims)\
 {                                                                              \
   Integer  _i;                                                                 \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0; _i<_ndim; _i++){                                                   \
        if(_subscript[_i] < _hi[_i]) { _subscript[_i]++; break;}                \
        _subscript[_i] = _lo[_i];                                               \
@@ -198,7 +194,6 @@ int ga_spare_procs;
 {                                                                              \
   Integer  _i;                                                                 \
   *_elems = 1;                                                                 \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0; _i<_ndim; _i++){                                                   \
        *_elems *= _hi[_i]-_lo[_i] +1;                                          \
        _subscript[_i] = _lo[_i];                                               \
@@ -539,14 +534,7 @@ void set_ga_group_is_for_ft(int val)
 
 logical pnga_uses_ma()
 {
-#ifdef AVOID_MA_STORAGE
    return FALSE;
-#else
-   if(!GAinitialized) return FALSE;
-   
-   if(ARMCI_Uses_shm()) return FALSE;
-   else return TRUE;
-#endif
 }
 
 /**
@@ -659,7 +647,6 @@ void pnga_initialize_ltd(Integer mem_limit)
 {\
 int _d;\
     if(ndim<1||ndim>MAXDIM) pnga_error("unsupported number of dimensions",ndim);\
-  __CRAYX1_PRAGMA("_CRI novector");                                         \
     for(_d=0; _d<ndim; _d++)\
          if(dims[_d]<1)pnga_error("wrong dimension specified",dims[_d]);\
 }
@@ -2416,55 +2403,7 @@ int gai_uses_shm(int grp_id)
 int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
 	       int grp_id)
 {
-#ifdef AVOID_MA_STORAGE
    return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
-#else
-Integer handle = INVALID_MA_HANDLE, index;
-Integer nproc=GAnproc, grp_me=GAme, item_size = GAsizeofM(type);
-C_Long nelem;
-char *ptr = (char*)0;
-
-   if (grp_id > 0) {
-     nproc  = PGRP_LIST[grp_id].map_nproc;
-     grp_me = PGRP_LIST[grp_id].map_proc_list[GAme];
-   }
- 
-   if(gai_uses_shm(grp_id)) return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
-   else{
-     nelem = bytes/((C_Long)item_size) + 1;
-     if(bytes)
-        if(MA_alloc_get(type, nelem, name, &handle, &index)){
-                MA_get_pointer(handle, &ptr);}
-     *id   = (long)handle;
-
-     /* 
-            printf("bytes=%d ptr=%ld index=%d\n",bytes, ptr,index);
-            fflush(stdout);
-     */
-
-     bzero((char*)ptr_arr,(int)nproc*sizeof(char*));
-     ptr_arr[grp_me] = ptr;
-
-#   ifndef _CHECK_MA_ALGN /* align */
-     {
-        long diff, adjust;  
-        diff = ((unsigned long)ptr_arr[grp_me]) % item_size; 
-        adjust = (diff > 0) ? item_size - diff : 0;
-        ptr_arr[grp_me] = adjust + (char*)ptr_arr[grp_me];
-     }
-#   endif
-     
-#   ifdef MSG_COMMS_MPI
-     if (grp_id > 0) {
-        armci_exchange_address_grp((void**)ptr_arr,(int)nproc,
-                                   &PGRP_LIST[grp_id].group);
-     } else
-#   endif
-        armci_exchange_address((void**)ptr_arr,(int)nproc);
-     if(bytes && !ptr) return 1; 
-     else return 0;
-   }
-#endif /* AVOID_MA_STORAGE */
 }
 
 
@@ -2498,9 +2437,6 @@ Integer status;
      /* make sure that remote memory addresses point to user memory */
      for(i=0; i<GAnproc; i++)ptr_arr[i] += extra;
 
-#ifndef AVOID_MA_STORAGE
-     if(ARMCI_Uses_shm()) 
-#endif
         id += extra; /* id is used to store offset */
 
      /* stuff the type and id info at the beginning */
@@ -2521,16 +2457,8 @@ int extra = sizeof(getmem_t)+GAnproc*sizeof(char*);
 getmem_t *info = (getmem_t *)((char*)ptr - extra);
 char **ptr_arr = (char**)(info+1);
 
-#ifndef AVOID_MA_STORAGE
-    if(ARMCI_Uses_shm()){
-#endif
       /* make sure that we free original (before address alignment) pointer */
       ARMCI_Free(ptr_arr[GAme] - info->id);
-#ifndef AVOID_MA_STORAGE
-    }else{
-      if(info->id != INVALID_MA_HANDLE) MA_free_heap(info->id);
-    }
-#endif
 
     if(GA_memory_limited) GA_total_memory += info->size;
 }
@@ -2856,9 +2784,6 @@ int local_sync_begin,local_sync_end;
     if(GA[ga_handle].ptr[grp_me]==NULL){
        return TRUE;
     } 
-#ifndef AVOID_MA_STORAGE
-    if(gai_uses_shm((int)grp_id)){
-#endif
       /* make sure that we free original (before address allignment) pointer */
 #ifdef MSG_COMMS_MPI
       if (grp_id > 0){
@@ -2868,11 +2793,6 @@ int local_sync_begin,local_sync_end;
       else
 #endif
 	 ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
-#ifndef AVOID_MA_STORAGE
-    }else{
-      if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
-    }
-#endif
 
     if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
     GAstat.curmem -= GA[ga_handle].size;

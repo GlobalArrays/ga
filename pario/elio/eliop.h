@@ -77,10 +77,6 @@ extern int                   elio_pending_error;
 
 
 #if !defined(PRINT_AND_ABORT)
-#   if defined(SUN)
-      extern int fprintf();
-      extern void fflush();
-#   endif
 #   define PRINT_AND_ABORT(msg, val){\
      fprintf(stderr, "ELIO fatal error: %s %ld\n", msg,  val);\
      fprintf(stdout, "ELIO fatal error: %s %ld\n", msg,  val);\

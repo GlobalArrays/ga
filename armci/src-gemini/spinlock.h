@@ -125,10 +125,6 @@ typedef unsigned int slock_t;
 #   define TESTANDSET(lock) _Asm_xchg(_SZ_W, lock, 1, _LDHINT_NONE)
 #   define RELEASE_SPINLOCK(lock) (*((volatile LOCK_T *) (lock)) = 0)
 
-#elif defined(NEC)
-#   if DEBUG_SPINLOCK
-#       warning SPINLOCK: NEC
-#   endif
 extern ullong ts1am_2me();
 #   define LOCK_T ullong
 #   define _LKWD (1ULL << 63)

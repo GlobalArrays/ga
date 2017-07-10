@@ -13,11 +13,6 @@
 
 int num_sem_alloc=0;
 void perror();
-#ifdef SUN
-int  fprintf();
-void fflush();
-int semget(),semctl();
-#endif
 
 #include "armcip.h"
 

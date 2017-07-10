@@ -156,7 +156,7 @@ char *kr_malloc(size_t nbytes, context_t *ctx, int record_allocation, char **new
     size_t nunits;
     char *return_ptr;
 
-#if !((defined(SUN) || defined(SOLARIS)) && !defined(SHMMAX_SEARCH_NO_FORK))
+#if !(defined(SOLARIS)) && !defined(SHMMAX_SEARCH_NO_FORK))
     if(ctx->ctx_type == KR_CTX_SHMEM) return kr_malloc_shmem(nbytes,ctx);
 #endif
     
@@ -232,7 +232,7 @@ char *kr_malloc(size_t nbytes, context_t *ctx, int record_allocation, char **new
 void kr_free(char *ap, context_t *ctx) {
     Header *bp, *p, **up;
     
-#if !((defined(SUN) || defined(SOLARIS)) && !defined(SHMMAX_SEARCH_NO_FORK))
+#if !(defined(SOLARIS)) && !defined(SHMMAX_SEARCH_NO_FORK))
     if(ctx->ctx_type == KR_CTX_SHMEM) { kr_free_shmem(ap,ctx); return; }
 #endif
     

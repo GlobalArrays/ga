@@ -17,7 +17,7 @@
 #if defined(CONVEX) && defined(HPUX)
 #include <sys/cnx_types.h>
 #endif
-#if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) \
+#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) \
                  || defined(CONVEX)  || defined(AIX)    || defined(NEXT) \
                  || defined(LINUX)
 #include <sys/wait.h>

@@ -12,9 +12,6 @@
 
 #include "sndrcv.h"
 
-#if (defined(SUN) && !defined(SOLARIS))
-    extern char *sprintf();
-#endif
 #ifndef SGI
     extern time_t time();
 #endif

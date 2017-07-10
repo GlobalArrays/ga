@@ -74,11 +74,7 @@ typedef socklen_t soclen_t;
 typedef int soclen_t;
 #   endif
 #else
-#   ifdef NEC
-typedef int soclen_t;
-#   else
 typedef socklen_t soclen_t;
-#   endif
 #endif
 
 

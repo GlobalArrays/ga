@@ -65,14 +65,7 @@ SigType (*SigSegvOrig)();
 
 
 /*********************** SIGINT *************************************/
-#if defined(SUN) && !defined(SOLARIS)
-SigType SigIntHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 SigType SigIntHandler(sig)
-#endif
      int sig;
 {
   AR_caught_sigint = 1;
@@ -103,14 +96,7 @@ void RestoreSigInt()
 
 
 /*********************** SIGABORT *************************************/
-#if defined(SUN) && !defined(SOLARIS)
-SigType SigAbortHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 SigType SigAbortHandler(sig)
-#endif
      int sig;
 {
   AR_caught_sig= sig;
@@ -131,14 +117,7 @@ void TrapSigAbort()
 
 
 /*********************** SIGCHLD *************************************/
-#if defined(SUN) && !defined(SOLARIS)
-SigType SigChldHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 SigType SigChldHandler(sig)
-#endif
      int sig;
 {
   int status;
@@ -204,14 +183,7 @@ void RestoreSigChldDfl()
 
 
 /*********************** SIGBUS *************************************/
-#if defined(SUN) && !defined(SOLARIS)
-SigType SigBusHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 SigType SigBusHandler(sig)
-#endif
      int sig;
 {
   AR_caught_sig= sig;
@@ -235,14 +207,7 @@ void TrapSigBus()
 
 
 /*********************** SIGFPE *************************************/
-#if defined(SUN) && !defined(SOLARIS)
-SigType SigFpeHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 SigType SigFpeHandler(sig)
-#endif
      int sig;
 {
   AR_caught_sig= sig;
@@ -267,14 +232,7 @@ void TrapSigFpe()
 
 
 /*********************** SIGILL *************************************/
-#if defined(SUN) && !defined(SOLARIS)
-SigType SigIllHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 SigType SigIllHandler(sig)
-#endif
      int sig;
 {
   AR_caught_sig= sig;
@@ -294,14 +252,7 @@ void TrapSigIll()
 
 
 /*********************** SIGSEGV *************************************/
-#if defined(SUN) && !defined(SOLARIS)
-SigType SigSegvHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 SigType SigSegvHandler(sig)
-#endif
      int sig;
 {
   AR_caught_sig= sig;
@@ -371,14 +322,7 @@ void RestoreSigSegv()
 
 
 /*********************** SIGSYS *************************************/
-#if defined(SUN) && !defined(SOLARIS)
-SigType SigSysHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 SigType SigSysHandler(sig)
-#endif
      int sig;
 {
   AR_caught_sig= sig;
@@ -399,14 +343,7 @@ void TrapSigSys()
 
 
 /*********************** SIGTRAP *************************************/
-#if defined(SUN) && !defined(SOLARIS)
-SigType SigTrapHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 SigType SigTrapHandler(sig)
-#endif
      int sig;
 {
   AR_caught_sig= sig;
@@ -425,14 +362,7 @@ void TrapSigTrap()
 
 
 /*********************** SIGHUP *************************************/
-#if defined(SUN) && !defined(SOLARIS)
-SigType SigHupHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 SigType SigHupHandler(sig)
-#endif
      int sig;
 {
   AR_caught_sig= sig;
@@ -462,14 +392,7 @@ void RestoreSigHup()
 
 
 /*********************** SIGTERM *************************************/
-#if defined(SUN) && !defined(SOLARIS)
-SigType SigTermHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 SigType SigTermHandler(sig)
-#endif
      int sig;
 {
   AR_caught_sigterm = 1;
@@ -499,14 +422,7 @@ void RestoreSigTerm()
 
 /*********************** SIGIOT *************************************/
 #ifdef SIGIOT
-#if defined(SUN) && !defined(SOLARIS)
-SigType SigIotHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 SigType SigIotHandler(sig)
-#endif
      int sig;
 {
   AR_caught_sig= sig;
@@ -526,14 +442,7 @@ void TrapSigIot()
 
 
 /*********************** SIGCONT *************************************/
-#if defined(SUN) && !defined(SOLARIS)
-SigType SigContHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 SigType SigContHandler(sig)
-#endif
      int sig;
 {
 /*  Error("Trace Cont error, status=",(int) sig);*/
@@ -550,14 +459,7 @@ void TrapSigCont()
 }
 
 /*********************** SIGXCPU *************************************/
-#if defined(SUN) && !defined(SOLARIS)
-SigType SigXcpuHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 SigType SigXcpuHandler(sig)
-#endif
      int sig;
 {
   AR_caught_sig= sig;

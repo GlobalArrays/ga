@@ -19,11 +19,6 @@ extern int *ProcListPerm;            /*permuted list of processes */
 #define FNAM        31              /* length of array names   */
 #define CACHE_SIZE  512             /* size of the cache inside GA DS*/
 
-#ifdef __crayx1
-#define __CRAYX1_PRAGMA _Pragma
-#else
-#define __CRAYX1_PRAGMA(_pragf)
-#endif
 
 
 typedef int ARMCI_Datatype;
@@ -127,7 +122,6 @@ extern proc_list_t *PGRP_LIST;
    Integer _loc, _nb, _d, _index, _dim=ndim,_dimstart=0, _dimpos;              \
    for(_nb=1, _d=0; _d<_dim; _d++)_nb *= (Integer)nblock[_d];                  \
    if((Integer)proc > _nb - 1 || proc<0){                                      \
-      __CRAYX1_PRAGMA("_CRI novector");                                        \
            for(_d=0; _d<_dim; _d++){                                           \
          lo[_d] = (Integer)0;                                                  \
          hi[_d] = (Integer)-1;}                                                \
@@ -135,7 +129,6 @@ extern proc_list_t *PGRP_LIST;
    else{                                                                       \
          _index = proc;                                                        \
          if(GA_inv_Proc_list) _index = GA_inv_Proc_list[proc];                 \
-      __CRAYX1_PRAGMA("_CRI novector");                                        \
          for(_d=0; _d<_dim; _d++){                                             \
              _loc = _index% (Integer)nblock[_d];                               \
              _index  /= (Integer)nblock[_d];                                   \
@@ -161,18 +154,6 @@ extern proc_list_t *PGRP_LIST;
 }
 
 /* this macro finds the ScaLAPACK indices for a given processor */
-#ifdef COMPACT_SCALAPACK
-#define gam_find_proc_indices(ga_handle,proc,index) {                          \
-  Integer _itmp, _i;                                                           \
-  Integer _ndim = GA[ga_handle].ndim;                                          \
-  _itmp = proc;                                                                \
-  index[0] = _itmp%GA[ga_handle].nblock[0];                                    \
-  for (_i=1; _i<_ndim; _i++) {                                                 \
-    _itmp = (_itmp-index[_i-1])/GA[ga_handle].nblock[_i-1];                    \
-    index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
-  }                                                                            \
-}
-#else
 #define gam_find_proc_indices(ga_handle,proc,index) {                          \
   Integer _itmp, _i;                                                           \
   Integer _ndim = GA[ga_handle].ndim;                                          \
@@ -183,7 +164,6 @@ extern proc_list_t *PGRP_LIST;
     index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
   }                                                                            \
 }
-#endif
 
 /* this macro finds cordinates of the chunk of array owned by processor proc */
 #define ga_ownsM(ga_handle, proc, lo, hi)                                      \
@@ -232,20 +212,6 @@ extern proc_list_t *PGRP_LIST;
 
 /* this macro finds the proc that owns a given set block indices
    using the ScaLAPACK data distribution */
-#ifdef COMPACT_SCALAPACK
-#define gam_find_proc_from_sl_indices(ga_handle,proc,index) {                  \
-  int _ndim = GA[ga_handle].ndim;                                              \
-  int _i;                                                                      \
-  Integer _index2[MAXDIM];                                                     \
-  for (_i=0; _i<_ndim; _i++) {                                                 \
-    _index2[_i] = index[_i]%GA[ga_handle].nblock[_i];                          \
-  }                                                                            \
-  proc = _index2[_ndim-1];                                                     \
-  for (_i=_ndim-2; _i >= 0; _i--) {                                            \
-    proc = proc*GA[ga_handle].nblock[_i]+_index2[_i];                          \
-  }                                                                            \
-}
-#else
 #define gam_find_proc_from_sl_indices(ga_handle,proc,index) {                  \
   int _ndim = GA[ga_handle].ndim;                                              \
   int _i;                                                                      \
@@ -258,7 +224,6 @@ extern proc_list_t *PGRP_LIST;
     proc = proc*GA[ga_handle].nblock[_i]+_index2[_i];                          \
   }                                                                            \
 }
-#endif
 /* this macro computes the strides on both the remote and local
    processors that map out the data. ld and ldrem are the physical dimensions
    of the memory on both the local and remote processors. */
@@ -266,7 +231,6 @@ extern proc_list_t *PGRP_LIST;
 #define gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc){\
   int _i;                                                            \
   stride_rem[0]= stride_loc[0] = (int)size;                          \
-  __CRAYX1_PRAGMA("_CRI novector");                                  \
   for(_i=0;_i<ndim-1;_i++){                                          \
     stride_rem[_i] *= (int)ldrem[_i];                                \
     stride_loc[_i] *= (int)ld[_i];                                   \
@@ -279,14 +243,12 @@ extern proc_list_t *PGRP_LIST;
       lo, and hi */
 #define gam_CountElems(ndim, lo, hi, pelems){                        \
   int _d;                                                            \
-  __CRAYX1_PRAGMA("_CRI novector");                                         \
   for(_d=0,*pelems=1; _d< ndim;_d++)  *pelems *= hi[_d]-lo[_d]+1;    \
 }
 
 /* NEEDS C_INT64 CONVERSION */
 #define gam_ComputeCount(ndim, lo, hi, count){                       \
   int _d;                                                            \
-  __CRAYX1_PRAGMA("_CRI novector");                                         \
   for(_d=0; _d< ndim;_d++) count[_d] = (int)(hi[_d]-lo[_d])+1;       \
 }
 
@@ -301,7 +263,6 @@ extern proc_list_t *PGRP_LIST;
   _l = strlen(err_string);                                           \
   sprintf(err_string+_l, " [%ld:%ld ",(long)lo[_d],(long)hi[_d]);    \
   _l=strlen(err_string);                                             \
-  __CRAYX1_PRAGMA("_CRI novector");                                  \
   for(_d=1; _d< ndim; _d++){                                         \
     sprintf(err_string+_l, ",%ld:%ld ",(long)lo[_d],(long)hi[_d]);   \
     _l=strlen(err_string);                                           \
@@ -323,7 +284,6 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
       _p_handle = GA[g_handle].p_handle;                                      \
       _iproc = proc;                                                          \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);              \
-  __CRAYX1_PRAGMA("_CRI novector");                                           \
       for(_d=0; _d < _last; _d++)            {                                \
           _w = (Integer)GA[g_handle].width[_d];                               \
           _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                    \
@@ -356,7 +316,6 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
 #define gaCheckSubscriptM(subscr, lo, hi, ndim)                                \
 {                                                                              \
 Integer _d;                                                                    \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
    for(_d=0; _d<  ndim; _d++)                                                  \
       if( subscr[_d]<  lo[_d] ||  subscr[_d]>  hi[_d]){                        \
         char err_string[ERR_STR_LEN];                                          \

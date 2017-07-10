@@ -6,7 +6,7 @@
 
 #include <signal.h>
 #include "sndrcvP.h"
-#if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || \
+#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || \
     defined(AIX) || defined(NEXT)
 #include <sys/wait.h>
 #else
@@ -28,7 +28,7 @@ int SR_caught_sigint = 0;
 #endif
 
 
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)) || (defined(SUN) && !defined(SOLARIS))
+#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)) 
 SigType SigintHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
@@ -64,7 +64,7 @@ void ZapChildren()
     (void) kill((int) SR_pids[SR_numchild], SIGINT);
 }
 
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)) || (defined(SUN) && !defined(SOLARIS))
+#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
 SigType SigchldHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
@@ -99,7 +99,7 @@ void TrapSigchld()
     Error("TrapSigchld: error from signal setting SIGCHLD", (long) SIGCHLD);
 }
 
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)) || (defined(SUN) && !defined(SOLARIS))
+#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
 SigType SigsegvHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
@@ -124,7 +124,7 @@ void TrapSigsegv()
        Error("TrapSigsegv: error from signal setting SIGSEGV", (long) SIGSEGV);
 }
 
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)) || (defined(SUN) && !defined(SOLARIS))
+#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
 SigType SigtermHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;

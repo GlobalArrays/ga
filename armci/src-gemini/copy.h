@@ -214,14 +214,8 @@
 
 #endif
 
-
-#ifdef NEC
-#  define THRESH 1
-#  define THRESH1D 1
-#else
 #  define THRESH 32
 #  define THRESH1D 512
-#endif
 #define ALIGN_SIZE sizeof(double)
 
 /********* interface to C 1D and 2D memory copy functions ***********/

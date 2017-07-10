@@ -71,10 +71,6 @@ static  int logpagesize=0;
 static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #endif
 
-#if defined(SUN)
-  extern char *shmat();
-#endif
-
 #define SHM_UNIT (1024)
 
 
@@ -100,7 +96,7 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
  */
 #define _SHMMAX 4*1024
 
-#if defined(SUN)||defined(SOLARIS)
+#if defined(SOLARIS)
 #  undef _SHMMAX
 #  define _SHMMAX (1024)  /* memory in KB */
 #elif defined(SGI64) || defined(AIX) || defined(CONVEX)

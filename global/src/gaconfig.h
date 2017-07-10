@@ -30,6 +30,5 @@
 
 /* uncoment the following line to never use MA (Memory Allocator) for
  * storing data in global arrays (not temporary buffers!)  */
-#define AVOID_MA_STORAGE
  
 #endif /* _GACONFIG_H */
