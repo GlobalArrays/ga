@@ -41,13 +41,6 @@
 #  include <windows.h>
 #  include <process.h>
 #  define  GETPID _getpid
-#elif defined(NEC)
-#  if HAVE_UNISTD_H
-#   include <unistd.h>
-#  endif
-#  include <sys/mppg.h>
-   typedef void* HANDLE;
-   typedef void* LPVOID;
 #  define  GETPID getpid
 #elif defined(HITACHI)
 #  if HAVE_UNISTD_H
@@ -249,8 +242,6 @@ int reg;
 #       if defined(WIN32)
           UnmapViewOfFile(region_list[reg].addr);
           CloseHandle(region_list[reg].id);
-#       elif defined(NEC)
-          (int)dp_xmfree(region_list[reg].addr);
 #       else
           munmap(region_list[reg].addr, region_list[reg].size);
           SET_MAPNAME(reg);
@@ -309,18 +300,6 @@ char *armci_get_core_from_map_file(int exists, long size)
      
     }
 
-#elif defined(NEC)
-
-    region_list[alloc_regions].addr = (char*)0;
-    if(exists)
-       ptr = dp_xmatt(parent_pid, region_list[alloc_regions].id, (void*)0);  
-    else {
-       ptr = dp_xmalloc((void*)0, (long long) size);
-       region_list[alloc_regions].id = ptr;
-    }
-
-    if(ptr == (void*)-1) return ((char*)0); 
-       
 #else
     HANDLE  h_shm_map;
     SET_MAPNAME(alloc_regions);
@@ -498,7 +477,7 @@ char* Create_Shared_Region(long idlist[], long size, long *offset)
 
      /* idlist[0] = alloc_regions; This is set in find_regions() */
      idlist[1] = parent_pid;
-#if  defined(HITACHI) || defined(NEC)
+#if  defined(HITACHI) 
      idlist[2] = (long) region_list[reg].id;
 #if  defined(HITACHI)
      idlist[SHMIDLEN-2]=_hitachi_reg_size;
@@ -535,7 +514,7 @@ char *Attach_Shared_Region(long id[], long size, long offset)
 
      /* find out if a new shmem region was allocated */
      if(alloc_regions < id[0]+1){
-#if      defined(HITACHI) || defined(NEC)
+#if      defined(HITACHI) 
 #if        defined(HITACHI)
                _hitachi_reg_size=id[SHMIDLEN-2];
 #          endif

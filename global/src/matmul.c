@@ -1403,7 +1403,7 @@ void pnga_matmul(transa, transb, alpha, beta,
 	  CONTIG_CHUNKS_OPT_FLAG = UNSET;
 	  DIRECT_ACCESS_OPT_FLAG = UNSET;
        }
-#    if defined(__crayx1) || defined(NEC)
+#    if defined(__crayx1)
        use_NB_matmul = UNSET;
 #    endif
     }

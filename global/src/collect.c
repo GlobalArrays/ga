@@ -19,8 +19,6 @@
 
 /* can handle ga_brdcst/igop/dgop via ARMCI or native message-passing library
  * uncomment line below to use the ARMCI version */
-#ifndef NEC
-#endif
 
 #ifdef MSG_COMMS_MPI
 #   include <mpi.h>

@@ -125,10 +125,6 @@ extern void _release_lock();
 #   define TESTANDSET(x) (!_acquire_lock((x))) 
 #   define RELEASE_SPINLOCK _release_lock 
 
-#elif defined(NEC)
-#   if DEBUG_SPINLOCK
-#       warning SPINLOCK: NEC
-#   endif
 extern ullong ts1am_2me();
 #   define LOCK_T ullong
 #   define _LKWD (1ULL << 63)

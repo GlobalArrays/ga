@@ -115,8 +115,6 @@ static bufstruct *_gop_buffer;
 #ifdef NEED_MEM_SYNC
 #  ifdef AIX
 #    define SET_SHM_FLAG(_flg,_val) _clear_lock((int *)(_flg),_val);
-#  elif defined(NEC)
-#    define SET_SHM_FLAG(_flg,_val) MEM_FENCE; *(_flg)=(_val)
 #  elif defined(__ia64)
 #    if defined(__GNUC__) && !defined (__INTEL_COMPILER)
 #       define SET_SHM_FLAG(_flg,_val)\
@@ -2017,30 +2015,11 @@ int len, lenmes, min;
 /*\ combine array of longs/ints/doubles accross all processes
 \*/
 
-#if defined(NEC)
-
-void armci_msg_igop(int *x, int n, char* op)
-{ armci_msg_gop_scope(SCOPE_ALL,x, n, op, ARMCI_INT); }
-
-void armci_msg_lgop(long *x, int n, char* op)
-{ armci_msg_gop_scope(SCOPE_ALL,x, n, op, ARMCI_LONG); }
-
-void armci_msg_llgop(long long *x, int n, char* op)
-{ armci_msg_gop_scope(SCOPE_ALL,x, n, op, ARMCI_LONG_LONG); }
-
-void armci_msg_dgop(double *x, int n, char* op)
-{ armci_msg_gop_scope(SCOPE_ALL,x, n, op, ARMCI_DOUBLE); }
-
-void armci_msg_fgop (float *x, int n, char* op)
-{ armci_msg_gop_scope(SCOPE_ALL,x, n, op, ARMCI_FLOAT);}
-
-#else
 void armci_msg_igop(int *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_INT); }
 void armci_msg_lgop(long *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_LONG); }
 void armci_msg_llgop(long long *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_LONG_LONG); }
 void armci_msg_fgop(float *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_FLOAT); }
 void armci_msg_dgop(double *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_DOUBLE); }
-#endif
 
 
 /*\ add array of longs/ints within the same cluster node
