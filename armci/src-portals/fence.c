@@ -7,8 +7,6 @@
 #include "armci.h"
 #include "copy.h"
 #include <stdio.h>
-#if defined(PVM)
-#   include <pvm3.h>
 #elif defined(TCGMSG)
 #   include <tcgmsg.h>
 #elif defined(BGML)

@@ -201,8 +201,6 @@ static void process_hostlist(char *names)
                  fprintf(stderr,"MPI");
 #              elif defined(TCGMSG)
                  fprintf(stderr,"TCGMSG");
-#              elif defined(PVM)
-                 fprintf(stderr,"PVM");
 #              endif
                fprintf(stderr,"\nmessage-passing job startup configuration.\n\n");
 #ifdef HITACHI
