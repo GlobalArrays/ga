@@ -14,11 +14,10 @@
 typedef struct struct_armcihdl_t{
     armci_hdl_t* handle;
     struct struct_armcihdl_t *next;
-    struct struct_armcihdl_t *prev;
     int index;
 }ga_armcihdl_t;
 
-static ga_armcihdl_t head={NULL,NULL,NULL,0};
+static ga_armcihdl_t head={NULL,NULL,0};
 static ga_armcihdl_t *tail=&head;
 pthread_mutex_t mutex;
 static unsigned next_hdl = 1; 
@@ -74,7 +73,6 @@ void add_hdl(Integer *nbhandle)
   temp->handle = (armci_hdl_t*) malloc(sizeof(armci_hdl_t)); 
   temp->index = *nbhandle;
   temp->next = NULL;
-  temp->prev= tail;
   tail->next=temp;
   tail = temp;
 }
@@ -101,17 +99,17 @@ void remove_hdl(Integer *nbhandle)
 {
   pthread_mutex_lock(&mutex);
   ga_armcihdl_t *temp = &head;
-  while(temp->next != NULL && temp->index != *nbhandle)
+  ga_armcihdl_t *temp2;
+  while(temp->next != NULL && temp->next->index != *nbhandle)
     temp = temp->next;
-  if(temp->index == *nbhandle)
+  if(temp->next->index == *nbhandle)
   {
-    if(temp->next != NULL)
-      temp->next->prev=temp->prev;
-    else
-      tail = tail->prev;
-    temp->prev->next=temp->next;
-    free(temp->handle);
-    free(temp);
+    if(temp->next->next == NULL)
+      tail = temp;
+    temp2 = temp->next;
+    temp->next = temp->next->next;
+    free(temp2->handle);
+    free(temp2);
   }
   pthread_mutex_unlock(&mutex);
 }
