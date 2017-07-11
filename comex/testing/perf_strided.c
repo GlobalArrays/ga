@@ -7,6 +7,7 @@
 #include <mpi.h>
 
 #include "comex.h"
+#include "stats.h"
 
 static int me;
 static int nproc;
@@ -90,7 +91,11 @@ static void strided_test(size_t buffer_size, int op)
     void **put_buf;
     void **get_buf;
     double *times;
+    stats_t stats_latency;
+    stats_t stats_bandwidth;
 
+    stats_clear(&stats_latency);
+    stats_clear(&stats_bandwidth);
     dst_ptr = (void*)malloc(nproc * sizeof(void*));
     put_buf = (void*)malloc(nproc * sizeof(void*));
     get_buf = (void*)malloc(nproc * sizeof(void*));
@@ -160,12 +165,24 @@ static void strided_test(size_t buffer_size, int op)
 
 
             if (0 == me) {
+                double latency = (t_end-t_start)/iter;
+                double bandwidth = msg_size*(nproc-1)*iter/(t_end-t_start);
                 printf("%5zu\t\t%6.2f\t\t%6.2f\t\t%zu\t\t%zu\n",
-                        msg_size,
-                        ((t_end  - t_start))/iter,
-                        msg_size*(nproc-1)*iter/((t_end - t_start)), xdim, ydim);
+                        msg_size, latency, bandwidth, xdim, ydim);
+                stats_sample_value(&stats_latency, latency);
+                stats_sample_value(&stats_bandwidth, bandwidth);
             }
         }
+    }
+    if (0 == me) {
+        printf("Latency avg %6.2f +- %6.2f\n",
+                stats_latency._mean, stats_stddev(&stats_latency));
+        printf("Latency min %6.2f\n", stats_latency._min);
+        printf("Latency max %6.2f\n", stats_latency._max);
+        printf("Bandwidth avg %6.2f +- %6.2f\n",
+                stats_bandwidth._mean, stats_stddev(&stats_bandwidth));
+        printf("Bandwidth min %6.2f\n", stats_bandwidth._min);
+        printf("Bandwidth max %6.2f\n", stats_bandwidth._max);
     }
     comex_free(dst_ptr[me], COMEX_GROUP_WORLD);
     comex_free(put_buf[me], COMEX_GROUP_WORLD);
