@@ -23,6 +23,7 @@
 
 /*
 #define USE_PRIOR_MPI_WIN_FLUSH
+#define USE_POST_MPI_WIN_FLUSH
 */
 
 /*
@@ -338,6 +339,10 @@ int comex_put(
      */
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_put:MPI_Wait");
+#ifdef USE_POST_MPI_WIN_FLUSH
+    ierr = MPI_Win_flush(lproc,reg_win->win);
+    translate_mpi_error(ierr,"comex_put:MPI_Win_flush");
+#endif
 #endif
 #else
     ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,reg_win->win);
@@ -395,6 +400,10 @@ int comex_get(
     translate_mpi_error(ierr,"comex_get:MPI_Rget");
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_get:MPI_Wait");
+#ifdef USE_POST_MPI_WIN_FLUSH
+    ierr = MPI_Win_flush(lproc,reg_win->win);
+    translate_mpi_error(ierr,"comex_get:MPI_Win_flush");
+#endif
 #endif
 #else
     ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,reg_win->win);
@@ -532,6 +541,10 @@ int comex_acc(
     translate_mpi_error(ierr,"comex_acc:MPI_Raccumulate");
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_acc:MPI_Wait");
+#ifdef USE_POST_MPI_WIN_FLUSH
+    ierr = MPI_Win_flush(lproc,reg_win->win);
+    translate_mpi_error(ierr,"comex_acc:MPI_Win_flush");
+#endif
 #endif
 #else
     ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,reg_win->win);
@@ -726,6 +739,10 @@ int comex_puts(
     translate_mpi_error(ierr,"comex_puts:MPI_Rput");
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_puts:MPI_Wait");
+#ifdef USE_POST_MPI_WIN_FLUSH
+    ierr = MPI_Win_flush(lproc,reg_win->win);
+    translate_mpi_error(ierr,"comex_puts:MPI_Win_flush");
+#endif
 #endif
 #else
     ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,reg_win->win);
@@ -865,6 +882,10 @@ int comex_gets(
     translate_mpi_error(ierr,"comex_gets:MPI_Rget");
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_gets:MPI_Wait");
+#ifdef USE_POST_MPI_WIN_FLUSH
+    ierr = MPI_Win_flush(lproc,reg_win->win);
+    translate_mpi_error(ierr,"comex_gets:MPI_Win_flush");
+#endif
 #endif
 #else
     ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,reg_win->win);
@@ -1200,6 +1221,10 @@ int comex_accs(
     translate_mpi_error(ierr,"comex_accs:MPI_Raccumulate");
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_accs:MPI_Wait");
+#ifdef USE_POST_MPI_WIN_FLUSH
+    ierr = MPI_Win_flush(lproc,reg_win->win);
+    translate_mpi_error(ierr,"comex_accs:MPI_Win_flush");
+#endif
 #endif
 #else
     ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,reg_win->win);
@@ -1366,6 +1391,10 @@ int comex_putv(
     translate_mpi_error(ierr,"comex_putv:MPI_Rput");
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_putv:MPI_Wait");
+#ifdef USE_POST_MPI_WIN_FLUSH
+    ierr = MPI_Win_flush(lproc,reg_win->win);
+    translate_mpi_error(ierr,"comex_putv:MPI_Win_flush");
+#endif
 #endif
 #else
     ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,reg_win->win);
@@ -1447,6 +1476,10 @@ int comex_getv(
     translate_mpi_error(ierr,"comex_getv:MPI_Rget");
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_getv:MPI_Wait");
+#ifdef USE_POST_MPI_WIN_FLUSH
+    ierr = MPI_Win_flush(lproc,reg_win->win);
+    translate_mpi_error(ierr,"comex_getv:MPI_Win_flush");
+#endif
 #endif
 #else
     ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,reg_win->win);
@@ -1761,6 +1794,10 @@ int comex_accv(
     translate_mpi_error(ierr,"comex_accv:MPI_Raccumulate");
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_accv:MPI_Wait");
+#ifdef USE_POST_MPI_WIN_FLUSH
+    ierr = MPI_Win_flush(lproc,reg_win->win);
+    translate_mpi_error(ierr,"comex_accv:MPI_Win_flush");
+#endif
 #endif
 #else
     ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,reg_win->win);
@@ -1906,8 +1943,10 @@ int comex_wait(comex_request_t* hdl)
   MPI_Status status;
   ierr = MPI_Wait(&(nb_list[*hdl]->request),&status);
   translate_mpi_error(ierr,"comex_wait:MPI_Wait");
+#ifdef USE_POST_MPI_WIN_FLUSH
   ierr = MPI_Win_flush(nb_list[*hdl]->remote_proc,nb_list[*hdl]->win);
   translate_mpi_error(ierr,"comex_wait:MPI_Win_flush_local");
+#endif
 #endif
   nb_list[*hdl]->active = 0;
   if (nb_list[*hdl]->use_type) {
