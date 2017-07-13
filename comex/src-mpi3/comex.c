@@ -27,10 +27,10 @@
 
 /*
 */
-
 #define USE_MPI_DATATYPES
-#define USE_MPI_REQUESTS
 
+
+#define USE_MPI_REQUESTS
 /*
 #define USE_MPI_FLUSH_LOCAL
 #define USE_MPI_WIN_ALLOC
@@ -1906,8 +1906,10 @@ int comex_wait(comex_request_t* hdl)
   MPI_Status status;
   ierr = MPI_Wait(&(nb_list[*hdl]->request),&status);
   translate_mpi_error(ierr,"comex_wait:MPI_Wait");
+  /*
   ierr = MPI_Win_flush_local(nb_list[*hdl]->remote_proc,nb_list[*hdl]->win);
   translate_mpi_error(ierr,"comex_wait:MPI_Win_flush_local");
+  */
 #endif
   nb_list[*hdl]->active = 0;
   if (nb_list[*hdl]->use_type) {
