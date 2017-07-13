@@ -1906,10 +1906,8 @@ int comex_wait(comex_request_t* hdl)
   MPI_Status status;
   ierr = MPI_Wait(&(nb_list[*hdl]->request),&status);
   translate_mpi_error(ierr,"comex_wait:MPI_Wait");
-  /*
-  ierr = MPI_Win_flush_local(nb_list[*hdl]->remote_proc,nb_list[*hdl]->win);
+  ierr = MPI_Win_flush(nb_list[*hdl]->remote_proc,nb_list[*hdl]->win);
   translate_mpi_error(ierr,"comex_wait:MPI_Win_flush_local");
-  */
 #endif
   nb_list[*hdl]->active = 0;
   if (nb_list[*hdl]->use_type) {
@@ -1919,6 +1917,7 @@ int comex_wait(comex_request_t* hdl)
     translate_mpi_error(ierr,"comex_wait:MPI_Type_free");
     nb_list[*hdl]->use_type = 0;
   }
+  return COMEX_SUCCESS;
 #else
   /* Non-blocking functions not implemented */
   return COMEX_SUCCESS;
@@ -1929,6 +1928,7 @@ int comex_wait(comex_request_t* hdl)
 int comex_test(comex_request_t* hdl, int *status)
 {
 #ifndef USE_MPI_DATATYPES
+  *status = 0;
   return COMEX_SUCCESS;
 #endif
 #ifdef USE_MPI_REQUESTS
