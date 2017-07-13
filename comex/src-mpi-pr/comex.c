@@ -218,9 +218,7 @@ STATIC void nb_recv_iov(void *buf, int count, int source, nb_t *nb, comex_giov_t
 STATIC void nb_recv(void *buf, int count, int source, nb_t *nb);
 STATIC int nb_get_handle_index();
 STATIC nb_t* nb_wait_for_handle();
-STATIC void nb_wait_for_send(nb_t *nb);
 STATIC void nb_wait_for_send1(nb_t *nb);
-STATIC void nb_wait_for_recv(nb_t *nb);
 STATIC void nb_wait_for_recv1(nb_t *nb);
 STATIC void nb_wait_for_all(nb_t *nb);
 STATIC void nb_wait_all();
@@ -4120,22 +4118,6 @@ STATIC nb_t* nb_wait_for_handle()
 }
 
 
-STATIC void nb_wait_for_send(nb_t *nb)
-{
-#if DEBUG
-    fprintf(stderr, "[%d] nb_wait_for_send(nb=%p)\n", g_state.rank, nb);
-#endif
-
-    COMEX_ASSERT(NULL != nb);
-
-    while (NULL != nb->send_head) {
-        nb_wait_for_send1(nb);
-    }
-
-    nb->send_tail = NULL;
-}
-
-
 STATIC void nb_wait_for_send1(nb_t *nb)
 {
 #if DEBUG
@@ -4174,20 +4156,6 @@ STATIC void nb_wait_for_send1(nb_t *nb)
         if (NULL == nb->send_head) {
             nb->send_tail = NULL;
         }
-    }
-}
-
-
-STATIC void nb_wait_for_recv(nb_t *nb)
-{
-#if DEBUG
-    fprintf(stderr, "[%d] nb_wait_for_recv(nb=%p)\n", g_state.rank, nb);
-#endif
-
-    COMEX_ASSERT(NULL != nb);
-
-    while (NULL != nb->recv_head) {
-        nb_wait_for_recv1(nb);
     }
 }
 
