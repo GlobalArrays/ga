@@ -86,6 +86,18 @@ typedef struct {
 #endif
 } global_array_t;
 
+typedef struct {
+  Integer g_a;
+  Integer count;
+  Integer *map;
+  Integer *proclist;
+  Integer nproc;
+  Integer offset;
+  Integer iproc;
+  Integer iblock;
+  Integer new_proc;
+} _iterator_hdl;
+
 extern global_array_t *_ga_main_data_structure; 
 extern proc_list_t *_proc_list_main_data_structure; 
 /*\
