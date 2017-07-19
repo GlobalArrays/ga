@@ -407,6 +407,7 @@ libga_la_SOURCES += global/src/global.periodic.c
 libga_la_SOURCES += global/src/globalp.h
 libga_la_SOURCES += global/src/global.util.c
 libga_la_SOURCES += global/src/hsort.scat.c
+libga_la_SOURCES += global/src/iterator.c
 libga_la_SOURCES += global/src/matmul.c
 libga_la_SOURCES += global/src/matmul.h
 libga_la_SOURCES += global/src/matrix.c
