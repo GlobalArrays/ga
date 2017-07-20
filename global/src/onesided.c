@@ -612,6 +612,7 @@ void ngai_put_common(Integer g_a,
 
   int _stride_rem[MAXDIM+1], _stride_loc[MAXDIM+1], _count[MAXDIM+1];
   int *stride_rem=&_stride_rem[1], *stride_loc=&_stride_loc[1], *count=&_count[1];
+  _iterator_hdl it_hdl;
 
   GA_PUSH_NAME("ngai_put_common");
 
@@ -631,6 +632,7 @@ void ngai_put_common(Integer g_a,
 
   if (!use_blocks) {
 
+#if 0
     /* Locate the processors containing some portion of the patch
        specified by lo and hi and return the results in _ga_map,
        GA_proclist, and np. GA_proclist contains a list of processors
@@ -762,6 +764,108 @@ void ngai_put_common(Integer g_a,
     }
 #if !defined(__crayx1) && !defined(DISABLE_NBOPT)
     if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
+#endif
+#else
+    gai_iterator_init(g_a, lo, hi, &it_hdl);
+
+#ifndef NO_GA_STATS
+    gam_CountElems(ndim, lo, hi, &elems);
+    GAbytes.puttot += (double)size*elems;
+    GAstat.numput++;
+    GAstat.numput_procs += np;
+#endif
+
+    if(nbhandle)ga_init_nbhandle(nbhandle);
+#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
+    else ga_init_nbhandle(&ga_nbhandle);
+#endif
+
+#ifdef PROFILE_OLD
+    ga_profile_start((int)handle, (long)size*elems, ndim, lo, hi, 
+        ENABLE_PROFILE_PUT);
+#endif
+
+#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
+    for(loop=0; loop<num_loops; loop++) {
+      __CRAYX1_PRAGMA("_CRI novector");
+#endif
+      Integer ldrem[MAXDIM];
+      Integer idx_buf, plo[MAXDIM], phi[MAXDIM];
+      char *pbuf, *prem;
+      gai_iterator_reset(&it_hdl);
+      while (gai_iterator_next(&it_hdl, &proc, plo, phi, ldrem)) {
+
+        /* check if it is local to SMP */
+#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
+        cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)proc);
+        if(loop==0) cond = !cond;
+        if(cond) {
+#endif
+          /* find the right spot in the user buffer */
+          gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
+          pbuf = size*idx_buf + (char*)buf;        
+
+          gam_ComputeCount(ndim, plo, phi, count); 
+
+          /* scale number of rows by element size */
+          count[0] *= size;
+          gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
+
+          if (p_handle >= 0) {
+            proc = (int)GA_proclist[p];
+            /* BJP */
+            proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
+          }
+          if(GA_fence_set)fence_array[proc]=1;
+
+#ifdef PERMUTE_PIDS
+          if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
+#endif
+
+#ifndef NO_GA_STATS	    
+          if(proc == GAme){
+            gam_CountElems(ndim, plo, phi, &elems);
+            GAbytes.putloc += (double)size*elems;
+          }
+#endif
+
+          /*casting what ganb_get_armci_handle function returns to armci_hdl is 
+            very crucial here as on 64 bit platforms, pointer is 64 bits where 
+            as temporary is only 32 bits*/ 
+#if defined(__crayx1) || defined(DISABLE_NBOPT)
+          /* ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc); */
+          ngai_puts(buf, pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
+#else
+          if(nbhandle)  {
+            /* ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1, */
+            /*              proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle)); */
+            ngai_nbputs(buf,pbuf, stride_loc, prem, stride_rem, count, ndim -1,
+                proc,field_off, field_size, size, 
+                (armci_hdl_t*)get_armci_nbhandle(nbhandle));
+          } else {
+            /* do blocking put for local processes. If all processes
+               are remote processes then do blocking put for the last one */
+            if((loop==0 && counter==(int)np-1) || loop==1) {
+              /* ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc); */
+              ngai_puts(buf, pbuf,stride_loc,prem,stride_rem,count,ndim-1,
+                  proc, field_off, field_size, size);
+            }
+            else {
+              ++counter;
+              /* ARMCI_NbPutS(pbuf,stride_loc,prem,stride_rem,count, ndim-1, */
+              /*              proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle)); */
+              ngai_nbputs(buf,pbuf,stride_loc,prem,stride_rem,count, ndim-1,
+                  proc, field_off, field_size, size,
+                  (armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
+            }
+          }
+        } /* end if(cond) */
+      }
+#endif
+    }
+#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
+    if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
+#endif
 #endif
   } else {
     Integer offset, l_offset, last, pinv;

@@ -88,6 +88,8 @@ typedef struct {
 
 typedef struct {
   Integer g_a;
+  Integer lo[MAXDIM];
+  Integer hi[MAXDIM];
   Integer count;
   Integer *map;
   Integer *proclist;
