@@ -105,15 +105,6 @@ int *ProcListPerm;
             *phi  = *plo + ndim;                 \
 }
 
-/*
-#define gam_GetRangeFromMap(p, ndim, plo, phi){\
-Integer   _mloc = p* ndim *2;\
-          *plo  = (Integer*)_ga_map + _mloc;\
-          *phi  = *plo + ndim;\
-}
-*/
-
-
 /*\ Return pointer (ptr_loc) to location in memory of element with subscripts
  *  (subscript). Also return physical dimensions of array in memory in ld.
 \*/
@@ -148,6 +139,38 @@ Integer   _mloc = p* ndim *2;\
   *(ptr_loc) =  GA[g_handle].ptr[_pinv]+_offset*GA[g_handle].elemsize;     \
 }
 
+void gam_LocationF(int proc, Integer g_handle,  Integer subscript[],
+    char **ptr_loc, Integer ld[])
+{                                                                          
+  Integer _offset=0, _d, _w, _factor=1, _last=GA[g_handle].ndim-1;         
+  Integer _lo[MAXDIM], _hi[MAXDIM], _pinv, _p_handle;                     
+                                                                           
+  ga_ownsM(g_handle, proc, _lo, _hi);                                      
+  gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               
+  if(_last==0) ld[0]=_hi[0]- _lo[0]+1+2*(Integer)GA[g_handle].width[0];   
+  __CRAYX1_PRAGMA("_CRI shortloop");                                      
+  for(_d=0; _d < _last; _d++)            {                                 
+    _w = (Integer)GA[g_handle].width[_d];                                  
+    _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                       
+    ld[_d] = _hi[_d] - _lo[_d] + 1 + 2*_w;                                 
+    _factor *= ld[_d];                                                     
+  }                                                                        
+  _offset += (subscript[_last]-_lo[_last]                                  
+      + (Integer)GA[g_handle].width[_last])                                
+  * _factor;                                                               
+  _p_handle = GA[g_handle].p_handle;                                       
+  if (_p_handle != 0) {                                                    
+    if (GA[g_handle].num_rstrctd == 0) {                                   
+      _pinv = proc;                                                        
+    } else {                                                               
+      _pinv = GA[g_handle].rstrctd_list[proc];                             
+    }                                                                      
+  } else {                                                                 
+    _pinv = PGRP_LIST[_p_handle].inv_map_proc_list[proc];                  
+  }                                                                       
+  *(ptr_loc) =  GA[g_handle].ptr[_pinv]+_offset*GA[g_handle].elemsize;    
+}
+
 #define gam_GetBlockPatch(plo,phi,lo,hi,blo,bhi,ndim) {                    \
   Integer _d;                                                              \
   for (_d=0; _d<ndim; _d++) {                                              \
@@ -171,6 +194,7 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
   Integer handle = GA_OFFSET + g_a;
   Integer ndim = GA[handle].ndim;
   Integer i;
+  hdl->g_a = g_a;
   hdl->count = 0;
   /*
   hdl->map = (Integer*)malloc((size_t)(GAnproc*2*ndim+1)*sizeof(Integer));
@@ -250,8 +274,8 @@ void gai_iterator_reset(_iterator_hdl *hdl)
  * @param prem pointer to remote buffer
  * @return returns false if there is no new block, true otherwise
  */
-int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer plo[],
-    Integer phi[], char *prem, Integer ldrem[])
+int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer *plo[],
+    Integer *phi[], char **prem, Integer ldrem[])
 {
   Integer idx, p;
   Integer handle = GA_OFFSET + hdl->g_a;
@@ -277,31 +301,32 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer plo[],
      * return the result in plo and phi. Also get actual processor
      * index corresponding to p and store the result in proc.
      */
-    gam_GetRangeFromMap(p, ndim, &blo, &bhi);
+    gam_GetRangeFromMap(p, ndim, plo, phi);
     *proc = (int)GA_proclist[p];
 
+    blo = *plo;
     if (n_rstrctd == 0) {
-      gam_Location(*proc,handle, blo, &prem, ldrem);
+      gam_Location(*proc, handle, blo, prem, ldrem);
     } else {
-      gam_Location(rank_rstrctd[*proc], handle, blo, &prem, ldrem);
+      gam_Location(rank_rstrctd[*proc], handle, blo, prem, ldrem);
     }
     hdl->count++;
   } else {
+    Integer offset, l_offset, last, pinv;
     Integer blk_tot = GA[handle].block_total;
     Integer blo[MAXDIM], bhi[MAXDIM];
-    Integer offset, l_offset, last, pinv;
-    Integer idx, j, jtot, iproc;
-    Integer chk;
+    Integer idx, j, jtot, chk, iproc;
     int check1, check2;
-    if (hdl->iproc == GAnproc && hdl->iblock >= blk_tot) return 0;
-    if (hdl->iblock == 0) hdl->offset = 0;
+    if (hdl->iproc == GAnproc-1 && hdl->iblock >= blk_tot) return 0;
+    if (hdl->iblock == pnga_nodeid()) hdl->offset = 0;
+    idx = hdl->iblock;
     if (GA[handle].block_sl_flag == 0) {
       /* Simple block-cyclic distribution */
       /* get the block corresponding to the current value of block_count */
       chk = 0;
       /* loop over blocks until a block with data is found */
       while (!chk) {
-        ga_ownsM(handle,GA[handle].block_total,blo,bhi);
+        ga_ownsM(handle,idx,blo,bhi);
         /* check to see if this block overlaps with requested block
          * defined by lo and hi */
         for (j=0; j<ndim; j++) {
@@ -316,29 +341,32 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer plo[],
               (hdl->hi[j] >= blo[j] && hdl->hi[j] <= bhi[j]));
           /* If there is some data, move to the next section of code,
            * otherwise, check next block */
-          if (check1 || check2) {
-            chk = 1;
-          } else {
-            /* evaluate new offset for block idx */
-            jtot = 1;
-            for (j=0; j<ndim; j++) {
-              jtot *= bhi[j]-blo[j]+1;
-            }
-            hdl->offset += jtot;
-            /* increment to next block */
-            hdl->iblock += pnga_nnodes();
-            if (hdl->iblock >= blk_tot) {
-              hdl->iblock = pnga_nodeid();
-              hdl->iproc++;
-            }
+        }
+        if (check1 || check2) {
+          chk = 1;
+        } else {
+          /* evaluate new offset for block idx */
+          jtot = 1;
+          for (j=0; j<ndim; j++) {
+            jtot *= bhi[j]-blo[j]+1;
+          }
+          hdl->offset += jtot;
+          /* increment to next block */
+          hdl->iblock += pnga_nnodes();
+          if (hdl->iblock >= blk_tot) {
+            hdl->iblock = pnga_nodeid();
+            hdl->offset = 0;
+            hdl->iproc++;
           }
         }
       }
 
       /* The block overlaps some data in lo,hi */
       if (chk) {
+        Integer *clo = *plo;
+        Integer *chi = *phi;
         /* get the patch of block that overlaps requested region */
-        gam_GetBlockPatch(blo,bhi,hdl->lo,hdl->hi,plo,phi,ndim);
+        gam_GetBlockPatch(blo,bhi,hdl->lo,hdl->hi,clo,chi,ndim);
 
         /* evaluate offset within block */
         last = ndim - 1;
@@ -346,11 +374,11 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer plo[],
         if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
         l_offset = 0;
         for (j=0; j<last; j++) {
-          l_offset += (plo[j]-blo[j])*jtot;
+          l_offset += (clo[j]-blo[j])*jtot;
           ldrem[j] = bhi[j]-blo[j]+1;
           jtot *= ldrem[j];
         }
-        l_offset += (plo[last]-blo[last])*jtot;
+        l_offset += (clo[last]-blo[last])*jtot;
         l_offset += hdl->offset;
 
         /* get pointer to data on remote block */
@@ -371,6 +399,7 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer plo[],
         if (hdl->iblock >= blk_tot) {
           hdl->iproc++;
           hdl->iblock = pnga_nodeid();
+          hdl->offset = 0;
         }
       }
     } else {

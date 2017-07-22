@@ -790,10 +790,10 @@ void ngai_put_common(Integer g_a,
       __CRAYX1_PRAGMA("_CRI novector");
 #endif
       Integer ldrem[MAXDIM];
-      Integer idx_buf, plo[MAXDIM], phi[MAXDIM];
+      Integer idx_buf, *plo, *phi;
       char *pbuf, *prem;
       gai_iterator_reset(&it_hdl);
-      while (gai_iterator_next(&it_hdl, &proc, plo, phi, ldrem)) {
+      while (gai_iterator_next(&it_hdl, &proc, &plo, &phi, &prem, ldrem)) {
 
         /* check if it is local to SMP */
 #if !defined(__crayx1) && !defined(DISABLE_NBOPT)
