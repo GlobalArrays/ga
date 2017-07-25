@@ -232,17 +232,6 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
   }
 }
 
-/*
-typedef struct {
-  Integer g_a;
-  Integer count;
-  Integer block_count;
-  Integer *map;
-  Integer *list;
-  Integer nproc;
-} _iterator_hdl;
-*/
-
 /**
  * Reset an iterator back to the start
  * @param hdl handle for iterator
@@ -310,22 +299,32 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer *plo[],
     } else {
       gam_Location(rank_rstrctd[*proc], handle, blo, prem, ldrem);
     }
+    if (p_handle >= 0) {
+      *proc = (int)GA_proclist[p];
+      /* BJP */
+      *proc = PGRP_LIST[p_handle].inv_map_proc_list[*proc];
+    }
     hdl->count++;
+    return 1;
   } else {
     Integer offset, l_offset, last, pinv;
     Integer blk_tot = GA[handle].block_total;
     Integer blo[MAXDIM], bhi[MAXDIM];
     Integer idx, j, jtot, chk, iproc;
     int check1, check2;
-    if (hdl->iproc == GAnproc-1 && hdl->iblock >= blk_tot) return 0;
+    if (hdl->iproc >= GAnproc) return 0;
+    /*if (hdl->iproc == GAnproc-1 && hdl->iblock >= blk_tot) return 0;*/
     if (hdl->iblock == pnga_nodeid()) hdl->offset = 0;
-    idx = hdl->iblock;
+    printf("p[%d] ndim: %d dims[0]: %d dims[1]: %d\n",GAme,GA[handle].ndim,
+        GA[handle].dims[0],GA[handle].dims[1]);
     if (GA[handle].block_sl_flag == 0) {
       /* Simple block-cyclic distribution */
       /* get the block corresponding to the current value of block_count */
       chk = 0;
       /* loop over blocks until a block with data is found */
+      printf("p[%d] blk_tot: %d\n",GAme,blk_tot);
       while (!chk) {
+        idx = hdl->iblock;
         ga_ownsM(handle,idx,blo,bhi);
         /* check to see if this block overlaps with requested block
          * defined by lo and hi */
@@ -354,12 +353,15 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer *plo[],
           /* increment to next block */
           hdl->iblock += pnga_nnodes();
           if (hdl->iblock >= blk_tot) {
-            hdl->iblock = pnga_nodeid();
             hdl->offset = 0;
             hdl->iproc++;
+            hdl->iblock = hdl->iproc;
+            if (hdl->iproc >= GAnproc) return 0;
           }
         }
       }
+        printf("p[%d] idx: %d blo[0]: %d bhi[0]: %d blo[1]: %d bhi[1]: %d\n",GAme,
+            idx,blo[0],bhi[0],blo[1],bhi[1]);
 
       /* The block overlaps some data in lo,hi */
       if (chk) {
@@ -386,7 +388,8 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer *plo[],
         if (p_handle > 0) {
           pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
         }
-        prem =  GA[handle].ptr[pinv]+l_offset*GA[handle].elemsize;
+        *prem =  GA[handle].ptr[pinv]+l_offset*GA[handle].elemsize;
+        *proc = pinv;
 
         /* evaluate new offset for block idx */
         jtot = 1;
@@ -395,13 +398,15 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer *plo[],
         }
         hdl->offset += jtot;
 
+        printf("p[%d] offset: %d l_offset: %d\n",GAme,hdl->offset,l_offset);
         hdl->iblock += pnga_nnodes();
         if (hdl->iblock >= blk_tot) {
           hdl->iproc++;
-          hdl->iblock = pnga_nodeid();
+          hdl->iblock = hdl->iproc;
           hdl->offset = 0;
         }
       }
+      return 1;
     } else {
       /* Scalapack-type data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
