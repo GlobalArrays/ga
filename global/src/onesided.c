@@ -885,8 +885,6 @@ void ngai_put_common(Integer g_a,
     Integer blk_tot = GA[handle].block_total;
     int check1, check2;
     char *pbuf, *prem;
-    int icount;
-    int *ibuf;
 
     gai_iterator_init(g_a, lo, hi, &it_hdl);
     /* GA uses simple block cyclic data distribution */
@@ -898,22 +896,15 @@ void ngai_put_common(Integer g_a,
 
         gai_iterator_reset(&it_hdl);
 
-        icount = 0;
         while (gai_iterator_next(&it_hdl, &proc, &plo, &phi, &prem, ldrem)) {
-          printf("p[%d] proc: %d  plo[0]: %d phi[0]: %d plo[1]: %d phi[1]: %d\n",
-              GAme,proc,plo[0],phi[0],plo[1],phi[1]);
-          icount++;
-          printf("p[%d] icount: %d\n",GAme,icount);
 #ifndef __crayx1
-          cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)iproc);
+          cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)proc);
           if(loop==0) cond = !cond;
           if(cond) {
 #endif
 
             gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
-            printf("p[%d] idx_buf: %d size: %d\n",GAme,idx_buf,size);
             pbuf = size*idx_buf + (char*)buf;        
-            printf("p[%d] pbuf: %p\n",GAme,pbuf);
 
             gam_ComputeCount(ndim, plo, phi, count); 
             /* scale number of rows by element size */
@@ -949,9 +940,6 @@ void ngai_put_common(Integer g_a,
               if(loop==1)
               */
               /*                     ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc); */
-              ibuf = (int*)pbuf;
-              printf("p[%d] buf: %p pbuf: %p prem: %p pbuf[0]: %d pbuf[1]: %d pbuf[2]: %d pbuf[3]: %d\n",
-                  GAme,buf,pbuf,prem,ibuf[0],ibuf[1],ibuf[2],ibuf[3]);
               ngai_puts(buf,pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc, field_off, field_size, size);
               /*
               else {

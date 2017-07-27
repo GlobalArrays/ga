@@ -246,7 +246,8 @@ void gai_iterator_reset(_iterator_hdl *hdl)
     if (GA[handle].block_sl_flag == 0) {
       /* simple block cyclic data distribution */
       hdl->iproc = 0;
-      hdl->iblock = pnga_nodeid();
+      hdl->iblock = 0;
+      hdl->offset = 0;
     } else {
       /* Scalapack-type block-cyclic data distribution */
     }
@@ -312,22 +313,20 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer *plo[],
     Integer blo[MAXDIM], bhi[MAXDIM];
     Integer idx, j, jtot, chk, iproc;
     int check1, check2;
-    if (hdl->iproc >= GAnproc) return 0;
-    /*if (hdl->iproc == GAnproc-1 && hdl->iblock >= blk_tot) return 0;*/
-    if (hdl->iblock == pnga_nodeid()) hdl->offset = 0;
-    printf("p[%d] ndim: %d dims[0]: %d dims[1]: %d\n",GAme,GA[handle].ndim,
-        GA[handle].dims[0],GA[handle].dims[1]);
     if (GA[handle].block_sl_flag == 0) {
       /* Simple block-cyclic distribution */
-      /* get the block corresponding to the current value of block_count */
+      if (hdl->iproc >= GAnproc) return 0;
+      /*if (hdl->iproc == GAnproc-1 && hdl->iblock >= blk_tot) return 0;*/
+      if (hdl->iblock == hdl->iproc) hdl->offset = 0;
       chk = 0;
       /* loop over blocks until a block with data is found */
-      printf("p[%d] blk_tot: %d\n",GAme,blk_tot);
       while (!chk) {
+        /* get the block corresponding to the current value of iblock */
         idx = hdl->iblock;
         ga_ownsM(handle,idx,blo,bhi);
         /* check to see if this block overlaps with requested block
          * defined by lo and hi */
+        chk = 1;
         for (j=0; j<ndim; j++) {
           /* check to see if at least one end point of the interval
            * represented by blo and bhi falls in the interval
@@ -340,10 +339,12 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer *plo[],
               (hdl->hi[j] >= blo[j] && hdl->hi[j] <= bhi[j]));
           /* If there is some data, move to the next section of code,
            * otherwise, check next block */
+          if (!check1 && !check2) {
+            chk = 0;
+          }
         }
-        if (check1 || check2) {
-          chk = 1;
-        } else {
+        
+        if (!chk) {
           /* evaluate new offset for block idx */
           jtot = 1;
           for (j=0; j<ndim; j++) {
@@ -360,11 +361,11 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer *plo[],
           }
         }
       }
-        printf("p[%d] idx: %d blo[0]: %d bhi[0]: %d blo[1]: %d bhi[1]: %d\n",GAme,
-            idx,blo[0],bhi[0],blo[1],bhi[1]);
 
       /* The block overlaps some data in lo,hi */
       if (chk) {
+        *plo = hdl->lobuf;
+        *phi = hdl->hibuf;
         Integer *clo = *plo;
         Integer *chi = *phi;
         /* get the patch of block that overlaps requested region */
@@ -398,7 +399,6 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer *plo[],
         }
         hdl->offset += jtot;
 
-        printf("p[%d] offset: %d l_offset: %d\n",GAme,hdl->offset,l_offset);
         hdl->iblock += pnga_nnodes();
         if (hdl->iblock >= blk_tot) {
           hdl->iproc++;

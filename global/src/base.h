@@ -98,6 +98,8 @@ typedef struct {
   Integer iproc;
   Integer iblock;
   Integer new_proc;
+  Integer lobuf[MAXDIM];
+  Integer hibuf[MAXDIM];
 } _iterator_hdl;
 
 extern global_array_t *_ga_main_data_structure; 
