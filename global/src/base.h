@@ -100,6 +100,15 @@ typedef struct {
   Integer new_proc;
   Integer lobuf[MAXDIM];
   Integer hibuf[MAXDIM];
+  /* ScalPACK distribution parameters*/
+  Integer blk_num[MAXDIM];
+  Integer blk_dim[MAXDIM];
+  Integer blk_inc[MAXDIM];
+  Integer blk_ld[MAXDIM];
+  Integer hlf_blk[MAXDIM];
+  Integer blk_size[MAXDIM];
+  Integer proc_index[MAXDIM];
+  Integer index[MAXDIM];
 } _iterator_hdl;
 
 extern global_array_t *_ga_main_data_structure; 

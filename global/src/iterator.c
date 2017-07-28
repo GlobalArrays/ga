@@ -228,8 +228,32 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
       hdl->iblock = pnga_nodeid();
     } else {
       /* GA uses ScaLAPACK block cyclic data distribution */
+      int *proc_gid;
+      int j;
+#if COMPACT_SCALAPACK
+#else
+      C_Integer *block_dims;
+      /* Scalapack-type block-cyclic data distribution */
+      /* Calculate some properties associated with data distribution */
+      int *proc_grid = GA[handle].nblock;
+      /*num_blocks = GA[handle].num_blocks;*/
+      block_dims = GA[handle].block_dims;
+      for (j=0; j<ndim; j++)  {
+        hdl->blk_size[j] = block_dims[j];
+        hdl->blk_dim[j] = block_dims[j]*proc_grid[j];
+        hdl->blk_num[j] = GA[handle].dims[j]/hdl->blk_dim[j];
+        hdl->blk_inc[j] = GA[handle].dims[j]-hdl->blk_num[j]*hdl->blk_dim[j];
+        hdl->blk_ld[j] = hdl->blk_num[j]*block_dims[j];
+        hdl->hlf_blk[j] = hdl->blk_inc[j]/block_dims[j];
+      }
+      hdl->iproc = 0;
+      hdl->offset = 0;
+      /* Initialize proc_index and index arrays */
+      gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
+      gam_find_proc_indices(handle, hdl->iproc, hdl->index);
     }
   }
+#endif
 }
 
 /**
@@ -249,7 +273,11 @@ void gai_iterator_reset(_iterator_hdl *hdl)
       hdl->iblock = 0;
       hdl->offset = 0;
     } else {
-      /* Scalapack-type block-cyclic data distribution */
+      hdl->iproc = 0;
+      hdl->offset = 0;
+      /* Initialize proc_index and index arrays */
+      gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
+      gam_find_proc_indices(handle, hdl->iproc, hdl->index);
     }
   }
 }
@@ -364,10 +392,11 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer *plo[],
 
       /* The block overlaps some data in lo,hi */
       if (chk) {
+        Integer *clo, *chi;
         *plo = hdl->lobuf;
         *phi = hdl->hibuf;
-        Integer *clo = *plo;
-        Integer *chi = *phi;
+        clo = *plo;
+        chi = *phi;
         /* get the patch of block that overlaps requested region */
         gam_GetBlockPatch(blo,bhi,hdl->lo,hdl->hi,clo,chi,ndim);
 
@@ -411,24 +440,135 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer *plo[],
       /* Scalapack-type data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer itmp;
-      Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
-      Integer blk_inc[MAXDIM], blk_jinc;
-      Integer blk_ld[MAXDIM],hlf_blk[MAXDIM];
-      /*C_Integer *num_blocks;*/
-      C_Integer *block_dims;
-      int *proc_grid;
+      Integer blk_jinc;
+      /* Return false at the end of the iteration */
+      if (hdl->iproc >= GAnproc) return 0;
+      chk = 0;
+      /* loop over blocks until a block with data is found */
+      while (!chk) {
+        /* get bounds for current block */
+        for (j = 0; j < ndim; j++) {
+          blo[j] = hdl->blk_size[j]*(hdl->index[j])+1;
+          bhi[j] = hdl->blk_size[j]*(hdl->index[j]+1);
+          if (bhi[j] > GA[handle].dims[j]) bhi[j] = GA[handle].dims[j];
+        }
+        /* check to see if this block overlaps with requested block
+         * defined by lo and hi */
+        chk = 1;
+        for (j=0; j<ndim; j++) {
+          /* check to see if at least one end point of the interval
+           * represented by blo and bhi falls in the interval
+           * represented by lo and hi */
+          check1 = ((blo[j] >= hdl->lo[j] && blo[j] <= hdl->hi[j]) ||
+              (bhi[j] >= hdl->lo[j] && bhi[j] <= hdl->hi[j]));
+          /* check to see if interval represented by lo and hi
+           * falls entirely within interval represented by blo and bhi */
+          check2 = ((hdl->lo[j] >= blo[j] && hdl->lo[j] <= bhi[j]) &&
+              (hdl->hi[j] >= blo[j] && hdl->hi[j] <= bhi[j]));
+          /* If there is some data, move to the next section of code,
+           * otherwise, check next block */
+          if (!check1 && !check2) {
+            chk = 0;
+          }
+        }
+        
+        if (!chk) {
+          /* evaluate new offset for block */
+          itmp = 1;
+          for (j=0; j<ndim; j++) {
+            itmp *= bhi[j]-blo[j]+1;
+          }
+          hdl->offset += itmp;
+          /* increment to next block */
+          hdl->index[0] += GA[handle].nblock[0];
+          for (j=0; j<ndim; j++) {
+            if (hdl->index[j] >= GA[handle].num_blocks[j] && j < ndim-1) {
+              hdl->index[j] = hdl->proc_index[j];
+              hdl->index[j+1] += GA[handle].nblock[j+1];
+            }
+          }
+          if (hdl->index[ndim-1] >= GA[handle].num_blocks[ndim-1]) {
+            hdl->iproc++;
+            if (hdl->iproc >= GAnproc) return 0;
+            hdl->offset = 0;
+            gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
+            gam_find_proc_indices(handle, hdl->iproc, hdl->index);
+          }
+        }
+      }
+      if (chk) {
+        Integer *clo, *chi;
+        *plo = hdl->lobuf;
+        *phi = hdl->hibuf;
+        clo = *plo;
+        chi = *phi;
+        /* get the patch of block that overlaps requested region */
+        gam_GetBlockPatch(blo,bhi,hdl->lo,hdl->hi,clo,chi,ndim);
 
-      /* Calculate some properties associated with data distribution */
-      proc_grid = GA[handle].nblock;
-      /*num_blocks = GA[handle].num_blocks;*/
-      block_dims = GA[handle].block_dims;
-      for (j=0; j<ndim; j++)  {
-        blk_dim[j] = block_dims[j]*proc_grid[j];
-        blk_num[j] = GA[handle].dims[j]/blk_dim[j];
-        /*blk_size[j] = block_dims[j]*blk_num[j];*/
-        blk_inc[j] = GA[handle].dims[j]-blk_num[j]*blk_dim[j];
-        blk_ld[j] = blk_num[j]*block_dims[j];
-        hlf_blk[j] = blk_inc[j]/block_dims[j];
+        /* evaluate offset within block */
+        last = ndim - 1;
+#if COMPACT_SCALAPACK
+        jtot = 1;
+        if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
+        l_offset = 0;
+        for (j=0; j<last; j++) {
+          l_offset += (clo[j]-blo[j])*jtot;
+          ldrem[j] = bhi[j]-blo[j]+1;
+          jtot *= ldrem[j];
+        }
+        l_offset += (clo[last]-blo[last])*jtot;
+        l_offset += offset;
+#else
+        l_offset = 0;
+        jtot = 1;
+        for (j=0; j<last; j++)  {
+          ldrem[j] = hdl->blk_ld[j];
+          blk_jinc = GA[handle].dims[j]%hdl->blk_size[j];
+          if (hdl->blk_inc[j] > 0) {
+            if (hdl->proc_index[j]<hdl->hlf_blk[j]) {
+              blk_jinc = hdl->blk_size[j];
+            } else if (hdl->proc_index[j] == hdl->hlf_blk[j]) {
+              blk_jinc = hdl->blk_inc[j]%hdl->blk_size[j];
+            } else {
+              blk_jinc = 0;
+            }
+          }
+          ldrem[j] += blk_jinc;
+          l_offset += (clo[j]-blo[j]
+              + ((blo[j]-1)/hdl->blk_dim[j])*hdl->blk_size[j])*jtot;
+          jtot *= ldrem[j];
+        }
+        l_offset += (clo[last]-blo[last]
+            + ((blo[last]-1)/hdl->blk_dim[j])*hdl->blk_size[last])*jtot;
+#endif
+        /* get pointer to data on remote block */
+        pinv = (hdl->iproc)%GAnproc;
+        if (p_handle > 0) {
+          pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
+        }
+        *prem =  GA[handle].ptr[pinv]+l_offset*GA[handle].elemsize;
+        *proc = pinv;
+
+        /* evaluate new offset for block */
+        itmp = 1;
+        for (j=0; j<ndim; j++) {
+          itmp *= bhi[j]-blo[j]+1;
+        }
+        hdl->offset += itmp;
+        /* increment to next block */
+        hdl->index[0] += GA[handle].nblock[0];
+        for (j=0; j<ndim; j++) {
+          if (hdl->index[j] >= GA[handle].num_blocks[j] && j < ndim-1) {
+            hdl->index[j] = hdl->proc_index[j];
+            hdl->index[j+1] += GA[handle].nblock[j+1];
+          }
+        }
+        if (hdl->index[ndim-1] >= GA[handle].num_blocks[ndim-1]) {
+          hdl->iproc++;
+          hdl->offset = 0;
+          gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
+          gam_find_proc_indices(handle, hdl->iproc, hdl->index);
+        }
       }
     }
   }
