@@ -829,10 +829,9 @@ c~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c
       logical status
 c
-      integer ha          !A
-      integer hb          !B
-      integer hi          !ipiv
-      MA_ACCESS_INDEX_TYPE adrA, adrB, adrI
+      integer ha, adra          !A
+      integer hb, adrb          !B
+      integer hi, adri          !ipiv
 c
 c
       logical oactive           ! true iff this process participates
@@ -1080,8 +1079,7 @@ c****
       integer dimA1, dimA2, typeA
       integer me, nproc
       integer n
-      integer i, j, hBUF
-      MA_ACCESS_INDEX_TYPE adrBUF
+      integer i, j, hBUF, adrBUF
 
 c**** Check Environment
       nproc = ga_nnodes()
@@ -1145,8 +1143,7 @@ c****
       integer dimA1, dimA2, typeA
       integer me, nproc
       integer n
-      integer i, j, hBUF
-      MA_ACCESS_INDEX_TYPE adrBUF, idx      
+      integer i, j, hBUF, adrBUF, idx      
 
 c**** Check Environment
       nproc = ga_nnodes()
@@ -1273,8 +1270,7 @@ c****
       integer     hsA          ! (input/output)
 c****
       logical status
-      integer hA
-      MA_ACCESS_INDEX_TYPE adrA
+      integer hA, adrA
       integer dimA18, dimA28, typeA
       INTGR4 dimA1, dimA2
       INTGR4 mpA, nqA
@@ -1343,13 +1339,8 @@ c**** Allocate A
          if (use_direct) then
            call nga_access_block_segment(g_A,me,adrA,alen)
          else
-c           if (elemA.ne.0)
-c     &          status = ma_push_get(MT_DBL, elemA, 'A', hA, adrA)
-           if (elemA.ne.0) then
-c                write(6,'(a,i1,a,i12)') 
-c     &         'p[',me,'] allocating hA hsa: ',hsa
-                status = ma_push_get(MT_DBL, elemA, 'A', hA, adrA)
-           endif
+           if (elemA.ne.0)
+     &          status = ma_push_get(MT_DBL, elemA, 'A', hA, adrA)
            if (.not.status)
      &          call ga_error('ga_llt_f: mem alloc failed A ', -1)
          endif
@@ -1389,7 +1380,6 @@ c**** and hsA==-1 or info>0 (i.e. fact. cannot be completed)
 c**** then deallocate the SL A MA array
                if (hsA.eq.-1) then
                   if (.not.use_direct) then
-c                    write(6,'(a,i1,a)') 'p[',me,'] deallocating hA at 1'
                     status = ma_pop_stack(hA)
                   endif
 c**** otherwise just save the hA MA handle            
@@ -1399,7 +1389,6 @@ c**** otherwise just save the hA MA handle
             endif
          else
             if (.not.use_direct) then
-c               write(6,'(a,i1,a)') 'p[',me,'] deallocating hA at 2'
                status = ma_pop_stack(hA)
             endif
          endif
@@ -1465,8 +1454,8 @@ c****
       integer     hsA          ! (input)
 c****
       logical status
-      integer hA, hB
-      MA_ACCESS_INDEX_TYPE adrA, adrB
+      integer hA, adrA
+      integer hB, adrB
       integer dimA18, dimA28, typeA
       integer dimB18, dimB28, typeB
       INTGR4 dimA1, dimA2
@@ -1685,8 +1674,7 @@ c****
       integer     hsA          ! (input/output)
 c****
       logical status
-      integer hA
-      MA_ACCESS_INDEX_TYPE adrA
+      integer hA, adrA
       integer dimA18, dimA28, typeA
       INTGR4 dimA1, dimA2
       INTGR4 mpA, nqA
@@ -2009,9 +1997,8 @@ c
 c
       character*1 jobz,  uplo
 c
-      integer ha          !A
-      integer hb          !B
-      MA_ACCESS_INDEX_TYPE adrA, adrB
+      integer ha, adra          !A
+      integer hb, adrb          !B
 c
 c
       logical oactive           ! true iff this process participates
@@ -3542,7 +3529,7 @@ c     broadcast evals
 #if HAVE_ELPA
       subroutine ga_evp_real(g_a, g_b, eval, nb8, mout)
       use ELPA1
-#if HAVE_ELPA_2STAGE
+#if HAVE_ELPA_2015 || HAVE_ELPA_2016
       use ELPA2
 #endif
       implicit none
@@ -3726,7 +3713,7 @@ c
      .        -info8)
 c     
 c     
-#if HAVE_ELPA_2STAGE
+#if HAVE_ELPA_2015 || HAVE_ELPA_2016
            mpierr=get_elpa_communicators (elpa_comm, 
 #else
            mpierr=get_elpa_row_col_comms(elpa_comm,
@@ -3736,8 +3723,13 @@ c
            if(mpierr.ne.0) call ga_error(
      A     'ga-evp_real: get_elpa_row_col failed ',mpierr)
  
-#if HAVE_ELPA_2STAGE
-         if(.not.solve_evp_real_2stage(n, mout4, 
+#if HAVE_ELPA_2016
+         if(.not.solve_evp_real_2stage_double(
+#elif HAVE_ELPA_2015
+         if(.not.solve_evp_real_2stage(
+#endif
+#if HAVE_ELPA_2016 || HAVE_ELPA_2015
+     C        n, mout4, 
      A        dbl_mb(adra), lda, 
      E        eval, dbl_mb(adrb), ldb, nb, 
      C          nqa,
