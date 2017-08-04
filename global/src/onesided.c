@@ -606,7 +606,8 @@ void ngai_put_common(Integer g_a,
 {
   Integer  p, np, handle=GA_OFFSET + g_a;
   Integer  idx, elems, size, p_handle;
-  int proc, ndim, loop, cond;
+  int ndim, loop, cond;
+  Integer proc;
   int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
   Integer use_blocks;
   Integer n_rstrctd;
@@ -988,7 +989,8 @@ void ngai_get_common(Integer g_a,
 
   Integer  p, np, handle=GA_OFFSET + g_a;
   Integer  idx, elems, size, p_handle;
-  int proc, ndim, loop, cond;
+  int ndim, loop, cond;
+  Integer proc;
   int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
   Integer use_blocks;
   Integer n_rstrctd;
@@ -1190,7 +1192,8 @@ void ngai_acc_common(Integer g_a,
 {
   Integer  p, np, handle=GA_OFFSET + g_a;
   Integer  idx, elems, size, type, p_handle, ga_nbhandle;
-  int optype=-1, proc, loop, ndim, cond;
+  int optype=-1, loop, ndim, cond;
+  Integer proc;
   int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
   Integer use_blocks;
   Integer n_rstrctd;
