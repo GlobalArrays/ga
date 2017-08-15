@@ -71,8 +71,6 @@
 #endif
 
 
-Integer *_ga_map;       /* used in get/put/acc */
-int *ProcListPerm;
 
 /*\ prepare permuted list of processes for remote ops
 \*/
