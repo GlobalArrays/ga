@@ -1497,7 +1497,7 @@ void pnga_matmul(transa, transb, alpha, beta,
        else if(atype==C_SCPL){
 	  if((((SingleComplex*)beta)->real == 0) && 
 	     (((SingleComplex*)beta)->imag ==0)) need_scaling =0;} 
-       else if((atype==C_DBL)){
+       else if(atype==C_DBL){
 	  if(*(DoublePrecision *)beta == 0) need_scaling =0;}
        else if( *(float*)beta ==0) need_scaling =0;
 
@@ -1719,7 +1719,7 @@ Integer clo[2], chi[2];
 	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0;} 
    else if(atype==C_SCPL){if((((SingleComplex*)beta)->real == 0) &&
 	       (((SingleComplex*)beta)->imag ==0)) need_scaling =0;} 
-   else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0) need_scaling =0;}
+   else if(atype==C_DBL){if(*(DoublePrecision *)beta == 0) need_scaling =0;}
    else if( *(float*)beta ==0) need_scaling =0;
 
    pnga_mask_sync(ZERO_I, ZERO_I);
@@ -2177,7 +2177,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0;} 
    else if(atype==C_SCPL){if((((SingleComplex*)beta)->real == 0) &&
 	       (((SingleComplex*)beta)->imag ==0)) need_scaling =0;} 
-   else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0)need_scaling =0;}
+   else if(atype==C_DBL){if(*(DoublePrecision *)beta == 0)need_scaling =0;}
    else if( *(float*)beta ==0) need_scaling =0;
 
    if(need_scaling) pnga_scale_patch(g_c, clo, chi, beta);
