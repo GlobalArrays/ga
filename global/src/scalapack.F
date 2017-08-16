@@ -3542,7 +3542,7 @@ c     broadcast evals
 #if HAVE_ELPA
       subroutine ga_evp_real(g_a, g_b, eval, nb8, mout)
       use ELPA1
-#if HAVE_ELPA_2STAGE
+#if HAVE_ELPA_2015 || HAVE_ELPA_2016
       use ELPA2
 #endif
       implicit none
@@ -3726,7 +3726,7 @@ c
      .        -info8)
 c     
 c     
-#if HAVE_ELPA_2STAGE
+#if HAVE_ELPA_2015 || HAVE_ELPA_2016
            mpierr=get_elpa_communicators (elpa_comm, 
 #else
            mpierr=get_elpa_row_col_comms(elpa_comm,
@@ -3736,8 +3736,13 @@ c
            if(mpierr.ne.0) call ga_error(
      A     'ga-evp_real: get_elpa_row_col failed ',mpierr)
  
-#if HAVE_ELPA_2STAGE
-         if(.not.solve_evp_real_2stage(n, mout4, 
+#if HAVE_ELPA_2016
+         if(.not.solve_evp_real_2stage_double(
+#elif HAVE_ELPA_2015
+         if(.not.solve_evp_real_2stage(
+#endif
+#if HAVE_ELPA_2016 || HAVE_ELPA_2015
+     C        n, mout4, 
      A        dbl_mb(adra), lda, 
      E        eval, dbl_mb(adrb), ldb, nb, 
      C          nqa,
