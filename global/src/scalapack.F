@@ -829,9 +829,10 @@ c~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c
       logical status
 c
-      integer ha, adra          !A
-      integer hb, adrb          !B
-      integer hi, adri          !ipiv
+      integer ha          !A
+      integer hb          !B
+      integer hi          !ipiv
+      MA_ACCESS_INDEX_TYPE adrA, adrB, adrI
 c
 c
       logical oactive           ! true iff this process participates
@@ -1079,7 +1080,8 @@ c****
       integer dimA1, dimA2, typeA
       integer me, nproc
       integer n
-      integer i, j, hBUF, adrBUF
+      integer i, j, hBUF
+      MA_ACCESS_INDEX_TYPE adrBUF
 
 c**** Check Environment
       nproc = ga_nnodes()
@@ -1143,7 +1145,8 @@ c****
       integer dimA1, dimA2, typeA
       integer me, nproc
       integer n
-      integer i, j, hBUF, adrBUF, idx      
+      integer i, j, hBUF
+      MA_ACCESS_INDEX_TYPE adrBUF, idx      
 
 c**** Check Environment
       nproc = ga_nnodes()
@@ -1270,7 +1273,8 @@ c****
       integer     hsA          ! (input/output)
 c****
       logical status
-      integer hA, adrA
+      integer hA
+      MA_ACCESS_INDEX_TYPE adrA
       integer dimA18, dimA28, typeA
       INTGR4 dimA1, dimA2
       INTGR4 mpA, nqA
@@ -1339,8 +1343,13 @@ c**** Allocate A
          if (use_direct) then
            call nga_access_block_segment(g_A,me,adrA,alen)
          else
-           if (elemA.ne.0)
-     &          status = ma_push_get(MT_DBL, elemA, 'A', hA, adrA)
+c           if (elemA.ne.0)
+c     &          status = ma_push_get(MT_DBL, elemA, 'A', hA, adrA)
+           if (elemA.ne.0) then
+c                write(6,'(a,i1,a,i12)') 
+c     &         'p[',me,'] allocating hA hsa: ',hsa
+                status = ma_push_get(MT_DBL, elemA, 'A', hA, adrA)
+           endif
            if (.not.status)
      &          call ga_error('ga_llt_f: mem alloc failed A ', -1)
          endif
@@ -1380,6 +1389,7 @@ c**** and hsA==-1 or info>0 (i.e. fact. cannot be completed)
 c**** then deallocate the SL A MA array
                if (hsA.eq.-1) then
                   if (.not.use_direct) then
+c                    write(6,'(a,i1,a)') 'p[',me,'] deallocating hA at 1'
                     status = ma_pop_stack(hA)
                   endif
 c**** otherwise just save the hA MA handle            
@@ -1389,6 +1399,7 @@ c**** otherwise just save the hA MA handle
             endif
          else
             if (.not.use_direct) then
+c               write(6,'(a,i1,a)') 'p[',me,'] deallocating hA at 2'
                status = ma_pop_stack(hA)
             endif
          endif
@@ -1454,8 +1465,8 @@ c****
       integer     hsA          ! (input)
 c****
       logical status
-      integer hA, adrA
-      integer hB, adrB
+      integer hA, hB
+      MA_ACCESS_INDEX_TYPE adrA, adrB
       integer dimA18, dimA28, typeA
       integer dimB18, dimB28, typeB
       INTGR4 dimA1, dimA2
@@ -1674,7 +1685,8 @@ c****
       integer     hsA          ! (input/output)
 c****
       logical status
-      integer hA, adrA
+      integer hA
+      MA_ACCESS_INDEX_TYPE adrA
       integer dimA18, dimA28, typeA
       INTGR4 dimA1, dimA2
       INTGR4 mpA, nqA
@@ -1997,8 +2009,9 @@ c
 c
       character*1 jobz,  uplo
 c
-      integer ha, adra          !A
-      integer hb, adrb          !B
+      integer ha          !A
+      integer hb          !B
+      MA_ACCESS_INDEX_TYPE adrA, adrB
 c
 c
       logical oactive           ! true iff this process participates
