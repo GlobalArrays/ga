@@ -31,6 +31,10 @@
 #if HAVE_CONFIG_H
 #   include "config.h"
 #endif
+
+#define MAX_INT_VALUE 2147483648
+
+/*#define LARGE_BLOCK_REQ*/
  
 /*#define PERMUTE_PIDS */
 
@@ -69,8 +73,6 @@
 #ifdef PROFILE_OLD
 #include "ga_profile.h"
 #endif
-
-
 
 /*\ prepare permuted list of processes for remote ops
 \*/
@@ -191,7 +193,7 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
 {
   Integer handle = GA_OFFSET + g_a;
   Integer ndim = GA[handle].ndim;
-  Integer i;
+  Integer i, nelems;
   hdl->g_a = g_a;
   hdl->count = 0;
   /*
@@ -218,6 +220,17 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
     gaPermuteProcList(hdl->nproc);
+
+#ifdef LARGE_BLOCK_REQ
+    /* Check to see if block size will overflow int values */
+    nelems = 1; 
+    for (i=0; i<ndim; i++) nelems *= (hi[i]-lo[i]+1);
+    if (nelems > MAX_INT_VALUE) {
+      hdl->oversize = 1;
+    } else {
+      hdl->oversize = 0;
+    }
+#endif
     /* Block-cyclic distribution */
   } else {
     if (GA[handle].block_sl_flag == 0) {
@@ -290,7 +303,7 @@ void gai_iterator_reset(_iterator_hdl *hdl)
  * @param prem pointer to remote buffer
  * @return returns false if there is no new block, true otherwise
  */
-int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer *plo[],
+int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
     Integer *phi[], char **prem, Integer ldrem[])
 {
   Integer idx, p;
@@ -308,10 +321,10 @@ int gai_iterator_next(_iterator_hdl *hdl, Integer *proc, Integer *plo[],
     p = (Integer)ProcListPerm[idx];
     *proc = (int)GA_proclist[p];
     if (p_handle >= 0) {
-      *proc = PGRP_LIST[p_handle].inv_map_proc_list[*proc];
+      *proc = (int)PGRP_LIST[p_handle].inv_map_proc_list[*proc];
     }
 #ifdef PERMUTE_PIDS
-    if (GA_Proc_list) *proc = GA_inv_Proc_list[*proc];
+    if (GA_Proc_list) *proc = (int)GA_inv_Proc_list[*proc];
 #endif
     /* Find  visible portion of patch held by processor p and
      * return the result in plo and phi. Also get actual processor

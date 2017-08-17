@@ -102,7 +102,7 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 
 extern void gai_iterator_init(Integer, Integer [], Integer [], _iterator_hdl *);
 extern void gai_iterator_reset(_iterator_hdl *);
-extern int gai_iterator_next(_iterator_hdl *, Integer *, Integer *[],
+extern int gai_iterator_next(_iterator_hdl *, int *, Integer *[],
     Integer *[], char **, Integer []);
 extern void gai_iterator_destroy(_iterator_hdl *);
 
@@ -606,8 +606,7 @@ void ngai_put_common(Integer g_a,
 {
   Integer  p, np, handle=GA_OFFSET + g_a;
   Integer  idx, elems, size, p_handle;
-  int ndim, loop, cond;
-  Integer proc;
+  int proc, ndim, loop, cond;
   int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
   Integer use_blocks;
   Integer n_rstrctd;
@@ -989,8 +988,7 @@ void ngai_get_common(Integer g_a,
 
   Integer  p, np, handle=GA_OFFSET + g_a;
   Integer  idx, elems, size, p_handle;
-  int ndim, loop, cond;
-  Integer proc;
+  int proc, ndim, loop, cond;
   int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
   Integer use_blocks;
   Integer n_rstrctd;
@@ -1193,7 +1191,7 @@ void ngai_acc_common(Integer g_a,
   Integer  p, np, handle=GA_OFFSET + g_a;
   Integer  idx, elems, size, type, p_handle, ga_nbhandle;
   int optype=-1, loop, ndim, cond;
-  Integer proc;
+  int proc;
   int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
   Integer use_blocks;
   Integer n_rstrctd;

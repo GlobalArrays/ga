@@ -98,6 +98,7 @@ typedef struct {
   Integer iproc;
   Integer iblock;
   Integer new_proc;
+  Integer oversize;
   Integer lobuf[MAXDIM];
   Integer hibuf[MAXDIM];
   /* ScalPACK distribution parameters*/
