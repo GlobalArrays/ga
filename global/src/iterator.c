@@ -34,7 +34,7 @@
 
 #define MAX_INT_VALUE 2147483648
 
-/*#define LARGE_BLOCK_REQ*/
+#define LARGE_BLOCK_REQ
  
 /*#define PERMUTE_PIDS */
 
@@ -193,9 +193,10 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
 {
   Integer handle = GA_OFFSET + g_a;
   Integer ndim = GA[handle].ndim;
-  Integer i, nelems;
+  Integer i;
   hdl->g_a = g_a;
   hdl->count = 0;
+  hdl->oversize = 0;
   /*
   hdl->map = (Integer*)malloc((size_t)(GAnproc*2*ndim+1)*sizeof(Integer));
   hdl->proclist = (Integer*)malloc((size_t)(GAnproc)*sizeof(Integer));
@@ -221,16 +222,6 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
 
     gaPermuteProcList(hdl->nproc);
 
-#ifdef LARGE_BLOCK_REQ
-    /* Check to see if block size will overflow int values */
-    nelems = 1; 
-    for (i=0; i<ndim; i++) nelems *= (hi[i]-lo[i]+1);
-    if (nelems > MAX_INT_VALUE) {
-      hdl->oversize = 1;
-    } else {
-      hdl->oversize = 0;
-    }
-#endif
     /* Block-cyclic distribution */
   } else {
     if (GA[handle].block_sl_flag == 0) {
@@ -306,18 +297,21 @@ void gai_iterator_reset(_iterator_hdl *hdl)
 int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
     Integer *phi[], char **prem, Integer ldrem[])
 {
-  Integer idx, p;
+  Integer idx, i, p;
   Integer handle = GA_OFFSET + hdl->g_a;
   Integer p_handle = GA[handle].p_handle;
   Integer n_rstrctd = GA[handle].num_rstrctd;
   Integer *rank_rstrctd = GA[handle].rank_rstrctd;
+  Integer elemsize = GA[handle].elemsize;
   int ndim;
   ndim = GA[handle].ndim;
   if (!GA[handle].block_flag) {
     Integer *blo, *bhi;
+    Integer nelems;
     idx = hdl->count;
     /* no blocks left, so return */
     if (idx>=hdl->nproc) return 0;
+
     p = (Integer)ProcListPerm[idx];
     *proc = (int)GA_proclist[p];
     if (p_handle >= 0) {
@@ -332,8 +326,64 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
      */
     gam_GetRangeFromMap(p, ndim, plo, phi);
     *proc = (int)GA_proclist[p];
-
     blo = *plo;
+    bhi = *phi;
+#ifdef LARGE_BLOCK_REQ
+    /* Check to see if block size will overflow int values and initialize
+     * counter over sub-blocks if the block is too big*/
+    if (!hdl->oversize) {
+      nelems = 1; 
+      for (i=0; i<ndim; i++) nelems *= (bhi[i]-blo[i]+1);
+      if (elemsize*nelems > MAX_INT_VALUE) {
+        Integer maxint = 0;
+        int maxidx;
+        hdl->oversize = 1;
+        /* Figure out block dimensions that correspond to block sizes
+         * that are beneath MAX_INT_VALUE */
+        for (i=0; i<ndim; i++) {
+          hdl->blk_size[i] = (bhi[i]-blo[i]+1);
+        }
+        while (elemsize*nelems > MAX_INT_VALUE) {
+          for (i=0; i<ndim; i++) {
+            if (hdl->blk_size[i] > maxint) {
+              maxidx = i;
+              maxint = hdl->blk_size[i];
+            }
+          }
+          hdl->blk_size[maxidx] /= 2;
+          nelems = 1;
+          for (i=0; i<ndim; i++) nelems *= hdl->blk_size[i];
+        }
+        /* Calculate the number of blocks along each dimension */
+        for (i=0; i<ndim; i++) {
+          hdl->blk_dim[i] = (bhi[i]-blo[i]+1)/hdl->blk_size[i];
+          if (hdl->blk_dim[i]*hdl->blk_size[i] < (bhi[i]-blo[i]+1))
+            hdl->blk_dim[i]++;
+        }
+        /* initialize block counting */
+        for (i=0; i<ndim; i++) hdl->blk_inc[i] = 0;
+      }
+    }
+
+    /* Get sub-block bounding dimensions */
+    if (hdl->oversize) {
+      Integer tmp;
+      for (i=0; i<ndim; i++) {
+        hdl->lobuf[i] = blo[i];
+        hdl->hibuf[i] = bhi[i];
+      }
+      *plo = hdl->lobuf;
+      *phi = hdl->hibuf;
+      blo = *plo;
+      bhi = *phi;
+      for (i=0; i<ndim; i++) {
+        hdl->lobuf[i] += hdl->blk_inc[i]*hdl->blk_size[i];
+        tmp = hdl->lobuf[i] + hdl->blk_size[i]-1;
+        if (tmp < hdl->hibuf[i]) hdl->hibuf[i] = tmp;
+      }
+    }
+#endif
+
     if (n_rstrctd == 0) {
       gam_Location(*proc, handle, blo, prem, ldrem);
     } else {
@@ -344,7 +394,26 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
       /* BJP */
       *proc = PGRP_LIST[p_handle].inv_map_proc_list[*proc];
     }
-    hdl->count++;
+#ifdef LARGE_BLOCK_REQ
+    if (!hdl->oversize) {
+#endif
+      hdl->count++;
+#ifdef LARGE_BLOCK_REQ
+    } else {
+      /* update blk_inc array */
+      hdl->blk_inc[0]++; 
+      for (i=0; i<ndim-1; i++) {
+        if (hdl->blk_inc[i] >= hdl->blk_dim[i]) {
+          hdl->blk_inc[i] = 0;
+          hdl->blk_inc[i+1]++;
+        }
+      }
+      if (hdl->blk_inc[ndim-1] >= hdl->blk_dim[ndim-1]) {
+        hdl->count++;
+        hdl->oversize = 0;
+      }
+    }
+#endif
     return 1;
   } else {
     Integer offset, l_offset, last, pinv;
