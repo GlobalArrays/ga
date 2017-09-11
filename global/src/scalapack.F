@@ -230,7 +230,7 @@ c
       INTGR4 nmax,nprocs,twoi
       double precision nprocs0
       double precision otto
-      parameter(nmax=11,fact=((7108d0*7108d0)/1024d0),otto=8d0)
+      parameter(nmax=19,fact=((7108d0*7108d0)/1024d0),otto=8d0)
 cnew      parameter(nmax=11,fact=((7108d0*7108d0)/512d0),otto=8d0)
 c     lower bound of 8 procs
       nprocs0=max((n*n)/fact,otto)
@@ -238,7 +238,7 @@ c
 c     try to get powers of two
 c
       do i = nmax, 0, -1 
-         if(nint(nprocs0/(2d0**i)).eq.1) goto 1
+         if(nint(nprocs0/(2d0**i)).ge.1) goto 1
       enddo
       i=4
 1     twoi=2**i
