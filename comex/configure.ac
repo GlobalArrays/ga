@@ -129,7 +129,7 @@ AC_CHECK_SIZEOF([double])
 # Checks for C library functions.
 AC_FUNC_MMAP
 COMEX_SEARCH_LIBS([sqrt], [m])
-COMEX_SEARCH_LIBS([sem_open], [rt])
+COMEX_SEARCH_LIBS([sem_open], [pthread])
 COMEX_SEARCH_LIBS([shm_open], [rt])
 COMEX_SEARCH_LIBS([shm_unlink], [rt])
 COMEX_CHECK_FUNCS([bzero])
