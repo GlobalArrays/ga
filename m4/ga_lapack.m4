@@ -88,7 +88,7 @@ AS_IF([test $ga_lapack_ok = no],
 # Generic LAPACK library?
 for lib in lapack lapack_rs6k; do
 AS_IF([test $ga_lapack_ok = no],
-    [ga_save_LIBS="$LIBS"; LIBS="-l$lib $BLAS_LIBS $LIBS"
+    [ga_save_LIBS="$LIBS"; LIBS="-l$lib $BLAS_LIBS $LIBS"; LAPACK_LIBS="-l$lib" 
      AS_IF([test "x$enable_f77" = xno],
         [AC_MSG_CHECKING([for C LAPACK using -l$lib])
          AC_LANG_PUSH([C])
