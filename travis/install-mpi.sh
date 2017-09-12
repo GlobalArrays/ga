@@ -42,6 +42,21 @@ case "$os" in
                     wget --no-check-certificate http://www.mpich.org/static/downloads/3.2/mpich-3.2.tar.gz
                     tar -xzf mpich-3.2.tar.gz
                     cd mpich-3.2
+cat > mpiimpl.h.patch <<EOF
+--- src/include/mpiimpl.h	2017-09-12 11:31:22.104653843 -0700
++++ src/include/mpiimpl.h.new	2017-09-12 11:30:29.696274605 -0700
+@@ -1528,7 +1528,8 @@
+ #ifdef MPID_DEV_REQUEST_DECL
+     MPID_DEV_REQUEST_DECL
+ #endif
+-} MPID_Request ATTRIBUTE((__aligned__(32)));
++} ATTRIBUTE((__aligned__(32))) MPID_Request;
++/*} MPID_Request ATTRIBUTE((__aligned__(32)));*/
+ 
+ extern MPIU_Object_alloc_t MPID_Request_mem;
+ /* Preallocated request objects */
+EOF
+                    patch -p0 < mpiimpl.h.patch
                     mkdir build && cd build
                     ../configure CFLAGS="-w" --prefix=$TRAVIS_ROOT/mpich
                     make -j ${MAKE_JNUM}
