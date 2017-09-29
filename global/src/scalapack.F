@@ -230,7 +230,7 @@ c
       INTGR4 nmax,nprocs,twoi
       double precision nprocs0
       double precision otto
-      parameter(nmax=11,fact=((7108d0*7108d0)/1024d0),otto=8d0)
+      parameter(nmax=19,fact=((7108d0*7108d0)/1024d0),otto=8d0)
 cnew      parameter(nmax=11,fact=((7108d0*7108d0)/512d0),otto=8d0)
 c     lower bound of 8 procs
       nprocs0=max((n*n)/fact,otto)
@@ -238,7 +238,7 @@ c
 c     try to get powers of two
 c
       do i = nmax, 0, -1 
-         if(nint(nprocs0/(2d0**i)).eq.1) goto 1
+         if(nint(nprocs0/(2d0**i)).ge.1) goto 1
       enddo
       i=4
 1     twoi=2**i
@@ -3542,7 +3542,7 @@ c     broadcast evals
 #if HAVE_ELPA
       subroutine ga_evp_real(g_a, g_b, eval, nb8, mout)
       use ELPA1
-#if HAVE_ELPA_2STAGE
+#if HAVE_ELPA_2015 || HAVE_ELPA_2016
       use ELPA2
 #endif
       implicit none
@@ -3726,7 +3726,7 @@ c
      .        -info8)
 c     
 c     
-#if HAVE_ELPA_2STAGE
+#if HAVE_ELPA_2015 || HAVE_ELPA_2016
            mpierr=get_elpa_communicators (elpa_comm, 
 #else
            mpierr=get_elpa_row_col_comms(elpa_comm,
@@ -3736,8 +3736,13 @@ c
            if(mpierr.ne.0) call ga_error(
      A     'ga-evp_real: get_elpa_row_col failed ',mpierr)
  
-#if HAVE_ELPA_2STAGE
-         if(.not.solve_evp_real_2stage(n, mout4, 
+#if HAVE_ELPA_2016
+         if(.not.solve_evp_real_2stage_double(
+#elif HAVE_ELPA_2015
+         if(.not.solve_evp_real_2stage(
+#endif
+#if HAVE_ELPA_2016 || HAVE_ELPA_2015
+     C        n, mout4, 
      A        dbl_mb(adra), lda, 
      E        eval, dbl_mb(adrb), ldb, nb, 
      C          nqa,
