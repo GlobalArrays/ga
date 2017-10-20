@@ -13,6 +13,9 @@ addons:
 matrix:
   allow_failures:
     - env: MPI_IMPL=openmpi
+  include:
+    - osx_image: xcode9.1
+    - osx_image: xcode7.3
 env:
   - MPI_IMPL=mpich
     PORT=mpi-ts
