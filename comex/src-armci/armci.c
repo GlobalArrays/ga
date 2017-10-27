@@ -112,23 +112,29 @@ int PARMCI_AccV(int op, void *scale, armci_giov_t *darr, int len, int proc)
 /* fence is always on the world group */
 void PARMCI_AllFence()
 {
-    assert(COMEX_SUCCESS == comex_fence_all(COMEX_GROUP_WORLD));
+    int rc;
+    rc = comex_fence_all(COMEX_GROUP_WORLD);
+    assert(COMEX_SUCCESS == rc);
 }
 
 
 void PARMCI_GroupFence(ARMCI_Group *group)
 {
+  int rc;
   if (*group > 0) {
-    assert(COMEX_SUCCESS == comex_fence_all(*group));
+    rc = comex_fence_all(*group);
   } else {
-    assert(COMEX_SUCCESS == comex_fence_all(COMEX_GROUP_WORLD));
+    rc = comex_fence_all(COMEX_GROUP_WORLD);
   }
+  assert(COMEX_SUCCESS == rc);
 }
 
 
 void PARMCI_Barrier()
 {
-    assert(COMEX_SUCCESS == comex_barrier(ARMCI_Default_Proc_Group));
+    int rc;
+    rc = comex_barrier(ARMCI_Default_Proc_Group);
+    assert(COMEX_SUCCESS == rc);
 }
 
 
@@ -211,36 +217,40 @@ int PARMCI_GetV(armci_giov_t *darr, int len, int proc)
 
 double PARMCI_GetValueDouble(void *src, int proc)
 {
+    int rc;
     double val;
-    assert(COMEX_SUCCESS == 
-            comex_get(src, &val, sizeof(double), proc, COMEX_GROUP_WORLD));
+    rc = comex_get(src, &val, sizeof(double), proc, COMEX_GROUP_WORLD);
+    assert(COMEX_SUCCESS == rc);
     return val;
 }
 
 
 float PARMCI_GetValueFloat(void *src, int proc)
 {
+    int rc;
     float val;
-    assert(COMEX_SUCCESS == 
-            comex_get(src, &val, sizeof(float), proc, COMEX_GROUP_WORLD));
+    rc = comex_get(src, &val, sizeof(float), proc, COMEX_GROUP_WORLD);
+    assert(COMEX_SUCCESS == rc);
     return val;
 }
 
 
 int PARMCI_GetValueInt(void *src, int proc)
 {
+    int rc;
     int val;
-    assert(COMEX_SUCCESS == 
-            comex_get(src, &val, sizeof(int), proc, COMEX_GROUP_WORLD));
+    rc = comex_get(src, &val, sizeof(int), proc, COMEX_GROUP_WORLD);
+    assert(COMEX_SUCCESS == rc);
     return val;
 }
 
 
 long PARMCI_GetValueLong(void *src, int proc)
 {
+    int rc;
     long val;
-    assert(COMEX_SUCCESS == 
-            comex_get(src, &val, sizeof(long), proc, COMEX_GROUP_WORLD));
+    rc = comex_get(src, &val, sizeof(long), proc, COMEX_GROUP_WORLD);
+    assert(COMEX_SUCCESS == rc);
     return val;
 }
 
@@ -248,7 +258,9 @@ long PARMCI_GetValueLong(void *src, int proc)
 int PARMCI_Init()
 {
     int rc = comex_init();
-    assert(COMEX_SUCCESS == comex_group_comm(COMEX_GROUP_WORLD, &ARMCI_COMM_WORLD));
+    assert(COMEX_SUCCESS == rc);
+    rc = comex_group_comm(COMEX_GROUP_WORLD, &ARMCI_COMM_WORLD);
+    assert(COMEX_SUCCESS == rc);
     ARMCI_Default_Proc_Group = 0;
     return rc;
 }
@@ -257,7 +269,9 @@ int PARMCI_Init()
 int PARMCI_Init_args(int *argc, char ***argv)
 {
     int rc = comex_init_args(argc, argv);
-    assert(COMEX_SUCCESS == comex_group_comm(COMEX_GROUP_WORLD, &ARMCI_COMM_WORLD));
+    assert(COMEX_SUCCESS == rc);
+    rc = comex_group_comm(COMEX_GROUP_WORLD, &ARMCI_COMM_WORLD);
+    assert(COMEX_SUCCESS == rc);
     ARMCI_Default_Proc_Group = 0;
     return rc;
 }
@@ -572,8 +586,10 @@ int PARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
 
 int PARMCI_Test(armci_hdl_t *nb_handle)
 {
+    int rc;
     int status;
-    assert(COMEX_SUCCESS == comex_test(nb_handle, &status));
+    rc = comex_test(nb_handle, &status);
+    assert(COMEX_SUCCESS == rc);
     return status;
 }
 
