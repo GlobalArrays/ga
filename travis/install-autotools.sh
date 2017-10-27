@@ -247,6 +247,10 @@ case "$os" in
             echo "${TOOL} found and is exactly needed version ($TOOL_VERSION_FOUND)"
         fi
 
+        # patch this old automake for new perl
+        awk 'NR==4159 {$0="  $text =~ s/\\$\\{([^ \\t=:+{}]+)}/&substitute_ac_subst_variables_worker ($1)/ge;"} 1' ${TOP}/bin/automake > ${TOP}/bin/automake.patched
+        cp ${TOP}/bin/automake.patched ${TOP}/bin/automake
+
         ##########################################
         ### third party m4 files
         ##########################################

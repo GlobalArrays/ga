@@ -9,7 +9,6 @@
 #include "comex_impl.h"
 #include "groups.h"
 
-
 /* the HEAD of the group linked list */
 comex_igroup_t *group_list = NULL;
 
@@ -18,7 +17,6 @@ comex_igroup_t *group_list = NULL;
 static void comex_create_group_and_igroup(
         comex_group_t *id, comex_igroup_t **igroup);
 static void comex_igroup_finalize(comex_igroup_t *igroup);
-
 
 /**
  * Return the comex igroup instance given the group id.
@@ -42,7 +40,6 @@ comex_igroup_t* comex_get_igroup_from_group(comex_group_t id)
 
     return NULL;
 }
-
 
 /**
  * Creates and associates an comex group with an comex igroup.
@@ -74,7 +71,6 @@ static void comex_create_group_and_igroup(
     *id = new_group_list_item->id;
 }
 
-
 int comex_group_rank(comex_group_t group, int *rank)
 {
     int status;
@@ -87,7 +83,6 @@ int comex_group_rank(comex_group_t group, int *rank)
 
     return COMEX_SUCCESS;
 }
-
 
 int comex_group_size(comex_group_t group, int *size)
 {
@@ -102,7 +97,6 @@ int comex_group_size(comex_group_t group, int *size)
     return COMEX_SUCCESS;
 }
 
-
 int comex_group_comm(comex_group_t group, MPI_Comm *comm)
 {
     int status;
@@ -112,7 +106,6 @@ int comex_group_comm(comex_group_t group, MPI_Comm *comm)
 
     return COMEX_SUCCESS;
 }
-
 
 int comex_group_translate_world(comex_group_t group, int group_rank, int *world_rank)
 {
@@ -131,7 +124,6 @@ int comex_group_translate_world(comex_group_t group, int group_rank, int *world_
 
     return COMEX_SUCCESS;
 }
-
 
 /**
  * Destroys the given comex igroup.
@@ -156,7 +148,6 @@ static void comex_igroup_finalize(comex_igroup_t *igroup)
         }
     }
 }
-
 
 int comex_group_free(comex_group_t id)
 {
@@ -183,7 +174,6 @@ int comex_group_free(comex_group_t id)
 
     return COMEX_SUCCESS;
 }
-
 
 int comex_group_create(
         int n, int *pid_list, comex_group_t id_parent, comex_group_t *id_child)
@@ -252,7 +242,6 @@ int comex_group_create(
     return COMEX_SUCCESS;
 }
 
-
 /**
  * Initialize group linked list. Prepopulate with world group.
  */
@@ -268,7 +257,6 @@ void comex_group_init()
     group_list->comm = l_state.world_comm;
     MPI_Comm_group(group_list->comm, &(group_list->group));
 }
-
 
 void comex_group_finalize()
 {
@@ -290,4 +278,3 @@ void comex_group_finalize()
     free(group_list);
     group_list = NULL;
 }
-

@@ -5,6 +5,7 @@
 #ifndef REQUEST_H_
 #define REQUEST_H_
 
+#include "comex.h"
 #include "comex_impl.h"
 
 #define sizeofa(x) (sizeof(x) / sizeof(*(x)))
@@ -47,7 +48,8 @@ typedef enum request_state
 } request_state;
 
 typedef struct request_t
-{ /* linked list of received messages */
+{
+    /* linked list of received messages */
     struct fi_context context;  /* OFI context */
     int               magic;    /* magic */
     int               index;    /* request index */
@@ -260,4 +262,3 @@ static inline void complete_request(request_t* request)
 }
 
 #endif /* REQUEST_H_ */
-

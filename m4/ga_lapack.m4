@@ -88,9 +88,19 @@ AS_IF([test $ga_lapack_ok = no],
 # Generic LAPACK library?
 for lib in lapack lapack_rs6k; do
 AS_IF([test $ga_lapack_ok = no],
-    [ga_save_LIBS="$LIBS"; LIBS="$BLAS_LIBS $LIBS"
-     AC_CHECK_LIB([$lib], [$dgetrs],
-        [ga_lapack_ok=yes; LAPACK_LIBS="-l$lib"], [], [$FLIBS])
+    [ga_save_LIBS="$LIBS"; LIBS="-l$lib $BLAS_LIBS $LIBS"; LAPACK_LIBS="-l$lib" 
+     AS_IF([test "x$enable_f77" = xno],
+        [AC_MSG_CHECKING([for C LAPACK using -l$lib])
+         AC_LANG_PUSH([C])
+         GA_C_LAPACK_TEST()
+         AC_LINK_IFELSE([], [ga_lapack_ok=yes], [LAPACK_LIBS=])
+         AC_LANG_POP([C])],
+        [AC_MSG_CHECKING([for Fortran 77 LAPACK using -l$lib])
+         AC_LANG_PUSH([Fortran 77])
+         GA_F77_LAPACK_TEST()
+         AC_LINK_IFELSE([], [ga_lapack_ok=yes], [LAPACK_LIBS=])
+         AC_LANG_POP([Fortran 77])])
+     AC_MSG_RESULT([$ga_lapack_ok])
      LIBS="$ga_save_LIBS"])
 done
 

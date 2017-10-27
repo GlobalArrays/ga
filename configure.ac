@@ -33,9 +33,10 @@ AC_SUBST([PACKAGE_VERSION])
 #
 # ga version 5.6.0: 1:0:0 (ABI version 1)
 # ga version 5.6.1: 1:1:0 (ABI version 1)
+# ga version 5.6.2: 1:2:0 (ABI version 1)
 #
 # libga -version-info current:revision:age
-LTVER="1:1:0"
+LTVER="1:2:0"
 AC_SUBST([LTVER])
 
 ###############################################################################
