@@ -184,7 +184,7 @@ c
       integer rows, indx, shifti
 c
       integer ilo, ihi, jlo, jhi
-      double precision seconds, buf 
+      double precision seconds, buf(*)
 c
       count = 0
       rows = ie - is + 1
@@ -224,7 +224,7 @@ c
       logical local
 c
       integer ilo, ihi, jlo, jhi
-      double precision seconds, buf
+      double precision seconds, buf(*)
 c
       count = 0
       rows = ie - is + 1
@@ -265,7 +265,7 @@ c
       logical local
 c
       integer ilo, ihi, jlo, jhi
-      double precision  seconds, buf
+      double precision  seconds, buf(*)
 c
       count = 0
       rows = ie - is + 1
@@ -437,7 +437,7 @@ c
       integer rows, cols, indx, shifti(3), shiftj(3)
 c
       integer ilo, ihi, jlo, jhi
-      double precision  seconds, buf 
+      double precision  seconds, buf(*) 
 c
       count = 0
       rows = ie - is + 1
@@ -486,7 +486,7 @@ c
       logical local
 c
       integer ilo, ihi, jlo, jhi
-      double precision  seconds, buf
+      double precision  seconds, buf(*)
 c
       count = 0
       rows = ie - is + 1
@@ -536,7 +536,7 @@ c
       logical local
 c
       integer ilo, ihi, jlo, jhi
-      double precision  seconds, buf
+      double precision  seconds, buf(*)
 c
       count = 0
       rows = ie - is + 1
