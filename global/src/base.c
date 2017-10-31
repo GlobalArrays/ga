@@ -149,6 +149,8 @@ Integer *mapALL;
 char** ptr_array;
 #endif
 
+static Integer _mirror_gop_grp;
+
 
 char *GA_name_stack[NAME_STACK_LEN];  /* stack for storing names of GA ops */
 int  GA_stack_size=0;
@@ -468,6 +470,28 @@ int bytes;
        PGRP_LIST[0].map_proc_list[i+j] = i;
        PGRP_LIST[0].inv_map_proc_list[i] = i+j;
     }
+
+    /* Set up group for doing cluster merge. Start by checking if
+     * number of procs per node is the same for all nodes */
+    i = nproc;
+    pnga_pgroup_gop(GA_World_Proc_Group,pnga_type_f2c(MT_F_INT),&i,1,"max");
+    j = nproc;
+    pnga_pgroup_gop(GA_World_Proc_Group,pnga_type_f2c(MT_F_INT),&j,1,"min");
+    if (i == j) {
+      /* construct a group that containing all processors with the same local
+       * proc ID across all nodes in the system */
+      Integer numnodes = pnga_cluster_nnodes();
+      Integer *nodelist = (Integer*)malloc(numnodes*sizeof(Integer));
+      Integer myproc = GAme-pnga_cluster_procid(nnode,zero);
+      for (i=0; i<numnodes; i++) {
+        nodelist[i] = i*nproc+myproc;
+      }
+      _mirror_gop_grp = pnga_pgroup_create(nodelist,numnodes);
+      free(nodelist);
+    } else {
+      _mirror_gop_grp = GA_World_Proc_Group;
+    }
+
 
 
     /* Allocate memory for update flags and signal*/
@@ -3885,11 +3909,14 @@ void pnga_merge_mirrored(Integer g_a)
   int *blocks;
   C_Integer  *map, *dims, *width;
   Integer i, j, index[MAXDIM], itmp, ndim;
+  Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
   Integer nelem, count, type, atype=ARMCI_INT;
   char *zptr=NULL, *bptr=NULL, *nptr=NULL;
   Integer bytes, total;
   int local_sync_begin, local_sync_end;
   long bigint;
+  int chk = 1;
+  void *ptr_a;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
@@ -3913,6 +3940,7 @@ void pnga_merge_mirrored(Integer g_a)
   ndim = GA[handle].ndim;
   bigint = 2147483647L/GAsizeof(type);
 
+#ifdef OPENIB
   /* Check whether or not all nodes contain the same number
      of processors. */
   if (nnodes*nprocs == pnga_nnodes())  {
@@ -3995,10 +4023,7 @@ void pnga_merge_mirrored(Integer g_a)
     } 
   } else {
     Integer _ga_tmp;
-    Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
     Integer idims[MAXDIM], iwidth[MAXDIM], ichunk[MAXDIM];
-    int chk = 1;
-    void *ptr_a;
     void *one = NULL;
     double d_one = 1.0;
     int i_one = 1;
@@ -4057,6 +4082,23 @@ void pnga_merge_mirrored(Integer g_a)
     }
     pnga_destroy(_ga_tmp);
   }
+#else
+  inode = GAme - zproc;
+  pnga_distribution(g_a,inode,lo,hi);
+  /* Check to make sure processor has data */
+  chk = 1;
+  nelem = 1;
+  for (i=0; i<ndim; i++) {
+    nelem *= (hi[i]-lo[i]+1);
+    if (hi[i]<lo[i]) {
+      chk = 0;
+    }
+  }
+  if (chk) {
+    pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+    pnga_pgroup_gop(_mirror_gop_grp,type,ptr_a,nelem,"+");
+  }
+#endif
   if (local_sync_end) pnga_sync();
   GA_POP_NAME;
 }
