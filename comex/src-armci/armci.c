@@ -43,11 +43,6 @@ void armci_init_domains(MPI_Comm comm)
   status = MPI_Allgather(name,MPI_MAX_PROCESSOR_NAME,MPI_CHAR,namebuf,
       MPI_MAX_PROCESSOR_NAME,MPI_CHAR,comm);
   assert(MPI_SUCCESS == status);
-  if (rank == 0) {
-    for (i=0; i<size; i++) {
-      buf_ptr = namebuf + MPI_MAX_PROCESSOR_NAME*i;
-    }
-  }
 
   /* Bin all processors with the same node name */
   ncnt = 0;
