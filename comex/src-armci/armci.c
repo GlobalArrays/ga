@@ -41,7 +41,7 @@ void armci_init_domains(MPI_Comm comm)
   nodesize = (int*)malloc(size*sizeof(int));
   MPI_Get_processor_name(name, &namelen);
   status = MPI_Allgather(name,MPI_MAX_PROCESSOR_NAME,MPI_CHAR,namebuf,
-      MPI_MAX_PROCESSOR_NAME,MPI_CHAR,MPI_COMM_WORLD);
+      MPI_MAX_PROCESSOR_NAME,MPI_CHAR,comm);
   assert(MPI_SUCCESS == status);
   if (rank == 0) {
     for (i=0; i<size; i++) {
