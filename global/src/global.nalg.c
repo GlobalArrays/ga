@@ -22,6 +22,11 @@
 #include "armci.h"
 #include "ga-papi.h"
 #include "ga-wapi.h"
+#include "base.h"
+
+extern void pnga_local_iterator_init(Integer, _iterator_hdl*);
+extern int pnga_local_iterator_next(_iterator_hdl*, Integer[],
+            Integer[], char**, Integer[]);
 
 #ifdef MSG_COMMS_MPI
 extern ARMCI_Group* ga_get_armci_group_(int);
@@ -248,6 +253,7 @@ Integer num_blocks_a, num_blocks_b;
 Integer blocks[MAXDIM], block_dims[MAXDIM];
 void *ptr_a, *ptr_b;
 int local_sync_begin,local_sync_end,use_put;
+_iterator_hdl hdl;
 
    GA_PUSH_NAME("ga_copy");
 
@@ -296,6 +302,7 @@ int local_sync_begin,local_sync_end,use_put;
         Copy operation is straightforward */
 
      if (use_put) {
+#if 0
        if (num_blocks_a < 0) {
          pnga_distribution(g_a, me_a, lo, hi);
          if(lo[0]>0){
@@ -342,7 +349,14 @@ int local_sync_begin,local_sync_end,use_put;
            }
          }
        }
+#else
+       pnga_local_iterator_init(g_a, &hdl);
+       while (pnga_local_iterator_next(&hdl,lo,hi,&ptr_a,ld)) {
+         pnga_put(g_b, lo, hi, ptr_a, ld);
+       }
+#endif
      } else {
+#if 0
        if (num_blocks_b < 0) {
          pnga_distribution(g_b, me_b, lo, hi);
          if(lo[0]>0){
@@ -389,6 +403,12 @@ int local_sync_begin,local_sync_end,use_put;
            }
          }
        }
+#else
+       pnga_local_iterator_init(g_b, &hdl);
+       while (pnga_local_iterator_next(&hdl,lo,hi,&ptr_b,ld)) {
+         pnga_get(g_a, lo, hi, ptr_b, ld);
+       }
+#endif
      }
    } else {
      /* One global array is mirrored and the other is not */

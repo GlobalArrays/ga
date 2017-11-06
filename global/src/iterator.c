@@ -661,3 +661,107 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
 void gai_iterator_destroy(_iterator_hdl *hdl)
 {
 }
+
+/**
+ * Functions that iterate over locally held blocks in a global array. These
+ * are used in some routines such as copy
+ */
+
+/**
+ * Initialize a local iterator
+ * @param g_a global array handle
+ * @param hdl handle for iterator
+ */
+void pnga_local_iterator_init(Integer g_a, _iterator_hdl *hdl)
+{
+  Integer handle = GA_OFFSET + g_a;
+  Integer ndim = GA[handle].ndim;
+  Integer grp = (Integer)GA[handle].p_handle;
+  hdl->g_a = g_a;
+  hdl->count = 0;
+  hdl->oversize = 0;
+  /* If standard GA distribution then no additional action needs to be taken */
+  if (GA[handle].block_flag) {
+    if (GA[handle].block_sl_flag == 0) {
+      /* GA uses simple block cyclic data distribution */
+      hdl->count = pnga_pgroup_nodeid(grp);
+    } else {
+      /* GA uses ScaLAPACK block cyclic data distribution */
+      int j;
+      Integer me = pnga_pgroup_nodeid(grp);
+      /* Calculate some properties associated with data distribution */
+      for (j=0; j<ndim; j++)  {
+        hdl->blk_size[j] = GA[handle].block_dims[j];
+        hdl->blk_num[j] = GA[handle].num_blocks[j];
+        hdl->blk_inc[j] = GA[handle].nblock[j];
+        hdl->blk_dim[j] = GA[handle].dims[j];
+      }
+      /* Initialize proc_index and index arrays */
+      gam_find_proc_indices(handle, me, hdl->proc_index);
+      gam_find_proc_indices(handle, me, hdl->index);
+    }
+  }
+}
+
+/**
+ * Get the next sub-block from local portion of global array
+ * @param hdl handle for iterator
+ * @param plo indices for lower corner of block
+ * @param phi indices for upper corner of block
+ * @param ptr pointer to local buffer
+ * @param ld array of strides for local block
+ * @return returns false if there is no new block, true otherwise
+ */
+int pnga_local_iterator_next(_iterator_hdl *hdl, Integer plo[],
+    Integer phi[], char **ptr, Integer ld[])
+{
+  Integer i;
+  Integer handle = GA_OFFSET + hdl->g_a;
+  Integer grp = GA[handle].p_handle;
+  Integer elemsize = GA[handle].elemsize;
+  int ndim;
+  int me = pnga_pgroup_nodeid(grp);
+  ndim = GA[handle].ndim;
+  if (!GA[handle].block_flag) {
+    Integer nelems;
+    /* no blocks left, so return */
+    if (hdl->count>0) return 0;
+
+    /* Find  visible portion of patch held by this processor and
+     * return the result in plo and phi. Return pointer to local
+     * data as well
+     */
+    pnga_distribution(hdl->g_a, me, plo, phi);
+    pnga_access_ptr(hdl->g_a,plo,phi,ptr,ld);
+    hdl->count++;
+  } else {
+    if (GA[handle].block_sl_flag == 0) {
+      /* Simple block-cyclic distribution */
+      if (hdl->count >= pnga_total_blocks(hdl->g_a)) return 0;
+      pnga_distribution(hdl->g_a,hdl->count,plo,phi);
+      pnga_access_block_ptr(hdl->g_a,hdl->count,ptr,ld);
+      hdl->count += pnga_pgroup_nnodes(grp);
+    } else {
+      /* Scalapack-type data distribution */
+      if (hdl->index[ndim-1] >= hdl->blk_num[ndim-1]) return 0;
+      Integer proc_index[MAXDIM], index[MAXDIM];
+      Integer itmp;
+      Integer blk_jinc;
+      /* Find coordinates of bounding block */
+      for (i=0; i<ndim; i++) {
+        plo[i] = hdl->index[i]*hdl->blk_size[i]+1;
+        phi[i] = (hdl->index[i]+1)*hdl->blk_size[i];
+        if (phi[i] > hdl->blk_dim[i]) phi[i] = hdl->blk_dim[i];
+      }
+      pnga_access_block_grid_ptr(hdl->g_a,hdl->index,ptr,ld);
+      hdl->index[0] += hdl->blk_inc[0];
+      for (i=0; i<ndim; i++) {
+        if (hdl->index[i] >= hdl->blk_num[i] && i<ndim-1) {
+          hdl->index[i] = hdl->proc_index[i];
+          hdl->index[i+1] += hdl->blk_inc[i+1];
+        }
+      }
+    }
+  }
+  return 1;
+}

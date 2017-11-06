@@ -86,6 +86,9 @@ typedef struct {
 #endif
 } global_array_t;
 
+/**
+ * Struct containing all data needed to keep track of iterator state
+ */
 typedef struct {
   Integer g_a;
   Integer lo[MAXDIM];
