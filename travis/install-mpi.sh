@@ -17,7 +17,6 @@ export PATH=$TRAVIS_ROOT/bin:$PATH
 case "$os" in
     Darwin)
         echo "Mac"
-        brew update
         case "$MPI_IMPL" in
             mpich)
                 brew install mpich || brew upgrade mpich
