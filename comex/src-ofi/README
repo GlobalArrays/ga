@@ -1,41 +1,89 @@
 COMEX/OFI provider
 ------------------
 
-COMEX/OFI is provider implemented to enable InfiniBand (and
-other) interconnects. It works on top of OFI library (called
-also libfabric):
-Web: https://github.com/ofiwg/libfabric
+COMEX/OFI is provider implemented to enable Omni-Path, InfiniBand and
+other interconnects. It works on top of OFI library (called also libfabric):
+https://github.com/ofiwg/libfabric
 
-Tricks
-------
+
 COMEX/OFI provider supports set of environment variables to
 configure internal engines:
 
-COMEX_OFI_LIBRARY
+COMEX_OFI_LOG_LEVEL
 -----------------
-COMEX_OFI_LIBRARY=path-to-libfabric.so
-Example: export COMEX_OFI_LIBRARY=/usr/local/lib/libfabric.so
-Description: set path to libfabric.so, useful when libfabric.so is
-             installed to non-default location
+COMEX_OFI_LOG_LEVEL=<level>
+Possible values: 0 - error
+                 1 - warning
+                 2 - info
+                 3 - debug
+                 4 - trace
+Default value: 0
+Example: export COMEX_OFI_LOG_LEVEL=2
+Description: set this environment variable to print logging information about the application.
+             Higher levels include information logged in the lower levels.
+
+COMEX_OFI_NATIVE_ATOMICS
+-----------------
+COMEX_OFI_NATIVE_ATOMICS=<value>
+Possible values: 0 - disable native atomics
+                 1 - enable native atomics 
+Default value: 1
+Example: export COMEX_OFI_NATIVE_ATOMICS=1
+Description: set this environment variable to control atomics path: native or emulated.
+             The native path is implemented over OFI Atomics API.
+             The emulated path is implemented by 2 ways,
+             controlled over COMEX_OFI_ATOMICS_EMULATION_TYPE.
+
+COMEX_OFI_ATOMICS_EMULATION_TYPE
+-----------------
+COMEX_OFI_ATOMICS_EMULATION_TYPE=<value>
+Possible values: 0 - operations are performed on origin side
+                 1 - operations are performed on target side
+Default value: 1
+Example: export COMEX_OFI_ATOMICS_EMULATION_TYPE=1
+Description: some OFI providers have no built-in support of atomic operations
+             (like remote add/sub/exchange). Such operations may be implemented
+             using other OFI APIs. Set this environment variable to control
+             emulated atomics approach: on origin side or on target side.
+             The emulated atomics on origin side is implemented
+             over OFI RMA API for accumulation and OFI Atomics API for rmw.
+             The emulated atomics on target side is implemented
+             over OFI Tagged API for accumulation and rmw,
+             requires enabling of progress thread.
+
+COMEX_OFI_PROGRESS_THREAD
+-----------------
+COMEX_OFI_PROGRESS_THREAD=<value>
+Possible values: 0 - disable progress thread
+                 1 - enable progress thread
+Default value: 1
+Example: export COMEX_OFI_PROGRESS_THREAD=1
+Description: set this environment variable to control creation of progress thread.
+
+COMEX_OFI_CQ_ENTRIES_COUNT
+-----------------
+COMEX_OFI_CQ_ENTRIES_COUNT=<value>
+Possible values: 1 <= value <= 1024
+Default value: 8
+Example: export COMEX_OFI_CQ_ENTRIES_COUNT=16
+Description: set this environment variable specify the maximum number
+             of entries what can be retrieved from OFI completion queue
+             by one fi_cq_read call.
 
 COMEX_OFI_PROVIDER
 ------------------
-COMEX_OFI_PROVIDER=provider-name
+COMEX_OFI_PROVIDER=<provider_name>
 Example: export COMEX_OFI_PROVIDER=psm2
-Description: set OFI provider name. By default OFI select provider
-             using information about available hardware. But in some
-             cases user may force selection of specific provider
+Description: set this environment variable to specify OFI provider name.
+             By default OFI selects provider using information about available hardware.
+             But in some cases user may force selection of specific provider
              setting variable COMEX_OFI_PROVIDER. List of available
              providers may be obtained using application "fi_info"
-             which is part of libfabric package
+             which is part of libfabric package.
 
-COMEX_OFI_ASYNC_PROGRESS
-------------------------
-COMEX_OFI_ASYNC_PROGRESS=0 or 1, default: 0
-Example: export COMEX_OFI_ASYNC_PROGRESS=1
-Description: enable processing of atomic operations in asynchronous
-             mode. Some OFI providers have no built-in support of
-             atomic operations (like remote add/sub/exchange). Such
-             operations may be implemented using point-2-point calls.
-             To enable such emulation of atomics set variable
-             COMEX_OFI_ASYNC_PROGRESS=1
+COMEX_OFI_LIBRARY
+-----------------
+COMEX_OFI_LIBRARY=<path_to_libfabric.so>
+Example: export COMEX_OFI_LIBRARY=/usr/local/lib/libfabric.so
+Description: set this environment variable to specify path to libfabric.so.
+             Useful when libfabric.so is installed to non-default location.

@@ -24,7 +24,7 @@ int n=N, type=MT_F_DBL;
 int me=GA_Nodeid(), nproc=GA_Nnodes();
 int i, row;
 int dims[2]={N,N};
-int lo[2], hi[2];
+int lo[2], hi[2], ld;
 
 /* Note: on all current platforms DoublePrecision == double */
 double buf[N], err, alpha, beta;
@@ -76,12 +76,13 @@ double buf[N], err, alpha, beta;
      row = n/2;
      lo[0]=hi[0]=row;
      lo[1]=0; hi[1]=n-1;
-     NGA_Acc(g_a, lo, hi, buf, &ONE, &alpha );
+     ld = hi[1]-lo[1]+1;
+     NGA_Acc(g_a, lo, hi, buf, &ld, &alpha );
      GA_Sync();
 
      if(me==0){ /* node 0 is checking the result */
 
-        NGA_Get(g_a, lo, hi, buf,&ONE);
+        NGA_Get(g_a, lo, hi, buf,&ld);
         for(i=0; i<n; i++) if(buf[i] != (double)nproc*i)
            GA_Error("failed: column=",i);
         printf("OK\n\n");

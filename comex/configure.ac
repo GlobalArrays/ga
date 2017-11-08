@@ -104,7 +104,6 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
 AC_CHECK_TYPES([ptrdiff_t])
-AX_PTHREAD
 COMEX_FUNCTION
 COMEX_DISABLE_SYS_WEAK_ALIAS
 COMEX_SYS_WEAK_ALIAS
@@ -129,7 +128,7 @@ AC_CHECK_SIZEOF([double])
 # Checks for C library functions.
 AC_FUNC_MMAP
 COMEX_SEARCH_LIBS([sqrt], [m])
-COMEX_SEARCH_LIBS([sem_open], [rt])
+COMEX_SEARCH_LIBS([sem_open], [rt pthread])
 COMEX_SEARCH_LIBS([shm_open], [rt])
 COMEX_SEARCH_LIBS([shm_unlink], [rt])
 COMEX_CHECK_FUNCS([bzero])

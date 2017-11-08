@@ -1,13 +1,20 @@
-#if HAVE_CONFIG_H
-#   include "config.h"
-#endif
+#ifndef _GA_THREAD_SAFE_H_
+#define _GA_THREAD_SAFE_H_
 
 #define THREAD_SAFE 1
 
 #if defined(PTHREADS) && defined(THREAD_SAFE)
 
-void GA_Internal_Threadsafe_Lock();
-void GA_Internal_Threadsafe_Unlock();
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern void GA_Internal_Threadsafe_Lock();
+extern void GA_Internal_Threadsafe_Unlock();
+
+#ifdef __cplusplus
+}
+#endif
 
 #else
 
@@ -16,3 +23,4 @@ void GA_Internal_Threadsafe_Unlock();
 
 #endif
 
+#endif /* _GA_THREAD_SAFE_H_ */

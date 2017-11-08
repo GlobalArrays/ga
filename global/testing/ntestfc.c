@@ -219,7 +219,7 @@ double *buf;
 #ifdef USE_FAPI
      ld[0]=adims[ndim-1] -1 + BASE;
 #else
-     ld[ndim-2]=adims[ndim-1] -1 + BASE;
+     ld[ndim-2]=adims[ndim-1] + BASE;
 #endif
 
      /* get buffer memory */
