@@ -68,7 +68,23 @@ case "x$PORT" in
         ;;
 esac
 
-# Run unit tests
+# build libga
 make V=0 -j ${MAKE_JNUM}
+
+# build test programs
 make V=0 checkprogs -j ${MAKE_JNUM}
-make V=0 check-travis
+
+# run one test
+MAYBE_OVERSUBSCRIBE=
+if test "x$os" = "xDarwin" && test "x$MPI_IMPL" = "xopenmpi"
+then
+    MAYBE_OVERSUBSCRIBE=-oversubscribe
+fi
+
+if test "x$PORT" = "xmpi-pr"
+then
+    mpirun -n 5 ${MAYBE_OVERSUBSCRIBE} ./global/testing/test.x
+else
+    mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ./global/testing/test.x
+fi
+
