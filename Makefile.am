@@ -482,6 +482,7 @@ check_PROGRAMS += global/testing/testmultrect
 check_PROGRAMS += global/testing/thread_perf_contig
 check_PROGRAMS += global/testing/thread_perf_strided
 check_PROGRAMS += global/testing/threadsafec
+check_PROGRAMS += global/testing/read_only
 check_PROGRAMS += global/testing/unpackc
 if ENABLE_F77
 check_PROGRAMS += global/testing/bin
@@ -663,6 +664,7 @@ GLOBAL_PARALLEL_TESTS += global/testing/testmultrect$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/thread_perf_contig$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/thread_perf_strided$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/threadsafec$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/read_only$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/unpackc$(EXEEXT)
 if ENABLE_F77
 GLOBAL_PARALLEL_TESTS += global/testing/bin$(EXEEXT)
@@ -946,6 +948,7 @@ global_testing_testspd_SOURCES             = global/testing/testspd.F $(gtsrc)
 global_testing_thread_perf_contig_SOURCES  = global/testing/thread_perf_contig.c $(gtsrc)
 global_testing_thread_perf_strided_SOURCES = global/testing/thread_perf_strided.c $(gtsrc)
 global_testing_threadsafec_SOURCES         = global/testing/threadsafec.c $(gtsrc)
+global_testing_read_only_SOURCES         = global/testing/read_only.c $(gtsrc)
 global_testing_types_test_SOURCES          = global/testing/types-test.F $(gtsrc)
 global_testing_unpackc_SOURCES             = global/testing/unpackc.c $(gtsrc)
 nodist_global_testing_nga_onesided_SOURCES = global/testing/nga-onesided.F $(gtsrc)
@@ -1043,10 +1046,12 @@ global_testing_unit_tests_ga_zeropatch_SOURCES            = global/testing/unit-
 global_testing_thread_perf_contig_CFLAGS  = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 global_testing_thread_perf_strided_CFLAGS = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 global_testing_threadsafec_CFLAGS         = $(AM_CFLAGS) $(OPENMP_CFLAGS)
+global_testing_read_only_CFLAGS           = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 
 global_testing_thread_perf_contig_CPPFLAGS = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 global_testing_thread_perf_strided_CPPFLAGS = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 global_testing_threadsafec_CPPFLAGS       = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
+global_testing_read_only_CPPFLAGS       = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 
 global_testing_bin_LDFLAGS                = $(FLDFLAGS)
 global_testing_blktest_LDFLAGS            = $(FLDFLAGS)
@@ -1095,6 +1100,7 @@ global_testing_testspd_LDFLAGS            = $(FLDFLAGS)
 global_testing_thread_perf_contig_LDFLAGS = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
 global_testing_thread_perf_strided_LDFLAGS = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
 global_testing_threadsafec_LDFLAGS        = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
+global_testing_read_only_LDFLAGS          = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
 global_testing_types_test_LDFLAGS         = $(FLDFLAGS)
 
 if F77_INTEL_NO_INLINE
@@ -1133,6 +1139,7 @@ nodist_EXTRA_global_testing_testmultrect_SOURCES        = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_thread_perf_contig_SOURCES  = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_thread_perf_strided_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_threadsafec_SOURCES         = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_read_only_SOURCES         = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_unpackc_SOURCES             = $(MAYBE_DUMMY_F_LINK)
 
 global_testing_test_mirrored_CPPFLAGS = $(AM_CPPFLAGS) -DMIRROR=1

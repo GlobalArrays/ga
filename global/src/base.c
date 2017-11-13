@@ -410,6 +410,7 @@ int bytes;
        GA[i].mapc = (C_Integer*)0;
        GA[i].rstrctd_list = (C_Integer*)0;
        GA[i].rank_rstrctd = (C_Integer*)0;
+       GA[i].property = NO_PROPERTY;
 #ifdef ENABLE_CHECKPOINT
        GA[i].record_id = 0;
 #endif
@@ -1840,6 +1841,322 @@ void pnga_set_restricted_range(Integer g_a, Integer lo_proc, Integer hi_proc)
   GA[ga_handle].has_data = has_data;
   GA[ga_handle].rstrctd_id = id;
   GA_POP_NAME;
+}
+
+/**
+ *  Set the property on a global array.
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_property = pnga_set_property
+#endif
+void pnga_set_property(Integer g_a, char* property) {
+  Integer ga_handle = g_a + GA_OFFSET;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
+  pnga_pgroup_sync(GA[ga_handle].p_handle);
+  GA_PUSH_NAME("ga_set_property");
+  /* Check to see if property conflicts with properties already set on the
+   * global array. This check may need more refinement as additional properties
+   * are added. */
+  if (GA[ga_handle].property != NO_PROPERTY) {
+    pnga_error("Cannot set property on an array that already has property set",0);
+  }
+  if (strcmp(property,"read_only")==0) {
+    /* TODO: copy global array to new configuration */
+    int i, d, ndim, btot;
+    Integer nprocs, nodeid, origin_id, dflt_grp, handle, maplen;
+    Integer nelem, mem_size, status, grp_me, g_tmp, me_local;
+    Integer *list;
+    Integer blk[MAXDIM], dims[MAXDIM], pe[MAXDIM], chunk[MAXDIM];
+    Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
+    Integer *pmap[MAXDIM], *map;
+    if (GA[ga_handle].block_flag) {
+      pnga_error("Block-cyclic arrays not supported for READ_ONLY",0);
+    }
+    if (GA[ga_handle].p_handle != pnga_pgroup_get_world()) {
+      pnga_error("Arrays on subgroups not supported for READ_ONLY",0);
+    }
+    GA[ga_handle].property = READ_ONLY;
+    ndim = (int)GA[ga_handle].ndim;
+    btot = 1;
+    for (i=0; i<ndim; i++) {
+      GA[ga_handle].old_nblock[i] = GA[ga_handle].nblock[i];
+      GA[ga_handle].old_lo[i] = GA[ga_handle].lo[i];
+      btot *= GA[ga_handle].nblock[i];
+    }
+    btot *= ndim;
+    GA[ga_handle].old_mapc = (Integer*)malloc(btot*sizeof(Integer));
+    for (i=0; i<btot; i++) {
+      GA[ga_handle].old_mapc[i] = GA[ga_handle].mapc[i];
+    }
+    /* Make a temporary copy of GA */
+    g_tmp = pnga_create_handle();
+    pnga_set_data(g_tmp,ndim,GA[ga_handle].dims,GA[ga_handle].type);
+    pnga_set_pgroup(g_tmp,GA[ga_handle].p_handle);
+    if (!pnga_allocate(g_tmp)) {
+      pnga_error("Failed to allocate temporary array",0);
+    }
+    pnga_copy(g_a, g_tmp);
+    /* Create a group containing all the processors on this node */
+    GA[ga_handle].old_handle = GA[ga_handle].p_handle;
+    nodeid = pnga_cluster_nodeid();
+    nprocs = pnga_cluster_nprocs(nodeid);
+    origin_id = pnga_cluster_procid(nodeid,0);
+    dflt_grp = pnga_pgroup_get_default();
+    pnga_pgroup_set_default(pnga_pgroup_get_world());
+    list = (Integer*)malloc(nprocs*sizeof(Integer));
+    for (i=0; i<nprocs; i++) {
+      list[i] = origin_id+i;
+    }
+    handle = pnga_pgroup_create(list, nprocs);
+    GA[ga_handle].p_handle = handle;
+
+    /* Ignore hints on data distribution (chunk) and just go with default
+     * distribution on the node */
+    for (i=0; i<ndim; i++) {
+      /* eliminate dimension=1 from analysis, otherwise set blk to -1*/
+      chunk[i] = GA[ga_handle].chunk[i];
+      dims[i] = GA[ga_handle].dims[i];
+    }
+    if (chunk[0] != 0)
+      for (d=0; d<ndim; d++) blk[d]=(Integer)GA_MIN(chunk[d],dims[d]);
+    else
+      for (d=0; d<ndim; d++) blk[d]=-1;
+    for (d=0; d<ndim; d++) if (dims[d]==1) blk[d]=1;
+    ddb_h2(ndim, dims, PGRP_LIST[handle].map_nproc,0.0,(Integer)0,blk,pe);
+    for(d=0, map=mapALL; d< ndim; d++){
+      Integer nblock;
+      Integer pcut; /* # procs that get full blk[] elements; the rest gets less*/
+      int p;
+
+      pmap[d] = map;
+
+      /* RJH ... don't leave some nodes without data if possible
+       * but respect the users block size */
+
+      if (chunk[d] > 1) {
+        Integer ddim = ((dims[d]-1)/GA_MIN(chunk[d],dims[d]) + 1);
+        pcut = (ddim -(blk[d]-1)*pe[d]) ;
+      } else {
+        pcut = (dims[d]-(blk[d]-1)*pe[d]) ;
+      }
+
+      for (nblock=i=p=0; (p<pe[d]) && (i<dims[d]); p++, nblock++) {
+        Integer b = blk[d];
+        if (p >= pcut)
+          b = b-1;
+        map[nblock] = i+1;
+        if (chunk[d]>1) b *= GA_MIN(chunk[d],dims[d]);
+        i += b;
+      }
+
+      pe[d] = GA_MIN(pe[d],nblock);
+      map +=  pe[d];
+    }
+    maplen = 0;
+    for( i = 0; i< ndim; i++){
+      GA[ga_handle].nblock[i] = pe[i];
+      maplen += pe[i];
+    }
+    for(i = 0; i< maplen; i++) {
+      GA[ga_handle].mapc[i] = (C_Integer)mapALL[i];
+    }
+    GA[ga_handle].mapc[maplen] = -1;
+    /* Set remaining paramters and determine memory size if regular data
+     * distribution is being used */
+
+    for( i = 0; i< ndim; i++){
+      GA[ga_handle].scale[i] = (double)GA[ga_handle].nblock[i]
+        / (double)GA[ga_handle].dims[i];
+    }
+
+    /*** determine which portion of the array I am supposed
+     * to hold ***/
+    me_local = (Integer)PGRP_LIST[handle].map_proc_list[GAme];
+    pnga_distribution(g_a, me_local, GA[ga_handle].lo, hi);
+    for( i = 0, nelem=1; i< ndim; i++){
+      nelem *= (hi[i]-(Integer)GA[ga_handle].lo[i]+1);
+    }
+    mem_size = nelem * GA[ga_handle].elemsize;
+    grp_me = pnga_pgroup_nodeid(handle);
+    /* Clean up old memory first */
+#ifndef AVOID_MA_STORAGE
+    if(gai_uses_shm((int)handle)){
+#endif
+      /* make sure that we free original (before address allignment)
+       * pointer */
+#ifdef MSG_COMMS_MPI
+      if (GA[ga_handle].old_handle > 0){
+        ARMCI_Free_group(
+            GA[ga_handle].ptr[pnga_pgroup_nodeid(GA[ga_handle].old_handle)]
+            - GA[ga_handle].id,
+            &PGRP_LIST[GA[ga_handle].old_handle].group);
+      }
+      else
+#endif
+        ARMCI_Free(
+            GA[ga_handle].ptr[pnga_pgroup_nodeid(GA[ga_handle].old_handle)]
+            - GA[ga_handle].id);
+#ifndef AVOID_MA_STORAGE
+    }else{
+      if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
+    }
+#endif
+
+    if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
+    GAstat.curmem -= GA[ga_handle].size;
+    /* if requested, enforce limits on memory consumption */
+    if(GA_memory_limited) GA_total_memory -= mem_size;
+    GAstat.curmem += mem_size;
+    /* check if everybody has enough memory left */
+    if(GA_memory_limited){
+      status = (GA_total_memory >= 0) ? 1 : 0;
+      pnga_pgroup_gop(handle,pnga_type_f2c(MT_F_INT), &status, 1, "&&");
+    } else status = 1;
+    /* allocate memory */
+    if (status) {
+      /* Allocate new memory */
+      status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
+          GA[ga_handle].type, &GA[ga_handle].id, handle);
+    } else {
+      GA[ga_handle].ptr[grp_me]=NULL;
+    }
+    GA[ga_handle].size = (C_Long)mem_size;
+    if (!status) {
+      pnga_error("Memory failure when unsetting READ_ONLY",0);
+    }
+    /* Copy data from copy of old GA to new GA and then get rid of copy*/
+    pnga_distribution(g_a,grp_me,lo,hi);
+    for (i=0; i<ndim; i++) {
+      ld[i] = hi[i] - lo[i] + 1;
+    }
+    pnga_get(g_tmp,lo,hi,GA[ga_handle].ptr[grp_me],ld);
+    pnga_destroy(g_tmp);
+    GA_POP_NAME;
+  } else {
+    pnga_error("Trying to set unknown property",0);
+  }
+}
+
+/**
+ *  Clear property from global array.
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_unset_property = pnga_unset_property
+#endif
+void pnga_unset_property(Integer g_a) {
+  Integer ga_handle = g_a + GA_OFFSET;
+  if (GA[ga_handle].property == READ_ONLY) {
+    /* TODO: Copy global array to original configuration */
+    int i, d, ndim, btot;
+    Integer g_tmp, grp_me;
+    Integer nprocs, nodeid, origin_id, dflt_grp, handle, maplen;
+    Integer nelem, mem_size, status;
+    Integer *list;
+    Integer dims[MAXDIM], chunk[MAXDIM];
+    Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
+    void *ptr;
+
+    ndim = (int)GA[ga_handle].ndim;
+    /* Start by making a copy of the GA */
+    for (i=0; i<ndim; i++) {
+      chunk[i] = GA[ga_handle].dims[i];
+      dims[i] = GA[ga_handle].dims[i];
+    }
+    /* Make a temporary copy of GA */
+    g_tmp = pnga_create_handle();
+    pnga_set_data(g_tmp,ndim,GA[ga_handle].dims,GA[ga_handle].type);
+    pnga_set_pgroup(g_tmp,GA[ga_handle].old_handle);
+    if (!pnga_allocate(g_tmp)) {
+      pnga_error("Failed to allocate temporary array",0);
+    }
+    /* Copy portion of global array to locally held portion of tmp array */
+    grp_me = pnga_pgroup_nodeid(GA[ga_handle].old_handle);
+    pnga_distribution(g_tmp,grp_me,lo,hi);
+    for (i=0; i<ndim; i++) {
+      ld[i] = hi[i]-lo[i]+1;
+    }
+    pnga_access_ptr(g_tmp,lo,hi,&ptr,ld);
+    pnga_get(g_a,lo,hi,ptr,ld);
+
+    /* Get rid of current memory allocation */
+#ifndef AVOID_MA_STORAGE
+    if(gai_uses_shm((int)GA[ga_handle].p_handle)){
+#endif
+      /* make sure that we free original (before address allignment)
+       * pointer */
+#ifdef MSG_COMMS_MPI
+      if (GA[ga_handle].p_handle > 0){
+        ARMCI_Free_group(
+            GA[ga_handle].ptr[pnga_pgroup_nodeid(GA[ga_handle].p_handle)]
+            - GA[ga_handle].id,
+            &PGRP_LIST[GA[ga_handle].p_handle].group);
+      }
+      else
+#endif
+        ARMCI_Free(
+            GA[ga_handle].ptr[pnga_pgroup_nodeid(GA[ga_handle].p_handle)]
+            - GA[ga_handle].id);
+#ifndef AVOID_MA_STORAGE
+    }else{
+      if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
+    }
+#endif
+    
+    /* Reset distribution parameters back to original values */
+    btot = 1;
+    for (i=0; i<ndim; i++) {
+      GA[ga_handle].nblock[i] = GA[ga_handle].old_nblock[i];
+      GA[ga_handle].lo[i] = GA[ga_handle].old_lo[i];
+      btot *= GA[ga_handle].nblock[i];
+    }
+    btot *= ndim;
+    GA[ga_handle].mapc = (Integer*)malloc(btot*sizeof(Integer));
+    for (i=0; i<btot; i++) {
+      GA[ga_handle].mapc[i] = GA[ga_handle].old_mapc[i];
+    }
+    free(GA[ga_handle].old_mapc);
+    handle = GA[ga_handle].old_handle;
+    GA[ga_handle].p_handle = handle;
+
+    pnga_distribution(g_a, grp_me, GA[ga_handle].lo, hi);
+    for( i = 0, nelem=1; i< ndim; i++){
+      nelem *= (hi[i]-(Integer)GA[ga_handle].lo[i]+1);
+    }
+    mem_size = nelem * GA[ga_handle].elemsize;
+
+    if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
+    GAstat.curmem -= GA[ga_handle].size;
+    /* if requested, enforce limits on memory consumption */
+    if(GA_memory_limited) GA_total_memory -= mem_size;
+    /* check if everybody has enough memory left */
+    if(GA_memory_limited){
+      status = (GA_total_memory >= 0) ? 1 : 0;
+      pnga_pgroup_gop(handle,pnga_type_f2c(MT_F_INT), &status, 1, "&&");
+    } else status = 1;
+    /* allocate memory */
+    if (status) {
+      /* Allocate new memory */
+      status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
+          GA[ga_handle].type, &GA[ga_handle].id, handle);
+    } else {
+      GA[ga_handle].ptr[grp_me]=NULL;
+    }
+    GA[ga_handle].size = (C_Long)mem_size;
+    if (!status) {
+      pnga_error("Memory failure when setting READ_ONLY",0);
+    }
+    /* Generate parameters for new memory allocation. Distribution function
+     * should work, so we can use that to find out how much data is on this
+     * processor */
+    pnga_distribution(g_a,grp_me,lo,hi);
+    for (i=0; i<ndim; i++) {
+      ld[i] = hi[i]-lo[i]+1;
+    }
+    pnga_access_ptr(g_a,lo,hi,&ptr,ld);
+    pnga_get(g_tmp,lo,hi,ptr,ld);
+    pnga_destroy(g_tmp);
+  }
+  GA[ga_handle].property = NO_PROPERTY;
 }
 
 /**
