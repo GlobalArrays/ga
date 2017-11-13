@@ -81,10 +81,26 @@ then
     MAYBE_OVERSUBSCRIBE=-oversubscribe
 fi
 
+# Determine test name based on whether fortran was supported.
+TEST_NAME=./global/testing/test.x
+if test -x $TEST_NAME
+then
+    echo "Running fortran-based test"
+else
+    TEST_NAME=./global/testing/testc.x
+    if test -x $TEST_NAME
+    then
+        echo "Running C-based test"
+    else
+        echo "No suitable test was found"
+        exit 1
+    fi
+fi
+
 if test "x$PORT" = "xmpi-pr"
 then
-    mpirun -n 5 ${MAYBE_OVERSUBSCRIBE} ./global/testing/test.x
+    mpirun -n 5 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
 else
-    mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ./global/testing/test.x
+    mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
 fi
 
