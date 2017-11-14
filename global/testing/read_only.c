@@ -110,8 +110,8 @@ int main(int argc, char * argv[])
 
   /* Find processor grid dimensions and processor grid coordinates */
   if (me==0) {
-    printf("\nTest running of %d processors\n",nproc);
-    printf("\n  Array dimension is %d X %d\n",x,y);
+    printf("\nTest running on %d processors\n",nproc);
+    printf("\nArray dimension is %d X %d\n",x,y);
   }
 
   dims[0] = x;
@@ -123,10 +123,6 @@ int main(int argc, char * argv[])
   g_ntime = NGA_Create(C_INT, 1, &nproc, "ntimes", &one);
   g_elems = NGA_Create(C_LONG, 1, &nproc, "nelems", &one);
   GA_Zero(g_src);
-
-  if (me==0) {
-    printf("\nInitialize global array\n");
-  }
 
   /* Fill the global array with unique values */
   NGA_Distribution(g_src,me,lo,hi);
@@ -145,7 +141,7 @@ int main(int argc, char * argv[])
   NGA_Set_property(g_src,"read_only");
 
   if (me == 0) {
-    printf("Performance results for read-only array\n");
+    printf("\nPerformance results for read-only array\n");
   }
   ok = 1;
   nextOK = 1;
@@ -194,17 +190,17 @@ int main(int argc, char * argv[])
   }
   if (trueEverywhere(ok)) {
     if (me == 0) {
-      printf("Read-only test succeeded\n");
+      printf("\nRead-only test succeeded\n");
     }
   } else if (me == 0) {
-    printf("Read-only test FAILED\n");
+    printf("\nRead-only test FAILED\n");
   }
 
   /* Unset read-only property */
   NGA_Unset_property(g_src);
 
   if (me == 0) {
-    printf("Performance results for regular array\n");
+    printf("\nPerformance results for regular array\n");
   }
   ok = 1;
   nextOK = 1;
@@ -253,10 +249,10 @@ int main(int argc, char * argv[])
   }
   if (trueEverywhere(ok)) {
     if (me == 0) {
-      printf("Regular array test succeeded\n");
+      printf("\nRegular array test succeeded\n\n");
     }
   } else if (me == 0) {
-    printf("Regular array test FAILED\n");
+    printf("\nRegular array test FAILED\n");
   }
 
   GA_Destroy(g_src);
