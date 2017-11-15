@@ -63,6 +63,7 @@
 #include "global.h"
 #include "globalp.h"
 #include "base.h"
+#include "ga_iterator.h"
 #include "armci.h"
 #include "macdecls.h"
 #include "ga-papi.h"
@@ -732,6 +733,11 @@ int pnga_local_iterator_next(_iterator_hdl *hdl, Integer plo[],
      * data as well
      */
     pnga_distribution(hdl->g_a, me, plo, phi);
+    /* Check to see if this process has any data. Return 0 if
+     * it does not */
+    for (i=0; i<ndim; i++) {
+      if (phi[i]<plo[i]) return 0;
+    }
     pnga_access_ptr(hdl->g_a,plo,phi,ptr,ld);
     hdl->count++;
   } else {

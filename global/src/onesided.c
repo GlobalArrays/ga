@@ -59,6 +59,7 @@
 #include "global.h"
 #include "globalp.h"
 #include "base.h"
+#include "ga_iterator.h"
 #include "armci.h"
 #include "macdecls.h"
 #include "ga-papi.h"

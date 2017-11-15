@@ -20,13 +20,10 @@
 #include "message.h"
 #include "globalp.h"
 #include "armci.h"
+#include "ga_iterator.h"
 #include "ga-papi.h"
 #include "ga-wapi.h"
 #include "base.h"
-
-extern void pnga_local_iterator_init(Integer, _iterator_hdl*);
-extern int pnga_local_iterator_next(_iterator_hdl*, Integer[],
-            Integer[], char**, Integer[]);
 
 #ifdef MSG_COMMS_MPI
 extern ARMCI_Group* ga_get_armci_group_(int);

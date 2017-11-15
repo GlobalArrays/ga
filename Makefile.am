@@ -382,6 +382,7 @@ CLEANFILES += global/src/ga-wapidefs.h
 libga_la_SOURCES += global/src/abstract_ops.h
 libga_la_SOURCES += global/src/base.c
 libga_la_SOURCES += global/src/base.h
+libga_la_SOURCES += global/src/iterator.h
 libga_la_SOURCES += global/src/capi.c
 libga_la_SOURCES += global/src/cnames.h
 libga_la_SOURCES += global/src/collect.c
