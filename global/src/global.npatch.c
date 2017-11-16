@@ -42,6 +42,7 @@
 #include "message.h"
 #include "globalp.h"
 #include "armci.h"
+#include "ga_iterator.h"
 #include "ga-papi.h"
 #include "ga-wapi.h"
 
@@ -534,6 +535,57 @@ void pnga_copy_patch(char *trans,
     if (use_put) {
       /* Array a is block-cyclic distributed */
       if (num_blocks_a >= 0) {
+#if 1
+        _iterator_hdl hdl_a;
+        pnga_local_iterator_init(g_a, &hdl_a);
+        while (pnga_local_iterator_next(&hdl_a, los, his,
+              &src_data_ptr, ld)) {
+            /* Copy limits since patch intersect modifies los array */
+            for (j=0; j < andim; j++) {
+              lod[j] = los[j];
+              hid[j] = his[j];
+            }
+            if (pnga_patch_intersect(alo,ahi,los,his,andim)) {
+              offset = 0;
+              last = andim - 1;
+              jtot = 1;
+              for (j=0; j<last; j++) {
+                offset += (los[j]-lod[j])*jtot;
+                jtot *= ld[j];
+              }
+              offset += (los[last]-lod[last])*jtot;
+              switch(atype) {
+                case C_DBL:
+                  src_data_ptr = (void*)((double*)(src_data_ptr) + offset); 
+                  break;
+                case C_INT:
+                  src_data_ptr = (void*)((int*)(src_data_ptr) + offset); 
+                  break;
+                case C_DCPL:
+                  src_data_ptr = (void*)((DoubleComplex*)(src_data_ptr) + offset); 
+                  break;
+                case C_SCPL:
+                  src_data_ptr = (void*)((SingleComplex*)(src_data_ptr) + offset); 
+                  break;
+                case C_FLOAT:
+                  src_data_ptr = (void*)((float*)(src_data_ptr) + offset); 
+                  break;     
+                case C_LONG:
+                  src_data_ptr = (void*)((long*)(src_data_ptr) + offset); 
+                  break;
+                case C_LONGLONG:
+                  src_data_ptr = (void*)((long long*)(src_data_ptr) + offset); 
+                  break;
+                default:
+                  break;
+              }
+              snga_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
+              snga_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
+              pnga_put(g_b, lod, hid, src_data_ptr, ld);
+              pnga_release_block(g_a, i);
+            }
+          }
+#else
         /* Uses simple block-cyclic data distribution */
         if (!pnga_uses_proc_grid(g_a)) {
           for (i = me_a; i < num_blocks_a; i += anproc) {
@@ -660,6 +712,7 @@ void pnga_copy_patch(char *trans,
             }
           }
         }
+#endif
       } else {
         /* Array b is block-cyclic distributed */
         pnga_distribution(g_a, me_a, los, his); 
@@ -674,6 +727,57 @@ void pnga_copy_patch(char *trans,
     } else {
       /* Array b is block-cyclic distributed */
       if (num_blocks_b >= 0) {
+#if 1
+        _iterator_hdl hdl_b;
+        pnga_local_iterator_init(g_b, &hdl_b);
+        while (pnga_local_iterator_next(&hdl_b, los, his,
+              &src_data_ptr, ld)) {
+            /* Copy limits since patch intersect modifies los array */
+            for (j=0; j < andim; j++) {
+              lod[j] = los[j];
+              hid[j] = his[j];
+            }
+            if (pnga_patch_intersect(blo,bhi,los,his,andim)) {
+              offset = 0;
+              last = andim - 1;
+              jtot = 1;
+              for (j=0; j<last; j++) {
+                offset += (los[j]-lod[j])*jtot;
+                jtot *= ld[j];
+              }
+              offset += (los[last]-lod[last])*jtot;
+              switch(atype) {
+                case C_DBL:
+                  src_data_ptr = (void*)((double*)(src_data_ptr) + offset); 
+                  break;
+                case C_INT:
+                  src_data_ptr = (void*)((int*)(src_data_ptr) + offset); 
+                  break;
+                case C_DCPL:
+                  src_data_ptr = (void*)((DoubleComplex*)(src_data_ptr) + offset); 
+                  break;
+                case C_SCPL:
+                  src_data_ptr = (void*)((SingleComplex*)(src_data_ptr) + offset); 
+                  break;
+                case C_FLOAT:
+                  src_data_ptr = (void*)((float*)(src_data_ptr) + offset); 
+                  break;     
+                case C_LONG:
+                  src_data_ptr = (void*)((long*)(src_data_ptr) + offset); 
+                  break;
+                case C_LONGLONG:
+                  src_data_ptr = (void*)((long long*)(src_data_ptr) + offset); 
+                  break;
+                default:
+                  break;
+              }
+              snga_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
+              snga_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
+              pnga_get(g_a, lod, hid, src_data_ptr, ld);
+              pnga_release_block(g_b, i);
+            }
+          }
+#else
         /* Uses simple block-cyclic data distribution */
         if (!pnga_uses_proc_grid(g_b)) {
           for (i = me_b; i < num_blocks_b; i += bnproc) {
@@ -800,6 +904,7 @@ void pnga_copy_patch(char *trans,
             }
           }
         }
+#endif
       } else {
         /* Array a is block-cyclic distributed */
         pnga_distribution(g_b, me_b, los, his); 
