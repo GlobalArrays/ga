@@ -17,6 +17,7 @@
 #   include <string.h>
 #endif
 #include "matmul.h"
+#include "ga_iterator.h"
 #include "ga-papi.h"
 #include "ga-wapi.h"
 
@@ -600,6 +601,8 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
   Integer ctype, cndim, cdims[2];
   Integer iblock=0, proc_index[2], index[2];
   Integer blocks[2], block_dims[2], topology[2];
+  _iterator_hdl hdl;
+  char *ptr_c;
 
   GA_PUSH_NAME("ga_matmul_regular");
   if(irregular) pnga_error("irregular flag set", 0L);
@@ -617,6 +620,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
   clo[1] = cjlo; chi[1] = cjhi;
   k = ajhi - ajlo +1;
 
+#if 0
   numblocks = pnga_total_blocks(g_c);
   if(numblocks>=0) init_block_info(g_c, proc_index, index, blocks,
       block_dims, topology, &iblock);
@@ -638,6 +642,11 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
             topology, &iblock, loC, hiC))
         break;
     }
+/*  } */
+#else
+  pnga_local_iterator_init(g_c, &hdl);
+  while (pnga_local_iterator_next(&hdl,loC,hiC,&ptr_c,ld)) {
+#endif
 
     /* If loC and hiC intersects with current patch region, then they will
      * be updated accordingly. Else it returns FALSE */
@@ -1529,13 +1538,14 @@ void pnga_matmul(transa, transb, alpha, beta,
 			      g_c, cilo, cihi, cjlo, cjhi,
 			      Ichunk, Kchunk, Jchunk, a_ar, b_ar, c_ar,
 			      need_scaling, irregular);
-	  else
+	  else {
 	     gai_matmul_regular(transa, transb, alpha, beta, atype,
 				g_a, ailo, aihi, ajlo, ajhi,
 				g_b, bilo, bihi, bjlo, bjhi,
 				g_c, cilo, cihi, cjlo, cjhi,
 				Ichunk, Kchunk, Jchunk, a_ar, b_ar, c_ar, 
 				need_scaling, irregular);
+     }
        }
 	     
        a = a_ar[0];
