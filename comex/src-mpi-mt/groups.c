@@ -356,6 +356,12 @@ int comex_group_create(
 }
 
 
+static int cmplong(const void *p1, const void *p2)
+{
+    return *((long*)p1) - *((long*)p2);
+}
+
+
 /**
  * Initialize group linked list. Prepopulate with world group.
  */
@@ -363,10 +369,10 @@ void comex_group_init()
 {
     int status = 0;
     int i = 0;
-    int smallest_rank_with_same_hostid = 0;
-    int largest_rank_with_same_hostid = 0;
     comex_group_t group = 0;
     comex_igroup_t *igroup = NULL;
+    long *sorted = NULL;
+    int count = 0;
     
     /* populate g_state */
 
@@ -412,7 +418,21 @@ void comex_group_init()
     COMEX_ASSERT(MPI_SUCCESS == status);
 
     /* create node comm */
-    status = MPI_Comm_split(MPI_COMM_WORLD, g_state.hostid[g_state.rank],
+    /* MPI_Comm_split requires a non-negative color,
+     * so sort and sanitize */
+    sorted = (long*)malloc(sizeof(long) * g_state.size);
+    (void)memcpy(sorted, g_state.hostid, sizeof(long)*g_state.size);
+    qsort(sorted, g_state.size, sizeof(long), cmplong);
+    for (i=0; i<g_state.size-1; ++i) {
+        if (sorted[i] == g_state.hostid[g_state.rank]) {
+            break;
+        }
+        if (sorted[i] != sorted[i+1]) {
+            count += 1;
+        }
+    }
+    free(sorted);
+    status = MPI_Comm_split(MPI_COMM_WORLD, count,
             g_state.rank, &(g_state.node_comm));
     COMEX_ASSERT(MPI_SUCCESS == status);
     /* node rank */
