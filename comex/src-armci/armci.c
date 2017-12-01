@@ -73,11 +73,11 @@ void armci_init_domains(MPI_Comm comm)
   if (!status) {
     _number_of_procs_per_node = 1;
     _my_node_id = rank;
-    return;
+  } else {
+    /* Same number of processors for all nodes so set domain variables */
+    _number_of_procs_per_node = nprocs;
+    _my_node_id = rank/_number_of_procs_per_node;
   }
-  /* Same number of processors for all nodes so set domain variables */
-  _number_of_procs_per_node = nprocs;
-  _my_node_id = rank/_number_of_procs_per_node;
 
   free(namebuf);
   free(nodeid);
