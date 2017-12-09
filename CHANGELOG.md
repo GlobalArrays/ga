@@ -9,6 +9,16 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
+## [5.6.3] - 2017-12-08
+- Known Bugs
+  - [\#48] Message sizes exceeding 2GB may not work correctly
+- Fixed
+  - Critical bug, incorrect use of MPI_Comm_split() might prevent startup
+    in the following ComEx ports.
+    - MPI-PR
+    - MPI-PT
+    - MPI-MT
+
 ## [5.6.2] - 2017-09-29
 - Known Bugs
   - [\#48] Message sizes exceeding 2GB may not work correctly
@@ -283,10 +293,45 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
 - Optimized one-sided non-blocking operations
 - Supports various platforms (Crays, IBM SPs, SGI Altix, ...) and interconnects (Myrinet, Quadrics, Infiniband, ...)
 
-[Unreleased]: https://github.com/GlobalArrays/ga/compare/v5.6.1...develop
+[Unreleased]: https://github.com/GlobalArrays/ga/compare/v5.6.3...develop
+[5.6.3]: https://github.com/GlobalArrays/ga/compare/v5.6.2...v5.6.3
+[5.6.2]: https://github.com/GlobalArrays/ga/compare/v5.6.1...v5.6.2
 [5.6.1]: https://github.com/GlobalArrays/ga/compare/v5.6...v5.6.1
 [5.6]: https://github.com/GlobalArrays/ga/releases/tag/v5.6
 
+[\#90]: https://github.com/GlobalArrays/ga/issues/90
+[\#89]: https://github.com/GlobalArrays/ga/issues/89
+[\#88]: https://github.com/GlobalArrays/ga/issues/88
+[\#87]: https://github.com/GlobalArrays/ga/pull/87
+[\#86]: https://github.com/GlobalArrays/ga/issues/86
+[\#85]: https://github.com/GlobalArrays/ga/issues/85
+[\#84]: https://github.com/GlobalArrays/ga/issues/84
+[\#83]: https://github.com/GlobalArrays/ga/issues/83
+[\#82]: https://github.com/GlobalArrays/ga/issues/82
+[\#81]: https://github.com/GlobalArrays/ga/pull/81
+[\#80]: https://github.com/GlobalArrays/ga/pull/80
+[\#79]: https://github.com/GlobalArrays/ga/pull/79
+[\#78]: https://github.com/GlobalArrays/ga/pull/78
+[\#77]: https://github.com/GlobalArrays/ga/pull/77
+[\#76]: https://github.com/GlobalArrays/ga/pull/76
+[\#75]: https://github.com/GlobalArrays/ga/pull/75
+[\#74]: https://github.com/GlobalArrays/ga/pull/74
+[\#73]: https://github.com/GlobalArrays/ga/pull/73
+[\#72]: https://github.com/GlobalArrays/ga/pull/72
+[\#71]: https://github.com/GlobalArrays/ga/pull/71
+[\#70]: https://github.com/GlobalArrays/ga/pull/70
+[\#69]: https://github.com/GlobalArrays/ga/pull/69
+[\#68]: https://github.com/GlobalArrays/ga/pull/68
+[\#67]: https://github.com/GlobalArrays/ga/pull/67
+[\#66]: https://github.com/GlobalArrays/ga/pull/66
+[\#65]: https://github.com/GlobalArrays/ga/pull/65
+[\#64]: https://github.com/GlobalArrays/ga/issues/64
+[\#63]: https://github.com/GlobalArrays/ga/pull/63
+[\#62]: https://github.com/GlobalArrays/ga/pull/62
+[\#61]: https://github.com/GlobalArrays/ga/issues/61
+[\#60]: https://github.com/GlobalArrays/ga/pull/60
+[\#59]: https://github.com/GlobalArrays/ga/pull/59
+[\#58]: https://github.com/GlobalArrays/ga/pull/58
 [\#57]: https://github.com/GlobalArrays/ga/issues/57
 [\#56]: https://github.com/GlobalArrays/ga/issues/56
 [\#55]: https://github.com/GlobalArrays/ga/pull/55
