@@ -1862,7 +1862,7 @@ void pnga_set_property(Integer g_a, char* property) {
   }
   if (strcmp(property,"read_only")==0) {
     /* TODO: copy global array to new configuration */
-    int i, d, ndim, btot;
+    int i, d, ndim, btot, chk;
     Integer nprocs, nodeid, origin_id, dflt_grp, handle, maplen;
     Integer nelem, mem_size, status, grp_me, g_tmp, me_local;
     Integer *list;
@@ -1877,15 +1877,14 @@ void pnga_set_property(Integer g_a, char* property) {
     }
     GA[ga_handle].property = READ_ONLY;
     ndim = (int)GA[ga_handle].ndim;
-    btot = 1;
+    btot = 0;
     for (i=0; i<ndim; i++) {
       GA[ga_handle].old_nblock[i] = GA[ga_handle].nblock[i];
       GA[ga_handle].old_lo[i] = GA[ga_handle].lo[i];
-      btot *= GA[ga_handle].nblock[i];
+      btot += GA[ga_handle].nblock[i];
     }
-    btot *= ndim;
-    GA[ga_handle].old_mapc = (Integer*)malloc(btot*sizeof(Integer));
-    for (i=0; i<btot; i++) {
+    GA[ga_handle].old_mapc = (Integer*)malloc((btot+1)*sizeof(Integer));
+    for (i=0; i<btot+1; i++) {
       GA[ga_handle].old_mapc[i] = GA[ga_handle].mapc[i];
     }
     /* Make a temporary copy of GA */
@@ -1908,6 +1907,7 @@ void pnga_set_property(Integer g_a, char* property) {
       list[i] = origin_id+i;
     }
     handle = pnga_pgroup_create(list, nprocs);
+    free(list);
     GA[ga_handle].p_handle = handle;
 
     /* Ignore hints on data distribution (chunk) and just go with default
@@ -1993,9 +1993,11 @@ void pnga_set_property(Integer g_a, char* property) {
       }
       else
 #endif
+      {
         ARMCI_Free(
             GA[ga_handle].ptr[pnga_pgroup_nodeid(GA[ga_handle].old_handle)]
             - GA[ga_handle].id);
+      }
 #ifndef AVOID_MA_STORAGE
     }else{
       if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
@@ -2026,10 +2028,12 @@ void pnga_set_property(Integer g_a, char* property) {
     }
     /* Copy data from copy of old GA to new GA and then get rid of copy*/
     pnga_distribution(g_a,grp_me,lo,hi);
+    chk = 1;
     for (i=0; i<ndim; i++) {
       ld[i] = hi[i] - lo[i] + 1;
+      if (hi[i] < lo[i]) chk = 0;
     }
-    pnga_get(g_tmp,lo,hi,GA[ga_handle].ptr[grp_me],ld);
+    if (chk) pnga_get(g_tmp,lo,hi,GA[ga_handle].ptr[grp_me],ld);
     pnga_destroy(g_tmp);
     GA_POP_NAME;
   } else {
@@ -2047,7 +2051,7 @@ void pnga_unset_property(Integer g_a) {
   Integer ga_handle = g_a + GA_OFFSET;
   if (GA[ga_handle].property == READ_ONLY) {
     /* TODO: Copy global array to original configuration */
-    int i, d, ndim, btot;
+    int i, d, ndim, btot, chk;
     Integer g_tmp, grp_me;
     Integer nprocs, nodeid, origin_id, dflt_grp, handle, maplen;
     Integer nelem, mem_size, status;
@@ -2059,7 +2063,7 @@ void pnga_unset_property(Integer g_a) {
     ndim = (int)GA[ga_handle].ndim;
     /* Start by making a copy of the GA */
     for (i=0; i<ndim; i++) {
-      chunk[i] = GA[ga_handle].dims[i];
+      chunk[i] = GA[ga_handle].chunk[i];
       dims[i] = GA[ga_handle].dims[i];
     }
     /* Make a temporary copy of GA */
@@ -2072,11 +2076,15 @@ void pnga_unset_property(Integer g_a) {
     /* Copy portion of global array to locally held portion of tmp array */
     grp_me = pnga_pgroup_nodeid(GA[ga_handle].old_handle);
     pnga_distribution(g_tmp,grp_me,lo,hi);
+    chk = 1;
     for (i=0; i<ndim; i++) {
       ld[i] = hi[i]-lo[i]+1;
+      if (hi[i] < lo[i]) chk = 0;
     }
-    pnga_access_ptr(g_tmp,lo,hi,&ptr,ld);
-    pnga_get(g_a,lo,hi,ptr,ld);
+    if (chk) {
+      pnga_access_ptr(g_tmp,lo,hi,&ptr,ld);
+      pnga_get(g_a,lo,hi,ptr,ld);
+    }
 
     /* Get rid of current memory allocation */
 #ifndef AVOID_MA_STORAGE
@@ -2093,9 +2101,11 @@ void pnga_unset_property(Integer g_a) {
       }
       else
 #endif
+      {
         ARMCI_Free(
             GA[ga_handle].ptr[pnga_pgroup_nodeid(GA[ga_handle].p_handle)]
             - GA[ga_handle].id);
+      }
 #ifndef AVOID_MA_STORAGE
     }else{
       if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
@@ -2103,20 +2113,17 @@ void pnga_unset_property(Integer g_a) {
 #endif
     
     /* Reset distribution parameters back to original values */
-    btot = 1;
+    btot = 0;
     for (i=0; i<ndim; i++) {
       GA[ga_handle].nblock[i] = GA[ga_handle].old_nblock[i];
       GA[ga_handle].lo[i] = GA[ga_handle].old_lo[i];
-      btot *= GA[ga_handle].nblock[i];
+      btot += GA[ga_handle].nblock[i];
     }
-    btot *= ndim;
-    GA[ga_handle].mapc = (Integer*)malloc(btot*sizeof(Integer));
-    for (i=0; i<btot; i++) {
+    GA[ga_handle].mapc = (Integer*)malloc((btot+1)*sizeof(Integer));
+    for (i=0; i<btot+1; i++) {
       GA[ga_handle].mapc[i] = GA[ga_handle].old_mapc[i];
     }
     free(GA[ga_handle].old_mapc);
-    handle = GA[ga_handle].old_handle;
-    GA[ga_handle].p_handle = handle;
 
     pnga_distribution(g_a, grp_me, GA[ga_handle].lo, hi);
     for( i = 0, nelem=1; i< ndim; i++){
@@ -2134,10 +2141,11 @@ void pnga_unset_property(Integer g_a) {
       pnga_pgroup_gop(handle,pnga_type_f2c(MT_F_INT), &status, 1, "&&");
     } else status = 1;
     /* allocate memory */
+    GA[ga_handle].p_handle = GA[ga_handle].old_handle;
     if (status) {
       /* Allocate new memory */
       status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
-          GA[ga_handle].type, &GA[ga_handle].id, handle);
+          GA[ga_handle].type, &GA[ga_handle].id, GA[ga_handle].p_handle);
     } else {
       GA[ga_handle].ptr[grp_me]=NULL;
     }
@@ -2149,11 +2157,15 @@ void pnga_unset_property(Integer g_a) {
      * should work, so we can use that to find out how much data is on this
      * processor */
     pnga_distribution(g_a,grp_me,lo,hi);
+    chk = 1;
     for (i=0; i<ndim; i++) {
       ld[i] = hi[i]-lo[i]+1;
+      if (hi[i] < lo[i]) chk = 0;
     }
-    pnga_access_ptr(g_a,lo,hi,&ptr,ld);
-    pnga_get(g_tmp,lo,hi,ptr,ld);
+    if (chk) {
+      pnga_access_ptr(g_a,lo,hi,&ptr,ld);
+      pnga_get(g_tmp,lo,hi,ptr,ld);
+    }
     pnga_destroy(g_tmp);
   }
   GA[ga_handle].property = NO_PROPERTY;
@@ -2696,7 +2708,9 @@ int i, nproc,grp_me=GAme;
 				      &PGRP_LIST[grp_id].group);
        else
 #  endif
+       {
 	  status = ARMCI_Malloc((void**)ptr_array, bytes);
+       }
        if(bytes!=0 && ptr_array[grp_me]==NULL) 
 	  pnga_error("gai_get_shmem: ARMCI Malloc failed", GAme);
        for(i=0;i<nproc;i++)ptr_arr[i] = ptr_array[GA_inv_Proc_list[i]];
