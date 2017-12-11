@@ -2138,9 +2138,10 @@ void pnga_unset_property(Integer g_a) {
     /* check if everybody has enough memory left */
     if(GA_memory_limited){
       status = (GA_total_memory >= 0) ? 1 : 0;
-      pnga_pgroup_gop(handle,pnga_type_f2c(MT_F_INT), &status, 1, "&&");
+      pnga_pgroup_gop(GA[ga_handle].old_handle,pnga_type_f2c(MT_F_INT),
+          &status, 1, "&&");
     } else status = 1;
-    /* allocate memory */
+    handle = GA[ga_handle].p_handle;
     GA[ga_handle].p_handle = GA[ga_handle].old_handle;
     if (status) {
       /* Allocate new memory */
@@ -2153,6 +2154,8 @@ void pnga_unset_property(Integer g_a) {
     if (!status) {
       pnga_error("Memory failure when setting READ_ONLY",0);
     }
+    /* Get rid of read-only group */
+    pnga_pgroup_destroy(handle);
     /* Generate parameters for new memory allocation. Distribution function
      * should work, so we can use that to find out how much data is on this
      * processor */
