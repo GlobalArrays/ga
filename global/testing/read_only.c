@@ -107,10 +107,11 @@ int main(int argc, char * argv[])
 
   nproc = GA_Nnodes();
   me = GA_Nodeid();
+  i = GA_Cluster_nprocs(GA_Cluster_nodeid());
 
   /* Find processor grid dimensions and processor grid coordinates */
   if (me==0) {
-    printf("\nTest running on %d processors\n",nproc);
+    printf("\nTest running on %d processors with %d processes per node\n",nproc,i);
     printf("\nArray dimension is %d X %d\n",x,y);
   }
 
