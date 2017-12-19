@@ -1881,6 +1881,7 @@ void pnga_set_property(Integer g_a, char* property) {
     for (i=0; i<ndim; i++) {
       GA[ga_handle].old_nblock[i] = GA[ga_handle].nblock[i];
       GA[ga_handle].old_lo[i] = GA[ga_handle].lo[i];
+      GA[ga_handle].old_chunk[i] = GA[ga_handle].chunk[i];
       btot += GA[ga_handle].nblock[i];
     }
     GA[ga_handle].old_mapc = (Integer*)malloc((btot+1)*sizeof(Integer));
@@ -1914,7 +1915,7 @@ void pnga_set_property(Integer g_a, char* property) {
      * distribution on the node */
     for (i=0; i<ndim; i++) {
       /* eliminate dimension=1 from analysis, otherwise set blk to -1*/
-      chunk[i] = GA[ga_handle].chunk[i];
+      chunk[i] = -1;
       dims[i] = GA[ga_handle].dims[i];
     }
     if (chunk[0] != 0)
@@ -1957,6 +1958,8 @@ void pnga_set_property(Integer g_a, char* property) {
       GA[ga_handle].nblock[i] = pe[i];
       maplen += pe[i];
     }
+    free(GA[ga_handle].mapc);
+    GA[ga_handle].mapc = (Integer*)malloc((maplen+1)*sizeof(Integer));
     for(i = 0; i< maplen; i++) {
       GA[ga_handle].mapc[i] = (C_Integer)mapALL[i];
     }
@@ -1973,10 +1976,13 @@ void pnga_set_property(Integer g_a, char* property) {
      * to hold ***/
     me_local = (Integer)PGRP_LIST[handle].map_proc_list[GAme];
     pnga_distribution(g_a, me_local, GA[ga_handle].lo, hi);
+    chk = 1;
     for( i = 0, nelem=1; i< ndim; i++){
+      if (hi[i]-(Integer)GA[ga_handle].lo[i]+1 <= 0) chk = 0;
       nelem *= (hi[i]-(Integer)GA[ga_handle].lo[i]+1);
     }
     mem_size = nelem * GA[ga_handle].elemsize;
+    if (!chk) mem_size = 0;
     grp_me = pnga_pgroup_nodeid(handle);
     /* Clean up old memory first */
 #ifndef AVOID_MA_STORAGE
@@ -2030,6 +2036,7 @@ void pnga_set_property(Integer g_a, char* property) {
     pnga_distribution(g_a,grp_me,lo,hi);
     chk = 1;
     for (i=0; i<ndim; i++) {
+      GA[ga_handle].chunk[i] = ((C_Integer)hi[i]-GA[ga_handle].lo[i]+1);
       ld[i] = hi[i] - lo[i] + 1;
       if (hi[i] < lo[i]) chk = 0;
     }
@@ -2117,8 +2124,10 @@ void pnga_unset_property(Integer g_a) {
     for (i=0; i<ndim; i++) {
       GA[ga_handle].nblock[i] = GA[ga_handle].old_nblock[i];
       GA[ga_handle].lo[i] = GA[ga_handle].old_lo[i];
+      GA[ga_handle].chunk[i] = GA[ga_handle].old_chunk[i];
       btot += GA[ga_handle].nblock[i];
     }
+    free(GA[ga_handle].mapc);
     GA[ga_handle].mapc = (Integer*)malloc((btot+1)*sizeof(Integer));
     for (i=0; i<btot+1; i++) {
       GA[ga_handle].mapc[i] = GA[ga_handle].old_mapc[i];
@@ -2126,10 +2135,13 @@ void pnga_unset_property(Integer g_a) {
     free(GA[ga_handle].old_mapc);
 
     pnga_distribution(g_a, grp_me, GA[ga_handle].lo, hi);
+    chk = 1;
     for( i = 0, nelem=1; i< ndim; i++){
+      if (hi[i]-(Integer)GA[ga_handle].lo[i]+1 <= 0) chk = 0;
       nelem *= (hi[i]-(Integer)GA[ga_handle].lo[i]+1);
     }
     mem_size = nelem * GA[ga_handle].elemsize;
+    if (!chk) mem_size = 0;
 
     if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
     GAstat.curmem -= GA[ga_handle].size;

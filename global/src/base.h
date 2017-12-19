@@ -86,6 +86,7 @@ typedef struct {
        int old_nblock[MAXDIM];      /* copy of original nblock array        */
        int old_handle;              /* original group handle                */
        int old_lo[MAXDIM];          /* original lo array                    */
+       int old_chunk[MAXDIM];       /* original chunk array                 */
 #ifdef ENABLE_CHECKPOINT
        int record_id;               /* record id for writing ga to disk     */
 #endif
