@@ -1425,6 +1425,7 @@ Integer pnga_create_handle()
                                    /* then array is not restricted.     */
   GA[ga_handle].actv_handle = 1;
   GA[ga_handle].has_data = 1;
+  GA[ga_handle].property = NO_PROPERTY;
   GA_POP_NAME;
   return g_a;
 }
@@ -3224,6 +3225,11 @@ int local_sync_begin,local_sync_end;
        free(GA[ga_handle].mapc);
        GA[ga_handle].mapc = NULL;
     } 
+
+    if (GA[ga_handle].property == READ_ONLY) {
+      free(GA[ga_handle].old_mapc);
+      pnga_pgroup_destroy(GA[ga_handle].p_handle);
+    }
 
     if(GA[ga_handle].ptr[grp_me]==NULL){
        return TRUE;
