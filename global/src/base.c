@@ -1203,7 +1203,9 @@ logical pnga_pgroup_destroy(Integer grp_id)
   i=0;
   ok = 1;
   do{
-      if(GA[i].p_handle == (int)grp_id && GA[i].actv) ok = 0;
+      if (GA[i].actv) {
+        if(GA[i].p_handle == (int)grp_id && GA[i].actv) ok = 0;
+      }
       i++;
   }while(i<_max_global_array && ok);
   if (!ok) pnga_error("Attempt to destroy process group with attached GAs",grp_id);
@@ -2153,7 +2155,7 @@ void pnga_unset_property(Integer g_a) {
       pnga_pgroup_gop(GA[ga_handle].old_handle,pnga_type_f2c(MT_F_INT),
           &status, 1, "&&");
     } else status = 1;
-    handle = GA[ga_handle].p_handle;
+    handle = (Integer)GA[ga_handle].p_handle;
     GA[ga_handle].p_handle = GA[ga_handle].old_handle;
     if (status) {
       /* Allocate new memory */
