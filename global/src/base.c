@@ -1872,6 +1872,7 @@ void pnga_set_property(Integer g_a, char* property) {
     Integer blk[MAXDIM], dims[MAXDIM], pe[MAXDIM], chunk[MAXDIM];
     Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
     Integer *pmap[MAXDIM], *map;
+    char *buf;
     if (GA[ga_handle].block_flag) {
       pnga_error("Block-cyclic arrays not supported for READ_ONLY",0);
     }
@@ -1915,10 +1916,15 @@ void pnga_set_property(Integer g_a, char* property) {
     GA[ga_handle].p_handle = handle;
 
     /* Ignore hints on data distribution (chunk) and just go with default
-     * distribution on the node */
+     * distribution on the node, except if chunk dimension is same as array
+     * dimension (no partitioning on that axis) */
     for (i=0; i<ndim; i++) {
       /* eliminate dimension=1 from analysis, otherwise set blk to -1*/
-      chunk[i] = -1;
+      if (GA[ga_handle].chunk[i] == GA[ga_handle].dims[i]) {
+        chunk[i] = GA[ga_handle].chunk[i];
+      } else {
+        chunk[i] = -1;
+      }
       dims[i] = GA[ga_handle].dims[i];
     }
     if (chunk[0] != 0)
@@ -2038,12 +2044,28 @@ void pnga_set_property(Integer g_a, char* property) {
     /* Copy data from copy of old GA to new GA and then get rid of copy*/
     pnga_distribution(g_a,grp_me,lo,hi);
     chk = 1;
+    nelem = 1;
     for (i=0; i<ndim; i++) {
+      /*
       GA[ga_handle].chunk[i] = ((C_Integer)hi[i]-GA[ga_handle].lo[i]+1);
+      */
       ld[i] = hi[i] - lo[i] + 1;
+      nelem *= ld[i];
       if (hi[i] < lo[i]) chk = 0;
     }
-    if (chk) pnga_get(g_tmp,lo,hi,GA[ga_handle].ptr[grp_me],ld);
+    if (chk) {
+#if 1
+      pnga_get(g_tmp,lo,hi,GA[ga_handle].ptr[grp_me],ld);
+#else
+      /* MPI RMA does not allow you to use memory assigned to one window as
+       * local buffer for another buffer. Create a local buffer to get around
+       * this problem */
+      buf = (char*)malloc(nelem*GA[ga_handle].elemsize);
+      pnga_get(g_tmp,lo,hi,buf,ld);
+      memcpy(GA[ga_handle].ptr[grp_me],buf,nelem*GA[ga_handle].elemsize);
+      free(buf);
+#endif
+    }
     pnga_destroy(g_tmp);
     GA_POP_NAME;
   } else {
@@ -2068,7 +2090,7 @@ void pnga_unset_property(Integer g_a) {
     Integer *list;
     Integer dims[MAXDIM], chunk[MAXDIM];
     Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
-    void *ptr;
+    void *ptr, *buf;
 
     ndim = (int)GA[ga_handle].ndim;
     /* Start by making a copy of the GA */
@@ -2176,13 +2198,26 @@ void pnga_unset_property(Integer g_a) {
      * processor */
     pnga_distribution(g_a,grp_me,lo,hi);
     chk = 1;
+    nelem = 1;
     for (i=0; i<ndim; i++) {
       ld[i] = hi[i]-lo[i]+1;
+      nelem *= ld[i];
       if (hi[i] < lo[i]) chk = 0;
     }
     if (chk) {
+#if 1
       pnga_access_ptr(g_a,lo,hi,&ptr,ld);
       pnga_get(g_tmp,lo,hi,ptr,ld);
+#else
+      /* MPI RMA does not allow you to use memory assigned to one window as
+       * local buffer for another buffer. Create a local buffer to get around
+       * this problem */
+      buf = (void*)malloc(nelem*GA[ga_handle].elemsize);
+      pnga_get(g_tmp,lo,hi,buf,ld);
+      pnga_access_ptr(g_a,lo,hi,&ptr,ld);
+      memcpy(ptr,buf,nelem*GA[ga_handle].elemsize);
+      free(buf);
+#endif
     }
     pnga_destroy(g_tmp);
   }
@@ -2398,7 +2433,9 @@ logical pnga_allocate(Integer g_a)
     }
     if (GA[ga_handle].num_rstrctd == 0 || GA[ga_handle].has_data == 1) {
       for( i = 0, nelem=1; i< ndim; i++){
+        /*
         GA[ga_handle].chunk[i] = ((C_Integer)hi[i]-GA[ga_handle].lo[i]+1);
+        */
         nelem *= (hi[i]-(Integer)GA[ga_handle].lo[i]+1+2*width[i]);
       }
     } else {
