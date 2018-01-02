@@ -19,23 +19,100 @@
 /* utilities for GA test programs */
 #include "testutil.h"
 
-#define N 29          /* first dimension  */
+#define N 400          /* first dimension  */
+
+#define NB 20          /* block dimension */
 
 #define GA_DATA_TYPE MT_C_FLOAT
 #define GA_ABS(a) (((a) >= 0) ? (a) : (-(a)))
-#define TOLERANCE 0.000001
+#define TOLERANCE 0.0001
 
+#define USE_SCALAPACK
+/*
+#define USE_SIMPLE_CYCLIC
+*/
 
 DoublePrecision gTime=0.0, gStart;
+
+#define MAX_FACTOR 512
+/**
+ * Factor p processors into 2D processor grid of dimensions px, py
+ */
+void grid_factor(int p, int *idx, int *idy) {
+  int i, j;
+  int ip, ifac, pmax, prime[MAX_FACTOR];
+  int fac[MAX_FACTOR];
+  int ix, iy, ichk;
+
+  i = 1;
+  /**
+   *   factor p completely
+   *   first, find all prime numbers, besides 1, less than or equal to 
+   *   the square root of p
+   */
+  ip = (int)(sqrt((double)p))+1;
+  pmax = 0;
+  for (i=2; i<=ip; i++) {
+    ichk = 1;
+    for (j=0; j<pmax; j++) {
+      if (i%prime[j] == 0) {
+        ichk = 0;
+        break;
+      }
+    }
+    if (ichk) {
+      pmax = pmax + 1;
+      if (pmax > MAX_FACTOR) printf("Overflow in grid_factor\n");
+      prime[pmax-1] = i;
+    }
+  }
+  /**
+   *   find all prime factors of p
+   */
+  ip = p;
+  ifac = 0;
+  for (i=0; i<pmax; i++) {
+    while(ip%prime[i] == 0) {
+      ifac = ifac + 1;
+      fac[ifac-1] = prime[i];
+      ip = ip/prime[i];
+    }
+  }
+  /**
+   *  p is prime
+   */
+  if (ifac==0) {
+    ifac++;
+    fac[0] = p;
+  }
+  /**
+   *    find two factors of p of approximately the
+   *    same size
+   */
+  *idx = 1;
+  *idy = 1;
+  for (i = ifac-1; i >= 0; i--) {
+    ix = *idx;
+    iy = *idy;
+    if (ix <= iy) {
+      *idx = fac[i]*(*idx);
+    } else {
+      *idy = fac[i]*(*idy);
+    }
+  }
+}
 
 void
 test(int data_type) {
   int me=GA_Nodeid();
+  int nproc = GA_Nnodes();
   int g_a, g_b, g_c;
   int ndim = 2;
   int dims[2]={N,N};
   int lo[2]={0,0};
   int hi[2]={N-1,N-1};
+  int block_size[2]={NB,NB};
+  int proc_grid[2];
   int i,j,l,k,m,n, ld;
 
   double alpha_dbl = 1.0, beta_dbl = 0.0;
@@ -45,6 +122,10 @@ test(int data_type) {
   float alpha_flt = 1.0, beta_flt = 0.0;
   float fzero = 0.0;
   float fdiff;
+  float ftmp;
+  double dtmp;
+  SingleComplex ctmp;
+  DoubleComplex ztmp;
 
   DoubleComplex alpha_dcpl = {1.0, 0.0} , beta_dcpl = {0.0, 0.0}; 
   DoubleComplex zzero = {0.0,0.0};
@@ -95,7 +176,30 @@ test(int data_type) {
   }
 
   if (me==0) printf("\nCreate A, B, C\n");
+#ifndef USE_SCALAPACK
+#ifndef USE_SIMPLE_CYCLIC
   g_a = NGA_Create(data_type, ndim, dims, "array A", NULL);
+#else
+  g_a = NGA_Create_handle();
+  NGA_Set_data(g_a,ndim,dims,data_type);
+  NGA_Set_array_name(g_a,"array A");
+  NGA_Set_block_cyclic(g_a,block_size);
+  if (!GA_Allocate(g_a)) {
+    GA_Error("Failed: create: g_a",40);
+  }
+#endif
+#else
+  g_a = NGA_Create_handle();
+  NGA_Set_data(g_a,ndim,dims,data_type);
+  NGA_Set_array_name(g_a,"array A");
+  grid_factor(nproc,&i,&j);
+  proc_grid[0] = i;
+  proc_grid[1] = j;
+  NGA_Set_block_cyclic_proc_grid(g_a,block_size,proc_grid);
+  if (!GA_Allocate(g_a)) {
+    GA_Error("Failed: create: g_a",40);
+  }
+#endif
   g_b = GA_Duplicate(g_a, "array B");  
   g_c = GA_Duplicate(g_a, "array C");
   if(!g_a || !g_b || !g_c) GA_Error("Create failed: a, b or c",1);
@@ -162,16 +266,20 @@ test(int data_type) {
   if (me==0) printf("\nPerform matrix multiply\n");
   switch (data_type) {
     case C_FLOAT:
-      GA_Sgemm('N','N',N,N,N,alpha_flt,g_a,g_b,beta_flt,g_c);
+      NGA_Matmul_patch('N','N',&alpha_flt,&beta_flt,g_a,lo,hi,
+        g_b,lo,hi,g_c,lo,hi);
       break;
     case C_DBL:
-      GA_Dgemm('N','N',N,N,N,alpha_dbl,g_a,g_b,beta_dbl,g_c);
+      NGA_Matmul_patch('N','N',&alpha_dbl,&beta_dbl,g_a,lo,hi,
+        g_b,lo,hi,g_c,lo,hi);
       break;
     case C_SCPL:
-      GA_Cgemm('N','N',N,N,N,alpha_scpl,g_a,g_b,beta_scpl,g_c);
+      NGA_Matmul_patch('N','N',&alpha_scpl,&beta_scpl,g_a,lo,hi,
+        g_b,lo,hi,g_c,lo,hi);
       break;
     case C_DCPL:
-      GA_Zgemm('N','N',N,N,N,alpha_dcpl,g_a,g_b,beta_dcpl,g_c);
+      NGA_Matmul_patch('N','N',&alpha_dcpl,&beta_dcpl,g_a,lo,hi,
+        g_b,lo,hi,g_c,lo,hi);
       break;
     default:
       GA_Error("wrong data type", data_type);
@@ -255,6 +363,9 @@ test(int data_type) {
         switch (data_type) {
           case C_FLOAT:
             fdiff = ((float*)abuf)[i*N+j]-((float*)cbuf)[i*N+j];
+            if (((float*)abuf)[i*N+j] != 0.0) {
+              fdiff /= ((float*)abuf)[i*N+j];
+            }
             if (fabs(fdiff) > TOLERANCE) {
               printf("p[%d] [%d,%d] Actual: %f Expected: %f\n",me,i,j,
                   ((float*)abuf)[i*N+j],((float*)cbuf)[i*N+j]);
@@ -262,6 +373,9 @@ test(int data_type) {
             break;
           case C_DBL:
             ddiff = ((double*)abuf)[i*N+j]-((double*)cbuf)[i*N+j];
+            if (((double*)abuf)[i*N+j] != 0.0) {
+              ddiff /= ((double*)abuf)[i*N+j];
+            }
             if (fabs(ddiff) > TOLERANCE) {
               printf("p[%d] [%d,%d] Actual: %f Expected: %f\n",me,i,j,
                   ((double*)abuf)[i*N+j],((double*)cbuf)[i*N+j]);
@@ -272,7 +386,15 @@ test(int data_type) {
               -((DoubleComplex*)cbuf)[i*N+j].real;
             zdiff.imag = ((DoubleComplex*)abuf)[i*N+j].imag
               -((DoubleComplex*)cbuf)[i*N+j].imag;
-            if (fabs(zdiff.real) > TOLERANCE) {
+            if (((DoubleComplex*)abuf)[i*N+j].real != 0.0 ||
+                ((DoubleComplex*)abuf)[i*N+j].imag != 0.0) {
+              ztmp = ((DoubleComplex*)abuf)[i*N+j];
+              ddiff = sqrt((zdiff.real*zdiff.real+zdiff.imag*zdiff.imag)
+                  /(ztmp.real*ztmp.real+ztmp.imag*ztmp.imag));
+            } else {
+              ddiff = sqrt(zdiff.real*zdiff.real+zdiff.imag*zdiff.imag);
+            }
+            if (fabs(ddiff) > TOLERANCE) {
               printf("p[%d] [%d,%d] Actual: (%f,%f) Expected: (%f,%f)\n",me,i,j,
                   ((DoubleComplex*)abuf)[i*N+j].real,
                   ((DoubleComplex*)abuf)[i*N+j].imag,
@@ -285,7 +407,15 @@ test(int data_type) {
               -((SingleComplex*)cbuf)[i*N+j].real;
             cdiff.imag = ((SingleComplex*)abuf)[i*N+j].imag
               -((SingleComplex*)cbuf)[i*N+j].imag;
-            if (fabs(cdiff.real) > TOLERANCE) {
+            if (((SingleComplex*)abuf)[i*N+j].real != 0.0 ||
+                ((SingleComplex*)abuf)[i*N+j].imag != 0.0) {
+              ctmp = ((SingleComplex*)abuf)[i*N+j];
+              fdiff = sqrt((cdiff.real*cdiff.real+cdiff.imag*cdiff.imag)
+                  /(ctmp.real*ctmp.real+ctmp.imag*ctmp.imag));
+            } else {
+              fdiff = sqrt(cdiff.real*cdiff.real+cdiff.imag*cdiff.imag);
+            }
+            if (fabs(fdiff) > TOLERANCE) {
               printf("p[%d] [%d,%d] Actual: (%f,%f) Expected: (%f,%f)\n",me,i,j,
                   ((SingleComplex*)abuf)[i*N+j].real,
                   ((SingleComplex*)abuf)[i*N+j].imag,
@@ -307,6 +437,23 @@ test(int data_type) {
   }
   GA_Sync();
 
+  /* Get norm of g_a */
+  switch (data_type) {
+    case C_FLOAT:
+      ftmp = GA_Fdot(g_a,g_a);
+      break;
+    case C_DBL:
+      dtmp = GA_Ddot(g_a,g_a);
+      break;
+    case C_DCPL:
+      ztmp = GA_Zdot(g_a,g_a);
+      break;
+    case C_SCPL:
+      ctmp = GA_Cdot(g_a,g_a);
+      break;
+    default:
+      GA_Error("wrong data type", data_type);
+  }
   /* subtract C from A and put the results in B */
   beta_flt = -1.0;
   beta_dbl = -1.0;
@@ -318,6 +465,9 @@ test(int data_type) {
   switch (data_type) {
     case C_FLOAT:
       fdiff = GA_Fdot(g_b, g_b);
+      if (ftmp != 0.0) {
+        fdiff /= ftmp;
+      }
       if(fabs(fdiff) > TOLERANCE) {
         printf("\nabs(result) = %f > %f\n", fabsf(fdiff), TOLERANCE);
         GA_Error("GA_Sgemm Failed", 1);
@@ -327,6 +477,9 @@ test(int data_type) {
       break;
     case C_DBL:
       ddiff = GA_Ddot(g_b, g_b);
+      if (dtmp != 0.0) {
+        ddiff /= dtmp;
+      }
       if(fabs(ddiff) > TOLERANCE) {
         printf("\nabs(result) = %f > %f\n", fabsf(ddiff), TOLERANCE);
         GA_Error("GA_Dgemm Failed", 1);
@@ -336,7 +489,13 @@ test(int data_type) {
       break;
     case C_DCPL:
       zdiff = GA_Zdot(g_b, g_b);
-      if(fabs(zdiff.real) > TOLERANCE) {
+      if (ztmp.real != 0.0 || ztmp.imag != 0.0) {
+        ddiff = sqrt((zdiff.real*zdiff.real+zdiff.imag*zdiff.imag)
+            /(ztmp.real*ztmp.real+ztmp.imag*ztmp.imag));
+      } else {
+        ddiff = sqrt(zdiff.real*zdiff.real+zdiff.imag*zdiff.imag);
+      }
+      if(fabs(ddiff) > TOLERANCE) {
         printf("\nabs(result) = %f > %f\n", fabsf(zdiff.real), TOLERANCE);
         GA_Error("GA_Zgemm Failed", 1);
       } else if (me == 0) {
@@ -345,7 +504,13 @@ test(int data_type) {
       break;
     case C_SCPL:
       cdiff = GA_Cdot(g_b, g_b);
-      if(fabs(cdiff.real) > TOLERANCE) {
+      if (ctmp.real != 0.0 || ctmp.imag != 0.0) {
+        fdiff = sqrt((cdiff.real*cdiff.real+cdiff.imag*cdiff.imag)
+            /(ctmp.real*ctmp.real+ctmp.imag*ctmp.imag));
+      } else {
+        fdiff = sqrt(cdiff.real*cdiff.real+cdiff.imag*cdiff.imag);
+      }
+      if(fabs(fdiff) > TOLERANCE) {
         printf("\nabs(result) = %f > %f\n", fabsf(cdiff.real), TOLERANCE);
         GA_Error("GA_Cgemm Failed", 1);
       } else if (me == 0) {
@@ -374,7 +539,7 @@ do_work() {
   test(C_FLOAT);
   test(C_DBL);
   test(C_DCPL);
-/*  test(C_SCPL); */
+  test(C_SCPL);
   if(me == 0) printf("\n\n");
 }
      
