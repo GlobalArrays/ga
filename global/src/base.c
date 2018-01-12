@@ -1879,7 +1879,6 @@ void pnga_set_property(Integer g_a, char* property) {
     if (GA[ga_handle].p_handle != pnga_pgroup_get_world()) {
       pnga_error("Arrays on subgroups not supported for READ_ONLY",0);
     }
-    GA[ga_handle].property = READ_ONLY;
     ndim = (int)GA[ga_handle].ndim;
     btot = 0;
     for (i=0; i<ndim; i++) {
@@ -1914,6 +1913,7 @@ void pnga_set_property(Integer g_a, char* property) {
     handle = pnga_pgroup_create(list, nprocs);
     free(list);
     GA[ga_handle].p_handle = handle;
+    GA[ga_handle].property = READ_ONLY;
 
     /* Ignore hints on data distribution (chunk) and just go with default
      * distribution on the node, except if chunk dimension is same as array
@@ -1983,8 +1983,7 @@ void pnga_set_property(Integer g_a, char* property) {
 
     /*** determine which portion of the array I am supposed
      * to hold ***/
-    me_local = (Integer)PGRP_LIST[handle].map_proc_list[GAme];
-    pnga_distribution(g_a, me_local, GA[ga_handle].lo, hi);
+    pnga_distribution(g_a, GAme, GA[ga_handle].lo, hi);
     chk = 1;
     for( i = 0, nelem=1; i< ndim; i++){
       if (hi[i]-(Integer)GA[ga_handle].lo[i]+1 <= 0) chk = 0;
@@ -2042,7 +2041,7 @@ void pnga_set_property(Integer g_a, char* property) {
       pnga_error("Memory failure when unsetting READ_ONLY",0);
     }
     /* Copy data from copy of old GA to new GA and then get rid of copy*/
-    pnga_distribution(g_a,grp_me,lo,hi);
+    pnga_distribution(g_a,GAme,lo,hi);
     chk = 1;
     nelem = 1;
     for (i=0; i<ndim; i++) {
@@ -2081,6 +2080,7 @@ void pnga_set_property(Integer g_a, char* property) {
 #endif
 void pnga_unset_property(Integer g_a) {
   Integer ga_handle = g_a + GA_OFFSET;
+  GA_PUSH_NAME("ga_unset_property");
   if (GA[ga_handle].property == READ_ONLY) {
     /* TODO: Copy global array to original configuration */
     int i, d, ndim, btot, chk;
@@ -2196,7 +2196,8 @@ void pnga_unset_property(Integer g_a) {
     /* Generate parameters for new memory allocation. Distribution function
      * should work, so we can use that to find out how much data is on this
      * processor */
-    pnga_distribution(g_a,grp_me,lo,hi);
+    GA[ga_handle].property = NO_PROPERTY;
+    pnga_distribution(g_a,GAme,lo,hi);
     chk = 1;
     nelem = 1;
     for (i=0; i<ndim; i++) {
@@ -2220,8 +2221,10 @@ void pnga_unset_property(Integer g_a) {
 #endif
     }
     pnga_destroy(g_tmp);
+  } else {
+    GA[ga_handle].property = NO_PROPERTY;
   }
-  GA[ga_handle].property = NO_PROPERTY;
+  GA_POP_NAME;
 }
 
 /**
@@ -2954,28 +2957,35 @@ char **ptr_arr = (char**)(info+1);
 
 void pnga_distribution(Integer g_a, Integer proc, Integer *lo, Integer * hi)
 {
-Integer ga_handle, lproc;
+  Integer ga_handle, lproc, old_grp;
 
-   ga_check_handleM(g_a, "nga_distribution");
-   ga_handle = (GA_OFFSET + g_a);
+  ga_check_handleM(g_a, "nga_distribution");
+  ga_handle = (GA_OFFSET + g_a);
 
-   lproc = proc;
-   if (GA[ga_handle].num_rstrctd > 0) {
-     lproc = GA[ga_handle].rank_rstrctd[lproc];
-   }
-   if (GA[ga_handle].block_flag == 0) {
-     ga_ownsM(ga_handle, lproc, lo, hi);
-   } else {
-     C_Integer index[MAXDIM];
-     int ndim = GA[ga_handle].ndim;
-     int i;
-     gam_find_block_indices(ga_handle,lproc,index);
-     for (i=0; i<ndim; i++) {
-       lo[i] = index[i]*GA[ga_handle].block_dims[i] + 1;
-       hi[i] = (index[i]+1)*GA[ga_handle].block_dims[i];
-       if (hi[i] > GA[ga_handle].dims[i]) hi[i] = GA[ga_handle].dims[i];
-     }
-   }
+  lproc = proc;
+  if (GA[ga_handle].num_rstrctd > 0) {
+    lproc = GA[ga_handle].rank_rstrctd[lproc];
+  }
+  /* This currently assumes that read-only property can only be applied to
+   * processors on the world group */
+  if (GA[ga_handle].property == READ_ONLY) {
+    Integer node = pnga_cluster_proc_nodeid(proc);
+    Integer nodesize = pnga_cluster_nprocs(node);
+    lproc = proc%nodesize;
+  }
+  if (GA[ga_handle].block_flag == 0) {
+    ga_ownsM(ga_handle, lproc, lo, hi);
+  } else {
+    C_Integer index[MAXDIM];
+    int ndim = GA[ga_handle].ndim;
+    int i;
+    gam_find_block_indices(ga_handle,lproc,index);
+    for (i=0; i<ndim; i++) {
+      lo[i] = index[i]*GA[ga_handle].block_dims[i] + 1;
+      hi[i] = (index[i]+1)*GA[ga_handle].block_dims[i];
+      if (hi[i] > GA[ga_handle].dims[i]) hi[i] = GA[ga_handle].dims[i];
+    }
+  }
 }
 
 /**
