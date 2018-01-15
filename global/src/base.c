@@ -1087,6 +1087,7 @@ Integer pnga_pgroup_create(Integer *list, Integer count)
  
     /* Allocate memory for arrays containg processor maps and initialize
        values */
+    printf("p[%d] Allocate map_proc_list for handle: %d\n",GAme,pgrp_handle);
     PGRP_LIST[pgrp_handle].map_proc_list
        = (int*)malloc(GAnproc*sizeof(int)*2);
     PGRP_LIST[pgrp_handle].inv_map_proc_list
@@ -1130,6 +1131,7 @@ Integer pnga_pgroup_create(Integer *list, Integer count)
        PGRP_LIST[pgrp_handle].map_proc_list[j] = i;
        PGRP_LIST[pgrp_handle].inv_map_proc_list[i] = j;
     }
+    printf("p[%d] Setting handle %d active\n",GAme,pgrp_handle);
     PGRP_LIST[pgrp_handle].actv = 1;
     PGRP_LIST[pgrp_handle].parent = GA_Default_Proc_Group;
     PGRP_LIST[pgrp_handle].mirrored = 0;
@@ -2916,7 +2918,9 @@ Integer i, handle;
     }
     /* don't free groups list until all arrays destroyed */
     for (i=0;i<_max_global_array;i++){
-          if(PGRP_LIST[i].actv) free(PGRP_LIST[i].map_proc_list);
+      if (PGRP_LIST[i].actv) printf("p[%d] Deallocating grp %d\n",GAme,i);
+          if(PGRP_LIST[i].actv) 
+            free(PGRP_LIST[i].map_proc_list);
     }
     pnga_sync();
 

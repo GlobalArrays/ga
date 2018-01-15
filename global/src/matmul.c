@@ -2026,8 +2026,13 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    GA_PUSH_NAME("nga_matmul_patch");
    if (pnga_total_blocks(g_a) > 0 || pnga_total_blocks(g_b) > 0 ||
        pnga_total_blocks(g_c) > 0) {
+   /*
+       */
      pnga_matmul_basic(transa, transb, alpha, beta, g_a, alo, ahi,
          g_b, blo, bhi, g_c, clo, chi);
+     return;
+     /*
+   */
    }
 
 
@@ -2335,6 +2340,43 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
  * 1. remove STATBUF
  * 2. 
  */
+void printBlock(char * banner, Integer type, void *ptr, Integer lo[],
+    Integer hi[], Integer ld[])
+{
+  Integer i,j;
+  Integer offset;
+  printf("p[%d] %s lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
+      pnga_nodeid(),banner,lo[0],hi[0],lo[1],hi[1]);
+  printf("    ");
+  for (i=lo[0]; i<=hi[0]; i++) printf(" %12d",i);
+  printf("\n");
+  for (j=lo[1]; j<=hi[1]; j++) {
+    printf("J: %d",j);
+    for (i=lo[0]; i<=hi[0]; i++) {
+      offset = (j-lo[1])*ld[0] + i-lo[0];
+      switch (type) {
+        case C_FLOAT:
+          printf(" %12.4f",*((float*)ptr+offset));
+          break;
+        case C_DBL:
+          printf(" %12.4f",*((double*)ptr+offset));
+          break;
+        case C_DCPL:
+          printf(" [%12.4f:%12.4f]",*((double*)ptr+2*offset),
+              *((double*)ptr+2*offset+1));
+          break;
+        case C_SCPL:
+          printf(" [%12.4f:%12.4f]",*((float*)ptr+2*offset),
+              *((float*)ptr+2*offset+1));
+          break;
+        default:
+          pnga_error("ga_matmul_basic: wrong data type", type);
+      }
+    }
+    printf("\n");
+  }
+  printf("\n\n");
+}
 /**
  * This is a routine that is designed to work for all layouts but may not be
  * high performing.
@@ -2358,6 +2400,7 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
   void *src_ptr;
   _iterator_hdl hdl_c;
   int local_sync_begin,local_sync_end;
+  int bail = 0;
 
   ONE_Z.real = 1.0;
   ONE_Z.imag = 0.0;
@@ -2378,9 +2421,14 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
     pnga_error("Cannot do basic multiply with mirrored arrays ",0);
   }
 
+
   pnga_inquire(g_a, &atype, &arank, adims);
   pnga_inquire(g_b, &btype, &brank, bdims);
   pnga_inquire(g_c, &ctype, &crank, cdims);
+  /*
+  if ((clo[0] > 1 || clo[1] > 1) && (ctype == C_DCPL || ctype == C_SCPL)) bail = 1;
+  if ((clo[0] > 1 || clo[1] > 1)) bail = 1;
+  */
 
   /* Can't handle dimensions other than 2 */
   if(arank != 2)  pnga_error("rank of A must be 2 ",arank);
@@ -2429,28 +2477,35 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
     pnga_error("Outer dimensions of A and B do not match dimensions of C ",0);
   }
 
+  /* Scale patch of C by beta */
+  pnga_scale_patch(g_c,clo,chi,beta);
+
   /* Multiplication is feasible. Start iterating over patches of C */
   pnga_local_iterator_init(g_c, &hdl_c);
   while (pnga_local_iterator_next(&hdl_c, loC, hiC, &src_ptr, lC)) {
     Integer num_blocks;
     Integer offset, elemsize, ld;
     void *a_buf, *b_buf, *c_buf;
-
+    Integer size_a, size_b, size_c;
+    if (bail) continue;
+    /*
+    printf("p[%d] loC[0]: %d hiC[0]: %d loC[1]: %d hiC[1]: %d lC[0]: %d\n",
+        pnga_nodeid(),loC[0],hiC[0],loC[1],hiC[1],lC[0]);
+        */
     /* Copy limits since patch intersect modifies loC array */
     for (n=0; n<crank; n++) {
       lot[n] = loC[n];
       hit[n] = hiC[n];
     }
+
     /* check to see if this block overlaps with patch on C */
     if (pnga_patch_intersect(loC,hiC,lot,hit,crank)) {
-
-      /* Scale patch of C by beta */
-      pnga_scale_patch(g_c,lot,hit,beta);
+      int istart, in;
 
       /* Calculating number of blocks for inner dimension. Assume that 
        * number of rows in block returned by iterator is a good size */
-      num_blocks = (ahi[1]-alo[1]+1)/(hiC[0]-loC[0]+1);
-      if (num_blocks*(hiC[0]-loC[0]+1) < ahi[1]-alo[1]+1) num_blocks++;
+      num_blocks = (ahi[1]-alo[1]+1)/(hit[0]-lot[0]+1);
+      if (num_blocks*(hit[0]-lot[0]+1) < ahi[1]-alo[1]+1) num_blocks++;
 
       /* Calculate offset from  src_ptr to beginning of lot */ 
       offset = lC[0]*(lot[1]-loC[1])+lot[0]-loC[0];
@@ -2458,34 +2513,69 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
       c_buf = (void*)((char*)src_ptr + elemsize*offset);
       a_buf = (void*)malloc((hit[0]-lot[0]+1)*(hit[1]-lot[1]+1)*elemsize);
       b_buf = (void*)malloc((hit[0]-lot[0]+1)*(hit[1]-lot[1]+1)*elemsize);
+      size_c = (hit[0]-lot[0]+1)*(hit[1]-lot[1]+1);
+
+      /* calculate starting block index */
+      istart = (lot[0]-clo[0])/(hit[0]-lot[0]+1);
 
       /* loop over block pairs */
       for (nb=0; nb<num_blocks; nb++) {
-        nlo = lot[0]+nb*(hit[0]-lot[0]+1);
+        /*
+    printf("p[%d] loC[0]: %d hiC[0]: %d loC[1]: %d hiC[1]: %d\n",pnga_nodeid(),
+        lot[0],hit[0],lot[1],hit[1]);
+        */
+        in = istart + nb;
+        in = in%num_blocks;
+        nlo = alo[1]+in*(hit[0]-lot[0]+1);
         loA[0] = lot[0];
         hiA[0] = hit[0];
         loA[1] = nlo;
-        if (loA[1] > ahi[1]) loA[1] = (loA[1]-ahi[1])+alo[1];
         hiA[1] = loA[1]+(hit[0]-lot[0]);
         if (hiA[1] > ahi[1]) hiA[1] = ahi[1];
         ld = hiA[0]-loA[0]+1;
+        size_a = (hiA[0]-loA[0]+1)*(hiA[1]-loA[1]+1);
+        if (size_a > size_c) {
+          printf("p[%d] size_a: %d size_c: %d\n",pnga_nodeid(),size_a,size_c);
+        }
+        /*
+    printf("p[%d] loA[0]: %d hiA[0]: %d loA[1]: %d hiA[1]: %d\n",pnga_nodeid(),
+        loA[0],hiA[0],loA[1],hiA[1]);
+        */
         pnga_get(g_a,loA,hiA,a_buf,&ld);
+        /*
+        printBlock("Matrix A",atype,a_buf,loA,hiA,&ld);
+        */
         loB[1] = lot[1];
         hiB[1] = hit[1];
+        nlo = blo[0]+in*(hit[0]-lot[0]+1);
         loB[0] = nlo;
-        if (loB[0] > bhi[0]) loB[0] = (loB[0]-bhi[0])+blo[0];
         hiB[0] = loB[0]+(hit[0]-lot[0]);
         if (hiB[0] > bhi[0]) hiB[0] = bhi[0];
         ld = hiB[0]-loB[0]+1;
+        size_b = (hiB[0]-loB[0]+1)*(hiB[1]-loB[1]+1);
+        if (size_b > size_c) {
+          printf("p[%d] size_b: %d size_c: %d\n",pnga_nodeid(),size_b,size_c);
+        }
+        /*
+    printf("p[%d] loB[0]: %d hiB[0]: %d loB[1]: %d hiB[1]: %d\n",pnga_nodeid(),
+        loB[0],hiB[0],loB[1],hiB[1]);
+        */
         pnga_get(g_b,loB,hiB,b_buf,&ld);
+        /*
+        printBlock("Matrix B",btype,b_buf,loB,hiB,&ld);
+        */
 
-	     idim_t=(BlasInt)(hiA[0]-loA[0]+1);
+        idim_t=(BlasInt)(hiA[0]-loA[0]+1);
         kdim_t=(BlasInt)(hiA[1]-loA[1]+1);
         jdim_t=(BlasInt)(hiB[1]-loB[1]+1);
-	     adim_t=hit[0]-lot[0]+1;
-	     bdim_t=hit[0]-lot[0]+1;
-        cdim_t=hiC[0]-loC[0]+1;
+        adim_t=hiA[0]-loA[0]+1;
+        bdim_t=hiB[0]-loB[0]+1;
+        cdim_t=lC[0];
 
+        /*
+        printf("p[%d] idim: %d jdim: %d kdim: %d adim: %d bdim: %d cdim: %d\n",
+            pnga_nodeid(),idim_t,jdim_t,kdim_t,adim_t,bdim_t,cdim_t);
+            */
         switch(atype) {
           case C_FLOAT:
             BLAS_SGEMM(transa, transb, &idim_t, &jdim_t, &kdim_t,

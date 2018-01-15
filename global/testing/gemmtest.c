@@ -19,17 +19,17 @@
 /* utilities for GA test programs */
 #include "testutil.h"
 
-#define N 400          /* first dimension  */
+#define N 8          /* first dimension  */
 
-#define NB 20          /* block dimension */
+#define NB 2          /* block dimension */
 
 #define GA_DATA_TYPE MT_C_FLOAT
 #define GA_ABS(a) (((a) >= 0) ? (a) : (-(a)))
 #define TOLERANCE 0.0001
 
-#define USE_SCALAPACK
-/*
 #define USE_SIMPLE_CYCLIC
+/*
+#define USE_SCALAPACK
 */
 
 DoublePrecision gTime=0.0, gStart;
@@ -111,7 +111,7 @@ test(int data_type) {
   int dims[2]={N,N};
   int lo[2]={0,0};
   int hi[2]={N-1,N-1};
-  int block_size[2]={NB,NB};
+  int block_size[2]={NB,NB-1};
   int proc_grid[2];
   int i,j,l,k,m,n, ld;
 
@@ -285,7 +285,15 @@ test(int data_type) {
       GA_Error("wrong data type", data_type);
   }
   GA_Sync();
+#if 0
   if (me==0) printf("\nCheck answer\n");
+  /*
+  GA_Print(g_a);
+  if (me == 0) printf("\n\n\n\n");
+  GA_Print(g_b);
+  if (me == 0) printf("\n\n\n\n");
+  GA_Print(g_c); 
+  */
 
   /* Check answer */
   NGA_Get(g_a,lo,hi,abuf,&ld);
@@ -349,13 +357,6 @@ test(int data_type) {
     }
   }
   GA_Sync();
-  /*
-  GA_Print(g_a);
-  if (me == 0) printf("\n\n\n\n");
-  GA_Print(g_c);
-  if (me == 0) printf("\n\n\n\n");
-  GA_Print(g_b); 
-  */
   if (me == 0) {
     NGA_Get(g_c,lo,hi,abuf,&ld);
     for (i=0; i<N; i++) {
@@ -520,11 +521,296 @@ test(int data_type) {
     default:
       GA_Error("wrong data type", data_type);
   }
+#endif
 
   free(abuf);
   free(bbuf);
   free(cbuf);
 
+  switch (data_type) {
+  case C_FLOAT:
+    abuf = (void*)malloc(N*N*sizeof(float)/4);
+    bbuf = (void*)malloc(N*N*sizeof(float)/4);
+    cbuf = (void*)malloc(N*N*sizeof(float)/4);
+    break;      
+  case C_DBL:
+    abuf = (void*)malloc(N*N*sizeof(double)/4);
+    bbuf = (void*)malloc(N*N*sizeof(double)/4);
+    cbuf = (void*)malloc(N*N*sizeof(double)/4);
+    break;    
+  case C_DCPL:
+    abuf = (void*)malloc(N*N*sizeof(DoubleComplex)/4);
+    bbuf = (void*)malloc(N*N*sizeof(DoubleComplex)/4);
+    cbuf = (void*)malloc(N*N*sizeof(DoubleComplex)/4);
+    break;
+  case C_SCPL:
+    abuf = (void*)malloc(N*N*sizeof(SingleComplex)/4);
+    bbuf = (void*)malloc(N*N*sizeof(SingleComplex)/4);
+    cbuf = (void*)malloc(N*N*sizeof(SingleComplex)/4);
+    break;
+  default:
+    GA_Error("wrong data type", data_type);
+  }
+
+  /* Test multiply on a fraction of matrix. Start by reinitializing
+   * A and B */
+  GA_Zero(g_a);
+  GA_Zero(g_b);
+  GA_Zero(g_c);
+
+  if (me==0) printf("\nTest patch multiply\n");
+
+  lo[0] = N/4;
+  lo[1] = N/4;
+  hi[0] = 3*N/4-1;
+  hi[1] = 3*N/4-1;
+  ld = N/2;
+
+  /* Set up matrix A */
+  if (me==0) printf("\nInitialize A\n");
+  if (me == 0) {
+    for (i=N/4; i<3*N/4; i++) {
+      for (j=N/4; j<3*N/4; j++) {
+        switch (data_type) {
+          case C_FLOAT:
+            ((float*)abuf)[(i-N/4)*N/2+(j-N/4)] = (float)(i*N+j);
+            break;
+          case C_DBL:
+            ((double*)abuf)[(i-N/4)*N/2+(j-N/4)] = (double)(i*N+j);
+            break;
+          case C_DCPL:
+            ((DoubleComplex*)abuf)[(i-N/4)*N/2+(j-N/4)].real = (double)(i*N+j);
+            ((DoubleComplex*)abuf)[(i-N/4)*N/2+(j-N/4)].imag = 1.0;
+            break;
+          case C_SCPL:
+            ((SingleComplex*)abuf)[(i-N/4)*N/2+(j-N/4)].real = (float)(i*N+j);
+            ((SingleComplex*)abuf)[(i-N/4)*N/2+(j-N/4)].imag = 1.0;
+            break;
+          default:
+            GA_Error("wrong data type", data_type);
+        }
+      }
+    }
+    NGA_Put(g_a,lo,hi,abuf,&ld);
+  }
+  GA_Sync();
+
+  if (me==0) printf("\nInitialize B\n");
+  /* Set up matrix B */
+  if (me == 0) {
+    for (i=N/4; i<3*N/4; i++) {
+      for (j=N/4; j<3*N/4; j++) {
+        switch (data_type) {
+          case C_FLOAT:
+            ((float*)bbuf)[(i-N/4)*N/2+(j-N/4)] = (float)(j*N+i);
+            break;
+          case C_DBL:
+            ((double*)bbuf)[(i-N/4)*N/2+(j-N/4)] = (double)(j*N+i);
+            break;
+          case C_DCPL:
+            ((DoubleComplex*)bbuf)[(i-N/4)*N/2+(j-N/4)].real = (double)(j*N+i);
+            ((DoubleComplex*)bbuf)[(i-N/4)*N/2+(j-N/4)].imag = 1.0;
+            break;
+          case C_SCPL:
+            ((SingleComplex*)bbuf)[(i-N/4)*N/2+(j-N/4)].real = (float)(j*N+i);
+            ((SingleComplex*)bbuf)[(i-N/4)*N/2+(j-N/4)].imag = 1.0;
+            break;
+          default:
+            GA_Error("wrong data type", data_type);
+        }
+      }
+    }
+    NGA_Put(g_b,lo,hi,bbuf,&ld);
+  }
+  GA_Sync();
+
+  beta_flt = 0.0;
+  beta_dbl = 0.0;
+  beta_scpl.real = 0.0;
+  beta_dcpl.real = 0.0;
+  if (me==0) printf("\nPerform matrix multiply on sub-blocks\n");
+  switch (data_type) {
+    case C_FLOAT:
+      NGA_Matmul_patch('N','N',&alpha_flt,&beta_flt,g_a,lo,hi,
+        g_b,lo,hi,g_c,lo,hi);
+      break;
+    case C_DBL:
+      NGA_Matmul_patch('N','N',&alpha_dbl,&beta_dbl,g_a,lo,hi,
+        g_b,lo,hi,g_c,lo,hi);
+      break;
+    case C_SCPL:
+      NGA_Matmul_patch('N','N',&alpha_scpl,&beta_scpl,g_a,lo,hi,
+        g_b,lo,hi,g_c,lo,hi);
+      break;
+    case C_DCPL:
+      NGA_Matmul_patch('N','N',&alpha_dcpl,&beta_dcpl,g_a,lo,hi,
+        g_b,lo,hi,g_c,lo,hi);
+      break;
+    default:
+      GA_Error("wrong data type", data_type);
+  }
+  GA_Sync();
+#if 0
+  if (0) {
+  /*
+  if (data_type != C_SCPL && data_type != C_DCPL) {
+  */
+
+  if (me==0) printf("\nCheck answer\n");
+
+  /* Multiply buffers by hand */
+  if (me == 0) {
+    for (i=0; i<N/2; i++) {
+      for (j=0; j<N/2; j++) {
+        switch (data_type) {
+          case C_FLOAT:
+            ((float*)cbuf)[i*N/2+j] = fzero;
+            break;
+          case C_DBL:
+            ((double*)cbuf)[i*N/2+j] = dzero;
+            break;
+          case C_DCPL:
+            ((DoubleComplex*)cbuf)[i*N/2+j] = zzero;
+            break;
+          case C_SCPL:
+            ((SingleComplex*)cbuf)[i*N/2+j] = czero;
+            break;
+          default:
+            GA_Error("wrong data type", data_type);
+        }
+        for (k=0; k<N/2; k++) {
+          switch (data_type) {
+            case C_FLOAT:
+              ((float*)cbuf)[i*N/2+j] += ((float*)abuf)[i*N/2+k]
+                *((float*)bbuf)[k*N/2+j];
+              break;
+            case C_DBL:
+              ((double*)cbuf)[i*N/2+j] += ((double*)abuf)[i*N/2+k]
+                *((double*)bbuf)[k*N/2+j];
+              break;
+            case C_DCPL:
+              ((DoubleComplex*)cbuf)[i*N/2+j].real +=
+                (((DoubleComplex*)abuf)[i*N/2+k].real
+                 *((DoubleComplex*)bbuf)[k*N/2+j].real
+                 -(((DoubleComplex*)abuf)[i*N/2+k].imag
+                   *((DoubleComplex*)bbuf)[k*N/2+j].imag));
+              ((DoubleComplex*)cbuf)[i*N/2+j].imag +=
+                (((DoubleComplex*)abuf)[i*N/2+k].real
+                 *((DoubleComplex*)bbuf)[k*N/2+j].imag
+                 +(((DoubleComplex*)abuf)[i*N/2+k].imag
+                   *((DoubleComplex*)bbuf)[k*N/2+j].real));
+              break;
+            case C_SCPL:
+              ((SingleComplex*)cbuf)[i*N/2+j].real +=
+                (((SingleComplex*)abuf)[i*N/2+k].real
+                 *((SingleComplex*)bbuf)[k*N/2+j].real
+                 -(((SingleComplex*)abuf)[i*N/2+k].imag
+                   *((SingleComplex*)bbuf)[k*N/2+j].imag));
+              ((SingleComplex*)cbuf)[i*N/2+j].imag +=
+                (((SingleComplex*)abuf)[i*N/2+k].real
+                 *((SingleComplex*)bbuf)[k*N/2+j].imag
+                 +(((SingleComplex*)abuf)[i*N/2+k].imag
+                   *((SingleComplex*)bbuf)[k*N/2+j].real));
+              break;
+            default:
+              GA_Error("wrong data type", data_type);
+          }
+        }
+      }
+    }
+    NGA_Put(g_a,lo,hi,cbuf,&ld);
+  }
+  if (me == 0) printf("\n\n\n\n");
+
+  /* Get norm of g_a */
+  switch (data_type) {
+    case C_FLOAT:
+      ftmp = NGA_Fdot_patch(g_a,'N',lo,hi,g_a,'N',lo,hi);
+      break;
+    case C_DBL:
+      dtmp = NGA_Ddot_patch(g_a,'N',lo,hi,g_a,'N',lo,hi);
+      break;
+    case C_DCPL:
+      ztmp = NGA_Zdot_patch(g_a,'N',lo,hi,g_a,'N',lo,hi);
+      break;
+    case C_SCPL:
+      ctmp = NGA_Cdot_patch(g_a,'N',lo,hi,g_a,'N',lo,hi);
+      break;
+    default:
+      GA_Error("wrong data type", data_type);
+  }
+  /* subtract C from A and put the results in B */
+  beta_flt = -1.0;
+  beta_dbl = -1.0;
+  beta_scpl.real = -1.0;
+  beta_dcpl.real = -1.0;
+  NGA_Zero_patch(g_b,lo,hi);
+  NGA_Add_patch(alpha,g_a,lo,hi,beta,g_c,lo,hi,g_b,lo,hi);
+  /* evaluate the norm of the difference between the two matrices */
+  switch (data_type) {
+    case C_FLOAT:
+      fdiff = NGA_Fdot_patch(g_b,'N',lo,hi,g_b,'N',lo,hi);
+      if (ftmp != 0.0) {
+        fdiff /= ftmp;
+      }
+      if(fabs(fdiff) > TOLERANCE) {
+        printf("\nabs(result) = %f > %f\n", fabsf(fdiff), TOLERANCE);
+        GA_Error("GA_Sgemm Failed", 1);
+      } else if (me == 0) {
+        printf("\nGA_Sgemm OK\n\n");
+      }
+      break;
+    case C_DBL:
+      ddiff = NGA_Ddot_patch(g_b,'N',lo,hi,g_b,'N',lo,hi);
+      if (dtmp != 0.0) {
+        ddiff /= dtmp;
+      }
+      if(fabs(ddiff) > TOLERANCE) {
+        printf("\nabs(result) = %f > %f\n", fabsf(ddiff), TOLERANCE);
+        GA_Error("GA_Dgemm Failed", 1);
+      } else if (me == 0) {
+        printf("\nGA_Dgemm OK\n\n");
+      }
+      break;
+    case C_DCPL:
+      zdiff = NGA_Zdot_patch(g_b,'N',lo,hi,g_b,'N',lo,hi);
+      if (ztmp.real != 0.0 || ztmp.imag != 0.0) {
+        ddiff = sqrt((zdiff.real*zdiff.real+zdiff.imag*zdiff.imag)
+            /(ztmp.real*ztmp.real+ztmp.imag*ztmp.imag));
+      } else {
+        ddiff = sqrt(zdiff.real*zdiff.real+zdiff.imag*zdiff.imag);
+      }
+      if(fabs(ddiff) > TOLERANCE) {
+        printf("\nabs(result) = %f > %f\n", fabsf(zdiff.real), TOLERANCE);
+        GA_Error("GA_Zgemm Failed", 1);
+      } else if (me == 0) {
+        printf("\nGA_Zgemm OK\n\n");
+      }
+      break;
+    case C_SCPL:
+      cdiff = NGA_Cdot_patch(g_b,'N',lo,hi,g_b,'N',lo,hi);
+      if (ctmp.real != 0.0 || ctmp.imag != 0.0) {
+        fdiff = sqrt((cdiff.real*cdiff.real+cdiff.imag*cdiff.imag)
+            /(ctmp.real*ctmp.real+ctmp.imag*ctmp.imag));
+      } else {
+        fdiff = sqrt(cdiff.real*cdiff.real+cdiff.imag*cdiff.imag);
+      }
+      if(fabs(fdiff) > TOLERANCE) {
+        printf("\nabs(result) = %f > %f\n", fabsf(cdiff.real), TOLERANCE);
+        GA_Error("GA_Cgemm Failed", 1);
+      } else if (me == 0) {
+        printf("\nGA_Cgemm OK\n\n");
+      }
+      break;
+    default:
+      GA_Error("wrong data type", data_type);
+  }
+
+  }
+#endif
+  free(abuf);
+  free(bbuf);
+  free(cbuf);
 
   GA_Destroy(g_a);
   GA_Destroy(g_b);
@@ -540,6 +826,8 @@ do_work() {
   test(C_DBL);
   test(C_DCPL);
   test(C_SCPL);
+  /*
+  */
   if(me == 0) printf("\n\n");
 }
      
@@ -561,6 +849,16 @@ DoublePrecision time;
     if(me==0) printf("Using %d processes\n\n",nproc);
 
     if (me==0) printf ("Matrix size is %d X %d\n",N,N);
+
+#ifdef USE_SCALAPACK
+    if (me == 0) printf("\nUsing ScalaPACK data distribution\n\n");
+#else
+#ifdef USE_SIMPLE_CYCLIC
+    if (me == 0) printf("\nUsing simple block-cyclic data distribution\n\n");
+#else
+    if (me == 0) printf("\nUsing regular data distribution\n\n");
+#endif
+#endif
 
     if(!MA_init((Integer)MT_F_DBL, stack/nproc, heap/nproc))
        GA_Error("MA_init failed bytes= %d",stack+heap);   

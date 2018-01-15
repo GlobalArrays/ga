@@ -1425,8 +1425,11 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   if (!GA[handle].block_sl_flag) {
     pnga_error("Array is not using ScaLAPACK data distribution",0);
   }
+  /* dimensions of processor grid */
   proc_grid = GA[handle].nblock;
+  /* number of blocks along each dimension */
   num_blocks = GA[handle].num_blocks;
+  /* size of individual blocks */
   block_dims = GA[handle].block_dims;
   dims = GA[handle].dims;
   ndim = GA[handle].ndim;
