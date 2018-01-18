@@ -248,7 +248,7 @@ Integer dimsb[MAXDIM],i;
 Integer a_grp, b_grp, anproc, bnproc;
 Integer num_blocks_a, num_blocks_b;
 Integer blocks[MAXDIM], block_dims[MAXDIM];
-void *ptr_a, *ptr_b;
+char *ptr_a, *ptr_b;
 int local_sync_begin,local_sync_end,use_put;
 _iterator_hdl hdl;
 

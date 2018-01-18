@@ -168,7 +168,7 @@ void pnga_copy_patch(char *trans,
   Integer los[MAXDIM], his[MAXDIM];
   Integer lod[MAXDIM], hid[MAXDIM];
   Integer ld[MAXDIM], ald[MAXDIM], bld[MAXDIM];
-  void *src_data_ptr, *tmp_ptr;
+  char *src_data_ptr, *tmp_ptr;
   Integer *src_idx_ptr, *dst_idx_ptr;
   Integer bvalue[MAXDIM], bunit[MAXDIM];
   Integer factor_idx1[MAXDIM], factor_idx2[MAXDIM], factor_data[MAXDIM];
@@ -1101,7 +1101,7 @@ void pnga_dot_patch(Integer g_a, char *t_a, Integer *alo, Integer *ahi, Integer 
   Integer loA[MAXDIM], hiA[MAXDIM], ldA[MAXDIM];
   Integer loB[MAXDIM], hiB[MAXDIM], ldB[MAXDIM];
   Integer g_A = g_a, g_B = g_b;
-  void *A_ptr=NULL, *B_ptr=NULL;
+  char *A_ptr=NULL, *B_ptr=NULL;
   Integer ctype=0;
   Integer atotal=0, btotal=0;
   int isum=0, alen=0;
@@ -1658,7 +1658,7 @@ void pnga_fill_patch(Integer g_a, Integer *lo, Integer *hi, void* val)
   Integer i;
   Integer ndim, dims[MAXDIM], type;
   Integer loA[MAXDIM], hiA[MAXDIM], ld[MAXDIM];
-  void *data_ptr;
+  char *data_ptr;
   Integer num_blocks, nproc;
   Integer me= pnga_nodeid();
   int local_sync_begin,local_sync_end;
@@ -2077,7 +2077,7 @@ void pnga_scale_patch(Integer g_a, Integer *lo, Integer *hi, void *alpha)
   Integer ndim, dims[MAXDIM], type;
   Integer loA[MAXDIM], hiA[MAXDIM];
   Integer ld[MAXDIM];
-  void *src_data_ptr;
+  char *src_data_ptr;
   Integer num_blocks, nproc;
   Integer me= pnga_nodeid();
   int local_sync_begin,local_sync_end;
@@ -2655,7 +2655,7 @@ void *alpha, *beta;
   Integer loA[MAXDIM], hiA[MAXDIM], ldA[MAXDIM];
   Integer loB[MAXDIM], hiB[MAXDIM], ldB[MAXDIM];
   Integer loC[MAXDIM], hiC[MAXDIM], ldC[MAXDIM];
-  void *A_ptr, *B_ptr, *C_ptr;
+  char *A_ptr, *B_ptr, *C_ptr;
   Integer n1dim;
   Integer atotal, btotal;
   Integer g_A = g_a, g_B = g_b;

@@ -2397,7 +2397,7 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
   DoubleComplex ONE_Z;
   SingleComplex ONE_F;
   BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
-  void *src_ptr;
+  char *src_ptr;
   _iterator_hdl hdl_c;
   int local_sync_begin,local_sync_end;
   int bail = 0;
