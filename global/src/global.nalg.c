@@ -84,6 +84,7 @@ void pnga_zero(Integer g_a)
 
       if (pnga_has_ghosts(g_a)) {
         pnga_zero_patch(g_a,lo,hi);
+        GA_POP_NAME;
         return;
       }
       pnga_access_ptr(g_a, lo, hi, &ptr, ld);
