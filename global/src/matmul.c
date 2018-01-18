@@ -2030,6 +2030,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
        */
      pnga_matmul_basic(transa, transb, alpha, beta, g_a, alo, ahi,
          g_b, blo, bhi, g_c, clo, chi);
+     GA_POP_NAME;
      return;
      /*
    */
