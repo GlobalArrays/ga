@@ -1412,11 +1412,11 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   Integer *dims;
   Integer last;
   Integer proc_index[MAXDIM];
-  Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM], blk_inc[MAXDIM];
+  Integer blk_num[MAXDIM], blk_dim[MAXDIM], blk_inc[MAXDIM];
   Integer blk_ld[MAXDIM],hlf_blk[MAXDIM],blk_jinc;
-#if COMPACT_SCALAPACK
+#ifdef COMPACT_SCALAPACK
   Integer j, lo, hi;
-  Integer lld[MAXDIM], block_count[MAXDIM], loc_block_dims[MAXDIM];
+  Integer lld[MAXDIM], block_idx[MAXDIM], block_count[MAXDIM];
   Integer ldims[MAXDIM];
 #endif
 
@@ -1446,18 +1446,18 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   last = ndim-1;
  
   /* Find strides of requested block */
-#if COMPACT_SCALAPACK
-  for (i=0; i<last; i++)  {
+#ifdef COMPACT_SCALAPACK
+  for (i=0; i<ndim; i++)  {
     lo = index[i]*block_dims[i]+1;
     hi = (index[i]+1)*block_dims[i];
     if (hi > dims[i]) hi = dims[i]; 
-    ld[i] = (hi - lo + 1);
+    ldims[i] = (hi - lo + 1);
+    if (i<last) ld[i] = ldims[i];
   }
 #else
   for (i=0; i<last; i++)  {
     blk_dim[i] = block_dims[i]*proc_grid[i];
     blk_num[i] = GA[handle].dims[i]/blk_dim[i];
-    /*blk_size[i] = block_dims[i]*blk_num[i];*/
     blk_inc[i] = GA[handle].dims[i] - blk_num[i]*blk_dim[i];
     blk_ld[i] = blk_num[i]*block_dims[i];
     hlf_blk[i] = blk_inc[i]/block_dims[i];
@@ -1481,17 +1481,15 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   }
 #endif
  
-#if COMPACT_SCALAPACK
-  /* Find dimensions of local block grid stored on processor inode
-     and store results in loc_block_dims. Also find the local grid
-     index of block relative to local block grid and store result
-     in block_count.
+#ifdef COMPACT_SCALAPACK
+  /* Find the local grid index of block relative to local block grid and
+     store result in block_idx.
      Find physical dimensions of locally held data and store in 
      lld and set values in ldim, which is used to evaluate the
      offset for the requested block. */
   for (i=0; i<ndim; i++) {
+    block_idx[i] = 0;
     block_count[i] = 0;
-    loc_block_dims[i] = 0;
     lld[i] = 0;
     lo = 0;
     hi = -1;
@@ -1499,34 +1497,40 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
       lo = j*block_dims[i] + 1;
       hi = (j+1)*block_dims[i];
       if (hi > dims[i]) hi = dims[i]; 
-      if (i<last) lld[i] += (hi - lo + 1);
-      if (j<index[i]) block_count[i]++;
-      loc_block_dims[i]++;
-    }
-    if (index[i] < num_blocks[i] - 1 || i == 0) {
-      ldims[i] = block_dims[i];
-    } else {
-      lo = index[i]*block_dims[i] + 1;
-      hi = (index[i]+1)*block_dims[i];
-      if (hi > dims[i]) hi = dims[i];
-      ldims[i] = hi - lo + 1;
+      lld[i] += (hi - lo + 1);
+      if (j<index[i]) block_idx[i]++;
+      block_count[i]++;
     }
   }
 
-  /* Evaluate offset for requested block. This algorithm has only been tested in
-     2D and is otherwise completely incomprehensible. */
+  /* Evaluate offset for requested block. The algorithm used goes like this:
+   *    The contribution from the fastest dimension is
+   *      block_idx[0]*block_dims[0]*...*block_dims[ndim-1];
+   *    The contribution from the second fastest dimension is
+   *      block_idx[1]*lld[0]*block_dims[1]*...*block_dims[ndim-1];
+   *    The contribution from the third fastest dimension is
+   *      block_idx[1]*lld[0]*lld[1]*block_dims[2]*...*block_dims[ndim-1];
+   *    etc.
+   *    If block_idx[i] is equal to the total number of blocks contained on that
+   *    processor minus 1 (the index is at the edge of the array) and the index
+   *    i is greater than the index of the dimension, then instead of using the
+   *    block dimension, use the fractional dimension of the edge block (which
+   *    may be smaller than the block dimension)
+   */
   offset = 0;
   for (i=0; i<ndim; i++) {
     factor = 1;
-    for (j=0; j<ndim; j++) {
-      if (j<i) {
-        factor *= lld[j];
-      } else {
+    for (j=0; j<i; j++) {
+      factor *= lld[j];
+    }
+    for (j=i; j<ndim; j++) {
+      if (j > i && block_idx[j] == block_count[j]-1) {
         factor *= ldims[j];
-        ldims[j] = block_dims[j];
+      } else {
+        factor *= block_dims[j];
       }
     }
-    offset += block_count[i]*factor;
+    offset += block_idx[i]*factor;
   }
 #else
   /* Evalauate offset for block */
@@ -3917,7 +3921,9 @@ void gai_ComputePatchIndexWithSkip(Integer ndim, Integer *lo, Integer *plo,
 }
 
 /**
- *  Put an N-dimensional patch of strided data into a Global Array
+ *  Put an N-dimensional patch of strided data into a Global Array. This routine
+ *  can by used with user-defined data types to modify a single element instead
+ *  of copying over the entire data
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_strided_put = pnga_strided_put
@@ -4115,7 +4121,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     } else {
       /* GA uses ScaLAPACK block cyclic data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
-#if COMPACT_SCALAPACK
+#ifdef COMPACT_SCALAPACK
       Integer itmp;
 #else
       Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
@@ -4184,7 +4190,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
             /* evaluate offset within block */
             last = ndim - 1;
-#if COMPACT_SCALAPACK
+#ifdef COMPACT_SCALAPACK
             jtot = 1;
             if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
             l_offset = 0;
@@ -4253,7 +4259,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
           }
           /* increment offset to account for all elements on this block */
-#if COMPACT_SCALAPACK
+#ifdef COMPACT_SCALAPACK
           itmp = 1;
           for (idx = 0; idx < ndim; idx++) {
             itmp *= (bhi[idx] - blo[idx] + 1);
@@ -4496,7 +4502,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     } else {
       /* GA uses ScaLAPACK block cyclic data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
-#if COMPACT_SCALAPACK
+#ifdef COMPACT_SCALAPACK
       Integer itmp;
 #else
       Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
@@ -4565,7 +4571,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
             /* evaluate offset within block */
             last = ndim - 1;
-#if COMPACT_SCALAPACK
+#ifdef COMPACT_SCALAPACK
             jtot = 1;
             if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
             l_offset = 0;
@@ -4634,7 +4640,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
           }
           /* increment offset to account for all elements on this block */
-#if COMPACT_SCALAPACK
+#ifdef COMPACT_SCALAPACK
           itmp = 1;
           for (idx = 0; idx < ndim; idx++) {
             itmp *= (bhi[idx] - blo[idx] + 1);
@@ -4870,7 +4876,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     } else {
       /* GA uses ScaLAPACK block cyclic data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
-#if COMPACT_SCALAPACK
+#ifdef COMPACT_SCALAPACK
       Integer itmp;
 #else
       Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
@@ -4939,7 +4945,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
             /* evaluate offset within block */
             last = ndim - 1;
-#if COMPACT_SCALAPACK
+#ifdef COMPACT_SCALAPACK
             jtot = 1;
             if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
             l_offset = 0;
@@ -5009,7 +5015,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
           }
           /* increment offset to account for all elements on this block */
-#if COMPACT_SCALAPACK
+#ifdef COMPACT_SCALAPACK
           itmp = 1;
           for (idx = 0; idx < ndim; idx++) {
             itmp *= (bhi[idx] - blo[idx] + 1);

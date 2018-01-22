@@ -235,7 +235,43 @@ void *ptr_a, *ptr_b;
 }
 #endif
 
-
+void printBlock_x(char * banner, Integer type, void *ptr, Integer lo[],
+    Integer hi[], Integer ld[])
+{
+  Integer i,j;
+  Integer offset;
+  printf("p[%d] %s lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
+      pnga_nodeid(),banner,lo[0],hi[0],lo[1],hi[1]);
+  printf("    ");
+  for (i=lo[0]; i<=hi[0]; i++) printf(" %12d",i);
+  printf("\n");
+  for (j=lo[1]; j<=hi[1]; j++) {
+    printf("p[%d] J: %d",pnga_nodeid(),j);
+    for (i=lo[0]; i<=hi[0]; i++) {
+      offset = (j-lo[1])*ld[0] + i-lo[0];
+      switch (type) {
+        case C_FLOAT:
+          printf(" %12.4f",*((float*)ptr+offset));
+          break;
+        case C_DBL:
+          printf(" %12.4f",*((double*)ptr+offset));
+          break;
+        case C_DCPL:
+          printf(" [%12.4f:%12.4f]",*((double*)ptr+2*offset),
+              *((double*)ptr+2*offset+1));
+          break;
+        case C_SCPL:
+          printf(" [%12.4f:%12.4f]",*((float*)ptr+2*offset),
+              *((float*)ptr+2*offset+1));
+          break;
+        default:
+          pnga_error("ga_matmul_basic: wrong data type", type);
+      }
+    }
+    printf("\n");
+  }
+  printf("\n\n");
+}
 
 /*\ COPY ONE GLOBAL ARRAY INTO ANOTHER
 \*/

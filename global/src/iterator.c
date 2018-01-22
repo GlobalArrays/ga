@@ -233,7 +233,17 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
       /* GA uses ScaLAPACK block cyclic data distribution */
       int *proc_gid;
       int j;
-#if COMPACT_SCALAPACK
+#ifdef COMPACT_SCALAPACK
+      C_Integer *block_dims;
+      hdl->iproc = 0;
+      hdl->offset = 0;
+      block_dims = GA[handle].block_dims;
+      for (j=0; j<ndim; j++)  {
+        hdl->blk_size[j] = block_dims[j];
+      }
+      /* Initialize proc_index and index arrays */
+      gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
+      gam_find_proc_indices(handle, hdl->iproc, hdl->index);
 #else
       C_Integer *block_dims;
       /* Scalapack-type block-cyclic data distribution */
@@ -254,9 +264,9 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
       /* Initialize proc_index and index arrays */
       gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
       gam_find_proc_indices(handle, hdl->iproc, hdl->index);
+#endif
     }
   }
-#endif
 }
 
 /**
@@ -588,7 +598,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
 
         /* evaluate offset within block */
         last = ndim - 1;
-#if COMPACT_SCALAPACK
+#ifdef COMPACT_SCALAPACK
         jtot = 1;
         if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
         l_offset = 0;
@@ -598,7 +608,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
           jtot *= ldrem[j];
         }
         l_offset += (clo[last]-blo[last])*jtot;
-        l_offset += offset;
+        l_offset += hdl->offset;
 #else
         l_offset = 0;
         jtot = 1;
@@ -652,8 +662,9 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         }
       }
     }
+    return 1;
   }
-  return 1;
+  return 0;
 }
 
 /**
@@ -750,9 +761,6 @@ int pnga_local_iterator_next(_iterator_hdl *hdl, Integer plo[],
     } else {
       /* Scalapack-type data distribution */
       if (hdl->index[ndim-1] >= hdl->blk_num[ndim-1]) return 0;
-      Integer proc_index[MAXDIM], index[MAXDIM];
-      Integer itmp;
-      Integer blk_jinc;
       /* Find coordinates of bounding block */
       for (i=0; i<ndim; i++) {
         plo[i] = hdl->index[i]*hdl->blk_size[i]+1;
