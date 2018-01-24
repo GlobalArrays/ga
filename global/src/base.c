@@ -2921,9 +2921,7 @@ Integer i, handle;
     }
     /* don't free groups list until all arrays destroyed */
     for (i=0;i<_max_global_array;i++){
-      if (PGRP_LIST[i].actv) printf("p[%d] Deallocating grp %d\n",GAme,i);
-          if(PGRP_LIST[i].actv)
-            free(PGRP_LIST[i].map_proc_list);
+          if(PGRP_LIST[i].actv) free(PGRP_LIST[i].map_proc_list);
     }
     pnga_sync();
 

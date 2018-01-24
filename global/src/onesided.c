@@ -3920,6 +3920,24 @@ void gai_ComputePatchIndexWithSkip(Integer ndim, Integer *lo, Integer *plo,
   }
 }
 
+/* Utility function to find offset from start of data segment
+ * ndim: dimension of block
+ * lo: Lower corner of block
+ * plo: Point within the block
+ * ld: Physical dimensions of data block
+ * offset: Number of elements plo is located from start of block
+*/
+void  gai_FindOffset(Integer ndim,Integer *lo, Integer *plo,
+    Integer *ld, Integer *offset)
+{
+  Integer i, factor;
+  *offset = 0;
+  factor = 1;
+  for (i<ndim-1; i>=0; i--) {
+    *offset += *offset*factor + plo[i]-lo[i]; 
+  }
+}
+
 /**
  *  Put an N-dimensional patch of strided data into a Global Array. This routine
  *  can by used with user-defined data types to modify a single element instead
@@ -3940,8 +3958,14 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
      ld[]:   ndim-1 physical dimensions of local buffer */
   Integer p, np, handle = GA_OFFSET + g_a;
   Integer idx, size, nstride, p_handle, nproc;
+  Integer ldrem[MAXDIM];
+  Integer idx_buf, *blo, *bhi;
+  Integer plo[MAXDIM],phi[MAXDIM];
+  char *pbuf, *prem;
+  int count[2*MAXDIM], stride_rem[2*MAXDIM], stride_loc[2*MAXDIM];
   int i, proc, ndim;
   int use_blocks;
+  _iterator_hdl it_hdl;
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -3958,6 +3982,46 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
   GA_PUSH_NAME("nga_strided_put");
 
+#if 1
+  gai_iterator_init(g_a, lo, hi, &it_hdl);
+  while (gai_iterator_next(&it_hdl, &proc, &blo, &bhi, &prem, ldrem)) {
+      /* Correct ranges to account for skips in original patch. If no
+         data is left in patch jump to next processor in loop. */
+      if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
+        continue;
+      /* May need to correct location of remote buffer */
+      gai_FindOffset(ndim,blo,plo,ldrem,&idx_buf);
+      prem += size*idx_buf;
+
+      /* get pointer in local buffer to point indexed by plo given that
+         the corner of the buffer corresponds to the point indexed by lo */
+      gai_ComputePatchIndexWithSkip(ndim, lo, plo, skip, ld, &idx_buf);
+      pbuf = size*idx_buf + (char*)buf;
+
+      /* Compute number of elements in each stride region and compute the
+         number of stride regions. Store the results in count and nstride */
+      if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
+        continue;
+
+      /* Scale first element in count by element size. The ARMCI_PutS routine
+         uses this convention to figure out memory sizes. */
+      count[0] *= size;
+
+      /* Calculate strides in memory for remote processor indexed by proc and
+         local buffer */ 
+      gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
+          skip);
+
+      /* BJP */
+      if (p_handle != -1) {
+        proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
+      }
+#ifdef PERMUTE_PIDS
+      if (GA_Proc_list) proc = GA_inv_Proc_list[proc];
+#endif
+      ARMCI_PutS(pbuf, stride_loc, prem, stride_rem, count, nstride-1, proc);
+    }
+#else
   if (!use_blocks) {
     /* Locate the processors containing some portion of the patch
        specified by lo and hi and return the results in _ga_map,
@@ -4279,6 +4343,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       }
     }
   }
+#endif
   GA_POP_NAME;
 }
 
@@ -4302,6 +4367,12 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   Integer idx, size, nstride, p_handle, nproc;
   int i, proc, ndim;
   int use_blocks;
+  Integer ldrem[MAXDIM];
+  Integer idx_buf, *blo, *bhi;
+  Integer plo[MAXDIM],phi[MAXDIM];
+  char *pbuf, *prem;
+  int count[2*MAXDIM], stride_rem[2*MAXDIM], stride_loc[2*MAXDIM];
+  _iterator_hdl it_hdl;
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -4318,6 +4389,46 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
   GA_PUSH_NAME("nga_strided_get");
 
+#if 1
+  gai_iterator_init(g_a, lo, hi, &it_hdl);
+  while (gai_iterator_next(&it_hdl, &proc, &blo, &bhi, &prem, ldrem)) {
+      /* Correct ranges to account for skips in original patch. If no
+         data is left in patch jump to next processor in loop. */
+      if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
+        continue;
+      /* May need to correct location of remote buffer */
+      gai_FindOffset(ndim,blo,plo,ldrem,&idx_buf);
+      prem += size*idx_buf;
+
+      /* get pointer in local buffer to point indexed by plo given that
+         the corner of the buffer corresponds to the point indexed by lo */
+      gai_ComputePatchIndexWithSkip(ndim, lo, plo, skip, ld, &idx_buf);
+      pbuf = size*idx_buf + (char*)buf;
+
+      /* Compute number of elements in each stride region and compute the
+         number of stride regions. Store the results in count and nstride */
+      if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
+        continue;
+
+      /* Scale first element in count by element size. The ARMCI_PutS routine
+         uses this convention to figure out memory sizes. */
+      count[0] *= size;
+
+      /* Calculate strides in memory for remote processor indexed by proc and
+         local buffer */ 
+      gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
+          skip);
+
+      /* BJP */
+      if (p_handle != -1) {
+        proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
+      }
+#ifdef PERMUTE_PIDS
+      if (GA_Proc_list) proc = GA_inv_Proc_list[proc];
+#endif
+      ARMCI_GetS(prem, stride_rem, pbuf, stride_loc, count, nstride-1, proc);
+    }
+#else
   if (!use_blocks) {
     /* Locate the processors containing some portion of the patch
        specified by lo and hi and return the results in _ga_map,
@@ -4660,6 +4771,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       }
     }
   }
+#endif
   GA_POP_NAME;
 }
 
@@ -4686,6 +4798,12 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   Integer idx, size, nstride, type, p_handle, nproc;
   int i, optype=-1, proc, ndim;
   int use_blocks;
+  Integer ldrem[MAXDIM];
+  Integer idx_buf, *blo, *bhi;
+  Integer plo[MAXDIM],phi[MAXDIM];
+  char *pbuf, *prem;
+  int count[2*MAXDIM], stride_rem[2*MAXDIM], stride_loc[2*MAXDIM];
+  _iterator_hdl it_hdl;
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -4711,6 +4829,47 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 
   GA_PUSH_NAME("nga_strided_acc");
 
+#if 1
+  gai_iterator_init(g_a, lo, hi, &it_hdl);
+  while (gai_iterator_next(&it_hdl, &proc, &blo, &bhi, &prem, ldrem)) {
+      /* Correct ranges to account for skips in original patch. If no
+         data is left in patch jump to next processor in loop. */
+      if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
+        continue;
+      /* May need to correct location of remote buffer */
+      gai_FindOffset(ndim,blo,plo,ldrem,&idx_buf);
+      prem += size*idx_buf;
+
+      /* get pointer in local buffer to point indexed by plo given that
+         the corner of the buffer corresponds to the point indexed by lo */
+      gai_ComputePatchIndexWithSkip(ndim, lo, plo, skip, ld, &idx_buf);
+      pbuf = size*idx_buf + (char*)buf;
+
+      /* Compute number of elements in each stride region and compute the
+         number of stride regions. Store the results in count and nstride */
+      if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
+        continue;
+
+      /* Scale first element in count by element size. The ARMCI_PutS routine
+         uses this convention to figure out memory sizes. */
+      count[0] *= size;
+
+      /* Calculate strides in memory for remote processor indexed by proc and
+         local buffer */ 
+      gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
+          skip);
+
+      /* BJP */
+      if (p_handle != -1) {
+        proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
+      }
+#ifdef PERMUTE_PIDS
+      if (GA_Proc_list) proc = GA_inv_Proc_list[proc];
+#endif
+      ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, count,
+          nstride-1, proc);
+    }
+#else
   if (!use_blocks) {
     /* Locate the processors containing some portion of the patch
        specified by lo and hi and return the results in _ga_map,
@@ -5035,5 +5194,6 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       }
     }
   }
+#endif
   GA_POP_NAME;
 }
