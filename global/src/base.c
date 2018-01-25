@@ -1090,7 +1090,6 @@ Integer pnga_pgroup_create(Integer *list, Integer count)
  
     /* Allocate memory for arrays containg processor maps and initialize
        values */
-    printf("p[%d] Allocate map_proc_list for handle: %d\n",GAme,pgrp_handle);
     PGRP_LIST[pgrp_handle].map_proc_list
        = (int*)malloc(GAnproc*sizeof(int)*2);
     PGRP_LIST[pgrp_handle].inv_map_proc_list
@@ -1134,7 +1133,6 @@ Integer pnga_pgroup_create(Integer *list, Integer count)
        PGRP_LIST[pgrp_handle].map_proc_list[j] = i;
        PGRP_LIST[pgrp_handle].inv_map_proc_list[i] = j;
     }
-    printf("p[%d] Setting handle %d active\n",GAme,pgrp_handle);
     PGRP_LIST[pgrp_handle].actv = 1;
     PGRP_LIST[pgrp_handle].parent = GA_Default_Proc_Group;
     PGRP_LIST[pgrp_handle].mirrored = 0;
