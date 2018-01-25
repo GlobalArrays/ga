@@ -646,8 +646,6 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 #else
   pnga_local_iterator_init(g_c, &hdl);
   while (pnga_local_iterator_next(&hdl,loC,hiC,&ptr_c,ld)) {
-    printf("p[%d] loC[0]: %d hiC[0]: %d loC[1]: %d hiC[1]: %d\n",
-        me,loC[0],hiC[0],loC[1],hiC[1]);
 #endif
 
     /* If loC and hiC intersects with current patch region, then they will
@@ -2026,14 +2024,10 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    GA_PUSH_NAME("nga_matmul_patch");
    if (pnga_total_blocks(g_a) > 0 || pnga_total_blocks(g_b) > 0 ||
        pnga_total_blocks(g_c) > 0) {
-   /*
-       */
      pnga_matmul_basic(transa, transb, alpha, beta, g_a, alo, ahi,
          g_b, blo, bhi, g_c, clo, chi);
      GA_POP_NAME;
      return;
-     /*
-   */
    }
 
 
