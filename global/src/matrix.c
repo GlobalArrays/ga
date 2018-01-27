@@ -285,7 +285,7 @@ static void sgai_median_patch_values(Integer type, Integer ndim, Integer *loA,
   }
 }
 
-/*\ median routine
+/*\ median routine. Not sure what this function is suppose to do
 \*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_median_patch = pnga_median_patch
@@ -865,6 +865,8 @@ static void sgai_norm_infinity_block(Integer g_a, void *ptr,
   }
 }
 
+/* Evaluate the infinity norm of an array. This is the maximum absolute
+ * value of the the elements in the array */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_norm_infinity = pnga_norm_infinity
 #endif
@@ -1177,6 +1179,8 @@ static void sgai_norm1_block(Integer g_a, void *ptr,
   }
 }
 
+/* Evaluate the L_1 norm of an array. This should be the sum of the absolute
+ * value of the individual array elements*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_norm1 = pnga_norm1
 #endif
@@ -1476,6 +1480,8 @@ static void sgai_get_diagonal_block(Integer g_a, void *ptr, Integer g_v,
   }
 }
 
+/* Get the diagonal elements of a matrix and copy them into a one dimensional
+ * array */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_get_diag = pnga_get_diag
 #endif
@@ -1704,6 +1710,7 @@ static void sgai_add_diagonal_block(Integer g_a, void *ptr, Integer g_v,
   }
 }
 
+/* Add values in vector g_v to diagonal elements of g_a */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_add_diagonal = pnga_add_diagonal
 #endif
@@ -1935,6 +1942,7 @@ static void sgai_set_diagonal_block(Integer g_a, void *ptr, Integer g_v, Integer
   }
 }
 
+/* Set diagonal of g_a to have values in g_v */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_set_diagonal = pnga_set_diagonal
 #endif
@@ -2319,6 +2327,7 @@ void pnga_zero_diagonal(Integer g_a)
 #if 1
   pnga_local_iterator_init(g_a, &hdl);
   while (pnga_local_iterator_next(&hdl,loA,hiA,&ptr,&ld)) {
+    offset = 0;
     if (loA[0] > 0) {
       lo[0] = GA_MAX (loA[0], loA[1]);
       lo[1] = GA_MAX (loA[0], loA[1]);
