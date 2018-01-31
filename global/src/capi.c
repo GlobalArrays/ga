@@ -4607,13 +4607,13 @@ void GA_Get_diag(int g_a, int g_v){
 void GA_Scale_rows(int g_a, int g_v){
  Integer a = (Integer )g_a;
  Integer v = (Integer )g_v;
- wnga_scale_rows(a, v);
+ wnga_scale_cols(a, v);
 }
 
 void GA_Scale_cols(int g_a, int g_v){
  Integer a = (Integer )g_a;
  Integer v = (Integer )g_v;
- wnga_scale_cols(a, v);
+ wnga_scale_rows(a, v);
 }
 void GA_Norm1(int g_a, double *nm){
  Integer a = (Integer )g_a;
