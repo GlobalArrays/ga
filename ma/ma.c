@@ -312,6 +312,16 @@ public MA_SingleComplex     ma_cb_scpl[2];    /* MT_C_SCPL */
 public MA_DoubleComplex     ma_cb_dcpl[2];    /* MT_C_DCPL */
 public MA_LongDoubleComplex ma_cb_ldcpl[2];   /* MT_C_LDCPL */
 
+#if NOFORT
+public Integer         ma_fb_byte[2];
+public Integer         ma_fb_integer[2];
+public Logical         ma_fb_logical[2];
+public Real            ma_fb_real[2];
+public DoublePrecision ma_fb_dbl[2];
+public SingleComplex   ma_fb_scpl[2];
+public DoubleComplex   ma_fb_dcpl[2];
+#endif
+
 /* requested power-of-two alignment */
 private Integer ma_numalign = 0;
 
@@ -1836,13 +1846,13 @@ public Boolean MAi_inform_base(datatype, address1, address2)
 #if NOFORT
 Integer ma_set_sizes_()
 {
-    MAi_inform_base(MT_F_BYTE, &ma_cb_char[0],  &ma_cb_char[1]);
-    MAi_inform_base(MT_F_INT,  &ma_cb_int[0],   &ma_cb_int[1]);
-    MAi_inform_base(MT_F_LOG,  &ma_cb_int[0],   &ma_cb_int[1]);
-    MAi_inform_base(MT_F_REAL, &ma_cb_float[0], &ma_cb_float[1]);
-    MAi_inform_base(MT_F_DBL,  &ma_cb_dbl[0],   &ma_cb_dbl[1]);
-    MAi_inform_base(MT_F_SCPL, &ma_cb_scpl[0],  &ma_cb_scpl[1]);
-    MAi_inform_base(MT_F_DCPL, &ma_cb_dcpl[0],  &ma_cb_dcpl[1]);
+    MAi_inform_base(MT_F_BYTE, (Pointer)&ma_fb_byte[0],    (Pointer)&ma_fb_byte[1]);
+    MAi_inform_base(MT_F_INT,  (Pointer)&ma_fb_integer[0], (Pointer)&ma_fb_integer[1]);
+    MAi_inform_base(MT_F_LOG,  (Pointer)&ma_fb_logical[0], (Pointer)&ma_fb_logical[1]);
+    MAi_inform_base(MT_F_REAL, (Pointer)&ma_fb_real[0],    (Pointer)&ma_fb_real[1]);
+    MAi_inform_base(MT_F_DBL,  (Pointer)&ma_fb_dbl[0],     (Pointer)&ma_fb_dbl[1]);
+    MAi_inform_base(MT_F_SCPL, (Pointer)&ma_fb_scpl[0],    (Pointer)&ma_fb_scpl[1]);
+    MAi_inform_base(MT_F_DCPL, (Pointer)&ma_fb_dcpl[0],    (Pointer)&ma_fb_dcpl[1]);
     return 1;
 }
 #endif
