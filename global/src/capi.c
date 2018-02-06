@@ -728,6 +728,34 @@ void NGA_Set_restricted_range(int g_a, int lo_proc, int hi_proc)
     wnga_set_restricted_range(aa,lo,hi);
 }
 
+void GA_Set_property(int g_a, char* property)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_set_property(aa,property);
+}
+
+void NGA_Set_property(int g_a, char* property)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_set_property(aa,property);
+}
+
+void GA_Unset_property(int g_a)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_unset_property(aa);
+}
+
+void NGA_Unset_property(int g_a)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_unset_property(aa);
+}
+
 int GA_Total_blocks(int g_a)
 {
     Integer aa;

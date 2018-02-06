@@ -154,14 +154,14 @@ int get_local_rank_from_win(MPI_Win win, int world_rank, int *local_rank)
 int comex_init()
 {
     int i, status;
-    
+    int init_flag;
+
     if (initialized) {
         return 0;
     }
     initialized = 1;
 
     /* Assert MPI has been initialized */
-    int init_flag;
     status = MPI_Initialized(&init_flag);
     assert(MPI_SUCCESS == status);
     assert(init_flag);

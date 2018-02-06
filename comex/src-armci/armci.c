@@ -14,6 +14,86 @@
 extern int ARMCI_Default_Proc_Group;
 MPI_Comm ARMCI_COMM_WORLD;
 
+int _number_of_procs_per_node = 1;
+int _my_node_id;
+ARMCI_Group ARMCI_Node_group;
+
+/**
+ * Initialize parameters that can be used by the armci_domain_xxx function
+ */
+void armci_init_domains(MPI_Comm comm)
+{
+  int i, status;
+  char name[MPI_MAX_PROCESSOR_NAME];
+  char *namebuf, *buf_ptr, *prev_ptr;
+  int namelen, rank, size, nprocs;
+  int *nodeid, *nodesize;
+  int ncnt;
+
+  status = MPI_Comm_rank(comm, &rank);
+  assert(MPI_SUCCESS == status);
+  status = MPI_Comm_size(comm, &size);
+  assert(MPI_SUCCESS == status);
+
+  /* determine number of processors per node. First find node name */
+  namebuf = (char*)malloc(MPI_MAX_PROCESSOR_NAME*size*sizeof(char));
+  nodeid = (int*)malloc(size*sizeof(int));
+  nodesize = (int*)malloc(size*sizeof(int));
+  MPI_Get_processor_name(name, &namelen);
+  status = MPI_Allgather(name,MPI_MAX_PROCESSOR_NAME,MPI_CHAR,namebuf,
+      MPI_MAX_PROCESSOR_NAME,MPI_CHAR,comm);
+  assert(MPI_SUCCESS == status);
+
+  /* Bin all processors with the same node name */
+  ncnt = 0;
+  nodeid[0] = ncnt;
+  nodesize[0] = 1;
+  prev_ptr = namebuf;
+  buf_ptr = namebuf+MPI_MAX_PROCESSOR_NAME;
+  for (i=1; i<size; i++) {
+    namelen = strlen(buf_ptr);
+    if (strncmp(prev_ptr,buf_ptr,namelen) != 0) {
+      ncnt++;
+      nodesize[ncnt]=0;
+    }
+    nodeid[i] = ncnt;
+    nodesize[ncnt]++;
+    prev_ptr += MPI_MAX_PROCESSOR_NAME;
+    buf_ptr += MPI_MAX_PROCESSOR_NAME;
+  }
+  ncnt++;
+  /* check to see if all nodes have the same number of processors */
+  status = 1;
+  nprocs = nodesize[0];
+  for (i=1; i<ncnt; i++) {
+    if (nodesize[i] != nprocs) status = 0;
+  }
+  /* uneven number of processors per node so bail out and assume each
+   * processor is a node */
+  if (!status) {
+    _number_of_procs_per_node = 1;
+    _my_node_id = rank;
+  } else {
+    /* Same number of processors for all nodes so set domain variables */
+    _number_of_procs_per_node = nprocs;
+    _my_node_id = rank/_number_of_procs_per_node;
+  }
+
+  free(namebuf);
+  free(nodeid);
+  free(nodesize);
+  status = MPI_Barrier(comm);
+  assert(MPI_SUCCESS == status);
+  /* Create a comex group on the node */
+  if (_number_of_procs_per_node > 1) {
+    int *nodelist = (int*)malloc(_number_of_procs_per_node*sizeof(int));
+    for (i=0; i<_number_of_procs_per_node; i++)
+      nodelist[i] = _my_node_id*_number_of_procs_per_node+i;
+    comex_group_create(_number_of_procs_per_node, nodelist,
+        COMEX_GROUP_WORLD, &ARMCI_Node_group);
+  }
+}
+
 /**
  * This function checks to see if the data copy is contiguous for both the src
  * and destination buffers. If it is, then a contiguous operation can be used
@@ -262,6 +342,7 @@ int PARMCI_Init()
     rc = comex_group_comm(COMEX_GROUP_WORLD, &ARMCI_COMM_WORLD);
     assert(COMEX_SUCCESS == rc);
     ARMCI_Default_Proc_Group = 0;
+    armci_init_domains(ARMCI_COMM_WORLD);
     return rc;
 }
 
@@ -272,6 +353,7 @@ int PARMCI_Init_args(int *argc, char ***argv)
     assert(COMEX_SUCCESS == rc);
     rc = comex_group_comm(COMEX_GROUP_WORLD, &ARMCI_COMM_WORLD);
     assert(COMEX_SUCCESS == rc);
+    armci_init_domains(ARMCI_COMM_WORLD);
     ARMCI_Default_Proc_Group = 0;
     return rc;
 }
@@ -631,36 +713,47 @@ int parmci_notify_wait(int proc, int *pval)
     return 0;
 }
 
-
+/**
+ * Return number of processes on node id
+ */
 int armci_domain_nprocs(armci_domain_t domain, int id)
 {
-    return 1;
+    return _number_of_procs_per_node;
 }
 
 
+/**
+ * Return ID of node corresponding to glob_proc_id
+ */
 int armci_domain_id(armci_domain_t domain, int glob_proc_id)
 {
-    return glob_proc_id;
+    return glob_proc_id/_number_of_procs_per_node;
 }
 
-
+/**
+ * Return global rank of local proc (loc_proc_id) on node id
+ */
 int armci_domain_glob_proc_id(armci_domain_t domain, int id, int loc_proc_id)
 {
-    return id;
+    return id*_number_of_procs_per_node+loc_proc_id;
 }
 
 
+/**
+ * Return ID of node containing calling process
+ */
 int armci_domain_my_id(armci_domain_t domain)
 {
     int rank;
 
     assert(comex_initialized());
-    comex_group_rank(COMEX_GROUP_WORLD, &rank);
 
-    return rank;
+    return _my_node_id;
 }
 
-
+/**
+ * Return number of nodes in the entire system
+ */
 int armci_domain_count(armci_domain_t domain)
 {
     int size;
@@ -668,7 +761,7 @@ int armci_domain_count(armci_domain_t domain)
     assert(comex_initialized());
     comex_group_size(COMEX_GROUP_WORLD, &size);
 
-    return size;
+    return size/_number_of_procs_per_node;
 }
 
 
@@ -678,7 +771,7 @@ int armci_domain_same_id(armci_domain_t domain, int proc)
 
     comex_group_rank(COMEX_GROUP_WORLD, &rank);
 
-    return (proc == rank);
+    return (proc/_number_of_procs_per_node == rank/_number_of_procs_per_node);
 }
 
 

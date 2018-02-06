@@ -82,11 +82,21 @@ typedef struct {
        C_Integer has_data;          /* flag that processor has data         */
        C_Integer rstrctd_id;        /* rank of processor in restricted list */
        C_Integer *rank_rstrctd;     /* ranks of processors with data        */
-
+                                    /* Properties                           */
+       int property;                /* property type for GA                 */
+       Integer *old_mapc;           /* copy of original map                 */
+       int old_nblock[MAXDIM];      /* copy of original nblock array        */
+       int old_handle;              /* original group handle                */
+       int old_lo[MAXDIM];          /* original lo array                    */
+       int old_chunk[MAXDIM];       /* original chunk array                 */
 #ifdef ENABLE_CHECKPOINT
        int record_id;               /* record id for writing ga to disk     */
 #endif
 } global_array_t;
+
+enum property_type { NO_PROPERTY,
+                     READ_ONLY
+};
 
 extern global_array_t *_ga_main_data_structure; 
 extern proc_list_t *_proc_list_main_data_structure; 

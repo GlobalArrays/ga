@@ -112,6 +112,8 @@ extern void pnga_set_memory_limit(Integer mem_limit);
 extern void pnga_set_pgroup(Integer g_a, Integer p_handle);
 extern void pnga_set_restricted(Integer g_a, Integer *list, Integer size);
 extern void pnga_set_restricted_range(Integer g_a, Integer lo_proc, Integer hi_proc);
+extern void pnga_set_property(Integer g_a, char *property);
+extern void pnga_unset_property(Integer g_a);
 extern void pnga_terminate();
 extern Integer pnga_total_blocks(Integer g_a);
 extern void pnga_unlock(Integer mutex);
