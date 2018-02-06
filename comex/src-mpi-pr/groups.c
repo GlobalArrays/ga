@@ -374,9 +374,6 @@ void comex_group_init()
     int smallest_rank_with_same_hostid = 0;
     int largest_rank_with_same_hostid = 0;
     int size_node = 0;
-    long *ID, *newID, *head, *link;
-    long bin, tmp;
-    int k, count;
     comex_group_t group = 0;
     comex_igroup_t *igroup = NULL;
     long *sorted = NULL;
@@ -411,57 +408,6 @@ void comex_group_init()
     status = MPI_Allgather(MPI_IN_PLACE, 1, MPI_LONG,
             g_state.hostid, 1, MPI_LONG, g_state.comm);
     COMEX_ASSERT(MPI_SUCCESS == status);
-
-    /* Host IDs may not be positive. Hence, they may not be used as
-       colors in the MPI_Comm_split routine. Relabel the host IDs to
-       guarantee that they are positive integers using a hash table.
-       The hash function is not robust but host IDs are probably not
-       distributed using a pathological numering scheme */
-
-    /* allocate arrays for binning host IDs */
-    link = (long*)malloc(sizeof(long)*g_state.size);
-    head = (long*)malloc(sizeof(long)*g_state.size);
-    ID = (long*)malloc(sizeof(long)*g_state.size);
-    newID = (long*)malloc(sizeof(long)*g_state.size);
-
-    /* initialize data */
-    for (k=0; k<g_state.size; k++) {
-      head[k] = -1;
-      link[k] = -1;
-      ID[k] = -1;
-      newID[k] = -1;
-    }
-
-    /* hash host IDs. Use ibin = labs(hostid)%size as hash function */
-    count = 0;
-    for (k=0; k<g_state.size; k++) {
-      /* use hash function to find bin for host ID */
-      bin = labs(g_state.hostid[k])%g_state.size;
-      tmp = head[bin];
-      /* look for ID in hash table */
-      while (tmp >= 0 && ID[tmp] != g_state.hostid[k]) {
-        tmp = link[tmp];
-      }
-      if (tmp >=0) {
-        /* found ID so map it to stored value of counter */
-        g_state.hostid[k] = newID[tmp];
-      } else {
-        /* Add new ID to hash table and increment counter */
-        tmp = head[bin];
-        head[bin] = count;
-        link[count] = tmp;
-        ID[count] = g_state.hostid[k];
-        newID[count] = count;
-        g_state.hostid[k] = newID[count];
-        count++;
-      }
-    }
-    /* clean up arrays */
-    free(head);
-    free(link);
-    free(ID);
-    free(newID);
-    
 
     smallest_rank_with_same_hostid = g_state.rank;
     largest_rank_with_same_hostid = g_state.rank;
