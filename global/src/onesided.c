@@ -3933,7 +3933,7 @@ void  gai_FindOffset(Integer ndim,Integer *lo, Integer *plo,
   Integer i, factor;
   *offset = 0;
   factor = 1;
-  for (i<ndim-1; i>=0; i--) {
+  for (i=ndim-1; i>=0; i--) {
     *offset += *offset*factor + plo[i]-lo[i]; 
   }
 }
