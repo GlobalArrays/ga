@@ -182,10 +182,13 @@ test_scale_cols (GA::GlobalArray *g_a,
     case C_INT:
       if (me == 0)
 	{
-	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
+	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_scale_rows:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DCPL:
@@ -195,37 +198,49 @@ test_scale_cols (GA::GlobalArray *g_a,
 	{
 	  if (MISMATCHED (dcmax.real, dcmin.real) || (dcmax.real != 0.0)
 	      || (dcmin.real != 0.0) || MISMATCHED (dcmax.imag, dcmin.imag)
-	      || (dcmax.imag != 0.0) || (dcmin.imag != 0.0))
+	      || (dcmax.imag != 0.0) || (dcmin.imag != 0.0)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_scale_rows:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DBL:
       if (me == 0)
 	{
-	  if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0))
+	  if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_scale_rows:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_FLOAT:
       if (me == 0)
 	{
-	  if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0))
+	  if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_scale_rows:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_LONG:
       if (me == 0)
 	{
-	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
+	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_scale_rows:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     default:
@@ -382,10 +397,13 @@ test_scale_rows (GA::GlobalArray *g_a,
     case C_INT:
       if (me == 0)
 	{
-	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
+	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_scale_rows:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DCPL:
@@ -395,37 +413,49 @@ test_scale_rows (GA::GlobalArray *g_a,
 	{
 	  if (MISMATCHED (dcmax.real, dcmin.real) || (dcmax.real != 0.0)
 	      || (dcmin.real != 0.0) || MISMATCHED (dcmax.imag, dcmin.imag)
-	      || (dcmax.imag != 0.0) || (dcmin.imag != 0.0))
+	      || (dcmax.imag != 0.0) || (dcmin.imag != 0.0)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_scale_rows:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DBL:
       if (me == 0)
 	{
-	  if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0))
-	    printf ("not ok.\n");
-	  else
+	  if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0)) {
+	    printf ("not ok.\n"); 
+        GA::SERVICES.error ((char *)"test_scale_rows:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_FLOAT:
       if (me == 0)
 	{
-	  if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0))
+	  if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_scale_rows:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_LONG:
       if (me == 0)
 	{
-	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
+	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_scale_rows:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     default:
@@ -615,10 +645,13 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
     case C_INT:
       if (me == 0)
 	{
-	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
+	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA_Error ((char *)"test_median:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DCPL:
@@ -628,37 +661,49 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
 	{
 	  if (MISMATCHED (dcmax.real, dcmin.real) || (dcmax.real != 0.0)
 	      || (dcmin.real != 0.0) || MISMATCHED (dcmax.imag, dcmin.imag)
-	      || (dcmax.imag != 0.0) || (dcmin.imag != 0.0))
+	      || (dcmax.imag != 0.0) || (dcmin.imag != 0.0)) {
 	    printf ("not ok.\n");
-	  else
+        GA_Error ((char *)"test_median:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DBL:
       if (me == 0)
 	{
-	  if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0))
+	  if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA_Error ((char *)"test_median:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_FLOAT:
       if (me == 0)
 	{
-	  if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0))
+	  if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA_Error ((char *)"test_median:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_LONG:
       if (me == 0)
 	{
-	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
+	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA_Error ((char *)"test_median:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     default:
@@ -844,10 +889,13 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
     case C_INT:
       if (me == 0)
 	{
-	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
+	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_median:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DCPL:
@@ -857,37 +905,49 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
 	{
 	  if (MISMATCHED (dcmax.real, dcmin.real) || (dcmax.real != 0.0)
 	      || (dcmin.real != 0.0) || MISMATCHED (dcmax.imag, dcmin.imag)
-	      || (dcmax.imag != 0.0) || (dcmin.imag != 0.0))
+	      || (dcmax.imag != 0.0) || (dcmin.imag != 0.0)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_median:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DBL:
       if (me == 0)
 	{
-	  if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0))
+	  if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_median:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_FLOAT:
       if (me == 0)
 	{
-	  if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0))
+	  if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_median:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_LONG:
       if (me == 0)
 	{
-	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
+	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_median:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     default:
@@ -970,10 +1030,13 @@ test_norm_infinity (GA::GlobalArray * g_a) {
   result = result * dims[0];
   if (me == 0)
     {
-      if (MISMATCHED (result, norm_infinity))
-	printf ("not ok.\n");
-      else
-	printf ("ok.\n");
+      if (MISMATCHED (result, norm_infinity)) {
+          printf ("not ok.\n");
+          GA::SERVICES.error ((char *)"test_norm_infinity:mismatched.", type);
+      }
+      else {
+          printf ("ok.\n");
+      }
     }
 }
 
@@ -1050,10 +1113,13 @@ test_norm1 (GA::GlobalArray * g_a)
   result = result * dims[1];
   if (me == 0)
     {
-      if (MISMATCHED (result, norm1))
-	printf ("not ok.\n");
-      else
-	printf ("ok.\n");
+      if (MISMATCHED (result, norm1)) {
+          printf ("not ok.\n");
+          GA::SERVICES.error ((char *)"test_norm1: mismatched.\n", type);
+      }
+      else {
+          printf ("ok.\n");
+      }
     }
 }
 
@@ -1115,10 +1181,13 @@ test_get_diagonal (GA::GlobalArray * g_a,
       iresult = g_v->idot (g_v);
       if (me == 0)
 	{
-	  if (MISMATCHED (idot, iresult))
+	  if (MISMATCHED (idot, iresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_get_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_LONG:
@@ -1126,10 +1195,13 @@ test_get_diagonal (GA::GlobalArray * g_a,
       lresult = g_v->ldot (g_v);
       if (me == 0)
 	{
-	  if (MISMATCHED (ldot, lresult))
+	  if (MISMATCHED (ldot, lresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_get_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_FLOAT:
@@ -1137,10 +1209,13 @@ test_get_diagonal (GA::GlobalArray * g_a,
       fresult = g_v->fdot (g_v);
       if (me == 0)
 	{
-	  if (MISMATCHED (fdot, fresult))
+	  if (MISMATCHED (fdot, fresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_get_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DBL:
@@ -1148,10 +1223,13 @@ test_get_diagonal (GA::GlobalArray * g_a,
       dresult = g_v->ddot (g_v);
       if (me == 0)
 	{
-	  if (MISMATCHED (ddot, dresult))
+	  if (MISMATCHED (ddot, dresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_get_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DCPL:
@@ -1163,10 +1241,13 @@ test_get_diagonal (GA::GlobalArray * g_a,
       if (me == 0)
 	{
 	  if (MISMATCHED (zdot.real, zresult.real)
-	      || MISMATCHED (zdot.imag, zresult.imag))
+	      || MISMATCHED (zdot.imag, zresult.imag)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_get_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     default:
@@ -1256,10 +1337,13 @@ test_add_diagonal (GA::GlobalArray * g_a,
       iresult = g_a->idot (g_a);
       if (me == 0)
 	{
-	  if (MISMATCHED (idot, iresult))
+	  if (MISMATCHED (idot, iresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_add_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_LONG:
@@ -1267,10 +1351,13 @@ test_add_diagonal (GA::GlobalArray * g_a,
       lresult = g_a->ldot (g_a);
       if (me == 0)
 	{
-	  if (MISMATCHED (ldot, lresult))
+	  if (MISMATCHED (ldot, lresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_add_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_FLOAT:
@@ -1278,10 +1365,13 @@ test_add_diagonal (GA::GlobalArray * g_a,
       fresult = g_a->fdot (g_a);
       if (me == 0)
 	{
-	  if (MISMATCHED (fdot, fresult))
+	  if (MISMATCHED (fdot, fresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_add_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DBL:
@@ -1289,10 +1379,13 @@ test_add_diagonal (GA::GlobalArray * g_a,
       dresult = g_a->ddot (g_a);
       if (me == 0)
 	{
-	  if (MISMATCHED (ddot, dresult))
+	  if (MISMATCHED (ddot, dresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_add_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DCPL:
@@ -1302,10 +1395,13 @@ test_add_diagonal (GA::GlobalArray * g_a,
       if (me == 0)
 	{
 	  if (MISMATCHED (zdot.real, zresult.real)
-	      || MISMATCHED (zdot.imag, zresult.imag))
+	      || MISMATCHED (zdot.imag, zresult.imag)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_add_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     default:
@@ -1374,10 +1470,13 @@ test_set_diagonal (GA::GlobalArray * g_a,
       iresult = g_a->idot (g_a);
       if (me == 0)
 	{
-	  if (MISMATCHED (idot, iresult))
+	  if (MISMATCHED (idot, iresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_set_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_LONG:
@@ -1385,10 +1484,13 @@ test_set_diagonal (GA::GlobalArray * g_a,
       lresult = g_a->ldot (g_a);
       if (me == 0)
 	{
-	  if (MISMATCHED (ldot, lresult))
+	  if (MISMATCHED (ldot, lresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_set_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_FLOAT:
@@ -1396,10 +1498,13 @@ test_set_diagonal (GA::GlobalArray * g_a,
       fresult = g_a->fdot (g_a);
       if (me == 0)
 	{
-	  if (MISMATCHED (fdot, fresult))
+	  if (MISMATCHED (fdot, fresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_set_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DBL:
@@ -1407,10 +1512,13 @@ test_set_diagonal (GA::GlobalArray * g_a,
       dresult = g_a->ddot (g_a);
       if (me == 0)
 	{
-	  if (MISMATCHED (ddot, dresult))
+	  if (MISMATCHED (ddot, dresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_set_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DCPL:
@@ -1422,10 +1530,13 @@ test_set_diagonal (GA::GlobalArray * g_a,
       if (me == 0)
 	{
 	  if (MISMATCHED (zdot.real, zresult.real)
-	      || MISMATCHED (zdot.imag, zresult.imag))
+	      || MISMATCHED (zdot.imag, zresult.imag)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_set_diagonal:mismatched.", type);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     default:
@@ -1493,10 +1604,13 @@ test_shift_diagonal (GA::GlobalArray *g_a) {
       iresult = g_a->idot (g_a);
       if (me == 0)
 	{
-	  if (MISMATCHED (idot, iresult))
+	  if (MISMATCHED (idot, iresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_shift_diagonal:mismatched.", 1);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_LONG:
@@ -1504,10 +1618,13 @@ test_shift_diagonal (GA::GlobalArray *g_a) {
       lresult = g_a->ldot (g_a);
       if (me == 0)
 	{
-	  if (MISMATCHED (ldot, lresult))
+	  if (MISMATCHED (ldot, lresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_shift_diagonal:mismatched.", 1);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_FLOAT:
@@ -1515,10 +1632,13 @@ test_shift_diagonal (GA::GlobalArray *g_a) {
       fresult = g_a->fdot (g_a);
       if (me == 0)
 	{
-	  if (MISMATCHED (fdot, fresult))
+	  if (MISMATCHED (fdot, fresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_shift_diagonal:mismatched.", 1);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DBL:
@@ -1526,10 +1646,13 @@ test_shift_diagonal (GA::GlobalArray *g_a) {
       dresult = g_a->ddot (g_a);
       if (me == 0)
 	{
-	  if (MISMATCHED (ddot, dresult))
+	  if (MISMATCHED (ddot, dresult)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_shift_diagonal:mismatched.", 1);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     case C_DCPL:
@@ -1540,10 +1663,13 @@ test_shift_diagonal (GA::GlobalArray *g_a) {
       if (me == 0)
 	{
 	  if (MISMATCHED (zdot.real, zresult.real)
-	      || MISMATCHED (zdot.imag, zresult.imag))
+	      || MISMATCHED (zdot.imag, zresult.imag)) {
 	    printf ("not ok.\n");
-	  else
+        GA::SERVICES.error ((char *)"test_shift_diagonal:mismatched.", 1);
+      }
+	  else {
 	    printf ("ok.\n");
+      }
 	}
       break;
     default:
