@@ -150,7 +150,7 @@ char** ptr_array;
 #endif
 
 
-char *GA_name_stack[NAME_STACK_LEN];  /* stack for storing names of GA ops */
+char **GA_name_stack;  /* stack for storing names of GA ops */
 int  GA_stack_size=0;
 
 /* Function prototypes */
@@ -391,6 +391,9 @@ int bytes;
         ARMCIinitialized = 1;
     }
     
+    GA_name_stack = malloc(sizeof(char*)*NAME_STACK_LEN);
+    GA_stack_size = 0;
+
     GA_Default_Proc_Group = -1;
     /* zero in pointers in GA array */
     _ga_main_data_structure
@@ -2940,7 +2943,11 @@ Integer i, handle;
     ARMCIinitialized = 0;
     GAinitialized = 0;
     //GA_Internal_Threadsafe_Unlock();
-}   
+    if (0 != GA_stack_size) {
+        pnga_error("0 != GA_stack_size", GA_stack_size);
+    }
+    free(GA_name_stack);
+}
 
     
 /**

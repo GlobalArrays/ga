@@ -17,6 +17,7 @@
 #   include <string.h>
 #endif
 #include "matmul.h"
+#include "ga_iterator.h"
 #include "ga-papi.h"
 #include "ga-wapi.h"
 
@@ -600,6 +601,8 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
   Integer ctype, cndim, cdims[2];
   Integer iblock=0, proc_index[2], index[2];
   Integer blocks[2], block_dims[2], topology[2];
+  _iterator_hdl hdl;
+  char *ptr_c;
 
   GA_PUSH_NAME("ga_matmul_regular");
   if(irregular) pnga_error("irregular flag set", 0L);
@@ -617,6 +620,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
   clo[1] = cjlo; chi[1] = cjhi;
   k = ajhi - ajlo +1;
 
+#if 0
   numblocks = pnga_total_blocks(g_c);
   if(numblocks>=0) init_block_info(g_c, proc_index, index, blocks,
       block_dims, topology, &iblock);
@@ -638,6 +642,11 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
             topology, &iblock, loC, hiC))
         break;
     }
+/*  } */
+#else
+  pnga_local_iterator_init(g_c, &hdl);
+  while (pnga_local_iterator_next(&hdl,loC,hiC,&ptr_c,ld)) {
+#endif
 
     /* If loC and hiC intersects with current patch region, then they will
      * be updated accordingly. Else it returns FALSE */
@@ -1497,7 +1506,7 @@ void pnga_matmul(transa, transb, alpha, beta,
        else if(atype==C_SCPL){
 	  if((((SingleComplex*)beta)->real == 0) && 
 	     (((SingleComplex*)beta)->imag ==0)) need_scaling =0;} 
-       else if((atype==C_DBL)){
+       else if(atype==C_DBL){
 	  if(*(DoublePrecision *)beta == 0) need_scaling =0;}
        else if( *(float*)beta ==0) need_scaling =0;
 
@@ -1529,13 +1538,14 @@ void pnga_matmul(transa, transb, alpha, beta,
 			      g_c, cilo, cihi, cjlo, cjhi,
 			      Ichunk, Kchunk, Jchunk, a_ar, b_ar, c_ar,
 			      need_scaling, irregular);
-	  else
+	  else {
 	     gai_matmul_regular(transa, transb, alpha, beta, atype,
 				g_a, ailo, aihi, ajlo, ajhi,
 				g_b, bilo, bihi, bjlo, bjhi,
 				g_c, cilo, cihi, cjlo, cjhi,
 				Ichunk, Kchunk, Jchunk, a_ar, b_ar, c_ar, 
 				need_scaling, irregular);
+     }
        }
 	     
        a = a_ar[0];
@@ -1719,7 +1729,7 @@ Integer clo[2], chi[2];
 	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0;} 
    else if(atype==C_SCPL){if((((SingleComplex*)beta)->real == 0) &&
 	       (((SingleComplex*)beta)->imag ==0)) need_scaling =0;} 
-   else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0) need_scaling =0;}
+   else if(atype==C_DBL){if(*(DoublePrecision *)beta == 0) need_scaling =0;}
    else if( *(float*)beta ==0) need_scaling =0;
 
    pnga_mask_sync(ZERO_I, ZERO_I);
@@ -1973,9 +1983,9 @@ void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
 #   pragma weak wnga_matmul_patch = pnga_matmul_patch
 #endif
 void pnga_matmul_patch(char *transa, char *transb, void *alpha, void *beta, 
-		      Integer g_a, Integer alo[], Integer ahi[], 
-                      Integer g_b, Integer blo[], Integer bhi[], 
-		      Integer g_c, Integer clo[], Integer chi[])
+    Integer g_a, Integer alo[], Integer ahi[], 
+    Integer g_b, Integer blo[], Integer bhi[], 
+    Integer g_c, Integer clo[], Integer chi[])
 {
 #ifdef STATBUF
    DoubleComplex a[ICHUNK*KCHUNK], b[KCHUNK*JCHUNK], c[ICHUNK*JCHUNK];
@@ -2012,6 +2022,14 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    if(local_sync_begin)pnga_sync();
 
    GA_PUSH_NAME("nga_matmul_patch");
+   if (pnga_total_blocks(g_a) > 0 || pnga_total_blocks(g_b) > 0 ||
+       pnga_total_blocks(g_c) > 0) {
+     pnga_matmul_basic(transa, transb, alpha, beta, g_a, alo, ahi,
+         g_b, blo, bhi, g_c, clo, chi);
+     GA_POP_NAME;
+     return;
+   }
+
 
    /* Check to make sure all global arrays are of the same type */
    if (!(pnga_is_mirrored(g_a) == pnga_is_mirrored(g_b) &&
@@ -2177,7 +2195,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0;} 
    else if(atype==C_SCPL){if((((SingleComplex*)beta)->real == 0) &&
 	       (((SingleComplex*)beta)->imag ==0)) need_scaling =0;} 
-   else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0)need_scaling =0;}
+   else if(atype==C_DBL){if(*(DoublePrecision *)beta == 0)need_scaling =0;}
    else if( *(float*)beta ==0) need_scaling =0;
 
    if(need_scaling) pnga_scale_patch(g_c, clo, chi, beta);
@@ -2317,3 +2335,277 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
  * 1. remove STATBUF
  * 2. 
  */
+void printBlock(char * banner, Integer type, void *ptr, Integer lo[],
+    Integer hi[], Integer ld[])
+{
+  Integer i,j;
+  Integer offset;
+  printf("p[%d] %s lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
+      pnga_nodeid(),banner,lo[0],hi[0],lo[1],hi[1]);
+  printf("    ");
+  for (i=lo[0]; i<=hi[0]; i++) printf(" %12d",i);
+  printf("\n");
+  for (j=lo[1]; j<=hi[1]; j++) {
+    printf("J: %d",j);
+    for (i=lo[0]; i<=hi[0]; i++) {
+      offset = (j-lo[1])*ld[0] + i-lo[0];
+      switch (type) {
+        case C_FLOAT:
+          printf(" %12.4f",*((float*)ptr+offset));
+          break;
+        case C_DBL:
+          printf(" %12.4f",*((double*)ptr+offset));
+          break;
+        case C_DCPL:
+          printf(" [%12.4f:%12.4f]",*((double*)ptr+2*offset),
+              *((double*)ptr+2*offset+1));
+          break;
+        case C_SCPL:
+          printf(" [%12.4f:%12.4f]",*((float*)ptr+2*offset),
+              *((float*)ptr+2*offset+1));
+          break;
+        default:
+          pnga_error("ga_matmul_basic: wrong data type", type);
+      }
+    }
+    printf("\n");
+  }
+  printf("\n\n");
+}
+/**
+ * This is a routine that is designed to work for all layouts but may not be
+ * high performing.
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_matmul_basic = pnga_matmul_basic
+#endif
+void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
+		                 Integer g_a, Integer alo[], Integer ahi[], 
+                       Integer g_b, Integer blo[], Integer bhi[], 
+		                 Integer g_c, Integer clo[], Integer chi[])
+{
+  Integer atype, btype, ctype;
+  Integer adims[GA_MAX_DIM],bdims[GA_MAX_DIM],cdims[GA_MAX_DIM],tmpld[GA_MAX_DIM];
+  Integer n, m, k, nb, adim, bdim, cdim, arank, brank, crank;
+  Integer loC[MAXDIM], hiC[MAXDIM], lot[MAXDIM], hit[MAXDIM], lC[MAXDIM];
+  Integer nlo, loA[MAXDIM], hiA[MAXDIM], loB[MAXDIM], hiB[MAXDIM];
+  DoubleComplex ONE_Z;
+  SingleComplex ONE_F;
+  BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
+  char *src_ptr;
+  _iterator_hdl hdl_c;
+  int local_sync_begin,local_sync_end;
+  int bail = 0;
+
+  ONE_Z.real = 1.0;
+  ONE_Z.imag = 0.0;
+  ONE_F.real = 1.0;
+  ONE_F.imag = 0.0;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)pnga_sync();
+
+  GA_PUSH_NAME("nga_matmul_basic");
+  /* For the time being, punt on transposes*/
+  if (*transa == 't' || *transa == 'T' || *transb == 't' || *transb == 'T') {
+    pnga_error("Cannot do basic multiply with tranpose ",0);
+  }
+  /* For the time being, punt on mirrored arrays */
+  if (pnga_is_mirrored(g_a) || pnga_is_mirrored(g_b) || pnga_is_mirrored(g_c)) {
+    pnga_error("Cannot do basic multiply with mirrored arrays ",0);
+  }
+
+
+  pnga_inquire(g_a, &atype, &arank, adims);
+  pnga_inquire(g_b, &btype, &brank, bdims);
+  pnga_inquire(g_c, &ctype, &crank, cdims);
+  /*
+  if ((clo[0] > 1 || clo[1] > 1) && (ctype == C_DCPL || ctype == C_SCPL)) bail = 1;
+  if ((clo[0] > 1 || clo[1] > 1)) bail = 1;
+  */
+
+  /* Can't handle dimensions other than 2 */
+  if(arank != 2)  pnga_error("rank of A must be 2 ",arank);
+  if(brank != 2)  pnga_error("rank of B must be 2 ",brank);
+  if(crank != 2)  pnga_error("rank of C must be 2 ",crank);
+
+  if(atype != btype || atype != ctype ) pnga_error(" types mismatch ", 0L);
+  if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT && atype != C_SCPL)
+    pnga_error(" type error: type not supported ",atype);
+
+  /* Check that patch dims are reasonable */
+  for (n=0; n<arank; n++) {
+    if (alo[n] <= 0 || alo[n] > adims[n] || ahi[n] <= 0 || ahi[n] > adims[n]) {
+      pnga_error("Patch is out of bounds for A ",0);
+    }
+  }
+  for (n=0; n<brank; n++) {
+    if (blo[n] <= 0 || blo[n] > bdims[n] || bhi[n] <= 0 || bhi[n] > bdims[n]) {
+      pnga_error("Patch is out of bounds for B ",0);
+    }
+  }
+  for (n=0; n<crank; n++) {
+    if (clo[n] <= 0 || clo[n] > cdims[n] || chi[n] <= 0 || chi[n] > cdims[n]) {
+      pnga_error("Patch is out of bounds for C ",0);
+    }
+  }
+
+  /* Check that multiplication is feasible */
+  for (n=0; n<arank; n++) {
+    if (ahi[n]<alo[n]) pnga_error("No data in patch on A ",0);
+  }
+
+  for (n=0; n<brank; n++) {
+    if (bhi[n]<blo[n]) pnga_error("No data in patch on B ",0);
+  }
+  for (n=0; n<crank; n++) {
+    if (chi[n]<clo[n]) pnga_error("No data in patch on C ",0);
+  }
+  m = ahi[0]-alo[0]+1;
+  k = ahi[1]-alo[1]+1;
+  n = bhi[1]-blo[1]+1;
+  if (k != bhi[0]-blo[0]+1) {
+    pnga_error("Inner dimensions of A and B do not match ",0);
+  }
+  if (m != chi[0]-clo[0]+1 || n != chi[1]-clo[1]+1) {
+    pnga_error("Outer dimensions of A and B do not match dimensions of C ",0);
+  }
+
+  /* Scale patch of C by beta */
+  pnga_scale_patch(g_c,clo,chi,beta);
+
+  /* Multiplication is feasible. Start iterating over patches of C */
+  pnga_local_iterator_init(g_c, &hdl_c);
+  while (pnga_local_iterator_next(&hdl_c, loC, hiC, &src_ptr, lC)) {
+    Integer num_blocks;
+    Integer offset, elemsize, ld;
+    void *a_buf, *b_buf, *c_buf;
+    Integer size_a, size_b, size_c;
+    if (bail) continue;
+    /*
+    printf("p[%d] loC[0]: %d hiC[0]: %d loC[1]: %d hiC[1]: %d lC[0]: %d\n",
+        pnga_nodeid(),loC[0],hiC[0],loC[1],hiC[1],lC[0]);
+        */
+    /* Copy limits since patch intersect modifies loC array */
+    for (n=0; n<crank; n++) {
+      lot[n] = loC[n];
+      hit[n] = hiC[n];
+    }
+
+    /* check to see if this block overlaps with patch on C */
+    if (pnga_patch_intersect(loC,hiC,lot,hit,crank)) {
+      int istart, in;
+
+      /* Calculating number of blocks for inner dimension. Assume that 
+       * number of rows in block returned by iterator is a good size */
+      num_blocks = (ahi[1]-alo[1]+1)/(hit[0]-lot[0]+1);
+      if (num_blocks*(hit[0]-lot[0]+1) < ahi[1]-alo[1]+1) num_blocks++;
+
+      /* Calculate offset from  src_ptr to beginning of lot */ 
+      offset = lC[0]*(lot[1]-loC[1])+lot[0]-loC[0];
+      elemsize = GAsizeofM(atype);
+      c_buf = (void*)((char*)src_ptr + elemsize*offset);
+      a_buf = (void*)malloc((hit[0]-lot[0]+1)*(hit[1]-lot[1]+1)*elemsize);
+      b_buf = (void*)malloc((hit[0]-lot[0]+1)*(hit[1]-lot[1]+1)*elemsize);
+      size_c = (hit[0]-lot[0]+1)*(hit[1]-lot[1]+1);
+
+      /* calculate starting block index */
+      istart = (lot[0]-clo[0])/(hit[0]-lot[0]+1);
+
+      /* loop over block pairs */
+      for (nb=0; nb<num_blocks; nb++) {
+        /*
+    printf("p[%d] loC[0]: %d hiC[0]: %d loC[1]: %d hiC[1]: %d\n",pnga_nodeid(),
+        lot[0],hit[0],lot[1],hit[1]);
+        */
+        in = istart + nb;
+        in = in%num_blocks;
+        nlo = alo[1]+in*(hit[0]-lot[0]+1);
+        loA[0] = lot[0];
+        hiA[0] = hit[0];
+        loA[1] = nlo;
+        hiA[1] = loA[1]+(hit[0]-lot[0]);
+        if (hiA[1] > ahi[1]) hiA[1] = ahi[1];
+        ld = hiA[0]-loA[0]+1;
+        size_a = (hiA[0]-loA[0]+1)*(hiA[1]-loA[1]+1);
+        if (size_a > size_c) {
+          printf("p[%d] size_a: %d size_c: %d\n",pnga_nodeid(),size_a,size_c);
+        }
+        /*
+    printf("p[%d] loA[0]: %d hiA[0]: %d loA[1]: %d hiA[1]: %d\n",pnga_nodeid(),
+        loA[0],hiA[0],loA[1],hiA[1]);
+        */
+        pnga_get(g_a,loA,hiA,a_buf,&ld);
+        /*
+        printBlock("Matrix A",atype,a_buf,loA,hiA,&ld);
+        */
+        loB[1] = lot[1];
+        hiB[1] = hit[1];
+        nlo = blo[0]+in*(hit[0]-lot[0]+1);
+        loB[0] = nlo;
+        hiB[0] = loB[0]+(hit[0]-lot[0]);
+        if (hiB[0] > bhi[0]) hiB[0] = bhi[0];
+        ld = hiB[0]-loB[0]+1;
+        size_b = (hiB[0]-loB[0]+1)*(hiB[1]-loB[1]+1);
+        if (size_b > size_c) {
+          printf("p[%d] size_b: %d size_c: %d\n",pnga_nodeid(),size_b,size_c);
+        }
+        /*
+    printf("p[%d] loB[0]: %d hiB[0]: %d loB[1]: %d hiB[1]: %d\n",pnga_nodeid(),
+        loB[0],hiB[0],loB[1],hiB[1]);
+        */
+        pnga_get(g_b,loB,hiB,b_buf,&ld);
+        /*
+        printBlock("Matrix B",btype,b_buf,loB,hiB,&ld);
+        */
+
+        idim_t=(BlasInt)(hiA[0]-loA[0]+1);
+        kdim_t=(BlasInt)(hiA[1]-loA[1]+1);
+        jdim_t=(BlasInt)(hiB[1]-loB[1]+1);
+        adim_t=hiA[0]-loA[0]+1;
+        bdim_t=hiB[0]-loB[0]+1;
+        cdim_t=lC[0];
+
+        /*
+        printf("p[%d] idim: %d jdim: %d kdim: %d adim: %d bdim: %d cdim: %d\n",
+            pnga_nodeid(),idim_t,jdim_t,kdim_t,adim_t,bdim_t,cdim_t);
+            */
+        switch(atype) {
+          case C_FLOAT:
+            BLAS_SGEMM(transa, transb, &idim_t, &jdim_t, &kdim_t,
+                (Real *)alpha, (Real *)a_buf, &adim_t,
+                (Real *)b_buf, &bdim_t, (Real *)&ONE_F,
+                (Real *)c_buf, &cdim_t);
+            break;
+          case C_DBL:
+            BLAS_DGEMM(transa, transb, &idim_t, &jdim_t, &kdim_t,
+                (DoublePrecision *)alpha, (DoublePrecision *)a_buf, &adim_t,
+                (DoublePrecision *)b_buf, &bdim_t, (DoublePrecision *)&ONE_Z,
+                (DoublePrecision *)c_buf, &cdim_t);
+            break;
+          case C_DCPL:
+            BLAS_ZGEMM(transa, transb, &idim_t, &jdim_t, &kdim_t,
+                (DoubleComplex *)alpha, (DoubleComplex *)a_buf, &adim_t,
+                (DoubleComplex *)b_buf, &bdim_t, (DoubleComplex *)&ONE_Z,
+                (DoubleComplex *)c_buf, &cdim_t);
+            break;
+          case C_SCPL:
+            BLAS_CGEMM(transa, transb, &idim_t, &jdim_t, &kdim_t,
+                (SingleComplex *)alpha, (SingleComplex *)a_buf, &adim_t,
+                (SingleComplex *)b_buf, &bdim_t, (SingleComplex *)&ONE_F,
+                (SingleComplex *)c_buf, &cdim_t);
+            break;
+		  default:
+		    pnga_error("ga_matmul_basic: wrong data type", atype);
+		  }
+      }
+
+      /* multiplication is done, free buffers */
+      free(a_buf);
+      free(b_buf);
+    }
+  }
+  GA_POP_NAME;
+  if(local_sync_end)pnga_sync(); 
+}

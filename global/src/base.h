@@ -25,6 +25,8 @@ extern int *ProcListPerm;            /*permuted list of processes */
 #define __CRAYX1_PRAGMA(_pragf)
 #endif
 
+#define COMPACT_SCALAPACK
+
 
 typedef int ARMCI_Datatype;
 typedef struct {
@@ -365,3 +367,6 @@ Integer _d;                                                                    \
           pnga_error(err_string, _d);                                          \
       }\
 }
+
+extern void pna_access_block_grid_ptr(Integer g_a, Integer *index, void *ptr,
+    Integer ld);
