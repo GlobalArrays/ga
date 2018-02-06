@@ -68,7 +68,39 @@ case "x$PORT" in
         ;;
 esac
 
-# Run unit tests
+# build libga
 make V=0 -j ${MAKE_JNUM}
+
+# build test programs
 make V=0 checkprogs -j ${MAKE_JNUM}
-make V=0 check-travis
+
+# run one test
+MAYBE_OVERSUBSCRIBE=
+if test "x$os" = "xDarwin" && test "x$MPI_IMPL" = "xopenmpi"
+then
+    MAYBE_OVERSUBSCRIBE=-oversubscribe
+fi
+
+# Determine test name based on whether fortran was supported.
+TEST_NAME=./global/testing/test.x
+if test -x $TEST_NAME
+then
+    echo "Running fortran-based test"
+else
+    TEST_NAME=./global/testing/testc.x
+    if test -x $TEST_NAME
+    then
+        echo "Running C-based test"
+    else
+        echo "No suitable test was found"
+        exit 1
+    fi
+fi
+
+if test "x$PORT" = "xmpi-pr"
+then
+    mpirun -n 5 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
+else
+    mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
+fi
+

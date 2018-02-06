@@ -9,7 +9,6 @@ AC_INIT([Aggregate Remote Memory Copy Interface (ARMCI)], [1.5],
         [http://www.emsl.pnl.gov/docs/parsoft/armci/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([config.h])
-AC_CONFIG_LIBOBJ_DIR([compat])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/common/armci.c])
 
@@ -151,7 +150,6 @@ GA_C_POINTER_AS_INTEGER
 AC_FUNC_FORK
 AC_FUNC_MMAP
 AC_FUNC_SELECT_ARGTYPES
-AC_FUNC_VPRINTF
 AS_IF([test "x$ga_msg_comms" = xTCGMSG],
     [AC_SEARCH_LIBS([xdr_array], [rpclib], [], [], [])])
 AC_SEARCH_LIBS([floor], [m], [have_floor=1], [have_floor=0])

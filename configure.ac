@@ -11,7 +11,6 @@ AC_INIT([Global Arrays (GA)],
         [http://hpc.pnl.gov/globalarrays/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([config.h])
-AC_CONFIG_LIBOBJ_DIR([compat])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([global/src/ga.h])
 ###############################################################################

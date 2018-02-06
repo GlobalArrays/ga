@@ -50,9 +50,9 @@ nodist_libarmci_la_SOURCES =
 libarmci_la_LIBADD =
 
 if ARMCI_NETWORK_COMEX
-ARMCI_NETWORK_CPPFLAGS += -I$(abs_srcdir)/../comex/src-armci $(BLAS_CPPFLAGS)
-ARMCI_NETWORK_LDFLAGS += -L$(abs_builddir)/../comex $(BLAS_LDFLAGS)
-ARMCI_NETWORK_LIBS += $(abs_builddir)/../comex/libarmci.la $(BLAS_LIBS)
+ARMCI_NETWORK_CPPFLAGS += -I$(abs_srcdir)/../comex/src-armci
+ARMCI_NETWORK_LDFLAGS += -L$(abs_builddir)/../comex
+ARMCI_NETWORK_LIBS += $(abs_builddir)/../comex/libarmci.la
 endif
 
 AM_FFLAGS += $(ARMCI_FOPT)
@@ -78,9 +78,6 @@ LDADD += $(ARMCI_NETWORK_LIBS)
 LDADD += $(GA_MP_LIBS)
 else
 LDADD += libarmci.la
-LDADD += $(LTLIBOBJS)
-LDADD += $(GA_MP_LIBS)
-LDADD += $(ARMCI_NETWORK_LIBS)
 endif
 
 if ARMCI_NETWORK_EXTERNAL

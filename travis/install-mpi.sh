@@ -17,15 +17,14 @@ export PATH=$TRAVIS_ROOT/bin:$PATH
 case "$os" in
     Darwin)
         echo "Mac"
-        brew update
         case "$MPI_IMPL" in
             mpich)
-                brew install mpich || brew upgrade mpich
+                brew install mpich || brew upgrade mpich || true
                 ;;
             openmpi)
                 # Homebrew is at 1.10.2, which is broken for STRIDED/IOV=DIRECT.
                 brew info open-mpi
-                brew install open-mpi || brew upgrade open-mpi
+                brew install open-mpi || brew upgrade open-mpi || true
                 ;;
             *)
                 echo "Unknown MPI implementation: $MPI_IMPL"

@@ -45,7 +45,6 @@ AM_CFLAGS =
 AM_CXXFLAGS =
 AM_CPPFLAGS =
 AM_LDFLAGS =
-FLDFLAGS =
 LDADD =
 
 if MINGW
@@ -77,29 +76,11 @@ AM_LDFLAGS += $(LAPACK_LDFLAGS)
 AM_LDFLAGS += $(BLAS_LDFLAGS)
 AM_LDFLAGS += $(GA_MP_LDFLAGS)
 AM_LDFLAGS += $(ARMCI_NETWORK_LDFLAGS)
-if ENABLE_F77
-AM_LDFLAGS += $(FLD_NOMAIN)
-endif
 
-FLDFLAGS += $(ELPA_LDFLAGS)
-FLDFLAGS += $(SCALAPACK_LDFLAGS)
-FLDFLAGS += $(LAPACK_LDFLAGS)
-FLDFLAGS += $(BLAS_LDFLAGS)
-FLDFLAGS += $(GA_MP_LDFLAGS)
-FLDFLAGS += $(ARMCI_NETWORK_LDFLAGS)
-
-LDADD += $(LTLIBOBJS)
 LDADD += libga.la
-LDADD += $(ELPA_LIBS)
-LDADD += $(SCALAPACK_LIBS)
-LDADD += $(LAPACK_LIBS)
-LDADD += $(BLAS_LIBS)
-LDADD += $(GA_MP_LIBS)
-LDADD += $(ARMCI_NETWORK_LIBS)
 
 # Certain trickery when turning Fortran support on or off.
 if ENABLE_F77
-MAYBE_DUMMY_F_LINK = dummy.f
 MAYBE_FLIBS = $(FLIBS)
 endif
 
@@ -222,12 +203,6 @@ ma_testf_SOURCES         = ma/testf.F
 ma_testc_SOURCES         = ma/testc.c
 ma_test_coalesce_SOURCES = ma/test-coalesce.c
 ma_test_inquire_SOURCES  = ma/test-inquire.c
-
-ma_testf_LDFLAGS = $(FLDFLAGS)
-
-nodist_EXTRA_ma_testc_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_ma_test_coalesce_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_ma_test_inquire_SOURCES  = $(MAYBE_DUMMY_F_LINK)
 
 ##############################################################################
 # LinAlg/lapack+blas
@@ -871,89 +846,88 @@ endif
 	$(M4) -I$(top_srcdir)/global/testing $< > $@ 
 endif
 
-gtsrc =
-gtsrc += global/testing/testutil.fh
-gtsrc += global/testing/testutil.h
-gtsrc += global/testing/util.c
 if ENABLE_F77
-gtsrc += global/testing/ffflush.F
+gtsrcf =
+gtsrcf += global/testing/testutil.fh
+gtsrcf += global/testing/ffflush.F
+gtsrcf += global/testing/util.c
 testblassrc = global/testing/testblas.F
 endif
 
-global_testing_big_SOURCES                 = global/testing/big.c $(gtsrc)
-global_testing_bin_SOURCES                 = global/testing/bin.F $(gtsrc)
-global_testing_blktest_SOURCES             = global/testing/blktest.F $(gtsrc)
-global_testing_d2test_SOURCES              = global/testing/d2test.F $(gtsrc)
-global_testing_elempatch_SOURCES           = global/testing/elempatch.c $(gtsrc)
-global_testing_field_test_SOURCES          = global/testing/field-test.F $(gtsrc)
-global_testing_g2test_SOURCES              = global/testing/g2test.F $(gtsrc)
-global_testing_g3test_SOURCES              = global/testing/g3test.F $(gtsrc)
-global_testing_ga_lu_SOURCES               = global/testing/ga_lu.c $(gtsrc)
-global_testing_ga_mpi_SOURCES              = global/testing/ga-mpi.c $(gtsrc)
-global_testing_ga_shift_SOURCES            = global/testing/ga_shift.F $(gtsrc)
-global_testing_gatscat_SOURCES             = global/testing/gatscat.c $(gtsrc)
-global_testing_getmem_SOURCES              = global/testing/getmem.c $(gtsrc)
-global_testing_ghosts_SOURCES              = global/testing/ghosts.F $(gtsrc)
-global_testing_ipc_clean_SOURCES           = global/testing/ipc.clean.c $(gtsrc)
-global_testing_jacobi_SOURCES              = global/testing/jacobi.F $(gtsrc)
-global_testing_lock_SOURCES                = global/testing/lock.c $(gtsrc)
-global_testing_mir_perf2_SOURCES           = global/testing/mir_perf2.F $(gtsrc)
-global_testing_mmatrix_SOURCES             = global/testing/mmatrix.F $(gtsrc)
-global_testing_mtest_SOURCES               = global/testing/mtest.c $(gtsrc)
-global_testing_mulmatpatch_SOURCES         = global/testing/mulmatpatch.F $(gtsrc) $(testblassrc)
-global_testing_mulmatpatchc_SOURCES        = global/testing/mulmatpatchc.c $(gtsrc)
-global_testing_nbtest_SOURCES              = global/testing/nbtest.F $(gtsrc)
-global_testing_nb2test_SOURCES             = global/testing/nb2test.F $(gtsrc)
-global_testing_ndim_SOURCES                = global/testing/ndim.F $(gtsrc)
-global_testing_normc_SOURCES               = global/testing/normc.c $(gtsrc)
-global_testing_ntestc_SOURCES              = global/testing/ntestc.c $(gtsrc)
-global_testing_ntestfc_SOURCES             = global/testing/ntestfc.c $(gtsrc)
-global_testing_packc_SOURCES               = global/testing/packc.c $(gtsrc)
-global_testing_patch_SOURCES               = global/testing/patch.F $(gtsrc) $(testblassrc)
-global_testing_patch2_SOURCES              = global/testing/patch2.F $(gtsrc)
-global_testing_patch_enumc_SOURCES         = global/testing/patch_enumc.c $(gtsrc)
-global_testing_patch_enumf_SOURCES         = global/testing/patch_enumf.F $(gtsrc)
-global_testing_perf_SOURCES                = global/testing/perf.F $(gtsrc)
-global_testing_perf2_SOURCES               = global/testing/perf2.c $(gtsrc)
-global_testing_perfmod_SOURCES             = global/testing/perfmod.F $(gtsrc)
-global_testing_perform_SOURCES             = global/testing/perform.F $(gtsrc)
-global_testing_pg2test_SOURCES             = global/testing/pg2test.F $(gtsrc)
-global_testing_pg2testmatmult_SOURCES      = global/testing/pg2testmatmult.F $(gtsrc) $(testblassrc)
-global_testing_pgtest_SOURCES              = global/testing/pgtest.F $(gtsrc)
-global_testing_pgtestmatmult_SOURCES       = global/testing/pgtestmatmult.F $(gtsrc)
-global_testing_print_SOURCES               = global/testing/print.c $(gtsrc)
-global_testing_random_SOURCES              = global/testing/random.F $(gtsrc)
-global_testing_scan_SOURCES                = global/testing/scan.F $(gtsrc)
-global_testing_scan_addc_SOURCES           = global/testing/scan_addc.c $(gtsrc)
-global_testing_scan_copyc_SOURCES          = global/testing/scan_copyc.c $(gtsrc)
-global_testing_sprsmatvec_SOURCES          = global/testing/sprsmatvec.c $(gtsrc)
-global_testing_simple_groups_SOURCES       = global/testing/simple_groups.F $(gtsrc)
-global_testing_simple_groups_comm_SOURCES  = global/testing/simple_groups_comm.F $(gtsrc)
-global_testing_simple_groups_commc_SOURCES = global/testing/simple_groups_commc.c $(gtsrc)
-global_testing_sparse_SOURCES              = global/testing/sparse.F $(gtsrc)
-global_testing_sprsmatmult_SOURCES         = global/testing/sprsmatmult.F $(gtsrc)
-global_testing_stride_SOURCES              = global/testing/stride.F $(gtsrc)
-global_testing_test_SOURCES                = global/testing/test.F $(gtsrc)
-global_testing_test_mirrored_SOURCES       = global/testing/test.F $(gtsrc)
-global_testing_testc_SOURCES               = global/testing/testc.c $(gtsrc)
-global_testing_testeig_SOURCES             = global/testing/testeig.F $(gtsrc)
-global_testing_testmatmult_SOURCES         = global/testing/testmatmult.F $(gtsrc)
-global_testing_testmatmultc_SOURCES        = global/testing/testmatmultc.c $(gtsrc)
-global_testing_testmult_SOURCES            = global/testing/testmult.c $(gtsrc)
-global_testing_testmultrect_SOURCES        = global/testing/testmultrect.c $(gtsrc)
-global_testing_testsolve_SOURCES           = global/testing/testsolve.F $(gtsrc)
-global_testing_testspd_SOURCES             = global/testing/testspd.F $(gtsrc)
-global_testing_thread_perf_contig_SOURCES  = global/testing/thread_perf_contig.c $(gtsrc)
-global_testing_thread_perf_strided_SOURCES = global/testing/thread_perf_strided.c $(gtsrc)
-global_testing_threadsafec_SOURCES         = global/testing/threadsafec.c $(gtsrc)
-global_testing_types_test_SOURCES          = global/testing/types-test.F $(gtsrc)
-global_testing_unpackc_SOURCES             = global/testing/unpackc.c $(gtsrc)
-nodist_global_testing_nga_onesided_SOURCES = global/testing/nga-onesided.F $(gtsrc)
-nodist_global_testing_nga_patch_SOURCES    = global/testing/nga-patch.F $(gtsrc)
-nodist_global_testing_nga_periodic_SOURCES = global/testing/nga-periodic.F $(gtsrc)
-nodist_global_testing_nga_scatter_SOURCES  = global/testing/nga-scatter.F $(gtsrc)
-nodist_global_testing_nga_util_SOURCES     = global/testing/nga-util.F $(gtsrc)
-nodist_global_testing_ngatest_SOURCES      = global/testing/ngatest.F $(gtsrc)
+global_testing_big_SOURCES                 = global/testing/big.c
+global_testing_bin_SOURCES                 = global/testing/bin.F $(gtsrcf)
+global_testing_blktest_SOURCES             = global/testing/blktest.F $(gtsrcf)
+global_testing_d2test_SOURCES              = global/testing/d2test.F $(gtsrcf)
+global_testing_elempatch_SOURCES           = global/testing/elempatch.c
+global_testing_field_test_SOURCES          = global/testing/field-test.F $(gtsrcf)
+global_testing_g2test_SOURCES              = global/testing/g2test.F $(gtsrcf)
+global_testing_g3test_SOURCES              = global/testing/g3test.F $(gtsrcf)
+global_testing_ga_lu_SOURCES               = global/testing/ga_lu.c
+global_testing_ga_mpi_SOURCES              = global/testing/ga-mpi.c
+global_testing_ga_shift_SOURCES            = global/testing/ga_shift.F $(gtsrcf)
+global_testing_gatscat_SOURCES             = global/testing/gatscat.c
+global_testing_getmem_SOURCES              = global/testing/getmem.c
+global_testing_ghosts_SOURCES              = global/testing/ghosts.F $(gtsrcf)
+global_testing_ipc_clean_SOURCES           = global/testing/ipc.clean.c
+global_testing_jacobi_SOURCES              = global/testing/jacobi.F
+global_testing_lock_SOURCES                = global/testing/lock.c
+global_testing_mir_perf2_SOURCES           = global/testing/mir_perf2.F $(gtsrcf)
+global_testing_mmatrix_SOURCES             = global/testing/mmatrix.F $(gtsrcf)
+global_testing_mtest_SOURCES               = global/testing/mtest.c
+global_testing_mulmatpatch_SOURCES         = global/testing/mulmatpatch.F $(gtsrcf) $(testblassrc)
+global_testing_mulmatpatchc_SOURCES        = global/testing/mulmatpatchc.c
+global_testing_nbtest_SOURCES              = global/testing/nbtest.F $(gtsrcf)
+global_testing_nb2test_SOURCES             = global/testing/nb2test.F $(gtsrcf)
+global_testing_ndim_SOURCES                = global/testing/ndim.F $(gtsrcf)
+global_testing_normc_SOURCES               = global/testing/normc.c
+global_testing_ntestc_SOURCES              = global/testing/ntestc.c
+global_testing_ntestfc_SOURCES             = global/testing/ntestfc.c
+global_testing_packc_SOURCES               = global/testing/packc.c
+global_testing_patch_SOURCES               = global/testing/patch.F $(gtsrcf) $(testblassrc)
+global_testing_patch2_SOURCES              = global/testing/patch2.F $(gtsrcf)
+global_testing_patch_enumc_SOURCES         = global/testing/patch_enumc.c
+global_testing_patch_enumf_SOURCES         = global/testing/patch_enumf.F
+global_testing_perf_SOURCES                = global/testing/perf.F $(gtsrcf)
+global_testing_perf2_SOURCES               = global/testing/perf2.c
+global_testing_perfmod_SOURCES             = global/testing/perfmod.F $(gtsrcf)
+global_testing_perform_SOURCES             = global/testing/perform.F $(gtsrcf)
+global_testing_pg2test_SOURCES             = global/testing/pg2test.F $(gtsrcf)
+global_testing_pg2testmatmult_SOURCES      = global/testing/pg2testmatmult.F $(gtsrcf) $(testblassrc)
+global_testing_pgtest_SOURCES              = global/testing/pgtest.F $(gtsrcf)
+global_testing_pgtestmatmult_SOURCES       = global/testing/pgtestmatmult.F $(gtsrcf)
+global_testing_print_SOURCES               = global/testing/print.c
+global_testing_random_SOURCES              = global/testing/random.F $(gtsrcf)
+global_testing_scan_SOURCES                = global/testing/scan.F $(gtsrcf)
+global_testing_scan_addc_SOURCES           = global/testing/scan_addc.c
+global_testing_scan_copyc_SOURCES          = global/testing/scan_copyc.c
+global_testing_sprsmatvec_SOURCES          = global/testing/sprsmatvec.c
+global_testing_simple_groups_SOURCES       = global/testing/simple_groups.F
+global_testing_simple_groups_comm_SOURCES  = global/testing/simple_groups_comm.F $(gtsrcf)
+global_testing_simple_groups_commc_SOURCES = global/testing/simple_groups_commc.c
+global_testing_sparse_SOURCES              = global/testing/sparse.F $(gtsrcf)
+global_testing_sprsmatmult_SOURCES         = global/testing/sprsmatmult.F
+global_testing_stride_SOURCES              = global/testing/stride.F
+global_testing_test_SOURCES                = global/testing/test.F $(gtsrcf)
+global_testing_test_mirrored_SOURCES       = global/testing/test.F $(gtsrcf)
+global_testing_testc_SOURCES               = global/testing/testc.c
+global_testing_testeig_SOURCES             = global/testing/testeig.F $(gtsrcf)
+global_testing_testmatmult_SOURCES         = global/testing/testmatmult.F $(gtsrcf)
+global_testing_testmatmultc_SOURCES        = global/testing/testmatmultc.c
+global_testing_testmult_SOURCES            = global/testing/testmult.c
+global_testing_testmultrect_SOURCES        = global/testing/testmultrect.c
+global_testing_testsolve_SOURCES           = global/testing/testsolve.F $(gtsrcf)
+global_testing_testspd_SOURCES             = global/testing/testspd.F
+global_testing_thread_perf_contig_SOURCES  = global/testing/thread_perf_contig.c
+global_testing_thread_perf_strided_SOURCES = global/testing/thread_perf_strided.c
+global_testing_threadsafec_SOURCES         = global/testing/threadsafec.c
+global_testing_types_test_SOURCES          = global/testing/types-test.F $(gtsrcf)
+global_testing_unpackc_SOURCES             = global/testing/unpackc.c
+nodist_global_testing_nga_onesided_SOURCES = global/testing/nga-onesided.F $(gtsrcf)
+nodist_global_testing_nga_patch_SOURCES    = global/testing/nga-patch.F $(gtsrcf)
+nodist_global_testing_nga_periodic_SOURCES = global/testing/nga-periodic.F $(gtsrcf)
+nodist_global_testing_nga_scatter_SOURCES  = global/testing/nga-scatter.F $(gtsrcf)
+nodist_global_testing_nga_util_SOURCES     = global/testing/nga-util.F $(gtsrcf)
+nodist_global_testing_ngatest_SOURCES      = global/testing/ngatest.F $(gtsrcf)
 
 UNIT_TEST_EXTRA_SRC =
 UNIT_TEST_EXTRA_SRC += global/testing/unit-tests/mock.c
@@ -1048,54 +1022,7 @@ global_testing_thread_perf_contig_CPPFLAGS = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 global_testing_thread_perf_strided_CPPFLAGS = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 global_testing_threadsafec_CPPFLAGS       = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 
-global_testing_bin_LDFLAGS                = $(FLDFLAGS)
-global_testing_blktest_LDFLAGS            = $(FLDFLAGS)
-global_testing_d2test_LDFLAGS             = $(FLDFLAGS)
-global_testing_field_test_LDFLAGS         = $(FLDFLAGS)
-global_testing_g2test_LDFLAGS             = $(FLDFLAGS)
-global_testing_g3test_LDFLAGS             = $(FLDFLAGS)
-global_testing_ga_shift_LDFLAGS           = $(FLDFLAGS)
-global_testing_ghosts_LDFLAGS             = $(FLDFLAGS)
-global_testing_jacobi_LDFLAGS             = $(FLDFLAGS)
-global_testing_mir_perf2_LDFLAGS          = $(FLDFLAGS)
-global_testing_mmatrix_LDFLAGS            = $(FLDFLAGS)
-global_testing_mulmatpatch_LDFLAGS        = $(FLDFLAGS)
-global_testing_nbtest_LDFLAGS             = $(FLDFLAGS)
-global_testing_nb2test_LDFLAGS            = $(FLDFLAGS)
-global_testing_ndim_LDFLAGS               = $(FLDFLAGS)
-global_testing_nga_onesided_LDFLAGS       = $(FLDFLAGS)
-global_testing_nga_patch_LDFLAGS          = $(FLDFLAGS)
-global_testing_nga_periodic_LDFLAGS       = $(FLDFLAGS)
-global_testing_nga_scatter_LDFLAGS        = $(FLDFLAGS)
-global_testing_ngatest_LDFLAGS            = $(FLDFLAGS)
-global_testing_nga_util_LDFLAGS           = $(FLDFLAGS)
-global_testing_patch_enumf_LDFLAGS        = $(FLDFLAGS)
-global_testing_patch_LDFLAGS              = $(FLDFLAGS)
-global_testing_patch2_LDFLAGS             = $(FLDFLAGS)
-global_testing_perf_LDFLAGS               = $(FLDFLAGS)
-global_testing_perfmod_LDFLAGS            = $(FLDFLAGS)
-global_testing_perform_LDFLAGS            = $(FLDFLAGS)
-global_testing_pg2test_LDFLAGS            = $(FLDFLAGS)
-global_testing_pg2testmatmult_LDFLAGS     = $(FLDFLAGS)
-global_testing_pgtest_LDFLAGS             = $(FLDFLAGS)
-global_testing_pgtestmatmult_LDFLAGS      = $(FLDFLAGS)
-global_testing_random_LDFLAGS             = $(FLDFLAGS)
-global_testing_scan_LDFLAGS               = $(FLDFLAGS)
-global_testing_simple_groups_LDFLAGS      = $(FLDFLAGS)
-global_testing_simple_groups_comm_LDFLAGS = $(FLDFLAGS)
-global_testing_sparse_LDFLAGS             = $(FLDFLAGS)
-global_testing_sprsmatmult_LDFLAGS        = $(FLDFLAGS)
-global_testing_stride_LDFLAGS             = $(FLDFLAGS)
-global_testing_testeig_LDFLAGS            = $(FLDFLAGS)
-global_testing_test_LDFLAGS               = $(FLDFLAGS)
-global_testing_test_mirrored_LDFLAGS      = $(FLDFLAGS)
-global_testing_testmatmult_LDFLAGS        = $(FLDFLAGS)
-global_testing_testsolve_LDFLAGS          = $(FLDFLAGS)
-global_testing_testspd_LDFLAGS            = $(FLDFLAGS)
-global_testing_thread_perf_contig_LDFLAGS = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
-global_testing_thread_perf_strided_LDFLAGS = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
 global_testing_threadsafec_LDFLAGS        = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
-global_testing_types_test_LDFLAGS         = $(FLDFLAGS)
 
 if F77_INTEL_NO_INLINE
 global_testing_nga_scatter_FFLAGS         = $(AM_FFLAGS) -fno-inline
@@ -1105,118 +1032,7 @@ global_testing_nga_scatter_FFLAGS         = $(AM_FFLAGS)
 global_testing_nga_onesided_FFLAGS        = $(AM_FFLAGS)
 endif
 
-nodist_EXTRA_global_testing_big_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_elempatch_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ga_lu_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ga_mpi_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_gatscat_SOURCES             = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_getmem_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ipc_clean_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_lock_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_mtest_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_mulmatpatchc_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_normc_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ntestc_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ntestfc_SOURCES             = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_packc_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_patch_enumc_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_perf2_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_print_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_scan_addc_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_scan_copyc_SOURCES          = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_sprsmatvec_SOURCES          = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_simple_groups_commc_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_testc_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_testmatmultc_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_testmult_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_testmultrect_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_thread_perf_contig_SOURCES  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_thread_perf_strided_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_threadsafec_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unpackc_SOURCES             = $(MAYBE_DUMMY_F_LINK)
-
 global_testing_test_mirrored_CPPFLAGS = $(AM_CPPFLAGS) -DMIRROR=1
-
-nodist_EXTRA_global_testing_unit_tests_ga_abs_value_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_acc_SOURCES                  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_add_SOURCES                  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_add_constant_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_add_constantpatch_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_add_diagonal_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_add_patch_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_copy2_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_copy3_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_copy_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_copypatch2_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_copypatch_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create1_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create2_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create3_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create_handle_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create_irreg2_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create_irreg3_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_create_irreg_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_destroy_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_dgop_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_dot_SOURCES                  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_duplicate_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_divide_SOURCES          = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_dividepatch_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_maximum_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_maximumpatch_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_minimum_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_minimumpatch_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_multiply_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_elem_multiplypatch_SOURCES   = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_fill_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_fillpatch1_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_fillpatch_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_gather2_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_gather3_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_gather_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_get_blockinfo_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_get_SOURCES                  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_get_diagonal_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_igop2_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_igop_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_inquire_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_intialize_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_lgop_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_median_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_ndim2_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_ndim_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_nnodes_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_nodeid_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create2_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create3_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create4_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create5_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_destroy2_SOURCES      = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_destroy_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_nnodes_nodeid_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_pgroup_setdefault_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_put2_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_put_SOURCES                  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_scale2_SOURCES               = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_scale_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_scale_cols_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_scale_patch_SOURCES          = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_scale_rows_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_scatter_SOURCES              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_set_data_SOURCES             = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_set_diagonal_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_set_restricted_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_solve_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_sync_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_transpose2_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_transpose3_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_transpose_SOURCES            = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_zero_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_zerodiagonal_SOURCES         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_zeropatch2_SOURCES           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_unit_tests_ga_zeropatch_SOURCES            = $(MAYBE_DUMMY_F_LINK)
 
 ##############################################################################
 # global/examples
@@ -1249,7 +1065,6 @@ global/examples/boltzmann/properties.F    \
 global/examples/boltzmann/setup.F         \
 global/examples/boltzmann/timestep.F      \
 global/examples/boltzmann/vorticity.F
-global_examples_boltzmann_boltz_LDFLAGS = $(FLDFLAGS)
 global_examples_boltzmann_boltz_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/global/examples/boltzmann
 
 global_examples_conjugate_gradient_ga_cg_SOURCES = \
@@ -1261,7 +1076,6 @@ global/examples/conjugate_gradient/read_input.c
 
 global_examples_lennard_jones_lennard_SOURCES = \
 global/examples/lennard-jones/lennard.c
-nodist_EXTRA_global_examples_lennard_jones_lennard_SOURCES = $(MAYBE_DUMMY_F_LINK)
 
 global_examples_md_cluster_grp_sim_SOURCES = \
 global/examples/md_cluster/cell_list.F       \
@@ -1289,7 +1103,6 @@ global/examples/md_cluster/shuffle.F         \
 global/examples/md_cluster/sort.F            \
 global/examples/md_cluster/tstats.F          \
 global/examples/md_cluster/update.F
-global_examples_md_cluster_grp_sim_LDFLAGS = $(FLDFLAGS)
 
 global_examples_scf_scf_SOURCES = \
 global/examples/scf/cscf.h        \
@@ -1298,7 +1111,6 @@ global/examples/scf/integ.F       \
 global/examples/scf/output.F      \
 global/examples/scf/scf.F         \
 global/examples/scf/timer.F
-global_examples_scf_scf_LDFLAGS = $(FLDFLAGS)
 
 EXTRA_DIST += global/examples/boltzmann/README
 EXTRA_DIST += global/examples/lennard-jones/README
@@ -1467,26 +1279,6 @@ pario_dra_time_mxm_SOURCES  = pario/dra/time_mxm.F $(dtsrc)
 pario_eaf_test_SOURCES      = pario/eaf/test.F $(dtsrc)
 pario_sf_test_SOURCES       = pario/sf/test.F $(dtsrc)
 
-nodist_EXTRA_pario_dra_bign_SOURCES      = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_dra_dbg_read_SOURCES  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_dra_dbg_write_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_dra_dra2arviz_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_dra_ntestc_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_dra_perfn_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_dra_rate_SOURCES      = $(MAYBE_DUMMY_F_LINK)
-
-pario_dra_big_LDFLAGS       = $(FLDFLAGS)
-pario_dra_dra_mxm_LDFLAGS   = $(FLDFLAGS)
-pario_dra_ntest_LDFLAGS     = $(FLDFLAGS)
-pario_dra_perf_LDFLAGS      = $(FLDFLAGS)
-pario_dra_perf2_LDFLAGS     = $(FLDFLAGS)
-pario_dra_perf3_LDFLAGS     = $(FLDFLAGS)
-pario_dra_test_LDFLAGS      = $(FLDFLAGS)
-pario_dra_test_mxm_LDFLAGS  = $(FLDFLAGS)
-pario_dra_time_mxm_LDFLAGS  = $(FLDFLAGS)
-pario_eaf_test_LDFLAGS      = $(FLDFLAGS)
-pario_sf_test_LDFLAGS       = $(FLDFLAGS)
-
 EXTRA_DIST += pario/dra/README
 
 ##############################################################################
@@ -1503,6 +1295,8 @@ libga___la_SOURCES += ga++/src/PGroup.cc
 libga___la_SOURCES += ga++/src/init_term.cc
 libga___la_SOURCES += ga++/src/overload.cc
 libga___la_SOURCES += ga++/src/services.cc
+
+libga___la_LIBADD = libga.la
 
 include_HEADERS += ga++/src/ga++.h
 include_HEADERS += ga++/src/GAServices.h
@@ -1556,12 +1350,11 @@ ga___testing_threadsafecpp_CPPFLAGS = $(AM_CPPFLAGS) $(OPENMP_CXXFLAGS)
 
 ga___testing_threadsafecpp_LDFLAGS  = $(AM_LDFLAGS) $(OPENMP_CXXFLAGS)
 
-ga___testing_elempatch_LDADD        = libga++.la $(LDADD) $(MAYBE_FLIBS)
-ga___testing_mtest_LDADD            = libga++.la $(LDADD) $(MAYBE_FLIBS)
-ga___testing_ntestc_LDADD           = libga++.la $(LDADD) $(MAYBE_FLIBS)
-ga___testing_testc_LDADD            = libga++.la $(LDADD) $(MAYBE_FLIBS)
-ga___testing_testmult_LDADD         = libga++.la $(LDADD) $(MAYBE_FLIBS)
-ga___testing_threadsafecpp_LDADD    =            $(LDADD) $(MAYBE_FLIBS)
+ga___testing_elempatch_LDADD        = libga++.la
+ga___testing_mtest_LDADD            = libga++.la
+ga___testing_ntestc_LDADD           = libga++.la
+ga___testing_testc_LDADD            = libga++.la
+ga___testing_testmult_LDADD         = libga++.la
 
 endif # CXX_BINDINGS
 
@@ -1620,11 +1413,6 @@ gparrays_testing_test_SOURCES      = gparrays/testing/test.F
 gparrays_testing_testc_SOURCES     = gparrays/testing/testc.c
 gparrays_testing_transpose_SOURCES = gparrays/testing/transpose.c
 
-nodist_EXTRA_gparrays_testing_testc_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_gparrays_testing_transpose_SOURCES = $(MAYBE_DUMMY_F_LINK)
-
-gparrays_testing_test_LDFLAGS  = $(FLDFLAGS)
-
 AM_CPPFLAGS += -I$(top_build_prefix)gparrays/src
 AM_CPPFLAGS += -I$(top_srcdir)/gparrays/src
 
@@ -1661,7 +1449,6 @@ GAF2C_SERIAL_TESTS += gaf2c/testarg$(EXEEXT)
 endif
 
 gaf2c_testarg_SOURCES = gaf2c/testarg.c gaf2c/testargf.f
-gaf2c_testarg_LDFLAGS = $(FLDFLAGS)
 
 ##############################################################################
 # tcgmsg
@@ -1767,11 +1554,6 @@ tcgmsg_tests_test_asyn_SOURCES = tcgmsg/tests/test_asyn.c
 tcgmsg_tests_testf_SOURCES     = tcgmsg/tests/testf.F
 tcgmsg_tests_test_SOURCES      = tcgmsg/tests/test.c
 
-tcgmsg_tests_testf_LDFLAGS     = $(FLDFLAGS)
-
-nodist_EXTRA_tcgmsg_tests_test_asyn_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_tcgmsg_tests_test_SOURCES      = $(MAYBE_DUMMY_F_LINK)
-
 endif # MSG_COMMS_MPI
 
 EXTRA_DIST += tcgmsg/tcgmsg-mpi/README
@@ -1847,9 +1629,8 @@ libga_la_LIBADD += comex/libarmci.la
 else
 libga_la_LIBADD += armci/libarmci.la
 endif
-libga_la_LIBADD += $(GA_MP_LIBS)
-libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 endif
+libga_la_LIBADD += $(MAYBE_FLIBS)
 
 # if --disable-f77 is used, we must override linker choice
 if ENABLE_F77
