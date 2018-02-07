@@ -43,7 +43,7 @@ c#define USE_RESTRICTED
       integer heap, stack, fudge, ma_heap, me, nproc, map(4096), block
       integer g_s, ndim, dim1, i
       logical status
-      parameter (heap=200*200*4, fudge=100, stack=200*200)
+      parameter (heap=800*800*4, fudge=100, stack=800*800)
 c     
 c***  Intitialize a message passing library
 c
