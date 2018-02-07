@@ -14,8 +14,8 @@ c vector boxes lack arithmetic precision
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF
 
-#define USE_SCALAPACK 0
-#define SMALL_TEST 1
+c#define USE_SCALAPACK 1
+#define SMALL_TEST 0
 
       program main
       implicit none
@@ -41,7 +41,7 @@ c vector boxes lack arithmetic precision
       double precision c(nmax,nmax),d(nmax,nmax), one, ddot
       double precision alpha, beta
       logical status
-      parameter (heap=400*400*4, fudge=100, stack=400*400*4)
+      parameter (heap=800*800*4, fudge=100, stack=800*800*4)
 c
 c***  Intitialize a message passing library
 c
