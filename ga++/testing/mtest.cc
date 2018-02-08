@@ -1027,7 +1027,6 @@ test_norm_infinity (GA::GlobalArray * g_a) {
     default:
       GA::SERVICES.error ((char *)"test_norm_infinity: wrong data type.\n", type);
     }
-  result = result * dims[0];
   if (me == 0)
     {
       if (MISMATCHED (result, norm_infinity)) {
@@ -1110,7 +1109,7 @@ test_norm1 (GA::GlobalArray * g_a)
     default:
       GA::SERVICES.error ((char *)"test_norm1: wrong data type.\n", type);
     }
-  result = result * dims[1];
+  result = result * dims[0] * dims[1];
   if (me == 0)
     {
       if (MISMATCHED (result, norm1)) {
@@ -1779,7 +1778,7 @@ do_work (int type, int op) {
     case OP_SCALE_ROWS:
       g_a = GA::SERVICES.createGA (type, 2, dims, (char *)"A", NULL);
       /*find out the diagonal length of the matrix A */
-      vdim = dims[1];
+      vdim = dims[0];
       g_v = GA::SERVICES.createGA (type, 1, &vdim, (char *)"V", NULL);
       test_scale_rows (g_a, g_v);
       g_a->destroy ();
@@ -1788,7 +1787,7 @@ do_work (int type, int op) {
     case OP_SCALE_COLS:
       g_a = GA::SERVICES.createGA (type, 2, dims, (char *)"A", NULL);
       /*find out the diagonal length of the matrix A */
-      vdim = dims[0];
+      vdim = dims[1];
       g_v = GA::SERVICES.createGA (type, 1, &vdim, (char *)"V", NULL);
       test_scale_cols (g_a, g_v);
       g_a->destroy ();
