@@ -14,7 +14,7 @@ c vector boxes lack arithmetic precision
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF
 
-c#define USE_SCALAPACK 1
+#define USE_SCALAPACK 0
 #define SMALL_TEST 0
 
       program main
@@ -27,7 +27,7 @@ c#define USE_SCALAPACK 1
 #if SMALL_TEST
       parameter (nmax = 8, DIM = 2)
 #else
-      parameter (nmax = 2375, DIM = 2)
+      parameter (nmax = 1000, DIM = 2)
 #endif
       integer ndim, nprocs, type, length
       integer g_a, g_b, g_c, g_d, g_e, g_f, g_h, g_i, g_j, inode
@@ -41,7 +41,7 @@ c#define USE_SCALAPACK 1
       double precision c(nmax,nmax),d(nmax,nmax), one, ddot
       double precision alpha, beta
       logical status
-      parameter (heap=800*800*4, fudge=100, stack=800*800*4)
+      parameter (heap=1600*1600*4, fudge=100, stack=1600*1600*4)
 c
 c***  Intitialize a message passing library
 c
@@ -87,8 +87,13 @@ c
         block(i) = 87
 #endif
       end do
-      proc_grid(1) = 2
-      proc_grid(2) = ga_nnodes()/2
+      if (ga_nnodes().gt.1) then
+        proc_grid(1) = 2
+        proc_grid(2) = ga_nnodes()/2
+      else
+        proc_grid(1) = 1
+        proc_grid(2) = 1
+      endif
 c
       g_a = ga_create_handle() 
       call ga_set_data(g_a, ndim, dims, MT_F_INT)
@@ -188,13 +193,13 @@ c
       t2hi(2) = 8
 #else
       tlo(1) = 3
-      thi(1) = 2277
+      thi(1) = 943
       tlo(2) = 4
-      thi(2) = 1832
+      thi(2) = 547
       t2lo(1) = 4
-      t2hi(1) = 2278
+      t2hi(1) = 944
       t2lo(2) = 5
-      t2hi(2) = 1833
+      t2hi(2) = 548
 #endif
 c
       one = 1.0d00
