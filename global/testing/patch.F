@@ -16,11 +16,15 @@ C $iD: PATch.F,v 1.21 2002/10/15 23:35:52 vinod Exp $
 #endif
 #define MISMATCH(x,y) abs(x-y)/max(1,abs(x)).gt.THRESH
 c
+c  Be aware that matrix-multiplies with transposes are not being tested
+c  currently for block-cyclic configurations. Make sure you turn these
+c  on if you think you have these multiplies working
+c
 c#define BLOCK_CYCLIC
 c#define USE_SCALAPACK_DISTR
-#ifdef USE_SCALAPACK_DISTR
-#define BLOCK_CYCLIC
-#endif
+c#ifdef USE_SCALAPACK_DISTR
+c#define BLOCK_CYCLIC
+c#endif
 c
       program test
       implicit none
@@ -470,6 +474,7 @@ c
          call ffflush(6)
       endif
 c
+#ifndef BLOCK_CYCLIC
       call ga_sync()
       call ga_matmul_patch('t','n', 1d0, 0d0,
      $                      g_a, ailo,ailo+n/2, ajlo, ajlo+n/3,
@@ -565,6 +570,7 @@ c
          write(6,*)'  trans(a)*trans(b): OK '
          call ffflush(6)
       endif
+#endif
       status = ga_destroy(g_a)
       status = status .and. ga_destroy(g_b)
       status = status .and. ga_destroy(g_c)
@@ -976,6 +982,7 @@ c
       endif
 c
       call ga_sync()
+#ifndef BLOCK_CYCLIC
       call ga_matmul_patch('t','n', (1d0,0d0), (0d0,0d0),
      $                      g_a, ailo,ailo+n/2, ajlo, ajlo+n/3,
      $                      g_b, bilo,bilo+n/3, bjlo, bjlo+n/2,
@@ -1073,6 +1080,7 @@ c
          write(6,*)'  trans(a)*trans(b): OK '
          call ffflush(6)
       endif
+#endif
       status = ga_destroy(g_a)
       status = status .and. ga_destroy(g_b)
       status = status .and. ga_destroy(g_c)

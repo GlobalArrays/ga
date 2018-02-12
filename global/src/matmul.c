@@ -1421,8 +1421,25 @@ void pnga_matmul(transa, transb, alpha, beta,
      * to test block cyclic */ 
     numblocks = pnga_total_blocks(g_c);
     if(numblocks>=0) {
+#if 0
        irregular     = UNSET;
        use_NB_matmul = SET; 
+#else
+       loA[0] = ailo;
+       loA[1] = ajlo;
+       hiA[0] = aihi;
+       hiA[1] = ajhi;
+       loB[0] = bilo;
+       loB[1] = bjlo;
+       hiB[0] = bihi;
+       hiB[1] = bjhi;
+       loC[0] = cilo;
+       loC[1] = cjlo;
+       hiC[0] = cihi;
+       hiC[1] = cjhi;
+       pnga_matmul_basic(transa, transb, alpha, beta, g_a, loA, hiA,
+         g_b, loB, hiB, g_c, loC, hiC);
+#endif
     }
     
     /****************************************************************
@@ -2341,12 +2358,12 @@ void printBlock(char * banner, Integer type, void *ptr, Integer lo[],
   Integer i,j;
   Integer offset;
   printf("p[%d] %s lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
-      pnga_nodeid(),banner,lo[0],hi[0],lo[1],hi[1]);
+      (int)pnga_nodeid(),banner,(int)lo[0],(int)hi[0],(int)lo[1],(int)hi[1]);
   printf("    ");
-  for (i=lo[0]; i<=hi[0]; i++) printf(" %12d",i);
+  for (i=lo[0]; i<=hi[0]; i++) printf(" %12d",(int)i);
   printf("\n");
   for (j=lo[1]; j<=hi[1]; j++) {
-    printf("J: %d",j);
+    printf("J: %d",(int)j);
     for (i=lo[0]; i<=hi[0]; i++) {
       offset = (j-lo[1])*ld[0] + i-lo[0];
       switch (type) {
@@ -2395,7 +2412,6 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
   char *src_ptr;
   _iterator_hdl hdl_c;
   int local_sync_begin,local_sync_end;
-  int bail = 0;
 
   ONE_Z.real = 1.0;
   ONE_Z.imag = 0.0;
@@ -2420,10 +2436,6 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
   pnga_inquire(g_a, &atype, &arank, adims);
   pnga_inquire(g_b, &btype, &brank, bdims);
   pnga_inquire(g_c, &ctype, &crank, cdims);
-  /*
-  if ((clo[0] > 1 || clo[1] > 1) && (ctype == C_DCPL || ctype == C_SCPL)) bail = 1;
-  if ((clo[0] > 1 || clo[1] > 1)) bail = 1;
-  */
 
   /* Can't handle dimensions other than 2 */
   if(arank != 2)  pnga_error("rank of A must be 2 ",arank);
@@ -2482,7 +2494,6 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
     Integer offset, elemsize, ld;
     void *a_buf, *b_buf, *c_buf;
     Integer size_a, size_b, size_c;
-    if (bail) continue;
     /*
     printf("p[%d] loC[0]: %d hiC[0]: %d loC[1]: %d hiC[1]: %d lC[0]: %d\n",
         pnga_nodeid(),loC[0],hiC[0],loC[1],hiC[1],lC[0]);
@@ -2530,7 +2541,7 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
         ld = hiA[0]-loA[0]+1;
         size_a = (hiA[0]-loA[0]+1)*(hiA[1]-loA[1]+1);
         if (size_a > size_c) {
-          printf("p[%d] size_a: %d size_c: %d\n",pnga_nodeid(),size_a,size_c);
+          printf("p[%d] size_a: %d size_c: %d\n",(int)pnga_nodeid(),(int)size_a,(int)size_c);
         }
         /*
     printf("p[%d] loA[0]: %d hiA[0]: %d loA[1]: %d hiA[1]: %d\n",pnga_nodeid(),
@@ -2549,7 +2560,8 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
         ld = hiB[0]-loB[0]+1;
         size_b = (hiB[0]-loB[0]+1)*(hiB[1]-loB[1]+1);
         if (size_b > size_c) {
-          printf("p[%d] size_b: %d size_c: %d\n",pnga_nodeid(),size_b,size_c);
+          printf("p[%d] size_b: %d size_c: %d\n",(int)pnga_nodeid(),
+              (int)size_b,(int)size_c);
         }
         /*
     printf("p[%d] loB[0]: %d hiB[0]: %d loB[1]: %d hiB[1]: %d\n",pnga_nodeid(),
