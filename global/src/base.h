@@ -27,6 +27,7 @@ extern int *ProcListPerm;            /*permuted list of processes */
 
 #define COMPACT_SCALAPACK
 
+enum data_distribution {REGULAR, BLOCK_CYCLIC, SCALAPACK, TILED};
 
 typedef int ARMCI_Datatype;
 typedef struct {
@@ -70,9 +71,7 @@ typedef struct {
        int p_handle;                /* pointer to processor list for array  */
        double *cache;               /* store for frequently accessed ptrs   */
        int corner_flag;             /* flag for updating corner ghost cells */
-       int block_flag;              /* flag to indicate block-cyclic data   */
-       int block_sl_flag;           /* flag to indicate block-cyclic data   */
-                                    /* using ScaLAPACK format               */
+       int distr_type;              /* tag for data distribution type       */
        C_Integer block_dims[MAXDIM];/* array of block dimensions            */
        C_Integer num_blocks[MAXDIM];/* number of blocks in each dimension   */
        C_Integer block_total;       /* total number of blocks in array      */
@@ -200,7 +199,7 @@ extern proc_list_t *PGRP_LIST;
 /* this macro finds cordinates of the chunk of array owned by processor proc */
 #define ga_ownsM(ga_handle, proc, lo, hi)                                      \
 {                                                                              \
-  if (GA[ga_handle].block_flag == 0) {                                         \
+  if (GA[ga_handle].distr_type == REGULAR) {                                   \
     if (GA[ga_handle].num_rstrctd == 0) {                                      \
       ga_ownsM_no_handle(GA[ga_handle].ndim, GA[ga_handle].dims,               \
                          GA[ga_handle].nblock, GA[ga_handle].mapc,             \
@@ -219,7 +218,8 @@ extern proc_list_t *PGRP_LIST;
         }                                                                      \
       }                                                                        \
     }                                                                          \
-  } else {                                                                     \
+  } else if (GA[ga_handle].distr_type == BLOCK_CYCLIC ||                          \
+      GA[ga_handle].distr_type == SCALAPACK) {                                    \
     int _index[MAXDIM];                                                        \
     int _i;                                                                    \
     int _ndim = GA[ga_handle].ndim;                                            \

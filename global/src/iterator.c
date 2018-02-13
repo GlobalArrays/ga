@@ -209,7 +209,7 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     hdl->hi[i] = hi[i];
   }
   /* Standard GA distribution */
-  if (!GA[handle].block_flag) {
+  if (GA[handle].distr_type == REGULAR) {
     /* Locate the processors containing some portion of the patch
      * specified by lo and hi and return the results in _ga_map,
      * GA_proclist, and np. GA_proclist contains a list of processors
@@ -224,48 +224,46 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     gaPermuteProcList(hdl->nproc);
 
     /* Block-cyclic distribution */
-  } else {
-    if (GA[handle].block_sl_flag == 0) {
-      /* GA uses simple block cyclic data distribution */
-      hdl->iproc = 0;
-      hdl->iblock = pnga_nodeid();
-    } else {
-      /* GA uses ScaLAPACK block cyclic data distribution */
-      int *proc_gid;
-      int j;
+  } else if (GA[handle].distr_type == BLOCK_CYCLIC) {
+    /* GA uses simple block cyclic data distribution */
+    hdl->iproc = 0;
+    hdl->iblock = pnga_nodeid();
+  } else if (GA[handle].distr_type == SCALAPACK)  {
+    /* GA uses ScaLAPACK block cyclic data distribution */
+    int *proc_gid;
+    int j;
 #ifdef COMPACT_SCALAPACK
-      C_Integer *block_dims;
-      hdl->iproc = 0;
-      hdl->offset = 0;
-      block_dims = GA[handle].block_dims;
-      for (j=0; j<ndim; j++)  {
-        hdl->blk_size[j] = block_dims[j];
-      }
-      /* Initialize proc_index and index arrays */
-      gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
-      gam_find_proc_indices(handle, hdl->iproc, hdl->index);
-#else
-      C_Integer *block_dims;
-      /* Scalapack-type block-cyclic data distribution */
-      /* Calculate some properties associated with data distribution */
-      int *proc_grid = GA[handle].nblock;
-      /*num_blocks = GA[handle].num_blocks;*/
-      block_dims = GA[handle].block_dims;
-      for (j=0; j<ndim; j++)  {
-        hdl->blk_size[j] = block_dims[j];
-        hdl->blk_dim[j] = block_dims[j]*proc_grid[j];
-        hdl->blk_num[j] = GA[handle].dims[j]/hdl->blk_dim[j];
-        hdl->blk_inc[j] = GA[handle].dims[j]-hdl->blk_num[j]*hdl->blk_dim[j];
-        hdl->blk_ld[j] = hdl->blk_num[j]*block_dims[j];
-        hdl->hlf_blk[j] = hdl->blk_inc[j]/block_dims[j];
-      }
-      hdl->iproc = 0;
-      hdl->offset = 0;
-      /* Initialize proc_index and index arrays */
-      gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
-      gam_find_proc_indices(handle, hdl->iproc, hdl->index);
-#endif
+    C_Integer *block_dims;
+    hdl->iproc = 0;
+    hdl->offset = 0;
+    block_dims = GA[handle].block_dims;
+    for (j=0; j<ndim; j++)  {
+      hdl->blk_size[j] = block_dims[j];
     }
+    /* Initialize proc_index and index arrays */
+    gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
+    gam_find_proc_indices(handle, hdl->iproc, hdl->index);
+#else
+    C_Integer *block_dims;
+    /* Scalapack-type block-cyclic data distribution */
+    /* Calculate some properties associated with data distribution */
+    int *proc_grid = GA[handle].nblock;
+    /*num_blocks = GA[handle].num_blocks;*/
+    block_dims = GA[handle].block_dims;
+    for (j=0; j<ndim; j++)  {
+      hdl->blk_size[j] = block_dims[j];
+      hdl->blk_dim[j] = block_dims[j]*proc_grid[j];
+      hdl->blk_num[j] = GA[handle].dims[j]/hdl->blk_dim[j];
+      hdl->blk_inc[j] = GA[handle].dims[j]-hdl->blk_num[j]*hdl->blk_dim[j];
+      hdl->blk_ld[j] = hdl->blk_num[j]*block_dims[j];
+      hdl->hlf_blk[j] = hdl->blk_inc[j]/block_dims[j];
+    }
+    hdl->iproc = 0;
+    hdl->offset = 0;
+    /* Initialize proc_index and index arrays */
+    gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
+    gam_find_proc_indices(handle, hdl->iproc, hdl->index);
+#endif
   }
 }
 
@@ -276,22 +274,20 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
 void gai_iterator_reset(_iterator_hdl *hdl)
 {
   Integer handle = GA_OFFSET + hdl->g_a;
-  if (!GA[handle].block_flag) {
+  if (GA[handle].distr_type == REGULAR) {
     /* Regular data distribution */
     hdl->count = 0;
-  } else {
-    if (GA[handle].block_sl_flag == 0) {
-      /* simple block cyclic data distribution */
-      hdl->iproc = 0;
-      hdl->iblock = 0;
-      hdl->offset = 0;
-    } else {
-      hdl->iproc = 0;
-      hdl->offset = 0;
-      /* Initialize proc_index and index arrays */
-      gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
-      gam_find_proc_indices(handle, hdl->iproc, hdl->index);
-    }
+  } else if (GA[handle].distr_type == BLOCK_CYCLIC) {
+    /* simple block cyclic data distribution */
+    hdl->iproc = 0;
+    hdl->iblock = 0;
+    hdl->offset = 0;
+  } else if (GA[handle].distr_type == SCALAPACK) {
+    hdl->iproc = 0;
+    hdl->offset = 0;
+    /* Initialize proc_index and index arrays */
+    gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
+    gam_find_proc_indices(handle, hdl->iproc, hdl->index);
   }
 }
 
@@ -316,7 +312,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
   Integer elemsize = GA[handle].elemsize;
   int ndim;
   ndim = GA[handle].ndim;
-  if (!GA[handle].block_flag) {
+  if (GA[handle].distr_type == REGULAR) {
     Integer *blo, *bhi;
     Integer nelems;
     idx = hdl->count;
@@ -432,7 +428,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
     Integer blo[MAXDIM], bhi[MAXDIM];
     Integer idx, j, jtot, chk, iproc;
     int check1, check2;
-    if (GA[handle].block_sl_flag == 0) {
+    if (GA[handle].distr_type == BLOCK_CYCLIC) {
       /* Simple block-cyclic distribution */
       if (hdl->iproc >= GAnproc) return 0;
       /*if (hdl->iproc == GAnproc-1 && hdl->iblock >= blk_tot) return 0;*/
@@ -527,7 +523,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         }
       }
       return 1;
-    } else {
+    } else if (GA[handle].distr_type == SCALAPACK) {
       /* Scalapack-type data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer itmp;
@@ -693,25 +689,23 @@ void pnga_local_iterator_init(Integer g_a, _iterator_hdl *hdl)
   hdl->count = 0;
   hdl->oversize = 0;
   /* If standard GA distribution then no additional action needs to be taken */
-  if (GA[handle].block_flag) {
-    if (GA[handle].block_sl_flag == 0) {
-      /* GA uses simple block cyclic data distribution */
-      hdl->count = pnga_pgroup_nodeid(grp);
-    } else {
-      /* GA uses ScaLAPACK block cyclic data distribution */
-      int j;
-      Integer me = pnga_pgroup_nodeid(grp);
-      /* Calculate some properties associated with data distribution */
-      for (j=0; j<ndim; j++)  {
-        hdl->blk_size[j] = GA[handle].block_dims[j];
-        hdl->blk_num[j] = GA[handle].num_blocks[j];
-        hdl->blk_inc[j] = GA[handle].nblock[j];
-        hdl->blk_dim[j] = GA[handle].dims[j];
-      }
-      /* Initialize proc_index and index arrays */
-      gam_find_proc_indices(handle, me, hdl->proc_index);
-      gam_find_proc_indices(handle, me, hdl->index);
+  if (GA[handle].distr_type == BLOCK_CYCLIC) {
+    /* GA uses simple block cyclic data distribution */
+    hdl->count = pnga_pgroup_nodeid(grp);
+  } else if (GA[handle].distr_type == SCALAPACK) {
+    /* GA uses ScaLAPACK block cyclic data distribution */
+    int j;
+    Integer me = pnga_pgroup_nodeid(grp);
+    /* Calculate some properties associated with data distribution */
+    for (j=0; j<ndim; j++)  {
+      hdl->blk_size[j] = GA[handle].block_dims[j];
+      hdl->blk_num[j] = GA[handle].num_blocks[j];
+      hdl->blk_inc[j] = GA[handle].nblock[j];
+      hdl->blk_dim[j] = GA[handle].dims[j];
     }
+    /* Initialize proc_index and index arrays */
+    gam_find_proc_indices(handle, me, hdl->proc_index);
+    gam_find_proc_indices(handle, me, hdl->index);
   }
 }
 
@@ -734,7 +728,7 @@ int pnga_local_iterator_next(_iterator_hdl *hdl, Integer plo[],
   int ndim;
   int me = pnga_pgroup_nodeid(grp);
   ndim = GA[handle].ndim;
-  if (!GA[handle].block_flag) {
+  if (GA[handle].distr_type == REGULAR) {
     Integer nelems;
     /* no blocks left, so return */
     if (hdl->count>0) return 0;
@@ -751,29 +745,27 @@ int pnga_local_iterator_next(_iterator_hdl *hdl, Integer plo[],
     }
     pnga_access_ptr(hdl->g_a,plo,phi,ptr,ld);
     hdl->count++;
-  } else {
-    if (GA[handle].block_sl_flag == 0) {
-      /* Simple block-cyclic distribution */
-      if (hdl->count >= pnga_total_blocks(hdl->g_a)) return 0;
-      pnga_distribution(hdl->g_a,hdl->count,plo,phi);
-      pnga_access_block_ptr(hdl->g_a,hdl->count,ptr,ld);
-      hdl->count += pnga_pgroup_nnodes(grp);
-    } else {
-      /* Scalapack-type data distribution */
-      if (hdl->index[ndim-1] >= hdl->blk_num[ndim-1]) return 0;
-      /* Find coordinates of bounding block */
-      for (i=0; i<ndim; i++) {
-        plo[i] = hdl->index[i]*hdl->blk_size[i]+1;
-        phi[i] = (hdl->index[i]+1)*hdl->blk_size[i];
-        if (phi[i] > hdl->blk_dim[i]) phi[i] = hdl->blk_dim[i];
-      }
-      pnga_access_block_grid_ptr(hdl->g_a,hdl->index,ptr,ld);
-      hdl->index[0] += hdl->blk_inc[0];
-      for (i=0; i<ndim; i++) {
-        if (hdl->index[i] >= hdl->blk_num[i] && i<ndim-1) {
-          hdl->index[i] = hdl->proc_index[i];
-          hdl->index[i+1] += hdl->blk_inc[i+1];
-        }
+  } else if (GA[handle].distr_type == BLOCK_CYCLIC) {
+    /* Simple block-cyclic distribution */
+    if (hdl->count >= pnga_total_blocks(hdl->g_a)) return 0;
+    pnga_distribution(hdl->g_a,hdl->count,plo,phi);
+    pnga_access_block_ptr(hdl->g_a,hdl->count,ptr,ld);
+    hdl->count += pnga_pgroup_nnodes(grp);
+  } else if (GA[handle].distr_type == SCALAPACK) {
+    /* Scalapack-type data distribution */
+    if (hdl->index[ndim-1] >= hdl->blk_num[ndim-1]) return 0;
+    /* Find coordinates of bounding block */
+    for (i=0; i<ndim; i++) {
+      plo[i] = hdl->index[i]*hdl->blk_size[i]+1;
+      phi[i] = (hdl->index[i]+1)*hdl->blk_size[i];
+      if (phi[i] > hdl->blk_dim[i]) phi[i] = hdl->blk_dim[i];
+    }
+    pnga_access_block_grid_ptr(hdl->g_a,hdl->index,ptr,ld);
+    hdl->index[0] += hdl->blk_inc[0];
+    for (i=0; i<ndim; i++) {
+      if (hdl->index[i] >= hdl->blk_num[i] && i<ndim-1) {
+        hdl->index[i] = hdl->proc_index[i];
+        hdl->index[i+1] += hdl->blk_inc[i+1];
       }
     }
   }

@@ -751,9 +751,8 @@ int use_blocks;
 
    ga_check_handleM(g_a, "nga_locate");
    ndim = GA[ga_handle].ndim;
-   use_blocks = GA[ga_handle].block_flag;
 
-   if (!use_blocks) {
+   if (GA[ga_handle].distr_type == REGULAR) {
      for(d=0, *owner=-1; d< ndim; d++) 
        if(subscript[d]< 1 || subscript[d]>GA[ga_handle].dims[d]) return FALSE;
 
@@ -769,30 +768,28 @@ int use_blocks;
      if (GA[ga_handle].num_rstrctd > 0) {
        *owner = GA[ga_handle].rstrctd_list[*owner];
      }
-   } else {
-     if (GA[ga_handle].block_sl_flag == 0) {
-       Integer i, j, chk, lo[MAXDIM], hi[MAXDIM];
-       Integer num_blocks = GA[ga_handle].block_total;
-       for (i=0; i< num_blocks; i++) {
-         pnga_distribution(g_a, i, lo, hi);
-         chk = 1;
-         for (j=0; j<ndim; j++) {
-           if (subscript[j]<lo[j] || subscript[j] > hi[j]) chk = 0;
-         }
-         if (chk) {
-           *owner = i;
-           break;
-         }
+   } else if (GA[ga_handle].distr_type == BLOCK_CYCLIC) {
+     Integer i, j, chk, lo[MAXDIM], hi[MAXDIM];
+     Integer num_blocks = GA[ga_handle].block_total;
+     for (i=0; i< num_blocks; i++) {
+       pnga_distribution(g_a, i, lo, hi);
+       chk = 1;
+       for (j=0; j<ndim; j++) {
+         if (subscript[j]<lo[j] || subscript[j] > hi[j]) chk = 0;
        }
-     } else {
-       Integer index[MAXDIM];
-       Integer i;
-       for (i=0; i<ndim; i++) {
-         index[i] = (subscript[i]-1)/GA[ga_handle].block_dims[i];
+       if (chk) {
+         *owner = i;
+         break;
        }
-       gam_find_block_from_indices(ga_handle, i, index);
-       *owner = i;
      }
+   } else if (GA[ga_handle].distr_type == SCALAPACK) {
+     Integer index[MAXDIM];
+     Integer i;
+     for (i=0; i<ndim; i++) {
+       index[i] = (subscript[i]-1)/GA[ga_handle].block_dims[i];
+     }
+     gam_find_block_from_indices(ga_handle, i, index);
+     *owner = i;
    }
    
    return TRUE;
@@ -1418,8 +1415,7 @@ Integer pnga_create_handle()
   GA[ga_handle].ghosts = 0;
   GA[ga_handle].corner_flag = -1;
   GA[ga_handle].cache = NULL;
-  GA[ga_handle].block_flag = 0;
-  GA[ga_handle].block_sl_flag = 0;
+  GA[ga_handle].distr_type = REGULAR;
   GA[ga_handle].block_total = -1;
   GA[ga_handle].rstrctd_list = NULL;
   GA[ga_handle].rank_rstrctd = NULL;
@@ -1680,10 +1676,9 @@ void pnga_set_block_cyclic(Integer g_a, Integer *dims)
     pnga_error("Cannot set block-cyclic data distribution on array that has been allocated",0);
   if (!(GA[ga_handle].ndim > 0))
     pnga_error("Cannot set block-cyclic data distribution if array size not set",0);
-  if (GA[ga_handle].block_flag == 1)
+  if (GA[ga_handle].distr_type != REGULAR)
     pnga_error("Cannot reset block-cyclic data distribution on array that has been set",0);
-  GA[ga_handle].block_flag = 1;
-  GA[ga_handle].block_sl_flag = 0;
+  GA[ga_handle].distr_type = BLOCK_CYCLIC;
   /* evaluate number of blocks in each dimension */
   for (i=0; i<GA[ga_handle].ndim; i++) {
     if (dims[i] < 1)
@@ -1717,10 +1712,9 @@ void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_g
     pnga_error("Cannot set block-cyclic data distribution on array that has been allocated",0);
   if (!(GA[ga_handle].ndim > 0))
     pnga_error("Cannot set block-cyclic data distribution if array size not set",0);
-  if (GA[ga_handle].block_flag == 1)
+  if (GA[ga_handle].distr_type != REGULAR)
     pnga_error("Cannot reset block-cyclic data distribution on array that has been set",0);
-  GA[ga_handle].block_flag = 1;
-  GA[ga_handle].block_sl_flag = 1;
+  GA[ga_handle].distr_type = SCALAPACK;
   /* Check to make sure processor grid is compatible with total number of processors */
   tot = 1;
   for (i=0; i<GA[ga_handle].ndim; i++) {
@@ -1876,7 +1870,7 @@ void pnga_set_property(Integer g_a, char* property) {
     Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
     Integer *pmap[MAXDIM], *map;
     char *buf;
-    if (GA[ga_handle].block_flag) {
+    if (GA[ga_handle].distr_type != REGULAR) {
       pnga_error("Block-cyclic arrays not supported for READ_ONLY",0);
     }
     if (GA[ga_handle].p_handle != pnga_pgroup_get_world()) {
@@ -2276,7 +2270,7 @@ logical pnga_allocate(Integer g_a)
 
   /* The data distribution has not been specified by the user. Create
      default distribution */
-  if (GA[ga_handle].mapc == NULL && GA[ga_handle].block_flag == 0) {
+  if (GA[ga_handle].mapc == NULL && GA[ga_handle].distr_type == REGULAR) {
     for (d=0; d<ndim; d++) {
       dims[d] = (Integer)GA[ga_handle].dims[d];
       chunk[d] = (Integer)GA[ga_handle].chunk[d];
@@ -2368,40 +2362,38 @@ logical pnga_allocate(Integer g_a)
       GA[ga_handle].mapc[i] = (C_Integer)mapALL[i];
     }
     GA[ga_handle].mapc[maplen] = -1;
-  } else if (GA[ga_handle].block_flag == 1) {
-    if (GA[ga_handle].block_sl_flag == 0) {
-      /* Regular block-cyclic data distribution has been specified. Figure
-         out how much memory is needed by each processor to store blocks */
-      Integer nblocks = GA[ga_handle].block_total;
-      Integer tsize, j;
-      Integer lo[MAXDIM];
-      block_size = 0;
-      for (i=GAme; i<nblocks; i +=GAnproc) {
-        ga_ownsM(ga_handle,i,lo,hi);
-        tsize = 1;
-        for (j=0; j<ndim; j++) {
-          tsize *= (hi[j] - lo[j] + 1);
-        }
-        block_size += tsize;
+  } else if (GA[ga_handle].distr_type == BLOCK_CYCLIC) {
+    /* Regular block-cyclic data distribution has been specified. Figure
+       out how much memory is needed by each processor to store blocks */
+    Integer nblocks = GA[ga_handle].block_total;
+    Integer tsize, j;
+    Integer lo[MAXDIM];
+    block_size = 0;
+    for (i=GAme; i<nblocks; i +=GAnproc) {
+      ga_ownsM(ga_handle,i,lo,hi);
+      tsize = 1;
+      for (j=0; j<ndim; j++) {
+        tsize *= (hi[j] - lo[j] + 1);
       }
-    } else {
-      /* ScaLAPACK block-cyclic data distribution has been specified. Figure
-         out how much memory is needed by each processor to store blocks */
-      Integer j, jtot, skip, imin, imax;
-      Integer index[MAXDIM];
-      gam_find_proc_indices(ga_handle,GAme,index);
-      block_size = 1;
-      for (i=0; i<ndim; i++) {
-        skip = GA[ga_handle].nblock[i];
-        jtot = 0;
-        for (j=index[i]; j<GA[ga_handle].num_blocks[i]; j += skip) {
-          imin = j*GA[ga_handle].block_dims[i] + 1;
-          imax = (j+1)*GA[ga_handle].block_dims[i];
-          if (imax > GA[ga_handle].dims[i]) imax = GA[ga_handle].dims[i];
-          jtot += (imax-imin+1);
-        }
-        block_size *= jtot;
+      block_size += tsize;
+    }
+  } else if (GA[ga_handle].distr_type == SCALAPACK) {
+    /* ScaLAPACK block-cyclic data distribution has been specified. Figure
+       out how much memory is needed by each processor to store blocks */
+    Integer j, jtot, skip, imin, imax;
+    Integer index[MAXDIM];
+    gam_find_proc_indices(ga_handle,GAme,index);
+    block_size = 1;
+    for (i=0; i<ndim; i++) {
+      skip = GA[ga_handle].nblock[i];
+      jtot = 0;
+      for (j=index[i]; j<GA[ga_handle].num_blocks[i]; j += skip) {
+        imin = j*GA[ga_handle].block_dims[i] + 1;
+        imax = (j+1)*GA[ga_handle].block_dims[i];
+        if (imax > GA[ga_handle].dims[i]) imax = GA[ga_handle].dims[i];
+        jtot += (imax-imin+1);
       }
+      block_size *= jtot;
     }
   }
 
@@ -2416,7 +2408,7 @@ logical pnga_allocate(Integer g_a)
 
   /* Set remaining paramters and determine memory size if regular data
    * distribution is being used */
-  if (GA[ga_handle].block_flag == 0) {
+  if (GA[ga_handle].distr_type == REGULAR) {
     /* set corner flag, if it has not already been set and set up message
        passing data */
     if (GA[ga_handle].corner_flag == -1) {
@@ -2474,7 +2466,7 @@ logical pnga_allocate(Integer g_a)
      GA[ga_handle].ptr[grp_me]=NULL;
   }
 
-  if (GA[ga_handle].block_flag == 0) {
+  if (GA[ga_handle].distr_type == REGULAR) {
     /* Finish setting up information for ghost cell updates */
     if (GA[ga_handle].ghosts == 1) {
       if (!pnga_set_ghost_info(g_a))
@@ -2976,7 +2968,7 @@ void pnga_distribution(Integer g_a, Integer proc, Integer *lo, Integer * hi)
     Integer nodesize = pnga_cluster_nprocs(node);
     lproc = proc%nodesize;
   }
-  if (GA[ga_handle].block_flag == 0) {
+  if (GA[ga_handle].distr_type == REGULAR) {
     ga_ownsM(ga_handle, lproc, lo, hi);
   } else {
     C_Integer index[MAXDIM];
@@ -3747,9 +3739,8 @@ logical pnga_locate_nnodes( Integer g_a,
     if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))return FALSE;
 
   ndim = GA[ga_handle].ndim;
-  use_blocks = GA[ga_handle].block_flag;
 
-  if (!use_blocks) {
+  if (GA[ga_handle].distr_type == REGULAR) {
     /* find "processor coordinates" for the top left corner and store them
      * in ProcT */
 #ifdef __crayx1
@@ -3880,9 +3871,8 @@ logical pnga_locate_region( Integer g_a,
     if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))return FALSE;
 
   ndim = GA[ga_handle].ndim;
-  use_blocks = GA[ga_handle].block_flag;
 
-  if (!use_blocks) {
+  if (GA[ga_handle].distr_type == REGULAR) {
     /* find "processor coordinates" for the top left corner and store them
      * in ProcT */
 #ifdef __crayx1
@@ -4102,23 +4092,22 @@ int i;
    for(i=0; i <GA[h_a].ndim; i++)
        if(GA[h_a].dims[i] != GA[h_b].dims[i]) return FALSE;
 
-   if (GA[h_a].block_flag != GA[h_b].block_flag) return FALSE;
-   if (GA[h_a].block_sl_flag != GA[h_b].block_sl_flag) return FALSE;
-   if (GA[h_a].block_flag == 0) {
+   if (GA[h_a].distr_type != GA[h_b].distr_type) return FALSE;
+   if (GA[h_a].distr_type == REGULAR) {
      if (h_a_maplen != h_b_maplen) return FALSE;
      for(i=0; i <h_a_maplen; i++){
        if(GA[h_a].mapc[i] != GA[h_b].mapc[i]) return FALSE;
        if(GA[h_a].mapc[i] == -1) break;
      }
-   }
-   else if (GA[h_a].block_flag == 1) {
+   } else if (GA[h_a].distr_type == BLOCK_CYCLIC ||
+       GA[h_a].distr_type == SCALAPACK) {
      for (i=0; i<GA[h_a].ndim; i++) {
        if (GA[h_a].block_dims[i] != GA[h_b].block_dims[i]) return FALSE;
      }
      for (i=0; i<GA[h_a].ndim; i++) {
        if (GA[h_a].num_blocks[i] != GA[h_b].num_blocks[i]) return FALSE;
      }
-     if (GA[h_a].block_sl_flag == 1) {
+     if (GA[h_a].distr_type == SCALAPACK) {
        for (i=0; i<GA[h_a].ndim; i++) {
          if (GA[h_a].nblock[i] != GA[h_b].nblock[i]) return FALSE;
        }
@@ -4677,7 +4666,7 @@ Integer pnga_locate_num_blocks(Integer g_a, Integer *lo, Integer *hi)
     if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))
       pnga_error("Requested region out of bounds",0);
 
-  if (GA[ga_handle].block_flag) {
+  if (GA[ga_handle].distr_type != REGULAR) {
     Integer nblocks = GA[ga_handle].block_total;
     Integer chk, i, j, tlo[MAXDIM], thi[MAXDIM];
     cnt = 0;
@@ -4732,7 +4721,7 @@ Integer pnga_total_blocks(Integer g_a)
 logical pnga_uses_proc_grid(Integer g_a)
 {
   Integer ga_handle = GA_OFFSET + g_a;
-  return (logical)GA[ga_handle].block_sl_flag;
+  return (logical)(GA[ga_handle].distr_type == SCALAPACK);
 }
 
 /**
@@ -4747,7 +4736,7 @@ logical pnga_uses_proc_grid(Integer g_a)
 void pnga_get_proc_index(Integer g_a, Integer iproc, Integer *index)
 {
   Integer ga_handle = GA_OFFSET + g_a;
-  if (!GA[ga_handle].block_sl_flag)
+  if (!GA[ga_handle].distr_type == SCALAPACK)
     pnga_error("Global array does not use ScaLAPACK data distribution",0);
   gam_find_proc_indices(ga_handle, iproc, index);
   return;
@@ -4766,7 +4755,7 @@ void pnga_get_block_info(Integer g_a, Integer *num_blocks, Integer *block_dims)
   Integer ga_handle = GA_OFFSET + g_a;
   Integer i, ndim;
   ndim = GA[ga_handle].ndim; 
-  if (GA[ga_handle].block_sl_flag) {
+  if (GA[ga_handle].distr_type == SCALAPACK) {
     for (i=0; i<ndim; i++) {
       num_blocks[i] = GA[ga_handle].num_blocks[i];
       block_dims[i] = GA[ga_handle].block_dims[i];

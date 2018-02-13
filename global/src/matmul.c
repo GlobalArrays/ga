@@ -1440,6 +1440,7 @@ void pnga_matmul(transa, transb, alpha, beta,
        pnga_matmul_basic(transa, transb, alpha, beta, g_a, loA, hiA,
          g_b, loB, hiB, g_c, loC, hiC);
        GA_POP_NAME;   
+       return;
 #endif
     }
     
