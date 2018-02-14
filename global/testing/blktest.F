@@ -15,6 +15,10 @@ c vector boxes lack arithmetic precision
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF
 
 #define USE_SCALAPACK 0
+#define USE_TILED 0
+#if USE_SCALAPACK
+#define USE_TILED 0
+#endif
 #define SMALL_TEST 0
 
       program main
@@ -98,8 +102,12 @@ c
       g_a = ga_create_handle() 
       call ga_set_data(g_a, ndim, dims, MT_F_INT)
       call ga_set_chunk(g_a, chunk)
+#if USE_SCALAPACK || USE_TILED
 #if USE_SCALAPACK
       call ga_set_block_cyclic_proc_grid(g_a, block, proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_a, block, proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_a, block)
 #endif
@@ -109,8 +117,12 @@ c
       g_b = ga_create_handle() 
       call ga_set_data(g_b, ndim, dims, MT_F_DBL)
       call ga_set_chunk(g_b, chunk)
+#if USE_SCALAPACK || USE_TILED
 #if USE_SCALAPACK
       call ga_set_block_cyclic_proc_grid(g_b, block, proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_b, block, proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_b, block)
 #endif
@@ -126,8 +138,12 @@ c
       g_d = ga_create_handle() 
       call ga_set_data(g_d, ndim, dims, MT_F_INT)
       call ga_set_chunk(g_d, chunk)
+#if USE_SCALAPACK || USE_TILED
 #if USE_SCALAPACK
       call ga_set_block_cyclic_proc_grid(g_d, block, proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_d, block, proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_d, block)
 #endif
@@ -137,8 +153,12 @@ c
       g_e = ga_create_handle() 
       call ga_set_data(g_e, ndim, dims, MT_F_DBL)
       call ga_set_chunk(g_e, chunk)
+#if USE_SCALAPACK || USE_TILED
 #if USE_SCALAPACK
       call ga_set_block_cyclic_proc_grid(g_e, block, proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_e, block, proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_e, block)
 #endif
@@ -148,8 +168,12 @@ c
       g_f = ga_create_handle() 
       call ga_set_data(g_f, ndim, dims, MT_F_DBL)
       call ga_set_chunk(g_f, chunk)
+#if USE_SCALAPACK || USE_TILED
 #if USE_SCALAPACK
       call ga_set_block_cyclic_proc_grid(g_f, block, proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_f, block, proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_f, block)
 #endif

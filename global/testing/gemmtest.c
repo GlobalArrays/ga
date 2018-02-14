@@ -27,9 +27,11 @@
 #define GA_ABS(a) (((a) >= 0) ? (a) : (-(a)))
 #define TOLERANCE 0.0001
 
-#define USE_SIMPLE_CYCLIC
+#define USE_REGULAR
 /*
+#define USE_SIMPLE_CYCLIC
 #define USE_SCALAPACK
+#define USE_TILED
 */
 
 DoublePrecision gTime=0.0, gStart;
@@ -176,10 +178,10 @@ test(int data_type) {
   }
 
   if (me==0) printf("\nCreate A, B, C\n");
-#ifndef USE_SCALAPACK
-#ifndef USE_SIMPLE_CYCLIC
+#ifdef USE_REGULAR
   g_a = NGA_Create(data_type, ndim, dims, "array A", NULL);
-#else
+#endif
+#ifdef USE_SIMPLE_CYCLIC
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a,ndim,dims,data_type);
   NGA_Set_array_name(g_a,"array A");
@@ -188,7 +190,7 @@ test(int data_type) {
     GA_Error("Failed: create: g_a",40);
   }
 #endif
-#else
+#ifdef USE_SCALAPACK
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a,ndim,dims,data_type);
   NGA_Set_array_name(g_a,"array A");
@@ -196,6 +198,18 @@ test(int data_type) {
   proc_grid[0] = i;
   proc_grid[1] = j;
   NGA_Set_block_cyclic_proc_grid(g_a,block_size,proc_grid);
+  if (!GA_Allocate(g_a)) {
+    GA_Error("Failed: create: g_a",40);
+  }
+#endif
+#ifdef USE_TILED
+  g_a = NGA_Create_handle();
+  NGA_Set_data(g_a,ndim,dims,data_type);
+  NGA_Set_array_name(g_a,"array A");
+  grid_factor(nproc,&i,&j);
+  proc_grid[0] = i;
+  proc_grid[1] = j;
+  NGA_Set_tiled_proc_grid(g_a,block_size,proc_grid);
   if (!GA_Allocate(g_a)) {
     GA_Error("Failed: create: g_a",40);
   }
@@ -850,14 +864,17 @@ DoublePrecision time;
 
     if (me==0) printf ("Matrix size is %d X %d\n",N,N);
 
-#ifdef USE_SCALAPACK
-    if (me == 0) printf("\nUsing ScalaPACK data distribution\n\n");
-#else
-#ifdef USE_SIMPLE_CYCLIC
-    if (me == 0) printf("\nUsing simple block-cyclic data distribution\n\n");
-#else
+#ifdef USE_REGULAR
     if (me == 0) printf("\nUsing regular data distribution\n\n");
 #endif
+#ifdef USE_SIMPLE_CYCLIC
+    if (me == 0) printf("\nUsing simple block-cyclic data distribution\n\n");
+#endif
+#ifdef USE_SCALAPACK
+    if (me == 0) printf("\nUsing ScaLAPACK data distribution\n\n");
+#endif
+#ifdef USE_TILED
+    if (me == 0) printf("\nUsing tiled data distribution\n\n");
 #endif
 
     if(!MA_init((Integer)MT_F_DBL, stack/nproc, heap/nproc))
