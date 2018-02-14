@@ -874,6 +874,30 @@ void NGA_Set_block_cyclic_proc_grid(int g_a, int block[], int proc_grid[])
     wnga_set_block_cyclic_proc_grid(aa, _block, _proc_grid);
 }
 
+void GA_Set_tiled_proc_grid(int g_a, int block[], int proc_grid[])
+{
+    Integer aa, ndim;
+    Integer _ga_dims[MAXDIM];
+    Integer _ga_lo[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    COPYC2F(block,_ga_dims, ndim);
+    COPYC2F(proc_grid,_ga_lo, ndim);
+    wnga_set_tiled_proc_grid(aa, _ga_dims, _ga_lo);
+}
+
+void NGA_Set_tiled_proc_grid(int g_a, int block[], int proc_grid[])
+{
+    Integer aa, ndim;
+    Integer _block[MAXDIM];
+    Integer _proc_grid[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    COPYC2F(block,_block, ndim);
+    COPYC2F(proc_grid, _proc_grid, ndim);
+    wnga_set_tiled_proc_grid(aa, _block, _proc_grid);
+}
+
 int GA_Get_pgroup(int g_a)
 {
     Integer aa;

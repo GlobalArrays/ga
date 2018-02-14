@@ -102,6 +102,7 @@ extern Integer pnga_get_pgroup_size(Integer grp_id);
 extern void pnga_set_array_name(Integer g_a, char *array_name);
 extern void pnga_set_block_cyclic(Integer g_a, Integer *dims);
 extern void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid);
+extern void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid);
 extern void pnga_set_chunk(Integer g_a, Integer *chunk);
 extern void pnga_set_data(Integer g_a, Integer ndim, Integer *dims, Integer type);
 extern void pnga_set_debug(logical flag);

@@ -1408,16 +1408,14 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   Integer proc_index[MAXDIM];
   Integer blk_num[MAXDIM], blk_dim[MAXDIM], blk_inc[MAXDIM];
   Integer blk_ld[MAXDIM],hlf_blk[MAXDIM],blk_jinc;
-#ifdef COMPACT_SCALAPACK
   Integer j, lo, hi;
   Integer lld[MAXDIM], block_idx[MAXDIM], block_count[MAXDIM];
   Integer ldims[MAXDIM];
-#endif
 
   GA_PUSH_NAME("nga_access_block_grid_ptr");
   /*p_handle = GA[handle].p_handle;*/
-  if (GA[handle].distr_type != SCALAPACK) {
-    pnga_error("Array is not using ScaLAPACK data distribution",0);
+  if (GA[handle].distr_type != SCALAPACK && GA[handle].distr_type != TILED) {
+    pnga_error("Array is not using ScaLAPACK or tiled data distribution",0);
   }
   /* dimensions of processor grid */
   proc_grid = GA[handle].nblock;
@@ -1432,109 +1430,116 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
       pnga_error("block index outside allowed values",index[i]);
   }
 
-  /* find out what processor block is located on */
-  gam_find_proc_from_sl_indices(handle, inode, index);
-
-  /* get proc indices of processor that owns block */
-  gam_find_proc_indices(handle,inode,proc_index)
-  last = ndim-1;
- 
   /* Find strides of requested block */
-#ifdef COMPACT_SCALAPACK
-  for (i=0; i<ndim; i++)  {
-    lo = index[i]*block_dims[i]+1;
-    hi = (index[i]+1)*block_dims[i];
-    if (hi > dims[i]) hi = dims[i]; 
-    ldims[i] = (hi - lo + 1);
-    if (i<last) ld[i] = ldims[i];
-  }
-#else
-  for (i=0; i<last; i++)  {
-    blk_dim[i] = block_dims[i]*proc_grid[i];
-    blk_num[i] = GA[handle].dims[i]/blk_dim[i];
-    blk_inc[i] = GA[handle].dims[i] - blk_num[i]*blk_dim[i];
-    blk_ld[i] = blk_num[i]*block_dims[i];
-    hlf_blk[i] = blk_inc[i]/block_dims[i];
-    ld[i] = blk_ld[i];
-    blk_jinc = dims[i]%block_dims[i];
-    if (blk_inc[i] > 0) {
-      if (proc_index[i]<hlf_blk[i]) {
-        blk_jinc = block_dims[i];
-      } else if (proc_index[i] == hlf_blk[i]) {
-        blk_jinc = blk_inc[i]%block_dims[i];
-        /*
-        if (blk_jinc == 0) {
-          blk_jinc = block_dims[i];
-        }
-        */
-      } else {
-        blk_jinc = 0;
-      }
-    }
-    ld[i] += blk_jinc;
-  }
-#endif
+  if (GA[handle].distr_type == TILED) {
+    /* find out what processor block is located on */
+    gam_find_tile_proc_from_indices(handle, inode, index);
+
+    /* get proc indices of processor that owns block */
+    gam_find_tile_proc_indices(handle,inode,proc_index)
+      last = ndim-1;
  
-#ifdef COMPACT_SCALAPACK
+    for (i=0; i<ndim; i++)  {
+      lo = index[i]*block_dims[i]+1;
+      hi = (index[i]+1)*block_dims[i];
+      if (hi > dims[i]) hi = dims[i]; 
+      ldims[i] = (hi - lo + 1);
+      if (i<last) ld[i] = ldims[i];
+    }
+  } else if (GA[handle].distr_type == SCALAPACK) {
+    /* find out what processor block is located on */
+    gam_find_proc_from_sl_indices(handle, inode, index);
+
+    /* get proc indices of processor that owns block */
+    gam_find_proc_indices(handle,inode,proc_index)
+      last = ndim-1;
+ 
+    for (i=0; i<last; i++)  {
+      blk_dim[i] = block_dims[i]*proc_grid[i];
+      blk_num[i] = GA[handle].dims[i]/blk_dim[i];
+      blk_inc[i] = GA[handle].dims[i] - blk_num[i]*blk_dim[i];
+      blk_ld[i] = blk_num[i]*block_dims[i];
+      hlf_blk[i] = blk_inc[i]/block_dims[i];
+      ld[i] = blk_ld[i];
+      blk_jinc = dims[i]%block_dims[i];
+      if (blk_inc[i] > 0) {
+        if (proc_index[i]<hlf_blk[i]) {
+          blk_jinc = block_dims[i];
+        } else if (proc_index[i] == hlf_blk[i]) {
+          blk_jinc = blk_inc[i]%block_dims[i];
+          /*
+          if (blk_jinc == 0) {
+          blk_jinc = block_dims[i];
+          }
+          */
+        } else {
+          blk_jinc = 0;
+        }
+      }
+      ld[i] += blk_jinc;
+    }
+  }
+
   /* Find the local grid index of block relative to local block grid and
      store result in block_idx.
      Find physical dimensions of locally held data and store in 
      lld and set values in ldim, which is used to evaluate the
      offset for the requested block. */
-  for (i=0; i<ndim; i++) {
-    block_idx[i] = 0;
-    block_count[i] = 0;
-    lld[i] = 0;
-    lo = 0;
-    hi = -1;
-    for (j=proc_index[i]; j<num_blocks[i]; j += proc_grid[i]) {
-      lo = j*block_dims[i] + 1;
-      hi = (j+1)*block_dims[i];
-      if (hi > dims[i]) hi = dims[i]; 
-      lld[i] += (hi - lo + 1);
-      if (j<index[i]) block_idx[i]++;
-      block_count[i]++;
-    }
-  }
-
-  /* Evaluate offset for requested block. The algorithm used goes like this:
-   *    The contribution from the fastest dimension is
-   *      block_idx[0]*block_dims[0]*...*block_dims[ndim-1];
-   *    The contribution from the second fastest dimension is
-   *      block_idx[1]*lld[0]*block_dims[1]*...*block_dims[ndim-1];
-   *    The contribution from the third fastest dimension is
-   *      block_idx[1]*lld[0]*lld[1]*block_dims[2]*...*block_dims[ndim-1];
-   *    etc.
-   *    If block_idx[i] is equal to the total number of blocks contained on that
-   *    processor minus 1 (the index is at the edge of the array) and the index
-   *    i is greater than the index of the dimension, then instead of using the
-   *    block dimension, use the fractional dimension of the edge block (which
-   *    may be smaller than the block dimension)
-   */
-  offset = 0;
-  for (i=0; i<ndim; i++) {
-    factor = 1;
-    for (j=0; j<i; j++) {
-      factor *= lld[j];
-    }
-    for (j=i; j<ndim; j++) {
-      if (j > i && block_idx[j] == block_count[j]-1) {
-        factor *= ldims[j];
-      } else {
-        factor *= block_dims[j];
+  if (GA[handle].distr_type == TILED) {
+    for (i=0; i<ndim; i++) {
+      block_idx[i] = 0;
+      block_count[i] = 0;
+      lld[i] = 0;
+      lo = 0;
+      hi = -1;
+      for (j=proc_index[i]; j<num_blocks[i]; j += proc_grid[i]) {
+        lo = j*block_dims[i] + 1;
+        hi = (j+1)*block_dims[i];
+        if (hi > dims[i]) hi = dims[i]; 
+        lld[i] += (hi - lo + 1);
+        if (j<index[i]) block_idx[i]++;
+        block_count[i]++;
       }
     }
-    offset += block_idx[i]*factor;
+
+    /* Evaluate offset for requested block. The algorithm used goes like this:
+     *    The contribution from the fastest dimension is
+     *      block_idx[0]*block_dims[0]*...*block_dims[ndim-1];
+     *    The contribution from the second fastest dimension is
+     *      block_idx[1]*lld[0]*block_dims[1]*...*block_dims[ndim-1];
+     *    The contribution from the third fastest dimension is
+     *      block_idx[1]*lld[0]*lld[1]*block_dims[2]*...*block_dims[ndim-1];
+     *    etc.
+     *    If block_idx[i] is equal to the total number of blocks contained on that
+     *    processor minus 1 (the index is at the edge of the array) and the index
+     *    i is greater than the index of the dimension, then instead of using the
+     *    block dimension, use the fractional dimension of the edge block (which
+     *    may be smaller than the block dimension)
+     */
+    offset = 0;
+    for (i=0; i<ndim; i++) {
+      factor = 1;
+      for (j=0; j<i; j++) {
+        factor *= lld[j];
+      }
+      for (j=i; j<ndim; j++) {
+        if (j > i && block_idx[j] == block_count[j]-1) {
+          factor *= ldims[j];
+        } else {
+          factor *= block_dims[j];
+        }
+      }
+      offset += block_idx[i]*factor;
+    }
+  } else if (GA[handle].distr_type == SCALAPACK) {
+    /* Evalauate offset for block */
+    offset = 0;
+    factor = 1;
+    for (i = 0; i<ndim; i++) {
+      offset += ((index[i]-proc_index[i])/proc_grid[i])*block_dims[i]*factor;
+      if (i<ndim-1) factor *= ld[i];
+    }
   }
-#else
-  /* Evalauate offset for block */
-  offset = 0;
-  factor = 1;
-  for (i = 0; i<ndim; i++) {
-    offset += ((index[i]-proc_index[i])/proc_grid[i])*block_dims[i]*factor;
-    if (i<ndim-1) factor *= ld[i];
-  }
-#endif
 
   lptr = GA[handle].ptr[inode]+offset*GA[handle].elemsize;
 
@@ -1587,7 +1592,8 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
     for (i=0; i<ndim-1; i++) {
       ld[i] = hi[i]-lo[i]+1;
     }
-  } else if (GA[handle].distr_type == SCALAPACK) {
+  } else if (GA[handle].distr_type == SCALAPACK ||
+      GA[handle].distr_type == TILED) {
     Integer indices[MAXDIM];
     /* find block indices */
     gam_find_block_indices(handle,index,indices);
@@ -2101,6 +2107,12 @@ int rc=0;
       index[0] = index[0]%GA[handle].nblock[0];
       index[1] = index[1]%GA[handle].nblock[1];
       gam_find_proc_from_sl_indices(handle,proc,index);
+    } else if (GA[handle].distr_type == TILED) {
+      Integer index[2];
+      gam_find_block_indices(handle, proc, index);
+      index[0] = index[0]%GA[handle].nblock[0];
+      index[1] = index[1]%GA[handle].nblock[1];
+      gam_find_tile_proc_from_indices(handle,proc,index);
     }
 
   }
@@ -2412,6 +2424,27 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
         index[0] = index[0]%GA[handle].nblock[0];
         index[1] = index[1]%GA[handle].nblock[1];
         gam_find_proc_from_sl_indices(handle,iproc,index);
+        if (p_handle >= 0) {
+          iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
+        }
+
+        rc = ARMCI_PutV(&desc, 1, (int)iproc);
+        if(rc) pnga_error("scatter failed in armci",rc);
+      }
+    } else if (GA[handle].distr_type == TILED) {
+      Integer index[MAXDIM];
+      for(k=0; k<naproc; k++) {
+        int rc;
+
+        desc.bytes = (int)item_size;
+        desc.src_ptr_array = ptr_src[k];
+        desc.dst_ptr_array = ptr_dst[k];
+        desc.ptr_array_len = (int)nelem[aproc[k]];
+        iproc = aproc[k];
+        gam_find_block_indices(handle, iproc, index);
+        index[0] = index[0]%GA[handle].nblock[0];
+        index[1] = index[1]%GA[handle].nblock[1];
+        gam_find_tile_proc_from_indices(handle,iproc,index);
         if (p_handle >= 0) {
           iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
         }
@@ -2744,6 +2777,27 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
             rc=ARMCI_GetV(&desc, 1, (int)iproc);
             if(rc) pnga_error("gather failed in armci",rc);
           }
+        } else if (GA[handle].distr_type == TILED) {
+          Integer j, index[MAXDIM];
+          for(k=0; k<naproc; k++) {
+            int rc;
+
+            desc.bytes = (int)item_size;
+            desc.src_ptr_array = ptr_src[k];
+            desc.dst_ptr_array = ptr_dst[k];
+            desc.ptr_array_len = (int)nelem[aproc[k]];
+            iproc = aproc[k];
+            gam_find_block_indices(handle, iproc, index);
+            for (j=0; j<ndim; j++) {
+              index[j] = index[j]%GA[handle].nblock[j];
+            }
+            gam_find_tile_proc_from_indices(handle,iproc,index);
+            if (p_handle >= 0) {
+              iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
+            }
+            rc=ARMCI_GetV(&desc, 1, (int)iproc);
+            if(rc) pnga_error("gather failed in armci",rc);
+          }
         }
         GAstat.numgat_procs += naproc;
         break;
@@ -2850,6 +2904,30 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
               index[j] = index[j]%GA[handle].nblock[j];
             }
             gam_find_proc_from_sl_indices(handle,iproc,index);
+            if (p_handle >= 0) {
+              iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
+            }
+            if(GA_fence_set) fence_array[iproc]=1;
+
+            rc=ARMCI_PutV(&desc, 1, (int)iproc);
+            if(rc) pnga_error("scatter failed in armci",rc);
+          }
+        } else if (GA[handle].distr_type == TILED) {
+          Integer j, index[MAXDIM];
+          for(k=0; k<naproc; k++) {
+            int rc;
+
+            desc.bytes = (int)item_size;
+            desc.src_ptr_array = ptr_src[k];
+            desc.dst_ptr_array = ptr_dst[k];
+            desc.ptr_array_len = (int)nelem[aproc[k]];
+
+            iproc = aproc[k];
+            gam_find_block_indices(handle, iproc, index);
+            for (j=0; j<ndim; j++) {
+              index[j] = index[j]%GA[handle].nblock[j];
+            }
+            gam_find_tile_proc_from_indices(handle,iproc,index);
             if (p_handle >= 0) {
               iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
             }
@@ -2983,6 +3061,40 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
               index[j] = index[j]%GA[handle].nblock[j];
             }
             gam_find_proc_from_sl_indices(handle,iproc,index);
+            if (p_handle >= 0) {
+              iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
+            }
+            if(GA_fence_set) fence_array[iproc]=1;
+
+            if(alpha != NULL) {
+              int optype=-1;
+              if(type==C_DBL) optype= ARMCI_ACC_DBL;
+              else if(type==C_DCPL)optype= ARMCI_ACC_DCP;
+              else if(type==C_SCPL)optype= ARMCI_ACC_CPL;
+              else if(type==C_INT)optype= ARMCI_ACC_INT;
+              else if(type==C_LONG)optype= ARMCI_ACC_LNG;
+              else if(type==C_FLOAT)optype= ARMCI_ACC_FLT; 
+              else pnga_error("type not supported",type);
+              rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)iproc);
+            }
+            if(rc) pnga_error("scatter_acc failed in armci",rc);
+          }
+        } else if (GA[handle].distr_type == TILED) {
+          Integer j, index[MAXDIM];
+          for(k=0; k<naproc; k++) {
+            int rc=0;
+
+            desc.bytes = (int)item_size;
+            desc.src_ptr_array = ptr_src[k];
+            desc.dst_ptr_array = ptr_dst[k];
+            desc.ptr_array_len = (int)nelem[aproc[k]];
+
+            iproc = aproc[k];
+            gam_find_block_indices(handle, iproc, index);
+            for (j=0; j<ndim; j++) {
+              index[j] = index[j]%GA[handle].nblock[j];
+            }
+            gam_find_tile_proc_from_indices(handle,iproc,index);
             if (p_handle >= 0) {
               iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
             }
@@ -3144,6 +3256,12 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
           index[j] = index[j]%nblock[j];
         }
         gam_find_proc_from_sl_indices(handle,idx,index);
+      } else if (GA[handle].distr_type == TILED) {
+        gam_find_block_indices(handle,idx,index);
+        for (j=0; j<ndim; j++) {
+          index[j] = index[j]%nblock[j];
+        }
+        gam_find_tile_proc_from_indices(handle,idx,index);
       }
       nelems[idx]++;
       if (maxlen<nelems[idx]) maxlen=nelems[idx];
@@ -3638,6 +3756,26 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
         rc=ARMCI_GetV(&desc, 1, (int)iproc);
         if(rc) pnga_error("gather failed in armci",rc);
       }
+    } else if (GA[handle].distr_type == TILED) {
+      Integer index[MAXDIM];
+      for(k=0; k<naproc; k++) {
+        int rc;
+
+        desc.bytes = (int)item_size;
+        desc.src_ptr_array = ptr_src[k];
+        desc.dst_ptr_array = ptr_dst[k];
+        desc.ptr_array_len = (int)nelem[aproc[k]];
+        iproc = aproc[k];
+        gam_find_block_indices(handle, iproc, index);
+        index[0] = index[0]%GA[handle].nblock[0];
+        index[1] = index[1]%GA[handle].nblock[1];
+        gam_find_tile_proc_from_indices(handle,iproc,index);
+        if (p_handle >= 0) {
+          iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc]; 
+        }
+        rc=ARMCI_GetV(&desc, 1, (int)iproc);
+        if(rc) pnga_error("gather failed in armci",rc);
+      }
     }
 
     gai_free(buf2);
@@ -3723,6 +3861,13 @@ void *pval;
         index[j] = index[j]%GA[handle].nblock[j];
       }
       gam_find_proc_from_sl_indices(handle,proc,index);
+    } else if (GA[handle].distr_type == TILED) {
+      Integer j, index[MAXDIM];
+      gam_find_block_indices(handle, proc, index);
+      for (j=0; j<ndim; j++) {
+        index[j] = index[j]%GA[handle].nblock[j];
+      }
+      gam_find_tile_proc_from_indices(handle,proc,index);
     }
     if (p_handle != -1) {   
        proc=PGRP_LIST[p_handle].inv_map_proc_list[proc];

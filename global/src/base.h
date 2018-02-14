@@ -25,8 +25,6 @@ extern int *ProcListPerm;            /*permuted list of processes */
 #define __CRAYX1_PRAGMA(_pragf)
 #endif
 
-#define COMPACT_SCALAPACK
-
 enum data_distribution {REGULAR, BLOCK_CYCLIC, SCALAPACK, TILED};
 
 typedef int ARMCI_Datatype;
@@ -172,8 +170,8 @@ extern proc_list_t *PGRP_LIST;
 }
 
 /* this macro finds the ScaLAPACK indices for a given processor */
-#ifdef COMPACT_SCALAPACK
-#define gam_find_proc_indices(ga_handle,proc,index) {                          \
+/* gam_find_proc_indices(ga_handle,proc,index) */
+#define gam_find_tile_proc_indices(ga_handle,proc,index) {                     \
   Integer _itmp, _i;                                                           \
   Integer _ndim = GA[ga_handle].ndim;                                          \
   _itmp = proc;                                                                \
@@ -183,7 +181,6 @@ extern proc_list_t *PGRP_LIST;
     index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
   }                                                                            \
 }
-#else
 #define gam_find_proc_indices(ga_handle,proc,index) {                          \
   Integer _itmp, _i;                                                           \
   Integer _ndim = GA[ga_handle].ndim;                                          \
@@ -194,7 +191,6 @@ extern proc_list_t *PGRP_LIST;
     index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
   }                                                                            \
 }
-#endif
 
 /* this macro finds cordinates of the chunk of array owned by processor proc */
 #define ga_ownsM(ga_handle, proc, lo, hi)                                      \
@@ -218,8 +214,9 @@ extern proc_list_t *PGRP_LIST;
         }                                                                      \
       }                                                                        \
     }                                                                          \
-  } else if (GA[ga_handle].distr_type == BLOCK_CYCLIC ||                          \
-      GA[ga_handle].distr_type == SCALAPACK) {                                    \
+  } else if (GA[ga_handle].distr_type == BLOCK_CYCLIC ||                       \
+      GA[ga_handle].distr_type == SCALAPACK ||                                 \
+      GA[ga_handle].distr_type == TILED) {                                     \
     int _index[MAXDIM];                                                        \
     int _i;                                                                    \
     int _ndim = GA[ga_handle].ndim;                                            \
@@ -244,8 +241,8 @@ extern proc_list_t *PGRP_LIST;
 
 /* this macro finds the proc that owns a given set block indices
    using the ScaLAPACK data distribution */
-#ifdef COMPACT_SCALAPACK
-#define gam_find_proc_from_sl_indices(ga_handle,proc,index) {                  \
+/* gam_find_proc_from_sl_indices(ga_handle,proc,index) */
+#define gam_find_tile_proc_from_indices(ga_handle,proc,index) {                \
   int _ndim = GA[ga_handle].ndim;                                              \
   int _i;                                                                      \
   Integer _index2[MAXDIM];                                                     \
@@ -257,7 +254,6 @@ extern proc_list_t *PGRP_LIST;
     proc = proc*GA[ga_handle].nblock[_i]+_index2[_i];                          \
   }                                                                            \
 }
-#else
 #define gam_find_proc_from_sl_indices(ga_handle,proc,index) {                  \
   int _ndim = GA[ga_handle].ndim;                                              \
   int _i;                                                                      \
@@ -270,7 +266,7 @@ extern proc_list_t *PGRP_LIST;
     proc = proc*GA[ga_handle].nblock[_i]+_index2[_i];                          \
   }                                                                            \
 }
-#endif
+
 /* this macro computes the strides on both the remote and local
    processors that map out the data. ld and ldrem are the physical dimensions
    of the memory on both the local and remote processors. */

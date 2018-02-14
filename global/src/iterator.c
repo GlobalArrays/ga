@@ -230,20 +230,7 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     hdl->iblock = pnga_nodeid();
   } else if (GA[handle].distr_type == SCALAPACK)  {
     /* GA uses ScaLAPACK block cyclic data distribution */
-    int *proc_gid;
     int j;
-#ifdef COMPACT_SCALAPACK
-    C_Integer *block_dims;
-    hdl->iproc = 0;
-    hdl->offset = 0;
-    block_dims = GA[handle].block_dims;
-    for (j=0; j<ndim; j++)  {
-      hdl->blk_size[j] = block_dims[j];
-    }
-    /* Initialize proc_index and index arrays */
-    gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
-    gam_find_proc_indices(handle, hdl->iproc, hdl->index);
-#else
     C_Integer *block_dims;
     /* Scalapack-type block-cyclic data distribution */
     /* Calculate some properties associated with data distribution */
@@ -263,7 +250,18 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     /* Initialize proc_index and index arrays */
     gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
     gam_find_proc_indices(handle, hdl->iproc, hdl->index);
-#endif
+  } else if (GA[handle].distr_type == TILED)  {
+    int j;
+    C_Integer *block_dims;
+    hdl->iproc = 0;
+    hdl->offset = 0;
+    block_dims = GA[handle].block_dims;
+    for (j=0; j<ndim; j++)  {
+      hdl->blk_size[j] = block_dims[j];
+    }
+    /* Initialize proc_index and index arrays */
+    gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
+    gam_find_tile_proc_indices(handle, hdl->iproc, hdl->index);
   }
 }
 
@@ -288,6 +286,12 @@ void gai_iterator_reset(_iterator_hdl *hdl)
     /* Initialize proc_index and index arrays */
     gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
     gam_find_proc_indices(handle, hdl->iproc, hdl->index);
+  } else if (GA[handle].distr_type == TILED)  {
+    hdl->iproc = 0;
+    hdl->offset = 0;
+    /* Initialize proc_index and index arrays */
+    gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
+    gam_find_tile_proc_indices(handle, hdl->iproc, hdl->index);
   }
 }
 
@@ -523,7 +527,8 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         }
       }
       return 1;
-    } else if (GA[handle].distr_type == SCALAPACK) {
+    } else if (GA[handle].distr_type == SCALAPACK ||
+        GA[handle].distr_type == TILED) {
       /* Scalapack-type data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer itmp;
@@ -578,8 +583,13 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
             hdl->iproc++;
             if (hdl->iproc >= GAnproc) return 0;
             hdl->offset = 0;
-            gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
-            gam_find_proc_indices(handle, hdl->iproc, hdl->index);
+            if (GA[handle].distr_type == TILED) {
+              gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
+              gam_find_tile_proc_indices(handle, hdl->iproc, hdl->index);
+            } else if (GA[handle].distr_type == SCALAPACK) {
+              gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
+              gam_find_proc_indices(handle, hdl->iproc, hdl->index);
+            }
           }
         }
       }
@@ -594,40 +604,40 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
 
         /* evaluate offset within block */
         last = ndim - 1;
-#ifdef COMPACT_SCALAPACK
-        jtot = 1;
-        if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-        l_offset = 0;
-        for (j=0; j<last; j++) {
-          l_offset += (clo[j]-blo[j])*jtot;
-          ldrem[j] = bhi[j]-blo[j]+1;
-          jtot *= ldrem[j];
-        }
-        l_offset += (clo[last]-blo[last])*jtot;
-        l_offset += hdl->offset;
-#else
-        l_offset = 0;
-        jtot = 1;
-        for (j=0; j<last; j++)  {
-          ldrem[j] = hdl->blk_ld[j];
-          blk_jinc = GA[handle].dims[j]%hdl->blk_size[j];
-          if (hdl->blk_inc[j] > 0) {
-            if (hdl->proc_index[j]<hdl->hlf_blk[j]) {
-              blk_jinc = hdl->blk_size[j];
-            } else if (hdl->proc_index[j] == hdl->hlf_blk[j]) {
-              blk_jinc = hdl->blk_inc[j]%hdl->blk_size[j];
-            } else {
-              blk_jinc = 0;
-            }
+        if (GA[handle].distr_type == TILED) {
+          jtot = 1;
+          if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
+          l_offset = 0;
+          for (j=0; j<last; j++) {
+            l_offset += (clo[j]-blo[j])*jtot;
+            ldrem[j] = bhi[j]-blo[j]+1;
+            jtot *= ldrem[j];
           }
-          ldrem[j] += blk_jinc;
-          l_offset += (clo[j]-blo[j]
-              + ((blo[j]-1)/hdl->blk_dim[j])*hdl->blk_size[j])*jtot;
-          jtot *= ldrem[j];
+          l_offset += (clo[last]-blo[last])*jtot;
+          l_offset += hdl->offset;
+        } else if (GA[handle].distr_type == SCALAPACK) {
+          l_offset = 0;
+          jtot = 1;
+          for (j=0; j<last; j++)  {
+            ldrem[j] = hdl->blk_ld[j];
+            blk_jinc = GA[handle].dims[j]%hdl->blk_size[j];
+            if (hdl->blk_inc[j] > 0) {
+              if (hdl->proc_index[j]<hdl->hlf_blk[j]) {
+                blk_jinc = hdl->blk_size[j];
+              } else if (hdl->proc_index[j] == hdl->hlf_blk[j]) {
+                blk_jinc = hdl->blk_inc[j]%hdl->blk_size[j];
+              } else {
+                blk_jinc = 0;
+              }
+            }
+            ldrem[j] += blk_jinc;
+            l_offset += (clo[j]-blo[j]
+                + ((blo[j]-1)/hdl->blk_dim[j])*hdl->blk_size[j])*jtot;
+            jtot *= ldrem[j];
+          }
+          l_offset += (clo[last]-blo[last]
+              + ((blo[last]-1)/hdl->blk_dim[j])*hdl->blk_size[last])*jtot;
         }
-        l_offset += (clo[last]-blo[last]
-            + ((blo[last]-1)/hdl->blk_dim[j])*hdl->blk_size[last])*jtot;
-#endif
         /* get pointer to data on remote block */
         pinv = (hdl->iproc)%GAnproc;
         if (p_handle > 0) {
@@ -653,8 +663,13 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         if (hdl->index[ndim-1] >= GA[handle].num_blocks[ndim-1]) {
           hdl->iproc++;
           hdl->offset = 0;
-          gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
-          gam_find_proc_indices(handle, hdl->iproc, hdl->index);
+          if (GA[handle].distr_type == TILED) {
+            gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
+            gam_find_tile_proc_indices(handle, hdl->iproc, hdl->index);
+          } else if (GA[handle].distr_type == SCALAPACK) {
+            gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
+            gam_find_proc_indices(handle, hdl->iproc, hdl->index);
+          }
         }
       }
     }
@@ -706,6 +721,20 @@ void pnga_local_iterator_init(Integer g_a, _iterator_hdl *hdl)
     /* Initialize proc_index and index arrays */
     gam_find_proc_indices(handle, me, hdl->proc_index);
     gam_find_proc_indices(handle, me, hdl->index);
+  } else if (GA[handle].distr_type == TILED) {
+    /* GA uses tiled distribution */
+    int j;
+    Integer me = pnga_pgroup_nodeid(grp);
+    /* Calculate some properties associated with data distribution */
+    for (j=0; j<ndim; j++)  {
+      hdl->blk_size[j] = GA[handle].block_dims[j];
+      hdl->blk_num[j] = GA[handle].num_blocks[j];
+      hdl->blk_inc[j] = GA[handle].nblock[j];
+      hdl->blk_dim[j] = GA[handle].dims[j];
+    }
+    /* Initialize proc_index and index arrays */
+    gam_find_tile_proc_indices(handle, me, hdl->proc_index);
+    gam_find_tile_proc_indices(handle, me, hdl->index);
   }
 }
 
@@ -751,7 +780,8 @@ int pnga_local_iterator_next(_iterator_hdl *hdl, Integer plo[],
     pnga_distribution(hdl->g_a,hdl->count,plo,phi);
     pnga_access_block_ptr(hdl->g_a,hdl->count,ptr,ld);
     hdl->count += pnga_pgroup_nnodes(grp);
-  } else if (GA[handle].distr_type == SCALAPACK) {
+  } else if (GA[handle].distr_type == SCALAPACK ||
+      GA[handle].distr_type == TILED) {
     /* Scalapack-type data distribution */
     if (hdl->index[ndim-1] >= hdl->blk_num[ndim-1]) return 0;
     /* Find coordinates of bounding block */

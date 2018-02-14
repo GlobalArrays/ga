@@ -782,7 +782,8 @@ int use_blocks;
          break;
        }
      }
-   } else if (GA[ga_handle].distr_type == SCALAPACK) {
+   } else if (GA[ga_handle].distr_type == SCALAPACK ||
+       GA[ga_handle].distr_type == TILED) {
      Integer index[MAXDIM];
      Integer i;
      for (i=0; i<ndim; i++) {
@@ -1743,6 +1744,52 @@ void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_g
 }
 
 /**
+ *  Use block-cyclic data distribution with ScaLAPACK-type proc grid for array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_tiled_proc_grid = pnga_set_tiled_proc_grid
+#endif
+
+void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid)
+{
+  Integer i, jsize, tot;
+  Integer ga_handle = g_a + GA_OFFSET;
+  GA_PUSH_NAME("ga_set_tiled_proc_grid");
+  if (GA[ga_handle].actv == 1)
+    pnga_error("Cannot set tiled data distribution on array that has been allocated",0);
+  if (!(GA[ga_handle].ndim > 0))
+    pnga_error("Cannot set tiled data distribution if array size not set",0);
+  if (GA[ga_handle].distr_type != REGULAR)
+    pnga_error("Cannot reset tiled data distribution on array that has been set",0);
+  GA[ga_handle].distr_type = TILED;
+  /* Check to make sure processor grid is compatible with total number of processors */
+  tot = 1;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    if (proc_grid[i] < 1)
+      pnga_error("Processor grid dimensions must all be greater than zero",0);
+    GA[ga_handle].nblock[i] = proc_grid[i];
+    tot *= proc_grid[i];
+  }
+  if (tot != GAnproc)
+    pnga_error("Number of processors in processor grid must equal available processors",0);
+  /* evaluate number of blocks in each dimension */
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    if (dims[i] < 1)
+      pnga_error("Block dimensions must all be greater than zero",0);
+    GA[ga_handle].block_dims[i] = dims[i];
+    jsize = GA[ga_handle].dims[i]/dims[i];
+    if (GA[ga_handle].dims[i]%dims[i] != 0) jsize++;
+    GA[ga_handle].num_blocks[i] = jsize;
+  }
+  jsize = 1;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    jsize *= GA[ga_handle].num_blocks[i];
+  }
+  GA[ga_handle].block_total = jsize;
+  GA_POP_NAME;
+}
+
+/**
  *  Restrict processors that actually contain data in the global array. Can also
  *  be used to rearrange the distribution of data amongst processors
  */
@@ -2383,6 +2430,24 @@ logical pnga_allocate(Integer g_a)
     Integer j, jtot, skip, imin, imax;
     Integer index[MAXDIM];
     gam_find_proc_indices(ga_handle,GAme,index);
+    block_size = 1;
+    for (i=0; i<ndim; i++) {
+      skip = GA[ga_handle].nblock[i];
+      jtot = 0;
+      for (j=index[i]; j<GA[ga_handle].num_blocks[i]; j += skip) {
+        imin = j*GA[ga_handle].block_dims[i] + 1;
+        imax = (j+1)*GA[ga_handle].block_dims[i];
+        if (imax > GA[ga_handle].dims[i]) imax = GA[ga_handle].dims[i];
+        jtot += (imax-imin+1);
+      }
+      block_size *= jtot;
+    }
+  } else if (GA[ga_handle].distr_type == TILED) {
+    /* Tiled data distribution has been specified. Figure
+       out how much memory is needed by each processor to store blocks */
+    Integer j, jtot, skip, imin, imax;
+    Integer index[MAXDIM];
+    gam_find_tile_proc_indices(ga_handle,GAme,index);
     block_size = 1;
     for (i=0; i<ndim; i++) {
       skip = GA[ga_handle].nblock[i];
@@ -4107,7 +4172,7 @@ int i;
      for (i=0; i<GA[h_a].ndim; i++) {
        if (GA[h_a].num_blocks[i] != GA[h_b].num_blocks[i]) return FALSE;
      }
-     if (GA[h_a].distr_type == SCALAPACK) {
+     if (GA[h_a].distr_type == SCALAPACK || GA[h_a].distr_type == TILED) {
        for (i=0; i<GA[h_a].ndim; i++) {
          if (GA[h_a].nblock[i] != GA[h_b].nblock[i]) return FALSE;
        }
@@ -4721,7 +4786,8 @@ Integer pnga_total_blocks(Integer g_a)
 logical pnga_uses_proc_grid(Integer g_a)
 {
   Integer ga_handle = GA_OFFSET + g_a;
-  return (logical)(GA[ga_handle].distr_type == SCALAPACK);
+  return (logical)(GA[ga_handle].distr_type == SCALAPACK
+      || GA[ga_handle].distr_type == TILED);
 }
 
 /**
@@ -4736,9 +4802,13 @@ logical pnga_uses_proc_grid(Integer g_a)
 void pnga_get_proc_index(Integer g_a, Integer iproc, Integer *index)
 {
   Integer ga_handle = GA_OFFSET + g_a;
-  if (!GA[ga_handle].distr_type == SCALAPACK)
+  if (GA[ga_handle].distr_type == SCALAPACK) {
+    gam_find_proc_indices(ga_handle, iproc, index);
+  } else if (GA[ga_handle].distr_type == TILED) {
+    gam_find_tile_proc_indices(ga_handle, iproc, index);
+  } else {
     pnga_error("Global array does not use ScaLAPACK data distribution",0);
-  gam_find_proc_indices(ga_handle, iproc, index);
+  }
   return;
 }
 
@@ -4755,7 +4825,8 @@ void pnga_get_block_info(Integer g_a, Integer *num_blocks, Integer *block_dims)
   Integer ga_handle = GA_OFFSET + g_a;
   Integer i, ndim;
   ndim = GA[ga_handle].ndim; 
-  if (GA[ga_handle].distr_type == SCALAPACK) {
+  if (GA[ga_handle].distr_type == SCALAPACK ||
+      GA[ga_handle].distr_type == TILED) {
     for (i=0; i<ndim; i++) {
       num_blocks[i] = GA[ga_handle].num_blocks[i];
       block_dims[i] = GA[ga_handle].block_dims[i];
