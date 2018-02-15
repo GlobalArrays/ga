@@ -184,6 +184,7 @@ c
          dims(2) = n
          call ga_set_data(g_c,ndim,dims,MT_DBL)
          call ga_set_array_name(g_c,'c')
+#ifndef USE_SIMPLE_CYCLIC
 #ifdef USE_SCALAPACK_DISTR
          call ga_set_block_cyclic_proc_grid(g_c,block_size,proc_grid)
 #else
