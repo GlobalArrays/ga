@@ -1029,14 +1029,13 @@ global_testing_thread_perf_strided_CFLAGS = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 global_testing_threadsafec_CFLAGS         = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 global_testing_read_only_CFLAGS           = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 
-global_testing_thread_perf_contig_CPPFLAGS = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
+global_testing_thread_perf_contig_CPPFLAGS  = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 global_testing_thread_perf_strided_CPPFLAGS = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
-global_testing_threadsafec_CPPFLAGS       = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
-global_testing_read_only_CPPFLAGS       = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
+global_testing_threadsafec_CPPFLAGS         = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
+global_testing_read_only_CPPFLAGS           = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 
 global_testing_threadsafec_LDFLAGS        = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
 global_testing_read_only_LDFLAGS          = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
-global_testing_types_test_LDFLAGS         = $(FLDFLAGS)
 
 if F77_INTEL_NO_INLINE
 global_testing_nga_scatter_FFLAGS         = $(AM_FFLAGS) -fno-inline
@@ -1087,6 +1086,7 @@ global/examples/conjugate_gradient/finclude.h      \
 global/examples/conjugate_gradient/ga_cg.c         \
 global/examples/conjugate_gradient/matvecmul.c     \
 global/examples/conjugate_gradient/read_input.c
+global_examples_conjugate_gradient_ga_cg_LDFLAGS = $(AM_LDFLAGS) $(FLD_NOMAIN)
 
 global_examples_lennard_jones_lennard_SOURCES = \
 global/examples/lennard-jones/lennard.c
