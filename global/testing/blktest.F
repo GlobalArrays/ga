@@ -38,6 +38,7 @@ c vector boxes lack arithmetic precision
       MA_ACCESS_INDEX_TYPE index
       integer i, j, k, nb, dims(7)
       integer lo(7), hi(7), tlo(7), thi(7), t2lo(7), t2hi(7)
+      integer lo1(7), hi1(7), ld1(7), lo2(7), hi2(7), ld2(7)
       integer block_list(10000), block_map(10000), nblock
       integer chunk(7), ld(7), block(7), proc_grid(7)
       integer a(nmax, nmax),b(nmax,nmax),e(nmax,nmax),f(nmax,nmax)
@@ -808,6 +809,19 @@ c
         write(6,*) 'Testing GA_Strided_get...'
         write(6,*)
       endif
+
+      lo1(1) = 1
+      lo1(2) = 1
+      hi1(1) = nmax/2+1
+      hi1(2) = nmax
+      ld1(1) = nmax
+
+      lo2(1) = nmax/2+2
+      lo2(2) = 1
+      hi2(1) = nmax
+      hi2(2) = nmax
+      ld2(1) = nmax
+
       skip(1) = 2
       skip(2) = 2
       call ga_zero(g_a)
@@ -817,8 +831,10 @@ c
       call ga_fill(g_a, 1)
       call ga_fill(g_c, 1)
       if (me.eq.0) then
-        call nga_strided_get(g_a,lo,hi,skip,a,ld)
-        call nga_strided_get(g_c,lo,hi,skip,b,ld)
+        call nga_strided_get(g_a,lo1,hi1,skip,a,ld1)
+        call nga_strided_get(g_a,lo2,hi2,skip,a(nmax/2+2,1),ld2)
+        call nga_strided_get(g_c,lo1,hi1,skip,b,ld1)
+        call nga_strided_get(g_c,lo2,hi2,skip,b(nmax/2+2,1),ld2)
       endif
       call ga_sync
       nb = 0
@@ -858,8 +874,10 @@ c
       if (me.eq.0) call nga_get(g_c,lo,hi,b,ld)
       call ga_zero(g_c)
       if (me.eq.0) then
-        call nga_strided_put(g_a,lo,hi,skip,a,ld)
-        call nga_strided_put(g_c,lo,hi,skip,b,ld)
+        call nga_strided_put(g_a,lo1,hi1,skip,a,ld1)
+        call nga_strided_put(g_a,lo2,hi2,skip,a(nmax/2+2,1),ld2)
+        call nga_strided_put(g_c,lo1,hi1,skip,b,ld1)
+        call nga_strided_put(g_c,lo2,hi2,skip,b(nmax/2+2,1),ld2)
       endif
       call ga_sync
       call ga_add(ialpha,g_a,ibeta,g_c,g_c)
@@ -891,8 +909,10 @@ c
       call nga_get(g_h,lo,hi,d,ld)
       call ga_sync
       if (me.eq.0) then
-        call nga_strided_acc(g_b,lo,hi,skip,c,ld,one)
-        call nga_strided_acc(g_h,lo,hi,skip,d,ld,one)
+        call nga_strided_acc(g_a,lo1,hi1,skip,a,ld1,one)
+        call nga_strided_acc(g_a,lo2,hi2,skip,a(nmax/2+2,1),ld2,one)
+        call nga_strided_acc(g_c,lo1,hi1,skip,b,ld1,one)
+        call nga_strided_acc(g_c,lo2,hi2,skip,b(nmax/2+2,1),ld2,one)
       endif
       call ga_sync
       call ga_add(alpha,g_b,beta,g_h,g_h)
