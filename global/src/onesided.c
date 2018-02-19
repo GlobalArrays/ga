@@ -4101,6 +4101,10 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   while (gai_iterator_next(&it_hdl, &proc, &blo, &bhi, &prem, ldrem)) {
       /* Correct ranges to account for skips in original patch. If no
          data is left in patch jump to next processor in loop. */
+      for (i=0; i<ndim; i++) {
+        plo[i] = blo[i];
+        phi[i] = bhi[i];
+      }
       if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
         continue;
       /* May need to correct location of remote buffer */
@@ -4506,6 +4510,10 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   while (gai_iterator_next(&it_hdl, &proc, &blo, &bhi, &prem, ldrem)) {
       /* Correct ranges to account for skips in original patch. If no
          data is left in patch jump to next processor in loop. */
+      for (i=0; i<ndim; i++) {
+        plo[i] = blo[i];
+        phi[i] = bhi[i];
+      }
       if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
         continue;
       /* May need to correct location of remote buffer */
@@ -4944,6 +4952,10 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   while (gai_iterator_next(&it_hdl, &proc, &blo, &bhi, &prem, ldrem)) {
       /* Correct ranges to account for skips in original patch. If no
          data is left in patch jump to next processor in loop. */
+      for (i=0; i<ndim; i++) {
+        plo[i] = blo[i];
+        phi[i] = bhi[i];
+      }
       if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
         continue;
       /* May need to correct location of remote buffer */
