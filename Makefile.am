@@ -1771,6 +1771,7 @@ if MSG_COMMS_TCGMSG5
 LOG_COMPILER = tst="$$dir$$f -np $(NPROCS)"; eval
 else
 if CROSS_COMPILING
+LOG_COMPILER = \
 maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; eval $$maybe_mpiexec
 else
 if ARMCI_NETWORK_MPI_PR
