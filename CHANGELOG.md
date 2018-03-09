@@ -9,6 +9,7 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
+## [5.7] - 2018-03-16
 - Known Bugs
 - Added
 - Changed
@@ -301,12 +302,17 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
 - Optimized one-sided non-blocking operations
 - Supports various platforms (Crays, IBM SPs, SGI Altix, ...) and interconnects (Myrinet, Quadrics, Infiniband, ...)
 
-[Unreleased]: https://github.com/GlobalArrays/ga/compare/v5.6.3...develop
+[Unreleased]: https://github.com/GlobalArrays/ga/compare/v5.7...develop
+[5.7]: https://github.com/GlobalArrays/ga/compare/v5.6.3...v5.7
 [5.6.3]: https://github.com/GlobalArrays/ga/compare/v5.6.2...v5.6.3
 [5.6.2]: https://github.com/GlobalArrays/ga/compare/v5.6.1...v5.6.2
 [5.6.1]: https://github.com/GlobalArrays/ga/compare/v5.6...v5.6.1
 [5.6]: https://github.com/GlobalArrays/ga/releases/tag/v5.6
 
+[\#94]: https://github.com/GlobalArrays/ga/issues/94
+[\#93]: https://github.com/GlobalArrays/ga/issues/93
+[\#92]: https://github.com/GlobalArrays/ga/pull/92
+[\#91]: https://github.com/GlobalArrays/ga/pull/91
 [\#90]: https://github.com/GlobalArrays/ga/issues/90
 [\#89]: https://github.com/GlobalArrays/ga/issues/89
 [\#88]: https://github.com/GlobalArrays/ga/issues/88
