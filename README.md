@@ -73,6 +73,89 @@ mkdir bld_mpi_ts && cd bld_mpi_ts && ../configure
 mkdir bld_mpi_openib  && cd bld_mpi_openib  && ../configure --with-openib
 ```
 Regardless of your choice to perform a VPATH build, the following should hopefully elucidate the myriad options to configure.  Only the options requiring additional details are documented here. `./configure --help` will certainly list more options in addition to limited documentation.
+
+##### Selecting the Underlying One-Sided Runtime
+
+This software contains a number of communication runtime implementations which directly use MPI instead of a native communication library, e.g., OpenIB verbs, Cray DMAPP. The basis of all of our MPI-based ports is the use of the MPI two-sided primitives (MPI_Send, MPI_Recv) to implement our ComEx/ARMCI one-sided protocols. The primary benefit of these ports is that Global Arrays and its user applications will now run on any platform where MPI is supported.
+
+The recommended port is MPI-1 with progress ranks `--with-mpi-pr` MPI-1 with progress ranks.  However, there are some caveats which must be mentioned in order to use the new MPI ports.
+
+###### How to Use Progress Ranks
+
+Your application code must not rely on MPI_COMM_WORLD directly. Instead, you must duplicate the MPI communicator that the GA library returns to you in place of any world communicator. Example code follows:
+
+Fortran77:
+```fortranfixed
+      program main
+      implicit none
+#include “mpi.fh"
+#include "global.fh"
+#include "ga-mpi.fh"
+      integer comm
+      integer ierr
+      call mpi_init(ierr)
+      call ga_initialize()
+      call ga_mpi_comm(comm)
+! use the returned comm as ususal
+      call ga_terminate()
+      call mpi_finalize(ierr)
+      end
+```
+C/C++:
+```C
+#include <mpi.h>
+#include "ga.h"
+#include "ga-mpi.h"
+int main(int argc, char **argv) {
+    MPI_Comm comm;
+    MPI_Init(&argc,&argv);
+    GA_Initialize();
+    comm = GA_MPI_Comm();
+    GA_Terminate();
+    MPI_Finalize();
+    return 0;
+}
+```
+
+###### How to Use Progress Threads
+
+This port uses MPI_Init_thread() internally with a threading level of MPI_THREAD_MULTIPLE. It will create one progress thread per compute node. It is advised to undersubscribe your compute nodes by one core. Your application code can remain unchanged unless you call MPI_Init() in your application code, in which case GA will detect the lower MPI threading level and abort with an error.
+
+###### How to Use the New Default Two Sided Port
+
+The MPI two-sided port is fully compatible with the MPI-1 standard. However, your application code will require additional GA_Sync() calls prior to and after any MPI function calls. This effectively splits user application code into blocks/epochs/phases of MPI code and GA code. Not doing so will likely cause your application to hang since our two sided port can only make communication progress inside of a GA function call.
+
+Any application code which only makes GA function calls can remain unchanged.
+
+###### Full List of Runtimes
+
+```
+  --with-armci[=ARG]      select armci network as external; path to external
+                          ARMCI library
+  --with-cray-shmem[=ARG] select armci network as Cray XT shmem
+  --with-dmapp[=ARG]      select armci network as (Comex) Cray DMAPP
+  --with-gemini[=ARG]     select armci network as Cray XE Gemini using
+                          libonesided
+  --with-lapi[=ARG]       select armci network as IBM LAPI
+  --with-mpi-mt[=ARG]     select armci network as (Comex) MPI-2
+                          multi-threading
+  --with-mpi-pt[=ARG]     select armci network as (Comex) MPI-2
+                          multi-threading with progress thread
+  --with-mpi-pr[=ARG]     select armci network as (Comex) MPI-1 two-sided with
+                          progress rank
+  --with-mpi-spawn[=ARG]  select armci network as MPI-2 dynamic process mgmt
+  --with-mpi-ts[=ARG]     select armci network as (Comex) MPI-1 two-sided
+  --with-mpi3[=ARG]       select armci network as (Comex) MPI-3 one-sided
+  --with-ofa[=ARG]        select armci network as (Comex) Infiniband OpenIB
+  --with-ofi[=ARG]        select armci network as (Comex) OFI
+  --with-openib[=ARG]     select armci network as Infiniband OpenIB
+  --with-portals4[=ARG]   select armci network as (Comex) Portals4
+  --with-portals[=ARG]    select armci network as Cray XT portals
+  --with-sockets[=ARG]    select armci network as Ethernet TCP/IP
+```
+
+##### Other Options
+
 ```
 --disable-f77           Disable Fortran code. This used to be the old
                         GA_C_CORE or NOFORT environment variables which
@@ -196,6 +279,10 @@ And if that doesn't work (cross-compilation is not detected) you must then *forc
 ```
     configure --host=x86_64-unknown-linux-gnu --build=x86_64-unknown-linux-gnu
 ```
+Alternatively, you can just tell configure directly.
+```
+    configure cross_compiling=yes
+```
 
 #### Compiler Selection 
 
@@ -239,3 +326,7 @@ The test suite will recurse into the ComEx directory and run the ComEx test suit
 Setting an environment variable MA_USE_ARMCI_MEM forces MA library to use
 ARMCI memory, communication via which can be faster on networks like GM, VIA
 and InfiniBand.
+
+### CMake
+
+TODO.
