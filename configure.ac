@@ -158,7 +158,7 @@ AC_C_CONST
 AC_C_INLINE
 AC_C_RESTRICT
 AC_C_VOLATILE
-AX_OPENMP
+AC_OPENMP
 AC_TYPE_INT64_T
 AC_TYPE_LONG_DOUBLE
 AC_TYPE_OFF_T
@@ -270,7 +270,7 @@ AS_IF([test "x$with_mpi" != xno], [GA_MPICXX_TEST])
 # Checks for C++ header files.
 
 # Checks for C++ typedefs, structures, and compiler characteristics.
-AX_OPENMP
+AC_OPENMP
 GA_CXX_NAMESPACES
 
 # Checks for C++ type sizes.
@@ -352,7 +352,7 @@ GA_F77_INTEGER_SIZE
 GA_GNU_LOOP_OPT
 
 # Checks for Fortran typedefs, structures, and compiler characteristics.
-AX_OPENMP
+AC_OPENMP
 
 # Checks for Fortran type sizes.
 ga_save_FFLAGS="$FFLAGS"; FFLAGS="$FFLAGS $FFLAG_INT"
