@@ -1,9 +1,20 @@
 # GA_F77_COMPUTE_SIZEOF(TYPE, VARIABLE)
 # -------------------------------------
-AC_DEFUN([GA_F77_COMPUTE_SIZEOF],
-[AC_F77_FUNC([size])
- AC_LANG_PUSH([C])
- AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+AC_DEFUN([GA_F77_COMPUTE_SIZEOF], [
+AS_TR_SH([$2])=no
+AC_F77_FUNC([size])
+AC_F77_FUNC([fsub])
+AC_LANG_PUSH([Fortran 77])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+[[      subroutine fsub
+      external size
+      $1 x(2)
+      call size(x(1),x(2))
+      end]])], [
+    ga_save_LIBS=$LIBS
+    LIBS="conftest.$ac_objext $LIBS $[]_AC_LANG_PREFIX[]LIBS"
+    AC_LANG_PUSH([C])
+    AC_RUN_IFELSE([AC_LANG_SOURCE(
 [[#include <stdio.h>
 #include <stdlib.h>
 #ifdef __cplusplus
@@ -19,25 +30,23 @@ void $size(char *a, char *b)
 }
 #ifdef __cplusplus
 }
-#endif]])],
-    [mv conftest.$ac_objext cfortran_test.$ac_objext
-     ga_save_LIBS=$LIBS
-     LIBS="cfortran_test.$ac_objext $LIBS $[]_AC_LANG_PREFIX[]LIBS"
-     AC_LANG_PUSH([Fortran 77])
-     AC_RUN_IFELSE(
-[[      program main
-      external size
-      $1 x(2)
-      call size(x(1),x(2))
-      end]],
-        [AS_TR_SH([$2])=`cat conftestval`],
-        [AS_TR_SH([$2])=no])
-     AC_LANG_POP([Fortran 77])
-     LIBS=$ga_save_LIBS
-     rm -f cfortran_test*],
-    [AS_TR_SH([$2])=no])
-AC_LANG_POP([C])
-rm -rf conftest*
+#endif
+#ifdef __cplusplus
+extern "C"
+#else
+extern
+#endif
+void $fsub(void);
+int main(int argc, char **argv)
+{
+    $fsub();
+    return 0;
+}
+]])], [AS_TR_SH([$2])=`cat conftestval`])
+    LIBS=$ga_save_LIBS
+    rm -f conftest*
+    AC_LANG_POP([C])])
+AC_LANG_POP([Fortran 77])
 ]) # GA_F77_COMPUTE_SIZEOF
 
 # GA_F77_CHECK_SIZEOF(TYPE, CROSS-SIZE)
