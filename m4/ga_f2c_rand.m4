@@ -24,9 +24,10 @@ long seed=6;
 _SRAND48_(&seed);
 ]]
 )],
-        [ga_cv_f2c_srand48=1],
-        [ga_cv_f2c_srand48=0])
+        [ga_cv_f2c_srand48=yes],
+        [ga_cv_f2c_srand48=no])
     AC_LANG_POP([C])])
-AC_DEFINE_UNQUOTED([F2C_SRAND48_OK], [$ga_cv_f2c_srand48],
+AS_IF([test "x$ga_cv_f2c_srand48" = xyes], [val=1], [val=0])
+AC_DEFINE_UNQUOTED([F2C_SRAND48_OK], [$val],
         [define to 1 if Fortran-callable srand48 does not conflict with system def])
 ]) # GA_F2C_SRAND48
