@@ -127,16 +127,16 @@ endif
 	@echo '#'
 	@echo '# For Fortran Programs: '
 	@echo 'FFLAGS="$(AM_FFLAGS)"' | $(SED_NORMALIZE_WHITESPACE)
-	@echo 'LIBS="-lga $(ELPA_LIBS) $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo 'LIBS="-lga -larmci $(ELPA_LIBS) $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo '#'
 	@echo '# For C Programs: '
 	@echo 'CFLAGS="$(AM_CFLAGS)"' | $(SED_NORMALIZE_WHITESPACE)
-	@echo 'LIBS="-lga $(ELPA_LIBS) $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo 'LIBS="-lga -larmci $(ELPA_LIBS) $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
 if CXX_BINDINGS
 	@echo '#'
 	@echo '# For C++ Programs: '
 	@echo 'CXXFLAGS="$(AM_CXXFLAGS)"' | $(SED_NORMALIZE_WHITESPACE)
-	@echo 'LIBS="-lga++ -lga $(ELPA_LIBS) $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo 'LIBS="-lga++ -lga -larmci $(ELPA_LIBS) $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
 endif
 	@echo '# =========================================================================== '
 
