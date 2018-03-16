@@ -40,6 +40,7 @@ libcomex_la_LIBADD =
 libcomex_la_LIBADD += $(MPI_LIBS)
 libcomex_la_LIBADD += $(COMEX_NETWORK_LIBS)
 libcomex_la_LIBADD += $(BLAS_LIBS)
+libcomex_la_LIBADD += $(LIBS)
 include_HEADERS += $(top_srcdir)/src-common/comex.h
 
 AM_CPPFLAGS += $(MPI_CPPFLAGS)
@@ -61,6 +62,7 @@ libcomexi_la_LIBADD =
 libcomexi_la_LIBADD += $(MPI_LIBS)
 libcomexi_la_LIBADD += $(COMEX_NETWORK_LIBS)
 libcomexi_la_LIBADD += $(BLAS_LIBS)
+libcomexi_la_LIBADD += $(LIBS)
 
 ##############################################################################
 # compiler and linker flags
@@ -79,7 +81,7 @@ flags:
 	@echo ' LDFLAGS="$(MPI_LDFLAGS) $(COMEX_NETWORK_LDFLAGS) $(BLAS_LDFLAGS) -L$(libdir)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo ' '
 	@echo ' For C/C++ Programs: '
-	@echo ' LIBS="-lcomex $(MPI_LIBS) $(COMEX_NETWORK_LIBS) $(BLAS_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo ' LIBS="-lcomex $(MPI_LIBS) $(COMEX_NETWORK_LIBS) $(BLAS_LIBS) $(LIBS)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo ' =========================================================================== '
 
 ##############################################################################
