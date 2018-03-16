@@ -25,7 +25,7 @@ export IFNAMES="${AUTOTOOLS_DIR}/bin/ifnames"
 export AUTOMAKE="${AUTOTOOLS_DIR}/bin/automake"
 export ACLOCAL="${AUTOTOOLS_DIR}/bin/aclocal"
 
-autoreconf vif
+autoreconf -vif
 
 # patch to configure script for PGF90 and -lnuma
 for conffile in configure comex/configure armci/configure
