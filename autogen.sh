@@ -13,10 +13,19 @@ fi
 # We force the use of specific Autotools versions.
 sh ./travis/install-autotools.sh "$AUTOTOOLS_DIR"
 
-export PATH="$AUTOTOOLS_DIR/bin":$PATH
+export PATH="${AUTOTOOLS_DIR}/bin":$PATH
+export M4="${AUTOTOOLS_DIR}/bin/m4"
+export AUTOCONF="${AUTOTOOLS_DIR}/bin/autoconf"
+export AUTOHEADER="${AUTOTOOLS_DIR}/bin/autoheader"
+export AUTOM4TE="${AUTOTOOLS_DIR}/bin/autom4te"
+export AUTORECONF="${AUTOTOOLS_DIR}/bin/autoreconf"
+export AUTOSCAN="${AUTOTOOLS_DIR}/bin/autoscan"
+export AUTOUPDATE="${AUTOTOOLS_DIR}/bin/autoupdate"
+export IFNAMES="${AUTOTOOLS_DIR}/bin/ifnames"
+export AUTOMAKE="${AUTOTOOLS_DIR}/bin/automake"
+export ACLOCAL="${AUTOTOOLS_DIR}/bin/aclocal"
 
-autoreconf=${AUTORECONF:-autoreconf}
-$autoreconf ${autoreconf_args:-"-vif"}
+autoreconf vif
 
 # patch to configure script for PGF90 and -lnuma
 for conffile in configure comex/configure armci/configure
