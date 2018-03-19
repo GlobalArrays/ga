@@ -220,7 +220,7 @@ int main(int argc, char **argv)
         fflush(stdout);
     }
 
-    for (q=1; q<=6; q++) {
+    for (q=1; q<=3; q++) {
     for (i=0; i<10; i++) {
         switch (i) {
             case 0: lo=0; hi=NELEM-1; excl=0; break;
