@@ -16,6 +16,7 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
   - armci-config and comex-config scripts to install.
 - Changed
   - install-autotools.sh installs all autotools regardless of existing versions
+  - configure tests needing mixed C/Fortran code now use C linker
 - Fixed
   - Test suite was broken when GA was cross-compiled
   - eliop FreeBSD patch from Debichem
