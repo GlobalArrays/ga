@@ -7,6 +7,13 @@ if (INPUT)
     foreach (l in ${in0})
       # Only retain lines that start with "#"
       set(found "")
+      string(REGEX MATCH "^#include" found "${l}")
+      if (found)
+        # don't include f2c_cmake.h
+        set(out "#include \"f2c_cmake.fh\"\n")
+       continue ()
+      endif ()
+      set(found "") 
       string(REGEX MATCH "^#" found "${l}")
       if (found)
         set(out "${out}${l}\n")

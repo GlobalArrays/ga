@@ -184,6 +184,15 @@ option (F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS "Set F77 macros" ON)
 if (ENABLE_FORTRAN)
   include( FortranCInterface )
   FortranCInterface_HEADER(${CMAKE_SOURCE_DIR}/f2c_cmake.h MACRO_NAMESPACE F77_FUNC_)
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/f2c_cmake.fh
+    COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/f2c_cmake.h" -D OUTPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/f2c_cmake.fh" -P ${PROJECT_SOURCE_DIR}/tools/f2c_cmake_fh_from_h.cmake DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/f2c_cmake.h
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/f2c_cmake.h
+  )
+  add_custom_target(
+    GenerateF2c_cmakeFH ALL
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/f2c_cmake.fh
+  )
 else()
   CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/f2c_dummy.h.in
                 ${CMAKE_SOURCE_DIR}/f2c_cmake.h )
@@ -368,6 +377,15 @@ if (ENABLE_FORTRAN)
      set (F77_FLUSH flush)
      set (FORTRAN_I8_FLAG -i8)
      set (FORTRAN_I4_FLAG -i4)
+     set (HAVE_F77_FLUSH 1)
+  elseif (CMAKE_Fortran_COMPILER MATCHES "xlf.*")
+     message(STATUS "Using IBM XL Fortran compiler settings")
+     set (F90_MODULE )
+     set (F77_GETARG GETARG)
+     set (F77_GETARG_ARGS "i,s")
+     set (F77_GETARG_DECLS "intrinsic GETARG")
+     set (F77_IARGC IARGC)
+     set (F77_FLUSH flush_)
      set (HAVE_F77_FLUSH 1)
   endif()
 else()

@@ -108,7 +108,7 @@ c
         print *,'Comparing distributed multiply with serial multiply'
         print *
 #endif
-        call flush(6)
+        call F77_FLUSH(6)
       endif
 c
 c***  Initialize the MA package

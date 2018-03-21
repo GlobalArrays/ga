@@ -123,7 +123,7 @@ c
 
         write(6,*)'bytes  loop         get                    put',
      &           '                 accumulate'
-        call flush(6)
+        call F77_FLUSH(6)
       endif
       call ga_sync()
 c
@@ -161,7 +161,7 @@ c
         if (me .eq. 0) then
           write(6,77)bytes, count, tg, 1d-6*bytes/tg,
      &               tp, 1d-6*bytes/tp, ta, 1d-6*bytes/ta
-          call flush(6)
+          call F77_FLUSH(6)
         endif
       enddo
 c
