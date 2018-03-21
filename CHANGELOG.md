@@ -9,14 +9,28 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
-## [5.7] - 2018-03-16
+## [5.7] - 2018-03-23
 - Known Bugs
+  - Some combinations of MPI implementations with the MPI RMA and PR
+    ports fail. Recommended to use latest MPI implementations available.
 - Added
+  - Tiled data layout
+  - Read-only property type using replication across SMP nodes
 - Changed
   - GA is now thread safe
+  - MPI3 implementation based on MPI RMA now uses data types in MPI
+    calls by default. This is higher performing but not as reliable as
+    using multiple contiguous data transfers. The build can be
+    configured to use contiguous transfers if data types are not working
+    for your MPI implementation.
 - Fixed
-- Closed Pull Requests
+  - Message sizes exceeding 2GB now work correctly
+  - Mirrored Arrays now distributes data across SMP nodes for
+    ComEx-based runtimes
+  - Matrix multiply works for non-standard data layouts (may not be
+    performant)
 - Closed Issues
+  - \[#48] Message sizes exceeding 2GB may not work correctly
 
 ## [5.6.4] - 2018-03-21
 - Known Bugs
