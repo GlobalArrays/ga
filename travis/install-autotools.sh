@@ -14,10 +14,6 @@ if [ ! -d ${TOP}/bin ] ; then
     mkdir ${TOP}/bin
 fi
 
-if [ ! -d ${TOP}/m4 ] ; then
-    mkdir ${TOP}/m4
-fi
-
 download=""
 if wget --version > /dev/null ; then
     download="wget -O"
@@ -63,16 +59,6 @@ case "$os" in
         fi
 
         ##########################################
-        ### ax_pthread.m4
-        ##########################################
-        cd ${TOP}/m4
-        if [ -f ax_pthread.m4 ] ; then
-            echo "ax_pthread.m4 already exists! Using existing copy."
-        else
-            ${download} ax_pthread.m4 'http://git.savannah.gnu.org/gitweb/?p=autoconf-archive.git;a=blob_plain;f=m4/ax_pthread.m4'
-        fi
-
-        ##########################################
         ### config.guess
         ##########################################
         cd ${TOP}/bin
@@ -97,51 +83,40 @@ case "$os" in
         ##########################################
         cd ${TOP}
         TOOL=m4
-        TOOL_OKAY=no
         TOOL_VERSION=$M4_VERSION
-        if ${TOOL} --version >/dev/null ; then
-            TOOL_VERSION_FOUND=`${TOOL} --version | head -n1 | cut -d' ' -f 4`
-            if [ "x$TOOL_VERSION" = "x$TOOL_VERSION_FOUND" ] ; then
-                TOOL_OKAY=yes
-            fi
+        TDIR=${TOOL}-${TOOL_VERSION}
+        FILE=${TDIR}.tar.gz
+        BIN=${TOP}/bin/${TOOL}
+        URL=http://ftp.gnu.org/gnu/${TOOL}/${FILE}
+        if [ "x$FTP_OK" = "xno" ] ; then
+            URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
         fi
-
-        if [ "x$TOOL_OKAY" = "xno" ] ; then
-            TDIR=${TOOL}-${TOOL_VERSION}
-            FILE=${TDIR}.tar.gz
-            BIN=${TOP}/bin/${TOOL}
-            URL=http://ftp.gnu.org/gnu/${TOOL}/${FILE}
-            if [ "x$FTP_OK" = "xno" ] ; then
-                URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
-            fi
-            if [ -f ${FILE} ] ; then
-                echo ${FILE} already exists! Using existing copy.
-            else
-                ${download} ${FILE} ${URL}
-            fi
-            if [ -d ${TDIR} ] ; then
-                echo ${TDIR} already exists! Using existing copy.
-            else
-                echo Unpacking ${FILE}
-                tar -xzf ${FILE}
-            fi
-            if [ -f ${BIN} ] ; then
-                echo ${BIN} already exists! Skipping build.
-            else
-                cd ${TOP}/${TDIR}
-                cp ${TOP}/bin/config.guess ./build-aux/config.guess
-                cp ${TOP}/bin/config.sub ./build-aux/config.sub
-                ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
-                if [ "x$?" != "x0" ] ; then
-                    echo FAILURE 1
-                    exit 1
-                fi
-            fi
-            # refresh the path
-            export PATH=${TOP}/bin:$PATH
+        if [ -f ${FILE} ] ; then
+            echo ${FILE} already exists! Using existing copy.
         else
-            echo "${TOOL} found and is sufficiently new ($TOOL_VERSION_FOUND)"
+            ${download} ${FILE} ${URL}
         fi
+        if [ -d ${TDIR} ] ; then
+            echo ${TDIR} already exists! Using existing copy.
+        else
+            echo Unpacking ${FILE}
+            tar -xzf ${FILE}
+        fi
+        if [ -f ${BIN} ] ; then
+            echo ${BIN} already exists! Skipping build.
+        else
+            cd ${TOP}/${TDIR}
+            cp ${TOP}/bin/config.guess ./build-aux/config.guess
+            cp ${TOP}/bin/config.sub ./build-aux/config.sub
+            ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
+            if [ "x$?" != "x0" ] ; then
+                echo FAILURE 1
+                exit
+            fi
+        fi
+        # refresh the path
+        export PATH=${TOP}/bin:$PATH
+        export M4=${TOP}/bin/m4
 
         ##########################################
         ### autoconf
@@ -149,51 +124,46 @@ case "$os" in
 
         cd ${TOP}
         TOOL=autoconf
-        TOOL_OKAY=no
         TOOL_VERSION=$AUTOCONF_VERSION
-        if ${TOOL} --version >/dev/null ; then
-            TOOL_VERSION_FOUND=`${TOOL} --version | head -n1 | cut -d' ' -f 4`
-            if [ "x$TOOL_VERSION" = "x$TOOL_VERSION_FOUND" ] ; then
-                TOOL_OKAY=yes
-            fi
+        TDIR=${TOOL}-${TOOL_VERSION}
+        FILE=${TDIR}.tar.gz
+        BIN=${TOP}/bin/${TOOL}
+        URL=http://ftp.gnu.org/gnu/${TOOL}/${FILE}
+        if [ "x$FTP_OK" = "xno" ] ; then
+            URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
         fi
-
-        if [ "x$TOOL_OKAY" = "xno" ] ; then
-            TDIR=${TOOL}-${TOOL_VERSION}
-            FILE=${TDIR}.tar.gz
-            BIN=${TOP}/bin/${TOOL}
-            URL=http://ftp.gnu.org/gnu/${TOOL}/${FILE}
-            if [ "x$FTP_OK" = "xno" ] ; then
-                URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
-            fi
-            if [ ! -f ${FILE} ] ; then
-                ${download} ${FILE} ${URL}
-            else
-                echo ${FILE} already exists! Using existing copy.
-            fi
-            if [ ! -d ${TDIR} ] ; then
-                echo Unpacking ${FILE}
-                tar -xzf ${FILE}
-            else
-                echo ${TDIR} already exists! Using existing copy.
-            fi
-            if [ -f ${BIN} ] ; then
-                echo ${BIN} already exists! Skipping build.
-            else
-                cd ${TOP}/${TDIR}
-                cp ${TOP}/bin/config.guess ./build-aux/config.guess
-                cp ${TOP}/bin/config.sub ./build-aux/config.sub
-                ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
-                if [ "x$?" != "x0" ] ; then
-                    echo FAILURE 3
-                    exit 1
-                fi
-            fi
-            # refresh the path
-            export PATH=${TOP}/bin:$PATH
+        if [ ! -f ${FILE} ] ; then
+            ${download} ${FILE} ${URL}
         else
-            echo "${TOOL} found and is exactly needed version ($TOOL_VERSION_FOUND)"
+            echo ${FILE} already exists! Using existing copy.
         fi
+        if [ ! -d ${TDIR} ] ; then
+            echo Unpacking ${FILE}
+            tar -xzf ${FILE}
+        else
+            echo ${TDIR} already exists! Using existing copy.
+        fi
+        if [ -f ${BIN} ] ; then
+            echo ${BIN} already exists! Skipping build.
+        else
+            cd ${TOP}/${TDIR}
+            cp ${TOP}/bin/config.guess ./build-aux/config.guess
+            cp ${TOP}/bin/config.sub ./build-aux/config.sub
+            ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
+            if [ "x$?" != "x0" ] ; then
+                echo FAILURE 3
+                exit
+            fi
+        fi
+        # refresh the path
+        export PATH=${TOP}/bin:$PATH
+        export AUTOCONF=${TOP}/bin/autoconf
+        export AUTOHEADER=${TOP}/bin/autoheader
+        export AUTOM4TE=${TOP}/bin/autom4te
+        export AUTORECONF=${TOP}/bin/autoreconf
+        export AUTOSCAN=${TOP}/bin/autoscan
+        export AUTOUPDATE=${TOP}/bin/autoupdate
+        export IFNAMES=${TOP}/bin/ifnames
 
         ##########################################
         ### automake
@@ -201,67 +171,53 @@ case "$os" in
 
         cd ${TOP}
         TOOL=automake
-        TOOL_OKAY=no
         TOOL_VERSION=$AUTOMAKE_VERSION
-        if ${TOOL} --version >/dev/null ; then
-            TOOL_VERSION_FOUND=`${TOOL} --version | head -n1 | cut -d' ' -f 4`
-            if [ "x$TOOL_VERSION" = "x$TOOL_VERSION_FOUND" ] ; then
-                TOOL_OKAY=yes
-            fi
+        TDIR=${TOOL}-${TOOL_VERSION}
+        FILE=${TDIR}.tar.gz
+        BIN=${TOP}/bin/${TOOL}
+        URL=http://ftp.gnu.org/gnu/${TOOL}/${FILE}
+        if [ "x$FTP_OK" = "xno" ] ; then
+            URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
         fi
-
-        if [ "x$TOOL_OKAY" = "xno" ] ; then
-            TDIR=${TOOL}-${TOOL_VERSION}
-            FILE=${TDIR}.tar.gz
-            BIN=${TOP}/bin/${TOOL}
-            URL=http://ftp.gnu.org/gnu/${TOOL}/${FILE}
-            if [ "x$FTP_OK" = "xno" ] ; then
-                URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
-            fi
-            if [ ! -f ${FILE} ] ; then
-                ${download} ${FILE} ${URL}
-            else
-                echo ${FILE} already exists! Using existing copy.
-            fi
-            if [ ! -d ${TDIR} ] ; then
-                echo Unpacking ${FILE}
-                tar -xzf ${FILE}
-            else
-                echo ${TDIR} already exists! Using existing copy.
-            fi
-            if [ -f ${BIN} ] ; then
-                echo ${BIN} already exists! Skipping build.
-            else
-                cd ${TOP}/${TDIR}
-                cp ${TOP}/bin/config.guess ./lib/config.guess
-                cp ${TOP}/bin/config.sub ./lib/config.sub
-                ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
-                if [ "x$?" != "x0" ] ; then
-                    echo FAILURE 4
-                    exit 1
-                fi
-            fi
-            # refresh the path
-            export PATH=${TOP}/bin:$PATH
+        if [ ! -f ${FILE} ] ; then
+            ${download} ${FILE} ${URL}
         else
-            echo "${TOOL} found and is exactly needed version ($TOOL_VERSION_FOUND)"
+            echo ${FILE} already exists! Using existing copy.
         fi
+        if [ ! -d ${TDIR} ] ; then
+            echo Unpacking ${FILE}
+            tar -xzf ${FILE}
+        else
+            echo ${TDIR} already exists! Using existing copy.
+        fi
+        if [ -f ${BIN} ] ; then
+            echo ${BIN} already exists! Skipping build.
+        else
+            cd ${TOP}/${TDIR}
+            cp ${TOP}/bin/config.guess ./lib/config.guess
+            cp ${TOP}/bin/config.sub ./lib/config.sub
+            ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
+            if [ "x$?" != "x0" ] ; then
+                echo FAILURE 4
+                exit
+            fi
+        fi
+        # refresh the path
+        export PATH=${TOP}/bin:$PATH
+        export AUTOMAKE=${TOP}/bin/automake
+        export ACLOCAL=${TOP}/bin/aclocal
 
         # patch this old automake for new perl
-        awk 'NR==4159 {$0="  $text =~ s/\\$\\{([^ \\t=:+{}]+)}/&substitute_ac_subst_variables_worker ($1)/ge;"} 1' ${TOP}/bin/automake > ${TOP}/bin/automake.patched
-        cp ${TOP}/bin/automake.patched ${TOP}/bin/automake
-
-        ##########################################
-        ### third party m4 files
-        ##########################################
-
-        aclocal_dir=`aclocal --print 2>/dev/null`
-        if [ ! -d ${aclocal_dir} ] ; then
-            mkdir -p ${aclocal_dir}
+        if [ -f ${TOP}/bin/automake.patched ] ; then
+            echo ${TOP}/bin/automake.patched already exists!
+        else
+            awk 'NR==4159 {$0="  $text =~ s/\\$\\{([^ \\t=:+{}]+)}/&substitute_ac_subst_variables_worker ($1)/ge;"} 1' ${TOP}/bin/automake > ${TOP}/bin/automake.patched
         fi
-        if ! cp ${TOP}/m4/*.m4 ${aclocal_dir}/ ; then
-            echo FAILURE 5
-            exit 5
+
+        if [ diff ${TOP}/bin/automake.patched ${TOP}/bin/automake >/dev/null ] ; then
+            echo  ${TOP}/bin/automake is already patched!
+        else
+            cp ${TOP}/bin/automake.patched ${TOP}/bin/automake
         fi
 
         ##########################################
@@ -270,51 +226,39 @@ case "$os" in
 
         cd ${TOP}
         TOOL=libtool
-        TOOL_OKAY=no
         TOOL_VERSION=$LIBTOOL_VERSION
-        if ${TOOL} --version >/dev/null ; then
-            TOOL_VERSION_FOUND=`${TOOL} --version | head -n1 | cut -d' ' -f 4`
-            if [ "x$TOOL_VERSION" = "x$TOOL_VERSION_FOUND" ] ; then
-                TOOL_OKAY=yes
-            fi
+        TDIR=${TOOL}-${TOOL_VERSION}
+        FILE=${TDIR}.tar.gz
+        BIN=${TOP}/bin/${TOOL}
+        URL=http://ftp.gnu.org/gnu/${TOOL}/${FILE}
+        if [ "x$FTP_OK" = "xno" ] ; then
+            URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
         fi
-
-        if [ "x$TOOL_OKAY" = "xno" ] ; then
-            TDIR=${TOOL}-${TOOL_VERSION}
-            FILE=${TDIR}.tar.gz
-            BIN=${TOP}/bin/${TOOL}
-            URL=http://ftp.gnu.org/gnu/${TOOL}/${FILE}
-            if [ "x$FTP_OK" = "xno" ] ; then
-                URL=https://github.com/GlobalArrays/autotools/blob/master/${FILE}?raw=true
-            fi
-            if [ ! -f ${FILE} ] ; then
-                ${download} ${FILE} ${URL}
-            else
-                echo ${FILE} already exists! Using existing copy.
-            fi
-            if [ ! -d ${TDIR} ] ; then
-                echo Unpacking ${FILE}
-                tar -xzf ${FILE}
-            else
-                echo ${TDIR} already exists! Using existing copy.
-            fi
-            if [ -f ${BIN} ] ; then
-                echo ${BIN} already exists! Skipping build.
-            else
-                cd ${TOP}/${TDIR}
-                cp ${TOP}/bin/config.guess ./build-aux/config.guess
-                cp ${TOP}/bin/config.sub ./build-aux/config.sub
-                ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
-                if [ "x$?" != "x0" ] ; then
-                    echo FAILURE 2
-                    exit 1
-                fi
-            fi
-            # refresh the path
-            export PATH=${TOP}/bin:$PATH
+        if [ ! -f ${FILE} ] ; then
+            ${download} ${FILE} ${URL}
         else
-            echo "${TOOL} found and is exactly needed version ($TOOL_VERSION_FOUND)"
+            echo ${FILE} already exists! Using existing copy.
         fi
+        if [ ! -d ${TDIR} ] ; then
+            echo Unpacking ${FILE}
+            tar -xzf ${FILE}
+        else
+            echo ${TDIR} already exists! Using existing copy.
+        fi
+        if [ -f ${BIN} ] ; then
+            echo ${BIN} already exists! Skipping build.
+        else
+            cd ${TOP}/${TDIR}
+            cp ${TOP}/bin/config.guess ./build-aux/config.guess
+            cp ${TOP}/bin/config.sub ./build-aux/config.sub
+            ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
+            if [ "x$?" != "x0" ] ; then
+                echo FAILURE 2
+                exit
+            fi
+        fi
+        # refresh the path
+        export PATH=${TOP}/bin:$PATH
 
         ;;
 esac

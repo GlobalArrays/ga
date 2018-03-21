@@ -64,6 +64,8 @@ AS_IF([test "x$ga_cv_f77_suppress" != xnone],
     [ga_save_suppress_FFLAGS="$FFLAGS $ga_cv_f77_suppress"])
 AS_IF([test "x$FFLAG_INT" != x],
     [FFLAGS="$ga_save_suppress_FFLAGS $FFLAG_INT"
+     rm -f a.out
+     touch a.out
      AC_LINK_IFELSE(
 [[      program main
       integer i
@@ -73,18 +75,24 @@ AS_IF([test "x$ga_result" = x],
     [for flag in _GA_F77_INTEGER_4_KNOWN_FLAGS
      do
         FFLAGS="$ga_save_suppress_FFLAGS $flag"
+        rm -f a.out
+        touch a.out
         AC_LINK_IFELSE(
 [[      program main
       integer i
       end program]],
             [ac_ext=F
+             rm -f a.out
+             touch a.out
              AC_LINK_IFELSE(
 [[      program main
       integer i
       end program]],
              	[ga_result=$flag; break])
              ac_ext=f])
-     done])
+     done
+     rm -f a.out
+     ])
 ac_f77_werror_flag=$ga_save_werror_flag
 FFLAGS="$ga_save_FFLAGS"
 AS_TR_SH([$1])="$ga_result"
@@ -110,6 +118,8 @@ AS_IF([test "x$ga_cv_f77_suppress" != xnone],
     [ga_save_suppress_FFLAGS="$FFLAGS $ga_cv_f77_suppress"])
 AS_IF([test "x$FFLAG_INT" != x],
     [FFLAGS="$ga_save_suppress_FFLAGS $FFLAG_INT"
+     rm -f a.out
+     touch a.out
      AC_LINK_IFELSE(
 [[      program main
       integer i
@@ -119,18 +129,24 @@ AS_IF([test "x$ga_result" = x],
     [for flag in _GA_F77_INTEGER_8_KNOWN_FLAGS
      do
         FFLAGS="$ga_save_suppress_FFLAGS $flag"
+        rm -f a.out
+        touch a.out
         AC_LINK_IFELSE(
 [[      program main
       integer i
       end program]],
             [ac_ext=F
+             rm -f a.out
+             touch a.out
              AC_LINK_IFELSE(
 [[      program main
       integer i
       end program]],
                 [ga_result=$flag; break])
              ac_ext=f])
-     done])
+     done
+     rm -f a.out
+     ])
 ac_f77_werror_flag=$ga_save_werror_flag
 FFLAGS="$ga_save_FFLAGS"
 AS_TR_SH([$1])="$ga_result"

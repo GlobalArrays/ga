@@ -18,6 +18,28 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
 - Closed Pull Requests
 - Closed Issues
 
+## [5.6.4] - 2018-03-21
+- Known Bugs
+  - [\#48] Message sizes exceeding 2GB may not work correctly
+- Added
+  - armci-config and comex-config scripts to install.
+- Changed
+  - install-autotools.sh installs all autotools regardless of existing versions
+  - configure tests needing mixed C/Fortran code now use C linker
+- Fixed
+  - Test suite was broken when GA was cross-compiled
+  - eliop FreeBSD patch from Debichem
+  - Locally installed automake is patched to work with newer perl versions
+  - MPI-PR increased limit on number of possible comex_malloc invocations
+- Closed Pull Requests
+  - \[#92] eliop FreeBSD patch from Debian maintainers of the NWChem Package
+- Closed Issues Requests
+  - \[#82] Fortran failure on theta
+  - \[#88] Automake regex expression broken for Perl versions >=5.26.0
+  - \[#89] autogen fails on Mac 10.12
+  - \[#90] configure script fails when using clang-4/5 + gfortran 6.3 compilers on Linux
+  - \[#95] comex/src-mpi-pr/comex.c:996: _generate_shm_name: Assertion 'snprintf_retval < (int)31' failed
+
 ## [5.6.3] - 2017-12-08
 - Known Bugs
   - [\#48] Message sizes exceeding 2GB may not work correctly
@@ -39,6 +61,8 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
   - ComEx OFI updates from Intel.
   - Improved configure tests for LAPACK.
   - Improved travis tests.
+- Closed Pull Requests
+  - [\#87] fix for case for large matrices when nprocs0/(2**I) is always larger than 1
 
 ## [5.6.1] - 2017-05-30
 - Known Bugs
@@ -303,12 +327,12 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
 - Supports various platforms (Crays, IBM SPs, SGI Altix, ...) and interconnects (Myrinet, Quadrics, Infiniband, ...)
 
 [Unreleased]: https://github.com/GlobalArrays/ga/compare/v5.7...develop
-[5.7]: https://github.com/GlobalArrays/ga/compare/v5.6.3...v5.7
+[5.7]: https://github.com/GlobalArrays/ga/compare/v5.6.4...v5.7
+[5.6.4]: https://github.com/GlobalArrays/ga/compare/v5.6.3...v5.6.4
 [5.6.3]: https://github.com/GlobalArrays/ga/compare/v5.6.2...v5.6.3
 [5.6.2]: https://github.com/GlobalArrays/ga/compare/v5.6.1...v5.6.2
 [5.6.1]: https://github.com/GlobalArrays/ga/compare/v5.6...v5.6.1
 [5.6]: https://github.com/GlobalArrays/ga/releases/tag/v5.6
-
 [\#94]: https://github.com/GlobalArrays/ga/issues/94
 [\#93]: https://github.com/GlobalArrays/ga/issues/93
 [\#92]: https://github.com/GlobalArrays/ga/pull/92

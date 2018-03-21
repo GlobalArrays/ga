@@ -1014,16 +1014,32 @@ STATIC char* _generate_shm_name(int rank)
     /* 0000000001111111111222222222233 */
     /* 1234567890123456789012345678901 */
     char *name = NULL;
-    static unsigned int counter = 0;
+    static const unsigned int limit = 62;
+    static const char letters[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static unsigned int counter[6] = {0};
 
     COMEX_ASSERT(rank >= 0);
     name = malloc(SHM_NAME_SIZE*sizeof(char));
     COMEX_ASSERT(name);
     snprintf_retval = snprintf(name, SHM_NAME_SIZE,
-            "/cmx%010u%010u%06u", getuid(), getpid(), counter);
+            "/cmx%010u%010u%c%c%c%c%c%c", getuid(), getpid(),
+            letters[counter[5]],
+            letters[counter[4]],
+            letters[counter[3]],
+            letters[counter[2]],
+            letters[counter[1]],
+            letters[counter[0]]);
     COMEX_ASSERT(snprintf_retval < (int)SHM_NAME_SIZE);
     name[SHM_NAME_SIZE-1] = '\0';
-    ++counter;
+    ++counter[0];
+    if (counter[0] >= limit) { ++counter[1]; counter[0] = 0; }
+    if (counter[1] >= limit) { ++counter[2]; counter[1] = 0; }
+    if (counter[2] >= limit) { ++counter[3]; counter[2] = 0; }
+    if (counter[3] >= limit) { ++counter[4]; counter[3] = 0; }
+    if (counter[4] >= limit) { ++counter[5]; counter[4] = 0; }
+    if (counter[5] >= limit) {
+        comex_error("_generate_shm_name: too many names generated", -1);
+    }
 #if DEBUG
     fprintf(stderr, "[%d] _generate_shm_name(%d)=%s\n",
             g_state.rank, rank, name);
