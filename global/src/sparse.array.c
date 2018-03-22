@@ -69,20 +69,22 @@ _sparse_array *SPA;
  * Initial number of values that can be stored on a processor before needing to
  * increase size of local buffers
  */
-#define INIT_BUF_SIZE 1024;
+#define INIT_BUF_SIZE 1024
 
 /**
- * Internal function to initialize sparse array data structures
+ * Internal function to initialize sparse array data structures. This needs to
+ * be called somewhere inside ga_init
  */
 void sai_init_sparse_arrays()
 {
   Integer i;
-  SPA = (_sparse_array*)malloc(MAX_ARRAY*sizeof(_sparse_array));
-  for (i=0; i<MAX_ARRAY; i++) {
+  SPA = (_sparse_array*)malloc(MAX_ARRAYS*sizeof(_sparse_array));
+  for (i=0; i<MAX_ARRAYS; i++) {
     SPA[i].active = 0;
     SPA[i].ready = 0;
     SPA[i].nblocks = 0;
     SPA[i].blkidx = NULL;
+    SPA[i].blksize = NULL;
     SPA[i].offset = NULL;
     SPA[i].idx = NULL;
     SPA[i].jdx = NULL;
@@ -92,8 +94,9 @@ void sai_init_sparse_arrays()
 
 /**
  * Create a new sparse array
+ * @param idim,jdim I (row) and J (column) dimensions of sparse array
  */
-int pnga_sprs_array_create(Integer idim, Integer jdim, Integer type)
+Integer pnga_sprs_array_create(Integer idim, Integer jdim, Integer type)
 {
   Integer i, hdl, s_a;
   gam_checktype(pnga_type_f2c((int)type));
@@ -101,11 +104,11 @@ int pnga_sprs_array_create(Integer idim, Integer jdim, Integer type)
     pnga_error("(ga_sprs_array_create) Invalid array dimenensions",0);
   if (SPA[hdl].ready) 
     pnga_error("(ga_sprs_array_create) Array is already distributed",hdl);
-  for (i=0; i<MAX_ARRAY; i++) {
+  for (i=0; i<MAX_ARRAYS; i++) {
     if (!SPA[i].active) {
       SPA[i].active = 1;
-      SPA[i].idx = (Intger*)malloc(INIT_BUF_SIZE*sizeof(Integer));
-      SPA[i].jdx = (Intger*)malloc(INIT_BUF_SIZE*sizeof(Integer));
+      SPA[i].idx = (Integer*)malloc(INIT_BUF_SIZE*sizeof(Integer));
+      SPA[i].jdx = (Integer*)malloc(INIT_BUF_SIZE*sizeof(Integer));
       SPA[i].type = pnga_type_f2c((int)(type));
       SPA[i].size = GAsizeofM(SPA[i].type);
       SPA[i].val = malloc(INIT_BUF_SIZE*SPA[i].size);
@@ -123,7 +126,7 @@ int pnga_sprs_array_create(Integer idim, Integer jdim, Integer type)
 }
 
 /**
- * Add element to a sparse array
+ * Add an element to a sparse array
  * @param s_a sparse array handle
  * @param idx,jdx I and J indices of sparse array element
  * @param val sparse array element value
@@ -170,20 +173,21 @@ void pnga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *va
   /* add new value to buffers */
   SPA[hdl].idx[nval] = idx;
   SPA[hdl].jdx[nval] = jdx;
-  memcopy((char)*SPA[hdl].val+size*nval,(char*)val,(size_t)size);
+  memcpy((char*)SPA[hdl].val+size*nval,(char*)val,(size_t)size);
   SPA[hdl].nval++;
 }
 
 /**
  * Prepare sparse array for use by distributing values into row blocks based on
  * processor and subdivide each row into column blocks, also based on processor
+ * @param s_a sparse array handle
  */
 Integer pnga_sprs_array_assemble(Integer s_a)
 {
   Integer hdl = GA_OFFSET + s_a;
   Integer lo, hi, ld;
-  Integer i,ilo,ihi;
-  int *offset;
+  Integer i,j,ilo,ihi;
+  Integer *offset;
   Integer *count;
   Integer *top;
   Integer *list;
@@ -204,28 +208,14 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   char *vals;
   Integer ncnt, icnt;
 
-  /* determine lower and upper indices of row block held by this process */
-  lo = (SPA[hdl].idim*me)/nproc;
-  for (i=0; i<nproc; i++) {
-    offset[i] = 0;
-  }
-  offset[me] = (int)lo;
-  pnga_pgroup_gop(SPA[hdl].grp,MT_F_INT,offset,nproc,"+");
-  if (me<nproc-1) {
-    hi = offset[me+1];
-  } else {
-    hi = SPA[hdl].idim-1;
-  }
-
   /* Create a linked list for values on this process and bin values by which
    * processor owns them */
   count = (Integer*)malloc(nproc*sizeof(Integer));
   top = (Integer*)malloc(nproc*sizeof(Integer));
   list = (Integer*)malloc(nvals*sizeof(Integer));
-  for (i=0; i<nprocs; i++) {
+  for (i=0; i<nproc; i++) {
     count[i] = 0;
     top[i] = -1;
-    offset[i] = -1;
   }
   for (i=0; i<nvals; i++) {
     iproc = idx[i]/nproc;
@@ -283,7 +273,7 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   if (!pnga_allocate(SPA[hdl].g_i)) ret = 0;
 
   /* fill up global arrays with data */
-  for (i=0; i<nprocs; i++) {
+  for (i=0; i<nproc; i++) {
     iproc = (i+me)%nproc;
     if (count[iproc] > 0) {
       Integer j;
@@ -296,8 +286,8 @@ Integer pnga_sprs_array_assemble(Integer s_a)
       j = top[iproc]; 
       while (j >= 0) {
         memcpy(((char*)vbuf+ncnt*elemsize),(vals+j*elemsize),(size_t)elemsize);
-        ibuf[ncnt] = SPA[hdl].g_i[j];
-        jbuf[ncnt] = SPA[hdl].g_j[j];
+        ibuf[ncnt] = SPA[hdl].idx[j];
+        jbuf[ncnt] = SPA[hdl].jdx[j];
         ncnt++;
         j = list[j];
       }
@@ -327,7 +317,7 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   nvals = hi - lo + 1;
   list = (Integer*)malloc(nvals*sizeof(Integer));
   pnga_access(SPA[hdl].g_j,lo,hi,&jdx,&ld);
-  for (i=0; i<nprocs; i++) {
+  for (i=0; i<nproc; i++) {
     count[i] = 0;
     top[i] = -1;
     offset[i] = -1;
@@ -342,13 +332,13 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   pnga_release(SPA[hdl].g_j,&lo,&hi);
   /* find out how many column blocks have data */
   ncnt = 0;
-  for (i=0; i<nprocs; i++) {
+  for (i=0; i<nproc; i++) {
     if (count[i] > 0) ncnt++;
   }
   SPA[hdl].nblocks = ncnt;
-  SPA[hdl].blkidx = (Integer*)malloc(ncnt*sizeof(Integer));
-  SPA[hdl].offset = (Integer*)malloc(ncnt*sizeof(Integer));
-  SPA[hdl].blksize = (Integer*)malloc(ncnt*sizeof(Integer));
+  if (ncnt > 0) SPA[hdl].blkidx = (Integer*)malloc(ncnt*sizeof(Integer));
+  if (ncnt > 0) SPA[hdl].offset = (Integer*)malloc(ncnt*sizeof(Integer));
+  if (ncnt > 0) SPA[hdl].blksize = (Integer*)malloc(ncnt*sizeof(Integer));
   /* allocate local buffers to sort everything into column blocks */
   SPA[hdl].val = malloc(nvals*SPA[hdl].size);
   SPA[hdl].idx = malloc(nvals*sizeof(Integer));
@@ -358,7 +348,7 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   pnga_access(SPA[hdl].g_data,&lo,&hi,&vals,&ld);
   pnga_access(SPA[hdl].g_i,&lo,&hi,&idx,&ld);
   pnga_access(SPA[hdl].g_j,&lo,&hi,&jdx,&ld);
-  for (i=0; i<nprocs; i++) {
+  for (i=0; i<nproc; i++) {
     Integer j = top[i];
     if (j >= 0) {
       char* vbuf = SPA[hdl].val;
@@ -410,17 +400,17 @@ Integer pnga_sprs_array_assemble(Integer s_a)
     nvals += offset[i];
   }
   SPA[hdl].g_i = pnga_create_handle();
-  pnga_set_data(SPA[hdl].g_i,&one,&nvals,MT_F_INT);
-  pnga_set_irreg_distr(SPA[hdl].g_i,map,nproc);
+  pnga_set_data(SPA[hdl].g_i,one,&nvals,MT_F_INT);
+  pnga_set_irreg_distr(SPA[hdl].g_i,map,&nproc);
   if (!pnga_allocate(SPA[hdl].g_i)) ret = 0;
-  pnga_distribution(SPA[hdl].g_i,&lo,&hi,me,&ld);
+  pnga_distribution(SPA[hdl].g_i,me,&lo,&hi);
   pnga_access(SPA[hdl].g_i,lo,hi,&idx,&ld);
 
   /* Bin up elements by row index for each column block */
   count = (Integer*)malloc(nrows*sizeof(Integer));
   top = (Integer*)malloc(nrows*sizeof(Integer));
   ncnt = 0;
-  jcnt = 0;
+  icnt = 0;
   for (i=0; i<SPA[hdl].nblocks; i++) {
     if (SPA[hdl].blksize[i] == 0) continue;
     char *vptr = vals+ncnt*SPA[hdl].size;
@@ -430,23 +420,23 @@ Integer pnga_sprs_array_assemble(Integer s_a)
       top[j] = -1;
       count[j] = 0;
     }
-    for (j=0; j<SPA[hdl].blksize; j++) {
-      irow = ibuf[j]-SPH[hdl].ilo;
+    for (j=0; j<SPA[hdl].blksize[i]; j++) {
+      irow = ibuf[j]-SPA[hdl].ilo;
       list[j] = top[irow];
       top[irow] = j;
       count[irow]++;
     }
     /* copy elements back into  global arrays after sorting by row index */
-    jcnt = 0;
+    icnt = 0;
     char *vbuf = (char*)SPA[hdl].val+ncnt*SPA[hdl].size;
     for (j=0; j<nrows; j++) {
       irow = top[j];
-      (idx+i*nrows)[j] = jcnt;
+      (idx+i*nrows)[j] = icnt;
       while (irow >= 0) {
-        jdx[jcnt] = jbuf[irow];
-        memcpy((vptr+jcnt*elemsize),((vbuf+irow*elemsize),(size_t)elemsize);
+        jdx[icnt] = jbuf[irow];
+        memcpy((vptr+icnt*elemsize),(vbuf+irow*elemsize),(size_t)elemsize);
         irow = list[irow];
-        jcnt++;
+        icnt++;
       }
     }
     /* TODO: (maybe) sort each row so that individual elements are arrange in
@@ -456,6 +446,10 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   free(SPA[hdl].val);
   free(SPA[hdl].idx);
   free(SPA[hdl].jdx);
+  SPA[hdl].val = NULL;
+  SPA[hdl].idx = NULL;
+  SPA[hdl].jdx = NULL;
+
   pnga_release(SPA[hdl].g_data,&lo,&hi);
   pnga_release(SPA[hdl].g_i,&lo,&hi);
   pnga_release(SPA[hdl].g_j,&lo,&hi);
@@ -464,6 +458,131 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   free(top);
   free(list);
   free(offset);
-  free(map)
+  free(map);
+  return ret;
+}
+
+/**
+ * Return the range of rows held by processor iproc. Note that this will return
+ * valid index ranges for the processor even if none of the rows contain
+ * non-zero values
+ * @param s_a sparse array handle
+ * @param iproc process for which index ranges are requested
+ * @param lo,hi low and high values of the row indices held by this processor */
+void pnga_sprs_array_row_distribution(Integer s_a, Integer iproc, Integer *lo,
+    Integer *hi)
+{
+  Integer hdl = GA_OFFSET + s_a;
+  Integer nproc = SPA[hdl].nprocs;
+  Integer idim = SPA[hdl].idim;
+  *lo = (idim*iproc)/nproc + 1;
+  if (iproc < nproc - 1) {
+    *hi = (idim*(iproc+1))/nproc;
+  } else {
+    *hi = idim;
+  }
+}
+
+/**
+ * Return the range of columns in column block iproc. Note that this will return
+ * valid index ranges for the processor even the column block contains no
+ * non-zero values
+ * @param s_a sparse array handle
+ * @param iproc process for which index ranges are requested
+ * @param lo,hi low and high values of the row indices held by this processor */
+void pnga_sprs_array_column_distribution(Integer s_a, Integer iproc, Integer *lo,
+    Integer *hi)
+{
+  Integer hdl = GA_OFFSET + s_a;
+  Integer nproc = SPA[hdl].nprocs;
+  Integer jdim = SPA[hdl].jdim;
+  *lo = (jdim*iproc)/nproc + 1;
+  if (iproc < nproc - 1) {
+    *hi = (jdim*(iproc+1))/nproc;
+  } else {
+    *hi = jdim;
+  }
+}
+
+/**
+ * Return pointers to the compressed sparse row formatted data corresponding to
+ * the column block icol. If the column block has no non-zero values, the
+ * pointers are returned as null.
+ * @param s_a sparse array handle
+ * @param 
+ */
+void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
+    Integer **idx, Integer **jdx, void *val)
+{
+  Integer hdl = GA_OFFSET + s_a;
+  char *lptr;
+  Integer i,index;
+  index = -1;
+  for (i=0; i<SPA[hdl].nblocks; i++) {
+    if (SPA[hdl].blkidx[i] == icol) {
+      index = i;
+      break;
+    }
+  }
+  if (index = -1) {
+    *idx = NULL;
+    *jdx = NULL;
+    *(char**)val = NULL;
+  }  else {
+    Integer *tidx;
+    Integer *tjdx;
+    char *lptr;
+    Integer lo, hi, ld;
+    Integer me = pnga_pgroup_nnodeid(SPA[hdl].grp);
+    Integer offset = SPA[hdl].offset[index];
+
+    /* access local portions of GAs containing data */
+    pnga_distribution(SPA[hdl].g_data,me,&lo,&hi);
+    pnga_access(SPA[hdl].g_data,&lo,&hi,&lptr,&ld);
+    pnga_distribution(SPA[hdl].g_i,me,&lo,&hi);
+    pnga_access(SPA[hdl].g_i,&lo,&hi,&tidx,&ld);
+    pnga_distribution(SPA[hdl].g_j,me,&lo,&hi);
+    pnga_access(SPA[hdl].g_j,&lo,&hi,&tjdx,&ld);
+    pnga_release(SPA[hdl].g_data,&lo,&hi);
+    pnga_release(SPA[hdl].g_i,&lo,&hi);
+    pnga_release(SPA[hdl].g_j,&lo,&hi);
+
+    /* shift pointers to correct location */
+    ld = SPA[hdl].ihi - SPA[hdl].ilo + 1;
+    lptr = lptr + offset;
+    tjdx = tjdx + offset;
+    tidx = tidx + ld*index;
+    
+    *idx = tidx;
+    *jdx = tjdx;
+    *(char**)val = lptr;
+  }
+}
+
+/**
+ * Delete a sparse array and free any resources it may be using
+ * @param s_a sparse array handle
+ */
+Integer pnga_sprs_array_destroy(Integer s_a)
+{
+  Integer hdl = GA_OFFSET + s_a;
+  Integer ret = 1;
+  if (SPA[hdl].ready) {
+    if (!pnga_destroy(SPA[hdl].g_data)) ret = 0;
+    if (!pnga_destroy(SPA[hdl].g_i)) ret = 0;
+    if (!pnga_destroy(SPA[hdl].g_j)) ret = 0;
+    if (SPA[hdl].blkidx != NULL) free(SPA[hdl].blkidx);
+    if (SPA[hdl].blksize != NULL) free(SPA[hdl].blksize);
+    if (SPA[hdl].offset != NULL) free(SPA[hdl].offset);
+  } else if (SPA[hdl].active) {
+    free(SPA[hdl].val);
+    SPA[hdl].val = NULL;
+    free(SPA[hdl].idx);
+    SPA[hdl].idx = NULL;
+    free(SPA[hdl].jdx);
+    SPA[hdl].jdx = NULL;
+  }
+  SPA[hdl].active = 0;
+  SPA[hdl].ready = 0;
   return ret;
 }
