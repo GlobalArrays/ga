@@ -1182,7 +1182,6 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
         SPA[s_hdl].type);
   }
   /* accumulate operation does not support type C_LONGLONG so fail if this
-   * data type encountered */
   if (SPA[s_hdl].type == C_LONGLONG) {
     pnga_error("Data type of sparse matrix and A and V vectors"
         " cannot be of type long long",SPA[s_hdl].type);

@@ -39,4 +39,3 @@ extern _sparse_array *SPA;
 
 extern void sai_init_sparse_arrays();
 extern void sai_terminate_sparse_arrays();
-
