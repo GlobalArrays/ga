@@ -32,6 +32,7 @@ typedef struct {
 extern _sparse_array *SPA;
 
 extern void sai_init_sparse_arrays();
+extern void sai_terminate_sparse_arrays();
 /*
 extern void pnga_sprs_array_add_element(Integer s_a, Integer i, Integer j, void *val);
 extern Integer pnga_sprs_array_create(Integer idim, Integer jdim, Integer type);
