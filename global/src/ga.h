@@ -397,6 +397,13 @@ extern double        NGA_Wtime(void);
 extern DoubleComplex NGA_Zdot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
 extern void          NGA_Zero(int g_a); 
 extern void          NGA_Zero_patch(int g_a, int lo[], int hi[]);
+extern int           NGA_Sprs_array_create(int idim, int jdim, int type);
+extern void          NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void *val);
+extern int           NGA_Sprs_array_assemble(int s_a);
+extern void          NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo, int *hi);
+extern void          NGA_Sprs_array_column_distribution(int s_a, int iproc, int *lo, int *hi);
+extern void          NGA_Sprs_array_access_col_block(int s_a, int icol, void *idx, void *jdx, void *val);
+extern int           NGA_Sprs_array_destroy(Integer s_a);
 
 /* 64 bit APIs */
 

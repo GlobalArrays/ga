@@ -123,6 +123,30 @@ void sai_terminate_sparse_arrays()
 }
 
 /**
+ * Internal function to finalize sparse array data structures. This needs to
+ * be called somewhere inside ga_terminate
+ */
+void sai_terminate_sparse_arrays()
+{
+  Integer i;
+  for (i=0; i<MAX_ARRAYS; i++) {
+    Integer ga = SPA[i].g_data + GA_OFFSET;
+    if (GA[ga].actv==1) pnga_destroy(SPA[i].g_data);
+    ga = SPA[i].g_i + GA_OFFSET;
+    if (GA[ga].actv==1) pnga_destroy(SPA[i].g_i);
+    ga = SPA[i].g_j + GA_OFFSET;
+    if (GA[ga].actv==1) pnga_destroy(SPA[i].g_j);
+    if (SPA[i].blkidx) free(SPA[i].blkidx);
+    if (SPA[i].blksize) free(SPA[i].blksize);
+    if (SPA[i].offset) free(SPA[i].offset);
+    if (SPA[i].idx) free(SPA[i].idx);
+    if (SPA[i].jdx) free(SPA[i].jdx);
+    if (SPA[i].val) free(SPA[i].val);
+  }
+  free(SPA);
+}
+
+/**
  * Create a new sparse array
  * @param idim,jdim I (row) and J (column) dimensions of sparse array
  * @param type type of data stored in sparse array
@@ -329,6 +353,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
     list[i] = top[iproc];
     top[iproc] = i;
   }
+  printf("(assemble) Got to 1\n");
 
   /* Create global array to store information on sparse blocks */
   {
@@ -395,6 +420,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   ilo = 1;
   ihi = nproc;
   pnga_get(g_offset,&ilo,&ihi,size,&nproc);
+  printf("(assemble) Got to 2\n");
 
   /* we now know how much data is on all processors (size) and have an offset on
    * remote processors that we can use to store data from this processor. Start by
@@ -435,6 +461,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   pnga_set_pgroup(SPA[hdl].g_i,SPA[hdl].grp);
   pnga_set_irreg_distr(SPA[hdl].g_i,map,&nproc);
   if (!pnga_allocate(SPA[hdl].g_i)) ret = 0;
+  printf("(assemble) Got to 3\n");
 
   /* fill up global arrays with data */
   for (i=0; i<nproc; i++) {
@@ -503,6 +530,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   free(SPA[hdl].idx);
   free(SPA[hdl].jdx);
   free(SPA[hdl].val);
+  printf("(assemble) Got to 4\n");
   
   /* All data has been moved so that each process has a row block of the sparse
    * matrix. Now need to organize data within each process into column blocks.
