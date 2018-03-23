@@ -138,7 +138,7 @@ static void contig_test(size_t buffer_size, int op)
 
 
         if (0 == me) {
-            printf("%8zu\t\t%6.2f\t\t%10.2f\n",
+            printf("%zu\t\t%f\t\t%f\n",
                     msg_size,
                     ((t_end  - t_start))/iter,
                     msg_size*iter/((t_end - t_start)));

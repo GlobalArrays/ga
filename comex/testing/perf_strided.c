@@ -160,7 +160,7 @@ static void strided_test(size_t buffer_size, int op)
 
 
             if (0 == me) {
-                printf("%5zu\t\t%6.2f\t\t%6.2f\t\t%zu\t\t%zu\n",
+                printf("%zu\t\t%f\t\t%f\t\t%zu\t\t%zu\n",
                         msg_size,
                         ((t_end  - t_start))/iter,
                         msg_size*(nproc-1)*iter/((t_end - t_start)), xdim, ydim);
