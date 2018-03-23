@@ -73,7 +73,7 @@ _sparse_array *SPA;
 
 /**
  * Internal function to initialize sparse array data structures. This needs to
- * be called somewhere inside ga_init
+ * be called somewhere inside ga_initialize
  */
 void sai_init_sparse_arrays()
 {
@@ -93,17 +93,42 @@ void sai_init_sparse_arrays()
 }
 
 /**
+ * Internal function to finalize sparse array data structures. This needs to
+ * be called somewhere inside ga_terminate
+ */
+void sai_terminate_sparse_arrays()
+{
+  Integer i;
+  for (i=0; i<MAX_ARRAYS; i++) {
+    Integer ga = SPA[i].g_data + GA_OFFSET;
+    if (GA[ga].actv==1) pnga_destroy(SPA[i].g_data);
+    ga = SPA[i].g_i + GA_OFFSET;
+    if (GA[ga].actv==1) pnga_destroy(SPA[i].g_i);
+    ga = SPA[i].g_j + GA_OFFSET;
+    if (GA[ga].actv==1) pnga_destroy(SPA[i].g_j);
+    if (SPA[i].blkidx) free(SPA[i].blkidx);
+    if (SPA[i].blksize) free(SPA[i].blksize);
+    if (SPA[i].offset) free(SPA[i].offset);
+    if (SPA[i].idx) free(SPA[i].idx);
+    if (SPA[i].jdx) free(SPA[i].jdx);
+    if (SPA[i].val) free(SPA[i].val);
+  }
+  free(SPA);
+}
+
+/**
  * Create a new sparse array
  * @param idim,jdim I (row) and J (column) dimensions of sparse array
  */
-Integer pnga_sprs_array_create(Integer idim, Integer jdim, Integer type)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_create =  pnga_sprs_array_create
+#endif
+logical pnga_sprs_array_create(Integer idim, Integer jdim, Integer type)
 {
   Integer i, hdl, s_a;
-  gam_checktype(pnga_type_f2c((int)type));
+  GAvalidtypeM(pnga_type_f2c((int)type));
   if (idim <= 0 || jdim <= 0)
     pnga_error("(ga_sprs_array_create) Invalid array dimenensions",0);
-  if (SPA[hdl].ready) 
-    pnga_error("(ga_sprs_array_create) Array is already distributed",hdl);
   for (i=0; i<MAX_ARRAYS; i++) {
     if (!SPA[i].active) {
       SPA[i].active = 1;
@@ -131,6 +156,9 @@ Integer pnga_sprs_array_create(Integer idim, Integer jdim, Integer type)
  * @param idx,jdx I and J indices of sparse array element
  * @param val sparse array element value
  */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_add_element =  pnga_sprs_array_add_element
+#endif
 void pnga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *val)
 {
   Integer hdl = GA_OFFSET + s_a;
@@ -182,7 +210,10 @@ void pnga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *va
  * processor and subdivide each row into column blocks, also based on processor
  * @param s_a sparse array handle
  */
-Integer pnga_sprs_array_assemble(Integer s_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_assemble =  pnga_sprs_array_assemble
+#endif
+logical pnga_sprs_array_assemble(Integer s_a)
 {
   Integer hdl = GA_OFFSET + s_a;
   Integer lo, hi, ld;
@@ -194,8 +225,8 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   Integer *idx = SPA[hdl].idx;
   Integer *jdx = SPA[hdl].jdx;
   Integer nvals = SPA[hdl].nval;
-  Integer nproc = pgna_pgroup_nnodes(SPA[hdl].grp);
-  Integer me = pgna_pgroup_nodeid(SPA[hdl].grp);
+  Integer nproc = pnga_pgroup_nnodes(SPA[hdl].grp);
+  Integer me = pnga_pgroup_nodeid(SPA[hdl].grp);
   Integer elemsize = SPA[hdl].size;
   Integer iproc;
   Integer g_offset;
@@ -224,6 +255,7 @@ Integer pnga_sprs_array_assemble(Integer s_a)
     list[i] = top[iproc];
     top[iproc] = i;
   }
+  printf("(assemble) Got to 1\n");
 
   /* determine how many values of matrix are stored on this process and what the
    * offset on remote processes is for the data. Create a global array to
@@ -234,7 +266,7 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   pnga_zero(g_offset);
   offset = (Integer*)malloc(nproc*sizeof(int));
   for (i=0; i<nproc; i++) {
-    iproc = (i+me)%nproc;
+    iproc = (i+me)%nproc+1;
     if (count[i] > 0) {
       offset[i] = (Integer)pnga_read_inc(g_offset,&iproc,count[i]);
     }
@@ -244,8 +276,9 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   ilo = 1;
   ihi = nproc;
   pnga_get(g_offset,&ilo,&ihi,size,&nproc);
+  printf("(assemble) Got to 2\n");
 
-  /* we now know how much data is on all processors (map) and have an offset on
+  /* we now know how much data is on all processors (size) and have an offset on
    * remote processors that we can use to store data from this processor. Start by
    * constructing global arrays to hold data */
   map = (Integer*)malloc(nproc*sizeof(Integer));
@@ -271,6 +304,7 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   pnga_set_data(SPA[hdl].g_i,one,&totalvals,MT_F_INT);
   pnga_set_irreg_distr(SPA[hdl].g_i,map,&nproc);
   if (!pnga_allocate(SPA[hdl].g_i)) ret = 0;
+  printf("(assemble) Got to 3\n");
 
   /* fill up global arrays with data */
   for (i=0; i<nproc; i++) {
@@ -308,6 +342,7 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   free(SPA[hdl].idx);
   free(SPA[hdl].jdx);
   free(SPA[hdl].val);
+  printf("(assemble) Got to 4\n");
   
   /* All data has been moved so that each process has a row block of the sparse
    * matrix. Now need to organize data within each process into column blocks.
@@ -316,7 +351,7 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   free(list);
   nvals = hi - lo + 1;
   list = (Integer*)malloc(nvals*sizeof(Integer));
-  pnga_access(SPA[hdl].g_j,lo,hi,&jdx,&ld);
+  pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&jdx,&ld);
   for (i=0; i<nproc; i++) {
     count[i] = 0;
     top[i] = -1;
@@ -330,6 +365,7 @@ Integer pnga_sprs_array_assemble(Integer s_a)
     top[iproc] = i;
   }
   pnga_release(SPA[hdl].g_j,&lo,&hi);
+  printf("(assemble) Got to 5\n");
   /* find out how many column blocks have data */
   ncnt = 0;
   for (i=0; i<nproc; i++) {
@@ -345,9 +381,10 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   SPA[hdl].jdx = malloc(nvals*sizeof(Integer));
   ncnt = 0;
   icnt = 0;
-  pnga_access(SPA[hdl].g_data,&lo,&hi,&vals,&ld);
-  pnga_access(SPA[hdl].g_i,&lo,&hi,&idx,&ld);
-  pnga_access(SPA[hdl].g_j,&lo,&hi,&jdx,&ld);
+  printf("(assemble) Got to 6\n");
+  pnga_access_ptr(SPA[hdl].g_data,&lo,&hi,&vals,&ld);
+  pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&idx,&ld);
+  pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&jdx,&ld);
   for (i=0; i<nproc; i++) {
     Integer j = top[i];
     if (j >= 0) {
@@ -371,6 +408,7 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   }
   free(count);
   free(top);
+  printf("(assemble) Got to 7\n");
   /* Values have all been sorted into column blocks within the row block. Now
    * need to sort them by row. Start by evaluating lower and upper row indices */
   SPA[hdl].ilo = (SPA[hdl].idim*me)/nproc;
@@ -382,16 +420,18 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   nrows = SPA[hdl].ihi - SPA[hdl].ilo + 1;
   /* Resize the i-index array to account for row blocks */
   pnga_destroy(SPA[hdl].g_i);
-  /* Calculate number of row values that will need to be stored */
+  /* Calculate number of row values that will need to be stored. Add an extra
+   * row to account for the total size of the column block */
   for (i=0; i<nproc; i++) {
     offset[i] = 0;
     map[i] = 0;
   }
   for (i=0; i<SPA[hdl].nblocks; i++) {
-    SPA[hdl].offset[i] = i*nrows;
+    SPA[hdl].offset[i] = i*(nrows+1);
   }
-  offset[me] = nrows*SPA[hdl].nblocks;
+  offset[me] = (nrows+1)*SPA[hdl].nblocks;
   pnga_pgroup_gop(SPA[hdl].grp,MT_F_INT,offset,nproc,"+");
+  printf("(assemble) Got to 8\n");
   /* Construct new version of g_i */
   map[0] = 1;
   nvals = offset[0];
@@ -404,7 +444,8 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   pnga_set_irreg_distr(SPA[hdl].g_i,map,&nproc);
   if (!pnga_allocate(SPA[hdl].g_i)) ret = 0;
   pnga_distribution(SPA[hdl].g_i,me,&lo,&hi);
-  pnga_access(SPA[hdl].g_i,lo,hi,&idx,&ld);
+  pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&idx,&ld);
+  printf("(assemble) Got to 9\n");
 
   /* Bin up elements by row index for each column block */
   count = (Integer*)malloc(nrows*sizeof(Integer));
@@ -439,10 +480,12 @@ Integer pnga_sprs_array_assemble(Integer s_a)
         icnt++;
       }
     }
+    (idx+i*nrows)[nrows] = icnt; 
     /* TODO: (maybe) sort each row so that individual elements are arrange in
      * order of increasing j */
     ncnt += SPA[hdl].blksize[i];
   }
+  printf("(assemble) Got to 10\n");
   free(SPA[hdl].val);
   free(SPA[hdl].idx);
   free(SPA[hdl].jdx);
@@ -459,6 +502,7 @@ Integer pnga_sprs_array_assemble(Integer s_a)
   free(list);
   free(offset);
   free(map);
+  printf("(assemble) Got to 11\n");
   return ret;
 }
 
@@ -469,6 +513,9 @@ Integer pnga_sprs_array_assemble(Integer s_a)
  * @param s_a sparse array handle
  * @param iproc process for which index ranges are requested
  * @param lo,hi low and high values of the row indices held by this processor */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_row_distribution =  pnga_sprs_array_row_distribution
+#endif
 void pnga_sprs_array_row_distribution(Integer s_a, Integer iproc, Integer *lo,
     Integer *hi)
 {
@@ -490,6 +537,9 @@ void pnga_sprs_array_row_distribution(Integer s_a, Integer iproc, Integer *lo,
  * @param s_a sparse array handle
  * @param iproc process for which index ranges are requested
  * @param lo,hi low and high values of the row indices held by this processor */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_column_distribution =  pnga_sprs_array_column_distribution
+#endif
 void pnga_sprs_array_column_distribution(Integer s_a, Integer iproc, Integer *lo,
     Integer *hi)
 {
@@ -511,6 +561,9 @@ void pnga_sprs_array_column_distribution(Integer s_a, Integer iproc, Integer *lo
  * @param s_a sparse array handle
  * @param 
  */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_access_col_block =  pnga_sprs_array_access_col_block
+#endif
 void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
     Integer **idx, Integer **jdx, void *val)
 {
@@ -538,11 +591,11 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
 
     /* access local portions of GAs containing data */
     pnga_distribution(SPA[hdl].g_data,me,&lo,&hi);
-    pnga_access(SPA[hdl].g_data,&lo,&hi,&lptr,&ld);
+    pnga_access_ptr(SPA[hdl].g_data,&lo,&hi,&lptr,&ld);
     pnga_distribution(SPA[hdl].g_i,me,&lo,&hi);
-    pnga_access(SPA[hdl].g_i,&lo,&hi,&tidx,&ld);
+    pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&tidx,&ld);
     pnga_distribution(SPA[hdl].g_j,me,&lo,&hi);
-    pnga_access(SPA[hdl].g_j,&lo,&hi,&tjdx,&ld);
+    pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&tjdx,&ld);
     pnga_release(SPA[hdl].g_data,&lo,&hi);
     pnga_release(SPA[hdl].g_i,&lo,&hi);
     pnga_release(SPA[hdl].g_j,&lo,&hi);
@@ -563,7 +616,10 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
  * Delete a sparse array and free any resources it may be using
  * @param s_a sparse array handle
  */
-Integer pnga_sprs_array_destroy(Integer s_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_destroy =  pnga_sprs_array_destroy
+#endif
+logical pnga_sprs_array_destroy(Integer s_a)
 {
   Integer hdl = GA_OFFSET + s_a;
   Integer ret = 1;

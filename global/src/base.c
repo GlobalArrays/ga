@@ -156,6 +156,8 @@ int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
                int grp_id);
 int gai_get_devmem(char *name, char **ptr_arr, C_Long bytes, int type, long *adj,
 		  int grp_id, int dev_flag, const char *device);
+extern void sai_init_sparse_arrays();
+extern void sai_terminate_sparse_arrays();
 #ifdef ENABLE_CHECKPOINT
 static int ga_group_is_for_ft=0;
 int ga_spare_procs;
@@ -517,6 +519,7 @@ void pnga_initialize()
     comm =  GA_MPI_Comm_pgroup(-1);
     MPI_Comm_dup(comm, &GA_MPI_World_comm_dup);
 #endif
+    sai_init_sparse_arrays();
     GA_Internal_Threadsafe_Unlock();
 }
 
@@ -4166,6 +4169,7 @@ Integer i, handle;
         return;
     }
 
+    sai_terminate_sparse_arrays();
 #ifdef PROFILE_OLD 
     ga_profile_terminate();
 #endif
