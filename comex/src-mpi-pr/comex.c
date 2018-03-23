@@ -155,6 +155,7 @@ static int COMEX_ENABLE_ACC_PACKED = ENABLE_ACC_PACKED;
 static int COMEX_ENABLE_PUT_IOV = ENABLE_PUT_IOV;
 static int COMEX_ENABLE_GET_IOV = ENABLE_GET_IOV;
 static int COMEX_ENABLE_ACC_IOV = ENABLE_ACC_IOV;
+static int COMEX_MAX_MESSAGE_SIZE = -1;
 
 #if PAUSE_ON_ERROR
 static int AR_caught_sig=0;
@@ -299,69 +300,131 @@ int comex_init()
     {
         char *value = NULL;
         nb_max_outstanding = COMEX_MAX_NB_OUTSTANDING; /* default */
-        if ((value = getenv("COMEX_MAX_NB_OUTSTANDING")) != NULL) {
+        value = getenv("COMEX_MAX_NB_OUTSTANDING");
+        if (NULL != value) {
             nb_max_outstanding = atoi(value);
         }
         COMEX_ASSERT(nb_max_outstanding > 0);
 
         COMEX_ENABLE_PUT_SELF = ENABLE_PUT_SELF; /* default */
-        if ((value = getenv("COMEX_ENABLE_PUT_SELF")) != NULL) {
+        value = getenv("COMEX_ENABLE_PUT_SELF");
+        if (NULL != value) {
             COMEX_ENABLE_PUT_SELF = atoi(value);
         }
 
         COMEX_ENABLE_GET_SELF = ENABLE_GET_SELF; /* default */
-        if ((value = getenv("COMEX_ENABLE_GET_SELF")) != NULL) {
+        value = getenv("COMEX_ENABLE_GET_SELF");
+        if (NULL != value) {
             COMEX_ENABLE_GET_SELF = atoi(value);
         }
 
         COMEX_ENABLE_ACC_SELF = ENABLE_ACC_SELF; /* default */
-        if ((value = getenv("COMEX_ENABLE_ACC_SELF")) != NULL) {
+        value = getenv("COMEX_ENABLE_ACC_SELF");
+        if (NULL != value) {
             COMEX_ENABLE_ACC_SELF = atoi(value);
         }
 
         COMEX_ENABLE_PUT_SMP = ENABLE_PUT_SMP; /* default */
-        if ((value = getenv("COMEX_ENABLE_PUT_SMP")) != NULL) {
+        value = getenv("COMEX_ENABLE_PUT_SMP");
+        if (NULL != value) {
             COMEX_ENABLE_PUT_SMP = atoi(value);
         }
 
         COMEX_ENABLE_GET_SMP = ENABLE_GET_SMP; /* default */
-        if ((value = getenv("COMEX_ENABLE_GET_SMP")) != NULL) {
+        value = getenv("COMEX_ENABLE_GET_SMP");
+        if (NULL != value) {
             COMEX_ENABLE_GET_SMP = atoi(value);
         }
 
         COMEX_ENABLE_ACC_SMP = ENABLE_ACC_SMP; /* default */
-        if ((value = getenv("COMEX_ENABLE_ACC_SMP")) != NULL) {
+        value = getenv("COMEX_ENABLE_ACC_SMP");
+        if (NULL != value) {
             COMEX_ENABLE_ACC_SMP = atoi(value);
         }
 
         COMEX_ENABLE_PUT_PACKED = ENABLE_PUT_PACKED; /* default */
-        if ((value = getenv("COMEX_ENABLE_PUT_PACKED")) != NULL) {
+        value = getenv("COMEX_ENABLE_PUT_PACKED");
+        if (NULL != value) {
             COMEX_ENABLE_PUT_PACKED = atoi(value);
         }
 
         COMEX_ENABLE_GET_PACKED = ENABLE_GET_PACKED; /* default */
-        if ((value = getenv("COMEX_ENABLE_GET_PACKED")) != NULL) {
+        value = getenv("COMEX_ENABLE_GET_PACKED");
+        if (NULL != value) {
             COMEX_ENABLE_GET_PACKED = atoi(value);
         }
 
         COMEX_ENABLE_ACC_PACKED = ENABLE_ACC_PACKED; /* default */
-        if ((value = getenv("COMEX_ENABLE_ACC_PACKED")) != NULL) {
+        value = getenv("COMEX_ENABLE_ACC_PACKED");
+        if (NULL != value) {
             COMEX_ENABLE_ACC_PACKED = atoi(value);
         }
 
         COMEX_ENABLE_PUT_IOV = ENABLE_PUT_IOV; /* default */
-        if ((value = getenv("COMEX_ENABLE_PUT_IOV")) != NULL) {
+        value = getenv("COMEX_ENABLE_PUT_IOV");
+        if (NULL != value) {
             COMEX_ENABLE_PUT_IOV = atoi(value);
         }
 
         COMEX_ENABLE_GET_IOV = ENABLE_GET_IOV; /* default */
-        if ((value = getenv("COMEX_ENABLE_GET_IOV")) != NULL) {
+        value = getenv("COMEX_ENABLE_GET_IOV");
+        if (NULL != value) {
             COMEX_ENABLE_GET_IOV = atoi(value);
         }
 
         COMEX_ENABLE_ACC_IOV = ENABLE_ACC_IOV; /* default */
-        if ((value = getenv("COMEX_ENABLE_ACC_IOV")) != NULL) {
+        value = getenv("COMEX_ENABLE_ACC_IOV");
+        if (NULL != value) {
             COMEX_ENABLE_ACC_IOV = atoi(value);
+        }
+
+        COMEX_MAX_MESSAGE_SIZE = -1;
+        value = getenv("COMEX_MAX_MESSAGE_SIZE");
+        if (NULL != value) {
+            COMEX_MAX_MESSAGE_SIZE = atoi(value);
+        }
+#if 0
+        if (-1 == COMEX_MAX_MESSAGE_SIZE) {
+            value = getenv("MPICH_CH3_EAGER_MAX_MSG_SIZE");
+            if (NULL != value) {
+                COMEX_MAX_MESSAGE_SIZE = atoi(value);
+            }
+        }
+        if (-1 == COMEX_MAX_MESSAGE_SIZE) {
+            value = getenv("MV2_IBA_EAGER_THRESHOLD");
+            if (NULL != value) {
+                COMEX_MAX_MESSAGE_SIZE = atoi(value);
+            }
+        }
+        if (-1 == COMEX_MAX_MESSAGE_SIZE) {
+            value = getenv("I_MPI_EAGER_THRESHOLD");
+            if (NULL != value) {
+                COMEX_MAX_MESSAGE_SIZE = atoi(value);
+            }
+        }
+        if (-1 == COMEX_MAX_MESSAGE_SIZE) {
+            printf("GETTING MPICH_GNI_MAX_EAGER_MSG_SIZE\n");
+            value = getenv("MPICH_GNI_MAX_EAGER_MSG_SIZE");
+            if (NULL != value) {
+                printf("GOT MPICH_GNI_MAX_EAGER_MSG_SIZE\n");
+                COMEX_MAX_MESSAGE_SIZE = atoi(value);
+            }
+        }
+        if (-1 == COMEX_MAX_MESSAGE_SIZE) {
+            value = getenv("OMPI_MCA_btl_sm_eager_limit");
+            if (NULL != value) {
+                COMEX_MAX_MESSAGE_SIZE = atoi(value);
+            }
+        }
+        if (-1 == COMEX_MAX_MESSAGE_SIZE) {
+            value = getenv("OMPI_MCA_btl_openib_eager_limit");
+            if (NULL != value) {
+                COMEX_MAX_MESSAGE_SIZE = atoi(value);
+            }
+        }
+#endif
+        if (-1 == COMEX_MAX_MESSAGE_SIZE) {
+            COMEX_MAX_MESSAGE_SIZE = COMEX_STATIC_BUFFER_SIZE;
         }
 
 #if DEBUG
@@ -379,6 +442,7 @@ int comex_init()
             printf("COMEX_ENABLE_PUT_IOV=%d\n", COMEX_ENABLE_PUT_IOV);
             printf("COMEX_ENABLE_GET_IOV=%d\n", COMEX_ENABLE_GET_IOV);
             printf("COMEX_ENABLE_ACC_IOV=%d\n", COMEX_ENABLE_ACC_IOV);
+            printf("COMEX_MAX_MESSAGE_SIZE=%d\n", COMEX_MAX_MESSAGE_SIZE);
             fflush(stdout);
         }
 #endif
@@ -2296,7 +2360,7 @@ STATIC void _progress_server()
     /* initialize shared buffers */
     static_buffer = (char*)malloc(sizeof(char)*COMEX_STATIC_BUFFER_SIZE);
     COMEX_ASSERT(static_buffer);
-    static_acc_buffer = (char*)malloc(sizeof(char)*COMEX_STATIC_BUFFER_SIZE);
+    static_acc_buffer = (char*)malloc(sizeof(char)*COMEX_MAX_MESSAGE_SIZE);
     COMEX_ASSERT(static_acc_buffer);
 
     running = 1;
@@ -2491,7 +2555,7 @@ STATIC void _put_packed_handler(header_t *header, int proc)
     }
 #endif
 
-    if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)header->length > COMEX_MAX_MESSAGE_SIZE) {
         packed_buffer = malloc(header->length);
     }
     else {
@@ -2509,7 +2573,7 @@ STATIC void _put_packed_handler(header_t *header, int proc)
     unpack(packed_buffer, mapped_offset,
             stride->stride, stride->count, stride->stride_levels);
 
-    if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)header->length > COMEX_MAX_MESSAGE_SIZE) {
         free(packed_buffer);
     }
 }
@@ -2568,7 +2632,7 @@ STATIC void _put_iov_handler(header_t *header, int proc)
             g_state.rank, limit, bytes, src[0], dst[0]);
 #endif
 
-    if ((unsigned)(bytes*limit) > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)(bytes*limit) > COMEX_MAX_MESSAGE_SIZE) {
         packed_buffer = malloc(bytes*limit);
         COMEX_ASSERT(packed_buffer);
     }
@@ -2591,7 +2655,7 @@ STATIC void _put_iov_handler(header_t *header, int proc)
     }
     COMEX_ASSERT(packed_index == bytes*limit);
 
-    if ((unsigned)(bytes*limit) > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)(bytes*limit) > COMEX_MAX_MESSAGE_SIZE) {
         free(packed_buffer);
     }
 
@@ -2724,7 +2788,7 @@ STATIC void _get_iov_handler(header_t *header, int proc)
             g_state.rank, limit, bytes, src[0], dst[0]);
 #endif
 
-    if ((unsigned)(bytes*limit) > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)(bytes*limit) > COMEX_MAX_MESSAGE_SIZE) {
         packed_buffer = malloc(bytes*limit);
         COMEX_ASSERT(packed_buffer);
     }
@@ -2746,7 +2810,7 @@ STATIC void _get_iov_handler(header_t *header, int proc)
 
     server_send(packed_buffer, packed_index, proc);
 
-    if ((unsigned)(bytes*limit) > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)(bytes*limit) > COMEX_MAX_MESSAGE_SIZE) {
         free(packed_buffer);
     }
 
@@ -2794,7 +2858,7 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
         default: COMEX_ASSERT(0);
     }
 
-    if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)header->length > COMEX_MAX_MESSAGE_SIZE) {
         acc_buffer = malloc(header->length);
     }
     else {
@@ -2817,7 +2881,7 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
         _acc(acc_type, header->length, mapped_offset, acc_buffer, scale);
     }
 
-    if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)header->length > COMEX_MAX_MESSAGE_SIZE) {
         free(acc_buffer);
     }
 }
@@ -2873,7 +2937,7 @@ STATIC void _acc_packed_handler(header_t *header, int proc)
     COMEX_ASSERT(stride);
     server_recv(stride, sizeof(stride_t), proc);
 
-    if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)header->length > COMEX_MAX_MESSAGE_SIZE) {
         acc_buffer = malloc(header->length);
     }
     else {
@@ -2951,7 +3015,7 @@ STATIC void _acc_packed_handler(header_t *header, int proc)
         sem_post(semaphores[header->rank]);
     }
 
-    if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)header->length > COMEX_MAX_MESSAGE_SIZE) {
         free(acc_buffer);
     }
 
@@ -3046,7 +3110,7 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
 
     COMEX_ASSERT(iov_off == header->length);
 
-    if ((unsigned)(bytes*limit) > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)(bytes*limit) > COMEX_MAX_MESSAGE_SIZE) {
         packed_buffer = malloc(bytes*limit);
     }
     else {
@@ -3073,7 +3137,7 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
         sem_post(semaphores[header->rank]);
     }
 
-    if ((unsigned)(bytes*limit) > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)(bytes*limit) > COMEX_MAX_MESSAGE_SIZE) {
         free(packed_buffer);
     }
 

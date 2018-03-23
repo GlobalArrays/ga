@@ -8,7 +8,7 @@
 
 static int me;
 static int nproc;
-static int size[] = {2,4,8,16,32,64,128,256,512,1024,0}; /* 0 is sentinal */
+static int size[] = {2,4,8,16,32,64,128,256,512,1024,1024*1024,1024*1024*8,0}; /* 0 is sentinal */
 
 #define PUT_FORWARD  0
 #define PUT_BACKWARD 1

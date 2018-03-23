@@ -15,7 +15,7 @@ static int nproc;
 #define GET 1
 #define ACC 2
 
-#define MAX_MESSAGE_SIZE 1024*1024
+#define MAX_MESSAGE_SIZE 1024*1024*8
 #define MEDIUM_MESSAGE_SIZE 8192
 #define ITER_SMALL 100
 #define ITER_LARGE 100
