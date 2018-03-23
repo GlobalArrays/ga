@@ -143,6 +143,19 @@ static int nb_count_recv_processed = 0;
 
 static char *static_acc_buffer = NULL;
 
+static int COMEX_ENABLE_PUT_SELF = ENABLE_PUT_SELF;
+static int COMEX_ENABLE_GET_SELF = ENABLE_GET_SELF;
+static int COMEX_ENABLE_ACC_SELF = ENABLE_ACC_SELF;
+static int COMEX_ENABLE_PUT_SMP = ENABLE_PUT_SMP;
+static int COMEX_ENABLE_GET_SMP = ENABLE_GET_SMP;
+static int COMEX_ENABLE_ACC_SMP = ENABLE_ACC_SMP;
+static int COMEX_ENABLE_PUT_PACKED = ENABLE_PUT_PACKED;
+static int COMEX_ENABLE_GET_PACKED = ENABLE_GET_PACKED;
+static int COMEX_ENABLE_ACC_PACKED = ENABLE_ACC_PACKED;
+static int COMEX_ENABLE_PUT_IOV = ENABLE_PUT_IOV;
+static int COMEX_ENABLE_GET_IOV = ENABLE_GET_IOV;
+static int COMEX_ENABLE_ACC_IOV = ENABLE_ACC_IOV;
+
 #if PAUSE_ON_ERROR
 static int AR_caught_sig=0;
 static int AR_caught_sigsegv=0;
@@ -279,6 +292,9 @@ int comex_init()
     CHECK_MPI_RETVAL(status);
     assert(init_flag);
     
+    /* groups */
+    comex_group_init();
+
     /* env vars */
     {
         char *value = NULL;
@@ -287,10 +303,86 @@ int comex_init()
             nb_max_outstanding = atoi(value);
         }
         COMEX_ASSERT(nb_max_outstanding > 0);
-    }
 
-    /* groups */
-    comex_group_init();
+        COMEX_ENABLE_PUT_SELF = ENABLE_PUT_SELF; /* default */
+        if ((value = getenv("COMEX_ENABLE_PUT_SELF")) != NULL) {
+            COMEX_ENABLE_PUT_SELF = atoi(value);
+        }
+
+        COMEX_ENABLE_GET_SELF = ENABLE_GET_SELF; /* default */
+        if ((value = getenv("COMEX_ENABLE_GET_SELF")) != NULL) {
+            COMEX_ENABLE_GET_SELF = atoi(value);
+        }
+
+        COMEX_ENABLE_ACC_SELF = ENABLE_ACC_SELF; /* default */
+        if ((value = getenv("COMEX_ENABLE_ACC_SELF")) != NULL) {
+            COMEX_ENABLE_ACC_SELF = atoi(value);
+        }
+
+        COMEX_ENABLE_PUT_SMP = ENABLE_PUT_SMP; /* default */
+        if ((value = getenv("COMEX_ENABLE_PUT_SMP")) != NULL) {
+            COMEX_ENABLE_PUT_SMP = atoi(value);
+        }
+
+        COMEX_ENABLE_GET_SMP = ENABLE_GET_SMP; /* default */
+        if ((value = getenv("COMEX_ENABLE_GET_SMP")) != NULL) {
+            COMEX_ENABLE_GET_SMP = atoi(value);
+        }
+
+        COMEX_ENABLE_ACC_SMP = ENABLE_ACC_SMP; /* default */
+        if ((value = getenv("COMEX_ENABLE_ACC_SMP")) != NULL) {
+            COMEX_ENABLE_ACC_SMP = atoi(value);
+        }
+
+        COMEX_ENABLE_PUT_PACKED = ENABLE_PUT_PACKED; /* default */
+        if ((value = getenv("COMEX_ENABLE_PUT_PACKED")) != NULL) {
+            COMEX_ENABLE_PUT_PACKED = atoi(value);
+        }
+
+        COMEX_ENABLE_GET_PACKED = ENABLE_GET_PACKED; /* default */
+        if ((value = getenv("COMEX_ENABLE_GET_PACKED")) != NULL) {
+            COMEX_ENABLE_GET_PACKED = atoi(value);
+        }
+
+        COMEX_ENABLE_ACC_PACKED = ENABLE_ACC_PACKED; /* default */
+        if ((value = getenv("COMEX_ENABLE_ACC_PACKED")) != NULL) {
+            COMEX_ENABLE_ACC_PACKED = atoi(value);
+        }
+
+        COMEX_ENABLE_PUT_IOV = ENABLE_PUT_IOV; /* default */
+        if ((value = getenv("COMEX_ENABLE_PUT_IOV")) != NULL) {
+            COMEX_ENABLE_PUT_IOV = atoi(value);
+        }
+
+        COMEX_ENABLE_GET_IOV = ENABLE_GET_IOV; /* default */
+        if ((value = getenv("COMEX_ENABLE_GET_IOV")) != NULL) {
+            COMEX_ENABLE_GET_IOV = atoi(value);
+        }
+
+        COMEX_ENABLE_ACC_IOV = ENABLE_ACC_IOV; /* default */
+        if ((value = getenv("COMEX_ENABLE_ACC_IOV")) != NULL) {
+            COMEX_ENABLE_ACC_IOV = atoi(value);
+        }
+
+#if DEBUG
+        if (0 == g_state.rank) {
+            printf("COMEX_MAX_NB_OUTSTANDING=%d\n", nb_max_outstanding);
+            printf("COMEX_ENABLE_PUT_SELF=%d\n", COMEX_ENABLE_PUT_SELF);
+            printf("COMEX_ENABLE_GET_SELF=%d\n", COMEX_ENABLE_GET_SELF);
+            printf("COMEX_ENABLE_ACC_SELF=%d\n", COMEX_ENABLE_ACC_SELF);
+            printf("COMEX_ENABLE_PUT_SMP=%d\n", COMEX_ENABLE_PUT_SMP);
+            printf("COMEX_ENABLE_GET_SMP=%d\n", COMEX_ENABLE_GET_SMP);
+            printf("COMEX_ENABLE_ACC_SMP=%d\n", COMEX_ENABLE_ACC_SMP);
+            printf("COMEX_ENABLE_PUT_PACKED=%d\n", COMEX_ENABLE_PUT_PACKED);
+            printf("COMEX_ENABLE_GET_PACKED=%d\n", COMEX_ENABLE_GET_PACKED);
+            printf("COMEX_ENABLE_ACC_PACKED=%d\n", COMEX_ENABLE_ACC_PACKED);
+            printf("COMEX_ENABLE_PUT_IOV=%d\n", COMEX_ENABLE_PUT_IOV);
+            printf("COMEX_ENABLE_GET_IOV=%d\n", COMEX_ENABLE_GET_IOV);
+            printf("COMEX_ENABLE_ACC_IOV=%d\n", COMEX_ENABLE_ACC_IOV);
+            fflush(stdout);
+        }
+#endif
+    }
 
     /* mutexes */
     mutexes = NULL;
@@ -2716,9 +2808,14 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
-    sem_wait(semaphores[header->rank]);
-    _acc(acc_type, header->length, mapped_offset, acc_buffer, scale);
-    sem_post(semaphores[header->rank]);
+    if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
+        sem_wait(semaphores[header->rank]);
+        _acc(acc_type, header->length, mapped_offset, acc_buffer, scale);
+        sem_post(semaphores[header->rank]);
+    }
+    else {
+        _acc(acc_type, header->length, mapped_offset, acc_buffer, scale);
+    }
 
     if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
         free(acc_buffer);
@@ -2790,7 +2887,9 @@ STATIC void _acc_packed_handler(header_t *header, int proc)
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
-    sem_wait(semaphores[header->rank]);
+    if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
+        sem_wait(semaphores[header->rank]);
+    }
     {
         char *packed_buffer = acc_buffer;
         char *dst = mapped_offset;
@@ -2848,7 +2947,9 @@ STATIC void _acc_packed_handler(header_t *header, int proc)
 
         COMEX_ASSERT(packed_index == n1dim*count[0]);
     }
-    sem_post(semaphores[header->rank]);
+    if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
+        sem_post(semaphores[header->rank]);
+    }
 
     if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
         free(acc_buffer);
@@ -2954,7 +3055,9 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
 
     server_recv(packed_buffer, bytes*limit, proc);
 
-    sem_wait(semaphores[header->rank]);
+    if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
+        sem_wait(semaphores[header->rank]);
+    }
     packed_index = 0;
     for (i=0; i<limit; ++i) {
         reg_entry = reg_cache_find(
@@ -2966,7 +3069,9 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
         packed_index += bytes;
     }
     COMEX_ASSERT(packed_index == bytes*limit);
-    sem_post(semaphores[header->rank]);
+    if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
+        sem_post(semaphores[header->rank]);
+    }
 
     if ((unsigned)(bytes*limit) > COMEX_STATIC_BUFFER_SIZE) {
         free(packed_buffer);
@@ -4046,27 +4151,27 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != nb);
 
-#if ENABLE_PUT_SELF
-    /* put to self */
-    if (g_state.rank == proc) {
-        memcpy(dst, src, bytes);
-        return;
+    if (COMEX_ENABLE_PUT_SELF) {
+        /* put to self */
+        if (g_state.rank == proc) {
+            memcpy(dst, src, bytes);
+            return;
+        }
     }
-#endif
 
-#if ENABLE_PUT_SMP
-    /* put to SMP node */
-    if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
-        reg_entry_t *reg_entry = NULL;
-        void *mapped_offset = NULL;
+    if (COMEX_ENABLE_PUT_SMP) {
+        /* put to SMP node */
+        if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+            reg_entry_t *reg_entry = NULL;
+            void *mapped_offset = NULL;
 
-        reg_entry = reg_cache_find(proc, dst, bytes);
-        COMEX_ASSERT(reg_entry);
-        mapped_offset = _get_offset_memory(reg_entry, dst);
-        memcpy(mapped_offset, src, bytes);
-        return;
+            reg_entry = reg_cache_find(proc, dst, bytes);
+            COMEX_ASSERT(reg_entry);
+            mapped_offset = _get_offset_memory(reg_entry, dst);
+            memcpy(mapped_offset, src, bytes);
+            return;
+        }
     }
-#endif
 
     {
         header_t *header = NULL;
@@ -4096,27 +4201,27 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != nb);
 
-#if ENABLE_GET_SELF
-    /* get from self */
-    if (g_state.rank == proc) {
-        memcpy(dst, src, bytes);
-        return;
+    if (COMEX_ENABLE_GET_SELF) {
+        /* get from self */
+        if (g_state.rank == proc) {
+            memcpy(dst, src, bytes);
+            return;
+        }
     }
-#endif
 
-#if ENABLE_GET_SMP
-    /* get from SMP node */
-    if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
-        reg_entry_t *reg_entry = NULL;
-        void *mapped_offset = NULL;
+    if (COMEX_ENABLE_GET_SMP) {
+        /* get from SMP node */
+        if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+            reg_entry_t *reg_entry = NULL;
+            void *mapped_offset = NULL;
 
-        reg_entry = reg_cache_find(proc, src, bytes);
-        COMEX_ASSERT(reg_entry);
-        mapped_offset = _get_offset_memory(reg_entry, src);
-        memcpy(dst, mapped_offset, bytes);
-        return;
+            reg_entry = reg_cache_find(proc, src, bytes);
+            COMEX_ASSERT(reg_entry);
+            mapped_offset = _get_offset_memory(reg_entry, src);
+            memcpy(dst, mapped_offset, bytes);
+            return;
+        }
     }
-#endif
 
     {
         header_t *header = NULL;
@@ -4146,31 +4251,31 @@ STATIC void nb_acc(int datatype, void *scale,
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != nb);
 
-#if ENABLE_ACC_SELF
-    /* acc to self */
-    if (g_state.rank == proc) {
-        sem_wait(semaphores[proc]);
-        _acc(datatype, bytes, dst, src, scale);
-        sem_post(semaphores[proc]);
-        return;
+    if (COMEX_ENABLE_ACC_SELF) {
+        /* acc to self */
+        if (g_state.rank == proc) {
+            sem_wait(semaphores[proc]);
+            _acc(datatype, bytes, dst, src, scale);
+            sem_post(semaphores[proc]);
+            return;
+        }
     }
-#endif
 
-#if ENABLE_ACC_SMP
-    /* acc to same SMP node */
-    if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
-        reg_entry_t *reg_entry = NULL;
-        void *mapped_offset = NULL;
+    if (COMEX_ENABLE_ACC_SMP) {
+        /* acc to same SMP node */
+        if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+            reg_entry_t *reg_entry = NULL;
+            void *mapped_offset = NULL;
 
-        reg_entry = reg_cache_find(proc, dst, bytes);
-        COMEX_ASSERT(reg_entry);
-        mapped_offset = _get_offset_memory(reg_entry, dst);
-        sem_wait(semaphores[proc]);
-        _acc(datatype, bytes, mapped_offset, src, scale);
-        sem_post(semaphores[proc]);
-        return;
+            reg_entry = reg_cache_find(proc, dst, bytes);
+            COMEX_ASSERT(reg_entry);
+            mapped_offset = _get_offset_memory(reg_entry, dst);
+            sem_wait(semaphores[proc]);
+            _acc(datatype, bytes, mapped_offset, src, scale);
+            sem_post(semaphores[proc]);
+            return;
+        }
     }
-#endif
 
     {
         header_t *header = NULL;
@@ -4251,16 +4356,14 @@ STATIC void nb_puts(
         return;
     }
 
-#if ENABLE_PUT_PACKED
-#if ENABLE_PUT_SELF
-    /* if not a strided put to self, use packed algorithm */
-    if (g_state.rank != proc)
-#endif
-    {
+    /* if not a strided put to self or SMP, use packed algorithm */
+    if (COMEX_ENABLE_PUT_PACKED
+            && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
+            && (!COMEX_ENABLE_PUT_SMP
+                || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
         nb_puts_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
-#endif
 
     /* number of n-element of the first dimension */
     n1dim = 1;
@@ -4400,16 +4503,14 @@ STATIC void nb_gets(
         return;
     }
 
-#if ENABLE_GET_PACKED
-#if ENABLE_GET_SELF
-    /* if not a strided get from self, use packed algorithm */
-    if (g_state.rank != proc)
-#endif
-    {
+    /* if not a strided get from self or SMP, use packed algorithm */
+    if (COMEX_ENABLE_GET_PACKED
+            && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
+            && (!COMEX_ENABLE_GET_SMP
+                || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
         nb_gets_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
-#endif
 
     /* number of n-element of the first dimension */
     n1dim = 1;
@@ -4565,16 +4666,14 @@ STATIC void nb_accs(
         return;
     }
 
-#if ENABLE_ACC_PACKED
-#if ENABLE_ACC_SELF
-    /* if not a strided acc to self, use packed algorithm */
-    if (g_state.rank != proc)
-#endif
-    {
+    /* if not a strided acc to self or SMP, use packed algorithm */
+    if (COMEX_ENABLE_ACC_PACKED
+            && (!COMEX_ENABLE_ACC_SELF || g_state.rank != proc)
+            && (!COMEX_ENABLE_ACC_SMP
+                || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
         nb_accs_packed(datatype, scale, src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
-#endif
 
     /* number of n-element of the first dimension */
     n1dim = 1;
@@ -4747,7 +4846,10 @@ STATIC void nb_putv(
 
     for (i=0; i<iov_len; ++i) {
         /* if not a vector put to self, use packed algorithm */
-        if (ENABLE_PUT_IOV && (!ENABLE_PUT_SELF || g_state.rank != proc)) {
+        if (COMEX_ENABLE_PUT_IOV
+                && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
+                && (!COMEX_ENABLE_PUT_SMP
+                    || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
             nb_putv_packed(&iov[i], proc, nb);
         }
         else {
@@ -4847,7 +4949,10 @@ STATIC void nb_getv(
 
     for (i=0; i<iov_len; ++i) {
         /* if not a vector get from self, use packed algorithm */
-        if (ENABLE_GET_IOV && (!ENABLE_GET_SELF || g_state.rank != proc)) {
+        if (COMEX_ENABLE_GET_IOV
+                && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
+                && (!COMEX_ENABLE_GET_SMP
+                    || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
             nb_getv_packed(&iov[i], proc, nb);
         }
         else {
@@ -4955,7 +5060,10 @@ STATIC void nb_accv(
 
     for (i=0; i<iov_len; ++i) {
         /* if not a vector acc to self, use packed algorithm */
-        if (ENABLE_ACC_IOV && (!ENABLE_ACC_SELF || g_state.rank != proc)) {
+        if (COMEX_ENABLE_ACC_IOV
+                && (!COMEX_ENABLE_ACC_SELF || g_state.rank != proc)
+                && (!COMEX_ENABLE_ACC_SMP
+                    || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
             nb_accv_packed(datatype, scale, &iov[i], proc, nb);
         }
         else {
