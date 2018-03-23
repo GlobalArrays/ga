@@ -3736,3 +3736,41 @@ void nga_version_(Integer *major, Integer *minor, Integer *patch)
 {
   wnga_version(major,minor,patch);
 }
+
+logical nga_sprs_array_create_(Integer idim, Integer jdim, Integer type)
+{
+  return wnga_sprs_array_create(idim,jdim,type);
+}
+
+void nga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *val)
+{
+  wnga_sprs_array_add_element(s_a,idx,jdx,val);
+}
+
+logical nga_sprs_array_assemble(Integer s_a)
+{
+  return wnga_sprs_array_assemble(s_a);
+}
+
+void nga_sprs_array_row_distribution(Integer s_a, Integer iproc, Integer *lo,
+    Integer *hi)
+{
+  wnga_sprs_array_row_distribution(s_a, iproc, lo, hi);
+}
+
+void nga_sprs_array_column_distribution(Integer s_a, Integer iproc, Integer *lo,
+    Integer *hi)
+{
+  wnga_sprs_array_column_distribution(s_a, iproc, lo, hi);
+}
+
+void nga_sprs_array_access_col_block(Integer s_a, Integer icol,
+        Integer **idx, Integer **jdx, void *val)
+{
+  wnga_sprs_array_access_col_block(s_a, icol, idx, jdx, val);
+}
+
+logical nga_sprs_array_destroy(Integer s_a)
+{
+  return wnga_sprs_array_destroy(s_a);
+}

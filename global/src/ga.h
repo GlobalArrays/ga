@@ -364,6 +364,13 @@ extern double        NGA_Wtime(void);
 extern DoubleComplex NGA_Zdot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
 extern void          NGA_Zero(int g_a); 
 extern void          NGA_Zero_patch(int g_a, int lo[], int hi[]);
+extern int           NGA_Sprs_array_create(int idim, int jdim, int type);
+extern void          NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void *val);
+extern int           NGA_Sprs_array_assemble(int s_a);
+extern void          NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo, int *hi);
+extern void          NGA_Sprs_array_column_distribution(int s_a, int iproc, int *lo, int *hi);
+extern void          NGA_Sprs_array_access_col_block(int s_a, int icol, void *idx, void *jdx, void *val);
+extern int           NGA_Sprs_array_destroy(Integer s_a);
 
 /* 64 bit APIs */
 
@@ -465,6 +472,10 @@ extern void          NGA_Strided_get64(int g_a, int64_t lo[], int64_t hi[], int6
 extern void          NGA_Strided_put64(int g_a, int64_t lo[], int64_t hi[], int64_t skip[], void* buf, int64_t  ld[]); 
 extern DoubleComplex NGA_Zdot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[], int g_b, char t_b, int64_t blo[], int64_t bhi[]);
 extern void          NGA_Zero_patch64(int g_a, int64_t lo[], int64_t hi[]);
+extern int           NGA_Sprs_array_create64(int64_t idim, int64_t jdim, int type);
+extern void          NGA_Sprs_array_add_element64(int s_a, int64_t idx, int64_t jdx, void *val);
+extern void          NGA_Sprs_array_row_distribution64(int s_a, int iproc, int64_t *lo, int64_t *hi);
+extern void          NGA_Sprs_array_column_distribution64(int s_a, int iproc, int64_t *lo, int64_t *hi);
 
 #ifdef __cplusplus
 }

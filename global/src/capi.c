@@ -5339,5 +5339,96 @@ void NGA_Version(int *major, int *minor, int *patch)
   *major = (int)maj;
   *minor = (int)min;
   *patch = (int)ptch;
+} 
+
+int NGA_Sprs_array_create(int idim, int jdim, int type)
+{
+  Integer i = (Integer)idim;
+  Integer j = (Integer)jdim;
+  return (int)wnga_sprs_array_create(i,j,type);
 }
 
+int NGA_Sprs_array_create64(int64_t idim, int64_t jdim, int type)
+{
+  Integer i = (Integer)idim;
+  Integer j = (Integer)jdim;
+  return (int)wnga_sprs_array_create(i,j,type);
+}
+
+void NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void *val)
+{
+  Integer sa = (Integer)s_a;
+  Integer i = (Integer)idx+1;
+  Integer j = (Integer)jdx+1;
+  wnga_sprs_array_add_element(sa,i,j,val);
+}
+
+void NGA_Sprs_array_add_element64(int s_a, int64_t idx, int64_t jdx, void *val)
+{
+  Integer sa = (Integer)s_a;
+  Integer i = (Integer)idx+1;
+  Integer j = (Integer)jdx+1;
+  wnga_sprs_array_add_element(sa,i,j,val);
+}
+
+int NGA_Sprs_array_assemble(int s_a)
+{
+  Integer sa = (Integer)s_a;
+  wnga_sprs_array_assemble(sa);
+}
+
+void NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo, int *hi)
+{
+  Integer sa = (Integer)s_a;
+  Integer ip = (Integer)iproc;
+  Integer ilo, ihi;
+  wnga_sprs_array_row_distribution(sa,ip,&ilo,&ihi);
+  *lo = (int)ilo;
+  *hi = (int)ihi;
+}
+
+void NGA_Sprs_array_row_distribution64(int s_a, int iproc, int64_t *lo, int64_t *hi)
+{
+  Integer sa = (Integer)s_a;
+  Integer ip = (Integer)iproc;
+  Integer ilo, ihi;
+  wnga_sprs_array_row_distribution(sa,ip,&ilo,&ihi);
+  *lo = (int64_t)ilo-1;
+  *hi = (int64_t)ihi-1;
+}
+
+void NGA_Sprs_array_column_distribution(int s_a, int iproc, int *lo, int *hi)
+{
+  Integer sa = (Integer)s_a;
+  Integer ip = (Integer)iproc;
+  Integer ilo, ihi;
+  wnga_sprs_array_column_distribution(sa,ip,&ilo,&ihi);
+  *lo = (int)ilo-1;
+  *hi = (int)ihi-1;
+}
+
+void NGA_Sprs_array_column_distribution64(int s_a, int iproc, int64_t *lo, int64_t *hi)
+{
+  Integer sa = (Integer)s_a;
+  Integer ip = (Integer)iproc;
+  Integer ilo, ihi;
+  wnga_sprs_array_column_distribution(sa,ip,&ilo,&ihi);
+  *lo = (int64_t)ilo-1;
+  *hi = (int64_t)ihi-1;
+}
+
+void NGA_Sprs_array_access_col_block(int s_a, int icol, void *idx, void *jdx,
+    void *val)
+{
+  Integer sa = (Integer)s_a;
+  Integer ic = (Integer)icol;
+  Integer *i = *(Integer**)idx;
+  Integer *j = *(Integer**)jdx;
+  wnga_sprs_array_access_col_block(sa,ic,&i,&j,val);
+}
+
+int NGA_Sprs_array_destroy(Integer s_a)
+{
+  Integer sa = (Integer)s_a;
+  wnga_sprs_array_destroy(sa);
+}

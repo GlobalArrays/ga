@@ -396,4 +396,14 @@ extern void pnga_nbget_field(Integer g_a, Integer *lo, Integer *hi, Integer foff
 extern void pnga_nbput_field(Integer g_a, Integer *lo, Integer *hi, Integer foff, Integer fsize,void *buf, Integer *ld, Integer *nbhandle);
 extern void pnga_put_field(Integer g_a, Integer *lo, Integer *hi, Integer foff, Integer fsize,void *buf, Integer *ld);
 
+
+/* Routines for sparse matrices */
+
+extern logical pnga_sprs_array_create(Integer idim, Integer jdim, Integer type);
+extern void pnga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *val);
+extern logical pnga_sprs_array_assemble(Integer s_a);
+extern void pnga_sprs_array_row_distribution(Integer s_a, Integer iproc, Integer *lo, Integer *hi);
+extern void pnga_sprs_array_column_distribution(Integer s_a, Integer iproc, Integer *lo, Integer *hi);
+extern void pnga_sprs_array_access_col_block(Integer s_a, Integer icol, Integer **idx, Integer **jdx, void *val);
+extern logical pnga_sprs_array_destroy(Integer s_a);
 #endif /* PAPI_H_ */
