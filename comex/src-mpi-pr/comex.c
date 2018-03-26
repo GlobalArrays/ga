@@ -320,7 +320,6 @@ int comex_init()
         if (NULL != value) {
             eager_threshold = atoi(value);
         }
-        COMEX_ASSERT(eager_threshold > 0);
 
         COMEX_ENABLE_PUT_SELF = ENABLE_PUT_SELF; /* default */
         value = getenv("COMEX_ENABLE_PUT_SELF");
