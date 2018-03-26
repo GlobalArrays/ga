@@ -198,7 +198,7 @@ STATIC void _get_handler(header_t *header, int proc);
 STATIC void _get_packed_handler(header_t *header, int proc);
 STATIC void _get_iov_handler(header_t *header, int proc);
 STATIC void _acc_handler(header_t *header, char *scale, int proc);
-STATIC void _acc_packed_handler(header_t *header, int proc);
+STATIC void _acc_packed_handler(header_t *header, char *payload, int proc);
 STATIC void _acc_iov_handler(header_t *header, int proc);
 STATIC void _fence_handler(header_t *header, int proc);
 STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc);
@@ -2357,6 +2357,7 @@ STATIC void _progress_server()
     int running = 0;
     char *static_header_buffer = NULL;
     int static_header_buffer_size = 0;
+    int extra_size = 0;
 
 #if DEBUG
     printf("[%d] _progress_server()\n", g_state.rank);
@@ -2373,7 +2374,14 @@ STATIC void _progress_server()
     /* static header buffer size must be large enough to hold the biggest
      * message that might possibly be sent using a header type message. */
     static_header_buffer_size += sizeof(header_t);
-    static_header_buffer_size += sizeof(reg_entry_t)*g_state.node_size;
+    /* extra header info could be reg entries, one per local rank */
+    extra_size = sizeof(reg_entry_t)*g_state.node_size;
+    /* or, extra header info could be an acc scale plus stride */
+    if ((sizeof(stride_t)+sizeof(DoubleComplex)) > extra_size) {
+        extra_size = sizeof(stride_t)+sizeof(DoubleComplex);
+    }
+    static_header_buffer_size += extra_size;
+    /* after all of the above, possibly grow the size based on user request */
     if (static_header_buffer_size < eager_threshold) {
         static_header_buffer_size = eager_threshold;
     }
@@ -2436,7 +2444,7 @@ STATIC void _progress_server()
             case OP_ACC_CPL_PACKED:
             case OP_ACC_DCP_PACKED:
             case OP_ACC_LNG_PACKED:
-                _acc_packed_handler(header, source);
+                _acc_packed_handler(header, payload, source);
                 break;
             case OP_ACC_INT_IOV:
             case OP_ACC_DBL_IOV:
@@ -2910,7 +2918,7 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
 }
 
 
-STATIC void _acc_packed_handler(header_t *header, int proc)
+STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
 {
     reg_entry_t *reg_entry = NULL;
     void *mapped_offset = NULL;
@@ -2952,13 +2960,8 @@ STATIC void _acc_packed_handler(header_t *header, int proc)
         default: COMEX_ASSERT(0);
     }
 
-    scale = malloc(sizeof_scale);
-    COMEX_ASSERT(scale);
-    server_recv(scale, sizeof_scale, proc);
-
-    stride = malloc(sizeof(stride_t));
-    COMEX_ASSERT(stride);
-    server_recv(stride, sizeof(stride_t), proc);
+    scale = payload;
+    stride = (stride_t*)(payload + sizeof_scale);
 
     if ((unsigned)header->length > static_server_buffer_size) {
         acc_buffer = malloc(header->length);
@@ -3041,9 +3044,6 @@ STATIC void _acc_packed_handler(header_t *header, int proc)
     if ((unsigned)header->length > static_server_buffer_size) {
         free(acc_buffer);
     }
-
-    free(stride);
-    free(scale);
 }
 
 
@@ -4819,7 +4819,7 @@ STATIC void nb_accs_packed(
     int i;
     int packed_index = 0;
     char *packed_buffer = NULL;
-    stride_t *stride = NULL;
+    stride_t stride;
 
 #if DEBUG
     printf("[%d] nb_accs_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -4839,30 +4839,28 @@ STATIC void nb_accs_packed(
     COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     /* copy dst info into structure */
-    stride = malloc(sizeof(stride_t));
-    COMEX_ASSERT(stride);
-    stride->ptr = dst;
-    stride->stride_levels = stride_levels;
-    stride->count[0] = count[0];
+    stride.ptr = dst;
+    stride.stride_levels = stride_levels;
+    stride.count[0] = count[0];
     for (i=0; i<stride_levels; ++i) {
-        stride->stride[i] = dst_stride[i];
-        stride->count[i+1] = count[i+1];
+        stride.stride[i] = dst_stride[i];
+        stride.count[i+1] = count[i+1];
     }
     /* assign remaining values to invalid */
     for (/*no init*/; i<COMEX_MAX_STRIDE_LEVEL; ++i) {
-        stride->stride[i] = -1;
-        stride->count[i+1] = -1;
+        stride.stride[i] = -1;
+        stride.count[i+1] = -1;
     }
 
-    COMEX_ASSERT(stride->stride_levels >= 0);
-    COMEX_ASSERT(stride->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+    COMEX_ASSERT(stride.stride_levels >= 0);
+    COMEX_ASSERT(stride.stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
 #if DEBUG
     printf("[%d] nb_accs_packed stride_levels=%d, count[0]=%d\n",
             g_state.rank, stride_levels, count[0]);
     for (i=0; i<stride_levels; ++i) {
         printf("[%d] stride[%d]=%d count[%d+1]=%d\n",
-                g_state.rank, i, stride->stride[i], i, stride->count[i+1]);
+                g_state.rank, i, stride.stride[i], i, stride.count[i+1]);
     }
 #endif
 
@@ -4873,6 +4871,8 @@ STATIC void nb_accs_packed(
 
     {
         header_t *header = NULL;
+        char *message = NULL;
+        int message_size = 0;
         int scale_size = 0;
         op_t operation = OP_NULL;
         int master_rank = -1;
@@ -4910,16 +4910,18 @@ STATIC void nb_accs_packed(
         /* only fence on the master */
         fence_array[master_rank] = 1;
 
-        header = malloc(sizeof(header_t));
-        COMEX_ASSERT(header);
+        message_size = sizeof(header_t) + scale_size + sizeof(stride_t);
+        message = malloc(message_size);
+        COMEX_ASSERT(message);
+        header = (header_t*)message;
         header->operation = operation;
         header->remote_address = dst;
         header->local_address = NULL;
         header->rank = proc;
         header->length = packed_index;
-        nb_send_header(header, sizeof(header_t), master_rank, nb);
-        nb_send_buffer(scale, scale_size, master_rank, nb);
-        nb_send_header(stride, sizeof(stride_t), master_rank, nb);
+        memcpy(message+sizeof(header_t), scale, scale_size);
+        memcpy(message+sizeof(header_t)+scale_size, &stride, sizeof(stride_t));
+        nb_send_header(message, message_size, master_rank, nb);
         nb_send_header(packed_buffer, packed_index, master_rank, nb);
     }
 }
