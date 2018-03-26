@@ -199,7 +199,7 @@ STATIC void _get_packed_handler(header_t *header, int proc);
 STATIC void _get_iov_handler(header_t *header, int proc);
 STATIC void _acc_handler(header_t *header, char *scale, int proc);
 STATIC void _acc_packed_handler(header_t *header, char *payload, int proc);
-STATIC void _acc_iov_handler(header_t *header, int proc);
+STATIC void _acc_iov_handler(header_t *header, char *scale, int proc);
 STATIC void _fence_handler(header_t *header, int proc);
 STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc);
 STATIC void _swap_handler(header_t *header, char *payload, int proc);
@@ -2452,7 +2452,7 @@ STATIC void _progress_server()
             case OP_ACC_CPL_IOV:
             case OP_ACC_DCP_IOV:
             case OP_ACC_LNG_IOV:
-                _acc_iov_handler(header, source);
+                _acc_iov_handler(header, payload, source);
                 break;
             case OP_FENCE:
                 _fence_handler(header, source);
@@ -3047,7 +3047,7 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
 }
 
 
-STATIC void _acc_iov_handler(header_t *header, int proc)
+STATIC void _acc_iov_handler(header_t *header, char *scale, int proc)
 {
     reg_entry_t *reg_entry = NULL;
     void *mapped_offset = NULL;
@@ -3060,7 +3060,6 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
     int bytes = 0;
     void **src = NULL;
     void **dst = NULL;
-    void *scale = NULL;
     int sizeof_scale = 0;
     int acc_type = 0;
 
@@ -3108,10 +3107,6 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
             break;
         default: COMEX_ASSERT(0);
     }
-
-    scale = malloc(sizeof_scale);
-    COMEX_ASSERT(scale);
-    server_recv(scale, sizeof_scale, proc);
 
     iov_buf = malloc(header->length);
     COMEX_ASSERT(iov_buf);
@@ -3164,7 +3159,6 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
         free(packed_buffer);
     }
 
-    free(scale);
     free(iov_buf);
 }
 
@@ -5228,6 +5222,8 @@ STATIC void nb_accv_packed(
 
     {
         header_t *header = NULL;
+        char *message = NULL;
+        int message_size = 0;
         int scale_size = 0;
         op_t operation = OP_NULL;
         int master_rank = g_state.master[proc];
@@ -5263,15 +5259,17 @@ STATIC void nb_accv_packed(
         /* only fence on the master */
         fence_array[master_rank] = 1;
 
-        header = malloc(sizeof(header_t));
-        COMEX_ASSERT(header);
+        message_size = sizeof(header_t) + scale_size;
+        message = malloc(message_size);
+        COMEX_ASSERT(message);
+        header = (header_t*)message;
         header->operation = operation;
         header->remote_address = NULL;
         header->local_address = NULL;
         header->rank = proc;
         header->length = iov_size;
-        nb_send_header(header, sizeof(header_t), master_rank, nb);
-        nb_send_buffer(scale, scale_size, master_rank, nb);
+        memcpy(message+sizeof(header_t), scale, scale_size);
+        nb_send_header(message, message_size, master_rank, nb);
         nb_send_header(iov_buf, iov_size, master_rank, nb);
         nb_send_header(packed_buffer, packed_size, master_rank, nb);
     }
