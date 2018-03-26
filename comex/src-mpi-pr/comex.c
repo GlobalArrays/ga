@@ -141,7 +141,10 @@ static int nb_count_send_processed = 0;
 static int nb_count_recv = 0;
 static int nb_count_recv_processed = 0;
 
-static char *static_acc_buffer = NULL;
+static char *static_server_buffer = NULL;
+static int static_server_buffer_size = 0;
+static int eager_threshold = -1;
+static int max_message_size = -1;
 
 static int COMEX_ENABLE_PUT_SELF = ENABLE_PUT_SELF;
 static int COMEX_ENABLE_GET_SELF = ENABLE_GET_SELF;
@@ -155,7 +158,6 @@ static int COMEX_ENABLE_ACC_PACKED = ENABLE_ACC_PACKED;
 static int COMEX_ENABLE_PUT_IOV = ENABLE_PUT_IOV;
 static int COMEX_ENABLE_GET_IOV = ENABLE_GET_IOV;
 static int COMEX_ENABLE_ACC_IOV = ENABLE_ACC_IOV;
-static int COMEX_MAX_MESSAGE_SIZE = -1;
 
 #if PAUSE_ON_ERROR
 static int AR_caught_sig=0;
@@ -306,6 +308,20 @@ int comex_init()
         }
         COMEX_ASSERT(nb_max_outstanding > 0);
 
+        static_server_buffer_size = COMEX_STATIC_BUFFER_SIZE; /* default */
+        value = getenv("COMEX_STATIC_BUFFER_SIZE");
+        if (NULL != value) {
+            static_server_buffer_size = atoi(value);
+        }
+        COMEX_ASSERT(static_server_buffer_size > 0);
+
+        eager_threshold = -1; /* default */
+        value = getenv("COMEX_EAGER_THRESHOLD");
+        if (NULL != value) {
+            eager_threshold = atoi(value);
+        }
+        COMEX_ASSERT(eager_threshold > 0);
+
         COMEX_ENABLE_PUT_SELF = ENABLE_PUT_SELF; /* default */
         value = getenv("COMEX_ENABLE_PUT_SELF");
         if (NULL != value) {
@@ -378,58 +394,56 @@ int comex_init()
             COMEX_ENABLE_ACC_IOV = atoi(value);
         }
 
-        COMEX_MAX_MESSAGE_SIZE = -1;
+        max_message_size = -1; /* default */
         value = getenv("COMEX_MAX_MESSAGE_SIZE");
         if (NULL != value) {
-            COMEX_MAX_MESSAGE_SIZE = atoi(value);
+            max_message_size = atoi(value);
         }
 #if 0
-        if (-1 == COMEX_MAX_MESSAGE_SIZE) {
+        if (-1 == max_message_size) {
             value = getenv("MPICH_CH3_EAGER_MAX_MSG_SIZE");
             if (NULL != value) {
-                COMEX_MAX_MESSAGE_SIZE = atoi(value);
+                max_message_size = atoi(value);
             }
         }
-        if (-1 == COMEX_MAX_MESSAGE_SIZE) {
+        if (-1 == max_message_size) {
             value = getenv("MV2_IBA_EAGER_THRESHOLD");
             if (NULL != value) {
-                COMEX_MAX_MESSAGE_SIZE = atoi(value);
+                max_message_size = atoi(value);
             }
         }
-        if (-1 == COMEX_MAX_MESSAGE_SIZE) {
+        if (-1 == max_message_size) {
             value = getenv("I_MPI_EAGER_THRESHOLD");
             if (NULL != value) {
-                COMEX_MAX_MESSAGE_SIZE = atoi(value);
+                max_message_size = atoi(value);
             }
         }
-        if (-1 == COMEX_MAX_MESSAGE_SIZE) {
-            printf("GETTING MPICH_GNI_MAX_EAGER_MSG_SIZE\n");
+        if (-1 == max_message_size) {
             value = getenv("MPICH_GNI_MAX_EAGER_MSG_SIZE");
             if (NULL != value) {
-                printf("GOT MPICH_GNI_MAX_EAGER_MSG_SIZE\n");
-                COMEX_MAX_MESSAGE_SIZE = atoi(value);
+                max_message_size = atoi(value);
             }
         }
-        if (-1 == COMEX_MAX_MESSAGE_SIZE) {
+        if (-1 == max_message_size) {
             value = getenv("OMPI_MCA_btl_sm_eager_limit");
             if (NULL != value) {
-                COMEX_MAX_MESSAGE_SIZE = atoi(value);
+                max_message_size = atoi(value);
             }
         }
-        if (-1 == COMEX_MAX_MESSAGE_SIZE) {
+        if (-1 == max_message_size) {
             value = getenv("OMPI_MCA_btl_openib_eager_limit");
             if (NULL != value) {
-                COMEX_MAX_MESSAGE_SIZE = atoi(value);
+                max_message_size = atoi(value);
             }
         }
 #endif
-        if (-1 == COMEX_MAX_MESSAGE_SIZE) {
-            COMEX_MAX_MESSAGE_SIZE = COMEX_STATIC_BUFFER_SIZE;
-        }
 
 #if DEBUG
         if (0 == g_state.rank) {
             printf("COMEX_MAX_NB_OUTSTANDING=%d\n", nb_max_outstanding);
+            printf("COMEX_STATIC_BUFFER_SIZE=%d\n", static_server_buffer_size);
+            printf("COMEX_MAX_MESSAGE_SIZE=%d\n", max_message_size);
+            printf("COMEX_EAGER_THRESHOLD=%d\n", eager_threshold);
             printf("COMEX_ENABLE_PUT_SELF=%d\n", COMEX_ENABLE_PUT_SELF);
             printf("COMEX_ENABLE_GET_SELF=%d\n", COMEX_ENABLE_GET_SELF);
             printf("COMEX_ENABLE_ACC_SELF=%d\n", COMEX_ENABLE_ACC_SELF);
@@ -442,7 +456,6 @@ int comex_init()
             printf("COMEX_ENABLE_PUT_IOV=%d\n", COMEX_ENABLE_PUT_IOV);
             printf("COMEX_ENABLE_GET_IOV=%d\n", COMEX_ENABLE_GET_IOV);
             printf("COMEX_ENABLE_ACC_IOV=%d\n", COMEX_ENABLE_ACC_IOV);
-            printf("COMEX_MAX_MESSAGE_SIZE=%d\n", COMEX_MAX_MESSAGE_SIZE);
             fflush(stdout);
         }
 #endif
@@ -2343,7 +2356,8 @@ int comex_free(void *ptr, comex_group_t group)
 STATIC void _progress_server()
 {
     int running = 0;
-    char *static_buffer = NULL;
+    char *static_header_buffer = NULL;
+    int static_header_buffer_size = 0;
 
 #if DEBUG
     printf("[%d] _progress_server()\n", g_state.rank);
@@ -2357,11 +2371,19 @@ STATIC void _progress_server()
         }
     }
 
+    /* static header buffer size must be large enough to hold the biggest
+     * message that might possibly be sent using a header type message. */
+    static_header_buffer_size += sizeof(header_t);
+    static_header_buffer_size += sizeof(reg_entry_t)*g_state.node_size;
+    if (static_header_buffer_size < eager_threshold) {
+        static_header_buffer_size = eager_threshold;
+    }
+
     /* initialize shared buffers */
-    static_buffer = (char*)malloc(sizeof(char)*COMEX_STATIC_BUFFER_SIZE);
-    COMEX_ASSERT(static_buffer);
-    static_acc_buffer = (char*)malloc(sizeof(char)*COMEX_MAX_MESSAGE_SIZE);
-    COMEX_ASSERT(static_acc_buffer);
+    static_header_buffer = (char*)malloc(sizeof(char)*static_header_buffer_size);
+    COMEX_ASSERT(static_header_buffer);
+    static_server_buffer = (char*)malloc(sizeof(char)*static_server_buffer_size);
+    COMEX_ASSERT(static_server_buffer);
 
     running = 1;
     while (running) {
@@ -2371,7 +2393,7 @@ STATIC void _progress_server()
         header_t *header = NULL;
         MPI_Status recv_status;
 
-        MPI_Recv(static_buffer, COMEX_STATIC_BUFFER_SIZE, MPI_CHAR,
+        MPI_Recv(static_header_buffer, static_header_buffer_size, MPI_CHAR,
                 MPI_ANY_SOURCE, COMEX_TAG, g_state.comm, &recv_status);
         MPI_Get_count(&recv_status, MPI_CHAR, &length);
         source = recv_status.MPI_SOURCE;
@@ -2379,8 +2401,8 @@ STATIC void _progress_server()
         printf("[%d] progress MPI_Recv source=%d length=%d\n",
                 g_state.rank, source, length);
 #   endif
-        header = (header_t*)static_buffer;
-        payload = static_buffer + sizeof(header_t);
+        header = (header_t*)static_header_buffer;
+        payload = static_header_buffer + sizeof(header_t);
         /* dispatch message handler */
         switch (header->operation) {
             case OP_PUT:
@@ -2464,8 +2486,8 @@ STATIC void _progress_server()
 
     initialized = 0;
 
-    free(static_buffer);
-    free(static_acc_buffer);
+    free(static_header_buffer);
+    free(static_server_buffer);
 
     _free_semaphore();
 
@@ -2555,11 +2577,11 @@ STATIC void _put_packed_handler(header_t *header, int proc)
     }
 #endif
 
-    if ((unsigned)header->length > COMEX_MAX_MESSAGE_SIZE) {
+    if ((unsigned)header->length > static_server_buffer_size) {
         packed_buffer = malloc(header->length);
     }
     else {
-        packed_buffer = static_acc_buffer;
+        packed_buffer = static_server_buffer;
     }
 
     server_recv(packed_buffer, header->length, proc);
@@ -2573,9 +2595,11 @@ STATIC void _put_packed_handler(header_t *header, int proc)
     unpack(packed_buffer, mapped_offset,
             stride->stride, stride->count, stride->stride_levels);
 
-    if ((unsigned)header->length > COMEX_MAX_MESSAGE_SIZE) {
+    if ((unsigned)header->length > static_server_buffer_size) {
         free(packed_buffer);
     }
+
+    free(stride);
 }
 
 
@@ -2632,12 +2656,12 @@ STATIC void _put_iov_handler(header_t *header, int proc)
             g_state.rank, limit, bytes, src[0], dst[0]);
 #endif
 
-    if ((unsigned)(bytes*limit) > COMEX_MAX_MESSAGE_SIZE) {
+    if ((unsigned)(bytes*limit) > static_server_buffer_size) {
         packed_buffer = malloc(bytes*limit);
         COMEX_ASSERT(packed_buffer);
     }
     else {
-        packed_buffer = static_acc_buffer;
+        packed_buffer = static_server_buffer;
     }
 
     server_recv(packed_buffer, bytes * limit, proc);
@@ -2655,7 +2679,7 @@ STATIC void _put_iov_handler(header_t *header, int proc)
     }
     COMEX_ASSERT(packed_index == bytes*limit);
 
-    if ((unsigned)(bytes*limit) > COMEX_MAX_MESSAGE_SIZE) {
+    if ((unsigned)(bytes*limit) > static_server_buffer_size) {
         free(packed_buffer);
     }
 
@@ -2788,12 +2812,12 @@ STATIC void _get_iov_handler(header_t *header, int proc)
             g_state.rank, limit, bytes, src[0], dst[0]);
 #endif
 
-    if ((unsigned)(bytes*limit) > COMEX_MAX_MESSAGE_SIZE) {
+    if ((unsigned)(bytes*limit) > static_server_buffer_size) {
         packed_buffer = malloc(bytes*limit);
         COMEX_ASSERT(packed_buffer);
     }
     else {
-        packed_buffer = static_acc_buffer;
+        packed_buffer = static_server_buffer;
     }
 
     packed_index = 0;
@@ -2810,7 +2834,7 @@ STATIC void _get_iov_handler(header_t *header, int proc)
 
     server_send(packed_buffer, packed_index, proc);
 
-    if ((unsigned)(bytes*limit) > COMEX_MAX_MESSAGE_SIZE) {
+    if ((unsigned)(bytes*limit) > static_server_buffer_size) {
         free(packed_buffer);
     }
 
@@ -2858,11 +2882,11 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
         default: COMEX_ASSERT(0);
     }
 
-    if ((unsigned)header->length > COMEX_MAX_MESSAGE_SIZE) {
+    if ((unsigned)header->length > static_server_buffer_size) {
         acc_buffer = malloc(header->length);
     }
     else {
-        acc_buffer = static_acc_buffer;
+        acc_buffer = static_server_buffer;
     }
 
     server_recv(acc_buffer, header->length, proc);
@@ -2881,7 +2905,7 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
         _acc(acc_type, header->length, mapped_offset, acc_buffer, scale);
     }
 
-    if ((unsigned)header->length > COMEX_MAX_MESSAGE_SIZE) {
+    if ((unsigned)header->length > static_server_buffer_size) {
         free(acc_buffer);
     }
 }
@@ -2937,11 +2961,11 @@ STATIC void _acc_packed_handler(header_t *header, int proc)
     COMEX_ASSERT(stride);
     server_recv(stride, sizeof(stride_t), proc);
 
-    if ((unsigned)header->length > COMEX_MAX_MESSAGE_SIZE) {
+    if ((unsigned)header->length > static_server_buffer_size) {
         acc_buffer = malloc(header->length);
     }
     else {
-        acc_buffer = static_acc_buffer;
+        acc_buffer = static_server_buffer;
     }
 
     server_recv(acc_buffer, header->length, proc);
@@ -3015,7 +3039,7 @@ STATIC void _acc_packed_handler(header_t *header, int proc)
         sem_post(semaphores[header->rank]);
     }
 
-    if ((unsigned)header->length > COMEX_MAX_MESSAGE_SIZE) {
+    if ((unsigned)header->length > static_server_buffer_size) {
         free(acc_buffer);
     }
 
@@ -3110,11 +3134,11 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
 
     COMEX_ASSERT(iov_off == header->length);
 
-    if ((unsigned)(bytes*limit) > COMEX_MAX_MESSAGE_SIZE) {
+    if ((unsigned)(bytes*limit) > static_server_buffer_size) {
         packed_buffer = malloc(bytes*limit);
     }
     else {
-        packed_buffer = static_acc_buffer;
+        packed_buffer = static_server_buffer;
     }
 
     server_recv(packed_buffer, bytes*limit, proc);
@@ -3137,7 +3161,7 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
         sem_post(semaphores[header->rank]);
     }
 
-    if ((unsigned)(bytes*limit) > COMEX_MAX_MESSAGE_SIZE) {
+    if ((unsigned)(bytes*limit) > static_server_buffer_size) {
         free(packed_buffer);
     }
 
