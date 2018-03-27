@@ -5422,9 +5422,9 @@ void NGA_Sprs_array_access_col_block(int s_a, int icol, void *idx, void *jdx,
 {
   Integer sa = (Integer)s_a;
   Integer ic = (Integer)icol;
-  Integer *i = *(Integer**)idx;
-  Integer *j = *(Integer**)jdx;
-  wnga_sprs_array_access_col_block(sa,ic,&i,&j,val);
+  Integer **i = (Integer**)idx;
+  Integer **j = (Integer**)jdx;
+  wnga_sprs_array_access_col_block(sa,ic,i,j,val);
 }
 
 int NGA_Sprs_array_destroy(Integer s_a)

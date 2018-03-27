@@ -142,6 +142,7 @@ logical pnga_sprs_array_create(Integer idim, Integer jdim, Integer type)
       SPA[i].idim = idim;
       SPA[i].jdim = jdim;
       SPA[i].grp = pnga_pgroup_get_default();
+      SPA[i].nprocs = pnga_pgroup_nnodes(SPA[i].grp);
       hdl = i;
       s_a = hdl - GA_OFFSET;
       break;
@@ -255,7 +256,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
     list[i] = top[iproc];
     top[iproc] = i;
   }
-  printf("(assemble) Got to 1\n");
+  printf("p[%d] (assemble) Got to 1\n",me);
 
   /* determine how many values of matrix are stored on this process and what the
    * offset on remote processes is for the data. Create a global array to
@@ -276,7 +277,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   ilo = 1;
   ihi = nproc;
   pnga_get(g_offset,&ilo,&ihi,size,&nproc);
-  printf("(assemble) Got to 2\n");
+  printf("p[%d] (assemble) Got to 2\n",me);
 
   /* we now know how much data is on all processors (size) and have an offset on
    * remote processors that we can use to store data from this processor. Start by
@@ -309,6 +310,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   /* fill up global arrays with data */
   for (i=0; i<nproc; i++) {
     iproc = (i+me)%nproc;
+    printf("p[%d] Got to 3a count[%d]: %d\n",me,i,count[i]);
     if (count[iproc] > 0) {
       Integer j;
       ncnt = 0;
@@ -316,19 +318,25 @@ logical pnga_sprs_array_assemble(Integer s_a)
       Integer *ibuf = (Integer*)malloc(count[iproc]*sizeof(Integer));
       Integer *jbuf = (Integer*)malloc(count[iproc]*sizeof(Integer));
       vals = SPA[hdl].val;
+      printf("p[%d] Got to 3b vals: %p\n",me,vals);
       /* fill up buffers with data going to process iproc */
       j = top[iproc]; 
+      printf("p[%d] Got to 3c top: %d vbuf: %p\n",me,j,vbuf);
       while (j >= 0) {
         memcpy(((char*)vbuf+ncnt*elemsize),(vals+j*elemsize),(size_t)elemsize);
         ibuf[ncnt] = SPA[hdl].idx[j];
         jbuf[ncnt] = SPA[hdl].jdx[j];
+  printf("p[%d] (assemble) idx: %d jdx: %d val: %f\n",me,ibuf[ncnt],jbuf[ncnt],
+      *((double*)((char*)vbuf+ncnt*elemsize)));
         ncnt++;
         j = list[j];
       }
+      printf("p[%d] Got to 3d ncnt: %d\n",me,ncnt);
       /* send data to global arrays */
-      lo = (SPA[hdl].idim*iproc)/iproc;
+      lo = (SPA[hdl].idim*iproc)/nproc;
       lo += (Integer)offset[iproc]+1;
-      hi = lo+count[i];
+      hi = lo+count[i]-1;
+      printf("p[%d] Got to 3e lo: %d hi: %d\n",me,lo,hi);
       pnga_put(SPA[hdl].g_data,&lo,&hi,vbuf,&count[iproc]);
       pnga_put(SPA[hdl].g_i,&lo,&hi,ibuf,&count[iproc]);
       pnga_put(SPA[hdl].g_j,&lo,&hi,jbuf,&count[iproc]);
@@ -342,7 +350,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   free(SPA[hdl].idx);
   free(SPA[hdl].jdx);
   free(SPA[hdl].val);
-  printf("(assemble) Got to 4\n");
+  printf("p[%d] (assemble) Got to 4\n",me);
   
   /* All data has been moved so that each process has a row block of the sparse
    * matrix. Now need to organize data within each process into column blocks.
@@ -365,7 +373,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
     top[iproc] = i;
   }
   pnga_release(SPA[hdl].g_j,&lo,&hi);
-  printf("(assemble) Got to 5\n");
+  printf("p[%d] (assemble) Got to 5\n",me);
   /* find out how many column blocks have data */
   ncnt = 0;
   for (i=0; i<nproc; i++) {
@@ -381,7 +389,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   SPA[hdl].jdx = malloc(nvals*sizeof(Integer));
   ncnt = 0;
   icnt = 0;
-  printf("(assemble) Got to 6\n");
+  printf("p[%d] (assemble) Got to 6\n",me);
   pnga_access_ptr(SPA[hdl].g_data,&lo,&hi,&vals,&ld);
   pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&idx,&ld);
   pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&jdx,&ld);
@@ -399,6 +407,8 @@ logical pnga_sprs_array_assemble(Integer s_a)
         memcpy(((char*)vbuf+icnt*elemsize),(vals+j*elemsize),(size_t)elemsize);
         ibuf[icnt] = idx[j];
         jbuf[icnt] = jdx[j];
+  printf("p[%d] (assemble) idx: %d jdx: %d val: %f\n",me,ibuf[icnt],jbuf[icnt],
+      *((double*)((char*)vbuf+icnt*elemsize)));
         j = list[j];
         SPA[hdl].blksize[ncnt]++;
         icnt++;
@@ -408,7 +418,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   }
   free(count);
   free(top);
-  printf("(assemble) Got to 7\n");
+  printf("p[%d] (assemble) Got to 7\n",me);
   /* Values have all been sorted into column blocks within the row block. Now
    * need to sort them by row. Start by evaluating lower and upper row indices */
   SPA[hdl].ilo = (SPA[hdl].idim*me)/nproc;
@@ -430,8 +440,9 @@ logical pnga_sprs_array_assemble(Integer s_a)
     SPA[hdl].offset[i] = i*(nrows+1);
   }
   offset[me] = (nrows+1)*SPA[hdl].nblocks;
-  pnga_pgroup_gop(SPA[hdl].grp,MT_F_INT,offset,nproc,"+");
-  printf("(assemble) Got to 8\n");
+  printf("p[%d] (assemble) Got to 7a\n",me);
+  pnga_pgroup_gop(SPA[hdl].grp,pnga_type_f2c(MT_F_INT),offset,nproc,"+");
+  printf("p[%d] (assemble) Got to 8\n",me);
   /* Construct new version of g_i */
   map[0] = 1;
   nvals = offset[0];
@@ -445,7 +456,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   if (!pnga_allocate(SPA[hdl].g_i)) ret = 0;
   pnga_distribution(SPA[hdl].g_i,me,&lo,&hi);
   pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&idx,&ld);
-  printf("(assemble) Got to 9\n");
+  printf("p[%d] (assemble) Got to 9 idx: %p\n",me,idx);
 
   /* Bin up elements by row index for each column block */
   count = (Integer*)malloc(nrows*sizeof(Integer));
@@ -453,39 +464,48 @@ logical pnga_sprs_array_assemble(Integer s_a)
   ncnt = 0;
   icnt = 0;
   for (i=0; i<SPA[hdl].nblocks; i++) {
-    if (SPA[hdl].blksize[i] == 0) continue;
     char *vptr = vals+ncnt*SPA[hdl].size;
-    Integer *ibuf = idx + ncnt;
-    Integer *jbuf = jdx + ncnt;
+    Integer *ibuf = SPA[hdl].idx + ncnt;
+    Integer *jbuf = SPA[hdl].jdx + ncnt;
     for (j=0; j<nrows; j++) {
       top[j] = -1;
       count[j] = 0;
     }
+  printf("p[%d] (assemble) Got to 10 blksize[%d]: %d ibuf: %p\n",me,i,SPA[hdl].blksize[i],ibuf);
     for (j=0; j<SPA[hdl].blksize[i]; j++) {
-      irow = ibuf[j]-SPA[hdl].ilo;
+      irow = ibuf[j]-1-SPA[hdl].ilo;
+      printf("Storing irow: %d j: %d\n",irow,j);
       list[j] = top[irow];
       top[irow] = j;
       count[irow]++;
     }
+  printf("p[%d] (assemble) Got to 11\n",me);
     /* copy elements back into  global arrays after sorting by row index */
     icnt = 0;
     char *vbuf = (char*)SPA[hdl].val+ncnt*SPA[hdl].size;
+  printf("p[%d] (assemble) Got to 12 nrows: %d\n",me,nrows);
     for (j=0; j<nrows; j++) {
       irow = top[j];
-      (idx+i*nrows)[j] = icnt;
+      (idx+i*(nrows+1))[j] = icnt;
+      printf("p[%d] (assemble) Got to 12a idx[%d*%d][%d]: %d irow: %d\n",me,i,nrows,j,
+          (idx+i*(nrows+1))[j],irow);
       while (irow >= 0) {
         jdx[icnt] = jbuf[irow];
         memcpy((vptr+icnt*elemsize),(vbuf+irow*elemsize),(size_t)elemsize);
+  printf("p[%d] (assemble) idx: %d jdx: %d val: %f\n",me,j,
+      jdx[icnt],*((double*)(vptr+icnt*elemsize)));
         irow = list[irow];
         icnt++;
       }
     }
-    (idx+i*nrows)[nrows] = icnt; 
+    if (top[j] >= 0) (idx+i*(nrows+1))[nrows] = icnt; 
+  printf("p[%d] (assemble) Got to 13 idx[%d*%d][%d]: %d\n",
+      me,i,nrows,nrows,(idx+i*nrows)[nrows]);
     /* TODO: (maybe) sort each row so that individual elements are arrange in
      * order of increasing j */
     ncnt += SPA[hdl].blksize[i];
+  printf("p[%d] (assemble) Got to 14 iptr: %p jptr: %p vptr: %p\n",me,idx,jdx,vptr);
   }
-  printf("(assemble) Got to 10\n");
   free(SPA[hdl].val);
   free(SPA[hdl].idx);
   free(SPA[hdl].jdx);
@@ -502,7 +522,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   free(list);
   free(offset);
   free(map);
-  printf("(assemble) Got to 11\n");
+  printf("p[%d] (assemble) Got to 15\n",me);
   return ret;
 }
 
@@ -572,12 +592,13 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
   Integer i,index;
   index = -1;
   for (i=0; i<SPA[hdl].nblocks; i++) {
+    printf("icol: %d blkidx[%d]: %d\n",icol,i,SPA[hdl].blkidx[i]);
     if (SPA[hdl].blkidx[i] == icol) {
       index = i;
       break;
     }
   }
-  if (index = -1) {
+  if (index == -1) {
     *idx = NULL;
     *jdx = NULL;
     *(char**)val = NULL;
@@ -586,12 +607,14 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
     Integer *tjdx;
     char *lptr;
     Integer lo, hi, ld;
-    Integer me = pnga_pgroup_nnodeid(SPA[hdl].grp);
+    Integer me = pnga_pgroup_nodeid(SPA[hdl].grp);
     Integer offset = SPA[hdl].offset[index];
+    printf("offset: %d index: %d\n",offset,index);
 
     /* access local portions of GAs containing data */
     pnga_distribution(SPA[hdl].g_data,me,&lo,&hi);
     pnga_access_ptr(SPA[hdl].g_data,&lo,&hi,&lptr,&ld);
+    printf("lo: %d hi: %d lptr: %p\n",lo,hi,lptr);
     pnga_distribution(SPA[hdl].g_i,me,&lo,&hi);
     pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&tidx,&ld);
     pnga_distribution(SPA[hdl].g_j,me,&lo,&hi);
@@ -601,14 +624,19 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
     pnga_release(SPA[hdl].g_j,&lo,&hi);
 
     /* shift pointers to correct location */
-    ld = SPA[hdl].ihi - SPA[hdl].ilo + 1;
+    ld = SPA[hdl].ihi - SPA[hdl].ilo + 2;
     lptr = lptr + offset;
     tjdx = tjdx + offset;
     tidx = tidx + ld*index;
     
     *idx = tidx;
     *jdx = tjdx;
+    printf("tidx: %p *idx: %p *jdx: %p sizeof(Integer): %d lptr: %p\n",
+        tidx,*idx,*jdx,sizeof(Integer),lptr);
     *(char**)val = lptr;
+    /*
+    printf("val: %p idx: %p jdx: %p\n",lptr,idx,jdx);
+    */
   }
 }
 
