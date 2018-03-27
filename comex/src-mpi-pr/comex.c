@@ -256,6 +256,7 @@ STATIC void nb_accv(int datatype, void *scale,
         comex_giov_t *iov, int iov_len, int proc, nb_t *nb);
 STATIC void nb_accv_packed(int datatype, void *scale,
         comex_giov_t *iov, int proc, nb_t *nb);
+STATIC void _fence_master(int master_rank);
 
 /* other functions */
 STATIC int packed_size(int *src_stride, int *count, int stride_levels);
@@ -934,21 +935,11 @@ int comex_fence_all(comex_group_t group)
 }
 
 
-int comex_fence_proc(int proc, comex_group_t group)
+void _fence_master(int master_rank)
 {
-    int world_rank = -1;
-    int master_rank = -1;
-    comex_igroup_t *igroup = NULL;
-
 #if DEBUG
-    printf("[%d] comex_fence_proc(proc=%d, group=%d)\n",
-            g_state.rank, proc, group);
+    printf("[%d] _fence_master(proc=%d)\n", g_state.rank, proc);
 #endif
-
-    CHECK_GROUP(group,proc);
-    igroup = comex_get_igroup_from_group(group);
-    world_rank = _get_world_rank(igroup, proc);
-    master_rank = g_state.master[world_rank];
 
     if (fence_array[master_rank]) {
         header_t *header = NULL;
@@ -971,6 +962,26 @@ int comex_fence_proc(int proc, comex_group_t group)
         nb_wait_for_all(nb);
         fence_array[master_rank] = 0;
     }
+}
+
+
+int comex_fence_proc(int proc, comex_group_t group)
+{
+    int world_rank = -1;
+    int master_rank = -1;
+    comex_igroup_t *igroup = NULL;
+
+#if DEBUG
+    printf("[%d] comex_fence_proc(proc=%d, group=%d)\n",
+            g_state.rank, proc, group);
+#endif
+
+    CHECK_GROUP(group,proc);
+    igroup = comex_get_igroup_from_group(group);
+    world_rank = _get_world_rank(igroup, proc);
+    master_rank = g_state.master[world_rank];
+
+    _fence_master(master_rank);
 
     return COMEX_SUCCESS;
 }
@@ -1071,7 +1082,7 @@ STATIC char* pack(
     for(i=0; i<n1dim; i++) {
         src_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-	  src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+            src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -1130,7 +1141,7 @@ STATIC void unpack(char *packed_buffer,
     for(i=0; i<n1dim; i++) {
         dst_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+            dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
@@ -3022,7 +3033,7 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
         for(i=0; i<n1dim; i++) {
             dst_idx = 0;
             for(j=1; j<=stride_levels; j++) {
-	      dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+                dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
                 if((i+1) % dst_bunit[j] == 0) {
                     dst_bvalue[j]++;
                 }
@@ -4232,9 +4243,17 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != nb);
 
+#if DEBUG
+    printf("[%d] nb_put(src=%p, dst=%p, bytes=%d, proc=%d, nb=%p)\n",
+            g_state.rank, src, dst, bytes, proc, nb);
+#endif
+
     if (COMEX_ENABLE_PUT_SELF) {
         /* put to self */
         if (g_state.rank == proc) {
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
             memcpy(dst, src, bytes);
             return;
         }
@@ -4245,6 +4264,10 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
         if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
             reg_entry_t *reg_entry = NULL;
             void *mapped_offset = NULL;
+
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
 
             reg_entry = reg_cache_find(proc, dst, bytes);
             COMEX_ASSERT(reg_entry);
@@ -4285,6 +4308,9 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
     if (COMEX_ENABLE_GET_SELF) {
         /* get from self */
         if (g_state.rank == proc) {
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
             memcpy(dst, src, bytes);
             return;
         }
@@ -4295,6 +4321,10 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
             reg_entry_t *reg_entry = NULL;
             void *mapped_offset = NULL;
+
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
 
             reg_entry = reg_cache_find(proc, src, bytes);
             COMEX_ASSERT(reg_entry);
@@ -4335,6 +4365,9 @@ STATIC void nb_acc(int datatype, void *scale,
     if (COMEX_ENABLE_ACC_SELF) {
         /* acc to self */
         if (g_state.rank == proc) {
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
             sem_wait(semaphores[proc]);
             _acc(datatype, bytes, dst, src, scale);
             sem_post(semaphores[proc]);
@@ -4347,6 +4380,10 @@ STATIC void nb_acc(int datatype, void *scale,
         if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
             reg_entry_t *reg_entry = NULL;
             void *mapped_offset = NULL;
+
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
 
             reg_entry = reg_cache_find(proc, dst, bytes);
             COMEX_ASSERT(reg_entry);
@@ -4468,7 +4505,7 @@ STATIC void nb_puts(
         src_idx = 0;
         dst_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-	  src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+            src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -4478,7 +4515,7 @@ STATIC void nb_puts(
         }
 
         for(j=1; j<=stride_levels; j++) {
-	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+            dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
@@ -4613,7 +4650,7 @@ STATIC void nb_gets(
     for(i=0; i<n1dim; i++) {
         src_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-	  src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+            src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -4625,7 +4662,7 @@ STATIC void nb_gets(
         dst_idx = 0;
         
         for(j=1; j<=stride_levels; j++) {
-	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+            dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
@@ -4778,7 +4815,7 @@ STATIC void nb_accs(
         src_idx = 0;
         dst_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-	  src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+            src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -4788,7 +4825,7 @@ STATIC void nb_accs(
         }
 
         for(j=1; j<=stride_levels; j++) {
-	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+            dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
