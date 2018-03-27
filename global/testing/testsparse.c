@@ -80,8 +80,10 @@ int main(int argc, char **argv) {
   int me, nproc;
   int xdim, ydim, ipx, ipy, idx, idy;
   int ilo, ihi, jlo, jhi;
-  int i, j, ld;
+  int i, j, iproc, ld, ncols;
   double val;
+  double *vptr;
+  long *iptr = NULL, *jptr = NULL;
   /* Intitialize a message passing library */
   one = 1;
   MP_INIT(argc,argv);
@@ -137,9 +139,31 @@ int main(int argc, char **argv) {
   NGA_Sprs_array_assemble(s_a);
   printf("Got to 7\n");
 
+  /* access array blocks an check values for correctness */
+  NGA_Sprs_array_row_distribution(s_a,me,&ilo,&ihi);
+  printf("Got to 8 sizeof(long): %d ilo: %d ihi: %d\n",sizeof(long),ilo,ihi);
+  for (iproc=0; iproc<nproc; iproc++) {
+    NGA_Sprs_array_column_distribution(s_a,iproc,&jlo,&jhi);
+    printf("Got to 9 jlo: %d jhi: %d iproc: %d\n",jlo,jhi,iproc);
+    NGA_Sprs_array_access_col_block(s_a,iproc,&iptr,&jptr,&vptr);
+    printf("Got to 10 iptr: %p jptr: %p vptr: %p\n",iptr,jptr,vptr);
+    for (i=0; i<4; i++) {
+      printf("i: %d j:%d v: %f\n",iptr[i],jptr[i],vptr[i]);
+    }
+    if (vptr != NULL) {
+      for (i=ilo; i<=ihi; i++) {
+        ncols = iptr[i+1-ilo]-iptr[i-ilo];
+        printf("iptr[%d]: %d iptr[%d]: %d\n",i+1-ilo,iptr[i+1-ilo],
+            i-ilo,iptr[i-ilo]);
+        for (j=0; j<ncols; j++) {
+          printf("p[%d] i: %d j: %d val: %f\n",me,i,jptr[iptr[i-ilo]+j],vptr[iptr[i-ilo]+j]);
+        }
+      }
+    }
+  }
+
 
   NGA_Sprs_array_destroy(s_a);
-  printf("Got to 8\n");
 
   NGA_Terminate();
   /**
