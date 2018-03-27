@@ -236,10 +236,16 @@ logical pnga_sprs_array_assemble(Integer s_a)
   Integer *map;
   Integer totalvals;
   Integer one = 1;
-  Integer nrows, irow;
+  Integer nrows, irow, idim, jdim;
   char *vals;
-  Integer ncnt, icnt;
+  Integer ncnt, icnt, jcnt;
 
+  for (i=0; i<nvals; i++) {
+    printf("(p[%d] (assemble) i: %d j: %d v: %f\n",me,
+        SPA[hdl].idx[i],SPA[hdl].jdx[i],((double*)SPA[hdl].val)[i]);
+  }
+  idim = SPA[hdl].idim;
+  jdim = SPA[hdl].jdim;
   /* Create a linked list for values on this process and bin values by which
    * processor owns them */
   count = (Integer*)malloc(nproc*sizeof(Integer));
@@ -249,9 +255,11 @@ logical pnga_sprs_array_assemble(Integer s_a)
     count[i] = 0;
     top[i] = -1;
   }
+  printf("p[%d] (assemble) nvals: %d\n",me,nvals);
   for (i=0; i<nvals; i++) {
-    iproc = idx[i]/nproc;
+    iproc = ((idx[i]-1)*nproc)/idim;
     if (iproc >= nproc) iproc = nproc-1;
+    printf("p[%d] (assemble) i: %d idx: %d iproc: %d\n",me,i,idx[i],iproc);
     count[iproc]++;
     list[i] = top[iproc];
     top[iproc] = i;
@@ -268,9 +276,11 @@ logical pnga_sprs_array_assemble(Integer s_a)
   offset = (Integer*)malloc(nproc*sizeof(int));
   for (i=0; i<nproc; i++) {
     iproc = (i+me)%nproc+1;
-    if (count[i] > 0) {
-      offset[i] = (Integer)pnga_read_inc(g_offset,&iproc,count[i]);
+    if (count[iproc-1] > 0) {
+      offset[iproc-1] = pnga_read_inc(g_offset,&iproc,count[iproc-1]);
     }
+    printf("p[%d] (assemble) Got to 1a count[%d]: %d offset[%d]: %d\n",
+        me,iproc-1,count[iproc-1],iproc-1,offset[iproc-1]);
   }
   pnga_pgroup_sync(SPA[hdl].grp);
   size = (Integer*)malloc(nproc*sizeof(Integer));
@@ -285,9 +295,11 @@ logical pnga_sprs_array_assemble(Integer s_a)
   map = (Integer*)malloc(nproc*sizeof(Integer));
   map[0] = 1;
   totalvals = size[0];
+    printf("p[%d] (assemble) Got to 2a map[%d]: %d\n",me,0,map[0]);
   for (i=1; i<nproc; i++) {
     map[i] = map[i-1] + size[i-1];
     totalvals += size[i];
+    printf("p[%d] (assemble) Got to 2a map[%d]: %d\n",me,i,map[i]);
   }
   free(size);
   SPA[hdl].g_data = pnga_create_handle();
@@ -333,13 +345,15 @@ logical pnga_sprs_array_assemble(Integer s_a)
       }
       printf("p[%d] Got to 3d ncnt: %d\n",me,ncnt);
       /* send data to global arrays */
-      lo = (SPA[hdl].idim*iproc)/nproc;
-      lo += (Integer)offset[iproc]+1;
-      hi = lo+count[i]-1;
+      lo = map[iproc];
+      lo += (Integer)offset[iproc];
+      hi = lo+count[iproc]-1;
       printf("p[%d] Got to 3e lo: %d hi: %d\n",me,lo,hi);
-      pnga_put(SPA[hdl].g_data,&lo,&hi,vbuf,&count[iproc]);
-      pnga_put(SPA[hdl].g_i,&lo,&hi,ibuf,&count[iproc]);
-      pnga_put(SPA[hdl].g_j,&lo,&hi,jbuf,&count[iproc]);
+      if (hi>=lo) {
+        pnga_put(SPA[hdl].g_data,&lo,&hi,vbuf,&count[iproc]);
+        pnga_put(SPA[hdl].g_i,&lo,&hi,ibuf,&count[iproc]);
+        pnga_put(SPA[hdl].g_j,&lo,&hi,jbuf,&count[iproc]);
+      }
       free(vbuf);
       free(ibuf);
       free(jbuf);
@@ -366,7 +380,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
     offset[i] = -1;
   }
   for (i=0; i<nvals; i++) {
-    iproc = jdx[i]/nproc;
+    iproc = ((jdx[i]-1)*nproc)/jdim;
     if (iproc >= nproc) iproc = nproc-1;
     count[iproc]++;
     list[i] = top[iproc];
@@ -400,7 +414,6 @@ logical pnga_sprs_array_assemble(Integer s_a)
       Integer* ibuf = SPA[hdl].idx;
       Integer* jbuf = SPA[hdl].jdx;
       SPA[hdl].blkidx[ncnt] = i;
-      SPA[hdl].offset[ncnt] = icnt;
       /* copy values from global array to local buffers */
       SPA[hdl].blksize[ncnt] = 0;
       while(j >= 0) {
@@ -436,9 +449,6 @@ logical pnga_sprs_array_assemble(Integer s_a)
     offset[i] = 0;
     map[i] = 0;
   }
-  for (i=0; i<SPA[hdl].nblocks; i++) {
-    SPA[hdl].offset[i] = i*(nrows+1);
-  }
   offset[me] = (nrows+1)*SPA[hdl].nblocks;
   printf("p[%d] (assemble) Got to 7a\n",me);
   pnga_pgroup_gop(SPA[hdl].grp,pnga_type_f2c(MT_F_INT),offset,nproc,"+");
@@ -463,6 +473,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   top = (Integer*)malloc(nrows*sizeof(Integer));
   ncnt = 0;
   icnt = 0;
+  jcnt = 0;
   for (i=0; i<SPA[hdl].nblocks; i++) {
     char *vptr = vals+ncnt*SPA[hdl].size;
     Integer *ibuf = SPA[hdl].idx + ncnt;
@@ -474,7 +485,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   printf("p[%d] (assemble) Got to 10 blksize[%d]: %d ibuf: %p\n",me,i,SPA[hdl].blksize[i],ibuf);
     for (j=0; j<SPA[hdl].blksize[i]; j++) {
       irow = ibuf[j]-1-SPA[hdl].ilo;
-      printf("Storing irow: %d j: %d\n",irow,j);
+      printf("p[%d] Storing irow: %d j: %d\n",me,irow,j);
       list[j] = top[irow];
       top[irow] = j;
       count[irow]++;
@@ -490,12 +501,13 @@ logical pnga_sprs_array_assemble(Integer s_a)
       printf("p[%d] (assemble) Got to 12a idx[%d*%d][%d]: %d irow: %d\n",me,i,nrows,j,
           (idx+i*(nrows+1))[j],irow);
       while (irow >= 0) {
-        jdx[icnt] = jbuf[irow];
+        jdx[jcnt] = jbuf[irow];
         memcpy((vptr+icnt*elemsize),(vbuf+irow*elemsize),(size_t)elemsize);
   printf("p[%d] (assemble) idx: %d jdx: %d val: %f\n",me,j,
-      jdx[icnt],*((double*)(vptr+icnt*elemsize)));
+      jdx[jcnt],*((double*)(vptr+icnt*elemsize)));
         irow = list[irow];
         icnt++;
+        jcnt++;
       }
     }
     if (top[j] >= 0) (idx+i*(nrows+1))[nrows] = icnt; 
@@ -503,6 +515,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
       me,i,nrows,nrows,(idx+i*nrows)[nrows]);
     /* TODO: (maybe) sort each row so that individual elements are arrange in
      * order of increasing j */
+    SPA[hdl].offset[i] = ncnt;
     ncnt += SPA[hdl].blksize[i];
   printf("p[%d] (assemble) Got to 14 iptr: %p jptr: %p vptr: %p\n",me,idx,jdx,vptr);
   }
@@ -625,7 +638,7 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
 
     /* shift pointers to correct location */
     ld = SPA[hdl].ihi - SPA[hdl].ilo + 2;
-    lptr = lptr + offset;
+    lptr = lptr + offset*SPA[hdl].size;
     tjdx = tjdx + offset;
     tidx = tidx + ld*index;
     

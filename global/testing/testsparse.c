@@ -89,17 +89,20 @@ int main(int argc, char **argv) {
   MP_INIT(argc,argv);
   /* Initialize GA */
   NGA_Initialize();
-  printf("Got to 1\n");
+  printf("p[%d] Got to 1\n",me);
 
   xdim = NDIM;
   ydim = NDIM;
   me = GA_Nodeid();
   nproc = GA_Nnodes();
-  printf("Got to 2\n");
+  printf("p[%d] Got to 2\n",me);
 
   /* factor array */
   grid_factor(nproc, xdim, ydim, &ipx, &ipy);
-  printf("Got to 3\n");
+  idx = ipy;
+  ipy = ipx;
+  ipx = idx;
+  printf("p[%d] Got to 3 ipx: %d ipy: %d\n",me,ipx,ipy);
   /* figure out process location in proc grid */
   idx = me%ipx;
   idy = (me-idx)/ipx;
@@ -116,11 +119,11 @@ int main(int argc, char **argv) {
   } else {
     jhi = ydim-1;
   }
-  printf("Got to 4\n");
+  printf("p[%d] Got to 4 ilo: %d ihi: %d jlo: %d jhi: %d\n",me,ilo,ihi,jlo,jhi);
  
   /* create sparse array */
   s_a = NGA_Sprs_array_create(xdim, ydim, C_DBL);
-  printf("Got to 5\n");
+  printf("p[%d] Got to 5\n",me);
   if (ydim%2 == 0) {
     ld = ydim/2;
   } else {
@@ -135,25 +138,25 @@ int main(int argc, char **argv) {
       }
     }
   }
-  printf("Got to 6\n");
+  printf("p[%d] Got to 6\n",me);
   NGA_Sprs_array_assemble(s_a);
-  printf("Got to 7\n");
+  printf("p[%d] Got to 7\n",me);
 
   /* access array blocks an check values for correctness */
   NGA_Sprs_array_row_distribution(s_a,me,&ilo,&ihi);
-  printf("Got to 8 sizeof(long): %d ilo: %d ihi: %d\n",sizeof(long),ilo,ihi);
+  printf("p[%d] Got to 8 sizeof(long): %d ilo: %d ihi: %d\n",me,sizeof(long),ilo,ihi);
   for (iproc=0; iproc<nproc; iproc++) {
     NGA_Sprs_array_column_distribution(s_a,iproc,&jlo,&jhi);
-    printf("Got to 9 jlo: %d jhi: %d iproc: %d\n",jlo,jhi,iproc);
+    printf("p[%d] Got to 9 jlo: %d jhi: %d iproc: %d\n",me,jlo,jhi,iproc);
     NGA_Sprs_array_access_col_block(s_a,iproc,&iptr,&jptr,&vptr);
-    printf("Got to 10 iptr: %p jptr: %p vptr: %p\n",iptr,jptr,vptr);
+    printf("p[%d] Got to 10 iptr: %p jptr: %p vptr: %p\n",me,iptr,jptr,vptr);
     for (i=0; i<4; i++) {
       printf("i: %d j:%d v: %f\n",iptr[i],jptr[i],vptr[i]);
     }
     if (vptr != NULL) {
       for (i=ilo; i<=ihi; i++) {
         ncols = iptr[i+1-ilo]-iptr[i-ilo];
-        printf("iptr[%d]: %d iptr[%d]: %d\n",i+1-ilo,iptr[i+1-ilo],
+        printf("p[%d] iptr[%d]: %d iptr[%d]: %d\n",me,i+1-ilo,iptr[i+1-ilo],
             i-ilo,iptr[i-ilo]);
         for (j=0; j<ncols; j++) {
           printf("p[%d] i: %d j: %d val: %f\n",me,i,jptr[iptr[i-ilo]+j],vptr[iptr[i-ilo]+j]);
