@@ -2974,6 +2974,7 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
     int acc_type = 0;
     char *acc_buffer = NULL;
     stride_t *stride = NULL;
+    int use_eager = 0;
 
 #if DEBUG
     printf("[%d] _acc_packed_handler\n", g_state.rank);
@@ -3006,18 +3007,35 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
             break;
         default: COMEX_ASSERT(0);
     }
+    use_eager = _eager_check(sizeof_scale+sizeof(stride_t)+header->length);
 
     scale = payload;
     stride = (stride_t*)(payload + sizeof_scale);
 
-    if ((unsigned)header->length > static_server_buffer_size) {
-        acc_buffer = malloc(header->length);
+    if (use_eager) {
+        acc_buffer = payload+sizeof_scale+sizeof(stride_t);
     }
     else {
-        acc_buffer = static_server_buffer;
-    }
+        if ((unsigned)header->length > static_server_buffer_size) {
+            acc_buffer = malloc(header->length);
+        }
+        else {
+            acc_buffer = static_server_buffer;
+        }
 
-    server_recv(acc_buffer, header->length, proc);
+        {
+            /* we receive the buffer backwards */
+            char *buf = acc_buffer + header->length;
+            int bytes_remaining = header->length;
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                buf -= size;
+                server_recv(buf, size, proc);
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
+    }
 
     reg_entry = reg_cache_find(
             header->rank, header->remote_address, header->length);
@@ -3088,8 +3106,12 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
         sem_post(semaphores[header->rank]);
     }
 
-    if ((unsigned)header->length > static_server_buffer_size) {
-        free(acc_buffer);
+    if (use_eager) {
+    }
+    else {
+        if ((unsigned)header->length > static_server_buffer_size) {
+            free(acc_buffer);
+        }
     }
 }
 
@@ -5049,6 +5071,7 @@ STATIC void nb_accs_packed(
         int scale_size = 0;
         op_t operation = OP_NULL;
         int master_rank = -1;
+        int use_eager = 0;
 
         switch (datatype) {
             case COMEX_ACC_INT:
@@ -5077,13 +5100,19 @@ STATIC void nb_accs_packed(
                 break;
             default: COMEX_ASSERT(0);
         }
+        use_eager = _eager_check(scale_size+sizeof(stride_t)+packed_index);
 
         master_rank = g_state.master[proc];
 
         /* only fence on the master */
         fence_array[master_rank] = 1;
 
-        message_size = sizeof(header_t) + scale_size + sizeof(stride_t);
+        if (use_eager) {
+            message_size = sizeof(header_t) + scale_size + sizeof(stride_t) + packed_index;
+        }
+        else {
+            message_size = sizeof(header_t) + scale_size + sizeof(stride_t);
+        }
         message = malloc(message_size);
         COMEX_ASSERT(message);
         header = (header_t*)message;
@@ -5094,8 +5123,29 @@ STATIC void nb_accs_packed(
         header->length = packed_index;
         (void)memcpy(message+sizeof(header_t), scale, scale_size);
         (void)memcpy(message+sizeof(header_t)+scale_size, &stride, sizeof(stride_t));
-        nb_send_header(message, message_size, master_rank, nb);
-        nb_send_header(packed_buffer, packed_index, master_rank, nb);
+        if (use_eager) {
+            (void)memcpy(message+sizeof(header_t)+scale_size+sizeof(stride_t),
+                    packed_buffer, packed_index);
+            nb_send_header(message, message_size, master_rank, nb);
+        }
+        else {
+            /* we send the buffer backwards */
+            char *buf = packed_buffer + packed_index;
+            int bytes_remaining = packed_index;
+            nb_send_header(message, message_size, master_rank, nb);
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                buf -= size;
+                if (size == bytes_remaining) {
+                    nb_send_header(buf, size, master_rank, nb);
+                }
+                else {
+                    nb_send_buffer(buf, size, master_rank, nb);
+                }
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
     }
 }
 
