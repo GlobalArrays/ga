@@ -191,7 +191,7 @@ STATIC const char *str_mpi_retval(int retval);
 STATIC void server_send(void *buf, int count, int dest);
 STATIC void server_recv(void *buf, int count, int source);
 STATIC void _progress_server();
-STATIC void _put_handler(header_t *header, int proc);
+STATIC void _put_handler(header_t *header, char *payload, int proc);
 STATIC void _put_packed_handler(header_t *header, int proc);
 STATIC void _put_iov_handler(header_t *header, int proc);
 STATIC void _get_handler(header_t *header, int proc);
@@ -257,6 +257,7 @@ STATIC void nb_accv(int datatype, void *scale,
 STATIC void nb_accv_packed(int datatype, void *scale,
         comex_giov_t *iov, int proc, nb_t *nb);
 STATIC void _fence_master(int master_rank);
+STATIC int _eager_check(int extra_bytes);
 
 /* other functions */
 STATIC int packed_size(int *src_stride, int *count, int stride_levels);
@@ -935,7 +936,13 @@ int comex_fence_all(comex_group_t group)
 }
 
 
-void _fence_master(int master_rank)
+STATIC int _eager_check(int extra_bytes)
+{
+    return (((int)sizeof(header_t))+extra_bytes) < eager_threshold;
+}
+
+
+STATIC void _fence_master(int master_rank)
 {
 #if DEBUG
     printf("[%d] _fence_master(proc=%d)\n", g_state.rank, proc);
@@ -2424,7 +2431,7 @@ STATIC void _progress_server()
         /* dispatch message handler */
         switch (header->operation) {
             case OP_PUT:
-                _put_handler(header, source);
+                _put_handler(header, payload, source);
                 break;
             case OP_PUT_PACKED:
                 _put_packed_handler(header, source);
@@ -2536,11 +2543,12 @@ STATIC void _progress_server()
 }
 
 
-STATIC void _put_handler(header_t *header, int proc)
+STATIC void _put_handler(header_t *header, char *payload, int proc)
 {
     reg_entry_t *reg_entry = NULL;
     void *mapped_offset = NULL;
     int retval = 0;
+    int use_eager = _eager_check(header->length);
 
 #if DEBUG
     printf("[%d] _put_handler rem=%p loc=%p rem_rank=%d len=%d\n",
@@ -2556,7 +2564,12 @@ STATIC void _put_handler(header_t *header, int proc)
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(
             reg_entry, header->remote_address);
-    server_recv(mapped_offset, header->length, proc);
+    if (use_eager) {
+        memcpy(mapped_offset, payload, header->length);
+    }
+    else {
+        server_recv(mapped_offset, header->length, proc);
+    }
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -4278,20 +4291,36 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
     }
 
     {
+        char *message = NULL;
+        int message_size = 0;
         header_t *header = NULL;
         int master_rank = -1;
+        int use_eager = _eager_check(bytes);
 
         master_rank = g_state.master[proc];
         /* only fence on the master */
         fence_array[master_rank] = 1;
-        header = malloc(sizeof(header_t));
+        if (use_eager) {
+            message_size = sizeof(header_t) + bytes;
+        }
+        else {
+            message_size = sizeof(header_t);
+        }
+        message = malloc(message_size);
+        header = (header_t*)message;
         header->operation = OP_PUT;
         header->remote_address = dst;
         header->local_address = src;
         header->rank = proc;
         header->length = bytes;
-        nb_send_header(header, sizeof(header_t), master_rank, nb);
-        nb_send_buffer(src, bytes, master_rank, nb);
+        if (use_eager) {
+            memcpy(message+sizeof(header_t), src, bytes);
+            nb_send_header(message, message_size, master_rank, nb);
+        }
+        else {
+            nb_send_header(header, sizeof(header_t), master_rank, nb);
+            nb_send_buffer(src, bytes, master_rank, nb);
+        }
     }
 }
 
