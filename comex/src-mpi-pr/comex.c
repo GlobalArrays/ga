@@ -196,7 +196,7 @@ STATIC void _put_handler(header_t *header, char *payload, int proc);
 STATIC void _put_packed_handler(header_t *header, char *payload, int proc);
 STATIC void _put_iov_handler(header_t *header, int proc);
 STATIC void _get_handler(header_t *header, int proc);
-STATIC void _get_packed_handler(header_t *header, int proc);
+STATIC void _get_packed_handler(header_t *header, char *payload, int proc);
 STATIC void _get_iov_handler(header_t *header, int proc);
 STATIC void _acc_handler(header_t *header, char *scale, int proc);
 STATIC void _acc_packed_handler(header_t *header, char *payload, int proc);
@@ -908,7 +908,7 @@ STATIC int _eager_check(int extra_bytes)
 STATIC void _fence_master(int master_rank)
 {
 #if DEBUG
-    printf("[%d] _fence_master(proc=%d)\n", g_state.rank, proc);
+    printf("[%d] _fence_master(master=%d)\n", g_state.rank, master_rank);
 #endif
 
     if (fence_array[master_rank]) {
@@ -2406,7 +2406,7 @@ STATIC void _progress_server()
                 _get_handler(header, source);
                 break;
             case OP_GET_PACKED:
-                _get_packed_handler(header, source);
+                _get_packed_handler(header, payload, source);
                 break;
             case OP_GET_IOV:
                 _get_iov_handler(header, source);
@@ -2538,8 +2538,7 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
             server_recv(buf, size, proc);
             buf += size;
             bytes_remaining -= size;
-        }
-        while (bytes_remaining > 0);
+        } while (bytes_remaining > 0);
     }
 }
 
@@ -2727,17 +2726,27 @@ STATIC void _get_handler(header_t *header, int proc)
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
-    server_send(mapped_offset, header->length, proc);
+    {
+        char *buf = (char*)mapped_offset;
+        int bytes_remaining = header->length;
+        do {
+            int size = bytes_remaining>max_message_size ?
+                max_message_size : bytes_remaining;
+            server_send(buf, size, proc);
+            buf += size;
+            bytes_remaining -= size;
+        } while (bytes_remaining > 0);
+    }
 }
 
 
-STATIC void _get_packed_handler(header_t *header, int proc)
+STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
 {
     reg_entry_t *reg_entry = NULL;
     void *mapped_offset = NULL;
     char *packed_buffer = NULL;
     int packed_index = 0;
-    stride_t *stride_src = NULL;
+    stride_t *stride_src = (stride_t*)payload;
 
 #if DEBUG
     printf("[%d] _get_packed_handler proc=%d\n", g_state.rank, proc);
@@ -2753,9 +2762,6 @@ STATIC void _get_packed_handler(header_t *header, int proc)
 
     assert(OP_GET_PACKED == header->operation);
 
-    stride_src = malloc(sizeof(stride_t));
-    COMEX_ASSERT(stride_src);
-    server_recv(stride_src, sizeof(stride_t), proc);
     COMEX_ASSERT(stride_src->stride_levels >= 0);
     COMEX_ASSERT(stride_src->stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
@@ -2768,9 +2774,19 @@ STATIC void _get_packed_handler(header_t *header, int proc)
             stride_src->stride, stride_src->count, stride_src->stride_levels,
             &packed_index);
 
-    server_send(packed_buffer, packed_index, proc);
+    {
+        /* we send the buffer backwards */
+        char *buf = packed_buffer + packed_index;
+        int bytes_remaining = packed_index;
+        do {
+            int size = bytes_remaining>max_message_size ?
+                max_message_size : bytes_remaining;
+            buf -= size;
+            server_send(buf, size, proc);
+            bytes_remaining -= size;
+        } while (bytes_remaining > 0);
+    }
 
-    free(stride_src);
     free(packed_buffer);
 }
 
@@ -4312,8 +4328,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
                 nb_send_buffer(buf, size, master_rank, nb);
                 buf += size;
                 bytes_remaining -= size;
-            }
-            while (bytes_remaining > 0);
+            } while (bytes_remaining > 0);
         }
     }
 }
@@ -4369,7 +4384,18 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->local_address = dst;
         header->rank = proc;
         header->length = bytes;
-        nb_recv(dst, bytes, master_rank, nb); /* prepost receive */
+        {
+            /* prepost all receives */
+            char *buf = (char*)dst;
+            int bytes_remaining = bytes;
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                nb_recv(buf, size, master_rank, nb);
+                buf += size;
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
         nb_send_header(header, sizeof(header_t), master_rank, nb);
     }
 }
@@ -4735,7 +4761,7 @@ STATIC void nb_gets_packed(
         int *count, int stride_levels, int proc, nb_t *nb)
 {
     int i;
-    stride_t *stride_src = NULL;
+    stride_t stride_src;
     stride_t *stride_dst = NULL;
 
 #if DEBUG
@@ -4755,22 +4781,20 @@ STATIC void nb_gets_packed(
     COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     /* copy src info into structure */
-    stride_src = malloc(sizeof(stride_t));
-    COMEX_ASSERT(stride_src);
-    stride_src->ptr = src;
-    stride_src->stride_levels = stride_levels;
-    stride_src->count[0] = count[0];
+    stride_src.ptr = src;
+    stride_src.stride_levels = stride_levels;
+    stride_src.count[0] = count[0];
     for (i=0; i<stride_levels; ++i) {
-        stride_src->stride[i] = src_stride[i];
-        stride_src->count[i+1] = count[i+1];
+        stride_src.stride[i] = src_stride[i];
+        stride_src.count[i+1] = count[i+1];
     }
     for (/*no init*/; i<COMEX_MAX_STRIDE_LEVEL; ++i) {
-        stride_src->stride[i] = -1;
-        stride_src->count[i+1] = -1;
+        stride_src.stride[i] = -1;
+        stride_src.count[i+1] = -1;
     }
 
-    COMEX_ASSERT(stride_src->stride_levels >= 0);
-    COMEX_ASSERT(stride_src->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+    COMEX_ASSERT(stride_src.stride_levels >= 0);
+    COMEX_ASSERT(stride_src.stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     /* copy dst info into structure */
     stride_dst = malloc(sizeof(stride_t));
@@ -4791,6 +4815,8 @@ STATIC void nb_gets_packed(
     COMEX_ASSERT(stride_dst->stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     {
+        char *message = NULL;
+        int message_size = 0;
         int recv_size = 0;
         char *packed_buffer = NULL;
         header_t *header = NULL;
@@ -4798,7 +4824,9 @@ STATIC void nb_gets_packed(
 
         master_rank = g_state.master[proc];
 
-        header = malloc(sizeof(header_t));
+        message_size = sizeof(header_t) + sizeof(stride_t);
+        message = malloc(message_size);
+        header = (header_t*)message;
         COMEX_ASSERT(header);
         header->operation = OP_GET_PACKED;
         header->remote_address = src;
@@ -4811,9 +4839,26 @@ STATIC void nb_gets_packed(
         COMEX_ASSERT(recv_size > 0);
         packed_buffer = malloc(recv_size);
         COMEX_ASSERT(packed_buffer);
-        nb_recv_packed(packed_buffer, recv_size, master_rank, nb, stride_dst);
-        nb_send_header(header, sizeof(header_t), master_rank, nb);
-        nb_send_header(stride_src, sizeof(stride_t), master_rank, nb);
+        {
+            /* prepost all receives backward */
+            char *buf = (char*)packed_buffer + recv_size;
+            int bytes_remaining = recv_size;
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                buf -= size;
+                if (size == bytes_remaining) {
+                    /* on the last recv, indicate a packed recv */
+                    nb_recv_packed(buf, size, master_rank, nb, stride_dst);
+                }
+                else {
+                    nb_recv(buf, size, master_rank, nb);
+                }
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
+        (void)memcpy(message+sizeof(header_t), &stride_src, sizeof(stride_t));
+        nb_send_header(message, message_size, master_rank, nb);
     }
 }
 
