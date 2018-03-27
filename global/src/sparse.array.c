@@ -346,9 +346,11 @@ logical pnga_sprs_array_assemble(Integer s_a)
     count[i] = 0;
     top[i] = -1;
   }
+  printf("p[%d] (assemble) nvals: %d\n",me,nvals);
   for (i=0; i<nvals; i++) {
     iproc = (idx[i]*nproc)/idim;
     if (iproc >= nproc) iproc = nproc-1;
+    printf("p[%d] (assemble) i: %d idx: %d iproc: %d\n",me,i,idx[i],iproc);
     count[iproc]++;
     list[i] = top[iproc];
     top[iproc] = i;
@@ -413,6 +415,8 @@ logical pnga_sprs_array_assemble(Integer s_a)
        * processor */
       offset[iproc-1] = (int64_t)pnga_read_inc(g_offset,&iproc,count[iproc-1]);
     }
+    printf("p[%d] (assemble) Got to 1a count[%d]: %d offset[%d]: %d\n",
+        me,iproc-1,count[iproc-1],iproc-1,offset[iproc-1]);
   }
   pnga_pgroup_sync(SPA[hdl].grp);
   size = (int64_t*)malloc(nproc*sizeof(int64_t));
@@ -429,6 +433,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   /* internal indices are unit based so start map at 1 */
   map[0] = 1;
   totalvals = size[0];
+    printf("p[%d] (assemble) Got to 2a map[%d]: %d\n",me,0,map[0]);
   for (i=1; i<nproc; i++) {
     map[i] = map[i-1] + (Integer)size[i-1];
     totalvals += (Integer)size[i];
