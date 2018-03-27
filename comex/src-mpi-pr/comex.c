@@ -3,19 +3,20 @@
 #endif
 
 /* C and/or system headers */
+#include <assert.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <pthread.h>
+#include <sched.h>
 #include <semaphore.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <sys/errno.h>
 #include <sys/mman.h>
-#include <pthread.h>
 #include <unistd.h>
-#include <sched.h>
-#include <assert.h>
-#include <signal.h>
 
 /* 3rd party headers */
 #include <mpi.h>
@@ -395,49 +396,11 @@ int comex_init()
             COMEX_ENABLE_ACC_IOV = atoi(value);
         }
 
-        max_message_size = -1; /* default */
+        max_message_size = INT_MAX; /* default */
         value = getenv("COMEX_MAX_MESSAGE_SIZE");
         if (NULL != value) {
             max_message_size = atoi(value);
         }
-#if 0
-        if (-1 == max_message_size) {
-            value = getenv("MPICH_CH3_EAGER_MAX_MSG_SIZE");
-            if (NULL != value) {
-                max_message_size = atoi(value);
-            }
-        }
-        if (-1 == max_message_size) {
-            value = getenv("MV2_IBA_EAGER_THRESHOLD");
-            if (NULL != value) {
-                max_message_size = atoi(value);
-            }
-        }
-        if (-1 == max_message_size) {
-            value = getenv("I_MPI_EAGER_THRESHOLD");
-            if (NULL != value) {
-                max_message_size = atoi(value);
-            }
-        }
-        if (-1 == max_message_size) {
-            value = getenv("MPICH_GNI_MAX_EAGER_MSG_SIZE");
-            if (NULL != value) {
-                max_message_size = atoi(value);
-            }
-        }
-        if (-1 == max_message_size) {
-            value = getenv("OMPI_MCA_btl_sm_eager_limit");
-            if (NULL != value) {
-                max_message_size = atoi(value);
-            }
-        }
-        if (-1 == max_message_size) {
-            value = getenv("OMPI_MCA_btl_openib_eager_limit");
-            if (NULL != value) {
-                max_message_size = atoi(value);
-            }
-        }
-#endif
 
 #if DEBUG
         if (0 == g_state.rank) {
@@ -2547,7 +2510,6 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
 {
     reg_entry_t *reg_entry = NULL;
     void *mapped_offset = NULL;
-    int retval = 0;
     int use_eager = _eager_check(header->length);
 
 #if DEBUG
@@ -2568,9 +2530,17 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
         memcpy(mapped_offset, payload, header->length);
     }
     else {
-        server_recv(mapped_offset, header->length, proc);
+        char *buf = (char*)mapped_offset;
+        int bytes_remaining = header->length;
+        do {
+            int size = bytes_remaining>max_message_size ? max_message_size
+                                                        : bytes_remaining;
+            server_recv(buf, size, proc);
+            buf += size;
+            bytes_remaining -= size;
+        }
+        while (bytes_remaining > 0);
     }
-    CHECK_MPI_RETVAL(retval);
 }
 
 
@@ -4318,8 +4288,17 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             nb_send_header(message, message_size, master_rank, nb);
         }
         else {
+            char *buf = (char*)src;
+            int bytes_remaining = bytes;
             nb_send_header(header, sizeof(header_t), master_rank, nb);
-            nb_send_buffer(src, bytes, master_rank, nb);
+            do {
+                int size = bytes_remaining>max_message_size ? max_message_size
+                                                            : bytes_remaining;
+                nb_send_buffer(buf, size, master_rank, nb);
+                buf += size;
+                bytes_remaining -= size;
+            }
+            while (bytes_remaining > 0);
         }
     }
 }
