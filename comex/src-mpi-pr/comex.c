@@ -2881,6 +2881,7 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
     reg_entry_t *reg_entry = NULL;
     void *mapped_offset = NULL;
     char *acc_buffer = NULL;
+    int use_eager = 0;
 
 #if DEBUG
     printf("[%d] _acc_handler\n", g_state.rank);
@@ -2913,20 +2914,37 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
             break;
         default: COMEX_ASSERT(0);
     }
-
-    if ((unsigned)header->length > static_server_buffer_size) {
-        acc_buffer = malloc(header->length);
-    }
-    else {
-        acc_buffer = static_server_buffer;
-    }
-
-    server_recv(acc_buffer, header->length, proc);
+    use_eager = _eager_check(sizeof_scale+header->length);
 
     reg_entry = reg_cache_find(
             header->rank, header->remote_address, header->length);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
+
+    if (use_eager) {
+        acc_buffer = scale + sizeof_scale;
+    }
+    else {
+        if ((unsigned)header->length > static_server_buffer_size) {
+            acc_buffer = malloc(header->length);
+        }
+        else {
+            acc_buffer = static_server_buffer;
+        }
+
+        {
+            char *buf = (char*)acc_buffer;
+            int bytes_remaining = header->length;
+
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                server_recv(buf, size, proc);
+                buf += size;
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
+    }
 
     if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
         sem_wait(semaphores[header->rank]);
@@ -2937,8 +2955,12 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
         _acc(acc_type, header->length, mapped_offset, acc_buffer, scale);
     }
 
-    if ((unsigned)header->length > static_server_buffer_size) {
-        free(acc_buffer);
+    if (use_eager) {
+    }
+    else {
+        if ((unsigned)header->length > static_server_buffer_size) {
+            free(acc_buffer);
+        }
     }
 }
 
@@ -4451,6 +4473,7 @@ STATIC void nb_acc(int datatype, void *scale,
         int message_size = 0;
         int scale_size = 0;
         op_t operation = OP_NULL;
+        int use_eager = 0;
 
         switch (datatype) {
             case COMEX_ACC_INT:
@@ -4479,13 +4502,19 @@ STATIC void nb_acc(int datatype, void *scale,
                 break;
             default: COMEX_ASSERT(0);
         }
+        use_eager = _eager_check(scale_size+bytes);
 
         master_rank = g_state.master[proc];
 
         /* only fence on the master */
         fence_array[master_rank] = 1;
 
-        message_size = sizeof(header_t) + scale_size;
+        if (use_eager) {
+            message_size = sizeof(header_t) + scale_size + bytes;
+        }
+        else {
+            message_size = sizeof(header_t) + scale_size;
+        }
         message = malloc(message_size);
         COMEX_ASSERT(message);
         header = (header_t*)message;
@@ -4495,8 +4524,23 @@ STATIC void nb_acc(int datatype, void *scale,
         header->rank = proc;
         header->length = bytes;
         (void)memcpy(message+sizeof(header_t), scale, scale_size);
-        nb_send_header(message, message_size, master_rank, nb);
-        nb_send_buffer(src, bytes, master_rank, nb);
+        if (use_eager) {
+            (void)memcpy(message+sizeof(header_t)+scale_size,
+                    src, bytes);
+            nb_send_header(message, message_size, master_rank, nb);
+        }
+        else {
+            char *buf = (char*)src;
+            int bytes_remaining = bytes;
+            nb_send_header(message, message_size, master_rank, nb);
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                nb_send_buffer(buf, size, master_rank, nb);
+                buf += size;
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
     }
 }
 
