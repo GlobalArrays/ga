@@ -353,7 +353,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
     list[i] = top[iproc];
     top[iproc] = i;
   }
-  printf("(assemble) Got to 1\n");
+  printf("p[%d] (assemble) Got to 1\n",me);
 
   /* Create global array to store information on sparse blocks */
   {
@@ -420,7 +420,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   ilo = 1;
   ihi = nproc;
   pnga_get(g_offset,&ilo,&ihi,size,&nproc);
-  printf("(assemble) Got to 2\n");
+  printf("p[%d] (assemble) Got to 2\n",me);
 
   /* we now know how much data is on all processors (size) and have an offset on
    * remote processors that we can use to store data from this processor. Start by
@@ -466,6 +466,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   /* fill up global arrays with data */
   for (i=0; i<nproc; i++) {
     iproc = (i+me)%nproc;
+    printf("p[%d] Got to 3a count[%d]: %d\n",me,i,count[i]);
     if (count[iproc] > 0) {
       Integer j;
       ncnt = 0;
@@ -482,6 +483,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
         jbuf = (int*)malloc(count[iproc]*sizeof(int));
       } 
       vals = SPA[hdl].val;
+      printf("p[%d] Got to 3b vals: %p\n",me,vals);
       /* fill up buffers with data going to process iproc */
       j = top[iproc]; 
       if (longidx) {
@@ -501,6 +503,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
           j = list[j];
         }
       }
+      printf("p[%d] Got to 3d ncnt: %d\n",me,ncnt);
       /* send data to global arrays */
       lo = map[iproc];
       lo += (Integer)offset[iproc];
@@ -530,7 +533,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   free(SPA[hdl].idx);
   free(SPA[hdl].jdx);
   free(SPA[hdl].val);
-  printf("(assemble) Got to 4\n");
+  printf("p[%d] (assemble) Got to 4\n",me);
   
   /* All data has been moved so that each process has a row block of the sparse
    * matrix. Now need to organize data within each process into column blocks.
@@ -793,6 +796,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
      * order of increasing j */
     SPA[hdl].offset[i] = ncnt;
     ncnt += SPA[hdl].blksize[i];
+  printf("p[%d] (assemble) Got to 14 iptr: %p jptr: %p vptr: %p\n",me,idx,jdx,vptr);
   }
   /* Find maximum number of non-zeros per row on this processors */
   max_nnz = 0;
@@ -1034,6 +1038,7 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
   }
   index = -1;
   for (i=0; i<SPA[hdl].nblocks; i++) {
+    printf("icol: %d blkidx[%d]: %d\n",icol,i,SPA[hdl].blkidx[i]);
     if (SPA[hdl].blkidx[i] == icol) {
       index = i;
       break;
@@ -1057,10 +1062,12 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
     Integer lo, hi, ld;
     Integer me = pnga_pgroup_nodeid(SPA[hdl].grp);
     Integer offset = SPA[hdl].offset[index];
+    printf("offset: %d index: %d\n",offset,index);
 
     /* access local portions of GAs containing data */
     pnga_distribution(SPA[hdl].g_data,me,&lo,&hi);
     pnga_access_ptr(SPA[hdl].g_data,&lo,&hi,&lptr,&ld);
+    printf("lo: %d hi: %d lptr: %p\n",lo,hi,lptr);
     pnga_distribution(SPA[hdl].g_i,me,&lo,&hi);
     if (longidx) {
       pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&tlidx,&ld);

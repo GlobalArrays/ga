@@ -5356,11 +5356,7 @@ int NGA_Sprs_array_create(int idim, int jdim, int type)
 {
   Integer i = (Integer)idim;
   Integer j = (Integer)jdim;
-<<<<<<< HEAD
   return (int)wnga_sprs_array_create(i,j,type,sizeof(int));
-=======
-  return (int)wnga_sprs_array_create(i,j,type);
->>>>>>> bd42ca4... Added sparse array routines to user interface and to the build system.
 }
 
 int NGA_Sprs_array_create64(int64_t idim, int64_t jdim, int type)
