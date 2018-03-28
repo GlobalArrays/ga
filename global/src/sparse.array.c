@@ -900,14 +900,19 @@ logical pnga_sprs_array_assemble(Integer s_a)
   pnga_release(SPA[hdl].g_data,&lo,&hi);
   pnga_release(SPA[hdl].g_i,&lo,&hi);
   pnga_release(SPA[hdl].g_j,&lo,&hi);
+  printf("p[%d] (assemble) Got to 17\n",me);
 
   pnga_destroy(g_offset);
 
   free(row_info);
   free(count);
+  printf("p[%d] (assemble) Got to 17a\n",me);
   free(top);
+  printf("p[%d] (assemble) Got to 17b\n",me);
   free(list);
+  printf("p[%d] (assemble) Got to 17c\n",me);
   free(offset);
+  printf("p[%d] (assemble) Got to 17d\n",me);
   free(map);
 
   SPA[hdl].ready = 1;
