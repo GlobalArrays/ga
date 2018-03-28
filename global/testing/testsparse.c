@@ -6,7 +6,7 @@
 #include "ga.h"
 #include "mp3.h"
 
-#define NDIM 8
+#define NDIM 1024
 
 #define MAX_FACTOR 1024
 void grid_factor(int p, int xdim, int ydim, int *idx, int *idy) {
@@ -80,29 +80,28 @@ int main(int argc, char **argv) {
   int me, nproc;
   int xdim, ydim, ipx, ipy, idx, idy;
   int ilo, ihi, jlo, jhi;
-  int i, j, iproc, ld, ncols;
+  int i, j, iproc, ld, ncols, ncnt;
   double val;
   double *vptr;
   long *iptr = NULL, *jptr = NULL;
+  int ok;
   /* Intitialize a message passing library */
   one = 1;
   MP_INIT(argc,argv);
   /* Initialize GA */
   NGA_Initialize();
-  printf("p[%d] Got to 1\n",me);
 
   xdim = NDIM;
   ydim = NDIM;
   me = GA_Nodeid();
   nproc = GA_Nnodes();
-  printf("p[%d] Got to 2\n",me);
 
   /* factor array */
   grid_factor(nproc, xdim, ydim, &ipx, &ipy);
-  idx = ipy;
-  ipy = ipx;
-  ipx = idx;
-  printf("p[%d] Got to 3 ipx: %d ipy: %d\n",me,ipx,ipy);
+  if (me == 0) {
+    printf("Testing sparse array on %d processors\n",nproc);
+    printf("\n    Using %d X %d processor grid\n",ipx,ipy);
+  }
   /* figure out process location in proc grid */
   idx = me%ipx;
   idy = (me-idx)/ipx;
@@ -119,11 +118,9 @@ int main(int argc, char **argv) {
   } else {
     jhi = ydim-1;
   }
-  printf("p[%d] Got to 4 ilo: %d ihi: %d jlo: %d jhi: %d\n",me,ilo,ihi,jlo,jhi);
  
   /* create sparse array */
   s_a = NGA_Sprs_array_create(xdim, ydim, C_DBL);
-  printf("p[%d] Got to 5\n",me);
   if (ydim%2 == 0) {
     ld = ydim/2;
   } else {
@@ -138,31 +135,38 @@ int main(int argc, char **argv) {
       }
     }
   }
-  printf("p[%d] Got to 6\n",me);
-  NGA_Sprs_array_assemble(s_a);
-  printf("p[%d] Got to 7\n",me);
+  if (NGA_Sprs_array_assemble(s_a) && me == 0) {
+    printf("\n    Sparse array assembly completed\n");
+  }
 
   /* access array blocks an check values for correctness */
   NGA_Sprs_array_row_distribution(s_a,me,&ilo,&ihi);
-  printf("p[%d] Got to 8 sizeof(long): %d ilo: %d ihi: %d\n",me,sizeof(long),ilo,ihi);
+  ok = 1;
+  ncnt = 0;
   for (iproc=0; iproc<nproc; iproc++) {
     NGA_Sprs_array_column_distribution(s_a,iproc,&jlo,&jhi);
-    printf("p[%d] Got to 9 jlo: %d jhi: %d iproc: %d\n",me,jlo,jhi,iproc);
     NGA_Sprs_array_access_col_block(s_a,iproc,&iptr,&jptr,&vptr);
-    printf("p[%d] Got to 10 iptr: %p jptr: %p vptr: %p\n",me,iptr,jptr,vptr);
-    for (i=0; i<4; i++) {
-      printf("i: %d j:%d v: %f\n",iptr[i],jptr[i],vptr[i]);
-    }
     if (vptr != NULL) {
       for (i=ilo; i<=ihi; i++) {
         ncols = iptr[i+1-ilo]-iptr[i-ilo];
-        printf("p[%d] iptr[%d]: %d iptr[%d]: %d\n",me,i+1-ilo,iptr[i+1-ilo],
-            i-ilo,iptr[i-ilo]);
         for (j=0; j<ncols; j++) {
-          printf("p[%d] i: %d j: %d val: %f\n",me,i,jptr[iptr[i-ilo]+j],vptr[iptr[i-ilo]+j]);
+          ncnt++;
+          idy = jptr[iptr[i-ilo]+j];
+          if ((i-1)%2 != 0 || (idy-1)%2 != 0) ok = 0;
+          val = (double)((i/2)*ld+idy/2);
+          if (abs(val-vptr[iptr[i-ilo]+j]) > 1.0e-5) {
+            ok = 0;
+            printf("p[%d] i: %d j: %d val: %f\n",me,i,
+                jptr[iptr[i-ilo]+j],vptr[iptr[i-ilo]+j]);
+          }
         }
       }
     }
+  }
+  GA_Igop(&ncnt,one,"+");
+  if (ncnt != (xdim/2)*(ydim/2)) ok = 0;
+  if (ok && me==0) {
+    printf("\n    Values in sparse array are correct\n");
   }
 
 
