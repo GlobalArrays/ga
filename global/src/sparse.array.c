@@ -417,6 +417,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
     }
     printf("p[%d] (assemble) Got to 1a count[%d]: %d offset[%d]: %d\n",
         me,iproc-1,count[iproc-1],iproc-1,offset[iproc-1]);
+    }
   }
   pnga_pgroup_sync(SPA[hdl].grp);
   size = (int64_t*)malloc(nproc*sizeof(int64_t));
