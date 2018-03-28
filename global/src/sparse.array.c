@@ -544,23 +544,30 @@ logical pnga_sprs_array_assemble(Integer s_a)
     ncnt += SPA[hdl].blksize[i];
   printf("p[%d] (assemble) Got to 14 offset[%d]: %d\n",me,i,SPA[hdl].offset[i]);
   }
+  printf("p[%d] (assemble) Got to 15\n",me);
   free(SPA[hdl].val);
   free(SPA[hdl].idx);
   free(SPA[hdl].jdx);
   SPA[hdl].val = NULL;
   SPA[hdl].idx = NULL;
   SPA[hdl].jdx = NULL;
+  printf("p[%d] (assemble) Got to 16\n",me);
 
   pnga_release(SPA[hdl].g_data,&lo,&hi);
   pnga_release(SPA[hdl].g_i,&lo,&hi);
   pnga_release(SPA[hdl].g_j,&lo,&hi);
+  printf("p[%d] (assemble) Got to 17\n",me);
 
   free(count);
+  printf("p[%d] (assemble) Got to 17a\n",me);
   free(top);
+  printf("p[%d] (assemble) Got to 17b\n",me);
   free(list);
+  printf("p[%d] (assemble) Got to 17c\n",me);
   free(offset);
+  printf("p[%d] (assemble) Got to 17d\n",me);
   free(map);
-  printf("p[%d] (assemble) Got to 15\n",me);
+  printf("p[%d] (assemble) Got to 18\n",me);
   return ret;
 }
 
