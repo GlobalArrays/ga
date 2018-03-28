@@ -4726,6 +4726,7 @@ STATIC void nb_puts_packed(
             (void)memcpy(message+sizeof(header_t)+sizeof(stride_t),
                     packed_buffer, packed_index);
             nb_send_header(message, message_size, master_rank, nb);
+            free(packed_buffer);
         }
         else {
             /* we send the buffer backwards */
@@ -5127,6 +5128,7 @@ STATIC void nb_accs_packed(
             (void)memcpy(message+sizeof(header_t)+scale_size+sizeof(stride_t),
                     packed_buffer, packed_index);
             nb_send_header(message, message_size, master_rank, nb);
+            free(packed_buffer);
         }
         else {
             /* we send the buffer backwards */
