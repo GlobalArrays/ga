@@ -273,14 +273,14 @@ logical pnga_sprs_array_assemble(Integer s_a)
   pnga_set_data(g_offset,one,&nproc,MT_F_INT);
   if (!pnga_allocate(g_offset)) ret = 0;
   pnga_zero(g_offset);
-  offset = (Integer*)malloc(nproc*sizeof(int));
+  offset = (Integer*)malloc(nproc*sizeof(Integer));
   for (i=0; i<nproc; i++) {
     iproc = (i+me)%nproc+1;
     if (count[iproc-1] > 0) {
       offset[iproc-1] = pnga_read_inc(g_offset,&iproc,count[iproc-1]);
-    }
     printf("p[%d] (assemble) Got to 1a count[%d]: %d offset[%d]: %d\n",
         me,iproc-1,count[iproc-1],iproc-1,offset[iproc-1]);
+    }
   }
   pnga_pgroup_sync(SPA[hdl].grp);
   size = (Integer*)malloc(nproc*sizeof(Integer));
