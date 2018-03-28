@@ -686,8 +686,10 @@ logical pnga_sprs_array_assemble(Integer s_a)
   /* Construct new version of g_i */
   map[0] = 1;
   nvals = offset[0];
+  printf("p[%d] (assemble) map[0]: %d offset: %d\n",me,map[0],offset[0]);
   for (i=1; i<nproc; i++) {
     map[i] = map[i-1] + offset[i-1];
+  printf("p[%d] (assemble) map[%d]: %d offset[%d]\n",me,i,map[i],i,offset[i]);
     nvals += offset[i];
   }
   SPA[hdl].g_i = pnga_create_handle();
@@ -801,7 +803,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
      * order of increasing j */
     SPA[hdl].offset[i] = ncnt;
     ncnt += SPA[hdl].blksize[i];
-  printf("p[%d] (assemble) Got to 14 iptr: %p jptr: %p vptr: %p\n",me,idx,jdx,vptr);
+  printf("p[%d] (assemble) Got to 14 offset[%d]: %d\n",me,i,SPA[hdl].offset[i]);
   }
   /* Find maximum number of non-zeros per row on this processors */
   max_nnz = 0;
@@ -1010,6 +1012,8 @@ void pnga_sprs_array_col_block_list(Integer s_a, Integer **idx, Integer *n)
   for (i=0; i<SPA[hdl].nblocks; i++) {
     (*idx)[i] = SPA[hdl].blkidx[i];
   }
+  (*lo)++;
+  (*hi)++;
 }
 
 
@@ -1067,12 +1071,12 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
     Integer lo, hi, ld;
     Integer me = pnga_pgroup_nodeid(SPA[hdl].grp);
     Integer offset = SPA[hdl].offset[index];
-    printf("offset: %d index: %d\n",offset,index);
+    printf("p[%d] (access) offset: %d index: %d\n",me,offset,index);
 
     /* access local portions of GAs containing data */
     pnga_distribution(SPA[hdl].g_data,me,&lo,&hi);
     pnga_access_ptr(SPA[hdl].g_data,&lo,&hi,&lptr,&ld);
-    printf("lo: %d hi: %d lptr: %p\n",lo,hi,lptr);
+    printf("p[%d] (access) lo: %d hi: %d lptr: %p\n",me,lo,hi,lptr);
     pnga_distribution(SPA[hdl].g_i,me,&lo,&hi);
     if (longidx) {
       pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&tlidx,&ld);
