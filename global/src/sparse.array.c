@@ -254,7 +254,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
     top[i] = -1;
   }
   for (i=0; i<nvals; i++) {
-    iproc = ((idx[i]-1)*nproc)/idim;
+    iproc = (idx[i]*nproc)/idim;
     if (iproc >= nproc) iproc = nproc-1;
     count[iproc]++;
     list[i] = top[iproc];
@@ -270,13 +270,17 @@ logical pnga_sprs_array_assemble(Integer s_a)
   pnga_zero(g_offset);
   offset = (Integer*)malloc(nproc*sizeof(Integer));
   for (i=0; i<nproc; i++) {
+    /* internal indices are unit based, so iproc needs
+     * to be incremented by 1 */
     iproc = (i+me)%nproc+1;
+    /* C indices are still zero based so need to subtract 1 from iproc */
     if (count[iproc-1] > 0) {
       offset[iproc-1] = pnga_read_inc(g_offset,&iproc,count[iproc-1]);
     }
   }
   pnga_pgroup_sync(SPA[hdl].grp);
   size = (Integer*)malloc(nproc*sizeof(Integer));
+  /* internal indices are unit based */
   ilo = 1;
   ihi = nproc;
   pnga_get(g_offset,&ilo,&ihi,size,&nproc);
@@ -285,6 +289,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
    * remote processors that we can use to store data from this processor. Start by
    * constructing global arrays to hold data */
   map = (Integer*)malloc(nproc*sizeof(Integer));
+  /* internal indices are unit based so start map at 1 */
   map[0] = 1;
   totalvals = size[0];
   for (i=1; i<nproc; i++) {
@@ -354,6 +359,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   free(list);
   nvals = hi - lo + 1;
   list = (Integer*)malloc(nvals*sizeof(Integer));
+  /* get pointer to list of j indices */
   pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&jdx,&ld);
   for (i=0; i<nproc; i++) {
     count[i] = 0;
@@ -361,7 +367,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
     offset[i] = -1;
   }
   for (i=0; i<nvals; i++) {
-    iproc = ((jdx[i]-1)*nproc)/jdim;
+    iproc = (jdx[i]*nproc)/jdim;
     if (iproc >= nproc) iproc = nproc-1;
     count[iproc]++;
     list[i] = top[iproc];
@@ -477,7 +483,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
       count[j] = 0;
     }
     for (j=0; j<SPA[hdl].blksize[i]; j++) {
-      irow = ibuf[j]-1-SPA[hdl].ilo;
+      irow = ibuf[j]-SPA[hdl].ilo;
       list[j] = top[irow];
       top[irow] = j;
       count[irow]++;
@@ -524,7 +530,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
 /**
  * Return the range of rows held by processor iproc. Note that this will return
  * valid index ranges for the processor even if none of the rows contain
- * non-zero values
+ * non-zero values. This function is zero-based
  * @param s_a sparse array handle
  * @param iproc process for which index ranges are requested
  * @param lo,hi low and high values of the row indices held by this processor */
@@ -535,14 +541,14 @@ void pnga_sprs_array_row_distribution(Integer s_a, Integer iproc, Integer *lo,
     Integer *hi)
 {
   Integer hdl = GA_OFFSET + s_a;
-  *lo = SPA[hdl].ilo + 1;
-  *hi = SPA[hdl].ihi + 1;
+  *lo = SPA[hdl].ilo;
+  *hi = SPA[hdl].ihi;
 }
 
 /**
  * Return the range of columns in column block iproc. Note that this will return
  * valid index ranges for the processor even the column block contains no
- * non-zero values
+ * non-zero values. This function is zero-based
  * @param s_a sparse array handle
  * @param iproc process for which index ranges are requested
  * @param lo,hi low and high values of the row indices held by this processor */
@@ -574,8 +580,6 @@ void pnga_sprs_array_column_distribution(Integer s_a, Integer iproc, Integer *lo
   } else {
     *hi = jdim-1;
   }
-  (*lo)++;
-  (*hi)++;
 }
 
 /**
