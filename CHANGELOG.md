@@ -23,6 +23,11 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
     using multiple contiguous data transfers. The build can be
     configured to use contiguous transfers if data types are not working
     for your MPI implementation.
+  - ComEx MPI-PR now uses data types in strided calls by default. To enable
+    the old packed behavior, set the following environment variables to 0.
+    - COMEX_ENABLE_PUT_DATATYPE
+    - COMEX_ENABLE_GET_DATATYPE
+    - COMEX_ENABLE_ACC_DATATYPE
 - Fixed
   - Message sizes exceeding 2GB now work correctly
   - Mirrored Arrays now distributes data across SMP nodes for
