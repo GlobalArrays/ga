@@ -59,6 +59,8 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
   - armci-config and comex-config added
     - --blas_size
     - --use_blas
+    - --network_ldflags
+    - --network_libs
   - ga-config added
     - --blas_size
     - --scalapack_size
@@ -69,6 +71,8 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
     - --use_elpa
     - --use_elpa_2015
     - --use_elpa_2016
+    - --network_ldflags
+    - --network_libs
 - Changed
   - Removed case statement from install-autotools.sh
 - Fixed
