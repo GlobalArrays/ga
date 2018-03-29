@@ -6,7 +6,7 @@
 #include "ga.h"
 #include "mp3.h"
 
-#define NDIM 1024
+#define NDIM 16384
 
 #define MAX_FACTOR 1024
 void grid_factor(int p, int xdim, int ydim, int *idx, int *idy) {
@@ -87,6 +87,7 @@ int main(int argc, char **argv) {
   long *iptr = NULL, *jptr = NULL;
   int ok;
   double r_one = 1.0;
+  double ir, jr, ldr;
   /* Intitialize a message passing library */
   one = 1;
   MP_INIT(argc,argv);
@@ -129,11 +130,14 @@ int main(int argc, char **argv) {
   } else {
     ld = (ydim-1)/2+1;
   }
+  ldr = (double)ld;
   /* add elements to array. Every other element is zero */
   for (i=ilo; i<=ihi; i++) {
+    ir = (double)(i/2);
     for (j=jlo; j<=jhi; j++) {
+      jr = (double)(j/2);
       if (i%2 == 0 && j%2 == 0) {
-        val = (double)((i/2)*ld+j/2);
+        val = (ir)*ldr+jr;
         NGA_Sprs_array_add_element(s_a,i,j,&val);
       }
     }
@@ -161,7 +165,7 @@ int main(int argc, char **argv) {
   NGA_Release(g_v,&ilo,&ihi);
 
 
-  /* access array blocks an check values for correctness */
+  /* access array blocks and check values for correctness */
   NGA_Sprs_array_row_distribution(s_a,me,&ilo,&ihi);
   ok = 1;
   ncnt = 0;
@@ -174,8 +178,10 @@ int main(int argc, char **argv) {
         for (j=0; j<ncols; j++) {
           ncnt++;
           idy = jptr[iptr[i-ilo]+j];
-          if ((i-1)%2 != 0 || (idy-1)%2 != 0) ok = 0;
-          val = (double)((i/2)*ld+idy/2);
+          if (i%2 != 0 || idy%2 != 0) ok = 0;
+          ir = (double)(i/2);
+          jr = (double)(idy/2);
+          val = ir*ldr+jr;
           if (fabs(val-vptr[iptr[i-ilo]+j]) > 1.0e-5) {
             ok = 0;
             printf("p[%d] i: %d j: %d val: %f\n",me,i,
@@ -205,7 +211,7 @@ int main(int argc, char **argv) {
       for (i=ilo; i<=ihi; i++) {
         ncols = iptr[i+1-ilo]-iptr[i-ilo];
         for (j=0; j<ncols; j++) {
-          vsum[i-ilo] += vptr[iptr[i-ilo]+j]*vbuf[jptr[iptr[i-ilo]+j]-1-jlo];
+          vsum[i-ilo] += vptr[iptr[i-ilo]+j]*vbuf[jptr[iptr[i-ilo]+j]-jlo];
           /*
           printf("i: %d j: %d a: %f v: %f j': %d tot: %f\n",i,jptr[iptr[i-ilo]+j],
               vptr[iptr[i-ilo]+j],vbuf[jptr[iptr[i-ilo]+j]-1-jlo],
@@ -219,8 +225,6 @@ int main(int argc, char **argv) {
       free(vbuf);
     }
   }
-  ilo--;
-  ihi--;
   if (ihi>=ilo) NGA_Acc(g_av,&ilo,&ihi,vsum,&one,&r_one);
   GA_Sync();
   free(vsum);
@@ -240,7 +244,9 @@ int main(int argc, char **argv) {
           /*
           printf("i: %d j: %d a: %d v: %d\n",i+1,j+1,(i/2)*ld+(j/2),j);
           */
-          val += (double)(((i/2)*ld+(j/2))*j);
+          ir = (double)i;
+          jr = (double)j;
+          val += (ir*ldr+jr)*jr*0.5;
         }
       }
       if (fabs(val-vptr[i-ilo]) >= 1.0e-5) {
