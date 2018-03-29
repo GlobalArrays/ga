@@ -262,6 +262,8 @@ cflags=""
 ldflags="@GA_MP_LDFLAGS@ @ARMCI_NETWORK_LDFLAGS@ @BLAS_LDFLAGS@ -L@prefix@/lib"
 libs="-larmci @GA_MP_LIBS@ @ARMCI_NETWORK_LIBS@ @BLAS_LIBS@ @LIBS@"
 version="@PACKAGE_VERSION@"
+blas_int=4 # so that this interface mirrors the other config scripts
+use_blas=0 # legacy ARMCI does not use BLAS
 
 usage="Usage: armci-config [OPTIONS]...
 
@@ -317,6 +319,10 @@ do
     result="$result $ldflags" ;;
   -libs | --libs )
     result="$result $libs" ;;
+  -blas_size | --blas_size )
+    result="$result $blas_size" ;;
+  -use_blas | --use_blas )
+    result="$result $use_blas" ;;
   # This is an error.
   *) $as_echo "unrecognized option: \`$1'
 Try \`$0 --help' for more information."; exit ;;
