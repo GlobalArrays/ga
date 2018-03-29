@@ -3,9 +3,12 @@ AS_INIT
 
 cc="@CC@"
 cppflags="@MPI_CPPFLAGS@ @COMEX_NETWORK_CPPFLAGS@ @BLAS_CPPFLAGS@ -I@prefix@/include"
+network_cppflags="@COMEX_NETWORK_CPPFLAGS@"
 cflags=""
 ldflags="@MPI_LDFLAGS@ @COMEX_NETWORK_LDFLAGS@ @BLAS_LDFLAGS@ -L@prefix@/lib"
+network_ldflags="@COMEX_NETWORK_LDFLAGS@"
 libs="-larmci @MPI_LIBS@ @COMEX_NETWORK_LIBS@ @BLAS_LIBS@ @LIBS@"
+network_libs="@COMEX_NETWORK_LIBS@"
 version="@PACKAGE_VERSION@"
 blas_size="@blas_size@"
 use_blas="@have_blas@"
@@ -22,6 +25,9 @@ Options:
   --cflags
   --ldflags
   --libs
+  --network_cppflags
+  --network_ldflags
+  --network_libs
   --version
   --help
 "]
@@ -58,12 +64,18 @@ do
     result="$result $cc" ;;
   -cppflags | --cppflags )
     result="$result $cppflags" ;;
+  -network_cppflags | --network_cppflags )
+    result="$result $network_cppflags" ;;
   -cflags | --cflags )
     result="$result $cflags" ;;
   -ldflags | --ldflags )
     result="$result $ldflags" ;;
+  -network_ldflags | --network_ldflags )
+    result="$result $network_ldflags" ;;
   -libs | --libs )
     result="$result $libs" ;;
+  -network_libs | --network_libs )
+    result="$result $network_libs" ;;
   -blas_size | --blas_size )
     result="$result $blas_size" ;;
   -use_blas | --use_blas )
