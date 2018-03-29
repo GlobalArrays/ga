@@ -75,7 +75,7 @@ void grid_factor(int p, int xdim, int ydim, int *idx, int *idy) {
 }
 
 int main(int argc, char **argv) {
-  int s_a, g_a;
+  int s_a, g_v, g_av;
   int one;
   int me, nproc;
   int xdim, ydim, ipx, ipy, idx, idy;
@@ -83,8 +83,10 @@ int main(int argc, char **argv) {
   int i, j, iproc, ld, ncols, ncnt;
   double val;
   double *vptr;
+  double *vbuf, *vsum;
   long *iptr = NULL, *jptr = NULL;
   int ok;
+  double r_one = 1.0;
   /* Intitialize a message passing library */
   one = 1;
   MP_INIT(argc,argv);
@@ -101,6 +103,7 @@ int main(int argc, char **argv) {
   if (me == 0) {
     printf("Testing sparse array on %d processors\n",nproc);
     printf("\n    Using %d X %d processor grid\n",ipx,ipy);
+    printf("\n    Matrix size is %d X %d\n",xdim,ydim);
   }
   /* figure out process location in proc grid */
   idx = me%ipx;
@@ -139,6 +142,25 @@ int main(int argc, char **argv) {
     printf("\n    Sparse array assembly completed\n");
   }
 
+  /* construct vector */
+  g_v = NGA_Create_handle();
+  NGA_Set_data(g_v,one,&ydim,C_DBL);
+  NGA_Allocate(g_v);
+  g_av = GA_Duplicate(g_v, "dup");
+  GA_Zero(g_av);
+
+  /* set vector values */
+  NGA_Distribution(g_v,me,&ilo,&ihi);
+  NGA_Access(g_v,&ilo,&ihi,&vptr,&one);
+  for (i=ilo;i<=ihi;i++) {
+    vptr[i-ilo] = (double)i;
+  }
+  if (me == 0) {
+    printf("\n    Vector initialized\n");
+  }
+  NGA_Release(g_v,&ilo,&ihi);
+
+
   /* access array blocks an check values for correctness */
   NGA_Sprs_array_row_distribution(s_a,me,&ilo,&ihi);
   ok = 1;
@@ -154,7 +176,7 @@ int main(int argc, char **argv) {
           idy = jptr[iptr[i-ilo]+j];
           if ((i-1)%2 != 0 || (idy-1)%2 != 0) ok = 0;
           val = (double)((i/2)*ld+idy/2);
-          if (abs(val-vptr[iptr[i-ilo]+j]) > 1.0e-5) {
+          if (fabs(val-vptr[iptr[i-ilo]+j]) > 1.0e-5) {
             ok = 0;
             printf("p[%d] i: %d j: %d val: %f\n",me,i,
                 jptr[iptr[i-ilo]+j],vptr[iptr[i-ilo]+j]);
@@ -169,8 +191,78 @@ int main(int argc, char **argv) {
     printf("\n    Values in sparse array are correct\n");
   }
 
+  /* multiply sparse matrix by sparse vector */
+  vsum = (double*)malloc((ihi-ilo+1)*sizeof(double));
+  for (i=ilo; i<=ihi; i++) {
+    vsum[i-ilo] = 0.0;
+  }
+  for (iproc=0; iproc<nproc; iproc++) {
+    NGA_Sprs_array_column_distribution(s_a,iproc,&jlo,&jhi);
+    NGA_Sprs_array_access_col_block(s_a,iproc,&iptr,&jptr,&vptr);
+    if (vptr != NULL) {
+      vbuf = (double*)malloc((jhi-jlo+1)*sizeof(double));
+      NGA_Get(g_v,&jlo,&jhi,vbuf,&one);
+      for (i=ilo; i<=ihi; i++) {
+        ncols = iptr[i+1-ilo]-iptr[i-ilo];
+        for (j=0; j<ncols; j++) {
+          vsum[i-ilo] += vptr[iptr[i-ilo]+j]*vbuf[jptr[iptr[i-ilo]+j]-1-jlo];
+          /*
+          printf("i: %d j: %d a: %f v: %f j': %d tot: %f\n",i,jptr[iptr[i-ilo]+j],
+              vptr[iptr[i-ilo]+j],vbuf[jptr[iptr[i-ilo]+j]-1-jlo],
+              jptr[iptr[i-ilo]+j]-1-jlo,vsum[i-ilo]);
+              */
+        }
+        /*
+        printf("i: %d vsum: %f\n",i,vsum[i-ilo]);
+        */
+      }
+      free(vbuf);
+    }
+  }
+  ilo--;
+  ihi--;
+  if (ihi>=ilo) NGA_Acc(g_av,&ilo,&ihi,vsum,&one,&r_one);
+  GA_Sync();
+  free(vsum);
+
+  /* check product vector */
+  ok = 1;
+  NGA_Distribution(g_av,me,&ilo,&ihi);
+  NGA_Access(g_av,&ilo,&ihi,&vptr,&one);
+  /*
+  printf("ilo: %d ihi: %d\n",ilo,ihi);
+  */
+  for (i=ilo; i<=ihi; i++) {
+    val = 0.0;
+    if (i%2 == 0) {
+      for (j=0; j<ydim; j++) {
+        if (j%2 == 0) {
+          /*
+          printf("i: %d j: %d a: %d v: %d\n",i+1,j+1,(i/2)*ld+(j/2),j);
+          */
+          val += (double)(((i/2)*ld+(j/2))*j);
+        }
+      }
+      if (fabs(val-vptr[i-ilo]) >= 1.0e-5) {
+        ok = 0;
+        printf("Error for element %d expected: %f actual: %f\n",
+            i,val,vptr[i-ilo]);
+      }
+    } else {
+      if (fabs(vptr[i-ilo]) >= 1.0e-5) {
+        ok = 0;
+        printf("Error for element %d expected: 0.00000 actual: %f\n",
+            i,vptr[i-ilo]);
+      }
+    }
+  }
+  if (ok && me==0) {
+    printf("\n    Matrix-vector product is correct\n\n");
+  }
 
   NGA_Sprs_array_destroy(s_a);
+  NGA_Destroy(g_v);
+  NGA_Destroy(g_av);
 
   NGA_Terminate();
   /**
