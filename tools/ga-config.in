@@ -271,6 +271,15 @@ cppflags="@SCALAPACK_CPPFLAGS@ @LAPACK_CPPFLAGS@ @BLAS_CPPFLAGS@ @GA_MP_CPPFLAGS
 cflags="@GA_COPT@"
 fflags="@GA_FOPT@ @FFLAG_INT@"
 fint="@FFLAG_INT@"
+blas_size="@blas_size@"
+scalapack_size="@scalapack_size@"
+use_blas="@have_blas@"
+use_lapack="@have_lapack@"
+use_scalapack="@have_scalapack@"
+use_peigs="@enable_peigs@"
+use_elpa="@have_elpa@"
+use_elpa_2015="@have_elpa_2015@"
+use_elpa_2016="@have_elpa_2016@"
 ldflags="@SCALAPACK_LDFLAGS@ @LAPACK_LDFLAGS@ @BLAS_LDFLAGS@ @GA_MP_LDFLAGS@ @ARMCI_NETWORK_LDFLAGS@ -L@prefix@/lib"
 libs="-lga @SCALAPACK_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ $dep_libs"
 flibs="@FLIBS@"
@@ -296,6 +305,15 @@ Options:
   --cflags
   --fflags
   --fint
+  --blas_size
+  --scalapack_size
+  --use_blas
+  --use_lapack
+  --use_scalapack
+  --use_peigs
+  --use_elpa
+  --use_elpa_2015
+  --use_elpa_2016
   --ldflags
   --libs
   --flibs
@@ -350,6 +368,24 @@ do
     result="$result $flibs" ;;
   -fint | --fint )
     result="$result $fint" ;;
+  -blas_size | --blas_size )
+    result="$result $blas_size" ;;
+  -scalapack_size | --scalapack_size )
+    result="$result $scalapack_size" ;;
+  -use_blas | --use_blas )
+    result="$result $use_blas" ;;
+  -use_lapack | --use_lapack )
+    result="$result $use_lapack" ;;
+  -use_scalapack | --use_scalapack )
+    result="$result $use_scalapack" ;;
+  -use_peigs | --use_peigs )
+    result="$result $use_peigs" ;;
+  -use_elpa | --use_elpa )
+    result="$result $use_elpa" ;;
+  -use_elpa_2015 | --use_elpa_2015 )
+    result="$result $use_elpa_2015" ;;
+  -use_elpa_2016 | --use_elpa_2016 )
+    result="$result $use_elpa_2016" ;;
   -enable-f77 | --enable-f77 )
     result="$result $enable_f77" ;;
   # This is an error.

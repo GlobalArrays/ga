@@ -7,6 +7,8 @@ cflags=""
 ldflags="@MPI_LDFLAGS@ @COMEX_NETWORK_LDFLAGS@ @BLAS_LDFLAGS@ -L@prefix@/lib"
 libs="-larmci @MPI_LIBS@ @COMEX_NETWORK_LIBS@ @BLAS_LIBS@ @LIBS@"
 version="@PACKAGE_VERSION@"
+blas_size="@blas_size@"
+use_blas="@have_blas@"
 
 [usage="Usage: armci-config [OPTIONS]...
 
@@ -62,6 +64,10 @@ do
     result="$result $ldflags" ;;
   -libs | --libs )
     result="$result $libs" ;;
+  -blas_size | --blas_size )
+    result="$result $blas_size" ;;
+  -use_blas | --use_blas )
+    result="$result $use_blas" ;;
   # This is an error.
   *) AS_ECHO(["unrecognized option: \`$1'
 Try \`$0 --help' for more information."]); exit ;;

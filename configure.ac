@@ -35,6 +35,7 @@ AC_SUBST([PACKAGE_VERSION])
 # ga version 5.6.2: 1:2:0
 # ga version 5.6.3: 1:3:0
 # ga version 5.6.4: 1:4:0
+# ga version 5.6.5: 1:5:0
 # ga version 5.7.0: 2:0:1
 #
 # libga -version-info current:revision:age

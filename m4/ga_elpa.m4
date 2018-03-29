@@ -243,6 +243,7 @@ AS_IF([test $ga_elpa_ok = yes],
     [AC_MSG_WARN([ELPA library not found, interfaces won't be defined])
      have_elpa=0
      $2])
+AC_SUBST([have_elpa])
 AC_DEFINE_UNQUOTED([HAVE_ELPA], [$have_elpa],
     [Define to 1 if you have ELPA library.])
 AM_CONDITIONAL([HAVE_ELPA], [test $ga_elpa_ok = yes])
@@ -253,6 +254,7 @@ AS_IF([test $ga_elpa_2015_ok = yes],
     [AC_MSG_WARN([ELPA 2015 library not found, interfaces won't be defined])
      have_elpa_2015=0
      $2])
+AC_SUBST([have_elpa_2015])
 AC_DEFINE_UNQUOTED([HAVE_ELPA_2015], [$have_elpa_2015],
     [Define to 1 if you have 2015 ELPA lib])
 AM_CONDITIONAL([HAVE_ELPA_2015], [test $ga_elpa_2015_ok = yes])
@@ -263,6 +265,7 @@ AS_IF([test $ga_elpa_2016_ok = yes],
     [AC_MSG_WARN([ELPA 2016 library not found, interfaces won't be defined])
      have_elpa_2016=0
      $2])
+AC_SUBST([have_elpa_2016])
 AC_DEFINE_UNQUOTED([HAVE_ELPA_2016], [$have_elpa_2016],
     [Define to 1 if you have ELPA library with 2STAGE alg. in 2016 ELPA lib])
 AM_CONDITIONAL([HAVE_ELPA_2016], [test $ga_elpa_2015_ok = yes])

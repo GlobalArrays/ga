@@ -9,7 +9,7 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
-## [5.7] - 2018-03-23
+## [5.7] - 2018-03-30
 - Known Bugs
   - Some combinations of MPI implementations with the MPI RMA and PR
     ports fail. Recommended to use latest MPI implementations available.
@@ -31,6 +31,53 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
     performant)
 - Closed Issues
   - \[#48] Message sizes exceeding 2GB may not work correctly
+
+## [5.6.5] - 2018-03-29
+- Known Bugs
+  - [\#48] Message sizes exceeding 2GB may not work correctly
+- Added
+  - Environment variables to control internal ComEx MPI-PR settings
+    - COMEX_MAX_NB_OUTSTANDING. Default 8.
+      The maximum number of concurrent non-blocking operations.
+    - COMEX_STATIC_BUFFER_SIZE. Default 2097152 bytes.
+      Some ComEx operations require a temporary buffer. Any message larger than this size will dynamically allocate and free a new buffer to hold the larger message.
+    - COMEX_EAGER_THRESHOLD. Default -1.
+      Small messages can be sent as part of other internal ComEx operations. Recommended to set this to less than or equal to the corresponding MPI eager/rendezvous threshold cutoff.
+    - COMEX_ENABLE_PUT_SELF. Default 1 (on). Contiguous put will use memcpy when target is same as originator.
+    - COMEX_ENABLE_GET_SELF. Default 1 (on). Contiguous get will use memcpy when target is same as originator.
+    - COMEX_ENABLE_ACC_SELF. Default 1 (on). Contiguous acc will use memcpy when target is same as originator.
+    - COMEX_ENABLE_PUT_SMP. Default 1 (on). Contiguous put will use memcpy when target is on the same host via shared memory.
+    - COMEX_ENABLE_GET_SMP. Default 1 (on). Contiguous get will use memcpy when target is on the same host via shared memory.
+    - COMEX_ENABLE_ACC_SMP. Default 1 (on). Contiguous acc will use memcpy when target is on the same host via shared memory.
+    - COMEX_ENABLE_PUT_PACKED. Default 1 (on). Strided put will pack the data into a contiguous buffer.
+    - COMEX_ENABLE_GET_PACKED. Default 1 (on). Strided get will pack the data into a contiguous buffer.
+    - COMEX_ENABLE_ACC_PACKED. Default 1 (on). Strided acc will pack the data into a contiguous buffer.
+    - COMEX_ENABLE_PUT_IOV. Default 1 (on). Vector put will pack the data into a contiguous buffer.
+    - COMEX_ENABLE_GET_IOV. Default 1 (on). Vector get will pack the data into a contiguous buffer.
+    - COMEX_ENABLE_ACC_IOV. Default 1 (on). Vector acc will pack the data into a contiguous buffer.
+    - COMEX_MAX_MESSAGE_SIZE. Default INT_MAX. All use of MPI will keep buffers less than this size. Sometimes useful in conjunction with eager thresholds to force all use of MPI below the eager threshold.
+  - armci-config and comex-config added
+    - --blas_size
+    - --use_blas
+  - ga-config added
+    - --blas_size
+    - --scalapack_size
+    - --use_blas
+    - --use_lapack
+    - --use_scalapack
+    - --use_peigs
+    - --use_elpa
+    - --use_elpa_2015
+    - --use_elpa_2016
+- Changed
+  - Removed case statement from install-autotools.sh
+- Fixed
+  - install-autotools.sh works on FreeBSD
+- Closed Issues Requests
+  - Scalapack with 8-byte integers? [\#93]
+  - Please clarify what is "peigs" library [\#96]
+  - additional arguments for bin/ga-config describing the presence of Peigs and/or Scalapack interfaces [\#99]
+  - additional arguments for bin/ga-config describing the integer size of the Blas library used [\#100]
 
 ## [5.6.4] - 2018-03-21
 - Known Bugs
@@ -341,12 +388,20 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
 - Supports various platforms (Crays, IBM SPs, SGI Altix, ...) and interconnects (Myrinet, Quadrics, Infiniband, ...)
 
 [Unreleased]: https://github.com/GlobalArrays/ga/compare/v5.7...develop
-[5.7]: https://github.com/GlobalArrays/ga/compare/v5.6.4...v5.7
+[5.7]: https://github.com/GlobalArrays/ga/compare/v5.6.5...v5.7
+[5.6.5]: https://github.com/GlobalArrays/ga/compare/v5.6.4...v5.6.5
 [5.6.4]: https://github.com/GlobalArrays/ga/compare/v5.6.3...v5.6.4
 [5.6.3]: https://github.com/GlobalArrays/ga/compare/v5.6.2...v5.6.3
 [5.6.2]: https://github.com/GlobalArrays/ga/compare/v5.6.1...v5.6.2
 [5.6.1]: https://github.com/GlobalArrays/ga/compare/v5.6...v5.6.1
 [5.6]: https://github.com/GlobalArrays/ga/releases/tag/v5.6
+
+[\#100]: https://github.com/GlobalArrays/ga/issues/100
+[\#99]: https://github.com/GlobalArrays/ga/issues/99
+[\#98]: https://github.com/GlobalArrays/ga/issues/98
+[\#97]: https://github.com/GlobalArrays/ga/issues/97
+[\#96]: https://github.com/GlobalArrays/ga/issues/96
+[\#95]: https://github.com/GlobalArrays/ga/issues/95
 [\#94]: https://github.com/GlobalArrays/ga/issues/94
 [\#93]: https://github.com/GlobalArrays/ga/issues/93
 [\#92]: https://github.com/GlobalArrays/ga/pull/92

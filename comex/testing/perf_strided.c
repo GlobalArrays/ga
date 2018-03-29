@@ -45,28 +45,24 @@ int main(int argc, char **argv)
     if (0 == me) {
         printf("msg size (bytes)     avg time (us)    avg b/w (MB/sec)\n");
     }
-    printf("\n\n");
 
     if (0 == me) {
+        printf("\n\n");
         printf("#PNNL ComEx Put Strided Test\n");
     }
     strided_test(MAX_MESSAGE_SIZE, PUTS);
-    printf("\n\n");
-
 
     if (0 == me) {
+        printf("\n\n");
         printf("#PNNL ComEx Get Strided Test\n");
     }
     strided_test(MAX_MESSAGE_SIZE, GETS);
-    printf("\n\n");
-    
    
     if (0 == me) {
+        printf("\n\n");
         printf("#PNNL ComEx Accumulate Strided Test\n");
     }
     strided_test(MAX_MESSAGE_SIZE, ACCS);
-    printf("\n\n");
-    
     
     comex_finalize();
     MPI_Finalize();
