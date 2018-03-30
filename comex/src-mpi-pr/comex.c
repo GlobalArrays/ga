@@ -167,7 +167,8 @@ static int COMEX_ENABLE_GET_PACKED = ENABLE_GET_PACKED;
 static int COMEX_ENABLE_ACC_PACKED = ENABLE_ACC_PACKED;
 static int COMEX_ENABLE_PUT_DATATYPE = ENABLE_PUT_DATATYPE;
 static int COMEX_ENABLE_GET_DATATYPE = ENABLE_GET_DATATYPE;
-static int COMEX_ENABLE_ACC_DATATYPE = ENABLE_ACC_DATATYPE;
+static int COMEX_PUT_DATATYPE_THRESHOLD = 8192;
+static int COMEX_GET_DATATYPE_THRESHOLD = 8192;
 static int COMEX_ENABLE_PUT_IOV = ENABLE_PUT_IOV;
 static int COMEX_ENABLE_GET_IOV = ENABLE_GET_IOV;
 static int COMEX_ENABLE_ACC_IOV = ENABLE_ACC_IOV;
@@ -285,7 +286,7 @@ STATIC void _fence_master(int master_rank);
 STATIC int _eager_check(int extra_bytes);
 
 /* other functions */
-STATIC int packed_size(int *src_stride, int *count, int stride_levels);
+STATIC int _packed_size(int *src_stride, int *count, int stride_levels);
 STATIC char* pack(char *src, int *src_stride,
                 int *count, int stride_levels, int *size);
 STATIC void unpack(char *packed_buffer,
@@ -418,12 +419,6 @@ int comex_init()
             COMEX_ENABLE_GET_DATATYPE = atoi(value);
         }
 
-        COMEX_ENABLE_ACC_DATATYPE = ENABLE_ACC_DATATYPE; /* default */
-        value = getenv("COMEX_ENABLE_ACC_DATATYPE");
-        if (NULL != value) {
-            COMEX_ENABLE_ACC_DATATYPE = atoi(value);
-        }
-
         COMEX_ENABLE_PUT_IOV = ENABLE_PUT_IOV; /* default */
         value = getenv("COMEX_ENABLE_PUT_IOV");
         if (NULL != value) {
@@ -465,7 +460,6 @@ int comex_init()
             printf("COMEX_ENABLE_ACC_PACKED=%d\n", COMEX_ENABLE_ACC_PACKED);
             printf("COMEX_ENABLE_PUT_DATATYPE=%d\n", COMEX_ENABLE_PUT_DATATYPE);
             printf("COMEX_ENABLE_GET_DATATYPE=%d\n", COMEX_ENABLE_GET_DATATYPE);
-            printf("COMEX_ENABLE_ACC_DATATYPE=%d\n", COMEX_ENABLE_ACC_DATATYPE);
             printf("COMEX_ENABLE_PUT_IOV=%d\n", COMEX_ENABLE_PUT_IOV);
             printf("COMEX_ENABLE_GET_IOV=%d\n", COMEX_ENABLE_GET_IOV);
             printf("COMEX_ENABLE_ACC_IOV=%d\n", COMEX_ENABLE_ACC_IOV);
@@ -1030,7 +1024,7 @@ int comex_barrier(comex_group_t group)
 }
 
 
-STATIC int packed_size(int *src_stride, int *count, int stride_levels)
+STATIC int _packed_size(int *src_stride, int *count, int stride_levels)
 {
     int size;
     int i;
@@ -1043,7 +1037,7 @@ STATIC int packed_size(int *src_stride, int *count, int stride_levels)
     COMEX_ASSERT(count[0] > 0);
 
 #if DEBUG
-    fprintf(stderr, "[%d] packed_size(src_stride=%p, count[0]=%d, stride_levels=%d)\n",
+    fprintf(stderr, "[%d] _packed_size(src_stride=%p, count[0]=%d, stride_levels=%d)\n",
             g_state.rank, src_stride, count[0], stride_levels);
 #endif
 
@@ -4867,7 +4861,8 @@ STATIC void nb_puts(
     if (COMEX_ENABLE_PUT_DATATYPE
             && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_PUT_SMP
-                || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+                || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+            && (_packed_size(src_stride, count, stride_levels) > COMEX_PUT_DATATYPE_THRESHOLD)) {
         nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
@@ -5275,7 +5270,7 @@ STATIC void nb_gets_packed(
         header->rank = proc;
         header->length = 0;
 
-        recv_size = packed_size(stride_dst->stride,
+        recv_size = _packed_size(stride_dst->stride,
                 stride_dst->count, stride_dst->stride_levels);
         COMEX_ASSERT(recv_size > 0);
         packed_buffer = malloc(recv_size);
