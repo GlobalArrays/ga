@@ -213,7 +213,7 @@ STATIC void _put_datatype_handler(header_t *header, char *payload, int proc);
 STATIC void _put_iov_handler(header_t *header, int proc);
 STATIC void _get_handler(header_t *header, int proc);
 STATIC void _get_packed_handler(header_t *header, char *payload, int proc);
-STATIC void _get_datatype_handler(header_t *header, int proc);
+STATIC void _get_datatype_handler(header_t *header, char *payload, int proc);
 STATIC void _get_iov_handler(header_t *header, int proc);
 STATIC void _acc_handler(header_t *header, char *scale, int proc);
 STATIC void _acc_packed_handler(header_t *header, char *payload, int proc);
@@ -419,6 +419,18 @@ int comex_init()
             COMEX_ENABLE_GET_DATATYPE = atoi(value);
         }
 
+        COMEX_PUT_DATATYPE_THRESHOLD = 8192; /* default */
+        value = getenv("COMEX_PUT_DATATYPE_THRESHOLD");
+        if (NULL != value) {
+            COMEX_PUT_DATATYPE_THRESHOLD = atoi(value);
+        }
+
+        COMEX_GET_DATATYPE_THRESHOLD = 8192; /* default */
+        value = getenv("COMEX_GET_DATATYPE_THRESHOLD");
+        if (NULL != value) {
+            COMEX_GET_DATATYPE_THRESHOLD = atoi(value);
+        }
+
         COMEX_ENABLE_PUT_IOV = ENABLE_PUT_IOV; /* default */
         value = getenv("COMEX_ENABLE_PUT_IOV");
         if (NULL != value) {
@@ -443,12 +455,14 @@ int comex_init()
             max_message_size = atoi(value);
         }
 
-#if DEBUG
+#if DEBUG || 1
         if (0 == g_state.rank) {
             printf("COMEX_MAX_NB_OUTSTANDING=%d\n", nb_max_outstanding);
             printf("COMEX_STATIC_BUFFER_SIZE=%d\n", static_server_buffer_size);
             printf("COMEX_MAX_MESSAGE_SIZE=%d\n", max_message_size);
             printf("COMEX_EAGER_THRESHOLD=%d\n", eager_threshold);
+            printf("COMEX_PUT_DATATYPE_THRESHOLD=%d\n", COMEX_PUT_DATATYPE_THRESHOLD);
+            printf("COMEX_GET_DATATYPE_THRESHOLD=%d\n", COMEX_GET_DATATYPE_THRESHOLD);
             printf("COMEX_ENABLE_PUT_SELF=%d\n", COMEX_ENABLE_PUT_SELF);
             printf("COMEX_ENABLE_GET_SELF=%d\n", COMEX_ENABLE_GET_SELF);
             printf("COMEX_ENABLE_ACC_SELF=%d\n", COMEX_ENABLE_ACC_SELF);
@@ -2478,7 +2492,7 @@ STATIC void _progress_server()
                 _get_packed_handler(header, payload, source);
                 break;
             case OP_GET_DATATYPE:
-                _get_datatype_handler(header, source);
+                _get_datatype_handler(header, payload, source);
                 break;
             case OP_GET_IOV:
                 _get_iov_handler(header, source);
@@ -2915,7 +2929,7 @@ STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
 }
 
 
-STATIC void _get_datatype_handler(header_t *header, int proc)
+STATIC void _get_datatype_handler(header_t *header, char *payload, int proc)
 {
     MPI_Datatype src_type;
     reg_entry_t *reg_entry = NULL;
@@ -2938,9 +2952,8 @@ STATIC void _get_datatype_handler(header_t *header, int proc)
 
     assert(OP_GET_DATATYPE == header->operation);
 
-    stride_src = malloc(sizeof(stride_t));
+    stride_src = (stride_t*)payload;
     COMEX_ASSERT(stride_src);
-    server_recv(stride_src, sizeof(stride_t), proc);
     COMEX_ASSERT(stride_src->stride_levels >= 0);
     COMEX_ASSERT(stride_src->stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
@@ -2967,8 +2980,6 @@ STATIC void _get_datatype_handler(header_t *header, int proc)
 
     ierr = MPI_Type_free(&src_type);
     translate_mpi_error(ierr,"_get_datatype_handler:MPI_Type_free");
-
-    free(stride_src);
 }
 
 
@@ -5130,7 +5141,8 @@ STATIC void nb_gets(
     if (COMEX_ENABLE_GET_DATATYPE
             && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_GET_SMP
-                || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+                || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+            && (_packed_size(src_stride, count, stride_levels) > COMEX_GET_DATATYPE_THRESHOLD)) {
         nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
@@ -5305,7 +5317,7 @@ STATIC void nb_gets_datatype(
 {
     MPI_Datatype dst_type;
     int i;
-    stride_t *stride_src = NULL;
+    stride_t stride_src;
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_gets_datatype(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -5335,32 +5347,34 @@ STATIC void nb_gets_datatype(
     COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     /* copy src info into structure */
-    stride_src = malloc(sizeof(stride_t));
-    COMEX_ASSERT(stride_src);
-    MAYBE_MEMSET(stride_src, 0, sizeof(header_t));
-    stride_src->ptr = src;
-    stride_src->stride_levels = stride_levels;
-    stride_src->count[0] = count[0];
+    MAYBE_MEMSET(&stride_src, 0, sizeof(header_t));
+    stride_src.ptr = src;
+    stride_src.stride_levels = stride_levels;
+    stride_src.count[0] = count[0];
     for (i=0; i<stride_levels; ++i) {
-        stride_src->stride[i] = src_stride[i];
-        stride_src->count[i+1] = count[i+1];
+        stride_src.stride[i] = src_stride[i];
+        stride_src.count[i+1] = count[i+1];
     }
     for (/*no init*/; i<COMEX_MAX_STRIDE_LEVEL; ++i) {
-        stride_src->stride[i] = -1;
-        stride_src->count[i+1] = -1;
+        stride_src.stride[i] = -1;
+        stride_src.count[i+1] = -1;
     }
 
-    COMEX_ASSERT(stride_src->stride_levels >= 0);
-    COMEX_ASSERT(stride_src->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+    COMEX_ASSERT(stride_src.stride_levels >= 0);
+    COMEX_ASSERT(stride_src.stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     {
+        char *message = NULL;
+        int message_size = 0;
         header_t *header = NULL;
         int master_rank = -1;
         int ierr;
 
         master_rank = g_state.master[proc];
 
-        header = malloc(sizeof(header_t));
+        message_size = sizeof(header_t) + sizeof(stride_t);
+        message = malloc(message_size);
+        header = (header_t*)message;
         COMEX_ASSERT(header);
         MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = OP_GET_DATATYPE;
@@ -5374,8 +5388,8 @@ STATIC void nb_gets_datatype(
         translate_mpi_error(ierr,"nb_gets_datatype:MPI_Type_commit");
 
         nb_recv_datatype(dst, dst_type, master_rank, nb);
-        nb_send_header(header, sizeof(header_t), master_rank, nb);
-        nb_send_header(stride_src, sizeof(stride_t), master_rank, nb);
+        (void)memcpy(message+sizeof(header_t), &stride_src, sizeof(stride_t));
+        nb_send_header(message, message_size, master_rank, nb);
     }
 }
 
