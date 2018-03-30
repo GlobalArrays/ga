@@ -453,6 +453,7 @@ check_PROGRAMS += global/testing/print
 check_PROGRAMS += global/testing/scan_addc
 check_PROGRAMS += global/testing/scan_copyc
 check_PROGRAMS += global/testing/sprsmatvec
+check_PROGRAMS += global/testing/testabstract_ops
 check_PROGRAMS += global/testing/testc
 check_PROGRAMS += global/testing/testmatmultc
 check_PROGRAMS += global/testing/testmult
@@ -917,6 +918,7 @@ global_testing_simple_groups_commc_SOURCES = global/testing/simple_groups_commc.
 global_testing_sparse_SOURCES              = global/testing/sparse.F $(gtsrcf)
 global_testing_sprsmatmult_SOURCES         = global/testing/sprsmatmult.F $(gtsrcf)
 global_testing_stride_SOURCES              = global/testing/stride.F $(gtsrcf)
+global_testing_testabstract_ops_SOURCES    = global/testing/testabstract_ops.c
 global_testing_test_SOURCES                = global/testing/test.F $(gtsrcf)
 global_testing_test_mirrored_SOURCES       = global/testing/test.F $(gtsrcf)
 global_testing_testc_SOURCES               = global/testing/testc.c
@@ -1025,16 +1027,21 @@ global_testing_unit_tests_ga_zerodiagonal_SOURCES         = global/testing/unit-
 global_testing_unit_tests_ga_zeropatch2_SOURCES           = global/testing/unit-tests/ga_zeropatch2.c $(UNIT_TEST_EXTRA_SRC)
 global_testing_unit_tests_ga_zeropatch_SOURCES            = global/testing/unit-tests/ga_zeropatch.c $(UNIT_TEST_EXTRA_SRC)
 
+global_testing_testabstract_ops_CFLAGS    = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 global_testing_thread_perf_contig_CFLAGS  = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 global_testing_thread_perf_strided_CFLAGS = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 global_testing_threadsafec_CFLAGS         = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 global_testing_read_only_CFLAGS           = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 
+global_testing_testabstract_ops_CPPFLAGS    = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 global_testing_thread_perf_contig_CPPFLAGS  = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 global_testing_thread_perf_strided_CPPFLAGS = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 global_testing_threadsafec_CPPFLAGS         = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 global_testing_read_only_CPPFLAGS           = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 
+global_testing_testabstract_ops_LDFLAGS   = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
+global_testing_thread_perf_contig_LDFLAGS = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
+global_testing_thread_perf_strided_LDFLAGS= $(AM_LDFLAGS) $(OPENMP_CFLAGS)
 global_testing_threadsafec_LDFLAGS        = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
 global_testing_read_only_LDFLAGS          = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
 
