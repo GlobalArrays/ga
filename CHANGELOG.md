@@ -87,6 +87,7 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
   - Removed case statement from install-autotools.sh
 - Fixed
   - install-autotools.sh works on FreeBSD
+  - patch locally built m4 for OSX High Sierra
 - Closed Issues Requests
   - Scalapack with 8-byte integers? [\#93]
   - Please clarify what is "peigs" library [\#96]
