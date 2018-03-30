@@ -206,7 +206,6 @@ void pnga_copy_patch(char *trans,
     }
   }
 
-  GA_PUSH_NAME("pnga_copy_patch");
 
   pnga_inquire(g_a, &atype, &andim, adims);
   pnga_inquire(g_b, &btype, &bndim, bdims);
@@ -918,7 +917,6 @@ void pnga_copy_patch(char *trans,
       }
     }
   }
-  GA_POP_NAME;
   /* ARMCI_AllFence(); */
   if(local_sync_end) {
     if (anproc <= bnproc) {
@@ -1123,7 +1121,6 @@ void pnga_dot_patch(Integer g_a, char *t_a, Integer *alo, Integer *ahi, Integer 
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  GA_PUSH_NAME("pnga_dot_patch");
   a_grp = pnga_get_pgroup(g_a);
   b_grp = pnga_get_pgroup(g_b);
   if (a_grp != b_grp)
@@ -1513,7 +1510,6 @@ void pnga_dot_patch(Integer g_a, char *t_a, Integer *alo, Integer *ahi, Integer 
   }
 
   if(temp_created) pnga_destroy(g_B);
-  GA_POP_NAME;
 }
 
 
@@ -1668,7 +1664,6 @@ void pnga_fill_patch(Integer g_a, Integer *lo, Integer *hi, void* val)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync(); 
 
-  GA_PUSH_NAME("nga_fill_patch");
 
   pnga_inquire(g_a,  &type, &ndim, dims);
   num_blocks = pnga_total_blocks(g_a);
@@ -1922,7 +1917,6 @@ void pnga_fill_patch(Integer g_a, Integer *lo, Integer *hi, void* val)
     }
   }
 #endif
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
 
@@ -2087,7 +2081,6 @@ void pnga_scale_patch(Integer g_a, Integer *lo, Integer *hi, void *alpha)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  GA_PUSH_NAME("pnga_scale_patch");
 
   pnga_inquire(g_a,  &type, &ndim, dims);
   num_blocks = pnga_total_blocks(g_a);
@@ -2336,7 +2329,6 @@ void pnga_scale_patch(Integer g_a, Integer *lo, Integer *hi, void *alpha)
     }
   }
 #endif
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();   
 }
 
@@ -2669,7 +2661,6 @@ void *alpha, *beta;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  GA_PUSH_NAME("nga_add_patch");
 
   pnga_inquire(g_a, &atype, &andim, adims);
   pnga_inquire(g_b, &btype, &bndim, bdims);
@@ -3125,7 +3116,6 @@ void *alpha, *beta;
   if(A_created) pnga_destroy(g_A);
   if(B_created) pnga_destroy(g_B);
 
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
 
@@ -3150,7 +3140,6 @@ void pnga_zero_patch(Integer g_a, Integer *lo, Integer *hi)
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(local_sync_begin)pnga_sync();
 
-    GA_PUSH_NAME("nga_zero_patch");
     
     pnga_inquire(g_a,  &type, &ndim, dims);
     
@@ -3186,6 +3175,5 @@ void pnga_zero_patch(Integer g_a, Integer *lo, Integer *hi)
     }
     pnga_fill_patch(g_a, lo, hi, valptr);
     
-    GA_POP_NAME;
     if(local_sync_end)pnga_sync();
 }
