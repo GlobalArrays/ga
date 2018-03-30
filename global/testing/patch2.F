@@ -4,11 +4,10 @@
 # define THRESH  1.0d-10
 #define MISMATCH(x,y) abs(x-y)/max(1,abs(x)).gt.THRESH
 c
-c#define BLOCK_CYCLIC
+#define USE_REGULAR
+c#define USE_SIMPLE_CYCLIC
 c#define USE_SCALAPACK_DISTR
-#ifdef USE_SCALAPACK_DISTR
-#define BLOCK_CYCLIC
-#endif
+c#define USE_TILED
 c
       program test
       implicit none

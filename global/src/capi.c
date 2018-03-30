@@ -728,6 +728,34 @@ void NGA_Set_restricted_range(int g_a, int lo_proc, int hi_proc)
     wnga_set_restricted_range(aa,lo,hi);
 }
 
+void GA_Set_property(int g_a, char* property)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_set_property(aa,property);
+}
+
+void NGA_Set_property(int g_a, char* property)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_set_property(aa,property);
+}
+
+void GA_Unset_property(int g_a)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_unset_property(aa);
+}
+
+void NGA_Unset_property(int g_a)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_unset_property(aa);
+}
+
 int GA_Total_blocks(int g_a)
 {
     Integer aa;
@@ -844,6 +872,30 @@ void NGA_Set_block_cyclic_proc_grid(int g_a, int block[], int proc_grid[])
     COPYC2F(block,_block, ndim);
     COPYC2F(proc_grid, _proc_grid, ndim);
     wnga_set_block_cyclic_proc_grid(aa, _block, _proc_grid);
+}
+
+void GA_Set_tiled_proc_grid(int g_a, int block[], int proc_grid[])
+{
+    Integer aa, ndim;
+    Integer _ga_dims[MAXDIM];
+    Integer _ga_lo[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    COPYC2F(block,_ga_dims, ndim);
+    COPYC2F(proc_grid,_ga_lo, ndim);
+    wnga_set_tiled_proc_grid(aa, _ga_dims, _ga_lo);
+}
+
+void NGA_Set_tiled_proc_grid(int g_a, int block[], int proc_grid[])
+{
+    Integer aa, ndim;
+    Integer _block[MAXDIM];
+    Integer _proc_grid[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    COPYC2F(block,_block, ndim);
+    COPYC2F(proc_grid, _proc_grid, ndim);
+    wnga_set_tiled_proc_grid(aa, _block, _proc_grid);
 }
 
 int GA_Get_pgroup(int g_a)
@@ -4607,13 +4659,13 @@ void GA_Get_diag(int g_a, int g_v){
 void GA_Scale_rows(int g_a, int g_v){
  Integer a = (Integer )g_a;
  Integer v = (Integer )g_v;
- wnga_scale_rows(a, v);
+ wnga_scale_cols(a, v);
 }
 
 void GA_Scale_cols(int g_a, int g_v){
  Integer a = (Integer )g_a;
  Integer v = (Integer )g_v;
- wnga_scale_cols(a, v);
+ wnga_scale_rows(a, v);
 }
 void GA_Norm1(int g_a, double *nm){
  Integer a = (Integer )g_a;

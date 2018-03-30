@@ -16,11 +16,14 @@ C $iD: PATch.F,v 1.21 2002/10/15 23:35:52 vinod Exp $
 #endif
 #define MISMATCH(x,y) abs(x-y)/max(1,abs(x)).gt.THRESH
 c
-c#define BLOCK_CYCLIC
+c  Be aware that matrix-multiplies with transposes are not being tested
+c  currently for block-cyclic configurations. Make sure you turn these
+c  on if you think you have these multiplies working
+c
+#define USE_REGULAR
+c#define USE_SIMPLE_CYCLIC
 c#define USE_SCALAPACK_DISTR
-#ifdef USE_SCALAPACK_DISTR
-#define BLOCK_CYCLIC
-#endif
+c#define USE_TILED_DISTR
 c
       program test
       implicit none
@@ -87,7 +90,7 @@ c
       integer g_a, g_b, g_c 
       integer rows, cols, loop
       logical status, dist_same 
-#ifdef BLOCK_CYCLIC
+#ifndef USE_REGULAR
       integer ndim, dims(2)
       integer block_size(2), proc_grid(2)
 #endif
@@ -96,10 +99,10 @@ c
 c
       me = ga_nodeid()
       nproc = ga_nnodes()
-#ifdef BLOCK_CYCLIC
+#ifndef USE_REGULAR
       block_size(1) = 32
       block_size(2) = 32
-#ifdef USE_SCALAPACK_DISTR
+#ifndef USE_SIMPLE_CYCLIC
       if (mod(nproc,2).ne.0)
      +  call ga_error("Available procs must be divisible by 2",0)
       proc_grid(1) = 2
@@ -117,7 +120,7 @@ c
 c
 c***  Create a global array
 c
-#ifndef BLOCK_CYCLIC
+#ifdef USE_REGULAR
       status = ga_create(MT_DBL, n, n, 'a', 0, 0, g_a)
 #else
       g_a = ga_create_handle()
@@ -126,8 +129,12 @@ c
       dims(2) = n
       call ga_set_data(g_a,ndim,dims,MT_DBL)
       call ga_set_array_name(g_a,'a')
+#ifndef USE_SIMPLE_CYCLIC
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
 #endif
@@ -147,7 +154,7 @@ c
          if(.not.ga_compare_distr(g_a, g_c))
      $           call ga_error("g_c distribution different",0) 
       else
-#ifndef BLOCK_CYCLIC
+#ifdef USE_REGULAR
          status = ga_create(MT_DBL, n, n, 'b', 0, n, g_b)
 #else
          g_b = ga_create_handle()
@@ -156,15 +163,19 @@ c
          dims(2) = n
          call ga_set_data(g_b,ndim,dims,MT_DBL)
          call ga_set_array_name(g_b,'b')
+#ifndef USE_SIMPLE_CYCLIC
 #ifdef USE_SCALAPACK_DISTR
          call ga_set_block_cyclic_proc_grid(g_b,block_size,proc_grid)
+#else
+         call ga_set_tiled_proc_grid(g_b,block_size,proc_grid)
+#endif
 #else
          call ga_set_block_cyclic(g_b,block_size)
 #endif
          status = ga_allocate(g_b)
 #endif
          if (.not. status) call ga_error('ga_create failed:b',0) 
-#ifndef BLOCK_CYCLIC
+#ifdef USE_REGULAR
          status = ga_create(MT_DBL, n, n, 'c', n, 0, g_c)
 #else
          g_c = ga_create_handle()
@@ -173,8 +184,12 @@ c
          dims(2) = n
          call ga_set_data(g_c,ndim,dims,MT_DBL)
          call ga_set_array_name(g_c,'c')
+#ifndef USE_SIMPLE_CYCLIC
 #ifdef USE_SCALAPACK_DISTR
          call ga_set_block_cyclic_proc_grid(g_c,block_size,proc_grid)
+#else
+         call ga_set_tiled_proc_grid(g_c,block_size,proc_grid)
+#endif
 #else
          call ga_set_block_cyclic(g_c,block_size)
 #endif
@@ -266,7 +281,7 @@ c
       bilo = iran(n/2)
       bjlo = iran(n/2)
 c
-#ifdef BLOCK_CYCLIC
+#ifndef USE_REGULAR
       if (me .eq. 0) then
          write(6,*)'  without transpose:   OK '
          call ffflush(6)
@@ -470,6 +485,7 @@ c
          call ffflush(6)
       endif
 c
+#ifdef USE_REGULAR
       call ga_sync()
       call ga_matmul_patch('t','n', 1d0, 0d0,
      $                      g_a, ailo,ailo+n/2, ajlo, ajlo+n/3,
@@ -565,6 +581,7 @@ c
          write(6,*)'  trans(a)*trans(b): OK '
          call ffflush(6)
       endif
+#endif
       status = ga_destroy(g_a)
       status = status .and. ga_destroy(g_b)
       status = status .and. ga_destroy(g_c)
@@ -593,7 +610,7 @@ c
       integer g_a, g_b, g_c 
       integer rows, cols, loop
       logical status, dist_same 
-#ifdef BLOCK_CYCLIC
+#ifndef USE_REGULAR
       integer ndim, dims(2)
       integer block_size(2), proc_grid(2)
 #endif
@@ -602,10 +619,10 @@ c
 c
       me = ga_nodeid()
       nproc = ga_nnodes()
-#ifdef BLOCK_CYCLIC
+#ifndef USE_REGULAR
       block_size(1) = 32
       block_size(2) = 32
-#ifdef USE_SCALAPACK_DISTR
+#ifndef USE_SIMPLE_CYCLIC
       if (mod(nproc,2).ne.0)
      +  call ga_error("Available procs must be divisible by 2",0)
       proc_grid(1) = 2
@@ -622,7 +639,7 @@ c
 c
 c***  Create a global array
 c
-#ifndef BLOCK_CYCLIC
+#ifdef USE_REGULAR
       status = ga_create(MT_DCPL, n, n, 'a', 0, 0, g_a)
 #else
       g_a = ga_create_handle()
@@ -631,8 +648,12 @@ c
       dims(2) = n
       call ga_set_data(g_a,ndim,dims,MT_DCPL)
       call ga_set_array_name(g_a,'a')
+#ifndef USE_SIMPLE_CYCLIC
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
 #endif
@@ -652,7 +673,7 @@ c
          if(.not.ga_compare_distr(g_a, g_c))
      $           call ga_error("g_c distribution different",0) 
       else
-#ifndef BLOCK_CYCLIC
+#ifdef USE_REGULAR
          status = ga_create(MT_DCPL, n, n, 'b', 0, n, g_b)
 #else
          g_b = ga_create_handle()
@@ -661,15 +682,19 @@ c
          dims(2) = n
          call ga_set_data(g_b,ndim,dims,MT_DCPL)
          call ga_set_array_name(g_b,'b')
+#ifndef USE_SIMPLE_CYCLIC
 #ifdef USE_SCALAPACK_DISTR
          call ga_set_block_cyclic_proc_grid(g_b,block_size,proc_grid)
+#else
+         call ga_set_tiled_proc_grid(g_b,block_size,proc_grid)
+#endif
 #else
          call ga_set_block_cyclic(g_b,block_size)
 #endif
          status = ga_allocate(g_b)
 #endif
          if (.not. status) call ga_error('ga_create failed:b',0) 
-#ifndef BLOCK_CYCLIC
+#ifdef USE_REGULAR
          status = ga_create(MT_DCPL, n, n, 'c', n, 0, g_c)
 #else
          g_c = ga_create_handle()
@@ -678,8 +703,12 @@ c
          dims(2) = n
          call ga_set_data(g_c,ndim,dims,MT_DCPL)
          call ga_set_array_name(g_c,'c')
+#ifndef USE_SIMPLE_CYCLIC
 #ifdef USE_SCALAPACK_DISTR
          call ga_set_block_cyclic_proc_grid(g_c,block_size,proc_grid)
+#else
+         call ga_set_tiled_proc_grid(g_c,block_size,proc_grid)
+#endif
 #else
          call ga_set_block_cyclic(g_c,block_size)
 #endif
@@ -771,7 +800,7 @@ c
       bilo = iran(n/2)
       bjlo = iran(n/2)
 c
-#ifdef BLOCK_CYCLIC
+#ifndef USE_REGULAR
       if (me .eq. 0) then
          write(6,*)'  without transpose:   OK '
          call ffflush(6)
@@ -976,6 +1005,7 @@ c
       endif
 c
       call ga_sync()
+#ifdef USE_REGULAR
       call ga_matmul_patch('t','n', (1d0,0d0), (0d0,0d0),
      $                      g_a, ailo,ailo+n/2, ajlo, ajlo+n/3,
      $                      g_b, bilo,bilo+n/3, bjlo, bjlo+n/2,
@@ -1073,6 +1103,7 @@ c
          write(6,*)'  trans(a)*trans(b): OK '
          call ffflush(6)
       endif
+#endif
       status = ga_destroy(g_a)
       status = status .and. ga_destroy(g_b)
       status = status .and. ga_destroy(g_c)
@@ -1099,7 +1130,7 @@ c
       integer g_a, g_b, g_c
       integer rows, cols, loop
       logical status, dist_same
-#ifdef BLOCK_CYCLIC
+#ifndef USE_REGULAR
       integer ndim, dims(2)
       integer block_size(2), proc_grid(2)
 #endif
@@ -1108,10 +1139,10 @@ c
 c
       me = ga_nodeid()
       nproc = ga_nnodes()
-#ifdef BLOCK_CYCLIC
+#ifndef USE_REGULAR
       block_size(1) = 32
       block_size(2) = 32
-#ifdef USE_SCALAPACK_DISTR
+#ifndef USE_SIMPLE_CYCLIC
       if (mod(nproc,2).ne.0)
      +  call ga_error("Available procs must be divisible by 2",0)
       proc_grid(1) = 2
@@ -1128,7 +1159,7 @@ c
 c
 c***  Create a global array
 c
-#ifndef BLOCK_CYCLIC
+#ifdef USE_REGULAR
       status = ga_create(MT_REAL, n, n, 'a', 0, 0, g_a)
 #else
       g_a = ga_create_handle()
@@ -1137,8 +1168,12 @@ c
       dims(2) = n
       call ga_set_data(g_a,ndim,dims,MT_REAL)
       call ga_set_array_name(g_a,'a')
+#ifndef USE_SIMPLE_CYCLIC
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
 #endif
@@ -1158,7 +1193,7 @@ c
          if(.not.ga_compare_distr(g_a, g_c))
      $           call ga_error("g_c distribution different",0)
       else
-#ifndef BLOCK_CYCLIC
+#ifdef USE_REGULAR
          status = ga_create(MT_REAL, n, n, 'b', 0, n, g_b)
 #else
          g_b = ga_create_handle()
@@ -1167,15 +1202,19 @@ c
          dims(2) = n
          call ga_set_data(g_b,ndim,dims,MT_REAL)
          call ga_set_array_name(g_b,'b')
+#ifndef USE_SIMPLE_CYCLIC
 #ifdef USE_SCALAPACK_DISTR
          call ga_set_block_cyclic_proc_grid(g_b,block_size,proc_grid)
+#else
+         call ga_set_tiled_proc_grid(g_b,block_size,proc_grid)
+#endif
 #else
          call ga_set_block_cyclic(g_b,block_size)
 #endif
          status = ga_allocate(g_b)
 #endif
          if (.not. status) call ga_error('ga_create failed:b',0)
-#ifndef BLOCK_CYCLIC
+#ifdef USE_REGULAR
          status = ga_create(MT_REAL, n, n, 'c', n, 0, g_c)
 #else
          g_c = ga_create_handle()
@@ -1184,8 +1223,12 @@ c
          dims(2) = n
          call ga_set_data(g_c,ndim,dims,MT_REAL)
          call ga_set_array_name(g_c,'c')
+#ifndef USE_SIMPLE_CYCLIC
 #ifdef USE_SCALAPACK_DISTR
          call ga_set_block_cyclic_proc_grid(g_c,block_size,proc_grid)
+#else
+         call ga_set_tiled_proc_grid(g_c,block_size,proc_grid)
+#endif
 #else
          call ga_set_block_cyclic(g_c,block_size)
 #endif
@@ -1277,7 +1320,7 @@ c
       bilo = iran(n/2)
       bjlo = iran(n/2)
 c
-#ifdef BLOCK_CYCLIC
+#ifndef USE_REGULAR
       if (me .eq. 0) then
          write(6,*)'  without transpose:   OK '
          call ffflush(6)

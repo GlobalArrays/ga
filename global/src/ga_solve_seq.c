@@ -544,7 +544,7 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
     blas_dimA2 = dimA2;
     blas_dimB1 = dimB1;
     blas_dimB2 = dimB2;
-    LAPACK_DGETRF(&blas_dimA1, &blas_dimA2, adra, &blas_dimA1, adri, &info);
+    LAPACK_DGETRF(&blas_dimA1, &blas_dimA2, adra, &blas_dimA1, (BlasInt*)adri, &info);
 #else
     {  int info_t;
       LP_dgefa(adra, (int)dimA1, (int)dimA2, (int*)adri, &info_t);
@@ -556,7 +556,7 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
     if(info == 0) {
 #if HAVE_LAPACK || ENABLE_F77
       LAPACK_DGETRS(trans, &blas_dimA1, &blas_dimB2, adra, &blas_dimA1, 
-          adri, adrb, &blas_dimB1, &info);
+          (BlasInt*)adri, adrb, &blas_dimB1, &info);
 #else
       DoublePrecision *p_b;
       Integer i;

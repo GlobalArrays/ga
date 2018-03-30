@@ -26,6 +26,11 @@ extern int ARMCI_Default_Proc_Group;
 /* for armci_msg_sel_scope */
 static MPI_Datatype MPI_LONGLONG_INT;
 
+/* Information on nodes */
+extern int _number_of_procs_per_node;
+extern int _my_node_id;
+extern ARMCI_Group ARMCI_Node_group;
+
 static MPI_Comm wc()
 {
     MPI_Comm comm;
@@ -258,7 +263,11 @@ void armci_msg_sel_scope(int scope, void *x, int n, char* op, int type, int cont
     MPI_Comm comm = get_default_comm();
 
     if (SCOPE_NODE == scope) {
+      if (_number_of_procs_per_node == 1) {
         comm = MPI_COMM_SELF;
+      } else {
+        comex_group_comm(ARMCI_Node_group,&comm);
+      }
     }
 
     /* first time this function is called we establish the
@@ -321,8 +330,10 @@ void armci_msg_bcast_scope(int scope, void* buffer, int len, int root)
         armci_msg_bcast(buffer, len, root);
     }
     else if (SCOPE_NODE == scope) {
+        MPI_Comm comm;
         assert(buffer != NULL);
-        MPI_Bcast(buffer, len, MPI_BYTE, root, MPI_COMM_SELF);
+        comex_group_comm(ARMCI_Node_group,&comm);
+        MPI_Bcast(buffer, len, MPI_BYTE, root, comm);
     }
     else {
         assert(0);
@@ -459,7 +470,11 @@ void armci_msg_reduce(void *x, int n, char *op, int type)
 void armci_msg_reduce_scope(int scope, void *x, int n, char *op, int type)
 {
     if (SCOPE_NODE == scope) {
+      if (_number_of_procs_per_node > 1) {
+        do_gop(x, n, op, type, ARMCI_Node_group);
+      } else {
         do_gop(x, n, op, type, ARMCI_GROUP_SELF);
+      }
     } else {
         do_gop(x, n, op, type, get_default_group());
     }
@@ -469,7 +484,11 @@ void armci_msg_reduce_scope(int scope, void *x, int n, char *op, int type)
 void armci_msg_gop_scope(int scope, void *x, int n, char* op, int type)
 {
     if (SCOPE_NODE == scope) {
+      if (_number_of_procs_per_node > 1) {
+        do_gop(x, n, op, type, ARMCI_Node_group);
+      } else {
         do_gop(x, n, op, type, ARMCI_GROUP_SELF);
+      }
     } else {
         do_gop(x, n, op, type, get_default_group());
     }
@@ -705,7 +724,13 @@ void parmci_msg_group_barrier(ARMCI_Group *group)
 void armci_msg_group_bcast_scope(int scope, void *buf, int len, int root, ARMCI_Group *group)
 {
     if (SCOPE_NODE == scope) {
+      if (_number_of_procs_per_node > 1) {
+        MPI_Comm comm;
+        comex_group_comm(ARMCI_Node_group, &comm);
+        MPI_Bcast(buf, len, MPI_BYTE, root, comm);
+      } else {
         MPI_Bcast(buf, len, MPI_BYTE, root, MPI_COMM_SELF);
+      }
     }
     else {
         int root_sub;

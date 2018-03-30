@@ -35,6 +35,7 @@ Purpose:
 #include "message.h"
 #include "ga-papi.h"
 #include "ga-wapi.h"
+#include "ga_iterator.h"
 
 #define auxi_median(a,b,c,m)                         \
 {                                                    \
@@ -284,7 +285,7 @@ static void sgai_median_patch_values(Integer type, Integer ndim, Integer *loA,
   }
 }
 
-/*\ median routine
+/*\ median routine. Not sure what this function is suppose to do
 \*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_median_patch = pnga_median_patch
@@ -305,8 +306,8 @@ void pnga_median_patch(
   Integer loM[MAXDIM], hiM[MAXDIM], ldM[MAXDIM];
   Integer g_A = g_a, g_B = g_b;
   Integer g_C = g_c, g_M = g_m;
-  void *A_ptr, *B_ptr;
-  void *C_ptr, *M_ptr;
+  char *A_ptr, *B_ptr;
+  char *C_ptr, *M_ptr;
   Integer offset;
   Integer atotal, btotal;
   Integer ctotal, mtotal;
@@ -315,6 +316,7 @@ void pnga_median_patch(
   char *tempname = "temp", transp = 'n';        /*no transpose */
   Integer num_blocks_a, num_blocks_b, num_blocks_c, num_blocks_m;
   int local_sync_begin,local_sync_end;
+  _iterator_hdl hdl_a, hdl_b, hdl_c, hdl_m;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -515,6 +517,39 @@ void pnga_median_patch(
     c_temp_created = 1;
 
     /* M is normally distributed so just get the mean using standard approach */
+#if 1
+    pnga_local_iterator_init(g_A, &hdl_a);
+    pnga_local_iterator_init(g_B, &hdl_b);
+    pnga_local_iterator_init(g_C, &hdl_c);
+    pnga_local_iterator_init(g_m, &hdl_m);
+    while(pnga_local_iterator_next(&hdl_a,loA,hiA,&A_ptr,ldA)) {
+      pnga_local_iterator_next(&hdl_b,loB,hiB,&B_ptr,ldB);
+      pnga_local_iterator_next(&hdl_c,loC,hiC,&C_ptr,ldC);
+      pnga_local_iterator_next(&hdl_m,loM,hiM,&M_ptr,ldM);
+      Integer idx, lod[MAXDIM]/*, hid[MAXDIM]*/;
+      Integer jtot, last;
+      /* make temporary copies of loM and hiM since pnga_patch_intersect
+         destroys original versions */
+      for (j=0; j<mndim; j++) {
+        lod[j] = loM[j];
+        /*hid[j] = hiM[j];*/
+      }
+
+      /* evaluate offsets for system */
+      offset = 0;
+      last = mndim - 1;
+      jtot = 1;
+      for (j=0; j<last; j++) {
+        offset += (loM[j] - lod[j])*jtot;
+        jtot *= ldM[j];
+      }
+      offset += (loM[last]-lod[last])*jtot;
+
+      sgai_median_patch_values(type, mndim, loM, hiM, ldM,
+          A_ptr, B_ptr, C_ptr, M_ptr, offset);
+
+    }
+#else
     if (num_blocks_m < 0) {
       offset = 0;
       pnga_distribution(g_m, me, loM, hiM);
@@ -636,6 +671,7 @@ void pnga_median_patch(
         }
       }
     }
+#endif
   }
   if (a_temp_created)
     pnga_destroy (g_A);
@@ -829,6 +865,8 @@ static void sgai_norm_infinity_block(Integer g_a, void *ptr,
   }
 }
 
+/* Evaluate the infinity norm of an array. This is the maximum absolute
+ * value of the the elements in the array */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_norm_infinity = pnga_norm_infinity
 #endif
@@ -847,12 +885,13 @@ void pnga_norm_infinity(Integer g_a, double *nm)
   double dval;
   DoubleComplex zsum;
   SingleComplex csum;
-  void *buf = NULL;
-  void *ptr = NULL;
+  char *buf = NULL;
+  char *ptr = NULL;
   zsum.real = 0.0;
   zsum.imag = 0.0;
   csum.real = 0.0;
   csum.imag = 0.0;
+  _iterator_hdl hdl;
 
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
@@ -894,6 +933,12 @@ void pnga_norm_infinity(Integer g_a, double *nm)
       pnga_error("ga_norm_infinity_: wrong data type:", type);
   }
 
+#if 1
+  pnga_local_iterator_init(g_a, &hdl);
+  while (pnga_local_iterator_next(&hdl,lo,hi,&ptr,&ld)) {
+    sgai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
+  }
+#else
   num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
@@ -946,6 +991,7 @@ void pnga_norm_infinity(Integer g_a, double *nm)
       }
     }
   }
+#endif
 
 
   /*calculate the global value buf[j] for each column */
@@ -1133,6 +1179,8 @@ static void sgai_norm1_block(Integer g_a, void *ptr,
   }
 }
 
+/* Evaluate the L_1 norm of an array. This should be the sum of the absolute
+ * value of the individual array elements*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_norm1 = pnga_norm1
 #endif
@@ -1151,12 +1199,13 @@ void pnga_norm1(Integer g_a, double *nm)
   float fval;
   DoubleComplex zsum;
   SingleComplex csum;
-  void *buf = NULL;                    /*temporary buffer */
-  void *ptr = NULL;
+  char *buf = NULL;                    /*temporary buffer */
+  char *ptr = NULL;
   zsum.real = 0.0;
   zsum.imag = 0.0;
   csum.real = 0.0;
   csum.imag = 0.0;
+  _iterator_hdl hdl;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -1195,6 +1244,12 @@ void pnga_norm1(Integer g_a, double *nm)
       pnga_error("ga_norm1_: wrong data type:", type);
   }
 
+#if 1
+  pnga_local_iterator_init(g_a, &hdl);
+  while (pnga_local_iterator_next(&hdl,lo,hi,&ptr,&ld)) {
+    sgai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
+  }
+#else
   num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
@@ -1247,6 +1302,7 @@ void pnga_norm1(Integer g_a, double *nm)
       }
     }
   }
+#endif
 
   /*calculate the global value buf[j] for each column */
   switch (type)
@@ -1424,6 +1480,8 @@ static void sgai_get_diagonal_block(Integer g_a, void *ptr, Integer g_v,
   }
 }
 
+/* Get the diagonal elements of a matrix and copy them into a one dimensional
+ * array */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_get_diag = pnga_get_diag
 #endif
@@ -1435,7 +1493,8 @@ void pnga_get_diag(Integer g_a, Integer g_v)
   Integer loA[2], hiA[2], ld;
   Integer num_blocks_a;
   int local_sync_begin,local_sync_end;
-  void *ptr;
+  char *ptr;
+  _iterator_hdl hdl;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -1469,6 +1528,12 @@ void pnga_get_diag(Integer g_a, Integer g_v)
        atype);
   }
 
+#if 1
+  pnga_local_iterator_init(g_a, &hdl);
+  while (pnga_local_iterator_next(&hdl,loA,hiA,&ptr,&ld)) {
+    sgai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
+  }
+#else
   num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
@@ -1521,6 +1586,7 @@ void pnga_get_diag(Integer g_a, Integer g_v)
       }
     }
   }
+#endif
 
   GA_POP_NAME;
   if(local_sync_end)pnga_sync();
@@ -1644,6 +1710,7 @@ static void sgai_add_diagonal_block(Integer g_a, void *ptr, Integer g_v,
   }
 }
 
+/* Add values in vector g_v to diagonal elements of g_a */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_add_diagonal = pnga_add_diagonal
 #endif
@@ -1655,7 +1722,8 @@ void pnga_add_diagonal(Integer g_a, Integer g_v)
   Integer loA[2], hiA[2], ld;
   Integer num_blocks_a;
   int local_sync_begin,local_sync_end;
-  void *ptr;
+  char *ptr;
+  _iterator_hdl hdl;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -1690,6 +1758,12 @@ void pnga_add_diagonal(Integer g_a, Integer g_v)
        atype);
   }
 
+#if 1
+  pnga_local_iterator_init(g_a, &hdl);
+  while (pnga_local_iterator_next(&hdl,loA,hiA,&ptr,&ld)) {
+    sgai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
+  }
+#else
   num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
@@ -1741,6 +1815,7 @@ void pnga_add_diagonal(Integer g_a, Integer g_v)
       }
     }
   }
+#endif
   GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
@@ -1867,6 +1942,7 @@ static void sgai_set_diagonal_block(Integer g_a, void *ptr, Integer g_v, Integer
   }
 }
 
+/* Set diagonal of g_a to have values in g_v */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_set_diagonal = pnga_set_diagonal
 #endif
@@ -1878,7 +1954,8 @@ void pnga_set_diagonal(Integer g_a, Integer g_v)
   Integer loA[2], hiA[2], ld;
   Integer num_blocks_a;
   int local_sync_begin,local_sync_end;
-  void *ptr;
+  char *ptr;
+  _iterator_hdl hdl;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -1913,6 +1990,12 @@ void pnga_set_diagonal(Integer g_a, Integer g_v)
        atype);
   }
 
+#if 1
+  pnga_local_iterator_init(g_a, &hdl);
+  while (pnga_local_iterator_next(&hdl,loA,hiA,&ptr,&ld)) {
+    sgai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
+  }
+#else
   num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
@@ -1966,7 +2049,7 @@ void pnga_set_diagonal(Integer g_a, Integer g_v)
     }
 
   }
-
+#endif
   GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
@@ -2073,9 +2156,10 @@ void pnga_shift_diagonal(Integer g_a, void *c)
   Integer loA[2], hiA[2]/*, dim1, dim2*/, ld;
   Integer andim, adims[2], type, atype;
   Integer me = pnga_nodeid (), i, nproc = pnga_nnodes();
-  void *ptr;
+  char *ptr;
   Integer num_blocks_a;
   int local_sync_begin,local_sync_end;
+  _iterator_hdl hdl;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -2091,6 +2175,12 @@ void pnga_shift_diagonal(Integer g_a, void *c)
   if (andim != 2) 
     pnga_error("Dimension must be 2 for shift diagonal operation",andim);
 
+#if 1
+  pnga_local_iterator_init(g_a, &hdl);
+  while (pnga_local_iterator_next(&hdl,loA,hiA,&ptr,&ld)) {
+    sgai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
+  }
+#else
   num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
@@ -2143,7 +2233,7 @@ void pnga_shift_diagonal(Integer g_a, void *c)
       }
     }
   }
-
+#endif
   GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
@@ -2217,10 +2307,11 @@ void pnga_zero_diagonal(Integer g_a)
   Integer /*dim1, dim2,*/ type;
   Integer ld, lo[2], hi[2], loA[2], hiA[2];
   Integer me = pnga_nodeid (), i, offset;
-  void *ptr;
+  char *ptr;
   Integer num_blocks_a;
   Integer atype, andim, adims[2];
   int local_sync_begin,local_sync_end;
+  _iterator_hdl hdl;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -2233,6 +2324,21 @@ void pnga_zero_diagonal(Integer g_a)
   /*dim2 = adims[1];*/
   type = atype;
 
+#if 1
+  pnga_local_iterator_init(g_a, &hdl);
+  while (pnga_local_iterator_next(&hdl,loA,hiA,&ptr,&ld)) {
+    offset = 0;
+    if (loA[0] > 0) {
+      lo[0] = GA_MAX (loA[0], loA[1]);
+      lo[1] = GA_MAX (loA[0], loA[1]);
+      hi[0] = GA_MIN (hiA[0], hiA[1]);
+      hi[1] = GA_MIN (hiA[0], hiA[1]);
+      if (hi[0] >= lo[0]) {
+        sgai_zero_diagonal_block(g_a, ptr, lo, hi, ld, offset, type);
+      }
+    }
+  }
+#else
   num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
@@ -2331,6 +2437,7 @@ void pnga_zero_diagonal(Integer g_a)
       }
     }
   }
+#endif
   GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
@@ -2430,10 +2537,11 @@ void pnga_scale_rows(Integer g_a, Integer g_v)
   Integer vndim, vdims, dim1/*, dim2*/, vtype, atype, type;
   Integer ld, lo[2], hi[2];
   Integer me = pnga_nodeid (), i, chk;
-  void *ptr;
+  char *ptr;
   Integer andim, adims[2];
   Integer num_blocks_a;
   int local_sync_begin,local_sync_end;
+  _iterator_hdl hdl;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -2469,6 +2577,12 @@ void pnga_scale_rows(Integer g_a, Integer g_v)
        atype);
   }
 
+#if 1
+  pnga_local_iterator_init(g_a, &hdl);
+  while (pnga_local_iterator_next(&hdl,lo,hi,&ptr,&ld)) {
+    sgai_scale_row_values(type, lo, hi, ld, ptr, g_v);
+  }
+#else
   num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
@@ -2531,6 +2645,7 @@ void pnga_scale_rows(Integer g_a, Integer g_v)
       }
     }
   }
+#endif
   GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }
@@ -2630,11 +2745,12 @@ void pnga_scale_cols(Integer g_a, Integer g_v)
   Integer vndim, vdims/*, dim1*/, dim2, vtype, atype, type;
   Integer ld, lo[2], hi[2];
   Integer me = pnga_nodeid (), i;
-  void *ptr;
+  char *ptr;
   Integer andim, adims[2];
   int local_sync_begin,local_sync_end;
   Integer num_blocks_a;
   Integer chk;
+  _iterator_hdl hdl;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -2670,6 +2786,12 @@ void pnga_scale_cols(Integer g_a, Integer g_v)
          atype);
     }
 
+#if 1
+  pnga_local_iterator_init(g_a, &hdl);
+  while (pnga_local_iterator_next(&hdl,lo,hi,&ptr,&ld)) {
+    sgai_scale_col_values(type, lo, hi, ld, ptr, g_v);
+  }
+#else
   num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
@@ -2732,6 +2854,7 @@ void pnga_scale_cols(Integer g_a, Integer g_v)
       }
     }
   }
+#endif
   GA_POP_NAME;
   if(local_sync_end)pnga_sync();
 }

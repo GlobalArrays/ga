@@ -98,6 +98,7 @@ set(GA_FILES
   global.periodic.c
   global.util.c
   hsort.scat.c
+  iterator.c
   matmul.c
   matrix.c
   nbutil.c

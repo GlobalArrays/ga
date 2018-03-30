@@ -102,6 +102,7 @@ extern Integer pnga_get_pgroup_size(Integer grp_id);
 extern void pnga_set_array_name(Integer g_a, char *array_name);
 extern void pnga_set_block_cyclic(Integer g_a, Integer *dims);
 extern void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid);
+extern void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid);
 extern void pnga_set_chunk(Integer g_a, Integer *chunk);
 extern void pnga_set_data(Integer g_a, Integer ndim, Integer *dims, Integer type);
 extern void pnga_set_debug(logical flag);
@@ -112,6 +113,8 @@ extern void pnga_set_memory_limit(Integer mem_limit);
 extern void pnga_set_pgroup(Integer g_a, Integer p_handle);
 extern void pnga_set_restricted(Integer g_a, Integer *list, Integer size);
 extern void pnga_set_restricted_range(Integer g_a, Integer lo_proc, Integer hi_proc);
+extern void pnga_set_property(Integer g_a, char *property);
+extern void pnga_unset_property(Integer g_a);
 extern void pnga_terminate();
 extern Integer pnga_total_blocks(Integer g_a);
 extern void pnga_unlock(Integer mutex);
@@ -337,6 +340,7 @@ extern void pnga_periodic(Integer g_a, Integer *lo, Integer *hi, void *buf, Inte
 extern void pnga_matmul(char *transa, char *transb, void *alpha, void *beta, Integer g_a, Integer ailo, Integer aihi, Integer ajlo, Integer ajhi, Integer g_b, Integer bilo, Integer bihi, Integer bjlo, Integer bjhi, Integer g_c, Integer cilo, Integer cihi, Integer cjlo, Integer cjhi);
 extern void pnga_matmul_mirrored(char *transa, char *transb, void *alpha, void *beta, Integer g_a, Integer ailo, Integer aihi, Integer ajlo, Integer ajhi, Integer g_b, Integer bilo, Integer bihi, Integer bjlo, Integer bjhi, Integer g_c, Integer cilo, Integer cihi, Integer cjlo, Integer cjhi);
 extern void pnga_matmul_patch(char *transa, char *transb, void *alpha, void *beta, Integer g_a, Integer alo[], Integer ahi[], Integer g_b, Integer blo[], Integer bhi[], Integer g_c, Integer clo[], Integer chi[]);
+extern void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta, Integer g_a, Integer alo[], Integer ahi[], Integer g_b, Integer blo[], Integer bhi[], Integer g_c, Integer clo[], Integer chi[]);
 
 /* Routines from ga_diag_seqc.c */
 
