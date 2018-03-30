@@ -455,7 +455,7 @@ int comex_init()
             max_message_size = atoi(value);
         }
 
-#if DEBUG || 1
+#if DEBUG
         if (0 == g_state.rank) {
             printf("COMEX_MAX_NB_OUTSTANDING=%d\n", nb_max_outstanding);
             printf("COMEX_STATIC_BUFFER_SIZE=%d\n", static_server_buffer_size);
