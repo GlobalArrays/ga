@@ -285,8 +285,8 @@ _iterator_hdl hdl;
        }
 #else
        pnga_local_iterator_init(g_a, &hdl);
-       while (pnga_local_iterator_next(&hdl,lo,hi,&ptr_a,ld)) {
-         pnga_put(g_b, lo, hi, ptr_a, ld);
+       while (pnga_local_iterator_next(&hdl,_lo,_hi,&ptr_a,_ld)) {
+         pnga_put(g_b, _lo, _hi, ptr_a, _ld);
        }
 #endif
      } else {
@@ -339,8 +339,8 @@ _iterator_hdl hdl;
        }
 #else
        pnga_local_iterator_init(g_b, &hdl);
-       while (pnga_local_iterator_next(&hdl,lo,hi,&ptr_b,ld)) {
-         pnga_get(g_a, lo, hi, ptr_b, ld);
+       while (pnga_local_iterator_next(&hdl,_lo,_hi,&ptr_b,_ld)) {
+         pnga_get(g_a, _lo, _hi, ptr_b, _ld);
        }
 #endif
      }

@@ -1709,7 +1709,6 @@ void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_g
     jsize *= GA[ga_handle].num_blocks[i];
   }
   GA[ga_handle].block_total = jsize;
-  GA_POP_NAME;
 }
 
 /**
@@ -1723,7 +1722,6 @@ void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid)
 {
   Integer i, jsize, tot;
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_tiled_proc_grid");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set tiled data distribution on array that has been allocated",0);
   if (!(GA[ga_handle].ndim > 0))
@@ -1864,7 +1862,6 @@ void pnga_set_property(Integer g_a, char* property) {
   Integer ga_handle = g_a + GA_OFFSET;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
   pnga_pgroup_sync(GA[ga_handle].p_handle);
-  GA_PUSH_NAME("ga_set_property");
   /* Check to see if property conflicts with properties already set on the
    * global array. This check may need more refinement as additional properties
    * are added. */
@@ -2074,7 +2071,6 @@ void pnga_set_property(Integer g_a, char* property) {
 #endif
     }
     pnga_destroy(g_tmp);
-    GA_POP_NAME;
   } else {
     pnga_error("Trying to set unknown property",0);
   }
@@ -2088,7 +2084,6 @@ void pnga_set_property(Integer g_a, char* property) {
 #endif
 void pnga_unset_property(Integer g_a) {
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_unset_property");
   if (GA[ga_handle].property == READ_ONLY) {
     /* TODO: Copy global array to original configuration */
     int i, d, ndim, btot, chk;
@@ -2232,7 +2227,6 @@ void pnga_unset_property(Integer g_a) {
   } else {
     GA[ga_handle].property = NO_PROPERTY;
   }
-  GA_POP_NAME;
 }
 
 /**

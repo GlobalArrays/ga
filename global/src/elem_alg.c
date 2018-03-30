@@ -982,6 +982,7 @@ static void gai_oper_elem(Integer g_a, Integer *lo, Integer *hi, void *scalar, I
       }
     }
   }
+#endif
   if(local_sync_end)pnga_sync();
 }
 
@@ -2753,6 +2754,7 @@ static void ngai_elem3_patch_(Integer g_a, Integer *alo, Integer *ahi, int op)
       }
     }
   }
+#endif
   if(local_sync_end)pnga_sync();
 }
 
@@ -3087,6 +3089,7 @@ Integer g_a, *alo, *ahi;    /* patch of g_a */
       }
     }
   }
+#endif
   pnga_sync();
   return iretval; /*negative element is not found in g_a*/
 }

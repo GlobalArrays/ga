@@ -1432,7 +1432,6 @@ void pnga_matmul(transa, transb, alpha, beta,
        hiC[1] = cjhi;
        pnga_matmul_basic(transa, transb, alpha, beta, g_a, loA, hiA,
          g_b, loB, hiB, g_c, loC, hiC);
-       GA_POP_NAME;   
        return;
 #endif
     }
@@ -2034,7 +2033,6 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
        pnga_total_blocks(g_c) > 0) {
      pnga_matmul_basic(transa, transb, alpha, beta, g_a, alo, ahi,
          g_b, blo, bhi, g_c, clo, chi);
-     GA_POP_NAME;
      return;
    }
 
@@ -2411,7 +2409,6 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  GA_PUSH_NAME("nga_matmul_basic");
   /* For the time being, punt on transposes*/
   if (*transa == 't' || *transa == 'T' || *transb == 't' || *transb == 'T') {
     pnga_error("Cannot do basic multiply with tranpose ",0);
@@ -2607,6 +2604,5 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
       free(b_buf);
     }
   }
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync(); 
 }
