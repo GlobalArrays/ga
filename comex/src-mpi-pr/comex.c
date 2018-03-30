@@ -165,6 +165,9 @@ static int COMEX_ENABLE_ACC_SMP = ENABLE_ACC_SMP;
 static int COMEX_ENABLE_PUT_PACKED = ENABLE_PUT_PACKED;
 static int COMEX_ENABLE_GET_PACKED = ENABLE_GET_PACKED;
 static int COMEX_ENABLE_ACC_PACKED = ENABLE_ACC_PACKED;
+static int COMEX_ENABLE_PUT_DATATYPE = ENABLE_PUT_DATATYPE;
+static int COMEX_ENABLE_GET_DATATYPE = ENABLE_GET_DATATYPE;
+static int COMEX_ENABLE_ACC_DATATYPE = ENABLE_ACC_DATATYPE;
 static int COMEX_ENABLE_PUT_IOV = ENABLE_PUT_IOV;
 static int COMEX_ENABLE_GET_IOV = ENABLE_GET_IOV;
 static int COMEX_ENABLE_ACC_IOV = ENABLE_ACC_IOV;
@@ -403,6 +406,24 @@ int comex_init()
             COMEX_ENABLE_ACC_PACKED = atoi(value);
         }
 
+        COMEX_ENABLE_PUT_DATATYPE = ENABLE_PUT_DATATYPE; /* default */
+        value = getenv("COMEX_ENABLE_PUT_DATATYPE");
+        if (NULL != value) {
+            COMEX_ENABLE_PUT_DATATYPE = atoi(value);
+        }
+
+        COMEX_ENABLE_GET_DATATYPE = ENABLE_GET_DATATYPE; /* default */
+        value = getenv("COMEX_ENABLE_GET_DATATYPE");
+        if (NULL != value) {
+            COMEX_ENABLE_GET_DATATYPE = atoi(value);
+        }
+
+        COMEX_ENABLE_ACC_DATATYPE = ENABLE_ACC_DATATYPE; /* default */
+        value = getenv("COMEX_ENABLE_ACC_DATATYPE");
+        if (NULL != value) {
+            COMEX_ENABLE_ACC_DATATYPE = atoi(value);
+        }
+
         COMEX_ENABLE_PUT_IOV = ENABLE_PUT_IOV; /* default */
         value = getenv("COMEX_ENABLE_PUT_IOV");
         if (NULL != value) {
@@ -442,6 +463,9 @@ int comex_init()
             printf("COMEX_ENABLE_PUT_PACKED=%d\n", COMEX_ENABLE_PUT_PACKED);
             printf("COMEX_ENABLE_GET_PACKED=%d\n", COMEX_ENABLE_GET_PACKED);
             printf("COMEX_ENABLE_ACC_PACKED=%d\n", COMEX_ENABLE_ACC_PACKED);
+            printf("COMEX_ENABLE_PUT_DATATYPE=%d\n", COMEX_ENABLE_PUT_DATATYPE);
+            printf("COMEX_ENABLE_GET_DATATYPE=%d\n", COMEX_ENABLE_GET_DATATYPE);
+            printf("COMEX_ENABLE_ACC_DATATYPE=%d\n", COMEX_ENABLE_ACC_DATATYPE);
             printf("COMEX_ENABLE_PUT_IOV=%d\n", COMEX_ENABLE_PUT_IOV);
             printf("COMEX_ENABLE_GET_IOV=%d\n", COMEX_ENABLE_GET_IOV);
             printf("COMEX_ENABLE_ACC_IOV=%d\n", COMEX_ENABLE_ACC_IOV);
