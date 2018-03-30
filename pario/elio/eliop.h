@@ -35,7 +35,7 @@ extern void GA_Error(char*, int);
 #if (defined(CRAY) && !defined(__crayx1))
 #        include <sys/statfs.h>
 #        define  STATVFS statfs
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) && !defined(GLIBC)
 #        include <sys/param.h>
 #        include <sys/mount.h>
 #        define  STATVFS statfs
@@ -44,7 +44,7 @@ extern void GA_Error(char*, int);
 #        define  STATVFS _stat 
 #        define  S_ISDIR(mode) ((mode&S_IFMT) == S_IFDIR)
 #        define  S_ISREG(mode) ((mode&S_IFMT) == S_IFREG)
-#elif defined(LINUX)  ||  defined(CYGWIN) || defined(BGQ)
+#elif defined(LINUX)  ||  defined(CYGWIN) || defined(BGQ) || defined(__GLIBC__)
 #        include <sys/vfs.h>
 #        define  STATVFS statfs
 #        define NO_F_FRSIZE 

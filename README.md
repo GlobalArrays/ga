@@ -2,11 +2,42 @@
 
 Travis: [![Build Status](https://travis-ci.org/GlobalArrays/ga.svg?branch=master)](https://travis-ci.org/GlobalArrays/ga)
 
+## Table of Contents
+
+* [DISCLAIMER](#disclaimer)
+* [ACKNOWLEDGMENT](#acknowledgment)
+* [GETTING STARTED](#getting-started)
+* [QUESTIONS/HELP/SUPPORT/BUG-REPORT](#questionshelpsupportbug-report)
+* [WHERE IS THE DOCUMENTATION?](#where-is-the-documentation)
+* [ABOUT THIS SOFTWARE](#about-this-software)
+* [HOW TO BUILD THE PACKAGE?](#how-to-build-the-package)
+   * [autotools build](#autotools-build)
+      * [Configuration Options](#configuration-options)
+         * [Selecting the Underlying One-Sided Runtime](#selecting-the-underlying-one-sided-runtime)
+            * [How to Use Progress Ranks](#how-to-use-progress-ranks)
+            * [How to Use Progress Threads](#how-to-use-progress-threads)
+            * [How to Use the New Default Two Sided Port](#how-to-use-the-new-default-two-sided-port)
+            * [Full List of Runtimes](#full-list-of-runtimes)
+         * [Other Options](#other-options)
+      * [Special Notes for BLAS](#special-notes-for-blas)
+      * [Cross-Compilation Issues](#cross-compilation-issues)
+         * [Cray XT](#cray-xt)
+      * [Compiler Selection](#compiler-selection)
+      * [After Configuration](#after-configuration)
+      * [Test Programs](#test-programs)
+      * [Test Suite](#test-suite)
+      * [Performance Tuning](#performance-tuning)
+   * [CMake](#cmake)
+
 ## DISCLAIMER
+
+[back to top]
 
 This material was prepared as an account of work sponsored by an agency of the United States Government.  Neither the United States Government nor the United States Department of Energy, nor Battelle, nor any of their employees, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, SOFTWARE, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY OWNED RIGHTS.
 
 ## ACKNOWLEDGMENT
+
+[back to top]
 
 This software and its documentation were produced with United States Government support under Contract Number DE-AC06-76RLO-1830 awarded by the United States Department of Energy. The United States Government retains a paid-up non-exclusive, irrevocable worldwide license to reproduce, prepare derivative works, perform publicly and display publicly by or for the US Government, including the right to distribute to other US Government contractors.
 
@@ -14,6 +45,8 @@ The primary current source of funding for development of GA is the Exascale Comp
 https://exascaleproject.org/
 
 ## GETTING STARTED
+
+[back to top]
 
 If the `configure` script is not present, run `./autogen.sh`.  It will install the necessary versions of autoconf, automake, and libtool into an `autotools` subdirectory and then run `autoreconf` automatically to generate the `configure` script.
 
@@ -27,19 +60,27 @@ Please refer to the INSTALL file for generic build instructions.  That is a good
 
 ## QUESTIONS/HELP/SUPPORT/BUG-REPORT
 
+[back to top]
+
 Please submit issues to our [GitHub issue tracker](https://github.com/GlobalArrays/ga/issues).  We use Google Groups to host [our discussion forum](https://groups.google.com/forum/#!forum/hpctools), or send an email to hpctools@pnl.gov as an alias for that group.
 
 ## WHERE IS THE DOCUMENTATION?
 
+[back to top]
+
 The [GA webpage](http://hpc.pnl.gov/globalarrays/) has the most current versions of the Fortran and C documentation and the User's Manual in the HTML format.
 
 ## ABOUT THIS SOFTWARE
+
+[back to top]
 
 This directory contains the Global Arrays (GA), Communications Runtime for Exascale (ComEx) run-time library, Aggregate Remote Memory Copy Interface (ARMCI) run-time library, Memory Allocator (MA), parallel I/O libraries (DRA,EAF,SF), TCGMSG, and TCGMSG-MPI packages bundled together. 
 
 Global Arrays is a portable Non-Uniform Memory Access (NUMA) shared-memory programming environment for distributed and shared memory computers. It augments the message-passing model by providing a shared-memory like access to distributed dense arrays. This is also known as the Partitioned Global Address Space (PGAS) model.
 
 ARMCI provides one-sided remote memory operations used by GA.
+
+ComEx is a successor to ARMCI and provides an ARMCI-compatible interface. New parallel runtime development takes place within ComEx including the MPI-only runtimes.
 
 DRA (Disk Resident Arrays) is a parallel I/O library that maintains dense two-dimensional arrays on disk. 
 
@@ -63,9 +104,13 @@ See file 'CHANGELOG.md' for a list of major changes in the current release.
 
 ### autotools build
 
+[back to top]
+
 Please refer to the INSTALL file for generic build instructions.  That is a good place to start if you are new to using "configure; make; make install" types of builds.  The following will cover platform-specific considerations as well as the various optional features of GA.  Customizations to the GA build via the configure script are discussed next.
 
 #### Configuration Options
+
+[back to top]
 
 There are many options available when configuring GA.  Although configure can be safely run within this distributions' root folder, we recommend performing an out-of-source (aka VPATH) build.  This will cleanly separate the generated Makefiles and compiled object files and libraries from the source code.  This will allow, for example, one build using MPI two-sided versus another build using OpenIB for the communication layer to use the same source tree e.g.:
 ```
@@ -76,11 +121,15 @@ Regardless of your choice to perform a VPATH build, the following should hopeful
 
 ##### Selecting the Underlying One-Sided Runtime
 
+[back to top]
+
 This software contains a number of communication runtime implementations which directly use MPI instead of a native communication library, e.g., OpenIB verbs, Cray DMAPP. The basis of all of our MPI-based ports is the use of the MPI two-sided primitives (MPI_Send, MPI_Recv) to implement our ComEx/ARMCI one-sided protocols. The primary benefit of these ports is that Global Arrays and its user applications will now run on any platform where MPI is supported.
 
-The recommended port is MPI-1 with progress ranks `--with-mpi-pr` MPI-1 with progress ranks.  However, there are some caveats which must be mentioned in order to use the new MPI ports.
+The recommended port is MPI-1 with progress ranks `--with-mpi-pr`. However, there are some caveats which must be mentioned in order to use the new MPI ports.
 
 ###### How to Use Progress Ranks
+
+[back to top]
 
 Your application code must not rely on MPI_COMM_WORLD directly. Instead, you must duplicate the MPI communicator that the GA library returns to you in place of any world communicator. Example code follows:
 
@@ -119,15 +168,21 @@ int main(int argc, char **argv) {
 
 ###### How to Use Progress Threads
 
+[back to top]
+
 This port uses MPI_Init_thread() internally with a threading level of MPI_THREAD_MULTIPLE. It will create one progress thread per compute node. It is advised to undersubscribe your compute nodes by one core. Your application code can remain unchanged unless you call MPI_Init() in your application code, in which case GA will detect the lower MPI threading level and abort with an error.
 
 ###### How to Use the New Default Two Sided Port
+
+[back to top]
 
 The MPI two-sided port is fully compatible with the MPI-1 standard. However, your application code will require additional GA_Sync() calls prior to and after any MPI function calls. This effectively splits user application code into blocks/epochs/phases of MPI code and GA code. Not doing so will likely cause your application to hang since our two sided port can only make communication progress inside of a GA function call.
 
 Any application code which only makes GA function calls can remain unchanged.
 
 ###### Full List of Runtimes
+
+[back to top]
 
 ```
   --with-armci[=ARG]      select armci network as external; path to external
@@ -155,6 +210,8 @@ Any application code which only makes GA function calls can remain unchanged.
 ```
 
 ##### Other Options
+
+[back to top]
 
 ```
 --disable-f77           Disable Fortran code. This used to be the old
@@ -213,7 +270,7 @@ whitespace-separated directories, linker or preprocessor directives.  For exampl
     --with-mpi=/path/to/mpi/base
     --with-mpi=-lmpich
 ```
-The messaging libraries supported include MPI, TCGMSG, and TCGMSG over MPI.  If you omit their respective `--with-` option, MPI is the default.  GA can be built to work with MPI or TCGMSG. Since the TCGMSG package is small (comparing to portable MPI implementations), compiles fast, it is still bundled with the GA package.
+The messaging libraries supported include MPI, TCGMSG, and TCGMSG over MPI.  If you omit their respective `--with-` option, MPI is the default.  GA can be built to work with MPI or TCGMSG. Since the TCGMSG package is small (comparing to portable MPI implementations) and compiles fast, it is still bundled with the GA package.
 ```
 --with-mpi=ARG          Select MPI as the messaging library (default). If you
                         omit ARG, we attempt to locate the MPI compiler
@@ -257,6 +314,8 @@ There are some influential environment variables as documented in `configure --h
 
 #### Special Notes for BLAS
 
+[back to top]
+
 BLAS, being a Fortran library, can be compiled with a default INTEGER size of 4 or a promoted INTEGER size of 8.  Experience has shown us that most of the time the default size of INTEGER used is 4.  In some cases, however, you may have an external BLAS library which is using 8-byte INTEGERs.  In order to correctly interface with an external BLAS library, GA must know the size of INTEGER used by the BLAS library.
 
 configure has the following BLAS-related options: `--with-blas`, `--with-blas4`, and `--with-blas8`.  The latter two will force the INTEGER size to 4- or 8-bytes, respectively.  The first option, `--with-blas`, defaults to 4-byte INTEGERS *however* in the two special cases of using ACML or MKL, it is possible to detect 8-byte INTEGERs automatically.  As documented in the ACML manual, if the path to the library has `_int64` then 8-byte INTEGERs are used. As documented in the MKL manual, if the library is `ilp64`, then 8-byte INTEGERs are used.
@@ -265,11 +324,15 @@ You may always override `--with-blas` by specifying the INTEGER size using one o
 
 #### Cross-Compilation Issues
 
+[back to top]
+
 Certain platforms cross-compile from a login node for a compute node, or one might choose to cross-compile for other reasons. Cross-compiling requires the use of the `--host` option to configure which indicates to configure that certain run-time tests should not be executed. See INSTALL for details on use of the `--host` option.
 
 Two of our target platforms are known to require cross-compilation, Cray XT and IBM Blue Gene.
 
 ##### Cray XT
+
+[back to top]
 
 It has been noted that configure still succeeds without the use of the --host flag.  If you experience problems without --host, we recommend
 ```
@@ -286,6 +349,8 @@ Alternatively, you can just tell configure directly.
 
 #### Compiler Selection 
 
+[back to top]
+
 Unless otherwise noted you can try to overwrite the default compiler names detected by configure by defining F77, CC, and CXX for Fortran (77), C, and C++ compilers, respectively.  Or when using the MPI compilers MPIF77, MPICC, and MPICXX for MPI Fortran (77), C, and C++ compilers, respectively:
 ```
     configure F77=f90 CC=gcc
@@ -294,6 +359,8 @@ Unless otherwise noted you can try to overwrite the default compiler names detec
 Although you can change the compiler at make-time it will likely fail.  Many platform-specific compiler flags are detected at configure-time based on the compiler selection. If changing compilers, we recommend rerunning configure as above.
 
 #### After Configuration
+
+[back to top]
 
 By this point we assume you have successfully run configure either from the base distribution directory or from a separate build directory (aka VPATH build.)  You are now ready to run 'make'.  You can optionally run parallel make using the "-j" option which significantly speeds up the build.  If using the MPI compiler wrappers, occasionally using "-j" will cause build failures because the MPI compiler wrapper creates a temporary symlink to the mpif.h header.  In that case, you won't be able to use the "-j" option.  Further, the influential environment variables used at configure-time can be overridden at make-time in case problems are encountered.  For example::
 ```
@@ -309,9 +376,13 @@ One particularly influential make variable is "V" which controls the verbosity o
 
 #### Test Programs
 
+[back to top]
+
 Running "make checkprogs" will build most test and example programs.  Note that not all tests are built -- some tests depend on certain features being detected or enabled during configure.  These programs are not intented to be examples of good GA coding practices because they often include private headers.  However, they help us debug or time our GA library.
 
 #### Test Suite
+
+[back to top]
 
 Running "make check" will build most test and example programs (See "make checkprogs" notes above) in addition to running the test suite.  The test suite runs both the serial and parallel tests.  The test suite must know how to launch the parallel tests via the MPIEXEC variable.  Please read your MPI flavor's documentation on how to launch, or if using TCGMSG you will use the "parallel" tool.  For example, the following is the command to launch the test suite when compiled with OpenMPI:
 ```
@@ -323,10 +394,61 @@ The test suite will recurse into the ComEx directory and run the ComEx test suit
 
 #### Performance Tuning
 
+[back to top]
+
 Setting an environment variable MA_USE_ARMCI_MEM forces MA library to use
 ARMCI memory, communication via which can be faster on networks like GM, VIA
 and InfiniBand.
 
 ### CMake
 
-TODO.
+[back to top]
+
+We have added a CMake build system that allows GA compilation on Windows platforms.
+
+The build system is still fairly new and was added to specifically target Windows platforms, so not all features may be covered.
+
+The CMake build only supports the MPI-based runtimes so GA can only be built using MPI two-sided, MPI progress ranks, MPI thread multiple, MPI progress threads and MPI-3 (MPI RMA) runtimes. We recommend using MPI two-sided/MPI progress ranks based approach. The CMake build requires CMake Version 2.8.8 or greater.
+
+The CMake build supports the following options
+
+* ENABLE_FORTRAN:BOOL Default is off
+* ENABLE_CXX:BOOL Default is off
+* GA_RUNTIME:STRING Default is MPI_2SIDED. Options are
+  * MPI_2SIDED (Default) use simple MPI-2 sided runtime
+  * MPI_PROGRESS Use progress ranks runtime
+  * MPI_MULTITHREADED Use thread multiple runtime
+  * MPI_PROGRESS_THREAD Use progress thread runtime
+  * MPI_RMA Use MPI RMA based runtime.
+* ENABLE_I8:BOOL Default (off) is to use 4-byte integers
+* ENABLE_BLAS Use an external BLAS library
+* CMAKE_CXX_COMPILER:STRING Specify C++ compiler. This should be the appropriate MPI wrapper (e.g. mpicxx)
+* CMAKE_C_COMPILER:STRING Specify C compiler. This should be the appropriate MPI wrapper (e.g. mpicc)
+* MPI_CXX_COMPILER:STRING Specify the MPI wrapper for the C++ compiler
+* MPI_C_COMPILER:STRING Specify the MPI wrapper for the C compiler
+* GA_EXTRA_LIBS:STRING Specify additional libraries or linker options when building GA
+* MPIEXEC:STRING Specify the command for running MPI executables (e.g. mpiexec)
+* CMAKE_INSTALL_PREFIX:PATH Specify the location of the installed GA header and library directories
+* CMAKE_BUILD_TYPE:STRING The options are
+  * RELWITHDEBINFO This will be compiled in a release mode but with debugger information (-g) included
+  * RELEASE Compiled in release mode and no debugger information is included in the code
+  * DEBUG Compiled with internal debugger information
+* CMAKE_VERBOSE_MAKEFILE:STRING Specify whether extensive output is produced during make. This is useful for debugging
+
+Many of the options above are standard CMake parameters and more information about them can be found in the CMake documentation. A typical invocation of a CMake build inside a Windows Visual Studios command prompt looks like
+
+    set CFLAGS="/D _ITERATOR_DEBUG_LEVEL=0"
+    set CXXFLAGS="/D _ITERATOR_DEBUG_LEVEL=0"
+    cmake -Wdev --debug-trycompile ^
+       -G "Visual Studio 10 2010 Win64" ^
+       -D ENABLE_BLAS:BOOL=No ^
+       -D ENABLE_FORTRAN:BOOL=No ^
+       -D ENABLE_CXX:BOOL=Yes ^
+       -D GA_RUNTIME:STRING=MPI_TS ^
+       -D CMAKE_INSTALL_PREFIX:PATH="\my\GA\install\path" ^
+       ..
+    cmake --build . --config Release
+    cmake --build . --config Release --target install
+
+
+[back to top]: #table-of-contents

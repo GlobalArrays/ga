@@ -216,7 +216,7 @@ extern int           NGA_Duplicate(int g_a, char* array_name);
 extern void          NGA_Error(char *str, int code);
 extern float         NGA_Fdot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
 extern void          NGA_Fence(void);
-extern void          NGA_Free_gatscat_buf();
+extern void          NGA_Free_gatscat_buf(void);
 extern void          NGA_Fill(int g_a, void *value);
 extern void          NGA_Fill_patch(int g_a, int lo[], int hi[], void *val);
 extern void          NGA_Gather(int g_a, void *v, int* subsArray[], int n);

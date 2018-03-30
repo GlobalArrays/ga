@@ -2,10 +2,22 @@
 # -----------------------------------------------------------------
 # Use ARGLIST in a Fortran/C mixed-language program and attempt to run it.
 # The Fortran program calls a C subroutine, passing two character strings.
-AC_DEFUN([_GA_F2C_STRING],
-[AC_F77_FUNC([SUB])
-AC_LANG_PUSH([C])
-AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+AC_DEFUN([_GA_F2C_STRING], [
+AC_F77_FUNC([CSUB])
+AC_F77_FUNC([FSUB])
+AC_LANG_PUSH([Fortran 77])
+AC_COMPILE_IFELSE(
+[[      subroutine fsub
+      character(LEN=10) :: first_name
+      character(LEN=15) :: last_name
+      first_name = "John"
+      last_name = "Doe"
+      call csub(first_name, last_name)
+      end]], [
+    ga_save_LIBS=$LIBS
+    LIBS="conftest.$ac_objext $LIBS $[]_AC_LANG_PREFIX[]LIBS"
+    AC_LANG_PUSH([C])
+    AC_RUN_IFELSE([AC_LANG_SOURCE(
 [[#include <stdio.h>
 #include <string.h>
 #define LEN 80
@@ -13,7 +25,7 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE(
 void fix_c_string_for_f(char *s, int len);
 void fix_f_string_for_c(char *s, int len);
 
-void $SUB($1)
+void $CSUB($1)
 {
     char result[LEN];
     fix_f_string_for_c(fname, fname_len);
@@ -37,25 +49,19 @@ void fix_f_string_for_c(char *s, int len)
     for (i=len-1; s[i] == ' ' && i>=0; i--) {
         s[i] = '\0';
     }
-}]])],
-    [mv conftest.$ac_objext cfortran_test.$ac_objext
-    ga_save_LIBS=$LIBS
-    LIBS="cfortran_test.$ac_objext $LIBS $[]_AC_LANG_PREFIX[]LIBS"
-    AC_LANG_PUSH([Fortran 77])
-    AC_RUN_IFELSE([[      program main
-      character(LEN=10) :: first_name
-      character(LEN=15) :: last_name
-      first_name = "John"
-      last_name = "Doe"
-      call sub(first_name, last_name)
-      end]],
-        [m4_default([$2], :)],
-        [m4_default([$3], :)])
-    AC_LANG_POP([Fortran 77])
-    LIBS=$ga_save_LIBS
-    rm -f cfortran_test*],
+}
+
+int main(int argc, char **argv)
+{
+    $FSUB();
+    return 0;
+}
+]])], [m4_default([$2], :)],
+      [m4_default([$3], :)])
+    AC_LANG_POP([C])
+    LIBS=$ga_save_LIBS],
     [m4_default([$3], :)])
-AC_LANG_POP([C])
+AC_LANG_POP([Fortran 77])
 rm -rf conftest*
 ])dnl
 

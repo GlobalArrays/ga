@@ -13,34 +13,19 @@ fi
 # We force the use of specific Autotools versions.
 sh ./travis/install-autotools.sh "$AUTOTOOLS_DIR"
 
-export PATH="$AUTOTOOLS_DIR/bin":$PATH
+export PATH="${AUTOTOOLS_DIR}/bin":$PATH
+export M4="${AUTOTOOLS_DIR}/bin/m4"
+export AUTOCONF="${AUTOTOOLS_DIR}/bin/autoconf"
+export AUTOHEADER="${AUTOTOOLS_DIR}/bin/autoheader"
+export AUTOM4TE="${AUTOTOOLS_DIR}/bin/autom4te"
+export AUTORECONF="${AUTOTOOLS_DIR}/bin/autoreconf"
+export AUTOSCAN="${AUTOTOOLS_DIR}/bin/autoscan"
+export AUTOUPDATE="${AUTOTOOLS_DIR}/bin/autoupdate"
+export IFNAMES="${AUTOTOOLS_DIR}/bin/ifnames"
+export AUTOMAKE="${AUTOTOOLS_DIR}/bin/automake"
+export ACLOCAL="${AUTOTOOLS_DIR}/bin/aclocal"
 
-# do we have a third party m4 directory?
-if [ -d $AUTOTOOLS_DIR/m4 ] ; then
-    # do we have any third party m4 files?
-    if [ "$(ls -A "$AUTOTOOLS_DIR/m4" 2>/dev/null)" ] ; then
-        # do we have write permissions to the aclocal directory?
-        aclocal_dir=`aclocal --print 2>/dev/null`
-        if ! cp $AUTOTOOLS_DIR/m4/*.m4 ${aclocal_dir} ; then
-            # last resort, copy to GA m4 direcory
-            if ! cp $AUTOTOOLS_DIR/m4/*.m4 ./m4 ; then
-                echo "failed to copy m4 files to GA m4 dir"
-                exit 5
-            else
-                echo "copied third party m4 files to GA dir"
-            fi
-        else
-            echo "copied third party m4 files to aclocal dir"
-        fi
-    else
-        echo "no third party m4 files found"
-    fi
-else
-    echo "no third party m4 directory found"
-fi
-
-autoreconf=${AUTORECONF:-autoreconf}
-$autoreconf ${autoreconf_args:-"-vif"}
+autoreconf -vif
 
 # patch to configure script for PGF90 and -lnuma
 for conffile in configure comex/configure armci/configure

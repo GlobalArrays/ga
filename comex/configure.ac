@@ -204,6 +204,8 @@ AC_SUBST([MPIEXEC])
 # The End
 ###############################################################################
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([tools/comex-config], [chmod +x tools/comex-config])
+AC_CONFIG_FILES([tools/armci-config], [chmod +x tools/armci-config])
 AC_OUTPUT
 
 # Report on what we found.

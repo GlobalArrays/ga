@@ -31,12 +31,15 @@ AC_SUBST([PACKAGE_VERSION])
 # Changes:
 #
 # ga version 5.6.0: 1:0:0 (ABI version 1)
-# ga version 5.6.1: 1:1:0 (ABI version 1)
-# ga version 5.6.2: 1:2:0 (ABI version 1)
-# ga version 5.6.3: 1:3:0 (ABI version 1)
+# ga version 5.6.1: 1:1:0
+# ga version 5.6.2: 1:2:0
+# ga version 5.6.3: 1:3:0
+# ga version 5.6.4: 1:4:0
+# ga version 5.6.5: 1:5:0
+# ga version 5.7.0: 2:0:1
 #
 # libga -version-info current:revision:age
-LTVER="1:3:0"
+LTVER="2:0:1"
 AC_SUBST([LTVER])
 
 ###############################################################################
@@ -158,7 +161,7 @@ AC_C_CONST
 AC_C_INLINE
 AC_C_RESTRICT
 AC_C_VOLATILE
-AX_OPENMP
+AC_OPENMP
 AC_TYPE_INT64_T
 AC_TYPE_LONG_DOUBLE
 AC_TYPE_OFF_T
@@ -270,7 +273,7 @@ AS_IF([test "x$with_mpi" != xno], [GA_MPICXX_TEST])
 # Checks for C++ header files.
 
 # Checks for C++ typedefs, structures, and compiler characteristics.
-AX_OPENMP
+AC_OPENMP
 GA_CXX_NAMESPACES
 
 # Checks for C++ type sizes.
@@ -352,7 +355,7 @@ GA_F77_INTEGER_SIZE
 GA_GNU_LOOP_OPT
 
 # Checks for Fortran typedefs, structures, and compiler characteristics.
-AX_OPENMP
+AC_OPENMP
 
 # Checks for Fortran type sizes.
 ga_save_FFLAGS="$FFLAGS"; FFLAGS="$FFLAGS $FFLAG_INT"

@@ -342,6 +342,8 @@ AS_IF([test $comex_blas_ok = yes],
      blas_size=4
      have_blas=0
      $2])
+AC_SUBST([have_blas])
+AC_SUBST([blas_size])
 AC_DEFINE_UNQUOTED([HAVE_BLAS], [$have_blas],
     [Define to 1 if using external BLAS library])
 AC_DEFINE_UNQUOTED([BLAS_SIZE], [$blas_size],
