@@ -612,6 +612,7 @@ GLOBAL_SERIAL_TESTS =
 GLOBAL_SERIAL_TESTS_XFAIL =
 GLOBAL_PARALLEL_TESTS =
 GLOBAL_PARALLEL_TESTS_XFAIL =
+GLOBAL_THREADED_TESTS =
 GLOBAL_TESTS = $(GLOBAL_SERIAL_TESTS) $(GLOBAL_PARALLEL_TESTS)
 GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
 
@@ -642,9 +643,9 @@ GLOBAL_PARALLEL_TESTS += global/testing/testmatmultc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmult$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmultrect$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/gemmtest$(EXEEXT)
-GLOBAL_PARALLEL_TESTS += global/testing/thread_perf_contig$(EXEEXT)
-GLOBAL_PARALLEL_TESTS += global/testing/thread_perf_strided$(EXEEXT)
-GLOBAL_PARALLEL_TESTS += global/testing/threadsafec$(EXEEXT)
+GLOBAL_THREADED_TESTS += global/testing/thread_perf_contig$(EXEEXT)
+GLOBAL_THREADED_TESTS += global/testing/thread_perf_strided$(EXEEXT)
+GLOBAL_THREADED_TESTS += global/testing/threadsafec$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/read_only$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/unpackc$(EXEEXT)
 if ENABLE_F77
@@ -1789,6 +1790,10 @@ endif # MSG_COMMS_TCGMSG4
 .PHONY: check-travis
 check-travis: $(all-am) $(check_LTLIBRARIES) $(TRAVIS_TESTS) $(MAYBE_PFILES)
 	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(TRAVIS_TESTS)" check-TESTS
+
+.PHONY: check-threaded
+check-travis: $(all-am) $(check_LTLIBRARIES) $(GLOBAL_THREADED_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(GLOBAL_THREADED_TESTS)" check-TESTS
 
 .PHONY: check-ga
 check-ga: $(all-am) $(check_LTLIBRARIES) $(check_PROGRAMS) $(MAYBE_PFILES)
