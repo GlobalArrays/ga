@@ -15,7 +15,11 @@ c vector boxes lack arithmetic precision
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF
 
 #define USE_SCALAPACK 0
-#define SMALL_TEST 1
+#define USE_TILED 0
+#if USE_SCALAPACK
+#define USE_TILED 0
+#endif
+#define SMALL_TEST 0
 
       program main
       implicit none
@@ -27,7 +31,7 @@ c vector boxes lack arithmetic precision
 #if SMALL_TEST
       parameter (nmax = 8, DIM = 2)
 #else
-      parameter (nmax = 2375, DIM = 2)
+      parameter (nmax = 1001, DIM = 2)
 #endif
       integer ndim, nprocs, type, length
       integer g_a, g_b, g_c, g_d, g_e, g_f, g_h, g_i, g_j, inode
@@ -41,7 +45,7 @@ c vector boxes lack arithmetic precision
       double precision c(nmax,nmax),d(nmax,nmax), one, ddot
       double precision alpha, beta
       logical status
-      parameter (heap=400*400*4, fudge=100, stack=400*400*4)
+      parameter (heap=1600*1600*4, fudge=100, stack=1600*1600*4)
 c
 c***  Intitialize a message passing library
 c
@@ -87,14 +91,23 @@ c
         block(i) = 87
 #endif
       end do
-      proc_grid(1) = 2
-      proc_grid(2) = ga_nnodes()/2
+      if (ga_nnodes().gt.1) then
+        proc_grid(1) = 2
+        proc_grid(2) = ga_nnodes()/2
+      else
+        proc_grid(1) = 1
+        proc_grid(2) = 1
+      endif
 c
       g_a = ga_create_handle() 
       call ga_set_data(g_a, ndim, dims, MT_F_INT)
       call ga_set_chunk(g_a, chunk)
+#if USE_SCALAPACK || USE_TILED
 #if USE_SCALAPACK
       call ga_set_block_cyclic_proc_grid(g_a, block, proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_a, block, proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_a, block)
 #endif
@@ -104,8 +117,12 @@ c
       g_b = ga_create_handle() 
       call ga_set_data(g_b, ndim, dims, MT_F_DBL)
       call ga_set_chunk(g_b, chunk)
+#if USE_SCALAPACK || USE_TILED
 #if USE_SCALAPACK
       call ga_set_block_cyclic_proc_grid(g_b, block, proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_b, block, proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_b, block)
 #endif
@@ -121,8 +138,12 @@ c
       g_d = ga_create_handle() 
       call ga_set_data(g_d, ndim, dims, MT_F_INT)
       call ga_set_chunk(g_d, chunk)
+#if USE_SCALAPACK || USE_TILED
 #if USE_SCALAPACK
       call ga_set_block_cyclic_proc_grid(g_d, block, proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_d, block, proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_d, block)
 #endif
@@ -132,8 +153,12 @@ c
       g_e = ga_create_handle() 
       call ga_set_data(g_e, ndim, dims, MT_F_DBL)
       call ga_set_chunk(g_e, chunk)
+#if USE_SCALAPACK || USE_TILED
 #if USE_SCALAPACK
       call ga_set_block_cyclic_proc_grid(g_e, block, proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_e, block, proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_e, block)
 #endif
@@ -143,8 +168,12 @@ c
       g_f = ga_create_handle() 
       call ga_set_data(g_f, ndim, dims, MT_F_DBL)
       call ga_set_chunk(g_f, chunk)
+#if USE_SCALAPACK || USE_TILED
 #if USE_SCALAPACK
       call ga_set_block_cyclic_proc_grid(g_f, block, proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_f, block, proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_f, block)
 #endif
@@ -188,13 +217,13 @@ c
       t2hi(2) = 8
 #else
       tlo(1) = 3
-      thi(1) = 2277
+      thi(1) = 943
       tlo(2) = 4
-      thi(2) = 1832
+      thi(2) = 547
       t2lo(1) = 4
-      t2hi(1) = 2278
+      t2hi(1) = 944
       t2lo(2) = 5
-      t2hi(2) = 1833
+      t2hi(2) = 548
 #endif
 c
       one = 1.0d00
@@ -779,14 +808,30 @@ c
         write(6,*) 'Testing GA_Strided_get...'
         write(6,*)
       endif
+
       skip(1) = 2
       skip(2) = 2
+      do j = 1, nmax
+        do i = 1, nmax
+          a(i,j) = 1
+          if (mod(i-1,2).eq.0.and.mod(j-1,2).eq.0) then
+            b(i,j) = 1
+          else
+            b(i,j) = 0
+          end if
+        end do
+      end do
       call ga_zero(g_a)
       call ga_zero(g_c)
-      call nga_get(g_a,lo,hi,a,ld)
-      call nga_get(g_c,lo,hi,b,ld)
-      call ga_fill(g_a, 1)
-      call ga_fill(g_c, 1)
+      call nga_put(g_a,lo,hi,a,ld)
+      call nga_put(g_c,lo,hi,b,ld)
+      call ga_sync
+      do j = 1, nmax
+        do i = 1, nmax
+          a(i,j) = 0
+          b(i,j) = 0
+        end do
+      end do
       if (me.eq.0) then
         call nga_strided_get(g_a,lo,hi,skip,a,ld)
         call nga_strided_get(g_c,lo,hi,skip,b,ld)
@@ -822,15 +867,21 @@ c
         write(6,*) 'Testing GA_Strided_put...'
         write(6,*)
       endif
-      call ga_fill(g_a, 1)
-      if (me.eq.0) call nga_get(g_a,lo,hi,a,ld)
+      do j = 1, nmax
+        do i = 1, nmax
+          a(i,j) = 1
+          if (mod(i-1,2).eq.0.and.mod(j-1,2).eq.0) then
+            b(i,j) = 1
+          else
+            b(i,j) = 0
+          end if
+        end do
+      end do
       call ga_zero(g_a)
-      call ga_fill(g_c, 1)
-      if (me.eq.0) call nga_get(g_c,lo,hi,b,ld)
       call ga_zero(g_c)
       if (me.eq.0) then
         call nga_strided_put(g_a,lo,hi,skip,a,ld)
-        call nga_strided_put(g_c,lo,hi,skip,b,ld)
+        call nga_put(g_c,lo,hi,b,ld)
       endif
       call ga_sync
       call ga_add(ialpha,g_a,ibeta,g_c,g_c)
@@ -856,18 +907,26 @@ c
         write(6,*) 'Testing GA_Strided_acc...'
         write(6,*)
       endif
-      call ga_fill(g_b, 1.0d00)
-      call nga_get(g_b,lo,hi,c,ld)
-      call ga_fill(g_h, 1.0d00)
-      call nga_get(g_h,lo,hi,d,ld)
-      call ga_sync
+      do j = 1, nmax
+        do i = 1, nmax
+          a(i,j) = 1
+          if (mod(i-1,2).eq.0.and.mod(j-1,2).eq.0) then
+            b(i,j) = 2
+          else
+            b(i,j) = 0
+          end if
+        end do
+      end do
+      call ga_zero(g_a)
+      call ga_zero(g_c)
       if (me.eq.0) then
-        call nga_strided_acc(g_b,lo,hi,skip,c,ld,one)
-        call nga_strided_acc(g_h,lo,hi,skip,d,ld,one)
+        call nga_strided_acc(g_a,lo,hi,skip,a,ld,i_one)
+        call nga_strided_acc(g_a,lo,hi,skip,a,ld,i_one)
+        call nga_put(g_c,lo,hi,b,ld)
       endif
       call ga_sync
-      call ga_add(alpha,g_b,beta,g_h,g_h)
-      if (ga_ddot(g_h,g_h).eq.0.0d00) then
+      call ga_add(ialpha,g_a,ibeta,g_c,g_c)
+      if (ga_idot(g_c,g_c).eq.0) then
         if (me.eq.0) then
           write(6,*)
           write(6,*) 'GA_Strided_acc is OK'

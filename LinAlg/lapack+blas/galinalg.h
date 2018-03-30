@@ -61,19 +61,19 @@ extern void gal_cgemm_(char *TRANSA, int alen, char *TRANSB, int blen, BlasInt *
 #if HAVE_LAPACK
 #   if defined(F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS)
 extern void dtrsm_(char *side, char *uplo, char *transa, char *diag, BlasInt *m, BlasInt *n, DoublePrecision *alpha, DoublePrecision *a, BlasInt *lda, DoublePrecision *b, BlasInt *ldb, int, int, int, int );
-extern void dgetrs_(char *trans, BlasInt *n, BlasInt *nrhs, DoublePrecision *a, Integer *lda, Integer *ipiv, DoublePrecision *b, Integer *ldb, Integer *info, int len );
+extern void dgetrs_(char *trans, BlasInt *n, BlasInt *nrhs, DoublePrecision *a, BlasInt *lda, BlasInt *ipiv, DoublePrecision *b, BlasInt *ldb, BlasInt *info, int len );
 #   else
 extern void dtrsm_(char *side, int, char *uplo, int, char *transa, int, char *diag, int, BlasInt *m, BlasInt *n, DoublePrecision *alpha, DoublePrecision *a, BlasInt *lda, DoublePrecision *b, BlasInt *ldb );
-extern void dgetrs_(char *trans, int len, BlasInt *n, BlasInt *nrhs, DoublePrecision *a, Integer *lda, Integer *ipiv, DoublePrecision *b, Integer *ldb, Integer *info );
+extern void dgetrs_(char *trans, int len, BlasInt *n, BlasInt *nrhs, DoublePrecision *a, BlasInt *lda, BlasInt *ipiv, DoublePrecision *b, BlasInt *ldb, BlasInt *info );
 #   endif
 extern void dgetrf_( BlasInt *m, BlasInt *n, DoublePrecision *a, BlasInt *ld, BlasInt *ipiv, BlasInt *info );
 #elif ENABLE_F77
 #   if defined(F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS)
 extern void gal_dtrsm_(char *side, char *uplo, char *transa, char *diag, BlasInt *m, BlasInt *n, DoublePrecision *alpha, DoublePrecision *a, BlasInt *lda, DoublePrecision *b, BlasInt *ldb, int, int, int, int );
-extern void gal_dgetrs_(char *trans, BlasInt *n, BlasInt *nrhs, DoublePrecision *a, Integer *lda, Integer *ipiv, DoublePrecision *b, Integer *ldb, Integer *info, int len );
+extern void gal_dgetrs_(char *trans, BlasInt *n, BlasInt *nrhs, DoublePrecision *a, BlasInt *lda, BlasInt *ipiv, DoublePrecision *b, BlasInt *ldb, BlasInt *info, int len );
 #   else
 extern void gal_dtrsm_(char *side, int, char *uplo, int, char *transa, int, char *diag, int, BlasInt *m, BlasInt *n, DoublePrecision *alpha, DoublePrecision *a, BlasInt *lda, DoublePrecision *b, BlasInt *ldb );
-extern void gal_dgetrs_(char *trans, int len, BlasInt *n, BlasInt *nrhs, DoublePrecision *a, Integer *lda, Integer *ipiv, DoublePrecision *b, Integer *ldb, Integer *info );
+extern void gal_dgetrs_(char *trans, int len, BlasInt *n, BlasInt *nrhs, DoublePrecision *a, BlasInt *lda, BlasInt *ipiv, DoublePrecision *b, BlasInt *ldb, BlasInt *info );
 #   endif
 extern void gal_dgetrf_( BlasInt *m, BlasInt *n, DoublePrecision *a, BlasInt *ld, BlasInt *ipiv, BlasInt *info );
 #else

@@ -91,7 +91,7 @@ void grid_factor(int p, int *idx, int *idy) {
 int trueEverywhere(int flag)
 {
   int tflag, nprocs;
-  if (tflag) tflag = 1;
+  if (flag) tflag = 1;
   else tflag = 0;
   nprocs = GA_Nnodes();
   GA_Igop(&tflag,1,"+");
@@ -127,10 +127,38 @@ void printTimes(double *time, int *ntime, int *nelems, int size,
   l_nelems *= sizeof(int);
   bandwdth = ((double)l_nelems)/l_time;
   bandwdth /= 1.0e6;
-  optime = (l_time)/((double)l_ntime);
+  optime = 1.0e6*(l_time)/((double)l_ntime);
   if (me==0) {
     printf("         %7d      %12.6f        %12.6f       %3d  %6d  %6d\n",
       size,optime,bandwdth,nthread, x, y);
+  }
+}
+
+/* Function to print out timing statistics for read-increment */
+void printRITimes(double *time, int *ntime, int nthread)
+{
+  int me = GA_Nodeid();
+  int nproc = GA_Nnodes();
+  double l_time;
+  int l_ntime;
+  int one = 1;
+  double optime;
+  int i;
+
+  l_time = 0.0;
+  l_ntime = 0;
+  for (i=0; i<nthread; i++) {
+    l_time += time[i];
+    l_ntime += ntime[i];
+  }
+  GA_Dgop(&l_time,one,"+");
+  GA_Igop(&l_ntime,one,"+");
+  optime = 1.0e6*(l_time)/((double)l_ntime);
+  if (me==0) {
+    printf("\nStatistics for Read-Increment\n");
+    printf("\nTotal operations     Time per op (us)\n");
+    printf("     %10d     %16.6f\n",
+      l_ntime,optime);
   }
 }
 
@@ -218,7 +246,7 @@ int main(int argc, char * argv[])
 
     if (me==0) {
        printf("\nPerformance of GA_Put\n");
-       printf("\nmsg size (bytes)    avg time (sec)    avg b/w (MB/sec) N threads    Xdim    Ydim\n");
+       printf("\nmsg size (bytes)     avg time (us)    avg b/w (MB/sec) N threads    Xdim    Ydim\n");
     }
 
     ok = 1;
@@ -334,7 +362,7 @@ int main(int argc, char * argv[])
 
     if (me==0) {
        printf("\nPerformance of GA_Get\n");
-       printf("\nmsg size (bytes)    avg time (sec)    avg b/w (MB/sec) N threads    Xdim    Ydim\n");
+       printf("\nmsg size (bytes)     avg time (us)    avg b/w (MB/sec) N threads    Xdim    Ydim\n");
     }
 
     ok = 1;
@@ -440,7 +468,7 @@ int main(int argc, char * argv[])
 
     if (me==0) {
        printf("\nPerformance of GA_Acc\n");
-       printf("\nmsg size (bytes)    avg time (sec)    avg b/w (MB/sec) N threads    Xdim    Ydim\n");
+       printf("\nmsg size (bytes)     avg time (us)    avg b/w (MB/sec) N threads    Xdim    Ydim\n");
     }
 
     ok = 1;
@@ -556,6 +584,8 @@ int main(int argc, char * argv[])
     } else if (me == 0 && !ok) {
       printf("\nAcc test failed\n");
     }
+
+    printRITimes(ritime, rinc, thread_count);
 
     free(time);
     free(ritime);

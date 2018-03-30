@@ -1022,7 +1022,7 @@ Integer pnga_cluster_nprocs(Integer node)
 }
 
 
-/*\ global id of calling process on the node
+/*\ global id of corresponding to node and local process ids
 \*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_cluster_procid = pnga_cluster_procid

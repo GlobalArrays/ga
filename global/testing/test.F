@@ -20,6 +20,7 @@ c#define MIRROR
 #define NGA_GATSCAT
 c#define BLOCK_CYCLIC
 c#define USE_SCALAPACK_DISTR
+c#define USE_TILED_DISTR
 c#define USE_RESTRICTED
 
 #ifdef USE_RESTRICTED
@@ -32,7 +33,12 @@ c#define USE_RESTRICTED
 #  define NEW_API
 #  undef MIRROR
 #else
-#  undef USE_SCALAPAC_DISTR
+#  undef USE_SCALAPACK_DISTR
+#  undef USE_TILED_DISTR
+#endif
+
+#ifdef USE_SCALAPACK_DISTR
+#  undef USE_TILED_DISTR
 #endif
 
       program main
@@ -43,7 +49,7 @@ c#define USE_RESTRICTED
       integer heap, stack, fudge, ma_heap, me, nproc, map(4096), block
       integer g_s, ndim, dim1, i
       logical status
-      parameter (heap=200*200*4, fudge=100, stack=200*200)
+      parameter (heap=800*800*4, fudge=100, stack=800*800)
 c     
 c***  Intitialize a message passing library
 c
@@ -268,7 +274,7 @@ c
 #ifdef BLOCK_CYCLIC
       block_size(1) = 32
       block_size(2) = 32
-#ifdef USE_SCALAPACK_DISTR
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
       if (mod(nproc,2).ne.0)
      +  call ga_error("Available procs must be divisible by 2",-1)
       proc_grid(1) = 2
@@ -308,8 +314,12 @@ c     call setdbg(1)
       call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
 #endif
 #ifdef BLOCK_CYCLIC
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
 #endif
@@ -579,8 +589,12 @@ c     overlapping accumulate
       call ga_set_data(g_b,ndim,dims,MT_DBL)
       call ga_set_array_name(g_b,'b')
 #ifdef BLOCK_CYCLIC
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_b,block_size,proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_b,block_size,proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_b,block_size)
 #endif
@@ -1027,8 +1041,12 @@ c
       call ga_set_data(g_c,ndim,dims,MT_DBL)
       call ga_set_array_name(g_c,'c')
 #ifdef BLOCK_CYCLIC
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_c,block_size,proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_c,block_size,proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_c,block_size)
 #endif
@@ -1785,7 +1803,7 @@ c
 #ifdef BLOCK_CYCLIC
       block_size(1) = 32
       block_size(2) = 32
-#ifdef USE_SCALAPACK_DISTR
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
       if (mod(nproc,2).ne.0)
      +  call ga_error("Available procs must be divisible by 2",-1)
       proc_grid(1) = 2
@@ -1823,8 +1841,12 @@ c     call setdbg(1)
       call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
 #endif
 #ifdef BLOCK_CYCLIC
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
 #endif
@@ -1857,8 +1879,12 @@ c     call setdbg(1)
       call ga_set_data(g_b,ndim,dims,MT_DCPL)
       call ga_set_array_name(g_b,'b')
 #ifdef BLOCK_CYCLIC
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_b,block_size,proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_b,block_size,proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_b,block_size)
 #endif
@@ -2392,7 +2418,7 @@ c
 #ifdef BLOCK_CYCLIC
       block_size(1) = 32
       block_size(2) = 32
-#ifdef USE_SCALAPACK_DISTR
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
       if (mod(nproc,2).ne.0)
      +  call ga_error("Available procs must be divisible by 2",-1)
       proc_grid(1) = 2
@@ -2427,8 +2453,12 @@ c
       call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
 #endif
 #ifdef BLOCK_CYCLIC
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
 #endif
@@ -2922,7 +2952,7 @@ c---------------------------------------------------------------------
 #ifdef BLOCK_CYCLIC
       block_size(1) = 32
       block_size(2) = 32
-#ifdef USE_SCALAPACK_DISTR
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
       if (mod(nproc,2).ne.0)
      +  call ga_error("Available procs must be divisible by 2",-1)
       proc_grid(1) = 2
@@ -2959,8 +2989,12 @@ c
       call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
 #endif
 #ifdef BLOCK_CYCLIC
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
+#else
+      call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
 #endif

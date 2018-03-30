@@ -20,8 +20,10 @@
 #include "message.h"
 #include "globalp.h"
 #include "armci.h"
+#include "ga_iterator.h"
 #include "ga-papi.h"
 #include "ga-wapi.h"
+#include "base.h"
 
 #ifdef MSG_COMMS_MPI
 extern ARMCI_Group* ga_get_armci_group_(int);
@@ -168,9 +170,6 @@ void pnga_zero(Integer g_a)
 }
 
 
-
-
-
 /*\ COPY ONE GLOBAL ARRAY INTO ANOTHER
 \*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -183,8 +182,9 @@ Integer dimsb[MAXDIM],i;
 Integer a_grp, b_grp, anproc, bnproc;
 Integer num_blocks_a, num_blocks_b;
 Integer blocks[MAXDIM], block_dims[MAXDIM];
-void *ptr_a, *ptr_b;
+char *ptr_a, *ptr_b;
 int local_sync_begin,local_sync_end,use_put;
+_iterator_hdl hdl;
 
 
    Integer _dims[MAXDIM];
@@ -236,6 +236,7 @@ int local_sync_begin,local_sync_end,use_put;
         Copy operation is straightforward */
 
      if (use_put) {
+#if 0
        if (num_blocks_a < 0) {
          pnga_distribution(g_a, me_a, _lo, _hi);
          if(_lo[0]>0){
@@ -282,7 +283,14 @@ int local_sync_begin,local_sync_end,use_put;
            }
          }
        }
+#else
+       pnga_local_iterator_init(g_a, &hdl);
+       while (pnga_local_iterator_next(&hdl,lo,hi,&ptr_a,ld)) {
+         pnga_put(g_b, lo, hi, ptr_a, ld);
+       }
+#endif
      } else {
+#if 0
        if (num_blocks_b < 0) {
          pnga_distribution(g_b, me_b, _lo, _hi);
          if(_lo[0]>0){
@@ -329,6 +337,12 @@ int local_sync_begin,local_sync_end,use_put;
            }
          }
        }
+#else
+       pnga_local_iterator_init(g_b, &hdl);
+       while (pnga_local_iterator_next(&hdl,lo,hi,&ptr_b,ld)) {
+         pnga_get(g_a, lo, hi, ptr_b, ld);
+       }
+#endif
      }
    } else {
      /* One global array is mirrored and the other is not */
@@ -939,10 +953,11 @@ Integer me = pnga_nodeid();
 Integer _ld[MAXDIM-1];
 Integer nproc = pnga_nnodes(); 
 Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
-Integer lo[2],hi[2];
+Integer lo[2],hi[2],ld[2];
 int local_sync_begin,local_sync_end;
 Integer num_blocks_a;
 char *ptr_tmp, *ptr_a;
+_iterator_hdl hdl;
 
     
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
@@ -957,6 +972,32 @@ char *ptr_tmp, *ptr_a;
     if(bndim != 2 || andim != 2) pnga_error("dimension must be 2",0);
     if(atype != btype ) pnga_error("array type mismatch ", 0L);
 
+#if 1
+    pnga_local_iterator_init(g_a, &hdl);
+    while (pnga_local_iterator_next(&hdl,lo,hi,&ptr_a,ld)) {
+      Integer idx;
+      Integer block_dims[MAXDIM];
+      Integer nelem, lob[2], hib[2], nrow, ncol;
+      int i, size=GAsizeofM(atype);
+
+      nelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+      ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
+
+      nrow   = hi[0] -lo[0]+1;
+      ncol   = hi[1] -lo[1]+1; 
+      nelem  = nrow*ncol;
+      lob[0] = lo[1]; lob[1] = lo[0];
+      hib[0] = hi[1]; hib[1] = hi[0];
+      for(i = 0; i < ncol; i++){
+        char *ptr = ptr_tmp + i*size;
+
+        snga_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
+        ptr_a += ld[0]*size;
+      }
+      pnga_put(g_b, lob, hib, ptr_tmp ,&ncol);
+      ga_free(ptr_tmp);
+    }
+#else
     num_blocks_a = pnga_total_blocks(g_a);
 
     if (num_blocks_a < 0) {
@@ -1080,6 +1121,6 @@ char *ptr_tmp, *ptr_a;
       }
       ga_free(ptr_tmp);
     }
-
+#endif
     if(local_sync_end)pnga_sync();
 }

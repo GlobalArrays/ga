@@ -530,11 +530,11 @@ void scale_cplx_patch(double *alpha, int ndim, double *patch1, int lo1[], int hi
     idx1 = Index(ndim, subscr1, dims1);  /* calculate element Index from a subscript */
     idx1 -= offset1;
     tmp = patch1[2*idx1];
-    printf("p[%d] scale idx: %d ar: %f ai: %f pr: %f pi: %f\n",
-        me,idx1,alpha[0],alpha[1],patch1[2*idx1],patch1[2*idx1+1]);
+    //printf("p[%d] scale idx: %d ar: %f ai: %f pr: %f pi: %f\n",
+    //    me,idx1,alpha[0],alpha[1],patch1[2*idx1],patch1[2*idx1+1]);
     patch1[2*idx1] = alpha[0]*patch1[2*idx1]-alpha[1]*patch1[2*idx1+1];
     patch1[2*idx1+1] = alpha[1]*tmp+alpha[0]*patch1[2*idx1+1];
-    printf("p[%d] rpatch: %f ipatch: %f\n",me,patch1[2*idx1],patch1[2*idx1+1]);
+    //printf("p[%d] rpatch: %f ipatch: %f\n",me,patch1[2*idx1],patch1[2*idx1+1]);
     update_subscript(ndim, subscr1, lo1, hi1);
   }
 }

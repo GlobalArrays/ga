@@ -879,6 +879,18 @@ void FATR nga_set_block_cyclic_proc_grid_(Integer *g_a, Integer *dims,
   wnga_set_block_cyclic_proc_grid(*g_a, dims, proc_grid);
 }
 
+void FATR ga_set_tiled_proc_grid_(Integer *g_a, Integer *dims,
+                                         Integer *proc_grid)
+{
+  wnga_set_tiled_proc_grid(*g_a, dims, proc_grid);
+}
+
+void FATR nga_set_tiled_proc_grid_(Integer *g_a, Integer *dims,
+                                          Integer *proc_grid)
+{
+  wnga_set_tiled_proc_grid(*g_a, dims, proc_grid);
+}
+
 void FATR ga_set_chunk_(Integer *g_a, Integer *chunk)
 {
   wnga_set_chunk(*g_a, chunk);
@@ -979,6 +991,30 @@ void FATR ga_set_restricted_range_(Integer *g_a, Integer *lo_proc, Integer *hi_p
 void FATR nga_set_restricted_range_(Integer *g_a, Integer *lo_proc, Integer *hi_proc)
 {
   wnga_set_restricted_range(*g_a, *lo_proc, *hi_proc);
+}
+
+void FATR ga_set_property_(Integer *g_a, char *property, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(property ,slen, buf, FNAM);
+  wnga_set_property(*g_a, buf);
+}
+
+void FATR nga_set_property_(Integer *g_a, char *property, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(property ,slen, buf, FNAM);
+  wnga_set_property(*g_a, buf);
+}
+
+void FATR ga_unset_property_(Integer *g_a)
+{
+  wnga_unset_property(*g_a);
+}
+
+void FATR nga_unset_property_(Integer *g_a)
+{
+  wnga_unset_property(*g_a);
 }
 
 void FATR  ga_terminate_()

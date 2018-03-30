@@ -11,7 +11,6 @@ AC_INIT([Global Arrays (GA)],
         [http://hpc.pnl.gov/globalarrays/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([config.h])
-AC_CONFIG_LIBOBJ_DIR([compat])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([global/src/ga.h])
 ###############################################################################
@@ -32,10 +31,15 @@ AC_SUBST([PACKAGE_VERSION])
 # Changes:
 #
 # ga version 5.6.0: 1:0:0 (ABI version 1)
-# ga version 5.6.1: 1:1:0 (ABI version 1)
+# ga version 5.6.1: 1:1:0
+# ga version 5.6.2: 1:2:0
+# ga version 5.6.3: 1:3:0
+# ga version 5.6.4: 1:4:0
+# ga version 5.6.5: 1:5:0
+# ga version 5.7.0: 2:0:1
 #
 # libga -version-info current:revision:age
-LTVER="1:1:0"
+LTVER="2:0:1"
 AC_SUBST([LTVER])
 
 ###############################################################################

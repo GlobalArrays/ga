@@ -25,6 +25,7 @@ extern int *ProcListPerm;            /*permuted list of processes */
 #define __CRAYX1_PRAGMA(_pragf)
 #endif
 
+enum data_distribution {REGULAR, BLOCK_CYCLIC, SCALAPACK, TILED};
 
 typedef int ARMCI_Datatype;
 typedef struct {
@@ -68,9 +69,7 @@ typedef struct {
        int p_handle;                /* pointer to processor list for array  */
        double *cache;               /* store for frequently accessed ptrs   */
        int corner_flag;             /* flag for updating corner ghost cells */
-       int block_flag;              /* flag to indicate block-cyclic data   */
-       int block_sl_flag;           /* flag to indicate block-cyclic data   */
-                                    /* using ScaLAPACK format               */
+       int distr_type;              /* tag for data distribution type       */
        C_Integer block_dims[MAXDIM];/* array of block dimensions            */
        C_Integer num_blocks[MAXDIM];/* number of blocks in each dimension   */
        C_Integer block_total;       /* total number of blocks in array      */
@@ -80,11 +79,21 @@ typedef struct {
        C_Integer has_data;          /* flag that processor has data         */
        C_Integer rstrctd_id;        /* rank of processor in restricted list */
        C_Integer *rank_rstrctd;     /* ranks of processors with data        */
-
+                                    /* Properties                           */
+       int property;                /* property type for GA                 */
+       Integer *old_mapc;           /* copy of original map                 */
+       int old_nblock[MAXDIM];      /* copy of original nblock array        */
+       int old_handle;              /* original group handle                */
+       int old_lo[MAXDIM];          /* original lo array                    */
+       int old_chunk[MAXDIM];       /* original chunk array                 */
 #ifdef ENABLE_CHECKPOINT
        int record_id;               /* record id for writing ga to disk     */
 #endif
 } global_array_t;
+
+enum property_type { NO_PROPERTY,
+                     READ_ONLY
+};
 
 extern global_array_t *_ga_main_data_structure; 
 extern proc_list_t *_proc_list_main_data_structure; 
@@ -161,8 +170,8 @@ extern proc_list_t *PGRP_LIST;
 }
 
 /* this macro finds the ScaLAPACK indices for a given processor */
-#ifdef COMPACT_SCALAPACK
-#define gam_find_proc_indices(ga_handle,proc,index) {                          \
+/* gam_find_proc_indices(ga_handle,proc,index) */
+#define gam_find_tile_proc_indices(ga_handle,proc,index) {                     \
   Integer _itmp, _i;                                                           \
   Integer _ndim = GA[ga_handle].ndim;                                          \
   _itmp = proc;                                                                \
@@ -172,7 +181,6 @@ extern proc_list_t *PGRP_LIST;
     index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
   }                                                                            \
 }
-#else
 #define gam_find_proc_indices(ga_handle,proc,index) {                          \
   Integer _itmp, _i;                                                           \
   Integer _ndim = GA[ga_handle].ndim;                                          \
@@ -183,12 +191,11 @@ extern proc_list_t *PGRP_LIST;
     index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
   }                                                                            \
 }
-#endif
 
 /* this macro finds cordinates of the chunk of array owned by processor proc */
 #define ga_ownsM(ga_handle, proc, lo, hi)                                      \
 {                                                                              \
-  if (GA[ga_handle].block_flag == 0) {                                         \
+  if (GA[ga_handle].distr_type == REGULAR) {                                   \
     if (GA[ga_handle].num_rstrctd == 0) {                                      \
       ga_ownsM_no_handle(GA[ga_handle].ndim, GA[ga_handle].dims,               \
                          GA[ga_handle].nblock, GA[ga_handle].mapc,             \
@@ -207,7 +214,9 @@ extern proc_list_t *PGRP_LIST;
         }                                                                      \
       }                                                                        \
     }                                                                          \
-  } else {                                                                     \
+  } else if (GA[ga_handle].distr_type == BLOCK_CYCLIC ||                       \
+      GA[ga_handle].distr_type == SCALAPACK ||                                 \
+      GA[ga_handle].distr_type == TILED) {                                     \
     int _index[MAXDIM];                                                        \
     int _i;                                                                    \
     int _ndim = GA[ga_handle].ndim;                                            \
@@ -232,8 +241,8 @@ extern proc_list_t *PGRP_LIST;
 
 /* this macro finds the proc that owns a given set block indices
    using the ScaLAPACK data distribution */
-#ifdef COMPACT_SCALAPACK
-#define gam_find_proc_from_sl_indices(ga_handle,proc,index) {                  \
+/* gam_find_proc_from_sl_indices(ga_handle,proc,index) */
+#define gam_find_tile_proc_from_indices(ga_handle,proc,index) {                \
   int _ndim = GA[ga_handle].ndim;                                              \
   int _i;                                                                      \
   Integer _index2[MAXDIM];                                                     \
@@ -245,7 +254,6 @@ extern proc_list_t *PGRP_LIST;
     proc = proc*GA[ga_handle].nblock[_i]+_index2[_i];                          \
   }                                                                            \
 }
-#else
 #define gam_find_proc_from_sl_indices(ga_handle,proc,index) {                  \
   int _ndim = GA[ga_handle].ndim;                                              \
   int _i;                                                                      \
@@ -258,7 +266,7 @@ extern proc_list_t *PGRP_LIST;
     proc = proc*GA[ga_handle].nblock[_i]+_index2[_i];                          \
   }                                                                            \
 }
-#endif
+
 /* this macro computes the strides on both the remote and local
    processors that map out the data. ld and ldrem are the physical dimensions
    of the memory on both the local and remote processors. */
@@ -365,3 +373,6 @@ Integer _d;                                                                    \
           pnga_error(err_string, _d);                                          \
       }\
 }
+
+extern void pna_access_block_grid_ptr(Integer g_a, Integer *index, void *ptr,
+    Integer ld);

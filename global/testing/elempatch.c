@@ -50,9 +50,16 @@ Revised on February 26, 2002.
 #include "ga-papi.h"
 
 #define BLOCK_CYCLIC 0
+#define USE_SCALAPACK 0
+#define USE_TILED 0
 
-#if BLOCK_CYCLIC
-#define USE_SCALAPACK 1
+#if !BLOCK_CYCLIC
+#define USE_SCALAPACK 0
+#define USE_TILED 0
+#endif
+
+#if USE_SCALAPACK
+#define USED_TILED 0
 #endif
 
 #ifndef GA_HALF_MAX_INT 
@@ -491,8 +498,12 @@ test_fun (int type, int dim, int OP)
   g_a = GA_Create_handle();
   GA_Set_data(g_a,dim,dims,type);
   GA_Set_array_name(g_a,"A");
+# if USE_SCALAPACK || USE_TILED
 # if USE_SCALAPACK
   GA_Set_block_cyclic_proc_grid(g_a,block_size,proc_grid);
+# else
+  GA_Set_tiled_proc_grid(g_a,block_size,proc_grid);
+# endif
 # else
   GA_Set_block_cyclic(g_a,block_size);
 # endif

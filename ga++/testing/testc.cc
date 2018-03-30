@@ -8,7 +8,7 @@
 using namespace std;
 #include "ga++.h"
 
-#define N 5
+#define N 300
 #define GA_DATA_TYPE MT_F_REAL
 
 /*
@@ -38,20 +38,20 @@ main(int argc, char *argv[]) {
   me = GA_Nodeid();
   nproc = GA_Nnodes();
   
-  if(me==0)printf("Size: %d: Creating matrix A\n", nproc);
+  if(me==0)printf("Number of processors: %d\n\nCreating matrix A\n", nproc);
   GA::GlobalArray *g_a = GA::SERVICES.createGA(type, 2, dims, (char *)"A", NULL);
  
   
-  if(me==0)printf("OK\n");
+  if(me==0)printf("\nOK\n");
   
-  if(me==0)printf("Creating matrix B\n");
+  if(me==0)printf("\nCreating matrix B\n");
   /* create matrix B  so that it has dims and distribution of A*/
   GA::GlobalArray *g_b = GA::SERVICES.createGA(g_a, (char *)"B");
-  if(me==0)printf("OK\n");
+  if(me==0)printf("\nOK\n");
   
   g_a->zero();   /* zero the matrix */
   
-  if(me==0)printf("Initializing matrix A\n");
+  if(me==0)printf("\nInitializing matrix A\n");
   /* fill in matrix A with random values in range 0.. 1 */ 
   lo[1]=0; hi[1]=n-1;
   for(row=me; row<n; row+= nproc){
@@ -63,17 +63,17 @@ main(int argc, char *argv[]) {
 //  g_a->print();
   
   
-  if(me==0)printf("Symmetrizing matrix A\n");
+  if(me==0)printf("\nSymmetrizing matrix A\n");
   g_a->symmetrize();   /* symmetrize the matrix A = 0.5*(A+A') */
   
   /* check if A is symmetric */ 
-  if(me==0)printf("Checking if matrix A is symmetric\n");
+  if(me==0)printf("\nChecking if matrix A is symmetric\n");
   g_a->transpose(g_b); /* B=A' */
   alpha=1.; beta=-1.;
   g_b->add(&alpha, g_a, &beta, g_b);  /* B= A - B */
   err= g_b->ddot(g_b);
   
-  if(me==0)printf("Error=%f\n",(double)err);
+  if(me==0)printf("\nError=%f\n",(double)err);
   
   if(me==0)printf("\nChecking atomic accumulate \n");
   	
@@ -90,10 +90,10 @@ main(int argc, char *argv[]) {
   
   if(me==0){ /* node 0 is checking the result */
     
-    g_a->get(lo, hi, buf,&ONE);
+    g_a->get(lo, hi, buf,&n);
     for(i=0; i<n; i++) if(buf[i] != (double)nproc*i)
       GA::SERVICES.error((char *)"failed: column=",i);
-    printf("OK\n\n");
+    printf("\nOK\n\n");
     
   }
 

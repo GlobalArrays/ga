@@ -106,6 +106,7 @@ AC_SUBST([SCALAPACK_LDFLAGS])
 AC_SUBST([SCALAPACK_CPPFLAGS])
 AS_IF([test "x$scalapack_size" = x8],
     [AC_DEFINE([SCALAPACK_I8], [1], [ScaLAPACK is using 8-byte integers])])
+AC_SUBST([scalapack_size])
 
 # test for pdsyevr which some implementations may not have
 AS_IF([test $ga_scalapack_ok = yes], [
@@ -142,6 +143,7 @@ AS_IF([test $ga_scalapack_ok = yes],
     [AC_MSG_WARN([ScaLAPACK library not found, interfaces won't be defined])
      have_scalapack=0
      $2])
+AC_SUBST([have_scalapack])
 AC_DEFINE_UNQUOTED([HAVE_SCALAPACK], [$have_scalapack],
     [Define to 1 if you have ScaLAPACK library.])
 AM_CONDITIONAL([HAVE_SCALAPACK], [test $ga_scalapack_ok = yes])

@@ -5,7 +5,8 @@ set -ev
 
 os=`uname`
 TRAVIS_ROOT="$1"
-MPI_IMPL="$2"
+PORT="$2"
+MPI_IMPL="$3"
 
 # Environment variables
 export CFLAGS="-std=c99"
@@ -52,13 +53,54 @@ esac
 
 # Configure and build
 ./autogen.sh $TRAVIS_ROOT
-if [ "x$PORT" = x ] ; then
-    ./configure $CONFIG_OPTS
-else
-    ./configure --with-${PORT} $CONFIG_OPTS
+case "x$PORT" in
+    xofi)
+        ./configure --with-ofi=$TRAVIS_ROOT/libfabric
+        if [[ "$os" == "Darwin" ]]; then
+            export COMEX_OFI_LIBRARY=$TRAVIS_ROOT/libfabric/lib/libfabric.dylib
+        fi
+        ;;
+    x)
+        ./configure $CONFIG_OPTS
+        ;;
+    x*)
+        ./configure --with-${PORT} $CONFIG_OPTS
+        ;;
+esac
+
+# build libga
+make V=0 -j ${MAKE_JNUM}
+
+# build test programs
+make V=0 checkprogs -j ${MAKE_JNUM}
+
+# run one test
+MAYBE_OVERSUBSCRIBE=
+if test "x$os" = "xDarwin" && test "x$MPI_IMPL" = "xopenmpi"
+then
+    MAYBE_OVERSUBSCRIBE=-oversubscribe
 fi
 
-# Run unit tests
-make V=0 -j ${MAKE_JNUM}
-make V=0 checkprogs -j ${MAKE_JNUM}
-make V=0 check-travis
+# Determine test name based on whether fortran was supported.
+TEST_NAME=./global/testing/test.x
+if test -x $TEST_NAME
+then
+    echo "Running fortran-based test"
+else
+    TEST_NAME=./global/testing/testc.x
+    if test -x $TEST_NAME
+    then
+        echo "Running C-based test"
+    else
+        echo "No suitable test was found"
+        exit 1
+    fi
+fi
+
+if test "x$PORT" = "xmpi-pr"
+then
+    mpirun -n 5 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
+else
+    mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
+fi
+

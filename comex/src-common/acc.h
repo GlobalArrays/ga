@@ -22,6 +22,27 @@ typedef struct {
 #define BLAS_INT long long
 #endif
 
+#if HAVE_BLAS
+void sscal(const int *n, const float  *a, const float  *x, const int *incx);
+void dscal(const int *n, const double *a, const double *x, const int *incx);
+void saxpy(const int *n,  const float *a,  const float *x,
+                 const int *incx, float *y, const int *incy);
+void daxpy(const int *n,  const double *a,  const double *x,
+                 const int *incX, double *Y, const int *incy);
+void caxpy(const int *n,  const void *a,  const void *x,
+                 const int *incX, void *Y, const int *incy);
+void zaxpy(const int *n,  const void *a,  const void *x,
+                 const int *incX, void *Y, const int *incy);
+void scopy(const int *n,  const float *x,
+                 const int *incx, float *y, const int *incy);
+void dcopy(const int *n,  const double *x,
+                 const int *incx, double *y, const int *incy);
+void ccopy(const int *n,  const void *x,
+                 const int *incx, void *y, const int *incy);
+void zcopy(const int *n,  const void *x,
+                 const int *incx, void *y, const int *incy);
+#endif
+
 #define IADD_SCALE_REG(A,B,C) (A) += (B) * (C)
 #define IADD_SCALE_CPL(A,B,C) \
     (A).real += ((B).real*(C).real) - ((B).imag*(C).imag);\

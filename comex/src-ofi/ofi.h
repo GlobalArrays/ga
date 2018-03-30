@@ -5,6 +5,9 @@
 #ifndef _COMEX_OFI_H_
 #define _COMEX_OFI_H_
 
+#include "env.h"
+#include "log.h"
+
 #define STR_ERROR(tbl, ret) CALL_TABLE_FUNCTION(tbl, fi_strerror(ret))
 #define OFI_EP_NAME_MAX_LENGTH (512) /* We use constant ep name length */
 
@@ -36,6 +39,7 @@ typedef struct ofi_ep_t
     struct fid_cq     *cq;       /* completion queue */
     struct fid_av     *av;       /* address vector   */
     peer_t*           peers;
+    enum fi_mr_mode   mr_mode;
 } ofi_ep_t;
 
 typedef struct ofi_data_t
@@ -46,20 +50,22 @@ typedef struct ofi_data_t
     int               rma_iov_limit;
     ssize_t           max_bytes_in_atomic[COMEX_DTYPES_COUNT]; /* bytes in one atomic operation per comex datatype */
     int               max_buffered_send;
+    uint64_t          mr_counter;
 } ofi_data_t;
 extern ofi_data_t ofi_data;
 
 #ifndef GA_OFI_STATIC_LINK
-#define DEFAULT_OFI_LIB "libfabric.so"
 
-#define LOAD_TABLE_FUNCTION(table, fname)                                        \
-    do {                                                                         \
-        (table)->fname = dlsym((table)->handle, #fname);                         \
-        if ((table)->fname == NULL) {                                            \
-            err_printf("Can't load function %s, error=%s\n", #fname, dlerror()); \
-            dlclose((table)->handle);                                            \
-            goto fn_fail;                                                        \
-        }                                                                        \
+#define LOAD_TABLE_FUNCTION(table, fname)                            \
+    do {                                                             \
+        (table)->fname = dlsym((table)->handle, #fname);             \
+        if ((table)->fname == NULL)                                  \
+        {                                                            \
+            COMEX_OFI_LOG(WARN, "Can't load function %s, error=%s",  \
+                          #fname, dlerror());                        \
+            dlclose((table)->handle);                                \
+            goto fn_fail;                                            \
+        }                                                            \
     } while (0)
 
 #define CALL_TABLE_FUNCTION(table, call) (table)->call
@@ -89,18 +95,10 @@ extern fi_loadable_methods_t ld_table;
 
 static inline int load_ofi(fi_loadable_methods_t* table)
 {
-    char *library_path = NULL;
-    char* envvar = getenv("COMEX_OFI_LIBRARY");
-
-    if (envvar && *envvar != '\0')
-        library_path = envvar;
-    else
-        library_path = DEFAULT_OFI_LIB;
-
-    ld_table.handle = dlopen(library_path, RTLD_NOW);
+    ld_table.handle = dlopen(env_data.library_path, RTLD_NOW);
     if (!ld_table.handle)
     {
-        err_printf("Cannot load default ofi library %s, error=%s", library_path, dlerror());
+        COMEX_OFI_LOG(ERROR, "cannot load default ofi library %s, error=%s", env_data.library_path, dlerror());
         goto fn_fail;
     }
 
@@ -131,6 +129,5 @@ static inline int unload_ofi(fi_loadable_methods_t* table)
 #define load_ofi(table) COMEX_SUCCESS
 #define unload_ofi(table) COMEX_SUCCESS
 #endif /* GA_OFI_STATIC_LINK */
-
 
 #endif /* _COMEX_OFI_H_ */
