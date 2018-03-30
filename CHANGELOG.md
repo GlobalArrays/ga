@@ -26,11 +26,14 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
   - ComEx MPI-PR now uses MPI data types in strided put and get calls
     by default. To enable the old packed behavior, set the following
     environment variables to 0.
+    
     - COMEX_ENABLE_PUT_DATATYPE
     - COMEX_ENABLE_GET_DATATYPE
+    
     Additionally, the original packing implementation is faster for smaller
     messages. Two new environment variables control at which point the MPI
     data types are used.
+    
     - COMEX_PUT_DATATYPE_THRESHOLD. Default 8192.
     - COMEX_GET_DATATYPE_THRESHOLD. Default 8192.
 - Fixed
