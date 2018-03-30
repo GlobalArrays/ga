@@ -106,10 +106,18 @@ else
     cd ${TOP}/${TDIR}
     cp ${TOP}/bin/config.guess ./build-aux/config.guess
     cp ${TOP}/bin/config.sub ./build-aux/config.sub
+    if [ -f secure_snprintf.patch ] ; then
+        echo secure_snprintf.patch already exists! Using existing copy.
+    else
+        ${download} secure_snprintf.patch https://raw.githubusercontent.com/macports/macports-ports/master/devel/m4/files/secure_snprintf.patch
+    fi
+    if patch -p0 -N < secure_snprintf.patch ; then
+        echo patch applied
+    fi
     ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
     if [ "x$?" != "x0" ] ; then
         echo FAILURE 1
-        exit
+        exit 1
     fi
 fi
 # refresh the path
@@ -150,7 +158,7 @@ else
     ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
     if [ "x$?" != "x0" ] ; then
         echo FAILURE 3
-        exit
+        exit 3
     fi
 fi
 # refresh the path
@@ -197,7 +205,7 @@ else
     ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
     if [ "x$?" != "x0" ] ; then
         echo FAILURE 4
-        exit
+        exit 4
     fi
 fi
 # refresh the path
@@ -252,7 +260,7 @@ else
     ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
     if [ "x$?" != "x0" ] ; then
         echo FAILURE 2
-        exit
+        exit 2
     fi
 fi
 # refresh the path
