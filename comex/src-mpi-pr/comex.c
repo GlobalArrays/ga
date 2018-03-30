@@ -208,7 +208,7 @@ STATIC void server_recv_datatype(void *buf, MPI_Datatype dt, int source);
 STATIC void _progress_server();
 STATIC void _put_handler(header_t *header, char *payload, int proc);
 STATIC void _put_packed_handler(header_t *header, char *payload, int proc);
-STATIC void _put_datatype_handler(header_t *header, int proc);
+STATIC void _put_datatype_handler(header_t *header, char *payload, int proc);
 STATIC void _put_iov_handler(header_t *header, int proc);
 STATIC void _get_handler(header_t *header, int proc);
 STATIC void _get_packed_handler(header_t *header, char *payload, int proc);
@@ -2472,7 +2472,7 @@ STATIC void _progress_server()
                 _put_packed_handler(header, payload, source);
                 break;
             case OP_PUT_DATATYPE:
-                _put_datatype_handler(header, source);
+                _put_datatype_handler(header, payload, source);
                 break;
             case OP_PUT_IOV:
                 _put_iov_handler(header, source);
@@ -2696,7 +2696,7 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
 }
 
 
-STATIC void _put_datatype_handler(header_t *header, int proc)
+STATIC void _put_datatype_handler(header_t *header, char *payload, int proc)
 {
     MPI_Datatype dst_type;
     reg_entry_t *reg_entry = NULL;
@@ -2716,9 +2716,8 @@ STATIC void _put_datatype_handler(header_t *header, int proc)
             header->length);
 #endif
 
-    stride = malloc(sizeof(stride_t));
+    stride = (stride_t*)payload;
     COMEX_ASSERT(stride);
-    server_recv(stride, sizeof(stride_t), proc);
     COMEX_ASSERT(stride->stride_levels >= 0);
     COMEX_ASSERT(stride->stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
@@ -5044,7 +5043,7 @@ STATIC void nb_puts_datatype(
     MPI_Datatype src_type;
     int ierr;
     int i;
-    stride_t *stride = NULL;
+    stride_t stride;
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_puts_datatype(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -5062,29 +5061,27 @@ STATIC void nb_puts_datatype(
     COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     /* copy dst info into structure */
-    stride = malloc(sizeof(stride_t));
-    COMEX_ASSERT(stride);
-    MAYBE_MEMSET(stride, 0, sizeof(stride_t));
-    stride->stride_levels = stride_levels;
-    stride->count[0] = count[0];
+    MAYBE_MEMSET(&stride, 0, sizeof(stride_t));
+    stride.stride_levels = stride_levels;
+    stride.count[0] = count[0];
     for (i=0; i<stride_levels; ++i) {
-        stride->stride[i] = dst_stride_ar[i];
-        stride->count[i+1] = count[i+1];
+        stride.stride[i] = dst_stride_ar[i];
+        stride.count[i+1] = count[i+1];
     }
     for (/*no init*/; i<COMEX_MAX_STRIDE_LEVEL; ++i) {
-        stride->stride[i] = -1;
-        stride->count[i+1] = -1;
+        stride.stride[i] = -1;
+        stride.count[i+1] = -1;
     }
 
-    COMEX_ASSERT(stride->stride_levels >= 0);
-    COMEX_ASSERT(stride->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+    COMEX_ASSERT(stride.stride_levels >= 0);
+    COMEX_ASSERT(stride.stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_puts_datatype stride_levels=%d, count[0]=%d\n",
             g_state.rank, stride_levels, count[0]);
     for (i=0; i<stride_levels; ++i) {
         fprintf(stderr, "[%d] stride[%d]=%d count[%d+1]=%d\n",
-                g_state.rank, i, stride->stride[i], i, stride->count[i+1]);
+                g_state.rank, i, stride.stride[i], i, stride.count[i+1]);
     }
 #endif
 
@@ -5094,21 +5091,25 @@ STATIC void nb_puts_datatype(
     translate_mpi_error(ierr,"nb_puts_datatype:MPI_Type_commit");
 
     {
+        char *message = NULL;
+        int message_size = 0;
         header_t *header = NULL;
         int master_rank = -1;
 
         master_rank = g_state.master[proc];
         /* only fence on the master */
         fence_array[master_rank] = 1;
-        header = malloc(sizeof(header_t));
+        message_size = sizeof(header_t) + sizeof(stride_t);
+        message = malloc(message_size);
+        header = (header_t*)message;
         MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = OP_PUT_DATATYPE;
         header->remote_address = dst_ptr;
         header->local_address = NULL;
         header->rank = proc;
         header->length = 0;
-        nb_send_header(header, sizeof(header_t), master_rank, nb);
-        nb_send_header(stride, sizeof(stride_t), master_rank, nb);
+        (void)memcpy(message+sizeof(header_t), &stride, sizeof(stride_t));
+        nb_send_header(message, message_size, master_rank, nb);
         nb_send_datatype(src_ptr, src_type, master_rank, nb);
     }
 }
