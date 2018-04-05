@@ -1,0 +1,90 @@
+dnl run "autom4te -l m4sh armci-config.in.m4sh > armci-config.in"
+AS_INIT
+
+cc="@CC@"
+cppflags="@MPI_CPPFLAGS@ @COMEX_NETWORK_CPPFLAGS@ @BLAS_CPPFLAGS@ -I@prefix@/include"
+network_cppflags="@COMEX_NETWORK_CPPFLAGS@"
+cflags=""
+ldflags="@MPI_LDFLAGS@ @COMEX_NETWORK_LDFLAGS@ @BLAS_LDFLAGS@ -L@prefix@/lib"
+network_ldflags="@COMEX_NETWORK_LDFLAGS@"
+libs="-larmci @MPI_LIBS@ @COMEX_NETWORK_LIBS@ @BLAS_LIBS@ @LIBS@"
+network_libs="@COMEX_NETWORK_LIBS@"
+version="@PACKAGE_VERSION@"
+blas_size="@blas_size@"
+use_blas="@have_blas@"
+
+[usage="Usage: armci-config [OPTIONS]...
+
+With the exception of --version and --help, all other options can be combined
+or run exclusively.  Output is echoed to stdout.
+
+Options:
+
+  --cc
+  --cppflags
+  --cflags
+  --ldflags
+  --libs
+  --network_cppflags
+  --network_ldflags
+  --network_libs
+  --version
+  --help
+"]
+
+result=
+
+while test $# != 0
+do
+  case $1 in
+  --*=?*)
+    ac_option=`expr "X$1" : 'X\([^=]*\)='`
+    ac_optarg=`expr "X$1" : 'X[^=]*=\(.*\)'`
+    ac_shift=:
+    ;;
+  --*=)
+    ac_option=`expr "X$1" : 'X\([^=]*\)='`
+    ac_optarg=
+    ac_shift=:
+    ;;
+  *)
+    ac_option=$1
+    ac_optarg=$2
+    ac_shift=shift
+    ;;
+  esac
+
+  case $ac_option in
+  # Handling of the options.
+  -help | --help | --hel | --he | -h )
+    AS_ECHO(["$usage"]); exit ;;
+  -version | --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
+    AS_ECHO(["$version"]); exit ;;
+  -cc | --cc )
+    result="$result $cc" ;;
+  -cppflags | --cppflags )
+    result="$result $cppflags" ;;
+  -network_cppflags | --network_cppflags )
+    result="$result $network_cppflags" ;;
+  -cflags | --cflags )
+    result="$result $cflags" ;;
+  -ldflags | --ldflags )
+    result="$result $ldflags" ;;
+  -network_ldflags | --network_ldflags )
+    result="$result $network_ldflags" ;;
+  -libs | --libs )
+    result="$result $libs" ;;
+  -network_libs | --network_libs )
+    result="$result $network_libs" ;;
+  -blas_size | --blas_size )
+    result="$result $blas_size" ;;
+  -use_blas | --use_blas )
+    result="$result $use_blas" ;;
+  # This is an error.
+  *) AS_ECHO(["unrecognized option: \`$1'
+Try \`$0 --help' for more information."]); exit ;;
+  esac
+  shift
+done
+
+AS_ECHO(["$result"]) | sed 's/ [ ]*/ /g;s/" /"/g;s/ "/"/g;s/^ [ ]*//;s/ [ ]*$//'

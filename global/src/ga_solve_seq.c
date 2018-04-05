@@ -504,7 +504,6 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
   dimB1 = dims[0];
   dimB2 = dims[1];
   
-  GA_PUSH_NAME("ga_lu_solve_seq");
 
   if (dimA1 != dimA2) 
     pnga_error("ga_lu_solve: g_a must be square matrix ", 1);
@@ -589,5 +588,4 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
 
   pnga_sync();
   
-  GA_POP_NAME;
 }

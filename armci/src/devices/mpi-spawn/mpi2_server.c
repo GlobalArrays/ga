@@ -134,16 +134,16 @@ void armci_mpi2_server_debug(int rank, const char *format, ...)
 #endif
 
 #if MPI_SPAWN_DEBUG
-static inline int MPI_Check (int status)
+static inline int CHECK_Mpi (int status)
 {
     if(status != MPI_SUCCESS) 
     {
        armci_mpi2_server_debug(armci_me, "MPI Check failed.\n");
-       armci_die("MPI_Check failed.", 0);
+       armci_die("CHECK_Mpi failed.", 0);
     }
 }
 #else
-# define MPI_Check(x) x
+# define CHECK_Mpi(x) x
 #endif
 
 
@@ -222,7 +222,7 @@ void armci_rcv_req (void *mesg, void *phdr, void *pdescr,
     msginfo = (request_header_t*) MessageRcvBuffer;
     p = * (int *) mesg;
     
-    MPI_Check(
+    CHECK_Mpi(
        MPI_Recv(MessageRcvBuffer, MSG_BUFLEN, MPI_BYTE, p, ARMCI_MPI_SPAWN_TAG,
                 MPI_COMM_SERVER2CLIENT, &status)
        );
@@ -326,7 +326,7 @@ void armci_WriteToDirect (int to, request_header_t *msginfo, void *data)
     if( !(to >= 0 && to < armci_nproc) )
        armci_die("armci_WriteToDirect: send request to invalid client", to);
     
-    MPI_Check(
+    CHECK_Mpi(
        MPI_Send(data, msginfo->datalen, MPI_BYTE, to,
                 ARMCI_MPI_SPAWN_TAG, MPI_COMM_SERVER2CLIENT)
        );
@@ -369,7 +369,7 @@ void armci_call_data_server()
     /* server main loop; wait for and service requests until QUIT requested */
     for(;;)
     {       
-       MPI_Check(
+       CHECK_Mpi(
           MPI_Probe(MPI_ANY_SOURCE, ARMCI_MPI_SPAWN_TAG,MPI_COMM_SERVER2CLIENT,
                     &status)
           );
@@ -396,7 +396,7 @@ void armci_call_data_server()
     /* server posts multiple receive buffers in advance */
     for(i=0; i<MPI2_MAX_BUFS; i++) 
     {
-       MPI_Check(
+       CHECK_Mpi(
           MPI_Irecv(_mpi2_rcv_buf[i], MSG_BUFLEN, MPI_BYTE, MPI_ANY_SOURCE,
                     ARMCI_MPI_SPAWN_TAG, MPI_COMM_SERVER2CLIENT,
                     &_mpi_request[i])
@@ -415,7 +415,7 @@ void armci_call_data_server()
        if(!do_waitlist) 
        {  
           /* process the first completed incoming request */
-          MPI_Check(
+          CHECK_Mpi(
              MPI_Waitany(MPI2_MAX_BUFS, _mpi_request, &reqid, &status)
              );
           p   = status.MPI_SOURCE;
@@ -440,7 +440,7 @@ void armci_call_data_server()
 
        /* After completing the request (which also frees a buffer), server
         * posts a receive using this buffer */
-       MPI_Check(
+       CHECK_Mpi(
           MPI_Irecv(_mpi2_rcv_buf[reqid], MSG_BUFLEN, MPI_BYTE, MPI_ANY_SOURCE,
                     ARMCI_MPI_SPAWN_TAG, MPI_COMM_SERVER2CLIENT,
                     &_mpi_request[reqid])

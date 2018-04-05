@@ -232,7 +232,6 @@ void ga_register_proclist_(Integer *list, Integer* np)
 {
 int i;
 
-      GA_PUSH_NAME("ga_register_proclist");
       if( *np <0 || *np >GAnproc) pnga_error("invalid number of processors",*np);
       if( *np <GAnproc) pnga_error("Invalid number of processors",*np);
 
@@ -247,14 +246,12 @@ int i;
           GA_inv_Proc_list[p]=i;
       }
 
-      GA_POP_NAME;
 }
 
 
 void GA_Register_proclist(int *list, int np)
 {
       int i;
-      GA_PUSH_NAME("ga_register_proclist");
       if( np <0 || np >GAnproc) pnga_error("invalid number of processors",np);
       if( np <GAnproc) pnga_error("Invalid number of processors",np);
 
@@ -268,7 +265,6 @@ void GA_Register_proclist(int *list, int np)
           GA_Proc_list[i] = p;
           GA_inv_Proc_list[p]=i;
       }
-      GA_POP_NAME;
 }
 
 
@@ -1085,7 +1081,6 @@ Integer pnga_pgroup_create(Integer *list, Integer count)
     ARMCI_Group *tmpgrp;
 #endif
  
-    GA_PUSH_NAME("ga_pgroup_create");
 
     /* Allocate temporary arrays */
     tmp_list = (Integer*)malloc(GAnproc*sizeof(Integer));
@@ -1174,7 +1169,6 @@ Integer pnga_pgroup_create(Integer *list, Integer count)
     free(tmp_list);
     free(tmp2_list);
 
-    GA_POP_NAME;
 #ifdef MSG_COMMS_MPI
     return pgrp_handle;
 #else
@@ -1194,7 +1188,6 @@ logical pnga_pgroup_destroy(Integer grp_id)
   logical ret = TRUE;
   int i, ok;
 
-   GA_PUSH_NAME("ga_pgroup_destroy_");
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
 
 #ifdef MSG_COMMS_MPI
@@ -1218,7 +1211,6 @@ logical pnga_pgroup_destroy(Integer grp_id)
 
   /* Deallocate memory for lists */
   free(PGRP_LIST[grp_id].map_proc_list);
-  GA_POP_NAME;
   return ret;
 }
 
@@ -1276,7 +1268,6 @@ Integer pnga_pgroup_split(Integer grp, Integer grp_num)
   Integer *nodes;
   Integer grp_id, ret=-1;
 
-  GA_PUSH_NAME("ga_pgroup_split_");
   /* Allocate temporary array */
   nodes = (Integer*)malloc(GAnproc*sizeof(Integer));
 
@@ -1321,7 +1312,6 @@ Integer pnga_pgroup_split(Integer grp, Integer grp_num)
   pnga_pgroup_set_default(default_grp);
   if(ret==-1) pnga_error("ga_pgroup_split failed",ret);
   /* Free temporary array */
-  GA_POP_NAME;
   free(nodes);
   return ret;
 }
@@ -1340,7 +1330,6 @@ Integer pnga_pgroup_split_irreg(Integer grp, Integer mycolor)
   Integer i, icnt=0;
   Integer *nodes, *color_arr;
   
-  GA_PUSH_NAME("ga_pgroup_split_irreg_");
   
   /* Allocate temporary arrays */
   nodes = (Integer*)malloc(GAnproc*sizeof(Integer));
@@ -1373,7 +1362,6 @@ Integer pnga_pgroup_split_irreg(Integer grp, Integer mycolor)
   free(nodes);
   free(color_arr);
 
-  GA_POP_NAME;
 
   return grp_id;
 }
@@ -1396,7 +1384,6 @@ Integer pnga_create_handle()
 {
   Integer ga_handle, i, g_a;
   /*** Get next free global array handle ***/
-  GA_PUSH_NAME("ga_create_handle");
   ga_handle =-1; i=0;
   do{
       if(!GA[i].actv_handle) ga_handle=i;
@@ -1426,7 +1413,6 @@ Integer pnga_create_handle()
   GA[ga_handle].actv_handle = 1;
   GA[ga_handle].has_data = 1;
   GA[ga_handle].property = NO_PROPERTY;
-  GA_POP_NAME;
   return g_a;
 }
 
@@ -1441,7 +1427,6 @@ void pnga_set_data(Integer g_a, Integer ndim, Integer *dims, Integer type)
 {
   Integer i;
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_data");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set data on array that has been allocated",0);
   gam_checkdim(ndim, dims);
@@ -1456,7 +1441,6 @@ void pnga_set_data(Integer g_a, Integer ndim, Integer *dims, Integer type)
     GA[ga_handle].width[i] = 0;
   }
   GA[ga_handle].ndim = (int)(ndim);
-  GA_POP_NAME;
 }
 
 /**
@@ -1470,7 +1454,6 @@ void pnga_set_chunk(Integer g_a, Integer *chunk)
 {
   Integer i;
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_chunk");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set chunk on array that has been allocated",0);
   if (GA[ga_handle].ndim < 1)
@@ -1480,7 +1463,6 @@ void pnga_set_chunk(Integer g_a, Integer *chunk)
       GA[ga_handle].chunk[i] = (C_Integer)chunk[i];
     }
   }
-  GA_POP_NAME;
 }
 
 /**
@@ -1493,13 +1475,11 @@ void pnga_set_chunk(Integer g_a, Integer *chunk)
 void pnga_set_array_name(Integer g_a, char *array_name)
 {
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_array_name");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set array name on array that has been allocated",0);
   if (strlen(array_name) > FNAM)
     pnga_error("Array name exceeds maximum array name length",FNAM);
   strcpy(GA[ga_handle].name, array_name);
-  GA_POP_NAME;
 }
 
 /**
@@ -1512,7 +1492,6 @@ void pnga_set_array_name(Integer g_a, char *array_name)
 void pnga_set_pgroup(Integer g_a, Integer p_handle)
 {
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_pgroup");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set processor configuration on array that has been allocated",0);
   if (p_handle == GA_World_Proc_Group || PGRP_LIST[p_handle].actv == 1) {
@@ -1520,7 +1499,6 @@ void pnga_set_pgroup(Integer g_a, Integer p_handle)
   } else {
     pnga_error("Processor group does not exist",0);
   }
-  GA_POP_NAME;
 }
 
 /**
@@ -1564,7 +1542,6 @@ void pnga_set_ghosts(Integer g_a, Integer *width)
 {
   Integer i;
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_ghosts");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set ghost widths on array that has been allocated",0);
   if (GA[ga_handle].ndim < 1)
@@ -1579,7 +1556,6 @@ void pnga_set_ghosts(Integer g_a, Integer *width)
     GA[ga_handle].width[i] = (C_Integer)width[i];
     if (width[i] > 0) GA[ga_handle].ghosts = 1;
   }
-  GA_POP_NAME;
 }
 
 /**
@@ -1593,7 +1569,6 @@ void pnga_set_irreg_distr(Integer g_a, Integer *mapc, Integer *nblock)
 {
   Integer i, j, ichk, maplen;
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_irreg_distr");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set irregular data distribution on array that has been allocated",0);
   if (GA[ga_handle].ndim < 1)
@@ -1630,7 +1605,6 @@ void pnga_set_irreg_distr(Integer g_a, Integer *mapc, Integer *nblock)
   }
   GA[ga_handle].mapc[maplen] = -1;
   GA[ga_handle].irreg = 1;
-  GA_POP_NAME;
 }
 
 /**
@@ -1643,9 +1617,7 @@ void pnga_set_irreg_distr(Integer g_a, Integer *mapc, Integer *nblock)
 void pnga_set_irreg_flag(Integer g_a, logical flag)
 {
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_irreg_flag");
   GA[ga_handle].irreg = (int)(flag);
-  GA_POP_NAME;
 }
 
 /**
@@ -1672,7 +1644,6 @@ void pnga_set_block_cyclic(Integer g_a, Integer *dims)
 {
   Integer i, jsize;
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_block_cyclic");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set block-cyclic data distribution on array that has been allocated",0);
   if (!(GA[ga_handle].ndim > 0))
@@ -1694,7 +1665,6 @@ void pnga_set_block_cyclic(Integer g_a, Integer *dims)
     jsize *= GA[ga_handle].num_blocks[i];
   }
   GA[ga_handle].block_total = jsize;
-  GA_POP_NAME;
 }
 
 /**
@@ -1708,7 +1678,6 @@ void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_g
 {
   Integer i, jsize, tot;
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_block_cyclic_proc_grid");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set block-cyclic data distribution on array that has been allocated",0);
   if (!(GA[ga_handle].ndim > 0))
@@ -1740,7 +1709,6 @@ void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_g
     jsize *= GA[ga_handle].num_blocks[i];
   }
   GA[ga_handle].block_total = jsize;
-  GA_POP_NAME;
 }
 
 /**
@@ -1754,7 +1722,6 @@ void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid)
 {
   Integer i, jsize, tot;
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_tiled_proc_grid");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set tiled data distribution on array that has been allocated",0);
   if (!(GA[ga_handle].ndim > 0))
@@ -1786,7 +1753,6 @@ void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid)
     jsize *= GA[ga_handle].num_blocks[i];
   }
   GA[ga_handle].block_total = jsize;
-  GA_POP_NAME;
 }
 
 /**
@@ -1801,7 +1767,6 @@ void pnga_set_restricted(Integer g_a, Integer *list, Integer size)
 {
   Integer i, ig, id=0, me, p_handle, has_data, nproc;
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_restricted");
   GA[ga_handle].num_rstrctd = size;
   GA[ga_handle].rstrctd_list = (Integer*)malloc(size*sizeof(Integer));
   GA[ga_handle].rank_rstrctd = (Integer*)malloc((GAnproc)*sizeof(Integer));
@@ -1835,7 +1800,6 @@ void pnga_set_restricted(Integer g_a, Integer *list, Integer size)
   }
   GA[ga_handle].has_data = has_data;
   GA[ga_handle].rstrctd_id = id;
-  GA_POP_NAME;
 }
 
 /**
@@ -1851,7 +1815,6 @@ void pnga_set_restricted_range(Integer g_a, Integer lo_proc, Integer hi_proc)
   Integer i, ig, id=0, me, p_handle, has_data, icnt, nproc, size;
   Integer ga_handle = g_a + GA_OFFSET;
   size = hi_proc - lo_proc + 1;
-  GA_PUSH_NAME("ga_set_restricted_range");
   GA[ga_handle].num_rstrctd = size;
   GA[ga_handle].rstrctd_list = (Integer*)malloc((size)*sizeof(Integer));
   GA[ga_handle].rank_rstrctd = (Integer*)malloc((GAnproc)*sizeof(Integer));
@@ -1887,7 +1850,6 @@ void pnga_set_restricted_range(Integer g_a, Integer lo_proc, Integer hi_proc)
   }
   GA[ga_handle].has_data = has_data;
   GA[ga_handle].rstrctd_id = id;
-  GA_POP_NAME;
 }
 
 /**
@@ -1900,7 +1862,6 @@ void pnga_set_property(Integer g_a, char* property) {
   Integer ga_handle = g_a + GA_OFFSET;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
   pnga_pgroup_sync(GA[ga_handle].p_handle);
-  GA_PUSH_NAME("ga_set_property");
   /* Check to see if property conflicts with properties already set on the
    * global array. This check may need more refinement as additional properties
    * are added. */
@@ -2110,7 +2071,6 @@ void pnga_set_property(Integer g_a, char* property) {
 #endif
     }
     pnga_destroy(g_tmp);
-    GA_POP_NAME;
   } else {
     pnga_error("Trying to set unknown property",0);
   }
@@ -2124,7 +2084,6 @@ void pnga_set_property(Integer g_a, char* property) {
 #endif
 void pnga_unset_property(Integer g_a) {
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_unset_property");
   if (GA[ga_handle].property == READ_ONLY) {
     /* TODO: Copy global array to original configuration */
     int i, d, ndim, btot, chk;
@@ -2268,7 +2227,6 @@ void pnga_unset_property(Integer g_a) {
   } else {
     GA[ga_handle].property = NO_PROPERTY;
   }
-  GA_POP_NAME;
 }
 
 /**
@@ -2302,7 +2260,6 @@ logical pnga_allocate(Integer g_a)
     p_handle = GA_Default_Proc_Group;
   }
   pnga_pgroup_sync(p_handle);
-  GA_PUSH_NAME("ga_allocate");
 
   if (p_handle > 0) {
      grp_nproc  = PGRP_LIST[p_handle].map_nproc;
@@ -2551,7 +2508,6 @@ logical pnga_allocate(Integer g_a)
     pnga_destroy(g_a);
     status = FALSE;
   }
-  GA_POP_NAME;
   return status;
 }
 
@@ -2581,7 +2537,6 @@ logical pnga_create_ghosts_irreg_config(
 
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
   pnga_pgroup_sync(p_handle);
-  GA_PUSH_NAME("pnga_create_ghosts_irreg_config");
 
   g_A = pnga_create_handle();
   *g_a = g_A;
@@ -2592,7 +2547,6 @@ logical pnga_create_ghosts_irreg_config(
   pnga_set_pgroup(g_A,p_handle);
   status = pnga_allocate(g_A);
 
-  GA_POP_NAME;
   return status;
 }
 
@@ -2634,7 +2588,6 @@ logical pnga_create_config(Integer type,
 {
   logical status;
   Integer g_A;
-  GA_PUSH_NAME("pnga_create_config");
   g_A = pnga_create_handle();
   *g_a = g_A;
   pnga_set_data(g_A,ndim,dims,type);
@@ -2642,7 +2595,6 @@ logical pnga_create_config(Integer type,
   pnga_set_chunk(g_A,chunk);
   pnga_set_pgroup(g_A,p_handle);
   status = pnga_allocate(g_A);
-  GA_POP_NAME;
   return status;
 }
 
@@ -2688,7 +2640,6 @@ logical pnga_create_ghosts_config(Integer type,
 {
   logical status;
   Integer g_A;
-  GA_PUSH_NAME("nga_create_ghosts_config");
   g_A = pnga_create_handle();
   *g_a = g_A;
   pnga_set_data(g_A,ndim,dims,type);
@@ -2697,7 +2648,6 @@ logical pnga_create_ghosts_config(Integer type,
   pnga_set_chunk(g_A,chunk);
   pnga_set_pgroup(g_A,p_handle);
   status = pnga_allocate(g_A);
-  GA_POP_NAME;
   return status;
 }
 
@@ -3464,7 +3414,6 @@ void pnga_randomize(Integer g_a, void* val)
   Integer grp_id;
   Integer num_blocks;
 
-  GA_PUSH_NAME("ga_randomize");
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
@@ -3548,7 +3497,6 @@ void pnga_randomize(Integer g_a, void* val)
 
   if(local_sync_end)pnga_pgroup_sync(grp_id);
 
-  GA_POP_NAME;
 }
 
 /**
@@ -3567,7 +3515,6 @@ void pnga_fill(Integer g_a, void* val)
   Integer grp_id;
   Integer num_blocks;
 
-  GA_PUSH_NAME("ga_fill");
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
@@ -3647,7 +3594,6 @@ void pnga_fill(Integer g_a, void* val)
 
   if(local_sync_end)pnga_pgroup_sync(grp_id);
 
-  GA_POP_NAME;
 }
 
 /**
@@ -4146,11 +4092,9 @@ int h_b_maplen = calc_maplen(h_b);
 int i;
 
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   GA_PUSH_NAME("ga_compare_distr");
    ga_check_handleM(g_a, "distribution a");
    ga_check_handleM(g_b, "distribution b");
    
-   GA_POP_NAME;
 
    if(GA[h_a].ndim != GA[h_b].ndim) return FALSE; 
 
@@ -4385,7 +4329,6 @@ void pnga_merge_mirrored(Integer g_a)
   if (local_sync_begin) pnga_sync();
   /* don't perform update if node is not mirrored */
   if (!pnga_is_mirrored(g_a)) return;
-  GA_PUSH_NAME("ga_merge_mirrored");
 
   inode = pnga_cluster_nodeid();
   nnodes = pnga_cluster_nnodes(); 
@@ -4562,7 +4505,6 @@ void pnga_merge_mirrored(Integer g_a)
   }
 #endif
   if (local_sync_end) pnga_sync();
-  GA_POP_NAME;
 }
 
 /**
@@ -4598,7 +4540,6 @@ void pnga_merge_distr_patch(Integer g_a, Integer *alo, Integer *ahi,
   void *one = NULL;
   Integer i, idim, intersect, p_handle;
 
-  GA_PUSH_NAME("nga_merge_distr_patch");
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
   if (local_sync_begin) pnga_sync();
@@ -4709,7 +4650,6 @@ void pnga_merge_distr_patch(Integer g_a, Integer *alo, Integer *ahi,
     pnga_acc(g_b, dlo, dhi, src_data_ptr, mld, one);
   }
   if (local_sync_end) pnga_sync();
-  GA_POP_NAME;
 }
 
 /**
@@ -4726,7 +4666,6 @@ Integer pnga_locate_num_blocks(Integer g_a, Integer *lo, Integer *hi)
   Integer ret = -1, d;
   Integer cnt;
 
-  GA_PUSH_NAME("nga_locate_num_blocks");
   for(d = 0; d< GA[ga_handle].ndim; d++)
     if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))
       pnga_error("Requested region out of bounds",0);
@@ -4758,7 +4697,6 @@ Integer pnga_locate_num_blocks(Integer g_a, Integer *lo, Integer *hi)
     ret = cnt;
   }
 
-  GA_POP_NAME;
   return ret;
 }
 

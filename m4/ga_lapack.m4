@@ -118,6 +118,7 @@ AS_IF([test $ga_lapack_ok = yes],
     [AC_MSG_WARN([LAPACK library not found, using internal LAPACK])
      have_lapack=0
      $2])
+AC_SUBST([have_lapack])
 AC_DEFINE_UNQUOTED([HAVE_LAPACK], [$have_lapack],
     [Define to 1 if using external LAPACK library])
 AM_CONDITIONAL([HAVE_LAPACK], [test $ga_lapack_ok = yes])

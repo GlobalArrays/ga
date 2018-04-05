@@ -3,19 +3,20 @@
 #endif
 
 /* C and/or system headers */
+#include <assert.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <pthread.h>
+#include <sched.h>
 #include <semaphore.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <sys/errno.h>
 #include <sys/mman.h>
-#include <pthread.h>
 #include <unistd.h>
-#include <sched.h>
-#include <assert.h>
-#include <signal.h>
 
 /* 3rd party headers */
 #include <mpi.h>
@@ -150,7 +151,27 @@ static int nb_count_send_processed = 0;
 static int nb_count_recv = 0;
 static int nb_count_recv_processed = 0;
 
-static char *static_acc_buffer = NULL;
+static char *static_server_buffer = NULL;
+static int static_server_buffer_size = 0;
+static int eager_threshold = -1;
+static int max_message_size = -1;
+
+static int COMEX_ENABLE_PUT_SELF = ENABLE_PUT_SELF;
+static int COMEX_ENABLE_GET_SELF = ENABLE_GET_SELF;
+static int COMEX_ENABLE_ACC_SELF = ENABLE_ACC_SELF;
+static int COMEX_ENABLE_PUT_SMP = ENABLE_PUT_SMP;
+static int COMEX_ENABLE_GET_SMP = ENABLE_GET_SMP;
+static int COMEX_ENABLE_ACC_SMP = ENABLE_ACC_SMP;
+static int COMEX_ENABLE_PUT_PACKED = ENABLE_PUT_PACKED;
+static int COMEX_ENABLE_GET_PACKED = ENABLE_GET_PACKED;
+static int COMEX_ENABLE_ACC_PACKED = ENABLE_ACC_PACKED;
+static int COMEX_ENABLE_PUT_DATATYPE = ENABLE_PUT_DATATYPE;
+static int COMEX_ENABLE_GET_DATATYPE = ENABLE_GET_DATATYPE;
+static int COMEX_PUT_DATATYPE_THRESHOLD = 8192;
+static int COMEX_GET_DATATYPE_THRESHOLD = 8192;
+static int COMEX_ENABLE_PUT_IOV = ENABLE_PUT_IOV;
+static int COMEX_ENABLE_GET_IOV = ENABLE_GET_IOV;
+static int COMEX_ENABLE_ACC_IOV = ENABLE_ACC_IOV;
 
 #if PAUSE_ON_ERROR
 static int AR_caught_sig=0;
@@ -186,17 +207,17 @@ STATIC void server_send_datatype(void *buf, MPI_Datatype dt, int dest);
 STATIC void server_recv(void *buf, int count, int source);
 STATIC void server_recv_datatype(void *buf, MPI_Datatype dt, int source);
 STATIC void _progress_server();
-STATIC void _put_handler(header_t *header, int proc);
-STATIC void _put_packed_handler(header_t *header, int proc);
-STATIC void _put_datatype_handler(header_t *header, int proc);
+STATIC void _put_handler(header_t *header, char *payload, int proc);
+STATIC void _put_packed_handler(header_t *header, char *payload, int proc);
+STATIC void _put_datatype_handler(header_t *header, char *payload, int proc);
 STATIC void _put_iov_handler(header_t *header, int proc);
 STATIC void _get_handler(header_t *header, int proc);
-STATIC void _get_packed_handler(header_t *header, int proc);
-STATIC void _get_datatype_handler(header_t *header, int proc);
+STATIC void _get_packed_handler(header_t *header, char *payload, int proc);
+STATIC void _get_datatype_handler(header_t *header, char *payload, int proc);
 STATIC void _get_iov_handler(header_t *header, int proc);
 STATIC void _acc_handler(header_t *header, char *scale, int proc);
-STATIC void _acc_packed_handler(header_t *header, int proc);
-STATIC void _acc_iov_handler(header_t *header, int proc);
+STATIC void _acc_packed_handler(header_t *header, char *payload, int proc);
+STATIC void _acc_iov_handler(header_t *header, char *scale, int proc);
 STATIC void _fence_handler(header_t *header, int proc);
 STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc);
 STATIC void _swap_handler(header_t *header, char *payload, int proc);
@@ -261,9 +282,11 @@ STATIC void nb_accv(int datatype, void *scale,
         comex_giov_t *iov, int iov_len, int proc, nb_t *nb);
 STATIC void nb_accv_packed(int datatype, void *scale,
         comex_giov_t *iov, int proc, nb_t *nb);
+STATIC void _fence_master(int master_rank);
+STATIC int _eager_check(int extra_bytes);
 
 /* other functions */
-STATIC int packed_size(int *src_stride, int *count, int stride_levels);
+STATIC int _packed_size(int *src_stride, int *count, int stride_levels);
 STATIC char* pack(char *src, int *src_stride,
                 int *count, int stride_levels, int *size);
 STATIC void unpack(char *packed_buffer,
@@ -304,18 +327,160 @@ int comex_init()
     
     /*MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);*/
 
+    /* groups */
+    comex_group_init();
+
     /* env vars */
     {
         char *value = NULL;
         nb_max_outstanding = COMEX_MAX_NB_OUTSTANDING; /* default */
-        if ((value = getenv("COMEX_MAX_NB_OUTSTANDING")) != NULL) {
+        value = getenv("COMEX_MAX_NB_OUTSTANDING");
+        if (NULL != value) {
             nb_max_outstanding = atoi(value);
         }
         COMEX_ASSERT(nb_max_outstanding > 0);
-    }
 
-    /* groups */
-    comex_group_init();
+        static_server_buffer_size = COMEX_STATIC_BUFFER_SIZE; /* default */
+        value = getenv("COMEX_STATIC_BUFFER_SIZE");
+        if (NULL != value) {
+            static_server_buffer_size = atoi(value);
+        }
+        COMEX_ASSERT(static_server_buffer_size > 0);
+
+        eager_threshold = -1; /* default */
+        value = getenv("COMEX_EAGER_THRESHOLD");
+        if (NULL != value) {
+            eager_threshold = atoi(value);
+        }
+
+        COMEX_ENABLE_PUT_SELF = ENABLE_PUT_SELF; /* default */
+        value = getenv("COMEX_ENABLE_PUT_SELF");
+        if (NULL != value) {
+            COMEX_ENABLE_PUT_SELF = atoi(value);
+        }
+
+        COMEX_ENABLE_GET_SELF = ENABLE_GET_SELF; /* default */
+        value = getenv("COMEX_ENABLE_GET_SELF");
+        if (NULL != value) {
+            COMEX_ENABLE_GET_SELF = atoi(value);
+        }
+
+        COMEX_ENABLE_ACC_SELF = ENABLE_ACC_SELF; /* default */
+        value = getenv("COMEX_ENABLE_ACC_SELF");
+        if (NULL != value) {
+            COMEX_ENABLE_ACC_SELF = atoi(value);
+        }
+
+        COMEX_ENABLE_PUT_SMP = ENABLE_PUT_SMP; /* default */
+        value = getenv("COMEX_ENABLE_PUT_SMP");
+        if (NULL != value) {
+            COMEX_ENABLE_PUT_SMP = atoi(value);
+        }
+
+        COMEX_ENABLE_GET_SMP = ENABLE_GET_SMP; /* default */
+        value = getenv("COMEX_ENABLE_GET_SMP");
+        if (NULL != value) {
+            COMEX_ENABLE_GET_SMP = atoi(value);
+        }
+
+        COMEX_ENABLE_ACC_SMP = ENABLE_ACC_SMP; /* default */
+        value = getenv("COMEX_ENABLE_ACC_SMP");
+        if (NULL != value) {
+            COMEX_ENABLE_ACC_SMP = atoi(value);
+        }
+
+        COMEX_ENABLE_PUT_PACKED = ENABLE_PUT_PACKED; /* default */
+        value = getenv("COMEX_ENABLE_PUT_PACKED");
+        if (NULL != value) {
+            COMEX_ENABLE_PUT_PACKED = atoi(value);
+        }
+
+        COMEX_ENABLE_GET_PACKED = ENABLE_GET_PACKED; /* default */
+        value = getenv("COMEX_ENABLE_GET_PACKED");
+        if (NULL != value) {
+            COMEX_ENABLE_GET_PACKED = atoi(value);
+        }
+
+        COMEX_ENABLE_ACC_PACKED = ENABLE_ACC_PACKED; /* default */
+        value = getenv("COMEX_ENABLE_ACC_PACKED");
+        if (NULL != value) {
+            COMEX_ENABLE_ACC_PACKED = atoi(value);
+        }
+
+        COMEX_ENABLE_PUT_DATATYPE = ENABLE_PUT_DATATYPE; /* default */
+        value = getenv("COMEX_ENABLE_PUT_DATATYPE");
+        if (NULL != value) {
+            COMEX_ENABLE_PUT_DATATYPE = atoi(value);
+        }
+
+        COMEX_ENABLE_GET_DATATYPE = ENABLE_GET_DATATYPE; /* default */
+        value = getenv("COMEX_ENABLE_GET_DATATYPE");
+        if (NULL != value) {
+            COMEX_ENABLE_GET_DATATYPE = atoi(value);
+        }
+
+        COMEX_PUT_DATATYPE_THRESHOLD = 8192; /* default */
+        value = getenv("COMEX_PUT_DATATYPE_THRESHOLD");
+        if (NULL != value) {
+            COMEX_PUT_DATATYPE_THRESHOLD = atoi(value);
+        }
+
+        COMEX_GET_DATATYPE_THRESHOLD = 8192; /* default */
+        value = getenv("COMEX_GET_DATATYPE_THRESHOLD");
+        if (NULL != value) {
+            COMEX_GET_DATATYPE_THRESHOLD = atoi(value);
+        }
+
+        COMEX_ENABLE_PUT_IOV = ENABLE_PUT_IOV; /* default */
+        value = getenv("COMEX_ENABLE_PUT_IOV");
+        if (NULL != value) {
+            COMEX_ENABLE_PUT_IOV = atoi(value);
+        }
+
+        COMEX_ENABLE_GET_IOV = ENABLE_GET_IOV; /* default */
+        value = getenv("COMEX_ENABLE_GET_IOV");
+        if (NULL != value) {
+            COMEX_ENABLE_GET_IOV = atoi(value);
+        }
+
+        COMEX_ENABLE_ACC_IOV = ENABLE_ACC_IOV; /* default */
+        value = getenv("COMEX_ENABLE_ACC_IOV");
+        if (NULL != value) {
+            COMEX_ENABLE_ACC_IOV = atoi(value);
+        }
+
+        max_message_size = INT_MAX; /* default */
+        value = getenv("COMEX_MAX_MESSAGE_SIZE");
+        if (NULL != value) {
+            max_message_size = atoi(value);
+        }
+
+#if DEBUG
+        if (0 == g_state.rank) {
+            printf("COMEX_MAX_NB_OUTSTANDING=%d\n", nb_max_outstanding);
+            printf("COMEX_STATIC_BUFFER_SIZE=%d\n", static_server_buffer_size);
+            printf("COMEX_MAX_MESSAGE_SIZE=%d\n", max_message_size);
+            printf("COMEX_EAGER_THRESHOLD=%d\n", eager_threshold);
+            printf("COMEX_PUT_DATATYPE_THRESHOLD=%d\n", COMEX_PUT_DATATYPE_THRESHOLD);
+            printf("COMEX_GET_DATATYPE_THRESHOLD=%d\n", COMEX_GET_DATATYPE_THRESHOLD);
+            printf("COMEX_ENABLE_PUT_SELF=%d\n", COMEX_ENABLE_PUT_SELF);
+            printf("COMEX_ENABLE_GET_SELF=%d\n", COMEX_ENABLE_GET_SELF);
+            printf("COMEX_ENABLE_ACC_SELF=%d\n", COMEX_ENABLE_ACC_SELF);
+            printf("COMEX_ENABLE_PUT_SMP=%d\n", COMEX_ENABLE_PUT_SMP);
+            printf("COMEX_ENABLE_GET_SMP=%d\n", COMEX_ENABLE_GET_SMP);
+            printf("COMEX_ENABLE_ACC_SMP=%d\n", COMEX_ENABLE_ACC_SMP);
+            printf("COMEX_ENABLE_PUT_PACKED=%d\n", COMEX_ENABLE_PUT_PACKED);
+            printf("COMEX_ENABLE_GET_PACKED=%d\n", COMEX_ENABLE_GET_PACKED);
+            printf("COMEX_ENABLE_ACC_PACKED=%d\n", COMEX_ENABLE_ACC_PACKED);
+            printf("COMEX_ENABLE_PUT_DATATYPE=%d\n", COMEX_ENABLE_PUT_DATATYPE);
+            printf("COMEX_ENABLE_GET_DATATYPE=%d\n", COMEX_ENABLE_GET_DATATYPE);
+            printf("COMEX_ENABLE_PUT_IOV=%d\n", COMEX_ENABLE_PUT_IOV);
+            printf("COMEX_ENABLE_GET_IOV=%d\n", COMEX_ENABLE_GET_IOV);
+            printf("COMEX_ENABLE_ACC_IOV=%d\n", COMEX_ENABLE_ACC_IOV);
+            fflush(stdout);
+        }
+#endif
+    }
 
     /* mutexes */
     mutexes = NULL;
@@ -793,21 +958,17 @@ int comex_fence_all(comex_group_t group)
 }
 
 
-int comex_fence_proc(int proc, comex_group_t group)
+STATIC int _eager_check(int extra_bytes)
 {
-    int world_rank = -1;
-    int master_rank = -1;
-    comex_igroup_t *igroup = NULL;
+    return (((int)sizeof(header_t))+extra_bytes) < eager_threshold;
+}
 
+
+STATIC void _fence_master(int master_rank)
+{
 #if DEBUG
-    fprintf(stderr, "[%d] comex_fence_proc(proc=%d, group=%d)\n",
-            g_state.rank, proc, group);
+    printf("[%d] _fence_master(master=%d)\n", g_state.rank, master_rank);
 #endif
-
-    CHECK_GROUP(group,proc);
-    igroup = comex_get_igroup_from_group(group);
-    world_rank = _get_world_rank(igroup, proc);
-    master_rank = g_state.master[world_rank];
 
     if (fence_array[master_rank]) {
         header_t *header = NULL;
@@ -831,6 +992,26 @@ int comex_fence_proc(int proc, comex_group_t group)
         nb_wait_for_all(nb);
         fence_array[master_rank] = 0;
     }
+}
+
+
+int comex_fence_proc(int proc, comex_group_t group)
+{
+    int world_rank = -1;
+    int master_rank = -1;
+    comex_igroup_t *igroup = NULL;
+
+#if DEBUG
+    printf("[%d] comex_fence_proc(proc=%d, group=%d)\n",
+            g_state.rank, proc, group);
+#endif
+
+    CHECK_GROUP(group,proc);
+    igroup = comex_get_igroup_from_group(group);
+    world_rank = _get_world_rank(igroup, proc);
+    master_rank = g_state.master[world_rank];
+
+    _fence_master(master_rank);
 
     return COMEX_SUCCESS;
 }
@@ -857,7 +1038,7 @@ int comex_barrier(comex_group_t group)
 }
 
 
-STATIC int packed_size(int *src_stride, int *count, int stride_levels)
+STATIC int _packed_size(int *src_stride, int *count, int stride_levels)
 {
     int size;
     int i;
@@ -870,7 +1051,7 @@ STATIC int packed_size(int *src_stride, int *count, int stride_levels)
     COMEX_ASSERT(count[0] > 0);
 
 #if DEBUG
-    fprintf(stderr, "[%d] packed_size(src_stride=%p, count[0]=%d, stride_levels=%d)\n",
+    fprintf(stderr, "[%d] _packed_size(src_stride=%p, count[0]=%d, stride_levels=%d)\n",
             g_state.rank, src_stride, count[0], stride_levels);
 #endif
 
@@ -931,7 +1112,7 @@ STATIC char* pack(
     for(i=0; i<n1dim; i++) {
         src_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-	  src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+            src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -990,7 +1171,7 @@ STATIC void unpack(char *packed_buffer,
     for(i=0; i<n1dim; i++) {
         dst_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+            dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
@@ -1014,16 +1195,32 @@ STATIC char* _generate_shm_name(int rank)
     /* 0000000001111111111222222222233 */
     /* 1234567890123456789012345678901 */
     char *name = NULL;
-    static unsigned int counter = 0;
+    static const unsigned int limit = 62;
+    static const char letters[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static unsigned int counter[6] = {0};
 
     COMEX_ASSERT(rank >= 0);
     name = malloc(SHM_NAME_SIZE*sizeof(char));
     COMEX_ASSERT(name);
     snprintf_retval = snprintf(name, SHM_NAME_SIZE,
-            "/cmx%010u%010u%06u", getuid(), getpid(), counter);
+            "/cmx%010u%010u%c%c%c%c%c%c", getuid(), getpid(),
+            letters[counter[5]],
+            letters[counter[4]],
+            letters[counter[3]],
+            letters[counter[2]],
+            letters[counter[1]],
+            letters[counter[0]]);
     COMEX_ASSERT(snprintf_retval < (int)SHM_NAME_SIZE);
     name[SHM_NAME_SIZE-1] = '\0';
-    ++counter;
+    ++counter[0];
+    if (counter[0] >= limit) { ++counter[1]; counter[0] = 0; }
+    if (counter[1] >= limit) { ++counter[2]; counter[1] = 0; }
+    if (counter[2] >= limit) { ++counter[3]; counter[2] = 0; }
+    if (counter[3] >= limit) { ++counter[4]; counter[3] = 0; }
+    if (counter[4] >= limit) { ++counter[5]; counter[4] = 0; }
+    if (counter[5] >= limit) {
+        comex_error("_generate_shm_name: too many names generated", -1);
+    }
 #if DEBUG
     fprintf(stderr, "[%d] _generate_shm_name(%d)=%s\n",
             g_state.rank, rank, name);
@@ -1864,7 +2061,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
         header->local_address = NULL;
         header->rank = 0;
         header->length = reg_entries_local_count;
-        memcpy(message+sizeof(header_t), reg_entries_local, reg_entries_local_size);
+        (void)memcpy(message+sizeof(header_t), reg_entries_local, reg_entries_local_size);
         nb = nb_wait_for_handle();
         nb_recv(NULL, 0, my_master, nb); /* prepost ack */
         nb_send_header(message, message_size, my_master, nb);
@@ -2194,7 +2391,7 @@ int comex_free(void *ptr, comex_group_t group)
         header->local_address = NULL;
         header->rank = 0;
         header->length = reg_entries_local_count;
-        memcpy(message+sizeof(header_t), rank_ptrs, rank_ptrs_local_size);
+        (void)memcpy(message+sizeof(header_t), rank_ptrs, rank_ptrs_local_size);
         nb = nb_wait_for_handle();
         nb_recv(NULL, 0, my_master, nb); /* prepost ack */
         nb_send_header(message, message_size, my_master, nb);
@@ -2219,7 +2416,9 @@ int comex_free(void *ptr, comex_group_t group)
 STATIC void _progress_server()
 {
     int running = 0;
-    char *static_buffer = NULL;
+    char *static_header_buffer = NULL;
+    int static_header_buffer_size = 0;
+    int extra_size = 0;
 
 #if DEBUG
     fprintf(stderr, "[%d] _progress_server()\n", g_state.rank);
@@ -2233,11 +2432,26 @@ STATIC void _progress_server()
         }
     }
 
+    /* static header buffer size must be large enough to hold the biggest
+     * message that might possibly be sent using a header type message. */
+    static_header_buffer_size += sizeof(header_t);
+    /* extra header info could be reg entries, one per local rank */
+    extra_size = sizeof(reg_entry_t)*g_state.node_size;
+    /* or, extra header info could be an acc scale plus stride */
+    if ((sizeof(stride_t)+sizeof(DoubleComplex)) > extra_size) {
+        extra_size = sizeof(stride_t)+sizeof(DoubleComplex);
+    }
+    static_header_buffer_size += extra_size;
+    /* after all of the above, possibly grow the size based on user request */
+    if (static_header_buffer_size < eager_threshold) {
+        static_header_buffer_size = eager_threshold;
+    }
+
     /* initialize shared buffers */
-    static_buffer = (char*)malloc(sizeof(char)*COMEX_STATIC_BUFFER_SIZE);
-    COMEX_ASSERT(static_buffer);
-    static_acc_buffer = (char*)malloc(sizeof(char)*COMEX_STATIC_BUFFER_SIZE);
-    COMEX_ASSERT(static_acc_buffer);
+    static_header_buffer = (char*)malloc(sizeof(char)*static_header_buffer_size);
+    COMEX_ASSERT(static_header_buffer);
+    static_server_buffer = (char*)malloc(sizeof(char)*static_server_buffer_size);
+    COMEX_ASSERT(static_server_buffer);
 
     running = 1;
     while (running) {
@@ -2247,7 +2461,7 @@ STATIC void _progress_server()
         header_t *header = NULL;
         MPI_Status recv_status;
 
-        MPI_Recv(static_buffer, COMEX_STATIC_BUFFER_SIZE, MPI_CHAR,
+        MPI_Recv(static_header_buffer, static_header_buffer_size, MPI_CHAR,
                 MPI_ANY_SOURCE, COMEX_TAG, g_state.comm, &recv_status);
         MPI_Get_count(&recv_status, MPI_CHAR, &length);
         source = recv_status.MPI_SOURCE;
@@ -2255,18 +2469,18 @@ STATIC void _progress_server()
         fprintf(stderr, "[%d] progress MPI_Recv source=%d length=%d\n",
                 g_state.rank, source, length);
 #   endif
-        header = (header_t*)static_buffer;
-        payload = static_buffer + sizeof(header_t);
+        header = (header_t*)static_header_buffer;
+        payload = static_header_buffer + sizeof(header_t);
         /* dispatch message handler */
         switch (header->operation) {
             case OP_PUT:
-                _put_handler(header, source);
+                _put_handler(header, payload, source);
                 break;
             case OP_PUT_PACKED:
-                _put_packed_handler(header, source);
+                _put_packed_handler(header, payload, source);
                 break;
             case OP_PUT_DATATYPE:
-                _put_datatype_handler(header, source);
+                _put_datatype_handler(header, payload, source);
                 break;
             case OP_PUT_IOV:
                 _put_iov_handler(header, source);
@@ -2275,10 +2489,10 @@ STATIC void _progress_server()
                 _get_handler(header, source);
                 break;
             case OP_GET_PACKED:
-                _get_packed_handler(header, source);
+                _get_packed_handler(header, payload, source);
                 break;
             case OP_GET_DATATYPE:
-                _get_datatype_handler(header, source);
+                _get_datatype_handler(header, payload, source);
                 break;
             case OP_GET_IOV:
                 _get_iov_handler(header, source);
@@ -2297,7 +2511,7 @@ STATIC void _progress_server()
             case OP_ACC_CPL_PACKED:
             case OP_ACC_DCP_PACKED:
             case OP_ACC_LNG_PACKED:
-                _acc_packed_handler(header, source);
+                _acc_packed_handler(header, payload, source);
                 break;
             case OP_ACC_INT_IOV:
             case OP_ACC_DBL_IOV:
@@ -2305,7 +2519,7 @@ STATIC void _progress_server()
             case OP_ACC_CPL_IOV:
             case OP_ACC_DCP_IOV:
             case OP_ACC_LNG_IOV:
-                _acc_iov_handler(header, source);
+                _acc_iov_handler(header, payload, source);
                 break;
             case OP_FENCE:
                 _fence_handler(header, source);
@@ -2346,8 +2560,8 @@ STATIC void _progress_server()
 
     initialized = 0;
 
-    free(static_buffer);
-    free(static_acc_buffer);
+    free(static_header_buffer);
+    free(static_server_buffer);
 
     _free_semaphore();
 
@@ -2378,11 +2592,11 @@ STATIC void _progress_server()
 }
 
 
-STATIC void _put_handler(header_t *header, int proc)
+STATIC void _put_handler(header_t *header, char *payload, int proc)
 {
     reg_entry_t *reg_entry = NULL;
     void *mapped_offset = NULL;
-    int retval = 0;
+    int use_eager = _eager_check(header->length);
 
 #if DEBUG
     fprintf(stderr, "[%d] _put_handler rem=%p loc=%p rem_rank=%d len=%d\n",
@@ -2398,17 +2612,30 @@ STATIC void _put_handler(header_t *header, int proc)
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(
             reg_entry, header->remote_address);
-    server_recv(mapped_offset, header->length, proc);
-    CHECK_MPI_RETVAL(retval);
+    if (use_eager) {
+        (void)memcpy(mapped_offset, payload, header->length);
+    }
+    else {
+        char *buf = (char*)mapped_offset;
+        int bytes_remaining = header->length;
+        do {
+            int size = bytes_remaining>max_message_size ?
+                max_message_size : bytes_remaining;
+            server_recv(buf, size, proc);
+            buf += size;
+            bytes_remaining -= size;
+        } while (bytes_remaining > 0);
+    }
 }
 
 
-STATIC void _put_packed_handler(header_t *header, int proc)
+STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
 {
     reg_entry_t *reg_entry = NULL;
     void *mapped_offset = NULL;
     char *packed_buffer = NULL;
     stride_t *stride = NULL;
+    int use_eager = _eager_check(sizeof(stride_t)+header->length);
 #if DEBUG
     int i=0;
 #endif
@@ -2422,9 +2649,7 @@ STATIC void _put_packed_handler(header_t *header, int proc)
             header->length);
 #endif
 
-    stride = malloc(sizeof(stride_t));
-    COMEX_ASSERT(stride);
-    server_recv(stride, sizeof(stride_t), proc);
+    stride = (stride_t*)payload;
     COMEX_ASSERT(stride->stride_levels >= 0);
     COMEX_ASSERT(stride->stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
@@ -2437,31 +2662,49 @@ STATIC void _put_packed_handler(header_t *header, int proc)
     }
 #endif
 
-    if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
-        packed_buffer = malloc(header->length);
-    }
-    else {
-        packed_buffer = static_acc_buffer;
-    }
-
-    server_recv(packed_buffer, header->length, proc);
-
     reg_entry = reg_cache_find(
             header->rank, header->remote_address, stride->count[0]);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(
             reg_entry, header->remote_address);
 
-    unpack(packed_buffer, mapped_offset,
-            stride->stride, stride->count, stride->stride_levels);
+    if (use_eager) {
+        packed_buffer = payload+sizeof(stride_t);
+        unpack(packed_buffer, mapped_offset,
+                stride->stride, stride->count, stride->stride_levels);
+    }
+    else {
+        if ((unsigned)header->length > static_server_buffer_size) {
+            packed_buffer = malloc(header->length);
+        }
+        else {
+            packed_buffer = static_server_buffer;
+        }
 
-    if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
-        free(packed_buffer);
+        {
+            /* we receive the buffer backwards */
+            char *buf = packed_buffer + header->length;
+            int bytes_remaining = header->length;
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                buf -= size;
+                server_recv(buf, size, proc);
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
+
+        unpack(packed_buffer, mapped_offset,
+                stride->stride, stride->count, stride->stride_levels);
+
+        if ((unsigned)header->length > static_server_buffer_size) {
+            free(packed_buffer);
+        }
     }
 }
 
 
-STATIC void _put_datatype_handler(header_t *header, int proc)
+STATIC void _put_datatype_handler(header_t *header, char *payload, int proc)
 {
     MPI_Datatype dst_type;
     reg_entry_t *reg_entry = NULL;
@@ -2481,9 +2724,8 @@ STATIC void _put_datatype_handler(header_t *header, int proc)
             header->length);
 #endif
 
-    stride = malloc(sizeof(stride_t));
+    stride = (stride_t*)payload;
     COMEX_ASSERT(stride);
-    server_recv(stride, sizeof(stride_t), proc);
     COMEX_ASSERT(stride->stride_levels >= 0);
     COMEX_ASSERT(stride->stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
@@ -2567,12 +2809,12 @@ STATIC void _put_iov_handler(header_t *header, int proc)
             g_state.rank, limit, bytes, src[0], dst[0]);
 #endif
 
-    if ((unsigned)(bytes*limit) > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)(bytes*limit) > static_server_buffer_size) {
         packed_buffer = malloc(bytes*limit);
         COMEX_ASSERT(packed_buffer);
     }
     else {
-        packed_buffer = static_acc_buffer;
+        packed_buffer = static_server_buffer;
     }
 
     server_recv(packed_buffer, bytes * limit, proc);
@@ -2590,7 +2832,7 @@ STATIC void _put_iov_handler(header_t *header, int proc)
     }
     COMEX_ASSERT(packed_index == bytes*limit);
 
-    if ((unsigned)(bytes*limit) > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)(bytes*limit) > static_server_buffer_size) {
         free(packed_buffer);
     }
 
@@ -2622,17 +2864,27 @@ STATIC void _get_handler(header_t *header, int proc)
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
-    server_send(mapped_offset, header->length, proc);
+    {
+        char *buf = (char*)mapped_offset;
+        int bytes_remaining = header->length;
+        do {
+            int size = bytes_remaining>max_message_size ?
+                max_message_size : bytes_remaining;
+            server_send(buf, size, proc);
+            buf += size;
+            bytes_remaining -= size;
+        } while (bytes_remaining > 0);
+    }
 }
 
 
-STATIC void _get_packed_handler(header_t *header, int proc)
+STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
 {
     reg_entry_t *reg_entry = NULL;
     void *mapped_offset = NULL;
     char *packed_buffer = NULL;
     int packed_index = 0;
-    stride_t *stride_src = NULL;
+    stride_t *stride_src = (stride_t*)payload;
 
 #if DEBUG
     fprintf(stderr, "[%d] _get_packed_handler proc=%d\n", g_state.rank, proc);
@@ -2648,9 +2900,6 @@ STATIC void _get_packed_handler(header_t *header, int proc)
 
     assert(OP_GET_PACKED == header->operation);
 
-    stride_src = malloc(sizeof(stride_t));
-    COMEX_ASSERT(stride_src);
-    server_recv(stride_src, sizeof(stride_t), proc);
     COMEX_ASSERT(stride_src->stride_levels >= 0);
     COMEX_ASSERT(stride_src->stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
@@ -2663,14 +2912,24 @@ STATIC void _get_packed_handler(header_t *header, int proc)
             stride_src->stride, stride_src->count, stride_src->stride_levels,
             &packed_index);
 
-    server_send(packed_buffer, packed_index, proc);
+    {
+        /* we send the buffer backwards */
+        char *buf = packed_buffer + packed_index;
+        int bytes_remaining = packed_index;
+        do {
+            int size = bytes_remaining>max_message_size ?
+                max_message_size : bytes_remaining;
+            buf -= size;
+            server_send(buf, size, proc);
+            bytes_remaining -= size;
+        } while (bytes_remaining > 0);
+    }
 
-    free(stride_src);
     free(packed_buffer);
 }
 
 
-STATIC void _get_datatype_handler(header_t *header, int proc)
+STATIC void _get_datatype_handler(header_t *header, char *payload, int proc)
 {
     MPI_Datatype src_type;
     reg_entry_t *reg_entry = NULL;
@@ -2693,9 +2952,8 @@ STATIC void _get_datatype_handler(header_t *header, int proc)
 
     assert(OP_GET_DATATYPE == header->operation);
 
-    stride_src = malloc(sizeof(stride_t));
+    stride_src = (stride_t*)payload;
     COMEX_ASSERT(stride_src);
-    server_recv(stride_src, sizeof(stride_t), proc);
     COMEX_ASSERT(stride_src->stride_levels >= 0);
     COMEX_ASSERT(stride_src->stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
@@ -2722,8 +2980,6 @@ STATIC void _get_datatype_handler(header_t *header, int proc)
 
     ierr = MPI_Type_free(&src_type);
     translate_mpi_error(ierr,"_get_datatype_handler:MPI_Type_free");
-
-    free(stride_src);
 }
 
 
@@ -2780,12 +3036,12 @@ STATIC void _get_iov_handler(header_t *header, int proc)
             g_state.rank, limit, bytes, src[0], dst[0]);
 #endif
 
-    if ((unsigned)(bytes*limit) > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)(bytes*limit) > static_server_buffer_size) {
         packed_buffer = malloc(bytes*limit);
         COMEX_ASSERT(packed_buffer);
     }
     else {
-        packed_buffer = static_acc_buffer;
+        packed_buffer = static_server_buffer;
     }
 
     packed_index = 0;
@@ -2802,7 +3058,7 @@ STATIC void _get_iov_handler(header_t *header, int proc)
 
     server_send(packed_buffer, packed_index, proc);
 
-    if ((unsigned)(bytes*limit) > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)(bytes*limit) > static_server_buffer_size) {
         free(packed_buffer);
     }
 
@@ -2817,6 +3073,7 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
     reg_entry_t *reg_entry = NULL;
     void *mapped_offset = NULL;
     char *acc_buffer = NULL;
+    int use_eager = 0;
 
 #if DEBUG
     fprintf(stderr, "[%d] _acc_handler\n", g_state.rank);
@@ -2849,32 +3106,58 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
             break;
         default: COMEX_ASSERT(0);
     }
-
-    if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
-        acc_buffer = malloc(header->length);
-    }
-    else {
-        acc_buffer = static_acc_buffer;
-    }
-
-    server_recv(acc_buffer, header->length, proc);
+    use_eager = _eager_check(sizeof_scale+header->length);
 
     reg_entry = reg_cache_find(
             header->rank, header->remote_address, header->length);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
-    sem_wait(semaphores[header->rank]);
-    _acc(acc_type, header->length, mapped_offset, acc_buffer, scale);
-    sem_post(semaphores[header->rank]);
+    if (use_eager) {
+        acc_buffer = scale + sizeof_scale;
+    }
+    else {
+        if ((unsigned)header->length > static_server_buffer_size) {
+            acc_buffer = malloc(header->length);
+        }
+        else {
+            acc_buffer = static_server_buffer;
+        }
 
-    if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
-        free(acc_buffer);
+        {
+            char *buf = (char*)acc_buffer;
+            int bytes_remaining = header->length;
+
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                server_recv(buf, size, proc);
+                buf += size;
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
+    }
+
+    if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
+        sem_wait(semaphores[header->rank]);
+        _acc(acc_type, header->length, mapped_offset, acc_buffer, scale);
+        sem_post(semaphores[header->rank]);
+    }
+    else {
+        _acc(acc_type, header->length, mapped_offset, acc_buffer, scale);
+    }
+
+    if (use_eager) {
+    }
+    else {
+        if ((unsigned)header->length > static_server_buffer_size) {
+            free(acc_buffer);
+        }
     }
 }
 
 
-STATIC void _acc_packed_handler(header_t *header, int proc)
+STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
 {
     reg_entry_t *reg_entry = NULL;
     void *mapped_offset = NULL;
@@ -2883,6 +3166,7 @@ STATIC void _acc_packed_handler(header_t *header, int proc)
     int acc_type = 0;
     char *acc_buffer = NULL;
     stride_t *stride = NULL;
+    int use_eager = 0;
 
 #if DEBUG
     fprintf(stderr, "[%d] _acc_packed_handler\n", g_state.rank);
@@ -2915,30 +3199,44 @@ STATIC void _acc_packed_handler(header_t *header, int proc)
             break;
         default: COMEX_ASSERT(0);
     }
+    use_eager = _eager_check(sizeof_scale+sizeof(stride_t)+header->length);
 
-    scale = malloc(sizeof_scale);
-    COMEX_ASSERT(scale);
-    server_recv(scale, sizeof_scale, proc);
+    scale = payload;
+    stride = (stride_t*)(payload + sizeof_scale);
 
-    stride = malloc(sizeof(stride_t));
-    COMEX_ASSERT(stride);
-    server_recv(stride, sizeof(stride_t), proc);
-
-    if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
-        acc_buffer = malloc(header->length);
+    if (use_eager) {
+        acc_buffer = payload+sizeof_scale+sizeof(stride_t);
     }
     else {
-        acc_buffer = static_acc_buffer;
-    }
+        if ((unsigned)header->length > static_server_buffer_size) {
+            acc_buffer = malloc(header->length);
+        }
+        else {
+            acc_buffer = static_server_buffer;
+        }
 
-    server_recv(acc_buffer, header->length, proc);
+        {
+            /* we receive the buffer backwards */
+            char *buf = acc_buffer + header->length;
+            int bytes_remaining = header->length;
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                buf -= size;
+                server_recv(buf, size, proc);
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
+    }
 
     reg_entry = reg_cache_find(
             header->rank, header->remote_address, header->length);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
-    sem_wait(semaphores[header->rank]);
+    if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
+        sem_wait(semaphores[header->rank]);
+    }
     {
         char *packed_buffer = acc_buffer;
         char *dst = mapped_offset;
@@ -2981,7 +3279,7 @@ STATIC void _acc_packed_handler(header_t *header, int proc)
         for(i=0; i<n1dim; i++) {
             dst_idx = 0;
             for(j=1; j<=stride_levels; j++) {
-	      dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+                dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
                 if((i+1) % dst_bunit[j] == 0) {
                     dst_bvalue[j]++;
                 }
@@ -2996,18 +3294,21 @@ STATIC void _acc_packed_handler(header_t *header, int proc)
 
         COMEX_ASSERT(packed_index == n1dim*count[0]);
     }
-    sem_post(semaphores[header->rank]);
-
-    if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
-        free(acc_buffer);
+    if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
+        sem_post(semaphores[header->rank]);
     }
 
-    free(stride);
-    free(scale);
+    if (use_eager) {
+    }
+    else {
+        if ((unsigned)header->length > static_server_buffer_size) {
+            free(acc_buffer);
+        }
+    }
 }
 
 
-STATIC void _acc_iov_handler(header_t *header, int proc)
+STATIC void _acc_iov_handler(header_t *header, char *scale, int proc)
 {
     reg_entry_t *reg_entry = NULL;
     void *mapped_offset = NULL;
@@ -3020,7 +3321,6 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
     int bytes = 0;
     void **src = NULL;
     void **dst = NULL;
-    void *scale = NULL;
     int sizeof_scale = 0;
     int acc_type = 0;
 
@@ -3069,10 +3369,6 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
         default: COMEX_ASSERT(0);
     }
 
-    scale = malloc(sizeof_scale);
-    COMEX_ASSERT(scale);
-    server_recv(scale, sizeof_scale, proc);
-
     iov_buf = malloc(header->length);
     COMEX_ASSERT(iov_buf);
     server_recv(iov_buf, header->length, proc);
@@ -3093,16 +3389,18 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
 
     COMEX_ASSERT(iov_off == header->length);
 
-    if ((unsigned)(bytes*limit) > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)(bytes*limit) > static_server_buffer_size) {
         packed_buffer = malloc(bytes*limit);
     }
     else {
-        packed_buffer = static_acc_buffer;
+        packed_buffer = static_server_buffer;
     }
 
     server_recv(packed_buffer, bytes*limit, proc);
 
-    sem_wait(semaphores[header->rank]);
+    if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
+        sem_wait(semaphores[header->rank]);
+    }
     packed_index = 0;
     for (i=0; i<limit; ++i) {
         reg_entry = reg_cache_find(
@@ -3114,13 +3412,14 @@ STATIC void _acc_iov_handler(header_t *header, int proc)
         packed_index += bytes;
     }
     COMEX_ASSERT(packed_index == bytes*limit);
-    sem_post(semaphores[header->rank]);
+    if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
+        sem_post(semaphores[header->rank]);
+    }
 
-    if ((unsigned)(bytes*limit) > COMEX_STATIC_BUFFER_SIZE) {
+    if ((unsigned)(bytes*limit) > static_server_buffer_size) {
         free(packed_buffer);
     }
 
-    free(scale);
     free(iov_buf);
 }
 
@@ -4279,44 +4578,80 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != nb);
 
-#if ENABLE_PUT_SELF
-    /* put to self */
-    if (g_state.rank == proc) {
-        memcpy(dst, src, bytes);
-        return;
-    }
+#if DEBUG
+    printf("[%d] nb_put(src=%p, dst=%p, bytes=%d, proc=%d, nb=%p)\n",
+            g_state.rank, src, dst, bytes, proc, nb);
 #endif
 
-#if ENABLE_PUT_SMP
-    /* put to SMP node */
-    if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
-        reg_entry_t *reg_entry = NULL;
-        void *mapped_offset = NULL;
-
-        reg_entry = reg_cache_find(proc, dst, bytes);
-        COMEX_ASSERT(reg_entry);
-        mapped_offset = _get_offset_memory(reg_entry, dst);
-        memcpy(mapped_offset, src, bytes);
-        return;
+    if (COMEX_ENABLE_PUT_SELF) {
+        /* put to self */
+        if (g_state.rank == proc) {
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
+            (void)memcpy(dst, src, bytes);
+            return;
+        }
     }
-#endif
+
+    if (COMEX_ENABLE_PUT_SMP) {
+        /* put to SMP node */
+        if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+            reg_entry_t *reg_entry = NULL;
+            void *mapped_offset = NULL;
+
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
+
+            reg_entry = reg_cache_find(proc, dst, bytes);
+            COMEX_ASSERT(reg_entry);
+            mapped_offset = _get_offset_memory(reg_entry, dst);
+            (void)memcpy(mapped_offset, src, bytes);
+            return;
+        }
+    }
 
     {
+        char *message = NULL;
+        int message_size = 0;
         header_t *header = NULL;
         int master_rank = -1;
+        int use_eager = _eager_check(bytes);
 
         master_rank = g_state.master[proc];
         /* only fence on the master */
         fence_array[master_rank] = 1;
-        header = malloc(sizeof(header_t));
+        if (use_eager) {
+            message_size = sizeof(header_t) + bytes;
+        }
+        else {
+            message_size = sizeof(header_t);
+        }
+        message = malloc(message_size);
+        header = (header_t*)message;
         header->operation = OP_PUT;
         MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->remote_address = dst;
         header->local_address = src;
         header->rank = proc;
         header->length = bytes;
-        nb_send_header(header, sizeof(header_t), master_rank, nb);
-        nb_send_buffer(src, bytes, master_rank, nb);
+        if (use_eager) {
+            (void)memcpy(message+sizeof(header_t), src, bytes);
+            nb_send_header(message, message_size, master_rank, nb);
+        }
+        else {
+            char *buf = (char*)src;
+            int bytes_remaining = bytes;
+            nb_send_header(header, sizeof(header_t), master_rank, nb);
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                nb_send_buffer(buf, size, master_rank, nb);
+                buf += size;
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
     }
 }
 
@@ -4330,27 +4665,34 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != nb);
 
-#if ENABLE_GET_SELF
-    /* get from self */
-    if (g_state.rank == proc) {
-        memcpy(dst, src, bytes);
-        return;
+    if (COMEX_ENABLE_GET_SELF) {
+        /* get from self */
+        if (g_state.rank == proc) {
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
+            (void)memcpy(dst, src, bytes);
+            return;
+        }
     }
-#endif
 
-#if ENABLE_GET_SMP
-    /* get from SMP node */
-    if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
-        reg_entry_t *reg_entry = NULL;
-        void *mapped_offset = NULL;
+    if (COMEX_ENABLE_GET_SMP) {
+        /* get from SMP node */
+        if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+            reg_entry_t *reg_entry = NULL;
+            void *mapped_offset = NULL;
 
-        reg_entry = reg_cache_find(proc, src, bytes);
-        COMEX_ASSERT(reg_entry);
-        mapped_offset = _get_offset_memory(reg_entry, src);
-        memcpy(dst, mapped_offset, bytes);
-        return;
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
+
+            reg_entry = reg_cache_find(proc, src, bytes);
+            COMEX_ASSERT(reg_entry);
+            mapped_offset = _get_offset_memory(reg_entry, src);
+            (void)memcpy(dst, mapped_offset, bytes);
+            return;
+        }
     }
-#endif
 
     {
         header_t *header = NULL;
@@ -4365,7 +4707,18 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->local_address = dst;
         header->rank = proc;
         header->length = bytes;
-        nb_recv(dst, bytes, master_rank, nb); /* prepost receive */
+        {
+            /* prepost all receives */
+            char *buf = (char*)dst;
+            int bytes_remaining = bytes;
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                nb_recv(buf, size, master_rank, nb);
+                buf += size;
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
         nb_send_header(header, sizeof(header_t), master_rank, nb);
     }
 }
@@ -4381,31 +4734,38 @@ STATIC void nb_acc(int datatype, void *scale,
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != nb);
 
-#if ENABLE_ACC_SELF
-    /* acc to self */
-    if (g_state.rank == proc) {
-        sem_wait(semaphores[proc]);
-        _acc(datatype, bytes, dst, src, scale);
-        sem_post(semaphores[proc]);
-        return;
+    if (COMEX_ENABLE_ACC_SELF) {
+        /* acc to self */
+        if (g_state.rank == proc) {
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
+            sem_wait(semaphores[proc]);
+            _acc(datatype, bytes, dst, src, scale);
+            sem_post(semaphores[proc]);
+            return;
+        }
     }
-#endif
 
-#if ENABLE_ACC_SMP
-    /* acc to same SMP node */
-    if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
-        reg_entry_t *reg_entry = NULL;
-        void *mapped_offset = NULL;
+    if (COMEX_ENABLE_ACC_SMP) {
+        /* acc to same SMP node */
+        if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+            reg_entry_t *reg_entry = NULL;
+            void *mapped_offset = NULL;
 
-        reg_entry = reg_cache_find(proc, dst, bytes);
-        COMEX_ASSERT(reg_entry);
-        mapped_offset = _get_offset_memory(reg_entry, dst);
-        sem_wait(semaphores[proc]);
-        _acc(datatype, bytes, mapped_offset, src, scale);
-        sem_post(semaphores[proc]);
-        return;
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
+
+            reg_entry = reg_cache_find(proc, dst, bytes);
+            COMEX_ASSERT(reg_entry);
+            mapped_offset = _get_offset_memory(reg_entry, dst);
+            sem_wait(semaphores[proc]);
+            _acc(datatype, bytes, mapped_offset, src, scale);
+            sem_post(semaphores[proc]);
+            return;
+        }
     }
-#endif
 
     {
         header_t *header = NULL;
@@ -4414,6 +4774,7 @@ STATIC void nb_acc(int datatype, void *scale,
         int message_size = 0;
         int scale_size = 0;
         op_t operation = OP_NULL;
+        int use_eager = 0;
 
         switch (datatype) {
             case COMEX_ACC_INT:
@@ -4442,13 +4803,19 @@ STATIC void nb_acc(int datatype, void *scale,
                 break;
             default: COMEX_ASSERT(0);
         }
+        use_eager = _eager_check(scale_size+bytes);
 
         master_rank = g_state.master[proc];
 
         /* only fence on the master */
         fence_array[master_rank] = 1;
 
-        message_size = sizeof(header_t) + scale_size;
+        if (use_eager) {
+            message_size = sizeof(header_t) + scale_size + bytes;
+        }
+        else {
+            message_size = sizeof(header_t) + scale_size;
+        }
         message = malloc(message_size);
         COMEX_ASSERT(message);
         header = (header_t*)message;
@@ -4457,9 +4824,24 @@ STATIC void nb_acc(int datatype, void *scale,
         header->local_address = src;
         header->rank = proc;
         header->length = bytes;
-        memcpy(message+sizeof(header_t), scale, scale_size);
-        nb_send_header(message, message_size, master_rank, nb);
-        nb_send_buffer(src, bytes, master_rank, nb);
+        (void)memcpy(message+sizeof(header_t), scale, scale_size);
+        if (use_eager) {
+            (void)memcpy(message+sizeof(header_t)+scale_size,
+                    src, bytes);
+            nb_send_header(message, message_size, master_rank, nb);
+        }
+        else {
+            char *buf = (char*)src;
+            int bytes_remaining = bytes;
+            nb_send_header(message, message_size, master_rank, nb);
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                nb_send_buffer(buf, size, master_rank, nb);
+                buf += size;
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
     }
 }
 
@@ -4486,27 +4868,24 @@ STATIC void nb_puts(
         return;
     }
 
-#if ENABLE_PUT_DATATYPE
-#if ENABLE_PUT_SELF
-    /* if not a strided put to self, use packed algorithm */
-    if (g_state.rank != proc)
-#endif
-    {
+    /* if not a strided put to self or SMP, use datatype algorithm */
+    if (COMEX_ENABLE_PUT_DATATYPE
+            && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
+            && (!COMEX_ENABLE_PUT_SMP
+                || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+            && (_packed_size(src_stride, count, stride_levels) > COMEX_PUT_DATATYPE_THRESHOLD)) {
         nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
-#endif
 
-#if ENABLE_PUT_PACKED
-#if ENABLE_PUT_SELF
-    /* if not a strided put to self, use packed algorithm */
-    if (g_state.rank != proc)
-#endif
-    {
+    /* if not a strided put to self or SMP, use packed algorithm */
+    if (COMEX_ENABLE_PUT_PACKED
+            && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
+            && (!COMEX_ENABLE_PUT_SMP
+                || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
         nb_puts_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
-#endif
 
     /* number of n-element of the first dimension */
     n1dim = 1;
@@ -4562,7 +4941,7 @@ STATIC void nb_puts_packed(
     int i;
     int packed_index = 0;
     char *packed_buffer = NULL;
-    stride_t *stride = NULL;
+    stride_t stride;
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_puts_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -4580,29 +4959,26 @@ STATIC void nb_puts_packed(
     COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     /* copy dst info into structure */
-    stride = malloc(sizeof(stride_t));
-    COMEX_ASSERT(stride);
-    MAYBE_MEMSET(stride, 0, sizeof(stride_t));
-    stride->stride_levels = stride_levels;
-    stride->count[0] = count[0];
+    stride.stride_levels = stride_levels;
+    stride.count[0] = count[0];
     for (i=0; i<stride_levels; ++i) {
-        stride->stride[i] = dst_stride[i];
-        stride->count[i+1] = count[i+1];
+        stride.stride[i] = dst_stride[i];
+        stride.count[i+1] = count[i+1];
     }
     for (/*no init*/; i<COMEX_MAX_STRIDE_LEVEL; ++i) {
-        stride->stride[i] = -1;
-        stride->count[i+1] = -1;
+        stride.stride[i] = -1;
+        stride.count[i+1] = -1;
     }
 
-    COMEX_ASSERT(stride->stride_levels >= 0);
-    COMEX_ASSERT(stride->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+    COMEX_ASSERT(stride.stride_levels >= 0);
+    COMEX_ASSERT(stride.stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_puts_packed stride_levels=%d, count[0]=%d\n",
             g_state.rank, stride_levels, count[0]);
     for (i=0; i<stride_levels; ++i) {
-        fprintf(stderr, "[%d] stride[%d]=%d count[%d+1]=%d\n",
-                g_state.rank, i, stride->stride[i], i, stride->count[i+1]);
+        printf("[%d] stride[%d]=%d count[%d+1]=%d\n",
+                g_state.rank, i, stride.stride[i], i, stride.count[i+1]);
     }
 #endif
 
@@ -4612,23 +4988,54 @@ STATIC void nb_puts_packed(
     COMEX_ASSERT(packed_index > 0);
 
     {
+        char *message = NULL;
+        int message_size = 0;
         header_t *header = NULL;
         int master_rank = -1;
+        int use_eager = _eager_check(sizeof(stride_t)+packed_index);
 
         master_rank = g_state.master[proc];
         /* only fence on the master */
         fence_array[master_rank] = 1;
-        header = malloc(sizeof(header_t));
-        COMEX_ASSERT(header);
-        MAYBE_MEMSET(header, 0, sizeof(header_t));
+        if (use_eager) {
+            message_size = sizeof(header_t)+sizeof(stride_t)+packed_index;
+        }
+        else {
+            message_size = sizeof(header_t)+sizeof(stride_t);
+        }
+        message = malloc(message_size);
+        header = (header_t*)message;
         header->operation = OP_PUT_PACKED;
         header->remote_address = dst;
         header->local_address = NULL;
         header->rank = proc;
         header->length = packed_index;
-        nb_send_header(header, sizeof(header_t), master_rank, nb);
-        nb_send_header(stride, sizeof(stride_t), master_rank, nb);
-        nb_send_header(packed_buffer, packed_index, master_rank, nb);
+        (void)memcpy(message+sizeof(header_t), &stride, sizeof(stride_t));
+        if (use_eager) {
+            (void)memcpy(message+sizeof(header_t)+sizeof(stride_t),
+                    packed_buffer, packed_index);
+            nb_send_header(message, message_size, master_rank, nb);
+            free(packed_buffer);
+        }
+        else {
+            /* we send the buffer backwards */
+            char *buf = packed_buffer + packed_index;;
+            int bytes_remaining = packed_index;
+            nb_send_header(message, message_size, master_rank, nb);
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                buf -= size;
+                if (size == bytes_remaining) {
+                    /* on the last send, mark buffer for deletion */
+                    nb_send_header(buf, size, master_rank, nb);
+                }
+                else {
+                    nb_send_buffer(buf, size, master_rank, nb);
+                }
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
     }
 }
 
@@ -4642,7 +5049,7 @@ STATIC void nb_puts_datatype(
     MPI_Datatype src_type;
     int ierr;
     int i;
-    stride_t *stride = NULL;
+    stride_t stride;
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_puts_datatype(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -4660,29 +5067,27 @@ STATIC void nb_puts_datatype(
     COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     /* copy dst info into structure */
-    stride = malloc(sizeof(stride_t));
-    COMEX_ASSERT(stride);
-    MAYBE_MEMSET(stride, 0, sizeof(stride_t));
-    stride->stride_levels = stride_levels;
-    stride->count[0] = count[0];
+    MAYBE_MEMSET(&stride, 0, sizeof(stride_t));
+    stride.stride_levels = stride_levels;
+    stride.count[0] = count[0];
     for (i=0; i<stride_levels; ++i) {
-        stride->stride[i] = dst_stride_ar[i];
-        stride->count[i+1] = count[i+1];
+        stride.stride[i] = dst_stride_ar[i];
+        stride.count[i+1] = count[i+1];
     }
     for (/*no init*/; i<COMEX_MAX_STRIDE_LEVEL; ++i) {
-        stride->stride[i] = -1;
-        stride->count[i+1] = -1;
+        stride.stride[i] = -1;
+        stride.count[i+1] = -1;
     }
 
-    COMEX_ASSERT(stride->stride_levels >= 0);
-    COMEX_ASSERT(stride->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+    COMEX_ASSERT(stride.stride_levels >= 0);
+    COMEX_ASSERT(stride.stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_puts_datatype stride_levels=%d, count[0]=%d\n",
             g_state.rank, stride_levels, count[0]);
     for (i=0; i<stride_levels; ++i) {
         fprintf(stderr, "[%d] stride[%d]=%d count[%d+1]=%d\n",
-                g_state.rank, i, stride->stride[i], i, stride->count[i+1]);
+                g_state.rank, i, stride.stride[i], i, stride.count[i+1]);
     }
 #endif
 
@@ -4692,21 +5097,25 @@ STATIC void nb_puts_datatype(
     translate_mpi_error(ierr,"nb_puts_datatype:MPI_Type_commit");
 
     {
+        char *message = NULL;
+        int message_size = 0;
         header_t *header = NULL;
         int master_rank = -1;
 
         master_rank = g_state.master[proc];
         /* only fence on the master */
         fence_array[master_rank] = 1;
-        header = malloc(sizeof(header_t));
+        message_size = sizeof(header_t) + sizeof(stride_t);
+        message = malloc(message_size);
+        header = (header_t*)message;
         MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = OP_PUT_DATATYPE;
         header->remote_address = dst_ptr;
         header->local_address = NULL;
         header->rank = proc;
         header->length = 0;
-        nb_send_header(header, sizeof(header_t), master_rank, nb);
-        nb_send_header(stride, sizeof(stride_t), master_rank, nb);
+        (void)memcpy(message+sizeof(header_t), &stride, sizeof(stride_t));
+        nb_send_header(message, message_size, master_rank, nb);
         nb_send_datatype(src_ptr, src_type, master_rank, nb);
     }
 }
@@ -4728,27 +5137,24 @@ STATIC void nb_gets(
         return;
     }
 
-#if ENABLE_GET_DATATYPE
-#if ENABLE_GET_SELF
-    /* if not a strided get from self, use packed algorithm */
-    if (g_state.rank != proc)
-#endif
-    {
+    /* if not a strided get from self or SMP, use datatype algorithm */
+    if (COMEX_ENABLE_GET_DATATYPE
+            && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
+            && (!COMEX_ENABLE_GET_SMP
+                || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+            && (_packed_size(src_stride, count, stride_levels) > COMEX_GET_DATATYPE_THRESHOLD)) {
         nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
-#endif
 
-#if ENABLE_GET_PACKED
-#if ENABLE_GET_SELF
-    /* if not a strided get from self, use packed algorithm */
-    if (g_state.rank != proc)
-#endif
-    {
+    /* if not a strided get from self or SMP, use packed algorithm */
+    if (COMEX_ENABLE_GET_PACKED
+            && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
+            && (!COMEX_ENABLE_GET_SMP
+                || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
         nb_gets_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
-#endif
 
     /* number of n-element of the first dimension */
     n1dim = 1;
@@ -4770,7 +5176,7 @@ STATIC void nb_gets(
     for(i=0; i<n1dim; i++) {
         src_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-	  src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+            src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -4782,7 +5188,7 @@ STATIC void nb_gets(
         dst_idx = 0;
         
         for(j=1; j<=stride_levels; j++) {
-	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+            dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
@@ -4802,7 +5208,7 @@ STATIC void nb_gets_packed(
         int *count, int stride_levels, int proc, nb_t *nb)
 {
     int i;
-    stride_t *stride_src = NULL;
+    stride_t stride_src;
     stride_t *stride_dst = NULL;
 
 #if DEBUG
@@ -4822,22 +5228,20 @@ STATIC void nb_gets_packed(
     COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     /* copy src info into structure */
-    stride_src = malloc(sizeof(stride_t));
-    COMEX_ASSERT(stride_src);
-    stride_src->ptr = src;
-    stride_src->stride_levels = stride_levels;
-    stride_src->count[0] = count[0];
+    stride_src.ptr = src;
+    stride_src.stride_levels = stride_levels;
+    stride_src.count[0] = count[0];
     for (i=0; i<stride_levels; ++i) {
-        stride_src->stride[i] = src_stride[i];
-        stride_src->count[i+1] = count[i+1];
+        stride_src.stride[i] = src_stride[i];
+        stride_src.count[i+1] = count[i+1];
     }
     for (/*no init*/; i<COMEX_MAX_STRIDE_LEVEL; ++i) {
-        stride_src->stride[i] = -1;
-        stride_src->count[i+1] = -1;
+        stride_src.stride[i] = -1;
+        stride_src.count[i+1] = -1;
     }
 
-    COMEX_ASSERT(stride_src->stride_levels >= 0);
-    COMEX_ASSERT(stride_src->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+    COMEX_ASSERT(stride_src.stride_levels >= 0);
+    COMEX_ASSERT(stride_src.stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     /* copy dst info into structure */
     stride_dst = malloc(sizeof(stride_t));
@@ -4858,6 +5262,8 @@ STATIC void nb_gets_packed(
     COMEX_ASSERT(stride_dst->stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     {
+        char *message = NULL;
+        int message_size = 0;
         int recv_size = 0;
         char *packed_buffer = NULL;
         header_t *header = NULL;
@@ -4865,7 +5271,9 @@ STATIC void nb_gets_packed(
 
         master_rank = g_state.master[proc];
 
-        header = malloc(sizeof(header_t));
+        message_size = sizeof(header_t) + sizeof(stride_t);
+        message = malloc(message_size);
+        header = (header_t*)message;
         COMEX_ASSERT(header);
         MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = OP_GET_PACKED;
@@ -4874,14 +5282,31 @@ STATIC void nb_gets_packed(
         header->rank = proc;
         header->length = 0;
 
-        recv_size = packed_size(stride_dst->stride,
+        recv_size = _packed_size(stride_dst->stride,
                 stride_dst->count, stride_dst->stride_levels);
         COMEX_ASSERT(recv_size > 0);
         packed_buffer = malloc(recv_size);
         COMEX_ASSERT(packed_buffer);
-        nb_recv_packed(packed_buffer, recv_size, master_rank, nb, stride_dst);
-        nb_send_header(header, sizeof(header_t), master_rank, nb);
-        nb_send_header(stride_src, sizeof(stride_t), master_rank, nb);
+        {
+            /* prepost all receives backward */
+            char *buf = (char*)packed_buffer + recv_size;
+            int bytes_remaining = recv_size;
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                buf -= size;
+                if (size == bytes_remaining) {
+                    /* on the last recv, indicate a packed recv */
+                    nb_recv_packed(buf, size, master_rank, nb, stride_dst);
+                }
+                else {
+                    nb_recv(buf, size, master_rank, nb);
+                }
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
+        (void)memcpy(message+sizeof(header_t), &stride_src, sizeof(stride_t));
+        nb_send_header(message, message_size, master_rank, nb);
     }
 }
 
@@ -4892,7 +5317,7 @@ STATIC void nb_gets_datatype(
 {
     MPI_Datatype dst_type;
     int i;
-    stride_t *stride_src = NULL;
+    stride_t stride_src;
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_gets_datatype(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -4922,32 +5347,34 @@ STATIC void nb_gets_datatype(
     COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     /* copy src info into structure */
-    stride_src = malloc(sizeof(stride_t));
-    COMEX_ASSERT(stride_src);
-    MAYBE_MEMSET(stride_src, 0, sizeof(header_t));
-    stride_src->ptr = src;
-    stride_src->stride_levels = stride_levels;
-    stride_src->count[0] = count[0];
+    MAYBE_MEMSET(&stride_src, 0, sizeof(header_t));
+    stride_src.ptr = src;
+    stride_src.stride_levels = stride_levels;
+    stride_src.count[0] = count[0];
     for (i=0; i<stride_levels; ++i) {
-        stride_src->stride[i] = src_stride[i];
-        stride_src->count[i+1] = count[i+1];
+        stride_src.stride[i] = src_stride[i];
+        stride_src.count[i+1] = count[i+1];
     }
     for (/*no init*/; i<COMEX_MAX_STRIDE_LEVEL; ++i) {
-        stride_src->stride[i] = -1;
-        stride_src->count[i+1] = -1;
+        stride_src.stride[i] = -1;
+        stride_src.count[i+1] = -1;
     }
 
-    COMEX_ASSERT(stride_src->stride_levels >= 0);
-    COMEX_ASSERT(stride_src->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+    COMEX_ASSERT(stride_src.stride_levels >= 0);
+    COMEX_ASSERT(stride_src.stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     {
+        char *message = NULL;
+        int message_size = 0;
         header_t *header = NULL;
         int master_rank = -1;
         int ierr;
 
         master_rank = g_state.master[proc];
 
-        header = malloc(sizeof(header_t));
+        message_size = sizeof(header_t) + sizeof(stride_t);
+        message = malloc(message_size);
+        header = (header_t*)message;
         COMEX_ASSERT(header);
         MAYBE_MEMSET(header, 0, sizeof(header_t));
         header->operation = OP_GET_DATATYPE;
@@ -4961,8 +5388,8 @@ STATIC void nb_gets_datatype(
         translate_mpi_error(ierr,"nb_gets_datatype:MPI_Type_commit");
 
         nb_recv_datatype(dst, dst_type, master_rank, nb);
-        nb_send_header(header, sizeof(header_t), master_rank, nb);
-        nb_send_header(stride_src, sizeof(stride_t), master_rank, nb);
+        (void)memcpy(message+sizeof(header_t), &stride_src, sizeof(stride_t));
+        nb_send_header(message, message_size, master_rank, nb);
     }
 }
 
@@ -4986,16 +5413,14 @@ STATIC void nb_accs(
         return;
     }
 
-#if ENABLE_ACC_PACKED
-#if ENABLE_ACC_SELF
-    /* if not a strided acc to self, use packed algorithm */
-    if (g_state.rank != proc)
-#endif
-    {
+    /* if not a strided acc to self or SMP, use packed algorithm */
+    if (COMEX_ENABLE_ACC_PACKED
+            && (!COMEX_ENABLE_ACC_SELF || g_state.rank != proc)
+            && (!COMEX_ENABLE_ACC_SMP
+                || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
         nb_accs_packed(datatype, scale, src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
-#endif
 
     /* number of n-element of the first dimension */
     n1dim = 1;
@@ -5019,7 +5444,7 @@ STATIC void nb_accs(
         src_idx = 0;
         dst_idx = 0;
         for(j=1; j<=stride_levels; j++) {
-	  src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+            src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
             if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
@@ -5029,7 +5454,7 @@ STATIC void nb_accs(
         }
 
         for(j=1; j<=stride_levels; j++) {
-	  dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+            dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
             if((i+1) % dst_bunit[j] == 0) {
                 dst_bvalue[j]++;
             }
@@ -5054,7 +5479,7 @@ STATIC void nb_accs_packed(
     int i;
     int packed_index = 0;
     char *packed_buffer = NULL;
-    stride_t *stride = NULL;
+    stride_t stride;
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_accs_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -5074,30 +5499,28 @@ STATIC void nb_accs_packed(
     COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     /* copy dst info into structure */
-    stride = malloc(sizeof(stride_t));
-    COMEX_ASSERT(stride);
-    stride->ptr = dst;
-    stride->stride_levels = stride_levels;
-    stride->count[0] = count[0];
+    stride.ptr = dst;
+    stride.stride_levels = stride_levels;
+    stride.count[0] = count[0];
     for (i=0; i<stride_levels; ++i) {
-        stride->stride[i] = dst_stride[i];
-        stride->count[i+1] = count[i+1];
+        stride.stride[i] = dst_stride[i];
+        stride.count[i+1] = count[i+1];
     }
     /* assign remaining values to invalid */
     for (/*no init*/; i<COMEX_MAX_STRIDE_LEVEL; ++i) {
-        stride->stride[i] = -1;
-        stride->count[i+1] = -1;
+        stride.stride[i] = -1;
+        stride.count[i+1] = -1;
     }
 
-    COMEX_ASSERT(stride->stride_levels >= 0);
-    COMEX_ASSERT(stride->stride_levels < COMEX_MAX_STRIDE_LEVEL);
+    COMEX_ASSERT(stride.stride_levels >= 0);
+    COMEX_ASSERT(stride.stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_accs_packed stride_levels=%d, count[0]=%d\n",
             g_state.rank, stride_levels, count[0]);
     for (i=0; i<stride_levels; ++i) {
-        fprintf(stderr, "[%d] stride[%d]=%d count[%d+1]=%d\n",
-                g_state.rank, i, stride->stride[i], i, stride->count[i+1]);
+        printf("[%d] stride[%d]=%d count[%d+1]=%d\n",
+                g_state.rank, i, stride.stride[i], i, stride.count[i+1]);
     }
 #endif
 
@@ -5108,9 +5531,12 @@ STATIC void nb_accs_packed(
 
     {
         header_t *header = NULL;
+        char *message = NULL;
+        int message_size = 0;
         int scale_size = 0;
         op_t operation = OP_NULL;
         int master_rank = -1;
+        int use_eager = 0;
 
         switch (datatype) {
             case COMEX_ACC_INT:
@@ -5139,24 +5565,53 @@ STATIC void nb_accs_packed(
                 break;
             default: COMEX_ASSERT(0);
         }
+        use_eager = _eager_check(scale_size+sizeof(stride_t)+packed_index);
 
         master_rank = g_state.master[proc];
 
         /* only fence on the master */
         fence_array[master_rank] = 1;
 
-        header = malloc(sizeof(header_t));
-        COMEX_ASSERT(header);
-        MAYBE_MEMSET(header, 0, sizeof(header_t));
+        if (use_eager) {
+            message_size = sizeof(header_t) + scale_size + sizeof(stride_t) + packed_index;
+        }
+        else {
+            message_size = sizeof(header_t) + scale_size + sizeof(stride_t);
+        }
+        message = malloc(message_size);
+        COMEX_ASSERT(message);
+        header = (header_t*)message;
         header->operation = operation;
         header->remote_address = dst;
         header->local_address = NULL;
         header->rank = proc;
         header->length = packed_index;
-        nb_send_header(header, sizeof(header_t), master_rank, nb);
-        nb_send_buffer(scale, scale_size, master_rank, nb);
-        nb_send_header(stride, sizeof(stride_t), master_rank, nb);
-        nb_send_header(packed_buffer, packed_index, master_rank, nb);
+        (void)memcpy(message+sizeof(header_t), scale, scale_size);
+        (void)memcpy(message+sizeof(header_t)+scale_size, &stride, sizeof(stride_t));
+        if (use_eager) {
+            (void)memcpy(message+sizeof(header_t)+scale_size+sizeof(stride_t),
+                    packed_buffer, packed_index);
+            nb_send_header(message, message_size, master_rank, nb);
+            free(packed_buffer);
+        }
+        else {
+            /* we send the buffer backwards */
+            char *buf = packed_buffer + packed_index;
+            int bytes_remaining = packed_index;
+            nb_send_header(message, message_size, master_rank, nb);
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                buf -= size;
+                if (size == bytes_remaining) {
+                    nb_send_header(buf, size, master_rank, nb);
+                }
+                else {
+                    nb_send_buffer(buf, size, master_rank, nb);
+                }
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
     }
 }
 
@@ -5169,7 +5624,10 @@ STATIC void nb_putv(
 
     for (i=0; i<iov_len; ++i) {
         /* if not a vector put to self, use packed algorithm */
-        if (ENABLE_PUT_IOV && (!ENABLE_PUT_SELF || g_state.rank != proc)) {
+        if (COMEX_ENABLE_PUT_IOV
+                && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
+                && (!COMEX_ENABLE_PUT_SMP
+                    || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
             nb_putv_packed(&iov[i], proc, nb);
         }
         else {
@@ -5270,7 +5728,10 @@ STATIC void nb_getv(
 
     for (i=0; i<iov_len; ++i) {
         /* if not a vector get from self, use packed algorithm */
-        if (ENABLE_GET_IOV && (!ENABLE_GET_SELF || g_state.rank != proc)) {
+        if (COMEX_ENABLE_GET_IOV
+                && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
+                && (!COMEX_ENABLE_GET_SMP
+                    || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
             nb_getv_packed(&iov[i], proc, nb);
         }
         else {
@@ -5379,7 +5840,10 @@ STATIC void nb_accv(
 
     for (i=0; i<iov_len; ++i) {
         /* if not a vector acc to self, use packed algorithm */
-        if (ENABLE_ACC_IOV && (!ENABLE_ACC_SELF || g_state.rank != proc)) {
+        if (COMEX_ENABLE_ACC_IOV
+                && (!COMEX_ENABLE_ACC_SELF || g_state.rank != proc)
+                && (!COMEX_ENABLE_ACC_SMP
+                    || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
             nb_accv_packed(datatype, scale, &iov[i], proc, nb);
         }
         else {
@@ -5455,6 +5919,8 @@ STATIC void nb_accv_packed(
 
     {
         header_t *header = NULL;
+        char *message = NULL;
+        int message_size = 0;
         int scale_size = 0;
         op_t operation = OP_NULL;
         int master_rank = g_state.master[proc];
@@ -5490,16 +5956,17 @@ STATIC void nb_accv_packed(
         /* only fence on the master */
         fence_array[master_rank] = 1;
 
-        header = malloc(sizeof(header_t));
-        COMEX_ASSERT(header);
-        MAYBE_MEMSET(header, 0, sizeof(header_t));
+        message_size = sizeof(header_t) + scale_size;
+        message = malloc(message_size);
+        COMEX_ASSERT(message);
+        header = (header_t*)message;
         header->operation = operation;
         header->remote_address = NULL;
         header->local_address = NULL;
         header->rank = proc;
         header->length = iov_size;
-        nb_send_header(header, sizeof(header_t), master_rank, nb);
-        nb_send_buffer(scale, scale_size, master_rank, nb);
+        (void)memcpy(message+sizeof(header_t), scale, scale_size);
+        nb_send_header(message, message_size, master_rank, nb);
         nb_send_header(iov_buf, iov_size, master_rank, nb);
         nb_send_header(packed_buffer, packed_size, master_rank, nb);
     }

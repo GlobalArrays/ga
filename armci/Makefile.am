@@ -25,6 +25,7 @@ ACLOCAL_AMFLAGS = -I m4 -I ../m4 -I ../comex/m4
 # automake variables used.
 include_HEADERS =
 bin_PROGRAMS =
+bin_SCRIPTS =
 check_PROGRAMS =
 check_LTLIBRARIES =
 lib_LTLIBRARIES =
@@ -103,8 +104,11 @@ flags:
 	@echo ' LDFLAGS="$(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) -L$(libdir)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo ' '
 	@echo ' For C/C++ Programs: '
-	@echo ' LIBS="-larmci $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo ' LIBS="-larmci $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo ' =========================================================================== '
+
+bin_SCRIPTS += tools/armci-config
+CLEANFILES += $(bin_SCRIPTS)
 
 ##############################################################################
 # src-portals
@@ -686,7 +690,7 @@ examples/features/gpc/hashtable/HashUtil.cc              \
 examples/features/gpc/hashtable/test_hashtable.cc        \
 examples/features/gpc/hashtable/Util.h $(atsrc)
 examples_features_gpc_hashtable_test_hashtable_LDFLAGS = $(LDFLAGS_BASE)
-examples_features_gpc_hashtable_test_hashtable_LDADD = $(LDADD) $(MAYBE_FLIBS)
+examples_features_gpc_hashtable_test_hashtable_LDADD = $(LDADD)
 
 examples_features_non_blocking_overlap_overlap_SOURCES = \
 examples/features/non-blocking/overlap/overlap.c $(atsrc)

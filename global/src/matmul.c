@@ -368,7 +368,6 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
   SingleComplex ONE_CF = {1.,0.};
   Integer clo[2], chi[2];
 
-  GA_PUSH_NAME("ga_matmul_shmem");
 
   /* to skip accumulate and exploit data locality:
      get chunks according to "C" matrix distribution*/
@@ -483,7 +482,6 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
       do_put = UNSET; /* In the second loop, accumulate should be done */
     }
   }
-  GA_POP_NAME;
 }
 
 
@@ -604,7 +602,6 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
   _iterator_hdl hdl;
   char *ptr_c;
 
-  GA_PUSH_NAME("ga_matmul_regular");
   if(irregular) pnga_error("irregular flag set", 0L);
 
   init_task_list(&state);
@@ -817,7 +814,6 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     } while(chunks_left);
   } /* while(has_more_blocks) */
 
-  GA_POP_NAME;
 }
 
 
@@ -855,7 +851,6 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
   Integer grp_me, a_grp = pnga_get_pgroup(g_a);
   Integer clo[2], chi[2];
 
-  GA_PUSH_NAME("ga_matmul_irreg");
   init_task_list(&taskListC);
   ONE.real =1.; ONE.imag =0.;
   ONE_CF.real =1.; ONE_CF.imag =0.;
@@ -1059,7 +1054,6 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
     }
   }
   /* ----------------------------------------- */
-  GA_POP_NAME;
 }
 
 #if DEBUG_
@@ -1328,7 +1322,6 @@ void pnga_matmul(transa, transb, alpha, beta,
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(local_sync_begin)pnga_pgroup_sync(a_grp);
 
-    GA_PUSH_NAME("pnga_matmul");
 
     if (a_grp != b_grp || a_grp != c_grp)
        pnga_error("Arrays must be defined on same group",0L);
@@ -1439,7 +1432,6 @@ void pnga_matmul(transa, transb, alpha, beta,
        hiC[1] = cjhi;
        pnga_matmul_basic(transa, transb, alpha, beta, g_a, loA, hiA,
          g_b, loB, hiB, g_c, loC, hiC);
-       GA_POP_NAME;   
        return;
 #endif
     }
@@ -1582,7 +1574,6 @@ void pnga_matmul(transa, transb, alpha, beta,
        pnga_pgroup_sync(a_grp);
 #endif
        
-       GA_POP_NAME;   
        if(local_sync_end)pnga_pgroup_sync(a_grp);
 }
 
@@ -1634,7 +1625,6 @@ Integer clo[2], chi[2];
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if(local_sync_begin)pnga_sync();
 
-   GA_PUSH_NAME("ga_matmul_patch");
 
    /* Check to make sure all global arrays are of the same type */
    if (!(pnga_is_mirrored(g_a) == pnga_is_mirrored(g_b) &&
@@ -1890,7 +1880,6 @@ Integer clo[2], chi[2];
    ga_free(a);
 #endif
 
-   GA_POP_NAME;
    if(local_sync_end)pnga_sync();
 
 }
@@ -2040,15 +2029,12 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if(local_sync_begin)pnga_sync();
 
-   GA_PUSH_NAME("nga_matmul_patch");
    if (pnga_total_blocks(g_a) > 0 || pnga_total_blocks(g_b) > 0 ||
        pnga_total_blocks(g_c) > 0) {
      pnga_matmul_basic(transa, transb, alpha, beta, g_a, alo, ahi,
          g_b, blo, bhi, g_c, clo, chi);
-     GA_POP_NAME;
      return;
    }
-
 
    /* Check to make sure all global arrays are of the same type */
    if (!(pnga_is_mirrored(g_a) == pnga_is_mirrored(g_b) &&
@@ -2346,7 +2332,6 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    ga_free(a);
 #endif
    
-   GA_POP_NAME;
    if(local_sync_end)pnga_sync(); 
 }
 
@@ -2424,7 +2409,6 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  GA_PUSH_NAME("nga_matmul_basic");
   /* For the time being, punt on transposes*/
   if (*transa == 't' || *transa == 'T' || *transb == 't' || *transb == 'T') {
     pnga_error("Cannot do basic multiply with tranpose ",0);
@@ -2620,6 +2604,5 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
       free(b_buf);
     }
   }
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync(); 
 }

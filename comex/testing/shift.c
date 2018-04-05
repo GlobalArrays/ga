@@ -8,12 +8,14 @@
 
 static int me;
 static int nproc;
-static int size[] = {2,4,8,16,32,64,128,256,512,1024,0}; /* 0 is sentinal */
+static int size[] = {2,4,8,16,32,64,128,256,512,1024,1024*1024,1024*1024*8,0}; /* 0 is sentinal */
 
 #define PUT_FORWARD  0
 #define PUT_BACKWARD 1
 #define GET_FORWARD  2
 #define GET_BACKWARD 3
+#define ACC_FORWARD  4
+#define ACC_BACKWARD 5
 
 static void fill_array(double *arr, int count, int which);
 static void shift(size_t buffer_size, int op);
@@ -29,6 +31,20 @@ int main(int argc, char **argv)
 
     if (0 == me) {
         printf("msg size (bytes)     avg time (milliseconds)    avg b/w (bytes/sec)\n");
+    }
+
+    if (0 == me) {
+        printf("shifting acc forward\n");
+    }
+    for (i=0; size[i]!=0; ++i) {
+        shift(size[i], ACC_FORWARD);
+    }
+
+    if (0 == me) {
+        printf("shifting acc backward\n");
+    }
+    for (i=0; size[i]!=0; ++i) {
+        shift(size[i], ACC_BACKWARD);
     }
 
     if (0 == me) {
@@ -81,6 +97,7 @@ static void shift(size_t buffer_size, int op)
     void **dst_ptr;
     void **put_buf;
     void **get_buf;
+    double scale = 2.0;
     int i=0;
     double *times;
     double *result;
@@ -107,6 +124,20 @@ static void shift(size_t buffer_size, int op)
 
     /* the shift */
     switch (op) {
+        case ACC_FORWARD:
+            for (i=1; i<nproc; ++i) {
+                int dst = (me+i)%nproc;
+                comex_acc(COMEX_ACC_DBL, &scale, put_buf[me], dst_ptr[dst], buffer_size, dst, COMEX_GROUP_WORLD);
+                comex_barrier(COMEX_GROUP_WORLD);
+            }
+            break;
+        case ACC_BACKWARD:
+            for (i=1; i<nproc; ++i) {
+                int dst = me<i ? me-i+nproc : me-i;
+                comex_acc(COMEX_ACC_DBL, &scale, put_buf[me], dst_ptr[dst], buffer_size, dst, COMEX_GROUP_WORLD);
+                comex_barrier(COMEX_GROUP_WORLD);
+            }
+            break;
         case PUT_FORWARD:
             for (i=1; i<nproc; ++i) {
                 int dst = (me+i)%nproc;
@@ -146,7 +177,7 @@ static void shift(size_t buffer_size, int op)
         total_time += times[i];
     }
     if (0 == me) {
-        printf("%5zu                %6.2f                   %10.2f\n",
+        printf("%zu\t%f\t%f\n",
                 buffer_size,
                 total_time/nproc*1000,
                 buffer_size*(nproc-1)/total_time);
