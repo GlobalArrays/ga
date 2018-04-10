@@ -5333,14 +5333,14 @@ int NGA_Sprs_array_create(int idim, int jdim, int type)
 {
   Integer i = (Integer)idim;
   Integer j = (Integer)jdim;
-  return (int)wnga_sprs_array_create(i,j,type);
+  return (int)wnga_sprs_array_create(i,j,type,sizeof(int));
 }
 
 int NGA_Sprs_array_create64(int64_t idim, int64_t jdim, int type)
 {
   Integer i = (Integer)idim;
   Integer j = (Integer)jdim;
-  return (int)wnga_sprs_array_create(i,j,type);
+  return (int)wnga_sprs_array_create(i,j,type,sizeof(long));
 }
 
 void NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void *val)
@@ -5405,14 +5405,20 @@ void NGA_Sprs_array_column_distribution64(int s_a, int iproc, int64_t *lo, int64
   *hi = (int64_t)ihi;
 }
 
-void NGA_Sprs_array_access_col_block(int s_a, int icol, void *idx, void *jdx,
+void NGA_Sprs_array_access_col_block(int s_a, int icol, int **idx, int **jdx,
     void *val)
 {
   Integer sa = (Integer)s_a;
   Integer ic = (Integer)icol;
-  Integer **i = (Integer**)idx;
-  Integer **j = (Integer**)jdx;
-  wnga_sprs_array_access_col_block(sa,ic,i,j,val);
+  wnga_sprs_array_access_col_block(sa,ic,idx,jdx,val);
+}
+
+void NGA_Sprs_array_access_col_block64(int s_a, int icol, long **idx, long **jdx,
+    void *val)
+{
+  Integer sa = (Integer)s_a;
+  Integer ic = (Integer)icol;
+  wnga_sprs_array_access_col_block(sa,ic,idx,jdx,val);
 }
 
 int NGA_Sprs_array_destroy(Integer s_a)

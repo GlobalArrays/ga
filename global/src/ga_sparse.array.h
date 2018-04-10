@@ -10,13 +10,14 @@ typedef struct {
   Integer g_data;   /* global array containing data values of sparse matrix */
   Integer g_j;      /* global array containing j indices of sparse matrix */
   Integer g_i;      /* global array containing first j index for row i */
+  Integer idx_size; /* size of integer indices */
   Integer grp;      /* handle for process group on which array is defined */
   Integer ilo, ihi; /* minimum and maximum row indices contained on this process */
   Integer nprocs;   /* number of processors containing this array */
   Integer nblocks;  /* number of non-zero sparse blocks contained on this process */
   Integer *blkidx;  /* array containing indices of non-zero blocks */
   Integer *blksize; /* array containining sizes of non-zero blocks */
-  Integer *offset;  /* array containing starting index in g_i for each block */
+  Integer *offset;  /* array containing starting index in g_i for each block (int) */
   Integer *idx;     /* local buffer containing i indices */
   Integer *jdx;     /* local buffer containing j indices */
   void    *val;     /* local buffer containing values */
@@ -33,9 +34,4 @@ extern _sparse_array *SPA;
 
 extern void sai_init_sparse_arrays();
 extern void sai_terminate_sparse_arrays();
-/*
-extern void pnga_sprs_array_add_element(Integer s_a, Integer i, Integer j, void *val);
-extern Integer pnga_sprs_array_create(Integer idim, Integer jdim, Integer type);
-extern Integer pnga_sprs_array_assemble(Integer s_a);
-*/
 

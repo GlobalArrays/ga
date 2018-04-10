@@ -3727,7 +3727,7 @@ void nga_version_(Integer *major, Integer *minor, Integer *patch)
 
 logical nga_sprs_array_create_(Integer idim, Integer jdim, Integer type)
 {
-  return wnga_sprs_array_create(idim,jdim,type);
+  return wnga_sprs_array_create(idim,jdim,type,sizeof(Integer));
 }
 
 void nga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *val)

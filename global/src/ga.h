@@ -361,7 +361,8 @@ extern void          NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void 
 extern int           NGA_Sprs_array_assemble(int s_a);
 extern void          NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo, int *hi);
 extern void          NGA_Sprs_array_column_distribution(int s_a, int iproc, int *lo, int *hi);
-extern void          NGA_Sprs_array_access_col_block(int s_a, int icol, void *idx, void *jdx, void *val);
+extern void          NGA_Sprs_array_access_col_block(int s_a, int icol, int **idx, int **jdx, void *val);
+extern void          NGA_Sprs_array_access_col_block64(int s_a, int icol, long **idx, long **jdx, void *val);
 extern int           NGA_Sprs_array_destroy(Integer s_a);
 
 /* 64 bit APIs */
