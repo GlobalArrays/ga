@@ -77,10 +77,14 @@ void grid_factor(int p, int xdim, int ydim, int *idx, int *idy) {
 int main(int argc, char **argv) {
   int s_a, g_v, g_av;
   int one;
+  int64_t one_64;
   int me, nproc;
-  int xdim, ydim, ipx, ipy, idx, idy;
-  int ilo, ihi, jlo, jhi;
-  int i, j, iproc, ld, ncols, ncnt;
+  int idim, jdim;
+  int64_t xdim, ydim;
+  int ipx, ipy, idx, idy;
+  int64_t ilo, ihi, jlo, jhi;
+  int64_t i, j;
+  int  iproc, ld, ncols, ncnt;
   double val;
   double *vptr;
   double *vbuf, *vsum;
@@ -90,21 +94,24 @@ int main(int argc, char **argv) {
   double ir, jr, ldr;
   /* Intitialize a message passing library */
   one = 1;
+  one_64 = 1;
   MP_INIT(argc,argv);
   /* Initialize GA */
   NGA_Initialize();
 
   xdim = NDIM;
   ydim = NDIM;
+  idim = NDIM;
+  jdim = NDIM;
   me = GA_Nodeid();
   nproc = GA_Nnodes();
 
   /* factor array */
-  grid_factor(nproc, xdim, ydim, &ipx, &ipy);
+  grid_factor(nproc, idim, jdim, &ipx, &ipy);
   if (me == 0) {
     printf("Testing sparse array on %d processors\n",nproc);
     printf("\n    Using %d X %d processor grid\n",ipx,ipy);
-    printf("\n    Matrix size is %d X %d\n",xdim,ydim);
+    printf("\n    Matrix size is %d X %d\n",idim,jdim);
   }
   /* figure out process location in proc grid */
   idx = me%ipx;
@@ -124,7 +131,7 @@ int main(int argc, char **argv) {
   }
  
   /* create sparse array */
-  s_a = NGA_Sprs_array_create(xdim, ydim, C_DBL);
+  s_a = NGA_Sprs_array_create64(xdim, ydim, C_DBL);
   if (ydim%2 == 0) {
     ld = ydim/2;
   } else {
@@ -138,7 +145,7 @@ int main(int argc, char **argv) {
       jr = (double)(j/2);
       if (i%2 == 0 && j%2 == 0) {
         val = (ir)*ldr+jr;
-        NGA_Sprs_array_add_element(s_a,i,j,&val);
+        NGA_Sprs_array_add_element64(s_a,i,j,&val);
       }
     }
   }
@@ -148,30 +155,30 @@ int main(int argc, char **argv) {
 
   /* construct vector */
   g_v = NGA_Create_handle();
-  NGA_Set_data(g_v,one,&ydim,C_DBL);
+  NGA_Set_data64(g_v,one,&ydim,C_DBL);
   NGA_Allocate(g_v);
   g_av = GA_Duplicate(g_v, "dup");
   GA_Zero(g_av);
 
   /* set vector values */
-  NGA_Distribution(g_v,me,&ilo,&ihi);
-  NGA_Access(g_v,&ilo,&ihi,&vptr,&one);
+  NGA_Distribution64(g_v,me,&ilo,&ihi);
+  NGA_Access64(g_v,&ilo,&ihi,&vptr,&one_64);
   for (i=ilo;i<=ihi;i++) {
     vptr[i-ilo] = (double)i;
   }
   if (me == 0) {
     printf("\n    Vector initialized\n");
   }
-  NGA_Release(g_v,&ilo,&ihi);
+  NGA_Release64(g_v,&ilo,&ihi);
 
 
   /* access array blocks and check values for correctness */
-  NGA_Sprs_array_row_distribution(s_a,me,&ilo,&ihi);
+  NGA_Sprs_array_row_distribution64(s_a,me,&ilo,&ihi);
   ok = 1;
   ncnt = 0;
   for (iproc=0; iproc<nproc; iproc++) {
-    NGA_Sprs_array_column_distribution(s_a,iproc,&jlo,&jhi);
-    NGA_Sprs_array_access_col_block(s_a,iproc,&iptr,&jptr,&vptr);
+    NGA_Sprs_array_column_distribution64(s_a,iproc,&jlo,&jhi);
+    NGA_Sprs_array_access_col_block64(s_a,iproc,&iptr,&jptr,&vptr);
     if (vptr != NULL) {
       for (i=ilo; i<=ihi; i++) {
         ncols = iptr[i+1-ilo]-iptr[i-ilo];
@@ -184,15 +191,15 @@ int main(int argc, char **argv) {
           val = ir*ldr+jr;
           if (fabs(val-vptr[iptr[i-ilo]+j]) > 1.0e-5) {
             ok = 0;
-            printf("p[%d] i: %d j: %d val: %f\n",me,i,
-                jptr[iptr[i-ilo]+j],vptr[iptr[i-ilo]+j]);
+            printf("p[%d] i: %d j: %d val: %f\n",me,(int)i,
+                (int)jptr[iptr[i-ilo]+j],vptr[iptr[i-ilo]+j]);
           }
         }
       }
     }
   }
   GA_Igop(&ncnt,one,"+");
-  if (ncnt != (xdim/2)*(ydim/2)) ok = 0;
+  if (ncnt != (idim/2)*(jdim/2)) ok = 0;
   if (ok && me==0) {
     printf("\n    Values in sparse array are correct\n");
   }
@@ -203,11 +210,11 @@ int main(int argc, char **argv) {
     vsum[i-ilo] = 0.0;
   }
   for (iproc=0; iproc<nproc; iproc++) {
-    NGA_Sprs_array_column_distribution(s_a,iproc,&jlo,&jhi);
-    NGA_Sprs_array_access_col_block(s_a,iproc,&iptr,&jptr,&vptr);
+    NGA_Sprs_array_column_distribution64(s_a,iproc,&jlo,&jhi);
+    NGA_Sprs_array_access_col_block64(s_a,iproc,&iptr,&jptr,&vptr);
     if (vptr != NULL) {
       vbuf = (double*)malloc((jhi-jlo+1)*sizeof(double));
-      NGA_Get(g_v,&jlo,&jhi,vbuf,&one);
+      NGA_Get64(g_v,&jlo,&jhi,vbuf,&one_64);
       for (i=ilo; i<=ihi; i++) {
         ncols = iptr[i+1-ilo]-iptr[i-ilo];
         for (j=0; j<ncols; j++) {
@@ -225,14 +232,14 @@ int main(int argc, char **argv) {
       free(vbuf);
     }
   }
-  if (ihi>=ilo) NGA_Acc(g_av,&ilo,&ihi,vsum,&one,&r_one);
+  if (ihi>=ilo) NGA_Acc64(g_av,&ilo,&ihi,vsum,&one_64,&r_one);
   GA_Sync();
   free(vsum);
 
   /* check product vector */
   ok = 1;
-  NGA_Distribution(g_av,me,&ilo,&ihi);
-  NGA_Access(g_av,&ilo,&ihi,&vptr,&one);
+  NGA_Distribution64(g_av,me,&ilo,&ihi);
+  NGA_Access64(g_av,&ilo,&ihi,&vptr,&one_64);
   /*
   printf("ilo: %d ihi: %d\n",ilo,ihi);
   */
@@ -252,13 +259,13 @@ int main(int argc, char **argv) {
       if (fabs(val-vptr[i-ilo]) >= 1.0e-5) {
         ok = 0;
         printf("Error for element %d expected: %f actual: %f\n",
-            i,val,vptr[i-ilo]);
+            (int)i,val,vptr[i-ilo]);
       }
     } else {
       if (fabs(vptr[i-ilo]) >= 1.0e-5) {
         ok = 0;
         printf("Error for element %d expected: 0.00000 actual: %f\n",
-            i,vptr[i-ilo]);
+            (int)i,vptr[i-ilo]);
       }
     }
   }

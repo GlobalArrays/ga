@@ -119,11 +119,13 @@ void sai_terminate_sparse_arrays()
 /**
  * Create a new sparse array
  * @param idim,jdim I (row) and J (column) dimensions of sparse array
+ * @param type type of data stored in sparse array
+ * @param size size of indices stored in sparse array
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_sprs_array_create =  pnga_sprs_array_create
 #endif
-logical pnga_sprs_array_create(Integer idim, Integer jdim, Integer type)
+logical pnga_sprs_array_create(Integer idim, Integer jdim, Integer type, Integer size)
 {
   Integer i, hdl, s_a;
   GAvalidtypeM(pnga_type_f2c((int)type));
@@ -135,6 +137,7 @@ logical pnga_sprs_array_create(Integer idim, Integer jdim, Integer type)
       SPA[i].idx = (Integer*)malloc(INIT_BUF_SIZE*sizeof(Integer));
       SPA[i].jdx = (Integer*)malloc(INIT_BUF_SIZE*sizeof(Integer));
       SPA[i].type = pnga_type_f2c((int)(type));
+      SPA[i].idx_size = size;
       SPA[i].size = GAsizeofM(SPA[i].type);
       SPA[i].val = malloc(INIT_BUF_SIZE*SPA[i].size);
       SPA[i].nval = 0;
@@ -221,7 +224,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   Integer hdl = GA_OFFSET + s_a;
   Integer lo, hi, ld;
   Integer i,j,ilo,ihi;
-  Integer *offset;
+  long *offset;
   Integer *count;
   Integer *top;
   Integer *list;
@@ -241,7 +244,18 @@ logical pnga_sprs_array_assemble(Integer s_a)
   Integer nrows, irow, idim, jdim;
   char *vals;
   Integer ncnt, icnt, jcnt;
+  Integer longidx;
+  int *isdx;
+  int *jsdx;
+  long *ildx;
+  long *jldx;
 
+  /* set variable that distinguishes between long and ints for indices */
+  if (SPA[hdl].idx_size == sizeof(long)) {
+    longidx = 1;
+  } else {
+    longidx = 0;
+  }
   idim = SPA[hdl].idim;
   jdim = SPA[hdl].jdim;
   /* Create a linked list for values on this process and bin values by which
@@ -265,17 +279,17 @@ logical pnga_sprs_array_assemble(Integer s_a)
    * offset on remote processes is for the data. Create a global array to
    * perform this calculation */
   g_offset = pnga_create_handle();
-  pnga_set_data(g_offset,one,&nproc,MT_F_INT);
+  pnga_set_data(g_offset,one,&nproc,C_LONG);
   if (!pnga_allocate(g_offset)) ret = 0;
   pnga_zero(g_offset);
-  offset = (Integer*)malloc(nproc*sizeof(Integer));
+  offset = (long*)malloc(nproc*sizeof(long));
   for (i=0; i<nproc; i++) {
     /* internal indices are unit based, so iproc needs
      * to be incremented by 1 */
     iproc = (i+me)%nproc+1;
     /* C indices are still zero based so need to subtract 1 from iproc */
     if (count[iproc-1] > 0) {
-      offset[iproc-1] = pnga_read_inc(g_offset,&iproc,count[iproc-1]);
+      offset[iproc-1] = (long)pnga_read_inc(g_offset,&iproc,count[iproc-1]);
     }
   }
   pnga_pgroup_sync(SPA[hdl].grp);
@@ -302,14 +316,22 @@ logical pnga_sprs_array_assemble(Integer s_a)
   pnga_set_irreg_distr(SPA[hdl].g_data,map,&nproc);
   if (!pnga_allocate(SPA[hdl].g_data)) ret = 0;
   SPA[hdl].g_j = pnga_create_handle();
-  pnga_set_data(SPA[hdl].g_j,one,&totalvals,MT_F_INT);
+  if (longidx) {
+    pnga_set_data(SPA[hdl].g_j,one,&totalvals,C_LONG);
+  } else {
+    pnga_set_data(SPA[hdl].g_j,one,&totalvals,C_INT);
+  }
   pnga_set_irreg_distr(SPA[hdl].g_j,map,&nproc);
   if (!pnga_allocate(SPA[hdl].g_j)) ret = 0;
   /* create temporary array using g_i to hold *all* i indices. We will fix it up
    * later to only hold location of first j value
    */
   SPA[hdl].g_i = pnga_create_handle();
-  pnga_set_data(SPA[hdl].g_i,one,&totalvals,MT_F_INT);
+  if (longidx) {
+    pnga_set_data(SPA[hdl].g_i,one,&totalvals,C_LONG);
+  } else {
+    pnga_set_data(SPA[hdl].g_i,one,&totalvals,C_INT);
+  }
   pnga_set_irreg_distr(SPA[hdl].g_i,map,&nproc);
   if (!pnga_allocate(SPA[hdl].g_i)) ret = 0;
 
@@ -320,17 +342,36 @@ logical pnga_sprs_array_assemble(Integer s_a)
       Integer j;
       ncnt = 0;
       char *vbuf = (char*)malloc(count[iproc]*elemsize);
-      Integer *ibuf = (Integer*)malloc(count[iproc]*sizeof(Integer));
-      Integer *jbuf = (Integer*)malloc(count[iproc]*sizeof(Integer));
+      long *ilbuf;
+      long *jlbuf;
+      int *ibuf;
+      int *jbuf;
+      if (longidx) {
+        ilbuf = (long*)malloc(count[iproc]*sizeof(long));
+        jlbuf = (long*)malloc(count[iproc]*sizeof(long));
+      } else {
+        ibuf = (int*)malloc(count[iproc]*sizeof(int));
+        jbuf = (int*)malloc(count[iproc]*sizeof(int));
+      } 
       vals = SPA[hdl].val;
       /* fill up buffers with data going to process iproc */
       j = top[iproc]; 
-      while (j >= 0) {
-        memcpy(((char*)vbuf+ncnt*elemsize),(vals+j*elemsize),(size_t)elemsize);
-        ibuf[ncnt] = SPA[hdl].idx[j];
-        jbuf[ncnt] = SPA[hdl].jdx[j];
-        ncnt++;
-        j = list[j];
+      if (longidx) {
+        while (j >= 0) {
+          memcpy(((char*)vbuf+ncnt*elemsize),(vals+j*elemsize),(size_t)elemsize);
+          ilbuf[ncnt] = (long)SPA[hdl].idx[j];
+          jlbuf[ncnt] = (long)SPA[hdl].jdx[j];
+          ncnt++;
+          j = list[j];
+        }
+      } else {
+        while (j >= 0) {
+          memcpy(((char*)vbuf+ncnt*elemsize),(vals+j*elemsize),(size_t)elemsize);
+          ibuf[ncnt] = (int)SPA[hdl].idx[j];
+          jbuf[ncnt] = (int)SPA[hdl].jdx[j];
+          ncnt++;
+          j = list[j];
+        }
       }
       /* send data to global arrays */
       lo = map[iproc];
@@ -338,12 +379,22 @@ logical pnga_sprs_array_assemble(Integer s_a)
       hi = lo+count[iproc]-1;
       if (hi>=lo) {
         pnga_put(SPA[hdl].g_data,&lo,&hi,vbuf,&count[iproc]);
-        pnga_put(SPA[hdl].g_i,&lo,&hi,ibuf,&count[iproc]);
-        pnga_put(SPA[hdl].g_j,&lo,&hi,jbuf,&count[iproc]);
+        if (longidx) {
+          pnga_put(SPA[hdl].g_i,&lo,&hi,ilbuf,&count[iproc]);
+          pnga_put(SPA[hdl].g_j,&lo,&hi,jlbuf,&count[iproc]);
+        } else {
+          pnga_put(SPA[hdl].g_i,&lo,&hi,ibuf,&count[iproc]);
+          pnga_put(SPA[hdl].g_j,&lo,&hi,jbuf,&count[iproc]);
+        }
       }
       free(vbuf);
-      free(ibuf);
-      free(jbuf);
+      if (longidx) {
+        free(ilbuf);
+        free(jlbuf);
+      } else {
+        free(ibuf);
+        free(jbuf);
+      }
     }
   }
   pnga_pgroup_sync(SPA[hdl].grp);
@@ -360,18 +411,32 @@ logical pnga_sprs_array_assemble(Integer s_a)
   nvals = hi - lo + 1;
   list = (Integer*)malloc(nvals*sizeof(Integer));
   /* get pointer to list of j indices */
-  pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&jdx,&ld);
+  if (longidx) {
+    pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&jldx,&ld);
+  } else {
+    pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&jsdx,&ld);
+  }
   for (i=0; i<nproc; i++) {
     count[i] = 0;
     top[i] = -1;
     offset[i] = -1;
   }
-  for (i=0; i<nvals; i++) {
-    iproc = (jdx[i]*nproc)/jdim;
-    if (iproc >= nproc) iproc = nproc-1;
-    count[iproc]++;
-    list[i] = top[iproc];
-    top[iproc] = i;
+  if (longidx) {
+    for (i=0; i<nvals; i++) {
+      iproc = (((Integer)jldx[i])*nproc)/jdim;
+      if (iproc >= nproc) iproc = nproc-1;
+      count[iproc]++;
+      list[i] = top[iproc];
+      top[iproc] = i;
+    }
+  } else {
+    for (i=0; i<nvals; i++) {
+      iproc = (((Integer)jsdx[i])*nproc)/jdim;
+      if (iproc >= nproc) iproc = nproc-1;
+      count[iproc]++;
+      list[i] = top[iproc];
+      top[iproc] = i;
+    }
   }
   pnga_release(SPA[hdl].g_j,&lo,&hi);
   /* find out how many column blocks have data */
@@ -390,8 +455,13 @@ logical pnga_sprs_array_assemble(Integer s_a)
   ncnt = 0;
   icnt = 0;
   pnga_access_ptr(SPA[hdl].g_data,&lo,&hi,&vals,&ld);
-  pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&idx,&ld);
-  pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&jdx,&ld);
+  if (longidx) {
+    pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&ildx,&ld);
+    pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&jldx,&ld);
+  } else {
+    pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&isdx,&ld);
+    pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&jsdx,&ld);
+  }
   for (i=0; i<nproc; i++) {
     Integer j = top[i];
     if (j >= 0) {
@@ -401,13 +471,24 @@ logical pnga_sprs_array_assemble(Integer s_a)
       SPA[hdl].blkidx[ncnt] = i;
       /* copy values from global array to local buffers */
       SPA[hdl].blksize[ncnt] = 0;
-      while(j >= 0) {
-        memcpy(((char*)vbuf+icnt*elemsize),(vals+j*elemsize),(size_t)elemsize);
-        ibuf[icnt] = idx[j];
-        jbuf[icnt] = jdx[j];
-        j = list[j];
-        SPA[hdl].blksize[ncnt]++;
-        icnt++;
+      if (longidx) {
+        while(j >= 0) {
+          memcpy(((char*)vbuf+icnt*elemsize),(vals+j*elemsize),(size_t)elemsize);
+          ibuf[icnt] = (Integer)ildx[j];
+          jbuf[icnt] = (Integer)jldx[j];
+          j = list[j];
+          SPA[hdl].blksize[ncnt]++;
+          icnt++;
+        }
+      } else {
+        while(j >= 0) {
+          memcpy(((char*)vbuf+icnt*elemsize),(vals+j*elemsize),(size_t)elemsize);
+          ibuf[icnt] = (Integer)isdx[j];
+          jbuf[icnt] = (Integer)jsdx[j];
+          j = list[j];
+          SPA[hdl].blksize[ncnt]++;
+          icnt++;
+        }
       }
       ncnt++;
     }
@@ -425,7 +506,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   }
   if ((SPA[hdl].ilo*nproc)/idim != me) {
     printf("p[%d] ilo: %d (ilo*nproc)/idim: %d\n",
-      me,SPA[hdl].ilo,(SPA[hdl].ilo*nproc)/idim);
+      (int)me,(int)SPA[hdl].ilo,(int)((SPA[hdl].ilo*nproc)/idim));
     SPA[hdl].ilo++;
   }
   if (me < nproc-1) {
@@ -442,7 +523,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   }
   if ((SPA[hdl].ihi*nproc)/idim != me)
     printf("p[%d] ihi: %d (ihi*nproc)/idim: %d\n",
-      me,SPA[hdl].ihi,(SPA[hdl].ihi*nproc)/idim);
+      (int)me,(int)SPA[hdl].ihi,(int)((SPA[hdl].ihi*nproc)/idim));
   nrows = SPA[hdl].ihi - SPA[hdl].ilo + 1;
   /* Resize the i-index array to account for row blocks */
   pnga_destroy(SPA[hdl].g_i);
@@ -453,7 +534,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
     map[i] = 0;
   }
   offset[me] = (nrows+1)*SPA[hdl].nblocks;
-  pnga_pgroup_gop(SPA[hdl].grp,pnga_type_f2c(MT_F_INT),offset,nproc,"+");
+  pnga_pgroup_gop(SPA[hdl].grp,C_LONG,offset,nproc,"+");
   /* Construct new version of g_i */
   map[0] = 1;
   nvals = offset[0];
@@ -462,11 +543,19 @@ logical pnga_sprs_array_assemble(Integer s_a)
     nvals += offset[i];
   }
   SPA[hdl].g_i = pnga_create_handle();
-  pnga_set_data(SPA[hdl].g_i,one,&nvals,MT_F_INT);
+  if (longidx) {
+    pnga_set_data(SPA[hdl].g_i,one,&nvals,C_LONG);
+  } else {
+    pnga_set_data(SPA[hdl].g_i,one,&nvals,C_INT);
+  }
   pnga_set_irreg_distr(SPA[hdl].g_i,map,&nproc);
   if (!pnga_allocate(SPA[hdl].g_i)) ret = 0;
   pnga_distribution(SPA[hdl].g_i,me,&lo,&hi);
-  pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&idx,&ld);
+  if (longidx) {
+    pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&ildx,&ld);
+  } else {
+    pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&isdx,&ld);
+  }
 
   /* Bin up elements by row index for each column block */
   count = (Integer*)malloc(nrows*sizeof(Integer));
@@ -491,18 +580,33 @@ logical pnga_sprs_array_assemble(Integer s_a)
     /* copy elements back into  global arrays after sorting by row index */
     icnt = 0;
     char *vbuf = (char*)SPA[hdl].val+ncnt*SPA[hdl].size;
-    for (j=0; j<nrows; j++) {
-      irow = top[j];
-      (idx+i*(nrows+1))[j] = icnt;
-      while (irow >= 0) {
-        jdx[jcnt] = jbuf[irow];
-        memcpy((vptr+icnt*elemsize),(vbuf+irow*elemsize),(size_t)elemsize);
-        irow = list[irow];
-        icnt++;
-        jcnt++;
+    if (longidx) {
+      for (j=0; j<nrows; j++) {
+        irow = top[j];
+        (ildx+i*(nrows+1))[j] = (long)icnt;
+        while (irow >= 0) {
+          jldx[jcnt] = (long)jbuf[irow];
+          memcpy((vptr+icnt*elemsize),(vbuf+irow*elemsize),(size_t)elemsize);
+          irow = list[irow];
+          icnt++;
+          jcnt++;
+        }
       }
+      if (top[j] >= 0) (ildx+i*(nrows+1))[nrows] = (long)icnt; 
+    } else {
+      for (j=0; j<nrows; j++) {
+        irow = top[j];
+        (isdx+i*(nrows+1))[j] = (int)icnt;
+        while (irow >= 0) {
+          jsdx[jcnt] = (int)jbuf[irow];
+          memcpy((vptr+icnt*elemsize),(vbuf+irow*elemsize),(size_t)elemsize);
+          irow = list[irow];
+          icnt++;
+          jcnt++;
+        }
+      }
+      if (top[j] >= 0) (isdx+i*(nrows+1))[nrows] = (int)icnt; 
     }
-    if (top[j] >= 0) (idx+i*(nrows+1))[nrows] = icnt; 
     /* TODO: (maybe) sort each row so that individual elements are arrange in
      * order of increasing j */
     SPA[hdl].offset[i] = ncnt;
@@ -593,11 +697,17 @@ void pnga_sprs_array_column_distribution(Integer s_a, Integer iproc, Integer *lo
 #   pragma weak wnga_sprs_array_access_col_block =  pnga_sprs_array_access_col_block
 #endif
 void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
-    Integer **idx, Integer **jdx, void *val)
+    void *idx, void *jdx, void *val)
 {
   Integer hdl = GA_OFFSET + s_a;
   char *lptr;
   Integer i,index;
+  Integer longidx;
+  if (SPA[hdl].idx_size == sizeof(long)) {
+    longidx = 1;
+  } else {
+    longidx = 0;
+  }
   index = -1;
   for (i=0; i<SPA[hdl].nblocks; i++) {
     if (SPA[hdl].blkidx[i] == icol) {
@@ -606,12 +716,19 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
     }
   }
   if (index == -1) {
-    *idx = NULL;
-    *jdx = NULL;
+    if (longidx) {
+      *(int**)idx = NULL;
+      *(int**)jdx = NULL;
+    } else {
+      *(long**)idx = NULL;
+      *(long**)jdx = NULL;
+    }
     *(char**)val = NULL;
   }  else {
-    Integer *tidx;
-    Integer *tjdx;
+    int *tidx;
+    int *tjdx;
+    long *tlidx;
+    long *tljdx;
     char *lptr;
     Integer lo, hi, ld;
     Integer me = pnga_pgroup_nodeid(SPA[hdl].grp);
@@ -621,9 +738,17 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
     pnga_distribution(SPA[hdl].g_data,me,&lo,&hi);
     pnga_access_ptr(SPA[hdl].g_data,&lo,&hi,&lptr,&ld);
     pnga_distribution(SPA[hdl].g_i,me,&lo,&hi);
-    pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&tidx,&ld);
+    if (longidx) {
+      pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&tlidx,&ld);
+    } else {
+      pnga_access_ptr(SPA[hdl].g_i,&lo,&hi,&tidx,&ld);
+    }
     pnga_distribution(SPA[hdl].g_j,me,&lo,&hi);
-    pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&tjdx,&ld);
+    if (longidx) {
+      pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&tljdx,&ld);
+    } else {
+      pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&tjdx,&ld);
+    }
     pnga_release(SPA[hdl].g_data,&lo,&hi);
     pnga_release(SPA[hdl].g_i,&lo,&hi);
     pnga_release(SPA[hdl].g_j,&lo,&hi);
@@ -631,11 +756,17 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
     /* shift pointers to correct location */
     ld = SPA[hdl].ihi - SPA[hdl].ilo + 2;
     lptr = lptr + offset*SPA[hdl].size;
-    tjdx = tjdx + offset;
-    tidx = tidx + ld*index;
-    
-    *idx = tidx;
-    *jdx = tjdx;
+    if (longidx) {
+      tljdx = tljdx + (long)offset;
+      tlidx = tlidx + (long)(ld*index);
+      *(long**)idx = tlidx;
+      *(long**)jdx = tljdx;
+    } else {
+      tjdx = tjdx + (int)offset;
+      tidx = tidx + (int)(ld*index);
+      *(int**)idx = tidx;
+      *(int**)jdx = tjdx;
+    }
     *(char**)val = lptr;
   }
 }
