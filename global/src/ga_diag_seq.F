@@ -20,7 +20,7 @@ c
       integer g_v               ! Global matrix to return evecs
       double precision evals(*) ! Local array to return evals
 c
-      integer n, ierr
+      integer n
 #if ENABLE_EISPACK
       integer l_fv1, l_fv2, l_v
       MA_ACCESS_INDEX_TYPE k_fv1, k_fv2, k_v
