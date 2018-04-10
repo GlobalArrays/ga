@@ -1,6 +1,11 @@
 #if HAVE_CONFIG_H
 #   include "config.fh"
 #endif
+#if (BLAS_SIZE ==4)
+#define INTGR4 integer*4
+#else
+#define INTGR4 integer*8
+#endif
 c
 c This file has been converted to use LAPACK circa 2011
 c instead of EISPACK circa 1983 by Jeff Hammond circa 2014.
@@ -27,6 +32,7 @@ c
       integer l_a, l_s
       MA_ACCESS_INDEX_TYPE k_a, k_s
       integer dim1, dim2, type, me
+      INTGR4 n4,ierr
       logical status
 c
 c
@@ -47,6 +53,7 @@ c
      $  call ga_error('ga_diag_seq: nonsquare matrix ',0)
  
       n = dim1
+      n4 = n
       me = ga_nodeid()
       if (me .eq. 0) then
 c
@@ -87,7 +94,7 @@ c
          call rsg(n, n, dbl_mb(k_a), dbl_mb(k_s), evals, 1,
      $        dbl_mb(k_v), dbl_mb(k_fv1), dbl_mb(k_fv2), ierr)
 #else
-         call dsygv(1,'V','U',n,dbl_mb(k_a),n,dbl_mb(k_s),n,
+         call dsygv(1,'V','U',n4,dbl_mb(k_a),n,dbl_mb(k_s),n4,
      $              evals,dbl_mb(k_wrk),n2, ierr)
          if (ierr.ne.0)
      $       call ga_error('ga_diag_seq: dsygv failed',ierr)
@@ -139,7 +146,7 @@ c
       integer g_v               ! Global matrix to return evecs
       double precision evals(*) ! Local array to return evals
 c
-      integer n, ierr
+      integer n
 #if ENABLE_EISPACK
       integer l_fv1, l_fv2, l_v
       MA_ACCESS_INDEX_TYPE k_fv1, k_fv2, k_v
@@ -151,6 +158,7 @@ c
       integer l_a
       MA_ACCESS_INDEX_TYPE k_a
       integer dim1, dim2, type, me
+      INTGR4 n4,n2_i4,ierr
       logical status
 c
 c
@@ -170,6 +178,7 @@ c
      $  call ga_error('ga_diag_std_seq: nonsquare matrix ',0)
  
       n = dim1
+      n4 = n
       me = ga_nodeid()
       if (me .eq. 0) then
 c
@@ -187,6 +196,7 @@ c
 #else
 c LAPACK fails for n=1 without this
          n2 = max(n*n,3*n-1)
+         n2_i4=n2
          status=status.and.ma_push_get(MT_DBL, n2,
      $        'diag_std_seq:wrk', l_wrk, k_wrk)
 #endif
@@ -205,8 +215,8 @@ c
          call rs(n, n, dbl_mb(k_a),  evals, 1,
      $        dbl_mb(k_v), dbl_mb(k_fv1), dbl_mb(k_fv2), ierr)
 #else
-         call dsyev('V',  'L',  n, dbl_mb(k_a), n,   
-     $              evals, dbl_mb(k_wrk), n2,  ierr)
+         call dsyev('V',  'L',  n4, dbl_mb(k_a), n4,   
+     $              evals, dbl_mb(k_wrk), n2_i4,  ierr)
          if (ierr.ne.0)
      $       call ga_error('ga_diag_std_seq: dsyev failed',ierr)
 c We used to copy to preserve code symmetry with EISPACK
