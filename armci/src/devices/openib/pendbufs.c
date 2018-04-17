@@ -759,7 +759,7 @@ void armci_pendbuf_service_req(immbuf_t *immbuf) {
     /* 	   fflush(stdout); */
     armci_complete_immbuf(immbuf);
   }
-  else if(pbuf = _armci_serv_pendbuf_enqueue(immbuf)) {
+  else if((pbuf = _armci_serv_pendbuf_enqueue(immbuf))) {
     /* 	   printf("%d: msg vbuf=%p op=%d from=%d imm=%d datalen=%d bytes=%d data_ptr=%p got pending buf. Progressing it!\n", */
     /* 		  armci_me, vbuf, msginfo->operation, msginfo->from, msginfo->tag.imm_msg,msginfo->datalen,msginfo->bytes,msginfo->tag.data_ptr); */
     /* 	   fflush(stdout); */
@@ -791,7 +791,6 @@ void armci_pendbuf_done_put(int pbufid) {
  * @return void
  */
 void armci_pendbuf_done_get(int pbufid) {
-  int done_status;
   pendbuf_t *pbuf;
   assert(pbufid>=0 && pbufid<PENDING_BUF_NUM);
   pbuf = &serv_pendbuf_arr[pbufid];
