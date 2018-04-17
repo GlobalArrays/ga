@@ -51,7 +51,7 @@ typedef int t_elem; /* type of an array element */
 #define MAX_MSG_SIZE    (1024 * 1024)
 #define MSG_COUNT       20
 
-static inline void ARMCI_ASSERT(int error_code) {
+static void ARMCI_ASSERT(int error_code) {
     if (error_code) {
         fprintf(stderr, "ARMCI error %d\n", error_code);
         pause();

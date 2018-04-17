@@ -1208,6 +1208,7 @@ void test_vector_acc()
   double alpha = 0.1, scale;
   int *proclist = work;
   armci_giov_t dsc;
+  int check;
 
   elems = ELEMS;
   dim = 1;
@@ -1276,7 +1277,7 @@ void test_vector_acc()
   ARMCI_Barrier();
 
   /* copy my patch into local array c */
-  int check = !ARMCI_Get((double *)b[proc], c, bytes, proc);
+  check = !ARMCI_Get((double *)b[proc], c, bytes, proc);
   assert(check);
 
   /*        scale = alpha*TIMES*nproc; */
@@ -2137,6 +2138,6 @@ int main(int argc, char *argv[])
   ARMCI_Barrier();
   ARMCI_Finalize();
   armci_msg_finalize();
-  //MPI_Finalize();
+  /*MPI_Finalize();*/
   return(0);
 }

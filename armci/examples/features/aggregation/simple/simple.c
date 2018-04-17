@@ -131,9 +131,10 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
 
 void destroy_array(void *ptr[])
 {
-    armci_msg_barrier();
+    int check;
 
-    int check = !ARMCI_Free(ptr[me]);
+    armci_msg_barrier();
+    check = !ARMCI_Free(ptr[me]);
     assert(check);
 }
 
@@ -293,7 +294,11 @@ void test_aggregate(int dryrun) {
     }
       }
     armci_msg_barrier();
-    if(!dryrun)if(me==0) printf("\n  aggregate put ..O.K.\n"); fflush(stdout);
+    if(!dryrun) {
+        if(me==0) {
+            printf("\n  aggregate put ..O.K.\n"); fflush(stdout);
+        }
+    }
 
     if(me==0) {
       for(i=1; i<nproc; i++) {
@@ -305,8 +310,11 @@ void test_aggregate(int dryrun) {
       }
     }
     armci_msg_barrier();
-    if(!dryrun)if(me==0) printf("  aggregate get ..O.K.\n"); fflush(stdout);
-
+    if(!dryrun) {
+        if(me==0) {
+            printf("  aggregate get ..O.K.\n"); fflush(stdout);
+        }
+    }
 
     ARMCI_AllFence();
     armci_msg_barrier();

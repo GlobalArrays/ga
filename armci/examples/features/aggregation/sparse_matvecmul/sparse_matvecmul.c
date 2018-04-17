@@ -133,8 +133,10 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
 
 void destroy_array(void *ptr[])
 {
+    int check;
+
     armci_msg_barrier();
-    int check = !ARMCI_Free(ptr[me]);
+    check = !ARMCI_Free(ptr[me]);
     assert(check);
 }
 

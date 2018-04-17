@@ -273,8 +273,9 @@ int i, rc;
 
 void destroy_array(void *ptr[])
 {
+    int check;
     armci_msg_barrier();
-    int check = !ARMCI_Free(ptr[me]) ;
+    check = !ARMCI_Free(ptr[me]) ;
     assert(check);
 }
 
