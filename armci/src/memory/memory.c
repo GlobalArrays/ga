@@ -978,19 +978,20 @@ int ARMCI_Uses_shm()
 
 int ARMCI_Uses_shm_grp(ARMCI_Group *group) 
 {    
-    int uses=0, grp_me, grp_nproc, grp_nclus;
-    armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
+    int uses=0, grp_me, grp_nproc;
+    /*int grp_nclus;*/
+    /*armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);*/
     ARMCI_PR_DBG("enter",0);
 
     ARMCI_Group_size(group, &grp_nproc);
     ARMCI_Group_rank(group, &grp_me);
-    grp_nclus = grp_attr->grp_nclus;
     
 #if (defined(SYSV) || defined(WIN32) || defined(MMAP) ||defined(HITACHI)) && !defined(NO_SHM)
 #   ifdef RMA_NEEDS_SHMEM
       if(grp_nproc >1) uses= 1; /* always unless serial mode */
 #   else
 #if 0
+      grp_nclus = grp_attr->grp_nclus;
       if(grp_nproc != grp_nclus)uses= 1; /* only when > 1 node used */
 #else
       if(armci_nproc != armci_nclus)uses= 1; /* only when > 1 node used */

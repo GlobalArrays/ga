@@ -63,9 +63,11 @@ void create_array(void *a[], int size)
 
 void destroy_array(void *ptr[])
 {
-    armci_msg_barrier();
+    int check;
 
-    assert(!ARMCI_Free(ptr[me]));
+    armci_msg_barrier();
+    check = !ARMCI_Free(ptr[me]);
+    assert(check);
 }
 
 

@@ -418,7 +418,8 @@ void destroy_array(void *ptr[])
 {
   ARMCI_Barrier();
 #if 0
-  assert(!ARMCI_Free(ptr[me]));
+  int check = !ARMCI_Free(ptr[me]);
+  assert(check);
 #endif
 }
 
@@ -1207,6 +1208,7 @@ void test_vector_acc()
   double alpha = 0.1, scale;
   int *proclist = work;
   armci_giov_t dsc;
+  int check;
 
   elems = ELEMS;
   dim = 1;
@@ -1275,7 +1277,8 @@ void test_vector_acc()
   ARMCI_Barrier();
 
   /* copy my patch into local array c */
-  assert(!ARMCI_Get((double *)b[proc], c, bytes, proc));
+  check = !ARMCI_Get((double *)b[proc], c, bytes, proc);
+  assert(check);
 
   /*        scale = alpha*TIMES*nproc; */
   scale = alpha * TIMES * nproc * nproc;
@@ -1476,9 +1479,10 @@ void test_memlock()
       bytes = sizeof(double) * elems;
 
       armci_lockmem(pstart, pend, proc);
-      assert(!ARMCI_Put(a, pstart, bytes, proc));
-      assert(!ARMCI_Get(pstart, c, bytes, proc));
-      assert(!ARMCI_Get(pstart, c, bytes, proc));
+      int check=!ARMCI_Put(a, pstart, bytes, proc);
+      assert(check);
+      check = !ARMCI_Get(pstart, c, bytes, proc);
+      assert(check);
       armci_unlockmem();
       for (k = 0; k < elems; k++)if (a[k] != c[k]) {
           printf("%d: error patch (%d:%d) elem=%d val=%f\n", me, first, last, k, c[k]);
@@ -2134,6 +2138,6 @@ int main(int argc, char *argv[])
   ARMCI_Barrier();
   ARMCI_Finalize();
   armci_msg_finalize();
-  //MPI_Finalize();
+  /*MPI_Finalize();*/
   return(0);
 }

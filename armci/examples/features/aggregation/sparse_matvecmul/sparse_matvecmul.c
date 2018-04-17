@@ -133,9 +133,11 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
 
 void destroy_array(void *ptr[])
 {
-    armci_msg_barrier();
+    int check;
 
-    assert(!ARMCI_Free(ptr[me]));
+    armci_msg_barrier();
+    check = !ARMCI_Free(ptr[me]);
+    assert(check);
 }
 
 static void verify_list(int *proc_row_list) {
