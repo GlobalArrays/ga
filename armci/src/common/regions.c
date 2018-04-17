@@ -94,12 +94,14 @@ static int armci_region_record(void *start, void *end, armci_reglist_t *reg)
 
 static void armci_region_register(void *start, long size, armci_reglist_t *reg)
 {
-     int regid;
+#ifdef REGIONS_REQUIRE_MEMHDL
+#  if defined(PORTALS)
+    int regid = reg->n;
+#  endif
+#endif
     ARMCI_PR_DBG("enter",0);
     if(reg->n >= MAX_REGIONS) return;
     if(armci_nclus<=1)return;
-
-    regid = reg->n;
 
 #ifdef REGIONS_REQUIRE_MEMHDL
 #  if defined(PORTALS)
@@ -130,7 +132,9 @@ static void armci_region_register(void *start, long size, armci_reglist_t *reg)
 
 void armci_region_register_shm(void *start, long size)
 {
+#ifdef PORTALS
 armci_reglist_t *reg = clus_regions+armci_clus_me;
+#endif
     if(allow_pin)
       armci_region_register(start, size, clus_regions+armci_clus_me);     
     else{
@@ -155,7 +159,9 @@ armci_reglist_t *reg = clus_regions+armci_clus_me;
 
 void armci_region_register_loc(void *start, long size)
 {
+#ifdef PORTALS
      armci_reglist_t *reg = &loc_regions_arr;
+#endif
      if(allow_pin)armci_region_register(start, size, &loc_regions_arr);
      else{
          needs_pin_ptr = start;
@@ -359,7 +365,7 @@ int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
 
      if(0){ 
             if(found==2){printf("%d: found both %d %p\n",
-                      armci_me,node,*loc_memhdl); 
+                      armci_me,node,(void*)*loc_memhdl); 
             fflush(stdout); 
             }
      }
@@ -409,7 +415,7 @@ int get_armci_region_local_hndl(void *loc, int node,ARMCI_MEMHDL_T **loc_memhdl)
    if(found == 1){
       *loc_memhdl = &((reg->list+i)->memhdl); 
       if(0){
-         printf("%d(s) : found local %p\n",armci_me,*loc_memhdl);
+         printf("%d(s) : found local %p\n",armci_me,(void*)*loc_memhdl);
          fflush(stdout);
       }     
       return 1;

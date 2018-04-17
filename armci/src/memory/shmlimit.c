@@ -145,8 +145,9 @@ again:   rc = wait (&status);
 
     close(fd[0]);
     close(fd[1]);
-    if(DEBUG_)
-       printf("%d:in parent: x=%d y=%d\n",armci_me,x,y);fflush(stdout);sleep(1);
+#if DEBUG_
+    printf("%d:in parent: x=%d y=%d\n",armci_me,x,y);fflush(stdout);sleep(1);
+#endif
     return y;
 }
 
