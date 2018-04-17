@@ -157,7 +157,8 @@ void destroy_array(double *ptr[])
 {
   ARMCI_Barrier();
 
-  assert(!ARMCI_Free(ptr[me]));
+  int check = !ARMCI_Free(ptr[me]);
+  assert(check);
 }
 
 void verify_results(int op, int *elems)

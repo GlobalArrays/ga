@@ -274,7 +274,8 @@ static int _armci_serv_pendbuf_can_progress(immbuf_t *vbuf) {
       return 1;
     }
 
-    assert(ARMCI_ACC(msginfo->operation));
+    int check = ARMCI_ACC(msginfo->operation);
+    assert(check);
     for(ptr=info->order_head; ptr!=NULL; ptr=ptr->order_next) {
       request_header_t *m = (request_header_t *)ptr->buf;
       assert(m->from == msginfo->from);

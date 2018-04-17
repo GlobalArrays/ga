@@ -403,7 +403,8 @@ void destroy_array(void *ptr[])
 {
   ARMCI_Barrier();
 
-  assert(!ARMCI_Free(ptr[me]));
+  int check = !ARMCI_Free(ptr[me]);
+  assert(check);
 }
 
 
