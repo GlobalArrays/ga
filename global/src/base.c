@@ -108,7 +108,6 @@ static int ARMCIinitialized = 0;
 int _ga_sync_begin = 1;
 int _ga_sync_end = 1;
 int _max_global_array = MAX_ARRAYS;
-Integer *GA_proclist;
 int* GA_Proc_list = NULL;
 int* GA_inv_Proc_list=NULL;
 int GA_World_Proc_Group = -1;
@@ -444,8 +443,6 @@ int bytes;
     if(GA_Proc_list)
       fprintf(stderr,"permutation applied %d now becomes %d\n",(int)MPme,(int)GAme);
 
-    GA_proclist = (Integer*)malloc((size_t)GAnproc*sizeof(Integer)); 
-    if(!GA_proclist) pnga_error("ga_init:malloc failed (proclist)",0);
     gai_init_onesided();
 
     /* set activity status for all arrays to inactive */
@@ -3358,7 +3355,6 @@ Integer i, handle;
     GA_total_memory = -1; /* restore "unlimited" memory usage status */
     GA_memory_limited = 0;
     gai_finalize_onesided();
-    free(GA_proclist);
 #ifdef PERMUTE_PIDS
     free(ptr_array);
 #endif

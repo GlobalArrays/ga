@@ -199,8 +199,7 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
   hdl->count = 0;
   hdl->oversize = 0;
   hdl->map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
-  /* hdl->proclist = (Integer*)malloc((size_t)(GAnproc)*sizeof(Integer)); */
-  hdl->proclist = GA_proclist;
+  hdl->proclist = malloc(GAnproc*sizeof(Integer));;
   hdl->proclistperm = malloc(GAnproc*sizeof(int));
   for (i=0; i<ndim; i++) {
     hdl->lo[i] = lo[i];
@@ -209,9 +208,9 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
   /* Standard GA distribution */
   if (GA[handle].distr_type == REGULAR) {
     /* Locate the processors containing some portion of the patch
-     * specified by lo and hi and return the results in _ga_map,
-     * GA_proclist, and np. GA_proclist contains a list of processors
-     * containing some portion of the patch, _ga_map contains
+     * specified by lo and hi and return the results in hdl->map,
+     * hdl->proclist, and np. hdl->proclist contains a list of processors
+     * containing some portion of the patch, hdl->map contains
      * the lower and upper indices of the portion of the patch held
      * by a given processor, and np contains the total number of
      * processors that contain some portion of the patch.
@@ -322,7 +321,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
     if (idx>=hdl->nproc) return 0;
 
     p = (Integer)hdl->proclistperm[idx];
-    *proc = (int)GA_proclist[p];
+    *proc = (int)hdl->proclist[p];
     if (p_handle >= 0) {
       *proc = (int)PGRP_LIST[p_handle].inv_map_proc_list[*proc];
     }
@@ -334,7 +333,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
      * index corresponding to p and store the result in proc.
      */
     gam_GetRangeFromMap(p, ndim, plo, phi);
-    *proc = (int)GA_proclist[p];
+    *proc = (int)hdl->proclist[p];
     blo = *plo;
     bhi = *phi;
 #ifdef LARGE_BLOCK_REQ
@@ -399,7 +398,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
       gam_Location(rank_rstrctd[*proc], handle, blo, prem, ldrem);
     }
     if (p_handle >= 0) {
-      *proc = (int)GA_proclist[p];
+      *proc = (int)hdl->proclist[p];
       /* BJP */
       *proc = PGRP_LIST[p_handle].inv_map_proc_list[*proc];
     }
@@ -682,6 +681,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
 void gai_iterator_destroy(_iterator_hdl *hdl)
 {
     free(hdl->map);
+    free(hdl->proclist);
     free(hdl->proclistperm);
 }
 

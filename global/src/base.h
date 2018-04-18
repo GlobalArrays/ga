@@ -5,7 +5,6 @@
 
 extern int _max_global_array;
 extern Integer GAme, GAnproc;
-extern Integer *GA_proclist;
 extern int GA_Default_Proc_Group;
 extern int* GA_Proc_list;
 extern int* GA_inv_Proc_list;
