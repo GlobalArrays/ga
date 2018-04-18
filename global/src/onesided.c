@@ -101,11 +101,13 @@ extern void armci_read_strided(void*, int, int*, int*, char*);
 extern void armci_write_strided(void*, int, int*, int*, char*);
 extern armci_hdl_t* get_armci_nbhandle(Integer *);
 
+#if 0
 extern void gai_iterator_init(Integer, Integer [], Integer [], _iterator_hdl *);
 extern void gai_iterator_reset(_iterator_hdl *);
 extern int gai_iterator_next(_iterator_hdl *, int *, Integer *[],
     Integer *[], char **, Integer []);
 extern void gai_iterator_destroy(_iterator_hdl *);
+#endif
 
 
 /***************************************************************************/
@@ -695,6 +697,8 @@ void ngai_put_common(Integer g_a,
 #ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
+
+  gai_iterator_destroy(&it_hdl);
 }
 
 
@@ -1066,6 +1070,8 @@ void ngai_get_common(Integer g_a,
 #ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
+
+  gai_iterator_destroy(&it_hdl);
 }
 
 /**
@@ -1247,6 +1253,8 @@ void ngai_acc_common(Integer g_a,
   ga_profile_stop();
 #endif
   GA_Internal_Threadsafe_Unlock();
+
+  gai_iterator_destroy(&it_hdl);
 }
 
 /**
@@ -4065,7 +4073,8 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       if (GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
       ARMCI_PutS(pbuf, stride_loc, prem, stride_rem, count, nstride-1, proc);
-    }
+  }
+  gai_iterator_destroy(&it_hdl);
 #else
   if (!use_blocks) {
     /* Locate the processors containing some portion of the patch
@@ -4473,7 +4482,8 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       if (GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
       ARMCI_GetS(prem, stride_rem, pbuf, stride_loc, count, nstride-1, proc);
-    }
+  }
+  gai_iterator_destroy(&it_hdl);
 #else
   if (!use_blocks) {
     /* Locate the processors containing some portion of the patch
@@ -4915,7 +4925,8 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 #endif
       ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, count,
           nstride-1, proc);
-    }
+  }
+  gai_iterator_destroy(&it_hdl);
 #else
   if (!use_blocks) {
     /* Locate the processors containing some portion of the patch
