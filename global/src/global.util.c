@@ -352,10 +352,6 @@ extern void Error();
 
     /* print GA names stack */
     sprintf(error_buffer,"%d:", (int)pnga_nodeid());
-    for(level = 0; level < GA_stack_size; level++){
-       strcat(error_buffer,GA_name_stack[level]);
-       strcat(error_buffer,":");
-    }
     strcat(error_buffer,string);
     strcat(error_buffer,":");
        

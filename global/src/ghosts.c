@@ -31,10 +31,6 @@
  * publicly by or for the US Government, including the right to
  * distribute to other US Government contractors.
  */
-
- 
-/*#define PERMUTE_PIDS */
-
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif

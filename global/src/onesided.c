@@ -31,7 +31,6 @@
 #   include "config.h"
 #endif
  
-/*#define PERMUTE_PIDS */
 #define USE_GATSCAT_NEW
 
 #if HAVE_STDIO_H
@@ -630,10 +629,6 @@ void ngai_put_common(Integer g_a,
         */
         if(GA_fence_set)fence_array[proc]=1;
 
-#ifdef PERMUTE_PIDS
-        if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
-
 #ifndef NO_GA_STATS	    
         if(proc == GAme){
           gam_CountElems(ndim, plo, phi, &elems);
@@ -1011,10 +1006,6 @@ void ngai_get_common(Integer g_a,
            buf (stride_loc) */
         gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
 
-#ifdef PERMUTE_PIDS
-        if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
-
 #ifndef NO_GA_STATS	    
         if(proc == GAme){
           gam_CountElems(ndim, plo, phi, &elems);
@@ -1197,9 +1188,6 @@ void ngai_acc_common(Integer g_a,
 
         if(GA_fence_set)fence_array[proc]=1;
 
-#ifdef PERMUTE_PIDS
-        if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
 #ifndef NO_GA_STATS
         if(proc == GAme){
           gam_CountElems(ndim, plo, phi, &elems);
@@ -2074,10 +2062,6 @@ int rc=0;
 
   if(GA_fence_set)fence_array[proc]=1;
 
-#ifdef PERMUTE_PIDS
-    if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
-
   if (p_handle >= 0) {
     proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
   }
@@ -2596,11 +2580,6 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
 
     *locbytes += (double)item_size* nelem[GAme];
     
-/*
-#ifdef PERMUTE_PIDS
-    if(GA_Proc_list) p = GA_inv_Proc_list[p];
-#endif
-*/    
     switch(op) { 
       case GATHER:
         /* go through all the elements
@@ -3732,9 +3711,6 @@ void *pval;
 
     if(GAme == proc)GAbytes.rdiloc += (double)sizeof(Integer);
 
-#ifdef PERMUTE_PIDS
-    if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
     if (GA[handle].distr_type == BLOCK_CYCLIC) {
       proc = proc%pnga_nnodes();
     } else if (GA[handle].distr_type == SCALAPACK) {
@@ -4013,9 +3989,6 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       if (p_handle != -1) {
         proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
       }
-#ifdef PERMUTE_PIDS
-      if (GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
       ARMCI_PutS(pbuf, stride_loc, prem, stride_rem, count, nstride-1, proc);
   }
   gai_iterator_destroy(&it_hdl);
@@ -4096,9 +4069,6 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       if (p_handle != -1) {
         proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
       }
-#ifdef PERMUTE_PIDS
-      if (GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
       ARMCI_GetS(prem, stride_rem, pbuf, stride_loc, count, nstride-1, proc);
   }
   gai_iterator_destroy(&it_hdl);
@@ -4191,9 +4161,6 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       if (p_handle != -1) {
         proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
       }
-#ifdef PERMUTE_PIDS
-      if (GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
       ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, count,
           nstride-1, proc);
   }

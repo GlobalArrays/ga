@@ -26,7 +26,6 @@
 
 #define N 10            /* first dimension  */
 #define NDIM 4          /* number of dimensions */
-#define PERMUTE_ 
 
 #ifdef USE_FAPI
 #define BASE 1
@@ -279,18 +278,6 @@ int me, nproc;
 
     if(!MA_init((Integer)MT_F_DBL, stack/nproc, heap/nproc))
        GA_Error("MA_init failed bytes= %d",stack+heap);   
-
-#ifdef PERMUTE
-      {
-        int i, *list = (int*)malloc(nproc*sizeof(int));
-        if(!list)GA_Error("malloc failed",nproc);
-
-        for(i=0; i<nproc;i++)list[i]=nproc-1-i;
-
-        GA_Register_proclist(list, nproc);
-        free(list);
-      }
-#endif
 
 #ifdef USE_FAPI
     if(!GA_Uses_fapi())

@@ -6,8 +6,6 @@
 extern int _max_global_array;
 extern Integer GAme, GAnproc;
 extern int GA_Default_Proc_Group;
-extern int* GA_Proc_list;
-extern int* GA_inv_Proc_list;
 extern int** GA_Update_Flags;
 extern int* GA_Update_Signal;
 extern short int _ga_irreg_flag; 
@@ -140,7 +138,6 @@ extern proc_list_t *PGRP_LIST;
    }                                                                           \
    else{                                                                       \
          _index = proc;                                                        \
-         if(GA_inv_Proc_list) _index = GA_inv_Proc_list[proc];                 \
       __CRAYX1_PRAGMA("_CRI novector");                                        \
          for(_d=0; _d<_dim; _d++){                                             \
              _loc = _index% (Integer)nblock[_d];                               \

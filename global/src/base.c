@@ -32,9 +32,6 @@
  * distribute to other US Government contractors.
  */
 
- 
-/*#define PERMUTE_PIDS */
-
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
@@ -108,14 +105,11 @@ static int ARMCIinitialized = 0;
 int _ga_sync_begin = 1;
 int _ga_sync_end = 1;
 int _max_global_array = MAX_ARRAYS;
-int* GA_Proc_list = NULL;
-int* GA_inv_Proc_list=NULL;
 int GA_World_Proc_Group = -1;
 int GA_Default_Proc_Group = -1;
 int ga_armci_world_group=0;
 int GA_Init_Proc_Group = -2;
 Integer GA_Debug_flag = 0;
-int *ProcPermList = NULL;
 
 /* MA addressing */
 DoubleComplex   *DCPL_MB;           /* double precision complex base address */
@@ -144,15 +138,7 @@ Integer GAme, GAnproc;
 static Integer MPme;
 Integer *mapALL;
 
-#ifdef PERMUTE_PIDS
-char** ptr_array;
-#endif
-
 static Integer _mirror_gop_grp;
-
-
-char **GA_name_stack;  /* stack for storing names of GA ops */
-int  GA_stack_size=0;
 
 /* Function prototypes */
 int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
@@ -229,43 +215,14 @@ Integer GAsizeof(Integer type)
 \*/
 void ga_register_proclist_(Integer *list, Integer* np)
 {
-int i;
-
-      if( *np <0 || *np >GAnproc) pnga_error("invalid number of processors",*np);
-      if( *np <GAnproc) pnga_error("Invalid number of processors",*np);
-
-      GA_Proc_list = (int*)malloc((size_t)GAnproc * sizeof(int)*2);
-      GA_inv_Proc_list = GA_Proc_list + *np;
-      if(!GA_Proc_list) pnga_error("could not allocate proclist",*np);
-
-      for(i=0;i< (int)*np; i++){
-          int p  = (int)list[i];
-          if(p<0 || p>= GAnproc) pnga_error("invalid list entry",p);
-          GA_Proc_list[i] = p; 
-          GA_inv_Proc_list[p]=i;
-      }
-
+    /* no longer used */
 }
 
 
 void GA_Register_proclist(int *list, int np)
 {
-      int i;
-      if( np <0 || np >GAnproc) pnga_error("invalid number of processors",np);
-      if( np <GAnproc) pnga_error("Invalid number of processors",np);
-
-      GA_Proc_list = (int*)malloc((size_t)GAnproc * sizeof(int)*2);
-      GA_inv_Proc_list = GA_Proc_list + np;
-      if(!GA_Proc_list) pnga_error("could not allocate proclist",np);
-
-      for(i=0; i< np; i++){
-          int p  = list[i];
-          if(p<0 || p>= GAnproc) pnga_error("invalid list entry",p);
-          GA_Proc_list[i] = p;
-          GA_inv_Proc_list[p]=i;
-      }
+    /* no long used */
 }
-
 
 
 /*\ FINAL CLEANUP of shmem when terminating
@@ -388,9 +345,6 @@ int bytes;
         ARMCIinitialized = 1;
     }
     
-    GA_name_stack = malloc(sizeof(char*)*NAME_STACK_LEN);
-    GA_stack_size = 0;
-
     GA_Default_Proc_Group = -1;
     /* zero in pointers in GA array */
     _ga_main_data_structure
@@ -422,26 +376,13 @@ int bytes;
     GAnproc = (Integer)armci_msg_nproc();
 
     /* Allocate arrays used by library */
-#ifdef PERMUTE_PIDS
-    ptr_array = (char**)malloc(GAnproc*sizeof(char*));
-#endif
     mapALL = (Integer*)malloc((GAnproc+MAXDIM-1)*sizeof(Integer*));
-
-#ifdef PERMUTE_PIDS
-    pnga_sync();
-    ga_hook_();
-    if(GA_Proc_list) GAme = (Integer)GA_Proc_list[ga_msg_nodeid_()];
-    else
-#endif
 
     GAme = (Integer)armci_msg_me();
     if(GAme<0 || GAme>GAnproc) 
        pnga_error("ga_init:message-passing initialization problem: my ID=",GAme);
 
     MPme= (Integer)armci_msg_me();
-
-    if(GA_Proc_list)
-      fprintf(stderr,"permutation applied %d now becomes %d\n",(int)MPme,(int)GAme);
 
     gai_init_onesided();
 
@@ -756,7 +697,7 @@ int use_blocks;
 
      ga_ComputeIndexM(&proc, ndim, proc_s, GA[ga_handle].nblock); 
 
-     *owner = GA_Proc_list ? GA_Proc_list[proc]: proc;
+     *owner = proc;
      if (GA[ga_handle].num_rstrctd > 0) {
        *owner = GA[ga_handle].rstrctd_list[*owner];
      }
@@ -2761,25 +2702,6 @@ int i, nproc,grp_me=GAme;
 #endif
 
     *adj = 0;
-#ifdef PERMUTE_PIDS
-    if(GA_Proc_list){
-       bzero(ptr_array,nproc*sizeof(char*));
-       /* use ARMCI_Malloc_group for groups if proc group is not world group
-	  or mirror group */
-#  ifdef MSG_COMMS_MPI
-       if (grp_id > 0)
-	  status = ARMCI_Malloc_group((void**)ptr_array, bytes,
-				      &PGRP_LIST[grp_id].group);
-       else
-#  endif
-       {
-	  status = ARMCI_Malloc((void**)ptr_array, bytes);
-       }
-       if(bytes!=0 && ptr_array[grp_me]==NULL) 
-	  pnga_error("gai_get_shmem: ARMCI Malloc failed", GAme);
-       for(i=0;i<nproc;i++)ptr_arr[i] = ptr_array[GA_inv_Proc_list[i]];
-    }else
-#endif
        
     /* use ARMCI_Malloc_group for groups if proc group is not world group
        or mirror group */
@@ -3355,9 +3277,6 @@ Integer i, handle;
     GA_total_memory = -1; /* restore "unlimited" memory usage status */
     GA_memory_limited = 0;
     gai_finalize_onesided();
-#ifdef PERMUTE_PIDS
-    free(ptr_array);
-#endif
     free(mapALL);
     free(_ga_main_data_structure);
     free(_proc_list_main_data_structure);
@@ -3370,10 +3289,6 @@ Integer i, handle;
     ARMCIinitialized = 0;
     GAinitialized = 0;
     //GA_Internal_Threadsafe_Unlock();
-    if (0 != GA_stack_size) {
-        pnga_error("0 != GA_stack_size", GA_stack_size);
-    }
-    free(GA_name_stack);
 }
 
     
@@ -3650,7 +3565,7 @@ Integer d, index, ndim, ga_handle = GA_OFFSET + g_a;
    ga_check_handleM(g_a, "nga_proc_topology");
    ndim = GA[ga_handle].ndim;
 
-   index = GA_Proc_list ? GA_Proc_list[proc]: proc;
+   index = proc;
 
    for(d=0; d<ndim; d++){
        subscript[d] = index% GA[ga_handle].nblock[d];
@@ -4181,10 +4096,6 @@ int m,p;
    p = num_mutexes/chunk_mutex -1;
    m = num_mutexes%chunk_mutex;
 
-#ifdef PERMUTE_PIDS
-    if(GA_Proc_list) p = GA_inv_Proc_list[p];
-#endif
-
    ARMCI_Lock(m,p);
 }
 
@@ -4204,10 +4115,6 @@ int m,p;
    
    p = num_mutexes/chunk_mutex -1;
    m = num_mutexes%chunk_mutex;
-
-#ifdef PERMUTE_PIDS
-    if(GA_Proc_list) p = GA_inv_Proc_list[p];
-#endif
 
    ARMCI_Unlock(m,p);
 }              
@@ -4246,11 +4153,6 @@ void pnga_list_nodeid(Integer *list, Integer num_procs)
 {
   Integer proc;
   for( proc = 0; proc < num_procs; proc++)
-
-#ifdef PERMUTE_PIDS
-    if(GA_Proc_list) list[proc] = GA_inv_Proc_list[proc];
-    else
-#endif
       list[proc]=proc;
 }
 

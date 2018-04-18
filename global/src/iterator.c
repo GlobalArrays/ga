@@ -36,8 +36,6 @@
 
 #define LARGE_BLOCK_REQ
  
-/*#define PERMUTE_PIDS */
-
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
@@ -325,9 +323,6 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
     if (p_handle >= 0) {
       *proc = (int)PGRP_LIST[p_handle].inv_map_proc_list[*proc];
     }
-#ifdef PERMUTE_PIDS
-    if (GA_Proc_list) *proc = (int)GA_inv_Proc_list[*proc];
-#endif
     /* Find  visible portion of patch held by processor p and
      * return the result in plo and phi. Also get actual processor
      * index corresponding to p and store the result in proc.
