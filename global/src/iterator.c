@@ -77,7 +77,7 @@
 
 /*\ prepare permuted list of processes for remote ops
 \*/
-#define gaPermuteProcList(nproc)                                      \
+#define gaPermuteProcList(nproc,ProcListPerm)                         \
 {                                                                     \
   if((nproc) ==1) ProcListPerm[0]=0;                                  \
   else{                                                               \
@@ -201,6 +201,7 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
   hdl->map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
   /* hdl->proclist = (Integer*)malloc((size_t)(GAnproc)*sizeof(Integer)); */
   hdl->proclist = GA_proclist;
+  hdl->proclistperm = malloc(GAnproc*sizeof(int));
   for (i=0; i<ndim; i++) {
     hdl->lo[i] = lo[i];
     hdl->hi[i] = hi[i];
@@ -218,7 +219,7 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     if(!pnga_locate_region(g_a, lo, hi, hdl->map, hdl->proclist, &hdl->nproc ))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
-    gaPermuteProcList(hdl->nproc);
+    gaPermuteProcList(hdl->nproc, hdl->proclistperm);
 
     /* Block-cyclic distribution */
   } else if (GA[handle].distr_type == BLOCK_CYCLIC) {
@@ -320,7 +321,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
     /* no blocks left, so return */
     if (idx>=hdl->nproc) return 0;
 
-    p = (Integer)ProcListPerm[idx];
+    p = (Integer)hdl->proclistperm[idx];
     *proc = (int)GA_proclist[p];
     if (p_handle >= 0) {
       *proc = (int)PGRP_LIST[p_handle].inv_map_proc_list[*proc];
@@ -681,6 +682,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
 void gai_iterator_destroy(_iterator_hdl *hdl)
 {
     free(hdl->map);
+    free(hdl->proclistperm);
 }
 
 /**
