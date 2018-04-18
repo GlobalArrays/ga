@@ -90,7 +90,6 @@
 char *fence_array;
 static int GA_fence_set=0;
 Integer *_ga_map;       /* used in get/put/acc */
-int *ProcListPerm;
 
 static int GA_prealloc_gatscat = 0;
 static Integer *GA_header;

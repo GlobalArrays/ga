@@ -12,6 +12,7 @@ typedef struct {
   Integer count;
   Integer *map;
   Integer *proclist;
+  int     *proclistperm;
   Integer nproc;
   Integer offset;
   Integer iproc;
