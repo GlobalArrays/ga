@@ -102,7 +102,7 @@
 
 #define gam_GetRangeFromMap(p, ndim, plo, phi){  \
   Integer   _mloc = p* ndim *2;                  \
-            *plo  = (Integer*)_ga_map + _mloc;   \
+            *plo  = hdl->map + _mloc;            \
             *phi  = *plo + ndim;                 \
 }
 
@@ -198,11 +198,8 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
   hdl->g_a = g_a;
   hdl->count = 0;
   hdl->oversize = 0;
-  /*
-  hdl->map = (Integer*)malloc((size_t)(GAnproc*2*ndim+1)*sizeof(Integer));
-  hdl->proclist = (Integer*)malloc((size_t)(GAnproc)*sizeof(Integer));
-  */
-  hdl->map = _ga_map;
+  hdl->map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+  /* hdl->proclist = (Integer*)malloc((size_t)(GAnproc)*sizeof(Integer)); */
   hdl->proclist = GA_proclist;
   for (i=0; i<ndim; i++) {
     hdl->lo[i] = lo[i];
@@ -683,6 +680,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
  */
 void gai_iterator_destroy(_iterator_hdl *hdl)
 {
+    free(hdl->map);
 }
 
 /**

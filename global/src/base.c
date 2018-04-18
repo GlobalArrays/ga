@@ -2912,7 +2912,7 @@ Integer status;
          if(!status)GA_total_memory +=bytes+extra;
      }else status = 1;
 
-     ptr_arr=(char**)_ga_map; /* need memory GAnproc*sizeof(char**) */
+     ptr_arr=malloc(GAnproc*sizeof(char**));
      rc= gai_getmem("ga_getmem", ptr_arr,(Integer)bytes+extra, type, &id, grp_id);
      if(rc)pnga_error("ga_getmem: failed to allocate memory",bytes+extra);
 
@@ -2933,6 +2933,7 @@ Integer status;
 
      /* add ptr info */
      memcpy(myptr+sizeof(getmem_t),ptr_arr,(size_t)GAnproc*sizeof(char**));
+     free(ptr_arr);
 
      return (void*)(myptr+extra);
 }
