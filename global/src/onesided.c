@@ -89,7 +89,6 @@
 
 char *fence_array;
 static int GA_fence_set=0;
-Integer *_ga_map;       /* used in get/put/acc */
 
 static int GA_prealloc_gatscat = 0;
 static Integer *GA_header;
@@ -225,8 +224,6 @@ void pnga_init_fence()
 
 void gai_init_onesided()
 {
-    _ga_map = (Integer*)malloc((size_t)(GAnproc*2*MAXDIM +1)*sizeof(Integer));
-    if(!_ga_map) pnga_error("ga_init:malloc failed (_ga_map)",0);
     fence_array = calloc((size_t)GAnproc,1);
     if(!fence_array) pnga_error("ga_init:calloc failed",0);
 }
@@ -234,8 +231,6 @@ void gai_init_onesided()
 
 void gai_finalize_onesided()
 {
-    free(_ga_map);
-    _ga_map = NULL;
     free(fence_array);
     fence_array = NULL;
 }
