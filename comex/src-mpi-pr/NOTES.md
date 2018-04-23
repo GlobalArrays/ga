@@ -15,13 +15,13 @@ When a user's get/put/acc request is made, it is sent as a small MPI message to
 the progress rank.  The progress rank interprets the header and processes the
 request, copying from/to the shared memory of one of the MPI ranks the progress
 rank is managing on its compute node. The code that implements the progress
-engine can be found in the _progress_server function located in
+engine can be found in the `_progress_server` function located in the
 [comex.c](comex.c) file.
 
 Incoming requests to the progress rank are all based on the active message
 concept. A 'header' message is sent first to the progress engine indicating the
 type of request, e.g., OP_PUT, OP_ACC_INT. A complete listing of the request
-types is defined in an enumerated list in [comex.c](comex.c). The header contains enough information to complete the request such as source and destination pointers, source and destination ranks, etc. After a header message is sent, any data payload is sent as a separate message. The intent was to let MPI directly use the buffer pointers in case the buffers were allocated using any special, network-specific allocator. Otherwise, a data payload could have been mem-copied to the end of the header message (this is done in the MPI-PR implementation as an optimization).
+types is defined in an enumerated list at the top of [comex.c](comex.c). The header contains enough information to complete the request such as source and destination pointers, source and destination ranks, etc. After a header message is sent, any data payload is sent as a separate message. The intent was to let MPI directly use the buffer pointers in case the buffers were allocated using any special, network-specific allocator. Otherwise, a data payload could have been mem-copied to the end of the header message (this is done in the MPI-PR implementation as an optimization).
 
 Posix shared memory is used between all ranks on a compute node, including the reserved progress rank.  When `comex_malloc` is called (collectively), it calls `comex_malloc_local` that creates the shared memory buffer on each user-level MPI rank.  The posix shmem names associated with each buffer is collectively exchanged with all ranks on the node so that all ranks on the same node can access each other's memory directly.  The progress rank does not allocate memory, but rather attaches to all segments allocated on it's node-local ranks.  The shmem name is guaranteed to be unique to the UID and PID and uses an internal counter.
 

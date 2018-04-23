@@ -18,7 +18,10 @@ configure.ac is relatively well-organized and broken into sections via comments.
 
 ## autogen.sh
 
-[autogen.sh](autogen.sh) runs the auxiliary script [travis/install-autotools.sh](travis/install-autotools.sh).  Next, the autogen.sh script will run `autoreconf -vif` to generate the various [configure](configure] scripts as well as the Makefile.in templates.  Finally, autogen.sh applies some patches to the generated build files.  See autogen.sh file for details.
+[autogen.sh](autogen.sh) runs the auxiliary script
+[travis/install-autotools.sh](travis/install-autotools.sh).  Next, the
+autogen.sh script will run `autoreconf -vif` to generate the various
+[configure](configure) scripts as well as the Makefile.in templates.  Finally, autogen.sh applies some patches to the generated build files.  See autogen.sh file for details.
 
 ## install-autotools.sh
 
