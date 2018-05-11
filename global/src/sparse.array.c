@@ -885,6 +885,14 @@ logical pnga_sprs_array_assemble(Integer s_a)
     pnga_pgroup_sync(SPA[hdl].grp);
   }
 
+  /*
+  if (GAme == 0) printf("G_DATA Array\n");
+  pnga_print(SPA[hdl].g_data);
+  if (GAme == 0) printf("G_I Array\n");
+  pnga_print(SPA[hdl].g_i);
+  if (GAme == 0) printf("G_J Array\n");
+  pnga_print(SPA[hdl].g_j);
+  */
   pnga_release(SPA[hdl].g_data,&lo,&hi);
   pnga_release(SPA[hdl].g_i,&lo,&hi);
   pnga_release(SPA[hdl].g_j,&lo,&hi);
