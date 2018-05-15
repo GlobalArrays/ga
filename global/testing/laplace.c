@@ -6,6 +6,7 @@
 #include "ga.h"
 #include "mp3.h"
 
+//#define WRITE_VTK
 #define NDIM 128
 
 /**
@@ -155,6 +156,8 @@ int main(int argc, char **argv) {
   int nsave;
   int heap=3000000, stack=2000000;
   int iterations = 1000;
+  double tol, twopi;
+  FILE *PHI;
   /* Intitialize a message passing library */
   one = 1;
   one_64 = 1;
@@ -177,6 +180,7 @@ int main(int argc, char **argv) {
   h = rxdim/((double)NDIM);
   me = GA_Nodeid();
   nproc = GA_Nnodes();
+  twopi = 8.0*atan(1.0);
 
   heap /= nproc;
   stack /= nproc;
@@ -312,7 +316,7 @@ int main(int argc, char **argv) {
   }
 
   /* Construct RHS vector. Assume points on boundary are given by
-   * the equation f(x,y,z) = cos(x) + cos(y) + cos(z) */
+   * the equation f(x,y,z) = cos(twopi*x) + cos(twopi*y) + cos(twopi*z) */
   ibuf = (int64_t*)malloc(ncnt*sizeof(int64_t));
   iptr = (int64_t**)malloc(ncnt*sizeof(int64_t*));
   vbuf = (double*)malloc(ncnt*sizeof(double));
@@ -328,7 +332,7 @@ int main(int argc, char **argv) {
         x = ((double)i+0.5)*h;
         y = ((double)j+0.5)*h;
         z = 0.0;
-        vbuf[ncnt] = -2.0*(cos(x)+cos(y)+cos(z))/(h*h);
+        vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
         ibuf[ncnt] = i + j*ldx;
         ncnt++;
       }
@@ -340,7 +344,7 @@ int main(int argc, char **argv) {
         x = ((double)i+0.5)*h;
         y = ((double)j+0.5)*h;
         z = 1.0;
-        vbuf[ncnt] = -2.0*(cos(x)+cos(y)+cos(z))/(h*h);
+        vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
         ibuf[ncnt] = i + j*ldx + (zdim-1)*ldxy;
         ncnt++;
       }
@@ -353,7 +357,7 @@ int main(int argc, char **argv) {
         x = ((double)i+0.5)*h;
         y = 0.0;
         z = ((double)k+0.5)*h;
-        vbuf[ncnt] = -2.0*(cos(x)+cos(y)+cos(z))/(h*h);
+        vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
         ibuf[ncnt] = i + k*ldxy;
         ncnt++;
       }
@@ -365,7 +369,7 @@ int main(int argc, char **argv) {
         x = ((double)i+0.5)*h;
         y = 1.0;
         z = ((double)k+0.5)*h;
-        vbuf[ncnt] = -2.0*(cos(x)+cos(y)+cos(z))/(h*h);
+        vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
         ibuf[ncnt] = i + (ydim-1)*ldx + k*ldxy;
         ncnt++;
       }
@@ -378,7 +382,7 @@ int main(int argc, char **argv) {
         x = 0.0;
         y = ((double)j+0.5)*h;
         z = ((double)k+0.5)*h;
-        vbuf[ncnt] = -2.0*(cos(x)+cos(y)+cos(z))/(h*h);
+        vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
         ibuf[ncnt] = j*ldx + k*ldxy;
         ncnt++;
       }
@@ -390,7 +394,7 @@ int main(int argc, char **argv) {
         x = 1.0;
         y = ((double)j+0.5)*h;
         z = ((double)k+0.5)*h;
-        vbuf[ncnt] = -2.0*(cos(x)+cos(y)+cos(z))/(h*h);
+        vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
         ibuf[ncnt] = (xdim-1) + j*ldx + k*ldxy;
         ncnt++;
       }
@@ -425,15 +429,18 @@ int main(int argc, char **argv) {
   GA_Copy(g_b, g_r);
   GA_Copy(g_r, g_p);
   residual = GA_Ddot(g_r,g_r);
+  GA_Norm_infinity(g_r, &tol);
   ncnt = 0;
-  while (residual > 1.0e-5 && ncnt < iterations) {
-    if (me==0) printf("Iteration: %d Residual: %e\n",(int)ncnt+1,residual);
+  /* Start iteration loop */
+  while (tol > 1.0e-5 && ncnt < iterations) {
+    if (me==0) printf("Iteration: %d Tolerance: %e\n",(int)ncnt+1,tol);
     MatVecMultiply(s_a, g_p, g_t, me, nproc);
     alpha = GA_Ddot(g_t,g_p);
     alpha = residual/alpha;
     GA_Add(&one_r,g_x,&alpha,g_p,g_x);
     alpha = -alpha;
     GA_Add(&one_r,g_r,&alpha,g_t,g_r);
+    GA_Norm_infinity(g_r, &tol);
     beta = residual;
     residual = GA_Ddot(g_r,g_r);
     beta = residual/beta;
@@ -452,6 +459,39 @@ int main(int argc, char **argv) {
   } else {
     if (me==0) printf("Solution converged\n");
   }
+
+  /* Write solution to file */
+#ifdef WRITE_VTK
+  if (me == 0) {
+    vbuf = (double*)malloc(xdim*ydim*sizeof(double));
+    PHI = fopen("phi.vtk","w");
+    fprintf(PHI,"# vtk DataFile Version 3.0\n");
+    fprintf(PHI,"Laplace Equation Solution\n");
+    fprintf(PHI,"ASCII\n");
+    fprintf(PHI,"DATASET STRUCTURED_POINTS\n");
+    fprintf(PHI,"DIMENSIONS %ld %ld %ld\n",xdim,ydim,zdim);
+    fprintf(PHI,"ORIGIN %12.6f %12.6f %12.6f\n",0.5*h,0.5*h,0.5*h);
+    fprintf(PHI,"SPACING %12.6f %12.6f %12.6f\n",h,h,h);
+    fprintf(PHI," \n");    
+    fprintf(PHI,"POINT_DATA %ld\n",xdim*ydim*zdim);
+    fprintf(PHI,"SCALARS Phi float\n");
+    fprintf(PHI,"LOOKUP_TABLE default\n");
+    for (k=0; k<zdim; k++) {
+      ilo = k*xdim*ydim;
+      ihi = ilo + xdim*ydim - 1;
+      NGA_Get64(g_x,&ilo,&ihi,vbuf,&one_64);
+      for (j=0; j<ydim; j++) {
+        for (i=0; i<xdim; i++) {
+          fprintf(PHI," %12.6f",vbuf[i+j*xdim]);
+          if (i%5 == 0) fprintf(PHI,"\n");
+        }
+        if ((xdim-1)%5 != 0) fprintf(PHI,"\n");
+      }
+    }
+    fclose(PHI);
+    free(vbuf);
+  }
+#endif
 
   NGA_Sprs_array_destroy(s_a);
   NGA_Destroy(g_b);
