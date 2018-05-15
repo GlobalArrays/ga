@@ -136,10 +136,7 @@ int main(int argc, char **argv) {
   h = rxdim/((double)NDIM);
   me = GA_Nodeid();
   nproc = GA_Nnodes();
-<<<<<<< HEAD
   twopi = 8.0*atan(1.0);
-=======
->>>>>>> 5478729... Added test case to solve Laplace's equation using conjugate gradient algorithm.
 
   heap /= nproc;
   stack /= nproc;
@@ -275,11 +272,7 @@ int main(int argc, char **argv) {
   }
 
   /* Construct RHS vector. Assume points on boundary are given by
-<<<<<<< HEAD
    * the equation f(x,y,z) = cos(twopi*x) + cos(twopi*y) + cos(twopi*z) */
-=======
-   * the equation f(x,y,z) = cos(x) + cos(y) + cos(z) */
->>>>>>> 5478729... Added test case to solve Laplace's equation using conjugate gradient algorithm.
   ibuf = (int64_t*)malloc(ncnt*sizeof(int64_t));
   iptr = (int64_t**)malloc(ncnt*sizeof(int64_t*));
   vbuf = (double*)malloc(ncnt*sizeof(double));
@@ -295,11 +288,7 @@ int main(int argc, char **argv) {
         x = ((double)i+0.5)*h;
         y = ((double)j+0.5)*h;
         z = 0.0;
-<<<<<<< HEAD
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-=======
-        vbuf[ncnt] = -2.0*(cos(x)+cos(y)+cos(z))/(h*h);
->>>>>>> 5478729... Added test case to solve Laplace's equation using conjugate gradient algorithm.
         ibuf[ncnt] = i + j*ldx;
         ncnt++;
       }
@@ -311,11 +300,7 @@ int main(int argc, char **argv) {
         x = ((double)i+0.5)*h;
         y = ((double)j+0.5)*h;
         z = 1.0;
-<<<<<<< HEAD
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-=======
-        vbuf[ncnt] = -2.0*(cos(x)+cos(y)+cos(z))/(h*h);
->>>>>>> 5478729... Added test case to solve Laplace's equation using conjugate gradient algorithm.
         ibuf[ncnt] = i + j*ldx + (zdim-1)*ldxy;
         ncnt++;
       }
@@ -328,11 +313,7 @@ int main(int argc, char **argv) {
         x = ((double)i+0.5)*h;
         y = 0.0;
         z = ((double)k+0.5)*h;
-<<<<<<< HEAD
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-=======
-        vbuf[ncnt] = -2.0*(cos(x)+cos(y)+cos(z))/(h*h);
->>>>>>> 5478729... Added test case to solve Laplace's equation using conjugate gradient algorithm.
         ibuf[ncnt] = i + k*ldxy;
         ncnt++;
       }
@@ -344,11 +325,7 @@ int main(int argc, char **argv) {
         x = ((double)i+0.5)*h;
         y = 1.0;
         z = ((double)k+0.5)*h;
-<<<<<<< HEAD
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-=======
-        vbuf[ncnt] = -2.0*(cos(x)+cos(y)+cos(z))/(h*h);
->>>>>>> 5478729... Added test case to solve Laplace's equation using conjugate gradient algorithm.
         ibuf[ncnt] = i + (ydim-1)*ldx + k*ldxy;
         ncnt++;
       }
@@ -361,11 +338,7 @@ int main(int argc, char **argv) {
         x = 0.0;
         y = ((double)j+0.5)*h;
         z = ((double)k+0.5)*h;
-<<<<<<< HEAD
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-=======
-        vbuf[ncnt] = -2.0*(cos(x)+cos(y)+cos(z))/(h*h);
->>>>>>> 5478729... Added test case to solve Laplace's equation using conjugate gradient algorithm.
         ibuf[ncnt] = j*ldx + k*ldxy;
         ncnt++;
       }
@@ -377,11 +350,7 @@ int main(int argc, char **argv) {
         x = 1.0;
         y = ((double)j+0.5)*h;
         z = ((double)k+0.5)*h;
-<<<<<<< HEAD
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-=======
-        vbuf[ncnt] = -2.0*(cos(x)+cos(y)+cos(z))/(h*h);
->>>>>>> 5478729... Added test case to solve Laplace's equation using conjugate gradient algorithm.
         ibuf[ncnt] = (xdim-1) + j*ldx + k*ldxy;
         ncnt++;
       }
