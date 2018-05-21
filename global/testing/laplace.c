@@ -85,50 +85,6 @@ void grid_factor(int p, int xdim, int ydim, int zdim,
   }
 }
 
-/**
- * Multiply a sparse matrix by a sparse vector
- * @param s_a handle for sparse matrix
- * @param g_v handle for vector
- * @param g_av handle for product vector
- * @me ID of this processor
- * @nproc nproc number of processors
- * */
-void MatVecMultiply(int s_a, int g_v, int g_av, int me, int nproc)
-{
-  int64_t ilo, ihi, jlo, jhi;
-  double *vsum, *vbuf, *vptr;
-  long *iptr = NULL, *jptr = NULL;
-  int i, j, iproc, ncols;
-  double one_r = 1.0;
-  int64_t one_64 = 1;
-  /* Make sure product vector is zero */
-  NGA_Zero(g_av);
-  /* multiply sparse matrix by sparse vector */
-  NGA_Sprs_array_row_distribution64(s_a,me,&ilo,&ihi);
-  vsum = (double*)malloc((ihi-ilo+1)*sizeof(double));
-  for (i=ilo; i<=ihi; i++) {
-    vsum[i-ilo] = 0.0;
-  }
-  for (iproc=0; iproc<nproc; iproc++) {
-    NGA_Sprs_array_column_distribution64(s_a,iproc,&jlo,&jhi);
-    NGA_Sprs_array_access_col_block64(s_a,iproc,&iptr,&jptr,&vptr);
-    if (vptr != NULL) {
-      vbuf = (double*)malloc((jhi-jlo+1)*sizeof(double));
-      NGA_Get64(g_v,&jlo,&jhi,vbuf,&one_64);
-      for (i=ilo; i<=ihi; i++) {
-        ncols = iptr[i+1-ilo]-iptr[i-ilo];
-        for (j=0; j<ncols; j++) {
-          vsum[i-ilo] += vptr[iptr[i-ilo]+j]*vbuf[jptr[iptr[i-ilo]+j]-jlo];
-        }
-      }
-      free(vbuf);
-    }
-  }
-  if (ihi>=ilo) NGA_Acc64(g_av,&ilo,&ihi,vsum,&one_64,&one_r);
-  GA_Sync();
-  free(vsum);
-}
-
 int main(int argc, char **argv) {
   int s_a, g_b, g_x, g_p, g_r, g_t;
   int one;
@@ -434,7 +390,7 @@ int main(int argc, char **argv) {
   /* Start iteration loop */
   while (tol > 1.0e-5 && ncnt < iterations) {
     if (me==0) printf("Iteration: %d Tolerance: %e\n",(int)ncnt+1,tol);
-    MatVecMultiply(s_a, g_p, g_t, me, nproc);
+    NGA_Sprs_array_matvec_multiply(s_a, g_p, g_t);
     alpha = GA_Ddot(g_t,g_p);
     alpha = residual/alpha;
     GA_Add(&one_r,g_x,&alpha,g_p,g_x);

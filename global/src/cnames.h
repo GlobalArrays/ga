@@ -3177,6 +3177,7 @@
 #define nga_sprs_array_row_distribution_ F77_FUNC_(nga_sprs_array_row_distribution,NGA_SPRS_ARRAY_ROW_DISTRIBUTION)
 #define nga_sprs_array_column_distribution_ F77_FUNC_(nga_sprs_array_column_distribution,NGA_SPRS_ARRAY_COLUMN_DISTRIBUTION)
 #define nga_sprs_array_access_column_block_ F77_FUNC_(nga_sprs_array_access_column_block,NGA_SPRS_ARRAY_ACCESS_COLUMN_BLOCK)
+#define nga_sprs_array_matvec_multiply_ F77_FUNC_(nga_sprs_array_matvec_multiply,NGA_SPRS_ARRAY_MATVEC_MULTIPLY)
 #define nga_sprs_array_destroy_ F77_FUNC_(nga_sprs_array_destroy,NGA_SPRS_ARRAY_DESTROY)
 /* the missing functions are either complex type or strangely named */
 
