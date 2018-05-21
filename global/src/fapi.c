@@ -3770,6 +3770,11 @@ void nga_sprs_array_access_col_block(Integer s_a, Integer icol,
   wnga_sprs_array_access_col_block(s_a, icol, idx, jdx, val);
 }
 
+void nga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
+{
+  wnga_sprs_array_matvec_multiply(s_a, g_a, g_v);
+}
+
 logical nga_sprs_array_destroy(Integer s_a)
 {
   return wnga_sprs_array_destroy(s_a);

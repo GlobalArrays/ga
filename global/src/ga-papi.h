@@ -405,5 +405,6 @@ extern logical pnga_sprs_array_assemble(Integer s_a);
 extern void pnga_sprs_array_row_distribution(Integer s_a, Integer iproc, Integer *lo, Integer *hi);
 extern void pnga_sprs_array_column_distribution(Integer s_a, Integer iproc, Integer *lo, Integer *hi);
 extern void pnga_sprs_array_access_col_block(Integer s_a, Integer icol, void *idx, void *jdx, void *val);
+extern void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v);
 extern logical pnga_sprs_array_destroy(Integer s_a);
 #endif /* PAPI_H_ */
