@@ -5433,6 +5433,14 @@ void NGA_Sprs_array_access_col_block64(int s_a, int icol, long **idx, long **jdx
   wnga_sprs_array_access_col_block(sa,ic,idx,jdx,val);
 }
 
+void NGA_Sprs_array_matvec_multiply(int s_a, int g_a, int g_v)
+{
+  Integer sa = (Integer)s_a;
+  Integer ga = (Integer)g_a;
+  Integer gv = (Integer)g_v;
+  wnga_sprs_array_matvec_multiply(sa, ga, gv);
+}
+
 int NGA_Sprs_array_destroy(Integer s_a)
 {
   Integer sa = (Integer)s_a;

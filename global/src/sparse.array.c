@@ -780,6 +780,87 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
 }
 
 /**
+ * Multiply a sparse matrix by a sparse vector
+ * @param s_a handle for sparse matrix
+ * @param g_a handle for vector
+ * @param g_v handle for product vector
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_matvec_multiply =  pnga_sprs_array_matvec_multiply
+#endif
+void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
+{
+  Integer s_hdl = GA_OFFSET + s_a;
+  int local_sync_begin,local_sync_end;
+  Integer s_grp = SPA[s_hdl].grp;
+  Integer me = pnga_pgroup_nodeid(s_grp);
+  Integer nproc = pnga_pgroup_nnodes(s_grp);
+
+  Integer ilo, ihi, jlo, jhi, klo, khi;
+  double *vsum, *vbuf, *vptr;
+  long *iptr = NULL, *jptr = NULL;
+  Integer i, j, iproc, ncols;
+  double one_r = 1.0;
+  Integer one = 1;
+  Integer adim, vdim, arank, vrank, dims[GA_MAX_DIM];
+  Integer atype, vtype;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  /* Check that g_hdl and v_hdl are both vectors and that sizes
+   * match */
+  pnga_inquire(g_a, &atype, &arank, dims);
+  adim = dims[0];
+  pnga_inquire(g_v, &vtype, &vrank, dims);
+  vdim = dims[0];
+  if (arank != 1) pnga_error("rank of A must be 1 (vector)",arank);
+  if (vrank != 1) pnga_error("rank of V must be 1 (vector)",vrank);
+  if (adim != SPA[s_hdl].jdim) {
+    pnga_error("length of A must equal second dimension of sparse matrix",adim);
+  }
+  if (vdim != SPA[s_hdl].jdim) {
+    pnga_error("length of V must equal second dimension of sparse matrix",vdim);
+  }
+  if (atype != SPA[s_hdl].type || vtype != SPA[s_hdl].type) {
+    pnga_error("Data type of sparse matrix and A and V vectors must match",
+        SPA[s_hdl].type);
+  }
+  
+  /* Make sure product vector is zero */
+  pnga_zero(g_v);
+  /* multiply sparse matrix by sparse vector */
+  pnga_sprs_array_row_distribution(s_a,me,&ilo,&ihi);
+  vsum = (double*)malloc((ihi-ilo+1)*sizeof(double));
+  for (i=ilo; i<=ihi; i++) {
+    vsum[i-ilo] = 0.0;
+  }
+  for (iproc=0; iproc<nproc; iproc++) {
+    pnga_sprs_array_column_distribution(s_a,iproc,&jlo,&jhi);
+    pnga_sprs_array_access_col_block(s_a,iproc,&iptr,&jptr,&vptr);
+    if (vptr != NULL) {
+      vbuf = (double*)malloc((jhi-jlo+1)*sizeof(double));
+      klo = jlo+1;
+      khi = jhi+1;
+      pnga_get(g_a,&klo,&khi,vbuf,&one);
+      for (i=ilo; i<=ihi; i++) {
+        ncols = iptr[i+1-ilo]-iptr[i-ilo];
+        for (j=0; j<ncols; j++) {
+          vsum[i-ilo] += vptr[iptr[i-ilo]+j]*vbuf[jptr[iptr[i-ilo]+j]-jlo];
+        }
+      }
+      free(vbuf);
+    }
+  }
+  if (ihi>=ilo) {
+    klo = ilo + 1;
+    khi = ihi + 1;
+    pnga_acc(g_v,&klo,&khi,vsum,&one,&one_r);
+  }
+  pnga_sync();
+  free(vsum);
+}
+
+/**
  * Delete a sparse array and free any resources it may be using
  * @param s_a sparse array handle
  */
