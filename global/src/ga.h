@@ -404,6 +404,7 @@ extern void          NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo
 extern void          NGA_Sprs_array_column_distribution(int s_a, int iproc, int *lo, int *hi);
 extern void          NGA_Sprs_array_access_col_block(int s_a, int icol, int **idx, int **jdx, void *val);
 extern void          NGA_Sprs_array_access_col_block64(int s_a, int icol, long **idx, long **jdx, void *val);
+extern void          NGA_Sprs_array_matvec_multiply(int s_a, int g_a, int g_v);
 extern int           NGA_Sprs_array_destroy(Integer s_a);
 
 /* 64 bit APIs */
