@@ -5026,5 +5026,21 @@ void NGA_Put_field(int g_a, int *lo, int *hi, int foff, int fsize,
   wnga_put_field(a, _alo, _ahi, foff, fsize, buf, _ld);
 }
 
+void GA_Version(int *major, int *minor, int *patch)
+{
+  Integer maj, min, ptch;
+  wnga_version(&maj,&min,&ptch);
+  *major = (int)maj;
+  *minor = (int)min;
+  *patch = (int)ptch;
+}
 
+void NGA_Version(int *major, int *minor, int *patch)
+{
+  Integer maj, min, ptch;
+  wnga_version(&maj,&min,&ptch);
+  *major = (int)maj;
+  *minor = (int)min;
+  *patch = (int)ptch;
+}
 

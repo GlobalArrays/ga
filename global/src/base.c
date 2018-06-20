@@ -4822,3 +4822,13 @@ int pnga_deregister_type(int type) {
   ga_types[tp].size = 0;
   return 0;  
 }
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_version = pnga_version
+#endif
+void pnga_version(Integer *major_version, Integer *minor_version, Integer *patch)
+{
+  *major_version = GA_VERSION_MAJOR;
+  *minor_version = GA_VERSION_MINOR;
+  *patch         = GA_VERSION_PATCH;
+}

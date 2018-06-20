@@ -9,6 +9,7 @@
 typedef intp AccessIndex;
 
 /* Routines from base.c */
+extern void pnga_version(Integer *major, Integer *minor, Integer *patch);
 extern logical pnga_allocate(Integer g_a);
 extern logical pnga_compare_distr(Integer g_a, Integer g_b);
 extern logical pnga_create(Integer type, Integer ndim,
