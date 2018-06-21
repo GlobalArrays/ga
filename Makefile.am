@@ -1799,7 +1799,7 @@ check-travis: $(all-am) $(check_LTLIBRARIES) $(TRAVIS_TESTS) $(MAYBE_PFILES)
 	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(TRAVIS_TESTS)" check-TESTS
 
 .PHONY: check-threaded
-check-travis: $(all-am) $(check_LTLIBRARIES) $(GLOBAL_THREADED_TESTS) $(MAYBE_PFILES)
+check-threaded: $(all-am) $(check_LTLIBRARIES) $(GLOBAL_THREADED_TESTS) $(MAYBE_PFILES)
 	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(GLOBAL_THREADED_TESTS)" check-TESTS
 
 .PHONY: check-ga
