@@ -10,12 +10,6 @@ int PARMCI_Wait(armci_hdl_t* usr_hdl)
     int success=0;
     int direct = SAMECLUSNODE(nb_handle->proc);
 
-#ifdef BGML
-    assert(nb_handle->cmpl_info);
-    BGML_Wait(&(nb_handle->count));
-    return(success);
-#else
-
     if(direct) {
         return(success);
     }
@@ -35,7 +29,7 @@ int PARMCI_Wait(armci_hdl_t* usr_hdl)
             ARMCI_NB_WAIT(nb_handle->cmpl_info);
             return(success);
         }
-#if defined(LAPI) || defined(ALLOW_PIN) || defined(ARMCIX)
+#if defined(LAPI) || defined(ALLOW_PIN)
         if(nb_handle->tag!=0 && nb_handle->bufid==NB_NONE){
             ARMCI_NB_WAIT(nb_handle->cmpl_info);
             return(success);
@@ -47,7 +41,6 @@ int PARMCI_Wait(armci_hdl_t* usr_hdl)
         COMPLETE_HANDLE(nb_handle->bufid,nb_handle->tag,(&success));
 #endif
     }
-#endif
 
     return(success);
 }
@@ -68,9 +61,6 @@ armci_hdl_t *armci_set_implicit_handle (int op, int proc)
         PARMCI_Wait(&armci_nb_handle[i]);
 
     nbh = (armci_ihdl_t)&armci_nb_handle[i];
-#ifdef BGML
-    nbh->count=0;
-#endif
     nbh->tag   = GET_NEXT_NBTAG();
     nbh->op    = op;
     nbh->proc  = proc;
@@ -83,11 +73,6 @@ armci_hdl_t *armci_set_implicit_handle (int op, int proc)
 
 /* wait for all non-blocking operations to finish */
 int PARMCI_WaitAll (void) {
-#ifdef BGML
-    BGML_WaitAll();
-#elif ARMCIX
-    ARMCIX_WaitAll ();
-#else
     int i;
     if(impcount) {
         for(i=0; i<ARMCI_MAX_IMPLICIT; i++) {
@@ -98,17 +83,11 @@ int PARMCI_WaitAll (void) {
         }
     }
     impcount=0;
-#endif
     return 0;
 }  
 
 /* wait for all non-blocking operations to a particular process to finish */
 int PARMCI_WaitProc (int proc) {
-#ifdef BGML
-    BGML_WaitProc(proc);
-#elif ARMCIX
-    ARMCIX_WaitProc (proc);
-#else
     int i;
     if(impcount) {
         for(i=0; i<ARMCI_MAX_IMPLICIT; i++) {
@@ -119,7 +98,6 @@ int PARMCI_WaitProc (int proc) {
             }
         }
     }
-#endif
     return 0;
 }
 
@@ -128,9 +106,6 @@ int PARMCI_Test(armci_hdl_t *usr_hdl)
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
     int success=0;
-#ifdef BGML
-    success=(int)nb_handle->count;
-#else
     int direct=SAMECLUSNODE(nb_handle->proc);
     if(direct)return(success);
     if(nb_handle) {
@@ -155,7 +130,6 @@ int PARMCI_Test(armci_hdl_t *usr_hdl)
         TEST_HANDLE(nb_handle->bufid,nb_handle->tag,(&success));
 #endif
     }
-#endif
     return(success);
 }
 

@@ -18,8 +18,6 @@ static void tcg_synch(long type)
 
     SYNCH_(&atype);
 }
-#elif defined(BGML)
-#   include "bgml.h"
 #else
 #   include <mpi.h>
 #endif
@@ -71,11 +69,6 @@ void PARMCI_Fence(int proc)
            bzero(&FENCE_ARR(master),
                    armci_clus_info[cluster].nslave);
      }
-#elif defined(ARMCIX)
-     ARMCIX_Fence (proc);
-#elif defined(BGML)
-     BGML_WaitProc(proc);
-     MEM_FENCE;
 #else
      FENCE_NODE(proc);
      MEM_FENCE;
@@ -85,11 +78,7 @@ void PARMCI_Fence(int proc)
 
 void PARMCI_AllFence()
 {
-#if defined(ARMCIX)
-    ARMCIX_AllFence ();
-#elif defined(BGML)
-    BGML_WaitAll();
-#elif defined(LAPI) || defined(CLUSTER)
+#if defined(LAPI) || defined(CLUSTER)
     int p;
 
     for(p = 0;p < armci_nproc; p++) {
@@ -101,21 +90,15 @@ void PARMCI_AllFence()
 
 void PARMCI_Barrier()
 {
-    if (armci_nproc==1)
-        return;
-#if defined(BGML)
-    BGML_WaitAll();
-    bgml_barrier(3);
-#else
+    if (armci_nproc==1) return;
     PARMCI_AllFence();
-#  ifdef MSG_COMMS_MPI
+#ifdef MSG_COMMS_MPI
     MPI_Barrier(ARMCI_COMM_WORLD);
-#  else
+#else
     {
        long type=ARMCI_TAG;
        tcg_synch(type);
     }
-#  endif
 #endif
     MEM_FENCE;
 }

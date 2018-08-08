@@ -56,18 +56,6 @@
 #include "armci_shmem.h"
 #include "signaltrap.h"
 
-#ifdef ARMCIX
-#include "armcix.h"
-#endif
-#ifdef BGML
-#include "bgml.h"
-#if HAVE_ASSERT_H
-#   include <assert.h>
-#endif
-#include "bgmldefs.h"
-extern void armci_msg_barrier(void);
-#endif
-
 #ifdef CRAY_SHMEM
 #  ifdef CRAY_XT
 #    include <mpp/shmem.h>
@@ -90,7 +78,7 @@ thread_id_t armci_usr_tid;
 #if !defined(HITACHI) && !defined(THREAD_SAFE)
 double armci_internal_buffer[BUFSIZE_DBL];
 #endif
-#if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI) || defined(CATAMOUNT) || defined(BGML)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI) || defined(CATAMOUNT)
 #   include "locks.h"
     lockset_t lockid;
 #endif
@@ -100,12 +88,6 @@ int* armci_prot_switch_fence=NULL;
 int armci_prot_switch_preproc = -1;
 int armci_prot_switch_preop = -1;
 #endif
-
-#ifdef BGML
-/*   void armci_allocate_locks(); */
-   void armci_init_memlock();
-#endif
-
 
 typedef struct{
   int sent;
@@ -178,9 +160,7 @@ extern int AR_caught_sigterm;
 
 void armci_abort(int code)
 {
-#if !defined(BGML)
     armci_perror_msg();
-#endif
     ARMCI_Cleanup();
 
     /* data server process cannot use message-passing library to abort
@@ -263,13 +243,6 @@ void armci_init_memlock()
     armci_msg_barrier();
 
     bzero(memlock_table_array[armci_me],bytes);
-
-#ifdef BGML
-    bgml_init_locks ((void *) memlock_table_array[armci_me]);
-#elif ARMCIX
-    ARMCIX_init_memlock ((memlock_t *) memlock_table_array[armci_me]);
-#endif
-
 
 #ifdef MEMLOCK_SHMEM_FLAG    
     /* armci_use_memlock_table is a pointer to local memory variable=1
@@ -428,23 +401,7 @@ int PARMCI_Init()
         }
     }
 #endif
-    
-#ifdef BGML
-    BGML_Messager_Init();
-    BG1S_Configuration_t config;
-    config=BG1S_Configure(NULL);
-    config.consistency= BG1S_ConsistencyModel_Weak;
-    BG1S_Configure(&config);
 
-    unsigned long long available = BGML_Messager_available();
-    if (available & BGML_MESSAGER_GI)
-      bgml_barrier = (BGML_Barrier) BGGI_Barrier;
-    else
-      bgml_barrier = (BGML_Barrier) BGTr_Barrier;
-#endif
-#ifdef ARMCIX
-    ARMCIX_Init ();
-#endif
     armci_nproc = armci_msg_nproc();
     armci_me = armci_msg_me();
     armci_usr_tid = THREAD_ID_SELF(); /*remember the main user thread id */
@@ -649,9 +606,6 @@ void PARMCI_Finalize()
     armci_msg_barrier();
 #ifdef MSG_COMMS_MPI
     armci_group_finalize();
-#endif
-#ifdef ARMCIX
-    ARMCIX_Finalize ();
 #endif
 #ifdef MSG_COMMS_MPI
     MPI_Comm_free(&ARMCI_COMM_WORLD); /*SK: free at last*/
