@@ -60,10 +60,6 @@ static short int new_seg=0;
 \*/
 void armci_lockmem_(void *pstart, void *pend, int proc)
 {
-#ifdef BGML
-    bgml_lockmem(pstart, pend, proc);
-#else
-
 #if defined(CLUSTER) && !defined(SGIALTIX)
     int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
@@ -86,15 +82,10 @@ void armci_lockmem_(void *pstart, void *pend, int proc)
       printf("%d: armci_lockmem_ done\n",armci_me);
       fflush(stdout);
     }
-#endif
 }
 
 void armci_unlockmem_(int proc)
 {
-#ifdef BGML
-    bgml_unlockmem(proc);
-#else
-
 #if defined(CLUSTER) && !defined(SGIALTIX) 
     int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
@@ -107,7 +98,6 @@ void armci_unlockmem_(int proc)
        kevin_ok=1;
     }
 #   endif
-#endif
 }
 
 
@@ -135,9 +125,6 @@ int i=factor*100000;
 \*/
 void armci_lockmem(void *start, void *end, int proc)
 {
-#ifdef ARMCIX
-  ARMCIX_Lockmem (start, end, proc);
-#else
      register void* pstart, *pend;
      register  int slot, avail=0;
      int turn=0, conflict=0;
@@ -270,7 +257,6 @@ void armci_lockmem(void *start, void *end, int proc)
 
      NATIVE_UNLOCK(lock,proc);
      locked_slot = avail;
-#endif /* ! ARMCIX */
 }
         
 
@@ -278,10 +264,6 @@ void armci_lockmem(void *start, void *end, int proc)
 \*/
 void armci_unlockmem(int proc)
 {
-#ifdef ARMCIX
-  ARMCIX_Unlockmem (proc);
-#else
-
      void *null[2] = {NULL,NULL};
      memlock_t *memlock_table;
 
@@ -301,7 +283,6 @@ void armci_unlockmem(int proc)
 
      memlock_table = (memlock_t*)memlock_table_array[proc];
      armci_put(null,&memlock_table[locked_slot].start,2*sizeof(void*),proc);
-#endif /* ! ARMCIX */
 }
 
 

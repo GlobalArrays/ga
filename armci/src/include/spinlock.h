@@ -179,23 +179,19 @@ static inline void armci_init_spinlock(LOCK_T *mutex)
 
 static inline void armci_acquire_spinlock(LOCK_T *mutex)
 {
-#if defined(BGML) || defined(DCMF)
-    return;
-#else
     int loop=0, maxloop =10;
 
     while (TESTANDSET(mutex)){
         loop++;
         if(loop==maxloop){ 
-#   if DEBUG_
+#if DEBUG_
             extern int armci_me;
             printf("%d:spinlock sleeping\n",armci_me); fflush(stdout);
-#   endif
+#endif
             usleep(1);
             loop=0;
         }
     }
-#endif
 }
 
 #ifdef RELEASE_SPINLOCK
@@ -207,23 +203,22 @@ static inline void armci_acquire_spinlock(LOCK_T *mutex)
 #else
 static inline void armci_release_spinlock(LOCK_T *mutex)
 {
-#if defined(BGML) || defined(DCMF)
-    return;
-#else
-#   ifdef MEMORY_BARRIER
-    MEMORY_BARRIER ();
-#   endif
+#ifdef MEMORY_BARRIER
+    MEMORY_BARRIER();
+#endif
+
 #if OPENPA
     OPA_store_int(mutex, 0);
 #else
     *mutex =0;
 #endif
-#   ifdef MEMORY_BARRIER
+
+#ifdef MEMORY_BARRIER
     MEMORY_BARRIER ();
-#   endif
-#   if (defined(MACX)||defined(LINUX)) && defined(__GNUC__) && defined(__ppc__)  
+#endif
+
+#if (defined(MACX)||defined(LINUX)) && defined(__GNUC__) && defined(__ppc__)
     __asm__ __volatile__ ("isync" : : : "memory");
-#   endif
 #endif
 }
 #endif /* RELEASE_SPINLOCK */

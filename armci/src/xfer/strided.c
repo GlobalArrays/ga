@@ -34,10 +34,6 @@
 #  endif
 #endif
 
-#if defined(BGML) || defined(ARMCIX)
-#define PREPROCESS_STRIDED(tmp_count)
-#define POSTPROCESS_STRIDED(tmp_count)
-#else
 #define BIGINT 2147483647
 #define PREPROCESS_STRIDED(tmp_count) {					\
     tmp_count=0;							\
@@ -54,7 +50,6 @@
     }									\
   }
 #define POSTPROCESS_STRIDED(tmp_count) if(tmp_count)seg_count[1]=tmp_count
-#endif
 
 #define SERVER_GET 1
 #define SERVER_NBGET 2
@@ -675,52 +670,6 @@ static int _armci_puts(void *src_ptr,
     }
   }
    
-#ifdef BGML
-  if(nbh) {
-    nbh->count = 1;
-    BGML_Callback_t cb_wait={wait_callback, &nbh->count};
-    BG1S_MemputS (&nbh->cmpl_info, proc,
-		  src_ptr, src_stride_arr,
-		  dst_ptr, dst_stride_arr,
-		  seg_count, stride_levels,
-		  0, &cb_wait, 1);
-  }
-  else if(!stride_levels) {
-    unsigned temp_count=1;
-    BGML_Callback_t cb_wait={wait_callback, &temp_count};
-    BG1S_t request;
-    BGML_CriticalSection_enter();
-    BG1S_Memput(&request, proc, src_ptr, 0, dst_ptr, count[0], &cb_wait, 1);
-    /*BGML_Wait(&count);*/
-    while (temp_count) BGML_Messager_advance();
-    BGML_CriticalSection_exit();
-  }
-  else {
-    armci_hdl_t nb_handle;
-    ARMCI_INIT_HANDLE(&nb_handle);
-    PARMCI_NbPutS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count,
-		 stride_levels, proc, &nb_handle);
-    PARMCI_Wait(&nb_handle);
-  }
-  if(put_flag) { /*=>!nbh*/
-    PARMCI_Fence(proc);
-    PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
-  }
-#elif ARMCIX
-  if(nbh) 
-    ARMCIX_NbPutS (src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, nbh);
-  else if(!stride_levels) {
-    ARMCIX_Put(src_ptr, dst_ptr, count[0], proc);
-  }
-  else {
-    ARMCIX_PutS (src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc);
-  }
-  if(put_flag) { /*=>!nbh*/
-    PARMCI_Fence(proc);
-    PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
-  }
-#else /*BGML*/
-
   /* use direct protocol for remote access when performance is better */
 #  if defined(LAPI) || defined(DOELAN4)
   if(!direct) {
@@ -870,7 +819,6 @@ static int _armci_puts(void *src_ptr,
 	PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
       }
     }
-#endif /*BGML*/
   POSTPROCESS_STRIDED(tmp_count);
   if(rc) return FAIL6;
   else return 0;
@@ -978,80 +926,22 @@ static int _armci_accs( int  optype,    void *scale,
   }
 
   PREPROCESS_STRIDED(tmp_count);
-#ifdef BGML
-  armci_ihdl_t inbh;
-  armci_hdl_t tmp_hdl;
-  if(nbh) inbh = nbh;
-  else {
-    ARMCI_INIT_HANDLE(&tmp_hdl);
-    inbh = (armci_ihdl_t)&tmp_hdl;
-  }
-  inbh->count=1;
-  BGML_Callback_t cb_wait={wait_callback, &inbh->count};
-    
-  BGML_Op oper1=BGML_PROD;
-  BGML_Op oper2=BGML_SUM;
-  BGML_Dt dt;
-  switch(optype) {
-  case ARMCI_ACC_INT:
-  case ARMCI_ACC_LNG:
-    dt=BGML_SIGNED_INT;
-    break;
-#if 0
-  case ARMCI_ACC_LNG:
-    dt=BGML_SIGNED_LONG;
-    break;
-#endif
-  case ARMCI_ACC_DBL:
-    dt=BGML_DOUBLE;
-    break;
-  case ARMCI_ACC_CPL:
-    dt=BGML_SINGLE_COMPLEX;
-    break;
-  case ARMCI_ACC_DCP:
-    dt=BGML_DOUBLE_COMPLEX;
-    break;
-  case ARMCI_ACC_FLT:
-    dt=BGML_FLOAT;
-    break;
-  default:
-    assert(0);
-  }
-    
-  BG1S_AccumulateS (&inbh->cmpl_info, proc,
-		    src_ptr, src_stride_arr,
-		    dst_ptr, dst_stride_arr,
-		    seg_count, stride_levels,
-		    scale, 0,
-		    dt, oper1, oper2,
-		    &cb_wait, 1);
-
-  if(!nbh) PARMCI_Wait(&tmp_hdl);
-#elif ARMCIX
-  if(!nbh)
-    ARMCIX_AccS (optype, scale, src_ptr, src_stride_arr, dst_ptr,
-		 dst_stride_arr, count, stride_levels, proc);
-  else
-    ARMCIX_NbAccS (optype, scale, src_ptr, src_stride_arr, dst_ptr,
-		   dst_stride_arr, count, stride_levels, proc, nbh);
-#else 
 
   direct=SAMECLUSNODE(proc);
 
-#   if defined(ACC_COPY) && !defined(ACC_SMP)
+#if defined(ACC_COPY) && !defined(ACC_SMP)
   if(armci_me != proc) direct=0;
-#   endif /*ACC_COPY && !ACC_SMP*/
-       
-  if(direct)
+#endif /*ACC_COPY && !ACC_SMP*/
+
+  if(direct) {
     rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,
 			  dst_stride_arr, count, stride_levels,1,NULL);
-  else{
+  } else {
     if(nbh) { DO_FENCE(proc,SERVER_NBPUT); }
     else { DO_FENCE(proc,SERVER_PUT); }
     rc = armci_pack_strided(optype,scale,proc,src_ptr, src_stride_arr,dst_ptr,
 			    dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,nbh);
   }
-#endif /*BGML*/
   POSTPROCESS_STRIDED(tmp_count);
   if(rc) return FAIL6;
   else return 0;  
@@ -1341,19 +1231,6 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
   if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
   if(proc<0)return FAIL5;
 
-#ifdef BGML
-  armci_ihdl_t nbh;
-  set_nbhandle(&nbh, usr_hdl, PUT, proc);
-  nbh->count=1;
-  BGML_Callback_t cb_wait={wait_callback, &nbh->count};
-
-  BG1S_MemgetS (&nbh->cmpl_info, proc,
-		src_ptr, src_stride_arr,
-		dst_ptr, dst_stride_arr,
-		seg_count, stride_levels,
-		0, &cb_wait, 1);
-#else
-
 #if !defined(QUADRICS)
   direct=SAMECLUSNODE(proc);
 #endif
@@ -1427,29 +1304,26 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 			     (ext_header_t*)0,nobuf,nb_handle);
       if(rc) goto DefaultPath; /* attempt to avoid buffering failed */ 
 
-    }else
+    } else
     DefaultPath: /* standard buffered path */
 #endif
-#ifdef ARMCIX
-      rc = ARMCIX_NbGetS (src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, nb_handle);
-#else
     rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
 			    dst_ptr,dst_stride_arr,count,stride_levels,
 			    NULL,-1,-1,-1,nb_handle);
-#endif
-  }else
+  } else
 #else
     /* avoid LAPI_GetV */
-    if(stride_levels==1 && count[0]>320 && !direct) 
+    if(stride_levels==1 && count[0]>320 && !direct) {
       ARMCI_REM_GET(proc,src_ptr,src_stride_arr,dst_ptr,
 		    dst_stride_arr, count, stride_levels, nb_handle);
-    else
+    } else
 #endif
+    {
       rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, dst_ptr,
 			    dst_stride_arr,count, stride_levels,0,nb_handle);
+    }
 
   POSTPROCESS_STRIDED(tmp_count);
-#endif /*bgml*/
 
   if(rc) return FAIL6;
   else return 0;
@@ -1474,7 +1348,7 @@ int PARMCI_NbAccS( int  optype,            /* operation */
 }
 
 
-#if !defined(ACC_COPY)&&!defined(CRAY_YMP)&&!defined(CYGNUS)&&!defined(CYGWIN) &&!defined(BGML)&&!defined(DCMF)
+#if !defined(ACC_COPY)&&!defined(CRAY_YMP)&&!defined(CYGNUS)&&!defined(CYGWIN)
 #   define REMOTE_OP
 #endif
 
@@ -1539,23 +1413,13 @@ static void _armci_op_value(int op, void *src, void *dst, int proc,
 #  ifdef LAPI
     SET_COUNTER(ack_cntr[armci_th_idx], 1);
 #  endif
-#  if defined(BGML) || defined(ARMCIX)
-    if(usr_hdl) PARMCI_NbPut(src,dst,bytes,proc,usr_hdl);
-    else PARMCI_Put(src,dst,bytes,proc);
-#  else
     armci_put(src, dst, bytes, proc);
-#  endif
   }
   else {
 #  ifdef LAPI
     SET_COUNTER(get_cntr[armci_th_idx], 1);
 #  endif
-#  if defined(BGML) || defined(ARMCIX)
-    if(usr_hdl) PARMCI_NbGet(src,dst,bytes,proc,usr_hdl);
-    else PARMCI_Get(src,dst,bytes,proc);
-#  else
     armci_get(src, dst, bytes, proc);
-#  endif
   }
     
   /* deal with non-blocking loads and stores */

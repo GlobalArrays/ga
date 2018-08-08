@@ -52,18 +52,6 @@ extern INLINE void _armci_buf_set_cmpld_idx(int idx, int state);
 #   define NB_SOCKETS_ /* define NB_SOCKETS to allow non-blocking path */
 #elif defined(HITACHI)
 #  include "sr8k.h"
-#elif defined(BGML)
-#  include "bgml.h"
-#  include "bgmldefs.h"
-#  define NB_CMPL_T BG1S_t  
-    typedef long msg_tag_t;
-#elif defined(ARMCIX)
-#  ifndef ARMCIX_OPAQUE_SIZE
-#    define ARMCIX_OPAQUE_SIZE 8
-#  endif
-   typedef char armcix_opaque_t [ARMCIX_OPAQUE_SIZE];
-#  define NB_CMPL_T armcix_opaque_t
-   typedef long msg_tag_t;
 #elif defined(MPI_SPAWN) || defined(MPI_MT)
 #  include "mpi2.h"
    typedef long msg_tag_t;
@@ -97,9 +85,6 @@ typedef struct{
 #endif
 #ifdef NB_CMPL_T
    NB_CMPL_T cmpl_info;
-#endif
-#ifdef BGML
-   unsigned count;
 #endif
 } armci_ireq_t;
 /*\ the internal request structure for non-blocking api. 

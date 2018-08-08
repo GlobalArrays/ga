@@ -380,31 +380,25 @@ int PARMCI_PutV( armci_giov_t darr[], /* descriptor array */
 #     endif
 #   endif
 
-#ifdef BGML
-   armci_hdl_t nb_handle;
-   ARMCI_INIT_HANDLE(&nb_handle);
-   PARMCI_NbPutV(darr, len, proc, &nb_handle);
-   PARMCI_Wait(&nb_handle);
-#elif ARMCIX
-   ARMCIX_PutV (darr, len, proc);
-#else
-    if(direct)
+    if (direct) {
          rc = armci_copy_vector(PUT, darr, len, proc);
-    else{
-#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)  
-       /*500 is very conservative, the number here should be modified to be 
-       based on the size of send/recv buffer*/
-       if(totvec<500)
+    } else {
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)
+       /* 500 is very conservative, the number here should be modified to be
+          based on the size of send/recv buffer */
+       if(totvec<500) {
          rc = armci_rem_vector(PUT, NULL, darr, len, proc, 1,NULL);
-       else 
-#endif    
+       } else
+#endif
+       {
          rc = armci_pack_vector(PUT, NULL, darr, len, proc,NULL);
+       }
     }
 
-#endif
-
-    if(rc) return FAIL6;
-    else return 0;
+    if (rc) {
+        return FAIL6;
+    }
+    return 0;
 
 }
 
@@ -445,31 +439,25 @@ int PARMCI_GetV( armci_giov_t darr[], /* descriptor array */
 #     endif
 #   endif
 
-#ifdef BGML
-   armci_hdl_t nb_handle;
-   ARMCI_INIT_HANDLE(&nb_handle);
-   PARMCI_NbGetV(darr, len, proc, &nb_handle);
-   PARMCI_Wait(&nb_handle);
-#elif ARMCIX
-   ARMCIX_GetV (darr, len, proc);
-#else
-    if(direct)
+    if (direct) {
        rc = armci_copy_vector(GET, darr, len, proc);
-    else{
-#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API) 
-       /*500 is very conservative, the number here should be modified to be 
-       based on the size of send/recv buffer*/
-       if(totvec<500)
+    } else {
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)
+       /* 500 is very conservative, the number here should be modified to be
+          based on the size of send/recv buffer*/
+       if (totvec<500) {
           rc = armci_rem_vector(GET, NULL, darr, len, proc,1,NULL);
-       else
-#endif   
-       rc = armci_pack_vector(GET, NULL, darr, len, proc,NULL);
+       } else
+#endif
+       {
+           rc = armci_pack_vector(GET, NULL, darr, len, proc,NULL);
+       }
     }
 
-#endif
-
-    if(rc) return FAIL6;
-    else return 0;
+    if(rc) {
+        return FAIL6;
+    }
+    return 0;
 }
 
 
@@ -495,28 +483,21 @@ int PARMCI_AccV( int op,              /* oeration code */
 
     ORDER(op,proc); /* ensure ordering */
     direct=SAMECLUSNODE(proc);
-#ifdef BGML
-   armci_hdl_t nb_handle;
-   ARMCI_INIT_HANDLE(&nb_handle);
-   PARMCI_NbAccV(op, scale, darr, len, proc, &nb_handle);
-   PARMCI_Wait(&nb_handle);
-#elif ARMCIX
-   ARMCIX_AccV (op, scale, darr, len, proc);
-#else
 
 #   if defined(ACC_COPY) && !defined(ACC_SMP)
        if(armci_me != proc) direct=0;
 #   endif
 
-    if(direct)
+    if (direct) {
          rc = armci_acc_vector( op, scale, darr, len, proc);
-    else
+    } else {
          rc = armci_pack_vector(op, scale, darr, len, proc,NULL);
+    }
 
-#endif
-
-    if(rc) return FAIL6;
-    else return 0;
+    if (rc) {
+        return FAIL6;
+    }
+    return 0;
 }
 
 /*****************************************************************************/
@@ -578,33 +559,19 @@ int PARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
     direct=1;
 #   endif
 
-    if(direct){
-#ifdef BGML
-         nb_handle->count = 0;
-#endif
+    if (direct) {
          rc = armci_copy_vector(PUT, darr, len, proc);
-    }
-    else{
-#ifdef BGML
-         nb_handle->count = 1;
-         BGML_Callback_t cb_wait={wait_callback, &nb_handle->count};
-         BGML_giov_t *array=(BGML_giov_t *)darr;
-         BG1S_MemputV(&nb_handle->cmpl_info, proc, len, 
-                      (BGML_giov_t *)darr, 0, &cb_wait, 1);
-#elif ARMCIX
-
-         ARMCIX_NbPutV (darr, len, proc, nb_handle);
-
-#else
-#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)  
-       /*500 is very conservative, the number here should be modified to be 
-       based on the size of send/recv buffer*/
-       if(totvec<500)
+    } else{
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)
+       /* 500 is very conservative, the number here should be modified to be
+          based on the size of send/recv buffer */
+       if (totvec<500) {
          rc = armci_rem_vector(PUT, NULL, darr, len, proc, 1,nb_handle);
-       else 
-#endif    
+       } else
+#endif
+       {
          rc = armci_pack_vector(PUT, NULL, darr, len, proc,nb_handle);
-#endif /* BGML */
+       }
     }
 
     if(rc) return FAIL6;
@@ -662,32 +629,19 @@ int PARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
 	nb_handle = (armci_ihdl_t)armci_set_implicit_handle(GET, proc);
     }
 
-    if(direct){ 
-#ifdef BGML
-         nb_handle->count = 0;
-#endif
+    if (direct) {
          rc = armci_copy_vector(GET, darr, len, proc);
-    }
-    else{
-#ifdef BGML
-       nb_handle->count = 1;
-       BGML_Callback_t cb_wait={wait_callback, &nb_handle->count};
-       BG1S_MemgetV(&nb_handle->cmpl_info, proc, len, 
-                (BGML_giov_t *)darr, 0, &cb_wait, 1);
-#elif ARMCIX
-
-         ARMCIX_NbGetV (darr, len, proc, nb_handle);
-
-#else
-#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API) 
-       /*500 is very conservative, the number here should be modified to be 
-       based on the size of send/recv buffer*/
-       if(totvec<500)
+    } else{
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)
+       /* 500 is very conservative, the number here should be modified to be
+          based on the size of send/recv buffer */
+       if (totvec<500) {
           rc = armci_rem_vector(GET, NULL, darr, len, proc,1,nb_handle);
-       else
-#endif   
-       rc = armci_pack_vector(GET, NULL, darr, len, proc,nb_handle);
-#endif /* BGML */
+       } else
+#endif
+       {
+         rc = armci_pack_vector(GET, NULL, darr, len, proc,nb_handle);
+       }
     }
 
     if(rc) return FAIL6;
@@ -716,64 +670,10 @@ int PARMCI_NbAccV( int op,              /* oeration code */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-#ifdef BGML
-    if(nb_handle){
-      nb_handle->tag = GET_NEXT_NBTAG();
-      nb_handle->op  = op;
-      nb_handle->proc= proc;
-      nb_handle->bufid=NB_NONE;
-    }
-    else
-      nb_handle = (armci_ihdl_t)armci_set_implicit_handle(op, proc);
-    
-    BGML_Dt dt;
-    switch(op)
-      {
-        case ARMCI_ACC_INT:
-          dt=BGML_SIGNED_INT;
-          break;
-        case ARMCI_ACC_LNG:
-#if 1
-          dt=BGML_SIGNED_LONG;
-#else
-          dt=BGML_SIGNED_INT;
-#endif
-          break;
-        case ARMCI_ACC_DBL:
-          dt=BGML_DOUBLE;
-          break;
-        case ARMCI_ACC_CPL:
-          dt=BGML_SINGLE_COMPLEX;
-          break;
-        case ARMCI_ACC_FLT:
-          dt=BGML_FLOAT;
-          break;
-        case ARMCI_ACC_DCP:
-          dt=BGML_DOUBLE_COMPLEX;
-          break;
-        default:
-          armci_die("Unsupported data operation\n",0);
-      }
-
-    nb_handle->count = 1;
-    BGML_Callback_t cb_wait={wait_callback, &nb_handle->count};
-    BG1S_AccumulateV(&nb_handle->cmpl_info, 
-                     proc, 
-                     len, 
-                     (BGML_giov_t *)darr,
-                     scale, 
-                     0,
-                     dt, 
-                     BGML_PROD, 
-                     BGML_SUM, 
-                     &cb_wait, 
-                     1);
-#else    
-
     /* ORDER(op,proc);  ensure ordering */
     UPDATE_FENCE_INFO(proc);
     direct=SAMECLUSNODE(proc);
-    
+
     if(nb_handle){
       nb_handle->tag = GET_NEXT_NBTAG();
       nb_handle->op  = op;
@@ -787,15 +687,15 @@ int PARMCI_NbAccV( int op,              /* oeration code */
        if(armci_me != proc) direct=0;
 #   endif
 
-    if(direct){
+    if (direct) {
          rc = armci_acc_vector( op, scale, darr, len, proc);
-    }
-    else{
+    } else {
          rc = armci_pack_vector(op, scale, darr, len, proc,nb_handle);
     }
-#endif /* BGML */
 
-    if(rc) return FAIL6;
-    else return 0;
+    if (rc) {
+      return FAIL6;
+    }
+    return 0;
 }
 /*****************************************************************************/

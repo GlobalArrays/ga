@@ -50,9 +50,6 @@ void DeleteLocks(lockset_t lockid) {
 void CreateInitLocks(int num_locks, lockset_t *plockid)
 {
 int locks_per_proc, size;
-#ifdef BGML
-  fprintf(stderr,"createinitlocks\n");
-#endif
   ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
   locks_per_proc = (num_locks*armci_nclus)/armci_nproc + 1;
   size=locks_per_proc*sizeof(PAD_LOCK_T);
