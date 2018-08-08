@@ -16,15 +16,13 @@
 #   error cannot run
 #endif
 
-#if (defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN) || defined(HITACHI)) && !(defined(BGML) || defined(DCMF))
+#if (defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN) || defined(HITACHI))
 #   include "armci_shmem.h"
 typedef struct {
     long off;
     long idlist[SHMIDLEN];
 } lockset_t;
 extern lockset_t lockid;
-#elif defined(BGML) || defined(DCMF)
-typedef int lockset_t;
 #endif
 
 #if defined(PMUTEX)
