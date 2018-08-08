@@ -105,7 +105,7 @@ extern  lock_t cri_l[NUM_LOCKS];
 #   define NAT_LOCK(x,p)   t_lock(cri_l+(x))
 #   define NAT_UNLOCK(x,p) t_unlock(cri_l+(x))
 
-#elif defined(CRAY_T3E) || defined(__crayx1) || defined(CATAMOUNT) || defined(CRAY_SHMEM) || defined(PORTALS)
+#elif defined(CRAY_T3E) || defined(__crayx1) || defined(CATAMOUNT) || defined(CRAY_SHMEM)
 #   include <limits.h>
 #   if defined(CRAY) || defined(CRAY_XT)
 #       include <mpp/shmem.h>

@@ -22,10 +22,6 @@
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
-#ifdef PORTALS
-#include "armci_portals.h"
-#endif
-
 
 #if 0
 #   define PRN_DBG_MSG3(m,a1,a2,a3) \
@@ -79,22 +75,9 @@ ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR
 ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR};
 */
 
-#if defined(PORTALS)
-extern ARMCI_MEMHDL_T *mhloc;
-extern ARMCI_MEMHDL_T *mhrem;
-#   define INI_HDL(_hdl, _op, _proc) {      \
-            (_hdl).tag = GET_NEXT_NBTAG();  \
-            (_hdl).op = _op;                \
-            (_hdl).proc = _proc;            \
-            (_hdl).bufid = NB_NONE;         \
-           }
-#   define CLR_HDL(_hdl) ((_hdl).tag = 0)
-#   define CHK_HDL(_hdl) (_hdl.tag)
-#else
-#   define CLR_HDL(_hdl) ((_hdl) = ZR)
-#   define CHK_HDL(_hdl) (_hdl)
-#   define INI_HDL(_hdl, _op, _proc)
-#endif
+#define CLR_HDL(_hdl) ((_hdl) = ZR)
+#define CHK_HDL(_hdl) (_hdl)
+#define INI_HDL(_hdl, _op, _proc)
 
 static int cur_get=0;
 static int cur_put=0;
