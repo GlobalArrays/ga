@@ -378,7 +378,7 @@ int PARMCI_Init()
                  "instead of PARMCI_Init(). Please replace PARMCI_Init() "
                  " with PARMCI_Init_args(&argc, &argv) as in the API docs", 0L);
 #endif
-#if defined(MPI_MT) || defined(DCMF)
+#if defined(MPI_MT)
     {
         int provided;
         MPI_Query_thread(&provided);

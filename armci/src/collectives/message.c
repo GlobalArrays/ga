@@ -491,7 +491,7 @@ void armci_msg_init(int *argc, char ***argv)
     int flag=0;
     MPI_Initialized(&flag);
     if (!flag) {
-#   if defined(DCMF) || defined(MPI_MT)
+#   if defined(MPI_MT)
         int provided;
         MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &provided);
 #   else
