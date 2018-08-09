@@ -15,8 +15,6 @@
 #  icpc     Intel C++ compiler
 #  KCC      KAI C++ compiler
 #  RCC      Rational C++
-#  bgxlC    Intel
-#  bgxlC_r  Intel, thread safe
 #  xlC      AIX C Set++
 #  xlC_r    AIX C Set++, thread safe
 #  pgCC     Portland Group
@@ -46,7 +44,7 @@
 AC_DEFUN([GA_PROG_MPICXX],
 [AC_ARG_VAR([MPICXX], [MPI C++ compiler])
 AS_CASE([$ga_cv_target_base],
-[BGP],  [ga_mpicxx_pref=mpixlcxx_r; ga_cxx_pref=bgxlC_r],
+[BGQ],  [ga_mpicxx_pref=mpixlcxx_r; ga_cxx_pref=bgxlC_r],
 [])
 # In the case of using MPI wrappers, set CXX=MPICXX since CXX will override
 # absolutely everything in our list of compilers.
@@ -69,7 +67,7 @@ AS_IF([test x$with_mpi_wrappers = xyes],
  ga_cv_mpicxx_naked="$CXX"
  CXX="$MPICXX"],
 [AC_MSG_ERROR([CXX/MPICXX case failure])])])
-ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC bgxlC_r bgxlC openCC sunCC crayc++ g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
+ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC openCC sunCC crayc++ g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
 ga_mpicxx="mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ mpiFCC CC"
 AS_IF([test x$with_mpi_wrappers = xyes],
     [CXX_TO_TEST="$ga_mpicxx_pref $ga_mpicxx"],

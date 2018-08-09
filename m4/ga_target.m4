@@ -16,8 +16,6 @@
 # SGITFP
 AC_DEFUN([GA_TARGET],
 [# AH_TEMPLATE for all known TARGETs
-AH_TEMPLATE([BGL],          [Define to 1 on BlueGene/L systems])
-AH_TEMPLATE([BGP],          [Define to 1 on BlueGene/P systems])
 AH_TEMPLATE([CATAMOUNT],    [Define to 1 on Cray XT systems using Catamount])
 AH_TEMPLATE([CRAY_SV1],     [Define to 1 on Cray SV1 systems])
 AH_TEMPLATE([CRAY_SV2],     [Define to 1 on Cray SV2 systems])
@@ -54,15 +52,7 @@ AC_CACHE_CHECK([for TARGET base (64bit-ness checked later)],
 [ga_cv_target_base],
 [ga_cv_target_base=UNKNOWN
 AS_IF([test "x$ga_cv_target_base" = xUNKNOWN],
-    [AS_IF([test -f /bgsys/drivers/ppcfloor/arch/include/common/bgp_personality.h],
-        [ga_cv_target_base=BGP])])
-AS_IF([test "x$ga_cv_target_base" = xUNKNOWN],
-    [AS_IF([test -d /bgl/BlueLight/ppcfloor/bglsys/include],
-        [ga_cv_target_base=BGL])])
-AS_IF([test "x$ga_cv_target_base" = xUNKNOWN],
     [AS_CASE([$host],
-        [*bgl*],            [ga_cv_target_base=BGL],
-        [*bgp*],            [ga_cv_target_base=BGP],
         #[TODO],            [ga_cv_target_base=CATAMOUNT],
         #[TODO],            [ga_cv_target_base=CRAY_XT],
         [*cygwin*],         [ga_cv_target_base=CYGWIN],
@@ -94,8 +84,6 @@ dnl AS_IF([test "x$ARMCI_TOP_BUILDDIR" != x], [
             [Define if we want this system to use SYSV shared memory])])
 dnl ])
 # Hopefully these will never be used and we can remove them soon.
-AM_CONDITIONAL([BGL],          [test "$ga_cv_target_base" = BGL])
-AM_CONDITIONAL([BGP],          [test "$ga_cv_target_base" = BGP])
 AM_CONDITIONAL([CATAMOUNT],    [test "$ga_cv_target_base" = CATAMOUNT])
 AM_CONDITIONAL([CRAY_SV1],     [test "$ga_cv_target_base" = CRAY_SV1])
 AM_CONDITIONAL([CRAY_SV2],     [test "$ga_cv_target_base" = CRAY_SV2])

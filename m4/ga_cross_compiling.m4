@@ -8,7 +8,7 @@ AC_DEFUN([GA_CROSS_COMPILING], [
 AC_REQUIRE([GA_TARGET])
 AC_CACHE_CHECK([whether we are cross compiling],
     [ga_cv_cross_compiling],
-    [AS_IF([test "x$ga_cv_target_base" = xBGP], [cross_compiling=yes])
+    [AS_IF([test "x$ga_cv_target_base" = xBGQ], [cross_compiling=yes])
      ga_cv_cross_compiling=$cross_compiling])
 AM_CONDITIONAL([CROSS_COMPILING], [test "x$cross_compiling" = xyes])
 ])dnl

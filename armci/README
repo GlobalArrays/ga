@@ -172,16 +172,6 @@ And if that doesn't work (cross-compilation is not detected) you must then
 
     configure --host=x86_64-unknown-linux-gnu --build=x86_64-unknown-linux-gnu
 
-BlueGene/P
-++++++++++
-
-Currently the only way to detect the BGP platform and compile correctly is to
-use::
-
-    configure --host=powerpc-bgp-linux
-
-The rest of the configure options apply as usual e.g. --with-dcmf in this case.
-
 Compiler Selection
 ------------------
 

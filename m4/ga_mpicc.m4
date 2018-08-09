@@ -9,8 +9,6 @@
 #  ecc      Intel on IA64 ??
 #  gcc      GNU
 #  icc      Intel
-#  bgxlc    Intel on BG/P
-#  bgxlc_r  Intel on BG/P, thread safe
 #  xlc      Intel
 #  xlc_r    Intel, thread safe
 #  pgcc     Portland Group
@@ -38,7 +36,7 @@
 AC_DEFUN([GA_PROG_MPICC],
 [AC_ARG_VAR([MPICC], [MPI C compiler])
 AS_CASE([$ga_cv_target_base],
-[BGP],  [ga_mpicc_pref=mpixlc_r; ga_cc_pref=bgxlc_r],
+[BGQ],  [ga_mpicc_pref=mpixlc_r; ga_cc_pref=bgxlc_r],
 [])
 # In the case of using MPI wrappers, set CC=MPICC since CC will override
 # absolutely everything in our list of compilers.
@@ -62,7 +60,7 @@ AS_IF([test x$with_mpi_wrappers = xyes],
  ga_cv_mpic_naked="$CC"
  CC="$MPICC"],
 [AC_MSG_ERROR([CC/MPICC case failure])])])
-ga_cc="bgxlc_r bgxlc xlc_r xlc pgcc pathcc icc sxcc fcc opencc suncc craycc gcc cc ecc cl ccc"
+ga_cc="xlc_r xlc pgcc pathcc icc sxcc fcc opencc suncc craycc gcc cc ecc cl ccc"
 ga_mpicc="mpicc mpixlc_r mpixlc hcc mpxlc_r mpxlc sxmpicc mpifcc mpgcc mpcc cmpicc cc"
 AS_IF([test x$with_mpi_wrappers = xyes],
     [CC_TO_TEST="$ga_mpicc_pref $ga_mpicc"],
