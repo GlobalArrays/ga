@@ -158,7 +158,6 @@ int ga_spare_procs;
 #define ga_ComputeIndexM(_index, _ndim, _subscript, _dims)                     \
 {                                                                              \
   Integer  _i, _factor=1;                                                      \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0,*(_index)=0; _i<_ndim; _i++){                                       \
       *(_index) += _subscript[_i]*_factor;                                     \
       if(_i<_ndim-1)_factor *= _dims[_i];                                      \
@@ -171,7 +170,6 @@ int ga_spare_procs;
 #define ga_UpdateSubscriptM(_ndim, _subscript, _lo, _hi, _dims)\
 {                                                                              \
   Integer  _i;                                                                 \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0; _i<_ndim; _i++){                                                   \
        if(_subscript[_i] < _hi[_i]) { _subscript[_i]++; break;}                \
        _subscript[_i] = _lo[_i];                                               \
@@ -185,7 +183,6 @@ int ga_spare_procs;
 {                                                                              \
   Integer  _i;                                                                 \
   *_elems = 1;                                                                 \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0; _i<_ndim; _i++){                                                   \
        *_elems *= _hi[_i]-_lo[_i] +1;                                          \
        _subscript[_i] = _lo[_i];                                               \
@@ -620,7 +617,6 @@ void pnga_initialize_ltd(Integer mem_limit)
 {\
 int _d;\
     if(ndim<1||ndim>MAXDIM) pnga_error("unsupported number of dimensions",ndim);\
-  __CRAYX1_PRAGMA("_CRI novector");                                         \
     for(_d=0; _d<ndim; _d++)\
          if(dims[_d]<1)pnga_error("wrong dimension specified",dims[_d]);\
 }
