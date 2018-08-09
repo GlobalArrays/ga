@@ -1614,20 +1614,15 @@ else
 endif
 
 if ARMCI_NETWORK_ARMCI
-else
-if ARMCI_NETWORK_PORTALS
-AM_CPPFLAGS += -I$(top_srcdir)/armci/src-portals
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-else
+else # ARMCI_NETWORK_ARMCI
 if ARMCI_NETWORK_GEMINI
 AM_CPPFLAGS += -I$(top_srcdir)/armci/src-gemini
 AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-else
+else # ARMCI_NETWORK_GEMINI
 AM_CPPFLAGS += -I$(top_srcdir)/armci/src/include
 AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-endif
-endif
-endif
+endif # ARMCI_NETWORK_GEMINI
+endif # ARMCI_NETWORK_ARMCI
 
 # As of ga-5-2 libarmci is no longer rolled up into libga.
 libga_la_LIBADD += $(ELPA_LIBS)

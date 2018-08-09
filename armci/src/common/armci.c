@@ -472,11 +472,6 @@ int PARMCI_Init()
     armci_init_lapi();
 #endif
 
-#ifdef PORTALS
-    armci_init_portals();
-    shmem_init();
-#endif
-
 #ifdef CRAY_SHMEM
     shmem_init();
 #endif
@@ -577,7 +572,7 @@ int PARMCI_Init()
        if(armci_nclus >1) 
            armci_start_server();
 #   endif
-#if defined(GM) || defined(VAPI) || defined(PORTALS) || (defined(LAPI) && defined(LAPI_RDMA))
+#if defined(GM) || defined(VAPI) || (defined(LAPI) && defined(LAPI_RDMA))
     /* initialize registration of memory */
     armci_region_init();
 #endif
@@ -635,9 +630,6 @@ void PARMCI_Finalize()
     }
 #endif
 
-#ifdef PORTALS
-    armci_fini_portals();
-#endif
 #ifdef LAPI
     armci_term_lapi();
 #endif

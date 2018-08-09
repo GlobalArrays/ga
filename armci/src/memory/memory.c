@@ -30,7 +30,7 @@ extern void armci_shmalloc_exchange_offsets(context_t *);
 #endif
 
 static context_t ctx_localmem;
-#if defined(PORTALS_WITHREG) || defined(PORTALS) || defined(ALLOW_PIN)
+#if defined(ALLOW_PIN)
 static context_t ctx_mlocalmem;
 #endif
 
@@ -160,9 +160,6 @@ void kr_check_local()
 kr_malloc_print_stats(&ctx_localmem);
 #endif
 kr_malloc_verify(&ctx_localmem);
-#if defined(PORTALS_WITHREG)
-kr_malloc_verify(&ctx_mlocalmem);
-#endif
 }
 
 void  armci_print_ptr(void **ptr_arr, int bytes, int size, void* myptr, int off)
@@ -705,16 +702,9 @@ void armci_shmem_memctl(armci_meminfo_t *meminfo) {
 #ifdef ALLOW_PIN
 void *reg_malloc(size_t size)
 {
-#ifdef PORTALS
-char *ptr; 
-extern void *shmalloc(size_t);
+    char *ptr;
     ARMCI_PR_DBG("enter",0);
     ptr = malloc(size);
-#else
-char *ptr; 
-    ARMCI_PR_DBG("enter",0);
-    ptr = malloc(size);
-#endif
     armci_region_register_loc(ptr,size);
     ARMCI_PR_DBG("exit",0);
     return(ptr);
@@ -757,27 +747,14 @@ void armci_krmalloc_init_localmem() {
  * Local Memory Allocation and Free
  */
 void *PARMCI_Malloc_local(armci_size_t bytes) {
-#if defined(PORTALS)
-    void *rptr;
-#endif
     ARMCI_PR_DBG("enter",0);
-#if defined(PORTALS)
-    rptr=kr_malloc((size_t)bytes, &ctx_mlocalmem);
-    ARMCI_PR_DBG("exit",0);
-    return rptr;
-#else
     ARMCI_PR_DBG("exit",0);
     return (void *)kr_malloc((size_t)bytes, &ctx_localmem);
-#endif
 }
 
 int PARMCI_Free_local(void *ptr) {
     ARMCI_PR_DBG("enter",0);
-#if defined(PORTALS)
-    kr_free((char *)ptr, &ctx_mlocalmem);
-#else
     kr_free((char *)ptr, &ctx_localmem);
-#endif
     ARMCI_PR_DBG("exit",0);
     return 0;
 }

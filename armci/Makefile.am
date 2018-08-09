@@ -111,15 +111,8 @@ bin_SCRIPTS += tools/armci-config
 CLEANFILES += $(bin_SCRIPTS)
 
 ##############################################################################
-# src-portals
-#
-if ARMCI_NETWORK_PORTALS
-include $(top_srcdir)/src-portals/Makefile.inc
-
-##############################################################################
 # src-gemini
 #
-else # !ARMCI_NETWORK_PORTALS
 if ARMCI_NETWORK_GEMINI
 include $(top_srcdir)/src-gemini/Makefile.inc
 
@@ -283,7 +276,6 @@ include_HEADERS += src/include/message.h
 AM_CPPFLAGS += -I$(top_srcdir)/src/include
 
 endif # ARMCI_NETWORK_GEMINI
-endif # ARMCI_NETWORK_PORTALS
 
 ##############################################################################
 # profiling
@@ -444,13 +436,6 @@ endif
 if THREAD_SAFE
 check_PROGRAMS += testing/test_mt
 endif
-if ARMCI_NETWORK_PORTALS
-check_PROGRAMS += testing/clone
-check_PROGRAMS += testing/fork
-check_PROGRAMS += testing/origptl
-check_PROGRAMS += testing/ptltest
-check_PROGRAMS += testing/te
-endif
 if HAVE_ARMCI_STRIDE_INFO_INIT
 check_PROGRAMS += testing/testitr
 endif
@@ -504,35 +489,23 @@ endif
 if THREAD_SAFE
 ARMCI_PARALLEL_TESTS += testing/test_mt$(EXEEXT)
 endif
-if ARMCI_NETWORK_PORTALS
-#ARMCI_PARALLEL_TESTS += testing/clone$(EXEEXT)
-#ARMCI_PARALLEL_TESTS += testing/fork$(EXEEXT)
-#ARMCI_PARALLEL_TESTS += testing/origptl$(EXEEXT)
-#ARMCI_PARALLEL_TESTS += testing/ptltest$(EXEEXT)
-#ARMCI_PARALLEL_TESTS += testing/te$(EXEEXT)
-endif
 if HAVE_ARMCI_STRIDE_INFO_INIT
 ARMCI_SERIAL_TESTS += testing/testitr$(EXEEXT)
 endif
 
-testing_clone_SOURCES       = testing/clone.c $(atsrc)
-testing_fork_SOURCES        = testing/fork.c $(atsrc)
 testing_fttest_SOURCES      = testing/fttest.c $(atsrc)
 testing_gpctest_SOURCES     = testing/gpctest.c $(atsrc)
 testing_ipctest_SOURCES     = testing/ipctest.c $(atsrc)
 testing_msgcheck_SOURCES    = testing/msgcheck.c $(atsrc)
-testing_origptl_SOURCES     = testing/origptl.c $(atsrc)
 testing_perf_aggr_SOURCES   = testing/perf_aggr.c $(atsrc)
 testing_perf_nb_SOURCES     = testing/perf_nb.c $(atsrc)
 testing_perf_strided_SOURCES= testing/perf_strided.c $(atsrc)
 testing_perf_SOURCES        = testing/perf.c $(atsrc)
 testing_perf2_SOURCES       = testing/perf2.c $(atsrc)
-testing_ptltest_SOURCES     = testing/ptltest.c $(atsrc)
 testing_shmclean_SOURCES    = testing/shmclean.c $(atsrc)
 testing_shmtest_SOURCES     = testing/shmtest.c $(atsrc)
 testing_simple_SOURCES      = testing/simple.c $(atsrc)
 testing_simplelock_SOURCES  = testing/simplelock.c $(atsrc)
-testing_te_SOURCES          = testing/te.c $(atsrc)
 testing_test2_SOURCES       = testing/test2.c $(atsrc)
 testing_test_groups_SOURCES = testing/test_groups.c $(atsrc)
 testing_testitr_SOURCES     = testing/testitr.c $(atsrc)

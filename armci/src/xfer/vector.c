@@ -371,13 +371,12 @@ int PARMCI_PutV( armci_giov_t darr[], /* descriptor array */
     direct=SAMECLUSNODE(proc);
 #endif
     /* use direct protocol for remote access when performance is better */
-#   if defined(LAPI) || defined(PORTALS)
-#     if defined(PORTALS)
-      direct=1;
-#     else
-      if(!direct)
-          if(len <5 || darr[0].ptr_array_len <5) direct=1;
-#     endif
+#   if defined(LAPI)
+      if (!direct) {
+          if (len <5 || darr[0].ptr_array_len <5) {
+              direct=1;
+          }
+      }
 #   endif
 
 #ifdef BGML
@@ -436,14 +435,13 @@ int PARMCI_GetV( armci_giov_t darr[], /* descriptor array */
     direct=SAMECLUSNODE(proc);
 #endif
     /* use direct protocol for remote access when performance is better */
-#   if defined(LAPI) || defined(PORTALS)
-#     if defined(PORTALS)
-      direct=1;
-#     else
-      if(!direct)
-          if(len <5 || darr[0].ptr_array_len <8) direct=1;
-#     endif
-#   endif
+#if defined(LAPI)
+      if(!direct) {
+          if(len <5 || darr[0].ptr_array_len <8) {
+              direct=1;
+          }
+      }
+#endif
 
 #ifdef BGML
    armci_hdl_t nb_handle;
@@ -574,10 +572,6 @@ int PARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
 	nb_handle = (armci_ihdl_t)armci_set_implicit_handle(PUT, proc);
     }
 
-#   if defined(PORTALS)
-    direct=1;
-#   endif
-
     if(direct){
 #ifdef BGML
          nb_handle->count = 0;
@@ -637,10 +631,6 @@ int PARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
 
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
-#endif
-
-#if defined(PORTALS)
-    direct=1;
 #endif
 
     /* aggregate get */

@@ -88,9 +88,6 @@ dnl ##########################################################################
 dnl FROM pario/eaf/GNUmakefile
 dnl ##########################################################################
 PARIO_CPPFLAGS="$PARIO_CPPFLAGS -DEAF_STATS"
-if test x$ga_armci_network = xPORTALS ; then
-  PARIO_CPPFLAGS="$PARIO_CPPFLAGS -DCRAY_XT"
-fi
 
 dnl ##########################################################################
 dnl FROM pario/dra/GNUmakefile

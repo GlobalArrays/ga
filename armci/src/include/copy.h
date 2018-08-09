@@ -37,8 +37,8 @@
 #   define PTR_ALIGN
 #endif
 
-#if defined(NB_NONCONT) && !defined(CRAY_SHMEM) && !defined(QUADRICS) && !defined(PORTALS)
-#error NB_NONCONT is only available on CRAY_SHMEM,QUADRICS and PORTALS
+#if defined(NB_NONCONT) && !defined(CRAY_SHMEM) && !defined(QUADRICS)
+#error NB_NONCONT is only available on CRAY_SHMEM,QUADRICS
 #endif
 
 #if defined(SHMEM_HANDLE_SUPPORTED) && !defined(CRAY_SHMEM)
@@ -227,8 +227,7 @@
 
 #   include "lapidefs.h"
 
-#elif defined(_CRAYMPP) || defined(QUADRICS) || defined(__crayx1)\
-   || defined(CRAY_SHMEM) || defined(PORTALS)
+#elif defined(_CRAYMPP) || defined(QUADRICS) || defined(__crayx1) || defined(CRAY_SHMEM)
 #if defined(CRAY) || defined(CRAY_XT)
 #   include <mpp/shmem.h>
 #else
@@ -461,26 +460,6 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
 
 #      define ARMCI_NB_WAIT(cmplt) CLEAR_COUNTER((cmplt))
 #      define ARMCI_NB_TEST(cmplt,_succ) TEST_COUNTER((cmplt),(_succ))
-       
-#elif defined(PORTALS)
-#      define armci_put(src,dst,n,proc) \
-            if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
-               armci_copy(src,dst,n);\
-            } else { PARMCI_Put((src), (dst),(n),(proc));}
-
-#      define armci_get(src,dst,n,proc)\
-            if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
-               armci_copy(src,dst,n);\
-            } else { PARMCI_Get((src), (dst),(n),(proc));}
-
-#if 0
-#      define ARMCI_NB_PUT(src,dst,n,proc,cmplt)\
-            nb_handle->tag=GET_NEXT_NBTAG();armci_portals_put((proc),(src),\
-                            (dst),(n),cmplt,nb_handle->tag)
-#      define ARMCI_NB_GET(src,dst,n,proc,cmplt)\
-            nb_handle->tag=GET_NEXT_NBTAG();armci_portals_get((proc),(src),\
-            (dst),(n),cmplt,nb_handle->tag)
-#endif                                                              
 
 #elif defined(BGML)
 #define armci_get(src, dst, n, p)   PARMCI_Get(src, dst, n, p)

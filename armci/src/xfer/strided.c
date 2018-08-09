@@ -497,7 +497,7 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
 
   /*    if(proc!=armci_me) INTR_OFF;*/
 
-#  if defined(LAPI2) || defined(PORTALS) /*|| defined(DOELAN4) && !defined(NB_NONCONT)*/
+#  if defined(LAPI2) /*|| defined(DOELAN4) && !defined(NB_NONCONT)*/
   /*even 1D armci_nbput has to use different origin counters for 1D */
 #   if defined(LAPI2)
   if(!ARMCI_ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
@@ -644,9 +644,9 @@ static int _armci_puts(void *src_ptr,
 #endif
 
   PREPROCESS_STRIDED(tmp_count);
-#  if (!defined(QUADRICS) || defined(PACKPUT))
+#if (!defined(QUADRICS) || defined(PACKPUT))
   direct=SAMECLUSNODE(proc);
-#  endif /*(!QUADRICS||!PACKPUT)&&!PORTALS*/
+#endif
 
   if(put_flag) dassert(1,nbh==NULL);
 
@@ -735,9 +735,6 @@ static int _armci_puts(void *src_ptr,
     }
   }
 #  endif /*LAPI||DOELAN4*/
-#  ifdef PORTALS
-     if(stride_levels) direct=1;
-#  endif
   
 #  if !defined(LAPI2) || defined(LAPI_RDMA)
   if(!direct){
@@ -1389,11 +1386,6 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
       direct=0;
 #endif
 
-#ifdef PORTALS
-  if(stride_levels) 
-      direct=1;
-#endif
-  
 #if !defined(LAPI2) || defined(LAPI_RDMA)
   if(!direct){
 #     ifdef ALLOW_PIN
