@@ -52,17 +52,15 @@ TEST PROGRAM NOTES
 
   For a single processor execution 'parallel' is not required and the
   program can be run as::
-            
+
     testing/test.x
 
-  or under control of your favorite debugger. 
+  or under control of your favorite debugger.
 
-  On MPP like T3D, IBM SP, and Intel machines, use appropriate system
-  command to specify the number of processors, load and run the
-  programs. For example, to run on four processors of the Cray T3D
-  use::
+  Use appropriate system command to specify the number of processors,
+  load and run the programs. For example, to run on four processors use:
 
-    mppexec testing/test.x -npes 4
+    mpirun -np 4 testing/test.x
 
 DOCUMENTATION
 =============
