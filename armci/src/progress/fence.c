@@ -18,8 +18,9 @@ static void tcg_synch(long type)
 
     SYNCH_(&atype);
 }
-
-#include <mpi.h>
+#else
+#   include <mpi.h>
+#endif
 
 char *_armci_fence_arr;
 
@@ -89,15 +90,14 @@ void PARMCI_AllFence()
 
 void PARMCI_Barrier()
 {
-    if (armci_nproc==1)
-        return;
+    if (armci_nproc==1) return;
     PARMCI_AllFence();
 #ifdef MSG_COMMS_MPI
     MPI_Barrier(ARMCI_COMM_WORLD);
 #else
     {
-      long type=ARMCI_TAG;
-      tcg_synch(type);
+       long type=ARMCI_TAG;
+       tcg_synch(type);
     }
 #endif
     MEM_FENCE;
