@@ -335,11 +335,6 @@ void pnga_error(char *string, Integer icode)
 extern void Error();
 #endif
 
-#ifdef CRAY_T3D 
-#  define FOUT stdout
-#else
-#  define FOUT stderr
-#endif
 #define ERR_LEN 400
     int level;
     char error_buffer[ERR_LEN];
@@ -361,9 +356,9 @@ extern void Error();
     ga_clean_resources(); 
     if (pnga_nnodes() > 1) Error(error_buffer, icode);
     else{
-      fprintf(FOUT,"%s %ld\n",error_buffer,icode);
+      fprintf(stderr,"%s %ld\n",error_buffer,icode);
       perror("system message:");
-      fflush(FOUT);
+      fflush(stderr);
       exit(1);
     }
 #endif
