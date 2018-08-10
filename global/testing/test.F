@@ -48,6 +48,7 @@ c#define USE_RESTRICTED
 #include "testutil.fh"
       integer heap, stack, fudge, ma_heap, me, nproc, map(4096), block
       integer g_s, ndim, dim1, i
+      integer version, subversion, patch
       logical status
       parameter (heap=800*800*4, fudge=100, stack=800*800)
 c     
@@ -74,11 +75,15 @@ c
       print *, 'util_mdtob(', ma_heap, ')=', util_mdtob(ma_heap)
       call GA_set_memory_limit(util_mdtob(ma_heap))
 c
+      call ga_version(version,subversion,patch)
       if(ga_nodeid().eq.0)then
 #ifdef MIRROR
          print *,' Performing tests on Mirrored Arrays'
 #endif
          print *,' GA initialized '
+         print *,' '
+         write(6,'(a,i1,a,i1,a,i1)') ' Version ',version,'.',
+     +      subversion,'.',patch
          call ffflush(6)
       endif
 c

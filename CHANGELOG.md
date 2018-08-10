@@ -9,6 +9,10 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
+-Added
+  - Version function that can be used to report the current version, subversion
+    and patch numbers of the current release
+
 ## [5.7] - 2018-03-30
 - Known Bugs
   - Some combinations of MPI implementations with the MPI RMA and PR

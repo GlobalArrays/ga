@@ -572,10 +572,12 @@ int comex_fence_proc(int proc, comex_group_t group)
 /* comex_barrier is comex_fence_all + MPI_Barrier */
 int comex_barrier(comex_group_t group)
 {
+    int status;
     MPI_Comm comm;
 
     comex_fence_all(group);
-    assert(COMEX_SUCCESS == comex_group_comm(group, &comm));
+    status = comex_group_comm(group, &comm);
+    assert(COMEX_SUCCESS == status);
     MPI_Barrier(comm);
 
     return COMEX_SUCCESS;

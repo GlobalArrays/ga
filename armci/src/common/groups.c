@@ -122,6 +122,7 @@ int ARMCI_Absolute_id(ARMCI_Group *group,int group_rank)
 #else
     MPI_Group grp;
     status = MPI_Comm_group(ARMCI_COMM_WORLD,&grp);
+    assert(MPI_SUCCESS == status);
     MPI_Group_translate_ranks(igroup->igroup,1,&group_rank,grp,&abs_rank);
     return(abs_rank);
 #endif

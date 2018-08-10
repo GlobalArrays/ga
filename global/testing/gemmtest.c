@@ -880,18 +880,6 @@ DoublePrecision time;
     if(!MA_init((Integer)MT_F_DBL, stack/nproc, heap/nproc))
        GA_Error("MA_init failed bytes= %d",stack+heap);   
 
-#ifdef PERMUTE
-      {
-        int i, *list = (int*)malloc(nproc*sizeof(int));
-        if(!list)GA_Error("malloc failed",nproc);
-
-        for(i=0; i<nproc;i++)list[i]=nproc-1-i;
-
-        GA_Register_proclist(list, nproc);
-        free(list);
-      }
-#endif
-
     if(GA_Uses_fapi())GA_Error("Program runs with C API only",1);
 
     time = MP_TIMER();

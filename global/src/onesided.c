@@ -31,7 +31,6 @@
 #   include "config.h"
 #endif
  
-/*#define PERMUTE_PIDS */
 #define USE_GATSCAT_NEW
 
 #if HAVE_STDIO_H
@@ -89,8 +88,6 @@
 
 char *fence_array;
 static int GA_fence_set=0;
-Integer *_ga_map;       /* used in get/put/acc */
-int *ProcListPerm;
 
 static int GA_prealloc_gatscat = 0;
 static Integer *GA_header;
@@ -100,13 +97,6 @@ static Integer *GA_elems;
 extern void armci_read_strided(void*, int, int*, int*, char*);
 extern void armci_write_strided(void*, int, int*, int*, char*);
 extern armci_hdl_t* get_armci_nbhandle(Integer *);
-
-extern void gai_iterator_init(Integer, Integer [], Integer [], _iterator_hdl *);
-extern void gai_iterator_reset(_iterator_hdl *);
-extern int gai_iterator_next(_iterator_hdl *, int *, Integer *[],
-    Integer *[], char **, Integer []);
-extern void gai_iterator_destroy(_iterator_hdl *);
-
 
 /***************************************************************************/
 
@@ -224,8 +214,6 @@ void pnga_init_fence()
 
 void gai_init_onesided()
 {
-    _ga_map = (Integer*)malloc((size_t)(GAnproc*2*MAXDIM +1)*sizeof(Integer));
-    if(!_ga_map) pnga_error("ga_init:malloc failed (_ga_map)",0);
     fence_array = calloc((size_t)GAnproc,1);
     if(!fence_array) pnga_error("ga_init:calloc failed",0);
 }
@@ -233,8 +221,6 @@ void gai_init_onesided()
 
 void gai_finalize_onesided()
 {
-    free(_ga_map);
-    _ga_map = NULL;
     free(fence_array);
     fence_array = NULL;
 }
@@ -265,53 +251,6 @@ void gai_finalize_onesided()
   }\
 }
      
-
-
-
-
-/*\ internal malloc that bypasses MA and uses internal buf when possible
-\*/
-#define MBUFLEN 256
-#define MBUF_LEN MBUFLEN+2
-static double ga_int_malloc_buf[MBUF_LEN];
-static int mbuf_used=0;
-#define MBUF_GUARD -1998.1998
-void *gai_malloc(int bytes)
-{
-    void *ptr;
-    if(!mbuf_used && bytes <= MBUF_LEN){
-       if(DEBUG){
-          ga_int_malloc_buf[0]= MBUF_GUARD;
-          ga_int_malloc_buf[MBUFLEN]= MBUF_GUARD;
-       }
-       ptr = ga_int_malloc_buf+1;
-       mbuf_used++;
-    }else{
-        Integer elems = (bytes+sizeof(double)-1)/sizeof(double)+1;
-	ptr=ga_malloc(elems, MT_DBL, "GA malloc temp");
-	/* *((Integer*)ptr)= handle;
-	   ptr = ((double*)ptr)+ 1;*/ /*needs sizeof(double)>=sizeof(Integer)*/
-    }
-    return ptr;
-}
-
-void gai_free(void *ptr)
-{
-    if(ptr == (ga_int_malloc_buf+1)){
-        if(DEBUG){
-          assert(ga_int_malloc_buf[0]== MBUF_GUARD);
-          assert(ga_int_malloc_buf[MBUFLEN]== MBUF_GUARD);
-          assert(mbuf_used ==1);
-        }
-        mbuf_used =0;
-    }else{
-        /* Integer handle= *( (Integer*) (-1 + (double*)ptr)); */
-      ga_free(ptr);
-    }
-}
-
-        
-
 
 #define gaShmemLocation(proc, g_a, _i, _j, ptr_loc, _pld)                      \
 {                                                                              \
@@ -621,7 +560,7 @@ void ngai_put_common(Integer g_a,
   int *stride_rem=&_stride_rem[1], *stride_loc=&_stride_loc[1], *count=&_count[1];
   _iterator_hdl it_hdl;
 
-  GA_PUSH_NAME("ngai_put_common");
+ 
 
   ga_check_handleM(g_a, "ngai_put_common");
 
@@ -690,10 +629,6 @@ void ngai_put_common(Integer g_a,
         */
         if(GA_fence_set)fence_array[proc]=1;
 
-#ifdef PERMUTE_PIDS
-        if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
-
 #ifndef NO_GA_STATS	    
         if(proc == GAme){
           gam_CountElems(ndim, plo, phi, &elems);
@@ -739,10 +674,11 @@ void ngai_put_common(Integer g_a,
   if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
 #endif
 
-  GA_POP_NAME;
 #ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
+
+  gai_iterator_destroy(&it_hdl);
 }
 
 
@@ -1001,8 +937,6 @@ void ngai_get_common(Integer g_a,
   int _stride_rem[MAXDIM+1], _stride_loc[MAXDIM+1], _count[MAXDIM+1];
   int *stride_rem=&_stride_rem[1], *stride_loc=&_stride_loc[1], *count=&_count[1];
 
-  GA_PUSH_NAME("ngai_get_common");
-
   ga_check_handleM(g_a, "ngai_get_common");
 
   size = GA[handle].elemsize;
@@ -1072,10 +1006,6 @@ void ngai_get_common(Integer g_a,
            buf (stride_loc) */
         gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
 
-#ifdef PERMUTE_PIDS
-        if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
-
 #ifndef NO_GA_STATS	    
         if(proc == GAme){
           gam_CountElems(ndim, plo, phi, &elems);
@@ -1113,10 +1043,11 @@ void ngai_get_common(Integer g_a,
   if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
 #endif
 
-  GA_POP_NAME;
 #ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
+
+  gai_iterator_destroy(&it_hdl);
 }
 
 /**
@@ -1196,9 +1127,6 @@ void ngai_acc_common(Integer g_a,
 
   GA_Internal_Threadsafe_Lock();
 
-
-  GA_PUSH_NAME("ngai_acc_common");
-
   ga_check_handleM(g_a, "ngai_acc_common");
 
   size = GA[handle].elemsize;
@@ -1260,9 +1188,6 @@ void ngai_acc_common(Integer g_a,
 
         if(GA_fence_set)fence_array[proc]=1;
 
-#ifdef PERMUTE_PIDS
-        if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
 #ifndef NO_GA_STATS
         if(proc == GAme){
           gam_CountElems(ndim, plo, phi, &elems);
@@ -1297,11 +1222,12 @@ void ngai_acc_common(Integer g_a,
   if(!nbhandle) nga_wait_internal(&ga_nbhandle);
 #endif
 
-  GA_POP_NAME;
 #ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
   GA_Internal_Threadsafe_Unlock();
+
+  gai_iterator_destroy(&it_hdl);
 }
 
 /**
@@ -1355,7 +1281,7 @@ char *lptr;
 Integer  handle = GA_OFFSET + g_a;
 Integer  ow,i,p_handle;
 
-   GA_PUSH_NAME("nga_access_ptr");
+   
    p_handle = GA[handle].p_handle;
    if (!pnga_locate(g_a,lo,&ow)) pnga_error("locate top failed",0);
    if (p_handle != -1)
@@ -1381,7 +1307,6 @@ Integer  ow,i,p_handle;
    }
    gam_Location(ow,handle, lo, &lptr, ld);
    *(char**)ptr = lptr; 
-   GA_POP_NAME;
 }
 
 /*\ RETURN A POINTER TO BEGINNING OF LOCAL DATA BLOCK
@@ -1412,7 +1337,7 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   Integer lld[MAXDIM], block_idx[MAXDIM], block_count[MAXDIM];
   Integer ldims[MAXDIM];
 
-  GA_PUSH_NAME("nga_access_block_grid_ptr");
+  
   /*p_handle = GA[handle].p_handle;*/
   if (GA[handle].distr_type != SCALAPACK && GA[handle].distr_type != TILED) {
     pnga_error("Array is not using ScaLAPACK or tiled data distribution",0);
@@ -1544,7 +1469,6 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   lptr = GA[handle].ptr[inode]+offset*GA[handle].elemsize;
 
   *(char**)ptr = lptr; 
-  GA_POP_NAME;
 }
 
 /**
@@ -1567,7 +1491,7 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
   Integer  i, j/*, p_handle*/, nblocks, offset, tsum, inode;
   Integer ndim, lo[MAXDIM], hi[MAXDIM], index;
 
-  GA_PUSH_NAME("nga_access_block_ptr");
+  
   /*p_handle = GA[handle].p_handle;*/
   nblocks = GA[handle].block_total;
   ndim = GA[handle].ndim;
@@ -1602,7 +1526,6 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
   }
   *(char**)ptr = lptr; 
 
-  GA_POP_NAME;
 }
 
 /**
@@ -1625,7 +1548,7 @@ void pnga_access_block_segment_ptr(Integer g_a, Integer proc, void* ptr, Integer
   /*Integer  p_handle, nblocks;*/
   Integer /*ndim,*/ index;
 
-  GA_PUSH_NAME("ga_access_block_segment_ptr");
+  
   /*p_handle = GA[handle].p_handle;*/
   /*nblocks = GA[handle].block_total;*/
   /*ndim = GA[handle].ndim;*/
@@ -1639,7 +1562,6 @@ void pnga_access_block_segment_ptr(Integer g_a, Integer proc, void* ptr, Integer
 
   *len = GA[handle].size/GA[handle].elemsize;
   *(char**)ptr = lptr; 
-  GA_POP_NAME;
 }
 
 /**
@@ -1658,7 +1580,7 @@ Integer  ow,i,p_handle;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
-   GA_PUSH_NAME("nga_access");
+   
    p_handle = GA[handle].p_handle;
    if(!pnga_locate(g_a,lo,&ow))pnga_error("locate top failed",0);
    if (p_handle != -1)
@@ -1735,7 +1657,6 @@ unsigned long    lref=0, lptr;
    (*index) ++ ;
    FLUSH_CACHE;
 
-   GA_POP_NAME;
 }
 
 /*\ PROVIDE ACCESS TO AN INDIVIDUAL DATA BLOCK OF A GLOBAL ARRAY
@@ -1752,7 +1673,7 @@ Integer  /*p_handle,*/ iblock;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
-   GA_PUSH_NAME("nga_access_block");
+   
    /*p_handle = GA[handle].p_handle;*/
    iblock = idx;
    if (iblock < 0 || iblock >= GA[handle].block_total)
@@ -1812,7 +1733,6 @@ unsigned long    lref=0, lptr;
    (*index) ++ ;
    FLUSH_CACHE;
 
-   GA_POP_NAME;
 }
 
 /**
@@ -1832,7 +1752,7 @@ Integer  i,ndim/*,p_handle*/;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
-   GA_PUSH_NAME("nga_access_block_grid");
+   
    /*p_handle = GA[handle].p_handle;*/
    ndim = GA[handle].ndim;
    for (i=0; i<ndim; i++) 
@@ -1893,7 +1813,6 @@ unsigned long    lref=0, lptr;
    (*index) ++ ;
    FLUSH_CACHE;
 
-   GA_POP_NAME;
 }
 
 /*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
@@ -1911,7 +1830,7 @@ Integer  handle = GA_OFFSET + g_a;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
-   GA_PUSH_NAME("nga_access_block_segment");
+   
    /*p_handle = GA[handle].p_handle;*/
 
    /*
@@ -1968,7 +1887,6 @@ unsigned long    lref=0, lptr;
    (*index) ++ ;
    FLUSH_CACHE;
 
-   GA_POP_NAME;
 }
 
 /**
@@ -2076,7 +1994,7 @@ int rc=0;
 
   if (nv < 1) return;
 
-  GA_PUSH_NAME("ga_scatter_local");
+  
   handle = GA_OFFSET + g_a;
   p_handle = GA[handle].p_handle;
 
@@ -2120,8 +2038,8 @@ int rc=0;
   type = GA[handle].type;
   item_size = GAsizeofM(type);
 
-  ptr_src = gai_malloc((int)nv*2*sizeof(void*));
-  if(ptr_src==NULL)pnga_error("gai_malloc failed",nv);
+  ptr_src = malloc((int)nv*2*sizeof(void*));
+  if(ptr_src==NULL)pnga_error("malloc failed",nv);
   ptr_dst=ptr_src+ nv;
 
   for(k=0; k< nv; k++){
@@ -2144,10 +2062,6 @@ int rc=0;
 
   if(GA_fence_set)fence_array[proc]=1;
 
-#ifdef PERMUTE_PIDS
-    if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
-
   if (p_handle >= 0) {
     proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
   }
@@ -2165,9 +2079,8 @@ int rc=0;
 
   if(rc) pnga_error("scatter/_acc failed in armci",rc);
 
-  gai_free(ptr_src);
+  free(ptr_src);
 
-  GA_POP_NAME;
 }
 
 /**
@@ -2206,7 +2119,7 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
     if (nv < 1) return;
     
     ga_check_handleM(g_a, "ga_scatter");
-    GA_PUSH_NAME("ga_scatter");
+    
     GAstat.numsca++;
     /* determine how many processors are associated with array */
     p_handle = GA[handle].p_handle;
@@ -2221,12 +2134,12 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
     
     /* allocate temp memory */
     if (GA[handle].distr_type == REGULAR) {
-      buf1 = gai_malloc((int) (nproc *4 +nv)* (sizeof(Integer)));
-      if(buf1 == NULL) pnga_error("gai_malloc failed", 3*nproc);
+      buf1 = malloc((int) (nproc *4 +nv)* (sizeof(Integer)));
+      if(buf1 == NULL) pnga_error("malloc failed", 3*nproc);
     } else {
       num_blocks = GA[handle].block_total;
-      buf1 = gai_malloc((int) (num_blocks *4 +nv)* (sizeof(Integer)));
-      if(buf1 == NULL) pnga_error("gai_malloc failed", 3*num_blocks);
+      buf1 = malloc((int) (num_blocks *4 +nv)* (sizeof(Integer)));
+      if(buf1 == NULL) pnga_error("malloc failed", 3*num_blocks);
     }
    
     owner = (Integer *)buf1;  
@@ -2296,9 +2209,9 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
     
     GAstat.numsca_procs += naproc;
 
-    buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*nv*sizeof(void *) +
+    buf2 = malloc((int)(2*naproc*sizeof(void **) + 2*nv*sizeof(void *) +
                       5*naproc*sizeof(Integer) + naproc*sizeof(char*)));
-    if(buf2 == NULL) pnga_error("gai_malloc failed", naproc);
+    if(buf2 == NULL) pnga_error("malloc failed", naproc);
  
     ptr_src = (void ***)buf2;
     ptr_dst = (void ***)(buf2 + naproc*sizeof(void **));
@@ -2454,10 +2367,9 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
       }
     }
 
-    gai_free(buf2);
-    gai_free(buf1);
+    free(buf2);
+    free(buf1);
 
-    GA_POP_NAME;
 }
 
 /**
@@ -2481,7 +2393,7 @@ Integer subscrpt[2];
   if (nv < 1) return;
 
   ga_check_handleM(g_a, "ga_scatter_acc");
-  GA_PUSH_NAME("ga_scatter_acc");
+  
   GAstat.numsca++;
 
   int_ptr = (Integer*) ga_malloc(nv, MT_F_INT, "ga_scatter_acc--p");
@@ -2529,7 +2441,6 @@ Integer subscrpt[2];
 
   ga_free(int_ptr);
 
-  GA_POP_NAME;
 }
 
 #define SCATTER -99
@@ -2558,7 +2469,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
     armci_giov_t desc;
     Integer num_blocks=0;
     
-    GA_PUSH_NAME("gai_gatscat");
+    
 
     proc=(Integer *)ga_malloc(nv, MT_F_INT, "ga_gat-p");
 
@@ -2578,12 +2489,12 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
 
     /* allocate temp memory */
     if (GA[handle].distr_type == REGULAR) {
-      buf1 = gai_malloc((int) nproc * 4 * (sizeof(Integer)));
-      if(buf1 == NULL) pnga_error("gai_malloc failed", 3*nproc);
+      buf1 = malloc((int) nproc * 4 * (sizeof(Integer)));
+      if(buf1 == NULL) pnga_error("malloc failed", 3*nproc);
     } else {
       num_blocks = GA[handle].block_total;
-      buf1 = gai_malloc((int) num_blocks * 4 * (sizeof(Integer)));
-      if(buf1 == NULL) pnga_error("gai_malloc failed", 3*num_blocks);
+      buf1 = malloc((int) num_blocks * 4 * (sizeof(Integer)));
+      if(buf1 == NULL) pnga_error("malloc failed", 3*num_blocks);
     }
     
     count = (Integer *)buf1;
@@ -2646,8 +2557,8 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
       }
     }
 
-    buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*nv*sizeof(void *)));
-    if(buf2 == NULL) pnga_error("gai_malloc failed", 2*naproc);
+    buf2 = malloc((int)(2*naproc*sizeof(void **) + 2*nv*sizeof(void *)));
+    if(buf2 == NULL) pnga_error("malloc failed", 2*naproc);
     
     ptr_src = (void ***)buf2;
     ptr_dst = (void ***)(buf2 + naproc * sizeof(void **));
@@ -2669,11 +2580,6 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
 
     *locbytes += (double)item_size* nelem[GAme];
     
-/*
-#ifdef PERMUTE_PIDS
-    if(GA_Proc_list) p = GA_inv_Proc_list[p];
-#endif
-*/    
     switch(op) { 
       case GATHER:
         /* go through all the elements
@@ -3118,10 +3024,9 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
       default: pnga_error("operation not supported",op);
     }
 
-    gai_free(buf2); gai_free(buf1);
+    free(buf2); free(buf1);
     
     ga_free(proc);
-    GA_POP_NAME;
 }
 
 /**
@@ -3189,7 +3094,7 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
     int *nblock;
     armci_giov_t desc;
 
-    GA_PUSH_NAME("gai_gatscat_new");
+    
 
     me = pnga_nodeid();
     num_rstrctd = GA[handle].num_rstrctd;
@@ -3272,7 +3177,7 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
     *locbytes = item_size * nelems[me];
 
     /* allocate buffers for individual vector calls */
-    buf = (char*)gai_malloc(2*maxlen*sizeof(void*));
+    buf = (char*)malloc(2*maxlen*sizeof(void*));
     ptr_loc = (void**)buf;
     ptr_rem = (void**)(buf+maxlen*sizeof(void*));
 
@@ -3375,14 +3280,13 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
         }
       }
     }
-    gai_free(buf);
+    free(buf);
     if (!GA_prealloc_gatscat) {
       ga_free(nelems);
       ga_free(list);
       ga_free(header);
     }
 
-    GA_POP_NAME;
 }
 
 /**
@@ -3397,7 +3301,7 @@ void pnga_gather(Integer g_a, void* v, void *subscript, Integer c_flag, Integer 
 
   if (nv < 1) return;
   ga_check_handleM(g_a, "nga_gather");
-  GA_PUSH_NAME("nga_gather");
+  
   GAstat.numgat++;
 
 #ifdef USE_GATSCAT_NEW
@@ -3406,7 +3310,6 @@ void pnga_gather(Integer g_a, void* v, void *subscript, Integer c_flag, Integer 
   gai_gatscat(GATHER,g_a,v,subscript,nv,&GAbytes.gattot,&GAbytes.gatloc, NULL);
 #endif
 
-  GA_POP_NAME;
 }
 
 /**
@@ -3422,7 +3325,7 @@ void pnga_scatter(Integer g_a, void* v, void *subscript, Integer c_flag, Integer
 
   if (nv < 1) return;
   ga_check_handleM(g_a, "nga_scatter");
-  GA_PUSH_NAME("nga_scatter");
+  
   GAstat.numsca++;
 
 #ifdef USE_GATSCAT_NEW
@@ -3431,7 +3334,6 @@ void pnga_scatter(Integer g_a, void* v, void *subscript, Integer c_flag, Integer
   gai_gatscat(SCATTER,g_a,v,subscript,nv,&GAbytes.scatot,&GAbytes.scaloc, NULL);
 #endif
 
-  GA_POP_NAME;
 }
 
 /**
@@ -3448,7 +3350,7 @@ void pnga_scatter_acc(Integer g_a, void* v, void *subscript, Integer c_flag,
 
   if (nv < 1) return;
   ga_check_handleM(g_a, "nga_scatter_acc");
-  GA_PUSH_NAME("nga_scatter_acc");
+  
   GAstat.numsca++;
 
 #ifdef USE_GATSCAT_NEW
@@ -3459,46 +3361,7 @@ void pnga_scatter_acc(Integer g_a, void* v, void *subscript, Integer c_flag,
               &GAbytes.scaloc, alpha);
 #endif
 
-  GA_POP_NAME;
 }
-
-#if 000
-void FATR  ga_gather000_(g_a, v, i, j, nv)
-     Integer g_a, nv, *i, *j;
-     void *v;
-{
-int k;
-Integer *sbar = (Integer*)malloc(2*sizeof(Integer)*  (int)nv);
-     if(!sbar) pnga_error("gather:malloc failed",nv);
-     for(k=0;k<nv;k++){
-          sbar[2*k] = i[k];
-          sbar[2*k+1] = j[k];
-     }
-     nga_gather_(g_a,v,sbar,nv);
-     free(sbar);
-}
-  
-
-
-/*\ SCATTER OPERATION elements of v into the global array
-\*/
-void FATR  ga_scatter000_(g_a, v, i, j, nv)
-     Integer g_a, nv, *i, *j;
-     void *v;
-{
-int k;
-Integer *sbar = (Integer*)malloc(2*sizeof(Integer)* (int) nv);
-     if(!sbar) pnga_error("scatter:malloc failed",nv);
-     for(k=0;k<nv;k++){
-          sbar[2*k] = i[k];
-          sbar[2*k+1] = j[k];
-     }
-     nga_scatter_(g_a,v,sbar,nv);
-     free(sbar);
-}
-
-#endif
-
 
 /**
  *  Gather random elements from 2D global array into local buffer v
@@ -3532,7 +3395,7 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
     if (nv < 1) return;
 
     ga_check_handleM(g_a, "ga_gather");
-    GA_PUSH_NAME("ga_gather");
+    
     GAstat.numgat++;
 
     /* determine how many processors are associated with array */
@@ -3548,12 +3411,12 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
 
     /* allocate temp memory */
     if (GA[handle].distr_type == REGULAR) {
-      buf1 = gai_malloc((int)(nproc *4  + nv)*  (sizeof(Integer)));
-      if(buf1 == NULL) pnga_error("gai_malloc failed", 3*nproc);
+      buf1 = malloc((int)(nproc *4  + nv)*  (sizeof(Integer)));
+      if(buf1 == NULL) pnga_error("malloc failed", 3*nproc);
     } else {
       num_blocks = GA[handle].block_total;
-      buf1 = gai_malloc((int)(num_blocks *4  + nv)*  (sizeof(Integer)));
-      if(buf1 == NULL) pnga_error("gai_malloc failed", 3*num_blocks);
+      buf1 = malloc((int)(num_blocks *4  + nv)*  (sizeof(Integer)));
+      if(buf1 == NULL) pnga_error("malloc failed", 3*num_blocks);
     }
     
     owner = (Integer *)buf1; 
@@ -3622,9 +3485,9 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
     }
     GAstat.numgat_procs += naproc;
     
-    buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*nv*sizeof(void *) +
+    buf2 = malloc((int)(2*naproc*sizeof(void **) + 2*nv*sizeof(void *) +
                       5*naproc*sizeof(Integer) + naproc*sizeof(char*)));
-    if(buf2 == NULL) pnga_error("gai_malloc failed", naproc);
+    if(buf2 == NULL) pnga_error("malloc failed", naproc);
  
     ptr_src = (void ***)buf2;
     ptr_dst = (void ***)(buf2 + naproc*sizeof(void **));
@@ -3778,9 +3641,8 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
       }
     }
 
-    gai_free(buf2);
-    gai_free(buf1);
-    GA_POP_NAME;
+    free(buf2);
+    free(buf1);
 }
 
 /**
@@ -3800,7 +3662,7 @@ long lvalue;
 void *pval;
 
     ga_check_handleM(g_a, "nga_read_inc");
-    GA_PUSH_NAME("nga_read_inc");
+    
     /* BJP printf("p[%d] g_a: %d subscript: %d inc: %d\n",GAme, g_a, subscript[0], inc); */
 
     if(GA[handle].type!=C_INT && GA[handle].type!=C_LONG &&
@@ -3849,9 +3711,6 @@ void *pval;
 
     if(GAme == proc)GAbytes.rdiloc += (double)sizeof(Integer);
 
-#ifdef PERMUTE_PIDS
-    if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
     if (GA[handle].distr_type == BLOCK_CYCLIC) {
       proc = proc%pnga_nnodes();
     } else if (GA[handle].distr_type == SCALAPACK) {
@@ -3876,7 +3735,6 @@ void *pval;
 
     ARMCI_Rmw(optype, pval, (int*)ptr, (int)inc, (int)proc);
 
-   GA_POP_NAME;
 
    GA_Internal_Threadsafe_Unlock();
    if(GA[handle].type==C_INT)
@@ -4094,9 +3952,6 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     }
   }
 
-  GA_PUSH_NAME("nga_strided_put");
-
-#if 1
   gai_iterator_init(g_a, lo, hi, &it_hdl);
   while (gai_iterator_next(&it_hdl, &proc, &blo, &bhi, &prem, ldrem)) {
       /* Correct ranges to account for skips in original patch. If no
@@ -4134,335 +3989,9 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       if (p_handle != -1) {
         proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
       }
-#ifdef PERMUTE_PIDS
-      if (GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
       ARMCI_PutS(pbuf, stride_loc, prem, stride_rem, count, nstride-1, proc);
-    }
-#else
-  if (!use_blocks) {
-    /* Locate the processors containing some portion of the patch
-       specified by lo and hi and return the results in _ga_map,
-       GA_proclist, and np. GA_proclist contains the list of processors
-       containing some portion of the patch, _ga_map contains the
-       lower and upper indices of the portion of the total patch held by
-       a given processor, and np contains the total number of processors
-       that contain some portion of the patch. */
-    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
-      ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
-
-    /* Loop over all processors containing a portion of patch */
-    gaPermuteProcList(np);
-    for (idx=0; idx<np; idx++) {
-      Integer ldrem[MAXDIM];
-      int stride_rem[2*MAXDIM], stride_loc[2*MAXDIM], count[2*MAXDIM];
-      Integer idx_buf, *plo, *phi;
-      char *pbuf, *prem;
-
-      p = (Integer)ProcListPerm[(int)idx];
-      /* find visible portion of patch held by processor p and return
-         the result in plo and phi. Also, get actual processor index
-         corresponding to p and store the result in proc. */
-      gam_GetRangeFromMap(p, ndim, &plo, &phi);
-      proc = (int)GA_proclist[(int)p];
-
-      /* Correct ranges to account for skips in original patch. If no
-         data is left in patch jump to next processor in loop. */
-      if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
-        continue;
-
-      /* get pointer prem in remote buffer to location indexed by plo.
-         Also get leading physical dimensions of remote buffer in memory
-         in ldrem */
-      gam_Location(proc, handle, plo, &prem, ldrem);
-
-      /* get pointer in local buffer to point indexed by plo given that
-         the corner of the buffer corresponds to the point indexed by lo */
-      gai_ComputePatchIndexWithSkip(ndim, lo, plo, skip, ld, &idx_buf);
-      pbuf = size*idx_buf + (char*)buf;
-
-      /* Compute number of elements in each stride region and compute the
-         number of stride regions. Store the results in count and nstride */
-      if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
-        continue;
-
-      /* Scale first element in count by element size. The ARMCI_PutS routine
-         uses this convention to figure out memory sizes. */
-      count[0] *= size;
-
-      /* Calculate strides in memory for remote processor indexed by proc and
-         local buffer */ 
-      gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-          skip);
-
-      /* BJP */
-      if (p_handle != -1) {
-        proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
-      }
-#ifdef PERMUTE_PIDS
-      if (GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
-      ARMCI_PutS(pbuf, stride_loc, prem, stride_rem, count, nstride-1, proc);
-    }
-  } else {
-    Integer offset, l_offset, last, pinv;
-    Integer blo[MAXDIM],bhi[MAXDIM];
-    Integer plo[MAXDIM],phi[MAXDIM];
-    Integer idx, j, jtot, chk, iproc;
-    Integer idx_buf, ldrem[MAXDIM];
-    Integer blk_tot = GA[handle].block_total;
-    int check1, check2;
-    int stride_rem[2*MAXDIM], stride_loc[2*MAXDIM], count[2*MAXDIM];
-    char *pbuf, *prem;
-
-    /* GA uses simple block cyclic data distribution */
-    if (GA[handle].block_sl_flag == 0) {
-
-      /* loop over all processors */
-      for (iproc = 0; iproc < nproc; iproc++) {
-        /* loop over all blocks on the processor */
-        offset = 0;
-        for (idx=iproc; idx < blk_tot; idx += nproc) {
-          /* get the block corresponding to the virtual processor idx */
-          ga_ownsM(handle, idx, blo, bhi);
-
-          /* check to see if this block overlaps requested block */
-          chk = 1;
-          for (j=0; j<ndim; j++) {
-            /* check to see if at least one end point of the interval
-             * represented by blo and bhi falls in the interval
-             * represented by lo and hi */
-            check1 = ((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-                (bhi[j] >= lo[j] && bhi[j] <= hi[j]));
-            /* check to see if interval represented by lo and hi
-             * falls entirely within interval represented by blo and bhi */
-            check2 = ((lo[j] >= blo[j] && lo[j] <= bhi[j]) &&
-                (hi[j] >= blo[j] && hi[j] <= bhi[j]));
-            if (!check1 && !check2) {
-              chk = 0;
-            }
-          }
-          if (chk) {
-            /* get the patch of block that overlaps requested region */
-            gam_GetBlockPatch(blo,bhi,lo,hi,plo,phi,ndim);
-
-            /* Correct ranges to account for skips in original patch. If no
-               data is left in patch jump to next processor in loop. */
-            if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
-              continue;
-
-            /* evaluate offset within block */
-            last = ndim - 1;
-            jtot = 1;
-            if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-            l_offset = 0;
-            for (j=0; j<last; j++) {
-              l_offset += (plo[j]-blo[j])*jtot;
-              ldrem[j] = bhi[j]-blo[j]+1;
-              jtot *= ldrem[j];
-            }
-            l_offset += (plo[last]-blo[last])*jtot;
-            l_offset += offset;
-
-            /* get pointer to data on remote block */
-            pinv = idx%nproc;
-            if (p_handle > 0) {
-              pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
-            }
-            prem =  GA[handle].ptr[pinv]+l_offset*GA[handle].elemsize;
-
-            gai_ComputePatchIndexWithSkip(ndim, lo, plo, skip, ld, &idx_buf);
-            pbuf = size*idx_buf + (char*)buf;
-
-            /* Compute number of elements in each stride region and compute the
-               number of stride regions. Store the results in count and nstride */
-            if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
-              continue;
-
-            /* scale number of rows by element size */
-            count[0] *= size;
-
-            /* Calculate strides in memory for remote processor indexed by proc and
-               local buffer */
-            gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-                skip);
-
-            proc = pinv;
-
-            ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,nstride-1,proc);
-
-          }
-          /* evaluate size of  block idx and use it to increment offset */
-          jtot = 1;
-          for (j=0; j<ndim; j++) {
-            jtot *= bhi[j]-blo[j]+1;
-          }
-          offset += jtot;
-        }
-      }
-    } else {
-      /* GA uses ScaLAPACK block cyclic data distribution */
-      Integer proc_index[MAXDIM], index[MAXDIM];
-#ifdef COMPACT_SCALAPACK
-      Integer itmp;
-#else
-      Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
-      Integer blk_inc[MAXDIM], blk_jinc;
-      Integer blk_ld[MAXDIM],hlf_blk[MAXDIM];
-      /*C_Integer *num_blocks;*/
-      C_Integer *block_dims;
-      int *proc_grid;
-
-      /* Calculate some properties associated with data distribution */
-      proc_grid = GA[handle].nblock;
-      /*num_blocks = GA[handle].num_blocks;*/
-      block_dims = GA[handle].block_dims;
-      for (j=0; j<ndim; j++)  {
-        blk_dim[j] = block_dims[j]*proc_grid[j];
-        blk_num[j] = GA[handle].dims[j]/blk_dim[j];
-        /*blk_size[j] = block_dims[j]*blk_num[j];*/
-        blk_inc[j] = GA[handle].dims[j]-blk_num[j]*blk_dim[j];
-        blk_ld[j] = blk_num[j]*block_dims[j];
-        hlf_blk[j] = blk_inc[j]/block_dims[j];
-      }
-#endif
-        /* Loop through all blocks owned by this processor. Decompose
-           this loop into a loop over all processors and then a loop
-           over all blocks owned by this processor. */
-      for (iproc = 0; iproc<GAnproc; iproc++) {
-        gam_find_proc_indices(handle, iproc, proc_index);
-        gam_find_proc_indices(handle, iproc, index);
-
-        /* Initialize offset for each processor to zero */
-        offset = 0;
-        while (index[ndim-1] < GA[handle].num_blocks[ndim-1]) {
-
-          /* get bounds for current block */
-          for (idx = 0; idx < ndim; idx++) {
-            blo[idx] = GA[handle].block_dims[idx]*index[idx]+1;
-            bhi[idx] = GA[handle].block_dims[idx]*(index[idx]+1);
-            if (bhi[idx] > GA[handle].dims[idx]) bhi[idx] = GA[handle].dims[idx];
-          }
-
-          /* check to see if this block overlaps with requested block
-           * defined by lo and hi */
-          chk = 1;
-          for (j=0; j<ndim; j++) {
-            /* check to see if at least one end point of the interval
-             * represented by blo and bhi falls in the interval
-             * represented by lo and hi */
-            check1 = ((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-                (bhi[j] >= lo[j] && bhi[j] <= hi[j]));
-            /* check to see if interval represented by lo and hi
-             * falls entirely within interval represented by blo and bhi */
-            check2 = ((lo[j] >= blo[j] && lo[j] <= bhi[j]) &&
-                (hi[j] >= blo[j] && hi[j] <= bhi[j]));
-            if (!check1 && !check2) {
-              chk = 0;
-            }
-          }
-          if (chk) {
-            /* get the patch of block that overlaps requested region */
-            gam_GetBlockPatch(blo,bhi,lo,hi,plo,phi,ndim);
-
-            /* Correct ranges to account for skips in original patch. If no
-               data is left in patch jump to next processor in loop. */
-            if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
-              continue;
-
-            /* evaluate offset within block */
-            last = ndim - 1;
-#ifdef COMPACT_SCALAPACK
-            jtot = 1;
-            if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-            l_offset = 0;
-            for (j=0; j<last; j++) {
-              l_offset += (plo[j]-blo[j])*jtot;
-              ldrem[j] = bhi[j]-blo[j]+1;
-              jtot *= ldrem[j];
-            }
-            l_offset += (plo[last]-blo[last])*jtot;
-            l_offset += offset;
-#else
-            l_offset = 0;
-            jtot = 1;
-            for (j=0; j<last; j++)  {
-              ldrem[j] = blk_ld[j];
-              blk_jinc = GA[handle].dims[j]%block_dims[j];
-              if (blk_inc[j] > 0) {
-                if (proc_index[j]<hlf_blk[j]) {
-                  blk_jinc = block_dims[j];
-                } else if (proc_index[j] == hlf_blk[j]) {
-                  blk_jinc = blk_inc[j]%block_dims[j];
-                  /*
-                  if (blk_jinc == 0) {
-                    blk_jinc = block_dims[j];
-                  }
-                  */
-                } else {
-                  blk_jinc = 0;
-                }
-              }
-              ldrem[j] += blk_jinc;
-              l_offset += (plo[j]-blo[j]
-                  + ((blo[j]-1)/blk_dim[j])*block_dims[j])*jtot;
-              jtot *= ldrem[j];
-            }
-            l_offset += (plo[last]-blo[last]
-                + ((blo[last]-1)/blk_dim[j])*block_dims[last])*jtot;
-#endif
-
-            /* get pointer to data on remote block */
-            pinv = iproc;
-            if (p_handle > 0) {
-              pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
-            }
-            prem =  GA[handle].ptr[pinv]+l_offset*GA[handle].elemsize;
-
-            gai_ComputePatchIndexWithSkip(ndim, lo, plo, skip, ld, &idx_buf);
-            pbuf = size*idx_buf + (char*)buf;        
-
-            /* Compute number of elements in each stride region and compute the
-               number of stride regions. Store the results in count and nstride */
-            if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
-              continue;
-
-            /* scale number of rows by element size */
-            count[0] *= size; 
-
-            /* Calculate strides in memory for remote processor indexed by proc and
-               local buffer */
-            gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-                skip);
-
-            proc = pinv;
-
-            ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,nstride-1,proc);
-
-          }
-          /* increment offset to account for all elements on this block */
-#ifdef COMPACT_SCALAPACK
-          itmp = 1;
-          for (idx = 0; idx < ndim; idx++) {
-            itmp *= (bhi[idx] - blo[idx] + 1);
-          }
-          offset += itmp;
-#endif
-
-          /* increment block indices to get the next block on processor iproc */
-          index[0] += GA[handle].nblock[0];
-          for (idx= 0; idx < ndim; idx++) {
-            if (index[idx] >= GA[handle].num_blocks[idx] && idx < ndim-1) {
-              index[idx] = proc_index[idx];
-              index[idx+1] += GA[handle].nblock[idx+1];
-            }
-          }
-        }
-      }
-    }
   }
-#endif
-  GA_POP_NAME;
+  gai_iterator_destroy(&it_hdl);
 }
 
 /**
@@ -4503,9 +4032,6 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     }
   }
 
-  GA_PUSH_NAME("nga_strided_get");
-
-#if 1
   gai_iterator_init(g_a, lo, hi, &it_hdl);
   while (gai_iterator_next(&it_hdl, &proc, &blo, &bhi, &prem, ldrem)) {
       /* Correct ranges to account for skips in original patch. If no
@@ -4543,356 +4069,9 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       if (p_handle != -1) {
         proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
       }
-#ifdef PERMUTE_PIDS
-      if (GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
       ARMCI_GetS(prem, stride_rem, pbuf, stride_loc, count, nstride-1, proc);
-    }
-#else
-  if (!use_blocks) {
-    /* Locate the processors containing some portion of the patch
-       specified by lo and hi and return the results in _ga_map,
-       GA_proclist, and np. GA_proclist contains the list of processors
-       containing some portion of the patch, _ga_map contains the
-       lower and upper indices of the portion of the total patch held by
-       a given processor, and np contains the total number of processors
-       that contain some portion of the patch. */
-    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
-      ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
-
-    /* Loop over all processors containing a portion of patch */
-    gaPermuteProcList(np);
-    for (idx=0; idx<np; idx++) {
-      Integer ldrem[MAXDIM];
-      int stride_rem[2*MAXDIM], stride_loc[2*MAXDIM], count[2*MAXDIM];
-      Integer idx_buf, *plo, *phi;
-      char *pbuf, *prem;
-
-      p = (Integer)ProcListPerm[(int)idx];
-      /* find visible portion of patch held by processor p and return
-         the result in plo and phi. Also, get actual processor index
-         corresponding to p and store the result in proc. */
-      gam_GetRangeFromMap(p, ndim, &plo, &phi);
-      proc = (int)GA_proclist[(int)p];
-
-      /* Correct ranges to account for skips in original patch. If no
-         data is left in patch jump to next processor in loop. */
-      if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
-        continue;
-
-      /* get pointer prem in remote buffer to location indexed by plo.
-         Also get leading physical dimensions of remote buffer in memory
-         in ldrem */
-      gam_Location(proc, handle, plo, &prem, ldrem);
-
-      /* get pointer in local buffer to point indexed by plo given that
-         the corner of the buffer corresponds to the point indexed by lo */
-      gai_ComputePatchIndexWithSkip(ndim, lo, plo, skip, ld, &idx_buf);
-      /*
-      if (GAme==0) {
-        printf("p[%d] Get patch at plo[0]: %d plo[1]: %d idx_buf: %d\n",
-               GAme,plo[0],plo[1],idx_buf);
-      }
-      */
-      pbuf = size*idx_buf + (char*)buf;
-
-      /* Compute number of elements in each stride region and compute the
-         number of stride regions. Store the results in count and nstride */
-      if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
-        continue;
-      /*
-      if (GAme==0) {
-        printf("p[%d] count[0]: %d count[1]: %d count[2]: %d count[3]: %d nstride: %d\n",
-            GAme,count[0],count[1],count[2],count[3],nstride);
-      }
-      */
-
-      /* Scale first element in count by element size. The ARMCI_PutS routine
-         uses this convention to figure out memory sizes. */
-      count[0] *= size;
-
-      /* Calculate strides in memory for remote processor indexed by proc and
-         local buffer */ 
-      gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-          skip);
-      /*
-      if (GAme==0) {
-        printf("p[%d] stride_loc[0]: %d stride_loc[1]: %d stride_loc[2]: %d nstride: %d\n",
-            GAme,stride_loc[0],stride_loc[1],stride_loc[2],nstride);
-        printf("p[%d] stride_rem[0]: %d stride_rem[1]: %d stride_rem[2]: %d nstride: %d\n",
-            GAme,stride_rem[0],stride_rem[1],stride_rem[2],nstride);
-      }
-      */
-      
-
-      /* BJP */
-      if (p_handle != -1) {
-        proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
-      }
-#ifdef PERMUTE_PIDS
-      if (GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
-      ARMCI_GetS(prem, stride_rem, pbuf, stride_loc, count, nstride-1, proc);
-    }
-  } else {
-    Integer offset, l_offset, last, pinv;
-    Integer blo[MAXDIM],bhi[MAXDIM];
-    Integer plo[MAXDIM],phi[MAXDIM];
-    Integer idx, j, jtot, chk, iproc;
-    Integer idx_buf, ldrem[MAXDIM];
-    Integer blk_tot = GA[handle].block_total;
-    int check1, check2;
-    int stride_rem[2*MAXDIM], stride_loc[2*MAXDIM], count[2*MAXDIM];
-    char *pbuf, *prem;
-
-    /* GA uses simple block cyclic data distribution */
-    if (GA[handle].block_sl_flag == 0) {
-
-      /* loop over all processors */
-      for (iproc = 0; iproc < nproc; iproc++) {
-        /* loop over all blocks on the processor */
-        offset = 0;
-        for (idx=iproc; idx < blk_tot; idx += nproc) {
-          /* get the block corresponding to the virtual processor idx */
-          ga_ownsM(handle, idx, blo, bhi);
-
-          /* check to see if this block overlaps requested block */
-          chk = 1;
-          for (j=0; j<ndim; j++) {
-            /* check to see if at least one end point of the interval
-             * represented by blo and bhi falls in the interval
-             * represented by lo and hi */
-            check1 = ((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-                (bhi[j] >= lo[j] && bhi[j] <= hi[j]));
-            /* check to see if interval represented by lo and hi
-             * falls entirely within interval represented by blo and bhi */
-            check2 = ((lo[j] >= blo[j] && lo[j] <= bhi[j]) &&
-                (hi[j] >= blo[j] && hi[j] <= bhi[j]));
-            if (!check1 && !check2) {
-              chk = 0;
-            }
-          }
-          if (chk) {
-            /* get the patch of block that overlaps requested region */
-            gam_GetBlockPatch(blo,bhi,lo,hi,plo,phi,ndim);
-
-            /* Correct ranges to account for skips in original patch. If no
-               data is left in patch jump to next processor in loop. */
-            if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
-              continue;
-
-            /* evaluate offset within block */
-            last = ndim - 1;
-            jtot = 1;
-            if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-            l_offset = 0;
-            for (j=0; j<last; j++) {
-              l_offset += (plo[j]-blo[j])*jtot;
-              ldrem[j] = bhi[j]-blo[j]+1;
-              jtot *= ldrem[j];
-            }
-            l_offset += (plo[last]-blo[last])*jtot;
-            l_offset += offset;
-
-            /* get pointer to data on remote block */
-            pinv = idx%nproc;
-            if (p_handle > 0) {
-              pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
-            }
-            prem =  GA[handle].ptr[pinv]+l_offset*GA[handle].elemsize;
-
-            gai_ComputePatchIndexWithSkip(ndim, lo, plo, skip, ld, &idx_buf);
-            pbuf = size*idx_buf + (char*)buf;
-
-            /* Compute number of elements in each stride region and compute the
-               number of stride regions. Store the results in count and nstride */
-            if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
-              continue;
-
-            /* scale number of rows by element size */
-            count[0] *= size;
-
-            /* Calculate strides in memory for remote processor indexed by proc and
-               local buffer */
-            gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-                skip);
-
-            proc = pinv;
-
-            ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,nstride-1,proc);
-
-          }
-          /* evaluate size of  block idx and use it to increment offset */
-          jtot = 1;
-          for (j=0; j<ndim; j++) {
-            jtot *= bhi[j]-blo[j]+1;
-          }
-          offset += jtot;
-        }
-      }
-    } else {
-      /* GA uses ScaLAPACK block cyclic data distribution */
-      Integer proc_index[MAXDIM], index[MAXDIM];
-#ifdef COMPACT_SCALAPACK
-      Integer itmp;
-#else
-      Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
-      Integer blk_inc[MAXDIM], blk_jinc;
-      Integer blk_ld[MAXDIM],hlf_blk[MAXDIM];
-      /*C_Integer *num_blocks;*/
-      C_Integer *block_dims;
-      int *proc_grid;
-
-      /* Calculate some properties associated with data distribution */
-      proc_grid = GA[handle].nblock;
-      /*num_blocks = GA[handle].num_blocks;*/
-      block_dims = GA[handle].block_dims;
-      for (j=0; j<ndim; j++)  {
-        blk_dim[j] = block_dims[j]*proc_grid[j];
-        blk_num[j] = GA[handle].dims[j]/blk_dim[j];
-        /*blk_size[j] = block_dims[j]*blk_num[j];*/
-        blk_inc[j] = GA[handle].dims[j]-blk_num[j]*blk_dim[j];
-        blk_ld[j] = blk_num[j]*block_dims[j];
-        hlf_blk[j] = blk_inc[j]/block_dims[j];
-      }
-#endif
-        /* Loop through all blocks owned by this processor. Decompose
-           this loop into a loop over all processors and then a loop
-           over all blocks owned by this processor. */
-      for (iproc = 0; iproc<GAnproc; iproc++) {
-        gam_find_proc_indices(handle, iproc, proc_index);
-        gam_find_proc_indices(handle, iproc, index);
-
-        /* Initialize offset for each processor to zero */
-        offset = 0;
-        while (index[ndim-1] < GA[handle].num_blocks[ndim-1]) {
-
-          /* get bounds for current block */
-          for (idx = 0; idx < ndim; idx++) {
-            blo[idx] = GA[handle].block_dims[idx]*index[idx]+1;
-            bhi[idx] = GA[handle].block_dims[idx]*(index[idx]+1);
-            if (bhi[idx] > GA[handle].dims[idx]) bhi[idx] = GA[handle].dims[idx];
-          }
-
-          /* check to see if this block overlaps with requested block
-           * defined by lo and hi */
-          chk = 1;
-          for (j=0; j<ndim; j++) {
-            /* check to see if at least one end point of the interval
-             * represented by blo and bhi falls in the interval
-             * represented by lo and hi */
-            check1 = ((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-                (bhi[j] >= lo[j] && bhi[j] <= hi[j]));
-            /* check to see if interval represented by lo and hi
-             * falls entirely within interval represented by blo and bhi */
-            check2 = ((lo[j] >= blo[j] && lo[j] <= bhi[j]) &&
-                (hi[j] >= blo[j] && hi[j] <= bhi[j]));
-            if (!check1 && !check2) {
-              chk = 0;
-            }
-          }
-          if (chk) {
-            /* get the patch of block that overlaps requested region */
-            gam_GetBlockPatch(blo,bhi,lo,hi,plo,phi,ndim);
-
-            /* Correct ranges to account for skips in original patch. If no
-               data is left in patch jump to next processor in loop. */
-            if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
-              continue;
-
-            /* evaluate offset within block */
-            last = ndim - 1;
-#ifdef COMPACT_SCALAPACK
-            jtot = 1;
-            if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-            l_offset = 0;
-            for (j=0; j<last; j++) {
-              l_offset += (plo[j]-blo[j])*jtot;
-              ldrem[j] = bhi[j]-blo[j]+1;
-              jtot *= ldrem[j];
-            }
-            l_offset += (plo[last]-blo[last])*jtot;
-            l_offset += offset;
-#else
-            l_offset = 0;
-            jtot = 1;
-            for (j=0; j<last; j++)  {
-              ldrem[j] = blk_ld[j];
-              blk_jinc = GA[handle].dims[j]%block_dims[j];
-              if (blk_inc[j] > 0) {
-                if (proc_index[j]<hlf_blk[j]) {
-                  blk_jinc = block_dims[j];
-                } else if (proc_index[j] == hlf_blk[j]) {
-                  blk_jinc = blk_inc[j]%block_dims[j];
-                  /*
-                  if (blk_jinc == 0) {
-                    blk_jinc = block_dims[j];
-                  }
-                  */
-                } else {
-                  blk_jinc = 0;
-                }
-              }
-              ldrem[j] += blk_jinc;
-              l_offset += (plo[j]-blo[j]
-                  + ((blo[j]-1)/blk_dim[j])*block_dims[j])*jtot;
-              jtot *= ldrem[j];
-            }
-            l_offset += (plo[last]-blo[last]
-                + ((blo[last]-1)/blk_dim[j])*block_dims[last])*jtot;
-#endif
-
-            /* get pointer to data on remote block */
-            pinv = iproc;
-            if (p_handle > 0) {
-              pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
-            }
-            prem =  GA[handle].ptr[pinv]+l_offset*GA[handle].elemsize;
-
-            gai_ComputePatchIndexWithSkip(ndim, lo, plo, skip, ld, &idx_buf);
-            pbuf = size*idx_buf + (char*)buf;        
-
-            /* Compute number of elements in each stride region and compute the
-               number of stride regions. Store the results in count and nstride */
-            if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
-              continue;
-
-            /* scale number of rows by element size */
-            count[0] *= size; 
-
-            /* Calculate strides in memory for remote processor indexed by proc and
-               local buffer */
-            gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-                skip);
-
-            proc = pinv;
-
-            ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,nstride-1,proc);
-
-          }
-          /* increment offset to account for all elements on this block */
-#ifdef COMPACT_SCALAPACK
-          itmp = 1;
-          for (idx = 0; idx < ndim; idx++) {
-            itmp *= (bhi[idx] - blo[idx] + 1);
-          }
-          offset += itmp;
-#endif
-
-          /* increment block indices to get the next block on processor iproc */
-          index[0] += GA[handle].nblock[0];
-          for (idx= 0; idx < ndim; idx++) {
-            if (index[idx] >= GA[handle].num_blocks[idx] && idx < ndim-1) {
-              index[idx] = proc_index[idx];
-              index[idx+1] += GA[handle].nblock[idx+1];
-            }
-          }
-        }
-      }
-    }
   }
-#endif
-  GA_POP_NAME;
+  gai_iterator_destroy(&it_hdl);
 }
 
 /**
@@ -4945,9 +4124,6 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     }
   }
 
-  GA_PUSH_NAME("nga_strided_acc");
-
-#if 1
   gai_iterator_init(g_a, lo, hi, &it_hdl);
   while (gai_iterator_next(&it_hdl, &proc, &blo, &bhi, &prem, ldrem)) {
       /* Correct ranges to account for skips in original patch. If no
@@ -4985,337 +4161,8 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       if (p_handle != -1) {
         proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
       }
-#ifdef PERMUTE_PIDS
-      if (GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
       ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, count,
           nstride-1, proc);
-    }
-#else
-  if (!use_blocks) {
-    /* Locate the processors containing some portion of the patch
-       specified by lo and hi and return the results in _ga_map,
-       GA_proclist, and np. GA_proclist contains the list of processors
-       containing some portion of the patch, _ga_map contains the
-       lower and upper indices of the portion of the total patch held by
-       a given processor, and np contains the total number of processors
-       that contain some portion of the patch. */
-    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
-      ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
-
-    /* Loop over all processors containing a portion of patch */
-    gaPermuteProcList(np);
-    for (idx=0; idx<np; idx++) {
-      Integer ldrem[MAXDIM];
-      int stride_rem[2*MAXDIM], stride_loc[2*MAXDIM], count[2*MAXDIM];
-      Integer idx_buf, *plo, *phi;
-      char *pbuf, *prem;
-
-      p = (Integer)ProcListPerm[(int)idx];
-      /* find visible portion of patch held by processor p and return
-         the result in plo and phi. Also, get actual processor index
-         corresponding to p and store the result in proc. */
-      gam_GetRangeFromMap(p, ndim, &plo, &phi);
-      proc = (int)GA_proclist[(int)p];
-
-      /* Correct ranges to account for skips in original patch. If no
-         data is left in patch jump to next processor in loop. */
-      if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
-        continue;
-
-      /* get pointer prem in remote buffer to location indexed by plo.
-         Also get leading physical dimensions of remote buffer in memory
-         in ldrem */
-      gam_Location(proc, handle, plo, &prem, ldrem);
-
-      /* get pointer in local buffer to point indexed by plo given that
-         the corner of the buffer corresponds to the point indexed by lo */
-      gai_ComputePatchIndexWithSkip(ndim, lo, plo, skip, ld, &idx_buf);
-      pbuf = size*idx_buf + (char*)buf;
-
-      /* Compute number of elements in each stride region and compute the
-         number of stride regions. Store the results in count and nstride */
-      if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
-        continue;
-
-      /* Scale first element in count by element size. The ARMCI_AccS routine
-         uses this convention to figure out memory sizes. */
-      count[0] *= size;
-
-      /* Calculate strides in memory for remote processor indexed by proc and
-         local buffer */ 
-      gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-          skip);
-
-      /* BJP */
-      if (p_handle != -1) {
-        proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
-      }
-#ifdef PERMUTE_PIDS
-      if (GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
-      ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, count,
-          nstride-1, proc);
-    }
-  } else {
-    Integer offset, l_offset, last, pinv;
-    Integer blo[MAXDIM],bhi[MAXDIM];
-    Integer plo[MAXDIM],phi[MAXDIM];
-    Integer idx, j, jtot, chk, iproc;
-    Integer idx_buf, ldrem[MAXDIM];
-    Integer blk_tot = GA[handle].block_total;
-    int check1, check2;
-    int stride_rem[2*MAXDIM], stride_loc[2*MAXDIM], count[2*MAXDIM];
-    char *pbuf, *prem;
-
-    /* GA uses simple block cyclic data distribution */
-    if (GA[handle].block_sl_flag == 0) {
-
-      /* loop over all processors */
-      for (iproc = 0; iproc < nproc; iproc++) {
-        /* loop over all blocks on the processor */
-        offset = 0;
-        for (idx=iproc; idx < blk_tot; idx += nproc) {
-          /* get the block corresponding to the virtual processor idx */
-          ga_ownsM(handle, idx, blo, bhi);
-
-          /* check to see if this block overlaps requested block */
-          chk = 1;
-          for (j=0; j<ndim; j++) {
-            /* check to see if at least one end point of the interval
-             * represented by blo and bhi falls in the interval
-             * represented by lo and hi */
-            check1 = ((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-                (bhi[j] >= lo[j] && bhi[j] <= hi[j]));
-            /* check to see if interval represented by lo and hi
-             * falls entirely within interval represented by blo and bhi */
-            check2 = ((lo[j] >= blo[j] && lo[j] <= bhi[j]) &&
-                (hi[j] >= blo[j] && hi[j] <= bhi[j]));
-            if (!check1 && !check2) {
-              chk = 0;
-            }
-          }
-          if (chk) {
-            /* get the patch of block that overlaps requested region */
-            gam_GetBlockPatch(blo,bhi,lo,hi,plo,phi,ndim);
-
-            /* Correct ranges to account for skips in original patch. If no
-               data is left in patch jump to next processor in loop. */
-            if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
-              continue;
-
-            /* evaluate offset within block */
-            last = ndim - 1;
-            jtot = 1;
-            if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-            l_offset = 0;
-            for (j=0; j<last; j++) {
-              l_offset += (plo[j]-blo[j])*jtot;
-              ldrem[j] = bhi[j]-blo[j]+1;
-              jtot *= ldrem[j];
-            }
-            l_offset += (plo[last]-blo[last])*jtot;
-            l_offset += offset;
-
-            /* get pointer to data on remote block */
-            pinv = idx%nproc;
-            if (p_handle > 0) {
-              pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
-            }
-            prem =  GA[handle].ptr[pinv]+l_offset*GA[handle].elemsize;
-
-            gai_ComputePatchIndexWithSkip(ndim, lo, plo, skip, ld, &idx_buf);
-            pbuf = size*idx_buf + (char*)buf;
-
-            /* Compute number of elements in each stride region and compute the
-               number of stride regions. Store the results in count and nstride */
-            if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
-              continue;
-
-            /* scale number of rows by element size */
-            count[0] *= size;
-
-            /* Calculate strides in memory for remote processor indexed by proc and
-               local buffer */
-            gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-                skip);
-
-            proc = pinv;
-
-            ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, count,
-                       nstride-1, proc);
-
-          }
-          /* evaluate size of  block idx and use it to increment offset */
-          jtot = 1;
-          for (j=0; j<ndim; j++) {
-            jtot *= bhi[j]-blo[j]+1;
-          }
-          offset += jtot;
-        }
-      }
-    } else {
-      /* GA uses ScaLAPACK block cyclic data distribution */
-      Integer proc_index[MAXDIM], index[MAXDIM];
-#ifdef COMPACT_SCALAPACK
-      Integer itmp;
-#else
-      Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
-      Integer blk_inc[MAXDIM], blk_jinc;
-      Integer blk_ld[MAXDIM],hlf_blk[MAXDIM];
-      /*C_Integer *num_blocks;*/
-      C_Integer *block_dims;
-      int *proc_grid;
-
-      /* Calculate some properties associated with data distribution */
-      proc_grid = GA[handle].nblock;
-      /*num_blocks = GA[handle].num_blocks;*/
-      block_dims = GA[handle].block_dims;
-      for (j=0; j<ndim; j++)  {
-        blk_dim[j] = block_dims[j]*proc_grid[j];
-        blk_num[j] = GA[handle].dims[j]/blk_dim[j];
-        /*blk_size[j] = block_dims[j]*blk_num[j];*/
-        blk_inc[j] = GA[handle].dims[j]-blk_num[j]*blk_dim[j];
-        blk_ld[j] = blk_num[j]*block_dims[j];
-        hlf_blk[j] = blk_inc[j]/block_dims[j];
-      }
-#endif
-        /* Loop through all blocks owned by this processor. Decompose
-           this loop into a loop over all processors and then a loop
-           over all blocks owned by this processor. */
-      for (iproc = 0; iproc<GAnproc; iproc++) {
-        gam_find_proc_indices(handle, iproc, proc_index);
-        gam_find_proc_indices(handle, iproc, index);
-
-        /* Initialize offset for each processor to zero */
-        offset = 0;
-        while (index[ndim-1] < GA[handle].num_blocks[ndim-1]) {
-
-          /* get bounds for current block */
-          for (idx = 0; idx < ndim; idx++) {
-            blo[idx] = GA[handle].block_dims[idx]*index[idx]+1;
-            bhi[idx] = GA[handle].block_dims[idx]*(index[idx]+1);
-            if (bhi[idx] > GA[handle].dims[idx]) bhi[idx] = GA[handle].dims[idx];
-          }
-
-          /* check to see if this block overlaps with requested block
-           * defined by lo and hi */
-          chk = 1;
-          for (j=0; j<ndim; j++) {
-            /* check to see if at least one end point of the interval
-             * represented by blo and bhi falls in the interval
-             * represented by lo and hi */
-            check1 = ((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-                (bhi[j] >= lo[j] && bhi[j] <= hi[j]));
-            /* check to see if interval represented by lo and hi
-             * falls entirely within interval represented by blo and bhi */
-            check2 = ((lo[j] >= blo[j] && lo[j] <= bhi[j]) &&
-                (hi[j] >= blo[j] && hi[j] <= bhi[j]));
-            if (!check1 && !check2) {
-              chk = 0;
-            }
-          }
-          if (chk) {
-            /* get the patch of block that overlaps requested region */
-            gam_GetBlockPatch(blo,bhi,lo,hi,plo,phi,ndim);
-
-            /* Correct ranges to account for skips in original patch. If no
-               data is left in patch jump to next processor in loop. */
-            if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
-              continue;
-
-            /* evaluate offset within block */
-            last = ndim - 1;
-#ifdef COMPACT_SCALAPACK
-            jtot = 1;
-            if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-            l_offset = 0;
-            for (j=0; j<last; j++) {
-              l_offset += (plo[j]-blo[j])*jtot;
-              ldrem[j] = bhi[j]-blo[j]+1;
-              jtot *= ldrem[j];
-            }
-            l_offset += (plo[last]-blo[last])*jtot;
-            l_offset += offset;
-#else
-            l_offset = 0;
-            jtot = 1;
-            for (j=0; j<last; j++)  {
-              ldrem[j] = blk_ld[j];
-              blk_jinc = GA[handle].dims[j]%block_dims[j];
-              if (blk_inc[j] > 0) {
-                if (proc_index[j]<hlf_blk[j]) {
-                  blk_jinc = block_dims[j];
-                } else if (proc_index[j] == hlf_blk[j]) {
-                  blk_jinc = blk_inc[j]%block_dims[j];
-                  /*
-                  if (blk_jinc == 0) {
-                    blk_jinc = block_dims[j];
-                  }
-                  */
-                } else {
-                  blk_jinc = 0;
-                }
-              }
-              ldrem[j] += blk_jinc;
-              l_offset += (plo[j]-blo[j]
-                  + ((blo[j]-1)/blk_dim[j])*block_dims[j])*jtot;
-              jtot *= ldrem[j];
-            }
-            l_offset += (plo[last]-blo[last]
-                + ((blo[last]-1)/blk_dim[j])*block_dims[last])*jtot;
-#endif
-
-            /* get pointer to data on remote block */
-            pinv = iproc;
-            if (p_handle > 0) {
-              pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
-            }
-            prem =  GA[handle].ptr[pinv]+l_offset*GA[handle].elemsize;
-
-            gai_ComputePatchIndexWithSkip(ndim, lo, plo, skip, ld, &idx_buf);
-            pbuf = size*idx_buf + (char*)buf;        
-
-            /* Compute number of elements in each stride region and compute the
-               number of stride regions. Store the results in count and nstride */
-            if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
-              continue;
-
-            /* scale number of rows by element size */
-            count[0] *= size; 
-
-            /* Calculate strides in memory for remote processor indexed by proc and
-               local buffer */
-            gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-                skip);
-
-            proc = pinv;
-
-            ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, count,
-                       nstride-1, proc);
-
-          }
-          /* increment offset to account for all elements on this block */
-#ifdef COMPACT_SCALAPACK
-          itmp = 1;
-          for (idx = 0; idx < ndim; idx++) {
-            itmp *= (bhi[idx] - blo[idx] + 1);
-          }
-          offset += itmp;
-#endif
-
-          /* increment block indices to get the next block on processor iproc */
-          index[0] += GA[handle].nblock[0];
-          for (idx= 0; idx < ndim; idx++) {
-            if (index[idx] >= GA[handle].num_blocks[idx] && idx < ndim-1) {
-              index[idx] = proc_index[idx];
-              index[idx+1] += GA[handle].nblock[idx+1];
-            }
-          }
-        }
-      }
-    }
   }
-#endif
-  GA_POP_NAME;
+  gai_iterator_destroy(&it_hdl);
 }

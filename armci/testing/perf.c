@@ -561,7 +561,7 @@ int main(int argc, char **argv)
               "USAGE: 2 <= processes < %d - got %d\n", MAXPROC, nproc);
     ARMCI_Barrier();
     armci_msg_finalize();
-    //MPI_Finalize();
+    /*MPI_Finalize();*/
     exit(0);
   }
 
@@ -617,7 +617,7 @@ int main(int argc, char **argv)
   /* done */
   ARMCI_Finalize();
   armci_msg_finalize();
-  //MPI_Finalize();
+  /*MPI_Finalize();*/
   return(0);
 }
 

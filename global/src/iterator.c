@@ -36,8 +36,6 @@
 
 #define LARGE_BLOCK_REQ
  
-/*#define PERMUTE_PIDS */
-
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
@@ -77,7 +75,7 @@
 
 /*\ prepare permuted list of processes for remote ops
 \*/
-#define gaPermuteProcList(nproc)                                      \
+#define gaPermuteProcList(nproc,ProcListPerm)                         \
 {                                                                     \
   if((nproc) ==1) ProcListPerm[0]=0;                                  \
   else{                                                               \
@@ -102,7 +100,7 @@
 
 #define gam_GetRangeFromMap(p, ndim, plo, phi){  \
   Integer   _mloc = p* ndim *2;                  \
-            *plo  = (Integer*)_ga_map + _mloc;   \
+            *plo  = hdl->map + _mloc;            \
             *phi  = *plo + ndim;                 \
 }
 
@@ -198,12 +196,9 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
   hdl->g_a = g_a;
   hdl->count = 0;
   hdl->oversize = 0;
-  /*
-  hdl->map = (Integer*)malloc((size_t)(GAnproc*2*ndim+1)*sizeof(Integer));
-  hdl->proclist = (Integer*)malloc((size_t)(GAnproc)*sizeof(Integer));
-  */
-  hdl->map = _ga_map;
-  hdl->proclist = GA_proclist;
+  hdl->map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+  hdl->proclist = malloc(GAnproc*sizeof(Integer));;
+  hdl->proclistperm = malloc(GAnproc*sizeof(int));
   for (i=0; i<ndim; i++) {
     hdl->lo[i] = lo[i];
     hdl->hi[i] = hi[i];
@@ -211,9 +206,9 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
   /* Standard GA distribution */
   if (GA[handle].distr_type == REGULAR) {
     /* Locate the processors containing some portion of the patch
-     * specified by lo and hi and return the results in _ga_map,
-     * GA_proclist, and np. GA_proclist contains a list of processors
-     * containing some portion of the patch, _ga_map contains
+     * specified by lo and hi and return the results in hdl->map,
+     * hdl->proclist, and np. hdl->proclist contains a list of processors
+     * containing some portion of the patch, hdl->map contains
      * the lower and upper indices of the portion of the patch held
      * by a given processor, and np contains the total number of
      * processors that contain some portion of the patch.
@@ -221,7 +216,7 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     if(!pnga_locate_region(g_a, lo, hi, hdl->map, hdl->proclist, &hdl->nproc ))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
-    gaPermuteProcList(hdl->nproc);
+    gaPermuteProcList(hdl->nproc, hdl->proclistperm);
 
     /* Block-cyclic distribution */
   } else if (GA[handle].distr_type == BLOCK_CYCLIC) {
@@ -323,20 +318,17 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
     /* no blocks left, so return */
     if (idx>=hdl->nproc) return 0;
 
-    p = (Integer)ProcListPerm[idx];
-    *proc = (int)GA_proclist[p];
+    p = (Integer)hdl->proclistperm[idx];
+    *proc = (int)hdl->proclist[p];
     if (p_handle >= 0) {
       *proc = (int)PGRP_LIST[p_handle].inv_map_proc_list[*proc];
     }
-#ifdef PERMUTE_PIDS
-    if (GA_Proc_list) *proc = (int)GA_inv_Proc_list[*proc];
-#endif
     /* Find  visible portion of patch held by processor p and
      * return the result in plo and phi. Also get actual processor
      * index corresponding to p and store the result in proc.
      */
     gam_GetRangeFromMap(p, ndim, plo, phi);
-    *proc = (int)GA_proclist[p];
+    *proc = (int)hdl->proclist[p];
     blo = *plo;
     bhi = *phi;
 #ifdef LARGE_BLOCK_REQ
@@ -401,7 +393,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
       gam_Location(rank_rstrctd[*proc], handle, blo, prem, ldrem);
     }
     if (p_handle >= 0) {
-      *proc = (int)GA_proclist[p];
+      *proc = (int)hdl->proclist[p];
       /* BJP */
       *proc = PGRP_LIST[p_handle].inv_map_proc_list[*proc];
     }
@@ -683,6 +675,9 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
  */
 void gai_iterator_destroy(_iterator_hdl *hdl)
 {
+    free(hdl->map);
+    free(hdl->proclist);
+    free(hdl->proclistperm);
 }
 
 /**

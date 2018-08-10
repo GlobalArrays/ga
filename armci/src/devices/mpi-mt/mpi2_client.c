@@ -59,16 +59,16 @@ void armci_mpi2_debug(int rank, const char *format, ...)
 #endif
 
 #if MPI_SPAWN_DEBUG
-static inline int MPI_Check (int status)
+static inline int CHECK_Mpi (int status)
 {
     if(status != MPI_SUCCESS) 
     {
        armci_mpi2_debug(armci_me, "MPI Check failed.\n");
-       armci_die("MPI_Check failed.", 0);
+       armci_die("CHECK_Mpi failed.", 0);
     }
 }
 #else
-# define MPI_Check(x) x
+# define CHECK_Mpi(x) x
 #endif
 
 
@@ -81,7 +81,7 @@ void armci_init_connections()
 {
     armci_mpi2_debug(0, "armci_init_connections\n");
     _armci_buf_init();    /* CHECK: Is this correct ? */
-    MPI_Check(MPI_Barrier(ARMCI_COMM_WORLD));
+    CHECK_Mpi(MPI_Barrier(ARMCI_COMM_WORLD));
     /* Abhinav Vishnu */
     armci_create_server_MPIprocess();
 
@@ -139,14 +139,14 @@ void armci_mpi_strided_c2s(int op, void *ptr, int stride_levels, int stride_arr[
 
         if(op == SEND) 
         {
-           MPI_Check(
+           CHECK_Mpi(
               MPI_Send(((char*)ptr)+idx, count[0], MPI_BYTE, proc,
                        ARMCI_MPI_CLIENT2SERVER_TAG, comm)
               );
         }
         else /* ( op == RECV) */
         {
-           MPI_Check(
+           CHECK_Mpi(
               MPI_Recv(((char*)ptr)+idx, count[0], MPI_BYTE, proc,
                        ARMCI_MPI_SERVER2CLIENT_TAG, comm, &status)
               );
@@ -175,7 +175,7 @@ int armci_send_req_msg (int proc, void *buf, int bytes)
   armci_mpi2_debug(armci_me, "armci_send_req_msg(): proc=%d, server=%d, "
                    "buf=%p, bytes=%d\n", proc, server, buf, bytes);
 
-  MPI_Check(
+  CHECK_Mpi(
      MPI_Send(buf, bytes, MPI_BYTE, server, ARMCI_MPI_CLIENT2SERVER_TAG,
               ARMCI_COMM_WORLD)
      );
@@ -233,7 +233,7 @@ char *armci_ReadFromDirect (int proc, request_header_t *msginfo, int len)
     armci_mpi2_debug(armci_me, "armci_ReadFromDirect: proc=%d, server=%d, "
                      "msginfo=%p, bytes=%d (op=%d)\n", proc, server, msginfo,
                      len, msginfo->operation);
-    MPI_Check(
+    CHECK_Mpi(
        MPI_Recv(msginfo + 1, len, MPI_BYTE, server, ARMCI_MPI_SERVER2CLIENT_TAG,
                 ARMCI_COMM_WORLD, &status)
        );
@@ -302,17 +302,17 @@ void armci_create_server_MPIprocess ()
 {
     int rank, size, flag, i;
 
-    MPI_Check(MPI_Initialized(&flag));
+    CHECK_Mpi(MPI_Initialized(&flag));
     if (flag == 0)
        armci_die("ARMCI error: MPI_Init must be called before PARMCI_Init()",0);
     
-    MPI_Check(MPI_Comm_rank(ARMCI_COMM_WORLD, &rank));
-    MPI_Check(MPI_Comm_size(ARMCI_COMM_WORLD, &size));
+    CHECK_Mpi(MPI_Comm_rank(ARMCI_COMM_WORLD, &rank));
+    CHECK_Mpi(MPI_Comm_size(ARMCI_COMM_WORLD, &size));
 
     armci_nserver = armci_nclus;
     
     /* makesure all processes sync here. CHECK: does it ensure global sync ? */
-    MPI_Check(MPI_Barrier(ARMCI_COMM_WORLD));
+    CHECK_Mpi(MPI_Barrier(ARMCI_COMM_WORLD));
  
     armci_mpi2_debug(0, "armci_create_server_MPIprocess: Servers spawned!\n");
 }

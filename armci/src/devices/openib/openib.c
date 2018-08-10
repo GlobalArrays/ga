@@ -159,10 +159,12 @@ unsigned int armci_srq_size = 4096;
 pthread_t armci_async_thread[4];
 
 void async_thread_hca_events(void *ctx);
-void async_thread_ud_events(void *ctx);
+void* async_thread_ud_events(void *ctx);
   
 void init_apm_lock(void);
+#if 0
 static struct ibv_srq *create_srq(vapi_nic_t *nic);
+#endif
 
 void setup_ud_channel(void);
 
@@ -305,7 +307,7 @@ static long *ack_buf;
 #endif
 
 extern double MPI_Wtime();
-static double inittime0=0,inittime1=0,inittime2=0,inittime3=0,inittime4=0;
+static double inittime0=0,inittime1=0,inittime2=0,inittime4=0;
 
 static int mark_buf_send_complete[NUMOFBUFFERS+1];
 static sr_descr_t armci_vapi_client_nbsdscr_array[MAX_PENDING];
@@ -333,16 +335,16 @@ int i;
        printf("\n%d:print_dscr rr id=%ld sg_lst_len=%d",
               armci_me, rr->wr_id, rr->num_sge);
        for (i = 0; i < rr->num_sge; i++) {
-         printf("\n\t:sg_entry=%d addr=%p len=%d",
+         printf("\n\t:sg_entry=%d addr=%lu len=%d",
                 i, rr->sg_list[i].addr, rr->sg_list[i].length);
        }
        fflush(stdout);
     }
     if(sr){
-       printf("\n%d:print_dscr sr id=%d opcode=%d sg_lst_len=%d",
+       printf("\n%d:print_dscr sr id=%lu opcode=%d sg_lst_len=%d",
               armci_me, sr->wr_id, sr->opcode, sr->num_sge);
        for (i = 0; i < sr->num_sge; i++) {
-         printf("\n\t:sg_entry=%d addr=%p len=%d",
+         printf("\n\t:sg_entry=%d addr=%lu len=%d",
                 i, sr->sg_list[i].addr, sr->sg_list[i].length);
        }
        fflush(stdout);
@@ -359,7 +361,7 @@ struct ibv_wc pdscr1;
 struct ibv_wc *pdscr = &pdscr1;
 sr_descr_t *rdscr_arr;
 vapi_nic_t *nic;
-int debug,i,done=0;
+int debug,i;
 
     if(SERVER_CONTEXT){
        rdscr_arr = armci_vapi_serv_nbrdscr_array;
@@ -386,7 +388,7 @@ int debug,i,done=0;
       dassert1(1,pdscr->status==IBV_WC_SUCCESS,pdscr->status);
        if(debug){
          if(pdscr->wr_id >= DSCRID_SCATGAT && pdscr->wr_id < DSCRID_SCATGAT_END)
-           printf("\n%d:recv from %s complete id=%d num=%d",armci_me,
+           printf("\n%d:recv from %s complete id=%lu num=%d",armci_me,
              from,pdscr->wr_id,rdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofrecvs);
        }
        if(pdscr->wr_id >= DSCRID_SCATGAT && pdscr->wr_id < DSCRID_SCATGAT_END){
@@ -460,7 +462,7 @@ void armci_send_complete(struct ibv_send_wr *snd_dscr, char *from,int numoftimes
             /*       printf("%d: Obtained completion of wr_id=%d\n", armci_me, pdscr->wr_id); */
             /*       fflush(stdout); */
             if(SERVER_CONTEXT){
-                if(debug)printf("%d:completed id %d i=%d\n",armci_me,pdscr->wr_id,i);
+                if(debug)printf("%d:completed id %lu i=%d\n",armci_me,pdscr->wr_id,i);
                 if(pdscr->wr_id >=DSCRID_SCATGAT && pdscr->wr_id < DSCRID_SCATGAT_END){
                     sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends--;
                     if(sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends==0)
@@ -477,7 +479,7 @@ void armci_send_complete(struct ibv_send_wr *snd_dscr, char *from,int numoftimes
                 else armci_die("server send complete got weird id",pdscr->wr_id);
             }
             else{
-                if(debug)printf("%d:completed id %d i=%d\n",armci_me,pdscr->wr_id,i);
+                if(debug)printf("%d:completed id %lu i=%d\n",armci_me,pdscr->wr_id,i);
                 if(pdscr->wr_id >=DSCRID_FROMBUFS && pdscr->wr_id < DSCRID_FROMBUFS_END) {
                     /*	   printf("%d: marking send buffer %d as complete\n", armci_me, pdscr->wr_id);*/
                     mark_buf_send_complete[pdscr->wr_id]=1;
@@ -508,7 +510,7 @@ void armci_send_complete(struct ibv_send_wr *snd_dscr, char *from,int numoftimes
 
 void armci_dscrlist_recv_complete(int tag, char* from,sr_descr_t *dscr)
 {
-    int i,nr,j;
+    int i,nr;
     sr_descr_t *retdscr,*rdscr_arr;
     
     if(dscr == NULL){
@@ -535,7 +537,7 @@ void armci_dscrlist_recv_complete(int tag, char* from,sr_descr_t *dscr)
 
 void armci_dscrlist_send_complete(int tag,char *from, sr_descr_t *dscr)
 {
-    int i,ns,j;
+    int i,ns;
     sr_descr_t *retdscr,*sdscr_arr;
     if(dscr==NULL){
         if(SERVER_CONTEXT)
@@ -786,7 +788,6 @@ static void armci_init_nic(vapi_nic_t *nic, int scq_entries, int
 {
     int rc, ndevs, i;
     struct ibv_device **devs=NULL;
-    struct ibv_context *cxt;
 
     if (nic == SRV_nic) {
         /* Initialize OpenIB runtime variables only once*/
@@ -826,10 +827,12 @@ static void armci_init_nic(vapi_nic_t *nic, int scq_entries, int
     nic->vendor = ibv_get_device_name(devs[device_id]);
 
     rc = ibv_query_device(nic->handle, &nic->attr);
+    assert(0 == rc);
 
     int down_port_count_check = 0;
     for (i = 1; i <= 2; i++) {
         rc = ibv_query_port(nic->handle, (uint8_t)i, &nic->hca_port);
+        assert(0 == rc);
         if (IBV_PORT_ACTIVE == nic->hca_port.state) {
             nic->active_port = i;
             break;
@@ -957,11 +960,10 @@ extern gpc_buf_t *gpc_req;
 #endif
 void armci_server_alloc_bufs()
 {
-    int rc;
-    int mod, bytes, total, extra =sizeof(struct ibv_recv_wr)*MAX_DESCR+SIXTYFOUR;
+    int bytes, total, extra =sizeof(struct ibv_recv_wr)*MAX_DESCR+SIXTYFOUR;
     int mhsize = armci_nproc*sizeof(armci_vapi_memhndl_t); /* ack */
     char *tmp, *tmp0;
-    int i, j=0;
+    int i;
 #if defined(PEND_BUFS)
     int clients = (IMM_BUF_NUM+1)*armci_nproc;
 #else
@@ -1055,8 +1057,8 @@ void armci_server_alloc_bufs()
    for (i =0; i<armci_nproc; i++) flag_arr[i] = 9999;
 
     if(DEBUG_SERVER){
-      printf("\n%d(s):registering mem %p %dbytes ptag=%ld handle=%d\n",
-             armci_me, tmp0,total,CLN_nic->ptag,CLN_nic->handle);fflush(stdout);
+      printf("\n%d(s):registering mem %p %dbytes ptag=%p handle=%p\n",
+             armci_me, tmp0,total,(void*)CLN_nic->ptag,(void*)CLN_nic->handle);fflush(stdout);
     }
 
     serv_memhandle.memhndl = ibv_reg_mr(CLN_nic->ptag, tmp0, total,
@@ -1069,8 +1071,8 @@ void armci_server_alloc_bufs()
 
     /* exchange address of ack/memhandle flag on servers */
     if(DEBUG_SERVER){
-       printf("%d(s):registered mem %p %dbytes mhandle=%d mharr starts%p\n",
-              armci_me, tmp0, total, serv_memhandle.memhndl,CLN_handle);
+       printf("%d(s):registered mem %p %dbytes mhandle=%p mharr starts%p\n",
+              armci_me, tmp0, total, (void*)serv_memhandle.memhndl,(void*)CLN_handle);
        fflush(stdout);
     }
 }
@@ -1078,7 +1080,6 @@ void armci_server_alloc_bufs()
 static char * client_malloc_buf_base;
 char * armci_vapi_client_mem_alloc(int size)
 {
-    int rc;
     int mod, total;
     int extra = MAX_DESCR*sizeof(struct ibv_recv_wr)+SIXTYFOUR;
     char *tmp,*tmp0;
@@ -1148,7 +1149,7 @@ void armci_server_register_region(void *ptr,long bytes, ARMCI_MEMHDL_T *memhdl)
 
     if(DEBUG_SERVER){
        printf("\n%d(s):registered lkey=%d rkey=%d ptr=%p end=%p %p\n",armci_me,
-               memhdl->lkey,memhdl->rkey,ptr,(char *)ptr+bytes,memhdl);
+               memhdl->lkey,memhdl->rkey,ptr,(char *)ptr+bytes,(void*)memhdl);
        fflush(stdout);
     }
 }
@@ -1182,7 +1183,7 @@ void armci_network_server_deregister_memory(ARMCI_MEMHDL_T *mh)
 {
     int rc;
 return; /* ??? why ??? */
-    printf("\n%d:deregister ptr=%p",armci_me,mh);fflush(stdout);
+    printf("\n%d:deregister ptr=%p",armci_me,(void*)mh);fflush(stdout);
     rc = ibv_dereg_mr(mh->memhndl);
     dassert1(1,rc==0,rc);
     armci_vapi_check_return(DEBUG_FINALIZE,rc,
@@ -1314,9 +1315,8 @@ void armci_init_connections()
 
 static void vapi_connect_client()
 {
-    int i, start, sz=0, c, rc;
+    int i, sz=0, c, rc;
     struct ibv_qp_attr qp_attr;
-    struct ibv_qp_cap qp_cap;
     enum ibv_qp_attr_mask qp_attr_mask;
 
     if (TIME_INIT) inittime0 = MPI_Wtime();
@@ -1398,7 +1398,6 @@ static void vapi_connect_client()
         qp_attr.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ;
 
         /* start from from server on my_node -1 */
-        start = (armci_clus_me == 0) ? armci_nclus - 1 : armci_clus_me - 1;
         for (i = 0; i < armci_nclus; i++) {
             armci_connect_t *con;
             con = SRV_con + i;
@@ -1424,10 +1423,11 @@ static void vapi_connect_client()
         /* AV: Adding the service level parameter */
         qp_attr.ah_attr.sl      = armci_openib_sl;
 
-        start = (armci_clus_me == 0) ? armci_nclus - 1 : armci_clus_me - 1;
         for (i = 0; i < armci_nclus; i++) {
             armci_connect_t *con;
+#if 0
             armci_connect_t *conS;
+#endif
             con = SRV_con + i;
 #if 0
             conS = CLN_con + armci_me;
@@ -1472,7 +1472,6 @@ static void vapi_connect_client()
         qp_attr.rnr_retry           = 7;
         qp_attr.max_rd_atomic  = 4;
 
-        start = (armci_clus_me == 0) ? armci_nclus - 1 : armci_clus_me - 1;
         for (i = 0; i < armci_nclus; i++){
             armci_connect_t *con;
             con = SRV_con + i;
@@ -1581,10 +1580,7 @@ void armci_server_initial_connection()
 {
   int c, rc, i, j;
     struct ibv_qp_attr qp_attr;
-    struct ibv_qp_init_attr qp_init_attr;
-    struct ibv_qp_cap qp_cap;
     enum ibv_qp_attr_mask qp_attr_mask;
-    char *enval;
     struct ibv_recv_wr *bad_wr;
 
     if (TIME_INIT) 
@@ -1617,8 +1613,6 @@ void armci_server_initial_connection()
 
     if (!armci_use_odcm) {
         for (c = 0; c < armci_nproc; c++) {
-            char *ptrr;           
-            int extra;            
             armci_connect_t *con = CLN_con + c;
             armci_create_qp(CLN_nic, &con->qp);
             con->sqpnum = con->qp->qp_num;
@@ -2077,7 +2071,7 @@ void armci_pbuf_start_put(void *src, void *dst, int bytes, int proc,
 
     if(DEBUG_SERVER){
        printf("\n%d(s):handle_array[%d]=%p lbuf=%p flag=%p bytes=%d\n",armci_me,
-              proc,&handle_array[proc],(char *)lbuf,
+              proc,(void*)&handle_array[proc],(char *)lbuf,
               (char *)lbuf+bytes-sizeof(int),bytes);
        fflush(stdout);
     }
@@ -2105,7 +2099,7 @@ void _armci_send_data_to_client_pbuf(int proc, struct ibv_send_wr *sdscr,
                           &serv_memhandle,(handle_array+proc));
     if(DEBUG_SERVER){
        printf("\n%d(s):handle_array[%d]=%p dbuf=%p flag=%p bytes=%d\n",armci_me,
-              proc,&handle_array[proc],(char *)rbuf,
+              proc,(void*)&handle_array[proc],(char *)rbuf,
               (char *)rbuf+bytes-sizeof(int),bytes);
        fflush(stdout);
     }
@@ -2123,9 +2117,15 @@ int rc = 0;
 int rc1 = 0;
 vapibuf_t *cbuf,*cbufs;
 request_header_t *msginfo,*msg;
-int c,i,need_ack,pollcount;
+int c,i;
 static int mytag=1;
+#ifdef CHANGE_SERVER_AFFINITY
 int rrr,serverwcount=0;
+#else
+#ifdef DATA_SERVER_YIELD_CPU_
+int serverwcount=0;
+#endif
+#endif
 
 #ifdef CHANGE_SERVER_AFFINITY
 cpu_set_t mycpuid,new_mask;
@@ -2199,7 +2199,7 @@ int nslave=armci_clus_info[armci_clus_me].nslave;
       } while (rc == 0);
 
       if(DEBUG_SERVER) {
-        printf("\n%d:pdscr=%p %p %d %d %d %d\n",armci_me,pdscr,&pdscr1,
+        printf("\n%d:pdscr=%p %p %d %d %d %d\n",armci_me,(void*)pdscr,(void*)&pdscr1,
                            pdscr->status,pdscr->opcode,pdscr->vendor_err,
                            pdscr->src_qp);
         fflush(stdout);
@@ -2241,7 +2241,11 @@ int nslave=armci_clus_info[armci_clus_me].nslave;
        }
 #endif
        if (pdscr->wr_id >= DSCRID_SCATGAT && pdscr->wr_id < DSCRID_SCATGAT_END) {
-	 sr_descr_t *sdscr_arr, *rdscr_arr;
+#if defined(PEND_BUFS)
+	 sr_descr_t *sdscr_arr;
+#else
+	 sr_descr_t *rdscr_arr;
+#endif
          if (DEBUG_SERVER) {
            printf("%d(s) : received SCATGAT DATA id = %ld, length = %d\n",
                   armci_me,pdscr->wr_id, pdscr->byte_len);
@@ -2254,7 +2258,6 @@ int nslave=armci_clus_info[armci_clus_me].nslave;
 	 if(sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends==0)
 	     sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].tag=0;
 #else
-	 rdscr_arr;
 	 rdscr_arr = armci_vapi_serv_nbrdscr_array;
 	 rdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofrecvs--;
 	 if(rdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofrecvs==0)
@@ -2351,7 +2354,6 @@ int nslave=armci_clus_info[armci_clus_me].nslave;
 	 }
 	 _armci_pendbuf_post_immbuf(cbufs, msginfo->from);
 	 SERVER_SEND_ACK(msginfo->from);
-	 need_ack = 0;
        }
        else if(msginfo->operation == REGISTER){
 	 if (DEBUG_SERVER) {
@@ -2382,12 +2384,11 @@ int nslave=armci_clus_info[armci_clus_me].nslave;
 	 if((msginfo->operation == PUT) || ARMCI_ACC(msginfo->operation)) { 
 	   /* for operations that do not send data back we can send ACK now */
 	   SERVER_SEND_ACK(msginfo->from);
-	   need_ack=0;
 	   if(DEBUG_SERVER){
 	     printf("%d(s) : posted ack\n\n",armci_me);
 	     fflush(stdout);
 	   }
-	 } else need_ack=1;
+	 }
 #endif
        }
        if (0) {
@@ -2411,7 +2412,6 @@ void armci_vapi_complete_buf(armci_vapi_field_t *field,int snd,int rcv,int to,in
   if(info->tag && op==GET)return;
 
   if(snd){
-    request_header_t *msginfo = (request_header_t *)(field+1);
     snd_dscr=&(field->sdscr);
     if(mark_buf_send_complete[snd_dscr->wr_id]==0)
       armci_send_complete(snd_dscr,"armci_vapi_complete_buf",1);
@@ -2451,7 +2451,7 @@ void armci_vapi_complete_buf(armci_vapi_field_t *field,int snd,int rcv,int to,in
 	if(loop==0){
 	  if(DEBUG_CLN){
 	    printf("%d: client last(%p)=%d flag(%p)=%ld off=%d\n",
-		   armci_me,last,*last,flag,*flag,msginfo->datalen);
+		   armci_me,(void*)last,*last,(void*)flag,*flag,msginfo->datalen);
 	    fflush(stdout);
 	  }
 	}
@@ -2471,7 +2471,6 @@ void armci_vapi_test_buf(armci_vapi_field_t *field,int snd,int rcv,int to,int op
   if(info->tag && op==GET)return;
 
   if(snd){
-    request_header_t *msginfo = (request_header_t *)(field+1);
     snd_dscr=&(field->sdscr);
     if(mark_buf_send_complete[snd_dscr->wr_id]==0) {
 /*       printf("%d: test buf. send not complete\n",armci_me); */
@@ -2483,7 +2482,6 @@ void armci_vapi_test_buf(armci_vapi_field_t *field,int snd,int rcv,int to,int op
   if(rcv){
     int *last;
     long *flag;
-    int loop = 0;
     request_header_t *msginfo = (request_header_t *)(field+1);
     flag = (long *)&msginfo->tag.ack;
   
@@ -2516,16 +2514,16 @@ static inline void armci_vapi_post_send(int isclient,int con_offset,
                                         struct ibv_send_wr *snd_dscr,char *from)
 {
     int rc = 0;
-    vapi_nic_t *nic;
+    /*vapi_nic_t *nic;*/
     armci_connect_t *con;
     int total = 0;
 
     if(!isclient){
-       nic = CLN_nic;
+       /*nic = CLN_nic;*/
        con = CLN_con+con_offset;
     }
     else{
-       nic = SRV_nic;
+       /*nic = SRV_nic;*/
        con = SRV_con+con_offset;
     }
 
@@ -2558,7 +2556,7 @@ static inline void armci_vapi_post_send(int isclient,int con_offset,
   */
 int armci_send_req_msg(int proc, void *buf, int bytes)
 {
-  int cluster = armci_clus_id(proc), i;
+  int cluster = armci_clus_id(proc);
     request_header_t *msginfo = (request_header_t *)buf;
     struct ibv_send_wr *snd_dscr;
     struct ibv_sge *ssg_lst;
@@ -2683,9 +2681,9 @@ int armci_send_req_msg(int proc, void *buf, int bytes)
     THREAD_UNLOCK(armci_user_threads.net_lock);
 
     if(DEBUG_CLN){
-       printf("%d:client sent REQ=%d %d bytes serv=%d qp=%ld id =%ld lkey=%d\n",
+       printf("%d:client sent REQ=%d %d bytes serv=%d qp=%p id =%ld lkey=%d\n",
                armci_me,msginfo->operation,bytes,cluster,
-               (SRV_con+cluster)->qp,snd_dscr->wr_id,ssg_lst->lkey);
+               (void*)(SRV_con+cluster)->qp,snd_dscr->wr_id,ssg_lst->lkey);
        fflush(stdout);
     }
     return(0);
@@ -2956,7 +2954,7 @@ void armci_client_direct_rdma_strided(int operation, int proc,
   assert(dirdscr->tag == nbtag);
 
   if(DEBUG_CLN) {
-    printf("\n%d: in direct rdma strided id=%d lkey=%ld rkey=%ld\n",
+    printf("\n%d: in direct rdma strided id=%lu lkey=%u rkey=%u\n",
 	   armci_me,dirdscr->sdescr.wr_id,lochdl->lkey,remhdl->rkey);fflush(stdout);
   }
 
@@ -3043,12 +3041,10 @@ void armci_client_direct_rdma_strided(int operation, int proc,
 #if defined(PEND_BUFS)
 int armci_server_msginfo_to_pbuf_index(request_header_t *msginfo) {
   int index=-1, i;
-  vapibuf_pend_t *pbuf=NULL;
   
   assert(!msginfo->tag.imm_msg);
   for(i = 0; i<PENDING_BUF_NUM; i++) {
     if(serv_pendbuf_arr[i].buf == (char *)msginfo) {
-      pbuf = &serv_pendbuf_arr[i];
       index = i;
       break;
     }
@@ -3208,7 +3204,7 @@ void armci_server_rdma_strided_to_contig(char *src_ptr, int src_stride_arr[],
   sdscr1.wr_id = wr_id;
 
   if(DEBUG_CLN) {
-    printf("\n%d: in rdma strided to contig id=%d lkey=%ld rkey=%ld\n",
+    printf("\n%d: in rdma strided to contig id=%d lkey=%u rkey=%u\n",
 	   armci_me,wr_id,loc_memhdl->lkey,rem_memhdl->rkey);
     fflush(stdout);
   }
@@ -3307,7 +3303,7 @@ void armci_server_rdma_contig_to_strided(char *src_ptr, int proc,
   sdscr1.wr_id = wr_id;
 
   if(DEBUG_CLN) {
-    printf("\n%d: in rdma strided to contig id=%d lkey=%ld rkey=%ld\n",
+    printf("\n%d: in rdma strided to contig id=%d lkey=%u rkey=%u\n",
 	   armci_me,wr_id,loc_memhdl->lkey,rem_memhdl->rkey);
     fflush(stdout);
   }
@@ -3377,7 +3373,7 @@ char *dataptr = GET_DATA_PTR(ecbuf->buf);
 extern void armci_util_wait_int(volatile int *,int,int);
 
     if(DEBUG_CLN){ printf("%d(c):read direct %d qp=%p\n",armci_me,
-                len,&(SRV_con+cluster)->qp); fflush(stdout);
+                len,(void*)&(SRV_con+cluster)->qp); fflush(stdout);
     }
 
     if(mark_buf_send_complete[ecbuf->snd_dscr.wr_id]==0)
@@ -3397,7 +3393,7 @@ extern void armci_util_wait_int(volatile int *,int,int);
 
          if(DEBUG_CLN){
            printf("\n%d:flagval=%d at ptr=%p ack=%ld dist=%d\n",armci_me,*last,
-                   last,*flag,len);fflush(stdout);
+                   (void*)last,*flag,len);fflush(stdout);
          }
 
          while(armci_util_int_getval(last) == ARMCI_STAMP &&
@@ -3407,7 +3403,7 @@ extern void armci_util_wait_int(volatile int *,int,int);
            if(loop==0){
              if(DEBUG_CLN){
                printf("%d: client last(%p)=%d flag(%p)=%ld off=%d\n",
-                      armci_me,last,*last,flag,*flag,msginfo->datalen);
+                      armci_me,(void*)last,*last,(void*)flag,*flag,msginfo->datalen);
                fflush(stdout);
              }
            }
@@ -3421,7 +3417,7 @@ extern void armci_util_wait_int(volatile int *,int,int);
            if(loop==0){
              if(DEBUG_CLN){
                printf("%d: client flag(%p)=%ld off=%d\n",
-                      armci_me,flag,*flag,msginfo->datalen);
+                      armci_me,(void*)flag,*flag,msginfo->datalen);
                fflush(stdout);
              }
            }
@@ -3435,7 +3431,7 @@ extern void armci_util_wait_int(volatile int *,int,int);
            if(loop==0){
              if(DEBUG_CLN){
                printf("%d: client waiting (%p)=%d off=%d\n",
-                      armci_me,flg,*flg,len);
+                      armci_me,(void*)flg,*flg,len);
                fflush(stdout);
              }
            }
@@ -3465,7 +3461,7 @@ char *armci_ReadFromDirectSegment(int proc, request_header_t *msginfo, int len, 
   extern void armci_util_wait_int(volatile int *,int,int);
 
   if(DEBUG_CLN){ printf("%d(c):read direct %d qp=%p\n",armci_me,
-			len,&(SRV_con+cluster)->qp); fflush(stdout);
+			len,(void*)&(SRV_con+cluster)->qp); fflush(stdout);
   }
 
   if(mark_buf_send_complete[ecbuf->snd_dscr.wr_id]==0)
@@ -3473,7 +3469,7 @@ char *armci_ReadFromDirectSegment(int proc, request_header_t *msginfo, int len, 
 
   if(!msginfo->bypass){
     long *flag;
-    int *last, *mid1, *mid2, third;
+    int *last;
     int loop = 0;
     flag = &(msginfo->tag.ack);
     if(msginfo->operation==GET){
@@ -3482,13 +3478,10 @@ char *armci_ReadFromDirectSegment(int proc, request_header_t *msginfo, int len, 
 	last = (int *)(dataptr+len+msginfo->dscrlen-sizeof(int));
 	dataptr+=msginfo->dscrlen;
       }
-      third = (last-(int*)(msginfo->dscrlen+(char*)(msginfo+1)))/3;
-      mid2 = (last - third);
-      mid1 = mid2 - third;
 
       if(DEBUG_CLN){
 	printf("\n%d:flagval=%d at ptr=%p ack=%ld dist=%d\n",armci_me,*last,
-	       last,*flag,len);fflush(stdout);
+	       (void*)last,*flag,len);fflush(stdout);
       }
 
       while(armci_util_int_getval(last) == ARMCI_STAMP &&
@@ -3498,7 +3491,7 @@ char *armci_ReadFromDirectSegment(int proc, request_header_t *msginfo, int len, 
 	if(loop==0){
 	  if(DEBUG_CLN){
 	    printf("%d: client last(%p)=%d flag(%p)=%ld off=%d\n",
-		   armci_me,last,*last,flag,*flag,msginfo->datalen);
+		   armci_me,(void*)last,*last,(void*)flag,*flag,msginfo->datalen);
 	    fflush(stdout);
 	  }
 	}
@@ -3511,8 +3504,8 @@ char *armci_ReadFromDirectSegment(int proc, request_header_t *msginfo, int len, 
 	  int off = (((int *)(dataptr+*bytes_done)-sfirst+ssize)/ssize)*ssize;
 	  int *ptr = sfirst+off;
 	  dassert(1,off>=0);
-	  dassert(1,(void *)sfirst>dataptr);
-	  dassert(1,(void *)ptr>dataptr);
+	  dassert(1,(char *)sfirst>dataptr);
+	  dassert(1,(char *)ptr>dataptr);
 	  if(ptr<=slast && armci_util_int_getval(ptr)!=ARMCI_STAMP) {
 	    *bytes_done = ((char*)ptr)-dataptr;
 	    return dataptr;
@@ -3530,7 +3523,7 @@ char *armci_ReadFromDirectSegment(int proc, request_header_t *msginfo, int len, 
 	if(loop==0){
 	  if(DEBUG_CLN){
 	    printf("%d: client flag(%p)=%ld off=%d\n",
-		   armci_me,flag,*flag,msginfo->datalen);
+		   armci_me,(void*)flag,*flag,msginfo->datalen);
 	    fflush(stdout);
 	  }
 	}
@@ -3544,7 +3537,7 @@ char *armci_ReadFromDirectSegment(int proc, request_header_t *msginfo, int len, 
 	if(loop==0){
 	  if(DEBUG_CLN){
 	    printf("%d: client waiting (%p)=%d off=%d\n",
-		   armci_me,flg,*flg,len);
+		   armci_me,(void*)flg,*flg,len);
 	    fflush(stdout);
 	  }
 	}
@@ -3580,7 +3573,7 @@ void armci_send_data_to_client(int proc, void *buf, int bytes,void *dbuf)
 
     if(DEBUG_SERVER){
        printf("\n%d(s):handle_array[%d]=%p dbuf=%p flag=%p bytes=%d\n",armci_me,
-              proc,&handle_array[proc],(char *)dbuf,
+              proc,(void*)&handle_array[proc],(char *)dbuf,
               (char *)dbuf+bytes-sizeof(int),bytes);
        fflush(stdout);
     }
@@ -3738,7 +3731,7 @@ struct ibv_recv_wr *bad_wr;
 
     /*armci_vapi_print_dscr_info(NULL,scat_dscr);*/
     if((type==SERV && DEBUG_SERVER) || (type==CLN && DEBUG_CLN)){
-       printf("%d(%d) : inside posts scatter dscr, id is %d\n",
+       printf("%d(%d) : inside posts scatter dscr, id is %lu\n",
 	      armci_me,type,scat_dscr->wr_id);
        fflush(stdout);
     }
@@ -3761,18 +3754,15 @@ struct ibv_recv_wr *bad_wr;
  *  client calls from request.c
  *  server calls from ds-shared.c
 \*/
-static sr_descr_t serv_blocking_scatter_dscr;
 static sr_descr_t client_blocking_scatter_dscr;
 void armci_post_scatter(void *dest_ptr, int dest_stride_arr[], int count[],
      int stride_levels, armci_vapi_memhndl_t *mhandle,
      int proc, int nbtag, int type, sr_descr_t **srd)
 {
     int i;
-    int total_size = 0;
     int total_of_2D = 1;
     int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
-    int j,k,y,z;
-    int num_dscr = 0;
+    int j,k,y;
     int num_xmit = 0, num_seg, max_seg, rem_seg,vecind;
     char* src, *src1;
     sr_descr_t *pend_dscr;
@@ -3832,7 +3822,7 @@ void armci_post_scatter(void *dest_ptr, int dest_stride_arr[], int count[],
     if(rem_seg!=0 && k==(num_xmit-1))num_seg = rem_seg;
     else num_seg = max_seg;
 
-    y=0,z=0;
+    y=0;
     for(i=0;i<total_of_2D;i++){
        src = (char *)dest_ptr;
        for(j=2;j<=stride_levels;j++){
@@ -3850,7 +3840,7 @@ void armci_post_scatter(void *dest_ptr, int dest_stride_arr[], int count[],
            /* the previous one has been posted, start off new*/
            scat_dscr->num_sge = 0;
            y = 0; /* reuse the same scatter descriptor */
-           vecind=0;total_size=0;k++;
+           vecind=0;k++;
            if(rem_seg!=0 && k==(num_xmit-1))num_seg = rem_seg;
          }
          /* fill the scatter descriptor */
@@ -3870,7 +3860,7 @@ void armci_post_scatter(void *dest_ptr, int dest_stride_arr[], int count[],
          /* the previous one has been posted, start off new*/
          scat_dscr->num_sge = 0;
          y =0 ;
-         vecind = 0; total_size=0; k++;
+         vecind = 0; k++;
          if(rem_seg!=0 && k==(num_xmit-1))num_seg=rem_seg;
          else num_seg = max_seg;
        }
@@ -3889,7 +3879,6 @@ void armci_post_scatter(void *dest_ptr, int dest_stride_arr[], int count[],
 void armci_wait_for_blocking_scatter()
 {
 sr_descr_t *pend_dscr=&client_blocking_scatter_dscr;
-int i;
     armci_recv_complete(&pend_dscr->rdescr,"armci_post_scatter",pend_dscr->numofrecvs);
 }
 
@@ -3909,7 +3898,7 @@ static void posts_gather_desc(sr_descr_t *pend_dscr,int proc,int type)
     gat_dscr = &pend_dscr->sdescr;
     /*armci_vapi_print_dscr_info(gat_dscr,NULL);*/
     if((type==SERV && DEBUG_SERVER) || (type==CLN && DEBUG_CLN)){
-       printf("%d: type(client=1)=%d inside posts gather dscr, id is %d\n",
+       printf("%d: type(client=1)=%d inside posts gather dscr, id is %lu\n",
 	      armci_me,type,gat_dscr->wr_id);
        fflush(stdout);
     }
@@ -3930,7 +3919,6 @@ static void posts_gather_desc(sr_descr_t *pend_dscr,int proc,int type)
 /*\
  *  posts a bunch of gather descriptors
 \*/ 
-static sr_descr_t serv_blocking_gather_dscr;
 static sr_descr_t client_blocking_gather_dscr;
 void armci_post_gather(void *src_ptr, int src_stride_arr[], int count[],
       int stride_levels, armci_vapi_memhndl_t *mhandle,
@@ -3938,10 +3926,8 @@ void armci_post_gather(void *src_ptr, int src_stride_arr[], int count[],
 {
     int i;
     int total_of_2D = 1;
-    int total_size = 0;
     int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
-    int j,k,y,z;
-    int num_posted = 0;
+    int j,k,y;
     char *src, *src1;
     int num_xmit = 0, num_seg, max_seg, rem_seg,vecind;
     sr_descr_t *pend_dscr;
@@ -3996,7 +3982,7 @@ void armci_post_gather(void *src_ptr, int src_stride_arr[], int count[],
     if(rem_seg!=0 && k==(num_xmit-1))num_seg = rem_seg;
     else num_seg = max_seg;
 
-    y=0,z=0;
+    y=0;
     for(i=0;i<total_of_2D;i++){
        src = (char *)src_ptr;
        for(j=2;j<=stride_levels;j++){
@@ -4014,7 +4000,7 @@ void armci_post_gather(void *src_ptr, int src_stride_arr[], int count[],
            /* the previous one has been posted, start off new*/
            gat_dscr->num_sge = 0;
            y = 0;
-           vecind=0;total_size=0;k++;
+           vecind=0;k++;
            if(rem_seg!=0 && k==(num_xmit-1))num_seg = rem_seg;
          }
 
@@ -4039,7 +4025,7 @@ void armci_post_gather(void *src_ptr, int src_stride_arr[], int count[],
          /* the previous one has been posted, start off new*/
          gat_dscr->num_sge = 0;
          y = 0;
-         vecind = 0; total_size=0; k++;
+         vecind = 0; k++;
          if(rem_seg!=0 && k==(num_xmit-1))num_seg=rem_seg;
          else num_seg = max_seg;
        }
@@ -4138,7 +4124,7 @@ int loop=0;
         if(loop==0){
           if(DEBUG_CLN){
             printf("%d: client last(%p)=%d ack(%p)=%ld off=%d\n",
-                  armci_me,last,*last,ack,*ack,(int)((char*)last - (char*)ptr));
+                  armci_me,(void*)last,*last,(void*)ack,*ack,(int)((char*)last - (char*)ptr));
             fflush(stdout);
           }
         }
@@ -4265,10 +4251,8 @@ void armci_direct_rmw(int op, int*ploc, int *prem, int extra, int proc,
     int rc = 0;
     struct ibv_send_wr *sd;
     struct ibv_sge *sg;
-    vapi_nic_t *nic;
     armci_connect_t *con;
 
-    nic = SRV_nic;
     con = CLN_con+proc;
 
     sd = &(rmw[armci_me].rmw_dscr);
@@ -4306,14 +4290,6 @@ struct node *dto_q = NULL;
 void process_con_break_from_client(armci_ud_rank *h, cbuf *v)
 {
 
-    struct ibv_qp_attr qp_attr;
-    struct ibv_qp_init_attr qp_init_attr;
-    struct ibv_qp_cap qp_cap;
-    enum ibv_qp_attr_mask qp_attr_mask;
-    char *enval;
-    struct ibv_recv_wr *bad_wr;
-
-    int rc, j;
     armci_connect_t *con = CLN_con + h->src_rank;
 
     cbuf *v1 = get_cbuf();
@@ -4343,7 +4319,6 @@ void process_con_break_from_client(armci_ud_rank *h, cbuf *v)
 void process_con_break_from_server(armci_ud_rank *h, cbuf *v)
 {
 
-    int rc, j;
     armci_connect_t *con = SRV_con + armci_clus_id(h->src_rank);
     con->state = QP_INACTIVE;
     release_cbuf(v);
@@ -4353,10 +4328,7 @@ void process_recv_completion_from_client(armci_ud_rank *h, cbuf *v)
 {
     
     struct ibv_qp_attr qp_attr;
-    struct ibv_qp_init_attr qp_init_attr;
-    struct ibv_qp_cap qp_cap;
     enum ibv_qp_attr_mask qp_attr_mask;
-    char *enval;
     struct ibv_recv_wr *bad_wr;
     
     int rc, j;
@@ -4369,10 +4341,7 @@ void process_recv_completion_from_client(armci_ud_rank *h, cbuf *v)
     }
     
     total_active_conn_to_client++;
-    double t_init_start, t_init_end, t_rtr_start, t_rts_end;
-    static int flag = 0;
     
-    t_init_start = MPI_Wtime();
     armci_connect_t *con = CLN_con + h->src_rank;
     
     if (con->state == QP_ACTIVE) {
@@ -4410,8 +4379,6 @@ void process_recv_completion_from_client(armci_ud_rank *h, cbuf *v)
         IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ;
 
     rc = ibv_modify_qp(con->qp, &qp_attr, qp_attr_mask);
-
-    t_init_end = MPI_Wtime();
 
     memset(&qp_attr, 0, sizeof qp_attr);
     qp_attr_mask = IBV_QP_STATE
@@ -4451,7 +4418,6 @@ void process_recv_completion_from_client(armci_ud_rank *h, cbuf *v)
     qp_attr.rnr_retry           = 7;
     qp_attr.max_rd_atomic  = 4;
     rc = ibv_modify_qp(con->qp, &qp_attr,qp_attr_mask);
-    t_rts_end = MPI_Wtime();
 
 #if defined(PEND_BUFS)
     assert(armci_nproc*(IMM_BUF_NUM+1)<DSCRID_IMMBUF_RECV_END-DSCRID_IMMBUF_RECV);
@@ -4525,19 +4491,10 @@ void process_recv_completion_from_client(armci_ud_rank *h, cbuf *v)
 
 void progress_engine()
 {
-    struct ibv_cq *ev_cq;
-    void *ev_ctx;
-    struct ibv_wc *sc;
     int ne;
     struct ibv_wc wc;
-    int send_comp = 0;
-    int recv_comp = 0;
-    int count;
-
     void *cbuf_addr;
-
     cbuf *v;
-    int ret;
 
     do {
         ne = ibv_poll_cq(hca.cq, 1, &wc);
@@ -4590,27 +4547,17 @@ void progress_engine()
 }
 
 
-void async_thread_ud_events(void *context)
+void* async_thread_ud_events(void *context)
 {
-    struct ibv_cq *ev_cq;
-    void *ev_ctx;
-    struct ibv_wc *sc;
-    int ne;
-    struct ibv_wc wc;
-    int send_comp = 0;
-    int recv_comp = 0;
-    int count;
-
-    void *cbuf_addr;
-
-    cbuf *v;
-    int ret;
     while (1) {
         progress_engine();
     }
+
+    return NULL;
 }
 
 
+#if 0
 static struct ibv_srq *create_srq(vapi_nic_t *nic)
 {
     struct ibv_srq_init_attr srq_init_attr;
@@ -4631,6 +4578,7 @@ static struct ibv_srq *create_srq(vapi_nic_t *nic)
     srq_ptr = ibv_create_srq(nic->ptag, &srq_init_attr);
     return srq_ptr;
 }
+#endif
 
 int init_params(void)
 {
@@ -4655,7 +4603,6 @@ int init_params(void)
 int open_hca(void)
 {
     struct ibv_device **dev_list;
-    struct ibv_device *ib_dev;
 
     int num_hcas;
     dev_list = ibv_get_device_list(&num_hcas);
@@ -4691,7 +4638,7 @@ int create_cq(void)
     }
     if (armci_me == armci_master) {
         pthread_create(&armci_async_thread[1], NULL,
-                (void *) async_thread_ud_events, (void *) hca.context);
+                &async_thread_ud_events, (void *) hca.context);
     }
 
     return 0;
@@ -4700,8 +4647,7 @@ int create_cq(void)
 int get_lid(void)
 {
     struct ibv_port_attr port_attr[2];
-    int i, j, count;
-    int active_port_search_count;
+    int i, j;
 
     for (j = 1; j <= 1; j++) {
         if (!ibv_query_port(hca.context, j, &port_attr[j - 1])
@@ -4717,9 +4663,6 @@ int get_lid(void)
 
 int exch_addr(void)
 {
-    MPI_Status status;
-    int i;
-
     MPI_Allgather((void *)conn.qp_num, sizeof(uint32_t), MPI_BYTE,
             (void *)rbuf.qp_num, sizeof(uint32_t), MPI_BYTE, ARMCI_COMM_WORLD);
     MPI_Alltoall((void *)conn.lid, sizeof(uint16_t), MPI_BYTE,
@@ -4743,7 +4686,6 @@ int exch_addr(void)
 int create_qp(void)
 {
     struct ibv_qp_attr qp_attr;
-    int i;
 
     memset(&qp_attr, 0, sizeof qp_attr);
 
@@ -4894,14 +4836,17 @@ void test_connectivity(void)
     }
 }
 
+#if 0
 int recycle_dead_qp()
 {
 }
+#endif
 
 void handle_network_fault(struct ibv_wc *pdscr)
 {
-
+#if 0
     recycle_dead_qp();
+#endif
 }
 
 
@@ -4941,13 +4886,9 @@ void process_recv_completion_from_server(armci_ud_rank *h, cbuf *v)
 {
 
     struct ibv_qp_attr qp_attr;
-    struct ibv_qp_init_attr qp_init_attr;
-    struct ibv_qp_cap qp_cap;
     enum ibv_qp_attr_mask qp_attr_mask;
-    char *enval;
-    struct ibv_recv_wr *bad_wr;
 
-    int rc, j;
+    int rc;
 
     armci_connect_t *con = SRV_con + armci_clus_id(h->src_rank);
 
@@ -4964,6 +4905,7 @@ void process_recv_completion_from_server(armci_ud_rank *h, cbuf *v)
         IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ;
 
     rc = ibv_modify_qp(con->qp, &qp_attr, qp_attr_mask);
+    assert(0 == rc);
 
     memset(&qp_attr, 0, sizeof qp_attr);
     qp_attr_mask = IBV_QP_STATE
@@ -4985,6 +4927,7 @@ void process_recv_completion_from_server(armci_ud_rank *h, cbuf *v)
     qp_attr.ah_attr.dlid = SRV_nic->lid_arr[h->src_rank];
     qp_attr.ah_attr.port_num = SRV_nic->active_port;
     rc = ibv_modify_qp(con->qp, &qp_attr, qp_attr_mask);
+    assert(0 == rc);
 
     memset(&qp_attr, 0, sizeof qp_attr);
 
@@ -5003,6 +4946,7 @@ void process_recv_completion_from_server(armci_ud_rank *h, cbuf *v)
     qp_attr.max_rd_atomic  = 4;
 
     rc = ibv_modify_qp(con->qp, &qp_attr,qp_attr_mask);
+    assert(0 == rc);
    release_cbuf(v);
 
     con->state = QP_ACTIVE;
@@ -5063,9 +5007,6 @@ void break_a_connection_if_needed()
     if (!armci_use_lazy_break)
         return;
 
-    int victim, proc;
-
-    armci_connect_t *con;
     int max_client_to_server_conn = get_max_client_to_server_conn();
 
     if ((total_active_conn_to_server >=
@@ -5081,26 +5022,14 @@ void break_a_connection_if_needed()
         } while ((armci_clus_me == clus_id) ||
                 ((SRV_con + clus_id)->state != QP_ACTIVE));
 
-
-        double t_fence_start, t_fence_end;
-
-        t_fence_start = MPI_Wtime();
-
         ARMCI_WaitAll();
 
         ARMCI_Fence(proc);
 
         struct ibv_qp_attr qp_attr;
-        struct ibv_qp_init_attr qp_init_attr;
-        struct ibv_qp_cap qp_cap;
         enum ibv_qp_attr_mask qp_attr_mask;
-        char *enval;
 
-        double t_destroy_start, t_destroy_end;
-
-        t_destroy_start = MPI_Wtime();
         armci_connect_t *con = SRV_con + clus_id;
-        int rc, j;
 
         dassert(1, con->state == QP_ACTIVE);
         qp_attr_mask = IBV_QP_STATE;
@@ -5156,8 +5085,6 @@ void check_state_of_ib_connection(int proc, int force)
 
     static int flag = 1;
 
-    static int last = 0;
-
     if (flag == 1) {
         total_active_conn_to_server = 0;
         total_breaks = 0;
@@ -5177,9 +5104,6 @@ void check_state_of_ib_connection(int proc, int force)
 
         total_active_conn_to_server++;
 
-        double t_create_start, t_create_end;
-
-        t_create_start = MPI_Wtime();
         armci_create_qp(SRV_nic, &con->qp);
         con->sqpnum  = con->qp->qp_num;
         con->lid = SRV_nic->lid_arr[clus_id];
@@ -5214,7 +5138,6 @@ void check_state_of_ib_connection(int proc, int force)
                 usleep(1);
             }
         }
-        t_create_end = MPI_Wtime();
     }
 
 }

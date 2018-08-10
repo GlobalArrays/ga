@@ -3611,3 +3611,13 @@ void nga_put_field_(Integer *g_a, Integer *lo, Integer *hi, Integer *foff, Integ
 		   void *buf, Integer *ld) {
   wnga_put_field(*g_a, lo, hi, *foff, *fsize, buf, ld);
 }
+
+void ga_version_(Integer *major, Integer *minor, Integer *patch)
+{
+  wnga_version(major,minor,patch);
+}
+
+void nga_version_(Integer *major, Integer *minor, Integer *patch)
+{
+  wnga_version(major,minor,patch);
+}
