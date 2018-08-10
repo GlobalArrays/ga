@@ -1310,6 +1310,7 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     } else
     DefaultPath: /* standard buffered path */
 #endif
+#endif
     rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
 			    dst_ptr,dst_stride_arr,count,stride_levels,
 			    NULL,-1,-1,-1,nb_handle);
