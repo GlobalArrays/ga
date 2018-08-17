@@ -10,6 +10,8 @@ addons:
   apt:
     packages:
       - gfortran
+  sonarcloud:
+    organization: pnnl
 matrix:
   allow_failures:
     - env: MPI_IMPL=openmpi
@@ -52,3 +54,5 @@ script:
   - sh ./travis/build-run.sh $TRAVIS_ROOT $PORT $MPI_IMPL
 after_failure:
   - cat ./test-suite.log
+after_script:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" && "$PORT" == "mpi-pr" ]]; then sonar-scanner; fi
