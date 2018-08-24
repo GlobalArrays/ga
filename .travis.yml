@@ -1,4 +1,4 @@
-sudo: false
+sudo: required
 language: c
 os:
   - osx
@@ -10,6 +10,14 @@ addons:
   apt:
     packages:
       - gfortran
+  homebrew:
+    packages:
+      - gcc
+      - coreutils
+    update: true
+cache:
+  directories:
+    - $HOME/travis
 matrix:
   allow_failures:
     - env: MPI_IMPL=openmpi
@@ -41,13 +49,12 @@ env:
     PORT=ofi
 before_install:
   - export TRAVIS_ROOT=$HOME/travis
-  - mkdir $TRAVIS_ROOT
+  - mkdir -p $TRAVIS_ROOT
   - sh ./travis/install-autotools.sh $TRAVIS_ROOT
 install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc || brew upgrade gcc || true; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install coreutils || brew upgrade coreutils || true; fi
   - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
   - if [[ "$PORT" == "ofi" ]]; then sh ./travis/install-libfabric.sh $TRAVIS_ROOT; fi
+  - if [[ ( "$PORT" == "mpi-pr" ) && ( "$TRAVIS_OS_NAME" == "linux" ) ]]; then sh ./travis/install-sicm.sh $TRAVIS_ROOT; fi
 script:
   - sh ./travis/build-run.sh $TRAVIS_ROOT $PORT $MPI_IMPL
 after_failure:

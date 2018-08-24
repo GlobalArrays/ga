@@ -52,6 +52,11 @@ case "$MPI_IMPL" in
 esac
 
 # Configure and build
+if test "x$PORT" = "xmpi-pr"
+then
+    export CFLAGS="-DUSE_SICM=1 -I${TRAVIS_ROOT}/SICM/include -L${TRAVIS_ROOT}/jemalloc/lib -ljemalloc -L${TRAVIS_ROOT}/SICM/lib -lsicm ${CFLAGS}"
+fi
+
 ./autogen.sh $TRAVIS_ROOT
 case "x$PORT" in
     xofi)
@@ -103,4 +108,3 @@ then
 else
     mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
 fi
-
