@@ -1,5 +1,7 @@
 # MPI Progress Ranks (MPI-PR)
 
+APPEND NOTES TO INCLUDE GENERALIZATION OF NUMBER OF PROGRESS-RANKS PER NODE. 
+
 These are notes describing the MPI progress ranks runtime. These notes are intended to help developers navigate the contents of these files and to locate specific functionality.
 
 The MPI-PR is intended to be the highest-performing MPI-1 compatible ARMCI/ComEx runtime.  It uses only features from the MPI-1 standard and provides asynchronous progress.  Posix shared memory is used extensively.

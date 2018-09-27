@@ -24,6 +24,11 @@
 #include "comex_impl.h"
 #include "groups.h"
 
+#ifndef NUM_GROUPS_PER_NODE
+// #define NUM_GROUPS_PER_NODE 1
+// Temporarily NUM_GROUPS_PER_NODE hard wired to 2 
+#define NUM_GROUPS_PER_NODE 2
+#endif
 
 /* world group state */
 comex_group_world_t g_state = {
@@ -402,13 +407,80 @@ void comex_group_init()
     }
 #endif
 
+#if 0  // create socket groups
+     MPI_Comm soc_comm;
+     MPI_Info info;
+ 
+     MPI_Comm_split_type(MPI_COMM_WORLD, OMPI_COMM_TYPE_SOCKET, 0,
+     MPI_INFO_NULL, &soc_comm);
+ 
+     int socket_group_rank, socket_group_size;
+     MPI_Comm_rank(soc_comm, &socket_group_rank);
+     MPI_Comm_size(soc_comm, &socket_group_size);
+     assert(socket_group_rank < 40);
+     printf("WORLD RANK/SIZE: %d/%d \t GROUP RANK/SIZE: %d/%d\n",
+        // world_rank, world_size, group_rank, group_size);
+        g_state.rank, g_state.size, socket_group_rank, socket_group_size);
+
+     // get count of number of sockets by counting number of ranks in the
+     // soc_com communicator
+     int socket_rank0, num_sockets;
+     socket_rank0 = (socket_group_rank == 0) ? 1 : 0;
+     MPI_Allreduce(&socket_rank0, &num_sockets, 1, MPI_INT, MPI_SUM,
+        g_state.comm);
+     // printf("NUMBER OF SOCKETS/NODE: %d \n", num_sockets); 
+     printf("TOTAL NUMBER OF SOCKETS: %d \n", num_sockets); 
+#endif
     /* need to figure out which proc is master on each node */
     g_state.hostid = (long*)malloc(sizeof(long)*g_state.size);
     g_state.hostid[g_state.rank] = xgethostid();
     status = MPI_Allgather(MPI_IN_PLACE, 1, MPI_LONG,
             g_state.hostid, 1, MPI_LONG, g_state.comm);
     COMEX_ASSERT(MPI_SUCCESS == status);
-
+#if 0
+    // create an array of host IDs on each socket
+    long* soc_state_id = (long*)malloc(sizeof(long)*socket_group_size);
+    printf("[%ld] comex_socket_group_init()\n", socket_group_size);
+    soc_state_id[socket_group_rank] = g_state.rank;
+    printf("WORLD RANK: %d \t GROUP RANK: %d\n", 
+       soc_state_id[socket_group_rank], socket_group_rank);
+    status = MPI_Allgather(MPI_IN_PLACE, 1, MPI_LONG,
+             soc_state_id, 1, MPI_LONG, soc_comm); 
+#else  
+     // First create a temporary node communicator and then
+     // split further into number of gruoups within the node
+     MPI_Comm temp_node_comm;
+     int temp_node_size;
+    /* create node comm */
+    /* MPI_Comm_split requires a non-negative color,
+     * so sort and sanitize */
+    sorted = (long*)malloc(sizeof(long) * g_state.size);
+    (void)memcpy(sorted, g_state.hostid, sizeof(long)*g_state.size);
+    qsort(sorted, g_state.size, sizeof(long), cmplong);
+    for (i=0; i<g_state.size-1; ++i) {
+        if (sorted[i] == g_state.hostid[g_state.rank]) 
+        {
+            break;
+        }
+        if (sorted[i] != sorted[i+1]) {
+            count += 1;
+        }
+    }
+    free(sorted);
+#if DEBUG
+    printf("count: %d\n", count);
+#endif
+    status = MPI_Comm_split(MPI_COMM_WORLD, count,
+            g_state.rank, &temp_node_comm);
+    int node_group_size, node_group_rank;
+    MPI_Comm_size(temp_node_comm, &node_group_size);
+    MPI_Comm_rank(temp_node_comm, &node_group_rank);
+    int node_rank0, num_nodes;
+    node_rank0 = (node_group_rank == 0) ? 1 : 0;
+    MPI_Allreduce(&node_rank0, &num_nodes, 1, MPI_INT, MPI_SUM,
+        g_state.comm);
+#endif
+#if 1
     smallest_rank_with_same_hostid = g_state.rank;
     largest_rank_with_same_hostid = g_state.rank;
     for (i=0; i<g_state.size; ++i) {
@@ -422,15 +494,76 @@ void comex_group_init()
             }
         }
     }
-    if (size_node < 2) {
-        comex_error("there must be at least two ranks per node", size_node);
+    if (size_node < 2 * NUM_GROUPS_PER_NODE) {  
+        // comex_error("there must be at least two ranks per node", size_node);
+        comex_error("ranks per node, must be at least", 2*NUM_GROUPS_PER_NODE);
     }
-
+    int split_group_size;
+    split_group_size = node_group_size / NUM_GROUPS_PER_NODE;
+#else
+    int smallest_rank_in_socket, largest_rank_in_socket;
+    int size_socket = 0;
+    int j;
+		smallest_rank_in_socket = g_state.rank;
+		largest_rank_in_socket = g_state.rank;
+    smallest_rank_with_same_hostid = g_state.rank;
+    largest_rank_with_same_hostid = g_state.rank;
+    for (i=0; i<g_state.size; ++i) {
+        if (g_state.hostid[i] == g_state.hostid[g_state.rank]) {
+            ++size_node;
+            if (i < smallest_rank_with_same_hostid) {
+                smallest_rank_with_same_hostid = i;
+            }
+            if (i > largest_rank_with_same_hostid) {
+                largest_rank_with_same_hostid = i;
+            }
+            // now get highest and lowest rank on each socket
+            for (j=0; j<socket_group_size; ++j) {
+              if(soc_state_id[j] == i) {
+                ++size_socket;
+                if (i < smallest_rank_in_socket) {
+                   smallest_rank_in_socket = i;
+                }
+                if (i > largest_rank_in_socket) {
+                   largest_rank_in_socket = i;
+                }
+              }
+            }
+        }
+    }
+    printf("size_node: [%ld] and size_socket: [%ld]\n", size_node, size_socket);
+    printf("Socket: smallest[%ld] and largest[%ld]\n", smallest_rank_in_socket, largest_rank_in_socket);
+    if (size_node < 4) {  // change this to (size_node < 4)
+        comex_error("there must be at least four ranks per node", size_node);
+    }
+#endif
+#if 1
+     MPI_Comm_free(&temp_node_comm);
+#else
+     MPI_Comm_free(&soc_comm);
+#endif
     g_state.master = (int*)malloc(sizeof(int)*g_state.size);
 #if MASTER_IS_SMALLEST_SMP_RANK
+#if 0
     g_state.master[g_state.rank] = smallest_rank_with_same_hostid;
 #else
+    // g_state.master[g_state.rank] = smallest_rank_in_socket;
+    g_state.master[g_state.rank] = smallest_rank_with_same_hostid + split_group_size *
+       ((g_state.rank - smallest_rank_with_same_hostid)/split_group_size);
+#endif
+#else
+#if 0
     g_state.master[g_state.rank] = largest_rank_with_same_hostid;
+#else
+    // g_state.master[g_state.rank] = largest_rank_in_socket;
+    g_state.master[g_state.rank] = largest_rank_with_same_hostid - split_group_size*
+       ((largest_rank_with_same_hostid - g_state.rank)/split_group_size);
+#endif
+#endif
+#if DEBUG
+    printf("[%d] rank; split_group_size: %d\n", g_state.rank, split_group_size);
+    printf("[%d] rank; largest_rank_with_same_hostid[%d]; my master is:[%d]\n",
+        g_state.rank, largest_rank_with_same_hostid, g_state.master[g_state.rank]);
 #endif
     status = MPI_Allgather(MPI_IN_PLACE, 1, MPI_INT,
             g_state.master, 1, MPI_INT, g_state.comm);
@@ -438,6 +571,36 @@ void comex_group_init()
 
     COMEX_ASSERT(group_list == NULL);
 
+    // put split group stamps
+    int proc_split_group_stamp;
+    int num_split_groups;
+    num_split_groups = num_nodes * NUM_GROUPS_PER_NODE;
+    int* split_group_list = (int*)malloc(sizeof(int)*num_split_groups);
+    int split_group_index = 0;
+    int j;
+    for (i=0; i<g_state.size; i++) {
+      for (j=0; j<i; j++) {
+        if (g_state.master[i] == g_state.master[j])
+            break; 
+      }
+      if(i == j) {
+        split_group_list[split_group_index] = g_state.master[i];
+        split_group_index++;
+      }
+    }
+#if 1
+    // label each process
+    for (j=0; j<num_split_groups; j++) {
+      if (split_group_list[j] == g_state.master[g_state.rank]) {
+        proc_split_group_stamp = j;
+      }
+    }
+#if DEBUG
+    printf("proc_split_group_stamp[%ld]: %ld\n", 
+       g_state.rank, proc_split_group_stamp);
+#endif
+    free(split_group_list);
+#endif
     /* create a comm of only the workers */
     if (g_state.master[g_state.rank] == g_state.rank) {
         /* I'm a master */
@@ -448,6 +611,7 @@ void comex_group_init()
         if (MPI_COMM_NULL != delete_me) {
             MPI_Comm_free(&delete_me);
         }
+        // printf("Creating comm: I AM MASTER[%ld]\n", g_state.rank);
     }
     else {
         /* I'm a worker */
@@ -462,8 +626,9 @@ void comex_group_init()
         COMEX_ASSERT(MPI_SUCCESS == status);
         status = MPI_Comm_size(igroup->comm, &(igroup->size));
         COMEX_ASSERT(MPI_SUCCESS == status);
+        // printf("Creating comm: I AM WORKER[%ld]\n", g_state.rank);
     }
-
+#if 0
     /* create node comm */
     /* MPI_Comm_split requires a non-negative color,
      * so sort and sanitize */
@@ -471,7 +636,8 @@ void comex_group_init()
     (void)memcpy(sorted, g_state.hostid, sizeof(long)*g_state.size);
     qsort(sorted, g_state.size, sizeof(long), cmplong);
     for (i=0; i<g_state.size-1; ++i) {
-        if (sorted[i] == g_state.hostid[g_state.rank]) {
+        if (sorted[i] == g_state.hostid[g_state.rank]) 
+        {
             break;
         }
         if (sorted[i] != sorted[i+1]) {
@@ -479,8 +645,14 @@ void comex_group_init()
         }
     }
     free(sorted);
+    free(split_group_list);
+    printf("count: %d\n", count);
     status = MPI_Comm_split(MPI_COMM_WORLD, count,
             g_state.rank, &(g_state.node_comm));
+#else
+    status = MPI_Comm_split(MPI_COMM_WORLD, proc_split_group_stamp,
+            g_state.rank, &(g_state.node_comm));
+#endif
     COMEX_ASSERT(MPI_SUCCESS == status);
     /* node rank */
     status = MPI_Comm_rank(g_state.node_comm, &(g_state.node_rank));
@@ -490,6 +662,7 @@ void comex_group_init()
     COMEX_ASSERT(MPI_SUCCESS == status);
 
 #if DEBUG
+    printf("node_rank[%d]/ size[%d]\n", g_state.node_rank, g_state.node_size);
     if (g_state.master[g_state.rank] == g_state.rank) {
         printf("[%d] world %d/%d\tI'm a master\n",
             RANK_OR_PID, g_state.rank, g_state.size);
