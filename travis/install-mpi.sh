@@ -51,15 +51,15 @@ cat > mpiimpl.h.patch <<EOF
 -} MPID_Request ATTRIBUTE((__aligned__(32)));
 +} ATTRIBUTE((__aligned__(32))) MPID_Request;
 +/*} MPID_Request ATTRIBUTE((__aligned__(32)));*/
- 
+
  extern MPIU_Object_alloc_t MPID_Request_mem;
  /* Preallocated request objects */
 EOF
                     patch -p0 < mpiimpl.h.patch
-                    mkdir build && cd build
+                    mkdir -p build && cd build
                     ../configure CFLAGS="-w" --prefix=$TRAVIS_ROOT/mpich
                     make -j ${MAKE_JNUM}
-                    make install
+                    make -j ${MAKE_JNUM} install
                 else
                     echo "MPICH already installed"
                 fi
@@ -69,7 +69,7 @@ EOF
                     wget --no-check-certificate https://www.open-mpi.org/software/ompi/v2.0/downloads/openmpi-2.0.2.tar.bz2
                     tar -xjf openmpi-2.0.2.tar.bz2
                     cd openmpi-2.0.2
-                    mkdir build && cd build
+                    mkdir -p build && cd build
                     ../configure CFLAGS="-w" --prefix=$TRAVIS_ROOT/open-mpi \
                                 --without-verbs --without-fca --without-mxm --without-ucx \
                                 --without-portals4 --without-psm --without-psm2 \

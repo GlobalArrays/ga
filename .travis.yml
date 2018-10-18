@@ -1,8 +1,8 @@
 sudo: required
 language: c
 os:
-  - osx
   - linux
+  - osx
 compiler:
   - clang
   - gcc
@@ -26,27 +26,27 @@ matrix:
     - osx_image: xcode7.3
 env:
   - MPI_IMPL=mpich
-    PORT=sockets
-  - MPI_IMPL=mpich
-    PORT=mpi-ts
-  - MPI_IMPL=mpich
-    PORT=mpi-mt
-  - MPI_IMPL=mpich
-    PORT=mpi-pt
-  - MPI_IMPL=mpich
     PORT=mpi-pr
-  - MPI_IMPL=mpich
-    PORT=mpi3
-  - MPI_IMPL=openmpi
-    PORT=mpi-ts
-  - MPI_IMPL=mpich
-    PORT=mpi-ts
-    CONFIG_OPTS="--disable-f77 --enable-cxx"
-  - MPI_IMPL=mpich
-    PORT=mpi-ts
-    CONFIG_OPTS="--disable-static --enable-shared"
-  - MPI_IMPL=mpich
-    PORT=ofi
+  # - MPI_IMPL=mpich
+  #   PORT=sockets
+  # - MPI_IMPL=mpich
+  #   PORT=mpi-ts
+  # - MPI_IMPL=mpich
+  #   PORT=mpi-mt
+  # - MPI_IMPL=mpich
+  #   PORT=mpi-pt
+  # - MPI_IMPL=mpich
+  #   PORT=mpi3
+  # - MPI_IMPL=openmpi
+  #   PORT=mpi-ts
+  # - MPI_IMPL=mpich
+  #   PORT=mpi-ts
+  #   CONFIG_OPTS="--disable-f77 --enable-cxx"
+  # - MPI_IMPL=mpich
+  #   PORT=mpi-ts
+  #   CONFIG_OPTS="--disable-static --enable-shared"
+  # - MPI_IMPL=mpich
+  #   PORT=ofi
 before_install:
   - export TRAVIS_ROOT=$HOME/travis
   - mkdir -p $TRAVIS_ROOT
@@ -58,4 +58,5 @@ install:
 script:
   - sh ./travis/build-run.sh $TRAVIS_ROOT $PORT $MPI_IMPL
 after_failure:
+  - cat config.log
   - cat ./test-suite.log

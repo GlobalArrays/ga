@@ -52,12 +52,11 @@ case "$MPI_IMPL" in
 esac
 
 # Configure and build
-if test "x$PORT" = "xmpi-pr"
-then
-    export CFLAGS="-DUSE_SICM=1 -I${TRAVIS_ROOT}/SICM/include -L${TRAVIS_ROOT}/jemalloc/lib -ljemalloc -L${TRAVIS_ROOT}/SICM/lib -lsicm ${CFLAGS}"
-fi
-
 ./autogen.sh $TRAVIS_ROOT
+
+ls -R $TRAVIS_ROOT/SICM
+ls -R $TRAVIS_ROOT/jemalloc
+
 case "x$PORT" in
     xofi)
         ./configure --with-ofi=$TRAVIS_ROOT/libfabric
@@ -66,10 +65,15 @@ case "x$PORT" in
         fi
         ;;
     x)
-        ./configure $CONFIG_OPTS
+        ./configure ${CONFIG_OPTS}
         ;;
+    xmpi-pr)
+        export CFLAGS="-DUSE_SICM=1 -I${TRAVIS_ROOT}/SICM/include ${CFLAGS}"
+        export LDFLAGS="-L${TRAVIS_ROOT}/jemalloc/lib -ljemalloc -L${TRAVIS_ROOT}/SICM/lib -lsicm ${LDFLAGS}"
+        export LD_LIBRARY_PATH="${TRAVIS_ROOT}/SICM/lib:${TRAVIS_ROOT}/jemalloc/lib:${LD_LIBRARY_PATH}"
+        ;&
     x*)
-        ./configure --with-${PORT} $CONFIG_OPTS
+        ./configure --with-${PORT} ${CONFIG_OPTS}
         ;;
 esac
 
