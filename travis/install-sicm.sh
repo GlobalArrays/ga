@@ -14,11 +14,12 @@ sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 sudo apt-get update -qq
 sudo apt-get install -qq libhwloc-dev libiomp-dev libnuma-dev libpfm4-dev llvm-3.9-dev numactl
 
+# set install directory to current location to not cache jemalloc/SICM
 TRAVIS_ROOT="$1"
 export PATH=$TRAVIS_ROOT/bin:$PATH
 
 # get SICM
-git clone https://github.com/lanl/SICM.git
+git clone -b ga-sicm https://github.com/lanl/SICM.git
 cd SICM
 
 # install jemalloc
@@ -31,6 +32,6 @@ export PKG_CONFIG_PATH="${JEPATH}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 ./autogen.sh
 mkdir -p build
 cd build
-../configure --with-jemalloc="${JEPATH}" --prefix="${TRAVIS_ROOT}/SICM"
+../configure --with-jemalloc="${JEPATH}" --prefix="${TRAVIS_ROOT}/SICM" CFLAGS="-std=gnu99 ${CFLAGS}"
 make -j $(nproc --all)
 make -j $(nproc --all) install

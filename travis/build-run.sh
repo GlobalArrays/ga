@@ -53,10 +53,6 @@ esac
 
 # Configure and build
 ./autogen.sh $TRAVIS_ROOT
-
-ls -R $TRAVIS_ROOT/SICM
-ls -R $TRAVIS_ROOT/jemalloc
-
 case "x$PORT" in
     xofi)
         ./configure --with-ofi=$TRAVIS_ROOT/libfabric
@@ -68,10 +64,11 @@ case "x$PORT" in
         ./configure ${CONFIG_OPTS}
         ;;
     xmpi-pr)
-        export CFLAGS="-DUSE_SICM=1 -I${TRAVIS_ROOT}/SICM/include ${CFLAGS}"
-        export LDFLAGS="-L${TRAVIS_ROOT}/jemalloc/lib -ljemalloc -L${TRAVIS_ROOT}/SICM/lib -lsicm ${LDFLAGS}"
-        export LD_LIBRARY_PATH="${TRAVIS_ROOT}/SICM/lib:${TRAVIS_ROOT}/jemalloc/lib:${LD_LIBRARY_PATH}"
-        ;&
+        export CFLAGS="-DUSE_SICM=1 -I${HOME}/no_cache/SICM/include ${CFLAGS}"
+        export LDFLAGS="-L${HOME}/no_cache/jemalloc/lib -ljemalloc -L${HOME}/no_cache/SICM/lib -lsicm ${LDFLAGS}"
+        export LD_LIBRARY_PATH="${HOME}/no_cache/SICM/lib:${HOME}/no_cache/jemalloc/lib:${LD_LIBRARY_PATH}"
+        ./configure --with-${PORT} ${CONFIG_OPTS}
+        ;;
     x*)
         ./configure --with-${PORT} ${CONFIG_OPTS}
         ;;

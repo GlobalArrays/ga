@@ -675,6 +675,10 @@ int comex_finalize()
     fprintf(stderr, "[%d] after comex_group_finalize()\n", g_state.rank);
 #endif
 
+#if USE_SICM
+    sicm_fini();
+#endif
+
 #if DEBUG_TO_FILE
     fclose(comex_trace_file);
 #endif
@@ -694,7 +698,6 @@ void comex_error(char *msg, int code)
 #endif
     fprintf(stderr,"[%d] Received an Error in Communication: (%d) %s\n",
             g_state.rank, code, msg);
-
     MPI_Abort(g_state.comm, code);
 }
 
