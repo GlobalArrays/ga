@@ -324,8 +324,6 @@ int comex_init()
     status = MPI_Initialized(&init_flag);
     CHECK_MPI_RETVAL(status);
     assert(init_flag);
-    
-    /*MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);*/
 
     /* groups */
     comex_group_init();
