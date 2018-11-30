@@ -20,6 +20,9 @@
 
 /* 3rd party headers */
 #include <mpi.h>
+#if USE_SICM
+#include <sicm_low.h>
+#endif
 
 /* our headers */
 #include "comex.h"
@@ -173,6 +176,11 @@ static int COMEX_ENABLE_PUT_IOV = ENABLE_PUT_IOV;
 static int COMEX_ENABLE_GET_IOV = ENABLE_GET_IOV;
 static int COMEX_ENABLE_ACC_IOV = ENABLE_ACC_IOV;
 
+#if USE_SICM
+static sicm_device_list devices = {0};
+static sicm_device *device = NULL;
+#endif
+
 #if PAUSE_ON_ERROR
 static int AR_caught_sig=0;
 static int AR_caught_sigsegv=0;
@@ -303,7 +311,11 @@ STATIC void _malloc_semaphore(void);
 STATIC void _free_semaphore(void);
 STATIC void* _shm_create(const char *name, size_t size);
 STATIC void* _shm_attach(const char *name, size_t size);
+#if USE_SICM
+STATIC void* _shm_map(int fd, size_t size, sicm_arena arena);
+#else
 STATIC void* _shm_map(int fd, size_t size);
+#endif
 STATIC int _set_affinity(int cpu);
 STATIC void translate_mpi_error(int ierr, const char* location);
 STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels, MPI_Datatype base_type, MPI_Datatype *type);
@@ -314,7 +326,7 @@ int comex_init()
     int status = 0;
     int init_flag = 0;
     int i = 0;
-    
+
     if (initialized) {
         return 0;
     }
@@ -324,7 +336,7 @@ int comex_init()
     status = MPI_Initialized(&init_flag);
     CHECK_MPI_RETVAL(status);
     assert(init_flag);
-    
+
     /*MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);*/
 
     /* groups */
@@ -507,6 +519,17 @@ int comex_init()
     nb_count_recv = 0;
     nb_count_recv_processed = 0;
 
+#if USE_SICM
+    devices = sicm_init();
+    device = NULL;
+    for(i = 0; i < devices.count; i++) {
+        if (devices.devices[i].tag == SICM_DRAM) {
+            device = &devices.devices[i];
+            break;
+        }
+    }
+#endif
+
     /* reg_cache */
     /* note: every process needs a reg cache and it's always based on the
      * world rank and size */
@@ -569,15 +592,15 @@ int comex_init_args(int *argc, char ***argv)
 {
     int init_flag;
     int status;
-    
+
     status = MPI_Initialized(&init_flag);
     CHECK_MPI_RETVAL(status);
-    
+
     if(!init_flag) {
         status = MPI_Init(argc, argv);
         CHECK_MPI_RETVAL(status);
     }
-    
+
     return comex_init();
 }
 
@@ -613,7 +636,7 @@ int comex_finalize()
 
     /* Make sure that all outstanding operations are done */
     comex_wait_all(COMEX_GROUP_WORLD);
-    
+
     comex_barrier(COMEX_GROUP_WORLD);
 
     /* send quit message to thread */
@@ -652,6 +675,10 @@ int comex_finalize()
     fprintf(stderr, "[%d] after comex_group_finalize()\n", g_state.rank);
 #endif
 
+#if USE_SICM
+    sicm_fini();
+#endif
+
 #if DEBUG_TO_FILE
     fclose(comex_trace_file);
 #endif
@@ -671,7 +698,6 @@ void comex_error(char *msg, int code)
 #endif
     fprintf(stderr,"[%d] Received an Error in Communication: (%d) %s\n",
             g_state.rank, code, msg);
-    
     MPI_Abort(g_state.comm, code);
 }
 
@@ -909,7 +935,7 @@ int comex_fence_all(comex_group_t group)
     fprintf(stderr, "[%d] comex_fence_all asm volatile (\"\" : : : \"memory\"); \n",
             g_state.rank, group);
 #endif
-    asm volatile ("" : : : "memory"); 
+    asm volatile ("" : : : "memory");
 #endif
 
     /* optimize by only sending to procs which we have outstanding messages */
@@ -1275,6 +1301,7 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
     /* register the memory locally */
     reg_entry = reg_cache_insert(
             g_state.rank, memory, size, name, memory);
+
     if (NULL == reg_entry) {
         comex_error("_comex_malloc_local: reg_cache_insert", -1);
     }
@@ -1302,7 +1329,12 @@ int comex_free_local(void *ptr)
     reg_entry = reg_cache_find(g_state.rank, ptr, 0);
 
     /* unmap the memory */
+#if USE_SICM
+    sicm_free(ptr);
+    retval = 0;
+#else
     retval = munmap(ptr, reg_entry->len);
+#endif
     if (-1 == retval) {
         perror("comex_free_local: munmap");
         comex_error("comex_free_local: munmap", retval);
@@ -1481,7 +1513,7 @@ int comex_nbacc(
 int comex_nbputs(
         void *src, int *src_stride,
         void *dst, int *dst_stride,
-        int *count, int stride_levels, 
+        int *count, int stride_levels,
         int proc, comex_group_t group,
         comex_request_t *hdl)
 {
@@ -1511,9 +1543,9 @@ int comex_nbputs(
 int comex_nbgets(
         void *src, int *src_stride,
         void *dst, int *dst_stride,
-        int *count, int stride_levels, 
+        int *count, int stride_levels,
         int proc, comex_group_t group,
-        comex_request_t *hdl) 
+        comex_request_t *hdl)
 {
     nb_t *nb = NULL;
     int world_proc = -1;
@@ -1916,7 +1948,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 
     /* preconditions */
     COMEX_ASSERT(ptrs);
-   
+
 #if DEBUG
     fprintf(stderr, "[%d] comex_malloc(ptrs=%p, size=%lu, group=%d)\n",
             g_state.rank, ptrs, (long unsigned)size, group);
@@ -2337,7 +2369,12 @@ int comex_free(void *ptr, comex_group_t group)
 #endif
 
             /* unmap the memory */
+#if USE_SICM
+            sicm_free(reg_entry->mapped);
+            retval = 0;
+#else
             retval = munmap(reg_entry->mapped, reg_entry->len);
+#endif
             if (-1 == retval) {
                 perror("comex_free: munmap");
                 comex_error("comex_free: munmap", retval);
@@ -2858,7 +2895,7 @@ STATIC void _get_handler(header_t *header, int proc)
 #endif
 
     COMEX_ASSERT(OP_GET == header->operation);
-    
+
     reg_entry = reg_cache_find(
             header->rank, header->remote_address, header->length);
     COMEX_ASSERT(reg_entry);
@@ -3438,7 +3475,7 @@ STATIC void _fence_handler(header_t *header, int proc)
     fprintf(stderr, "[%d] _fence_handler asm volatile (\"\" : : : \"memory\"); \n",
             g_state.rank);
 #endif
-    asm volatile ("" : : : "memory"); 
+    asm volatile ("" : : : "memory");
 #endif
 
     /* we send the ack back to the originating proc */
@@ -3471,7 +3508,7 @@ STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc)
             header->rank, header->remote_address, header->length);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
-    
+
     if (sizeof(int) == header->length) {
         value_int = malloc(sizeof(int));
         *value_int = *((int*)mapped_offset); /* "fetch" */
@@ -3514,7 +3551,7 @@ STATIC void _swap_handler(header_t *header, char *payload, int proc)
             header->rank, header->remote_address, header->length);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
-    
+
     if (sizeof(int) == header->length) {
         value_int = malloc(sizeof(int));
         *value_int = *((int*)mapped_offset); /* "fetch" */
@@ -3588,7 +3625,7 @@ STATIC void _lock_handler(header_t *header, int proc)
 #endif
 
     COMEX_ASSERT(0 <= id);
-    
+
     if (UNLOCKED == mutexes[rank][id]) {
         mutexes[rank][id] = proc;
         server_send(&id, sizeof(int), proc);
@@ -3630,7 +3667,7 @@ STATIC void _unlock_handler(header_t *header, int proc)
 #endif
 
     COMEX_ASSERT(0 <= id);
-    
+
     if (lq_heads[rank][id]) {
         /* a lock requester was queued */
         /* find the next lock request and update queue */
@@ -3760,7 +3797,12 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
 #endif
 
             /* unmap the memory */
+#if USE_SICM
+            sicm_free(reg_entry->mapped);
+            retval = 0;
+#else
             retval = munmap(reg_entry->mapped, reg_entry->len);
+#endif
             if (-1 == retval) {
                 perror("_free_handler: munmap");
                 comex_error("_free_handler: munmap", retval);
@@ -3939,6 +3981,13 @@ STATIC void* _shm_create(const char *name, size_t size)
         comex_error("_shm_create: shm_open", fd);
     }
 
+#if USE_SICM
+    /* the file will be used for arena allocation, so it should not be truncated here */
+    sicm_arena arena = sicm_arena_create_mmapped(0, device, fd, 0, -1, 0);
+
+    /* map into local address space */
+    mapped = _shm_map(fd, size, arena);
+#else
     /* set the size of my shared memory object */
     retval = ftruncate(fd, size);
     if (-1 == retval) {
@@ -3948,6 +3997,7 @@ STATIC void* _shm_create(const char *name, size_t size)
 
     /* map into local address space */
     mapped = _shm_map(fd, size);
+#endif
 
     /* close file descriptor */
     retval = close(fd);
@@ -3978,9 +4028,15 @@ STATIC void* _shm_attach(const char *name, size_t size)
         comex_error("_shm_attach: shm_open", -1);
     }
 
+#if USE_SICM
+    sicm_arena arena = sicm_arena_create_mmapped(0, device, fd, 0, -1, 0);
+
+    /* map into local address space */
+    mapped = _shm_map(fd, size, arena);
+#else
     /* map into local address space */
     mapped = _shm_map(fd, size);
-
+#endif
     /* close file descriptor */
     retval = close(fd);
     if (-1 == retval) {
@@ -3991,12 +4047,21 @@ STATIC void* _shm_attach(const char *name, size_t size)
     return mapped;
 }
 
+#if USE_SICM
+STATIC void* _shm_map(int fd, size_t size, sicm_arena arena)
+{
+    void *memory = sicm_arena_alloc(arena, size);
+    if (NULL == memory) {
+        perror("_shm_map: mmap");
+        comex_error("_shm_map: mmap", -1);
+    }
 
+    return memory;
+}
+#else
 STATIC void* _shm_map(int fd, size_t size)
 {
-    void *memory = NULL;
-
-    memory = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    void *memory  = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     if (MAP_FAILED == memory) {
         perror("_shm_map: mmap");
         comex_error("_shm_map: mmap", -1);
@@ -4004,7 +4069,7 @@ STATIC void* _shm_map(int fd, size_t size)
 
     return memory;
 }
-
+#endif
 
 STATIC int _set_affinity(int cpu)
 {
@@ -4927,7 +4992,7 @@ STATIC void nb_puts(
                 dst_bvalue[j] = 0;
             }
         }
-        
+
         nb_put((char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
@@ -5186,7 +5251,7 @@ STATIC void nb_gets(
         }
 
         dst_idx = 0;
-        
+
         for(j=1; j<=stride_levels; j++) {
             dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
             if((i+1) % dst_bunit[j] == 0) {
@@ -5196,7 +5261,7 @@ STATIC void nb_gets(
                 dst_bvalue[j] = 0;
             }
         }
-        
+
         nb_get((char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
@@ -5462,7 +5527,7 @@ STATIC void nb_accs(
                 dst_bvalue[j] = 0;
             }
         }
-        
+
         nb_acc(datatype, scale, (char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
@@ -6062,4 +6127,3 @@ STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels,
         translate_mpi_error(ierr,"strided_to_subarray_dtype:MPI_Type_create_subarray");
     }
 }
-
