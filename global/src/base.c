@@ -48,6 +48,7 @@
 #   include <assert.h>
 #endif
 
+#include <ctype.h>
 #include "farg.h"
 #include "globalp.h"
 #include "message.h"
@@ -363,6 +364,7 @@ int bytes;
        GA[i].rstrctd_list = (C_Integer*)0;
        GA[i].rank_rstrctd = (C_Integer*)0;
        GA[i].property = NO_PROPERTY;
+       GA[i].mem_dev_set = 0;
 #ifdef ENABLE_CHECKPOINT
        GA[i].record_id = 0;
 #endif
@@ -2014,6 +2016,27 @@ void pnga_set_property(Integer g_a, char* property) {
 }
 
 /**
+ *  Set the memory device on a global array.
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_memory_dev = pnga_set_memory_dev
+#endif
+void pnga_set_memory_dev(Integer g_a, char *device) {
+  Integer ga_handle = g_a + GA_OFFSET;
+  int len = strlen(device);
+  int i;
+  if (len>FNAM) {
+    pnga_error("Illegal memory device name specified. Device name exceeds length: ",
+        FNAM);
+  }
+  for (i=0; i<len; i++) {
+    device[i] = tolower(device[i]);
+  }
+  GA[ga_handle].mem_dev_set = 1;
+  strcpy(GA[ga_handle].mem_dev,device);
+}
+
+/**
  *  Clear property from global array.
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -3185,6 +3208,7 @@ int local_sync_begin,local_sync_end;
     GA[ga_handle].cache = NULL;
     GA[ga_handle].actv = 0;     
     GA[ga_handle].actv_handle = 0;     
+    GA[ga_handle].mem_dev_set = 0;     
 
     if (GA[ga_handle].num_rstrctd > 0) {
       GA[ga_handle].num_rstrctd = 0;

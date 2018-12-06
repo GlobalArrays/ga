@@ -756,6 +756,20 @@ void NGA_Unset_property(int g_a)
     wnga_unset_property(aa);
 }
 
+void GA_Set_memory_dev(int g_a, char *device)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_set_memory_dev(aa,device);
+}
+
+void NGA_Set_memory_dev(int g_a, char *device)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_set_memory_dev(aa,device);
+}
+
 int GA_Total_blocks(int g_a)
 {
     Integer aa;

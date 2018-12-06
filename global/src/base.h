@@ -84,6 +84,8 @@ typedef struct {
 #ifdef ENABLE_CHECKPOINT
        int record_id;               /* record id for writing ga to disk     */
 #endif
+       int mem_dev_set;             /* flag for setting memory device       */
+       char mem_dev[FNAM+1];        /* memory device type                   */
 } global_array_t;
 
 enum property_type { NO_PROPERTY,

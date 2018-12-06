@@ -1017,6 +1017,20 @@ void FATR nga_unset_property_(Integer *g_a)
   wnga_unset_property(*g_a);
 }
 
+void FATR ga_set_memory_dev_(Integer *g_a, char *device, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(device, slen, buf, FNAM);
+  wnga_set_memory_dev(*g_a, buf);
+}
+
+void FATR nga_set_memory_dev_(Integer *g_a, char *device, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(device, slen, buf, FNAM);
+  wnga_set_memory_dev(*g_a, buf);
+}
+
 void FATR  ga_terminate_()
 {
   wnga_terminate();
