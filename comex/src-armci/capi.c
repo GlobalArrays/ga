@@ -224,6 +224,15 @@ int ARMCI_Malloc(void **ptr_arr, armci_size_t bytes)
     return PARMCI_Malloc(ptr_arr, bytes);
 }
 
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak ARMCI_Malloc_memdev
+#endif
+int ARMCI_Malloc_memdev(void **ptr_arr, armci_size_t bytes,
+    const char *device)
+{
+    return PARMCI_Malloc(ptr_arr, bytes);
+}
+
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak ARMCI_Malloc_local

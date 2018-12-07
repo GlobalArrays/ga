@@ -27,6 +27,8 @@ extern int    PARMCI_Initialized();
 extern void   PARMCI_Lock(int mutex, int proc);
 extern void*  PARMCI_Malloc_local(armci_size_t bytes);
 extern int    PARMCI_Malloc(void **ptr_arr, armci_size_t bytes);
+extern int    PARMCI_Malloc_memdev(void **ptr_arr, armci_size_t bytes,
+    const char *device);
 extern void*  PARMCI_Memat(armci_meminfo_t * meminfo, long offset);
 extern void   PARMCI_Memget(size_t bytes, armci_meminfo_t * meminfo, int memflg);
 extern int    PARMCI_NbAccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t * nb_handle);

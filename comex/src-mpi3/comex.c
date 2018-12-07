@@ -3239,6 +3239,12 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 #endif
 }
 
+int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
+        const char* device)
+{
+    return comex_malloc(ptrs,size,group);
+}
+
 
 int comex_free(void *ptr, comex_group_t group)
 {
