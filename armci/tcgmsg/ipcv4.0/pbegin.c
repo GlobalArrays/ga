@@ -323,15 +323,6 @@ void tcgi_pbegin(argc, argv)
       
 #if defined(NOSPIN)
     SR_proc_info[me].semid = SemSetCreate((long) 3*nslave, (long) 0);
-#else
-#ifdef KSR_NATIVE
-    /* Bind myself to a processor */
-    KSR_BindProcess(0);
-    if (DEBUG_) {
-      (void) printf("pbegin: bound master process\n");
-      (void) fflush(stdout);
-    }
-#endif
 #endif
 
 #if defined(SOLARIS) 
@@ -370,15 +361,6 @@ void tcgi_pbegin(argc, argv)
 	/* Child process */
 	me = SR_proc_id += i;               /* change process id */
 
-#ifdef KSR_NATIVE
-	/* Bind myself to a processor */
-	KSR_BindProcess(me);
-	if (DEBUG_) {
-	  (void) printf("pbegin: bound slave process %ld\n", NODEID_());
-	  (void) fflush(stdout);
-	}
-#endif
-
 #if defined(SOLARIS)
 	/*printf("binding slave process %d to processor %d\n", getpid(), 31-i);
 	if (processor_bind(P_PID, P_MYID, 31-i, (void *) NULL))
@@ -406,7 +388,7 @@ void tcgi_pbegin(argc, argv)
       SR_proc_info[i].shmem = SR_proc_info[masterid].shmem;
       SR_proc_info[i].shmem_size = SR_proc_info[masterid].shmem_size;
       SR_proc_info[i].shmem_id = SR_proc_info[masterid].shmem_id;
-#ifndef KSR_NATIVE
+#if 1
       SR_proc_info[i].header = (MessageHeader *)
 	(SR_proc_info[i].shmem + slaveid * SHMEM_BUF_SIZE);
 /*      SR_proc_info[i].header->nodeto = -1; */
@@ -427,28 +409,9 @@ void tcgi_pbegin(argc, argv)
 #endif
     }
 
-#ifdef KSR_NATIVE
-    /* Map the data structures onto the shared memory */
-    KSR_MapBufferSpace(masterid, nslave);
-    if (DEBUG_) {
-      (void) printf("pbegin: %2ld: Mapped buffer space\n", NODEID_());
-      (void) fflush(stdout);
-    }
-#else
     /* Post read semaphore to make sends partially asynchronous */
-    
 #ifdef NOSPIN
     SemPost(SR_proc_info[me].semid, SR_proc_info[me].sem_read);
-#endif
-#endif
-
-#ifdef KSR_NATIVE
-    /* Initialize the buffer space data structures */
-    KSR_InitBufferSpace();
-    if (DEBUG_) {
-      (void) printf("pbegin: %2ld: Initialized buffer space\n", NODEID_());
-      (void) fflush(stdout);
-    }
 #endif
 
   }

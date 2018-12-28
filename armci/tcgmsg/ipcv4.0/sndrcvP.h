@@ -44,18 +44,6 @@
 #if defined(SGI) || defined(SGITFP)
 #define SHMEM_BUF_SIZE 262144
 #endif
-#ifdef KSR
-#define SHMEM_BUF_SIZE 524288
-#endif
-#ifdef ALLIANT
-#define SHMEM_BUF_SIZE 524288
-#endif
-#ifdef ENCORE
-#define SHMEM_BUF_SIZE 4096
-#endif
-#ifdef SEQUENT
-#define SHMEM_BUF_SIZE 16384
-#endif
 #ifdef HPUX
 #define SHMEM_BUF_SIZE 262144
 #endif
@@ -64,11 +52,6 @@
 #endif
 #if defined(SOLARIS)
 #define SHMEM_BUF_SIZE 253952 
-#endif
-#ifdef KSR_NATIVE
-#include "ksr.h"
-#undef SHMEM_BUF_SIZE
-#define SHMEM_BUF_SIZE KSR_SHMEM_BUF_SIZE
 #endif
 #if !defined(SHMEM_BUF_SIZE)
 #define SHMEM_BUF_SIZE 131072

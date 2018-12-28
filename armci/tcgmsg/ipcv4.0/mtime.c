@@ -15,8 +15,6 @@ long MTIME_()
   return (long) (TCGTIME_()*100.0);
 }
 
-#if !(defined(KSR) || defined(ALLIANT))
-
 #include <sys/types.h>
 #include <sys/time.h>
 
@@ -57,78 +55,3 @@ double TCGTIME_()
 
   return high + 1.0e-6*(low+low);
 }
-
-#endif
-
-#ifdef KSR
-static double firsttime = 0;
-
-static double KSRTime()
-{
-  long time;
-#pragma setregval (time, i12)
- 
-  /* Read timer */
-  asm("finop; movb8_8 %x_all_timer,%i12");
-  asm("finop; cxnop");
-  asm("finop; cxnop");
-  
-  return(time * 4.0e-7);
-}
-
-double TCGTIME_()
-/*
-  Return wall clock time in seconds as accurately as possible
-*/
-{
-  static int firstcall = 1;
-  
-  if (firstcall) {
-    firstcall = 0;
-    MtimeReset();
-  }
-
-  return KSRTime() - firsttime;
-}
-
-void MtimeReset()               /* Sets timer reference */
-{
-  firsttime = KSRTime();
-}
-
-#endif
-
-#ifdef ALLIANT
-
-#include <sys/time.h>
-
-struct hrcval firsttime;
-
-void MtimeReset()
-{
-  hrcstamp(&firsttime);
-}
-
-double TCGTIME_()
-{
-  double low, high;
-  struct hrcval current;
-  static int firstcall = 1;
-
-  if (firstcall) {
-    firstcall = 0;
-    MtimeReset();
-  }
-
-  hrcstamp(&current);
-
-  /* Lose a bit but does this avoid the roll problem ? */
-
-  low = (double) (current.hv_low>>1) - (double) (firsttime.hv_low>>1);
-    
-  high = (double) (current.hv_high - firsttime.hv_high);
-
-  return (high*4294967296e-6+ 2.0*low) * 0.997e-5;
-}
-
-#endif

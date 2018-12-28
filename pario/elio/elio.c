@@ -42,10 +42,6 @@
 
 #include "../sf/coms.h"
 
-#if defined(CRAY) && defined(__crayx1)
-#undef CRAY
-#endif
-
 #if  defined(AIX) || defined(SGI64) || defined(CRAY) || defined(LINUXAIO)
      /* systems with Asynchronous I/O */
 #else
