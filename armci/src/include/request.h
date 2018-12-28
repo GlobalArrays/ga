@@ -17,12 +17,12 @@ extern void _armci_buf_test_nb_request(int bufid,unsigned int tag, int *retcode)
 extern void _armci_buf_set_tag(void *bufptr,unsigned int tag,short int protocol);
 extern void _armci_buf_clear_all();
 
-extern INLINE char *_armci_buf_get_clear_busy(int size, int operation, int to);
-extern INLINE void _armci_buf_set_busy(void *buf, int state);
-extern INLINE void _armci_buf_set_busy_idx(int tbl_idx, int state);
-extern INLINE int  _armci_buf_cmpld(int bufid);
-extern INLINE void _armci_buf_set_cmpld(void *buf, int state);
-extern INLINE void _armci_buf_set_cmpld_idx(int idx, int state);
+extern char *_armci_buf_get_clear_busy(int size, int operation, int to);
+extern void _armci_buf_set_busy(void *buf, int state);
+extern void _armci_buf_set_busy_idx(int tbl_idx, int state);
+extern int  _armci_buf_cmpld(int bufid);
+extern void _armci_buf_set_cmpld(void *buf, int state);
+extern void _armci_buf_set_cmpld_idx(int idx, int state);
 
 #ifdef LAPI
 #  include "lapidefs.h"
@@ -152,7 +152,7 @@ extern BUF_INFO_T *_armci_buf_to_bufinfo(void *buf);
 #define BUF_TO_BUFINFO _armci_buf_to_bufinfo
 
 void armci_complete_req_buf(BUF_INFO_T *info, void *buffer);
-extern INLINE BUF_INFO_T *_armci_id_to_bufinfo(int bufid);
+extern BUF_INFO_T *_armci_id_to_bufinfo(int bufid);
 
 #if 0 && defined(DATA_SERVER) && defined(SOCKETS)
 #define MAX_BUFS  1

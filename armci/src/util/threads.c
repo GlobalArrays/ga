@@ -81,8 +81,8 @@ void armci_finalize_threads()
 }
 
 /* calling armci_thread_idx for every function that accesses thread-private data
- * might be expensive -- needs optiomization */
-INLINE int armci_thread_idx()
+ * might be expensive -- needs optimization */
+int armci_thread_idx()
 {
     int i, n = ARMCI_MIN(armci_user_threads.avail, armci_user_threads.max);
     thread_id_t id = THREAD_ID_SELF();
@@ -96,7 +96,7 @@ INLINE int armci_thread_idx()
     return armci_register_thread(id);
 }
 
-INLINE int armci_register_thread(thread_id_t id)
+int armci_register_thread(thread_id_t id)
 {
     int i;
 
