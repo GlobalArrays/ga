@@ -42,6 +42,19 @@ extern active_socks_t *_armci_active_socks;
 extern void armci_sock_send(int to, void *data, int len);
 #endif
 
+#if defined(VAPI)
+void armci_send_contig_bypass(int proc, request_header_t *msginfo,
+                              void *src_ptr, void *rem_ptr, int bytes);
+int armci_read_strided_inc(stride_info_t *sinfo, const char *buf,int bytes, int *seg_off);
+void armci_server_rdma_strided_to_contig(char *src_ptr, int src_stride_arr[],
+					 int seg_count[], int stride_levels,
+					 char *dst_ptr, int proc,
+					 request_header_t *msginfo);
+void armcill_server_put(int proc, void* s, void *d, int len);
+int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides);
+void armci_unpin_memory(void *ptr, int stride_arr[], int count[], int strides);
+#endif
+
 /**************************** pipelining for medium size msg ***********/
 #ifdef PIPE_BUFSIZE
 
