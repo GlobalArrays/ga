@@ -26,9 +26,6 @@ extern INLINE void _armci_buf_set_cmpld_idx(int idx, int state);
 
 #ifdef LAPI
 #  include "lapidefs.h"
-#elif PORTALS
-#  include "armci_portals.h"
-   typedef long msg_tag_t;
 #elif defined(GM)
 #  include "myrinet.h"
 #elif defined(VIA)
@@ -70,9 +67,6 @@ typedef struct{
    short int agg_flag;
    int op;
    int proc;
-#ifdef PORTALS
-   int flag;
-#endif
 #ifdef NB_CMPL_T
    NB_CMPL_T cmpl_info;
 #endif

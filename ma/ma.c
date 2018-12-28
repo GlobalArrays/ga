@@ -97,7 +97,7 @@ extern void* ARMCI_Malloc_local(long bytes);
  */
 #if defined(__bgq__)
 #define ALIGNMENT	32
-#if defined(__bgp__)
+#elif defined(__bgp__)
 #define ALIGNMENT	16
 #elif defined(__AVX512F__)
 #define ALIGNMENT	64

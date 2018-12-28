@@ -117,6 +117,8 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 
 /* Limits for the largest shmem segment are in Kilobytes to avoid passing
  * Gigavalues to kr_malloc
+ * the limit for the KSR is lower than SHMMAX in sys/param.h because
+ * shmat would fail -- SHMMAX cannot be trusted (a bug)
  */
 #define _SHMMAX 4*1024
 
@@ -129,6 +131,9 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #elif defined(SGI) && !defined(SGI64)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)128*1024)
+#elif defined(KSR)
+#  undef _SHMMAX
+#  define _SHMMAX ((unsigned long)512*1024)
 #elif defined(HPUX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)64*1024)
@@ -178,8 +183,7 @@ static  int id_search_no_fork=0;
 
 
 #ifdef   ALLOC_MUNMAP
-#  define ALGN_MALLOC(s,a) malloc((s))
-#endif
+#define ALGN_MALLOC(s,a) malloc((s))
 
 static char* alloc_munmap(size_t size)
 {
@@ -400,6 +404,23 @@ long lower_bound=_SHMMAX*SHM_UNIT;
 #endif
 
 
+#ifdef MULTI_CTX
+void armci_nattach_preallocate_info(int* segments, int *segsize)
+{
+     int x;
+     char *uval;
+     uval = getenv("LIBELAN_NATTACH");
+     if(uval != NULL){
+        sscanf(uval,"%d",&x);
+        if(x<2 || x>8) armci_die("Error in LIBELAN_NATTACH <8, >1 ",(int)x);
+     }else
+        armci_die("Inconsistent configuration: ARMCI needs LIBELAN_NATTACH",0);
+     *segments =x;
+     *segsize = (int) (SHM_UNIT * MinShmem);
+
+}
+#endif
+        
 /* Create shared region to store kr_malloc context in shared memory */
 void armci_krmalloc_init_ctxshmem() {
     void *myptr=NULL;
@@ -451,6 +472,9 @@ void armci_krmalloc_init_ctxshmem() {
 
 void armci_shmem_init()
 {
+
+#ifdef ALLOC_MUNMAP
+#endif
 
    if(armci_me == armci_master){
 #if !defined(NO_SHMMAX_SEARCH) || defined(SHMMAX_SEARCH_NO_FORK)
@@ -566,7 +590,7 @@ static long occup_blocks=0;
 /* SHM_OP is an operator to calculate shmem address to attach 
  * might be + or - depending on the system 
  */
-#if defined(LINUX)
+#if defined(DECOSF) || defined(LINUX)
 #define SHM_OP +
 #else
 #define SHM_OP -
