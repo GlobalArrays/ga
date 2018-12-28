@@ -143,7 +143,6 @@ libarmci_la_SOURCES += src/include/asm-ppc.h
 libarmci_la_SOURCES += src/include/atomic_ops_ia64.h
 libarmci_la_SOURCES += src/include/atomics-i386.h
 libarmci_la_SOURCES += src/include/copy.h
-libarmci_la_SOURCES += src/include/fujitsu-vpp.h
 libarmci_la_SOURCES += src/include/kr_malloc.h
 libarmci_la_SOURCES += src/include/locks.h
 libarmci_la_SOURCES += src/include/memlock.h

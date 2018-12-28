@@ -32,7 +32,6 @@
 #cmakedefine NDEBUG
 
 #cmakedefine CYGWIN
-#cmakedefine DECOSF
 
 #cmakedefine01 ENABLE_EISPACK
 

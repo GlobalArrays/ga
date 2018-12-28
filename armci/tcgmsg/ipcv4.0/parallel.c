@@ -5,18 +5,14 @@
 /* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.22 2005-02-22 18:47:02 manoj Exp $ */
 
 #include <stdio.h>
-#ifdef SEQUENT
-#include <strings.h>
-#else
+#include <stdlib.h>
 #include <string.h>
-#endif
 #include <sys/types.h>
-#include <unistd.h> 
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || \
-    defined(AIX) || defined(NEXT)    || defined(LINUX)
+#if defined(SUN) || defined(AIX) || defined(LINUX)
 #include <sys/wait.h>
 #endif
 
@@ -27,18 +23,6 @@
 #include "tcgsockets.h"
 
 extern char *getenv();
-#if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(HPUX) || \
-    defined(KSR)    || defined(DECOSF)
-extern void *malloc();
-#else
-#include <stdlib.h>
-#endif
-
-#if 0
-#if !(defined(SGI) || defined(LINUX))
-extern char *strdup();
-#endif
-#endif
 
 extern void NextValueServer();
 extern void Error();

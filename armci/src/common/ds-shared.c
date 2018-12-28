@@ -78,8 +78,6 @@ else if(len <41*PIPE_BUFSIZE){
 else
 #if defined(VIA) || defined(VAPI)
    len = 8*4096;
-#elif defined(HITACHI)
-   len = 128*1024-128;
 #else
    len = 64*1024-128;
 #endif
@@ -104,11 +102,7 @@ buf_arg_t arg;
 int  packsize = PACK_SIZE(msginfo->datalen);
 
      arg.buf_posted = arg.buf   = buf;
-#ifdef HITACHI
-     arg.count = 0;
-#else
      arg.count = bufsize;
-#endif
      arg.proc  = (msginfo->operation==GET)?msginfo->to:msginfo->from;
      arg.op    = msginfo->operation;
 
@@ -143,7 +137,7 @@ void armci_pipe_send_strided(request_header_t *msginfo, void *buf, int buflen,
 buf_arg_t arg;
 int  packsize = PACK_SIZE(msginfo->datalen);
 
-#if defined(GM) || defined(HITACHI)
+#if defined(GM)
      arg.buf_posted   = msginfo->tag.data_ptr;
 #endif
 #if (defined(VIA) && defined(VIA_USES_RDMA)) || defined(VAPI)
@@ -961,7 +955,7 @@ void armci_data_server(void *mesg)
           }
           armci_server_ipc(msginfo, descr, buffer, buflen);
           break;
-#if defined(SOCKETS) || defined(HITACHI) || defined(MPI_SPAWN) || defined(MPI_MT)
+#if defined(SOCKETS) || defined(MPI_SPAWN) || defined(MPI_MT)
       case QUIT:   
           if(DEBUG_){ 
              printf("%d(serv):got QUIT request from %d\n",armci_me, from);

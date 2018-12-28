@@ -491,58 +491,6 @@ void armci_krmalloc_init_ctxshmem() {
 void armci_shmem_init()
 {
 
-#ifdef ALLOC_MUNMAP
-
-#if defined(QUADRICS) 
-#   if (defined(__ia64__) || defined(__alpha)) && !defined(DECOSF) 
-
-      /* this is to determine size of Elan Main memory allocator for munmap */
-      long x;
-      char *uval;
-      uval = getenv("LIBELAN_ALLOC_SIZE");
-      if(uval != NULL){
-        sscanf(uval,"%ld",&x);
-        if((x>80000000) && (x< 4*1024*1024*1024L)){ 
-          max_alloc_munmap = (x>>20) - 72;
-          if(DEBUG_){
-            printf("%d: max_alloc_munmap is %ld\n",armci_me,max_alloc_munmap);
-            fflush(stdout);
-          }
-        }
-      }
-
-      /* an alternative approach is to use MMAP area where we get
-         the address from the Elan environment variable in qsnetlibs 1.4+  */
-      uval = getenv("LIBELAN3_MMAPBASE");
-      if(uval != NULL){
-         sscanf(uval,"%p",&armci_elan_starting_address);
-      }
-
-#   endif
-#   if defined(__ia64__)
-       /* need aligment on 1MB boundary rather than the actual pagesize */
-       pagesize = 1024*1024;
-       logpagesize = 20;
-#   else
-       /* determine log2(pagesize) needed for address alignment */
-       int tp=512;
-       logpagesize = 9;
-       pagesize = getpagesize();
-       if(tp>pagesize)armci_die("armci_shmem_init:pagesize",pagesize);
-
-       while(tp<pagesize){
-         tp <<= 1;
-         logpagesize++;
-       }
-       if(tp!=pagesize)armci_die("armci_shmem_init:pagesize pow 2",pagesize);
-#   endif
-
-   if(DEBUG_) {
-     printf("page size =%d log=%d\n",pagesize,logpagesize); fflush(stdout); }
-
-#endif
-#endif
-
    if(armci_me == armci_master){
 #if !defined(NO_SHMMAX_SEARCH) || defined(SHMMAX_SEARCH_NO_FORK)
 #       ifdef SHMMAX_SEARCH_NO_FORK
@@ -657,7 +605,7 @@ static long occup_blocks=0;
 /* SHM_OP is an operator to calculate shmem address to attach 
  * might be + or - depending on the system 
  */
-#if defined(DECOSF) || defined(LINUX)
+#if defined(LINUX)
 #define SHM_OP +
 #else
 #define SHM_OP -

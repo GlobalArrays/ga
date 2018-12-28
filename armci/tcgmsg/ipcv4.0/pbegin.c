@@ -5,21 +5,13 @@
 /* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.20 2005-02-22 18:47:02 manoj Exp $ */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
-#ifdef SEQUENT
-#include <strings.h>
-#else
 #include <string.h>
-#endif
 #include <sys/types.h>
 #include <sys/time.h>
-#if defined(CONVEX) && defined(HPUX)
-#include <sys/cnx_types.h>
-#endif
-#if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) \
-                 || defined(CONVEX)  || defined(AIX)    || defined(NEXT) \
-                 || defined(LINUX)
+#if defined(SUN) || defined(AIX) || defined(LINUX)
 #include <sys/wait.h>
 #endif
 
@@ -56,25 +48,8 @@ extern void exit();
 extern void InitClusInfoNotParallel();
 extern int WaitAll(long nchild);
 
-#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || \
-    defined(CONVEX)  || defined(ARDENT) || defined(ULTRIX) || defined(AIX) || \
-    defined(NEXT)    || defined(DECOSF)
-extern char *strdup();
-#endif
-
 #define max(A, B) ( (A) > (B) ? (A) : (B) )
 #define min(A, B) ( (A) < (B) ? (A) : (B) )
-
-#if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(HPUX) || \
-    defined(KSR)    || defined(DECOSF)
-extern void *malloc();
-#else
-#include <stdlib.h>
-#endif
-
-#ifdef IPSC
-#define bzero(A,N) memset((A), 0, (N))
-#endif
 
 static int SR_initialized=0;
 long TCGREADY_()

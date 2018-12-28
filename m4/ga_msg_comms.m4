@@ -20,7 +20,7 @@ with_mpi_need_parse=no
 AS_CASE([$with_mpi],
     [yes],  [with_mpi_wrappers=yes; ga_msg_comms=MPI],
     [no],   [AS_CASE([$ga_cv_target_base],
-                [MACX|LAPI|CYGNUS|CYGWIN|INTERIX], [ga_msg_comms=TCGMSG5],
+                [MACX|LAPI|CYGNUS|CYGWIN], [ga_msg_comms=TCGMSG5],
                 [ga_msg_comms=TCGMSG])],
     [*],    [with_mpi_need_parse=yes; ga_msg_comms=MPI])
 dnl postpone parsing with_mpi until we know sizeof(void*)

@@ -100,7 +100,7 @@ int PARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
 #ifdef LAPI
     int  ival, rc, opcode=SWAP, *parg=ploc;
     lapi_cntr_t req_id;
-#elif defined(_CRAYMPP) || defined(QUADRICS) || defined(CRAY_SHMEM)
+#elif defined(QUADRICS) || defined(CRAY_SHMEM)
     int  ival;
     long lval;
 #endif
@@ -116,7 +116,7 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
 #endif
 
 #if defined(CLUSTER) && !defined(LAPI) && !defined(QUADRICS) &&!defined(CYGWIN)\
-    && !defined(HITACHI) && !defined(CRAY_SHMEM) && !defined(PORTALS)
+    && !defined(CRAY_SHMEM) && !defined(PORTALS)
      if(!SAMECLUSNODE(proc)){
        armci_rem_rmw(op, ploc, prem,  extra, proc);
        return 0;
@@ -127,7 +127,7 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
      if(SAMECLUSNODE(proc)) (void)armci_region_fixup(proc,&prem);
 #endif
     switch (op) {
-#   if defined(QUADRICS) || defined(_CRAYMPP) || defined(CRAY_SHMEM)
+#   if defined(QUADRICS) || defined(CRAY_SHMEM)
       case ARMCI_FETCH_AND_ADD:
 #ifdef SHMEM_FADD
          /* printf(" calling intfdd arg %x %ld \n", prem, *prem); */

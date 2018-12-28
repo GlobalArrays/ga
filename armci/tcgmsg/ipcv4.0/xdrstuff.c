@@ -4,32 +4,12 @@
 
 /* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/xdrstuff.c,v 1.5 2004-04-01 02:04:57 manoj Exp $ */
 
+#include <stdlib.h>
+
 #ifdef GOTXDR
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
-
-#ifdef CRAY
-extern bool_t xdr_char();
-extern char *malloc();
-#define NULL 0
-#endif
-
-#ifdef SEQUENT
-static bool_t xdr_char();  /* below from sun distribution tape */
-#define NULL 0
-#endif
-
-#ifdef HPUX
-#define NULL 0
-#endif
-
-#if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(HPUX)|| \
-    defined(AIX) || defined(KSR) || defined(DECOSF)
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
 
 #define XDR_BUF_LEN 4096        /* Size of XDR buffer in bytes */
 #define XDR_DOUBLE_LEN 8        /* Size of XDR double in bytes */

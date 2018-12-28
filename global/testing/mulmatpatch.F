@@ -2,18 +2,9 @@
 #   include "config.fh"
 #endif
 c $Id: mulmatpatch.F,v 1.6 2005-11-23 10:25:18 manoj Exp $
-#if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
-#   define xgemm SGEMM
-#   define ygemm CGEMM
-#else
-#   define xgemm TEST_DGEMM
-#   define ygemm TEST_ZGEMM
-#endif
-#if defined(FUJITSU) || defined(CRAY_YMP)
-# define THRESH  1.0d-10
-#else
-# define THRESH  1.0d-20
-#endif
+#define xgemm TEST_DGEMM
+#define ygemm TEST_ZGEMM
+#define THRESH  1.0d-20
 #define MISMATCH(x,y) abs(x-y)/max(1,abs(x)).gt.THRESH
 #define NMAX 10
 c

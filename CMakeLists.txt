@@ -228,7 +228,6 @@ endif()
 # hardwire various GA configuration parameters. Use convention that parameters
 # are defined and set to 0 if not used
 set (CYGWIN 0)
-set (DECOSF 0)
 
 # check for numerical libraries. These should set variables BLAS_FOUND and
 # LAPACK_FOUND

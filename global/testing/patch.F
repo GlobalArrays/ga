@@ -2,18 +2,9 @@
 #   include "config.fh"
 #endif
 C $iD: PATch.F,v 1.21 2002/10/15 23:35:52 vinod Exp $
-#if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
-#   define xgemm SGEMM
-#   define ygemm CGEMM
-#else
-#   define xgemm TEST_DGEMM
-#   define ygemm TEST_ZGEMM
-#endif
-#if defined(FUJITSU) || defined(CRAY_YMP)
-# define THRESH  1.0d-10
-#else
-# define THRESH  1.0d-20
-#endif
+#define xgemm TEST_DGEMM
+#define ygemm TEST_ZGEMM
+#define THRESH  1.0d-20
 #define MISMATCH(x,y) abs(x-y)/max(1,abs(x)).gt.THRESH
 c
 c  Be aware that matrix-multiplies with transposes are not being tested
