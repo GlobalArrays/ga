@@ -71,6 +71,10 @@ static char exch_loc[MAX_REGIONS];
 static char exch_rem[MAX_REGIONS];
 void armci_serv_register_req(void *start,long bytes, ARMCI_MEMHDL_T *reg_mem);
 
+#ifdef VAPI
+void armci_network_client_deregister_memory(ARMCI_MEMHDL_T *mh);
+void armci_network_server_deregister_memory(ARMCI_MEMHDL_T *mh);
+#endif
 
 static int armci_region_record(void *start, void *end, armci_reglist_t *reg)
 {

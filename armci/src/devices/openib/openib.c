@@ -171,6 +171,9 @@ void setup_ud_channel(void);
 void process_recv_completion_from_server(armci_ud_rank *h, cbuf *v);
 void process_recv_completion_from_client(armci_ud_rank *h, cbuf *v);
 
+void armci_server_region_destroy();
+void armci_region_destroy();
+
 struct ibv_srq      *CLN_srq_hndl;
 struct ibv_srq      *SRV_srq_hndl;
 void post_recv(void);
