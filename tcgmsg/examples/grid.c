@@ -4,6 +4,7 @@
 
 /*$Id: grid.c,v 1.2 1995-02-02 23:24:11 d3g681 Exp $*/
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 #ifdef PLOT
@@ -23,11 +24,6 @@ static long plot_type = 0;      /* 0 means no plot */
 #if defined(DELTA) || defined(IPSC)
 #define htonl(a) (a)
 #endif
-
-#if !defined(AIX) && !defined(DECOSF)
-extern char *malloc();
-#endif
-extern void exit();
 
 #define TCG_MAX(a,b) (((a)>(b)) ? (a) : (b))
 #define TCG_MIN(a,b) (((a)<(b)) ? (a) : (b))

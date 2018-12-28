@@ -25,13 +25,9 @@
 
 /* macro supports run-time selection of request sending scheme */
 #if defined(CLIENT_BUF_BYPASS)
-#define CAN_REQUEST_DIRECTLY _armci_bypass
+#  define CAN_REQUEST_DIRECTLY _armci_bypass
 #else
-#  if defined(HITACHI)
-#    define CAN_REQUEST_DIRECTLY 0
-#  else
-#    define CAN_REQUEST_DIRECTLY 1
-#  endif
+#  define CAN_REQUEST_DIRECTLY 1
 #endif
 
 #define BIGINT 2147483647
@@ -1351,7 +1347,7 @@ int PARMCI_NbAccS( int  optype,            /* operation */
 }
 
 
-#if !defined(ACC_COPY)&&!defined(CRAY_YMP)&&!defined(CYGNUS)&&!defined(CYGWIN)
+#if !defined(ACC_COPY) && !defined(CYGNUS) && !defined(CYGWIN)
 #   define REMOTE_OP
 #endif
 

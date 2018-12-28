@@ -5,22 +5,10 @@
 /* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pfilecopy.c,v 1.9 2004-05-07 20:45:10 pollack Exp $ */
 
 #include <stdio.h>
-#ifdef SEQUENT
-#include <strings.h>
-#else
+#include <stdlib.h>
 #include <string.h>
-#endif
 #include "sndrcv.h"
 #include "msgtypesc.h"
-
-#if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(HPUX) || \
-    defined(KSR)    || defined(DECOSF)
-extern void *malloc();
-#else
-extern void *malloc();
-#endif
-
-extern void free();
 
 void tcgi_pfilecopy(type, node0, filename)
      long *type, *node0;

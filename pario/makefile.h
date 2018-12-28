@@ -80,9 +80,6 @@ ifdef LIB_TARGETS
 ifdef HPIODIR
  LIB_DEFINES += -DHPIODIR=\'$(HPIODIR)/\'
 endif
-ifeq ($(TARGET), DECOSF)
-  LOC_LIBS += -laio -lpthreads
-endif
 endif
 
 ifdef USE_LINUXAIO

@@ -312,29 +312,6 @@ void unsetlock(int mutex)
 }
 
 
-#elif defined(CRAY_YMP)
-
-lock_t  cri_l[NUM_LOCKS];
-#pragma  _CRI common cri_l
-
-void CreateInitLocks(int num_locks, lockset_t  *lockid)
-{
-   int i;
-   if(num_locks > NUM_LOCKS) armci_die("To many locks requested", num_locks);
-
-   for(i=0;i<num_locks;i++)cri_l[i]=0;
-}
-
-
-void InitLocks(int num_locks, lockset_t lockid)
-{
-}
-
-
-void DeleteLocks(lockset_t lockid)
-{
-}
-
 #else
 /*********************** every thing else *************************/
 

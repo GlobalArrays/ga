@@ -78,12 +78,6 @@ static int testandset(void *spinlock) {
 }
 #   define TESTANDSET testandset
 
-#elif defined(DECOSF)
-#   if DEBUG_SPINLOCK
-#       warning SPINLOCK: DECOSF
-#   endif
-#   error "no implementation"
-
 #elif defined(SGI)
 #   if DEBUG_SPINLOCK
 #       warning SPINLOCK: SGI

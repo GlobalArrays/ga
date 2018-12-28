@@ -5,8 +5,7 @@
 /* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/waitall.c,v 1.3 1995-02-24 02:18:05 d3h325 Exp $ */
 
 #include <stdio.h>
-#if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || \
-    defined(AIX) || defined(NEXT)    || defined(DECOSF) || defined(LINUX)
+#if defined(SUN) || defined(AIX) || defined(LINUX)
 #include <sys/wait.h>
 #endif
 
@@ -20,17 +19,8 @@ int WaitAll(nchild)
 {
   int status, pid, child, stat=0, lo, hi;
   
-#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
-  union wait ustatus;
-#endif
-
   for (child=0; child<nchild; child++) {
-#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
-      pid = wait(&ustatus);
-      status = ustatus.w_status;
-#else
       pid = wait(&status);
-#endif
 /*
 (void) printf("Child finished pid=%d, status=0x%x\n",pid, status);
 (void) fflush(stdout);

@@ -16,7 +16,7 @@
 #   error cannot run
 #endif
 
-#if (defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN) || defined(HITACHI))
+#if (defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN)
 #   include "armci_shmem.h"
 typedef struct {
     long off;
@@ -55,15 +55,6 @@ extern PAD_LOCK_T *_armci_int_mutexes;
 #   define NAT_UNLOCK(x,p) armci_release_spinlock((LOCK_T*)(_armci_int_mutexes+(x)))
 extern PAD_LOCK_T *_armci_int_mutexes;
 
-#elif defined(HITACHI)
-extern void armcill_lock(int mutex, int proc);
-extern void armcill_unlock(int mutex, int proc);
-#   define LOCK_T int
-#   define PAD_LOCK_T LOCK_T
-#   define NAT_LOCK(x,p) armcill_lock((x),(p))
-#   define NAT_UNLOCK(x,p) armcill_unlock((x),(p))
-extern PAD_LOCK_T *_armci_int_mutexes;
-
 #elif defined(SGI)
 #   define SGI_SPINS 100
 #   include <ulocks.h>
@@ -95,20 +86,12 @@ extern void unsetlock(int);
 #   define NAT_LOCK(x,p)   setlock(x)
 #   define NAT_UNLOCK(x,p)  unsetlock(x)
 
-#elif defined(CRAY_YMP) && !defined(__crayx1)
-#   include <tfork.h>
-typedef int lockset_t;
-extern  lock_t cri_l[NUM_LOCKS];
-#   pragma  _CRI common cri_l
-#   define NAT_LOCK(x,p)   t_lock(cri_l+(x))
-#   define NAT_UNLOCK(x,p) t_unlock(cri_l+(x))
-
-#elif defined(CRAY_T3E) || defined(__crayx1) || defined(CATAMOUNT) || defined(CRAY_SHMEM) || defined(PORTALS)
+#elif defined(CATAMOUNT) || defined(CRAY_SHMEM)
 #   include <limits.h>
 #   if defined(CRAY) || defined(CRAY_XT)
 #       include <mpp/shmem.h>
 #   endif
-#   if defined(DECOSF) || defined(LINUX64) || defined(__crayx1) || defined(CATAMOUNT)
+#   if defined(LINUX64) || defined(CATAMOUNT)
 #       define _INT_MIN_64 (LONG_MAX-1)
 #   endif
 #   undef NUM_LOCKS
@@ -136,10 +119,6 @@ typedef int lockset_t;
 extern pthread_mutex_t _armci_mutex_thread;
 #   define NAT_LOCK(x,p)   pthread_mutex_lock(&_armci_mutex_thread)
 #   define NAT_UNLOCK(x,p) pthread_mutex_unlock(&_armci_mutex_thread)
-
-#elif defined(FUJITSU)
-typedef int lockset_t;
-#   include "fujitsu-vpp.h"
 
 #elif defined(SYSV) || defined(MACX)
 #   include "semaphores.h"

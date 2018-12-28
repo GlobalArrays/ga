@@ -16,50 +16,6 @@ IF CRAY
     CFLAGS = -I$(LIBDIR) -DCRAY
    SCFBLAS = scfblas.o
 ENDIF CRAY
-IF SGI
-        FC = f77
-    FFLAGS = -O2
-        CC = cc
-    CFLAGS = -O -I$(LIBDIR) -I/usr/include/bsd -I/usr/include/sun -DSGI
-      LIBS = -lmalloc -lbsd -lrpcsvc -lsun
-   SCFBLAS = scfblas.o
-ENDIF SGI
-IF SGITFP
-#SGI IRIX ...  note that need -lmalloc ... default break in Stress
-        FC = f77
-    FFLAGS = -O2 -d8 -i8
-        CC = cc
-   DEFINES = -DSGI -DSGITFP
-    CFLAGS = -O  $(DEFINES)
-      LIBS = -lmalloc -lbsd -lrpcsvc 
-   SCFBLAS = scfblas.o
-ENDIF SGI
-IF KSR
-        FC = f77
-    FFLAGS = -para -g -r8
-        CC = cc
-    CFLAGS = -para -g -I$(LIBDIR)
-      LIBS = -lrpc
-   SCFBLAS = scfblas.o
-ENDIF KSR
-IF APOLLO
-#APOLLO GN10000 ... Apollo PRISM Domain/OS
-        FC = f77
-    FFLAGS =  -O
-        CC = cc
-    CFLAGS = -O -DAPOLLO -DCONVEX -I$(LIBDIR) \
-             -A nansi -A sys,bsd4.3 -A run,bsd4.3
-      LIBS =
-   SCFBLAS = scfblas.o
-ENDIF
-IF CONVEX
-        FC = fc
-    FFLAGS =  -O2
-        CC = cc
-    CFLAGS = -O -DCONVEX -I$(LIBDIR)
-      LIBS =
-   SCFBLAS = 
-ENDIF CONVEX
 IF HPUX
         FC = f77
         CC = cc
@@ -84,22 +40,6 @@ IF SUN
     CFLAGS = -O -dalign -DSUN -DPLOT -I$(LIBDIR)
    SCFBLAS = scfblas.o
 ENDIF SUN
-IF DEC
-        FC = f77
-        CC = cc
-      LIBS = 
-    FFLAGS = -O2
-    CFLAGS = -O -DULTRIX -DPLOT -I$(LIBDIR)
-   SCFBLAS = scfblas.o
-ENDIF DEC
-IF DECOSF
-        FC = f77
-        CC = cc
-      LIBS =
-    FFLAGS = -O -integer_size 64 -align dcommons -align records
-    CFLAGS = -O -DDECOSF -I$(LIBDIR)
-   SCFBLAS = scfblas.o
-ENDIF DEC
 IF LINUX
         FC = f77
         CC = cc
@@ -108,45 +48,6 @@ IF LINUX
     CFLAGS = -O -I$(LIBDIR)
    SCFBLAS = scfblas.o
 ENDIF LINUX
-IF IPSC DELTA PARAGON
-        AS = as860
-        FC = if77
-        CC = icc
-      LIBS = -node -lkmath
-IF DELTA
-   DEFINES = -DIPSC -DDELTA -DPLOT
-   INSTALL = rcp "$@" delta1: &
-    CFLAGS = -i860 -O $(DEFINES) -I$(LIBDIR) -Knoieee
-    FFLAGS = -O2 -i860 -Knoieee
-ELSEIF PARAGON
-   DEFINES = -DIPSC -DPARAGON -DPLOT
-   INSTALL = echo "$@" is built
-   CFLAGS = -nx -g -Knoieee $(DEFINES)
-   FFLAGS = -nx -O2 -Knoieee
-ELSE
-   DEFINES = -DIPSC -DPLOT
-   INSTALL = rcp "$@" micron: &
-    CFLAGS = -i860 -O $(DEFINES) -I$(LIBDIR) -Knoieee
-    FFLAGS = -O2 -i860 -Knoieee
-ENDIF
-   SCFBLAS = 
-ENDIF IPSC DELTA PARAGON
-IF NEXT
-        FC = f77
-        CC = cc
-    FFLAGS = -g -f -N9
-    CFLAGS = -g -DNEXT -DEXTNAME -DPLOT -I$(LIBDIR)
-      LIBS = 
-   SCFBLAS = scfblas.o
-ENDIF NEXT
-IF NEXTNOEXT
-        FC = f77
-        CC = cc
-    FFLAGS = -g -f
-    CFLAGS = -g -DNEXT -DPLOT -I$(LIBDIR)
-      LIBS = 
-   SCFBLAS = scfblas.o
-ENDIF NEXT
 IF IBM
 #IBM RISC 6000 ... AIX 3.1 ... -qEXTNAME
 #              ... see the comments in the Makefile for the toolkit.
@@ -165,26 +66,6 @@ IF IBMNOEXT
     CFLAGS = -O -DPLOT -DAIX -I$(LIBDIR)
    SCFBLAS = 
 ENDIF IBMNOEXT
-IF ARDENT
-        FC = fc
-        CC = cc
-      LIBS =
-    FFLAGS = -43 -O2
-    CFLAGS = -O2 -43 -DARDENT -DPLOT -I$(LIBDIR)
-   SCFBLAS = scfblas.o
-ENDIF ARDENT
-IF ALLIANT ALLIANTMPP
-       FC = fortran
-       CC = fxc
-IF ALLIANT
-     LIBS = -lalgebra -lsignal -lcommon
-ELSE
-     LIBS = -lalgebra -lsignal -lcommon -lsw
-ENDIF
-   FFLAGS = -g -Ogv -AS -uniproc -OM
-   CFLAGS = -Ogv -uniproc -DALLIANT -I$(LIBDIR)
-   SCFBLAS = 
-ENDIF ALLIANT
 
 ######################################
 # Should not need to modify below here

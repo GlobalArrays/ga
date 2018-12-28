@@ -18,28 +18,10 @@
 #endif
 #endif
 #include <stdarg.h>
+#include <string.h>
+#include <stdlib.h>
 
 extern long nodeid_();
-
-#ifdef SEQUENT
-#include <strings.h>
-#else
-#include <string.h>
-#endif
-
-
-#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || \
-    defined(CONVEX)  || defined(ARDENT) || defined(ULTRIX) || \
-    defined(AIX)     || defined(IPSC)   || defined(NEXT)   || defined(DECOSF)
-extern char *strdup();
-#endif
-
-#if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(KSR) || \
-    defined(DECOSF)
-extern void *malloc();
-#else
-#include <stdlib.h>
-#endif
 
 #include "evlog.h"
 
@@ -48,9 +30,7 @@ static double walltime();
 /* If sprintf returns an integer instead of a character pointer
    then define the flag INTSPRINTF */
 
-#if defined(SGI)  || defined(AIX) || defined(IPSC) || defined(CRAY) || \
-    defined(HPUX) || defined(ALLIANT) || defined(CONVEX) || defined(NEXT) || \
-    defined(KSR)  || defined(DECOSF)
+#if defined(SGI)  || defined(AIX) || defined(CRAY) || defined(HPUX)
 #define INTSPRINTF
 #endif
 

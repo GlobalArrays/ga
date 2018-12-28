@@ -27,20 +27,6 @@
 #include "message.h"
 #include "armcip.h"
 
-
-/* NO_SHMEM enables to simulate cluster environment on a single workstation.
- * Must define NO_SHMMAX_SEARCH in shmem.c to prevent depleting shared memory
- * due to a gready shmem request by the master process on cluster node 0.
- */ 
-#if defined(DECOSF) && defined(QUADRICS)
-#  if !defined(REGION_ALLOC)
-#    define NO_SHMEM
-     extern int armci_enable_alpha_hack();
-#  endif
-#else
-#  define armci_enable_alpha_hack() 1
-#endif
-
 #define DEBUG  0
 #define MAX_HOSTNAME 80
 #define CHECK_NODE_NAMES 
@@ -68,25 +54,7 @@
 /*** stores cluster configuration. Initialized before user threads are created and then read-only ***/
 armci_clus_t *armci_clus_info;
 
-#ifdef HITACHI
-#include <hmpp/nalloc.h>
-# define GETHOSTNAME sr_gethostname
-ndes_t _armci_group;
-
-static int sr_gethostname(char *name, int len)
-{
-int no;
-pid_t ppid;
-
-   if(hmpp_nself (&_armci_group,&no,&ppid,0,NULL) <0)
-     return -1;
-
-   if(len<6)armci_die("len too small",len);
-   if(no>1024)armci_die("expected node id <1024",no);
-   sprintf(name,"n%d",no);
-   return 0;
-}
-#elif defined(SGIALTIX)
+#if defined(SGIALTIX)
 # define GETHOSTNAME altix_gethostname
 static int altix_gethostname(char *name, int len) {
     sprintf(name,"altix");
@@ -372,7 +340,7 @@ void armci_init_clusinfo()
 #endif
 
 #ifdef NO_SHMEM
-  if(armci_enable_alpha_hack()) {
+  if(1) {
     name[len]='0'+armci_me;
     name[len+1]='\0';
     len++;
@@ -390,13 +358,13 @@ void armci_init_clusinfo()
   process_hostlist(name);        /* compute cluster info */
 #endif
 
-#if (defined(SYSV) || defined(WIN32)  || defined(MMAP)) && !defined(HITACHI)
+#if (defined(SYSV) || defined(WIN32)  || defined(MMAP))
   armci_set_shmem_limit_per_node(armci_clus_info[0].nslave);
 #endif
   armci_master = armci_clus_info[armci_clus_me].master;
 
 #ifdef NO_SHMEM
-  if(armci_enable_alpha_hack()) {
+  if(1) {
      int i;
      for(i=0;i<armci_nclus;i++){
         int len=strlen(armci_clus_info[i].hostname);

@@ -17,7 +17,7 @@
 #ifdef QUADRICS
 #include <elan/elan.h>
 #ifdef QSNETLIBS_VERSION_CODE
-#ifndef DECOSF
+#if 1
 #  define ELAN_ACC
 #  define PENDING_OPER(x) ARMCI_ACC_INT
 #endif
@@ -44,7 +44,7 @@ extern void armci_elan_fence(int p);
 #   define sleep(x) Sleep(100*(x))
 #endif
 
-#if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM) && !defined(HITACHI) && !defined(CATAMOUNT)
+#if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM) && !defined(CATAMOUNT)
 #define CLUSTER
 
 #ifdef SERVER_THREAD
@@ -164,8 +164,7 @@ extern INLINE int armci_register_thread(thread_id_t id);
 #   endif
 #endif
 
-#if defined(CRAY_XT) || defined(CRAY_T3E) || defined(FUJITSU)\
-       || defined(HITACHI) || (defined(QUADRICS) && !defined(ELAN_ACC))
+#if defined(CRAY_XT) || defined(FUJITSU) || (defined(QUADRICS) && !defined(ELAN_ACC))
 #define ACC_COPY
 #endif
 
@@ -190,17 +189,13 @@ extern INLINE int armci_register_thread(thread_id_t id);
                            EXTRA_MSG_BUFLEN_DBL)
 #endif
 
-#if defined(HITACHI)
-#  define BUFSIZE  ((0x50000) * sizeof(double))
-#else   
-   /* packing algorithm for double complex numbers requires even number */
-#  ifdef MSG_BUFLEN_DBL
-#    define BUFSIZE_DBL (MSG_BUFLEN_DBL - RESERVED_BUFLEN)
-#  else
-#    define BUFSIZE_DBL 32768
-#  endif
-#  define BUFSIZE  (BUFSIZE_DBL * sizeof(double))
+/* packing algorithm for double complex numbers requires even number */
+#ifdef MSG_BUFLEN_DBL
+#  define BUFSIZE_DBL (MSG_BUFLEN_DBL - RESERVED_BUFLEN)
+#else
+#  define BUFSIZE_DBL 32768
 #endif
+#define BUFSIZE  (BUFSIZE_DBL * sizeof(double))
 
 /* note opcodes must be lower than ARMCI_ACC_OFF !!! */
 #define PUT 1
@@ -216,13 +211,8 @@ extern INLINE int armci_register_thread(thread_id_t id);
 
 extern  int armci_me, armci_nproc;
 extern int _armci_initialized;
-#ifdef HITACHI
-   extern int sr8k_server_ready;
-   extern  double *armci_internal_buffer;
-#else
 #if !defined(THREAD_SAFE)
    extern  double armci_internal_buffer[BUFSIZE_DBL];
-#endif
 #endif
 
 extern void armci_shmem_init();
@@ -317,8 +307,7 @@ extern void armci_finalize_fence();
         if( proc == armci_me || ( ARMCI_ACC(op) && ARMCI_ACC(PENDING_OPER(proc))) );\
         else  FENCE_NODE(proc)
 #  define UPDATE_FENCE_INFO(proc_)
-#elif defined(CLUSTER) && !defined(QUADRICS) && !defined(HITACHI)\
-        && !defined(CRAY_SHMEM) && !defined(PORTALS)
+#elif defined(CLUSTER) && !defined(QUADRICS) && !defined(CRAY_SHMEM) && !defined(PORTALS)
 #  define ORDER(op_,proc_)\
           if(!SAMECLUSNODE(proc_) && op_ != GET )FENCE_ARR(proc_)=1
 #  define UPDATE_FENCE_INFO(proc_) if(!SAMECLUSNODE(proc_))FENCE_ARR(proc_)=1
