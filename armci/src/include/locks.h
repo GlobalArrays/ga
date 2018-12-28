@@ -16,7 +16,7 @@
 #   error cannot run
 #endif
 
-#if (defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN)
+#if defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN)
 #   include "armci_shmem.h"
 typedef struct {
     long off;

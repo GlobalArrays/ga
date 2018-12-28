@@ -25,7 +25,7 @@
 
 /* macro supports run-time selection of request sending scheme */
 #if defined(CLIENT_BUF_BYPASS)
-#  define CAN_REQUEST_DIRECTLY _armci_bypass
+#define CAN_REQUEST_DIRECTLY _armci_bypass
 #else
 #  define CAN_REQUEST_DIRECTLY 1
 #endif
@@ -217,7 +217,12 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
 }
 
 
-#define DAXPY  daxpy_
+#if defined(CRAY)
+#ifdef CRAY
+#  define DAXPY  SAXPY
+#else
+#  define DAXPY  daxpy_
+#endif
 
 static int ONE=1;
 #define THRESH_ACC 32
@@ -462,7 +467,7 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
 
   /*    if(proc!=armci_me) INTR_OFF;*/
 
-#  if defined(LAPI2) || defined(PORTALS)
+#  if defined(LAPI2)
   /*even 1D armci_nbput has to use different origin counters for 1D */
 #   if defined(LAPI2)
   if(!ARMCI_ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
@@ -599,9 +604,9 @@ static int _armci_puts(void *src_ptr,
   if(proc<0)return FAIL5;
 
   PREPROCESS_STRIDED(tmp_count);
-#if (defined(PACKPUT))
+#  if (defined(PACKPUT))
   direct=SAMECLUSNODE(proc);
-#endif
+#  endif
 
   if(put_flag) dassert(1,nbh==NULL);
 
@@ -644,10 +649,7 @@ static int _armci_puts(void *src_ptr,
     }
   }
 #  endif
-#  ifdef PORTALS
-     if(stride_levels) direct=1;
-#  endif
-  
+
 #  if !defined(LAPI2) || defined(LAPI_RDMA)
   if(!direct){
 #    ifdef ALLOW_PIN /*if we can pin, we do*/
@@ -767,7 +769,7 @@ static int _armci_puts(void *src_ptr,
 		      count[0]);
 #  if defined(LAPI)
 	if(proc != armci_me) { WAIT_FOR_PUTS; }
-#  endif
+#  endif /*LAPI*/
       }
       else {
 	rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
@@ -889,14 +891,14 @@ static int _armci_accs( int  optype,    void *scale,
 
   direct=SAMECLUSNODE(proc);
 
-#if defined(ACC_COPY) && !defined(ACC_SMP)
+#   if defined(ACC_COPY) && !defined(ACC_SMP)
   if(armci_me != proc) direct=0;
-#endif /*ACC_COPY && !ACC_SMP*/
-
-  if(direct) {
+#   endif /*ACC_COPY && !ACC_SMP*/
+       
+  if(direct)
     rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,
 			  dst_stride_arr, count, stride_levels,1,NULL);
-  } else {
+  else{
     if(nbh) { DO_FENCE(proc,SERVER_NBPUT); }
     else { DO_FENCE(proc,SERVER_PUT); }
     rc = armci_pack_strided(optype,scale,proc,src_ptr, src_stride_arr,dst_ptr,
@@ -945,7 +947,9 @@ int PARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc) {
 
 int PARMCI_Get(void *src, void* dst, int bytes, int proc) {
   int rc=0;
+
   rc = PARMCI_GetS(src, NULL, dst, NULL, &bytes, 0, proc);
+
   dassert(1,rc==0);
   return rc;
 }
@@ -1218,11 +1222,6 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
       direct=0;
 #endif
 
-#ifdef PORTALS
-  if(stride_levels) 
-      direct=1;
-#endif
-  
 #if !defined(LAPI2) || defined(LAPI_RDMA)
   if(!direct){
 #     ifdef ALLOW_PIN
@@ -1259,24 +1258,23 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 			     (ext_header_t*)0,nobuf,nb_handle);
       if(rc) goto DefaultPath; /* attempt to avoid buffering failed */ 
 
-    } else
+    }else
     DefaultPath: /* standard buffered path */
+#endif
 #endif
     rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
 			    dst_ptr,dst_stride_arr,count,stride_levels,
 			    NULL,-1,-1,-1,nb_handle);
-  } else
+  }else
 #else
     /* avoid LAPI_GetV */
-    if(stride_levels==1 && count[0]>320 && !direct) {
+    if(stride_levels==1 && count[0]>320 && !direct) 
       ARMCI_REM_GET(proc,src_ptr,src_stride_arr,dst_ptr,
 		    dst_stride_arr, count, stride_levels, nb_handle);
-    } else
+    else
 #endif
-    {
       rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, dst_ptr,
 			    dst_stride_arr,count, stride_levels,0,nb_handle);
-    }
 
   POSTPROCESS_STRIDED(tmp_count);
 

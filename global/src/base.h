@@ -131,7 +131,6 @@ extern proc_list_t *PGRP_LIST;
    }                                                                           \
    else{                                                                       \
          _index = proc;                                                        \
-         if(GA_inv_Proc_list) _index = GA_inv_Proc_list[proc];                 \
          for(_d=0; _d<_dim; _d++){                                             \
              _loc = _index% (Integer)nblock[_d];                               \
              _index  /= (Integer)nblock[_d];                                   \

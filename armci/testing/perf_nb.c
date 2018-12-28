@@ -392,39 +392,6 @@ void test_perf_nb(int dry_run)
       ARMCI_Barrier();
     }
 
-#if PORTALS
-    /* See the note below why this part is disabled */
-    /* ---------------------- nb-Accumulate ------------------------ */
-    for (i = 0; i < elems[1]; i++) {
-      dsrc[me][i] = 1.0;
-    }
-    ARMCI_Barrier();
-    stride = elems[1] * sizeof(double);
-    scale  = 1.0;
-    for (j = 0; j < ntimes; j++) {
-      stime = armci_timer();
-      if ((rc = ARMCI_NbAccS(ARMCI_ACC_DBL, &scale, &dsrc[me][0], &stride,
-                             &ddst[0][0], &stride, &bytes, 0, 0, &hdl_acc))) {
-        ARMCI_Error("armci_nbacc failed\n", rc);
-      }
-      t8 += armci_timer() - stime;
-      stime = armci_timer();
-      ARMCI_Wait(&hdl_acc);
-      t9 += armci_timer() - stime;
-
-      ARMCI_Barrier();
-      ARMCI_AllFence();
-      ARMCI_Barrier();
-      if (VERIFY) {
-        verify_results(ACC, elems);
-      }
-      for (i = 0; i < elems[0]*elems[1]; i++) {
-        ddst[me][i] = 0.0;
-      }
-      ARMCI_Barrier();
-    }
-#endif
-
     /* print timings */
     if (!dry_run) if (me == 0) printf("%d\t %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e\n",
                                           bytes, t4 / ntimes, t5 / ntimes, t6 / ntimes, t1 / ntimes,

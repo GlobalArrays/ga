@@ -48,7 +48,7 @@ static int altix_gethostname(char *name, int len) {
     sprintf(name,"altix");
     return 0;
 }
-#elif defined(CRAY_XT) /* && !defined(PORTALS) */
+#elif defined(CRAY_XT)
 #define GETHOSTNAME cnos_gethostname
 static int cnos_gethostname(char *name, int len)
 {
