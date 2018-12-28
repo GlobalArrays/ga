@@ -57,6 +57,5 @@ long DeleteSharedRegion(long id)
 
 char *AttachSharedRegion(long id, long size)
 {
-    Error("AttachSharedRegion: cannot do this on SEQUENT or BALANCE",
-            (long) -1);
+    Error("AttachSharedRegion: cannot do this", (long) -1);
 }

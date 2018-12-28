@@ -50,10 +50,7 @@
 
 #ifdef  NB_NONCONT
 
-#if   defined(QUADRICS)
-typedef ELAN_EVENT *HTYPE;
-#define SHMEM_HANDLE_SUPPORTED
-#elif defined(CRAY_SHMEM)
+#if defined(CRAY_SHMEM)
 typedef void *HTYPE;
 #else
 typedef armci_ireq_t HTYPE;

@@ -6,11 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef SEQUENT
-#include <strings.h>
-#else
 #include <string.h>
-#endif
 
 #ifdef AIX
 #include <sys/select.h>
@@ -42,17 +38,10 @@ extern void Error();
 #endif
 
 #if defined(SHMEM) || defined(SYSV)
-#if !defined(SEQUENT) && !defined(CONVEX)
 #include <memory.h>
-#endif
 #include "sema.h"
 #include "tcgshmem.h"
-#if defined(USE_SRMOVER)
-extern void SRmover();
-#else
-#define SRmover(a,b,n) memcpy(a,b,n)
 #endif
-#endif 
 
 #ifdef EVENTLOG
 #include "evlog.h"
@@ -240,7 +229,7 @@ static void rcv_local(type, buf, lenbuf, lenmes, nodeselect, nodefrom)
      Error("rcv_local: message meant for someone else?", (long) nodeto);
      
   if (len)
-    (void) SRmover(buf, buffer, (len > buflen) ? buflen : len);
+    (void) memcpy(buf, buffer, (len > buflen) ? buflen : len);
 
 #if defined(NOSPIN) && !defined(PARTIALSPIN)
   SemPost(semid, sem_read);
@@ -263,7 +252,7 @@ static void rcv_local(type, buf, lenbuf, lenmes, nodeselect, nodefrom)
 #else    
     Await(buffer_full, (long) TRUE);
 #endif
-    (void) SRmover(buf, buffer, (len > buflen) ? buflen : len);
+    (void) memcpy(buf, buffer, (len > buflen) ? buflen : len);
 #if defined(NOSPIN) && !defined(PARTIALSPIN)
     SemPost(semid, sem_read);
 #else
@@ -336,7 +325,7 @@ static void snd_local(type, buf, lenbuf, node)
      even for messages of zero length */
 
   if (len)
-    (void) SRmover(buffer, buf, (len > buflen) ? buflen : len);
+    (void) memcpy(buffer, buf, (len > buflen) ? buflen : len);
 
 #if defined(NOSPIN) && !defined(PARTIALSPIN)
   SemPost(semid, sem_written);
@@ -359,7 +348,7 @@ static void snd_local(type, buf, lenbuf, node)
 #else
     Await(buffer_full, (long) FALSE);
 #endif
-    (void) SRmover(buffer, buf, (len > buflen) ? buflen : len);
+    (void) memcpy(buffer, buf, (len > buflen) ? buflen : len);
 #if defined(NOSPIN) && !defined(PARTIALSPIN)
     SemPost(semid, sem_written);
 #else

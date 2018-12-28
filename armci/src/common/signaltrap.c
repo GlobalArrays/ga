@@ -42,14 +42,8 @@
 extern void Error();
 #endif
 
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-#   define SigType  int
-#else
-#   define SigType  void
-#endif
-
 #ifndef SIG_ERR
-#   define SIG_ERR         (SigType (*)())-1
+#   define SIG_ERR         (void (*)())-1
 #endif
 
 extern int armci_me;
@@ -60,18 +54,18 @@ int AR_caught_sigchld=0;
 int AR_caught_sigsegv=0;
 int AR_caught_sig=0;
 
-SigType (*SigChldOrig)(), (*SigIntOrig)(), (*SigHupOrig)(), (*SigTermOrig)();
-SigType (*SigSegvOrig)();
+void (*SigChldOrig)(), (*SigIntOrig)(), (*SigHupOrig)(), (*SigTermOrig)();
+void (*SigSegvOrig)();
 
 
 /*********************** SIGINT *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-SigType SigIntHandler(sig, code, scp, addr)
+void SigIntHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-SigType SigIntHandler(sig)
+void SigIntHandler(sig)
 #endif
      int sig;
 {
@@ -104,12 +98,12 @@ void RestoreSigInt()
 
 /*********************** SIGABORT *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-SigType SigAbortHandler(sig, code, scp, addr)
+void SigAbortHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-SigType SigAbortHandler(sig)
+void SigAbortHandler(sig)
 #endif
      int sig;
 {
@@ -132,19 +126,16 @@ void TrapSigAbort()
 
 /*********************** SIGCHLD *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-SigType SigChldHandler(sig, code, scp, addr)
+void SigChldHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-SigType SigChldHandler(sig)
+void SigChldHandler(sig)
 #endif
      int sig;
 {
   int status;
-#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
-  union wait ustatus;
-#endif
   
 #if defined(LINUX)
   pid_t ret;
@@ -153,26 +144,13 @@ SigType SigChldHandler(sig)
     Error("SigChldHandler: error from signal setting SIGCHLD",0);
 #endif
 
-#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
-
-# if defined(LINUX)
-  ret = wait(&ustatus);
-  if((ret == 0) || ((ret == -1) && (errno == ECHILD))) { return; }
-# else
-  (void) wait(&ustatus); 
-# endif  
-  status = ustatus.w_status;
-
+#if defined(LINUX)
+ ret = waitpid(0, &status, WNOHANG);
+ if((ret == 0) || ((ret == -1) && (errno == ECHILD))) { return; }
 #else
-
-# if defined(LINUX)
-  ret = waitpid(0, &status, WNOHANG);
-  if((ret == 0) || ((ret == -1) && (errno == ECHILD))) { return; }
-# else
-  (void)wait(&status);
-# endif
-
+ (void)wait(&status);
 #endif
+
       AR_caught_sigchld=1;
       AR_caught_sig= sig;
       Error("Child process terminated prematurely, status=",(int) status);
@@ -205,12 +183,12 @@ void RestoreSigChldDfl()
 
 /*********************** SIGBUS *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-SigType SigBusHandler(sig, code, scp, addr)
+void SigBusHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-SigType SigBusHandler(sig)
+void SigBusHandler(sig)
 #endif
      int sig;
 {
@@ -236,12 +214,12 @@ void TrapSigBus()
 
 /*********************** SIGFPE *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-SigType SigFpeHandler(sig, code, scp, addr)
+void SigFpeHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-SigType SigFpeHandler(sig)
+void SigFpeHandler(sig)
 #endif
      int sig;
 {
@@ -268,12 +246,12 @@ void TrapSigFpe()
 
 /*********************** SIGILL *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-SigType SigIllHandler(sig, code, scp, addr)
+void SigIllHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-SigType SigIllHandler(sig)
+void SigIllHandler(sig)
 #endif
      int sig;
 {
@@ -295,12 +273,12 @@ void TrapSigIll()
 
 /*********************** SIGSEGV *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-SigType SigSegvHandler(sig, code, scp, addr)
+void SigSegvHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-SigType SigSegvHandler(sig)
+void SigSegvHandler(sig)
 #endif
      int sig;
 {
@@ -316,7 +294,7 @@ SigType SigSegvHandler(sig)
 }
 #ifdef ENABLE_CHECKPOINT
 static void * signal_arr[100];
-SigType SigSegvActionSa(int sig,siginfo_t *sinfo, void *ptr)
+void SigSegvActionSa(int sig,siginfo_t *sinfo, void *ptr)
 {
   int (*func)();      
   AR_caught_sig= sig;
@@ -372,12 +350,12 @@ void RestoreSigSegv()
 
 /*********************** SIGSYS *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-SigType SigSysHandler(sig, code, scp, addr)
+void SigSysHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-SigType SigSysHandler(sig)
+void SigSysHandler(sig)
 #endif
      int sig;
 {
@@ -400,12 +378,12 @@ void TrapSigSys()
 
 /*********************** SIGTRAP *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-SigType SigTrapHandler(sig, code, scp, addr)
+void SigTrapHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-SigType SigTrapHandler(sig)
+void SigTrapHandler(sig)
 #endif
      int sig;
 {
@@ -426,12 +404,12 @@ void TrapSigTrap()
 
 /*********************** SIGHUP *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-SigType SigHupHandler(sig, code, scp, addr)
+void SigHupHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-SigType SigHupHandler(sig)
+void SigHupHandler(sig)
 #endif
      int sig;
 {
@@ -463,12 +441,12 @@ void RestoreSigHup()
 
 /*********************** SIGTERM *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-SigType SigTermHandler(sig, code, scp, addr)
+void SigTermHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-SigType SigTermHandler(sig)
+void SigTermHandler(sig)
 #endif
      int sig;
 {
@@ -500,12 +478,12 @@ void RestoreSigTerm()
 /*********************** SIGIOT *************************************/
 #ifdef SIGIOT
 #if defined(SUN) && !defined(SOLARIS)
-SigType SigIotHandler(sig, code, scp, addr)
+void SigIotHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-SigType SigIotHandler(sig)
+void SigIotHandler(sig)
 #endif
      int sig;
 {
@@ -527,12 +505,12 @@ void TrapSigIot()
 
 /*********************** SIGCONT *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-SigType SigContHandler(sig, code, scp, addr)
+void SigContHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-SigType SigContHandler(sig)
+void SigContHandler(sig)
 #endif
      int sig;
 {
@@ -551,12 +529,12 @@ void TrapSigCont()
 
 /*********************** SIGXCPU *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-SigType SigXcpuHandler(sig, code, scp, addr)
+void SigXcpuHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-SigType SigXcpuHandler(sig)
+void SigXcpuHandler(sig)
 #endif
      int sig;
 {

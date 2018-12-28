@@ -31,14 +31,6 @@ extern INLINE void _armci_buf_set_cmpld_idx(int idx, int state);
    typedef long msg_tag_t;
 #elif defined(GM)
 #  include "myrinet.h"
-#elif defined(DOELAN4)
-#  include "elandefs.h"
-#elif defined(QUADRICS)
-#  include <elan/elan.h>
-   typedef void* msg_tag_t; 
-#  ifdef _ELAN_PUTGET_H
-#    define NB_CMPL_T ELAN_EVENT*
-#  endif
 #elif defined(VIA)
 #  include "via.h"
    typedef void* msg_tag_t;
@@ -101,11 +93,7 @@ typedef struct {
    short int from;            /* message sender */
 #endif
 unsigned int   operation:8;   /* operation code */
-#if defined(DOELAN4) 
-unsigned int   format:2;      /* data format used */
-unsigned int   dowait:1;      /* indicates if should wait for data  */
-unsigned int   inbuf:1;       /* data is in one of the buffers */
-#elif defined(CLIENT_BUF_BYPASS) || defined(LAPI2)
+#if defined(CLIENT_BUF_BYPASS) || defined(LAPI2)
 unsigned int   format:2;      /* data format used */
 unsigned int   pinned:1;      /* indicates if sender memory was pinned */
 unsigned int   bypass:1;      /* indicate if bypass protocol used */
@@ -216,13 +204,6 @@ extern  char* MessageSndBuffer;
 #  else
 #    define GA_SEND_REPLY(tag, buf, len, p)  
 #  endif
-#endif
-
-#ifdef QUADRICS_
-#  define GET_SEND_BUFFER(_size,_op,_to) MessageSndBuffer;\
-                    while(((request_header_t*)MessageSndBuffer)->tag)\
-                    armci_util_spin(100, MessageSndBuffer)
-#  define FREE_SEND_BUFFER(_ptr) ((request_header_t*)MessageSndBuffer)->tag = (void*)0 
 #endif
 
 #ifndef GET_SEND_BUFFER

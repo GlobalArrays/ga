@@ -462,14 +462,11 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
 
   /*    if(proc!=armci_me) INTR_OFF;*/
 
-#  if defined(LAPI2) || defined(PORTALS) /*|| defined(DOELAN4) && !defined(NB_NONCONT)*/
+#  if defined(LAPI2) || defined(PORTALS)
   /*even 1D armci_nbput has to use different origin counters for 1D */
 #   if defined(LAPI2)
   if(!ARMCI_ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
 					 (!nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD))) 
-#   elif defined(DOELAN4) && !defined(NB_NONCONT)
-    /*if(!ARMCI_ACC(op) && !SAMECLUSNODE(proc) && nb_handle && stride_levels<2)*/
-    if(!ARMCI_ACC(op) && !SAMECLUSNODE(proc) && stride_levels<2)
 #   else
       if(!SAMECLUSNODE(proc))
 #   endif
@@ -541,7 +538,7 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
 	}
     
   /* deal with non-blocking loads and stores */
-#if defined(LAPI) || defined(_ELAN_PUTGET_H) || defined(NB_NONCONT)
+#if defined(LAPI) || defined(NB_NONCONT)
 #   if defined(LAPI)
   if(!nb_handle)
 #   endif
@@ -602,9 +599,9 @@ static int _armci_puts(void *src_ptr,
   if(proc<0)return FAIL5;
 
   PREPROCESS_STRIDED(tmp_count);
-#  if (!defined(QUADRICS) || defined(PACKPUT))
+#if (defined(PACKPUT))
   direct=SAMECLUSNODE(proc);
-#  endif /*(!QUADRICS||!PACKPUT)&&!PORTALS*/
+#endif
 
   if(put_flag) dassert(1,nbh==NULL);
 
@@ -634,7 +631,7 @@ static int _armci_puts(void *src_ptr,
   }
    
   /* use direct protocol for remote access when performance is better */
-#  if defined(LAPI) || defined(DOELAN4)
+#  if defined(LAPI)
   if(!direct) {
     switch(stride_levels) {
     case 0:
@@ -646,7 +643,7 @@ static int _armci_puts(void *src_ptr,
     default: if(count[0]> LONG_PUT_THRESHOLD )direct=1; break;
     }
   }
-#  endif /*LAPI||DOELAN4*/
+#  endif
 #  ifdef PORTALS
      if(stride_levels) direct=1;
 #  endif
@@ -768,9 +765,9 @@ static int _armci_puts(void *src_ptr,
       if(!nbh && stride_levels == 0) {
 	armci_copy_2D(PUT, proc, src_ptr, dst_ptr, count[0], 1, count[0],
 		      count[0]);
-#  if defined(LAPI) || defined(_ELAN_PUTGET_H)
+#  if defined(LAPI)
 	if(proc != armci_me) { WAIT_FOR_PUTS; }
-#  endif /*LAPI||_ELAN_PUTGET_H*/
+#  endif
       }
       else {
 	rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
@@ -1188,9 +1185,7 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
   if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
   if(proc<0)return FAIL5;
 
-#if !defined(QUADRICS)
   direct=SAMECLUSNODE(proc);
-#endif
   PREPROCESS_STRIDED(tmp_count);
 
   /* aggregate get */
@@ -1363,7 +1358,7 @@ static void _armci_op_value(int op, void *src, void *dst, int proc,
       nbh->bufid=NB_NONE;
     }
   }
-#if defined(REMOTE_OP) && !defined(QUADRICS)
+#if defined(REMOTE_OP)
   rc = armci_rem_strided(op, NULL, proc, src, NULL, dst, NULL,
 			 &bytes, 0, NULL, 0, nbh);
   if(rc) armci_die("ARMCI_Value: armci_rem_strided incomplete", FAIL6);
@@ -1383,7 +1378,7 @@ static void _armci_op_value(int op, void *src, void *dst, int proc,
   }
     
   /* deal with non-blocking loads and stores */
-#  if defined(LAPI) || defined(_ELAN_PUTGET_H)
+#  if defined(LAPI)
 #    ifdef LAPI
   if(!nbh)
 #    endif

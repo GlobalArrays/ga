@@ -7,15 +7,8 @@ extern char* Attach_Shared_Region(long idlist[], long size, long offset);
 extern void Free_Shmem_Ptr(long id, long size, char* addr);
 extern long armci_shmem_reg_size(int i, long id);
 extern char* armci_shmem_reg_ptr(int i);
-#ifdef MULTI_CTX
-extern void armci_nattach_preallocate_info(int* segments, int *segsize);
-#endif
 
-#if defined(QUADRICS) && defined(MULTI_CTX)
-#define POST_ALLOC_CHECK(temp,size) armci_checkMapped(temp,size);
-#else
 #define POST_ALLOC_CHECK(temp,size) ;
-#endif
 
 #define MAX_REGIONS 64 
 

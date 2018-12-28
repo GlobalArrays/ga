@@ -372,29 +372,4 @@ int ReadXdrChar(sock, x, n_char)
 
   return nb;
 }
-
-#ifdef SEQUENT
-/*
- * XDR a char
- */
-static bool_t xdr_char(xdrs, cp)
-        XDR *xdrs;
-        char *cp;
-{
-        int i;
-
-        i = (*cp);
-        if (!xdr_int(xdrs, &i)) {
-                return (FALSE);
-        }
-        *cp = i;
-        return (TRUE);
-}
-#endif
-
-#else
-/* dummy function to make this source file legitimate */
-#include <stdio.h>
-#include <stdlib.h>
-void _dummy_ZefP_() {printf("XDR:Illegal function call\n"); exit(1);}
 #endif

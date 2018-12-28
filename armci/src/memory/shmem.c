@@ -178,19 +178,6 @@ static  int id_search_no_fork=0;
 
 
 #ifdef   ALLOC_MUNMAP
-#ifdef QUADRICS
-#  include <elan/elan.h>
-#  include <elan3/elan3.h>
-   static  char *armci_elan_starting_address = (char*)0;
-
-#  ifdef __ia64__
-#    define ALLOC_MUNMAP_ALIGN 1024*1024
-#  else
-#    define ALLOC_MUNMAP_ALIGN 64*1024
-#  endif
-
-#  define ALGN_MALLOC(s,a) elan_allocMain(elan_base->state, (a), (s))
-#else 
 #  define ALGN_MALLOC(s,a) malloc((s))
 #endif
 
@@ -305,11 +292,7 @@ static int armci_shmalloc_try(long size)
  */
 #define PAGE (16*65536L)
 #define LBOUND  1048576L
-#if defined(MULTI_CTX) && defined(QUADRICS)
-#define UBOUND 256*LBOUND
-#else
 #define UBOUND 512*LBOUND
-#endif
 
 #define ARMCI_STRINGIFY(str) #str
 #define ARMCI_CONCAT(str) strL
@@ -417,23 +400,6 @@ long lower_bound=_SHMMAX*SHM_UNIT;
 #endif
 
 
-#ifdef MULTI_CTX
-void armci_nattach_preallocate_info(int* segments, int *segsize)
-{
-     int x;
-     char *uval;
-     uval = getenv("LIBELAN_NATTACH");
-     if(uval != NULL){
-        sscanf(uval,"%d",&x);
-        if(x<2 || x>8) armci_die("Error in LIBELAN_NATTACH <8, >1 ",(int)x);
-     }else
-        armci_die("Inconsistent configuration: ARMCI needs LIBELAN_NATTACH",0);
-     *segments =x;
-     *segsize = (int) (SHM_UNIT * MinShmem);
-
-}
-#endif
-        
 /* Create shared region to store kr_malloc context in shared memory */
 void armci_krmalloc_init_ctxshmem() {
     void *myptr=NULL;

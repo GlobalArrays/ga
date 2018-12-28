@@ -14,24 +14,7 @@
         printf("\n%d:%s:%d:%s:%s:%d",armci_me,__FILE__,__LINE__,FUNCTION_NAME,__ARMCI_ST,__ARMCI_NU)*/
 #define ARMCI_PR_DBG(__ARMCI_ST,__ARMCI_NU) 
 
-#ifdef QUADRICS
-#include <elan/elan.h>
-#ifdef QSNETLIBS_VERSION_CODE
-#if 1
-#  define ELAN_ACC
-#  define PENDING_OPER(x) ARMCI_ACC_INT
-#endif
-
-#  if QSNETLIBS_VERSION_CODE > QSNETLIBS_VERSION(1,5,0)
-#     define LIBELAN_ATOMICS
-#  endif
-
-#endif
-extern void armci_elan_fence(int p);
-#endif
-
-/* we got problems on IA64/Linux64 with Elan if inlining is used */
-#if defined(__GNUC__) && !defined(QUADRICS)
+#if defined(__GNUC__)
 #   define INLINE inline
 #else
 #   define INLINE
@@ -164,7 +147,7 @@ extern INLINE int armci_register_thread(thread_id_t id);
 #   endif
 #endif
 
-#if defined(CRAY_XT) || defined(FUJITSU) || (defined(QUADRICS) && !defined(ELAN_ACC))
+#if defined(CRAY_XT) || defined(FUJITSU)
 #define ACC_COPY
 #endif
 
@@ -300,12 +283,12 @@ extern void armci_finalize_fence();
 #endif
 
 
-#if defined(LAPI) || defined(ELAN_ACC)
+#if defined(LAPI)
 #  define ORDER(op,proc)\
         if( proc == armci_me || ( ARMCI_ACC(op) && ARMCI_ACC(PENDING_OPER(proc))) );\
         else  FENCE_NODE(proc)
 #  define UPDATE_FENCE_INFO(proc_)
-#elif defined(CLUSTER) && !defined(QUADRICS) && !defined(CRAY_SHMEM) && !defined(PORTALS)
+#elif defined(CLUSTER) && !defined(CRAY_SHMEM) && !defined(PORTALS)
 #  define ORDER(op_,proc_)\
           if(!SAMECLUSNODE(proc_) && op_ != GET )FENCE_ARR(proc_)=1
 #  define UPDATE_FENCE_INFO(proc_) if(!SAMECLUSNODE(proc_))FENCE_ARR(proc_)=1

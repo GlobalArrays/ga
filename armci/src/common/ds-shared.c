@@ -798,15 +798,7 @@ void armci_send_data(request_header_t* msginfo, void *data)
         armci_WriteToDirect(to, msginfo, buf);
     }
 #else
-#ifdef DOELAN4
-        /*this is because WriteToDirect is a no-op in elan4.c so we have
-         * to do a put. This will not cause problems anywhere else in the
-         * code and this part on elan4 will only be invoked in a GPC
-         */
-        PARMCI_Put(data,msginfo->tag.data_ptr,msginfo->datalen,to);
-#else
         armci_WriteToDirect(to, msginfo, data);
-#endif
 #endif
 }
 
@@ -1077,7 +1069,7 @@ void armci_start_server()
 void *armci_server_code(void *data)
 {
 #ifdef SERVER_THREAD
-#if (defined(GM) || defined(VAPI) || defined(QUADRICS)) && ARMCI_ENABLE_GPC_CALLS
+#if (defined(GM) || defined(VAPI) ) && ARMCI_ENABLE_GPC_CALLS
 #  ifdef PTHREADS
   extern pthread_t data_server;
   data_server = pthread_self();
