@@ -263,10 +263,6 @@ int armci_copy_vector(int op,            /* operation code */
 
         for(i = 0; i< len; i++){
 
-#ifdef QUADRICS
-          armcill_putv(proc, darr[i].bytes, darr[i].ptr_array_len,
-                       darr[i].src_ptr_array, darr[i].dst_ptr_array); 
-#else
 #         ifdef LAPI
                 SET_COUNTER(ack_cntr[armci_th_idx],darr[i].ptr_array_len);
 #         endif
@@ -276,7 +272,6 @@ int armci_copy_vector(int op,            /* operation code */
               armci_put(darr[i].src_ptr_array[s],darr[i].dst_ptr_array[s],
                         darr[i].bytes, proc);
            }
-#endif
         }
         break;
 
@@ -284,10 +279,6 @@ int armci_copy_vector(int op,            /* operation code */
 
         for(i = 0; i< len; i++){
 
-#ifdef QUADRICS
-          armcill_getv(proc, darr[i].bytes, darr[i].ptr_array_len,
-                       darr[i].src_ptr_array, darr[i].dst_ptr_array); 
-#else
 #         ifdef LAPI
                 SET_COUNTER(get_cntr[armci_th_idx],darr[i].ptr_array_len);
 #         endif
@@ -296,7 +287,6 @@ int armci_copy_vector(int op,            /* operation code */
               armci_get(darr[i].src_ptr_array[s],darr[i].dst_ptr_array[s],
                         darr[i].bytes,proc);
            }
-#endif
         }
         break;
 
@@ -367,9 +357,7 @@ int PARMCI_PutV( armci_giov_t darr[], /* descriptor array */
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
     ORDER(PUT,proc); /* ensure ordering */
-#ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
-#endif
     /* use direct protocol for remote access when performance is better */
 #   if defined(LAPI) || defined(PORTALS)
 #     if defined(PORTALS)
@@ -426,9 +414,7 @@ int PARMCI_GetV( armci_giov_t darr[], /* descriptor array */
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
     ORDER(GET,proc); /* ensure ordering */
-#ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
-#endif
     /* use direct protocol for remote access when performance is better */
 #   if defined(LAPI) || defined(PORTALS)
 #     if defined(PORTALS)
@@ -528,9 +514,7 @@ int PARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
     
-#ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
-#endif
 
     /* aggregate put */
     if(nb_handle && nb_handle->agg_flag == SET) {
@@ -602,9 +586,7 @@ int PARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-#ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
-#endif
 
 #if defined(PORTALS)
     direct=1;

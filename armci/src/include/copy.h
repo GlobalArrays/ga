@@ -32,8 +32,8 @@
 #   define PTR_ALIGN
 #endif
 
-#if defined(NB_NONCONT) && !defined(CRAY_SHMEM) && !defined(QUADRICS)
-#error NB_NONCONT is only available on CRAY_SHMEM,QUADRICS and PORTALS
+#if defined(NB_NONCONT) && !defined(CRAY_SHMEM)
+#error NB_NONCONT is only available on CRAY_SHMEM and PORTALS
 #endif
 
 #if defined(SHMEM_HANDLE_SUPPORTED) && !defined(CRAY_SHMEM)
@@ -124,27 +124,6 @@
 #   define armci_get2D(p, bytes, count, src_ptr,src_stride,dst_ptr,dst_stride)\
            CopyPatchFrom(src_ptr, src_stride, dst_ptr, dst_stride,count,bytes,p)
 
-#elif defined(_ELAN_PUTGET_H) && !defined(NB_NONCONT)
-
-#if defined(QUADRICS)
-#if 0
-#   define WAIT_FOR_PUTS elan_putWaitAll(elan_base->state,200)
-#   define WAIT_FOR_GETS elan_getWaitAll(elan_base->state,200)
-#else
-#   define WAIT_FOR_PUTS armcill_wait_put()
-#   define WAIT_FOR_GETS armcill_wait_get()
-    extern void armcill_wait_put();
-    extern void armcill_wait_get();
-#endif
-#endif
-
-    extern void armcill_put2D(int proc, int bytes, int count,
-                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
-    extern void armcill_get2D(int proc, int bytes, int count,
-                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
-#   define armci_put2D armcill_put2D
-#   define armci_get2D armcill_get2D
-
 #elif defined(NB_NONCONT)
 
     extern void armcill_wait_put();
@@ -159,16 +138,7 @@
 #   define armci_put2D armcill_put2D
 #   define armci_get2D armcill_get2D
 
-#   if   defined(QUADRICS)
-
-#       define armcill_nb_put(_dst, _src, _sz, _proc, _hdl)\
-               _hdl = elan_put(elan_base->state,_src,_dst,(size_t)_sz,_proc)
-#       define armcill_nb_get(_dst, _src, _sz, _proc, _hdl)\
-               _hdl =  elan_get(elan_base->state,_src,_dst,(size_t)_sz,_proc)
-#       define armcill_nb_wait(_hdl)\
-               elan_wait(_hdl,100)
-
-#   elif defined(CRAY_SHMEM)
+#   if defined(CRAY_SHMEM)
 
 #       define armcill_nb_wait(_hdl)\
                shmem_wait_nb(_hdl)
@@ -214,7 +184,7 @@
 
 #   include "lapidefs.h"
 
-#elif defined(QUADRICS) || defined(CRAY_SHMEM) || defined(PORTALS)
+#elif defined(CRAY_SHMEM) || defined(PORTALS)
 #if defined(CRAY) || defined(CRAY_XT)
 #   include <mpp/shmem.h>
 #else
@@ -224,16 +194,10 @@
 #endif
 #   include <shmem.h>
 #endif
-#   ifdef ELAN_ACC
-#     define FENCE_NODE(p) {\
-          if(((p)<armci_clus_first)||((p)>armci_clus_last))armci_elan_fence(p);}
-#     define UPDATE_FENCE_STATE(p, op, nissued) 
-#   else
       int cmpl_proc;
 #       define FENCE_NODE(p) if(cmpl_proc == (p)){\
              if(((p)<armci_clus_first)||((p)>armci_clus_last))shmem_quiet(); }
 #     define UPDATE_FENCE_STATE(p, op, nissued) if((op)==PUT) cmpl_proc=(p);
-#   endif
 #else
 #   if defined(GM) && defined(ACK_FENCE) 
      extern void armci_gm_fence(int p);
@@ -321,43 +285,7 @@ void c_dcopy13_(const int*    const restrict rows,
 
 
 /***************************** 1-Dimensional copy ************************/
-#if defined(QUADRICS)
-#   include <elan/elan.h>
-
-#   if defined(_ELAN_PUTGET_H)
-#      define qsw_put(src,dst,n,proc) \
-        elan_wait(elan_put(elan_base->state,src,dst,n,proc),elan_base->waitType)
-#      define qsw_get(src,dst,n,proc) \
-        elan_wait(elan_get(elan_base->state,src,dst,n,proc),elan_base->waitType)
-/*
-#      define ARMCI_NB_PUT(src,dst,n,proc,phandle)\
-              *(phandle)=elan_put(elan_base->state,src,dst,n,proc)
-*/
-#ifdef DOELAN4
-extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, ELAN_EVENT **phandle);
-#      define ARMCI_NB_PUT(src,dst,n,proc,phandle)\
-              armci_elan_put_with_tracknotify(src,dst,n,proc,phandle)
-#endif
-
-#      define ARMCI_NB_GET(src,dst,n,proc,phandle)\
-              *(phandle)=elan_get(elan_base->state,src,dst,n,proc)
-#      define ARMCI_NB_WAIT(handle) if(handle)elan_wait(handle,elan_base->waitType) 
-#      define ARMCI_NB_TEST(handle,_succ) (*(_succ))= (handle)? !elan_poll(handle,1L): 1 
-#   else
-#      define qsw_put(src,dst,n,proc) shmem_putmem((dst),(src),(int)(n),(proc))
-#      define qsw_get(src,dst,n,proc) shmem_getmem((dst),(src),(int)(n),(proc))
-#   endif
-
-#   define armci_put(src,dst,n,proc)\
-           if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
-              armci_copy(src,dst,n);\
-           } else { qsw_put(src,dst,n,proc);}
-#   define armci_get(src,dst,n,proc) \
-           if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
-             armci_copy(src,dst,n);\
-           } else { qsw_get((src),(dst),(int)(n),(proc));}
-
-#elif defined(CRAY_SHMEM)
+#if defined(CRAY_SHMEM)
 #      define armci_copy_disabled(src,dst,n)\
         if((n)<256 || n%sizeof(long) ) memcpy((dst),(src),(n));\
         else {\

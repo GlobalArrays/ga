@@ -180,67 +180,10 @@ char *AttachSharedRegion(id, size)
 }
 
 #endif
-#if defined(SEQUENT) || defined(ENCORE)
 
-#ifdef SEQUENT
-#define SHMALLOC shmalloc
-#define SHFREE   shfree
-#endif
-#ifdef ENCORE
-#define SHMALLOC share_malloc
-#define SHFREE   share_free
-#endif
-
-extern char *SHMALLOC();
-extern int SHFREE();
-
-#define MAX_ADDR 20
-static int next_id = 0;              /* Keep track of id */
-static char *shaddr[MAX_ADDR];       /* Keep track of addresses */
-
-char *CreateSharedRegion(id, size)
-     long *size, *id;
-{
-  char *temp;
-
-  if (next_id >= MAX_ADDR)
-    Error("CreateSharedRegion: too many shared regions", (long) next_id);
-
-  if ( (temp = SHMALLOC((unsigned) *size)) == (char *) NULL)
-    Error("CreateSharedRegion: failed in SHMALLOC", (long) *size);
-
-  *id = next_id++;
-  shaddr[*id] = temp;
-
-  return temp;
-}
-
-long DetachSharedRegion( id, size, addr)
-     long id, size;
-     char *addr;
-{
-  /* This needs improving to make more robust */
-  return SHFREE(addr);
-}
-
-long DeleteSharedRegion(id)
-     long id;
-{
-  /* This needs improving to make more robust */
-  return SHFREE(shaddr[id]);
-}
-
-char *AttachSharedRegion(id, size)
-     long id, size;
-{
-  Error("AttachSharedRegion: cannot do this on SEQUENT or BALANCE", (long) -1);
-}
-
-
-#endif
    /* Bizarre sequent has sysv semaphores but proprietary shmem */
    /* Encore has sysv shmem but is limited to total of 16384bytes! */
-#if defined(SYSV) && !defined(SEQUENT) && !defined(ENCORE)
+#if defined(SYSV)
 
 #include <sys/types.h>
 #include <sys/ipc.h>

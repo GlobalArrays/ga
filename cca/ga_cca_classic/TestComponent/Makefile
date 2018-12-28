@@ -16,10 +16,6 @@ include $(EG_ROOT)/ccaComponent/MakeIncl.EGComponent
 
 #OTHERFLAGS = -D_DBG_ILOOP -D_DBG_PLATE1
 
-ifdef LINUX64_QUADRICS
-  EXTRA_LIBS = -lshmem -lelan3 -lelan -lpthread
-endif
-
 GA_INC  = -I$(GA_HOME)/include
 GA_LIBS = -L$(GA_HOME)/lib/$(TARGET) -L$(MPI_LIB) -ldl -lc -lglobal\
         -lma -llinalg -larmci -ltcgmsg-mpi $(LIBMPI)\

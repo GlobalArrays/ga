@@ -9,25 +9,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#ifdef SEQUENT
-#include <strings.h>
-#else
 #include <string.h>
-#endif
-#if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || \
-                    defined(SEQUENT) || defined(AIX)    || \
-                    defined(NEXT)    || defined(LINUX)
+#if defined(SUN) || defined(AIX)    || defined(LINUX)
 #include <sys/wait.h>
 #endif
 
 #ifdef AIX
 #include <sys/select.h>
 #endif
-#ifdef CONVEX
-#include <errno.h>
-#else
 #include <sys/errno.h>
-#endif
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>

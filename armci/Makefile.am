@@ -348,7 +348,6 @@ libarmci_la_SOURCES += tcgmsg/ipcv4.0/sndrcv.h
 libarmci_la_SOURCES += tcgmsg/ipcv4.0/sndrcvP.h
 libarmci_la_SOURCES += tcgmsg/ipcv4.0/sockets.c
 libarmci_la_SOURCES += tcgmsg/ipcv4.0/srftoc.h
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/srmover.c
 libarmci_la_SOURCES += tcgmsg/ipcv4.0/stats.c
 libarmci_la_SOURCES += tcgmsg/ipcv4.0/synch.c
 libarmci_la_SOURCES += tcgmsg/ipcv4.0/usleep.c
