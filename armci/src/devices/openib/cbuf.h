@@ -24,15 +24,30 @@
  *
  */
 
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
 
 #ifndef _CBUF_H
 #define _CBUF_H
 
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_MALLOC_H
+#   include <malloc.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
 #include <pthread.h>
 #include <infiniband/verbs.h>
-#include <malloc.h>
-#include <string.h>
 
 #ifdef _IA64_
 #define CBUF_FLAG_TYPE uint64_t

@@ -27,7 +27,6 @@
 #define _XOPEN_SOURCE 600
 
 #include "cbuf.h"
-#include <assert.h>
 
 
 /*
