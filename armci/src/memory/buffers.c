@@ -152,7 +152,7 @@ reqbuf_pool_t* _armci_buf_state;  /* array that describes state of each buf */
 extern active_socks_t *_armci_active_socks;
 
 /* returns bufinfo, given bufid */
-INLINE BUF_INFO_T *_armci_id_to_bufinfo(int bufid) {
+BUF_INFO_T *_armci_id_to_bufinfo(int bufid) {
   if (bufid < 0 || bufid >= (MAX_BUFS+MAX_SMALL_BUFS))
       armci_die2("_armci_id_to_bufinfo: bad id",bufid,MAX_BUFS);
 
@@ -489,7 +489,7 @@ void _armci_buf_release_index(int tbl_idx) {
 
 /*\ release buffer when it becomes free
 \*/
-INLINE void _armci_buf_release(void *buf)
+void _armci_buf_release(void *buf)
 {
     _armci_buf_release_index(_armci_buf_to_index(buf));
 }
@@ -1700,36 +1700,36 @@ BUF_INFO_T *_armci_tag_to_bufinfo(msg_tag_t tag) {
 
 
 /* inline primitives for buffer state management */
-INLINE char *_armci_buf_get_clear_busy(int size, int operation, int to) {
+char *_armci_buf_get_clear_busy(int size, int operation, int to) {
     char *buf = _armci_buf_get(size, operation, to);
     _armci_buf_set_busy(buf, 0);
     return buf;
 }
 
-INLINE void _armci_buf_set_busy(void *buf, int state) {
+void _armci_buf_set_busy(void *buf, int state) {
         _armci_buf_state->table[_armci_buf_to_index(buf)].busy = state;
 }
 
-INLINE void _armci_buf_set_busy_idx(int idx, int state) {
+void _armci_buf_set_busy_idx(int idx, int state) {
     _armci_buf_state->table[idx].busy = state;
 }
 
 #if 0
-INLINE int _armci_buf_cmpld(void *buf) {
+int _armci_buf_cmpld(void *buf) {
     return _armci_buf_state->table[_armci_buf_to_index(buf)].cmpl;
 }
 #else
-INLINE int _armci_buf_cmpld(int bufid) {
+int _armci_buf_cmpld(int bufid) {
         return _armci_buf_state->table[bufid].cmpl;
 }
 #endif
 
 
-INLINE void _armci_buf_set_cmpld(void *buf, int state) {
+void _armci_buf_set_cmpld(void *buf, int state) {
         _armci_buf_state->table[_armci_buf_to_index(buf)].cmpl = state;
 }
 
-INLINE void _armci_buf_set_cmpld_idx(int idx, int state) {
+void _armci_buf_set_cmpld_idx(int idx, int state) {
     _armci_buf_state->table[idx].cmpl = state;
 }
 
