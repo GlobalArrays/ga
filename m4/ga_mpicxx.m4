@@ -46,7 +46,7 @@
 AC_DEFUN([GA_PROG_MPICXX],
 [AC_ARG_VAR([MPICXX], [MPI C++ compiler])
 AS_CASE([$ga_cv_target_base],
-[BGP],  [ga_mpicxx_pref=mpixlcxx_r; ga_cxx_pref=bgxlC_r],
+[BGQ],  [ga_mpicxx_pref=mpixlcxx_r; ga_cxx_pref=bgxlC_r],
 [])
 # In the case of using MPI wrappers, set CXX=MPICXX since CXX will override
 # absolutely everything in our list of compilers.
