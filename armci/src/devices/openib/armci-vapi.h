@@ -197,6 +197,9 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #endif
 #define BUF_ALLOCATE armci_vapi_client_mem_alloc
 
+void armci_vapi_test_buf(armci_vapi_field_t *field,int snd,int rcv,int to,int op, int *retval);
+void armci_vapi_complete_buf(armci_vapi_field_t *field,int snd,int rcv,int to,int op);
+
 #define CLEAR_SEND_BUF_FIELD(_field,_snd,_rcv,_to,_op) armci_vapi_complete_buf((armci_vapi_field_t *)(&(_field)),(_snd),(_rcv),(_to),(_op));_snd=0;_rcv=0;_to=0
 
 #define TEST_SEND_BUF_FIELD(_field,_snd,_rcv,_to,_op,_pret) armci_vapi_test_buf((armci_vapi_field_t *)(&(_field)),(_snd),(_rcv),(_to),(_op),(_pret))
