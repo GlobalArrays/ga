@@ -535,11 +535,7 @@ void SND_(type, buf, lenbuf, node, sync)
 
 #if defined(SHMEM) || defined(SYSV)
   if (SR_proc_info[*node].local){
-#ifdef KSR_NATIVE
-    KSR_snd_local(type, buf, lenbuf, node);
-#else
     snd_local(type, buf, lenbuf, node);
-#endif
   } else {
 #endif
       snd_remote(type, buf, lenbuf, node);
@@ -625,11 +621,7 @@ static long NextReadyNode(type)
       else if (SR_proc_info[next_node].local) {
 	/* Look for local message */
 
-#ifdef KSR_NATIVE
-	if (KSR_MatchMessage(next_node, me, type))
-#else
 	if (MatchMessage(SR_proc_info[next_node].header, me, type))
-#endif
 	  break;
       }
       else if (SR_proc_info[next_node].sock >= 0) {
@@ -723,11 +715,7 @@ long PROBE_(type, node)
     else if (SR_proc_info[i].local) {
       /* Look for local message */
       
-#ifdef KSR_NATIVE
-      if (KSR_MatchMessage(i, me, type))
-#else
       if (MatchMessage(SR_proc_info[i].header, me, *type))
-#endif
 	break;
     }
     else if (SR_proc_info[i].sock >= 0) {
@@ -957,11 +945,7 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 
 #if defined(SHMEM) || defined(SYSV)
   if (SR_proc_info[node].local){
-#ifdef KSR_NATIVE
-    KSR_rcv_local(type, buf, lenbuf, lenmes, &node, nodefrom);
-#else
     rcv_local(type, buf, lenbuf, lenmes, &node, nodefrom);
-#endif
   } else {
 #endif
       rcv_remote(type, buf, lenbuf, lenmes, &node, nodefrom);

@@ -117,8 +117,6 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 
 /* Limits for the largest shmem segment are in Kilobytes to avoid passing
  * Gigavalues to kr_malloc
- * the limit for the KSR is lower than SHMMAX in sys/param.h because
- * shmat would fail -- SHMMAX cannot be trusted (a bug)
  */
 #define _SHMMAX 4*1024
 
@@ -131,9 +129,6 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #elif defined(SGI) && !defined(SGI64)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)128*1024)
-#elif defined(KSR)
-#  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)512*1024)
 #elif defined(HPUX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)64*1024)
