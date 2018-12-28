@@ -9,6 +9,9 @@
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
+#if HAVE_STDINT_H
+#   include <stdint.h> /* intptr_t */
+#endif
 #if HAVE_ASSERT_H
 #   include <assert.h>
 #endif
@@ -39,8 +42,8 @@
  * @return Value of the attribute on return
  */
 static int att_ops(int attid, int gs, int v) {
-  static not_first[NUM_ATTRIBUTES]; /*auto-init to zero*/
-  static val[NUM_ATTRIBUTES];
+  static int not_first[NUM_ATTRIBUTES] = {0}; /*auto-init to zero*/
+  static int val[NUM_ATTRIBUTES] = {0};
   assert(attid>=0 && attid<NUM_ATTRIBUTES);
   assert(gs==0 || gs==1);
   if(!((gs && !not_first[attid]) || (!gs && not_first[attid]))) {
@@ -558,7 +561,7 @@ static void _armci_serv_pendbuf_progress_get(pendbuf_t *pbuf) {
 #warning "PEND_BUFS: Abusing msginfo->tag.ack_ptr for GETS with large descriptors!"
       assert(msginfo->tag.ack_ptr != NULL); /*sanity check. Should point to tag.ack on the client side*/
       void *lptr = ((char *)msginfo)+IMM_BUF_LEN;
-      void *rptr = ((char *)msginfo->tag.ack_ptr) - (int)(&((request_header_t *)0)->tag.ack) + IMM_BUF_LEN;
+      void *rptr = ((char *)msginfo->tag.ack_ptr) - (intptr_t)(&((request_header_t *)0)->tag.ack) + IMM_BUF_LEN;
 /*       printf("%d(s):: GET getting rest of descriptor index=%d bytes=%d ptr=%p from=%d\n", */
 /* 	     armci_me,index,bytes,rptr,msginfo->from); */
 /*       fflush(stdout); */
@@ -625,7 +628,7 @@ static void _armci_serv_pendbuf_progress_putacc(pendbuf_t *pbuf) {
 #warning "PEND_BUFS: Abusing msginfo->tag.ack_ptr for GETS with large descriptors!"
       assert(msginfo->tag.ack_ptr != NULL); /*sanity check. Should point to tag.ack on the client side*/
       void *lptr = ((char *)msginfo)+IMM_BUF_LEN;
-      void *rptr = ((char *)msginfo->tag.ack_ptr) - (int)(&((request_header_t *)0)->tag.ack) + IMM_BUF_LEN;
+      void *rptr = ((char *)msginfo->tag.ack_ptr) - (intptr_t)(&((request_header_t *)0)->tag.ack) + IMM_BUF_LEN;
 /*       printf("%d(s):: PUT getting rest of descriptor index=%d bytes=%d ptr=%p from=%d\n", */
 /* 	     armci_me,index,bytes,rptr,msginfo->from); */
 /*       fflush(stdout); */
