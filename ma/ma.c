@@ -84,7 +84,7 @@ extern void* ARMCI_Malloc_local(long bytes);
 
 /* block lengths are integral multiples of this */
 /*
- * Note that for machines such as the KSR on which sizeof(pointer)
+ * Note that for machines where sizeof(pointer)
  * and sizeof(long) are different than sizeof(int), alignment issues
  * can be tricky.  For example, the fields of a struct (e.g.,
  * client_space of AD) can be improperly aligned if the struct is
@@ -95,10 +95,18 @@ extern void* ARMCI_Malloc_local(long bytes);
  * problem is solved, but the sum of sizes of preceding fields can
  * still potentially cause difficulty.
  */
-#if defined(BGQ)
+#if defined(__bgq__)
 #define ALIGNMENT	32
+#if defined(__bgp__)
+#define ALIGNMENT	16
+#elif defined(__AVX512F__)
+#define ALIGNMENT	64
+#elif defined(__AVX__)
+#define ALIGNMENT	32
+#elif defined(__SSE2__)
+#define ALIGNMENT	16
 #else
-#define ALIGNMENT	sizeof(long)
+#define ALIGNMENT	 8
 #endif
 
 /* min size of block split and placed on free list */
