@@ -8,7 +8,7 @@
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
-#elif defined(TCGMSG)
+#if defined(TCGMSG)
 #   include <sndrcv.h>
 static void tcg_synch(long type)
 {
