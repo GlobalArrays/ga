@@ -3,13 +3,8 @@
 #endif
 c $Id: test.F,v 1.64.2.11 2007-04-06 22:37:35 d3g293 Exp $
 c vector boxes lack arithmetic precision 
-#if defined(FUJITSU)
-# define THRESH 1d-12
-# define THRESHF 1e-5
-#else
-# define THRESH 1d-13
-# define THRESHF 2e-5
-#endif
+#define THRESH 1d-13
+#define THRESHF 2e-5
 
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF 

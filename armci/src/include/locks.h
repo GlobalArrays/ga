@@ -127,12 +127,7 @@ extern void CreateInitLocks(int num, lockset_t *id);
 extern void InitLocks(int num , lockset_t id);
 extern void DeleteLocks(lockset_t id);
 
-#ifdef FUJITSU
-#   define NATIVE_LOCK(x,p) if(armci_nproc>1) { NAT_LOCK(p); }
-#   define NATIVE_UNLOCK(x,p) if(armci_nproc>1) { NAT_UNLOCK(p); }
-#else
-#   define NATIVE_LOCK(x,p) if(armci_nproc>1) { NAT_LOCK(x,p); }
-#   define NATIVE_UNLOCK(x,p) if(armci_nproc>1) { NAT_UNLOCK(x,p); }
-#endif
+#define NATIVE_LOCK(x,p) if(armci_nproc>1) { NAT_LOCK(x,p); }
+#define NATIVE_UNLOCK(x,p) if(armci_nproc>1) { NAT_UNLOCK(x,p); }
 
 #endif /* _ARMCI_LOCKS_H_ */
