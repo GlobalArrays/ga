@@ -66,10 +66,9 @@ Index
 
 Supported Platforms
 -------------------
-- leadership class machines: Cray XE6, Cray XTs, IBM Blue Gene/Q.
+- leadership class machines: Cray XT/XE/XK/XC, IBM Blue Gene/Q.
 - shared-memory systems: SUN Solaris, SGI, SGI Altix, IBM, Linux, HP.
-- distributed-memory systems: Cray T3E, IBM SP(TARGET=LAPI).
-- clusters of workstations (InfiniBand, sockets)
+- clusters of workstations (InfiniBand, sockets).
 
 configure options
 -----------------
@@ -133,7 +132,6 @@ specified.
 --with-cray-shmem=ARG   select armci network as Cray XT shmem
 --with-dcmf=ARG         select armci network as IBM BG/P Deep Computing
                         Message Framework
---with-lapi=ARG         select armci network as IBM LAPI
 --with-mpi-spawn=ARG    select armci network as MPI-2 dynamic process mgmt
 --with-openib=ARG       select armci network as InfiniBand OpenIB
 --with-portals=ARG      select armci network as Cray XT portals
@@ -259,30 +257,11 @@ inter-processor communication facility called arena.
 Building on IBM
 ---------------
 
-Running on IBM without LAPI
-+++++++++++++++++++++++++++
+Running on IBM AIX
+++++++++++++++++++
 
 On IBM's running AIX, target can be set to IBM or IBM64 to run 32/64 bit
 versions of the code.
-
-Running on the IBM-SP
-+++++++++++++++++++++
-
-TARGET on IBM-SP can be set to LAPI (LAPI64 for 64 bit object).  POE
-environment variable settings for the parallel environment PSSP 3.1:
-
-- ARMCI applications like any other LAPI-based codes must define
-  MP_MSG_API=lapi  or MP_MSG_API=mpi,lapi (when using ARMCI and MPI)
-- The LAPI-based implementation of ARMCI cannot be used on the very old SP-2
-  systems because LAPI did not support the TB2 switch used in those models.
-  If in doubt which switch you got use odmget command: odmget -q name=css0
-  CuDv
-- For AIX versions 4.3.1 and later, environment variable AIXTHREAD_SCOPE=S
-  must be set to assure correct operation of LAPI (IBM should  do it in PSSP
-  by default).
-- Under AIX 4.3.3 and later  an additional environment variable is
-  required(RT_GRQ=ON) to restore the original thread scheduling that LAPI
-  relies on.
 
 Building on CRAY
 ----------------

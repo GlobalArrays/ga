@@ -189,9 +189,6 @@ Any application code which only makes GA function calls can remain unchanged.
                           ARMCI library
   --with-cray-shmem[=ARG] select armci network as Cray XT shmem
   --with-dmapp[=ARG]      select armci network as (Comex) Cray DMAPP
-  --with-gemini[=ARG]     select armci network as Cray XE Gemini using
-                          libonesided
-  --with-lapi[=ARG]       select armci network as IBM LAPI
   --with-mpi-mt[=ARG]     select armci network as (Comex) MPI-2
                           multi-threading
   --with-mpi-pt[=ARG]     select armci network as (Comex) MPI-2
@@ -205,7 +202,6 @@ Any application code which only makes GA function calls can remain unchanged.
   --with-ofi[=ARG]        select armci network as (Comex) OFI
   --with-openib[=ARG]     select armci network as Infiniband OpenIB
   --with-portals4[=ARG]   select armci network as (Comex) Portals4
-  --with-portals[=ARG]    select armci network as Cray XT portals
   --with-sockets[=ARG]    select armci network as Ethernet TCP/IP
 ```
 

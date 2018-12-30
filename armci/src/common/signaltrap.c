@@ -555,9 +555,7 @@ void TrapSigXcpu()
 
 void ARMCI_ChildrenTrapSignals()
 {
-#ifndef LAPI
      TrapSigBus();
-#endif
      TrapSigFpe();
      TrapSigIll();
 #ifdef ENABLE_CHECKPOINT
@@ -571,7 +569,7 @@ void ARMCI_ChildrenTrapSignals()
      TrapSigTerm();
      TrapSigInt();
 
-#if defined(LAPI) || defined(SGI)
+#if defined(SGI)
      TrapSigIot();
 #endif
 
@@ -584,9 +582,7 @@ void ARMCI_ChildrenTrapSignals()
 
 void ARMCI_ParentTrapSignals()
 {
-#ifndef LAPI
      TrapSigChld();
-#endif
      TrapSigHup();
 }
 
@@ -601,9 +597,7 @@ void ARMCI_RestoreSignals()
 
 void ARMCI_ParentRestoreSignals()
 {
-#ifndef LAPI
      RestoreSigChld();
-#endif
      ARMCI_RestoreSignals();
      RestoreSigHup();
 }

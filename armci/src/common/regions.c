@@ -525,10 +525,6 @@ void armci_global_region_exchange(void *start, long size)
 #endif
 	(void)armci_region_record((clreglist->list+foundclus)->start,(clreglist->list+foundclus)->end,reglist);
 
-#ifdef LAPI_RDMA
-        armci_copy(&(clreglist->list+foundclus)->memhdl, &(reglist->list+foundclus)->memhdl, sizeof(ARMCI_MEMHDL_T));
-#endif
-
 #if DEBUG
 	printf("\n%d:serv recording st=%p end=%p sz=%d from %d n=%d sz=%d\n",armci_me,(clreglist->list+foundclus)->start,(clreglist->list+foundclus)->end,(clreglist->list+foundclus)->end-(clreglist->list+foundclus)->start,armci_clus_me,reglist->n,sizeof(ARMCI_MEMHDL_T));fflush(stdout);
 #endif

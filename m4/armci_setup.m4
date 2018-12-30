@@ -20,12 +20,6 @@ AS_CASE([$ga_armci_network],
     AC_DEFINE([_REENTRANT], [1], [TODO])
     AC_DEFINE([GM], [1], [TODO])
     ],
-[LAPI], [
-    AC_DEFINE([LAPI], [1], [TODO])
-    AS_IF([test x$LAPI_RDMA != x],
-        [AC_DEFINE([ALLOW_PIN], [1], [TODO])
-         AC_DEFINE([LAPI_RDMA], [1], [TODO])])
-    ],
 [MELLANOX], [
     AC_DEFINE([PTHREADS], [1], [TODO])
     AC_DEFINE([DATA_SERVER], [1], [TODO])

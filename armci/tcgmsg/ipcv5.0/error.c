@@ -43,11 +43,9 @@ void Error(char *string, long integer)
        propagate an error condition to anyone that is trying to communicate
        with me */
 
-#ifndef LAPI
     ZapChildren();  /* send interrupt to children which should trap it
                        and call Error in the handler */
     DeleteSharedRegion(TCGMSG_shmem_id);
-#endif
 
     exit(1);
 }

@@ -27,11 +27,6 @@
 
 #include "tcgmsgP.h"
 
-#ifdef LAPI
-ShmemBuf  TCGMSG_receive_buffer[MAX_PROC];
-void lapi_initialize();
-#endif
-
 extern void TrapSigint(void);
 extern void TrapSigchld(void);
 extern int WaitAll(long);
@@ -72,15 +67,11 @@ void tcgi_pbegin(int argc, char **argv)
     if(SR_initialized)Error("TCGMSG initialized already???",-1);
     else SR_initialized=1;
 
-#ifdef LAPI
-    lapi_initialize();
-#else /* LAPI */
     for (arg=1; arg<(argc-1); arg++)
         if (strcmp(argv[arg],"-np") == 0) {
             TCGMSG_nnodes = atol(argv[arg+1]);
             break;
         }
-#endif /* LAPI */
 
     if (TCGMSG_nnodes > MAX_PROC){
         if(NODEID_()){
@@ -99,10 +90,8 @@ void tcgi_pbegin(int argc, char **argv)
 
     /* Set up handler for SIGINT and SIGCHLD */
 
-#ifndef LAPI
     TrapSigint();
     TrapSigchld();
-#endif
 
     /* Allocate the process info structures */
 
@@ -129,15 +118,10 @@ void tcgi_pbegin(int argc, char **argv)
 
     /* Create the shared memory and fill with zeroes */
 
-#ifndef LAPI
     TCGMSG_shmem_size = (long) (TCGMSG_nnodes * TCGMSG_nnodes * sizeof(ShmemBuf));
     TCGMSG_shmem_size += 64;
     TCGMSG_shmem = CreateSharedRegion(&TCGMSG_shmem_id, &TCGMSG_shmem_size);
     nxtval_shmem = (long*)(((char*)(TCGMSG_shmem))+TCGMSG_shmem_size-64); 
-#else
-    TCGMSG_shmem_size = (long)(TCGMSG_nnodes * sizeof(ShmemBuf));
-    TCGMSG_shmem = (char *) TCGMSG_receive_buffer;
-#endif
 
     bzero(TCGMSG_shmem, (int) TCGMSG_shmem_size);
 
@@ -145,19 +129,17 @@ void tcgi_pbegin(int argc, char **argv)
 
     TCGMSG_proc_info[0].pid = getpid();
 
-#ifndef LAPI
     for (node=1; node<TCGMSG_nnodes; node++) {
         pid_t pid = fork();
 
         if (pid == 0) {
             TCGMSG_nodeid = node;    /* Generate my unique id */
             break;
-        }      
+        }
         else {
             TCGMSG_proc_info[node].pid = pid;
         }
     }
-#endif
 
 
     /* Now everyone initializes the pointers to the shared-
@@ -171,51 +153,34 @@ void tcgi_pbegin(int argc, char **argv)
         long me = TCGMSG_nodeid;
         if (me != node) {
 
-#ifndef LAPI
             TCGMSG_proc_info[node].sendbuf = ((ShmemBuf *) TCGMSG_shmem) +
                 (node*TCGMSG_nnodes + me);
             TCGMSG_proc_info[node].recvbuf = ((ShmemBuf *) TCGMSG_shmem) +
                 (me*TCGMSG_nnodes + node);
-#else
-            TCGMSG_proc_info[node].sendbuf = ((ShmemBuf *) TCGMSG_shmem) + me;
-            TCGMSG_proc_info[node].recvbuf = ((ShmemBuf *) TCGMSG_shmem) + node;
-#endif
         }
     }
 
-#ifdef LAPI
-    lapi_adr_exchg();
-#endif
-
-    /* At this point communication is possible. 
-
-       Synchronize and continue. */
-
+    /* At this point communication is possible. Synchronize and continue. */
     {
         long type = 1;
-
         SYNCH_(&type);
     }
 }
 
 
 void tcgi_alt_pbegin(int *argc, char **argv[])
-{ 
+{
     tcgi_pbegin(*argc, *argv);
-} 
-
+}
 
 void PEND_(void)
 {
     long type = 999;
-#ifndef LAPI
     (void) signal(SIGCHLD, SIG_DFL); /* Death of children now OK */
-#endif
 
     SYNCH_(&type);
     SR_initialized = 0;
 
-#ifndef LAPI
     if (TCGMSG_nodeid == 0 && TCGMSG_nnodes > 1) {
         int status;
         int rc;
@@ -224,5 +189,4 @@ void PEND_(void)
         if(rc)printf("DeleteSharedMem returned %d\n",rc);
         if (status) exit(1);
     }
-#endif
 }

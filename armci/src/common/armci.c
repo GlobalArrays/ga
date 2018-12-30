@@ -44,9 +44,6 @@
 #   include <unistd.h>
 #  endif
 #endif
-#ifdef LAPI
-#  include "lapidefs.h"
-#endif
 #if HAVE_ERRNO_H
 #   include <errno.h>
 #endif
@@ -105,10 +102,9 @@ void ARMCI_Cleanup()
 {
 #if (defined(SYSV) || defined(WIN32) || defined(MMAP))
     Delete_All_Regions();
-    if(armci_nproc>1)
-#if !defined(LAPI) 
+    if(armci_nproc>1) {
        DeleteLocks(lockid);
-#endif
+    }
 
     /* in case of an error notify server that it is time to quit */
 #if defined(DATA_SERVER)
@@ -166,11 +162,6 @@ void armci_abort(int code)
     /* data server process cannot use message-passing library to abort
      * it simply exits, parent will get SIGCHLD and abort the program
      */
-#if defined(IBM) || defined(IBM64)
-     /* hack for a problem in POE signal handlers in non-LAPI MPI  */
-     if(AR_caught_sigint || AR_caught_sigterm) 
-         _exit(1);
-#endif
 
 #if defined(DATA_SERVER)
     if(armci_me<0)
@@ -392,19 +383,6 @@ int PARMCI_Init()
         printf("WARNING: PARMCI_Init is called from thread %d, should be 0\n",th_idx);
 #endif
 
-#ifdef LAPI
-#   ifdef AIX
-    {
-       char *tmp1 = getenv("RT_GRQ"), *tmp2 = getenv("AIXTHREAD_SCOPE");
-       if(tmp1 == NULL || strcmp((const char *)tmp1,"ON")) 
-	  armci_die("Armci_Init: environment variable RT_GRQ not set. It should be set as RT_GRQ=ON, to restore original thread scheduling LAPI relies upon",0);
-       if(tmp2 == NULL || strcmp((const char *)tmp2,"S")) 
-	  armci_die("Armci_Init: environment variable AIXTHREAD_SCOPE=S should be set to assure correct operation of LAPI", 0);
-    }
-#   endif
-    armci_init_lapi();
-#endif
-
 #ifdef CRAY_SHMEM
     shmem_init();
 #endif
@@ -466,7 +444,7 @@ int PARMCI_Init()
        if(armci_nclus >1) 
            armci_start_server();
 #   endif
-#if defined(GM) || defined(VAPI) || (defined(LAPI) && defined(LAPI_RDMA))
+#if defined(GM) || defined(VAPI)
     /* initialize registration of memory */
     armci_region_init();
 #endif
@@ -524,9 +502,6 @@ void PARMCI_Finalize()
     }
 #endif
 
-#ifdef LAPI
-    armci_term_lapi();
-#endif
 #ifdef ALLOW_PIN
     free(armci_prot_switch_fence);
 #endif
@@ -726,7 +701,7 @@ char *ptr;
       nb_handle = NULL;
     }  
 
-#if defined(LAPI) || defined(GM) || defined(VAPI)
+#if defined(GM) || defined(VAPI)
     if(armci_rem_gpc(GET, darr, 2, &send, proc, 1, nb_handle))
 #endif
       return FAIL2;

@@ -130,15 +130,7 @@ int armci_iwork[MAX_STRIDE_LEVEL];
 static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, 
                           int bytes, int count, int src_stride, int dst_stride)
 {
-#ifdef LAPI
-  int armci_th_idx = ARMCI_THREAD_IDX;
-#endif
-    
-#ifdef LAPI2__
-#  define COUNT 1
-#else
-#  define COUNT count
-#endif
+#define COUNT count
 
   int shmem = SAMECLUSNODE(proc);
 
@@ -191,9 +183,6 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
     if(op==PUT){ 
             
       UPDATE_FENCE_STATE(proc, PUT, COUNT);
-#ifdef LAPI
-      SET_COUNTER(ack_cntr[armci_th_idx],COUNT);
-#endif
       if(count==1){
 	armci_put(src_ptr, dst_ptr, bytes, proc);
       }else{
@@ -203,9 +192,6 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
             
     }else{
             
-#ifdef LAPI
-      SET_COUNTER(get_cntr[armci_th_idx], COUNT);
-#endif
       if(count==1){
 	armci_get(src_ptr, dst_ptr, bytes, proc);
       }else{
@@ -467,18 +453,6 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
 
   /*    if(proc!=armci_me) INTR_OFF;*/
 
-#  if defined(LAPI2)
-  /*even 1D armci_nbput has to use different origin counters for 1D */
-#   if defined(LAPI2)
-  if(!ARMCI_ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
-					 (!nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD))) 
-#   else
-      if(!SAMECLUSNODE(proc))
-#   endif
-	armci_network_strided(op,scale,proc,src_ptr,src_stride_arr,dst_ptr,
-			      dst_stride_arr,count,stride_levels,nb_handle);
-      else
-#  endif
 	switch (stride_levels) {
 	case 0: /* 1D copy */ 
 
@@ -543,10 +517,7 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
 	}
     
   /* deal with non-blocking loads and stores */
-#if defined(LAPI) || defined(NB_NONCONT)
-#   if defined(LAPI)
-  if(!nb_handle)
-#   endif
+#if defined(NB_NONCONT)
     {
       if(!(SAMECLUSNODE(proc))){
 	if(op == GET){
@@ -636,21 +607,8 @@ static int _armci_puts(void *src_ptr,
   }
    
   /* use direct protocol for remote access when performance is better */
-#  if defined(LAPI)
-  if(!direct) {
-    switch(stride_levels) {
-    case 0:
-#      ifndef LAPI_RDMA
-       direct =1;
-#      endif
-       break;
-    case 1:  if((count[1]<PACKPUT)||count[0]>LONG_PUT_THRESHOLD) direct =1; break;
-    default: if(count[0]> LONG_PUT_THRESHOLD )direct=1; break;
-    }
-  }
-#  endif
 
-#  if !defined(LAPI2) || defined(LAPI_RDMA)
+#  if 1 || 0
   if(!direct){
 #    ifdef ALLOW_PIN /*if we can pin, we do*/
     if(!stride_levels && 
@@ -728,9 +686,9 @@ static int _armci_puts(void *src_ptr,
 #      endif /*VAPI*/
 #    endif /*ALLOW_PIN*/
   }
-#endif /* !LAPI2||LAPI_RDMA */
+#endif
   
-#  ifndef LAPI2
+#  if 1
   if(!direct){
     if(nbh) { DO_FENCE(proc,SERVER_PUT); }
     else    { DO_FENCE(proc,SERVER_NBPUT); }
@@ -762,14 +720,11 @@ static int _armci_puts(void *src_ptr,
       }
   }
   else
-#  endif /*!LAPI*/
+#  endif
     {
       if(!nbh && stride_levels == 0) {
 	armci_copy_2D(PUT, proc, src_ptr, dst_ptr, count[0], 1, count[0],
 		      count[0]);
-#  if defined(LAPI)
-	if(proc != armci_me) { WAIT_FOR_PUTS; }
-#  endif /*LAPI*/
       }
       else {
 	rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
@@ -1217,12 +1172,7 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
       nb_handle = (armci_ihdl_t)armci_set_implicit_handle(GET, proc);
   }
 
-#ifdef LAPI_RDMA
-  if(stride_levels == 0 || count[0] > LONG_GET_THRESHOLD) 
-      direct=0;
-#endif
-
-#if !defined(LAPI2) || defined(LAPI_RDMA)
+#if 1 || 0
   if(!direct){
 #     ifdef ALLOW_PIN
     if(!stride_levels && 
@@ -1234,9 +1184,8 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     }
 #     endif
   }
-#endif /*!LAPI||LAPI_RDMA */
+#endif
   
-#ifndef LAPI2
   if(!direct){
     DO_FENCE(proc,SERVER_NBGET);
 #if defined(DATA_SERVER) && (defined(SOCKETS) || defined(CLIENT_BUF_BYPASS) )
@@ -1266,13 +1215,6 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 			    dst_ptr,dst_stride_arr,count,stride_levels,
 			    NULL,-1,-1,-1,nb_handle);
   }else
-#else
-    /* avoid LAPI_GetV */
-    if(stride_levels==1 && count[0]>320 && !direct) 
-      ARMCI_REM_GET(proc,src_ptr,src_stride_arr,dst_ptr,
-		    dst_stride_arr, count, stride_levels, nb_handle);
-    else
-#endif
       rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, dst_ptr,
 			    dst_stride_arr,count, stride_levels,0,nb_handle);
 
@@ -1333,9 +1275,6 @@ int PARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 static void _armci_op_value(int op, void *src, void *dst, int proc, 
 			    int bytes, armci_hdl_t *usr_hdl) {
   int rc=0,pv=0;
-#ifdef LAPI
-  int armci_th_idx = ARMCI_THREAD_IDX;
-#endif
   armci_ihdl_t nbh = (armci_ihdl_t)usr_hdl;
 
   if(!nbh) {
@@ -1363,33 +1302,12 @@ static void _armci_op_value(int op, void *src, void *dst, int proc,
 #else
   if(op==PUT) {
     UPDATE_FENCE_STATE(proc, PUT, 1);
-#  ifdef LAPI
-    SET_COUNTER(ack_cntr[armci_th_idx], 1);
-#  endif
     armci_put(src, dst, bytes, proc);
   }
   else {
-#  ifdef LAPI
-    SET_COUNTER(get_cntr[armci_th_idx], 1);
-#  endif
     armci_get(src, dst, bytes, proc);
   }
-    
   /* deal with non-blocking loads and stores */
-#  if defined(LAPI)
-#    ifdef LAPI
-  if(!nbh)
-#    endif
-    {
-      if(proc != armci_me){
-	if(op == GET){
-	  WAIT_FOR_GETS; /* wait for data arrival */
-	}else {
-	  WAIT_FOR_PUTS; /* data must be copied out*/
-	}
-      }
-    }
-#  endif
 #endif
 }
 
