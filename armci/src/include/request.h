@@ -24,9 +24,7 @@ extern int  _armci_buf_cmpld(int bufid);
 extern void _armci_buf_set_cmpld(void *buf, int state);
 extern void _armci_buf_set_cmpld_idx(int idx, int state);
 
-#if defined(GM)
-#  include "myrinet.h"
-#elif defined(VIA)
+#if defined(VIA)
 #  include "via.h"
    typedef void* msg_tag_t;
 #elif defined(VAPI)
