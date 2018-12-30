@@ -47,7 +47,7 @@ void armci_finalize_fence()
 
 void PARMCI_Fence(int proc)
 {
-#if defined(DATA_SERVER) && !(defined(GM) && defined(ACK_FENCE))
+#if defined(DATA_SERVER)
      if(FENCE_ARR(proc) && (armci_nclus >1)){
 
            int cluster = armci_clus_id(proc);

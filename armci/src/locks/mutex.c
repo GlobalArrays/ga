@@ -14,10 +14,6 @@
 #define MAX_LOCKS 32768
 #define SPINMAX 1000
 
-#if defined(GM)
-#  define SERVER_LOCK 
-#endif
-
 double _dummy_work_=0.;
 static int num_mutexes=0, *tickets; 
 

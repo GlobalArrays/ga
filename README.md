@@ -393,8 +393,7 @@ The test suite will recurse into the ComEx directory and run the ComEx test suit
 [back to top]
 
 Setting an environment variable MA_USE_ARMCI_MEM forces MA library to use
-ARMCI memory, communication via which can be faster on networks like GM, VIA
-and InfiniBand.
+ARMCI memory, communication via which can be faster on networks like InfiniBand.
 
 ### CMake
 

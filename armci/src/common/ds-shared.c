@@ -128,9 +128,6 @@ void armci_pipe_receive_strided(request_header_t* msginfo, void *ptr,
 {
 buf_arg_t arg;
 int  packsize = PACK_SIZE(msginfo->datalen);
-#if defined(GM)
-     arg.buf_posted   = msginfo->tag.data_ptr;
-#endif
 #if (defined(VIA) && defined(VIA_USES_RDMA)) || defined(VAPI)
      arg.buf_posted   = msginfo->tag;
 #endif
@@ -150,9 +147,6 @@ void armci_pipe_send_strided(request_header_t *msginfo, void *buf, int buflen,
 buf_arg_t arg;
 int  packsize = PACK_SIZE(msginfo->datalen);
 
-#if defined(GM)
-     arg.buf_posted   = msginfo->tag.data_ptr;
-#endif
 #if (defined(VIA) && defined(VIA_USES_RDMA)) || defined(VAPI)
      arg.buf_posted   = msginfo->tag;
 #endif
@@ -164,15 +158,12 @@ int  packsize = PACK_SIZE(msginfo->datalen);
 
      armci_dispatch_strided(ptr, stride_arr, count, strides, -1, -1,
                             packsize, armcill_pipe_send_chunk, &arg);
-#ifdef GM
-     armci_serv_send_nonblocking_complete(0);
-#endif
 }
 #endif
 /**************************** end of pipelining for medium size msg ***********/
 
 
-#if defined(CLIENT_BUF_BYPASS) && !defined(GM)
+#if defined(CLIENT_BUF_BYPASS)
 /**************** NOTE: for now this code can only handle contiguous data *****/
 void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
                                     void *loc_buf, int msg_buflen,
@@ -780,7 +771,7 @@ void armci_send_data(request_header_t* msginfo, void *data)
 {
     int to = msginfo->from;
 
-#if defined(VIA) || defined(GM) || defined(VAPI)
+#if defined(VIA) || defined(VAPI)
     /* if the data is in the pinned buffer: MessageRcvBuffer */
 #if defined(PEND_BUFS)
     extern int armci_data_in_serv_buf(void *);
@@ -793,10 +784,6 @@ void armci_send_data(request_header_t* msginfo, void *data)
         armci_WriteToDirect(to, msginfo, data);
     else {
         /* copy the data to the MessageRcvBuffer */
-#ifdef GM
-        /* leave space for header ack */
-        char *buf = MessageRcvBuffer + sizeof(long);
-#else
         char *buf = MessageRcvBuffer;
 # if defined(PEND_BUFS)
 	fprintf(stderr, "%d:: op=%d len=%d ptr=%p working on unpinned memory. aborting!\n", armci_me, msginfo->operation,msginfo->datalen, data);
@@ -805,7 +792,6 @@ void armci_send_data(request_header_t* msginfo, void *data)
 /*         extern char *armci_openib_get_msg_rcv_buf(int); */
 /* 	buf = armci_openib_get_msg_rcv_buf(msginfo->from); */
 # endif
-#endif
 	assert(buf != NULL);
         armci_copy(data, buf, msginfo->datalen);
         armci_WriteToDirect(to, msginfo, buf);
@@ -1082,7 +1068,7 @@ void armci_start_server()
 void *armci_server_code(void *data)
 {
 #ifdef SERVER_THREAD
-#if (defined(GM) || defined(VAPI) ) && ARMCI_ENABLE_GPC_CALLS
+#if defined(VAPI) && ARMCI_ENABLE_GPC_CALLS
 #  ifdef PTHREADS
   extern pthread_t data_server;
   data_server = pthread_self();
