@@ -4319,7 +4319,7 @@ void pnga_nbget_ghost_dir(Integer g_a,
   /*p_handle = GA[handle].p_handle;*/
   /* check mask to see that it corresponds to a valid direction */
   for (i=0; i<ndim; i++) {
-    if (abs(mask[i]) != 0 && abs(mask[i]) != 1)
+    if (abs((int)mask[i]) != 0 && abs((int)mask[i]) != 1)
       pnga_error("nga_nbget_ghost_dir: invalid mask entry", mask[i]);
   }
 
