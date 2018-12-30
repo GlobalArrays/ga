@@ -1,21 +1,4 @@
-#if defined(PVM)
-#   include <pvm3.h>
-    extern void pvm_init(int argc, char *argv[]);
-    extern double armci_timer();
-#   ifdef CRAY
-#       define MPGROUP              (char *)NULL
-#       define MP_INIT(argc,argv)
-#   else
-#       define MPGROUP              "mp_working_group"
-#       define MP_INIT(argc,argv)   pvm_init(argc, argv)
-#   endif
-#   define MP_FINALIZE()        pvm_exit()
-#   define MP_BARRIER()         pvm_barrier(MPGROUP,-1)
-#   define MP_MYID(pid)         *(pid)   = pvm_getinst(MPGROUP,pvm_mytid())
-#   define MP_PROCS(pproc)      *(pproc) = (int)pvm_gsize(MPGROUP)
-#   define MP_TIMER             armci_timer
-#   define MP_ASSERT(code)      code
-#elif defined(MSG_COMMS_TCGMSG) || defined(MSG_COMMS_TCGMSG5) || defined(MSG_COMMS_TCGMSGMPI)
+#if defined(MSG_COMMS_TCGMSG) || defined(MSG_COMMS_TCGMSG5) || defined(MSG_COMMS_TCGMSGMPI)
 #   include <tcgmsg.h>
 #   define MP_BARRIER()         tcg_synch(30000)
 #   define MP_INIT(argc,argv)   tcg_pbegin((argc),(argv))

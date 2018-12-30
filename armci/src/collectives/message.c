@@ -186,16 +186,6 @@ int armci_msg_generate_tree(int *idlist,int idlen,int *id_tree,int TREE)
 }
 #endif
 
-/*\
- *  *************************************************************
-\*/
-#ifdef CRAY
-char *mp_group_name = (char *)NULL;
-#else
-char *mp_group_name = "mp_working_group";
-#endif
-
-
 static void _allocate_mem_for_work(){
     work = (double *)malloc(sizeof(double)*BUF_SIZE);
     if(!work)armci_die("malloc in _allocate_mem_for_work failed",0);
