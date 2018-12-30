@@ -28,7 +28,7 @@
    EXTERN long long _armci_vec_sync_flag;
 #endif
 
-#if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined(__ia64__)
+#if defined(SGI) || defined(HPUX) || defined(SOLARIS) || defined(__ia64__)
 #   define PTR_ALIGN
 #endif
 
@@ -116,15 +116,7 @@
       }\
     }
 
-#if defined(FUJITSU)
-
-#   define armci_put2D(p, bytes,count,src_ptr,src_stride,dst_ptr,dst_stride)\
-           CopyPatchTo(src_ptr, src_stride, dst_ptr, dst_stride, count,bytes, p)
-
-#   define armci_get2D(p, bytes, count, src_ptr,src_stride,dst_ptr,dst_stride)\
-           CopyPatchFrom(src_ptr, src_stride, dst_ptr, dst_stride,count,bytes,p)
-
-#elif defined(NB_NONCONT)
+#if defined(NB_NONCONT)
 
     extern void armcill_wait_put();
     extern void armcill_wait_get();
@@ -195,12 +187,7 @@
              if(((p)<armci_clus_first)||((p)>armci_clus_last))shmem_quiet(); }
 #     define UPDATE_FENCE_STATE(p, op, nissued) if((op)==PUT) cmpl_proc=(p);
 #else
-#   if defined(GM) && defined(ACK_FENCE) 
-     extern void armci_gm_fence(int p);
-#    define FENCE_NODE(p) armci_gm_fence(p)
-#   else
-#     define FENCE_NODE(p)
-#   endif   
+#   define FENCE_NODE(p)
 #   define UPDATE_FENCE_STATE(p, op, nissued)
 
 #endif
