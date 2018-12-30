@@ -265,13 +265,7 @@ versions of the code.
 Building on CRAY
 ----------------
 
-- TARGET environment variable is also used by cc on CRAY. It has to be set to
-  CRAY-SV1 on SV1, CRAY-YMP on YMP, CRAY-T3E on T3E. ARMCI on CRAY'S hence
-  uses the same values to this environment variable as cc requires.
-
-- On CRAY-T3E, ARMCI can be run with either of the CRAY Message Passing
-  Libraries(PVM and MPI). For more information on running with PVM look at
-  docs/README.PVM. If running with PVM, MSG_COMMS has to be set to PVM.
+Modern Cray systems support Linux and MPI, hence require no special configuration options.
 
 Building on other platforms
 ---------------------------
