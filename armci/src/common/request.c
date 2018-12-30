@@ -45,9 +45,9 @@ extern void armci_sock_send(int to, void *data, int len);
 #endif
 
 
-#if !defined(VIA) &&!defined(VAPI)
+#if !defined(VAPI)
   double _armci_rcv_buf[MSG_BUFLEN_DBL];
-  double _armci_snd_buf[MSG_BUFLEN_DBL]; 
+  double _armci_snd_buf[MSG_BUFLEN_DBL];
   char* MessageSndBuffer = (char*)_armci_snd_buf;
   char* MessageRcvBuffer = (char*)_armci_rcv_buf;
 #endif

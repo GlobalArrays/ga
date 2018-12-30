@@ -70,7 +70,7 @@ int n;
     n = len%PIPE_SHORT_ROUNDUP;
    if(n)len += (PIPE_SHORT_ROUNDUP-n);
  } 
-#if defined(VIA) || defined(VAPI)
+#if defined(VAPI)
  else if(len <25*PIPE_BUFSIZE){
    len /=4;
    n = len%PIPE_SHORT_ROUNDUP;
@@ -89,7 +89,7 @@ else if(len <41*PIPE_BUFSIZE){
  }
 #endif
 else
-#if defined(VIA) || defined(VAPI)
+#if defined(VAPI)
    len = 8*4096;
 #else
    len = 64*1024-128;
@@ -128,7 +128,7 @@ void armci_pipe_receive_strided(request_header_t* msginfo, void *ptr,
 {
 buf_arg_t arg;
 int  packsize = PACK_SIZE(msginfo->datalen);
-#if (defined(VIA) && defined(VIA_USES_RDMA)) || defined(VAPI)
+#if defined(VAPI)
      arg.buf_posted   = msginfo->tag;
 #endif
 
@@ -147,7 +147,7 @@ void armci_pipe_send_strided(request_header_t *msginfo, void *buf, int buflen,
 buf_arg_t arg;
 int  packsize = PACK_SIZE(msginfo->datalen);
 
-#if (defined(VIA) && defined(VIA_USES_RDMA)) || defined(VAPI)
+#if defined(VAPI)
      arg.buf_posted   = msginfo->tag;
 #endif
 
@@ -771,7 +771,7 @@ void armci_send_data(request_header_t* msginfo, void *data)
 {
     int to = msginfo->from;
 
-#if defined(VIA) || defined(VAPI)
+#if defined(VAPI)
     /* if the data is in the pinned buffer: MessageRcvBuffer */
 #if defined(PEND_BUFS)
     extern int armci_data_in_serv_buf(void *);

@@ -99,7 +99,7 @@ int armci_pack_strided(int op, void* scale, int proc,
     if(op==GET)bufsize=STRIDED_GET_BUFLEN;
 #endif
 
-#if (defined(GM_) || defined(VIA_) || defined(VAPI_))
+#if defined(VAPI_)
     /*we cant assume that the entire available buffer will be used for data, 
       fact that the header and descriptor also go in the same buffer should be
       considered while packing.

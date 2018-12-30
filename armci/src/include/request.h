@@ -24,10 +24,7 @@ extern int  _armci_buf_cmpld(int bufid);
 extern void _armci_buf_set_cmpld(void *buf, int state);
 extern void _armci_buf_set_cmpld_idx(int idx, int state);
 
-#if defined(VIA)
-#  include "via.h"
-   typedef void* msg_tag_t;
-#elif defined(VAPI)
+#if defined(VAPI)
 #  include "armci-vapi.h"
 #elif defined(SOCKETS)
 #  include "sockets.h"
@@ -205,7 +202,7 @@ typedef struct {
 } buf_arg_t;
 
 /*includes for SERVER_LOCK*/
-#if defined(SERVER_THREAD) && !defined(VIA)
+#if defined(SERVER_THREAD)
    extern void armci_rem_lock(int mutex, int proc, int *ticket);
    extern void armci_rem_unlock(int mutex, int proc, int ticket);
    extern void armci_unlock_waiting_process(msg_tag_t tag,int proc, int ticket);

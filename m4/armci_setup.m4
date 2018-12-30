@@ -71,13 +71,6 @@ AS_CASE([$ga_armci_network],
     AC_DEFINE([DATA_SERVER], [1], [TODO])
     AC_DEFINE([SOCKETS], [1], [TODO])
     ],
-[VIA], [
-    AC_DEFINE([PTHREADS], [1], [TODO])
-    AC_DEFINE([DATA_SERVER], [1], [TODO])
-    AC_DEFINE([SERVER_THREAD], [1], [TODO])
-    AC_DEFINE([_REENTRANT], [1], [TODO])
-    AC_DEFINE([VIA], [1], [TODO])
-    ]
 )
 AS_IF([test x$REPORT_SHMMAX != x],
     [AC_DEFINE([REPORT_SHMMAX], [1], [TODO])])
