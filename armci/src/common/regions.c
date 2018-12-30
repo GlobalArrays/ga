@@ -16,8 +16,8 @@
 
 
 /*7/7/06
- * REGIONS REQUIRE MEMHDL was for all networks like via, infiniband, etc.. 
- * which had a handle associated with remote/local memory required for
+ * REGIONS REQUIRE MEMHDL was for all networks like InfiniBand, etc.
+ * that had a handle associated with remote/local memory required for
  * rdma. Coincidentally all these networks also used a server thread.
  * so server_regions were allocated and enabled when REGIONS_REQUIRE_MEMHDL
  * was defined.
