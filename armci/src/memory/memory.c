@@ -37,8 +37,7 @@ static context_t ctx_mlocalmem;
 #if defined(SYSV) || defined(WIN32) || defined(MMAP)
 #include "armci_shmem.h"
 
-#if !(defined(LAPI) || defined(SERVER_THREAD)) ||\
-    defined(USE_SHMEM)
+#if !(defined(SERVER_THREAD)) || defined(USE_SHMEM)
 #define RMA_NEEDS_SHMEM
 #endif
 

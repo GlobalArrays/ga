@@ -102,23 +102,10 @@ typedef int lockset_t;
 #   define NAT_LOCK(x,p) while( shmem_swap(armci_lock_var+(x),INVALID,(p)) )
 #   define NAT_UNLOCK(x,p) shmem_swap(armci_lock_var+(x), 0, (p))
 
-#elif defined(SYSV) && defined(LAPI) && defined(AIX)
-int **_armci_int_mutexes;
-#   define NAT_LOCK(x,p)  armci_lapi_lock(_armci_int_mutexes[armci_master]+(x))
-#   define NAT_UNLOCK(x,p)  armci_lapi_unlock(_armci_int_mutexes[armci_master]+(x))
-typedef int lockset_t;
-
 #elif defined(CYGNUS)
 typedef int lockset_t;
 #   define NAT_LOCK(x,p) armci_die("does not run in parallel",0) 
 #   define NAT_UNLOCK(x,p) armci_die("does not run in parallel",0)  
-
-#elif defined(LAPI) && !defined (LINUX)
-#   include <pthread.h>
-typedef int lockset_t;
-extern pthread_mutex_t _armci_mutex_thread;
-#   define NAT_LOCK(x,p)   pthread_mutex_lock(&_armci_mutex_thread)
-#   define NAT_UNLOCK(x,p) pthread_mutex_unlock(&_armci_mutex_thread)
 
 #elif defined(SYSV) || defined(MACX)
 #   include "semaphores.h"

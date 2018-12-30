@@ -3,9 +3,7 @@
 #endif
 
 /* $Id: message.c,v 1.58.6.4 2007-04-24 10:08:26 vinod Exp $ */
-#if defined(PVM)
-#   include <pvm3.h>
-#elif defined(TCGMSG)
+#if defined(TCGMSG)
 #   include <sndrcv.h>
 static void tcg_brdcst(long type, void *buf, long lenbuf, long originator)
 {
@@ -225,10 +223,6 @@ void armci_msg_gop_init()
        char *tmp;
        int size = sizeof(bufstruct);
        int bytes = size * armci_clus_info[armci_clus_me].nslave;
-#ifdef LAPI
-       void armci_msg_barr_init();
-       armci_msg_barr_init();
-#endif
        bytes += size*2; /* extra for brdcst */
 
        ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
@@ -256,26 +250,6 @@ void armci_msg_gop_init()
      }
 #endif
      /*stuff needed for barrier and binomial bcast/reduce*/
-#ifdef LAPI
-     if(!_armci_barrier_shmem){
-       int size = 2*sizeof(int);
-       /*allocate memory to send/rcv data*/
-       barr_snd_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
-       barr_rcv_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
-
-       if(PARMCI_Malloc(barr_snd_ptr,size))armci_die("malloc barrinit failed",0);
-       if(PARMCI_Malloc(barr_rcv_ptr,size))armci_die("malloc barrinit failed",0);
-       if(barr_rcv_ptr[armci_me]==NULL || barr_snd_ptr[armci_me]==NULL)
-         armci_die("problems in malloc barr_init",0);
-       powof2nodes=1;
-       LnB = floor(log(armci_nclus)/log(2))+1;
-       if(pow(2,LnB-1)<armci_nclus){powof2nodes=0;}
-       /*Lp2 is the largest pow-of-2 less than or equal to nclus(num of nodes)*/
-       Lp2 = pow(2,LnB);
-       _armci_barrier_init = 1;
-     }
-     /****************************************************/
-#endif
      _armci_gop_init=1;
 }
 
@@ -365,117 +339,13 @@ void armci_msg_barr_init(){
     _armci_barrier_init = 1;
 }
 
-/*\
- *armci barrier: implemented as a recursive doubling based pairwise exchange
- *algorithm with SMP barrier inside a node and msg_snd/rcv between the nodes.
- *NOTE::code for power or two nodes and non power of two nodes can be combined.
-\*/
-#ifdef LAPI
-static void _armci_msg_barrier(){
-    int next_node,next,i;
-    char *dstn,*srcp;
-    int nslave = armci_clus_info[armci_clus_me].nslave;
-    static int barr_count = 0;
-    int last, next_nodel=0;
-    void armci_util_wait_int(volatile int *,int,int);
-    /*if(barr_count==0)armci_msg_barr_init();*/
-    barr_count++;
-    if(armci_me==armci_master){ /*only masters do the intenode barrier*/
-       for(i=1;i<nslave;i++){   /*wait for all smp procs to enter the barrier*/
-         armci_util_wait_int(&BAR_BUF(i)->flag1,FULL,100000);
-         SET_SHM_FLAG(&(BAR_BUF(i)->flag1),empty);
-       }
-       if(armci_nclus>1){
-       last =  ((int)pow(2,(LnB-1)))^armci_clus_me;
-       if(last>=0 && last<armci_nclus)
-         next_nodel = armci_clus_info[last].master;
-       /*three step exchange if num of nodes is not pow of 2*/
-       /*divide _nodes_ into two sets, first set "pow2" will have a power of 
-        *two nodes, the second set "not-pow2" will have the remaining.
-        *Each node in the not-pow2 set will have a pair node in the pow2 set.
-        *Step-1:each node in pow2 set with a pair in not-pow2 set first recvs 
-        *      :a message from its pair in not-pow2. 
-        *step-2:All nodes in pow2 do a Rercusive Doubling based Pairwise exng.
-        *step-3:Each node in pow2 with a pair in not-pow2 snds msg to its 
-        *      :pair node.
-        *if num of nodes a pow of 2, only step 2 executed
-       */
-       if(last>armci_clus_me){ /*the pow2 set of procs*/
-         if(last<armci_nclus && !powof2nodes){ /*step 1*/
-           dstn = (char *)barr_rcv_ptr[next_nodel];
-           armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_nodel);
-           armci_util_wait_int((volatile int *)dstn,barr_count,100000);
-         }
-         for(i=0;i<LnB-1;i++){/*step 2*/
-           next=((int)pow(2,i))^armci_clus_me;
-           /*printf("\n%d:next=%d \n",armci_me,next);fflush(stdout);*/
-           if(next>=0 && next<armci_nclus){
-             next_node = armci_clus_info[next].master;
-             /*printf("\n%d:node=%d -\n",armci_me,next_node);fflush(stdout);*/
-             srcp = (char *)barr_snd_ptr[next_node];
-             *(int *)srcp = barr_count;
-             dstn = (char *)barr_rcv_ptr[next_node];
-             if(next_node > armci_me){
-               armci_msg_snd(ARMCI_TAG, srcp,4,next_node);
-               armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_node);
-             }
-             else{
-               /*would we gain anything by doing a snd,rcv instead of rcv,snd*/
-               armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_node);
-               armci_msg_snd(ARMCI_TAG, srcp,4,next_node);
-             }
-             armci_util_wait_int((volatile int *)dstn,barr_count,100000);
-           }
-         }
-         if(last<armci_nclus && !powof2nodes){ /*step 3*/
-           srcp = (char *)barr_snd_ptr[next_nodel];
-           *(int *)srcp = barr_count;
-           armci_msg_snd(ARMCI_TAG, srcp,4,next_nodel);
-         }
-       }
-       else {
-         if(!powof2nodes){
-           srcp = (char *)barr_snd_ptr[next_nodel];
-           *(int *)srcp = barr_count;
-           dstn = (char *)barr_rcv_ptr[next_nodel];
-           armci_msg_snd(ARMCI_TAG, srcp,4,next_nodel);
-           armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_nodel);
-           armci_util_wait_int((volatile int *)dstn,barr_count,100000);
-         }
-       }
-       } /* paranthesis for if armci_nclus>1*/
-       for(i=1;i<nslave;i++) /*tell smp procs that internode barrier complete*/
-         SET_SHM_FLAG(&(BAR_BUF(i)->flag2),full);
-    }
-    else {                   /*if not master, partake in the smp barrier,only*/
-       i=armci_me-armci_master;
-       SET_SHM_FLAG(&(BAR_BUF(i)->flag1),full);
-       armci_util_wait_int(&BAR_BUF(i)->flag2,FULL,100000);
-       SET_SHM_FLAG(&(BAR_BUF(i)->flag2),empty);
-    }
-}
-       
-#endif /*barrier enabled only for lapi*/
 void parmci_msg_barrier()
 {
 #if defined(MSG_COMMS_MPI)
      MPI_Barrier(ARMCI_COMM_WORLD);
-#  elif defined(PVM)
-     pvm_barrier(mp_group_name, armci_nproc);
-#  elif defined(LAPI)
-#if !defined(NEED_MEM_SYNC)
-     if(_armci_barrier_init)
-       _armci_msg_barrier();
-     else
+#else
+     tcg_synch(ARMCI_TAG);
 #endif
-     {
-       tcg_synch(ARMCI_TAG);
-     }
-#  else
-     {
-        tcg_synch(ARMCI_TAG);
-     }
-#  endif
 }
 /***********************End Barrier Code*************************************/
 
@@ -490,7 +360,7 @@ void armci_msg_init(int *argc, char ***argv)
     int flag=0;
     MPI_Initialized(&flag);
     if (!flag) {
-#   if defined(DCMF) || defined(MPI_MT)
+#   if defined(MPI_MT)
         int provided;
         MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &provided);
 #   else
@@ -515,9 +385,6 @@ int armci_msg_me()
         counter = 1;
     }
     return armci_me;
-
-#elif defined(PVM)
-    return(pvm_getinst(mp_group_name,pvm_mytid()));
 #else
     return (int)NODEID_();
 #endif
@@ -535,14 +402,11 @@ int armci_msg_nproc()
         counter = 1;
     }
     return armci_nproc;
-#elif defined(PVM)
-    return(pvm_gsize(mp_group_name));
 #else
     return (int)NNODES_();
 #endif
 }
 
-#ifndef PVM
 double armci_timer()
 {
 #if defined(MSG_COMMS_MPI)
@@ -551,8 +415,6 @@ double armci_timer()
     return TCGTIME_();
 #endif
 }
-#endif
-
 
 void armci_msg_abort(int code)
 {
@@ -560,10 +422,6 @@ void armci_msg_abort(int code)
 #    ifndef BROKEN_MPI_ABORT
     MPI_Abort(ARMCI_COMM_WORLD,code);
 #    endif
-#elif defined(PVM)
-    char error_msg[25];
-    sprintf(error_msg, "ARMCI aborting [%d]", code);
-    pvm_halt();
 #else
     Error("ARMCI aborting",(long)code);
 #endif
@@ -795,9 +653,6 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
     armci_msg_bcast_scope(SCOPE_ALL, (buf), (len), (root));
     return;
 #endif
-#ifdef LAPI
-    if(_armci_gop_init){_armci_msg_binomial_bcast(buf,len,root);return;}
-#endif
     /* inter-node operation between masters */
     if(armci_nclus>1)armci_msg_bcast_scope(SCOPE_MASTERS, buf, len, root);
     else  Root = root;
@@ -820,8 +675,6 @@ void armci_msg_brdcst(void* buffer, int len, int root)
 
 #if defined(MSG_COMMS_MPI)
    MPI_Bcast(buffer, len, MPI_CHAR, root, ARMCI_COMM_WORLD);
-#elif defined(PVM)
-   armci_msg_bcast(buffer, len, root);
 #else
    {
       long ttag=ARMCI_TAG, llen=len, rroot=root;
@@ -835,8 +688,6 @@ void armci_msg_snd(int tag, void* buffer, int len, int to)
 {
 #ifdef MSG_COMMS_MPI
   MPI_Send(buffer, len, MPI_CHAR, to, tag, ARMCI_COMM_WORLD);
-#elif defined(PVM)
-  pvm_psend(pvm_gettid(mp_group_name, to), tag, buffer, len, PVM_BYTE);
 #else
   {
     long ttag=tag, llen=len, tto=to, block=1;
@@ -854,11 +705,6 @@ void armci_msg_rcv(int tag, void* buffer, int buflen, int *msglen, int from)
     MPI_Status status;
     MPI_Recv(buffer, buflen, MPI_CHAR, from, tag, ARMCI_COMM_WORLD, &status);
     if(msglen) MPI_Get_count(&status, MPI_CHAR, msglen);
-#elif defined(PVM)
-    int src, rtag,mlen;
-    pvm_precv(pvm_gettid(mp_group_name, from), tag, buffer, buflen, PVM_BYTE,
-              &src, &rtag, &mlen);
-    if(msglen)*msglen=mlen;
 #else
     long ttag=tag, llen=buflen, mlen, ffrom=from, sender, block=1;
     tcg_rcv(ttag, buffer, llen, &mlen, ffrom, &sender, block);
@@ -880,17 +726,12 @@ int armci_msg_rcvany(int tag, void* buffer, int buflen, int *msglen)
       if(msglen)if(MPI_SUCCESS!=MPI_Get_count(&status, MPI_CHAR, msglen))
                        armci_die("armci_msg_rcvany: count failed ", tag);
       return (int)status.MPI_SOURCE;
-#  elif defined(PVM)
-      int src, rtag,mlen;
-      pvm_precv(-1, tag, buffer, buflen, PVM_BYTE, &src, &rtag, &mlen);
-      if(msglen)*msglen=mlen;
-      return(pvm_getinst(mp_group_name,src));
-#  else
+#else
       long ttag=tag, llen=buflen, mlen, ffrom=-1, sender, block=1;
       tcg_rcv(ttag, buffer, llen, &mlen, ffrom, &sender, block);
       if(msglen)*msglen = (int)mlen;
       return (int)sender;
-#  endif
+#endif
 }
 
 
@@ -1750,11 +1591,6 @@ void armci_msg_reduce(void *x, int n, char* op, int type)
 
     /* inter-node operation between masters */
     if(armci_nclus>1){
-#ifdef LAPI
-       if(_armci_gop_init)
-         _armci_msg_binomial_reduce(x,n,op,type);
-       else
-#endif
          armci_msg_reduce_scope(SCOPE_MASTERS, x, n, op, type);
     }
 }
@@ -2163,19 +1999,3 @@ void armci_msg_group_dgop(double *x, int n, char* op,ARMCI_Group *group)
 #  endif /* ifdef MSG_COMMS_MPI */
 /*********************** End ARMCI Groups Code ****************************/
 
-
-#ifdef PVM
-/* set the group name if using PVM */
-void ARMCI_PVM_Init(char *mpgroup)
-{
-#ifdef CRAY
-    mp_group_name = (char *)NULL;
-#else
-    if(mpgroup != NULL) {
-/*        free(mp_group_name); */
-        mp_group_name = (char *)malloc(25 * sizeof(char));
-        strcpy(mp_group_name, mpgroup);
-    }
-#endif
-}
-#endif

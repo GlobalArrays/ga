@@ -21,8 +21,7 @@ typedef struct {
 extern void** memlock_table_array;
 extern int *armci_use_memlock_table;
 
-#if defined(LAPI  ) || defined(FUJITSU)  || defined(PTHREADS) || \
-  defined(CYGWIN)   || defined(NEC)      || \
+#if defined(PTHREADS) || defined(CYGWIN)   || defined(NEC)      || \
   (defined(LINUX64) && defined(__GNUC__) && defined(__alpha__))
 #  define ARMCI_LOCKMEM armci_lockmem_
 #  define ARMCI_UNLOCKMEM armci_unlockmem_

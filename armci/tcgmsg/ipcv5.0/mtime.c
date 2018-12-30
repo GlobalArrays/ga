@@ -20,12 +20,6 @@ long MTIME_()
     return (long) (TCGTIME_()*100.0);
 }
 
-#if defined(LAPI) && defined(AIX)
-#   define LAPI_AIX
-#endif
-
-#ifndef LAPI_AIX
-
 #if HAVE_SYS_TYPES_H
 #   include <sys/types.h>
 #endif
@@ -72,60 +66,3 @@ double TCGTIME_()
     return high + 1.0e-6*(low+low);
 }
 
-#endif
-
-#ifdef LAPI_AIX
-
-#if HAVE_SYS_TIME_H
-#   include <sys/time.h>
-#endif
-#if HAVE_SYS_SYSTEMCFG_H
-#   include <sys/systemcfg.h>
-#endif
-
-static int firstsec=0;    /* Reference for timer */
-static int firstnsec=0;    
-
-void MtimeReset()               /* Sets timer reference */
-{
-    timebasestruct_t t;
-    read_real_time(&t, TIMEBASE_SZ);
-    time_base_to_time(&t, TIMEBASE_SZ);
-
-    firstsec = t.tb_high;
-    firstnsec = t.tb_low;
-}
-
-
-/**
- * Return wall clock time in seconds as accurately as possible
- */
-double TCGTIME_()
-{
-    static int firstcall=1;
-    timebasestruct_t t;
-    int low, high;
-    int secs, nsecs;
-
-    if (firstcall) {
-        MtimeReset();
-        firstcall = 0;
-    }
-
-
-    read_real_time(&t, TIMEBASE_SZ);
-    time_base_to_time(&t, TIMEBASE_SZ);
-
-    secs = t.tb_high - firstsec;
-    nsecs = t.tb_low - firstnsec;
-
-    /* If there was a carry from low-order to high-order during
-       the measurement, we have to undo it */
-    if(nsecs < 0){
-        secs--;
-        nsecs+= 1000000000;
-    }
-    return (double)(secs + 1.0e-9*nsecs);
-}
-
-#endif /* LAPI_AIX */

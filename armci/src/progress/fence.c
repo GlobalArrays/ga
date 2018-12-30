@@ -72,7 +72,7 @@ void PARMCI_GroupFence(ARMCI_Group *group)
 
 void PARMCI_AllFence()
 {
-#if defined(LAPI) || defined(CLUSTER)
+#if defined(CLUSTER)
     int p;
 
     for(p = 0;p < armci_nproc; p++) {

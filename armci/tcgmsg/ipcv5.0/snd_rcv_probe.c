@@ -144,12 +144,7 @@ void SND_(long *type, void *buf, long *lenbuf, long *node, long *sync)
     long me = NODEID_();
     long msg_async_snd();
 
-    /*asynchronous communication not supported under LAPI */
-#ifdef LAPI
-    long block = 1;
-#else
     long block = *sync;
-#endif
 
     if (DEBUG_) {
         (void)printf("SND_: node %ld sending to %ld, len=%ld, type=%ld, sync=%ld\n",

@@ -156,14 +156,6 @@ if ARMCI_NETWORK_CRAY_SHMEM
 AM_CPPFLAGS += -I$(top_srcdir)/src/devices/cray-shmem
 libarmci_la_SOURCES += src/memory/shmalloc.c
 endif
-if ARMCI_NETWORK_LAPI
-AM_CPPFLAGS += -I$(top_srcdir)/src/devices/lapi
-libarmci_la_SOURCES += src/common/async.c
-libarmci_la_SOURCES += src/common/request.c
-libarmci_la_SOURCES += src/devices/lapi/lapi.c
-libarmci_la_SOURCES += src/devices/lapi/lapidefs.h
-libarmci_la_SOURCES += src/memory/buffers.c
-endif
 if ARMCI_NETWORK_MPI_MT
 AM_CPPFLAGS += -I$(top_srcdir)/src/devices/mpi-mt
 libarmci_la_SOURCES += src/common/ds-shared.c
@@ -371,10 +363,6 @@ libarmci_la_SOURCES += tcgmsg/ipcv5.0/srftoc.h
 libarmci_la_SOURCES += tcgmsg/ipcv5.0/tcgmsgP.h
 libarmci_la_SOURCES += tcgmsg/ipcv5.0/usleep.c
 libarmci_la_SOURCES += tcgmsg/ipcv5.0/waitall.c
-if ARMCI_NETWORK_LAPI
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/async_send_lapi.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/lapi_putget.c
-else
 libarmci_la_SOURCES += tcgmsg/ipcv5.0/async_send.c
 libarmci_la_SOURCES += tcgmsg/ipcv5.0/busy.c
 libarmci_la_SOURCES += tcgmsg/ipcv5.0/error.c
@@ -382,7 +370,6 @@ libarmci_la_SOURCES += tcgmsg/ipcv5.0/nxtval.shm.c
 libarmci_la_SOURCES += tcgmsg/ipcv5.0/pbeginf.c
 libarmci_la_SOURCES += tcgmsg/ipcv5.0/shmem.c
 libarmci_la_SOURCES += tcgmsg/ipcv5.0/synch.c
-endif # ARMCI_NETWORK_LAPI
 
 endif # MSG_COMMS_TCGMSG5
 

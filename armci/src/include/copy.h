@@ -180,11 +180,7 @@
 #endif
    
 /* macros to ensure ordering of consecutive puts or gets following puts */
-#if defined(LAPI)
-
-#   include "lapidefs.h"
-
-#elif defined(CRAY_SHMEM)
+#if defined(CRAY_SHMEM)
 #if defined(CRAY) || defined(CRAY_XT)
 #   include <mpp/shmem.h>
 #else
@@ -300,47 +296,6 @@ void c_dcopy13_(const int*    const restrict rows,
               shmem_get32((void *)(dst),(void *)(src),(int)(n)/4,(proc));\
               shmem_quiet()
 
-#elif  defined(LAPI)
-
-#      include <lapi.h>
-       extern lapi_handle_t lapi_handle;
-
-#      define armci_put(src,dst,n,proc)\
-              if(proc==armci_me){\
-                 armci_copy(src,dst,n);\
-              } else {\
-              if(LAPI_Put(lapi_handle, (uint)proc, (uint)n, (dst), (src),\
-                NULL,&(ack_cntr[ARMCI_THREAD_IDX].cntr),&cmpl_arr[proc].cntr))\
-                  ARMCI_Error("LAPI_put failed",0); else;}
-
-       /**** this copy is nonblocking and requires fence to complete!!! ****/
-#      define armci_get(src,dst,n,proc) \
-              if(proc==armci_me){\
-                 armci_copy(src,dst,n);\
-              } else {\
-              if(LAPI_Get(lapi_handle, (uint)proc, (uint)n, (src), (dst), \
-                 NULL, &(get_cntr[ARMCI_THREAD_IDX].cntr)))\
-                 ARMCI_Error("LAPI_Get failed",0);else;}
-
-#      define ARMCI_NB_PUT(src,dst,n,proc,cmplt)\
-              {if(LAPI_Setcntr(lapi_handle, &((cmplt)->cntr), 0))\
-                  ARMCI_Error("LAPI_Setcntr in NB_PUT failed",0);\
-              (cmplt)->val=1;\
-              if(LAPI_Put(lapi_handle, (uint)proc, (uint)n, (dst), (src),\
-                 NULL, &((cmplt)->cntr), &cmpl_arr[proc].cntr))\
-                  ARMCI_Error("LAPI_put failed",0); else;}
-
-#      define ARMCI_NB_GET(src,dst,n,proc,cmplt)\
-              {if(LAPI_Setcntr(lapi_handle, &((cmplt)->cntr), 0))\
-                  ARMCI_Error("LAPI_Setcntr in NB_GET failed",0);\
-              (cmplt)->val=1;\
-              if(LAPI_Get(lapi_handle, (uint)proc, (uint)n, (src), (dst), \
-                 NULL, &((cmplt)->cntr)))\
-                 ARMCI_Error("LAPI_Get NB_GET failed",0);else;}
-
-#      define ARMCI_NB_WAIT(cmplt) CLEAR_COUNTER((cmplt))
-#      define ARMCI_NB_TEST(cmplt,_succ) TEST_COUNTER((cmplt),(_succ))
-       
 #else
 
 #      define armci_get(src,dst,n,p)    armci_copy((src),(dst),(n))
