@@ -100,7 +100,7 @@ AC_HEADER_DIRENT
 AC_HEADER_STDBOOL
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-GA_CHECK_HEADERS([assert.h c_asm.h errno.h fcntl.h float.h ia64/sys/inline.h malloc.h math.h memory.h mpp/shmem.h netdb.h netinet/in.h netinet/tcp.h process.h setjmp.h signal.h stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/types.h sys/atomic_op.h sys/errno.h sys/file.h sys/ipc.h sys/mman.h sys/param.h sys/sem.h sys/shm.h sys/socket.h sys/stat.h sys/syscall.h sys/systemcfg.h sys/time.h sys/uio.h sys/wait.h time.h unistd.h windows.h winsock.h rpc/rpc.h rpc/types.h rpc/xdr.h],
+GA_CHECK_HEADERS([assert.h c_asm.h errno.h fcntl.h float.h malloc.h math.h memory.h mpp/shmem.h netdb.h netinet/in.h netinet/tcp.h process.h setjmp.h signal.h stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/types.h sys/atomic_op.h sys/errno.h sys/file.h sys/ipc.h sys/mman.h sys/param.h sys/sem.h sys/shm.h sys/socket.h sys/stat.h sys/syscall.h sys/systemcfg.h sys/time.h sys/uio.h sys/wait.h time.h unistd.h windows.h winsock.h rpc/rpc.h rpc/types.h rpc/xdr.h],
 [], [],
 [@%:@ifdef HAVE_RPC_TYPES_H
 @%:@include <rpc/types.h>
@@ -296,7 +296,7 @@ AM_CONDITIONAL([ENABLE_SHARED], [test x$enable_shared = xyes])
 
 AS_IF([test "x$ga_cv_target" = xLINUX64],
     [AS_CASE([$host_cpu],
-        [x86_64|ppc64|ia64],
+        [x86_64|ppc64],
             [AC_DEFINE([NEED_MEM_SYNC], [1], [Creates memfenc macro])])])
 AS_IF([test "x$host_cpu" = xPWR4],
     [AC_DEFINE([NEED_MEM_SYNC], [1], [Creates memfenc macro])])

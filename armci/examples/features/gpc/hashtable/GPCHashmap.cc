@@ -23,15 +23,6 @@ using std::endl;
 
 /***************************** macros ************************/
 extern "C" {
-#  if defined(__ia64)
-#    if defined(__GNUC__) && !defined (__INTEL_COMPILER)
-#       define MEM_FENCE __asm__ __volatile__ ("mf" ::: "memory");
-#    else /* Intel Compiler */
-        extern void _armci_ia64_mb();
-#       define MEM_FENCE _armci_ia64_mb();
-#    endif
-#  endif
-}
 
 #include "Hash_common.h"
 #include "GPCHashmap.h"
