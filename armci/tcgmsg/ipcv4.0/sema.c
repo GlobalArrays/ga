@@ -281,7 +281,7 @@ long SemSetCreate(long n_sem, long value)
     Error("SemSetCreate: failed to create arena", 0L);
 
   /* Magic factors of EIGHT here to ensure that values are
-     in different cache lines to avoid aliasing -- good on SGI and Convex */
+     in different cache lines to avoid aliasing */
 
   if (!(val = (int *) usmalloc(EIGHT*MAX_SEMA*sizeof(int), arena_ptr)))
     Error("SemSetCreate: failed to get shmem", (long) (MAX_SEMA*sizeof(int)));

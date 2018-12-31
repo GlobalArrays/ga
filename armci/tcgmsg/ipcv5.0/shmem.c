@@ -217,8 +217,7 @@ long DeleteSharedRegion(long id)
 
 char *AttachSharedRegion(long id, long size)
 {
-    Error("AttachSharedRegion: need mods for this to work on CONVEX",
-            (long) -1);
+    Error("AttachSharedRegion: need mods for this to work", (long) -1);
 }
 
 
