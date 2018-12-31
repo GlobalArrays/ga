@@ -92,11 +92,13 @@ endif()
 # Build MA tests
 # -------------------------------------------------------------
 
-add_executable(testf.x testf.F)
+#add_executable(testf.x testf.F)
+#set_target_properties(testf.x PROPERTIES LINKER_LANGUAGE Fortran)
+#target_link_libraries(testf.x ga ${ctargetlibs})
+
 add_executable(test-coalesce.x test-coalesce.c)
 add_executable(test-inquire.x test-inquire.c)
 #add_executable(testc.x testc.c)
-target_link_libraries(testf.x ga ${ctargetlibs})
 target_link_libraries(test-coalesce.x ga ${ctargetlibs})
 target_link_libraries(test-inquire.x ga ${ctargetlibs})
 #target_link_libraries(testc.x ga ${ctargetlibs})
