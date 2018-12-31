@@ -167,10 +167,8 @@ mc.o:	msgtypesf.h
 
 IF CRAY
   JOBJ = fexit.o timer.o getmem.o
-ELSEIF IBMNOEXT ALLIANT
+ELSEIF IBMNOEXT
   JOBJ = fexit.o timer.o getmem.o mxv_dgemv.o
-ELSEIF IPSC DELTA
-  JOBJ = fexit.o timer.o getmem.o mxv_daxpy1.o daxpy1.o
 ELSE
   JOBJ = fexit.o timer.o getmem.o mxv_fortran.o
 ENDIF
@@ -199,13 +197,11 @@ template.p:
 	echo "# This template is piped thru sed to replace" >  template.p
 	echo "# PROGRAM with the name of the program."      >> template.p
 	echo "# Add other hosts and processes as desired."  >> template.p
-IF CRAY NEXT NEXTNOEXT
+IF CRAY
 	echo "$$LOGNAME `hostname` 1 `pwd`/PROGRAM /tmp"   >> template.p
 	echo "$$LOGNAME `hostname` 1 `pwd`/PROGRAM /tmp"   >> template.p
 	echo "$$LOGNAME `hostname` 1 `pwd`/PROGRAM /tmp"   >> template.p
 	echo "$$LOGNAME `hostname` 1 `pwd`/PROGRAM /tmp"   >> template.p
-ELSEIF IPSC
-	echo '0 $$ ' PROGRAM . >> template.p
 ELSE
 	echo "`whoami` `hostname` 4 `pwd`/PROGRAM /tmp"   >> template.p
 ENDIF

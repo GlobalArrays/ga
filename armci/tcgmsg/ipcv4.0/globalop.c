@@ -14,7 +14,6 @@
 
 extern void free();
 
-#ifndef IPSC
 #include "sndrcvP.h"
 
 #define GOP_BUF_SIZE 81920
@@ -298,59 +297,3 @@ void IGOP_(long * ptype, long * x, long * pn, char * op, int len)
   nb = *pn * sizeof(long);
   BRDCST_(&type, (char *) tmp, &nb, &zero);
 }
-
-#endif
-
-/* Wrapper for fortran interface ... UGH ... note that
-   string comparisons above do NOT rely on NULL termination
-   of the operation character string */
-
-#ifdef CRAY
-#include <fortran.h>
-#endif
-#ifdef ARDENT
-struct char_desc {
-  char *string;
-  int len;
-};
-#endif
-
-#if defined(CRAY) || defined(CRAY)
-#ifdef ARDENT
-void dgop_(long * ptype, double * x, long * pn, struct char_desc * arg)
-{
-  char *op = arg->string;
-  int len_op = arg->len;
-#endif
-#if defined(CRAY)
-void dgop_(ptype, x, pn, arg)
-     long *ptype, *pn;
-     double *x;
-     _fcd arg;
-{
-  char *op = _fcdtocp(arg);
-  int len_op = _fcdlen(arg);
-#endif
-  DGOP_(ptype, x, pn, op);
-}
-#endif
-/* This crap to handle FORTRAN character strings */
-
-#if defined(CRAY) || defined(CRAY)
-#ifdef ARDENT
-void igop_(long * ptype, long * x, long * pn, struct char_desc * arg)
-{
-  char *op = arg->string;
-  int len_op = arg->len;
-#endif
-#if defined(CRAY)
-void igop_(long * wrap_ptype, long * x, long * wrap_pn, _fcd arg)
-{
-  long ptype, pn;
-  ptype = (long) *ptype;
-  char *op = _fcdtocp(arg);
-  int len_op = _fcdlen(arg);
-#endif
-  IGOP_(ptype, x, pn, op);
-}
-#endif

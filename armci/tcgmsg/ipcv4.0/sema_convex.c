@@ -72,11 +72,7 @@ extern void Error();
 /* On the convex a semaphore is a structure but on the apollo
    it is an array which does not need dereferencing.  Use ADDR
    to generate the address of a semaphore */
-#ifdef APOLLO
-#define ADDR(x) x
-#else
 #define ADDR(x) &x
-#endif
 
 extern char *mktemp();
 
@@ -99,26 +95,18 @@ void InitSemSets()
   int i, j;
   unsigned size = sizeof(struct sem_set_struct) * MAX_SEM_SETS;
 
-#ifndef APOLLO
-  /* Generate scratch file to identify region ... mustn't do this
-     on the APOLLO */
+  /* Generate scratch file to identify region */
 
   filename = mktemp(template);
   if ( (fd = open(filename, O_RDWR|O_CREAT, 0666)) < 0 )
     Error("InitSemSets: failed to open temporary file",0);
-#endif
 
   sem_sets = (struct sem_set_struct *) mmap((caddr_t) 0, &size,
                      PROT_READ|PROT_WRITE,
                      MAP_ANON|MAP_HASSEMAPHORE|MAP_SHARED, fd, 0);
 
-#ifdef APOLLO
-  if (sem_sets == (struct sem_set_struct *) 0)
-    Error("InitSemSets: mmap failed", (long) -1);
-#else
   if (sem_sets == (struct sem_set_struct *) -1)
     Error("InitSemSets: mmap failed", (long) -1);
-#endif
 
   for (i=0; i<MAX_SEM_SETS; i++) {
     sem_sets[i].n_sem = 0;
