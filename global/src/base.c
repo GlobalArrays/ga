@@ -63,7 +63,6 @@ static int calc_maplen(int handle);
 #ifdef PROFILE_OLD
 #include "ga_profile.h"
 #endif
-/*#define AVOID_MA_STORAGE 1*/ 
 #define DEBUG 0
 #define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 
@@ -497,7 +496,7 @@ void set_ga_group_is_for_ft(int val)
 
 logical pnga_uses_ma()
 {
-#ifdef AVOID_MA_STORAGE
+#if 1
    return FALSE;
 #else
    if(!GAinitialized) return FALSE;
@@ -1931,7 +1930,7 @@ void pnga_set_property(Integer g_a, char* property) {
     if (!chk) mem_size = 0;
     grp_me = pnga_pgroup_nodeid(handle);
     /* Clean up old memory first */
-#ifndef AVOID_MA_STORAGE
+#if 0
     if(gai_uses_shm((int)handle)){
 #endif
       /* make sure that we free original (before address allignment)
@@ -1950,7 +1949,7 @@ void pnga_set_property(Integer g_a, char* property) {
             GA[ga_handle].ptr[pnga_pgroup_nodeid(GA[ga_handle].old_handle)]
             - GA[ga_handle].id);
       }
-#ifndef AVOID_MA_STORAGE
+#if 0
     }else{
       if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
     }
@@ -2055,7 +2054,7 @@ void pnga_unset_property(Integer g_a) {
     }
 
     /* Get rid of current memory allocation */
-#ifndef AVOID_MA_STORAGE
+#if 0
     if(gai_uses_shm((int)GA[ga_handle].p_handle)){
 #endif
       /* make sure that we free original (before address allignment)
@@ -2074,7 +2073,7 @@ void pnga_unset_property(Integer g_a) {
             GA[ga_handle].ptr[pnga_pgroup_nodeid(GA[ga_handle].p_handle)]
             - GA[ga_handle].id);
       }
-#ifndef AVOID_MA_STORAGE
+#if 0
     }else{
       if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
     }
@@ -2753,7 +2752,7 @@ int gai_uses_shm(int grp_id)
 int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
 	       int grp_id)
 {
-#ifdef AVOID_MA_STORAGE
+#if 1
    return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
 #else
 Integer handle = INVALID_MA_HANDLE, index;
@@ -2801,7 +2800,7 @@ char *ptr = (char*)0;
      if(bytes && !ptr) return 1; 
      else return 0;
    }
-#endif /* AVOID_MA_STORAGE */
+#endif
 }
 
 
@@ -2835,7 +2834,7 @@ Integer status;
      /* make sure that remote memory addresses point to user memory */
      for(i=0; i<GAnproc; i++)ptr_arr[i] += extra;
 
-#ifndef AVOID_MA_STORAGE
+#if 0
      if(ARMCI_Uses_shm()) 
 #endif
         id += extra; /* id is used to store offset */
@@ -2859,12 +2858,12 @@ int extra = sizeof(getmem_t)+GAnproc*sizeof(char*);
 getmem_t *info = (getmem_t *)((char*)ptr - extra);
 char **ptr_arr = (char**)(info+1);
 
-#ifndef AVOID_MA_STORAGE
+#if 0
     if(ARMCI_Uses_shm()){
 #endif
       /* make sure that we free original (before address alignment) pointer */
       ARMCI_Free(ptr_arr[GAme] - info->id);
-#ifndef AVOID_MA_STORAGE
+#if 0
     }else{
       if(info->id != INVALID_MA_HANDLE) MA_free_heap(info->id);
     }
@@ -3206,7 +3205,7 @@ int local_sync_begin,local_sync_end;
     if(GA[ga_handle].ptr[grp_me]==NULL){
        return TRUE;
     } 
-#ifndef AVOID_MA_STORAGE
+#if 0
     if(gai_uses_shm((int)grp_id)){
 #endif
       /* make sure that we free original (before address allignment) pointer */
@@ -3218,7 +3217,7 @@ int local_sync_begin,local_sync_end;
       else
 #endif
 	 ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
-#ifndef AVOID_MA_STORAGE
+#if 0
     }else{
       if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
     }
