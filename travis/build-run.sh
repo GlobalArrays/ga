@@ -60,6 +60,9 @@ case "x$PORT" in
             export COMEX_OFI_LIBRARY=$TRAVIS_ROOT/libfabric/lib/libfabric.dylib
         fi
         ;;
+    xarmci)
+        ./configure --with-armci=$TRAVIS_ROOT/external-armci CFLAGS=-pthread LIBS=-lpthread
+        ;;
     x)
         ./configure $CONFIG_OPTS
         ;;
