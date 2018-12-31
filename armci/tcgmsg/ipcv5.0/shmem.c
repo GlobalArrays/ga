@@ -29,8 +29,7 @@
  *
  *
  * Delete a shared region from the system. This has to be done on the SUN
- * to remove it from the system. On the Alliant the shared region disappears
- * when the last process dies or detaches. Returns 0 on success, -1 on error.
+ * to remove it from the system. Returns 0 on success, -1 on error.
  *
  * long DeleteSharedRegion((long) id)
  *
