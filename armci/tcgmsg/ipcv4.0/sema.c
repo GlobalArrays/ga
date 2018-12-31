@@ -62,7 +62,7 @@
 
 extern void Error();
 
-#if defined(SYSV) && !defined SGIUS  && !defined(SPPLOCKS) && !defined(MACX)
+#if defined(SYSV) && !defined(SPPLOCKS) && !defined(MACX)
 
 /********************************************************************
   Most system V compatible machines
@@ -96,7 +96,7 @@ union semun {
 static int sem_set_id_list[MAX_SEM_SETS];
 static int num_sem_set = 0;
 
-#if defined(SGITFP) || defined(SGI64) || defined(SOLARIS) || defined (AIX) || defined(LINUX64)
+#if defined(SOLARIS) || defined (AIX) || defined(LINUX64)
 #   define MAX_N_SEM 512 
 #else
 #   define MAX_N_SEM 40
@@ -240,12 +240,7 @@ long SemSetDestroyAll()
 
 #endif
 
-#if defined(SGIUS) || defined(SPPLOCKS)
-
-/*
-  SGI fast US library semaphores ... aren't any faster
-  than system V semaphores ... implement using spin locks
-*/
+#if defined(SPPLOCKS)
 
 #include <stdio.h>
 #include <unistd.h>  

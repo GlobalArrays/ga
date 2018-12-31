@@ -41,9 +41,6 @@
 
 /* Shared memory allocated per process .. make even multiple of
    page size ... usually 4096 */
-#if defined(SGI) || defined(SGITFP)
-#define SHMEM_BUF_SIZE 262144
-#endif
 #ifdef MACX
 #define SHMEM_BUF_SIZE 65536
 #endif

@@ -124,12 +124,9 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #if defined(SUN)||defined(SOLARIS)
 #  undef _SHMMAX
 #  define _SHMMAX (1024)  /* memory in KB */
-#elif defined(SGI64) || defined(AIX) || defined(CONVEX)
+#elif defined(AIX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)512*1024)
-#elif defined(SGI) && !defined(SGI64)
-#  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)128*1024)
 #elif defined(__FreeBSD__)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)3*1024)
@@ -168,8 +165,6 @@ static  int id_search_no_fork=0;
 #define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm shm %d",id);
 #elif  defined(SOLARIS) 
 #define CLEANUP_CMD(command) sprintf(command,"/bin/ipcrm -m %d",id);
-#elif  defined(SGI) 
-#define CLEANUP_CMD(command) sprintf(command,"/usr/sbin/ipcrm -m %d",id);
 #else
 #define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm -m %d",id);
 #endif
@@ -924,10 +919,6 @@ char *Attach_Shared_Region(id, size, offset)
 int reg, found, shmflag=0;
 static char *temp;
 
-#if defined(SGI_N32) && defined(SHM_SGI_ANYADDR)
-  shmflag= SHM_SGI_ANYADDR;
-#endif
-  
   if(alloc_regions>=MAX_REGIONS)
        armci_die("Attach_Shared_Region: to many regions ",0);
 
@@ -1023,10 +1014,6 @@ size_t sz = (size_t)size;
 #else
        char *pref_addr = (char*)0;
 #endif
-#if defined(SGI_N32) && defined(SHM_SGI_ANYADDR)
-  shmflag= SHM_SGI_ANYADDR;
-#endif
-
     if(DEBUG1){
        printf("%d:allocate: Shmem allocate size %ld bytes\n",armci_me,size); 
        fflush(stdout);

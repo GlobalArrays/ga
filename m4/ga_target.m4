@@ -3,8 +3,6 @@
 # Attempt to determine the old TARGET variable automatically.
 # Deprecated TARGETs:
 # CYGNUS
-# SGI
-# SGI64
 AC_DEFUN([GA_TARGET],
 [# AH_TEMPLATE for all known TARGETs
 AH_TEMPLATE([CRAY_XT],      [Define to 1 on Cray XT systems])
@@ -16,7 +14,6 @@ AH_TEMPLATE([LINUX],        [Define to 1 on generic Linux systems])
 AH_TEMPLATE([LINUX64],      [Define to 1 on generic 64bit Linux systems])
 AH_TEMPLATE([MACX],         [Define to 1 on OSX systems])
 AH_TEMPLATE([MACX64],       [Define to 1 on 64bit OSX systems])
-AH_TEMPLATE([SGI],          [Define to 1 on ??? systems])
 AH_TEMPLATE([SOLARIS],      [Define to 1 on Solaris systems])
 AH_TEMPLATE([SOLARIS64],    [Define to 1 on 64bit Solaris systems])
 AC_REQUIRE([AC_CANONICAL_BUILD])
@@ -43,7 +40,7 @@ dnl AS_IF([test "x$ARMCI_TOP_BUILDDIR" != x], [
     AC_CACHE_CHECK([whether we think this system is what we call SYSV],
     [ga_cv_sysv],
     [AS_CASE([$ga_cv_target_base],
-        [SUN|SOLARIS|SGI|IBM|LINUX],
+        [SUN|SOLARIS|IBM|LINUX],
             [ga_cv_sysv=yes],
         [ga_cv_sysv=no])
     ])
@@ -59,7 +56,6 @@ AM_CONDITIONAL([IBM],          [test "$ga_cv_target_base" = IBM])
 AM_CONDITIONAL([LINUX],        [test "$ga_cv_target_base" = LINUX])
 AM_CONDITIONAL([MACX],         [test "$ga_cv_target_base" = MACX])
 AM_CONDITIONAL([MINGW],        [test "$ga_cv_target_base" = MINGW])
-AM_CONDITIONAL([SGI],          [test "$ga_cv_target_base" = SGI])
 AM_CONDITIONAL([SOLARIS],      [test "$ga_cv_target_base" = SOLARIS])
 ])dnl
 

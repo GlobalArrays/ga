@@ -59,11 +59,7 @@ void Error(string, integer)
 		     and call Error in the handler */
 
 #if defined(SHMEM) || defined(SYSV)
-#   if (defined(SGI_N32) || defined(SGITFP))
-#       define PARTIALSPIN
-#   else
-#       define NOSPIN
-#   endif
+#  define NOSPIN
 #endif
 
 #if defined(SHMEM) || defined(SYSV)
