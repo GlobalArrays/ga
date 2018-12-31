@@ -75,7 +75,7 @@ thread_id_t armci_usr_tid;
 #if !defined(THREAD_SAFE)
 double armci_internal_buffer[BUFSIZE_DBL];
 #endif
-#if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(CATAMOUNT)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP)
 #   include "locks.h"
     lockset_t lockid;
 #endif
@@ -183,9 +183,7 @@ void ARMCI_Error(char *msg, int code)
 
 void armci_allocate_locks()
 {
-#if !defined(CRAY_SHMEM) && defined(CATAMOUNT)
-       armcill_allocate_locks(NUM_LOCKS);
-#elif (defined(SYSV) || defined(WIN32) || defined(MMAP))
+#if (defined(SYSV) || defined(WIN32) || defined(MMAP))
        if(armci_nproc == 1)return;
 #  if defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN)
        CreateInitLocks(NUM_LOCKS, &lockid);

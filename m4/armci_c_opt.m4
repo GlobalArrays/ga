@@ -12,7 +12,6 @@ AS_IF([test "x$armci_cv_c_opt" = x && test "x$enable_opt" = xyes], [
 AS_CASE([$ga_cv_target:$ga_cv_c_compiler_vendor:$host_cpu:$ga_armci_network],
 [BGQ:ibm:*:*],              [armci_cv_c_opt="-O3 -qstrict"],
 [BGQ:gnu:*:*],              [armci_cv_c_opt="-O2"],
-[CATAMOUNT:*:*:*],          [armci_cv_c_opt=],
 [CRAY_XT:*:*:*],            [armci_cv_c_opt=],
 [CYGWIN:*:*:*],             [armci_cv_c_opt="-malign-double"],
 [HPUX64:*:*:*],             [armci_cv_c_opt="-Ae"],
