@@ -49,8 +49,6 @@
 #include "ga-papi.h"
 #include "ga-wapi.h"
 
-#define ARMCI 1
-
 #if defined(SUN)
   void fflush();
 #endif
@@ -326,15 +324,6 @@ int i;
 
 void pnga_error(char *string, Integer icode)
 {
-#ifndef ARMCI
-extern void Error();
-#endif
-
-#ifdef CRAY_T3D 
-#  define FOUT stdout
-#else
-#  define FOUT stderr
-#endif
 #define ERR_LEN 400
     int level;
     char error_buffer[ERR_LEN];
@@ -349,19 +338,8 @@ extern void Error();
     sprintf(error_buffer,"%d:", (int)pnga_nodeid());
     strcat(error_buffer,string);
     strcat(error_buffer,":");
-       
-#ifdef ARMCI
+
     ARMCI_Error(error_buffer,(int)icode);
-#else
-    ga_clean_resources(); 
-    if (pnga_nnodes() > 1) Error(error_buffer, icode);
-    else{
-      fprintf(FOUT,"%s %ld\n",error_buffer,icode);
-      perror("system message:");
-      fflush(FOUT);
-      exit(1);
-    }
-#endif
 }
 
 void ga_debug_suspend()
@@ -373,15 +351,6 @@ void ga_debug_suspend()
    pause();
 #endif
 }
-
-
-
-
-
-
-
-
-#ifdef ARMCI
 
 /*********************************************************************
  *        N-dimensional operations                                   *
@@ -942,8 +911,6 @@ void pnga_summarize(Integer verbose)
     fprintf(DEV, "\n\n");
     fflush(DEV);
 }
-
-#endif
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_print_file = pnga_print_file
