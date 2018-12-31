@@ -121,7 +121,7 @@ void print_range_internal(char *pre,int ndim, int lo[], int hi[], char* post)
 
 /*\ print subscript of ndim dimensional array with two strings before and after
 \*/
-void print_subscript(char *pre,int ndim, int subscript[], char* post)
+void print_subscript2(char *pre,int ndim, int subscript[], char* post)
 {
     int i;
 
@@ -248,9 +248,9 @@ int compare_patches_internal(int me, double eps, int ndim, double *array1,
             char msg[48], val[48];
             sprintf(msg,"ERROR (proc=%d): a",me);
             sprintf(val,"=%f, ",patch1[idx1]);
-            print_subscript(msg,ndim,subscr1,val);
+            print_subscript2(msg,ndim,subscr1,val);
             sprintf(msg,"=%f\n",patch2[idx2]);
-            print_subscript(" b",ndim,subscr2,msg);
+            print_subscript2(" b",ndim,subscr2,msg);
                         sleep(1);
                         return(1);
         }
