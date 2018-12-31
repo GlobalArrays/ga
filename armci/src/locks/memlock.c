@@ -44,9 +44,6 @@ void **memlock_table_array;
 #endif
 
 #define ALIGN_ADDRESS(x) (char*)((((unsigned long)x) >> LOG_CALGN) << LOG_CALGN) 
-#ifdef CRAY_T3E
-#pragma _CRI cache_align table
-#endif
 static memlock_t table[MAX_SLOTS];
 
 #if defined(SGIALTIX) || (defined(CRAY_SHMEM) && defined(CRAY_XT))
