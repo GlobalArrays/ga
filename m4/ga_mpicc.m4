@@ -6,7 +6,6 @@
 #  cc       generic compiler name
 #  ccc      Fujitsu ?? old Cray ??
 #  cl
-#  ecc      Intel on IA64 ??
 #  gcc      GNU
 #  icc      Intel
 #  bgxlc    Intel on BG/P

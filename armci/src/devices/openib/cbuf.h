@@ -52,11 +52,7 @@
 #include <pthread.h>
 #include <infiniband/verbs.h>
 
-#ifdef _IA64_
-#define CBUF_FLAG_TYPE uint64_t
-#else
 #define CBUF_FLAG_TYPE uint32_t
-#endif
 
 #if (defined(RDMA_FAST_PATH) || defined(ADAPTIVE_RDMA_FAST_PATH))
 

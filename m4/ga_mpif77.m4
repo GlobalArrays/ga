@@ -9,7 +9,6 @@
 # preferred above all.
 #
 # Known Fortran 95 compilers:
-#  efc          Intel Fortran 95 compiler for IA64
 #  f95          generic compiler name
 #  fort         Compaq/HP Fortran 90/95 compiler for Tru64 and Linux/Alpha
 #  ftn          native Fortran 95 compiler on Cray X1,XT4,XT5

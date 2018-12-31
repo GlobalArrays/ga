@@ -209,11 +209,6 @@ static void armci_protect_pages(unsigned long startpagenum,unsigned long numpage
 void armci_init_checkpoint2()
 {
     printf("%d:in armci init checkpoint2\n",armci_me);fflush(stdout);
-#ifdef __ia64
-    /* get backing store bottom */
-    asm("mov %0=ar.bsp": "=r"(armci_ckpt_bspBottom));
-    printf("%d: armci_ckpt_bspBottom=%p\n", armci_me, armci_ckpt_bspBottom);
-#endif
 }
 
 /*\ ----------CORE FUNCTIONS -----------
@@ -227,11 +222,6 @@ int armci_init_checkpoint(int spare)
     
 #ifdef CHECKPOINT2
     printf("%d:in armci init checkpoint\n",armci_me);fflush(stdout);
-#ifdef __ia64
-    /* get backing store bottom */
-    asm("mov %0=ar.bsp": "=r"(armci_ckpt_bspBottom));
-    printf("%d: armci_ckpt_bspBottom=%p\n", armci_me, armci_ckpt_bspBottom);
-#endif
 #endif
     mypagesize = getpagesize();
     if(checkpointing_initialized)return(0);
@@ -487,44 +477,6 @@ void what_is_going_on() {
     printf("what_is_going_on(): a=%p\n", &a);
 }
 
-/*
-  In IA64, there is a seperate stack called register stack engine (RSE,
-  contains 96 registers) to manage across functions calls (e.g. these
-  registers stores the function return address, etc.. In order to save this
-  info, flush the stack registers to backing store and save backing store.
-  NOTE: backing store is a cache to register stack. 
- */
-#if defined(__ia64)
-static void armci_ckpt_write_backstore(int rid) 
-{
-    char *bspTop; /* in IA64 only, back store pointer (bsp) */
-    off_t ofs;
-    
-    /* flush the register stack */
-    asm("flushrs");
-    
-    /* getting back store pointer (bsp). BSP is similar to stack pointer,
-     * which points to the top of backing store */
-    asm("mov %0=ar.bsp": "=r"(bspTop));
-    printf("BSP Pointer (ar.bsp) = %p\n", bspTop);
-
-    armci_storage_record[rid].bsp_mon.ptr = armci_ckpt_bspBottom;
-    armci_storage_record[rid].bsp_mon.bytes=((unsigned long)(bspTop) - (unsigned long)(armci_ckpt_bspBottom));
-
-    ofs=CURR_FILE_POS(rid);
-    UPDATE_FILE_POS(rid, armci_storage_record[rid].bsp_mon.bytes);
-    armci_storage_record[rid].bsp_mon.fileoffset = ofs;
-    
-    printf("%d: Save Backing store: %p to %p (bytes=%ld: off=%ld)\n\n",armci_me, armci_ckpt_bspBottom, armci_ckpt_bspBottom+armci_storage_record[rid].bsp_mon.bytes, armci_storage_record[rid].bsp_mon.bytes, ofs);fflush(stdout);
-
-    armci_storage_write_ptr(armci_storage_record[rid].fileinfo.fd,
-                            armci_storage_record[rid].bsp_mon.ptr,
-                            armci_storage_record[rid].bsp_mon.bytes,
-                            armci_storage_record[rid].bsp_mon.fileoffset);
-    
-}
-#endif
-
 static void armci_ckpt_write_stack(int rid)
 {
     int dummy_first=ARMCI_STACK_VERIFY;
@@ -548,10 +500,6 @@ static void armci_ckpt_write_stack(int rid)
                             armci_storage_record[rid].stack_mon.bytes,
                             armci_storage_record[rid].stack_mon.fileoffset);
 
-#if defined(__ia64)
-    /* In IA64, write Backing Store, as it is the cache for Stack Registers */
-    armci_ckpt_write_backstore(rid);    
-#endif    
 }
 
 static void armci_ckpt_write_heap(int rid)
@@ -664,16 +612,6 @@ int armci_icheckpoint(int rid)
     if(armci_storage_record[rid].ckpt_stack ||
        armci_storage_record[rid].ckpt_heap) {
 
-#if defined(__ia64)
-       {
-          char *tmp_bsp;
-          /* flush the register stack */
-          asm("flushrs");
-          /* get the top of backing store */
-          asm("mov %0=ar.bsp": "=r"(tmp_bsp));
-          printf("tmp: ar.bsp = %p\n", tmp_bsp);
-       }
-#endif
        if((armci_recovering=setjmp(armci_storage_record[rid].jmp))==0){
 
           /* 1. file offsets */
@@ -725,42 +663,6 @@ int armci_icheckpoint(int rid)
 }
 
 /**
- * Recover Backing Store.
- */
-#if defined(__ia64)
-static void armci_recover_backstore(int rid) 
-{
-    off_t offset = armci_storage_record[rid].bsp_mon.fileoffset;
-    size_t size  = armci_storage_record[rid].bsp_mon.bytes;
-    char *bspTop = (char*)((unsigned long)(armci_storage_record[rid].bsp_mon.ptr) + size);
-    char *bsp;
-    
-    asm("flushrs");
-    asm("mov %0=ar.bsp": "=r"(bsp));
-
-    /* CHECK: expand the backing store so that the current backing store is
-       replaced with saved backing store (CHECK: register stack can be as
-       large as 96 registers, so 96*8 bytes) */
-    if( (unsigned long)bsp < (unsigned long)(bspTop + 96*8 + EST_OFFSET) ) {
-       armci_recover_backstore(rid);
-    }
-    else{
-       printf("%d: armci_recover_backstore(): size=%ld offset=%ld backing store: %p to %p\n", armci_me, size, offset, bspTop, armci_storage_record[rid].bsp_mon.ptr);
-       armci_storage_read_ptr(armci_storage_record[rid].fileinfo.fd, bspTop, size, offset);
-
-       printf("%d: armci_recover_backstore(): rid=%d\n", armci_me, rid);
-       
-       /* CHECK: Is there a way to verify backing store recovery
-          (similar to stack) */
-    }
-    /**
-     * CHECK: Do nothing here. Recursive function in action.
-     */
-}
-#endif
-
-
-/**
  * Recover stack: restore a saved stack by overwriting the current stack
  * of this process . The idea of restoring the stack is, we are going to
  * replace the contents of current stack, so that longjmp is legitimate.
@@ -794,10 +696,6 @@ static void armci_recover_stack(int rid)
              printf("%d: armci_recover_stack SUCCESS (%d)\n", armci_me, dummy);
        }
        
-#ifdef __ia64
-       /* recover the backing store (BSP) */
-       armci_recover_backstore(rid);
-#endif
 
     }
     /**
@@ -813,27 +711,10 @@ static void armci_recover_memory(int rid)
     size_t stacksize  = armci_storage_record[rid].stack_mon.bytes;
     char *stacktop = (char*)((unsigned long)(armci_storage_record[rid].stack_mon.ptr) - stacksize);
 
-#ifdef __ia64
-    size_t bspsize = armci_storage_record[rid].bsp_mon.bytes;
-    char *bspTop   = (char*)((unsigned long)(armci_storage_record[rid].bsp_mon.ptr) + bspsize);
-    char *bsp;
-#endif
-    
     printf("armci_recover_stack(): check=%p ; rid=%d\n", &dummy, rid);
     /* call recursively until current stack is above saved stack */
     if( (unsigned long)&dummy >= (unsigned long)(stacktop-EST_OFFSET) )
        armci_recover_memory(rid);
-    
-#ifdef __ia64
-    asm("flushrs");
-    asm("mov %0=ar.bsp": "=r"(bsp));
-
-    printf("armci_recover_bsp(): check=%p ; rid=%d\n", &dummy, rid);
-    /* similarly, call recursively until current backing store expands
-       (register stack can be as large as 96 registers) */
-    if( (unsigned long)bsp < (unsigned long)(bspTop + 97*8) )
-       armci_recover_memory(rid);
-#endif
     
     /* ------------------ recover stack segment ------------------- */
     printf("%d: armci_recover_stack(): fp=%p size=%ld off=%ld stack: %p to %p\n", armci_me, armci_storage_record[rid].fileinfo.fd, stacksize, armci_storage_record[rid].stack_mon.fileoffset, stacktop, armci_storage_record[rid].stack_mon.ptr);
@@ -848,22 +729,6 @@ static void armci_recover_memory(int rid)
           printf("%d: armci_recover_stack SUCCESS (%d)\n", armci_me, dummy);
     }
     
-    /* -------- recover register stack (RSE) segment (IA64 only) -------- */
-#ifdef __ia64
-    {
-       size_t bspsize = armci_storage_record[rid].bsp_mon.bytes;
-       char *bspTop   = (char*)((unsigned long)(armci_storage_record[rid].bsp_mon.ptr) + bspsize);
-
-       bsp = (char*)armci_storage_record[rid].bsp_mon.ptr; /* CHECK: */
-       
-       printf("%d: armci_recover_backstore(): size=%ld off=%ld backing store: %p to %p\n", armci_me, bspsize, armci_storage_record[rid].bsp_mon.fileoffset, armci_storage_record[rid].bsp_mon.ptr, bspTop);
-       armci_storage_read_ptr(armci_storage_record[rid].fileinfo.fd, bsp, bspsize, armci_storage_record[rid].bsp_mon.fileoffset);
-       printf("%d: armci_recover_backstore(): rid=%d\n", armci_me, rid);
-       
-       /* CHECK: Is there a way to verify backing store recovery
-          (similar to stack) */
-    }
-#endif
 
     ofs=0; /* jmp_buf is the first one to be stored in ckpt file, so ofs=0 */
     printf("%d: armci_recover jmp_buf(): size=%ld off=%ld (%p to %p)\n", armci_me, sizeof(jmp_buf), ofs, &armci_storage_record[rid].jmp, (char*)(&armci_storage_record[rid].jmp)+sizeof(jmp_buf));
@@ -1009,9 +874,7 @@ void armci_icheckpoint_finalize(int rid)
 
 /*
   TODO:
-  1. organize all the $ifdef __ia64's properly..They are scattered all
-  over and it is difficult to track down and potentially buggy
-  2. checkpoint shared memory and mmap regions
-  3. I/O file open/close, signals and other system specific stuff ???
-  4. memory leaks due to malloc()....free'em
+  - checkpoint shared memory and mmap regions
+  - I/O file open/close, signals and other system specific stuff ???
+  - memory leaks due to malloc()....free'em
 */
