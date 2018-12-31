@@ -16,11 +16,7 @@
 #endif
 
 #if defined(SHMEM) || defined(SYSV)
-#   if (defined(SGI_N32) || defined(SGITFP))
-#       define PARTIALSPIN
-#   else
-#       define NOSPIN
-#   endif
+#   define NOSPIN
 #endif
 
 #if defined(SOLARIS)

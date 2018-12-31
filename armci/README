@@ -58,16 +58,15 @@ Index
 -----
 1.  Supported Platforms
 2.  General Settings
-3.  Building ARMCI on SGI.
-4.  Building ARMCI on IBM.
-5.  Building ARMCI on CRAY.
-6.  Building ARMCI on other platforms
-7.  Platform specific issues/tuning
+3.  Building ARMCI on IBM.
+4.  Building ARMCI on CRAY.
+5.  Building ARMCI on other platforms
+6.  Platform specific issues/tuning
 
 Supported Platforms
 -------------------
 - leadership class machines: Cray XT/XE/XK/XC, IBM Blue Gene/Q.
-- shared-memory systems: SUN Solaris, SGI, SGI Altix, IBM, Linux, HP.
+- shared-memory systems: SUN Solaris, SGI Altix, IBM, Linux.
 - clusters of workstations (InfiniBand, sockets).
 
 configure options
@@ -234,24 +233,6 @@ of failed tests is collected in the top-level log summary test-suite.log.
 
 ANCIENT WISDOM
 ==============
-
-Building on SGI
----------------
-
-For running on SGI machines running the irix os, three target settings are
-available:
-
-- TARGET=SGI generates a MIPS-4 64-bit code with 32-bit address space when
-  compiling on any R8000 based machines and a 32 bit MPIS-2 code on any
-  non-R8000 machines.
-- Use TARGET=SGI64 For generating a 64 bit code with 64-bit address space.
-- TARGET=SGI_N32 generates a 32bit code with a 32bit address space.
-
-By default, SGI_N32 generates a MIPS3 code and SGI64 generates a MIPS4 code.
-
-There is a possibility of conflict between the SGI's implementation of MPI
-(but not others, MPICH for example) and ARMCI in their use of the SGI specific
-inter-processor communication facility called arena.
 
 Building on IBM
 ---------------
