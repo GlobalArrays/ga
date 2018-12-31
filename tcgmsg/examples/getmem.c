@@ -5,11 +5,11 @@
 /*$Id: getmem.c,v 1.2 1995-02-02 23:24:10 d3g681 Exp $*/
 extern char * memalign();
 
-#if (defined(AIX) || defined(NEXT) || defined(HPUX)) && !defined(EXTNAME)
+#if (defined(AIX) || defined(HPUX)) && !defined(EXTNAME)
 #define getmem_ getmem
 #endif
 
-#if defined(CRAY) || defined(ARDENT)
+#if defined(CRAY)
 #define getmem_ GETMEM
 #endif
 

@@ -103,31 +103,12 @@ void PFILECOPY_(type, node0, filename)
     tcgi_pfilecopy(type, node0, filename);
 }
 
-#ifdef IPSC
-#define bcopy(a, b, n) memcpy((b), (a), (n))
-#endif
-
 #ifdef CRAY
 #include <fortran.h>
-#endif
-#ifdef ARDENT
-struct char_desc {
-  char *string;
-  int len;
-};
 #endif
 
 /* This crap because FORTRAN has no standard for passing strings */
 
-#ifdef ARDENT
-void PFCOPY_(type, node0, arg)
-     long *type;
-     long *node0;
-     struct char_desc *arg;
-{
-  char *fname = arg->string;
-  int   len = arg->len;
-#endif
 #ifdef CRAY
 void PFCOPY_(type, node0, arg)
      long *type;
@@ -137,7 +118,7 @@ void PFCOPY_(type, node0, arg)
   char *fname = _fcdtocp(arg);
   int len = _fcdlen(arg);
 #endif
-#if !defined(ARDENT) && !defined(CRAY)
+#if !defined(CRAY)
 void PFCOPY_(type, node0, fname, len)
   long *type;
   long *node0;

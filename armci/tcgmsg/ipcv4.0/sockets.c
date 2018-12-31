@@ -125,11 +125,6 @@ void TcpNoDelay(sock)
   struct protoent *proto = getprotobyname("TCP");
 #endif
 
-#if defined(APOLLO)
-  if (value)
-    return;
-#endif
-
   if (proto == (struct protoent *) NULL)
     Error("TcpNoDelay: getprotobyname on TCP failed!", (long) -1);
 
@@ -257,9 +252,7 @@ void CreateSocketAndBind(sock, port)
   if(setsockopt(*sock, SOL_SOCKET, SO_SNDBUF, (char *) &size, sizeof size))
     Error("CreateSocketAndBind: error setting SO_SNDBUF", (long) size);
 
-#ifndef ARDENT
   TcpNoDelay(*sock);
-#endif
 
   /* Name socket with wildcards */
 
@@ -357,9 +350,7 @@ againacc:
   if(setsockopt(msgsock, SOL_SOCKET, SO_SNDBUF, (char *) &size, sizeof size))
     Error("ListenAndAccept: error setting SO_SNDBUF", (long) size);
 
-#ifndef ARDENT
   TcpNoDelay(msgsock);
-#endif
 
   (void) close(sock); /* will not be needing this again */
   return msgsock;
@@ -435,9 +426,7 @@ againacc:
   if(setsockopt(msgsock, SOL_SOCKET, SO_SNDBUF, (char *) &size, sizeof size))
     Error("ListenAndAccept: error setting SO_SNDBUF", (long) size);
 
-#ifndef ARDENT
   TcpNoDelay(msgsock);
-#endif
 
   (void) close(sock); /* will not be needing this again */
   return msgsock;
@@ -492,9 +481,7 @@ int CreateSocketAndConnect(hostname, cport)
   if(setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *) &size, sizeof size))
     Error("CreateSocketAndConnect: error setting SO_SNDBUF", (long) size);
 
-#ifndef ARDENT
   TcpNoDelay(sock);
-#endif
 
   /* Connect socket */
 

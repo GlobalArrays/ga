@@ -32,9 +32,6 @@ char *CreateSharedRegion(long *id, long *size)
     }
     *id = next_id;
 
-#ifdef APOLLO
-    id_list[*id].fd = -1;
-#else
     if ( (temp = strdup(template)) == (char *) NULL) {
         Error("CreateSharedRegion: failed to get space for filename", 0);
     }
@@ -48,20 +45,13 @@ char *CreateSharedRegion(long *id, long *size)
                     O_RDWR|O_CREAT, 0666)) < 0) {
         Error("CreateSharedRegion: failed to open temporary file",0);
     }
-#endif
 
     id_list[*id].addr = mmap((caddr_t) 0, (unsigned *) size, 
             PROT_READ|PROT_WRITE, 
             MAP_ANON|MAP_SHARED, id_list[*id].fd, 0);
-#ifdef APOLLO
-    if (id_list[*id].addr == (char *) 0) {
-        Error("CreateSharedRegion: mmap failed",-1);
-    }
-#else
     if (id_list[*id].addr == (char *) -1) {
         Error("CreateSharedRegion: mmap failed",-1);
     }
-#endif
 
     id_list[*id].size = *size;
     id_list[*id].status = 1;

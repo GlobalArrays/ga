@@ -130,9 +130,6 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #elif defined(SGI) && !defined(SGI64)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)128*1024)
-#elif defined(KSR)
-#  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)512*1024)
 #elif defined(HPUX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)64*1024)
