@@ -10,8 +10,6 @@ AC_DEFUN([GA_TARGET],
 AH_TEMPLATE([CRAY_XT],      [Define to 1 on Cray XT systems])
 AH_TEMPLATE([CYGNUS],       [Define to 1 on Cygnus systems])
 AH_TEMPLATE([CYGWIN],       [Define to 1 on Cygwin systems])
-AH_TEMPLATE([HPUX],         [Define to 1 on HP-UX systems])
-AH_TEMPLATE([HPUX64],       [Define to 1 on 64bit HP-UX systems])
 AH_TEMPLATE([IBM],          [Define to 1 on IBM SP systems])
 AH_TEMPLATE([IBM64],        [Define to 1 on 64bit IBM SP systems])
 AH_TEMPLATE([LINUX],        [Define to 1 on generic Linux systems])
@@ -30,7 +28,6 @@ AS_IF([test "x$ga_cv_target_base" = xUNKNOWN],
     [AS_CASE([$host],
         #[TODO],            [ga_cv_target_base=CRAY_XT],
         [*cygwin*],         [ga_cv_target_base=CYGWIN],
-        [*hpux*],           [ga_cv_target_base=HPUX],
         [*ibm*],            [ga_cv_target_base=IBM],
         [*linux*],          [ga_cv_target_base=LINUX],
         [*darwin*],         [ga_cv_target_base=MACX],
@@ -46,7 +43,7 @@ dnl AS_IF([test "x$ARMCI_TOP_BUILDDIR" != x], [
     AC_CACHE_CHECK([whether we think this system is what we call SYSV],
     [ga_cv_sysv],
     [AS_CASE([$ga_cv_target_base],
-        [SUN|SOLARIS|SGI|HPUX|IBM|LINUX],
+        [SUN|SOLARIS|SGI|IBM|LINUX],
             [ga_cv_sysv=yes],
         [ga_cv_sysv=no])
     ])
@@ -58,7 +55,6 @@ dnl ])
 AM_CONDITIONAL([CRAY_XT],      [test "$ga_cv_target_base" = CRAY_XT])
 AM_CONDITIONAL([CYGNUS],       [test "$ga_cv_target_base" = CYGNUS])
 AM_CONDITIONAL([CYGWIN],       [test "$ga_cv_target_base" = CYGWIN])
-AM_CONDITIONAL([HPUX],         [test "$ga_cv_target_base" = HPUX])
 AM_CONDITIONAL([IBM],          [test "$ga_cv_target_base" = IBM])
 AM_CONDITIONAL([LINUX],        [test "$ga_cv_target_base" = LINUX])
 AM_CONDITIONAL([MACX],         [test "$ga_cv_target_base" = MACX])

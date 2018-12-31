@@ -40,7 +40,7 @@
 /* These to get portable FORTRAN interface ... these routines
    will not be called from C which has the superior evlog interface */
 
-#if (defined(AIX) || defined(HPUX)) && !defined(EXTNAME)
+#if defined(AIX) && !defined(EXTNAME)
 #define evon_     evon
 #define evoff_    evoff
 #define evbgin_   evbgin

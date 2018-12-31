@@ -1,6 +1,6 @@
       subroutine fexit
       end
-IF HPUX HPUXNOEXT IBM IBMNOEXT
+IF IBM IBMNOEXT
       subroutine flush(iunit)
       end
 ENDIF

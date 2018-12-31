@@ -124,9 +124,6 @@
 !     variables
 !
 
-#ifdef HPUX
-#  define HP_SHARED_COMMON_
-#endif
 !     common blocks
 #ifdef INTEL_64ALIGN
 !DIR$ ATTRIBUTES ALIGN : 64 :: mbc_byte

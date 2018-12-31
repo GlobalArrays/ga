@@ -453,7 +453,7 @@ double FATR util_timer_()
 void FATR set_ma_use_armci_mem_() 
 {
     int retval;
-#if defined(SPARC64_GP) || defined(HPUX64)
+#if defined(SPARC64_GP)
     if((retval=putenv("MA_USE_ARMCI_MEM=YES")) != 0)
 #elif defined(_WIN32)
     if((retval=_putenv("MA_USE_ARMCI_MEM=YES")) != 0)
