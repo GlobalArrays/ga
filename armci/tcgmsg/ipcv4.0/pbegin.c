@@ -206,11 +206,7 @@ void tcgi_pbegin(argc, argv)
 
   if (SR_clus_id != 0)
     (void) fclose(stdin);
-#ifdef SPARC64_GP
-  for (i=3; i<62; i++)
-#else
   for (i=3; i<64; i++)
-#endif
     (void) close((int) i);
 
   /* Connect to the master process which will have process id

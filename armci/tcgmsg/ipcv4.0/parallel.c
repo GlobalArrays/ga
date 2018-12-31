@@ -224,11 +224,7 @@ static long RemoteCreate(remote_hostname, remote_username,
 #ifndef SUN
     if (proc_id != 0)    	/* Close all uneeded files */
       (void) fclose(stdin);
-#ifdef SPARC64_GP
-    for (i=3; i<62; i++)
-#else
     for (i=3; i<64; i++)
-#endif
       (void) close(i);
 #endif
 
