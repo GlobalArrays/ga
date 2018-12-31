@@ -19,8 +19,6 @@ AH_TEMPLATE([LINUX],        [Define to 1 on generic Linux systems])
 AH_TEMPLATE([LINUX64],      [Define to 1 on generic 64bit Linux systems])
 AH_TEMPLATE([MACX],         [Define to 1 on OSX systems])
 AH_TEMPLATE([MACX64],       [Define to 1 on 64bit OSX systems])
-AH_TEMPLATE([NEC],          [Define to 1 on NEC systems])
-AH_TEMPLATE([NEC64],        [Define to 1 on 64bit NEC systems])
 AH_TEMPLATE([SGI],          [Define to 1 on ??? systems])
 AH_TEMPLATE([SOLARIS],      [Define to 1 on Solaris systems])
 AH_TEMPLATE([SOLARIS64],    [Define to 1 on 64bit Solaris systems])
@@ -40,7 +38,6 @@ AS_IF([test "x$ga_cv_target_base" = xUNKNOWN],
         [*darwin*],         [ga_cv_target_base=MACX],
         [*apple*],          [ga_cv_target_base=MACX],
         [*mingw32*],        [ga_cv_target_base=MINGW],
-        [*superux*],        [ga_cv_target_base=NEC],
         [*solaris*],        [ga_cv_target_base=SOLARIS])])
 ])dnl
 AC_DEFINE_UNQUOTED([$ga_cv_target_base], [1],
@@ -69,7 +66,6 @@ AM_CONDITIONAL([IBM],          [test "$ga_cv_target_base" = IBM])
 AM_CONDITIONAL([LINUX],        [test "$ga_cv_target_base" = LINUX])
 AM_CONDITIONAL([MACX],         [test "$ga_cv_target_base" = MACX])
 AM_CONDITIONAL([MINGW],        [test "$ga_cv_target_base" = MINGW])
-AM_CONDITIONAL([NEC],          [test "$ga_cv_target_base" = NEC])
 AM_CONDITIONAL([SGI],          [test "$ga_cv_target_base" = SGI])
 AM_CONDITIONAL([SOLARIS],      [test "$ga_cv_target_base" = SOLARIS])
 ])dnl

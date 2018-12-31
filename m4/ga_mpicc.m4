@@ -15,7 +15,6 @@
 #  xlc_r    Intel, thread safe
 #  pgcc     Portland Group
 #  pathcc   PathScale
-#  sxcc     NEC SX
 #  fcc      Fujitsu
 #  opencc   AMD's x86 open64
 #  suncc    Sun's Studio
@@ -28,7 +27,6 @@
 #  hcc
 #  mpxlc_r
 #  mpxlc
-#  sxmpicc  NEC SX
 #  mpifcc   Fujitsu
 #  mpgcc
 #  mpcc

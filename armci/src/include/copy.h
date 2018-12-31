@@ -22,12 +22,6 @@
 #   define EXTERN extern
 #endif
  
-#ifdef NEC
-#  define memcpy1 _VEC_memcpy
-#  define armci_copy1(src,dst,n) _VEC_memcpy((dst),(src),(n))
-   EXTERN long long _armci_vec_sync_flag;
-#endif
-
 #if defined(SGI) || defined(HPUX) || defined(SOLARIS) || defined(__ia64__)
 #   define PTR_ALIGN
 #endif
@@ -42,10 +36,6 @@
 
 #if  defined(MEMCPY)  && !defined(armci_copy)
 #  define armci_copy(src,dst,n)  memcpy((dst), (src), (n)) 
-#endif
-
-#ifdef NEC
-#    define MEM_FENCE {mpisx_clear_cache(); _armci_vec_sync_flag=1;mpisx_syncset0_long(&_armci_vec_sync_flag);}
 #endif
 
 #if defined(NEED_MEM_SYNC)
@@ -193,13 +183,8 @@
 #endif
 
 
-#ifdef NEC
-#  define THRESH 1
-#  define THRESH1D 1
-#else
-#  define THRESH 32
-#  define THRESH1D 512
-#endif
+#define THRESH 32
+#define THRESH1D 512
 #define ALIGN_SIZE sizeof(double)
 
 /********* interface to C 1D and 2D memory copy functions ***********/

@@ -41,14 +41,6 @@
 #  include <windows.h>
 #  include <process.h>
 #  define  GETPID _getpid
-#elif defined(NEC)
-#  if HAVE_UNISTD_H
-#   include <unistd.h>
-#  endif
-#  include <sys/mppg.h>
-   typedef void* HANDLE;
-   typedef void* LPVOID;
-#  define  GETPID getpid
 #elif defined(MMAP)
 #  if HAVE_FCNTL_H
 #   include <fcntl.h>
@@ -230,8 +222,6 @@ int reg;
 #       if defined(WIN32)
           UnmapViewOfFile(region_list[reg].addr);
           CloseHandle(region_list[reg].id);
-#       elif defined(NEC)
-          (int)dp_xmfree(region_list[reg].addr);
 #       else
           munmap(region_list[reg].addr, region_list[reg].size);
           SET_MAPNAME(reg);
@@ -255,19 +245,6 @@ char *armci_get_core_from_map_file(int exists, long size)
 {
     LPVOID  ptr;
 
-#if defined(NEC)
-
-    region_list[alloc_regions].addr = (char*)0;
-    if(exists)
-       ptr = dp_xmatt(parent_pid, region_list[alloc_regions].id, (void*)0);  
-    else {
-       ptr = dp_xmalloc((void*)0, (long long) size);
-       region_list[alloc_regions].id = ptr;
-    }
-
-    if(ptr == (void*)-1) return ((char*)0); 
-       
-#else
     HANDLE  h_shm_map;
     SET_MAPNAME(alloc_regions);
     region_list[alloc_regions].addr = (char*)0;
@@ -363,8 +340,6 @@ char *armci_get_core_from_map_file(int exists, long size)
     /*     save file handle in the array to close it in the future */
     region_list[alloc_regions].id   = h_shm_map;
 
-#endif
-
     if(DEBUG0){printf("%d: got ptr=%p bytes=%ld mmap\n",armci_me,ptr,size); fflush(stdout); }
     region_list[alloc_regions].addr = (char*)ptr;
     region_list[alloc_regions].size = size;
@@ -444,9 +419,6 @@ char* Create_Shared_Region(long idlist[], long size, long *offset)
 
      /* idlist[0] = alloc_regions; This is set in find_regions() */
      idlist[1] = parent_pid;
-#if defined(NEC)
-     idlist[2] = (long) region_list[reg].id;
-#endif
      if(DEBUG)printf("%d:created %p %ld id=%ld id[0]=%ld\n",armci_me,temp, size,idlist[2],idlist[0]);
      return (temp);
 }
@@ -470,10 +442,6 @@ char *Attach_Shared_Region(long id[], long size, long offset)
 
      /* find out if a new shmem region was allocated */
      if(alloc_regions < id[0]+1){
-#if defined(NEC)
-
-               region_list[alloc_regions].id = (HANDLE) id[2];
-#endif
          if(DEBUG)printf("alloc_regions=%d size=%ld\n",alloc_regions,size);
          temp = armci_get_core_from_map_file(1,size);
          if(temp != NULL)alloc_regions++;
