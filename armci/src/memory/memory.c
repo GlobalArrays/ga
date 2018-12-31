@@ -21,12 +21,9 @@
 #if defined(CRAY_SHMEM)
 extern void armci_shmalloc_exchange_address(void **ptr_arr);
 extern void armci_shmalloc_exchange_offsets(context_t *);
-#  if defined(CRAY_XT)
+# if defined(CRAY_XT)
 #  include <mpp/shmem.h>
-#    ifdef CATAMOUNT
-#      include <catamount/data.h>
-#    endif
-#  endif
+# endif
 #endif
 
 static context_t ctx_localmem;
@@ -708,12 +705,8 @@ void armci_krmalloc_init_localmem() {
     kr_malloc_init(0, 0, 0, malloc, 0, &ctx_mlocalmem);
     ctx_mlocalmem.ctx_type = KR_CTX_LOCALMEM;
 #elif defined(CRAY_SHMEM) && defined(CRAY_XT)
-#   ifdef CATAMOUNT
-    int units_avail = (cnos_shmem_size() - 1024 * 1024) / SHM_UNIT;
-#   else
     extern size_t get_xt_heapsize();
     int units_avail = (get_xt_heapsize() - 1024 * 1024) / SHM_UNIT;
-#   endif
 
     if(DEBUG_) 
     {
