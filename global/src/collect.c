@@ -17,10 +17,6 @@
 #include "ga-papi.h"
 #include "ga-wapi.h"
 
-/* can handle ga_brdcst/igop/dgop via ARMCI or native message-passing library
- * uncomment line below to use the ARMCI version */
-#define  ARMCI_COLLECTIVES 
-
 #ifdef MSG_COMMS_MPI
 #   include <mpi.h>
 extern MPI_Comm ARMCI_COMM_WORLD;
@@ -52,7 +48,6 @@ void pnga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root)
     buffer_ptr=(char *)buffer+istart;
     if (istart+len_small > len) len_small=((long)(len - istart));
     /*               printf("%ld step %d of %d  len= %d total=%ld istart= %ld\n",GAme,(i+1),nsteps,len_small,len,istart); */
-#ifdef ARMCI_COLLECTIVES
     p_grp = (int)pnga_pgroup_get_default();
     if (p_grp > 0) {
 #   ifdef MSG_COMMS_MPI
@@ -62,13 +57,6 @@ void pnga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root)
     } else {
       armci_msg_bcast(buffer_ptr, (int)len_small, (int)root);
     }
-#else
-#   ifdef MSG_COMMS_MPI
-    MPI_Bcast(buffer_ptr, (int)len_small, MPI_CHAR, (int)root, ARMCI_COMM_WORLD);
-#   else
-    tcg_brdcst(type, buffer_ptr, len_small, root);
-#   endif
-#endif
           istart+=len_small;
   }
 }
@@ -180,7 +168,7 @@ void pnga_pgroup_gop(Integer p_grp, Integer type, void *x, Integer n, char *op)
 {
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if (p_grp > 0) {
-#if defined(ARMCI_COLLECTIVES) && defined(MSG_COMMS_MPI)
+#if defined(MSG_COMMS_MPI)
         int group = (int)p_grp;
         switch (type){
             case C_INT:
@@ -226,7 +214,6 @@ void pnga_gop(Integer type, void *x, Integer n, char *op)
     if (p_grp > 0) {
         pnga_pgroup_gop(p_grp, type, x, n, op);
     } else {
-#if defined(ARMCI_COLLECTIVES) || defined(MSG_COMMS_MPI)
         switch (type){
             case C_INT:
                 armci_msg_igop((int*)x, n, op);
@@ -252,32 +239,5 @@ void pnga_gop(Integer type, void *x, Integer n, char *op)
             default:
                 pnga_error(" wrong data type ",type);
         }
-#else
-        switch (type){
-            case C_INT:
-                pnga_error("Operation not defined for system",0);
-                break;
-            case C_LONG:
-                tcg_igop(GA_TYPE_GOP, x, n, op);
-                break;
-            case C_LONGLONG:
-                pnga_error("Operation not defined for system",0);
-                break;
-            case C_FLOAT:
-                pnga_error("Operation not defined for system",0);
-                break;
-            case C_DBL:
-                tcg_dgop(GA_TYPE_GOP, x, n, op);
-                break;
-            case C_SCPL:
-                pnga_error("Operation not defined for system",0);
-                break;
-            case C_DCPL:
-                pnga_error("Operation not defined for system",0);
-                break;
-            default:
-                pnga_error(" wrong data type ",type);
-        }
-#endif
     }
 }
