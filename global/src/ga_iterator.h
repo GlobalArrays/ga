@@ -46,18 +46,6 @@ typedef struct {
 }
 
 /* this macro finds the ScaLAPACK indices for a given processor */
-#ifdef COMPACT_SCALAPACK
-#define gam_find_proc_indices(ga_handle,proc,index) {                          \
-  Integer _itmp, _i;                                                           \
-  Integer _ndim = GA[ga_handle].ndim;                                          \
-  _itmp = proc;                                                                \
-  index[0] = _itmp%GA[ga_handle].nblock[0];                                    \
-  for (_i=1; _i<_ndim; _i++) {                                                 \
-    _itmp = (_itmp-index[_i-1])/GA[ga_handle].nblock[_i-1];                    \
-    index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
-  }                                                                            \
-}
-#else
 #define gam_find_proc_indices(ga_handle,proc,index) {                          \
   Integer _itmp, _i;                                                           \
   Integer _ndim = GA[ga_handle].ndim;                                          \
@@ -68,7 +56,6 @@ typedef struct {
     index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
   }                                                                            \
 }
-#endif
 
 /* this macro finds the block index corresponding to a given set of indices */
 #define gam_find_block_from_indices(ga_handle,nblock,index) {                  \
@@ -82,20 +69,6 @@ typedef struct {
 
 /* this macro finds the proc that owns a given set block indices
    using the ScaLAPACK data distribution */
-#ifdef COMPACT_SCALAPACK
-#define gam_find_proc_from_sl_indices(ga_handle,proc,index) {                  \
-  int _ndim = GA[ga_handle].ndim;                                              \
-  int _i;                                                                      \
-  Integer _index2[MAXDIM];                                                     \
-  for (_i=0; _i<_ndim; _i++) {                                                 \
-    _index2[_i] = index[_i]%GA[ga_handle].nblock[_i];                          \
-  }                                                                            \
-  proc = _index2[_ndim-1];                                                     \
-  for (_i=_ndim-2; _i >= 0; _i--) {                                            \
-    proc = proc*GA[ga_handle].nblock[_i]+_index2[_i];                          \
-  }                                                                            \
-}
-#else
 #define gam_find_proc_from_sl_indices(ga_handle,proc,index) {                  \
   int _ndim = GA[ga_handle].ndim;                                              \
   int _i;                                                                      \
@@ -108,7 +81,7 @@ typedef struct {
     proc = proc*GA[ga_handle].nblock[_i]+_index2[_i];                          \
   }                                                                            \
 }
-#endif
+
 /* this macro computes the strides on both the remote and local
    processors that map out the data. ld and ldrem are the physical dimensions
    of the memory on both the local and remote processors. */
