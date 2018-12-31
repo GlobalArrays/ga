@@ -30,7 +30,7 @@ static double walltime();
 /* If sprintf returns an integer instead of a character pointer
    then define the flag INTSPRINTF */
 
-#if defined(SGI)  || defined(AIX) || defined(CRAY) || defined(HPUX)
+#if defined(SGI)  || defined(AIX) || defined(CRAY)
 #define INTSPRINTF
 #endif
 

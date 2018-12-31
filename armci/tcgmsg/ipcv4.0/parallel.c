@@ -259,13 +259,10 @@ static long RemoteCreate(remote_hostname, remote_username,
 #ifdef SGI
       (void) execv("/usr/bsd/rsh",argv2);
 #endif
-#ifdef HPUX
-      (void) execv("/usr/bin/remsh",argv2);
-#endif
 #if defined(LINUX)
       (void) execv("/usr/bin/rsh",argv2);
 #endif
-#if !defined(SGI) && !defined(HPUX) && !defined(LINUX)
+#if !defined(SGI) && !defined(LINUX)
       (void) execv("/usr/ucb/rsh",argv2);
 #endif
     }

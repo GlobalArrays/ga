@@ -130,9 +130,6 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #elif defined(SGI) && !defined(SGI64)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)128*1024)
-#elif defined(HPUX)
-#  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)64*1024)
 #elif defined(__FreeBSD__)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)3*1024)
@@ -1065,7 +1062,7 @@ size_t sz = (size_t)size;
          printf("%d:allocate:attach:id=%d paddr=%p size=%ld\n",armci_me,id,temp,size);
          fflush(stdout);
        }
-#if !defined(AIX) && !defined(HPUX64)
+#if !defined(AIX)
        /* delete segment id so that OS cleans it when all attached processes are gone */
        if(shmctl( id, IPC_RMID, (struct shmid_ds *)NULL))
           fprintf(stderr,"failed to remove shm id=%d\n",id);

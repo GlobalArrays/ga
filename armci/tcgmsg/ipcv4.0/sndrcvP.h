@@ -44,9 +44,6 @@
 #if defined(SGI) || defined(SGITFP)
 #define SHMEM_BUF_SIZE 262144
 #endif
-#ifdef HPUX
-#define SHMEM_BUF_SIZE 262144
-#endif
 #ifdef MACX
 #define SHMEM_BUF_SIZE 65536
 #endif

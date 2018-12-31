@@ -348,12 +348,7 @@ void tcgi_pbegin(argc, argv)
   	(void) printf("pbegin: %ld fork process, i=%ld\n", NODEID_(), nslave);
   	(void) fflush(stdout);
       }
-#if   defined(CONVEX) && defined(HPUX)
-      status=i/8; /* on SPP-1200 there are eight processors per hypernode */
-      status = cnx_sc_fork(CNX_INHERIT_SC,status);
-#else
       status = fork();
-#endif
       if (status < 0)
         Error("pbegin: error forking process",status);
       else if (status == 0) {

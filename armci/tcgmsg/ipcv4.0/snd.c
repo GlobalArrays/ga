@@ -115,10 +115,6 @@ static int DummyRoutine()
 static long flag(p)
      long *p;
 {
-#if defined(CONVEX) && defined(HPUX)
-  asm("sync");
-#endif
-
   return *p;
 }
 
@@ -235,10 +231,6 @@ static void rcv_local(type, buf, lenbuf, lenmes, nodeselect, nodefrom)
   SemPost(semid, sem_read);
 #else
   *buffer_full = FALSE;
-# if defined(CONVEX) && defined(HPUX)
-     asm("sync");
-# endif
-
 #endif
 
   len -= buflen;
@@ -311,9 +303,6 @@ static void snd_local(type, buf, lenbuf, node)
   head->length = *lenbuf;
   head->tag = tag;
   head->nodeto = (char) *node;
-#if defined(CONVEX) && defined(HPUX)
-  asm("sync");
-#endif
 
   if (DEBUG_) {
     PrintMessageHeader("snd_local ",head);
@@ -331,9 +320,6 @@ static void snd_local(type, buf, lenbuf, node)
   SemPost(semid, sem_written);
 #else
   *buffer_full = TRUE;
-# if defined(CONVEX) && defined(HPUX)
-   asm("sync");
-# endif
 #endif
 #ifdef NOSPIN
   SemPost(semid_to, sem_pend);
@@ -353,9 +339,6 @@ static void snd_local(type, buf, lenbuf, node)
     SemPost(semid, sem_written);
 #else
     *buffer_full = TRUE;
-#   if defined(CONVEX) && defined(HPUX)
-       asm("sync");
-#   endif
 #endif
     len -= buflen;
     buf += buflen;
