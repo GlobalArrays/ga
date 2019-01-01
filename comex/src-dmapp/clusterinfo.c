@@ -48,14 +48,6 @@ static int altix_gethostname(char *name, int len) {
     sprintf(name,"altix");
     return 0;
 }
-#elif defined(CRAY_XT)
-#define GETHOSTNAME cnos_gethostname
-static int cnos_gethostname(char *name, int len)
-{
-    int size,rank;
-    size=PMI_Get_rank(&rank);
-    sprintf(name,"%d",rank);
-}
 #else
 # define GETHOSTNAME gethostname
 #endif

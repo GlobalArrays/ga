@@ -103,29 +103,14 @@ void PFILECOPY_(type, node0, filename)
     tcgi_pfilecopy(type, node0, filename);
 }
 
-#ifdef CRAY
-#include <fortran.h>
-#endif
-
 /* This crap because FORTRAN has no standard for passing strings */
 
-#ifdef CRAY
-void PFCOPY_(type, node0, arg)
-     long *type;
-     long *node0;
-     _fcd arg;
-{
-  char *fname = _fcdtocp(arg);
-  int len = _fcdlen(arg);
-#endif
-#if !defined(CRAY)
 void PFCOPY_(type, node0, fname, len)
   long *type;
   long *node0;
   char *fname;
   int   len;
 {
-#endif
 
   /* Fortran wrapper around pfilecopy */
 

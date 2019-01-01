@@ -78,12 +78,6 @@ typedef socklen_t soclen_t;
 #endif
 
 
-#ifdef CRAY
-#   if HAVE_MEMORY_H
-#       include <memory.h>
-#   endif
-#endif
-
 /* portability of socklen_t definition is iffy - we need to avoid it !!
 #if defined(LINUX) && ( defined(_SOCKETBITS_H) || defined(__BITS_SOCKET_H))
 #elif defined(AIX)

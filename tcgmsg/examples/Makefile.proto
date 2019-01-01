@@ -5,17 +5,6 @@
 
    INSTALL = echo "$@" is built
 
-IF CRAY
-#CRAY ... note that ranf is much faster than dran48 being used
-        FC = cf77
-        CC = cc
-#older UNICOS
-#      LIBS =  -lbsd -lnet -lrpc
-      LIBS = 
-    FFLAGS = -Zv -Wf"-dp"
-    CFLAGS = -I$(LIBDIR) -DCRAY
-   SCFBLAS = scfblas.o
-ENDIF CRAY
 IF SUN
         FC = f77
         CC = cc
@@ -149,9 +138,7 @@ mc.o:	msgtypesf.h
 # Jacobi example
 ################
 
-IF CRAY
-  JOBJ = fexit.o timer.o getmem.o
-ELSEIF IBMNOEXT
+IF IBMNOEXT
   JOBJ = fexit.o timer.o getmem.o mxv_dgemv.o
 ELSE
   JOBJ = fexit.o timer.o getmem.o mxv_fortran.o
@@ -181,11 +168,4 @@ template.p:
 	echo "# This template is piped thru sed to replace" >  template.p
 	echo "# PROGRAM with the name of the program."      >> template.p
 	echo "# Add other hosts and processes as desired."  >> template.p
-IF CRAY
-	echo "$$LOGNAME `hostname` 1 `pwd`/PROGRAM /tmp"   >> template.p
-	echo "$$LOGNAME `hostname` 1 `pwd`/PROGRAM /tmp"   >> template.p
-	echo "$$LOGNAME `hostname` 1 `pwd`/PROGRAM /tmp"   >> template.p
-	echo "$$LOGNAME `hostname` 1 `pwd`/PROGRAM /tmp"   >> template.p
-ELSE
 	echo "`whoami` `hostname` 4 `pwd`/PROGRAM /tmp"   >> template.p
-ENDIF

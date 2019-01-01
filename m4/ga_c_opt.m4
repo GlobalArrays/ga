@@ -11,7 +11,6 @@ AS_IF([test "x$ga_cv_c_opt" = x && test "x$enable_opt" = xyes], [
 AS_CASE([$ga_cv_target:$ga_cv_c_compiler_vendor:$host_cpu],
 [BGQ:ibm:*],                [ga_cv_c_opt="-O3 -qstrict"],
 [BGQ:gnu:*],                [ga_cv_c_opt="-O2"],
-[CRAY_XT:*:*],              [ga_cv_c_opt=],
 [CYGWIN:*:*],               [ga_cv_c_opt=],
 [IBM64:*:*],                [ga_cv_c_opt=],
 [IBM:*:*],                  [ga_cv_c_opt=],
