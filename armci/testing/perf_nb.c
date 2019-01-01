@@ -63,11 +63,7 @@
 #define MAXPROC 8
 #define TIMES 100
 
-#ifdef CRAY
-# define ELEMS 800
-#else
-# define ELEMS 200
-#endif
+#define ELEMS 200
 
 #define MAXELEMS      131072 /* 262144 */
 #define MAX_REQUESTS  MAXELEMS

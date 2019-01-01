@@ -187,7 +187,6 @@ Any application code which only makes GA function calls can remain unchanged.
 ```
   --with-armci[=ARG]      select armci network as external; path to external
                           ARMCI library
-  --with-cray-shmem[=ARG] select armci network as Cray XT shmem
   --with-dmapp[=ARG]      select armci network as (Comex) Cray DMAPP
   --with-mpi-mt[=ARG]     select armci network as (Comex) MPI-2
                           multi-threading

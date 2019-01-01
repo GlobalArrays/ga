@@ -7,11 +7,6 @@
 AC_DEFUN([ARMCI_SETUP],
 [AC_REQUIRE([GA_ARMCI_NETWORK])
 AS_CASE([$ga_armci_network],
-[CRAY_SHMEM], [
-    AC_DEFINE([CLUSTER], [1], [TODO])
-    AC_DEFINE([CRAY_XT], [1], [TODO])
-    AC_DEFINE([CRAY_SHMEM], [1], [TODO])
-    ],
 [MELLANOX], [
     AC_DEFINE([PTHREADS], [1], [TODO])
     AC_DEFINE([DATA_SERVER], [1], [TODO])
@@ -54,8 +49,6 @@ AS_CASE([$ga_armci_network],
 [MPI_SPAWN], [
     AC_DEFINE([DATA_SERVER], [1], [TODO])
     AC_DEFINE([MPI_SPAWN], [1], [TODO])
-    AS_IF([test x$ARMCI_SPAWN_CRAY_XT != x],
-        [AC_DEFINE([SPAWN_CRAY_XT], [1], [TODO])])
     ],
 [OPENIB], [
     AC_DEFINE([PTHREADS], [1], [TODO])

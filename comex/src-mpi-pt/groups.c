@@ -509,7 +509,6 @@ void comex_group_finalize()
 static long xgethostid()
 {
 #if defined(__bgp__)
-#warning BGP
     long nodeid;
     int matched,midplane,nodecard,computecard;
     char rack_row,rack_col;
@@ -527,7 +526,6 @@ static long xgethostid()
             (int)rack_row, (int)rack_col, midplane, nodecard, computecard);
     nodeid = atol(location_clean);
 #elif defined(__bgq__)
-#warning BGQ
     int nodeid;
     MPIX_Hardware_t hw;
     MPIX_Hardware(&hw);
@@ -538,7 +536,6 @@ static long xgethostid()
         + hw.Coords[3] * hw.Size[4]
         + hw.Coords[4];
 #elif defined(__CRAYXT) || defined(__CRAYXE)
-#warning CRAY
     int nodeid;
 #  if defined(__CRAYXT)
     PMI_Portals_get_nid(g_state.rank, &nodeid);

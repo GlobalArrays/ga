@@ -18,14 +18,6 @@
 #define USE_SHMEM_
 #define SHM_UNIT 1024
 
-#if defined(CRAY_SHMEM)
-extern void armci_shmalloc_exchange_address(void **ptr_arr);
-extern void armci_shmalloc_exchange_offsets(context_t *);
-# if defined(CRAY_XT)
-#  include <mpp/shmem.h>
-# endif
-#endif
-
 static context_t ctx_localmem;
 #if defined(ALLOW_PIN)
 static context_t ctx_mlocalmem;
@@ -704,22 +696,8 @@ void armci_krmalloc_init_localmem() {
     kr_malloc_init(0, 0, 0, reg_malloc, 0, &ctx_localmem);
     kr_malloc_init(0, 0, 0, malloc, 0, &ctx_mlocalmem);
     ctx_mlocalmem.ctx_type = KR_CTX_LOCALMEM;
-#elif defined(CRAY_SHMEM) && defined(CRAY_XT)
-    extern size_t get_xt_heapsize();
-    int units_avail = (get_xt_heapsize() - 1024 * 1024) / SHM_UNIT;
-
-    if(DEBUG_) 
-    {
-       fprintf(stderr,"%d:krmalloc_init_localmem: symheap=%llu,units(%d)=%d\n",
-               armci_me, SHM_UNIT*units_avail, SHM_UNIT, units_avail);
-    }
-    kr_malloc_init(SHM_UNIT, units_avail, units_avail, shmalloc, 0,
-                   &ctx_localmem);
-    armci_shmalloc_exchange_offsets(&ctx_localmem);
 #else
-
     kr_malloc_init(0, 0, 0, malloc, 0, &ctx_localmem);
-
 #endif
 
     ctx_localmem.ctx_type = KR_CTX_LOCALMEM;
@@ -855,14 +833,9 @@ int PARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 
       bzero((char*)ptr_arr,armci_nproc*sizeof(void*));
       ptr_arr[armci_me] = ptr;
-      
-#  if defined(CRAY_SHMEM)
-      armci_shmalloc_exchange_address(ptr_arr);
-#  else
 
       /* now combine individual addresses into a single array */
       armci_exchange_address(ptr_arr, armci_nproc);
-#  endif
 #  ifdef ALLOW_PIN
       armci_global_region_exchange(ptr, (long) bytes);
 #  endif
@@ -1009,12 +982,8 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
        ptr_arr[grp_me] = ptr;
        
        /* now combine individual addresses into a single array */
-#if defined(CRAY_SHMEM)
-       armci_shmalloc_exchange_address_grp(ptr_arr, group);
-#else
        armci_exchange_address_grp(ptr_arr, grp_nproc, group);
-#endif
-      
+
 #      ifdef ALLOW_PIN
 #         if 0
              /* ????? check ?????? */

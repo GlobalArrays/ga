@@ -25,12 +25,7 @@
 #include <netinet/tcp.h>
 #include <netdb.h>
 
-#ifdef CRAY
-#include <memory.h>
-#include <errno.h>
-#else
 extern int errno;
-#endif
 
 #include "sndrcv.h"
 #include "sndrcvP.h"
