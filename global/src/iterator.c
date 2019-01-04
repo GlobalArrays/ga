@@ -671,6 +671,35 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
 }
 
 /**
+ * Return true if this is the last data packet for this iterator
+ */
+int gai_iterator_last(_iterator_hdl *hdl)
+{
+  Integer idx;
+  Integer handle = GA_OFFSET + hdl->g_a;
+  Integer p_handle = GA[handle].p_handle;
+  Integer n_rstrctd = GA[handle].num_rstrctd;
+  Integer *rank_rstrctd = GA[handle].rank_rstrctd;
+  Integer elemsize = GA[handle].elemsize;
+  int ndim;
+  ndim = GA[handle].ndim;
+  if (GA[handle].distr_type == REGULAR) {
+    idx = hdl->count;
+    /* no blocks left after this iteration */
+    if (idx>=hdl->nproc) return 1;
+  } else {
+    if (GA[handle].distr_type == BLOCK_CYCLIC) {
+      /* Simple block-cyclic distribution */
+      if (hdl->iproc >= GAnproc) return 1;
+    } else if (GA[handle].distr_type == SCALAPACK ||
+        GA[handle].distr_type == TILED) {
+      if (hdl->iproc >= GAnproc) return 1;
+    }
+  }
+  return 0;
+}
+
+/**
  * Clean up iterator
  */
 void gai_iterator_destroy(_iterator_hdl *hdl)

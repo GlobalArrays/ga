@@ -65,10 +65,6 @@
 #include "ga-wapi.h"
 #include "thread-safe.h"
 
-/*
-#define USE_ARMCI_GROUP_FENCE
-*/
-
 #define DEBUG 0
 #define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 
@@ -652,7 +648,7 @@ void ngai_put_common(Integer g_a,
         } else {
           /* do blocking put for local processes. If all processes
              are remote processes then do blocking put for the last one */
-          if((loop==0 && counter==(int)np-1) || loop==1) {
+          if((loop==0 && gai_iterator_last(&it_hdl)) || loop==1) {
             /* ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc); */
             ngai_puts(buf, pbuf,stride_loc,prem,stride_rem,count,ndim-1,
                 proc, field_off, field_size, size);
@@ -1023,7 +1019,7 @@ void ngai_get_common(Integer g_a,
               proc,field_off, field_size, size,
               (armci_hdl_t*)get_armci_nbhandle(nbhandle));
         } else {
-          if((loop==0 && counter==(int)np-1) || loop==1) {
+          if((loop==0 && gai_iterator_last(&it_hdl)) || loop==1) {
             /*               ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc); */
             ngai_gets(buf,prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc, field_off, field_size, size);
           } else {
@@ -1201,7 +1197,7 @@ void ngai_acc_common(Integer g_a,
               (armci_hdl_t*)get_armci_nbhandle(nbhandle));
         else {
 #  if !defined(DISABLE_NBOPT)
-          if((loop==0 && counter==(int)np-1) || loop==1)
+          if((loop==0 && gai_iterator_last(&it_hdl)) || loop==1)
             ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, 
                 count, ndim-1, proc);
           else {
