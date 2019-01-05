@@ -1461,6 +1461,16 @@ void FATR nga_sync_()
   wnga_sync();
 }
 
+void FATR ga_msg_sync_()
+{
+  wnga_msg_sync();
+}
+
+void FATR nga_msg_sync_()
+{
+  wnga_msg_sync();
+}
+
 /* Routines from global.util.c */
 
 void FATR ga_print_stats_()

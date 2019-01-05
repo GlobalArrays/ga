@@ -13,9 +13,9 @@ AC_COMPILE_IFELSE(
       first_name = "John"
       last_name = "Doe"
       call csub(first_name, last_name)
-      end]], [
+      end]], [mv conftest.$ac_objext cfortran_test.$ac_objext
     ga_save_LIBS=$LIBS
-    LIBS="conftest.$ac_objext $LIBS $[]_AC_LANG_PREFIX[]LIBS"
+    LIBS="cfortran_test.$ac_objext $LIBS $[]_AC_LANG_PREFIX[]LIBS"
     AC_LANG_PUSH([C])
     AC_RUN_IFELSE([AC_LANG_SOURCE(
 [[#include <stdio.h>
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     LIBS=$ga_save_LIBS],
     [m4_default([$3], :)])
 AC_LANG_POP([Fortran 77])
-rm -rf conftest*
+rm -rf conftest* cfortran_test.$ac_objext
 ])dnl
 
 

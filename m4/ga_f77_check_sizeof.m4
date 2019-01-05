@@ -10,9 +10,9 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE(
       external size
       $1 x(2)
       call size(x(1),x(2))
-      end]])], [
+      end]])], [mv conftest.$ac_objext cfortran_test.$ac_objext
     ga_save_LIBS=$LIBS
-    LIBS="conftest.$ac_objext $LIBS $[]_AC_LANG_PREFIX[]LIBS"
+    LIBS="cfortran_test.$ac_objext $LIBS $[]_AC_LANG_PREFIX[]LIBS"
     AC_LANG_PUSH([C])
     AC_RUN_IFELSE([AC_LANG_SOURCE(
 [[#include <stdio.h>
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 }
 ]])], [AS_TR_SH([$2])=`cat conftestval`])
     LIBS=$ga_save_LIBS
-    rm -f conftest*
+    rm -f conftest* cfortran_test*
     AC_LANG_POP([C])])
 AC_LANG_POP([Fortran 77])
 ]) # GA_F77_COMPUTE_SIZEOF
