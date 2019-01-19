@@ -324,8 +324,6 @@ int comex_init()
     status = MPI_Initialized(&init_flag);
     CHECK_MPI_RETVAL(status);
     assert(init_flag);
-    
-    /*MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);*/
 
     /* groups */
     comex_group_init();
@@ -1946,8 +1944,10 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 #endif
 
 #if MASTER_IS_SMALLEST_SMP_RANK
-    /* NEEDS MODIFICATIONS HERE */
-    is_notifier = _smallest_world_rank_with_same_hostid(igroup) == g_state.rank;
+    // is_notifier = _smallest_world_rank_with_same_hostid(igroup) == g_state.rank;
+    int smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
+    is_notifier = g_state.rank == smallest_rank_with_same_hostid + g_state.node_size*
+      ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size);
 #else
     // is_notifier = _largest_world_rank_with_same_hostid(igroup) == g_state.rank;
     int largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
@@ -1968,12 +1968,9 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     fprintf(stderr, "[%d] comex_malloc igroup size=%d\n", g_state.rank, igroup->size);
     fprintf(stderr, "[%d] comex_malloc node_size=%d\n", g_state.rank, g_state.node_size);
     fprintf(stderr, "[%d] comex_malloc is_notifier=%d\n", g_state.rank, is_notifier);
-#endif
-#if DEBUG
     fprintf(stderr, "[%d] rank, igroup size[5%d]\n",
             g_state.rank, igroup->size);
 #endif
-
 #if DEBUG && DEBUG_VERBOSE
     fprintf(stderr, "[%d] comex_malloc allocated reg entries\n",
             g_state.rank);
@@ -2030,9 +2027,15 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
         }
         // else if (g_state.hostid[reg_entries[i].rank]
         //         == g_state.hostid[my_world_rank]) 
+#if MASTER_IS_SMALLEST_SMP_RANK
+        else if (g_state.master[reg_entries[i].rank] ==
+                g_state.master[(smallest_rank_with_same_hostid + g_state.node_size *
+       ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size))])
+#else
         else if (g_state.master[reg_entries[i].rank] ==
                 g_state.master[(largest_rank_with_same_hostid - g_state.node_size *
        ((largest_rank_with_same_hostid - g_state.rank)/g_state.node_size))])
+#endif
             {
             /* same SMP node, need to mmap */
             /* open remote shared memory object */
@@ -2312,8 +2315,10 @@ int comex_free(void *ptr, comex_group_t group)
 #endif
 
 #if MASTER_IS_SMALLEST_SMP_RANK
-    /* NEEDS MODIFICATIONS HERE */
-    is_notifier = _smallest_world_rank_with_same_hostid(igroup) == g_state.rank;
+    // is_notifier = _smallest_world_rank_with_same_hostid(igroup) == g_state.rank;
+    int smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
+    is_notifier = g_state.rank == smallest_rank_with_same_hostid + g_state.node_size*
+      ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size);
 #else
     // is_notifier = _largest_world_rank_with_same_hostid(igroup) == g_state.rank;
     int largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
@@ -2363,9 +2368,15 @@ int comex_free(void *ptr, comex_group_t group)
         }
         // else if (g_state.hostid[world_ranks[i]]
         //         == g_state.hostid[g_state.rank]) 
+#if MASTER_IS_SMALLEST_SMP_RANK
+        else if (g_state.master[world_ranks[i]] ==
+                g_state.master[(smallest_rank_with_same_hostid + g_state.node_size *
+       ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size))]) 
+#else
         else if (g_state.master[world_ranks[i]] ==
                 g_state.master[(largest_rank_with_same_hostid - g_state.node_size *
        ((largest_rank_with_same_hostid - g_state.rank)/g_state.node_size))]) 
+#endif
         {
             /* same SMP node */
             reg_entry_t *reg_entry = NULL;

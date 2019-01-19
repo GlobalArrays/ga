@@ -1,6 +1,27 @@
 # MPI Progress Ranks (MPI-PR)
 
-APPEND NOTES TO INCLUDE GENERALIZATION OF NUMBER OF PROGRESS-RANKS PER NODE. 
+##################################################################################
+#NOTES on generalization of number of Progress-Ranks per computing node
+##################################################################################
+Number of Progress-Ranks per node can be suitably 
+User has the flexibility to choose the number of Progress-Ranks per
+node during the execution of a program. 
+An environment variable GA_PROCS_GROUPS_PER_NODE will capture the
+number to be set for number of Progress-Ranks per node. If not set
+in the environment, then this number will set to 1 by default. 
+e.g. of defining this variable in the environment during execution:
+
+$ export GA_PROCS_GROUPS_PER_NODE=1
+$ export GA_PROCS_GROUPS_PER_NODE=2
+$ export GA_PROCS_GROUPS_PER_NODE=4
+$ setenv GA_PROCS_GROUPS_PER_NODE 2
+
+CAUTION: For optimum performance, number of MPI ranks per node used
+to execute a program should be in multiples of value set for
+GA_PROCS_GROUPS_PER_NODE. 
+##################################################################################
+#End of NOTES on generalization of number of Progress-Ranks per computing node
+##################################################################################
 
 These are notes describing the MPI progress ranks runtime. These notes are intended to help developers navigate the contents of these files and to locate specific functionality.
 
