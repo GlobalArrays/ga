@@ -615,18 +615,28 @@ int comex_finalize()
     comex_barrier(COMEX_GROUP_WORLD);
 
     /* send quit message to thread */
-    int smallest_rank_with_same_hostid;
+    int smallest_rank_with_same_hostid, largest_rank_with_same_hostid; 
+    int num_progress_ranks_per_node, is_node_ranks_packed;
+    int my_rank_to_free;
     int is_notifier = 0; 
+
+    num_progress_ranks_per_node = get_num_progress_ranks_per_node();
+    is_node_ranks_packed = get_progress_rank_distribution_on_node();
     smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(group_list);
+    largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(group_list);
+    my_rank_to_free = get_my_rank_to_free(g_state.rank,
+        g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+        num_progress_ranks_per_node, is_node_ranks_packed);
 #if DEBUG
     fprintf(stderr, "[%d] comex_finalize() sr_in_group %d\n", g_state.rank, 
-        smallest_rank_with_same_hostid + g_state.node_size*
-      ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size));
+        my_rank_to_free);
+    //     smallest_rank_with_same_hostid + g_state.node_size*
+    //  ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size));
 #endif
-    is_notifier = g_state.rank == smallest_rank_with_same_hostid + g_state.node_size*
-      ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size);
+    // is_notifier = g_state.rank == smallest_rank_with_same_hostid + g_state.node_size*
+    //   ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size);
     // if (_smallest_world_rank_with_same_hostid(group_list) == g_state.rank) 
-    if(is_notifier)
+    if(is_notifier = my_rank_to_free == g_state.rank)
     {
         int my_master = -1;
         header_t *header = NULL;
@@ -1909,7 +1919,6 @@ int comex_unlock(int mutex, int proc)
     return COMEX_SUCCESS;
 }
 
-
 int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 {
     comex_igroup_t *igroup = NULL;
@@ -1943,6 +1952,16 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     fprintf(stderr, "[%d] comex_malloc my_master=%d\n", g_state.rank, my_master);
 #endif
 
+    int smallest_rank_with_same_hostid, largest_rank_with_same_hostid; 
+    int num_progress_ranks_per_node, is_node_ranks_packed;
+    num_progress_ranks_per_node = get_num_progress_ranks_per_node();
+    is_node_ranks_packed = get_progress_rank_distribution_on_node();
+    smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
+    largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
+    is_notifier = g_state.rank == get_my_master_rank_with_same_hostid(g_state.rank,
+        g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+        num_progress_ranks_per_node, is_node_ranks_packed);
+#if 0
 #if MASTER_IS_SMALLEST_SMP_RANK
     // is_notifier = _smallest_world_rank_with_same_hostid(igroup) == g_state.rank;
     int smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
@@ -1953,6 +1972,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     int largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
     is_notifier = g_state.rank == (largest_rank_with_same_hostid - g_state.node_size *
        ((largest_rank_with_same_hostid - g_state.rank)/g_state.node_size));
+#endif
 #endif
     if (is_notifier) {
         reg_entries_local = malloc(sizeof(reg_entry_t)*g_state.node_size);
@@ -2027,6 +2047,12 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
         }
         // else if (g_state.hostid[reg_entries[i].rank]
         //         == g_state.hostid[my_world_rank]) 
+
+        else if (g_state.master[reg_entries[i].rank] == 
+           g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
+           g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+           num_progress_ranks_per_node, is_node_ranks_packed)] )
+#if 0
 #if MASTER_IS_SMALLEST_SMP_RANK
         else if (g_state.master[reg_entries[i].rank] ==
                 g_state.master[(smallest_rank_with_same_hostid + g_state.node_size *
@@ -2035,6 +2061,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
         else if (g_state.master[reg_entries[i].rank] ==
                 g_state.master[(largest_rank_with_same_hostid - g_state.node_size *
        ((largest_rank_with_same_hostid - g_state.rank)/g_state.node_size))])
+#endif
 #endif
             {
             /* same SMP node, need to mmap */
@@ -2314,6 +2341,14 @@ int comex_free(void *ptr, comex_group_t group)
     fprintf(stderr, "[%d] comex_free my_master=%d\n", g_state.rank, my_master);
 #endif
 
+    int num_progress_ranks_per_node = get_num_progress_ranks_per_node();
+    int is_node_ranks_packed = get_progress_rank_distribution_on_node();
+    int smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
+    int largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
+    is_notifier = g_state.rank == get_my_master_rank_with_same_hostid(g_state.rank,
+        g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+        num_progress_ranks_per_node, is_node_ranks_packed);
+#if 0
 #if MASTER_IS_SMALLEST_SMP_RANK
     // is_notifier = _smallest_world_rank_with_same_hostid(igroup) == g_state.rank;
     int smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
@@ -2324,6 +2359,7 @@ int comex_free(void *ptr, comex_group_t group)
     int largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
     is_notifier = g_state.rank == (largest_rank_with_same_hostid - g_state.node_size *
        ((largest_rank_with_same_hostid - g_state.rank)/g_state.node_size));
+#endif
 #endif
     if (is_notifier) {
         rank_ptrs = malloc(sizeof(rank_ptr_t)*g_state.node_size);
@@ -2368,6 +2404,11 @@ int comex_free(void *ptr, comex_group_t group)
         }
         // else if (g_state.hostid[world_ranks[i]]
         //         == g_state.hostid[g_state.rank]) 
+        else if (g_state.master[world_ranks[i]] == 
+           g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
+           g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+           num_progress_ranks_per_node, is_node_ranks_packed)] )
+#if 0
 #if MASTER_IS_SMALLEST_SMP_RANK
         else if (g_state.master[world_ranks[i]] ==
                 g_state.master[(smallest_rank_with_same_hostid + g_state.node_size *
@@ -2376,6 +2417,7 @@ int comex_free(void *ptr, comex_group_t group)
         else if (g_state.master[world_ranks[i]] ==
                 g_state.master[(largest_rank_with_same_hostid - g_state.node_size *
        ((largest_rank_with_same_hostid - g_state.rank)/g_state.node_size))]) 
+#endif
 #endif
         {
             /* same SMP node */

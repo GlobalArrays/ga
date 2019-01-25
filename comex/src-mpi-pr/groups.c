@@ -363,7 +363,6 @@ static int cmplong(const void *p1, const void *p2)
     return *((long*)p1) - *((long*)p2);
 }
 
-
 /**
  * Initialize group linked list. Prepopulate with world group.
  */
@@ -453,39 +452,25 @@ void comex_group_init()
             }
         }
     }
-    const char* ga_proc_group_env_var = getenv("GA_PROCS_GROUPS_PER_NODE");
-    int num_process_groups_per_node;
-    if (ga_proc_group_env_var != NULL && ga_proc_group_env_var[0] != '\0') {
-       num_process_groups_per_node = atoi(getenv("GA_PROCS_GROUPS_PER_NODE"));
-#if DEBUG
-       printf("num_process_groups_per_node: %d\n", num_process_groups_per_node);
-#endif
-    }
-    else {
-        num_process_groups_per_node = 1;
-    }
-    if (size_node < 2 * num_process_groups_per_node) {  
+    /* Get nuber of Progress-Ranks per node from environment variable
+     * equal to 1 by default */
+    int num_progress_ranks_per_node = get_num_progress_ranks_per_node();
+    /* Perform check on the number of Progress-Ranks */
+    if (size_node < 2 * num_progress_ranks_per_node) {  
         comex_error("ranks per node, must be at least", 
-            2 * num_process_groups_per_node);
+            2 * num_progress_ranks_per_node);
     }
-    if (size_node % num_process_groups_per_node > 0) {  
+    if (size_node % num_progress_ranks_per_node > 0) {  
         comex_error("number of ranks per node must be multiple of number of process groups per node", -1);
     }
+    int is_node_ranks_packed = get_progress_rank_distribution_on_node();
     int split_group_size;
-    split_group_size = node_group_size / num_process_groups_per_node;
+    split_group_size = node_group_size / num_progress_ranks_per_node;
      MPI_Comm_free(&temp_node_comm);
     g_state.master = (int*)malloc(sizeof(int)*g_state.size);
-#if MASTER_IS_SMALLEST_SMP_RANK
-    // g_state.master[g_state.rank] = smallest_rank_with_same_hostid;
-    g_state.master[g_state.rank] = smallest_rank_with_same_hostid 
-         + split_group_size *
-       ((g_state.rank - smallest_rank_with_same_hostid)/split_group_size);
-#else
-    // g_state.master[g_state.rank] = largest_rank_with_same_hostid;
-    g_state.master[g_state.rank] = largest_rank_with_same_hostid 
-         - split_group_size*
-       ((largest_rank_with_same_hostid - g_state.rank)/split_group_size);
-#endif
+    g_state.master[g_state.rank] = get_my_master_rank_with_same_hostid(g_state.rank, 
+        split_group_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+        num_progress_ranks_per_node, is_node_ranks_packed);
 #if DEBUG
     printf("[%d] rank; split_group_size: %d\n", g_state.rank, split_group_size);
     printf("[%d] rank; largest_rank_with_same_hostid[%d]; my master is:[%d]\n",
@@ -500,7 +485,7 @@ void comex_group_init()
     // put split group stamps
     int proc_split_group_stamp;
     int num_split_groups;
-    num_split_groups = num_nodes * num_process_groups_per_node;
+    num_split_groups = num_nodes * num_progress_ranks_per_node;
     int* split_group_list = (int*)malloc(sizeof(int)*num_split_groups);
     int split_group_index = 0;
     int j;
