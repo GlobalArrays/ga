@@ -46,7 +46,7 @@ before_install:
 install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc || brew upgrade gcc || true; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install coreutils || brew upgrade coreutils || true; fi
-  - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
+  - travis_wait sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
   - if [[ "$PORT" == "ofi" ]]; then sh ./travis/install-libfabric.sh $TRAVIS_ROOT; fi
 script:
   - sh ./travis/build-run.sh $TRAVIS_ROOT $PORT $MPI_IMPL
