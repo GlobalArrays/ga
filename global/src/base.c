@@ -362,6 +362,8 @@ int bytes;
 #ifdef ENABLE_CHECKPOINT
        GA[i].record_id = 0;
 #endif
+       GA[i].actv = 0;
+       GA[i].p_handle = GA_Init_Proc_Group;
        PGRP_LIST[i].map_proc_list = (int*)0;
        PGRP_LIST[i].inv_map_proc_list = (int*)0;
        PGRP_LIST[i].actv = 0;
