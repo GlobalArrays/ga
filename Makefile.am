@@ -1620,6 +1620,7 @@ endif
 if ARMCI_SRC_DIR_COMEX
 AM_CPPFLAGS += -I$(top_srcdir)/comex/src-armci
 else
+endif
 
 AM_CPPFLAGS += -I$(top_srcdir)/armci/src/include
 AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
