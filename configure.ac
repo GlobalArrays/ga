@@ -528,6 +528,9 @@ AS_IF([test "x$ga_cv_target" = xLINUX64],
         [x86_64|ppc64],
             [AC_DEFINE([NOUSE_MMAP], [1], [Set some mallopt options])])])
 
+AC_CHECK_FUNCS([mallopt], [have_mallopt=1], [have_mallopt=0])
+AC_DEFINE_UNQUOTED([HAVE_MALLOPT], [$have_mallopt], [Define to 1 if you have the 'mallopt' function.])
+
 # Create proper types for our access functions.
 AS_IF([test "x$ac_cv_sizeof_voidp" = "x$ac_cv_sizeof_int"],
       [ga_access_index_type_c="int"],
