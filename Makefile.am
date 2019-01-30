@@ -26,6 +26,7 @@ ACLOCAL_AMFLAGS = -I m4
 # automake variables used.
 include_HEADERS =
 nodist_include_HEADERS =
+noinst_HEADERS =
 bin_PROGRAMS =
 bin_SCRIPTS =
 check_PROGRAMS =
@@ -164,15 +165,15 @@ if ENABLE_F77
 libga_la_SOURCES += ma/maf.F
 endif
 
-include_HEADERS += ma/error.h
 include_HEADERS += ma/macdecls.h
 include_HEADERS += ma/macommon.h
 include_HEADERS += ma/maf2c.fh
 include_HEADERS += ma/mafdecls.fh
 include_HEADERS += ma/matypes.h
-include_HEADERS += ma/scope.h
-include_HEADERS += ma/string-util.h
-include_HEADERS += ma/table.h
+noinst_HEADERS += ma/scope.h
+noinst_HEADERS += ma/string-util.h
+noinst_HEADERS += ma/table.h
+noinst_HEADERS += ma/error.h
 
 AM_CPPFLAGS += -I$(top_build_prefix)ma
 AM_CPPFLAGS += -I$(top_srcdir)/ma
