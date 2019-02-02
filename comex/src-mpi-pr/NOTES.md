@@ -1,8 +1,6 @@
 # MPI Progress Ranks (MPI-PR)
 
-##################################################################################
- NOTES on generalization of number of Progress-Ranks per computing node
-##################################################################################
+###NOTES on generalization of number of Progress-Ranks per computing node
 Number of Progress-Ranks per node can be suitably 
 User has the flexibility to choose the number of Progress-Ranks per
 node during the execution of a program. 
@@ -48,9 +46,8 @@ make sure to set GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=0 if previously used
 Above environmental settings sets 2 Progress-Ranks/node and CYCLIC distribution
 The two groups are (0,2,4,6) and (1,3,5,7)
 Here, MPI ranks 6 and 7 are Progress-Ranks on the node
-##################################################################################
- End of NOTES on generalization of number of Progress-Ranks per computing node
-##################################################################################
+####End of NOTES on generalization of number of Progress-Ranks per computing node
+----
 
 These are notes describing the MPI progress ranks runtime. These notes are intended to help developers navigate the contents of these files and to locate specific functionality.
 
