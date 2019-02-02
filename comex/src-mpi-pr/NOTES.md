@@ -1,6 +1,6 @@
 # MPI Progress Ranks (MPI-PR)
 
-###NOTES on generalization of number of Progress-Ranks per computing node
+##NOTES on generalization of number of Progress-Ranks per computing node
 Number of Progress-Ranks per node can be suitably 
 User has the flexibility to choose the number of Progress-Ranks per
 node during the execution of a program. 
@@ -41,15 +41,14 @@ $ export GA_NUM_PROGRESS_RANKS_PER_NODE=2
 $ export GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=0 
 $ export GA_PROGRESS_RANKS_DISTRIBUTION_CYCLIC=1
 
-make sure to set GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=0 if previously used
+Please make sure to set GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=0 if previously used.
 
 Above environmental settings sets 2 Progress-Ranks/node and CYCLIC distribution
 The two groups are (0,2,4,6) and (1,3,5,7)
 Here, MPI ranks 6 and 7 are Progress-Ranks on the node
-####End of NOTES on generalization of number of Progress-Ranks per computing node
 ----
-
-These are notes describing the MPI progress ranks runtime. These notes are intended to help developers navigate the contents of these files and to locate specific functionality.
+##Other notes on MPI Progress-Rank
+These are notes describing the MPI Progress ranks runtime. These notes are intended to help developers navigate the contents of these files and to locate specific functionality.
 
 The MPI-PR is intended to be the highest-performing MPI-1 compatible ARMCI/ComEx runtime.  It uses only features from the MPI-1 standard and provides asynchronous progress.  Posix shared memory is used extensively.
 
