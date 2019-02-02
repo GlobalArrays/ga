@@ -8,11 +8,12 @@ An environment variable GA_NUM_PROGRESS_RANKS_PER_NODE will capture the
 number to be set for number of Progress-Ranks per node. If not set
 in the environment, then this number will set to 1 by default. 
 e.g. of defining this variable in the environment during execution:
-
+```
 $ export GA_NUM_PROGRESS_RANKS_PER_NODE=1
 $ export GA_NUM_PROGRESS_RANKS_PER_NODE=2
 $ export GA_NUM_PROGRESS_RANKS_PER_NODE=4
 $ setenv GA_NUM_PROGRESS_RANKS_PER_NODE 2
+```
 
 CAUTION: For optimum performance, number of MPI ranks per node used
 to execute a program should be in multiples of value set for
@@ -26,20 +27,26 @@ Total 8 MPI ranks will be divided into two groups and by default, the highest ra
 will be the Progress-Rank of each group. 
 
 PACKED distribution
+```
 $ export GA_NUM_PROGRESS_RANKS_PER_NODE=2
 $ export GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=1
+```
 or
+```
 $ export GA_NUM_PROGRESS_RANKS_PER_NODE=2
 $ export GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=Y
+```
 
 Above environmental settings sets 2 Progress-Ranks/node and PACKED distribution
 The two groups are (0,1,2,3) and (4,5,6,7)
 Here, MPI ranks 3 and 7 are Progress-Ranks on the node
 
 Next, CYCLIC distribution
+```
 $ export GA_NUM_PROGRESS_RANKS_PER_NODE=2
 $ export GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=0 
 $ export GA_PROGRESS_RANKS_DISTRIBUTION_CYCLIC=1
+```
 
 Please make sure to set GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=0 if previously used.
 
