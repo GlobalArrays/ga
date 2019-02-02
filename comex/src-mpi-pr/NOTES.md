@@ -42,7 +42,8 @@ Next, CYCLIC distribution
 $ export GA_NUM_PROGRESS_RANKS_PER_NODE=2
 $ export GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=0 
 $ export GA_PROGRESS_RANKS_DISTRIBUTION_CYCLIC=1
-# make sure to set GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=0 if previously used
+
+make sure to set GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=0 if previously used
 
 Above environmental settings sets 2 Progress-Ranks/node and CYCLIC distribution
 The two groups are (0,2,4,6) and (1,3,5,7)
