@@ -12,6 +12,10 @@
 
 /* 3rd party headers */
 #include <mpi.h>
+#if USE_SICM
+#include <sicm_low.h>
+#include <sicm_impl.h>
+#endif
 
 /* our headers */
 #include "comex.h"
@@ -39,6 +43,11 @@
 
 #ifdef USE_MPI_FLUSH_LOCAL
 #define USE_MPI_REQUESTS
+#endif
+
+#if USE_SICM
+static sicm_device_list devices = {0};
+static sicm_device *device = NULL;
 #endif
 
 /* exported state */
@@ -202,6 +211,22 @@ int comex_init()
       nb_list[i]->active = 0;
     }
 #endif
+
+#if USE_SICM
+    devices = sicm_init();
+    device = NULL;
+    for(i = 0; i < devices.count; i++){
+       if(devices.devices[i].tag == SICM_DRAM){
+          device = &(devices.devices[i]);
+	  break;
+       }
+    }
+    if(!device){
+       printf("Device not found\n");
+       exit(18);
+    }
+#endif
+
 
     /* sync - initialize first communication epoch */
     comex_fence_all(COMEX_GROUP_WORLD);
@@ -1866,8 +1891,17 @@ void *comex_malloc_local(size_t size)
     MPI_Aint tsize;
     int ierr;
     tsize = size;
+#if USE_SICM
+    sicm_arena arena = sicm_arena_create(0, device);
+    ptr = sicm_arena_alloc(arena, size);
+    if(!ptr){
+        fprintf(stderr, "Error in allocating the pool\n");
+	exit(11);
+    }
+#else
     ierr = MPI_Alloc_mem(tsize,MPI_INFO_NULL,&ptr);
     translate_mpi_error(ierr,"comex_malloc_local:MPI_Alloc_mem");
+#endif
   }
   return ptr;
 }
@@ -1877,8 +1911,12 @@ int comex_free_local(void *ptr)
 {
     if (ptr != NULL) {
       int ierr;
+#if USE_SICM
+      sicm_free(ptr);
+#else
       ierr = MPI_Free_mem(ptr);
       translate_mpi_error(ierr,"comex_free_local:MPI_Free_mem");
+#endif 
     }
 
     return COMEX_SUCCESS;
@@ -1916,6 +1954,10 @@ int comex_finalize()
     }
     free(nb_list);
 #endif
+
+#if USE_SICM
+    sicm_fini();
+#endif    
 
     return COMEX_SUCCESS;
 }
@@ -3200,9 +3242,19 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     MPI_Win_allocate(sizeof(char)*tsize,1,MPI_INFO_NULL,comm,&reg_entries[comm_rank].buf,
         &reg_entries[comm_rank].win);
 #else
+#   if USE_SICM
+    sicm_arena arena = sicm_arena_create(0, device);
+    reg_entries[comm_rank].buf = sicm_arena_alloc(arena, size);
+    if(!(reg_entries[comm_rank].buf)){
+        fprintf(stderr, "Error in allocating the pool\n");
+        exit(11);
+    }
+#   else
     MPI_Alloc_mem(tsize,MPI_INFO_NULL,&reg_entries[comm_rank].buf);
+#endif
     MPI_Win_create(reg_entries[comm_rank].buf,tsize,1,MPI_INFO_NULL,comm,
         &reg_entries[comm_rank].win);
+
 #endif
 #ifdef USE_MPI_REQUESTS
     MPI_Win_lock_all(0,reg_entries[comm_rank].win);
@@ -3342,7 +3394,11 @@ int comex_free(void *ptr, comex_group_t group)
     MPI_Win_free(&window);
 #ifndef USE_MPI_WIN_ALLOC
     /* Clear memory for this window */
+#  if USE_SICM    
+    sicm_free(buf);
+#  else
     MPI_Free_mem(buf);
+#  endif
 #endif
 
     /* Is this needed? */
