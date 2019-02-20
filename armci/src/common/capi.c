@@ -100,6 +100,15 @@ int ARMCI_Free(void *ptr)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak ARMCI_Free_memdev
+#endif
+int ARMCI_Free_memdev(void *ptr)
+{
+    return PARMCI_Free_memdev(ptr);
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak ARMCI_Free_local
 #endif
 int ARMCI_Free_local(void *ptr)

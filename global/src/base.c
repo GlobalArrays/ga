@@ -144,6 +144,8 @@ static Integer _mirror_gop_grp;
 /* Function prototypes */
 int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
                int grp_id);
+int gai_get_devmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
+               int grp_id, int mem_dev_set, const char *device);
 #ifdef ENABLE_CHECKPOINT
 static int ga_group_is_for_ft=0;
 int ga_spare_procs;
@@ -2024,14 +2026,24 @@ void pnga_set_property(Integer g_a, char* property) {
 void pnga_set_memory_dev(Integer g_a, char *device) {
   Integer ga_handle = g_a + GA_OFFSET;
   int len = strlen(device);
-  int i;
+  int i, ilen;
   if (len>FNAM) {
     pnga_error("Illegal memory device name specified. Device name exceeds length: ",
         FNAM);
   }
+  /* convert device name to lower case */
   for (i=0; i<len; i++) {
     device[i] = tolower(device[i]);
   }
+  /* remove blanks */
+  ilen = 0;
+  for (i=0; i<len; i++) {
+    if (device[i] != ' ') {
+      device [ilen] = device[i];
+      ilen++;
+    }
+  }
+  if (ilen > len && ilen < FNAM) device[ilen] = '\0';
   GA[ga_handle].mem_dev_set = 1;
   strcpy(GA[ga_handle].mem_dev,device);
 }
@@ -2442,8 +2454,14 @@ logical pnga_allocate(Integer g_a)
   }else status = 1;
 
   if (status) {
-    status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
-                             GA[ga_handle].type, &GA[ga_handle].id, p_handle);
+    if (GA[ga_handle].mem_dev_set) {
+      status = !gai_get_devmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
+          GA[ga_handle].type, &GA[ga_handle].id, p_handle,
+          GA[ga_handle].mem_dev_set, GA[ga_handle].mem_dev);
+    } else {
+      status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
+          GA[ga_handle].type, &GA[ga_handle].id, p_handle);
+    }
   } else {
      GA[ga_handle].ptr[grp_me]=NULL;
   }
@@ -2777,10 +2795,101 @@ int gai_uses_shm(int grp_id)
       return ARMCI_Uses_shm();
 }
 
+int gai_get_devmem(char* name, char **ptr_arr, C_Long bytes, int type, long *adj,
+	       int grp_id, int dev_flag, const char *device)
+{
+  int status=0;
+#ifndef _CHECK_MA_ALGN
+  char *base;
+  long diff, item_size;  
+  Integer *adjust;
+  int i, nproc,grp_me=GAme;
+
+  if (grp_id > 0) {
+    nproc  = PGRP_LIST[grp_id].map_nproc;
+    grp_me = PGRP_LIST[grp_id].map_proc_list[GAme];
+  }
+  else
+    nproc = GAnproc; 
+
+  /* need to enforce proper, natural allignment (on size boundary)  */
+  switch (pnga_type_c2f(type)){
+    case MT_F_DBL:   base =  (char *) DBL_MB; break;
+    case MT_F_INT:   base =  (char *) INT_MB; break;
+    case MT_F_DCPL:  base =  (char *) DCPL_MB; break;
+    case MT_F_SCPL:  base =  (char *) SCPL_MB; break;
+    case MT_F_REAL:  base =  (char *) FLT_MB; break;  
+    default:        base = (char*)0;
+  }
+
+  item_size = GAsizeofM(type);
+#   ifdef GA_ELEM_PADDING
+  bytes += (C_Long)item_size; 
+#   endif
+
+#endif
+
+  *adjust = 0;
+
+  /* use ARMCI_Malloc_group for groups if proc group is not world group
+     or mirror group */
+#ifdef MSG_COMMS_MPI
+  if (grp_id > 0) {
+    if (dev_flag) {
+      status = ARMCI_Malloc_group_memdev((void**)ptr_arr, (armci_size_t)bytes,
+          &PGRP_LIST[grp_id].group, device);
+    } else {
+      status = ARMCI_Malloc_group((void**)ptr_arr, (armci_size_t)bytes,
+          &PGRP_LIST[grp_id].group);
+    }
+  } else {
+#endif
+    if (dev_flag) {
+      status = ARMCI_Malloc_memdev((void**)ptr_arr, (armci_size_t)bytes, device);
+    } else {
+      status = ARMCI_Malloc((void**)ptr_arr, (armci_size_t)bytes);
+    }
+#ifdef MSG_COMMS_MPI
+  }
+#endif
+
+  if(bytes!=0 && ptr_arr[grp_me]==NULL) 
+    pnga_error("gai_get_shmem: ARMCI Malloc failed", GAme);
+  if(status) return status;
+
+#ifndef _CHECK_MA_ALGN
+
+  /* adjust all addresses if they are not alligned on corresponding nodes*/
+
+  /* we need storage for GAnproc*sizeof(Integer) */
+  /* JAD -- fixed bug where _ga_map was reused before gai_getmem was done
+   * with it. Now malloc/free needed memory. */
+  adjust = (Integer*)malloc(GAnproc*sizeof(Integer));
+
+  diff = (GA_ABS( base - (char *) ptr_arr[grp_me])) % item_size; 
+  for(i=0;i<nproc;i++)adjust[i]=0;
+  adjust[grp_me] = (diff > 0) ? item_size - diff : 0;
+  *adj = adjust[grp_me];
+
+  if (grp_id > 0)
+    pnga_pgroup_gop(grp_id, pnga_type_f2c(MT_F_INT), adjust, nproc, "+");
+  else
+    pnga_gop(pnga_type_f2c(MT_F_INT), adjust, nproc, "+");
+
+  for(i=0;i<nproc;i++){
+    ptr_arr[i] = adjust[i] + (char*)ptr_arr[i];
+  }
+  free(adjust);
+
+#endif
+  return status;
+}
+
 int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
 	       int grp_id)
 {
 #ifdef AVOID_MA_STORAGE
+   printf("p[%d] Calling gai_get_shmem at 1\n",GAme);
    return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
 #else
 Integer handle = INVALID_MA_HANDLE, index;
@@ -3061,9 +3170,15 @@ logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
 
   if(status)
   {
-    status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,
-        (int)GA[ga_handle].type, &GA[ga_handle].id,
-        (int)grp_id);
+    if (GA[ga_handle].mem_dev_set) {
+      status = !gai_get_devmem(array_name, GA[ga_handle].ptr,mem_size,
+          (int)GA[ga_handle].type, &GA[ga_handle].id,
+          (int)grp_id,GA[ga_handle].mem_dev_set,GA[ga_handle].mem_dev);
+    } else {
+      status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,
+          (int)GA[ga_handle].type, &GA[ga_handle].id,
+          (int)grp_id);
+    }
 }
   else{
     GA[ga_handle].ptr[grp_me]=NULL;
@@ -3245,7 +3360,11 @@ int local_sync_begin,local_sync_end;
       }
       else
 #endif
-	 ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
+        if (GA[ga_handle].mem_dev_set) {
+          ARMCI_Free_memdev(GA[ga_handle].ptr[GAme]-GA[ga_handle].id);
+        } else {
+          ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
+        }
 #ifndef AVOID_MA_STORAGE
     }else{
       if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);

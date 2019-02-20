@@ -47,7 +47,7 @@
 
 #if USE_SICM
 static sicm_device_list devices = {0};
-static sicm_device *device = NULL;
+static sicm_device *device_dram = NULL;
 #endif
 
 /* exported state */
@@ -214,16 +214,15 @@ int comex_init()
 
 #if USE_SICM
     devices = sicm_init();
-    device = NULL;
     for(i = 0; i < devices.count; i++){
-       if(devices.devices[i].tag == SICM_DRAM){
-          device = &(devices.devices[i]);
-	  break;
-       }
+      if(devices.devices[i].tag == SICM_DRAM){
+        device_dram = &(devices.devices[i]);
+        break;
+      }
     }
-    if(!device){
-       printf("Device not found\n");
-       exit(18);
+    if(!device_dram){
+      printf("Device DRAM not found\n");
+      exit(18);
     }
 #endif
 
@@ -1891,12 +1890,12 @@ void *comex_malloc_local(size_t size)
     MPI_Aint tsize;
     int ierr;
     tsize = size;
-#if USE_SICM
+#if USEX_SICM
     sicm_arena arena = sicm_arena_create(0, device);
     ptr = sicm_arena_alloc(arena, size);
     if(!ptr){
-        fprintf(stderr, "Error in allocating the pool\n");
-	exit(11);
+      fprintf(stderr, "Error in allocating the pool\n");
+      exit(11);
     }
 #else
     ierr = MPI_Alloc_mem(tsize,MPI_INFO_NULL,&ptr);
@@ -1911,7 +1910,7 @@ int comex_free_local(void *ptr)
 {
     if (ptr != NULL) {
       int ierr;
-#if USE_SICM
+#if USEX_SICM
       sicm_free(ptr);
 #else
       ierr = MPI_Free_mem(ptr);
@@ -3168,34 +3167,13 @@ int comex_unlock(int mutex, int proc)
 
 int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 {
-#if 0
-    comex_igroup_t *igroup = NULL;
-    MPI_Comm comm = MPI_COMM_NULL;
-    int comm_rank = -1;
-    int comm_size = -1;
-    void *src_buf = NULL;
-
-    /* preconditions */
-    assert(ptrs);
-   
-    igroup = comex_get_igroup_from_group(group);
-    comm = igroup->comm;
-    assert(comm != MPI_COMM_NULL);
-    MPI_Comm_rank(comm, &comm_rank);
-    MPI_Comm_size(comm, &comm_size);
-
-    /* allocate and register segment */
-    ptrs[comm_rank] = comex_malloc_local(sizeof(char)*size);
-  
-    /* exchange buffer address */
-    /* @TODO: Consider using MPI_IN_PLACE? */
-    memcpy(&src_buf, &ptrs[comm_rank], sizeof(void *));
-    MPI_Allgather(&src_buf, sizeof(void *), MPI_BYTE, ptrs,
-            sizeof(void *), MPI_BYTE, comm);
-
-    MPI_Barrier(comm);
-
-    return COMEX_SUCCESS;
+#if USE_SICM && TEST_SICM
+#  ifdef TEST_SICM_DEV
+  const char* cdevice = TEST_SICM_DEV;
+#  else
+  const char* cdevice = "dram";
+#  endif
+  return comex_malloc_mem_dev(ptrs, size, group, cdevice);
 #else
     comex_igroup_t *igroup = NULL;
     reg_entry_t *reg_entries = NULL;
@@ -3242,20 +3220,11 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     MPI_Win_allocate(sizeof(char)*tsize,1,MPI_INFO_NULL,comm,&reg_entries[comm_rank].buf,
         &reg_entries[comm_rank].win);
 #else
-#   if USE_SICM
-    sicm_arena arena = sicm_arena_create(0, device);
-    reg_entries[comm_rank].buf = sicm_arena_alloc(arena, size);
-    if(!(reg_entries[comm_rank].buf)){
-        fprintf(stderr, "Error in allocating the pool\n");
-        exit(11);
-    }
-#   else
     MPI_Alloc_mem(tsize,MPI_INFO_NULL,&reg_entries[comm_rank].buf);
 #endif
     MPI_Win_create(reg_entries[comm_rank].buf,tsize,1,MPI_INFO_NULL,comm,
         &reg_entries[comm_rank].win);
 
-#endif
 #ifdef USE_MPI_REQUESTS
     MPI_Win_lock_all(0,reg_entries[comm_rank].win);
     /* Use MPI_MODE_NOCHECK instead of 0 */
@@ -3294,46 +3263,101 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
         const char* device)
 {
+#if (!defined(USE_SICM) || !USE_SICM)
     return comex_malloc(ptrs,size,group);
-}
-
-
-int comex_free(void *ptr, comex_group_t group)
-{
-#if 0
+#else
     comex_igroup_t *igroup = NULL;
+    reg_entry_t *reg_entries = NULL;
     MPI_Comm comm = MPI_COMM_NULL;
-    int comm_rank;
-    int comm_size;
-    long **allgather_ptrs = NULL;
+    int i, ierr;
+    int comm_rank = -1;
+    int comm_size = -1;
+    int tsize;
+    reg_entry_t src;
 
-    /* preconditions */
-    assert(NULL != ptr);
+    /* This will become more complicated */
+    sicm_device *idevice = device_dram;
+
+    if (!strncmp(device,"dram",4)) {
+      idevice = device_dram;
+    }
 
     igroup = comex_get_igroup_from_group(group);
+
+    /* preconditions */
+    COMEX_ASSERT(ptrs);
+
     comm = igroup->comm;
     assert(comm != MPI_COMM_NULL);
     MPI_Comm_rank(comm, &comm_rank);
     MPI_Comm_size(comm, &comm_size);
 
-    /* allocate receive buffer for exchange of pointers */
-    allgather_ptrs = (long **)malloc(sizeof(void *) * comm_size);
-    assert(allgather_ptrs);
+    /* is this needed? */
+    /* comex_barrier(group); */
 
-    /* exchange of pointers */
-    MPI_Allgather(&ptr, sizeof(void *), MPI_BYTE,
-            allgather_ptrs, sizeof(void *), MPI_BYTE, comm);
+    /* allocate ret_entry_t object for this process */
+    reg_entries = malloc(sizeof(reg_entry_t)*comm_size);
+    /*assert(reg_entries) */
+    reg_entries[comm_rank].rank = comm_rank;
+    reg_entries[comm_rank].len = size;
 
-    /* TODO do something useful with pointers */
+    /* allocate and register segment. We need to allocate something even if size
+       is zero so allocate a nominal amount so that routines don't break. Count
+       on the fact that the length is zero to keep things from breaking down */
+    if (size > 0) {
+      tsize = size;
+    } else {
+      tsize = 8;
+    }
+    sicm_arena arena = sicm_arena_create(0, idevice);
+    reg_entries[comm_rank].buf = sicm_arena_alloc(arena, size);
+    if(!(reg_entries[comm_rank].buf)){
+        fprintf(stderr, "Error in allocating the pool\n");
+        exit(11);
+    }
+    MPI_Win_create(reg_entries[comm_rank].buf,tsize,1,MPI_INFO_NULL,comm,
+        &reg_entries[comm_rank].win);
 
-    /* remove my ptr from reg cache and free ptr */
-    comex_free_local(ptr);
-    free(allgather_ptrs);
+#ifdef USE_MPI_REQUESTS
+    MPI_Win_lock_all(0,reg_entries[comm_rank].win);
+    /* Use MPI_MODE_NOCHECK instead of 0 */
+#endif
 
-    /* Is this needed? */
+
+    /* exchange buffer address */
+    /* @TODO: Consider using MPI_IN_PLACE? */
+    memcpy(&src, &reg_entries[comm_rank], sizeof(reg_entry_t));
+    MPI_Allgather(&src, sizeof(reg_entry_t), MPI_BYTE, reg_entries,
+            sizeof(reg_entry_t), MPI_BYTE, comm);
+
+    /* assign the ptr array to return to caller */
+    for (i=0; i<comm_size; ++i) {
+      ptrs[i] = reg_entries[i].buf;
+      int world_rank;
+      ierr = comex_group_translate_world(group,i,&world_rank);
+      assert(COMEX_SUCCESS == ierr);
+      if (i != comm_rank) {
+        reg_entries[i].win = reg_entries[comm_rank].win;
+      }
+      /* probably want to use commicator rank instead of world rank*/
+      reg_win_insert(world_rank,  reg_entries[i].buf, reg_entries[i].len,
+          reg_entries[i].win, igroup);
+    }
+    comex_igroup_add_win(group,reg_entries[comm_rank].win);
+
+    comex_wait_all(group);
+    /* MPI_Win_fence(0,reg_entries[comm_rank].win); */
     MPI_Barrier(comm);
 
     return COMEX_SUCCESS;
+#endif
+}
+
+
+int comex_free(void *ptr, comex_group_t group)
+{
+#if USE_SICM && TEST_SICM
+    return comex_free_dev(ptr, group);
 #else
     comex_igroup_t *igroup = NULL;
     MPI_Comm comm = MPI_COMM_NULL;
@@ -3394,12 +3418,80 @@ int comex_free(void *ptr, comex_group_t group)
     MPI_Win_free(&window);
 #ifndef USE_MPI_WIN_ALLOC
     /* Clear memory for this window */
-#  if USE_SICM    
-    sicm_free(buf);
-#  else
     MPI_Free_mem(buf);
-#  endif
 #endif
+
+    /* Is this needed? */
+    MPI_Barrier(comm);
+
+    return COMEX_SUCCESS;
+#endif
+}
+
+int comex_free_dev(void *ptr, comex_group_t group)
+{
+#if (!defined(USE_SICM) || !USE_SICM)
+    return comex_free(ptr,group);
+#else
+    comex_igroup_t *igroup = NULL;
+    MPI_Comm comm = MPI_COMM_NULL;
+    MPI_Win window;
+    int comm_rank, world_rank;
+    int comm_size;
+    void **allgather_ptrs = NULL;
+    int i, ierr;
+    reg_entry_t *reg_win;
+
+    /* preconditions */
+    assert(ptr != NULL);
+
+    igroup = comex_get_igroup_from_group(group);
+    comm = igroup->comm;
+    assert(comm != MPI_COMM_NULL);
+    MPI_Comm_rank(comm, &comm_rank);
+    MPI_Comm_size(comm, &comm_size);
+    
+    /* Find the window that this buffer belongs to */
+    comex_group_translate_world(group,comm_rank,&world_rank);
+    reg_win = reg_win_find(world_rank, ptr, 0);
+    window = reg_win->win;
+
+#ifndef USE_MPI_WIN_ALLOC
+    /* Save pointer to memory */
+    void* buf = reg_win->buf;
+#endif
+
+    /* allocate receive buffer for exchange of pointers */
+    allgather_ptrs = (void **)malloc(sizeof(void *) * comm_size);
+    assert(allgather_ptrs);
+
+    /* exchange of pointers */
+    MPI_Allgather(&ptr, sizeof(void *), MPI_BYTE,
+            allgather_ptrs, sizeof(void *), MPI_BYTE, comm);
+
+    /* Get rid of pointers for this window */
+    for (i=0; i < comm_size; i++) {
+      int world_rank;
+      ierr = comex_group_translate_world(group, i, &world_rank);
+      assert(COMEX_SUCCESS == ierr);
+      /* probably should use rank for communicator, not world rank*/
+      reg_win_delete(world_rank,allgather_ptrs[i]);
+    }
+
+    /* Remove window from group list */
+    comex_igroup_delete_win(group, window);
+
+    /* remove my ptr from reg cache and free ptr */
+    /* comex_free_local(ptr); */
+    free(allgather_ptrs);
+
+    /* free up window */
+#ifdef USE_MPI_REQUESTS
+    MPI_Win_unlock_all(window);
+#endif
+    MPI_Win_free(&window);
+    /* Clear memory for this window */
+    sicm_free(buf);
 
     /* Is this needed? */
     MPI_Barrier(comm);

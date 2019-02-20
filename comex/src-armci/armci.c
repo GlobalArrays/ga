@@ -248,6 +248,10 @@ int PARMCI_Free(void *ptr)
     return comex_free(ptr, ARMCI_Default_Proc_Group);
 }
 
+int PARMCI_Free_memdev(void *ptr)
+{
+    return comex_free_dev(ptr, ARMCI_Default_Proc_Group);
+}
 
 int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
 {

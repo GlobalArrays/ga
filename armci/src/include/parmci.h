@@ -14,6 +14,7 @@ extern void   PARMCI_Fence(int proc);
 extern void   PARMCI_Finalize();
 extern int    PARMCI_Free_local(void *ptr);
 extern int    PARMCI_Free(void *ptr);
+extern int    PARMCI_Free_memdev(void *ptr);
 extern int    PARMCI_GetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc);
 extern double PARMCI_GetValueDouble(void *src, int proc);
 extern float  PARMCI_GetValueFloat(void *src, int proc);

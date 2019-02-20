@@ -967,6 +967,11 @@ int PARMCI_Free(void *ptr)
      return 0;
 }
 
+int PARMCI_Free_memdev(void *ptr)
+{
+  return PARMCI_Free(ptr);
+}
+
 
 int ARMCI_Uses_shm()
 {

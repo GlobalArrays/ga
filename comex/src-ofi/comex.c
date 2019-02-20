@@ -3702,6 +3702,11 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
+int comex_free_dev(void *ptr, comex_group_t group)
+{
+    return comex_free(ptr, group);
+}
+
 static inline int destroy_all_windows()
 {
     local_window_t* local = local_wnd;

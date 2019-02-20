@@ -2196,3 +2196,7 @@ int comex_free(void *ptr, comex_group_t group)
     return COMEX_SUCCESS;
 }
 
+int comex_free_dev(void *ptr, comex_group_t group)
+{
+    return comex_free(ptr, group);
+}

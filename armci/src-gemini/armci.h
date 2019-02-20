@@ -145,6 +145,7 @@ extern int ARMCI_Malloc(void* ptr_arr[], armci_size_t bytes);
 extern int ARMCI_Malloc_memdev(void* ptr_arr[], armci_size_t bytes,
     const char *device);
 extern int ARMCI_Free(void *ptr);
+extern int ARMCI_Free_memdev(void *ptr);
 extern void* ARMCI_Malloc_local(armci_size_t bytes);
 extern int ARMCI_Free_local(void *ptr);
 extern int ARMCI_Same_node(int proc);

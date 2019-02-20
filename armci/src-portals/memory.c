@@ -688,6 +688,14 @@ int PARMCI_Free(void *ptr)
     return 0;
 }
 
+/*\
+ *  Wrapper on PARMCI_Free_memdev so that old code still works
+\*/
+int PARMCI_Free_memdev(void *ptr)
+{
+  PARMCI_Free(void *ptr);
+}
+
 
 int ARMCI_Uses_shm()
 {

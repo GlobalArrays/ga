@@ -59,6 +59,8 @@ int PARMCI_PutV (armci_giov_t * darr, int len, int proc);
 
 int PARMCI_Free (void *ptr);
 
+int PARMCI_Free_memdev (void *ptr);
+
 int PARMCI_Init_args (int *argc, char ***argv);
 
 int PARMCI_PutValueInt (int src, void *dst, int proc);

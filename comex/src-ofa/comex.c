@@ -174,6 +174,10 @@ int comex_free(void *ptr, comex_group_t group)
     return 0;
 }
 
+int comex_free_dev(void *ptr, comex_group_t group)
+{
+    return comex_free(ptr, group);
+}
 
 static void *_comex_malloc_local(size_t size, void **rinfo)
 {

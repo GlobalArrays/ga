@@ -211,6 +211,14 @@ ARMCI_Free (void *ptr)
 }
 
 int
+ARMCI_Free_memdev (void *ptr)
+{
+  int rval;
+  rval = PARMCI_Free_memdev (ptr);
+  return rval;
+}
+
+int
 ARMCI_Init_args (int *argc, char ***argv)
 {
   int rval;

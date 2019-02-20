@@ -544,6 +544,15 @@ extern int comex_malloc_mem_dev(
 extern int comex_free(void *ptr, comex_group_t group);
 
 /**
+ * Collective free of memory on a specified device given the original local pointer.
+ *
+ * @param[in] ptr the original local memory allocated using comex_malloc
+ * @param[in] group the group to which the calling process belongs
+ * @return COMEX_SUCCESS on success
+ */
+extern int comex_free_dev(void *ptr, comex_group_t group);
+
+/**
  * Local (noncollective) allocation of registered memory.
  *
  * Using memory allocated here may have performance benefits when used as a
