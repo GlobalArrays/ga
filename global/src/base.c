@@ -1977,8 +1977,14 @@ void pnga_set_property(Integer g_a, char* property) {
     /* allocate memory */
     if (status) {
       /* Allocate new memory */
-      status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
-          GA[ga_handle].type, &GA[ga_handle].id, handle);
+      if (GA[ga_handle].mem_dev_set) {
+        status = !gai_get_devmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
+            GA[ga_handle].type, &GA[ga_handle].id, handle,
+            GA[ga_handle].mem_dev_set,GA[ga_handle].mem_dev);
+      } else {
+        status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
+            GA[ga_handle].type, &GA[ga_handle].id, handle);
+      }
     } else {
       GA[ga_handle].ptr[grp_me]=NULL;
     }
@@ -2157,8 +2163,14 @@ void pnga_unset_property(Integer g_a) {
     GA[ga_handle].p_handle = GA[ga_handle].old_handle;
     if (status) {
       /* Allocate new memory */
-      status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
-          GA[ga_handle].type, &GA[ga_handle].id, GA[ga_handle].p_handle);
+      if (GA[ga_handle].mem_dev_set) {
+        status = !gai_get_devmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
+            GA[ga_handle].type, &GA[ga_handle].id, GA[ga_handle].p_handle,
+            GA[ga_handle].mem_dev_set,GA[ga_handle].mem_dev);
+      } else {
+        status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
+            GA[ga_handle].type, &GA[ga_handle].id, GA[ga_handle].p_handle);
+      }
     } else {
       GA[ga_handle].ptr[grp_me]=NULL;
     }
