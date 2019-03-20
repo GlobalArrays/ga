@@ -45,6 +45,9 @@
 #define USE_MPI_REQUESTS
 #endif
 
+#define XSTR(x) #x
+#define STR(x) XSTR(x)
+
 #if USE_SICM
 static sicm_device_list devices = {0};
 static sicm_device *device_dram = NULL;
@@ -3169,7 +3172,10 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 {
 #if USE_SICM && TEST_SICM
 #  ifdef TEST_SICM_DEV
-  const char* cdevice = TEST_SICM_DEV;
+  // const char* cdevice = TEST_SICM_DEV;
+  char temp_cdevice[30];
+  strcpy(temp_cdevice,STR(TEST_SICM_DEV));
+  char* cdevice = &temp_cdevice[0];
 #  else
   const char* cdevice = "dram";
 #  endif

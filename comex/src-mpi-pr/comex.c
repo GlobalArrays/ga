@@ -41,6 +41,9 @@
 #define MAYBE_MEMSET(a,b,c) ((void)0)
 #endif
 
+#define XSTR(x) #x
+#define STR(x) XSTR(x)
+
 /* data structures */
 
 typedef enum {
@@ -2020,7 +2023,10 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 {
 #if USE_SICM && TEST_SICM
 #  ifdef TEST_SICM_DEV
-    const char* cdevice = TEST_SICM_DEV;
+    // const char* cdevice = TEST_SICM_DEV;
+    char temp_cdevice[30];
+    strcpy(temp_cdevice,STR(TEST_SICM_DEV));
+    char* cdevice = &temp_cdevice[0];
 #  else
     const char* cdevice = "dram";
 #  endif
