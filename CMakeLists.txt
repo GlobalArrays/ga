@@ -477,6 +477,13 @@ add_library(ga
   $<TARGET_OBJECTS:ga_src>
   $<TARGET_OBJECTS:linalg>
 )
+target_include_directories(ga INTERFACE $<TARGET_PROPERTY:ga_src,INCLUDE_DIRECTORIES>)
+target_include_directories(ga INTERFACE $<TARGET_PROPERTY:dra,INCLUDE_DIRECTORIES>)
+target_include_directories(ga INTERFACE $<TARGET_PROPERTY:eaf,INCLUDE_DIRECTORIES>)
+target_include_directories(ga INTERFACE $<TARGET_PROPERTY:elio,INCLUDE_DIRECTORIES>)
+target_include_directories(ga INTERFACE $<TARGET_PROPERTY:sf,INCLUDE_DIRECTORIES>)
+target_include_directories(ga INTERFACE $<TARGET_PROPERTY:linalg,INCLUDE_DIRECTORIES>)
+add_library(ga::ga ALIAS ga)
 
 # -------------------------------------------------------------
 # Global Arrays library installation
