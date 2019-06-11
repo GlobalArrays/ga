@@ -43,7 +43,7 @@ project (GlobalArrays)
 #enable_language(CXX)
 
 # where to look for special .cmake files
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake-modules")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules")
 message(status " CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
 include(GlobalArrays RESULT_VARIABLE result)
 message(status " RESULT_VARIABLE: ${result}")
@@ -183,10 +183,10 @@ option (F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS "Set F77 macros" ON)
 
 if (ENABLE_FORTRAN)
   include( FortranCInterface )
-  FortranCInterface_HEADER(${CMAKE_SOURCE_DIR}/f2c_cmake.h MACRO_NAMESPACE F77_FUNC_)
+  FortranCInterface_HEADER(${CMAKE_CURRENT_SOURCE_DIR}/f2c_cmake.h MACRO_NAMESPACE F77_FUNC_)
 else()
-  CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/f2c_dummy.h.in
-                ${CMAKE_SOURCE_DIR}/f2c_cmake.h )
+  CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/f2c_dummy.h.in
+                ${CMAKE_CURRENT_SOURCE_DIR}/f2c_cmake.h )
 endif()
 
 # check size of different variables
@@ -419,18 +419,18 @@ set (CM_BLAS_SIZE ${CM_SIZEOF_F77_INTEGER})
 # -------------------------------------------------------------
 # Create include files from templates
 # -------------------------------------------------------------
-CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/config.h.in
-                ${CMAKE_SOURCE_DIR}/config.h )
-CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/farg.h.in
-                ${CMAKE_SOURCE_DIR}/gaf2c/farg.h )
-CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/typesf2c.h.in
-                ${CMAKE_SOURCE_DIR}/gaf2c/typesf2c.h )
-CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/matypes.h.in
-                ${CMAKE_SOURCE_DIR}/ma/matypes.h )
-CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/mafdecls.fh.in
-                ${CMAKE_SOURCE_DIR}/ma/mafdecls.fh )
-CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/global.fh.in
-                ${CMAKE_SOURCE_DIR}/global/src/global.fh )
+CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h.in
+                ${CMAKE_CURRENT_SOURCE_DIR}/config.h )
+CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/farg.h.in
+                ${CMAKE_CURRENT_SOURCE_DIR}/gaf2c/farg.h )
+CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/typesf2c.h.in
+                ${CMAKE_CURRENT_SOURCE_DIR}/gaf2c/typesf2c.h )
+CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/matypes.h.in
+                ${CMAKE_CURRENT_SOURCE_DIR}/ma/matypes.h )
+CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/mafdecls.fh.in
+                ${CMAKE_CURRENT_SOURCE_DIR}/ma/mafdecls.fh )
+CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/global.fh.in
+                ${CMAKE_CURRENT_SOURCE_DIR}/global/src/global.fh )
 
 if (ENABLE_FORTRAN)
 message(STATUS "CMAKE_COMMAND:${CMAKE_COMMAND}")
@@ -477,6 +477,13 @@ add_library(ga
   $<TARGET_OBJECTS:ga_src>
   $<TARGET_OBJECTS:linalg>
 )
+target_include_directories(ga INTERFACE $<TARGET_PROPERTY:ga_src,INCLUDE_DIRECTORIES>)
+target_include_directories(ga INTERFACE $<TARGET_PROPERTY:dra,INCLUDE_DIRECTORIES>)
+target_include_directories(ga INTERFACE $<TARGET_PROPERTY:eaf,INCLUDE_DIRECTORIES>)
+target_include_directories(ga INTERFACE $<TARGET_PROPERTY:elio,INCLUDE_DIRECTORIES>)
+target_include_directories(ga INTERFACE $<TARGET_PROPERTY:sf,INCLUDE_DIRECTORIES>)
+target_include_directories(ga INTERFACE $<TARGET_PROPERTY:linalg,INCLUDE_DIRECTORIES>)
+add_library(ga::ga ALIAS ga)
 
 # -------------------------------------------------------------
 # Global Arrays library installation

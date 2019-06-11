@@ -114,6 +114,14 @@ else
     if patch -p0 -N < secure_snprintf.patch ; then
         echo patch applied
     fi
+    if [ -f 0001-fflush-adjust-to-glibc-2.28-libio.h-removal.patch ] ; then
+        echo glibc v2.28 patch already exists! Using existing copy.
+    else
+        ${download} 0001-fflush-adjust-to-glibc-2.28-libio.h-removal.patch https://gitlab.com/atilla/buildroot/raw/c48f8a64626c60bd1b46804b7cf1a699ff53cdf3/package/m4/0001-fflush-adjust-to-glibc-2.28-libio.h-removal.patch
+    fi
+    if patch -p1 -N < 0001-fflush-adjust-to-glibc-2.28-libio.h-removal.patch ; then
+        echo patch applied
+    fi
     ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
     if [ "x$?" != "x0" ] ; then
         echo FAILURE 1
