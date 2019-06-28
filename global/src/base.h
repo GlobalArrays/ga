@@ -4,17 +4,12 @@
 #include "typesf2c.h"
 
 extern int _max_global_array;
-extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
-extern Integer *GA_proclist;
 extern int GA_Default_Proc_Group;
-extern int* GA_Proc_list;
-extern int* GA_inv_Proc_list;
 extern int** GA_Update_Flags;
 extern int* GA_Update_Signal;
 extern short int _ga_irreg_flag; 
 extern Integer GA_Debug_flag;
-extern int *ProcListPerm;            /*permuted list of processes */
 
 #define FNAM        31              /* length of array names   */
 #define CACHE_SIZE  512             /* size of the cache inside GA DS*/
@@ -89,14 +84,27 @@ typedef struct {
 #ifdef ENABLE_CHECKPOINT
        int record_id;               /* record id for writing ga to disk     */
 #endif
+       //new
+       int read_cache;              /* flag for read only pointer in cache  */
 } global_array_t;
 
+typedef struct cache_struct{
+int lo[MAXDIM];
+int hi[MAXDIM];
+void* cache_buf;
+struct cache_struct *next;
+} cache_struct_t;
+
 enum property_type { NO_PROPERTY,
-                     READ_ONLY
+                     READ_ONLY,
+                     READ_CACHE //new
 };
 
 extern global_array_t *_ga_main_data_structure; 
 extern proc_list_t *_proc_list_main_data_structure; 
+extern cache_struct_t *_cache_head;
+
+
 /*\
  *The following statement had to be moved here because of a problem in the c
  *compiler on SV1. The problem is that when a c file is compiled with a 
@@ -107,6 +115,9 @@ extern proc_list_t *_proc_list_main_data_structure;
  *So to handle that,we cannot initialize global variables to be able to run 
  *on SV1.
 \*/
+
+//new
+extern cache_struct_t *cache_head;
 extern global_array_t *GA;
 extern proc_list_t *PGRP_LIST;
 
@@ -143,7 +154,6 @@ extern proc_list_t *PGRP_LIST;
    }                                                                           \
    else{                                                                       \
          _index = proc;                                                        \
-         if(GA_inv_Proc_list) _index = GA_inv_Proc_list[proc];                 \
       __CRAYX1_PRAGMA("_CRI novector");                                        \
          for(_d=0; _d<_dim; _d++){                                             \
              _loc = _index% (Integer)nblock[_d];                               \
@@ -376,3 +386,4 @@ Integer _d;                                                                    \
 
 extern void pna_access_block_grid_ptr(Integer g_a, Integer *index, void *ptr,
     Integer ld);
+

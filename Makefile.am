@@ -437,8 +437,10 @@ AM_CPPFLAGS += -I$(top_srcdir)/global/src
 AM_CPPFLAGS += -I$(top_srcdir)/global/testing
 
 check_PROGRAMS += global/testing/big
+check_PROGRAMS += global/testing/cache_test
 check_PROGRAMS += global/testing/elempatch
 check_PROGRAMS += global/testing/gatscat
+check_PROGRAMS += global/testing/gatscat_thread
 check_PROGRAMS += global/testing/getmem
 check_PROGRAMS += global/testing/mtest
 check_PROGRAMS += global/testing/mulmatpatchc
@@ -453,6 +455,7 @@ check_PROGRAMS += global/testing/print
 check_PROGRAMS += global/testing/scan_addc
 check_PROGRAMS += global/testing/scan_copyc
 check_PROGRAMS += global/testing/sprsmatvec
+check_PROGRAMS += global/testing/testabstract_ops
 check_PROGRAMS += global/testing/testc
 check_PROGRAMS += global/testing/testmatmultc
 check_PROGRAMS += global/testing/testmult
@@ -612,6 +615,7 @@ GLOBAL_SERIAL_TESTS =
 GLOBAL_SERIAL_TESTS_XFAIL =
 GLOBAL_PARALLEL_TESTS =
 GLOBAL_PARALLEL_TESTS_XFAIL =
+GLOBAL_THREADED_TESTS =
 GLOBAL_TESTS = $(GLOBAL_SERIAL_TESTS) $(GLOBAL_PARALLEL_TESTS)
 GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
 
@@ -624,7 +628,9 @@ endif
 
 #GLOBAL_PARALLEL_TESTS += global/testing/big$(EXEEXT) # needs lots of memory
 GLOBAL_PARALLEL_TESTS += global/testing/elempatch$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/cache_test$(EXEEXT)
 #GLOBAL_PARALLEL_TESTS += global/testing/gatscat$(EXEEXT) # broken
+GLOBAL_PARALLEL_TESTS += global/testing/gatscat_thread$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/getmem$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/mtest$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/mulmatpatchc$(EXEEXT)
@@ -642,9 +648,9 @@ GLOBAL_PARALLEL_TESTS += global/testing/testmatmultc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmult$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmultrect$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/gemmtest$(EXEEXT)
-GLOBAL_PARALLEL_TESTS += global/testing/thread_perf_contig$(EXEEXT)
-GLOBAL_PARALLEL_TESTS += global/testing/thread_perf_strided$(EXEEXT)
-GLOBAL_PARALLEL_TESTS += global/testing/threadsafec$(EXEEXT)
+GLOBAL_THREADED_TESTS += global/testing/thread_perf_contig$(EXEEXT)
+GLOBAL_THREADED_TESTS += global/testing/thread_perf_strided$(EXEEXT)
+GLOBAL_THREADED_TESTS += global/testing/threadsafec$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/read_only$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/unpackc$(EXEEXT)
 if ENABLE_F77
@@ -867,6 +873,7 @@ global_testing_bin_SOURCES                 = global/testing/bin.F $(gtsrcf)
 global_testing_blktest_SOURCES             = global/testing/blktest.F $(gtsrcf)
 global_testing_d2test_SOURCES              = global/testing/d2test.F $(gtsrcf)
 global_testing_elempatch_SOURCES           = global/testing/elempatch.c
+global_testing_cache_test_SOURCES          = global/testing/cache_test.c
 global_testing_field_test_SOURCES          = global/testing/field-test.F $(gtsrcf)
 global_testing_g2test_SOURCES              = global/testing/g2test.F $(gtsrcf)
 global_testing_g3test_SOURCES              = global/testing/g3test.F $(gtsrcf)
@@ -874,6 +881,7 @@ global_testing_ga_lu_SOURCES               = global/testing/ga_lu.c
 global_testing_ga_mpi_SOURCES              = global/testing/ga-mpi.c
 global_testing_ga_shift_SOURCES            = global/testing/ga_shift.F $(gtsrcf)
 global_testing_gatscat_SOURCES             = global/testing/gatscat.c
+global_testing_gatscat_thread_SOURCES      = global/testing/gatscat_thread.c
 global_testing_getmem_SOURCES              = global/testing/getmem.c
 global_testing_ghosts_SOURCES              = global/testing/ghosts.F $(gtsrcf)
 global_testing_ipc_clean_SOURCES           = global/testing/ipc.clean.c
@@ -916,6 +924,7 @@ global_testing_simple_groups_commc_SOURCES = global/testing/simple_groups_commc.
 global_testing_sparse_SOURCES              = global/testing/sparse.F $(gtsrcf)
 global_testing_sprsmatmult_SOURCES         = global/testing/sprsmatmult.F $(gtsrcf)
 global_testing_stride_SOURCES              = global/testing/stride.F $(gtsrcf)
+global_testing_testabstract_ops_SOURCES    = global/testing/testabstract_ops.c
 global_testing_test_SOURCES                = global/testing/test.F $(gtsrcf)
 global_testing_test_mirrored_SOURCES       = global/testing/test.F $(gtsrcf)
 global_testing_testc_SOURCES               = global/testing/testc.c
@@ -1024,17 +1033,25 @@ global_testing_unit_tests_ga_zerodiagonal_SOURCES         = global/testing/unit-
 global_testing_unit_tests_ga_zeropatch2_SOURCES           = global/testing/unit-tests/ga_zeropatch2.c $(UNIT_TEST_EXTRA_SRC)
 global_testing_unit_tests_ga_zeropatch_SOURCES            = global/testing/unit-tests/ga_zeropatch.c $(UNIT_TEST_EXTRA_SRC)
 
+global_testing_testabstract_ops_CFLAGS    = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 global_testing_thread_perf_contig_CFLAGS  = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 global_testing_thread_perf_strided_CFLAGS = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 global_testing_threadsafec_CFLAGS         = $(AM_CFLAGS) $(OPENMP_CFLAGS)
+global_testing_gatscat_thread_CFLAGS      = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 global_testing_read_only_CFLAGS           = $(AM_CFLAGS) $(OPENMP_CFLAGS)
 
+global_testing_testabstract_ops_CPPFLAGS    = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 global_testing_thread_perf_contig_CPPFLAGS  = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 global_testing_thread_perf_strided_CPPFLAGS = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 global_testing_threadsafec_CPPFLAGS         = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
+global_testing_gatscat_thread_CPPFLAGS      = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 global_testing_read_only_CPPFLAGS           = $(AM_CPPFLAGS) $(OPENMP_CFLAGS)
 
+global_testing_testabstract_ops_LDFLAGS   = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
+global_testing_thread_perf_contig_LDFLAGS = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
+global_testing_thread_perf_strided_LDFLAGS= $(AM_LDFLAGS) $(OPENMP_CFLAGS)
 global_testing_threadsafec_LDFLAGS        = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
+global_testing_gatscat_thread_LDFLAGS     = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
 global_testing_read_only_LDFLAGS          = $(AM_LDFLAGS) $(OPENMP_CFLAGS)
 
 if F77_INTEL_NO_INLINE
@@ -1789,6 +1806,10 @@ endif # MSG_COMMS_TCGMSG4
 .PHONY: check-travis
 check-travis: $(all-am) $(check_LTLIBRARIES) $(TRAVIS_TESTS) $(MAYBE_PFILES)
 	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(TRAVIS_TESTS)" check-TESTS
+
+.PHONY: check-threaded
+check-travis: $(all-am) $(check_LTLIBRARIES) $(GLOBAL_THREADED_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(GLOBAL_THREADED_TESTS)" check-TESTS
 
 .PHONY: check-ga
 check-ga: $(all-am) $(check_LTLIBRARIES) $(check_PROGRAMS) $(MAYBE_PFILES)

@@ -31,5 +31,10 @@
 /* uncoment the following line to never use MA (Memory Allocator) for
  * storing data in global arrays (not temporary buffers!)  */
 #define AVOID_MA_STORAGE
+
+/* maxiumum amount of GAs stored for read cache*/
+#define MAXCACHE GA_MAX_CACHE
+
+//#define THREAD_LOCK_DEFAULT 0
  
 #endif /* _GACONFIG_H */
