@@ -464,6 +464,7 @@ check_PROGRAMS += global/testing/thread_perf_contig
 check_PROGRAMS += global/testing/thread_perf_strided
 check_PROGRAMS += global/testing/threadsafec
 check_PROGRAMS += global/testing/read_only
+check_PROGRAMS += global/testing/cache_test
 check_PROGRAMS += global/testing/unpackc
 if ENABLE_F77
 check_PROGRAMS += global/testing/bin
@@ -649,6 +650,7 @@ GLOBAL_THREADED_TESTS += global/testing/thread_perf_contig$(EXEEXT)
 GLOBAL_THREADED_TESTS += global/testing/thread_perf_strided$(EXEEXT)
 GLOBAL_THREADED_TESTS += global/testing/threadsafec$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/read_only$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/cache_test$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/unpackc$(EXEEXT)
 if ENABLE_F77
 GLOBAL_PARALLEL_TESTS += global/testing/bin$(EXEEXT)
@@ -936,6 +938,7 @@ global_testing_thread_perf_strided_SOURCES = global/testing/thread_perf_strided.
 global_testing_threadsafec_SOURCES         = global/testing/threadsafec.c
 global_testing_types_test_SOURCES          = global/testing/types-test.F $(gtsrcf)
 global_testing_unpackc_SOURCES             = global/testing/unpackc.c
+global_testing_cache_test_SOURCES          = global/testing/cache_test.c
 nodist_global_testing_nga_onesided_SOURCES = global/testing/nga-onesided.F $(gtsrcf)
 nodist_global_testing_nga_patch_SOURCES    = global/testing/nga-patch.F $(gtsrcf)
 nodist_global_testing_nga_periodic_SOURCES = global/testing/nga-periodic.F $(gtsrcf)

@@ -84,14 +84,25 @@ typedef struct {
 #ifdef ENABLE_CHECKPOINT
        int record_id;               /* record id for writing ga to disk     */
 #endif
+       /* new */
+       int read_cache;              /* flag for read only pointer in cache  */
 } global_array_t;
 
+typedef struct cache_struct{
+  int lo[MAXDIM];
+  int hi[MAXDIM];
+  void* cache_buf;
+  struct cache_struct *next;
+} cache_struct_t;
+
 enum property_type { NO_PROPERTY,
-                     READ_ONLY
+                     READ_ONLY,
+                     READ_CACHE /* new */
 };
 
 extern global_array_t *_ga_main_data_structure; 
 extern proc_list_t *_proc_list_main_data_structure; 
+extern cache_struct_t *_cache_head;
 /*\
  *The following statement had to be moved here because of a problem in the c
  *compiler on SV1. The problem is that when a c file is compiled with a 
@@ -102,6 +113,8 @@ extern proc_list_t *_proc_list_main_data_structure;
  *So to handle that,we cannot initialize global variables to be able to run 
  *on SV1.
 \*/
+/* new */
+extern cache_struct_t *cache_head;
 extern global_array_t *GA;
 extern proc_list_t *PGRP_LIST;
 
