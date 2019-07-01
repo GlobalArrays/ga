@@ -1071,19 +1071,19 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
     /* ngai_get_common(g_a,lo,hi,buf,ld,0,-1,(Integer *)NULL); */
 
     /* cache is empty condition */
-    if (cache_head == NULL) {
-      cache_head = malloc(sizeof(cache_struct_t));
+    if (GA[handle].cache_head == NULL) {
+      GA[handle].cache_head = malloc(sizeof(cache_struct_t));
       nelem = 1;
       for (i=0; i<ndim; i++) {
-        cache_head -> lo[i] = lo[i];
-        cache_head -> hi[i] = hi[i];
+        GA[handle].cache_head -> lo[i] = lo[i];
+        GA[handle].cache_head -> hi[i] = hi[i];
         nelem *= (hi[i]-lo[i]+1);
       }
-      cache_head -> cache_buf = malloc(GA[handle].elemsize*nelem);
-      cache_head -> next = NULL;
+      GA[handle].cache_head -> cache_buf = malloc(GA[handle].elemsize*nelem);
+      GA[handle].cache_head -> next = NULL;
 
       /*new */
-        void *new_buf = cache_head->cache_buf;
+        void *new_buf = GA[handle].cache_head->cache_buf;
 
       /* place data to receive buffer */
       ngai_get_common(g_a,lo,hi,buf,ld,0,-1,(Integer*)NULL);
@@ -1092,7 +1092,7 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
       memcpy(new_buf,buf,GA[handle].elemsize*nelem);
     } else {
 
-      cache_struct_t * cache_temp_pointer = cache_head;
+      cache_struct_t * cache_temp_pointer = GA[handle].cache_head;
       int match = 0;
       while (cache_temp_pointer != NULL) {
         int chk;
@@ -1140,8 +1140,8 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
         }
         cache_new -> cache_buf = malloc(GA[handle].elemsize*nelem);
         new_buf = cache_new->cache_buf;
-        cache_new -> next = cache_head;
-        cache_head = cache_new;
+        cache_new -> next = GA[handle].cache_head;
+        GA[handle].cache_head = cache_new;
 
 
         //place data to recieve buffer
@@ -1152,7 +1152,7 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
     }
 
     /* check number of items cached */
-    cache_struct_t * cache_temp_pointer = cache_head;
+    cache_struct_t * cache_temp_pointer = GA[handle].cache_head;
     int cache_size = 0;
 
     /* check number of items cached */

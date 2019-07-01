@@ -38,6 +38,13 @@ typedef struct {
 typedef Integer C_Integer;
 typedef armci_size_t C_Long;
 
+typedef struct cache_struct{
+  int lo[MAXDIM];
+  int hi[MAXDIM];
+  void* cache_buf;
+  struct cache_struct *next;
+} cache_struct_t;
+
 typedef struct {
        short int  ndim;             /* number of dimensions                 */
        short int  irreg;            /* 0-regular; 1-irregular distribution  */
@@ -86,14 +93,9 @@ typedef struct {
 #endif
        /* new */
        int read_cache;              /* flag for read only pointer in cache  */
-} global_array_t;
+       cache_struct_t *cache_head;  /* linked list of cached reads          */
 
-typedef struct cache_struct{
-  int lo[MAXDIM];
-  int hi[MAXDIM];
-  void* cache_buf;
-  struct cache_struct *next;
-} cache_struct_t;
+} global_array_t;
 
 enum property_type { NO_PROPERTY,
                      READ_ONLY,
@@ -102,7 +104,6 @@ enum property_type { NO_PROPERTY,
 
 extern global_array_t *_ga_main_data_structure; 
 extern proc_list_t *_proc_list_main_data_structure; 
-extern cache_struct_t *_cache_head;
 /*\
  *The following statement had to be moved here because of a problem in the c
  *compiler on SV1. The problem is that when a c file is compiled with a 
@@ -113,8 +114,6 @@ extern cache_struct_t *_cache_head;
  *So to handle that,we cannot initialize global variables to be able to run 
  *on SV1.
 \*/
-/* new */
-extern cache_struct_t *cache_head;
 extern global_array_t *GA;
 extern proc_list_t *PGRP_LIST;
 

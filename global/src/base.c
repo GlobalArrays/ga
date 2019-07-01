@@ -111,9 +111,6 @@ int ga_armci_world_group=0;
 int GA_Init_Proc_Group = -2;
 Integer GA_Debug_flag = 0;
 
-cache_struct_t *_cache_head;
-cache_struct_t *cache_head;
-
 /* MA addressing */
 DoubleComplex   *DCPL_MB;           /* double precision complex base address */
 SingleComplex   *SCPL_MB;           /* single precision complex base address */
@@ -2015,8 +2012,7 @@ void pnga_set_property(Integer g_a, char* property) {
     pnga_destroy(g_tmp);
   } else if (strcmp(property, "read_cache") == 0) {
     GA[ga_handle].property = READ_CACHE;
-    _cache_head = NULL; /* (cache_struct_t *)malloc(sizeof(cache_struct_t)) */
-    cache_head = _cache_head;
+    GA[ga_handle].cache_head = NULL; /* (cache_struct_t *)malloc(sizeof(cache_struct_t)) */
   } else {
     pnga_error("Trying to set unknown property",0);
   }
@@ -2171,19 +2167,21 @@ void pnga_unset_property(Integer g_a) {
     }
     pnga_destroy(g_tmp);
   } else if (GA[ga_handle].property == READ_CACHE) {
-    if (_cache_head != NULL) {
+    if (GA[ga_handle].cache_head != NULL) {
       cache_struct_t *next;
-      next = _cache_head->next;
-      if (_cache_head->cache_buf) free(_cache_head->cache_buf);
-      free(_cache_head);
+      next = GA[ga_handle].cache_head->next;
+      if (GA[ga_handle].cache_head->cache_buf)
+        free(GA[ga_handle].cache_head->cache_buf);
+      free(GA[ga_handle].cache_head);
       while (next) {
-        _cache_head = next;
+        GA[ga_handle].cache_head = next;
         next = next->next;
-        if (_cache_head->cache_buf) free(_cache_head->cache_buf);
-        free(_cache_head);
+        if (GA[ga_handle].cache_head->cache_buf)
+          free(GA[ga_handle].cache_head->cache_buf);
+        free(GA[ga_handle].cache_head);
       }
     }
-    _cache_head = NULL;
+    GA[ga_handle].cache_head = NULL;
   } else {
     GA[ga_handle].property = NO_PROPERTY;
   }
@@ -3224,6 +3222,24 @@ int local_sync_begin,local_sync_end;
        free(GA[ga_handle].mapc);
        GA[ga_handle].mapc = NULL;
     } 
+
+    if (GA[ga_handle].property == READ_CACHE) {
+      if (GA[ga_handle].cache_head != NULL) {
+        cache_struct_t *next;
+        next = GA[ga_handle].cache_head->next;
+        if (GA[ga_handle].cache_head->cache_buf)
+          free(GA[ga_handle].cache_head->cache_buf);
+        free(GA[ga_handle].cache_head);
+        while (next) {
+          GA[ga_handle].cache_head = next;
+          next = next->next;
+          if (GA[ga_handle].cache_head->cache_buf)
+            free(GA[ga_handle].cache_head->cache_buf);
+          free(GA[ga_handle].cache_head);
+        }
+      }
+    }
+    GA[ga_handle].cache_head = NULL;
 
     if (GA[ga_handle].property == READ_ONLY) {
       free(GA[ga_handle].old_mapc);
