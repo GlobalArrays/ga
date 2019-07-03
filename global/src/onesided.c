@@ -1047,6 +1047,99 @@ void ngai_get_common(Integer g_a,
 }
 
 /**
+ * Utility function to copy data from one buffer to another
+ */
+void gai_mem_copy(int elemsize, int ndim, void *src_ptr, Integer *src_start,
+    Integer *count,  Integer *src_ld, void *dst_ptr, Integer *dst_start,
+    Integer *dst_ld)
+{
+  Integer src_offset, dst_offset;
+  Integer factor;
+  void *sptr, *dptr;
+  int i, j;
+  long src_idx, dst_idx;
+  int n1dim; /* total number of contiguous segments */
+  int src_bvalue[MAXDIM], src_bunit[MAXDIM];
+  int dst_bvalue[MAXDIM], dst_bunit[MAXDIM];
+  int src_stride[MAXDIM], dst_stride[MAXDIM];
+  int segsize;
+  /* find offsets for both source and destination buffers and use these to
+   * adjust pointers to the first element in each data set
+   */
+  factor = 1;
+  src_offset = 0;
+  for (i=0; i<ndim; i++) {
+    src_offset += src_start[i]*factor;
+    if (i<ndim-1) factor *= src_ld[i];
+  }
+  sptr = (void*)((char*)src_ptr+src_offset*elemsize);
+  dst_offset = 0;
+  for (i=0; i<ndim; i++) {
+    dst_offset += dst_start[i]*factor;
+    if (i<ndim-1) factor *= dst_ld[i];
+  }
+  dptr = (void*)((char*)dst_ptr+dst_offset*elemsize);
+  segsize = count[0]*elemsize;
+  /* perform the memcpy from source to destination buffer. Start by calculating
+   * the total number of contiguous segments in the src array*/
+  n1dim = 1;
+
+  src_stride[0] = dst_stride[0] = elemsize;
+  for (i=0; i<ndim-1; i++) {
+    src_stride[i+1] = src_stride[i];
+    src_stride[i+1] *= (int)src_ld[i];
+    dst_stride[i+1] = dst_stride[i];
+    dst_stride[i+1] *= (int)dst_ld[i];
+  }
+
+  for (i=1; i<=ndim-1; i++) {
+    n1dim *= count[i];
+  }
+  /* initialize arrays for evaluating offset of each segment */
+  src_bvalue[0] = 0;
+  src_bvalue[1] = 0;
+  src_bunit[0] = 1;
+  src_bunit[1] = 1;
+  dst_bvalue[0] = 0;
+  dst_bvalue[1] = 0;
+  dst_bunit[0] = 1;
+  dst_bunit[1] = 1;
+
+  for (i=2; i<=ndim-1; i++) {
+    src_bvalue[i] = 0;
+    dst_bvalue[i] = 0;
+    src_bunit[i] = src_bunit[i-1]*count[i-1];
+    dst_bunit[i] = dst_bunit[i-1]*count[i-1];
+  }
+
+  /* evaluate offset for each contiguous segment */
+  for (i=0; i<n1dim; i++) {
+    src_idx = 0;
+    dst_idx = 0;
+    for (j=1; j<=ndim-1; j++) {
+      src_idx += src_bvalue[j]*src_stride[j-1];
+      if ((i+1)%src_bunit[j] == 0) {
+        src_bvalue[j]++;
+      }
+      if (src_bvalue[j] > (count[j]-1)) {
+        src_bvalue[j] = 0;
+      }
+    }
+    for (j=1; j<=ndim-1; j++) {
+      dst_idx += dst_bvalue[j]*dst_stride[j-1];
+      if ((i+1)%dst_bunit[j] == 0) {
+        dst_bvalue[j]++;
+      }
+      if (dst_bvalue[j] > (count[j]-1)) {
+        dst_bvalue[j] = 0;
+      }
+    }
+    /* copy memory */
+    memcpy((char*)dptr+dst_idx,(char*)sptr+src_idx,segsize);
+  }
+}
+
+/**
  * Get an N-dimensional patch of data from a Global Array
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -1068,6 +1161,8 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
     int i;
     int nelem;
     int ndim = GA[handle].ndim;
+    Integer nstart[MAXDIM], ncount[MAXDIM], nld[MAXDIM];
+    Integer bstart[MAXDIM];
     /* ngai_get_common(g_a,lo,hi,buf,ld,0,-1,(Integer *)NULL); */
 
     /* cache is empty condition */
@@ -1089,7 +1184,14 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
       ngai_get_common(g_a,lo,hi,buf,ld,0,-1,(Integer*)NULL);
 
       /* new */
-      memcpy(new_buf,buf,GA[handle].elemsize*nelem);
+      for (i=0; i<ndim; i++) {
+        nstart[i] = 0;
+        bstart[i] = 0;
+        nld[i] = (hi[i]-lo[i]+1);
+        ncount[i] = nld[i];
+      }
+      gai_mem_copy(GA[handle].elemsize,ndim,buf,bstart,ncount,ld,new_buf,
+          nstart, nld);
     } else {
 
       cache_struct_t * cache_temp_pointer = GA[handle].cache_head;
@@ -1117,9 +1219,15 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
           for (i=0; i<ndim; i++) {
             nelem *= (hi[i]-lo[i]+1);
           }
+          for (i=0; i<ndim; i++) {
+            nstart[i] = (lo[i]-temp_lo[i]);
+            bstart[i] = 0;
+            nld[i] = (temp_hi[i]-temp_lo[i]+1);
+            ncount[i] = (hi[i]-lo[i]+1);
+          }
           /* copy data to recieve buffer */
-          memcpy(buf,temp_buf,GA[handle].elemsize*nelem);
-          /* ngai_get_common(g_a,lo,hi,temp_buf,ld,0,-1,(Integer*)NULL); */
+          gai_mem_copy(GA[handle].elemsize,ndim,temp_buf,nstart,ncount,nld,buf,
+              bstart, ld);
           match = 1;
           break;
         }
@@ -1147,7 +1255,14 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
         //place data to recieve buffer
         ngai_get_common(g_a,lo,hi,buf,ld,0,-1,(Integer *)NULL);
 
-        memcpy(new_buf,buf,GA[handle].elemsize*nelem);
+        for (i=0; i<ndim; i++) {
+          nstart[i] = 0;
+          bstart[i] = 0;
+          nld[i] = (hi[i]-lo[i]+1);
+          ncount[i] = nld[i];
+        }
+        gai_mem_copy(GA[handle].elemsize,ndim,buf,bstart,ncount,ld,new_buf,
+            nstart, nld);
       }
     }
 

@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
   for (test = 0; test <= 1; test++) {
 
     for (dimsize = 4; dimsize <=4096; dimsize *= 2){
-      int *abuf1, *bbuf1, *cbuf1;
+      int *abuf, *bbuf, *cbuf;
       int *ctest;
 
       int full_size = dimsize*dimsize;
@@ -409,7 +409,7 @@ int main(int argc, char **argv) {
       NGA_Unset_property(g_a);
       NGA_Unset_property(g_b);
 
-
+#if 0
       /* check multipy for correctness */
       abuf = (int*)malloc(sizeof(int)*dimsize*dimsize);
       bbuf = (int*)malloc(sizeof(int)*dimsize*dimsize);
@@ -435,6 +435,7 @@ int main(int argc, char **argv) {
       free(bbuf);
       free(cbuf);
       free(ctest);
+#endif
 
       GA_Destroy(g_a);
       GA_Destroy(g_b);
