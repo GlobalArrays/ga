@@ -152,6 +152,9 @@ int main(int argc, char **argv) {
   for (test = 0; test <= 1; test++) {
 
     for (dimsize = 4; dimsize <=4096; dimsize *= 2){
+
+      if (rank == 0) fprintf(stderr,"dim:%d start\n",dimsize);
+
       int *abuf, *bbuf, *cbuf;
       int *ctest;
 
@@ -208,8 +211,6 @@ int main(int argc, char **argv) {
 
       //GA_Print(g_a);
 
-      //fprintf(stderr, "rank[%d] PUTBUFA loA[0]:%d,loA[1]:%d,hiA[0]:%d,hiA[1]:%d, ld:%d\n",rank, loA[0],loA[1],hiA[0],hiA[1], lda);
-
       NGA_Put(g_a, alo, ahi, local_A, &lda);
       NGA_Put(g_b, blo, bhi, local_B, &ldb);
 
@@ -219,22 +220,51 @@ int main(int argc, char **argv) {
 
       char* read_only = "read_only";
       char* read_cache = "read_cache";
-
-      /*
+ 
       if (test == 0) {
       NGA_Set_property(g_a, read_only);
       NGA_Set_property(g_b, read_only);
       }
-      */
+      
 
       if (test == 1) {
         NGA_Set_property(g_a, read_cache);
         NGA_Set_property(g_b, read_cache);
       }
 
+      //subarray test
+      //allocate temp arrays
+      
+        int sub_size = (dimsize-2)*(dimsize-2);
+      
+        int *fullarray_test = (int*)malloc(full_size*sizeof(int));
+        int *subarray_test = (int*)malloc(sub_size*sizeof(int));
+      
+        int loS[DIM];
+        int hiS[DIM];
+      
+        loS[0] = loA[0] + 1;
+        loS[1] = loA[1] + 1;
+        hiS[0] = hiA[0] - 1;
+        hiS[1] = hiA[1] - 1;
+      
+        int lds = hiS[0]-loS[0]+1;
+      
+        NGA_Get(g_a,loA,hiA,fullarray_test,&lda);
+        NGA_Get(g_a,loS,hiS,subarray_test,&lds);
+      
+        if (rank == 0 && dimsize == 8) {
+           for (i=0; i<full_size; i++) {
+             fprintf(stderr,"test[%d] - rank[%d] full[%d] = %d\n",test,rank,i,fullarray_test[i]);
+           }
+           for (i=0; i<sub_size; i++){
+             fprintf(stderr,"test[%d] - rank[%d] sub[%d]  = %d\n",test,rank,i,subarray_test[i]);
+           }
+        }
+     
+           
+
       GA_Sync();
-      //GA_Print(g_a);
-      //GA_Print(g_b);
 
       grid_factor(nprocs, &pdx, &pdy);
 
@@ -270,13 +300,6 @@ int main(int argc, char **argv) {
 
       delta_t = GA_Wtime();
 
-      /* 
-         if (test == 0)
-         { 
-         if (full_size > 16) delta_t -= (.00000002*full_size);
-         }
-         */
-
       while (ycnt < ynbl) {
         int num_blocks;
         int offset;
@@ -306,7 +329,6 @@ int main(int argc, char **argv) {
 
         //set up buffers
         offset = 0;
-        //elemsize = GA_sizeofM(atype);
         elemsize = sizeof(int);
 
         c_buf = (void*)malloc((hiC[0]-loC[0]+1)*(hiC[1]-loC[1]+1)*elemsize);
@@ -337,8 +359,6 @@ int main(int argc, char **argv) {
           ld = hiA[0]-loA[0]+1;
           size_a = (hiA[0]-loA[0]+1)*(hiA[1]-loA[1]+1);
 
-          //fprintf(stderr, "rank[%d] GETBUFA loA[0]:%d,loA[1]:%d,hiA[0]:%d,hiA[1]:%d, ld:%d\n",rank, loA[0],loA[1],hiA[0],hiA[1], ld);
-
           NGA_Get(g_a,loA,hiA,a_buf,&ld);       
 
           loB[1] = loC[1];
@@ -349,8 +369,6 @@ int main(int argc, char **argv) {
           if (hiB[0] > bhi[0]) hiB[0] = bhi[0];
           ld = hiB[0]-loB[0]+1;
           size_b = (hiB[0]-loB[0]+1)*(hiB[1]-loB[1]+1);        
-
-          //fprintf(stderr, "rank[%d] GETBUFB loA[0]:%d,loA[1]:%d,hiA[0]:%d,hiA[1]:%d, ld:%d\n",rank, loA[0],loA[1],hiA[0],hiA[1], ld);
 
           NGA_Get(g_b,loB,hiB,b_buf,&ld);
 
@@ -379,12 +397,11 @@ int main(int argc, char **argv) {
           NGA_Acc(g_c, loC, hiC, c_buf, &ldC, &one);
 
         }
-
+         
         // multiplication is done, free buffers 
         free(a_buf);
         free(b_buf);
         free(c_buf);
-
 
         xcnt += pdx;
 
@@ -400,16 +417,12 @@ int main(int argc, char **argv) {
       if (test == 0 && rank == 0) printf("READ  - DIMSIZE: %5d  Time (us): %7.4f\n",dimsize,delta_t*1.0e6);
       if (test == 1 && rank == 0) printf("CACHE - DIMSIZE: %5d  Time (us): %7.4f\n",dimsize,delta_t*1.0e6);
 
-      //GA_Sync();
-
-      //if (dimsize == 4) GA_Print(g_c);
-
       GA_Sync();
 
       NGA_Unset_property(g_a);
       NGA_Unset_property(g_b);
 
-#if 0
+#if 0 
       /* check multipy for correctness */
       abuf = (int*)malloc(sizeof(int)*dimsize*dimsize);
       bbuf = (int*)malloc(sizeof(int)*dimsize*dimsize);
@@ -452,5 +465,4 @@ int main(int argc, char **argv) {
 
   MPI_Finalize();
 
-  //fprintf(stderr,"rank[%d] complete\n",rank);   
 }

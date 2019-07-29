@@ -1073,6 +1073,9 @@ void gai_mem_copy(int elemsize, int ndim, void *src_ptr, Integer *src_start,
     if (i<ndim-1) factor *= src_ld[i];
   }
   sptr = (void*)((char*)src_ptr+src_offset*elemsize);
+
+  factor = 1; //reset the factor
+
   dst_offset = 0;
   for (i=0; i<ndim; i++) {
     dst_offset += dst_start[i]*factor;
@@ -1105,6 +1108,7 @@ void gai_mem_copy(int elemsize, int ndim, void *src_ptr, Integer *src_start,
   dst_bunit[0] = 1;
   dst_bunit[1] = 1;
 
+  //this part does nothing?
   for (i=2; i<=ndim-1; i++) {
     src_bvalue[i] = 0;
     dst_bvalue[i] = 0;
@@ -1117,7 +1121,7 @@ void gai_mem_copy(int elemsize, int ndim, void *src_ptr, Integer *src_start,
     src_idx = 0;
     dst_idx = 0;
     for (j=1; j<=ndim-1; j++) {
-      src_idx += src_bvalue[j]*src_stride[j-1];
+      src_idx += src_bvalue[j]*src_stride[j];
       if ((i+1)%src_bunit[j] == 0) {
         src_bvalue[j]++;
       }
@@ -1126,7 +1130,7 @@ void gai_mem_copy(int elemsize, int ndim, void *src_ptr, Integer *src_start,
       }
     }
     for (j=1; j<=ndim-1; j++) {
-      dst_idx += dst_bvalue[j]*dst_stride[j-1];
+      dst_idx += dst_bvalue[j]*dst_stride[j];
       if ((i+1)%dst_bunit[j] == 0) {
         dst_bvalue[j]++;
       }
@@ -1177,13 +1181,11 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
       GA[handle].cache_head -> cache_buf = malloc(GA[handle].elemsize*nelem);
       GA[handle].cache_head -> next = NULL;
 
-      /*new */
         void *new_buf = GA[handle].cache_head->cache_buf;
 
       /* place data to receive buffer */
       ngai_get_common(g_a,lo,hi,buf,ld,0,-1,(Integer*)NULL);
-
-      /* new */
+   
       for (i=0; i<ndim; i++) {
         nstart[i] = 0;
         bstart[i] = 0;
@@ -1198,6 +1200,7 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
       int match = 0;
       while (cache_temp_pointer != NULL) {
         int chk;
+        int sub_chk;
         int temp_lo[MAXDIM];
         int temp_hi[MAXDIM];
         void *temp_buf = cache_temp_pointer->cache_buf;
@@ -1206,14 +1209,15 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
           temp_hi[i] = cache_temp_pointer->hi[i];
         }
 
-        /* temp_buff == buf */
+        //match
         chk = 1;
         for (i=0; i<ndim; i++) {
-          if (!(temp_lo[i] == lo[i] && temp_hi[i] == hi[i])) {
+          if (!(temp_lo[i] <= lo[i] && temp_hi[i] >= hi[i])) {
             chk = 0;
             break;
           }
         }
+        //match
         if (chk) {
           nelem = 1;
           for (i=0; i<ndim; i++) {
@@ -1227,7 +1231,7 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
           }
           /* copy data to recieve buffer */
           gai_mem_copy(GA[handle].elemsize,ndim,temp_buf,nstart,ncount,nld,buf,
-              bstart, ld);
+              bstart, ncount /*ld*/);
           match = 1;
           break;
         }
@@ -1236,6 +1240,7 @@ void pnga_get(Integer g_a, Integer *lo, Integer *hi,
 
       }
 
+      //no match condition
       if (match == 0) {
         void *new_buf;
         /* create new node on cache list*/
