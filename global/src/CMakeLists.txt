@@ -42,7 +42,8 @@ if (ENABLE_FORTRAN)
   )
   set (GA_FORTRAN_INTERFACE_F_FILES
     complex.F
-  )
+    ga_diag_seq.F
+    )
 endif()
 
 if (ENABLE_SCALAPACK)
@@ -50,10 +51,6 @@ if (ENABLE_SCALAPACK)
        ${GA_FORTRAN_INTERFACE_H_FILES} scalapack.fh)
   set (GA_FORTRAN_INTERFACE_F_FILES
        ${GA_FORTRAN_INTERFACE_F_FILES} scalapack.F)
-  if (HAVE_LAPACK OR ENABLE_EISPACK)
-    set (GA_FORTRAN_INTERFACE_F_FILES
-         ${GA_FORTRAN_INTERFACE_F_FILES} ga_diag_seq.F)
-  endif()
 endif()
 
 set(target_libraries
