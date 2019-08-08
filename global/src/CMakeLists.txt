@@ -69,6 +69,7 @@ set(WAPI_FILES
 )
 
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}
+                    ${CMAKE_CURRENT_BINARY_DIR}
                     ${PROJECT_SOURCE_DIR}/gaf2c
                     ${PROJECT_SOURCE_DIR}/ma
                     ${PROJECT_SOURCE_DIR}/comex/src-armci
@@ -111,22 +112,22 @@ set(GA_FILES
 )
 
 add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/ga-wapi.h
-  COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/ga-papi.h" -D OUTPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/ga-wapi.h" -P ${PROJECT_SOURCE_DIR}/tools/ga_papi_to_wapi.cmake
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ga-wapi.h
+  COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/ga-papi.h" -D OUTPUT:PATH="${CMAKE_CURRENT_BINARY_DIR}/ga-wapi.h" -P ${PROJECT_SOURCE_DIR}/tools/ga_papi_to_wapi.cmake
   DEPENDS ga-papi.h
 )
 
 add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/ga-wapidefs.h
-  COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/ga-papi.h" -D OUTPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/ga-wapidefs.h" -P ${PROJECT_SOURCE_DIR}/tools/ga_papi_to_wapidefs.cmake
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ga-wapidefs.h
+  COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/ga-papi.h" -D OUTPUT:PATH="${CMAKE_CURRENT_BINARY_DIR}/ga-wapidefs.h" -P ${PROJECT_SOURCE_DIR}/tools/ga_papi_to_wapidefs.cmake
   DEPENDS ga-papi.h
 )
 
 add_library(ga_src OBJECT
-  ${CMAKE_CURRENT_SOURCE_DIR}/ga-wapi.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/ga-wapidefs.h
+  ${CMAKE_CURRENT_BINARY_DIR}/ga-wapi.h
+  ${CMAKE_CURRENT_BINARY_DIR}/ga-wapidefs.h
   ${GA_FILES}
-)
+  )
 
 if(ENABLE_FORTRAN)
   ADD_DEPENDENCIES(ga_src GenerateConfigFH)
@@ -146,7 +147,7 @@ install(FILES
   ga-papi.h
 #  ga_profile.h
 #  ga-wapidefs.h
-  ga-wapi.h
+  ${CMAKE_CURRENT_BINARY_DIR}/ga-wapi.h
 #  global.h
 #  globalp.h
 #  matmul.h

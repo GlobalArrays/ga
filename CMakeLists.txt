@@ -183,10 +183,10 @@ option (F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS "Set F77 macros" ON)
 
 if (ENABLE_FORTRAN)
   include( FortranCInterface )
-  FortranCInterface_HEADER(${CMAKE_SOURCE_DIR}/f2c_cmake.h MACRO_NAMESPACE F77_FUNC_)
+  FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/f2c_cmake.h MACRO_NAMESPACE F77_FUNC_)
 else()
   CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/f2c_dummy.h.in
-                ${CMAKE_SOURCE_DIR}/f2c_cmake.h )
+                ${CMAKE_BINARY_DIR}/f2c_cmake.h )
 endif()
 
 # check size of different variables
@@ -420,28 +420,28 @@ set (CM_BLAS_SIZE ${CM_SIZEOF_F77_INTEGER})
 # Create include files from templates
 # -------------------------------------------------------------
 CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/config.h.in
-                ${CMAKE_SOURCE_DIR}/config.h )
+                ${CMAKE_BINARY_DIR}/config.h )
 CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/farg.h.in
-                ${CMAKE_SOURCE_DIR}/gaf2c/farg.h )
+                ${CMAKE_BINARY_DIR}/gaf2c/farg.h )
 CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/typesf2c.h.in
-                ${CMAKE_SOURCE_DIR}/gaf2c/typesf2c.h )
+                ${CMAKE_BINARY_DIR}/gaf2c/typesf2c.h )
 CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/matypes.h.in
-                ${CMAKE_SOURCE_DIR}/ma/matypes.h )
+                ${CMAKE_BINARY_DIR}/ma/matypes.h )
 CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/mafdecls.fh.in
-                ${CMAKE_SOURCE_DIR}/ma/mafdecls.fh )
+                ${CMAKE_BINARY_DIR}/ma/mafdecls.fh )
 CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/global.fh.in
-                ${CMAKE_SOURCE_DIR}/global/src/global.fh )
+                ${CMAKE_BINARY_DIR}/global/src/global.fh )
 
 if (ENABLE_FORTRAN)
 message(STATUS "CMAKE_COMMAND:${CMAKE_COMMAND}")
   add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/config.fh
-    COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/config.h" -D OUTPUT:PATH="${CMAKE_CURRENT_SOURCE_DIR}/config.fh" -P ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.cmake DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/config.h
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/config.h
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/config.fh
+    COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_BINARY_DIR}/config.h" -D OUTPUT:PATH="${CMAKE_CURRENT_BINARY_DIR}/config.fh" -P ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.cmake 
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/config.h
   )
   add_custom_target(
     GenerateConfigFH ALL
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/config.fh
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/config.fh
   )
 endif()
 
@@ -458,7 +458,14 @@ include_directories(AFTER ${MPI_INCLUDE_PATH})
 
 message(STATUS "MPI_CXX_LIBRARIES: ${MPI_CXX_LIBRARIES}")
 
-include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
+# Need to include directories where generated files were placed
+include_directories(BEFORE
+  ${CMAKE_SOURCE_DIR}
+  ${CMAKE_BINARY_DIR}
+  ${CMAKE_BINARY_DIR}/gaf2c
+  ${CMAKE_BINARY_DIR}/ma
+  ${CMAKE_BINARY_DIR}/global/src
+  )
 if (ENABLE_CRAY_BUILD)
   if (NOT ${MPI_LIBRARY} OR NOT ${MPI_EXTRA_LIBRARY})
     set(MPI_LIBRARY "")
@@ -479,18 +486,6 @@ add_library(ga
 )
 
 # -------------------------------------------------------------
-# Global Arrays library installation
-# -------------------------------------------------------------
-
-set (CMAKE_REQUIRED_LIBRARIES lapack blas)
-target_link_libraries(ga ${linalg_lib} ${GA_EXTRA_LIBS})
-
-install (TARGETS
-  ga
-  DESTINATION lib
-)
-
-# -------------------------------------------------------------
 # Subdirectories
 # -------------------------------------------------------------
 add_subdirectory(global/src)
@@ -503,3 +498,16 @@ add_subdirectory(pario)
 add_subdirectory(gaf2c)
 add_subdirectory(LinAlg/lapack+blas)
 add_subdirectory(global/testing)
+
+# -------------------------------------------------------------
+# Global Arrays library installation
+# -------------------------------------------------------------
+
+set (CMAKE_REQUIRED_LIBRARIES lapack blas)
+target_link_libraries(ga ${linalg_lib} ${GA_EXTRA_LIBS})
+
+install (TARGETS
+  ga
+  DESTINATION lib
+)
+

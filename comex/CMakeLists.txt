@@ -37,7 +37,10 @@ option (COMEX_NETWORK_MPI_PR "use MPI progress ranks protocol for communication"
 option (COMEX_NETWORK_MPI3 "use MPI RMA protocols for communication" OFF)
 option (COMEX_NETWORK_MPI_MT "use MPI multi-threading protocol for communication" OFF)
 option (COMEX_NETWORK_MPI_PT "use MPI progress threads protocol for communication" OFF)
-include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR} src-common)
+include_directories(BEFORE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  src-common)
 if (MPI_TS)
   set(COMEX_DEVICE
     src-mpi/comex.c
@@ -399,7 +402,7 @@ CHECK_FUNCTION_EXISTS(pthread_setaffinity_np
 
 # generate config.h header file
 CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h.in
-                ${CMAKE_CURRENT_SOURCE_DIR}/config.h )
+                ${CMAKE_CURRENT_BINARY_DIR}/config.h )
 
 # -------------------------------------------------------------
 # ARMCI and COMEX header installation
