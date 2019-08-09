@@ -504,7 +504,7 @@ add_subdirectory(global/testing)
 # -------------------------------------------------------------
 
 set (CMAKE_REQUIRED_LIBRARIES lapack blas)
-target_link_libraries(ga ${linalg_lib} ${GA_EXTRA_LIBS})
+target_link_libraries(ga ${linalg_lib} ${GA_EXTRA_LIBS} ${MPI_C_LIBRARIES})
 
 install (TARGETS
   ga

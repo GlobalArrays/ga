@@ -69,7 +69,7 @@ add_library(ga++
   services.cc
 )
 
-target_link_libraries(ga++)
+target_link_libraries(ga++ ga  ${MPI_C_LIBRARIES})
 
 install (TARGETS
   ga++

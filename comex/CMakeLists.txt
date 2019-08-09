@@ -451,7 +451,7 @@ add_library(armci
   ${COMEX_DEVICE}
 )
 
-target_link_libraries(armci)
+target_link_libraries(armci ${MPI_C_LIBRARIES})
 
 install (TARGETS
   armci
@@ -462,7 +462,7 @@ add_library(comex
  ${COMEX_DEVICE}
 )
 
-target_link_libraries(comex)
+target_link_libraries(comex ${MPI_C_LIBRARIES})
 
 install (TARGETS
   comex
