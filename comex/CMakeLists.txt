@@ -439,7 +439,12 @@ set(ARMCI_FILES
 add_library(armci_comex OBJECT
   ${ARMCI_FILES}
   ${COMEX_DEVICE}
-)
+  )
+
+if (BUILD_SHARED_LIBS)
+  set_target_properties(armci_comex PROPERTIES POSITION_INDEPENDENT_CODE True)
+endif()
+
 
 add_library(armci
   ${ARMCI_FILES}

@@ -125,6 +125,9 @@ add_library(ga_src OBJECT
   ${CMAKE_CURRENT_BINARY_DIR}/ga-wapidefs.h
   ${GA_FILES}
   )
+if (BUILD_SHARED_LIBS)
+  set_target_properties(ga_src PROPERTIES POSITION_INDEPENDENT_CODE True)
+endif()
 
 if(ENABLE_FORTRAN)
   ADD_DEPENDENCIES(ga_src GenerateConfigFH)

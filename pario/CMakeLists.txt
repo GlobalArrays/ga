@@ -106,7 +106,6 @@ set(DRA_FILES
     dra/capi.c
     dra/disk.param.c
     dra/env.c
-    dra/global.unsup.c
     dra/patch.util.c
     dra/util.c
     ${DRA_FORTRAN_FILES}
@@ -136,3 +135,7 @@ add_library(dra OBJECT ${DRA_FILES})
 add_library(eaf OBJECT ${EAF_FILES})
 add_library(elio OBJECT ${ELIO_FILES})
 add_library(sf OBJECT ${SF_FILES})
+if (BUILD_SHARED_LIBS)
+  set_target_properties(dra eaf elio sf
+    PROPERTIES POSITION_INDEPENDENT_CODE True)
+endif()

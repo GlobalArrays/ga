@@ -62,7 +62,11 @@ add_library(gaf2c OBJECT
   testarg.c
   drand.c
   ${FORTRAN_FILES}
-)
+  )
+if (BUILD_SHARED_LIBS)
+  set_target_properties(gaf2c PROPERTIES POSITION_INDEPENDENT_CODE True)
+endif()
+
 
 if (ENABLE_FORTRAN)
   ADD_DEPENDENCIES(ga_src GenerateConfigFH)

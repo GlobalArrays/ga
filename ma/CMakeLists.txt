@@ -85,7 +85,10 @@ add_library(ma OBJECT
   string-util.c
   table.c
   ${FORTRAN_FILES}
-)
+  )
+if (BUILD_SHARED_LIBS)
+  set_target_properties(ma PROPERTIES POSITION_INDEPENDENT_CODE True)
+endif()
 
 if (ENABLE_FORTRAN)
   ADD_DEPENDENCIES(ga_src GenerateConfigFH)
