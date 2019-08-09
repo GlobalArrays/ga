@@ -55,10 +55,10 @@ endfunction(ga_add_parallel_test)
 # on multiple processors using ${MPI_EXEC}. Success or failure is
 # based on the exit code.
 # -------------------------------------------------------------
-function(ga_add_parallel_run_test test_name test_program test_input)
+function(ga_add_parallel_run_test test_name test_program)
   set(the_test_name "${test_name}_parallel")
   add_test("${the_test_name}"
-    ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} ${test_program} ${MPIEXEC_POSTFLAGS} ${test_input})
+    ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} ${test_program} ${MPIEXEC_POSTFLAGS})
   set_tests_properties("${the_test_name}"
     PROPERTIES 
     TIMEOUT ${GLOBALARRAYS_TEST_TIMEOUT}
