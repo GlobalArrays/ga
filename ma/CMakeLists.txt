@@ -50,7 +50,7 @@ endif()
 # -------------------------------------------------------------
 
 if (ENABLE_FORTRAN)
-  set(FORTRAN_HEADERS maf2c.fh mafdecls.fh)
+  set(FORTRAN_HEADERS maf2c.fh ${CMAKE_CURRENT_BINARY_DIR}/mafdecls.fh)
 endif()
 
 set(MA_HEADERS
@@ -58,7 +58,7 @@ set(MA_HEADERS
 #  error.h
   macdecls.h
   macommon.h
-  matypes.h
+  ${CMAKE_CURRENT_BINARY_DIR}/matypes.h
 #  memcpy.h
   scope.h
   string-util.h
