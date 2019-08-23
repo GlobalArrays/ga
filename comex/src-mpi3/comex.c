@@ -1972,18 +1972,16 @@ int comex_test(comex_request_t* hdl, int *status)
 #endif
 #ifdef USE_MPI_REQUESTS
     int flag;
-    int ret, ierr;
+    int ierr;
     MPI_Status stat;
     ierr = MPI_Test(&(nb_list[*hdl]->request),&flag,&stat);
     translate_mpi_error(ierr,"comex_test:MPI_Test");
     if (flag) {
       *status = 0;
-      ret = COMEX_SUCCESS;
     } else {
       *status = 1;
-      ret = COMEX_FAILURE;
     }
-    return ret;
+    return COMEX_SUCCESS;
 #else
     *status = 0;
     return COMEX_SUCCESS;
