@@ -30,7 +30,6 @@ int main( int argc, char **argv ) {
 
   int heap=3000000, stack=2000000;
 
-  exit(0);
   MP_INIT(argc,argv);
 
   GA_INIT(argc,argv);                            /* initialize GA */
@@ -92,17 +91,17 @@ int main( int argc, char **argv ) {
 
   /* Check to see if g_a is filled with correct values */
   NGA_Distribution(g_a, me, lo, hi);
-  NGA_Access(g_a, lo, hi, &buf, &ld);
+  NGA_Access(g_a, lo, hi, &ptr, &ld);
   isize = (hi[0]-lo[0]+1);
   jsize = (hi[1]-lo[1]+1);
   ld = jsize;
   ok = 1;
   for (i=0; i<isize; i++) {
     for (j=0; j<jsize; j++) {
-      if (buf[j+ld*i] != j+lo[1] + N*(i+lo[0])) {
+      if (ptr[j+ld*i] != j+lo[1] + N*(i+lo[0])) {
         ok = 0;
         printf("p[%d] Mismatch for non-blocking put. Expected: %d Actual: %d\n",
-            me,j+lo[1] + N*(i+lo[0]),buf[j+ld*isize]);
+            me,j+lo[1] + N*(i+lo[0]),ptr[j+ld*isize]);
       }
     }
   }
@@ -117,6 +116,7 @@ int main( int argc, char **argv ) {
   }
   /* Test non-blocking put to more than 1 processor */
   GA_Sync();
+  GA_Zero(g_a);
   if (me == 0) {
     lo[0] = 0;
     hi[0] = N-1;
@@ -130,25 +130,29 @@ int main( int argc, char **argv ) {
         buf[j+ld*i] = j + N*i;
       }
     }
-      NGA_NbPut(g_a, lo, hi, buf, &ld, &nbhdl[0]);
+    NGA_NbPut(g_a, lo, hi, buf, &ld, &nbhdl[0]);
     /* Test handle until completion */
-    while (NGA_NbTest(&nbhdl[0])) {}
+    jsize = 0;
+    while (NGA_NbTest(&nbhdl[0])) {
+      jsize++;
+    }
+    free(buf);
   }
   GA_Sync();
   /* Check to see if g_a is filled with correct values */
   NGA_Distribution(g_a, me, lo, hi);
-  NGA_Access(g_a, lo, hi, &buf, &ld);
+  NGA_Access(g_a, lo, hi, &ptr, &ld);
   isize = (hi[0]-lo[0]+1);
   jsize = (hi[1]-lo[1]+1);
   ld = jsize;
   ok = 1;
   for (i=0; i<isize; i++) {
     for (j=0; j<jsize; j++) {
-      if (buf[j+ld*i] != j+lo[1] + N*(i+lo[0])) {
+      if (ptr[j+ld*i] != j+lo[1] + N*(i+lo[0])) {
         ok = 0;
         printf("p[%d] Mismatch for multi-process non-blocking put."
             " Expected: %d Actual: %d\n",
-            me,j+lo[1] + N*(i+lo[0]),buf[j+ld*isize]);
+            me,j+lo[1] + N*(i+lo[0]),ptr[j+ld*isize]);
       }
     }
   }
@@ -190,7 +194,7 @@ int main( int argc, char **argv ) {
       for (j=0; j<N; j++) {
         if (buf[j+N*i] != j+N*i) {
           printf("p[%d] Mismatch for non-blocking get. Expected: %d Actual: %d\n",
-            me,j+lo[1] + N*(i+lo[0]),buf[j+ld*isize]);
+            me,j + N*i,buf[j+N*i]);
           ok = 0;
         }
       }

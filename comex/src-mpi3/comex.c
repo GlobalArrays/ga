@@ -109,6 +109,7 @@ void get_nb_request(comex_request_t *handle, nb_t **req)
      * handle as available. This is NOT thread safe */
     *handle = nb_full_count;
     comex_wait(handle);
+    *req = nb_list[nb_full_count];
     nb_full_count++;
     nb_full_count = nb_full_count%nb_max_outstanding;
   }

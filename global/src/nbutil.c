@@ -175,20 +175,20 @@ ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
 /*\ Add the armci handle list element to the end of the list.
 \*/
 static void add_armcihdl_to_list(ga_armcihdl_t *listelement, int headindex){
-ga_armcihdl_t *first=ga_ihdl_array[headindex].ahandle;
+  ga_armcihdl_t *first=ga_ihdl_array[headindex].ahandle;
 
-    ga_ihdl_array[headindex].count++;
-    listelement->ga_hdlarr_index = headindex;
-    if(ga_ihdl_array[headindex].ahandle==NULL){
-       ga_ihdl_array[headindex].ahandle=listelement;
-       listelement->previous= NULL;
-       return;
-    }
-    while(first->next!=NULL){
-       first=first->next;
-    }
-    first->next=listelement;
-    listelement->previous=first;
+  ga_ihdl_array[headindex].count++;
+  listelement->ga_hdlarr_index = headindex;
+  if(ga_ihdl_array[headindex].ahandle==NULL){
+    ga_ihdl_array[headindex].ahandle=listelement;
+    listelement->previous= NULL;
+    return;
+  }
+  while(first->next!=NULL){
+    first=first->next;
+  }
+  first->next=listelement;
+  listelement->previous=first;
 }
 
 
