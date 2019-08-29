@@ -44,6 +44,9 @@
 #define MAYBE_MEMSET(a,b,c) ((void)0)
 #endif
 
+#define XSTR(x) #x
+#define STR(x) XSTR(x)
+
 /* data structures */
 
 typedef enum {

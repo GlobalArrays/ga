@@ -48,6 +48,9 @@
 #define USE_MPI_REQUESTS
 #endif
 
+#define XSTR(x) #x
+#define STR(x) XSTR(x)
+
 #if USE_SICM
 static sicm_device_list devices = {0};
 static sicm_device *device_dram = NULL;
