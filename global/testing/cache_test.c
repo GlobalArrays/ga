@@ -141,9 +141,9 @@ int main(int argc, char **argv) {
       char* read_cache = "read_cache";
 
       //subarray variables
-      int sub_size = (dimsize-2)*(dimsize-2);
+      int sub_size;
       int *fullarray_test = (int*)malloc(full_size*sizeof(int));
-      int *subarray_test = (int*)malloc(sub_size*sizeof(int));
+      int *subarray_test;
       int loS[DIM], hiS[DIM];
       int lds;
 
@@ -180,26 +180,9 @@ int main(int argc, char **argv) {
         NGA_Set_property(g_b, read_cache);
       }
 
-      //subarray test   
-      loS[0] = loA[0] + 1;
-      loS[1] = loA[1] + 1;
-      hiS[0] = hiA[0] - 1;
-      hiS[1] = hiA[1] - 1;  
-      lds = hiS[0]-loS[0]+1;
-      
-      NGA_Get(g_a,loA,hiA,fullarray_test,&lda);
-      NGA_Get(g_a,loS,hiS,subarray_test,&lds);
-      
-      if (rank == 0 && dimsize == 8) {
-        for (i=0; i<full_size; i++) {
-          fprintf(stderr,"test[%d] - rank[%d] full[%d] = %d\n",test,rank,i,fullarray_test[i]);
-        }
-        for (i=0; i<sub_size; i++){
-          fprintf(stderr,"test[%d] - rank[%d] sub[%d]  = %d\n",test,rank,i,subarray_test[i]);
-        }
-      }    
-
       GA_Sync();
+
+      delta_t = GA_Wtime();
 
       grid_factor(nprocs, &pdx, &pdy);
 
@@ -227,8 +210,6 @@ int main(int argc, char **argv) {
       ycnt = ipy;
 
       GA_Sync();
-
-      delta_t = GA_Wtime();
 
       while (ycnt < ynbl) {
         int num_blocks, offset;
@@ -258,20 +239,20 @@ int main(int argc, char **argv) {
         c_buf = (void*)malloc((hiC[0]-loC[0]+1)*(hiC[1]-loC[1]+1)*elemsize);
         a_buf = (void*)malloc((hiC[0]-loC[0]+1)*(hiC[1]-loC[1]+1)*elemsize);
         b_buf = (void*)malloc((hiC[0]-loC[0]+1)*(hiC[1]-loC[1]+1)*elemsize);
-
+        
         test_buf = (hiC[0]-loC[0]+1)*(hiC[1]-loC[1]+1)*elemsize;
         size_c = (hiC[0]-loC[0]+1)*(hiC[1]-loC[1]+1);
         ldC = hiC[1]-loC[1]+1;
-
+        
         // calculate starting block index
         istart = (loC[0]-clo[0])/(hiC[0]-loC[0]+1);
-
+        
         // loop over block pairs
         for (nb=0; nb<num_blocks; nb++) {
-
+          
           ind = istart + nb;
           ind = ind%num_blocks;
-
+          
           nlo = alo[1]+ind*(hiC[0]-loC[0]+1);
           loA[0] = loC[0];
           hiA[0] = hiC[0];
@@ -280,8 +261,21 @@ int main(int argc, char **argv) {
           if (hiA[1] > ahi[1]) hiA[1] = ahi[1];
           ld = hiA[0]-loA[0]+1;
           size_a = (hiA[0]-loA[0]+1)*(hiA[1]-loA[1]+1);
-
+          
           NGA_Get(g_a,loA,hiA,a_buf,&ld);       
+          
+          if (dimsize > 4) {
+          sub_size = (hiC[0]-loC[0]-1)*(hiC[1]-loC[1]-1);
+          subarray_test = (int*)malloc(sub_size*sizeof(int)); 
+          
+          loS[0] = loA[0]+1;
+          loS[1] = loA[1]+1;
+          hiS[0] = hiA[0]-1;
+          hiS[1] = hiA[1]-1;
+          lds = hiS[0]-loS[0]+1;
+
+          NGA_Get(g_a,loS,hiS,subarray_test,&lds);
+          }          
 
           loB[1] = loC[1];
           hiB[1] = hiC[1];
