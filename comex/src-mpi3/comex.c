@@ -109,6 +109,7 @@ void get_nb_request(comex_request_t *handle, nb_t **req)
      * handle as available. This is NOT thread safe */
     *handle = nb_full_count;
     comex_wait(handle);
+    *req = nb_list[nb_full_count];
     nb_full_count++;
     nb_full_count = nb_full_count%nb_max_outstanding;
   }
@@ -1972,18 +1973,16 @@ int comex_test(comex_request_t* hdl, int *status)
 #endif
 #ifdef USE_MPI_REQUESTS
     int flag;
-    int ret, ierr;
+    int ierr;
     MPI_Status stat;
     ierr = MPI_Test(&(nb_list[*hdl]->request),&flag,&stat);
     translate_mpi_error(ierr,"comex_test:MPI_Test");
     if (flag) {
       *status = 0;
-      ret = COMEX_SUCCESS;
     } else {
       *status = 1;
-      ret = COMEX_FAILURE;
     }
-    return ret;
+    return COMEX_SUCCESS;
 #else
     *status = 0;
     return COMEX_SUCCESS;

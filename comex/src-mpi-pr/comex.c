@@ -1392,12 +1392,14 @@ int comex_test(comex_request_t* hdl, int *status)
     }
 
     if (NULL == nb->send_head && NULL == nb->recv_head) {
+      /* Completed */
         COMEX_ASSERT(0 == nb->send_size);
         COMEX_ASSERT(0 == nb->recv_size);
         *status = 0;
         nb->in_use = 0;
     }
     else {
+      /* Not completed */
         *status = 1;
     }
 

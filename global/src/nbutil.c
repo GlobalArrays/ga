@@ -175,20 +175,20 @@ ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
 /*\ Add the armci handle list element to the end of the list.
 \*/
 static void add_armcihdl_to_list(ga_armcihdl_t *listelement, int headindex){
-ga_armcihdl_t *first=ga_ihdl_array[headindex].ahandle;
+  ga_armcihdl_t *first=ga_ihdl_array[headindex].ahandle;
 
-    ga_ihdl_array[headindex].count++;
-    listelement->ga_hdlarr_index = headindex;
-    if(ga_ihdl_array[headindex].ahandle==NULL){
-       ga_ihdl_array[headindex].ahandle=listelement;
-       listelement->previous= NULL;
-       return;
-    }
-    while(first->next!=NULL){
-       first=first->next;
-    }
-    first->next=listelement;
-    listelement->previous=first;
+  ga_ihdl_array[headindex].count++;
+  listelement->ga_hdlarr_index = headindex;
+  if(ga_ihdl_array[headindex].ahandle==NULL){
+    ga_ihdl_array[headindex].ahandle=listelement;
+    listelement->previous= NULL;
+    return;
+  }
+  while(first->next!=NULL){
+    first=first->next;
+  }
+  first->next=listelement;
+  listelement->previous=first;
 }
 
 
@@ -218,16 +218,16 @@ int elementtofree,i;
 /*\ called from ga_put/get before a call to every non-blocking armci request. 
 \*/
 armci_hdl_t* get_armci_nbhandle(Integer *nbhandle){
-gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
-ga_armcihdl_t *ret_handle;
-    if(inbhandle->ihdl_index == (NUM_HDLS+1)){
-       inbhandle->ihdl_index = get_GAnbhdl_element(-1);
-       inbhandle->ga_nbtag = get_next_tag();
-       ga_ihdl_array[(inbhandle->ihdl_index)].ga_nbtag=inbhandle->ga_nbtag; 
-    }
-    ret_handle = get_armcihdl(); 
-    add_armcihdl_to_list(ret_handle,inbhandle->ihdl_index);
-    return(ret_handle->handle);
+  gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
+  ga_armcihdl_t *ret_handle;
+  if(inbhandle->ihdl_index == (NUM_HDLS+1)){
+    inbhandle->ihdl_index = get_GAnbhdl_element(-1);
+    inbhandle->ga_nbtag = get_next_tag();
+    ga_ihdl_array[(inbhandle->ihdl_index)].ga_nbtag=inbhandle->ga_nbtag; 
+  }
+  ret_handle = get_armcihdl(); 
+  add_armcihdl_to_list(ret_handle,inbhandle->ihdl_index);
+  return(ret_handle->handle);
 }
 
 /*\ the wait routine which is called inside nga_nbwait and ga_nbwait
@@ -245,29 +245,46 @@ int retval = 0;
 }
 
 
-static int test_list_element(int index){
-ga_armcihdl_t *listele;
-    if(DEBUG){
-       printf("\n%ld:clearing handle %d\n",(long)GAme,index);fflush(stdout);
-    }
-    listele = &(list_element_array[index]);
+static int test_list_element(int index)
+{
+  ga_armcihdl_t *listele;
+  if(DEBUG){
+    printf("\n%ld:clearing handle %d\n",(long)GAme,index);fflush(stdout);
+  }
+  listele = &(list_element_array[index]);
 
-    return (ARMCI_Test(listele->handle));
+  return (ARMCI_Test(listele->handle));
 }
 
-static int test_armci_handle_list(int elementtofree){
-ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
- int done = 1; 
-    /*call clear_list_element for every element in the list*/
-    while(first!=NULL){
-       next=first->next;
-       if (test_list_element(first->index) == 0) {
-	 done = 0;
-	 break;
-       }
-       first=next;
+static int test_armci_handle_list(int elementtofree)
+{
+  ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle;
+  ga_armcihdl_t *next;
+  ga_armcihdl_t *prev = NULL;
+  int done = 1; 
+  /*call clear_list_element for every element in the list*/
+  while(first!=NULL){
+    next=first->next;
+    if (test_list_element(first->index) == 0) {
+      /* Remove this element from the list */
+      if (prev == NULL && next == NULL) {
+        /* No elements left, so test is finished */
+        done = 0;
+        first = next;
+      } else {
+        if (prev == NULL) {
+          first = next;
+        } else {
+          prev->next = next;
+          first = next;
+        }
+      }
+    } else {
+      prev = first;
+      first=next;
     }
-    return (done);
+  }
+  return (done);
 }
 
 /*\ the test routine which is called inside nga_nbtest
@@ -275,10 +292,11 @@ ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
 int nga_test_internal(Integer *nbhandle){
 gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
 int retval = 0;
-    if(inbhandle->ihdl_index==(NUM_HDLS+1))retval=0;
-    else if(inbhandle->ga_nbtag !=ga_ihdl_array[inbhandle->ihdl_index].ga_nbtag)
+    if(inbhandle->ihdl_index==(NUM_HDLS+1)) {
+      retval=0;
+    } else if(inbhandle->ga_nbtag !=ga_ihdl_array[inbhandle->ihdl_index].ga_nbtag) {
        retval=0;
-    else
+    } else
        return (test_armci_handle_list(inbhandle->ihdl_index));
     
     return(retval);
