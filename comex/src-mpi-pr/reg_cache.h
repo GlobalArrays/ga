@@ -3,7 +3,7 @@
 
 #if USE_SICM
 #include <sicm_low.h>
-#include <sicm_impl.h>
+//#include <sicm_impl.h>
 #endif
 #include <stddef.h>
 
@@ -27,7 +27,11 @@ typedef struct _reg_entry_t {
     char name[SHM_NAME_SIZE];   /**< name of region */
     int use_dev;                /**< memory is on a device */
 #if USE_SICM
+#if SICM_OLD
     sicm_device *device;         /**< pointer to SICM device */
+#else
+    sicm_device_list device;         /**< pointer to SICM device */
+#endif
 #endif
 } reg_entry_t;
 
@@ -42,7 +46,11 @@ reg_entry_t *reg_cache_find(int rank, void *buf, size_t len);
 reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len,
     const char *name, void *mapped, int use_dev
 #if USE_SICM
+#if SICM_OLD
     ,sicm_device *device
+#else
+    ,sicm_device_list device
+#endif
 #endif
     );
 reg_return_t reg_cache_delete(int rank, void *buf);

@@ -142,7 +142,12 @@ void tcgi_alt_pbegin(int *argc, char **argv[])
 #else
         MPI_Init(argc, argv);
 #endif
+
+#if MPI_VERSION >= 3
+        MPI_Comm_set_errhandler(TCGMSG_Comm, MPI_ERRORS_RETURN);
+#else
         MPI_Errhandler_set(TCGMSG_Comm, MPI_ERRORS_RETURN);
+#endif
     }
 
     MPI_Comm_size(TCGMSG_Comm, &numprocs);

@@ -494,7 +494,11 @@ reg_entry_t*
 reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped,
     int use_dev
 #if USE_SICM
+#if SICM_OLD
     ,sicm_device *device
+#else
+    ,sicm_device_list device
+#endif
 #endif
     )
 {

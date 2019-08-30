@@ -22,7 +22,9 @@
 #include <mpi.h>
 #if USE_SICM
 #include <sicm_low.h>
-#include <sicm_impl.h>
+//#include <sicm_impl.h>
+sicm_device_list nill;
+
 #endif
 
 /* our headers */
@@ -182,7 +184,11 @@ static int COMEX_ENABLE_ACC_IOV = ENABLE_ACC_IOV;
 
 #if USE_SICM
 static sicm_device_list devices = {0};
+#if SICM_OLD
 static sicm_device *device_dram = NULL;
+#else
+static sicm_device_list device_dram = {0};
+#endif
 #endif
 
 #if PAUSE_ON_ERROR
@@ -306,7 +312,11 @@ STATIC void unpack(char *packed_buffer,
 STATIC char* _generate_shm_name(int rank);
 STATIC reg_entry_t* _comex_malloc_local(size_t size);
 #if USE_SICM
+#if SICM_OLD
 STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device *device);
+#else
+STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device_list device);
+#endif
 int _comex_free_local_memdev(void *ptr);
 #endif
 STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory);
@@ -321,8 +331,13 @@ STATIC void* _shm_create(const char *name, size_t size);
 STATIC void* _shm_attach(const char *name, size_t size);
 STATIC void* _shm_map(int fd, size_t size);
 #if USE_SICM
+#if SICM_OLD
 STATIC void* _shm_create_memdev(const char *name, size_t size, sicm_device *device);
 STATIC void* _shm_attach_memdev(const char *name, size_t size, sicm_device *device);
+#else
+STATIC void* _shm_create_memdev(const char *name, size_t size, sicm_device_list device);
+STATIC void* _shm_attach_memdev(const char *name, size_t size, sicm_device_list device);
+#endif
 STATIC void* _shm_map_arena(int fd, size_t size, sicm_arena arena);
 #endif
 STATIC int _set_affinity(int cpu);
@@ -530,9 +545,11 @@ int comex_init()
 
 #if USE_SICM
     devices = sicm_init();
+#if SICM_OLD
     for(i = 0; i < devices.count; i++) {
-        if (devices.devices[i].tag == SICM_DRAM) {
-            device_dram = &devices.devices[i];
+        sicm_device *curr = &devices.devices[i];
+        if (curr->tag == SICM_DRAM) {
+            device_dram = curr;
             break;
         }
     }
@@ -540,6 +557,20 @@ int comex_init()
       printf("Device DRAM not found\n");
       exit(18);
     }
+#else
+   for(i =0; i < devices.count; ++i){
+      sicm_device *curr = devices.devices[i];
+      if(curr->tag == SICM_DRAM){
+         device_dram.count = 1;
+         device_dram.devices = &devices.devices[i];
+         break;
+      }
+   }
+   if(device_dram.devices == NULL){
+      printf("Device DRAM not found\n");
+      exit(18);
+   }
+#endif
 #endif
 
     /* reg_cache */
@@ -1311,8 +1342,13 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
 #endif
 
     /* register the memory locally */
+#if SICM_OLD
     reg_entry = reg_cache_insert(
             g_state.rank, memory, size, name, memory, 0, NULL);
+#else
+    reg_entry = reg_cache_insert(
+            g_state.rank, memory, size, name, memory, 0, nill);
+#endif
 
     if (NULL == reg_entry) {
         comex_error("_comex_malloc_local: reg_cache_insert", -1);
@@ -1324,7 +1360,11 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
 }
 
 #if USE_SICM
+#if SICM_OLD
 STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device *device)
+#else
+STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device_list device)
+#endif
 {
     char *name = NULL;
     void *memory = NULL;
@@ -2147,7 +2187,14 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
                     reg_entries[i].buf,
                     reg_entries[i].len,
                     reg_entries[i].name,
-                    memory,0,NULL);
+                    memory,0
+#if SICM_OLD
+                    ,NULL
+#else
+                    ,nill
+#endif
+
+);
             if (is_notifier) {
                 /* does this need to be a memcpy?? */
                 reg_entries_local[reg_entries_local_count++] = reg_entries[i];
@@ -2224,7 +2271,13 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
     int reg_entries_local_count = 0;
     reg_entry_t *reg_entries_local = NULL;
     int status = 0;
+#if SICM_OLD
     sicm_device *idevice = NULL;
+#else
+    sicm_device_list idevice;
+    idevice.count = 0;
+    idevice.devices = NULL;
+#endif
 
     /* preconditions */
     COMEX_ASSERT(ptrs);
@@ -2270,10 +2323,11 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
         reg_cache_nullify(&my_reg);
     }
     else {
+      /* Joseph: is this code selecting the correct device? */
       /* This will become more complicated */
       idevice = device_dram;
 
-      if (!strncmp(device,"dram",4)) {
+      if (!strncmp(device,"dram",4)) { /* Joseph: how other devices are selected? */
         idevice = device_dram;
       }
       my_reg = *_comex_malloc_local_memdev(sizeof(char)*size, idevice);
@@ -4462,7 +4516,11 @@ STATIC void* _shm_create(const char *name, size_t size)
 }
 
 #if USE_SICM
+#if SICM_OLD
 STATIC void* _shm_create_memdev(const char *name, size_t size, sicm_device* device)
+#else
+STATIC void* _shm_create_memdev(const char *name, size_t size, sicm_device_list device)
+#endif
 {
     void *mapped = NULL;
     int fd = 0;
@@ -4496,9 +4554,11 @@ STATIC void* _shm_create_memdev(const char *name, size_t size, sicm_device* devi
 
     /* the file will be used for arena allocation,
      * so it should not be truncated here */
-
+#if SICM_OLD
     sicm_arena arena = sicm_arena_create_mmapped(0, device, fd, 0, -1, 0);
-
+#else
+    sicm_arena arena = sicm_arena_create_mmapped(0, 0, &device, fd, 0, -1, 0);
+#endif
     /* map into local address space */
     mapped = _shm_map_arena(fd, size, arena);
 
@@ -4545,7 +4605,11 @@ STATIC void* _shm_attach(const char *name, size_t size)
 }
 
 #if USE_SICM
+#if SICM_OLD
 STATIC void* _shm_attach_memdev(const char *name, size_t size, sicm_device *device)
+#else
+STATIC void* _shm_attach_memdev(const char *name, size_t size, sicm_device_list device)
+#endif
 {
     void *mapped = NULL;
     int fd = 0;
@@ -4562,8 +4626,11 @@ STATIC void* _shm_attach_memdev(const char *name, size_t size, sicm_device *devi
         perror("_shm_attach_memdev: shm_open");
         comex_error("_shm_attach_memdev: shm_open", -1);
     }
-
+#if SICM_OLD
     sicm_arena arena = sicm_arena_create_mmapped(0, device, fd, 0, -1, 0);
+#else
+    sicm_arena arena = sicm_arena_create_mmapped(0, 0, &device, fd, 0, -1, 0);
+#endif
 
     /* map into local address space */
     mapped = _shm_map_arena(fd, size, arena);

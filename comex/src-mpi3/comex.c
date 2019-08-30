@@ -14,7 +14,7 @@
 #include <mpi.h>
 #if USE_SICM
 #include <sicm_low.h>
-#include <sicm_impl.h>
+//#include <sicm_impl.h>
 #endif
 
 /* our headers */
