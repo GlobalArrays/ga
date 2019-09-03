@@ -14,16 +14,20 @@
 #include "macdecls.h"
 #include "mp3.h"
 
-#define N 8            /* dimension of matrices */
+#define N 128            /* dimension of matrices */
 
+#define TEST 1
 
 int main( int argc, char **argv ) {
   int g_a;
+  int g_cnt, zero;
+  long lone;
+  int one;
   int lo[2], hi[2];
   int dims[2];
   int me, nproc;
   int i, j, n, ld, isize, jsize, icnt, nleft;
-  int type=MT_C_INT, one;
+  int type=MT_C_INT;
   int nelems, ok;
   int *buf, *ptr;
   ga_nbhdl_t *nbhdl;
@@ -46,19 +50,27 @@ int main( int argc, char **argv ) {
   if(! MA_init(MT_F_DBL, stack, heap)) 
     GA_Error("MA_init failed",stack+heap);  /* initialize memory allocator*/ 
 
+  one = 1;
+  lone = 1;
+  zero = 0;
   /* Create a regular matrix. */
   if(me==0)printf("\nCreating matrix A of size %d x %d\n",N,N);
   dims[0] = N;
   dims[1] = N;
   g_a = NGA_Create(type, 2, dims, "A", NULL);
   if(!g_a) GA_Error("create failed: A",n); 
+  g_cnt = NGA_Create(type,one,&one,"COUNT",NULL);
+  GA_Zero(g_cnt);
 
+#if 1
   /* Fill matrix from process 0 using non-blocking puts */
   nelems = N*N;
   if (me == 0) {
     buf = (int*)malloc(nelems*sizeof(int));
     ptr = buf;
     nbhdl = (ga_nbhdl_t*)malloc(nproc*sizeof(ga_nbhdl_t));
+    printf("p[%d] Calling NbPut\n",me);
+      NGA_Read_inc(g_cnt,&zero,lone); /* 0 */
     for (n=0; n<nproc; n++) {
       NGA_Distribution(g_a, n, lo, hi);
       isize = (hi[0]-lo[0]+1);
@@ -74,18 +86,25 @@ int main( int argc, char **argv ) {
        * a new buffer for next put */
       ptr = ptr + isize*jsize;
     }
+    printf("p[%d] Completed NbPut, calling NbTest\n",me);
     /* Test handles until completion */
     nleft = nproc;
+      NGA_Read_inc(g_cnt,&zero,lone); /* 1 */
     while (nleft > 0) {
       icnt = 0;
       for (n=0; n<nleft; n++) {
+#if TEST
         if (NGA_NbTest(&nbhdl[n])) {
           nbhdl[icnt] = nbhdl[n];
           icnt++;
         }
+#else
+        NGA_NbWait(&nbhdl[n]);
+#endif
       }
       nleft = icnt;
     }
+    printf("p[%d] Completed NbTest\n",me);
   }
   GA_Sync();
 
@@ -130,12 +149,18 @@ int main( int argc, char **argv ) {
         buf[j+ld*i] = j + N*i;
       }
     }
+      NGA_Read_inc(g_cnt,&zero,lone); /* 2 */
     NGA_NbPut(g_a, lo, hi, buf, &ld, &nbhdl[0]);
     /* Test handle until completion */
+      NGA_Read_inc(g_cnt,&zero,lone); /* 3 */
+#if TEST
     jsize = 0;
     while (NGA_NbTest(&nbhdl[0])) {
       jsize++;
     }
+#else
+    NGA_NbWait(&nbhdl[0]);
+#endif
     free(buf);
   }
   GA_Sync();
@@ -165,26 +190,46 @@ int main( int argc, char **argv ) {
       printf("\nNbTest fails for non-blocking put to multiple processes\n");
     }
   }
- 
+#else
+  NGA_Distribution(g_a, me, lo, hi);
+  NGA_Access(g_a, lo, hi, &ptr, &ld);
+  for (i=0; i<hi[0]-lo[0]+1; i++) {
+    for (j=0; j<hi[1]-lo[1]+1; j++) {
+      ptr[j+ld*i] = j+lo[1] + (i+lo[0])*N;
+    }
+  }
+  NGA_Release(g_a,lo,hi);
+  GA_Sync();
+#endif
+
   /* Copy matrix to process 0 using non-blocking gets */
   if (me == 0) {
     buf = (int*)malloc(N*N*sizeof(int));
     ld = N;
+      NGA_Read_inc(g_cnt,&zero,lone); /* 4 */
     for (n=0; n<nproc; n++) {
       NGA_Distribution(g_a, n, lo, hi);
+      printf("p[%d] n: %d lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
+          me,n,lo[0],hi[0],lo[1],hi[1]);
       /* figure out offset in local buffer */
       ptr = buf + lo[1] + N*lo[0];
       NGA_NbGet(g_a, lo, hi, ptr, &ld, &nbhdl[n]);
     }
     /* Test handles until completion */
     nleft = nproc;
+      NGA_Read_inc(g_cnt,&zero,lone); /* 5 */
     while (nleft > 0) {
       icnt = 0;
       for (n=0; n<nleft; n++) {
+#if TEST
         if (NGA_NbTest(&nbhdl[n])) {
           nbhdl[icnt] = nbhdl[n];
           icnt++;
+          printf("p[%d] ICNT: %d\n",me,icnt);
         }
+#else
+        NGA_NbWait(&nbhdl[n]);
+#endif
       }
       nleft = icnt;
     }

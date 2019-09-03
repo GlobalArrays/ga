@@ -39,6 +39,7 @@ typedef struct{
 
 
 /*fills up the armci_hdl_t entries in ga_armcihdl_t */
+/*armci_hdl_t is defined in armci.h. It is currently an int */
 static armci_hdl_t hdl_array[NUM_HDLS];
 
 
@@ -293,8 +294,11 @@ int nga_test_internal(Integer *nbhandle){
 gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
 int retval = 0;
     if(inbhandle->ihdl_index==(NUM_HDLS+1)) {
+      /* Handle was initialized by not used so return completed */
       retval=0;
-    } else if(inbhandle->ga_nbtag !=ga_ihdl_array[inbhandle->ihdl_index].ga_nbtag) {
+    } else if(inbhandle->ga_nbtag !=
+        ga_ihdl_array[inbhandle->ihdl_index].ga_nbtag) {
+      /* Indicates that this was not initialized by ARMCI? */
        retval=0;
     } else
        return (test_armci_handle_list(inbhandle->ihdl_index));
