@@ -356,7 +356,7 @@ Integer _d, _factor;                                                           \
 
 Integer pnga_nbtest(Integer *nbhandle) 
 {
-    return nga_test_internal((Integer *)nbhandle);
+    return !nga_test_internal((Integer *)nbhandle);
 } 
 
 /**

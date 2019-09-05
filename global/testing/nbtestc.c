@@ -16,8 +16,6 @@
 
 #define N 128            /* dimension of matrices */
 
-#define TEST 1
-
 int main( int argc, char **argv ) {
   int g_a;
   long lone;
@@ -84,14 +82,10 @@ int main( int argc, char **argv ) {
     while (nleft > 0) {
       icnt = 0;
       for (n=0; n<nleft; n++) {
-#if TEST
-        if (NGA_NbTest(&nbhdl[n])) {
+        if (!NGA_NbTest(&nbhdl[n])) {
           nbhdl[icnt] = nbhdl[n];
           icnt++;
         }
-#else
-        NGA_NbWait(&nbhdl[n]);
-#endif
       }
       nleft = icnt;
     }
@@ -141,14 +135,10 @@ int main( int argc, char **argv ) {
     }
     NGA_NbPut(g_a, lo, hi, buf, &ld, &nbhdl[0]);
     /* Test handle until completion */
-#if TEST
     jsize = 0;
-    while (NGA_NbTest(&nbhdl[0])) {
+    while (!NGA_NbTest(&nbhdl[0])) {
       jsize++;
     }
-#else
-    NGA_NbWait(&nbhdl[0]);
-#endif
     free(buf);
   }
   GA_Sync();
@@ -194,14 +184,10 @@ int main( int argc, char **argv ) {
     while (nleft > 0) {
       icnt = 0;
       for (n=0; n<nleft; n++) {
-#if TEST
-        if (NGA_NbTest(&nbhdl[n])) {
+        if (!NGA_NbTest(&nbhdl[n])) {
           nbhdl[icnt] = nbhdl[n];
           icnt++;
         }
-#else
-        NGA_NbWait(&nbhdl[n]);
-#endif
       }
       nleft = icnt;
     }
