@@ -1375,6 +1375,7 @@ int comex_wait(comex_request_t* hdl)
 }
 
 
+/* return 0 if operation is completed, 1 otherwise */
 int comex_test(comex_request_t* hdl, int *status)
 {
     int index = 0;

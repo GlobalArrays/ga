@@ -1965,6 +1965,8 @@ int comex_wait(comex_request_t* hdl)
 }
 
 
+/* returns 0 if operation completed */
+
 int comex_test(comex_request_t* hdl, int *status)
 {
 #ifndef USE_MPI_DATATYPES
