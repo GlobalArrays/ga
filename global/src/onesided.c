@@ -1051,6 +1051,103 @@ void ngai_get_common(Integer g_a,
 }
 
 /**
+ * Utility function to copy data from one buffer to another
+ */
+void gai_mem_copy(int elemsize, int ndim, void *src_ptr, Integer *src_start,
+    Integer *count,  Integer *src_ld, void *dst_ptr, Integer *dst_start,
+    Integer *dst_ld)
+{
+  Integer src_offset, dst_offset;
+  Integer factor;
+  void *sptr, *dptr;
+  int i, j;
+  long src_idx, dst_idx;
+  int n1dim; /* total number of contiguous segments */
+  int src_bvalue[MAXDIM], src_bunit[MAXDIM];
+  int dst_bvalue[MAXDIM], dst_bunit[MAXDIM];
+  int src_stride[MAXDIM], dst_stride[MAXDIM];
+  int segsize;
+  /* find offsets for both source and destination buffers and use these to
+   * adjust pointers to the first element in each data set
+   */
+  factor = 1;
+  src_offset = 0;
+  for (i=0; i<ndim; i++) {
+    src_offset += src_start[i]*factor;
+    if (i<ndim-1) factor *= src_ld[i];
+  }
+  sptr = (void*)((char*)src_ptr+src_offset*elemsize);
+
+  factor = 1; //reset the factor
+
+  dst_offset = 0;
+  for (i=0; i<ndim; i++) {
+    dst_offset += dst_start[i]*factor;
+    if (i<ndim-1) factor *= dst_ld[i];
+  }
+  dptr = (void*)((char*)dst_ptr+dst_offset*elemsize);
+  segsize = count[0]*elemsize;
+  /* perform the memcpy from source to destination buffer. Start by calculating
+   * the total number of contiguous segments in the src array*/
+  n1dim = 1;
+
+  src_stride[0] = dst_stride[0] = elemsize;
+  for (i=0; i<ndim-1; i++) {
+    src_stride[i+1] = src_stride[i];
+    src_stride[i+1] *= (int)src_ld[i];
+    dst_stride[i+1] = dst_stride[i];
+    dst_stride[i+1] *= (int)dst_ld[i];
+  }
+
+  for (i=1; i<=ndim-1; i++) {
+    n1dim *= count[i];
+  }
+  /* initialize arrays for evaluating offset of each segment */
+  src_bvalue[0] = 0;
+  src_bvalue[1] = 0;
+  src_bunit[0] = 1;
+  src_bunit[1] = 1;
+  dst_bvalue[0] = 0;
+  dst_bvalue[1] = 0;
+  dst_bunit[0] = 1;
+  dst_bunit[1] = 1;
+
+  //this part does nothing?
+  for (i=2; i<=ndim-1; i++) {
+    src_bvalue[i] = 0;
+    dst_bvalue[i] = 0;
+    src_bunit[i] = src_bunit[i-1]*count[i-1];
+    dst_bunit[i] = dst_bunit[i-1]*count[i-1];
+  }
+
+  /* evaluate offset for each contiguous segment */
+  for (i=0; i<n1dim; i++) {
+    src_idx = 0;
+    dst_idx = 0;
+    for (j=1; j<=ndim-1; j++) {
+      src_idx += src_bvalue[j]*src_stride[j];
+      if ((i+1)%src_bunit[j] == 0) {
+        src_bvalue[j]++;
+      }
+      if (src_bvalue[j] > (count[j]-1)) {
+        src_bvalue[j] = 0;
+      }
+    }
+    for (j=1; j<=ndim-1; j++) {
+      dst_idx += dst_bvalue[j]*dst_stride[j];
+      if ((i+1)%dst_bunit[j] == 0) {
+        dst_bvalue[j]++;
+      }
+      if (dst_bvalue[j] > (count[j]-1)) {
+        dst_bvalue[j] = 0;
+      }
+    }
+    /* copy memory */
+    memcpy((char*)dptr+dst_idx,(char*)sptr+src_idx,segsize);
+  }
+}
+
+/**
  * Get an N-dimensional patch of data from a Global Array
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -1060,9 +1157,146 @@ void ngai_get_common(Integer g_a,
 void pnga_get(Integer g_a, Integer *lo, Integer *hi,
               void *buf, Integer *ld)
 {
-  GA_Internal_Threadsafe_Lock();
-  ngai_get_common(g_a,lo,hi,buf,ld,0,-1,(Integer *)NULL);
-  GA_Internal_Threadsafe_Unlock();
+  Integer handle = GA_OFFSET + g_a;
+  enum property_type ga_property = GA[handle].property;
+
+  if (ga_property != READ_CACHE) /* if array is not read only */
+  {
+    GA_Internal_Threadsafe_Lock();
+    ngai_get_common(g_a,lo,hi,buf,ld,0,-1,(Integer *)NULL);
+    GA_Internal_Threadsafe_Unlock();
+  } else {
+    int i;
+    int nelem;
+    int ndim = GA[handle].ndim;
+    Integer nstart[MAXDIM], ncount[MAXDIM], nld[MAXDIM];
+    Integer bstart[MAXDIM];
+    /* ngai_get_common(g_a,lo,hi,buf,ld,0,-1,(Integer *)NULL); */
+
+    /* cache is empty condition */
+    if (GA[handle].cache_head == NULL) {
+      GA[handle].cache_head = malloc(sizeof(cache_struct_t));
+      nelem = 1;
+      for (i=0; i<ndim; i++) {
+        GA[handle].cache_head -> lo[i] = lo[i];
+        GA[handle].cache_head -> hi[i] = hi[i];
+        nelem *= (hi[i]-lo[i]+1);
+      }
+      GA[handle].cache_head -> cache_buf = malloc(GA[handle].elemsize*nelem);
+      GA[handle].cache_head -> next = NULL;
+
+        void *new_buf = GA[handle].cache_head->cache_buf;
+
+      /* place data to receive buffer */
+      ngai_get_common(g_a,lo,hi,buf,ld,0,-1,(Integer*)NULL);
+   
+      for (i=0; i<ndim; i++) {
+        nstart[i] = 0;
+        bstart[i] = 0;
+        nld[i] = (hi[i]-lo[i]+1);
+        ncount[i] = nld[i];
+      }
+      gai_mem_copy(GA[handle].elemsize,ndim,buf,bstart,ncount,ld,new_buf,
+          nstart, nld);
+    } else {
+
+      cache_struct_t * cache_temp_pointer = GA[handle].cache_head;
+      int match = 0;
+      while (cache_temp_pointer != NULL) {
+        int chk;
+        int sub_chk;
+        int temp_lo[MAXDIM];
+        int temp_hi[MAXDIM];
+        void *temp_buf = cache_temp_pointer->cache_buf;
+        for (i=0; i<ndim; i++) {
+          temp_lo[i] = cache_temp_pointer->lo[i];
+          temp_hi[i] = cache_temp_pointer->hi[i];
+        }
+
+        //match
+        chk = 1;
+        for (i=0; i<ndim; i++) {
+          if (!(temp_lo[i] <= lo[i] && temp_hi[i] >= hi[i])) {
+            chk = 0;
+            break;
+          }
+        }
+        //match
+        if (chk) {
+          nelem = 1;
+          for (i=0; i<ndim; i++) {
+            nelem *= (hi[i]-lo[i]+1);
+          }
+          for (i=0; i<ndim; i++) {
+            nstart[i] = (lo[i]-temp_lo[i]);
+            bstart[i] = 0;
+            nld[i] = (temp_hi[i]-temp_lo[i]+1);
+            ncount[i] = (hi[i]-lo[i]+1);
+          }
+          /* copy data to recieve buffer */
+          gai_mem_copy(GA[handle].elemsize,ndim,temp_buf,nstart,ncount,nld,buf,
+              bstart, ncount /*ld*/);
+          match = 1;
+          break;
+        }
+
+        cache_temp_pointer = cache_temp_pointer->next;
+
+      }
+
+      //no match condition
+      if (match == 0) {
+        void *new_buf;
+        /* create new node on cache list*/
+        cache_struct_t *cache_new = malloc(sizeof(cache_struct_t));
+        nelem = 1;
+        for (i=0; i<ndim; i++) {
+          cache_new -> lo[i] = lo[i];
+          cache_new -> hi[i] = hi[i];
+          nelem *= (hi[i]-lo[i]+1);
+        }
+        cache_new -> cache_buf = malloc(GA[handle].elemsize*nelem);
+        new_buf = cache_new->cache_buf;
+        cache_new -> next = GA[handle].cache_head;
+        GA[handle].cache_head = cache_new;
+
+
+        //place data to recieve buffer
+        ngai_get_common(g_a,lo,hi,buf,ld,0,-1,(Integer *)NULL);
+
+        for (i=0; i<ndim; i++) {
+          nstart[i] = 0;
+          bstart[i] = 0;
+          nld[i] = (hi[i]-lo[i]+1);
+          ncount[i] = nld[i];
+        }
+        gai_mem_copy(GA[handle].elemsize,ndim,buf,bstart,ncount,ld,new_buf,
+            nstart, nld);
+      }
+    }
+
+    /* check number of items cached */
+    cache_struct_t * cache_temp_pointer = GA[handle].cache_head;
+    int cache_size = 0;
+
+    /* check number of items cached */
+    while (cache_temp_pointer != NULL) {
+      if (cache_size > MAXCACHE) {
+        cache_struct_t *last = cache_temp_pointer;
+        cache_struct_t *next = last->next;
+        last->next = NULL;
+        cache_temp_pointer = next;
+        while (next) {
+          next = cache_temp_pointer->next;
+          free(cache_temp_pointer->cache_buf);
+          free(cache_temp_pointer);
+        }
+        break;
+      }
+      cache_size++;
+    }
+    /* end */
+  }
 }
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA

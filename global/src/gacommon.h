@@ -4,6 +4,7 @@
 #include "macommon.h"
 
 #define GA_MAX_DIM 7
+#define GA_MAX_CACHE 10
 
 #define GA_VERSION_MAJOR 5
 #define GA_VERSION_MINOR 7

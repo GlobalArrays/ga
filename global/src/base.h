@@ -38,6 +38,13 @@ typedef struct {
 typedef Integer C_Integer;
 typedef armci_size_t C_Long;
 
+typedef struct cache_struct{
+  int lo[MAXDIM];
+  int hi[MAXDIM];
+  void* cache_buf;
+  struct cache_struct *next;
+} cache_struct_t;
+
 typedef struct {
        short int  ndim;             /* number of dimensions                 */
        short int  irreg;            /* 0-regular; 1-irregular distribution  */
@@ -84,10 +91,15 @@ typedef struct {
 #ifdef ENABLE_CHECKPOINT
        int record_id;               /* record id for writing ga to disk     */
 #endif
+       /* new */
+       int read_cache;              /* flag for read only pointer in cache  */
+       cache_struct_t *cache_head;  /* linked list of cached reads          */
+
 } global_array_t;
 
 enum property_type { NO_PROPERTY,
-                     READ_ONLY
+                     READ_ONLY,
+                     READ_CACHE /* new */
 };
 
 extern global_array_t *_ga_main_data_structure; 
