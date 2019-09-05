@@ -34,6 +34,9 @@ sicm_device_list nill;
 #include "reg_cache.h"
 #include "acc.h"
 
+#define XSTR(x) #x
+#define STR(x) XSTR(x)
+
 #define PAUSE_ON_ERROR 0
 #define STATIC static inline
 
@@ -186,8 +189,12 @@ static int COMEX_ENABLE_ACC_IOV = ENABLE_ACC_IOV;
 static sicm_device_list devices = {0};
 #if SICM_OLD
 static sicm_device *device_dram = NULL;
+static sicm_device *device_knl_hbm = NULL;
+static sicm_device *device_ppc_hbm = NULL;
 #else
 static sicm_device_list device_dram = {0};
+static sicm_device_list device_knl_hbm = {0};
+static sicm_device_list device_ppc_hbm = {0};
 #endif
 #endif
 
@@ -547,10 +554,14 @@ int comex_init()
     devices = sicm_init();
 #if SICM_OLD
     for(i = 0; i < devices.count; i++) {
-        sicm_device *curr = &devices.devices[i];
-        if (curr->tag == SICM_DRAM) {
-            device_dram = curr;
-            break;
+        if (devices.devices[i].tag == SICM_DRAM) {
+            device_dram = &devices.devices[i];
+        }
+        if (devices.devices[i].tag == SICM_KNL_HBM) {
+            device_knl_hbm = &devices.devices[i];
+        }
+        if (devices.devices[i].tag == SICM_POWERPC_HBM) {
+            device_ppc_hbm = &devices.devices[i];
         }
     }
     if (!device_dram) {
@@ -563,7 +574,14 @@ int comex_init()
       if(curr->tag == SICM_DRAM){
          device_dram.count = 1;
          device_dram.devices = &devices.devices[i];
-         break;
+      }
+      if (curr->tag == SICM_KNL_HBM) {
+         device_knl_hbm.count = 1;
+         device_knl_hbm.devices = &devices.devices[i];
+      }
+      if (curr->tag == SICM_POWERPC_HBM) {
+         device_ppc_hbm.count = 1;
+         device_ppc_hbm.devices = &devices.devices[i];
       }
    }
    if(device_dram.devices == NULL){
@@ -2062,13 +2080,11 @@ int comex_unlock(int mutex, int proc)
 int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 {
 #if USE_SICM && TEST_SICM
+    char cdevice[32];
 #  ifdef TEST_SICM_DEV
-    // const char* cdevice = TEST_SICM_DEV;
-    char temp_cdevice[30];
-    strcpy(temp_cdevice,STR(TEST_SICM_DEV));
-    char* cdevice = &temp_cdevice[0];
+    strcpy(cdevice,STR(TEST_SICM_DEV));
 #  else
-    const char* cdevice = "dram";
+    strcpy(cdevice,"dram");
 #  endif
     return comex_malloc_mem_dev(ptrs, size, group, cdevice);
 #else
@@ -2323,12 +2339,14 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
         reg_cache_nullify(&my_reg);
     }
     else {
-      /* Joseph: is this code selecting the correct device? */
-      /* This will become more complicated */
       idevice = device_dram;
 
-      if (!strncmp(device,"dram",4)) { /* Joseph: how other devices are selected? */
+      if (!strncmp(device,"dram",4)) {
         idevice = device_dram;
+      } else if (!strncmp(device,"knl_hbm",7)) {
+        idevice = device_knl_hbm;
+      } else if (!strncmp(device,"ppc_hbm",7)) {
+        idevice = device_ppc_hbm;
       }
       my_reg = *_comex_malloc_local_memdev(sizeof(char)*size, idevice);
     }
