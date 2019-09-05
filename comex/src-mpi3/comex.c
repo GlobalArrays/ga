@@ -1980,8 +1980,18 @@ int comex_test(comex_request_t* hdl, int *status)
     ierr = MPI_Test(&(nb_list[*hdl]->request),&flag,&stat);
     translate_mpi_error(ierr,"comex_test:MPI_Test");
     if (flag) {
+      /* operation is complete */
       *status = 0;
+      nb_list[*hdl]->active = 0;
+      if (nb_list[*hdl]->use_type) {
+        ierr = MPI_Type_free(&(nb_list[*hdl]->src_type));
+        translate_mpi_error(ierr,"comex_wait:MPI_Type_free");
+        ierr = MPI_Type_free(&(nb_list[*hdl]->dst_type));
+        translate_mpi_error(ierr,"comex_wait:MPI_Type_free");
+        nb_list[*hdl]->use_type = 0;
+      }
     } else {
+      /* operation is incomplete */
       *status = 1;
     }
     return COMEX_SUCCESS;
