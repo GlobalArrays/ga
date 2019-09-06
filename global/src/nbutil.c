@@ -9,8 +9,12 @@
 #endif
 #define DEBUG 0
 
+/* WARNING: The maximum value NUM_HDLS can assume is 254. If it is any larger,
+ * the 8-bit field defined in gai_hbhdl_t will exceed its upper limit of 255 in
+ * some parts of the nbutil.c code */
+#define NUM_HDLS 254
+
 /*The structure of gai_nbhdl_t is (this is our internal handle)*/
-#define NUM_HDLS 20
 typedef struct {
     unsigned int ihdl_index:8;
     unsigned int ga_nbtag:24;
@@ -64,7 +68,7 @@ static ga_nbhdl_array_t ga_ihdl_array[NUM_HDLS];
 
 
 /*this is the array of linked list elements. */
-static ga_armcihdl_t list_element_array[NUM_HDLS] = {
+static ga_armcihdl_t list_element_array[NUM_HDLS] /* = {
 {&(hdl_array[0]), NULL,NULL,0, -1 },{&(hdl_array[1]), NULL,NULL, 1,-1 }, 
 {&(hdl_array[2]), NULL,NULL,2, -1 },{&(hdl_array[3]), NULL,NULL, 3,-1 },
 {&(hdl_array[4]), NULL,NULL,4, -1 },{&(hdl_array[5]), NULL,NULL, 5,-1 }, 
@@ -74,7 +78,7 @@ static ga_armcihdl_t list_element_array[NUM_HDLS] = {
 {&(hdl_array[12]),NULL,NULL,12,-1 },{&(hdl_array[13]),NULL,NULL,13,-1 },
 {&(hdl_array[14]),NULL,NULL,14,-1 },{&(hdl_array[15]),NULL,NULL,15,-1 },
 {&(hdl_array[16]),NULL,NULL,16,-1 },{&(hdl_array[17]),NULL,NULL,17,-1 },
-{&(hdl_array[18]),NULL,NULL,18,-1 },{&(hdl_array[19]),NULL,NULL,19,-1 }};
+{&(hdl_array[18]),NULL,NULL,18,-1 },{&(hdl_array[19]),NULL,NULL,19,-1 }}*/;
 
 
 
@@ -83,14 +87,30 @@ static ga_armcihdl_t list_element_array[NUM_HDLS] = {
 
 static int nextIHAelement=-1; /*oldest ga_ihdl_array element*/
 static int nextLEAelement=-1; /*oldest list_element_array element*/
-static int ihdl_array_avail[NUM_HDLS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
-static int list_ele_avail[NUM_HDLS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+static int ihdl_array_avail[NUM_HDLS]/*={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}*/;
+static int list_ele_avail[NUM_HDLS]/*={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}*/;
 
 /*\ a unique tag for each individual ARMCI call
 \*/
 static unsigned int ga_nb_tag = 0;
 unsigned int get_next_tag(){
     return((++ga_nb_tag));
+}
+
+/*\ Initialize some data structures used in the non-blocking function calls
+\*/
+void gai_nb_init()
+{
+  int i;
+  for (i=0; i<NUM_HDLS; i++) {
+    list_element_array[i].handle = &(hdl_array[i]);
+    list_element_array[i].next = NULL;
+    list_element_array[i].previous = NULL;
+    list_element_array[i].index = i;
+    list_element_array[i].ga_hdlarr_index = -1;
+    ihdl_array_avail[i] = 1;
+    list_ele_avail[i] = 1;
+  }
 }
 
 /*\ the only way to complete a list element! 

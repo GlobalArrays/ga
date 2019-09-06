@@ -375,6 +375,9 @@ int bytes;
 
     bzero(&GAstat,sizeof(GAstat));
 
+    /* initialize some data structures used in non-blocking communication */
+    gai_nb_init();
+
     GAnproc = (Integer)armci_msg_nproc();
 
     /* Allocate arrays used by library */
