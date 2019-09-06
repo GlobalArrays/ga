@@ -1360,12 +1360,17 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
 #endif
 
     /* register the memory locally */
-#if SICM_OLD
+#if USE_SICM
+#if SICM_OLD 
     reg_entry = reg_cache_insert(
             g_state.rank, memory, size, name, memory, 0, NULL);
 #else
     reg_entry = reg_cache_insert(
             g_state.rank, memory, size, name, memory, 0, nill);
+#endif
+#else
+    reg_entry = reg_cache_insert(
+            g_state.rank, memory, size, name, memory, 0);
 #endif
 
     if (NULL == reg_entry) {
@@ -2204,12 +2209,13 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
                     reg_entries[i].len,
                     reg_entries[i].name,
                     memory,0
+#if USE_SICM
 #if SICM_OLD
                     ,NULL
 #else
                     ,nill
 #endif
-
+#endif
 );
             if (is_notifier) {
                 /* does this need to be a memcpy?? */
@@ -4237,12 +4243,16 @@ STATIC void _malloc_handler(
             /* same SMP node, need to mmap */
             /* attach to remote shared memory object */
           void *memory;
+#if USE_SICM
           if (reg_entries[i].use_dev) {
             memory = _shm_attach_memdev(reg_entries[i].name, reg_entries[i].len,
                 reg_entries[i].device);
           } else {
+#endif
             memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
+#if USE_SICM
           }
+#endif
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] _malloc_handler registering "
                     "rank=%d buf=%p len=%lu name=%s, mapped=%p\n",
@@ -4258,9 +4268,12 @@ STATIC void _malloc_handler(
                     reg_entries[i].buf,
                     reg_entries[i].len,
                     reg_entries[i].name,
-                    memory,
-                    reg_entries[i].use_dev,
-                    reg_entries[i].device);
+                    memory
+                    ,reg_entries[i].use_dev
+#if USE_SICM
+                    ,reg_entries[i].device
+#endif
+);
         }
         else {
 #if 0
