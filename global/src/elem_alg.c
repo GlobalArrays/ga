@@ -2768,6 +2768,9 @@ static void ngai_has_negative_element(Integer atype, Integer andim, Integer *loA
   long   *ltempA;
   float  *ftempA;
 
+  /* JBMF: For some reason iretval can enter this function with a one already. Reset the value here: Might be wrong*/
+  *iretval = 0;
+
   /* number of n-element of the first dimension */
   n1dim = 1; for(i=1; i<andim; i++) n1dim *= (hiA[i] - loA[i] + 1);
 
@@ -2840,7 +2843,7 @@ Integer g_a, *alo, *ahi;    /* patch of g_a */
   Integer andim, adims[MAXDIM];
   Integer loA[MAXDIM], hiA[MAXDIM], ldA[MAXDIM];
   char *A_ptr; 
-  Integer iretval;
+  Integer iretval = 0; /* JBMF: Might create an bad path*/
   Integer num_blocks;
   Integer me= pnga_nodeid();
   _iterator_hdl hdl;
@@ -3125,7 +3128,7 @@ void pnga_step_bound_info_patch(
      Integer loXU[MAXDIM], hiXU[MAXDIM];
      Integer xltotal,xutotal;
      Integer me= pnga_nodeid();
-     Integer g_Q;
+     Integer g_Q = 0;
      Integer g_R;
      Integer g_S;
      Integer g_T;
@@ -3608,8 +3611,10 @@ void pnga_step_max_patch(g_a,  alo, ahi, g_b,  blo, bhi, result)
   } else {
     /*Now look at each element of the array g_a. 
       If an element of g_a is negative, then simply return */ 
-    if(has_negative_elem(g_a, alo, ahi) == 1)
+    if(has_negative_elem(g_a, alo, ahi) == 1){
+      printf("I: %X [%d %d] \n", g_a, alo[0], ahi[0]);
       pnga_error("ga_step_max_patch_: g_a has negative element.", -1);
+    }
 
     /*duplicate an array c to hold the temparate result = g_a/g_b; */
     pnga_duplicate(g_a, &g_c, "Temp");
