@@ -52,10 +52,16 @@
 #define STR(x) XSTR(x)
 
 #if USE_SICM
-static sicm_device_list devices = {0};
-static sicm_device *device_dram = NULL;
+static sicm_device_list devices    = {0};
+#if SICM_OLD
+static sicm_device *device_dram    = NULL;
 static sicm_device *device_knl_hbm = NULL;
 static sicm_device *device_ppc_hbm = NULL;
+#else
+static sicm_device_list device_dram     = {0};
+static sicm_device_list device_knl_hbm  = {0};
+static sicm_device_list device_ppc_hbm  = {0};
+#endif
 #endif
 
 /* exported state */
@@ -222,6 +228,7 @@ int comex_init()
 
 #if USE_SICM
     devices = sicm_init();
+#if SICM_OLD
     for(i = 0; i < devices.count; i++){
       if(devices.devices[i].tag == SICM_DRAM){
         device_dram = &(devices.devices[i]);
@@ -237,6 +244,27 @@ int comex_init()
       printf("Device DRAM not found\n");
       exit(18);
     }
+#else
+   for(i =0; i < devices.count; ++i){
+      sicm_device *curr = devices.devices[i];
+      if(curr->tag == SICM_DRAM){
+         device_dram.count = 1;
+         device_dram.devices = &devices.devices[i];
+      }
+      if (curr->tag == SICM_KNL_HBM) {
+         device_knl_hbm.count = 1;
+         device_knl_hbm.devices = &devices.devices[i];
+      }
+      if (curr->tag == SICM_POWERPC_HBM) {
+         device_ppc_hbm.count = 1;
+         device_ppc_hbm.devices = &devices.devices[i];
+      }
+   }
+   if(device_dram.devices == NULL){
+      printf("Device DRAM not found\n");
+      exit(18);
+   }
+#endif
 #endif
 
 
@@ -1904,7 +1932,21 @@ void *comex_malloc_local(size_t size)
     int ierr;
     tsize = size;
 #if USEX_SICM
-    sicm_arena arena = sicm_arena_create(0, device);
+    sicm_device_list *idevice = &device_dram;
+
+#if TEST_SICM
+    char cdevice[32];
+#ifdef TEST_SICM_DEV
+    strcpy(cdevice, STR(TEST_SICM_DEV));
+    if (!strncmp(cdevice, "knl_hbm", 7)){
+       idevice = &device_knl_hbm;
+    }else if (!strncmp(cdevice, "ppc_hbm", 7)){
+       idevice = &device_ppc_hbm;
+    }
+#endif
+#endif
+
+    sicm_arena arena = sicm_arena_create(0, 0, idevice);
     ptr = sicm_arena_alloc(arena, size);
     if(!ptr){
       fprintf(stderr, "Error in allocating the pool\n");
@@ -3290,14 +3332,14 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
     reg_entry_t src;
 
     /* This will become more complicated */
-    sicm_device *idevice = device_dram;
+    sicm_device_list *idevice = &device_dram;
 
     if (!strncmp(device,"dram",4)) {
-      idevice = device_dram;
+      idevice = &device_dram;
     } else if (!strncmp(device,"knl_hbm",7)) {
-      idevice = device_knl_hbm;
+      idevice = &device_knl_hbm;
     } else if (!strncmp(device,"ppc_hbm",7)) {
-      idevice = device_ppc_hbm;
+      idevice = &device_ppc_hbm;
     }
 
     igroup = comex_get_igroup_from_group(group);
@@ -3327,7 +3369,7 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
     } else {
       tsize = 8;
     }
-    sicm_arena arena = sicm_arena_create(0, idevice);
+    sicm_arena arena = sicm_arena_create(0, 0, idevice);
     reg_entries[comm_rank].buf = sicm_arena_alloc(arena, size);
     if(!(reg_entries[comm_rank].buf)){
         fprintf(stderr, "Error in allocating the pool\n");
