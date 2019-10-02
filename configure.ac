@@ -524,7 +524,7 @@ MA_STATS
 MA_VERIFY
 AS_IF([test "x$ga_cv_target" = xLINUX],
     [AS_CASE([$host_cpu],
-        [i686|x86_64],
+        [i686|x86_64*|powerpc*|mips*|arm*],
             [AC_DEFINE([NOUSE_MMAP], [1], [Set some mallopt options])])])
 
 AS_IF([test "x$ga_cv_target" = xLINUX64],
