@@ -14,7 +14,7 @@ matrix:
   allow_failures:
     - env: MPI_IMPL=openmpi
   include:
-    - osx_image: xcode9.1
+    - osx_image: xcode9.2
     - osx_image: xcode10.2
 env:
   - MPI_IMPL=mpich
