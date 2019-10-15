@@ -47,8 +47,7 @@ MPI_Comm armci_group_comm(ARMCI_Group *group)
     MPI_Comm comm, dupcomm;
     check = comex_group_comm(*group, &comm);
     assert(COMEX_SUCCESS == check);
-    MPI_Comm_dup(comm, &dupcomm);
-    return dupcomm;
+    return comm;
 }
 
 
