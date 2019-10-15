@@ -44,7 +44,7 @@ static MPI_Comm wc()
 MPI_Comm armci_group_comm(ARMCI_Group *group)
 {
     int check;
-    MPI_Comm comm, dupcomm;
+    MPI_Comm comm;
     check = comex_group_comm(*group, &comm);
     assert(COMEX_SUCCESS == check);
     return comm;
