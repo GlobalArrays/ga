@@ -3,6 +3,10 @@
 #include "gaconfig.h"
 #include "typesf2c.h"
 
+#ifdef MSG_COMMS_MPI
+#include <mpi.h>
+#endif
+
 extern int _max_global_array;
 extern Integer GAme, GAnproc;
 extern int GA_Default_Proc_Group;
@@ -117,6 +121,14 @@ extern proc_list_t *_proc_list_main_data_structure;
 extern global_array_t *GA;
 extern proc_list_t *PGRP_LIST;
 
+/*\
+ * Copy of the world communicator used by GA so that applications using MPI
+ * libraries will not use the same communicator that GA uses internally (at
+ * least for the world communictor)
+\*/
+#ifdef MSG_COMMS_MPI
+extern MPI_Comm GA_MPI_World_comm_dup;
+#endif
 
 #define ERR_STR_LEN 256               /* length of string for error reporting */
 

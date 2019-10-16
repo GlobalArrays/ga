@@ -127,6 +127,13 @@ long size;
 long dummy;
 } getmem_t;
 
+/*\
+ * Copy of GA's internal communicator
+\*/
+#ifdef MSG_COMMS_MPI
+MPI_Comm GA_MPI_World_comm_dup;
+#endif
+
 /* set total limit (bytes) for memory usage per processor to "unlimited" */
 static Integer GA_total_memory = -1;
 static Integer GA_memory_limited = 0;
@@ -306,9 +313,12 @@ extern int _ga_initialize_f;
 
 void pnga_initialize()
 {
+    Integer  i, j,nproc, nnode, zero;
+    int bytes;
     GA_Internal_Threadsafe_Lock();
-Integer  i, j,nproc, nnode, zero;
-int bytes;
+#ifdef MSG_COMMS_MPI
+        MPI_Comm comm;
+#endif
 
     if(GAinitialized)
     {
@@ -476,6 +486,11 @@ int bytes;
     printf("\n%d:here done with initialize\n",GAme);
                  
     }
+#endif
+    /* create duplicate of world communicator */
+#ifdef MSG_COMMS_MPI
+    comm =  GA_MPI_Comm_pgroup(-1);
+    MPI_Comm_dup(comm, &GA_MPI_World_comm_dup);
 #endif
     GA_Internal_Threadsafe_Unlock();
 }
