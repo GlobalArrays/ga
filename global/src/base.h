@@ -5,6 +5,7 @@
 
 #ifdef MSG_COMMS_MPI
 #include <mpi.h>
+#include "ga-mpi.h"
 #endif
 
 extern int _max_global_array;

@@ -682,6 +682,26 @@ void NGA_Set_block_cyclic(int g_a, int dims[])
     wnga_set_block_cyclic(aa, _ga_dims);
 }
 
+void GA_Set_block_cyclic64(int g_a, int64_t dims[])
+{
+    Integer aa, ndim;
+    Integer _ga_dims[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    COPYC2F(dims,_ga_dims, ndim);
+    wnga_set_block_cyclic(aa, _ga_dims);
+}
+
+void NGA_Set_block_cyclic64(int g_a, int64_t dims[])
+{
+    Integer aa, ndim;
+    Integer _ga_dims[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    COPYC2F(dims,_ga_dims, ndim);
+    wnga_set_block_cyclic(aa, _ga_dims);
+}
+
 void GA_Set_restricted(int g_a, int list[], int size)
 {
     Integer aa;
