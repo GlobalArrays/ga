@@ -1568,11 +1568,13 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   Integer blk_ld[MAXDIM],hlf_blk[MAXDIM],blk_jinc;
   Integer j, lo, hi;
   Integer lld[MAXDIM], block_idx[MAXDIM], block_count[MAXDIM];
-  Integer ldims[MAXDIM];
+  Integer ldims[MAXDIM], ldidx[MAXDIM];
+  Integer *mapc;
 
   
   /*p_handle = GA[handle].p_handle;*/
-  if (GA[handle].distr_type != SCALAPACK && GA[handle].distr_type != TILED) {
+  if (GA[handle].distr_type != SCALAPACK && GA[handle].distr_type != TILED &&
+      GA[handle].distr_type != TILED_IRREG) {
     pnga_error("Array is not using ScaLAPACK or tiled data distribution",0);
   }
   /* dimensions of processor grid */
@@ -1591,18 +1593,53 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   /* Find strides of requested block */
   if (GA[handle].distr_type == TILED) {
     /* find out what processor block is located on */
-    gam_find_tile_proc_from_indices(handle, inode, index);
+    gam_find_tile_proc_from_indices(handle, inode, index)
 
     /* get proc indices of processor that owns block */
     gam_find_tile_proc_indices(handle,inode,proc_index)
       last = ndim-1;
- 
+
     for (i=0; i<ndim; i++)  {
       lo = index[i]*block_dims[i]+1;
       hi = (index[i]+1)*block_dims[i];
       if (hi > dims[i]) hi = dims[i]; 
       ldims[i] = (hi - lo + 1);
       if (i<last) ld[i] = ldims[i];
+    }
+  } else if (GA[handle].distr_type == TILED_IRREG) {
+    /* find out what processor block is located on */
+    gam_find_tile_proc_from_indices(handle, inode, index);
+
+    /* get proc indices of processor that owns block */
+    gam_find_tile_proc_indices(handle,inode,proc_index)
+      last = ndim-1;
+
+    mapc = GA[handle].mapc;
+    offset = 0;
+    for (i=0; i<ndim; i++) {
+      lld[i] = 0;
+      ldidx[i] = 0;
+      lo = mapc[offset+index[i]];
+      if (index[i] < num_blocks[i]-1) {
+        hi = mapc[offset+index[i]+1]-1;
+      } else {
+        hi = dims[i];
+      }
+      ldims[i] = hi - lo + 1;
+      for (j = proc_index[i]; j<num_blocks[i]; j += proc_grid[i]) {
+        lo = mapc[offset+j];
+        if (j < num_blocks[i]-1) {
+          hi = mapc[offset+j+1]-1;
+        } else {
+          hi = dims[i];
+        }
+        lld[i] += (hi-lo+1);
+        if (j < index[i]) {
+          ldidx[i] += (hi-lo+1);
+        }
+      }
+      if (i<last) ld[i] = ldims[i];
+      offset += num_blocks[i];
     }
   } else if (GA[handle].distr_type == SCALAPACK) {
     /* find out what processor block is located on */
@@ -1666,7 +1703,7 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
      *    The contribution from the second fastest dimension is
      *      block_idx[1]*lld[0]*block_dims[1]*...*block_dims[ndim-1];
      *    The contribution from the third fastest dimension is
-     *      block_idx[1]*lld[0]*lld[1]*block_dims[2]*...*block_dims[ndim-1];
+     *      block_idx[2]*lld[0]*lld[1]*block_dims[2]*...*block_dims[ndim-1];
      *    etc.
      *    If block_idx[i] is equal to the total number of blocks contained on that
      *    processor minus 1 (the index is at the edge of the array) and the index
@@ -1681,13 +1718,36 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
         factor *= lld[j];
       }
       for (j=i; j<ndim; j++) {
-        if (j > i && block_idx[j] == block_count[j]-1) {
+        if (j > i && block_idx[j] > block_count[j]-1) {
           factor *= ldims[j];
         } else {
           factor *= block_dims[j];
         }
       }
       offset += block_idx[i]*factor;
+    }
+  } else if (GA[handle].distr_type == TILED_IRREG) {
+    /* Evaluate offset for requested block. This algorithm is similar to the
+     * algorithm for reqularly tiled data layouts.
+     *    The contribution from the fastest dimension is
+     *      ldidx[0]*ldims[2]*...*ldims[ndim-1];
+     *    The contribution from the second fastest dimension is
+     *      lld[0]*ldidx[1]*ldims[2]*...*ldims[ndim-1];
+     *    The contribution from the third fastest dimension is
+     *      lld[0]*lld[1]*ldidx[2]*ldims[3]*...*ldims[ndim-1];
+     *    etc.
+     */
+    offset = 0;
+    for (i=0; i<ndim; i++) {
+      factor = 1;
+      for (j=0; j<i; j++) {
+        factor *= lld[j];
+      }
+      factor *= ldidx[i];
+      for (j=i+1; j<ndim; j++) {
+        factor *= ldims[j];
+      }
+      offset += factor;
     }
   } else if (GA[handle].distr_type == SCALAPACK) {
     /* Evalauate offset for block */
@@ -1750,7 +1810,8 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
       ld[i] = hi[i]-lo[i]+1;
     }
   } else if (GA[handle].distr_type == SCALAPACK ||
-      GA[handle].distr_type == TILED) {
+      GA[handle].distr_type == TILED ||
+      GA[handle].distr_type == TILED_IRREG) {
     Integer indices[MAXDIM];
     /* find block indices */
     gam_find_block_indices(handle,index,indices);
@@ -2258,7 +2319,8 @@ int rc=0;
       index[0] = index[0]%GA[handle].nblock[0];
       index[1] = index[1]%GA[handle].nblock[1];
       gam_find_proc_from_sl_indices(handle,proc,index);
-    } else if (GA[handle].distr_type == TILED) {
+    } else if (GA[handle].distr_type == TILED ||
+        GA[handle].distr_type == TILED_IRREG) {
       Integer index[2];
       gam_find_block_indices(handle, proc, index);
       index[0] = index[0]%GA[handle].nblock[0];
@@ -2577,7 +2639,8 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
         rc = ARMCI_PutV(&desc, 1, (int)iproc);
         if(rc) pnga_error("scatter failed in armci",rc);
       }
-    } else if (GA[handle].distr_type == TILED) {
+    } else if (GA[handle].distr_type == TILED ||
+        GA[handle].distr_type == TILED_IRREG) {
       Integer index[MAXDIM];
       for(k=0; k<naproc; k++) {
         int rc;
@@ -2916,7 +2979,8 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
             rc=ARMCI_GetV(&desc, 1, (int)iproc);
             if(rc) pnga_error("gather failed in armci",rc);
           }
-        } else if (GA[handle].distr_type == TILED) {
+        } else if (GA[handle].distr_type == TILED ||
+            GA[handle].distr_type == TILED_IRREG) {
           Integer j, index[MAXDIM];
           for(k=0; k<naproc; k++) {
             int rc;
@@ -3051,7 +3115,8 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
             rc=ARMCI_PutV(&desc, 1, (int)iproc);
             if(rc) pnga_error("scatter failed in armci",rc);
           }
-        } else if (GA[handle].distr_type == TILED) {
+        } else if (GA[handle].distr_type == TILED ||
+            GA[handle].distr_type == TILED_IRREG) {
           Integer j, index[MAXDIM];
           for(k=0; k<naproc; k++) {
             int rc;
@@ -3218,7 +3283,8 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
             }
             if(rc) pnga_error("scatter_acc failed in armci",rc);
           }
-        } else if (GA[handle].distr_type == TILED) {
+        } else if (GA[handle].distr_type == TILED ||
+            GA[handle].distr_type == TILED_IRREG) {
           Integer j, index[MAXDIM];
           for(k=0; k<naproc; k++) {
             int rc=0;
@@ -3394,7 +3460,8 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
           index[j] = index[j]%nblock[j];
         }
         gam_find_proc_from_sl_indices(handle,idx,index);
-      } else if (GA[handle].distr_type == TILED) {
+      } else if (GA[handle].distr_type == TILED ||
+          GA[handle].distr_type == TILED_IRREG) {
         gam_find_block_indices(handle,idx,index);
         for (j=0; j<ndim; j++) {
           index[j] = index[j]%nblock[j];
@@ -3852,7 +3919,8 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
         rc=ARMCI_GetV(&desc, 1, (int)iproc);
         if(rc) pnga_error("gather failed in armci",rc);
       }
-    } else if (GA[handle].distr_type == TILED) {
+    } else if (GA[handle].distr_type == TILED ||
+        GA[handle].distr_type == TILED_IRREG) {
       Integer index[MAXDIM];
       for(k=0; k<naproc; k++) {
         int rc;
@@ -3953,7 +4021,8 @@ void *pval;
         index[j] = index[j]%GA[handle].nblock[j];
       }
       gam_find_proc_from_sl_indices(handle,proc,index);
-    } else if (GA[handle].distr_type == TILED) {
+    } else if (GA[handle].distr_type == TILED ||
+        GA[handle].distr_type == TILED_IRREG) {
       Integer j, index[MAXDIM];
       gam_find_block_indices(handle, proc, index);
       for (j=0; j<ndim; j++) {

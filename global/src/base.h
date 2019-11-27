@@ -25,7 +25,7 @@ extern Integer GA_Debug_flag;
 #define __CRAYX1_PRAGMA(_pragf)
 #endif
 
-enum data_distribution {REGULAR, BLOCK_CYCLIC, SCALAPACK, TILED};
+enum data_distribution {REGULAR, BLOCK_CYCLIC, SCALAPACK, TILED, TILED_IRREG};
 
 typedef int ARMCI_Datatype;
 typedef struct {
@@ -63,7 +63,8 @@ typedef struct {
        long id;                     /* ID of shmem region / MA handle       */
        C_Integer  dims[MAXDIM];     /* global array dimensions              */
        C_Integer  chunk[MAXDIM];    /* chunking                             */
-       int  nblock[MAXDIM];         /* number of blocks per dimension       */
+       int  nblock[MAXDIM];         /* number of blocks per dimension in    */
+                                    /* processor grid                       */
        C_Integer  width[MAXDIM];    /* boundary cells per dimension         */
        C_Integer  first[MAXDIM];    /* (Mirrored only) first local element  */
        C_Integer  last[MAXDIM];     /* (Mirrored only) last local element   */
@@ -178,7 +179,7 @@ extern MPI_Comm GA_MPI_World_comm_dup;
 
 /* this macro finds the block indices for a given block */
 #define gam_find_block_indices(ga_handle,nblock,index) {                       \
-  int _itmp, _i;                                                       \
+  int _itmp, _i;                                                               \
   int _ndim = GA[ga_handle].ndim;                                              \
   _itmp = nblock;                                                              \
   index[0] = _itmp%GA[ga_handle].num_blocks[0];                                \
@@ -200,6 +201,7 @@ extern MPI_Comm GA_MPI_World_comm_dup;
     index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
   }                                                                            \
 }
+/*
 #define gam_find_proc_indices(ga_handle,proc,index) {                          \
   Integer _itmp, _i;                                                           \
   Integer _ndim = GA[ga_handle].ndim;                                          \
@@ -210,8 +212,24 @@ extern MPI_Comm GA_MPI_World_comm_dup;
     index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
   }                                                                            \
 }
+*/
+#define gam_find_proc_indices(ga_handle,proc,index) {                          \
+  Integer _itmp, _i;                                                           \
+  Integer _ndim = GA[ga_handle].ndim;                                          \
+  _itmp = proc;                                                                \
+  index[0] = _itmp%GA[ga_handle].nblock[0];                        \
+  for (_i=1; _i<_ndim; _i++) {                                              \
+    _itmp = (_itmp-index[_i-1])/GA[ga_handle].nblock[_i-1];                    \
+    index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
+  }                                                                            \
+}
 
-/* this macro finds cordinates of the chunk of array owned by processor proc */
+/* this macro finds cordinates of the chunk of array owned by processor proc
+ * ga_handle: global array handle
+ * proc: processor (or block) index
+ * lo: lower indices of elements owned by processor (or block)
+ * hi: upper indices of elements owned by processor (or block)
+ */
 #define ga_ownsM(ga_handle, proc, lo, hi)                                      \
 {                                                                              \
   if (GA[ga_handle].distr_type == REGULAR) {                                   \
@@ -241,9 +259,24 @@ extern MPI_Comm GA_MPI_World_comm_dup;
     int _ndim = GA[ga_handle].ndim;                                            \
     gam_find_block_indices(ga_handle,proc,_index);                             \
     for (_i=0; _i<_ndim; _i++) {                                               \
-      lo[_i] = _index[_i]*GA[ga_handle].block_dims[_i]+1;    \
-      hi[_i] = (_index[_i]+1)*GA[ga_handle].block_dims[_i];  \
+      lo[_i] = _index[_i]*GA[ga_handle].block_dims[_i]+1;                      \
+      hi[_i] = (_index[_i]+1)*GA[ga_handle].block_dims[_i];                    \
       if (hi[_i] > GA[ga_handle].dims[_i]) hi[_i]=GA[ga_handle].dims[_i];      \
+    }                                                                          \
+  } else if (GA[ga_handle].distr_type == TILED_IRREG) {                        \
+    int _index[MAXDIM];                                                        \
+    int _i;                                                                    \
+    int _ndim = GA[ga_handle].ndim;                                            \
+    int _offset = 0;                                                           \
+    gam_find_block_indices(ga_handle,proc,_index);                             \
+    for (_i=0; _i<_ndim; _i++) {                                               \
+      lo[_i] = GA[ga_handle].mapc[_offset+_index[_i]];                         \
+      if (_index[_i] < GA[ga_handle].num_blocks[_i]-1) {                       \
+        hi[_i] = GA[ga_handle].mapc[_offset+_index[_i]+1]-1;                   \
+      } else {                                                                 \
+        hi[_i] = GA[ga_handle].dims[_i];                                     \
+      }                                                                        \
+      _offset += GA[ga_handle].num_blocks[_i];                                   \
     }                                                                          \
   }                                                                            \
 }

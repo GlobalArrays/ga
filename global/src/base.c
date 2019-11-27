@@ -663,6 +663,13 @@ logical pnga_is_mirrored(Integer g_a)
   return ret;
 }
 
+/**
+ * map_ij: pointer to map array containing axis partitions
+ * n: number of blocks along axis
+ * scale: factor for coming up with an initial guess
+ * elem: array element index that we are trying to find
+ * block: index of block containing elem
+ */
 #define findblock(map_ij,n,scale,elem, block)\
 {\
 int candidate, found, b; \
@@ -689,6 +696,37 @@ C_Integer *map= (map_ij);\
     *(block) = b;\
 }
 
+/*\
+ * Find indices of block containing the array element at the location
+ * in subscript.
+\*/
+#define gam_find_block_indices_from_subscript(handle,subscript,index)\
+{                                                                    \
+  int _type = GA[handle].distr_type;                                 \
+  Integer *_mapc = GA[handle].mapc;                                  \
+  Integer _offset;                                                   \
+  int _i;                                                            \
+  int _ndim = GA[handle].ndim;                                       \
+  if (_type == REGULAR) {                                            \
+    for (_i=0, _offset=0; _i<_ndim; _i++) {                          \
+      findblock(_mapc+_offset, GA[handle].nblock[_i],                \
+          GA[handle].scale[_i],subscript[_i],&index[_i]);            \
+      _offset += GA[handle].nblock[_i];                              \
+    }                                                                \
+  } else if (_type == TILED_IRREG) {                                 \
+    for (_i=0, _offset=0; _i<_ndim; _i++) {                          \
+      findblock(_mapc+_offset, GA[handle].num_blocks[_i],            \
+          GA[handle].scale[_i],subscript[_i],&index[_i]);            \
+      _offset += GA[handle].num_blocks[_i];                          \
+    }                                                                \
+  } else {                                                           \
+    for (_i=0; _i<_ndim; _i++) {                                     \
+      index[_i] = (subscript[_i]-1)/GA[handle].block_dims[_i];       \
+    }                                                                \
+  }                                                                  \
+}
+
+
 /**
  *  Locate the owner of an element of a Global Array specified by the array
  *  subscript
@@ -700,7 +738,6 @@ C_Integer *map= (map_ij);\
 logical pnga_locate(Integer g_a, Integer* subscript, Integer* owner)
 {
 Integer d, proc, dpos, ndim, ga_handle = GA_OFFSET + g_a, proc_s[MAXDIM];
-int use_blocks;
 
    ga_check_handleM(g_a, "nga_locate");
    ndim = GA[ga_handle].ndim;
@@ -721,28 +758,11 @@ int use_blocks;
      if (GA[ga_handle].num_rstrctd > 0) {
        *owner = GA[ga_handle].rstrctd_list[*owner];
      }
-   } else if (GA[ga_handle].distr_type == BLOCK_CYCLIC) {
-     Integer i, j, chk, lo[MAXDIM], hi[MAXDIM];
-     Integer num_blocks = GA[ga_handle].block_total;
-     for (i=0; i< num_blocks; i++) {
-       pnga_distribution(g_a, i, lo, hi);
-       chk = 1;
-       for (j=0; j<ndim; j++) {
-         if (subscript[j]<lo[j] || subscript[j] > hi[j]) chk = 0;
-       }
-       if (chk) {
-         *owner = i;
-         break;
-       }
-     }
-   } else if (GA[ga_handle].distr_type == SCALAPACK ||
-       GA[ga_handle].distr_type == TILED) {
-     Integer index[MAXDIM];
+   } else {
      Integer i;
-     for (i=0; i<ndim; i++) {
-       index[i] = (subscript[i]-1)/GA[ga_handle].block_dims[i];
-     }
-     gam_find_block_from_indices(ga_handle, i, index);
+     Integer index[MAXDIM];
+     gam_find_block_indices_from_subscript(ga_handle,subscript,index);
+     gam_find_block_from_indices(ga_handle,i,index);    
      *owner = i;
    }
    
@@ -1712,6 +1732,76 @@ void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid)
   GA[ga_handle].block_total = jsize;
 }
 
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_tiled_irreg_proc_grid = pnga_set_tiled_irreg_proc_grid
+#endif
+
+void pnga_set_tiled_irreg_proc_grid(Integer g_a, Integer *mapc, Integer *nblocks,
+    Integer *proc_grid)
+{
+  Integer i, j, ichk, maplen, tot, jsize;
+  Integer ga_handle = g_a + GA_OFFSET;
+  if (GA[ga_handle].actv == 1)
+    pnga_error("Cannot set irregular tiled data distribution on array"
+        " that has been allocated",0);
+  if (!(GA[ga_handle].ndim > 0))
+    pnga_error("Cannot set irregular tiled data distribution if array size not set",0);
+  if (GA[ga_handle].ndim < 1)
+    pnga_error("Dimensions must be set before irregular distribution is specified",0);
+  for (i=0; i<GA[ga_handle].ndim; i++)
+    if ((C_Integer)nblocks[i] > GA[ga_handle].dims[i])
+      pnga_error("number of blocks must be <= corresponding dimension",i);
+  if (GA[ga_handle].distr_type != REGULAR)
+    pnga_error("Cannot reset irregular tiled data distribution on array that has been set",0);
+  GA[ga_handle].distr_type = TILED_IRREG;
+  /* Check to see that mapc array is sensible */
+  maplen = 0;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    ichk = mapc[maplen];
+    if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+      pnga_error("Mapc entry outside array dimension limits",ichk);
+    maplen++;
+    for (j=1; j<nblocks[i]; j++) {
+      if (mapc[maplen] < ichk) {
+        pnga_error("Mapc entries are not properly monotonic",ichk);
+      }
+      ichk = mapc[maplen];
+      if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+        pnga_error("Mapc entry outside array dimension limits",ichk);
+      maplen++;
+    }
+  }
+
+  maplen = 0;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    maplen += nblocks[i];
+    GA[ga_handle].num_blocks[i] = (C_Integer)nblocks[i];
+  }
+  GA[ga_handle].mapc = (C_Integer*)malloc((maplen+1)*sizeof(C_Integer*));
+  for (i=0; i<maplen; i++) {
+    GA[ga_handle].mapc[i] = (C_Integer)mapc[i];
+  }
+  GA[ga_handle].mapc[maplen] = -1;
+  GA[ga_handle].irreg = 1;
+
+  /* Check to make sure processor grid is compatible with total number of processors */
+  tot = 1;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    if (proc_grid[i] < 1)
+      pnga_error("Processor grid dimensions must all be greater than zero",0);
+    GA[ga_handle].nblock[i] = proc_grid[i];
+    tot *= proc_grid[i];
+  }
+  if (tot != GAnproc)
+    pnga_error("Number of processors in processor grid must equal available processors",0);
+  /* Find total number of blocks */
+  jsize = 1;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    jsize *= GA[ga_handle].num_blocks[i];
+  }
+  GA[ga_handle].block_total = jsize;
+}
+
 /**
  *  Restrict processors that actually contain data in the global array. Can also
  *  be used to rearrange the distribution of data amongst processors
@@ -2393,6 +2483,29 @@ logical pnga_allocate(Integer g_a)
       }
       block_size *= jtot;
     }
+  } else if (GA[ga_handle].distr_type == TILED_IRREG) {
+    /* Tiled data distribution has been specified. Figure
+       out how much memory is needed by each processor to store blocks */
+    Integer j, jtot, skip, imin, imax;
+    Integer index[MAXDIM];
+    Integer offset = 0;
+    gam_find_tile_proc_indices(ga_handle,GAme,index);
+    block_size = 1;
+    for (i=0; i<ndim; i++) {
+      skip = GA[ga_handle].nblock[i];
+      jtot = 0;
+      for (j=index[i]; j<GA[ga_handle].num_blocks[i]; j += skip) {
+        imin = GA[ga_handle].mapc[offset+j];
+        if (j<GA[ga_handle].num_blocks[i]-1) {
+          imax = GA[ga_handle].mapc[offset+j+1]-1;
+        } else {
+          imax = GA[ga_handle].dims[i];
+        }
+        jtot += (imax-imin+1);
+      }
+      block_size *= jtot;
+      offset += GA[ga_handle].num_blocks[i];
+    }
   }
 
   GAstat.numcre ++;
@@ -2404,7 +2517,7 @@ logical pnga_allocate(Integer g_a)
     GA[ga_handle].p_handle = pnga_pgroup_get_world();
   }
 
-  /* Set remaining paramters and determine memory size if regular data
+  /* Set remaining parameters and determine memory size if regular data
    * distribution is being used */
   if (GA[ga_handle].distr_type == REGULAR) {
     /* set corner flag, if it has not already been set and set up message
@@ -2941,19 +3054,7 @@ void pnga_distribution(Integer g_a, Integer proc, Integer *lo, Integer * hi)
     Integer nodesize = pnga_cluster_nprocs(node);
     lproc = proc%nodesize;
   }
-  if (GA[ga_handle].distr_type == REGULAR) {
-    ga_ownsM(ga_handle, lproc, lo, hi);
-  } else {
-    C_Integer index[MAXDIM];
-    int ndim = GA[ga_handle].ndim;
-    int i;
-    gam_find_block_indices(ga_handle,lproc,index);
-    for (i=0; i<ndim; i++) {
-      lo[i] = index[i]*GA[ga_handle].block_dims[i] + 1;
-      hi[i] = (index[i]+1)*GA[ga_handle].block_dims[i];
-      if (hi[i] > GA[ga_handle].dims[i]) hi[i] = GA[ga_handle].dims[i];
-    }
-  }
+  ga_ownsM(ga_handle, lproc, lo, hi);
 }
 
 /**
@@ -3002,7 +3103,7 @@ logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
   int local_sync_begin,local_sync_end;
   Integer grp_id, grp_me=GAme;
   /* Integer grp_nproc=GAnproc; */
-  int maplen = calc_maplen(GA_OFFSET + g_a);
+  int maplen;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -3036,6 +3137,8 @@ logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
   GA[ga_handle] = GA[GA_OFFSET + g_a]; /* <--- shallow copy */
   strcpy(GA[ga_handle].name, array_name);
   GA[ga_handle].ptr = save_ptr;
+  GA[ga_handle].distr_type = GA[GA_OFFSET + g_a].distr_type;
+  maplen = calc_maplen(GA_OFFSET + g_a);
   if (maplen > 0) {
     GA[ga_handle].mapc = (C_Integer*)malloc((maplen+1)*sizeof(C_Integer*));
     for(i=0;i<maplen; i++)GA[ga_handle].mapc[i] = GA[GA_OFFSET+ g_a].mapc[i];
@@ -4076,7 +4179,7 @@ int i;
        if(GA[h_a].mapc[i] == -1) break;
      }
    } else if (GA[h_a].distr_type == BLOCK_CYCLIC ||
-       GA[h_a].distr_type == SCALAPACK) {
+       GA[h_a].distr_type == SCALAPACK || GA[h_a].distr_type == TILED) {
      for (i=0; i<GA[h_a].ndim; i++) {
        if (GA[h_a].block_dims[i] != GA[h_b].block_dims[i]) return FALSE;
      }
@@ -4087,6 +4190,15 @@ int i;
        for (i=0; i<GA[h_a].ndim; i++) {
          if (GA[h_a].nblock[i] != GA[h_b].nblock[i]) return FALSE;
        }
+     }
+   } else if (GA[h_a].distr_type == TILED_IRREG) {
+     if (h_a_maplen != h_b_maplen) return FALSE;
+     for(i=0; i <h_a_maplen; i++){
+       if(GA[h_a].mapc[i] != GA[h_b].mapc[i]) return FALSE;
+       if(GA[h_a].mapc[i] == -1) break;
+     }
+     for (i=0; i<GA[h_a].ndim; i++) {
+       if (GA[h_a].nblock[i] != GA[h_b].nblock[i]) return FALSE;
      }
    }
    if (GA[h_a].num_rstrctd == GA[h_b].num_rstrctd) {
@@ -4679,13 +4791,15 @@ logical pnga_uses_proc_grid(Integer g_a)
 {
   Integer ga_handle = GA_OFFSET + g_a;
   return (logical)(GA[ga_handle].distr_type == SCALAPACK
-      || GA[ga_handle].distr_type == TILED);
+      || GA[ga_handle].distr_type == TILED ||
+      GA[ga_handle].distr_type == TILED_IRREG);
 }
 
 /**
  *  Return the index of a processor based on the block partition associated
- *  with a particular Global Array (assuming GA uses a ScalLAPACK data
- *  distribution)
+ *  with a particular Global Array, assuming GA uses some sort of block-cyclic
+ *  data distribution based on an underlying processor grid. (e.g. a
+ *  ScaLAPACK data distribution)
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_get_proc_index =  pnga_get_proc_index
@@ -4696,7 +4810,8 @@ void pnga_get_proc_index(Integer g_a, Integer iproc, Integer *index)
   Integer ga_handle = GA_OFFSET + g_a;
   if (GA[ga_handle].distr_type == SCALAPACK) {
     gam_find_proc_indices(ga_handle, iproc, index);
-  } else if (GA[ga_handle].distr_type == TILED) {
+  } else if (GA[ga_handle].distr_type == TILED ||
+      GA[ga_handle].distr_type == TILED_IRREG) {
     gam_find_tile_proc_indices(ga_handle, iproc, index);
   } else {
     pnga_error("Global array does not use ScaLAPACK data distribution",0);
@@ -4723,6 +4838,10 @@ void pnga_get_block_info(Integer g_a, Integer *num_blocks, Integer *block_dims)
       num_blocks[i] = GA[ga_handle].num_blocks[i];
       block_dims[i] = GA[ga_handle].block_dims[i];
     }
+  } else if (GA[ga_handle].distr_type == TILED_IRREG) {
+    /* not sure what to do here */
+    pnga_error("Don't know how to respond to get_block_infor for"
+        " irregular tiled array",0);
   } else {
     Integer dim, bsize;
     for (i=0; i<ndim; i++) {
@@ -4813,8 +4932,14 @@ static int calc_maplen(int handle)
 {
     if (GA[handle].mapc != NULL) {
         int i,len=0;
-        for (i=0; i<GA[handle].ndim; i++) {
+        if (GA[handle].distr_type != TILED_IRREG) {
+          for (i=0; i<GA[handle].ndim; i++) {
             len += GA[handle].nblock[i];
+          }
+        } else {
+          for (i=0; i<GA[handle].ndim; i++) {
+            len += GA[handle].num_blocks[i];
+          }
         }
         return len;
     }

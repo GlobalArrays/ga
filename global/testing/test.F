@@ -21,6 +21,7 @@ c#define MIRROR
 c#define BLOCK_CYCLIC
 c#define USE_SCALAPACK_DISTR
 c#define USE_TILED_DISTR
+c#define USE_TILED_IRREG_DISTR
 c#define USE_RESTRICTED
 
 #ifdef USE_RESTRICTED
@@ -35,10 +36,21 @@ c#define USE_RESTRICTED
 #else
 #  undef USE_SCALAPACK_DISTR
 #  undef USE_TILED_DISTR
+#  undef USE_TILED_IRREG_DISTR
 #endif
 
 #ifdef USE_SCALAPACK_DISTR
 #  undef USE_TILED_DISTR
+#  undef USE_TILED_IRREG_DISTR
+#  define BLOCK_CYCLIC
+#endif
+
+#ifdef USE_TILED_DISTR
+#  define BLOCK_CYCLIC
+#endif
+
+#ifdef USE_TILED_IRREG_DISTR
+#  define BLOCK_CYCLIC
 #endif
 
       program main
@@ -140,7 +152,6 @@ c
       endif
 
       call check_dbl()
-#if 1
 c
 c***  Check support for single precision complex arrays
 c
@@ -200,7 +211,6 @@ c***  Check if memory limits are enforced
 c
       call check_mem(util_mdtob(ma_heap*ga_nnodes()))
 c
-#endif
       if(me.eq.0) call ga_print_stats()
       if(me.eq.0) print *,' ' 
       if(me.eq.0) print *,'All tests successful ' 
@@ -258,6 +268,9 @@ c
 #endif
 #ifdef BLOCK_CYCLIC
       integer block_size(2), proc_grid(2)
+#endif
+#ifdef USE_TILED_IRREG_DISTR
+      integer mapc(4096), nblocks(2)
 #endif
       intrinsic int
       iran(i) = int(drand(0)*real(i)) + 1
@@ -318,17 +331,24 @@ c     call setdbg(1)
 #ifdef USE_RESTRICTED
       call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
 #endif
+
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#else
+      call util_create_map(mapc,block_size(1),dims,nblocks,proc_grid)
+      call ga_set_tiled_irreg_proc_grid(g_a,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
 #endif
 #endif
+
 #  ifdef MIRROR
       p_mirror = ga_pgroup_get_mirror()
       call ga_set_pgroup(g_a,p_mirror)
@@ -374,12 +394,9 @@ c
          call ffflush(6)
       endif
       call ga_zero(g_a)
-
 c
 c     Check that it is indeed zero
 c
-      
-      
       call ga_get(g_a, 1, n, 1, n, b, n)
       call ga_sync()
       do i = 1, n
@@ -593,17 +610,23 @@ c     overlapping accumulate
       g_b = ga_create_handle()
       call ga_set_data(g_b,ndim,dims,MT_DBL)
       call ga_set_array_name(g_b,'b')
+
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_b,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_b,block_size,proc_grid)
+#else
+      call ga_set_tiled_irreg_proc_grid(g_b,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_b,block_size)
 #endif
 #endif
+
 #  ifdef MIRROR
       call ga_set_pgroup(g_b,p_mirror)
 #  endif
@@ -1045,17 +1068,23 @@ c
       g_c = ga_create_handle()
       call ga_set_data(g_c,ndim,dims,MT_DBL)
       call ga_set_array_name(g_c,'c')
+
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_c,block_size,proc_grid)
 #else
+#ifdef USE_TILE_DISTR
       call ga_set_tiled_proc_grid(g_c,block_size,proc_grid)
+#else
+      call ga_set_tiled_irreg_proc_grid(g_c,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_c,block_size)
 #endif
 #endif
+
       if (.not.ga_allocate(g_c)) then
 #else
       if (.not. nga_create(MT_DBL, ndim, dims, 'c', chunk, g_c)) then
@@ -1788,6 +1817,9 @@ c
 #ifdef BLOCK_CYCLIC
       integer block_size(2), proc_grid(2)
 #endif
+#ifdef USE_TILED_IRREG_DISTR
+      integer mapc(4096), nblocks(2)
+#endif
       intrinsic int
       iran(i) = int(drand(0)*real(i)) + 1
 c
@@ -1846,11 +1878,16 @@ c     call setdbg(1)
       call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
 #endif
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#else
+      call util_create_map(mapc,block_size(1),dims,nblocks,proc_grid)
+      call ga_set_tiled_irreg_proc_grid(g_a,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
@@ -1884,11 +1921,15 @@ c     call setdbg(1)
       call ga_set_data(g_b,ndim,dims,MT_DCPL)
       call ga_set_array_name(g_b,'b')
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_b,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_b,block_size,proc_grid)
+#else
+      call ga_set_tiled_irreg_proc_grid(g_b,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_b,block_size)
@@ -2404,6 +2445,9 @@ c
 #else
       integer map(5,maxproc), found, np,k
 #endif
+#ifdef USE_TILED_IRREG_DISTR
+      integer mapc(4096), nblocks(2)
+#endif
       intrinsic int
       iran(i) = int(drand(0)*real(i)) + 1
 c     
@@ -2458,11 +2502,16 @@ c
       call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
 #endif
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#else
+      call util_create_map(mapc,block_size(1),dims,nblocks,proc_grid)
+      call ga_set_tiled_irreg_proc_grid(g_a,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
@@ -3944,3 +3993,103 @@ c
 c
       end
 
+      subroutine util_create_map(mapc, base, dims, nblocks, proc_grid)
+      implicit none
+#include "global.fh"
+      integer mapc(4096)
+      integer dims(2), nblocks(2), proc_grid(2)
+      integer primes(256), nprime
+      integer factors(256), nfactors
+      integer base
+      integer i, j, nproc, pmax, px, py, lo, hi
+      logical ok
+!
+!  Factor nproc into 2 x 2 processor grid. Start by finding prime
+!  factors
+!
+      nproc = ga_nnodes()
+      pmax = sqrt(dble(nproc)) + 1
+      nprime = 1 
+      primes(1) = 2
+      do i = 3, pmax
+        ok = .true.
+        do j = 1, nprime
+!
+! check to see if any of the existing primes divides i
+!
+          if (mod(i,primes(j)).eq.0) then
+             ok = .false.
+          endif
+        end do
+!
+!  none of the existing primes divides i, so add it to the list of
+!  primes
+!
+        if (ok) then
+          nprime = nprime + 1
+          primes(nprime) = i
+        endif
+      end do
+!
+!  find prime factors of nproc
+!
+      nfactors = 0
+      j = nproc
+      i = 1
+      do while (i.le.nprime.and.j.gt.1)
+        do while (mod(j,primes(i)).eq.0.and.j.gt.1)
+          nfactors = nfactors + 1
+          factors(nfactors) = primes(i)
+          j = j/primes(i)
+        end do
+        i = i + 1
+      end do
+      if (nfactors.eq.0) then
+        nfactors = 1
+        primes(1) = nproc
+      endif
+!
+!  prime factors are available. Create px and py
+!
+      px = 1
+      py = 1
+      do i = nfactors, 1, -1
+        if (px.lt.py) then
+          px = px*factors(i) 
+        else
+          py = py*factors(i)
+        endif
+      end do
+      proc_grid(1) = px
+      proc_grid(2) = py
+!
+!  proc grid is complete, now create map. Start with x-axis
+!
+      lo = 1
+      hi = 0
+      i = 0
+      j = 0
+      do while (hi.lt.dims(1))
+        i = i + 1
+        hi = lo + base + mod(i+1,2) - 1
+!        hi = lo + base - 1
+        if (hi.gt.dims(1)) hi = dims(1)
+        j = j + 1
+        mapc(j) = lo
+        lo = hi + 1
+      end do
+      nblocks(1) = i
+      lo = 1
+      hi = 0
+      i = 0
+      do while (hi.lt.dims(2))
+        i = i + 1
+        hi = lo + base + mod(i,2) - 1
+!        hi = lo + base - 1
+        if (hi.gt.dims(1)) hi = dims(1)
+        j = j + 1
+        mapc(j) = lo
+        lo = hi + 1
+      end do
+      nblocks(2) = i
+      end

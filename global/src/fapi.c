@@ -891,6 +891,20 @@ void FATR nga_set_tiled_proc_grid_(Integer *g_a, Integer *dims,
   wnga_set_tiled_proc_grid(*g_a, dims, proc_grid);
 }
 
+void FATR ga_set_tiled_irreg_proc_grid_(Integer *g_a, Integer *mapc,
+                                         Integer *nblocks, 
+                                         Integer *proc_grid)
+{
+  wnga_set_tiled_irreg_proc_grid(*g_a, mapc, nblocks, proc_grid);
+}
+
+void FATR nga_set_tiled_irreg_proc_grid_(Integer *g_a, Integer *mapc,
+                                         Integer *nblocks, 
+                                         Integer *proc_grid)
+{
+  wnga_set_tiled_irreg_proc_grid(*g_a, mapc, nblocks, proc_grid);
+}
+
 void FATR ga_set_chunk_(Integer *g_a, Integer *chunk)
 {
   wnga_set_chunk(*g_a, chunk);
