@@ -26,6 +26,7 @@ ACLOCAL_AMFLAGS = -I m4
 # automake variables used.
 include_HEADERS =
 nodist_include_HEADERS =
+noinst_HEADERS =
 bin_PROGRAMS =
 bin_SCRIPTS =
 check_PROGRAMS =
@@ -76,6 +77,11 @@ AM_LDFLAGS += $(LAPACK_LDFLAGS)
 AM_LDFLAGS += $(BLAS_LDFLAGS)
 AM_LDFLAGS += $(GA_MP_LDFLAGS)
 AM_LDFLAGS += $(ARMCI_NETWORK_LDFLAGS)
+
+if WITH_SICM
+AM_CPPFLAGS += $(SICM_CPPFLAGS)
+AM_LDFLAGS += $(SICM_LDFLAGS)
+endif
 
 LDADD += libga.la
 
@@ -164,15 +170,15 @@ if ENABLE_F77
 libga_la_SOURCES += ma/maf.F
 endif
 
-include_HEADERS += ma/error.h
 include_HEADERS += ma/macdecls.h
 include_HEADERS += ma/macommon.h
 include_HEADERS += ma/maf2c.fh
 include_HEADERS += ma/mafdecls.fh
 include_HEADERS += ma/matypes.h
-include_HEADERS += ma/scope.h
-include_HEADERS += ma/string-util.h
-include_HEADERS += ma/table.h
+noinst_HEADERS += ma/scope.h
+noinst_HEADERS += ma/string-util.h
+noinst_HEADERS += ma/table.h
+noinst_HEADERS += ma/error.h
 
 AM_CPPFLAGS += -I$(top_build_prefix)ma
 AM_CPPFLAGS += -I$(top_srcdir)/ma
@@ -445,6 +451,7 @@ check_PROGRAMS += global/testing/mulmatpatchc
 check_PROGRAMS += global/testing/normc
 check_PROGRAMS += global/testing/matrixc
 check_PROGRAMS += global/testing/ntestc
+check_PROGRAMS += global/testing/nbtestc
 check_PROGRAMS += global/testing/ntestfc
 check_PROGRAMS += global/testing/packc
 check_PROGRAMS += global/testing/patch_enumc
@@ -463,6 +470,7 @@ check_PROGRAMS += global/testing/thread_perf_contig
 check_PROGRAMS += global/testing/thread_perf_strided
 check_PROGRAMS += global/testing/threadsafec
 check_PROGRAMS += global/testing/read_only
+check_PROGRAMS += global/testing/cache_test
 check_PROGRAMS += global/testing/unpackc
 if ENABLE_F77
 check_PROGRAMS += global/testing/bin
@@ -633,6 +641,7 @@ GLOBAL_PARALLEL_TESTS += global/testing/mulmatpatchc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/normc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/matrixc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/ntestc$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/nbtestc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/ntestfc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/packc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/patch_enumc$(EXEEXT)
@@ -648,6 +657,7 @@ GLOBAL_THREADED_TESTS += global/testing/thread_perf_contig$(EXEEXT)
 GLOBAL_THREADED_TESTS += global/testing/thread_perf_strided$(EXEEXT)
 GLOBAL_THREADED_TESTS += global/testing/threadsafec$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/read_only$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/cache_test$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/unpackc$(EXEEXT)
 if ENABLE_F77
 GLOBAL_PARALLEL_TESTS += global/testing/bin$(EXEEXT)
@@ -892,6 +902,7 @@ global_testing_ndim_SOURCES                = global/testing/ndim.F $(gtsrcf)
 global_testing_normc_SOURCES               = global/testing/normc.c
 global_testing_matrixc_SOURCES             = global/testing/matrixc.c
 global_testing_ntestc_SOURCES              = global/testing/ntestc.c
+global_testing_nbtestc_SOURCES             = global/testing/nbtestc.c
 global_testing_ntestfc_SOURCES             = global/testing/ntestfc.c
 global_testing_packc_SOURCES               = global/testing/packc.c
 global_testing_patch_SOURCES               = global/testing/patch.F $(gtsrcf) $(testblassrc)
@@ -935,6 +946,7 @@ global_testing_thread_perf_strided_SOURCES = global/testing/thread_perf_strided.
 global_testing_threadsafec_SOURCES         = global/testing/threadsafec.c
 global_testing_types_test_SOURCES          = global/testing/types-test.F $(gtsrcf)
 global_testing_unpackc_SOURCES             = global/testing/unpackc.c
+global_testing_cache_test_SOURCES          = global/testing/cache_test.c
 nodist_global_testing_nga_onesided_SOURCES = global/testing/nga-onesided.F $(gtsrcf)
 nodist_global_testing_nga_patch_SOURCES    = global/testing/nga-patch.F $(gtsrcf)
 nodist_global_testing_nga_periodic_SOURCES = global/testing/nga-periodic.F $(gtsrcf)
@@ -1618,8 +1630,8 @@ endif
 endif
 
 if ARMCI_SRC_DIR_COMEX
+AM_CPPFLAGS += -I$(top_srcdir)/comex/src-armci
 else
-endif
 
 if ARMCI_NETWORK_ARMCI
 else
@@ -1636,12 +1648,18 @@ AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
 endif
 endif
 endif
+endif
 
 # As of ga-5-2 libarmci is no longer rolled up into libga.
 libga_la_LIBADD += $(ELPA_LIBS)
 libga_la_LIBADD += $(SCALAPACK_LIBS)
 libga_la_LIBADD += $(LAPACK_LIBS)
 libga_la_LIBADD += $(BLAS_LIBS)
+
+if WITH_SICM
+libga_la_LIBADD += $(SICM_LIBS)
+endif
+
 if ARMCI_NETWORK_ARMCI
 libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 libga_la_LIBADD += $(GA_MP_LIBS)
