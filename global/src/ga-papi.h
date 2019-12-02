@@ -87,6 +87,8 @@ extern Integer pnga_nnodes();
 extern Integer pnga_nodeid();
 extern Integer pnga_pgroup_absolute_id(Integer grp, Integer pid);
 extern Integer pnga_pgroup_create(Integer *list, Integer count);
+extern Integer pnga_pgroup_duplicate(Integer grp);
+extern Integer pnga_pgroup_self();
 extern logical pnga_pgroup_destroy(Integer grp);
 extern Integer pnga_pgroup_get_default();
 extern Integer pnga_pgroup_get_mirror();

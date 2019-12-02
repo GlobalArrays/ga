@@ -1297,6 +1297,28 @@ int NGA_Pgroup_create(int *list, int count)
     return grp_id;
 }
 
+int GA_Pgroup_duplicate(int grp)
+{
+  Integer pgrp = (Integer)grp;
+  return (int)wnga_pgroup_duplicate(pgrp);
+}
+
+int NGA_Pgroup_duplicate(int grp)
+{
+  Integer pgrp = (Integer)grp;
+  return (int)wnga_pgroup_duplicate(pgrp);
+}
+
+int GA_Pgroup_self()
+{
+  return (int)wnga_pgroup_self();
+}
+
+int NGA_Pgroup_self()
+{
+  return (int)wnga_pgroup_self();
+}
+
 int GA_Pgroup_destroy(int grp)
 {
     Integer grp_id = (Integer)grp;

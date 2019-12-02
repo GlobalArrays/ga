@@ -729,6 +729,26 @@ Integer FATR nga_pgroup_create_(Integer *list, Integer *count)
   return wnga_pgroup_create(list, *count);
 }
 
+Integer FATR ga_pgroup_duplicate_(Integer *grp)
+{
+  return wnga_pgroup_duplicate(*grp);
+}
+
+Integer FATR nga_pgroup_duplicate_(Integer *grp)
+{
+  return wnga_pgroup_duplicate(*grp);
+}
+
+Integer FATR ga_pgroup_self_()
+{
+  return wnga_pgroup_self();
+}
+
+Integer FATR nga_pgroup_self_()
+{
+  return wnga_pgroup_self();
+}
+
 logical FATR ga_pgroup_destroy_(Integer *grp)
 {
   return wnga_pgroup_destroy(*grp);

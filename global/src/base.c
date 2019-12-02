@@ -1154,6 +1154,117 @@ Integer pnga_pgroup_create(Integer *list, Integer count)
 }
 
 /**
+ *  Duplicate and existing processor group
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_duplicate = pnga_pgroup_duplicate
+#endif
+
+Integer pnga_pgroup_duplicate(Integer grp)
+{
+    Integer pgrp_handle, i, j, nprocs, itmp;
+    int tmp_count;
+    int *tmp_list, *tmp2_list;
+#ifdef MSG_COMMS_MPI
+    ARMCI_Group *tmpgrp;
+#endif
+    Integer save_grp;
+    if (grp != -1 && !PGRP_LIST[grp].actv) {
+       pnga_error(" Group is not active ", grp);
+    }
+
+    /*** Get next free process group handle ***/
+    pgrp_handle =-1; i=0;
+    do{
+       if(!PGRP_LIST[i].actv) pgrp_handle=i;
+       i++;
+    }while(i<_max_global_array && pgrp_handle==-1);
+    if( pgrp_handle == -1)
+       pnga_error(" Too many process groups ", (Integer)_max_global_array);
+ 
+    /* Allocate memory for arrays containg processor maps and initialize
+       values */
+    PGRP_LIST[pgrp_handle].map_proc_list
+       = (int*)malloc(GAnproc*sizeof(int)*2);
+    PGRP_LIST[pgrp_handle].inv_map_proc_list
+       = PGRP_LIST[pgrp_handle].map_proc_list + GAnproc;
+    for (i=0; i<GAnproc; i++)
+       PGRP_LIST[pgrp_handle].map_proc_list[i] = -1;
+    for (i=0; i<GAnproc; i++)
+       PGRP_LIST[pgrp_handle].inv_map_proc_list[i] = -1;
+    if (grp != -1) {
+      for (i=0; i<GAnproc; i++) {
+        PGRP_LIST[pgrp_handle].map_proc_list[i]
+          = PGRP_LIST[grp].map_proc_list[i];
+        PGRP_LIST[pgrp_handle].inv_map_proc_list[i]
+          = PGRP_LIST[grp].inv_map_proc_list[i];
+      }
+    } else {
+      for (i=0; i<GAnproc; i++) {
+        PGRP_LIST[pgrp_handle].map_proc_list[i]
+          = i;
+        PGRP_LIST[pgrp_handle].inv_map_proc_list[i]
+          = i;
+      }
+    }
+    tmp_count = PGRP_LIST[grp].map_nproc;
+
+    tmp_list = (int*)malloc(GAnproc*sizeof(int));
+    tmp2_list = PGRP_LIST[grp].map_proc_list;
+    save_grp = GA_Default_Proc_Group;
+    GA_Default_Proc_Group = PGRP_LIST[grp].parent;
+    if (GA_Default_Proc_Group != -1) {
+       int parent = GA_Default_Proc_Group;
+       for (i=0; i<tmp_count; i++) {
+          tmp_list[i] = (int)PGRP_LIST[parent].inv_map_proc_list[tmp2_list[i]];
+       }
+    } else {
+       for (i=0; i<tmp_count; i++) {
+          tmp_list[i] = (int)tmp2_list[i];
+       }
+    }
+    
+    PGRP_LIST[pgrp_handle].map_nproc = tmp_count;
+    PGRP_LIST[pgrp_handle].actv = 1;
+    PGRP_LIST[pgrp_handle].parent = PGRP_LIST[grp].parent;
+    PGRP_LIST[pgrp_handle].mirrored = 0;
+    PGRP_LIST[pgrp_handle].map_nproc = PGRP_LIST[grp].map_nproc;
+#ifdef MSG_COMMS_MPI
+    tmpgrp = &PGRP_LIST[pgrp_handle].group;
+#if ENABLE_CHECKPOINT
+    if(ga_group_is_for_ft)
+       tmpgrp = ARMCI_Get_ft_group();
+    else
+#endif
+       ARMCI_Group_create(tmp_count, tmp_list, &PGRP_LIST[pgrp_handle].group);
+#endif
+
+    GA_Default_Proc_Group = save_grp;
+    /* Clean up temporary arrays */
+    free(tmp_list);
+
+#ifdef MSG_COMMS_MPI
+    return pgrp_handle;
+#else
+    return pnga_pgroup_get_default();
+#endif
+}
+
+/**
+ * Create a duplicate of the group with only the calling processor in it
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_self = pnga_pgroup_self
+#endif
+
+Integer pnga_pgroup_self()
+{
+  Integer one = 1;
+  Integer me = pnga_nodeid();
+  return pnga_pgroup_create(&me,one);
+}
+
+/**
  *  Free up processor group handle for reuse
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA

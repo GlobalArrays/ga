@@ -108,6 +108,8 @@ extern int           GA_Pgroup_absolute_id(int pgroup, int pid);
 extern void          GA_Pgroup_brdcst(int grp, void *buf, int lenbuf, int root);
 extern void          GA_Pgroup_cgop(int grp, SingleComplex x[], int n, char *op);
 extern int           GA_Pgroup_create(int *list, int count);
+extern int           GA_Pgroup_duplicate(int grp);
+extern int           GA_Pgroup_self();
 extern int           GA_Pgroup_destroy(int grp);
 extern void          GA_Pgroup_dgop(int grp, double x[], int n, char *op);
 extern void          GA_Pgroup_fgop(int grp, float x[], int n, char *op);   
@@ -275,6 +277,8 @@ extern void          NGA_Periodic_get(int g_a, int lo[], int hi[], void* buf, in
 extern void          NGA_Periodic_put(int g_a, int lo[], int hi[], void* buf, int ld[]); 
 extern int           NGA_Pgroup_absolute_id(int pgroup, int pid);
 extern int           NGA_Pgroup_create(int *list, int count);
+extern int           NGA_Pgroup_duplicate(int grp);
+extern int           NGA_Pgroup_self();
 extern int           NGA_Pgroup_destroy(int grp);
 extern int           NGA_Pgroup_get_default(void);
 extern int           NGA_Pgroup_get_mirror(void);
