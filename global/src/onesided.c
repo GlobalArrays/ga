@@ -1841,16 +1841,17 @@ void pnga_access_block_segment_ptr(Integer g_a, Integer proc, void* ptr, Integer
   Integer  handle = GA_OFFSET + g_a;
   /*Integer  p_handle, nblocks;*/
   Integer /*ndim,*/ index;
+  int grp = GA[handle].p_handle;
 
   
   /*p_handle = GA[handle].p_handle;*/
   /*nblocks = GA[handle].block_total;*/
   /*ndim = GA[handle].ndim;*/
   index = proc;
-  if (index < 0 || index >= GAnproc)
+  if (index < 0 || index >= pnga_pgroup_nnodes(grp))
     pnga_error("processor index outside allowed values",index);
 
-  if (index != GAme)
+  if (index != pnga_pgroup_nodeid(grp))
     pnga_error("Only get accurate number of elements for processor making request",0);
   lptr = GA[handle].ptr[index];
 
