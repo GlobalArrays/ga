@@ -198,9 +198,9 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
   hdl->g_a = g_a;
   hdl->count = 0;
   hdl->oversize = 0;
-  hdl->map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
-  hdl->proclist = malloc(GAnproc*sizeof(Integer));;
-  hdl->proclistperm = malloc(GAnproc*sizeof(int));
+  hdl->map = malloc((size_t)(nproc*2*MAXDIM+1)*sizeof(Integer));
+  hdl->proclist = malloc(nproc*sizeof(Integer));;
+  hdl->proclistperm = malloc(nproc*sizeof(int));
   for (i=0; i<ndim; i++) {
     hdl->lo[i] = lo[i];
     hdl->hi[i] = hi[i];
@@ -439,8 +439,8 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
     int check1, check2;
     if (GA[handle].distr_type == BLOCK_CYCLIC) {
       /* Simple block-cyclic distribution */
-      if (hdl->iproc >= GAnproc) return 0;
-      /*if (hdl->iproc == GAnproc-1 && hdl->iblock >= blk_tot) return 0;*/
+      if (hdl->iproc >= nproc) return 0;
+      /*if (hdl->iproc == nproc-1 && hdl->iblock >= blk_tot) return 0;*/
       if (hdl->iblock == hdl->iproc) hdl->offset = 0;
       chk = 0;
       /* loop over blocks until a block with data is found */
@@ -481,7 +481,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
             hdl->offset = 0;
             hdl->iproc++;
             hdl->iblock = hdl->iproc;
-            if (hdl->iproc >= GAnproc) return 0;
+            if (hdl->iproc >= nproc) return 0;
           }
         }
       }
@@ -510,7 +510,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         l_offset += hdl->offset;
 
         /* get pointer to data on remote block */
-        pinv = idx%GAnproc;
+        pinv = idx%nproc;
         if (p_handle > 0) {
           pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
         }
@@ -540,7 +540,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
       Integer itmp;
       Integer blk_jinc;
       /* Return false at the end of the iteration */
-      if (hdl->iproc >= GAnproc) return 0;
+      if (hdl->iproc >= nproc) return 0;
       chk = 0;
       /* loop over blocks until a block with data is found */
       while (!chk) {
@@ -585,7 +585,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         }
         
         if (!chk) {
-          /* evaluate new offset for block */
+          /* update offset for block */
           itmp = 1;
           for (j=0; j<ndim; j++) {
             itmp *= bhi[j]-blo[j]+1;
@@ -604,7 +604,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
             /* last iteration has been completed on current processor. Go
              * to next processor */
             hdl->iproc++;
-            if (hdl->iproc >= GAnproc) return 0;
+            if (hdl->iproc >= nproc) return 0;
             hdl->offset = 0;
             if (GA[handle].distr_type == TILED ||
                 GA[handle].distr_type == TILED_IRREG) {
@@ -664,7 +664,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
               + ((blo[last]-1)/hdl->blk_dim[j])*hdl->blk_size[last])*jtot;
         }
         /* get pointer to data on remote block */
-        pinv = (hdl->iproc)%GAnproc;
+        pinv = (hdl->iproc)%nproc;
         if (p_handle > 0) {
           pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
         }

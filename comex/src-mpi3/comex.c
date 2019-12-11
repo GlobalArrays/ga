@@ -2089,9 +2089,8 @@ int comex_test(comex_request_t* hdl, int *status)
     } else {
       /* operation is incomplete */
       *status = 1;
-      ret = COMEX_FAILURE;
     }
-    return ret;
+    return COMEX_SUCCESS;
 #else
     *status = 0;
     return COMEX_SUCCESS;

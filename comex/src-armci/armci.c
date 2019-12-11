@@ -99,8 +99,12 @@ void armci_init_domains(MPI_Comm comm)
  * and destination buffers. If it is, then a contiguous operation can be used
  * instead of a strided operation. This function is intended for arrays of
  * dimension greater than 1 (contiguous operations can always be used for 1
- * dimensional arrays). This operation does not identify all contiguous cases,
- * since no information is available about the last dimension.
+ * dimensional arrays).
+ * 
+ * The current implementation tries to identify all contiguous cases by using
+ * all information from the stride and count arrays. The old implementation did
+ * not identify all cases of contiguous data transfers.
+ *
  * src_stride: physical dimensions of source buffer
  * dst_stride: physical dimensions of destination buffer
  * count: number of elements being moved in each dimension
@@ -170,7 +174,7 @@ int armci_check_contiguous(int *src_stride, int *dst_stride,
   /* NOTE: The count array contains the length of the final dimension and could
    * be used to evaluate some corner cases that are not picked up by this
    * algorithm
-   */
+   */ 
   for (i=0; i<n_stride; i++) {
     /* check for overflow */
     int tmp = stridelen * count[i];

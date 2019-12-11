@@ -370,7 +370,6 @@ int retval = 0;
 }
 
 /*\ unlike in ARMCI, user doesnt have to initialize handle in GA.
- *  it is done by the get/put call instead.
 \*/
 void ga_init_nbhandle(Integer *nbhandle)
 {

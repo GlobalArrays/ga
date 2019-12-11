@@ -363,7 +363,6 @@ static int cmplong(const void *p1, const void *p2)
     return *((long*)p1) - *((long*)p2);
 }
 
-
 /**
  * Initialize group linked list. Prepopulate with world group.
  */

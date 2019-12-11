@@ -65,10 +65,6 @@
 #include "ga-wapi.h"
 #include "thread-safe.h"
 
-/*
-#define USE_ARMCI_GROUP_FENCE
-*/
-
 #define DEBUG 0
 #define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 
@@ -1443,7 +1439,6 @@ void ngai_acc_common(Integer g_a,
             ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, 
                 count, ndim-1, proc);
           else {
-            ++counter;
             ARMCI_NbAccS(optype, alpha, pbuf, stride_loc, prem, 
                 stride_rem, count, ndim-1, proc,
                 (armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));

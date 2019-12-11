@@ -742,7 +742,6 @@ C_Integer *map= (map_ij);\
 logical pnga_locate(Integer g_a, Integer* subscript, Integer* owner)
 {
 Integer d, proc, dpos, ndim, ga_handle = GA_OFFSET + g_a, proc_s[MAXDIM];
-int use_blocks;
 
    ga_check_handleM(g_a, "nga_locate");
    ndim = GA[ga_handle].ndim;
@@ -763,28 +762,11 @@ int use_blocks;
      if (GA[ga_handle].num_rstrctd > 0) {
        *owner = GA[ga_handle].rstrctd_list[*owner];
      }
-   } else if (GA[ga_handle].distr_type == BLOCK_CYCLIC) {
-     Integer i, j, chk, lo[MAXDIM], hi[MAXDIM];
-     Integer num_blocks = GA[ga_handle].block_total;
-     for (i=0; i< num_blocks; i++) {
-       pnga_distribution(g_a, i, lo, hi);
-       chk = 1;
-       for (j=0; j<ndim; j++) {
-         if (subscript[j]<lo[j] || subscript[j] > hi[j]) chk = 0;
-       }
-       if (chk) {
-         *owner = i;
-         break;
-       }
-     }
-   } else if (GA[ga_handle].distr_type == SCALAPACK ||
-       GA[ga_handle].distr_type == TILED) {
-     Integer index[MAXDIM];
+   } else {
      Integer i;
-     for (i=0; i<ndim; i++) {
-       index[i] = (subscript[i]-1)/GA[ga_handle].block_dims[i];
-     }
-     gam_find_block_from_indices(ga_handle, i, index);
+     Integer index[MAXDIM];
+     gam_find_block_indices_from_subscript(ga_handle,subscript,index);
+     gam_find_block_from_indices(ga_handle,i,index);    
      *owner = i;
    }
    
@@ -3325,19 +3307,7 @@ void pnga_distribution(Integer g_a, Integer proc, Integer *lo, Integer * hi)
     Integer nodesize = pnga_cluster_nprocs(node);
     lproc = proc%nodesize;
   }
-  if (GA[ga_handle].distr_type == REGULAR) {
-    ga_ownsM(ga_handle, lproc, lo, hi);
-  } else {
-    C_Integer index[MAXDIM];
-    int ndim = GA[ga_handle].ndim;
-    int i;
-    gam_find_block_indices(ga_handle,lproc,index);
-    for (i=0; i<ndim; i++) {
-      lo[i] = index[i]*GA[ga_handle].block_dims[i] + 1;
-      hi[i] = (index[i]+1)*GA[ga_handle].block_dims[i];
-      if (hi[i] > GA[ga_handle].dims[i]) hi[i] = GA[ga_handle].dims[i];
-    }
-  }
+  ga_ownsM(ga_handle, lproc, lo, hi);
 }
 
 /**
@@ -3386,7 +3356,7 @@ logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
   int local_sync_begin,local_sync_end;
   Integer grp_id, grp_me=GAme;
   /* Integer grp_nproc=GAnproc; */
-  int maplen = calc_maplen(GA_OFFSET + g_a);
+  int maplen;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/

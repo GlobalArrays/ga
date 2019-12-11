@@ -144,7 +144,6 @@ int main(int argc, char * argv[])
     for(int j =0; j< thread_count; j++) {
         int thread_id = omp_get_thread_num();
         int local_buffer_read[dims[0]][dims[1]];
-        
         NGA_Get(handle, lo, hi, local_buffer_read, ld);
         for(int i =0; i<dims[0]; i++) {
             for(int k =0; k<dims[1]; k++) {
@@ -343,7 +342,6 @@ int main(int argc, char * argv[])
         printf("Acc: p[%d] T[%d] handle: %d\n",rank,thread_id,
             wait_handle_read[thread_id]);
     }
-    
     #pragma omp parallel for
     for(int j =0; j< thread_count; j++) {
         int thread_id = omp_get_thread_num();
@@ -396,4 +394,3 @@ int main(int argc, char * argv[])
     return 1;
 #endif
 }
-

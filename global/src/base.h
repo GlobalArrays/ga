@@ -102,6 +102,7 @@ typedef struct {
        cache_struct_t *cache_head;  /* linked list of cached reads          */
        int mem_dev_set;             /* flag for setting memory device       */
        char mem_dev[FNAM+1];        /* memory device type                   */
+
 } global_array_t;
 
 enum property_type { NO_PROPERTY,
