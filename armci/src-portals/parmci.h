@@ -42,6 +42,7 @@ int PARMCI_NbAccV (int op, void *scale, armci_giov_t * darr, int len,
 float PARMCI_GetValueFloat (void *src, int proc);
 
 int PARMCI_Malloc (void **ptr_arr, armci_size_t bytes);
+int PARMCI_Malloc_memdev (void **ptr_arr, armci_size_t bytes, const char *device);
 
 int PARMCI_NbAccS (int optype, void *scale, void *src_ptr,
 		   int *src_stride_arr, void *dst_ptr, int *dst_stride_arr,
@@ -57,6 +58,8 @@ void *PARMCI_Memat (armci_meminfo_t * meminfo, long offset);
 int PARMCI_PutV (armci_giov_t * darr, int len, int proc);
 
 int PARMCI_Free (void *ptr);
+
+int PARMCI_Free_memdev (void *ptr);
 
 int PARMCI_Init_args (int *argc, char ***argv);
 

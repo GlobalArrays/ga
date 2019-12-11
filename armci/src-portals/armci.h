@@ -142,7 +142,9 @@ extern double ARMCI_GetValueDouble(void *src, int proc);
 
 
 extern int ARMCI_Malloc(void* ptr_arr[], armci_size_t bytes);
+extern int ARMCI_Malloc_memdev(void* ptr_arr[], armci_size_t bytes, const char *device);
 extern int ARMCI_Free(void *ptr);
+extern int ARMCI_Free_memdev(void *ptr);
 extern void* ARMCI_Malloc_local(armci_size_t bytes);
 extern int ARMCI_Free_local(void *ptr);
 extern int ARMCI_Same_node(int proc);
@@ -255,6 +257,7 @@ extern void ARMCI_Group_get_default(ARMCI_Group *group_out);
 extern void ARMCI_Group_get_world(ARMCI_Group *group_out);
    
 extern int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,ARMCI_Group *group);
+extern int ARMCI_Malloc_group_memdev(void *ptr_arr[], armci_size_t bytes,ARMCI_Group *group, const char *device);
 extern int ARMCI_Free_group(void *ptr, ARMCI_Group *group);
 
 extern int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* nb_handle);

@@ -1,6 +1,10 @@
 #ifndef _REG_CACHE_H_
 #define _REG_CACHE_H_
 
+#if USE_SICM
+#include <sicm_low.h>
+//#include <sicm_impl.h>
+#endif
 #include <stddef.h>
 
 /**
@@ -21,6 +25,14 @@ typedef struct _reg_entry_t {
     void *mapped;               /**< starting address of mmap'd region */
     int rank;                   /**< rank where this region lives */
     char name[SHM_NAME_SIZE];   /**< name of region */
+    int use_dev;                /**< memory is on a device */
+#if USE_SICM
+#if SICM_OLD
+    sicm_device *device;         /**< pointer to SICM device */
+#else
+    sicm_device_list device;         /**< pointer to SICM device */
+#endif
+#endif
 } reg_entry_t;
 
 /* functions
@@ -31,7 +43,16 @@ typedef struct _reg_entry_t {
 reg_return_t reg_cache_init(int nprocs);
 reg_return_t reg_cache_destroy();
 reg_entry_t *reg_cache_find(int rank, void *buf, size_t len);
-reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped);
+reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len,
+    const char *name, void *mapped, int use_dev
+#if USE_SICM
+#if SICM_OLD
+    ,sicm_device *device
+#else
+    ,sicm_device_list device
+#endif
+#endif
+    );
 reg_return_t reg_cache_delete(int rank, void *buf);
 reg_return_t reg_cache_nullify(reg_entry_t *entry);
 

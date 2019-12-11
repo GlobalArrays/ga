@@ -64,10 +64,16 @@ case "x$PORT" in
         ./configure --with-armci=$TRAVIS_ROOT/external-armci CFLAGS=-pthread LIBS=-lpthread
         ;;
     x)
-        ./configure $CONFIG_OPTS
+        ./configure ${CONFIG_OPTS}
+        ;;
+    xmpi-pr)
+        export CFLAGS="-DUSE_SICM=1 -I${HOME}/no_cache/SICM/include ${CFLAGS}"
+        export LDFLAGS="-L${HOME}/no_cache/jemalloc/lib -ljemalloc -L${HOME}/no_cache/SICM/lib -lsicm ${LDFLAGS}"
+        export LD_LIBRARY_PATH="${HOME}/no_cache/SICM/lib:${HOME}/no_cache/jemalloc/lib:${LD_LIBRARY_PATH}"
+        ./configure --with-${PORT} ${CONFIG_OPTS}
         ;;
     x*)
-        ./configure --with-${PORT} $CONFIG_OPTS
+        ./configure --with-${PORT} ${CONFIG_OPTS}
         ;;
 esac
 
@@ -106,4 +112,3 @@ then
 else
     mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
 fi
-

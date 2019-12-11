@@ -267,7 +267,7 @@ fi
 
 f77="@F77@"
 cc="@CC@"
-cppflags="@SCALAPACK_CPPFLAGS@ @LAPACK_CPPFLAGS@ @BLAS_CPPFLAGS@ @GA_MP_CPPFLAGS@ @ARMCI_NETWORK_CPPFLAGS@ -I@prefix@/include"
+cppflags="@SCALAPACK_CPPFLAGS@ @LAPACK_CPPFLAGS@ @BLAS_CPPFLAGS@ @GA_MP_CPPFLAGS@ @ARMCI_NETWORK_CPPFLAGS@  @SICM_CPPFLAGS@ -I@prefix@/include"
 network_cppflags="@ARMCI_NETWORK_CPPFLAGS@"
 cflags="@GA_COPT@"
 fflags="@GA_FOPT@ @FFLAG_INT@"
@@ -281,9 +281,11 @@ use_peigs="@enable_peigs@"
 use_elpa="@have_elpa@"
 use_elpa_2015="@have_elpa_2015@"
 use_elpa_2016="@have_elpa_2016@"
-ldflags="@SCALAPACK_LDFLAGS@ @LAPACK_LDFLAGS@ @BLAS_LDFLAGS@ @GA_MP_LDFLAGS@ @ARMCI_NETWORK_LDFLAGS@ -L@prefix@/lib"
+use_sicm="@have_sicm@"
+sicm_dev="@with_sicm_dev@"
+ldflags="@SCALAPACK_LDFLAGS@ @LAPACK_LDFLAGS@ @BLAS_LDFLAGS@ @GA_MP_LDFLAGS@ @ARMCI_NETWORK_LDFLAGS@  @SICM_LDFLAGS@ -L@prefix@/lib"
 network_ldflags="@ARMCI_NETWORK_LDFLAGS@"
-libs="-lga @SCALAPACK_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ $dep_libs"
+libs="-lga @SCALAPACK_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ $dep_libs @SICM_LIBS@"
 network_libs="@ARMCI_NETWORK_LIBS@"
 flibs="@FLIBS@"
 enable_f77_true="@ENABLE_F77_TRUE@"
@@ -317,6 +319,8 @@ Options:
   --use_elpa
   --use_elpa_2015
   --use_elpa_2016
+  --use_sicm
+  --sicm_dev
   --ldflags
   --libs
   --flibs
@@ -398,6 +402,10 @@ do
     result="$result $use_elpa_2015" ;;
   -use_elpa_2016 | --use_elpa_2016 )
     result="$result $use_elpa_2016" ;;
+  -use_sicm | --use_sicm )
+    result="$result $use_sicm" ;;
+  -sicm_dev | --sicm_dev )
+    result="$result $sicm_dev" ;;
   -enable-f77 | --enable-f77 )
     result="$result $enable_f77" ;;
   # This is an error.

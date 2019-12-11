@@ -449,6 +449,13 @@ GA_LAPACK
 GA_SCALAPACK
 GA_ELPA
 
+
+###############################################################################
+# Checks for enabling interfaces to external libraries
+###############################################################################
+GA_SICM
+
+
 ###############################################################################
 # Checks for programs.
 ###############################################################################
@@ -643,4 +650,9 @@ AS_CASE([$ga_msg_comms], [MPI|TCGMSGMPI], [
 AC_MSG_NOTICE([               MPIEXEC=$MPIEXEC])
 ])
 AC_MSG_NOTICE([                NPROCS=$NPROCS])
+if test "x$with_sicm" != "xno"; then :
+AC_MSG_NOTICE([                SICM_CPPFLAGS=$SICM_CPPFLAGS])
+AC_MSG_NOTICE([                SICM_LDFLAGS=$SICM_LDFLAGS])
+AC_MSG_NOTICE([                SICM_LIBS=$SICM_LIBS])
+fi
 AC_MSG_NOTICE([])
