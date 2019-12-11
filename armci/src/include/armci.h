@@ -270,6 +270,7 @@ extern void ARMCI_Group_size(ARMCI_Group *group, int *size);
 extern void ARMCI_Group_set_default(ARMCI_Group *group);
 extern void ARMCI_Group_get_default(ARMCI_Group *group_out);
 extern void ARMCI_Group_get_world(ARMCI_Group *group_out);
+extern void ARMCI_GroupFence(ARMCI_Group *group);
    
 extern int ARMCI_Absolute_id(ARMCI_Group *group, int group_rank);
 extern int ARMCI_Uses_shm_grp(ARMCI_Group *group);

@@ -280,7 +280,7 @@ void armci_msg_sel_scope(int scope, void *x, int n, char* op, int type, int cont
         disp[1] = sizeof(long long);
         block[0] = 1;
         block[1] = 1;
-#if MPI_VERSION >= 3
+#if defined(MPI_VERSION) && (MPI_VERSION >= 2)
         MPI_Type_create_struct(2, block, disp, type, &MPI_LONGLONG_INT);
 #else
         MPI_Type_struct(2, block, disp, type, &MPI_LONGLONG_INT);

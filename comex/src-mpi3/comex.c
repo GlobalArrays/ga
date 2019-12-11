@@ -132,6 +132,7 @@ void get_nb_request(comex_request_t *handle, nb_t **req)
      * handle as available. This is NOT thread safe */
     *handle = nb_full_count;
     comex_wait(handle);
+    *req = nb_list[nb_full_count];
     nb_full_count++;
     nb_full_count = nb_full_count%nb_max_outstanding;
   }
@@ -2060,6 +2061,8 @@ int comex_wait(comex_request_t* hdl)
 }
 
 
+/* returns 0 if operation completed */
+
 int comex_test(comex_request_t* hdl, int *status)
 {
 #ifndef USE_MPI_DATATYPES
@@ -2068,14 +2071,23 @@ int comex_test(comex_request_t* hdl, int *status)
 #endif
 #ifdef USE_MPI_REQUESTS
     int flag;
-    int ret, ierr;
+    int ierr;
     MPI_Status stat;
     ierr = MPI_Test(&(nb_list[*hdl]->request),&flag,&stat);
     translate_mpi_error(ierr,"comex_test:MPI_Test");
     if (flag) {
+      /* operation is complete */
       *status = 0;
-      ret = COMEX_SUCCESS;
+      nb_list[*hdl]->active = 0;
+      if (nb_list[*hdl]->use_type) {
+        ierr = MPI_Type_free(&(nb_list[*hdl]->src_type));
+        translate_mpi_error(ierr,"comex_wait:MPI_Type_free");
+        ierr = MPI_Type_free(&(nb_list[*hdl]->dst_type));
+        translate_mpi_error(ierr,"comex_wait:MPI_Type_free");
+        nb_list[*hdl]->use_type = 0;
+      }
     } else {
+      /* operation is incomplete */
       *status = 1;
       ret = COMEX_FAILURE;
     }
@@ -3352,6 +3364,11 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
     MPI_Comm_rank(comm, &comm_rank);
     MPI_Comm_size(comm, &comm_size);
 
+#if DEBUG
+    printf("[%d] comex_malloc(ptrs=%p, size=%lu, group=%d)\n",
+        comm_rank, ptrs, (long unsigned)size, group);
+#endif
+
     /* is this needed? */
     /* comex_barrier(group); */
 
@@ -3448,7 +3465,7 @@ int comex_free(void *ptr, comex_group_t group)
 #endif
 
     /* allocate receive buffer for exchange of pointers */
-    allgather_ptrs = (void **)malloc(sizeof(void *) * comm_size);
+    allgather_ptrs = (long **)malloc(sizeof(void *) * comm_size);
     assert(allgather_ptrs);
 
     /* exchange of pointers */

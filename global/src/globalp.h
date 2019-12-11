@@ -151,6 +151,7 @@ extern void    gai_hsort(Integer *list, int num);
 extern void    ga_init_nbhandle(Integer *nbhandle);
 extern int     nga_test_internal(Integer *nbhandle);
 extern int     nga_wait_internal(Integer *nbhandle);
+extern void    gai_nb_init();
 extern int     ga_icheckpoint_init(Integer *gas, int num);
 extern int     ga_icheckpoint(Integer *gas, int num);
 extern int     ga_irecover(int rid);

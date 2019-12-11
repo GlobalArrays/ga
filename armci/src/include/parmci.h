@@ -11,6 +11,7 @@ extern void   PARMCI_Barrier();
 extern int    PARMCI_Create_mutexes(int num);
 extern int    PARMCI_Destroy_mutexes();
 extern void   PARMCI_Fence(int proc);
+extern void   PARMCI_GroupFence(ARMCI_Group *group);
 extern void   PARMCI_Finalize();
 extern int    PARMCI_Free_local(void *ptr);
 extern int    PARMCI_Free(void *ptr);

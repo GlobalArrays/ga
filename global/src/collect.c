@@ -111,7 +111,8 @@ void pnga_pgroup_brdcst(Integer grp_id, Integer type, void *buf,
 #ifdef MSG_COMMS_MPI
 MPI_Comm GA_MPI_Comm()
 {
-    return GA_MPI_Comm_pgroup(-1);
+    /*return GA_MPI_Comm_pgroup(-1); */
+  return GA_MPI_World_comm_dup;
 }
 MPI_Comm GA_MPI_Comm_pgroup_default()
 {

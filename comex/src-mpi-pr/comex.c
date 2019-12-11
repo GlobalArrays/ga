@@ -267,6 +267,7 @@ STATIC nb_t* nb_wait_for_handle();
 STATIC void nb_wait_for_send1(nb_t *nb);
 STATIC void nb_wait_for_recv1(nb_t *nb);
 STATIC void nb_wait_for_all(nb_t *nb);
+STATIC int nb_test_for_all(nb_t *nb);
 STATIC void nb_wait_all();
 STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb);
 STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb);
@@ -357,7 +358,7 @@ int comex_init()
     int status = 0;
     int init_flag = 0;
     int i = 0;
-
+    
     if (initialized) {
         return 0;
     }
@@ -653,15 +654,15 @@ int comex_init_args(int *argc, char ***argv)
 {
     int init_flag;
     int status;
-
+    
     status = MPI_Initialized(&init_flag);
     CHECK_MPI_RETVAL(status);
-
+    
     if(!init_flag) {
         status = MPI_Init(argc, argv);
         CHECK_MPI_RETVAL(status);
     }
-
+    
     return comex_init();
 }
 
@@ -697,11 +698,33 @@ int comex_finalize()
 
     /* Make sure that all outstanding operations are done */
     comex_wait_all(COMEX_GROUP_WORLD);
-
+    
     comex_barrier(COMEX_GROUP_WORLD);
 
     /* send quit message to thread */
-    if (_smallest_world_rank_with_same_hostid(group_list) == g_state.rank) {
+    int smallest_rank_with_same_hostid, largest_rank_with_same_hostid; 
+    int num_progress_ranks_per_node, is_node_ranks_packed;
+    int my_rank_to_free;
+    int is_notifier = 0; 
+
+    num_progress_ranks_per_node = get_num_progress_ranks_per_node();
+    is_node_ranks_packed = get_progress_rank_distribution_on_node();
+    smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(group_list);
+    largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(group_list);
+    my_rank_to_free = get_my_rank_to_free(g_state.rank,
+        g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+        num_progress_ranks_per_node, is_node_ranks_packed);
+#if DEBUG
+    fprintf(stderr, "[%d] comex_finalize() sr_in_group %d\n", g_state.rank, 
+        my_rank_to_free);
+    //     smallest_rank_with_same_hostid + g_state.node_size*
+    //  ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size));
+#endif
+    // is_notifier = g_state.rank == smallest_rank_with_same_hostid + g_state.node_size*
+    //   ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size);
+    // if (_smallest_world_rank_with_same_hostid(group_list) == g_state.rank) 
+    if(is_notifier = my_rank_to_free == g_state.rank)
+    {
         int my_master = -1;
         header_t *header = NULL;
         nb_t *nb = NULL;
@@ -759,6 +782,7 @@ void comex_error(char *msg, int code)
 #endif
     fprintf(stderr,"[%d] Received an Error in Communication: (%d) %s\n",
             g_state.rank, code, msg);
+    
     MPI_Abort(g_state.comm, code);
 }
 
@@ -996,7 +1020,7 @@ int comex_fence_all(comex_group_t group)
     fprintf(stderr, "[%d] comex_fence_all asm volatile (\"\" : : : \"memory\"); \n",
             g_state.rank, group);
 #endif
-    asm volatile ("" : : : "memory");
+    asm volatile ("" : : : "memory"); 
 #endif
 
     /* optimize by only sending to procs which we have outstanding messages */
@@ -1536,6 +1560,7 @@ int comex_wait(comex_request_t* hdl)
 }
 
 
+/* return 0 if operation is completed, 1 otherwise */
 int comex_test(comex_request_t* hdl, int *status)
 {
     int index = 0;
@@ -1553,14 +1578,19 @@ int comex_test(comex_request_t* hdl, int *status)
                 g_state.rank);
     }
 
-    if (NULL == nb->send_head && NULL == nb->recv_head) {
+    if (!nb_test_for_all(nb)) {
+      /* Completed */
         COMEX_ASSERT(0 == nb->send_size);
         COMEX_ASSERT(0 == nb->recv_size);
         *status = 0;
         nb->in_use = 0;
     }
     else {
+      /* Not completed */
         *status = 1;
+    }
+    if (*status == 0) {
+      nb->in_use = 0;
     }
 
     return COMEX_SUCCESS;
@@ -1663,7 +1693,7 @@ int comex_nbacc(
 int comex_nbputs(
         void *src, int *src_stride,
         void *dst, int *dst_stride,
-        int *count, int stride_levels,
+        int *count, int stride_levels, 
         int proc, comex_group_t group,
         comex_request_t *hdl)
 {
@@ -1693,9 +1723,9 @@ int comex_nbputs(
 int comex_nbgets(
         void *src, int *src_stride,
         void *dst, int *dst_stride,
-        int *count, int stride_levels,
+        int *count, int stride_levels, 
         int proc, comex_group_t group,
-        comex_request_t *hdl)
+        comex_request_t *hdl) 
 {
     nb_t *nb = NULL;
     int world_proc = -1;
@@ -2107,7 +2137,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 
     /* preconditions */
     COMEX_ASSERT(ptrs);
-
+   
 #if DEBUG
     fprintf(stderr, "[%d] comex_malloc(ptrs=%p, size=%lu, group=%d)\n",
             g_state.rank, ptrs, (long unsigned)size, group);
@@ -2124,10 +2154,27 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     fprintf(stderr, "[%d] comex_malloc my_master=%d\n", g_state.rank, my_master);
 #endif
 
+    int smallest_rank_with_same_hostid, largest_rank_with_same_hostid; 
+    int num_progress_ranks_per_node, is_node_ranks_packed;
+    num_progress_ranks_per_node = get_num_progress_ranks_per_node();
+    is_node_ranks_packed = get_progress_rank_distribution_on_node();
+    smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
+    largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
+    is_notifier = g_state.rank == get_my_master_rank_with_same_hostid(g_state.rank,
+        g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+        num_progress_ranks_per_node, is_node_ranks_packed);
+#if 0
 #if MASTER_IS_SMALLEST_SMP_RANK
-    is_notifier = _smallest_world_rank_with_same_hostid(igroup) == g_state.rank;
+    // is_notifier = _smallest_world_rank_with_same_hostid(igroup) == g_state.rank;
+    int smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
+    is_notifier = g_state.rank == smallest_rank_with_same_hostid + g_state.node_size*
+      ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size);
 #else
-    is_notifier = _largest_world_rank_with_same_hostid(igroup) == g_state.rank;
+    // is_notifier = _largest_world_rank_with_same_hostid(igroup) == g_state.rank;
+    int largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
+    is_notifier = g_state.rank == (largest_rank_with_same_hostid - g_state.node_size *
+       ((largest_rank_with_same_hostid - g_state.rank)/g_state.node_size));
+#endif
 #endif
     if (is_notifier) {
         reg_entries_local = malloc(sizeof(reg_entry_t)*g_state.node_size);
@@ -2137,7 +2184,15 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     size_entries = sizeof(reg_entry_t) * igroup->size;
     reg_entries = malloc(size_entries);
     MAYBE_MEMSET(reg_entries, 0, sizeof(reg_entry_t)*igroup->size);
-
+#if DEBUG
+    fprintf(stderr, "[%d] comex_malloc lr_same_hostid=%d\n", 
+      g_state.rank, largest_rank_with_same_hostid);
+    fprintf(stderr, "[%d] comex_malloc igroup size=%d\n", g_state.rank, igroup->size);
+    fprintf(stderr, "[%d] comex_malloc node_size=%d\n", g_state.rank, g_state.node_size);
+    fprintf(stderr, "[%d] comex_malloc is_notifier=%d\n", g_state.rank, is_notifier);
+    fprintf(stderr, "[%d] rank, igroup size[5%d]\n",
+            g_state.rank, igroup->size);
+#endif
 #if DEBUG && DEBUG_VERBOSE
     fprintf(stderr, "[%d] comex_malloc allocated reg entries\n",
             g_state.rank);
@@ -2161,6 +2216,10 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     reg_entries[igroup->rank] = my_reg;
     status = MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
             reg_entries, sizeof(reg_entry_t), MPI_BYTE, igroup->comm);
+#if DEBUG
+    fprintf(stderr, "[%d] comex_malloc allgather status [%d]\n",
+            g_state.rank, status);
+#endif
     COMEX_ASSERT(MPI_SUCCESS == status);
 
 #if DEBUG && DEBUG_VERBOSE
@@ -2449,6 +2508,10 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
         header_t *header = NULL;
 
         reg_entries_local_size = sizeof(reg_entry_t)*reg_entries_local_count;
+#if DEBUG
+        fprintf(stderr, "[%d] comex_malloc, reg_entries_local_count[%d]\n",
+           g_state.rank, reg_entries_local_count); 
+#endif 
         message_size = sizeof(header_t) + reg_entries_local_size;
         message = malloc(message_size);
         COMEX_ASSERT(message);
@@ -2674,10 +2737,25 @@ int comex_free(void *ptr, comex_group_t group)
     fprintf(stderr, "[%d] comex_free my_master=%d\n", g_state.rank, my_master);
 #endif
 
+    int num_progress_ranks_per_node = get_num_progress_ranks_per_node();
+    int is_node_ranks_packed = get_progress_rank_distribution_on_node();
+    int smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
+    int largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
+    is_notifier = g_state.rank == get_my_master_rank_with_same_hostid(g_state.rank,
+        g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+        num_progress_ranks_per_node, is_node_ranks_packed);
+#if 0
 #if MASTER_IS_SMALLEST_SMP_RANK
-    is_notifier = _smallest_world_rank_with_same_hostid(igroup) == g_state.rank;
+    // is_notifier = _smallest_world_rank_with_same_hostid(igroup) == g_state.rank;
+    int smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
+    is_notifier = g_state.rank == smallest_rank_with_same_hostid + g_state.node_size*
+      ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size);
 #else
-    is_notifier = _largest_world_rank_with_same_hostid(igroup) == g_state.rank;
+    // is_notifier = _largest_world_rank_with_same_hostid(igroup) == g_state.rank;
+    int largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
+    is_notifier = g_state.rank == (largest_rank_with_same_hostid - g_state.node_size *
+       ((largest_rank_with_same_hostid - g_state.rank)/g_state.node_size));
+#endif
 #endif
     if (is_notifier) {
         rank_ptrs = malloc(sizeof(rank_ptr_t)*g_state.node_size);
@@ -2720,8 +2798,24 @@ int comex_free(void *ptr, comex_group_t group)
             fprintf(stderr, "[%d] comex_free found NULL at %d\n", g_state.rank, i);
 #endif
         }
-        else if (g_state.hostid[world_ranks[i]]
-                == g_state.hostid[g_state.rank]) {
+        // else if (g_state.hostid[world_ranks[i]]
+        //         == g_state.hostid[g_state.rank]) 
+        else if (g_state.master[world_ranks[i]] == 
+           g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
+           g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+           num_progress_ranks_per_node, is_node_ranks_packed)] )
+#if 0
+#if MASTER_IS_SMALLEST_SMP_RANK
+        else if (g_state.master[world_ranks[i]] ==
+                g_state.master[(smallest_rank_with_same_hostid + g_state.node_size *
+       ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size))]) 
+#else
+        else if (g_state.master[world_ranks[i]] ==
+                g_state.master[(largest_rank_with_same_hostid - g_state.node_size *
+       ((largest_rank_with_same_hostid - g_state.rank)/g_state.node_size))]) 
+#endif
+#endif
+        {
             /* same SMP node */
             reg_entry_t *reg_entry = NULL;
             int retval = 0;
@@ -3421,7 +3515,7 @@ STATIC void _get_handler(header_t *header, int proc)
 #endif
 
     COMEX_ASSERT(OP_GET == header->operation);
-
+    
     reg_entry = reg_cache_find(
             header->rank, header->remote_address, header->length);
     COMEX_ASSERT(reg_entry);
@@ -4001,7 +4095,7 @@ STATIC void _fence_handler(header_t *header, int proc)
     fprintf(stderr, "[%d] _fence_handler asm volatile (\"\" : : : \"memory\"); \n",
             g_state.rank);
 #endif
-    asm volatile ("" : : : "memory");
+    asm volatile ("" : : : "memory"); 
 #endif
 
     /* we send the ack back to the originating proc */
@@ -4034,7 +4128,7 @@ STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc)
             header->rank, header->remote_address, header->length);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
-
+    
     if (sizeof(int) == header->length) {
         value_int = malloc(sizeof(int));
         *value_int = *((int*)mapped_offset); /* "fetch" */
@@ -4077,7 +4171,7 @@ STATIC void _swap_handler(header_t *header, char *payload, int proc)
             header->rank, header->remote_address, header->length);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
-
+    
     if (sizeof(int) == header->length) {
         value_int = malloc(sizeof(int));
         *value_int = *((int*)mapped_offset); /* "fetch" */
@@ -4151,7 +4245,7 @@ STATIC void _lock_handler(header_t *header, int proc)
 #endif
 
     COMEX_ASSERT(0 <= id);
-
+    
     if (UNLOCKED == mutexes[rank][id]) {
         mutexes[rank][id] = proc;
         server_send(&id, sizeof(int), proc);
@@ -4193,7 +4287,7 @@ STATIC void _unlock_handler(header_t *header, int proc)
 #endif
 
     COMEX_ASSERT(0 <= id);
-
+    
     if (lq_heads[rank][id]) {
         /* a lock requester was queued */
         /* find the next lock request and update queue */
@@ -4699,6 +4793,7 @@ STATIC void* _shm_map(int fd, size_t size)
     return memory;
 }
 
+
 STATIC int _set_affinity(int cpu)
 {
     int status = 0;
@@ -5088,10 +5183,17 @@ STATIC nb_t* nb_wait_for_handle()
 {
     nb_t *nb = NULL;
     int in_use_count = 0;
+    int loop_index = nb_index;
+    int found = 0;
 
     /* find first handle that isn't associated with a user-level handle */
     /* make sure the handle we find has processed all events */
     /* the user can accidentally exhaust the available handles */
+
+#if 0
+    /* NOTE: it looks like this loop just forces completion of the handle
+     * corresponding to nb_index. It should probably test all handles and if it
+     * doesn't find  a free one, then use the one at nb_index */
     do {
         ++in_use_count;
         if (in_use_count > nb_max_outstanding) {
@@ -5101,10 +5203,34 @@ STATIC nb_t* nb_wait_for_handle()
                     g_state.rank);
             MPI_Abort(g_state.comm, -1);
         }
-        nb = &nb_state[nb_index++];
+        nb = &nb_state[nb_index];
+        nb_index++;
         nb_index %= nb_max_outstanding; /* wrap around if needed */
         nb_wait_for_all(nb);
     } while (nb->in_use);
+#else
+    /* look through list for unused handle */
+    do {
+        ++in_use_count;
+        if (in_use_count > nb_max_outstanding) {
+          break;
+        }
+        nb = &nb_state[loop_index];
+        loop_index++;
+        loop_index %= nb_max_outstanding; /* wrap around if needed */
+        if (!nb->in_use) {
+          nb_index = loop_index;
+          found = 1;
+          break;
+        }
+    } while (nb->in_use);
+    if (!found) {
+      nb = &nb_state[nb_index];
+      nb_index++;
+      nb_index %= nb_max_outstanding; /* wrap around if needed */
+      nb_wait_for_all(nb);
+    }
+#endif
 
     return nb;
 }
@@ -5148,6 +5274,60 @@ STATIC void nb_wait_for_send1(nb_t *nb)
         if (NULL == nb->send_head) {
             nb->send_tail = NULL;
         }
+    }
+}
+
+
+/* returns true if operation has completed */
+STATIC int nb_test_for_send1(nb_t *nb, message_t **save_send_head,
+    message_t **prev)
+{
+#if DEBUG
+    fprintf(stderr, "[%d] nb_test_for_send1(nb=%p)\n", g_state.rank, nb);
+#endif
+
+    COMEX_ASSERT(NULL != nb);
+    COMEX_ASSERT(NULL != nb->send_head);
+
+    {
+        MPI_Status status;
+        int retval = 0;
+        int flag;
+        message_t *message_to_free = NULL;
+
+        retval = MPI_Test(&(nb->send_head->request), &flag, &status);
+        CHECK_MPI_RETVAL(retval);
+
+        if (flag) {
+          if (nb->send_head->need_free) {
+            free(nb->send_head->message);
+          }
+
+          if (MPI_DATATYPE_NULL != nb->send_head->datatype) {
+            retval = MPI_Type_free(&nb->send_head->datatype);
+            CHECK_MPI_RETVAL(retval);
+          }
+
+          message_to_free = nb->send_head;
+          if (*prev) (*prev)->next=nb->send_head->next;
+          nb->send_head = nb->send_head->next;
+          *save_send_head = NULL;
+          free(message_to_free);
+
+          COMEX_ASSERT(nb->send_size > 0);
+          nb->send_size -= 1;
+          nb_count_send_processed += 1;
+          nb_count_event_processed += 1;
+
+          if (NULL == nb->send_head) {
+            nb->send_tail = NULL;
+          }
+        } else {
+          *prev = nb->send_head;
+          *save_send_head = nb->send_head;
+          nb->send_head = nb->send_head->next;
+        }
+        return flag;
     }
 }
 
@@ -5221,6 +5401,87 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
 }
 
 
+/* returns true if operation has completed */
+STATIC int nb_test_for_recv1(nb_t *nb, message_t **save_recv_head,
+    message_t **prev)
+{
+#if DEBUG
+    fprintf(stderr, "[%d] nb_wait_for_recv1(nb=%p)\n", g_state.rank, nb);
+#endif
+
+    COMEX_ASSERT(NULL != nb);
+    COMEX_ASSERT(NULL != nb->recv_head);
+
+    {
+        MPI_Status status;
+        int retval = 0;
+        int flag;
+        message_t *message_to_free = NULL;
+
+        retval = MPI_Test(&(nb->recv_head->request), &flag, &status);
+        CHECK_MPI_RETVAL(retval);
+
+        if (flag) {
+          if (NULL != nb->recv_head->stride) {
+            stride_t *stride = nb->recv_head->stride;
+            COMEX_ASSERT(nb->recv_head->message);
+            COMEX_ASSERT(stride);
+            COMEX_ASSERT(stride->ptr);
+            COMEX_ASSERT(stride->stride);
+            COMEX_ASSERT(stride->count);
+            COMEX_ASSERT(stride->stride_levels);
+            unpack(nb->recv_head->message, stride->ptr,
+                stride->stride, stride->count, stride->stride_levels);
+            free(stride);
+          }
+
+          if (NULL != nb->recv_head->iov) {
+            int i = 0;
+            char *message = nb->recv_head->message;
+            int off = 0;
+            comex_giov_t *iov = nb->recv_head->iov;
+            for (i=0; i<iov->count; ++i) {
+              (void)memcpy(iov->dst[i], &message[off], iov->bytes);
+              off += iov->bytes;
+            }
+            free(iov->src);
+            free(iov->dst);
+            free(iov);
+          }
+
+          if (nb->recv_head->need_free) {
+            free(nb->recv_head->message);
+          }
+
+          if (MPI_DATATYPE_NULL != nb->recv_head->datatype) {
+            retval = MPI_Type_free(&nb->recv_head->datatype);
+            CHECK_MPI_RETVAL(retval);
+          }
+
+          message_to_free = nb->recv_head;
+          if (*prev) (*prev)->next=nb->recv_head->next;
+          nb->recv_head = nb->recv_head->next;
+          *save_recv_head = NULL;
+          free(message_to_free);
+
+          COMEX_ASSERT(nb->recv_size > 0);
+          nb->recv_size -= 1;
+          nb_count_recv_processed += 1;
+          nb_count_event_processed += 1;
+
+          if (NULL == nb->recv_head) {
+            nb->recv_tail = NULL;
+          }
+        } else {
+          *prev = nb->recv_head;
+          *save_recv_head = nb->recv_head;
+           nb->recv_head = nb->recv_head->next;
+        }
+        return flag;
+    }
+}
+
+
 STATIC void nb_wait_for_all(nb_t *nb)
 {
 #if DEBUG
@@ -5238,6 +5499,47 @@ STATIC void nb_wait_for_all(nb_t *nb)
             nb_wait_for_recv1(nb);
         }
     }
+}
+
+/* Returns 0 if no outstanding requests */
+
+STATIC int nb_test_for_all(nb_t *nb)
+{
+#if DEBUG
+    fprintf(stderr, "[%d] nb_test_for_all(nb=%p)\n", g_state.rank, nb);
+#endif
+    int ret = 0;
+    message_t *save_send_head = NULL;
+    message_t *save_recv_head = NULL;
+    message_t *tmp_send_head;
+    message_t *tmp_recv_head;
+    message_t *send_prev = NULL;
+    message_t *recv_prev = NULL;
+
+    COMEX_ASSERT(NULL != nb);
+
+    /* check for outstanding requests */
+    while (NULL != nb->send_head || NULL != nb->recv_head) {
+      if (NULL != nb->send_head) {
+        if (!nb_test_for_send1(nb, &tmp_send_head, &send_prev)) {
+          ret = 1; 
+        }
+        if ((NULL == save_send_head) && (ret == 1)) {
+          save_send_head = tmp_send_head;
+        }
+      }
+      if (NULL != nb->recv_head) {
+        if (!nb_test_for_recv1(nb, &tmp_recv_head, &recv_prev)) {
+          ret = 1;
+        }
+        if ((NULL == save_recv_head) && (ret == 1)) {
+          save_recv_head = tmp_recv_head;
+        }
+      }
+    }
+    nb->send_head = save_send_head;
+    nb->recv_head = save_recv_head;
+    return ret;
 }
 
 
@@ -5289,7 +5591,9 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 
     if (COMEX_ENABLE_PUT_SMP) {
         /* put to SMP node */
-        if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+        // if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) 
+        if (g_state.master[proc] == g_state.master[g_state.rank]) 
+        {
             reg_entry_t *reg_entry = NULL;
             void *mapped_offset = NULL;
 
@@ -5371,7 +5675,9 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 
     if (COMEX_ENABLE_GET_SMP) {
         /* get from SMP node */
-        if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+        // if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) 
+        if (g_state.master[proc] == g_state.master[g_state.rank]) 
+        {
             reg_entry_t *reg_entry = NULL;
             void *mapped_offset = NULL;
 
@@ -5442,7 +5748,9 @@ STATIC void nb_acc(int datatype, void *scale,
 
     if (COMEX_ENABLE_ACC_SMP) {
         /* acc to same SMP node */
-        if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+        // if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) 
+        if (g_state.master[proc] == g_state.master[g_state.rank]) 
+        {
             reg_entry_t *reg_entry = NULL;
             void *mapped_offset = NULL;
 
@@ -5620,7 +5928,7 @@ STATIC void nb_puts(
                 dst_bvalue[j] = 0;
             }
         }
-
+        
         nb_put((char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
@@ -5879,7 +6187,7 @@ STATIC void nb_gets(
         }
 
         dst_idx = 0;
-
+        
         for(j=1; j<=stride_levels; j++) {
             dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
             if((i+1) % dst_bunit[j] == 0) {
@@ -5889,7 +6197,7 @@ STATIC void nb_gets(
                 dst_bvalue[j] = 0;
             }
         }
-
+        
         nb_get((char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
@@ -6155,7 +6463,7 @@ STATIC void nb_accs(
                 dst_bvalue[j] = 0;
             }
         }
-
+        
         nb_acc(datatype, scale, (char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
@@ -6755,3 +7063,4 @@ STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels,
         translate_mpi_error(ierr,"strided_to_subarray_dtype:MPI_Type_create_subarray");
     }
 }
+

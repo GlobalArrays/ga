@@ -1,8 +1,8 @@
-#if HAVE_CONFIG_H
+#if HAVE_CONFIG_H 
 #   include "config.fh"
 #endif
 c $Id: test.F,v 1.64.2.11 2007-04-06 22:37:35 d3g293 Exp $
-c vector boxes lack arithmetic precision
+c vector boxes lack arithmetic precision 
 #if defined(FUJITSU)
 # define THRESH 1d-12
 # define THRESHF 1e-5
@@ -12,7 +12,7 @@ c vector boxes lack arithmetic precision
 #endif
 
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
-#define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF
+#define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF 
 
 c#define NEW_API
 c#define MIRROR
@@ -21,6 +21,7 @@ c#define MIRROR
 c#define BLOCK_CYCLIC
 c#define USE_SCALAPACK_DISTR
 c#define USE_TILED_DISTR
+c#define USE_TILED_IRREG_DISTR
 c#define USE_RESTRICTED
 
 #ifdef USE_RESTRICTED
@@ -35,10 +36,21 @@ c#define USE_RESTRICTED
 #else
 #  undef USE_SCALAPACK_DISTR
 #  undef USE_TILED_DISTR
+#  undef USE_TILED_IRREG_DISTR
 #endif
 
 #ifdef USE_SCALAPACK_DISTR
 #  undef USE_TILED_DISTR
+#  undef USE_TILED_IRREG_DISTR
+#  define BLOCK_CYCLIC
+#endif
+
+#ifdef USE_TILED_DISTR
+#  define BLOCK_CYCLIC
+#endif
+
+#ifdef USE_TILED_IRREG_DISTR
+#  define BLOCK_CYCLIC
 #endif
 
       program main
@@ -51,7 +63,7 @@ c#define USE_RESTRICTED
       integer version, subversion, patch
       logical status
       parameter (heap=800*800*4, fudge=100, stack=800*800)
-c
+c     
 c***  Intitialize a message passing library
 c
 #include "mp3.fh"
@@ -67,7 +79,7 @@ c
       me = ga_nodeid()
 c     we can also use GA_set_memory_limit BEFORE first ga_create call
 c
-      ma_heap = heap/nproc + fudge
+      ma_heap = heap/nproc + fudge 
       ma_heap = 2*ma_heap
 #ifdef USE_RESTRICTED
       ma_heap = 2*ma_heap
@@ -91,7 +103,7 @@ c***  Initialize the MA package
 c     MA must be initialized before any global array is allocated
 c
       status = ma_init(MT_DCPL, stack, ma_heap)
-      if (.not. status) call ga_error('ma_init failed',-1)
+      if (.not. status) call ga_error('ma_init failed',-1) 
 c
 c     Uncomment the below line to register external memory allocator
 c     for dynamic arrays inside GA routines.
@@ -101,7 +113,7 @@ c
         print *, 'using ', nproc,' process(es) ', ga_cluster_nnodes(),
      $           ' cluster nodes'
         print *,'process ', me, ' is on node ',ga_cluster_nodeid(),
-     $          ' with ',  ga_cluster_nprocs(-1), ' processes'
+     $          ' with ',  ga_cluster_nprocs(-1), ' processes' 
         call ffflush(6)
       endif
 c
@@ -140,7 +152,6 @@ c
       endif
 
       call check_dbl()
-#if 1
 c
 c***  Check support for single precision complex arrays
 c
@@ -184,9 +195,9 @@ c
          write(6,*)
          call ffflush(6)
       endif
-
-      call check_flt()
-c
+ 
+      call check_flt() 
+c     
       if (me.eq.0) then
          write(6,*)
          write(6,*)'CHECKING Wrappers to Message Passing Collective ops'
@@ -196,14 +207,13 @@ c
 
       call check_wrappers
 c
-c***  Check if memory limits are enforced
+c***  Check if memory limits are enforced 
 c
       call check_mem(util_mdtob(ma_heap*ga_nnodes()))
 c
-#endif
       if(me.eq.0) call ga_print_stats()
-      if(me.eq.0) print *,' '
-      if(me.eq.0) print *,'All tests successful '
+      if(me.eq.0) print *,' ' 
+      if(me.eq.0) print *,'All tests successful ' 
       status = ga_destroy(g_s)
 c
 c***  Tidy up the GA package
@@ -222,7 +232,7 @@ c
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-c
+c     
       integer n,m
       parameter (n = 256)
       parameter (m = 2*n)
@@ -259,9 +269,12 @@ c
 #ifdef BLOCK_CYCLIC
       integer block_size(2), proc_grid(2)
 #endif
+#ifdef USE_TILED_IRREG_DISTR
+      integer mapc(4096), nblocks(2)
+#endif
       intrinsic int
       iran(i) = int(drand(0)*real(i)) + 1
-c
+c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
       inode = ga_cluster_nodeid()
@@ -286,7 +299,7 @@ c
       proc_grid(2) = nproc/2
 #endif
 #endif
-c
+c     
 c     a() is a local copy of what the global array should start as
 c
       do j = 1, n
@@ -296,7 +309,7 @@ c
 #else
             a(i,j) = inode + i-1 + (j-1)*n
 #endif
-            b(i,j) =-1.
+            b(i,j) =-1. 
          enddo
       enddo
 *      write(6,*) ' correct '
@@ -318,17 +331,24 @@ c     call setdbg(1)
 #ifdef USE_RESTRICTED
       call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
 #endif
+
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#else
+      call util_create_map(mapc,block_size(1),dims,nblocks,proc_grid)
+      call ga_set_tiled_irreg_proc_grid(g_a,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
 #endif
 #endif
+
 #  ifdef MIRROR
       p_mirror = ga_pgroup_get_mirror()
       call ga_set_pgroup(g_a,p_mirror)
@@ -365,21 +385,18 @@ c
       call ga_distribution(g_a, lproc, ilo, ihi, jlo, jhi)
 #endif
       call ga_sync()
-c
+c     
 c     Zero the array
 c
-      if (me .eq. 0) then
-         write(6,21)
+      if (me .eq. 0) then 
+         write(6,21) 
  21      format('> Checking zero ... ')
          call ffflush(6)
       endif
       call ga_zero(g_a)
-
 c
 c     Check that it is indeed zero
 c
-
-
       call ga_get(g_a, 1, n, 1, n, b, n)
       call ga_sync()
       do i = 1, n
@@ -401,7 +418,7 @@ c
 c     Each node fills in disjoint sections of the array
 c
       if (me .eq. 0) then
-         write(6,2)
+         write(6,2) 
  2       format('> Checking disjoint put ... ')
          call ffflush(6)
       endif
@@ -443,7 +460,7 @@ c
             if (b(i,j) .ne. a(i,j)) then
                write(6,*) ' put ', me, i, j, a(i,j),b(i,j)
                call ffflush(6)
-               call ga_error('... exiting3 ',-1)
+               call ga_error('... exiting ',-1)
             endif
          enddo
       enddo
@@ -483,7 +500,7 @@ c
          endif
 c
          nwords = nwords + (ihi-ilo+1)*(jhi-jlo+1)
-c
+c     
          call util_dfill(n*n, 0.0d0, b, 1)
          call ga_get(g_a, ilo, ihi, jlo, jhi, b(ilo, jlo), n)
          if (me .eq. 0 .and. mod(loop-1, max(1,nloop/20)).eq.0) then
@@ -517,17 +534,17 @@ c     Each node accumulates into disjoint sections of the array
 c
 #if 1
       if (me .eq. 0) then
-         write(6,9)
+         write(6,9) 
  9       format('> Checking accumulate ... ')
          call ffflush(6)
       endif
       call ga_sync()
-c
+c     
       crap = drand(12345)       ! Same seed for each process
       do j = 1, n
          do i = 1, n
 c           b(i,j) = drand(0)
-            b(i,j) = i+j
+            b(i,j) = i+j 
          enddo
       enddo
 c
@@ -557,7 +574,7 @@ c               print *, me, 'checking accumulate ',ilo,ihi,jlo,jhi,x
                call ga_acc(g_a, ilo, ihi, jlo, jhi, b(ilo, jlo), n, x)
             endif
             ij = ij + 1
-c
+c     
 c           Each process applies all updates to its local copy
 c
             do jj = jlo, jhi
@@ -593,17 +610,23 @@ c     overlapping accumulate
       g_b = ga_create_handle()
       call ga_set_data(g_b,ndim,dims,MT_DBL)
       call ga_set_array_name(g_b,'b')
+
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_b,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_b,block_size,proc_grid)
+#else
+      call ga_set_tiled_irreg_proc_grid(g_b,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_b,block_size)
 #endif
 #endif
+
 #  ifdef MIRROR
       call ga_set_pgroup(g_b,p_mirror)
 #  endif
@@ -663,7 +686,7 @@ c
             a(i,j) = 0.1d0*a(i,j) + 0.9d0*b(i,j)
          enddo
       enddo
-
+      
 #ifndef MIRROR
       if (me.eq.0) call ga_put(g_b, 1, n, 1, n, b, n)
 #else
@@ -676,7 +699,7 @@ c
             if(MISMATCH(b(i,j), a(i,j)))then
                write(6,*) ' add ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',-1)
+               call ga_error('... exiting ',-1) 
             endif
          enddo
       enddo
@@ -690,7 +713,7 @@ c
 c     Check the ddot function
 c
       if (me .eq. 0) then
-         write(6,19)
+         write(6,19) 
  19      format('> Checking ddot ...')
          call ffflush(6)
       endif
@@ -703,9 +726,9 @@ c
          enddo
       enddo
 #ifndef MIRROR
-      if (me.eq.0) then
+      if (me.eq.0) then 
 #else
-      if (iproc.eq.0) then
+      if (iproc.eq.0) then 
 #endif
          call ga_put(g_b, 1, n, 1, n, b, n)
          call ga_put(g_a, 1, n, 1, n, a, n)
@@ -781,7 +804,7 @@ c
       call ga_sync()
 c
       crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
-      do j = 1, 10
+      do j = 1, 10 
        call ga_sync()
 #ifndef MIRROR
        itmp = iran(nproc)-1
@@ -791,12 +814,12 @@ c
        if(me.eq.itmp) then
 #endif
 #ifndef NGA_GATSCAT
-         do loop = 1,m
-           ilo = iran(n)
+         do loop = 1,m 
+           ilo = iran(n) 
            jlo = iran(n)
            iv(loop) = ilo
            jv(loop) = jlo
-         enddo
+         enddo 
          call ga_gather(g_a, v, iv, jv, m)
          do loop = 1,m
            ilo= iv(loop)
@@ -810,12 +833,12 @@ c
            endif
          enddo
 #else
-         do loop = 1,m
-           ilo = iran(n)
+         do loop = 1,m 
+           ilo = iran(n) 
            jlo = iran(n)
            ijv(1,loop) = ilo
            ijv(2,loop) = jlo
-         enddo
+         enddo 
          call nga_gather(g_a, v, ijv, m)
          do loop = 1,m
            ilo= ijv(1,loop)
@@ -839,7 +862,7 @@ c
          call ffflush(6)
       endif
 c
-      do j = 1,10
+      do j = 1,10 
        call ga_sync()
 #ifndef MIRROR
        if(me.eq.iran(ga_nnodes())-1) then
@@ -852,44 +875,44 @@ c
            jlo = iran(n)
            iv(loop) = ilo
            jv(loop) = jlo
-c          v(loop) = DSIN(a(ilo,jlo)+b(ilo,jlo))
+c          v(loop) = DSIN(a(ilo,jlo)+b(ilo,jlo)) 
            v(loop) = 1d0 *(ilo+jlo)
-         enddo
+         enddo 
          call ga_scatter(g_a, v, iv, jv, m)
          do loop = 1,m
            ilo= iv(loop)
-           jlo= jv(loop)
+           jlo= jv(loop) 
            call ga_get(g_a,ilo,ilo,jlo,jlo,w(loop),1)
-c          if(v(loop)  .ne. w(loop))then
-           if(w(loop)  .ne. 1d0 *(ilo+jlo) )then
-             write(6,*)me,' scatter ', ilo,',',jlo,',',w(loop)
-     &             ,' ', 1d0 *(ilo+jlo)
+c          if(v(loop)  .ne. w(loop))then 
+           if(w(loop)  .ne. 1d0 *(ilo+jlo) )then 
+             write(6,*)me,' scatter ', ilo,',',jlo,',',w(loop) 
+     &             ,' ', 1d0 *(ilo+jlo) 
              call ffflush(6)
              call ga_error('... exiting ',-1)
            endif
-         enddo
+         enddo 
 #else
          do loop = 1,m
            ilo = iran(n)
            jlo = iran(n)
            ijv(1,loop) = ilo
            ijv(2,loop) = jlo
-c          v(loop) = DSIN(a(ilo,jlo)+b(ilo,jlo))
+c          v(loop) = DSIN(a(ilo,jlo)+b(ilo,jlo)) 
            v(loop) = 1d0 *(ilo+jlo)
-         enddo
+         enddo 
          call nga_scatter(g_a, v, ijv, m)
          do loop = 1,m
            ilo= ijv(1,loop)
-           jlo= ijv(2,loop)
+           jlo= ijv(2,loop) 
            call ga_get(g_a,ilo,ilo,jlo,jlo,w(loop),1)
-c          if(v(loop)  .ne. w(loop))then
-           if(w(loop)  .ne. 1d0 *(ilo+jlo) )then
+c          if(v(loop)  .ne. w(loop))then 
+           if(w(loop)  .ne. 1d0 *(ilo+jlo) )then 
              write(6,927)me,ilo,jlo,w(loop),1d0 *(ilo+jlo),loop
   927        format(i3,' scatter ',i5,',',i5,',',f7.1,',',f7.1,',',i5)
              call ffflush(6)
              call ga_error('... exiting ',-1)
            endif
-         enddo
+         enddo 
 #endif
        endif
        call ga_sync()
@@ -924,9 +947,9 @@ c
 c
       x = .1d0
       ii =n
-      do jj = 1,1
+      do jj = 1,1 
         call ga_sync()
-        do loop = 1, ii
+        do loop = 1, ii 
 
 c         generate unique i,j pairs
 10        continue
@@ -957,7 +980,7 @@ c         if (found(i,j, iv, jv, loop-1) ) goto 10
 
 c
         call ga_sync()
-c
+c     
 c       check the result
 c
         call ga_get(g_a, 1, n, 1,n, a, n)
@@ -971,13 +994,13 @@ c
           j = ijv(2,loop)
 #endif
           if(MISMATCH(a(i,j),b(i,j)))then
-             print *,'Error',i,j,loop,a(i,j),'expected=',b(i,j)
+             print *,'Error',i,j,loop,a(i,j),'expected=',b(i,j)  
 *            if(me.eq.0)then
 *              do ii=1,loop
 *                   print *,'element',ii, iv(ii),jv(ii)
 *              enddo
 *            endif
-             call ga_error('scatter-acc error in trial ',jj)
+             call ga_error('scatter-acc error in trial ',jj) 
           endif
         enddo
         call ga_sync()
@@ -1002,11 +1025,11 @@ c
          enddo
       enddo
       if (me .eq. 0) then
-         write(6,23)
+         write(6,23) 
  23      format('> Checking merge ...')
          call ffflush(6)
       endif
-      if (iproc.eq.0) then
+      if (iproc.eq.0) then 
          call ga_put(g_a, 1, n, 1, n, a, n)
       endif
       call ga_merge_mirrored(g_a)
@@ -1037,7 +1060,7 @@ c
 c    Checking copy between different array configurations
 c
       if (me .eq. 0) then
-         write(6,20)
+         write(6,20) 
  20      format('> Checking mixed copy ...')
          call ffflush(6)
       endif
@@ -1045,17 +1068,23 @@ c
       g_c = ga_create_handle()
       call ga_set_data(g_c,ndim,dims,MT_DBL)
       call ga_set_array_name(g_c,'c')
+
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_c,block_size,proc_grid)
 #else
+#ifdef USE_TILE_DISTR
       call ga_set_tiled_proc_grid(g_c,block_size,proc_grid)
+#else
+      call ga_set_tiled_irreg_proc_grid(g_c,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_c,block_size)
 #endif
 #endif
+
       if (.not.ga_allocate(g_c)) then
 #else
       if (.not. nga_create(MT_DBL, ndim, dims, 'c', chunk, g_c)) then
@@ -1112,7 +1141,7 @@ c
          enddo
       enddo
       if (me .eq. 0) then
-         write(6,24)
+         write(6,24) 
  24      format('> Checking merge to distributed patch ...')
          call ffflush(6)
       endif
@@ -1127,7 +1156,7 @@ c
        ahi(i) = ihi
        bhi(i) = ihi + 1
       end do
-      if (iproc.eq.0) then
+      if (iproc.eq.0) then 
          call ga_put(g_a, 1, n, 1, n, a, n)
       endif
       call nga_merge_distr_patch(g_a, alo, ahi, g_c, blo, bhi)
@@ -1165,7 +1194,7 @@ c     Delete the global arrays
 c
       status = ga_destroy(g_b)
       status = ga_destroy(g_a)
-c
+c     
       end
 
 c-----------------------------------------------------------------
@@ -1457,7 +1486,7 @@ c
 c           x = cmplx(drand(0),0.333d0)
 c           x = cmplx(0.333d0,0)
 *           x = cmplx(0d0,0d0)
-            x = 0
+            x = 0 
             ilo = i
             ihi = min(i+inc-1, n)
             if(ihi.eq.n-1)ihi=n
@@ -1788,6 +1817,9 @@ c
 #ifdef BLOCK_CYCLIC
       integer block_size(2), proc_grid(2)
 #endif
+#ifdef USE_TILED_IRREG_DISTR
+      integer mapc(4096), nblocks(2)
+#endif
       intrinsic int
       iran(i) = int(drand(0)*real(i)) + 1
 c
@@ -1846,11 +1878,16 @@ c     call setdbg(1)
       call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
 #endif
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#else
+      call util_create_map(mapc,block_size(1),dims,nblocks,proc_grid)
+      call ga_set_tiled_irreg_proc_grid(g_a,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
@@ -1884,11 +1921,15 @@ c     call setdbg(1)
       call ga_set_data(g_b,ndim,dims,MT_DCPL)
       call ga_set_array_name(g_b,'b')
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_b,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_b,block_size,proc_grid)
+#else
+      call ga_set_tiled_irreg_proc_grid(g_b,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_b,block_size)
@@ -2076,7 +2117,7 @@ c
 c           x = cmplx(drand(0),0.333d0)
 c           x = cmplx(0.333d0,0)
 *           x = cmplx(0d0,0d0)
-            x = 0
+            x = 0 
             ilo = i
             ihi = min(i+inc-1, n)
             if(ihi.eq.n-1)ihi=n
@@ -2377,7 +2418,7 @@ c-----------------------------------------------------------------
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-c
+c     
       integer n
       parameter (n = 128)
       integer a(n,n), b(n,n)
@@ -2404,9 +2445,12 @@ c
 #else
       integer map(5,maxproc), found, np,k
 #endif
+#ifdef USE_TILED_IRREG_DISTR
+      integer mapc(4096), nblocks(2)
+#endif
       intrinsic int
       iran(i) = int(drand(0)*real(i)) + 1
-c
+c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
       inode = ga_cluster_nodeid()
@@ -2430,7 +2474,7 @@ c
       proc_grid(2) = nproc/2
 #endif
 #endif
-c
+c     
 c     a() is a local copy of what the global array should start as
 c
       do j = 1, n
@@ -2442,7 +2486,7 @@ c
 #endif
          enddo
       enddo
-c
+c     
 c     Create a global array
 c
       ndim = 2
@@ -2458,11 +2502,16 @@ c
       call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
 #endif
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#else
+      call util_create_map(mapc,block_size(1),dims,nblocks,proc_grid)
+      call ga_set_tiled_irreg_proc_grid(g_a,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
@@ -2486,11 +2535,11 @@ c
          call ffflush(6)
          call ga_error('... exiting ',-1)
       endif
-c
+c     
 c     Zero the array
 c
       if (me .eq. 0) then
-         write(6,21)
+         write(6,21) 
  21      format('> Checking zero ... ')
          call ffflush(6)
       endif
@@ -2518,7 +2567,7 @@ c
 c     Each node fills in disjoint sections of the array
 c
       if (me .eq. 0) then
-         write(6,2)
+         write(6,2) 
  2       format('> Checking disjoint put ... ')
          call ffflush(6)
       endif
@@ -2600,7 +2649,7 @@ c
             jhi = jlo
             jlo = itmp
          endif
-c
+c     
          nwords = nwords + (ihi-ilo+1)*(jhi-jlo+1)
 c
          call util_ifill(n*n, 0.0d0, b, 1)
@@ -2635,9 +2684,9 @@ c
       if (me .eq. 0 .and. n.gt.7) then
          write(6,*)
          write(6,*) '> Checking ga_print_patch --- should see '
-         write(6,*)' [2002 3002 4002 5002 6002]'
-         write(6,*)' [2003 3003 4003 5003 6003]'
-         write(6,*)' [2004 3004 4004 5004 6004]'
+         write(6,*)' [2002 3002 4002 5002 6002]'  
+         write(6,*)' [2003 3003 4003 5003 6003]'  
+         write(6,*)' [2004 3004 4004 5004 6004]'  
          write(6,*)
          call ffflush(6)
       endif
@@ -2655,7 +2704,7 @@ c
       call ga_sync()
 c
       crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
-      inc =5
+      inc =5 
 c     every processor will be operating on somebody elses data
 c
 #ifndef MIRROR
@@ -2679,7 +2728,7 @@ c     write(6,111) me,ilo,ihi,jlo,jhi,dimi,dimj
   111 format(i2,'..',4i8,'.',2i8)
       call ga_sync()
       if(ilo .gt.0 .and. jhi .gt. 0)then
-       do loop = 1,nloop
+       do loop = 1,nloop 
          ii= IABS(iran(dimi)) - 1
          jj= IABS(iran(dimj)) - 1
          i=ilo + Mod(ii,dimi)
@@ -2688,16 +2737,16 @@ c
 c        write(6,*) me,'..',ilo,ihi,jlo,jhi,'.',dimi,dimj,'..',i,j
 c        call ffflush(6)
          buf = ga_read_inc(g_a,i,j,inc)
-         if(a(i,j).ne. buf)then
+         if(a(i,j).ne. buf)then   
             write(6,114) me,ilo,ihi,jlo,jhi
             write(6,112) me,i,j,a(i,j),buf,loop
-c            write(6,*)me,'READ_inc ', i,',',j,',', a(i,j),' ',buf,me
+c            write(6,*)me,'READ_inc ', i,',',j,',', a(i,j),' ',buf,me 
             call ffflush(6)
          endif
   112    format(i3,' READ_inc ',i3,',',i3,',',i8,' ',i8,' loop ',i8)
-         call ga_get(g_a, i,i,j,j, buf,1)
-         a(i,j) = a(i,j)+inc
-         if(a(i,j).ne.  buf)then
+         call ga_get(g_a, i,i,j,j, buf,1) 
+         a(i,j) = a(i,j)+inc 
+         if(a(i,j).ne.  buf)then   
             write(6,114) me,ilo,ihi,jlo,jhi
             write(6,113) me,i,j,a(i,j),buf,loop
 c            write(6,*)me,'read_INC ', i,',',j,',', a(i,j),' ',buf,me
@@ -2729,7 +2778,7 @@ c
 c
 c***  use ga_read_inc and elements g_a(1:2,1) to implement a lock
 c***  compute g_a(:,n) = sum (1(:)) for P processors
-c
+c     
       status = ga_create_mutexes(1)
       if (.not. status) then
          call ga_error('ga_create_mutexes failed ',-1)
@@ -2771,7 +2820,7 @@ c
          write(6,*)
          write(6,*) ' ga_fence and ga_lock are OK'
          write(6,*)
-      endif
+      endif 
 #endif
 c
 c
@@ -2898,11 +2947,11 @@ c
          write(6,*)
          call ffflush(6)
       endif
-c
+c     
 c     Delete the global array
 c
       status = ga_destroy(g_a)
-c
+c     
       end
 
 c---------------------------------------------------------------------
@@ -2913,7 +2962,7 @@ c---------------------------------------------------------------------
 #include "global.fh"
 #include "testutil.fh"
       integer n, m
-      parameter (n =100)
+      parameter (n =100) 
       parameter (m=2*n)
       real a(n,n), b(n,n), v(m), w(m)
       integer iv(m), jv(m)
@@ -2964,7 +3013,7 @@ c---------------------------------------------------------------------
       proc_grid(2) = nproc/2
 #endif
 #endif
-c
+c     
 c     a() is a local copy of what the global array should start as
 c
       do j = 1, n
@@ -2978,7 +3027,7 @@ c
          enddo
       enddo
 
-c
+c     
 c     Create a global array
 c
       ndim = 2
@@ -3038,13 +3087,13 @@ c
       lproc = me - ga_cluster_procid(inode,0)
       call ga_distribution(g_a, lproc, ilo, ihi, jlo, jhi)
 #endif
-      call ga_sync()
-c
+      call ga_sync()      
+c     
 c     Zero the array
 c
       if (me .eq. 0) then
-         write(6,21)
- 21      format('> Checking zero ... ')
+         write(6,21) 
+ 21      format('> Checking zero ... ')          
          call ffflush(6)
       endif
       call ga_zero(g_a)
@@ -3072,8 +3121,8 @@ c
 c     Each node fills in disjoint sections of the array
 c
       if (me .eq. 0) then
-         write(6,2)
- 2       format('> Checking disjoint put ... ')
+         write(6,2) 
+ 2       format('> Checking disjoint put ... ')   
          call ffflush(6)
       endif
       call ga_sync()
@@ -3148,7 +3197,7 @@ c
             jhi = jlo
             jlo = itmp
          endif
-c
+c     
          nwords = nwords + (ihi-ilo+1)*(jhi-jlo+1)
 c
          call util_rfill(n*n, 0.0, b, 1)
@@ -3234,7 +3283,7 @@ c
             enddo
          enddo
       enddo
-      call ga_sync()
+      call ga_sync()                       
 c
 c     All nodes check all of a
       call ga_get(g_a, 1, n, 1, n, b, n)
@@ -3294,7 +3343,7 @@ c
          write(6,91)
  91      format('> Checking add ...')
          call ffflush(6)
-      endif
+      endif                           
 c
       crap = drand(12345)       ! Everyone has same seed
       do j = 1, n
@@ -3385,7 +3434,7 @@ c
          write(6,*) ' scale is OK '
          write(6,*)
       endif
-c
+c                                
 c     Check the ga_copy function
 c
       if (me .eq. 0) then
@@ -3445,7 +3494,7 @@ c
      &             ,' ',v(loop)
              call ffflush(6)
              call ga_error('... exiting ',-1)
-           endif
+           endif                                     
          enddo
        endif
       enddo
@@ -3498,7 +3547,7 @@ c
       call ga_sync()
 c
 c     scatter-acc available in GA ver. 3.0
-#ifdef GA3
+#ifdef GA3                                         
       if (me.eq.0) then
          write(6,*)
          write(6,*) ' checking scatter-accumulate'
@@ -3519,7 +3568,7 @@ c
       do jj = 1,1
           call ga_sync()
         do loop = 1, ii
-
+ 
 c          generate unique i,j pairs
 10         continue
               i = iran(n)
@@ -3535,16 +3584,16 @@ c          generate unique i,j pairs
            b(i,j) = b(i,j) + lprocs*x*v(loop) ! update local ref. array
 #endif
         enddo
-
+ 
         call ga_scatter_acc(g_a,v,iv,jv, ii,x)
-
+ 
 c
         call ga_sync()
 c
 c       check the result
 c
         call ga_get(g_a, 1, n, 1,n, a, n)
-
+ 
         do loop = 1,ii
           i = iv(loop)
           j = jv(loop)
@@ -3557,23 +3606,23 @@ c
 *            endif
              call ga_error('scatter-acc error in trial ',jj)
           endif
-        enddo
+        enddo                                 
           call ga_sync()
-
+ 
       enddo
-
+ 
       call ga_sync()
       if (me.eq.0) then
          write(6,*)
          write(6,*) ' scatter-accumulate is  OK'
          write(6,*)
       endif
-#endif
+#endif                      
 c
 c     Delete the global array
 c
       status = ga_destroy(g_a)
-c
+c     
       end
 c_____________________________________________________________
 
@@ -3600,11 +3649,11 @@ c
          write(6,*)
          call ffflush(6)
       endif
-      do i = 1, n
+      do i = 1, n 
          isum(i) =  i + me
       enddo
       call ga_gop(MT_INT, isum, n, '+')
-      do i = 1, n
+      do i = 1, n 
          if(isum(i).ne.(i*nproc + (nproc-1)*nproc/2))then
             call ga_error('ga_gop error -2',isum(i))
          endif
@@ -3647,11 +3696,11 @@ c
          write(6,*)
          call ffflush(6)
       endif
-      do i = 1, n
+      do i = 1, n 
          fsum(i) = i + 1.0 * me
       enddo
       call ga_gop(MT_REAL, fsum, n, '+')
-      do i = 1, n
+      do i = 1, n 
          if(Int(fsum(i)).ne.(i*nproc + (nproc-1)*nproc/2))then
             call ga_error('ga_gop error',Int(fsum(i)))
          endif
@@ -3675,7 +3724,7 @@ c
          check(i)= cmplx(nproc*i+nproc*1d0, nproc*i+(nproc-1)*nproc/2)
       enddo
       call ga_gop(MT_DCPL, zsum, n, '+')
-      do i = 1, n
+      do i = 1, n 
          if(zsum(i).ne.check(i)) then
             call ga_error('ga_gop error', -1)
          endif
@@ -3686,7 +3735,7 @@ c
          write(6,*) ' ga_gop (double complex) is  OK'
          write(6,*)
       endif
-c
+c                                   
       call ga_sync()
       if (me .eq. 0) then
          write(6,*)
@@ -3719,7 +3768,7 @@ c
 #include "global.fh"
 #include "testutil.fh"
 c
-      integer n,nmax,left,need, me,procs,g_a, g_b
+      integer n,nmax,left,need, me,procs,g_a, g_b 
       logical status
 c
       if(.not. ga_memory_limited())return
@@ -3775,7 +3824,7 @@ c
       status = ga_destroy(g_a)
       end
 
-
+     
 
       subroutine print_mem_info(n,left, need, total)
       implicit none
@@ -3783,10 +3832,10 @@ c
 c
       write(6,*)' '
       if(left - need .ge. 0) then
-        write(6,1)n,n
+        write(6,1)n,n 
 1       format('> Creating array ',i4,' by ',i4,' -- should succeed')
       else
-        write(6,2)n,n
+        write(6,2)n,n 
 2       format('> Creating array ',i4,' by ',i4,' -- SHOULD FAIL')
       endif
       write(6,3) need, left, total
@@ -3797,18 +3846,18 @@ c
       end
 
 
-
+      
       subroutine my_lock(g_b)
       implicit none
 #include "global.fh"
       integer g_b, val, flag, i
       logical first_time
-      double precision  dummy
-      common /lock/ val
+      double precision  dummy 
+      common /lock/ val 
       common /dum/ dummy
       data first_time /.true./
 c
-c     this awkward initialization is to avoid a weird problem
+c     this awkward initialization is to avoid a weird problem 
 C     with block data on SUN
       if(first_time)then
         first_time = .false.
@@ -3817,12 +3866,12 @@ C     with block data on SUN
 c
       val = ga_read_inc(g_b,1,1, 1)
 10    call ga_get(g_b, 2,2,1,1, flag, 1)
-           if(flag.eq.val) return
+           if(flag.eq.val) return 
 c
 c          to reduce memory stress,  wait a while before retrying
            do i = 1, 100
-              dummy = dummy + .1
-           enddo
+              dummy = dummy + .1 
+           enddo 
       goto 10
       end
 
@@ -3833,7 +3882,7 @@ c          to reduce memory stress,  wait a while before retrying
       integer g_b, val
       common /lock/ val
 c
-      call ga_put(g_b, 2,2,1,1, val+1, 1)
+      call ga_put(g_b, 2,2,1,1, val+1, 1) 
       end
 
 
@@ -3851,9 +3900,9 @@ c
             enddo
 99    continue
       return
-      end
-
-
+      end 
+      
+            
       subroutine proc_remap()
       implicit none
 #include "global.fh"
@@ -3867,7 +3916,7 @@ c
 c     call ga_register_proclist(proc,nproc)
       end
 
-
+      
       subroutine util_rfill(n,val,a,ia)
       implicit none
       real  a(*), val
@@ -3887,7 +3936,7 @@ c
 c
       end
 
-
+      
       subroutine util_dfill(n,val,a,ia)
       implicit none
       double precision  a(*), val
@@ -3942,4 +3991,105 @@ c
  20      continue
       endif
 c
+      end
+
+      subroutine util_create_map(mapc, base, dims, nblocks, proc_grid)
+      implicit none
+#include "global.fh"
+      integer mapc(4096)
+      integer dims(2), nblocks(2), proc_grid(2)
+      integer primes(256), nprime
+      integer factors(256), nfactors
+      integer base
+      integer i, j, nproc, pmax, px, py, lo, hi
+      logical ok
+!
+!  Factor nproc into 2 x 2 processor grid. Start by finding prime
+!  factors
+!
+      nproc = ga_nnodes()
+      pmax = sqrt(dble(nproc)) + 1
+      nprime = 1 
+      primes(1) = 2
+      do i = 3, pmax
+        ok = .true.
+        do j = 1, nprime
+!
+! check to see if any of the existing primes divides i
+!
+          if (mod(i,primes(j)).eq.0) then
+             ok = .false.
+          endif
+        end do
+!
+!  none of the existing primes divides i, so add it to the list of
+!  primes
+!
+        if (ok) then
+          nprime = nprime + 1
+          primes(nprime) = i
+        endif
+      end do
+!
+!  find prime factors of nproc
+!
+      nfactors = 0
+      j = nproc
+      i = 1
+      do while (i.le.nprime.and.j.gt.1)
+        do while (mod(j,primes(i)).eq.0.and.j.gt.1)
+          nfactors = nfactors + 1
+          factors(nfactors) = primes(i)
+          j = j/primes(i)
+        end do
+        i = i + 1
+      end do
+      if (nfactors.eq.0) then
+        nfactors = 1
+        primes(1) = nproc
+      endif
+!
+!  prime factors are available. Create px and py
+!
+      px = 1
+      py = 1
+      do i = nfactors, 1, -1
+        if (px.lt.py) then
+          px = px*factors(i) 
+        else
+          py = py*factors(i)
+        endif
+      end do
+      proc_grid(1) = px
+      proc_grid(2) = py
+!
+!  proc grid is complete, now create map. Start with x-axis
+!
+      lo = 1
+      hi = 0
+      i = 0
+      j = 0
+      do while (hi.lt.dims(1))
+        i = i + 1
+        hi = lo + base + mod(i+1,2) - 1
+!        hi = lo + base - 1
+        if (hi.gt.dims(1)) hi = dims(1)
+        j = j + 1
+        mapc(j) = lo
+        lo = hi + 1
+      end do
+      nblocks(1) = i
+      lo = 1
+      hi = 0
+      i = 0
+      do while (hi.lt.dims(2))
+        i = i + 1
+        hi = lo + base + mod(i,2) - 1
+!        hi = lo + base - 1
+        if (hi.gt.dims(1)) hi = dims(1)
+        j = j + 1
+        mapc(j) = lo
+        lo = hi + 1
+      end do
+      nblocks(2) = i
       end

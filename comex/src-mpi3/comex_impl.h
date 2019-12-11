@@ -9,7 +9,7 @@
 
 #include "groups.h"
 
-#define COMEX_MAX_NB_OUTSTANDING 8
+#define COMEX_MAX_NB_OUTSTANDING 256
 #define SHM_NAME_SIZE 20
 
 typedef struct {

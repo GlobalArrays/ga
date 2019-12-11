@@ -192,6 +192,8 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
 {
   Integer handle = GA_OFFSET + g_a;
   Integer ndim = GA[handle].ndim;
+  int grp = GA[handle].p_handle;
+  int nproc = pnga_pgroup_nnodes(grp);
   Integer i;
   hdl->g_a = g_a;
   hdl->count = 0;
@@ -257,6 +259,14 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     /* Initialize proc_index and index arrays */
     gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
     gam_find_tile_proc_indices(handle, hdl->iproc, hdl->index);
+  } else if (GA[handle].distr_type == TILED_IRREG)  {
+    int j;
+    hdl->iproc = 0;
+    hdl->offset = 0;
+    hdl->mapc =  GA[handle].mapc;
+    /* Initialize proc_index and index arrays */
+    gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
+    gam_find_tile_proc_indices(handle, hdl->iproc, hdl->index);
   }
 }
 
@@ -281,7 +291,8 @@ void gai_iterator_reset(_iterator_hdl *hdl)
     /* Initialize proc_index and index arrays */
     gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
     gam_find_proc_indices(handle, hdl->iproc, hdl->index);
-  } else if (GA[handle].distr_type == TILED)  {
+  } else if (GA[handle].distr_type == TILED ||
+      GA[handle].distr_type == TILED_IRREG)  {
     hdl->iproc = 0;
     hdl->offset = 0;
     /* Initialize proc_index and index arrays */
@@ -310,6 +321,8 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
   Integer *rank_rstrctd = GA[handle].rank_rstrctd;
   Integer elemsize = GA[handle].elemsize;
   int ndim;
+  int grp = GA[handle].p_handle;
+  int nproc = pnga_pgroup_nnodes(grp);
   ndim = GA[handle].ndim;
   if (GA[handle].distr_type == REGULAR) {
     Integer *blo, *bhi;
@@ -520,7 +533,8 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
       }
       return 1;
     } else if (GA[handle].distr_type == SCALAPACK ||
-        GA[handle].distr_type == TILED) {
+        GA[handle].distr_type == TILED ||
+        GA[handle].distr_type == TILED_IRREG) {
       /* Scalapack-type data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer itmp;
@@ -531,10 +545,24 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
       /* loop over blocks until a block with data is found */
       while (!chk) {
         /* get bounds for current block */
-        for (j = 0; j < ndim; j++) {
-          blo[j] = hdl->blk_size[j]*(hdl->index[j])+1;
-          bhi[j] = hdl->blk_size[j]*(hdl->index[j]+1);
-          if (bhi[j] > GA[handle].dims[j]) bhi[j] = GA[handle].dims[j];
+        if (GA[handle].distr_type == SCALAPACK ||
+            GA[handle].distr_type == TILED) {
+          for (j = 0; j < ndim; j++) {
+            blo[j] = hdl->blk_size[j]*(hdl->index[j])+1;
+            bhi[j] = hdl->blk_size[j]*(hdl->index[j]+1);
+            if (bhi[j] > GA[handle].dims[j]) bhi[j] = GA[handle].dims[j];
+          }
+        } else {
+          offset = 0;
+          for (j = 0; j < ndim; j++) {
+            blo[j] = GA[handle].mapc[offset+hdl->index[j]];
+            if (hdl->index[j] == GA[handle].num_blocks[j]-1) {
+              bhi[j] = GA[handle].dims[j];
+            } else {
+              bhi[j] = GA[handle].mapc[offset+hdl->index[j]+1]-1;
+            }
+            offset += GA[handle].num_blocks[j];
+          }
         }
         /* check to see if this block overlaps with requested block
          * defined by lo and hi */
@@ -563,6 +591,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
             itmp *= bhi[j]-blo[j]+1;
           }
           hdl->offset += itmp;
+
           /* increment to next block */
           hdl->index[0] += GA[handle].nblock[0];
           for (j=0; j<ndim; j++) {
@@ -572,10 +601,13 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
             }
           }
           if (hdl->index[ndim-1] >= GA[handle].num_blocks[ndim-1]) {
+            /* last iteration has been completed on current processor. Go
+             * to next processor */
             hdl->iproc++;
             if (hdl->iproc >= GAnproc) return 0;
             hdl->offset = 0;
-            if (GA[handle].distr_type == TILED) {
+            if (GA[handle].distr_type == TILED ||
+                GA[handle].distr_type == TILED_IRREG) {
               gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
               gam_find_tile_proc_indices(handle, hdl->iproc, hdl->index);
             } else if (GA[handle].distr_type == SCALAPACK) {
@@ -596,7 +628,8 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
 
         /* evaluate offset within block */
         last = ndim - 1;
-        if (GA[handle].distr_type == TILED) {
+        if (GA[handle].distr_type == TILED ||
+            GA[handle].distr_type == TILED_IRREG) {
           jtot = 1;
           if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
           l_offset = 0;
@@ -655,7 +688,8 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         if (hdl->index[ndim-1] >= GA[handle].num_blocks[ndim-1]) {
           hdl->iproc++;
           hdl->offset = 0;
-          if (GA[handle].distr_type == TILED) {
+          if (GA[handle].distr_type == TILED ||
+              GA[handle].distr_type == TILED_IRREG) {
             gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
             gam_find_tile_proc_indices(handle, hdl->iproc, hdl->index);
           } else if (GA[handle].distr_type == SCALAPACK) {
@@ -666,6 +700,38 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
       }
     }
     return 1;
+  }
+  return 0;
+}
+
+/**
+ * Return true if this is the last data packet for this iterator
+ */
+int gai_iterator_last(_iterator_hdl *hdl)
+{
+  Integer idx;
+  Integer handle = GA_OFFSET + hdl->g_a;
+  Integer p_handle = GA[handle].p_handle;
+  Integer n_rstrctd = GA[handle].num_rstrctd;
+  Integer *rank_rstrctd = GA[handle].rank_rstrctd;
+  Integer elemsize = GA[handle].elemsize;
+  int ndim;
+  int grp = GA[handle].p_handle;
+  int nproc = pnga_pgroup_nnodes(grp);
+  ndim = GA[handle].ndim;
+  if (GA[handle].distr_type == REGULAR) {
+    idx = hdl->count;
+    /* no blocks left after this iteration */
+    if (idx>=hdl->nproc) return 1;
+  } else {
+    if (GA[handle].distr_type == BLOCK_CYCLIC) {
+      /* Simple block-cyclic distribution */
+      if (hdl->iproc >= nproc) return 1;
+    } else if (GA[handle].distr_type == SCALAPACK ||
+        GA[handle].distr_type == TILED ||
+        GA[handle].distr_type == TILED_IRREG) {
+      if (hdl->iproc >= nproc) return 1;
+    }
   }
   return 0;
 }
@@ -730,6 +796,20 @@ void pnga_local_iterator_init(Integer g_a, _iterator_hdl *hdl)
     /* Initialize proc_index and index arrays */
     gam_find_tile_proc_indices(handle, me, hdl->proc_index);
     gam_find_tile_proc_indices(handle, me, hdl->index);
+  } else if (GA[handle].distr_type == TILED_IRREG) {
+    /* GA uses irregular tiled distribution */
+    int j;
+    Integer me = pnga_pgroup_nodeid(grp);
+    hdl->mapc = GA[handle].mapc;
+    /* Calculate some properties associated with data distribution */
+    for (j=0; j<ndim; j++)  {
+      hdl->blk_num[j] = GA[handle].num_blocks[j];
+      hdl->blk_inc[j] = GA[handle].nblock[j];
+      hdl->blk_dim[j] = GA[handle].dims[j];
+    }
+    /* Initialize proc_index and index arrays */
+    gam_find_tile_proc_indices(handle, me, hdl->proc_index);
+    gam_find_tile_proc_indices(handle, me, hdl->index);
   }
 }
 
@@ -784,6 +864,28 @@ int pnga_local_iterator_next(_iterator_hdl *hdl, Integer plo[],
       plo[i] = hdl->index[i]*hdl->blk_size[i]+1;
       phi[i] = (hdl->index[i]+1)*hdl->blk_size[i];
       if (phi[i] > hdl->blk_dim[i]) phi[i] = hdl->blk_dim[i];
+    }
+    pnga_access_block_grid_ptr(hdl->g_a,hdl->index,ptr,ld);
+    hdl->index[0] += hdl->blk_inc[0];
+    for (i=0; i<ndim; i++) {
+      if (hdl->index[i] >= hdl->blk_num[i] && i<ndim-1) {
+        hdl->index[i] = hdl->proc_index[i];
+        hdl->index[i+1] += hdl->blk_inc[i+1];
+      }
+    }
+  } else if (GA[handle].distr_type == TILED_IRREG) {
+    /* Irregular tiled data distribution */
+    Integer offset = 0;
+    if (hdl->index[ndim-1] >= hdl->blk_num[ndim-1]) return 0;
+    /* Find coordinates of bounding block */
+    for (i=0; i<ndim; i++) {
+      plo[i] = hdl->mapc[offset+hdl->index[i]];
+      if (hdl->index[i] < hdl->blk_num[i]-1) {
+        phi[i] = hdl->mapc[offset+hdl->index[i]+1]-1;
+      } else {
+        phi[i] = GA[handle].dims[i];
+      }
+      offset += GA[handle].num_blocks[i];
     }
     pnga_access_block_grid_ptr(hdl->g_a,hdl->index,ptr,ld);
     hdl->index[0] += hdl->blk_inc[0];

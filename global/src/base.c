@@ -128,6 +128,13 @@ long size;
 long dummy;
 } getmem_t;
 
+/*\
+ * Copy of GA's internal communicator
+\*/
+#ifdef MSG_COMMS_MPI
+MPI_Comm GA_MPI_World_comm_dup;
+#endif
+
 /* set total limit (bytes) for memory usage per processor to "unlimited" */
 static Integer GA_total_memory = -1;
 static Integer GA_memory_limited = 0;
@@ -309,9 +316,12 @@ extern int _ga_initialize_f;
 
 void pnga_initialize()
 {
+    Integer  i, j,nproc, nnode, zero;
+    int bytes;
     GA_Internal_Threadsafe_Lock();
-Integer  i, j,nproc, nnode, zero;
-int bytes;
+#ifdef MSG_COMMS_MPI
+        MPI_Comm comm;
+#endif
 
     if(GAinitialized)
     {
@@ -370,12 +380,17 @@ int bytes;
 #ifdef ENABLE_CHECKPOINT
        GA[i].record_id = 0;
 #endif
+       GA[i].actv = 0;
+       GA[i].p_handle = GA_Init_Proc_Group;
        PGRP_LIST[i].map_proc_list = (int*)0;
        PGRP_LIST[i].inv_map_proc_list = (int*)0;
        PGRP_LIST[i].actv = 0;
     }
 
     bzero(&GAstat,sizeof(GAstat));
+
+    /* initialize some data structures used in non-blocking communication */
+    gai_nb_init();
 
     GAnproc = (Integer)armci_msg_nproc();
 
@@ -475,6 +490,11 @@ int bytes;
     printf("\n%d:here done with initialize\n",GAme);
                  
     }
+#endif
+    /* create duplicate of world communicator */
+#ifdef MSG_COMMS_MPI
+    comm =  GA_MPI_Comm_pgroup(-1);
+    MPI_Comm_dup(comm, &GA_MPI_World_comm_dup);
 #endif
     GA_Internal_Threadsafe_Unlock();
 }
@@ -647,6 +667,13 @@ logical pnga_is_mirrored(Integer g_a)
   return ret;
 }
 
+/**
+ * map_ij: pointer to map array containing axis partitions
+ * n: number of blocks along axis
+ * scale: factor for coming up with an initial guess
+ * elem: array element index that we are trying to find
+ * block: index of block containing elem
+ */
 #define findblock(map_ij,n,scale,elem, block)\
 {\
 int candidate, found, b; \
@@ -672,6 +699,37 @@ C_Integer *map= (map_ij);\
     if(!found)b=(n)-1;\
     *(block) = b;\
 }
+
+/*\
+ * Find indices of block containing the array element at the location
+ * in subscript.
+\*/
+#define gam_find_block_indices_from_subscript(handle,subscript,index)\
+{                                                                    \
+  int _type = GA[handle].distr_type;                                 \
+  Integer *_mapc = GA[handle].mapc;                                  \
+  Integer _offset;                                                   \
+  int _i;                                                            \
+  int _ndim = GA[handle].ndim;                                       \
+  if (_type == REGULAR) {                                            \
+    for (_i=0, _offset=0; _i<_ndim; _i++) {                          \
+      findblock(_mapc+_offset, GA[handle].nblock[_i],                \
+          GA[handle].scale[_i],subscript[_i],&index[_i]);            \
+      _offset += GA[handle].nblock[_i];                              \
+    }                                                                \
+  } else if (_type == TILED_IRREG) {                                 \
+    for (_i=0, _offset=0; _i<_ndim; _i++) {                          \
+      findblock(_mapc+_offset, GA[handle].num_blocks[_i],            \
+          GA[handle].scale[_i],subscript[_i],&index[_i]);            \
+      _offset += GA[handle].num_blocks[_i];                          \
+    }                                                                \
+  } else {                                                           \
+    for (_i=0; _i<_ndim; _i++) {                                     \
+      index[_i] = (subscript[_i]-1)/GA[handle].block_dims[_i];       \
+    }                                                                \
+  }                                                                  \
+}
+
 
 /**
  *  Locate the owner of an element of a Global Array specified by the array
@@ -1115,6 +1173,117 @@ Integer pnga_pgroup_create(Integer *list, Integer count)
 #else
     return pnga_pgroup_get_default();
 #endif
+}
+
+/**
+ *  Duplicate and existing processor group
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_duplicate = pnga_pgroup_duplicate
+#endif
+
+Integer pnga_pgroup_duplicate(Integer grp)
+{
+    Integer pgrp_handle, i, j, nprocs, itmp;
+    int tmp_count;
+    int *tmp_list, *tmp2_list;
+#ifdef MSG_COMMS_MPI
+    ARMCI_Group *tmpgrp;
+#endif
+    Integer save_grp;
+    if (grp != -1 && !PGRP_LIST[grp].actv) {
+       pnga_error(" Group is not active ", grp);
+    }
+
+    /*** Get next free process group handle ***/
+    pgrp_handle =-1; i=0;
+    do{
+       if(!PGRP_LIST[i].actv) pgrp_handle=i;
+       i++;
+    }while(i<_max_global_array && pgrp_handle==-1);
+    if( pgrp_handle == -1)
+       pnga_error(" Too many process groups ", (Integer)_max_global_array);
+ 
+    /* Allocate memory for arrays containg processor maps and initialize
+       values */
+    PGRP_LIST[pgrp_handle].map_proc_list
+       = (int*)malloc(GAnproc*sizeof(int)*2);
+    PGRP_LIST[pgrp_handle].inv_map_proc_list
+       = PGRP_LIST[pgrp_handle].map_proc_list + GAnproc;
+    for (i=0; i<GAnproc; i++)
+       PGRP_LIST[pgrp_handle].map_proc_list[i] = -1;
+    for (i=0; i<GAnproc; i++)
+       PGRP_LIST[pgrp_handle].inv_map_proc_list[i] = -1;
+    if (grp != -1) {
+      for (i=0; i<GAnproc; i++) {
+        PGRP_LIST[pgrp_handle].map_proc_list[i]
+          = PGRP_LIST[grp].map_proc_list[i];
+        PGRP_LIST[pgrp_handle].inv_map_proc_list[i]
+          = PGRP_LIST[grp].inv_map_proc_list[i];
+      }
+    } else {
+      for (i=0; i<GAnproc; i++) {
+        PGRP_LIST[pgrp_handle].map_proc_list[i]
+          = i;
+        PGRP_LIST[pgrp_handle].inv_map_proc_list[i]
+          = i;
+      }
+    }
+    tmp_count = PGRP_LIST[grp].map_nproc;
+
+    tmp_list = (int*)malloc(GAnproc*sizeof(int));
+    tmp2_list = PGRP_LIST[grp].map_proc_list;
+    save_grp = GA_Default_Proc_Group;
+    GA_Default_Proc_Group = PGRP_LIST[grp].parent;
+    if (GA_Default_Proc_Group != -1) {
+       int parent = GA_Default_Proc_Group;
+       for (i=0; i<tmp_count; i++) {
+          tmp_list[i] = (int)PGRP_LIST[parent].inv_map_proc_list[tmp2_list[i]];
+       }
+    } else {
+       for (i=0; i<tmp_count; i++) {
+          tmp_list[i] = (int)tmp2_list[i];
+       }
+    }
+    
+    PGRP_LIST[pgrp_handle].map_nproc = tmp_count;
+    PGRP_LIST[pgrp_handle].actv = 1;
+    PGRP_LIST[pgrp_handle].parent = PGRP_LIST[grp].parent;
+    PGRP_LIST[pgrp_handle].mirrored = 0;
+    PGRP_LIST[pgrp_handle].map_nproc = PGRP_LIST[grp].map_nproc;
+#ifdef MSG_COMMS_MPI
+    tmpgrp = &PGRP_LIST[pgrp_handle].group;
+#if ENABLE_CHECKPOINT
+    if(ga_group_is_for_ft)
+       tmpgrp = ARMCI_Get_ft_group();
+    else
+#endif
+       ARMCI_Group_create(tmp_count, tmp_list, &PGRP_LIST[pgrp_handle].group);
+#endif
+
+    GA_Default_Proc_Group = save_grp;
+    /* Clean up temporary arrays */
+    free(tmp_list);
+
+#ifdef MSG_COMMS_MPI
+    return pgrp_handle;
+#else
+    return pnga_pgroup_get_default();
+#endif
+}
+
+/**
+ * Create a duplicate of the group with only the calling processor in it
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_self = pnga_pgroup_self
+#endif
+
+Integer pnga_pgroup_self()
+{
+  Integer one = 1;
+  Integer me = pnga_nodeid();
+  return pnga_pgroup_create(&me,one);
 }
 
 /**
@@ -1696,6 +1865,76 @@ void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid)
   GA[ga_handle].block_total = jsize;
 }
 
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_tiled_irreg_proc_grid = pnga_set_tiled_irreg_proc_grid
+#endif
+
+void pnga_set_tiled_irreg_proc_grid(Integer g_a, Integer *mapc, Integer *nblocks,
+    Integer *proc_grid)
+{
+  Integer i, j, ichk, maplen, tot, jsize;
+  Integer ga_handle = g_a + GA_OFFSET;
+  if (GA[ga_handle].actv == 1)
+    pnga_error("Cannot set irregular tiled data distribution on array"
+        " that has been allocated",0);
+  if (!(GA[ga_handle].ndim > 0))
+    pnga_error("Cannot set irregular tiled data distribution if array size not set",0);
+  if (GA[ga_handle].ndim < 1)
+    pnga_error("Dimensions must be set before irregular distribution is specified",0);
+  for (i=0; i<GA[ga_handle].ndim; i++)
+    if ((C_Integer)nblocks[i] > GA[ga_handle].dims[i])
+      pnga_error("number of blocks must be <= corresponding dimension",i);
+  if (GA[ga_handle].distr_type != REGULAR)
+    pnga_error("Cannot reset irregular tiled data distribution on array that has been set",0);
+  GA[ga_handle].distr_type = TILED_IRREG;
+  /* Check to see that mapc array is sensible */
+  maplen = 0;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    ichk = mapc[maplen];
+    if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+      pnga_error("Mapc entry outside array dimension limits",ichk);
+    maplen++;
+    for (j=1; j<nblocks[i]; j++) {
+      if (mapc[maplen] < ichk) {
+        pnga_error("Mapc entries are not properly monotonic",ichk);
+      }
+      ichk = mapc[maplen];
+      if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+        pnga_error("Mapc entry outside array dimension limits",ichk);
+      maplen++;
+    }
+  }
+
+  maplen = 0;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    maplen += nblocks[i];
+    GA[ga_handle].num_blocks[i] = (C_Integer)nblocks[i];
+  }
+  GA[ga_handle].mapc = (C_Integer*)malloc((maplen+1)*sizeof(C_Integer*));
+  for (i=0; i<maplen; i++) {
+    GA[ga_handle].mapc[i] = (C_Integer)mapc[i];
+  }
+  GA[ga_handle].mapc[maplen] = -1;
+  GA[ga_handle].irreg = 1;
+
+  /* Check to make sure processor grid is compatible with total number of processors */
+  tot = 1;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    if (proc_grid[i] < 1)
+      pnga_error("Processor grid dimensions must all be greater than zero",0);
+    GA[ga_handle].nblock[i] = proc_grid[i];
+    tot *= proc_grid[i];
+  }
+  if (tot != GAnproc)
+    pnga_error("Number of processors in processor grid must equal available processors",0);
+  /* Find total number of blocks */
+  jsize = 1;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    jsize *= GA[ga_handle].num_blocks[i];
+  }
+  GA[ga_handle].block_total = jsize;
+}
+
 /**
  *  Restrict processors that actually contain data in the global array. Can also
  *  be used to rearrange the distribution of data amongst processors
@@ -2018,6 +2257,9 @@ void pnga_set_property(Integer g_a, char* property) {
 #endif
     }
     pnga_destroy(g_tmp);
+  } else if (strcmp(property, "read_cache") == 0) {
+    GA[ga_handle].property = READ_CACHE;
+    GA[ga_handle].cache_head = NULL; /* (cache_struct_t *)malloc(sizeof(cache_struct_t)) */
   } else {
     pnga_error("Trying to set unknown property",0);
   }
@@ -2208,6 +2450,22 @@ void pnga_unset_property(Integer g_a) {
 #endif
     }
     pnga_destroy(g_tmp);
+  } else if (GA[ga_handle].property == READ_CACHE) {
+    if (GA[ga_handle].cache_head != NULL) {
+      cache_struct_t *next;
+      next = GA[ga_handle].cache_head->next;
+      if (GA[ga_handle].cache_head->cache_buf)
+        free(GA[ga_handle].cache_head->cache_buf);
+      free(GA[ga_handle].cache_head);
+      while (next) {
+        GA[ga_handle].cache_head = next;
+        next = next->next;
+        if (GA[ga_handle].cache_head->cache_buf)
+          free(GA[ga_handle].cache_head->cache_buf);
+        free(GA[ga_handle].cache_head);
+      }
+    }
+    GA[ga_handle].cache_head = NULL;
   } else {
     GA[ga_handle].property = NO_PROPERTY;
   }
@@ -2401,6 +2659,29 @@ logical pnga_allocate(Integer g_a)
       }
       block_size *= jtot;
     }
+  } else if (GA[ga_handle].distr_type == TILED_IRREG) {
+    /* Tiled data distribution has been specified. Figure
+       out how much memory is needed by each processor to store blocks */
+    Integer j, jtot, skip, imin, imax;
+    Integer index[MAXDIM];
+    Integer offset = 0;
+    gam_find_tile_proc_indices(ga_handle,GAme,index);
+    block_size = 1;
+    for (i=0; i<ndim; i++) {
+      skip = GA[ga_handle].nblock[i];
+      jtot = 0;
+      for (j=index[i]; j<GA[ga_handle].num_blocks[i]; j += skip) {
+        imin = GA[ga_handle].mapc[offset+j];
+        if (j<GA[ga_handle].num_blocks[i]-1) {
+          imax = GA[ga_handle].mapc[offset+j+1]-1;
+        } else {
+          imax = GA[ga_handle].dims[i];
+        }
+        jtot += (imax-imin+1);
+      }
+      block_size *= jtot;
+      offset += GA[ga_handle].num_blocks[i];
+    }
   }
 
   GAstat.numcre ++;
@@ -2412,7 +2693,7 @@ logical pnga_allocate(Integer g_a)
     GA[ga_handle].p_handle = pnga_pgroup_get_world();
   }
 
-  /* Set remaining paramters and determine memory size if regular data
+  /* Set remaining parameters and determine memory size if regular data
    * distribution is being used */
   if (GA[ga_handle].distr_type == REGULAR) {
     /* set corner flag, if it has not already been set and set up message
@@ -3139,6 +3420,8 @@ logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
   GA[ga_handle] = GA[GA_OFFSET + g_a]; /* <--- shallow copy */
   strcpy(GA[ga_handle].name, array_name);
   GA[ga_handle].ptr = save_ptr;
+  GA[ga_handle].distr_type = GA[GA_OFFSET + g_a].distr_type;
+  maplen = calc_maplen(GA_OFFSET + g_a);
   if (maplen > 0) {
     GA[ga_handle].mapc = (C_Integer*)malloc((maplen+1)*sizeof(C_Integer*));
     for(i=0;i<maplen; i++)GA[ga_handle].mapc[i] = GA[GA_OFFSET+ g_a].mapc[i];
@@ -3350,6 +3633,24 @@ int local_sync_begin,local_sync_end;
        free(GA[ga_handle].mapc);
        GA[ga_handle].mapc = NULL;
     } 
+
+    if (GA[ga_handle].property == READ_CACHE) {
+      if (GA[ga_handle].cache_head != NULL) {
+        cache_struct_t *next;
+        next = GA[ga_handle].cache_head->next;
+        if (GA[ga_handle].cache_head->cache_buf)
+          free(GA[ga_handle].cache_head->cache_buf);
+        free(GA[ga_handle].cache_head);
+        while (next) {
+          GA[ga_handle].cache_head = next;
+          next = next->next;
+          if (GA[ga_handle].cache_head->cache_buf)
+            free(GA[ga_handle].cache_head->cache_buf);
+          free(GA[ga_handle].cache_head);
+        }
+      }
+    }
+    GA[ga_handle].cache_head = NULL;
 
     if (GA[ga_handle].property == READ_ONLY) {
       free(GA[ga_handle].old_mapc);
@@ -4172,7 +4473,7 @@ int i;
        if(GA[h_a].mapc[i] == -1) break;
      }
    } else if (GA[h_a].distr_type == BLOCK_CYCLIC ||
-       GA[h_a].distr_type == SCALAPACK) {
+       GA[h_a].distr_type == SCALAPACK || GA[h_a].distr_type == TILED) {
      for (i=0; i<GA[h_a].ndim; i++) {
        if (GA[h_a].block_dims[i] != GA[h_b].block_dims[i]) return FALSE;
      }
@@ -4183,6 +4484,15 @@ int i;
        for (i=0; i<GA[h_a].ndim; i++) {
          if (GA[h_a].nblock[i] != GA[h_b].nblock[i]) return FALSE;
        }
+     }
+   } else if (GA[h_a].distr_type == TILED_IRREG) {
+     if (h_a_maplen != h_b_maplen) return FALSE;
+     for(i=0; i <h_a_maplen; i++){
+       if(GA[h_a].mapc[i] != GA[h_b].mapc[i]) return FALSE;
+       if(GA[h_a].mapc[i] == -1) break;
+     }
+     for (i=0; i<GA[h_a].ndim; i++) {
+       if (GA[h_a].nblock[i] != GA[h_b].nblock[i]) return FALSE;
      }
    }
    if (GA[h_a].num_rstrctd == GA[h_b].num_rstrctd) {
@@ -4775,13 +5085,15 @@ logical pnga_uses_proc_grid(Integer g_a)
 {
   Integer ga_handle = GA_OFFSET + g_a;
   return (logical)(GA[ga_handle].distr_type == SCALAPACK
-      || GA[ga_handle].distr_type == TILED);
+      || GA[ga_handle].distr_type == TILED ||
+      GA[ga_handle].distr_type == TILED_IRREG);
 }
 
 /**
  *  Return the index of a processor based on the block partition associated
- *  with a particular Global Array (assuming GA uses a ScalLAPACK data
- *  distribution)
+ *  with a particular Global Array, assuming GA uses some sort of block-cyclic
+ *  data distribution based on an underlying processor grid. (e.g. a
+ *  ScaLAPACK data distribution)
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_get_proc_index =  pnga_get_proc_index
@@ -4792,7 +5104,8 @@ void pnga_get_proc_index(Integer g_a, Integer iproc, Integer *index)
   Integer ga_handle = GA_OFFSET + g_a;
   if (GA[ga_handle].distr_type == SCALAPACK) {
     gam_find_proc_indices(ga_handle, iproc, index);
-  } else if (GA[ga_handle].distr_type == TILED) {
+  } else if (GA[ga_handle].distr_type == TILED ||
+      GA[ga_handle].distr_type == TILED_IRREG) {
     gam_find_tile_proc_indices(ga_handle, iproc, index);
   } else {
     pnga_error("Global array does not use ScaLAPACK data distribution",0);
@@ -4819,6 +5132,10 @@ void pnga_get_block_info(Integer g_a, Integer *num_blocks, Integer *block_dims)
       num_blocks[i] = GA[ga_handle].num_blocks[i];
       block_dims[i] = GA[ga_handle].block_dims[i];
     }
+  } else if (GA[ga_handle].distr_type == TILED_IRREG) {
+    /* not sure what to do here */
+    pnga_error("Don't know how to respond to get_block_infor for"
+        " irregular tiled array",0);
   } else {
     Integer dim, bsize;
     for (i=0; i<ndim; i++) {
@@ -4909,8 +5226,14 @@ static int calc_maplen(int handle)
 {
     if (GA[handle].mapc != NULL) {
         int i,len=0;
-        for (i=0; i<GA[handle].ndim; i++) {
+        if (GA[handle].distr_type != TILED_IRREG) {
+          for (i=0; i<GA[handle].ndim; i++) {
             len += GA[handle].nblock[i];
+          }
+        } else {
+          for (i=0; i<GA[handle].ndim; i++) {
+            len += GA[handle].num_blocks[i];
+          }
         }
         return len;
     }

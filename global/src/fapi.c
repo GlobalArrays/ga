@@ -729,6 +729,26 @@ Integer FATR nga_pgroup_create_(Integer *list, Integer *count)
   return wnga_pgroup_create(list, *count);
 }
 
+Integer FATR ga_pgroup_duplicate_(Integer *grp)
+{
+  return wnga_pgroup_duplicate(*grp);
+}
+
+Integer FATR nga_pgroup_duplicate_(Integer *grp)
+{
+  return wnga_pgroup_duplicate(*grp);
+}
+
+Integer FATR ga_pgroup_self_()
+{
+  return wnga_pgroup_self();
+}
+
+Integer FATR nga_pgroup_self_()
+{
+  return wnga_pgroup_self();
+}
+
 logical FATR ga_pgroup_destroy_(Integer *grp)
 {
   return wnga_pgroup_destroy(*grp);
@@ -889,6 +909,20 @@ void FATR nga_set_tiled_proc_grid_(Integer *g_a, Integer *dims,
                                           Integer *proc_grid)
 {
   wnga_set_tiled_proc_grid(*g_a, dims, proc_grid);
+}
+
+void FATR ga_set_tiled_irreg_proc_grid_(Integer *g_a, Integer *mapc,
+                                         Integer *nblocks, 
+                                         Integer *proc_grid)
+{
+  wnga_set_tiled_irreg_proc_grid(*g_a, mapc, nblocks, proc_grid);
+}
+
+void FATR nga_set_tiled_irreg_proc_grid_(Integer *g_a, Integer *mapc,
+                                         Integer *nblocks, 
+                                         Integer *proc_grid)
+{
+  wnga_set_tiled_irreg_proc_grid(*g_a, mapc, nblocks, proc_grid);
 }
 
 void FATR ga_set_chunk_(Integer *g_a, Integer *chunk)
