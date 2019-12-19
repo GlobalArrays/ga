@@ -225,7 +225,7 @@ int PARMCI_AccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, voi
 {
   int iret;
   /* check if data is contiguous */
-  if (armci_checkt_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
@@ -335,7 +335,7 @@ int PARMCI_GetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stri
 {
   int iret;
   /* check if data is contiguous */
-  if (armci_checkt_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
@@ -537,7 +537,7 @@ int PARMCI_NbAccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, v
 {
   int iret;
   /* check if data is contiguous */
-  if (armci_checkt_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
@@ -572,7 +572,7 @@ int PARMCI_NbGetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_st
 {
   int iret;
   /* check if data is contiguous */
-  if (armci_checkt_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
@@ -607,7 +607,7 @@ int PARMCI_NbPutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_st
 {
   int iret;
   /* check if data is contiguous */
-  if (armci_checkt_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
@@ -666,7 +666,7 @@ int PARMCI_PutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stri
 {
   int iret;
   /* check if data is contiguous */
-  if (armci_checkt_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
