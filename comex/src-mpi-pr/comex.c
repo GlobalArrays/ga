@@ -3944,6 +3944,7 @@ STATIC int _get_world_rank(comex_igroup_t *igroup, int rank)
 /* gets (in group order) corresponding world ranks for entire group */
 STATIC int* _get_world_ranks(comex_igroup_t *igroup)
 {
+#if 0
     int i = 0;
     int *group_ranks = (int*)malloc(sizeof(int)*igroup->size);
     int *world_ranks = (int*)malloc(sizeof(int)*igroup->size);
@@ -3966,6 +3967,27 @@ STATIC int* _get_world_ranks(comex_igroup_t *igroup)
     free(group_ranks);
 
     return world_ranks;
+#else
+    MPI_Comm comm = igroup->comm;
+    int i = 0;
+    int my_world_rank = g_state.rank;
+    int *world_ranks = (int*)malloc(sizeof(int)*igroup->size);
+    int status;
+
+    for (i=0; i<igroup->size; ++i) {
+        world_ranks[i] = MPI_PROC_NULL;
+    }
+
+    status = MPI_Allgather(&my_world_rank,1,MPI_INT,world_ranks,
+        1,MPI_INT,comm);
+    COMEX_ASSERT(MPI_SUCCESS == status);
+
+    for (i=0; i<igroup->size; ++i) {
+        COMEX_ASSERT(MPI_PROC_NULL != world_ranks[i]);
+    }
+
+    return world_ranks;
+#endif
 }
 
 
