@@ -3646,6 +3646,11 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
+int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
+        const char* device)
+{
+    return comex_malloc(ptrs,size,group);
+}
 
 int comex_free(void* ptr, comex_group_t group)
 {
@@ -3695,6 +3700,11 @@ fn_success:
 
 fn_fail:
     return COMEX_FAILURE;
+}
+
+int comex_free_dev(void *ptr, comex_group_t group)
+{
+    return comex_free(ptr, group);
 }
 
 static inline int destroy_all_windows()

@@ -646,6 +646,13 @@ int PARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
     return(0);
 }
 
+/*\
+ *  Wrapper on PARMCI_Malloc so that old code still works
+\*/
+int PARMCI_Malloc_memdev(void *ptr_arr[], armci_size_t bytes, const char *device)
+{
+  return PARMCI_Malloc(ptr_arr,bytes);
+}
 
 
 /*\ shared memory is released to kr_malloc only on process 0
@@ -679,6 +686,14 @@ int PARMCI_Free(void *ptr)
     ptr = NULL;
     ARMCI_PR_DBG("exit",0);
     return 0;
+}
+
+/*\
+ *  Wrapper on PARMCI_Free_memdev so that old code still works
+\*/
+int PARMCI_Free_memdev(void *ptr)
+{
+  PARMCI_Free(void *ptr);
 }
 
 
@@ -774,6 +789,14 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
     return(0);
 }
 
+/*\
+ *  Wrapper on PARMCI_Malloc_group so that old code still works
+\*/
+int ARMCI_Malloc_group_memdev(void *ptr_arr[], armci_size_t bytes,
+                       ARMCI_Group *group, const char *device)
+{
+  return ARMCI_Malloc_group(ptr_arr,bytes,group);
+}
 
 /*\ shared memory is released to kr_malloc only on process 0
  *  with data server malloc cannot be used

@@ -78,6 +78,11 @@ AM_LDFLAGS += $(BLAS_LDFLAGS)
 AM_LDFLAGS += $(GA_MP_LDFLAGS)
 AM_LDFLAGS += $(ARMCI_NETWORK_LDFLAGS)
 
+if WITH_SICM
+AM_CPPFLAGS += $(SICM_CPPFLAGS)
+AM_LDFLAGS += $(SICM_LDFLAGS)
+endif
+
 LDADD += libga.la
 
 # Certain trickery when turning Fortran support on or off.
@@ -1650,6 +1655,11 @@ libga_la_LIBADD += $(ELPA_LIBS)
 libga_la_LIBADD += $(SCALAPACK_LIBS)
 libga_la_LIBADD += $(LAPACK_LIBS)
 libga_la_LIBADD += $(BLAS_LIBS)
+
+if WITH_SICM
+libga_la_LIBADD += $(SICM_LIBS)
+endif
+
 if ARMCI_NETWORK_ARMCI
 libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 libga_la_LIBADD += $(GA_MP_LIBS)
