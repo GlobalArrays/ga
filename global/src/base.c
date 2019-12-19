@@ -1214,17 +1214,21 @@ Integer pnga_pgroup_duplicate(Integer grp)
     tmp_count = PGRP_LIST[grp].map_nproc;
 
     tmp_list = (int*)malloc(GAnproc*sizeof(int));
-    tmp2_list = PGRP_LIST[grp].map_proc_list;
+    tmp2_list = PGRP_LIST[grp].inv_map_proc_list;
     save_grp = GA_Default_Proc_Group;
     GA_Default_Proc_Group = PGRP_LIST[grp].parent;
-    if (GA_Default_Proc_Group != -1) {
+    if (grp != -1 && GA_Default_Proc_Group != -1) {
        int parent = GA_Default_Proc_Group;
        for (i=0; i<tmp_count; i++) {
-          tmp_list[i] = (int)PGRP_LIST[parent].inv_map_proc_list[tmp2_list[i]];
+          tmp_list[i] = (int)PGRP_LIST[parent].map_proc_list[tmp2_list[i]];
+       }
+    } else if (grp != -1 && GA_Default_Proc_Group == -1) {
+       for (i=0; i<tmp_count; i++) {
+          tmp_list[i] = (int)PGRP_LIST[grp].map_proc_list[tmp2_list[i]];
        }
     } else {
-       for (i=0; i<tmp_count; i++) {
-          tmp_list[i] = (int)tmp2_list[i];
+       for (i=0; i<GAnproc; i++) {
+          tmp_list[i] = i;
        }
     }
     
