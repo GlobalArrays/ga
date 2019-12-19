@@ -2737,7 +2737,6 @@ int comex_free(void *ptr, comex_group_t group)
     rank_ptr_t *rank_ptrs = NULL;
     int status = 0;
 
-    fprintf(stderr,"p[%d] Calling comex_free\n",g_state.rank);
     comex_barrier(group);
 
 #if DEBUG
@@ -3248,7 +3247,6 @@ STATIC void _progress_server()
                 _unlock_handler(header, source);
                 break;
             case OP_QUIT:
-                printf("p[%d] (_progress_server) Received QUIT\n",g_state.rank);
                 running = 0;
                 break;
             case OP_MALLOC:
