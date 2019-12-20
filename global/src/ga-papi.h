@@ -56,6 +56,7 @@ extern void pnga_get_block_info(Integer g_a, Integer *num_blocks,
                                 Integer *block_dims);
 extern logical pnga_get_debug();
 extern Integer pnga_get_dimension(Integer g_a);
+extern void pnga_get_distribution_type(Integer g_a, char *type);
 extern void pnga_get_proc_grid(Integer g_a, Integer *dims);
 extern void pnga_get_proc_index(Integer g_a, Integer iproc, Integer *index);
 extern logical pnga_has_ghosts(Integer g_a);

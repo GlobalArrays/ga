@@ -4348,7 +4348,37 @@ int i, n;
 
      n = GA[ga_handle].ndim;
 
-     for(i=0; i<n; i++) nblock[i] = (Integer)GA[ga_handle].nblock[i];
+     if (GA[ga_handle].distr_type == REGULAR) {
+       for(i=0; i<n; i++) nblock[i] = (Integer)GA[ga_handle].nblock[i];
+     } else {
+       for(i=0; i<n; i++) nblock[i] = (Integer)GA[ga_handle].num_blocks[i];
+     }
+}
+
+/**
+ * Returns a character string describing internal data distribution
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get_distribution_type =  pnga_get_distribution_type
+#endif
+
+void pnga_get_distribution_type(Integer g_a, char *type)
+{
+  Integer ga_handle = GA_OFFSET + g_a;
+  Integer itype = GA[ga_handle].distr_type;
+  if (itype == REGULAR) {
+    strcpy(type,"regular");
+  } else if (itype == BLOCK_CYCLIC) {
+    strcpy(type,"block_cyclic");
+  } else if (itype == SCALAPACK) {
+    strcpy(type,"scalapack");
+  } else if (itype == TILED) {
+    strcpy(type,"tiled");
+  } else if (itype == TILED_IRREG) {
+    strcpy(type,"tiled_irreg");
+  } else {
+    strcpy(type,"unknown");
+  }
 }
 
 /**
