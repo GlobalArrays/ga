@@ -38,6 +38,10 @@ env:
     CONFIG_OPTS="--disable-static --enable-shared"
   - MPI_IMPL=mpich
     PORT=ofi
+  - MPI_IMPL=mpich
+    PORT=armci
+  - MPI_IMPL=openmpi
+    PORT=armci
 before_install:
   - export TRAVIS_ROOT=$HOME/travis
   - mkdir $TRAVIS_ROOT
@@ -47,7 +51,9 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install coreutils || brew upgrade coreutils || true; fi
   - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
   - if [[ "$PORT" == "ofi" ]]; then sh ./travis/install-libfabric.sh $TRAVIS_ROOT; fi
+  - if [[ "$PORT" == "armci" ]]; then sh ./travis/install-armci-mpi.sh $TRAVIS_ROOT; fi
 script:
   - sh ./travis/build-run.sh $TRAVIS_ROOT $PORT $MPI_IMPL
 after_failure:
+  - if [[ "$PORT" == "armci" ]]; then find . -name config.log -exec cat {} ";"; fi
   - cat ./test-suite.log
