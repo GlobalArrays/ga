@@ -1,4 +1,3 @@
-sudo: false
 language: c
 os:
   - osx
@@ -6,6 +5,7 @@ os:
 compiler:
   - clang
   - gcc
+osx_image: xcode10.2
 addons:
   apt:
     packages:
@@ -13,8 +13,6 @@ addons:
 matrix:
   allow_failures:
     - env: MPI_IMPL=openmpi
-  include:
-    - osx_image: xcode10.2
 env:
   - MPI_IMPL=mpich
     PORT=sockets
