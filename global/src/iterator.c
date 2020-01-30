@@ -323,113 +323,130 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
   int ndim;
   int grp = GA[handle].p_handle;
   int nproc = pnga_pgroup_nnodes(grp);
+  int ok;
   ndim = GA[handle].ndim;
   if (GA[handle].distr_type == REGULAR) {
     Integer *blo, *bhi;
     Integer nelems;
     idx = hdl->count;
-    /* no blocks left, so return */
-    if (idx>=hdl->nproc) return 0;
 
-    p = (Integer)hdl->proclistperm[idx];
-    *proc = (int)hdl->proclist[p];
-    if (p_handle >= 0) {
-      *proc = (int)PGRP_LIST[p_handle].inv_map_proc_list[*proc];
-    }
-    /* Find  visible portion of patch held by processor p and
-     * return the result in plo and phi. Also get actual processor
-     * index corresponding to p and store the result in proc.
+    /* Check to see if range is valid (it may not be valid if user has
+     * created and irregular distribution in which some processors do not have
+     * data). If invalid, skip this block and go to the next one
      */
-    gam_GetRangeFromMap(p, ndim, plo, phi);
-    *proc = (int)hdl->proclist[p];
-    blo = *plo;
-    bhi = *phi;
-#ifdef LARGE_BLOCK_REQ
-    /* Check to see if block size will overflow int values and initialize
-     * counter over sub-blocks if the block is too big*/
-    if (!hdl->oversize) {
-      nelems = 1; 
-      for (i=0; i<ndim; i++) nelems *= (bhi[i]-blo[i]+1);
-      if (elemsize*nelems > MAX_INT_VALUE) {
-        Integer maxint = 0;
-        int maxidx;
-        hdl->oversize = 1;
-        /* Figure out block dimensions that correspond to block sizes
-         * that are beneath MAX_INT_VALUE */
-        for (i=0; i<ndim; i++) {
-          hdl->blk_size[i] = (bhi[i]-blo[i]+1);
-        }
-        while (elemsize*nelems > MAX_INT_VALUE) {
-          for (i=0; i<ndim; i++) {
-            if (hdl->blk_size[i] > maxint) {
-              maxidx = i;
-              maxint = hdl->blk_size[i];
-            }
-          }
-          hdl->blk_size[maxidx] /= 2;
-          nelems = 1;
-          for (i=0; i<ndim; i++) nelems *= hdl->blk_size[i];
-        }
-        /* Calculate the number of blocks along each dimension */
-        for (i=0; i<ndim; i++) {
-          hdl->blk_dim[i] = (bhi[i]-blo[i]+1)/hdl->blk_size[i];
-          if (hdl->blk_dim[i]*hdl->blk_size[i] < (bhi[i]-blo[i]+1))
-            hdl->blk_dim[i]++;
-        }
-        /* initialize block counting */
-        for (i=0; i<ndim; i++) hdl->blk_inc[i] = 0;
-      }
-    }
-
-    /* Get sub-block bounding dimensions */
-    if (hdl->oversize) {
-      Integer tmp;
-      for (i=0; i<ndim; i++) {
-        hdl->lobuf[i] = blo[i];
-        hdl->hibuf[i] = bhi[i];
-      }
-      *plo = hdl->lobuf;
-      *phi = hdl->hibuf;
-      blo = *plo;
-      bhi = *phi;
-      for (i=0; i<ndim; i++) {
-        hdl->lobuf[i] += hdl->blk_inc[i]*hdl->blk_size[i];
-        tmp = hdl->lobuf[i] + hdl->blk_size[i]-1;
-        if (tmp < hdl->hibuf[i]) hdl->hibuf[i] = tmp;
-      }
-    }
-#endif
-
-    if (n_rstrctd == 0) {
-      gam_Location(*proc, handle, blo, prem, ldrem);
-    } else {
-      gam_Location(rank_rstrctd[*proc], handle, blo, prem, ldrem);
-    }
-    if (p_handle >= 0) {
+    ok = 0;
+    while(!ok) {
+      /* no blocks left, so return */
+      if (idx>=hdl->nproc) return 0;
+      p = (Integer)hdl->proclistperm[idx];
       *proc = (int)hdl->proclist[p];
-      /* BJP */
-      *proc = PGRP_LIST[p_handle].inv_map_proc_list[*proc];
-    }
-#ifdef LARGE_BLOCK_REQ
-    if (!hdl->oversize) {
-#endif
-      hdl->count++;
-#ifdef LARGE_BLOCK_REQ
-    } else {
-      /* update blk_inc array */
-      hdl->blk_inc[0]++; 
-      for (i=0; i<ndim-1; i++) {
-        if (hdl->blk_inc[i] >= hdl->blk_dim[i]) {
-          hdl->blk_inc[i] = 0;
-          hdl->blk_inc[i+1]++;
+      if (p_handle >= 0) {
+        *proc = (int)PGRP_LIST[p_handle].inv_map_proc_list[*proc];
+      }
+      /* Find  visible portion of patch held by processor p and
+       * return the result in plo and phi. Also get actual processor
+       * index corresponding to p and store the result in proc.
+       */
+      gam_GetRangeFromMap(p, ndim, plo, phi);
+      ok = 1;
+      for (i=0; i<ndim; i++) {
+        if (phi[i]<plo[i]) {
+          ok = 0;
+          break;
         }
       }
-      if (hdl->blk_inc[ndim-1] >= hdl->blk_dim[ndim-1]) {
-        hdl->count++;
-        hdl->oversize = 0;
-      }
-    }
+      if (ok) {
+        *proc = (int)hdl->proclist[p];
+        blo = *plo;
+        bhi = *phi;
+#ifdef LARGE_BLOCK_REQ
+        /* Check to see if block size will overflow int values and initialize
+         * counter over sub-blocks if the block is too big*/
+        if (!hdl->oversize) {
+          nelems = 1; 
+          for (i=0; i<ndim; i++) nelems *= (bhi[i]-blo[i]+1);
+          if (elemsize*nelems > MAX_INT_VALUE) {
+            Integer maxint = 0;
+            int maxidx;
+            hdl->oversize = 1;
+            /* Figure out block dimensions that correspond to block sizes
+             * that are beneath MAX_INT_VALUE */
+            for (i=0; i<ndim; i++) {
+              hdl->blk_size[i] = (bhi[i]-blo[i]+1);
+            }
+            while (elemsize*nelems > MAX_INT_VALUE) {
+              for (i=0; i<ndim; i++) {
+                if (hdl->blk_size[i] > maxint) {
+                  maxidx = i;
+                  maxint = hdl->blk_size[i];
+                }
+              }
+              hdl->blk_size[maxidx] /= 2;
+              nelems = 1;
+              for (i=0; i<ndim; i++) nelems *= hdl->blk_size[i];
+            }
+            /* Calculate the number of blocks along each dimension */
+            for (i=0; i<ndim; i++) {
+              hdl->blk_dim[i] = (bhi[i]-blo[i]+1)/hdl->blk_size[i];
+              if (hdl->blk_dim[i]*hdl->blk_size[i] < (bhi[i]-blo[i]+1))
+                hdl->blk_dim[i]++;
+            }
+            /* initialize block counting */
+            for (i=0; i<ndim; i++) hdl->blk_inc[i] = 0;
+          }
+        }
+
+        /* Get sub-block bounding dimensions */
+        if (hdl->oversize) {
+          Integer tmp;
+          for (i=0; i<ndim; i++) {
+            hdl->lobuf[i] = blo[i];
+            hdl->hibuf[i] = bhi[i];
+          }
+          *plo = hdl->lobuf;
+          *phi = hdl->hibuf;
+          blo = *plo;
+          bhi = *phi;
+          for (i=0; i<ndim; i++) {
+            hdl->lobuf[i] += hdl->blk_inc[i]*hdl->blk_size[i];
+            tmp = hdl->lobuf[i] + hdl->blk_size[i]-1;
+            if (tmp < hdl->hibuf[i]) hdl->hibuf[i] = tmp;
+          }
+        }
 #endif
+
+        if (n_rstrctd == 0) {
+          gam_Location(*proc, handle, blo, prem, ldrem);
+        } else {
+          gam_Location(rank_rstrctd[*proc], handle, blo, prem, ldrem);
+        }
+        if (p_handle >= 0) {
+          *proc = (int)hdl->proclist[p];
+          /* BJP */
+          *proc = PGRP_LIST[p_handle].inv_map_proc_list[*proc];
+        }
+      }
+#ifdef LARGE_BLOCK_REQ
+      if (!hdl->oversize) {
+#endif
+        hdl->count++;
+#ifdef LARGE_BLOCK_REQ
+      } else {
+        /* update blk_inc array */
+        hdl->blk_inc[0]++; 
+        for (i=0; i<ndim-1; i++) {
+          if (hdl->blk_inc[i] >= hdl->blk_dim[i]) {
+            hdl->blk_inc[i] = 0;
+            hdl->blk_inc[i+1]++;
+          }
+        }
+        if (hdl->blk_inc[ndim-1] >= hdl->blk_dim[ndim-1]) {
+          hdl->count++;
+          hdl->oversize = 0;
+        }
+      }
+#endif
+    }
     return 1;
   } else {
     Integer offset, l_offset, last, pinv;
