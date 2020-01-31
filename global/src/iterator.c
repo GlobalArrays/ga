@@ -350,7 +350,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
       gam_GetRangeFromMap(p, ndim, plo, phi);
       ok = 1;
       for (i=0; i<ndim; i++) {
-        if (phi[i]<plo[i]) {
+        if ((*phi)[i]<(*plo)[i]) {
           ok = 0;
           break;
         }
@@ -430,6 +430,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
       if (!hdl->oversize) {
 #endif
         hdl->count++;
+        idx = hdl->count;
 #ifdef LARGE_BLOCK_REQ
       } else {
         /* update blk_inc array */
@@ -442,6 +443,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         }
         if (hdl->blk_inc[ndim-1] >= hdl->blk_dim[ndim-1]) {
           hdl->count++;
+          idx = hdl->count;
           hdl->oversize = 0;
         }
       }
