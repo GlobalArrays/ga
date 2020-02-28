@@ -6,6 +6,7 @@ os:
 compiler:
   - clang
   - gcc
+osx_image: xcode10.2
 addons:
   apt:
     packages:
@@ -21,8 +22,6 @@ cache:
 matrix:
   allow_failures:
     - env: MPI_IMPL=openmpi
-  include:
-    - osx_image: xcode9.1
 env:
   # - MPI_IMPL=mpich
   #   PORT=sockets
