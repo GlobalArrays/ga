@@ -37,9 +37,10 @@ AC_SUBST([PACKAGE_VERSION])
 # ga version 5.6.4: 1:4:0
 # ga version 5.6.5: 1:5:0
 # ga version 5.7.0: 2:0:1
+# ga version 5.7.1: 2:1:1
 #
 # libga -version-info current:revision:age
-LTVER="2:0:1"
+LTVER="2:1:1"
 AC_SUBST([LTVER])
 
 ###############################################################################
@@ -529,6 +530,11 @@ MA_ENABLE_ARMCI_MEM_OPTION
 MA_LONG_DOUBLE_TYPEDEF
 MA_STATS
 MA_VERIFY
+AS_IF([test "x$ga_cv_target" = xLINUX],
+    [AS_CASE([$host_cpu],
+        [i686|x86_64*|powerpc*|mips*|arm*],
+            [AC_DEFINE([NOUSE_MMAP], [1], [Set some mallopt options])])])
+
 AS_IF([test "x$ga_cv_target" = xLINUX64],
     [AS_CASE([$host_cpu],
         [x86_64|ppc64],
