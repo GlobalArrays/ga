@@ -1579,6 +1579,23 @@ void pnga_set_array_name(Integer g_a, char *array_name)
 }
 
 /**
+ * Get the array name of a global array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get_array_name = pnga_get_array_name
+#endif
+
+void pnga_get_array_name(Integer g_a, char *array_name)
+{
+  Integer ga_handle = g_a + GA_OFFSET;
+  if (GA[ga_handle].actv == 1)
+    pnga_error("Cannot get array name on array that has not been allocated",0);
+  if (strlen(array_name) > FNAM)
+    pnga_error("Array name exceeds maximum array name length",FNAM);
+  strcpy(array_name, GA[ga_handle].name);
+}
+
+/**
  *  Set the processor group on a new global array
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA

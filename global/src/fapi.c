@@ -877,6 +877,20 @@ void FATR nga_set_array_name_(Integer *g_a, char *array_name, int slen)
   wnga_set_array_name(*g_a, buf);
 }
 
+void FATR ga_get_array_name_(Integer *g_a, char *array_name, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(array_name ,slen, buf, FNAM);
+  wnga_get_array_name(*g_a, buf);
+}
+
+void FATR nga_get_array_name_(Integer *g_a, char *array_name, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(array_name ,slen, buf, FNAM);
+  wnga_get_array_name(*g_a, buf);
+}
+
 void FATR ga_set_block_cyclic_(Integer *g_a, Integer *dims)
 {
   wnga_set_block_cyclic(*g_a, dims);

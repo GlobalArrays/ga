@@ -104,6 +104,7 @@ extern void pnga_randomize(Integer g_a, void* val);
 extern Integer pnga_get_pgroup(Integer g_a);
 extern Integer pnga_get_pgroup_size(Integer grp_id);
 extern void pnga_set_array_name(Integer g_a, char *array_name);
+extern void pnga_get_array_name(Integer g_a, char *array_name);
 extern void pnga_set_block_cyclic(Integer g_a, Integer *dims);
 extern void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid);
 extern void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid);

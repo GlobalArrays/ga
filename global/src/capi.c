@@ -646,6 +646,20 @@ void NGA_Set_array_name(int g_a, char *name)
     wnga_set_array_name(aa, name);
 }
 
+void GA_Get_array_name(int g_a, char *name)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_get_array_name(aa, name);
+}
+
+void NGA_Get_array_name(int g_a, char *name)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_get_array_name(aa, name);
+}
+
 void GA_Set_pgroup(int g_a, int p_handle)
 {
   Integer aa, pp;
