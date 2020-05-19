@@ -99,6 +99,7 @@ static void _create_group_and_igroup(
     new_group_list_item->group = MPI_GROUP_NULL;
     new_group_list_item->size = -1;
     new_group_list_item->rank = -1;
+    new_group_list_item->world_ranks = NULL;
 
     /* find the last group in the group linked list and insert */
     if (group_list) {
@@ -220,6 +221,9 @@ static void _igroup_free(comex_igroup_t *igroup)
 #if DEBUG
     printf("[%d] free'd comm\n", RANK_OR_PID);
 #endif
+    if (igroup->world_ranks != NULL) {
+      free(igroup->world_ranks);
+    }
 
     free(igroup);
 }
@@ -254,6 +258,25 @@ int comex_group_free(comex_group_t id)
     return COMEX_SUCCESS;
 }
 
+void _igroup_set_world_ranks(comex_igroup_t *igroup)
+{
+  int i = 0;
+  int my_world_rank = g_state.rank;
+  igroup->world_ranks = (int*)malloc(sizeof(int)*igroup->size);
+  int status;
+
+  for (i=0; i<igroup->size; ++i) {
+    igroup->world_ranks[i] = MPI_PROC_NULL;
+  }
+
+  status = MPI_Allgather(&my_world_rank,1,MPI_INT,igroup->world_ranks,
+      1,MPI_INT,igroup->comm);
+  COMEX_ASSERT(MPI_SUCCESS == status);
+
+  for (i=0; i<igroup->size; ++i) {
+    COMEX_ASSERT(MPI_PROC_NULL != igroup->world_ranks[i]);
+  }
+}
 
 int comex_group_create(
         int n, int *pid_list, comex_group_t id_parent, comex_group_t *id_child)
@@ -353,6 +376,7 @@ int comex_group_create(
 #if DEBUG
     printf("[%d] comex_group_create after crazy logic\n", RANK_OR_PID);
 #endif
+    _igroup_set_world_ranks(igroup_child);
 
     return COMEX_SUCCESS;
 }
@@ -537,6 +561,8 @@ void comex_group_init()
         COMEX_ASSERT(MPI_SUCCESS == status);
         status = MPI_Comm_size(igroup->comm, &(igroup->size));
         COMEX_ASSERT(MPI_SUCCESS == status);
+        _igroup_set_world_ranks(igroup);
+        COMEX_ASSERT(igroup->world_ranks != NULL);
 #if DEBUG
         printf("Creating comm: I AM WORKER[%ld]\n", g_state.rank);
 #endif

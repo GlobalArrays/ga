@@ -33,6 +33,7 @@ typedef struct group_link {
     MPI_Group group;        /**< whole group; all ranks */
     int size;               /**< comm size */
     int rank;               /**< comm rank */
+    int *world_ranks;       /**< list of ranks in MPI_COMM_WORLD */
 } comex_igroup_t;
 
 /** list of worker groups */

@@ -4549,6 +4549,7 @@ STATIC int _is_master(void)
 
 STATIC int _get_world_rank(comex_igroup_t *igroup, int rank)
 {
+#if 0
     int world_rank;
     int status;
 
@@ -4558,6 +4559,9 @@ STATIC int _get_world_rank(comex_igroup_t *igroup, int rank)
     COMEX_ASSERT(MPI_PROC_NULL != world_rank);
 
     return world_rank;
+#else
+    return igroup->world_ranks[rank];
+#endif
 }
 
 
@@ -4588,6 +4592,7 @@ STATIC int* _get_world_ranks(comex_igroup_t *igroup)
 
     return world_ranks;
 #else
+#if 0
     MPI_Comm comm = igroup->comm;
     int i = 0;
     int my_world_rank = g_state.rank;
@@ -4607,6 +4612,15 @@ STATIC int* _get_world_ranks(comex_igroup_t *igroup)
     }
 
     return world_ranks;
+#else
+    int size = igroup->size;
+    int i = 0;
+    int *world_ranks = (int*)malloc(sizeof(int)*size);
+    for (i=0; i<size; ++i) {
+      world_ranks[i] = igroup->world_ranks[i];
+    }
+    return world_ranks;
+#endif
 #endif
 }
 

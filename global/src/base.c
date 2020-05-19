@@ -3046,9 +3046,12 @@ int i, nproc,grp_me=GAme;
     if (grp_id > 0) {
        status = ARMCI_Malloc_group((void**)ptr_arr, (armci_size_t)bytes,
 				   &PGRP_LIST[grp_id].group);
-    } else
+    } else {
 #endif
       status = ARMCI_Malloc((void**)ptr_arr, (armci_size_t)bytes);
+#ifdef MSG_COMMS_MPI
+    }
+#endif
 
     if(bytes!=0 && ptr_arr[grp_me]==NULL) 
        pnga_error("gai_get_shmem: ARMCI Malloc failed", GAme);
@@ -3195,13 +3198,16 @@ int gai_get_devmem(char *name, char **ptr_arr, C_Long bytes, int type, long *adj
       status = ARMCI_Malloc_group((void**)ptr_arr, (armci_size_t)bytes,
           &PGRP_LIST[grp_id].group);
     }
-  } else
+  } else {
 #endif
     if (dev_flag) {
       status = ARMCI_Malloc_memdev((void**)ptr_arr, (armci_size_t)bytes, device);
     } else {
       status = ARMCI_Malloc((void**)ptr_arr, (armci_size_t)bytes);
     }
+#ifdef MSG_COMMS_MPI
+  }
+#endif
 
   if(bytes!=0 && ptr_arr[grp_me]==NULL) 
     pnga_error("gai_get_shmem: ARMCI Malloc failed", GAme);
