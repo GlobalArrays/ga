@@ -2,8 +2,9 @@
 #   include "config.h"
 #endif
 
-#include <mpi.h>
-
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 #if HAVE_STDLIB_H
 #   include <stdlib.h>
 #endif
@@ -19,6 +20,8 @@
 #if HAVE_UNISTD_H
 #   include <unistd.h>
 #endif
+
+#include <mpi.h>
 
 #define HOSTNAME_LEN 128 
 static char myname[HOSTNAME_LEN], rootname[HOSTNAME_LEN];

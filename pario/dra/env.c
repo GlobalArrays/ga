@@ -6,6 +6,9 @@
  * $Id: env.c,v 1.1 1997-12-07 11:14:18 d3e129 Exp $
  */
 
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 #if HAVE_STDLIB_H
 #   include <stdlib.h>
 #endif

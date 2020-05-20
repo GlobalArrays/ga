@@ -2,11 +2,14 @@
 #   include "config.h"
 #endif
 
-#if HAVE_MALLOC_H
-#   include <malloc.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
 #endif
 #if HAVE_STDLIB_H
 #   include <stdlib.h>
+#endif
+#if HAVE_MALLOC_H
+#   include <malloc.h>
 #endif
 
 #include "typesf2c.h"
