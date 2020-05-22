@@ -382,6 +382,7 @@ void pnga_initialize()
 #endif
        GA[i].actv = 0;
        GA[i].p_handle = GA_Init_Proc_Group;
+       GA[i].overlay = 0;
        PGRP_LIST[i].map_proc_list = (int*)0;
        PGRP_LIST[i].inv_map_proc_list = (int*)0;
        PGRP_LIST[i].actv = 0;
@@ -2786,6 +2787,307 @@ logical pnga_allocate(Integer g_a)
 }
 
 /**
+ *  Use memory from another GA and complete setup of global array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_overlay = pnga_overlay
+#endif
+
+logical pnga_overlay(Integer g_a, Integer g_parent)
+{
+
+  Integer hi[MAXDIM];
+  Integer ga_handle = g_a + GA_OFFSET;
+  Integer g_p = g_parent + GA_OFFSET;
+  Integer d, width[MAXDIM], ndim;
+  Integer mem_size, nelem;
+  Integer i, status, maplen=0, p_handle;
+  Integer dims[MAXDIM], chunk[MAXDIM];
+  Integer pe[MAXDIM], *pmap[MAXDIM], *map;
+  Integer blk[MAXDIM];
+  Integer grp_me=GAme, grp_nproc=GAnproc;
+  Integer block_size = 0;
+
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
+  if (GA[ga_handle].ndim == -1)
+    pnga_error("Insufficient data to create global array",0);
+
+  p_handle = (Integer)GA[ga_handle].p_handle;
+  if (p_handle == (Integer)GA_Init_Proc_Group) {
+    GA[ga_handle].p_handle = GA_Default_Proc_Group;
+    p_handle = GA_Default_Proc_Group;
+  }
+  pnga_pgroup_sync(p_handle);
+  if (p_handle != (Integer)GA[g_p].p_handle) {
+    pnga_error("Parent and overlay global array must be on same procesor group",0);
+  }
+
+  if (p_handle > 0) {
+     grp_nproc  = PGRP_LIST[p_handle].map_nproc;
+     grp_me = PGRP_LIST[p_handle].map_proc_list[GAme];
+  }
+  
+  if(!GAinitialized) pnga_error("GA not initialized ", 0);
+  if(!ma_address_init) gai_ma_address_init();
+
+  ndim = GA[ga_handle].ndim;
+  for (i=0; i<ndim; i++) width[i] = (C_Integer)GA[ga_handle].width[i];
+
+  /* The data distribution has not been specified by the user. Create
+     default distribution */
+  if (GA[ga_handle].mapc == NULL && GA[ga_handle].distr_type == REGULAR) {
+    for (d=0; d<ndim; d++) {
+      dims[d] = (Integer)GA[ga_handle].dims[d];
+      chunk[d] = (Integer)GA[ga_handle].chunk[d];
+    }
+    if(chunk[0]!=0) /* for chunk[0]=0 compute all */
+      for(d=0; d< ndim; d++) blk[d]=(Integer)GA_MIN(chunk[d],dims[d]);
+    else
+      for(d=0; d< ndim; d++) blk[d]=-1;
+
+    /* eliminate dimensions =1 from ddb analysis */
+    for(d=0; d<ndim; d++)if(dims[d]==1)blk[d]=1;
+ 
+    if (GAme==0 && DEBUG )
+      for (d=0;d<ndim;d++) fprintf(stderr,"b[%ld]=%ld\n",(long)d,(long)blk[d]);
+    pnga_pgroup_sync(p_handle);
+
+    /* ddb(ndim, dims, GAnproc, blk, pe);*/
+    if(p_handle == 0) /* for mirrored arrays */
+#if OLD_DISTRIBUTION
+       ddb_h2(ndim, dims, PGRP_LIST[p_handle].map_nproc,0.0,(Integer)0, blk, pe);
+#else
+       ddb(ndim, dims, PGRP_LIST[p_handle].map_nproc, blk, pe);
+#endif
+    else
+       if (GA[ga_handle].num_rstrctd == 0) {
+         /* Data is normally distributed on processors */
+#if OLD_DISTRIBUTION
+         ddb_h2(ndim, dims, grp_nproc,0.0,(Integer)0, blk, pe);
+#else
+         ddb(ndim, dims, grp_nproc, blk, pe);
+#endif
+       } else {
+         /* Data is only distributed on subset of processors */
+#if OLD_DISTRIBUTION
+         ddb_h2(ndim, dims, GA[ga_handle].num_rstrctd, 0.0, (Integer)0, blk, pe);
+#else
+         ddb(ndim, dims, GA[ga_handle].num_rstrctd, blk, pe);
+#endif
+       }
+
+    for(d=0, map=mapALL; d< ndim; d++){
+      Integer nblock;
+      Integer pcut; /* # procs that get full blk[] elements; the rest gets less*/
+      int p;
+
+      pmap[d] = map;
+
+      /* RJH ... don't leave some nodes without data if possible
+       but respect the users block size */
+      
+      if (chunk[d] > 1) {
+        Integer ddim = ((dims[d]-1)/GA_MIN(chunk[d],dims[d]) + 1);
+        pcut = (ddim -(blk[d]-1)*pe[d]) ;
+      }
+      else {
+        pcut = (dims[d]-(blk[d]-1)*pe[d]) ;
+      }
+
+      for (nblock=i=p=0; (p<pe[d]) && (i<dims[d]); p++, nblock++) {
+        Integer b = blk[d];
+        if (p >= pcut)
+          b = b-1;
+        map[nblock] = i+1;
+        if (chunk[d]>1) b *= GA_MIN(chunk[d],dims[d]);
+        i += b;
+      }
+
+      pe[d] = GA_MIN(pe[d],nblock);
+      map +=  pe[d]; 
+    }
+    if(GAme==0&& DEBUG){
+      gai_print_subscript("pe ",(int)ndim, pe,"\n");
+      gai_print_subscript("blocks ",(int)ndim, blk,"\n");
+      printf("decomposition map\n");
+      for(d=0; d< ndim; d++){
+        printf("dim=%ld: ",(long)d); 
+        for (i=0;i<pe[d];i++)printf("%ld ",(long)pmap[d][i]);
+        printf("\n"); 
+      }
+      fflush(stdout);
+    }
+    maplen = 0;
+    for( i = 0; i< ndim; i++){
+      GA[ga_handle].nblock[i] = pe[i];
+      maplen += pe[i];
+    }
+    GA[ga_handle].mapc = (C_Integer*)malloc((maplen+1)*sizeof(C_Integer*));
+    for(i = 0; i< maplen; i++) {
+      GA[ga_handle].mapc[i] = (C_Integer)mapALL[i];
+    }
+    GA[ga_handle].mapc[maplen] = -1;
+  } else if (GA[ga_handle].distr_type == BLOCK_CYCLIC) {
+    /* Regular block-cyclic data distribution has been specified. Figure
+       out how much memory is needed by each processor to store blocks */
+    Integer nblocks = GA[ga_handle].block_total;
+    Integer tsize, j;
+    Integer lo[MAXDIM];
+    block_size = 0;
+    for (i=GAme; i<nblocks; i +=GAnproc) {
+      ga_ownsM(ga_handle,i,lo,hi);
+      tsize = 1;
+      for (j=0; j<ndim; j++) {
+        tsize *= (hi[j] - lo[j] + 1);
+      }
+      block_size += tsize;
+    }
+  } else if (GA[ga_handle].distr_type == SCALAPACK) {
+    /* ScaLAPACK block-cyclic data distribution has been specified. Figure
+       out how much memory is needed by each processor to store blocks */
+    Integer j, jtot, skip, imin, imax;
+    Integer index[MAXDIM];
+    gam_find_proc_indices(ga_handle,GAme,index);
+    block_size = 1;
+    for (i=0; i<ndim; i++) {
+      skip = GA[ga_handle].nblock[i];
+      jtot = 0;
+      for (j=index[i]; j<GA[ga_handle].num_blocks[i]; j += skip) {
+        imin = j*GA[ga_handle].block_dims[i] + 1;
+        imax = (j+1)*GA[ga_handle].block_dims[i];
+        if (imax > GA[ga_handle].dims[i]) imax = GA[ga_handle].dims[i];
+        jtot += (imax-imin+1);
+      }
+      block_size *= jtot;
+    }
+  } else if (GA[ga_handle].distr_type == TILED) {
+    /* Tiled data distribution has been specified. Figure
+       out how much memory is needed by each processor to store blocks */
+    Integer j, jtot, skip, imin, imax;
+    Integer index[MAXDIM];
+    gam_find_tile_proc_indices(ga_handle,GAme,index);
+    block_size = 1;
+    for (i=0; i<ndim; i++) {
+      skip = GA[ga_handle].nblock[i];
+      jtot = 0;
+      for (j=index[i]; j<GA[ga_handle].num_blocks[i]; j += skip) {
+        imin = j*GA[ga_handle].block_dims[i] + 1;
+        imax = (j+1)*GA[ga_handle].block_dims[i];
+        if (imax > GA[ga_handle].dims[i]) imax = GA[ga_handle].dims[i];
+        jtot += (imax-imin+1);
+      }
+      block_size *= jtot;
+    }
+  } else if (GA[ga_handle].distr_type == TILED_IRREG) {
+    /* Tiled data distribution has been specified. Figure
+       out how much memory is needed by each processor to store blocks */
+    Integer j, jtot, skip, imin, imax;
+    Integer index[MAXDIM];
+    Integer offset = 0;
+    gam_find_tile_proc_indices(ga_handle,GAme,index);
+    block_size = 1;
+    for (i=0; i<ndim; i++) {
+      skip = GA[ga_handle].nblock[i];
+      jtot = 0;
+      for (j=index[i]; j<GA[ga_handle].num_blocks[i]; j += skip) {
+        imin = GA[ga_handle].mapc[offset+j];
+        if (j<GA[ga_handle].num_blocks[i]-1) {
+          imax = GA[ga_handle].mapc[offset+j+1]-1;
+        } else {
+          imax = GA[ga_handle].dims[i];
+        }
+        jtot += (imax-imin+1);
+      }
+      block_size *= jtot;
+      offset += GA[ga_handle].num_blocks[i];
+    }
+  }
+
+  GAstat.numcre ++;
+
+  GA[ga_handle].actv = 1;
+  /* If only one node is being used and array is mirrored,
+   * set proc list to world group */
+  if (pnga_cluster_nnodes() == 1 && GA[ga_handle].p_handle == 0) {
+    GA[ga_handle].p_handle = pnga_pgroup_get_world();
+  }
+
+  /* Set remaining parameters and determine memory size if regular data
+   * distribution is being used */
+  if (GA[ga_handle].distr_type == REGULAR) {
+    /* set corner flag, if it has not already been set and set up message
+       passing data */
+    if (GA[ga_handle].corner_flag == -1) {
+       i = 1;
+    } else {
+       i = GA[ga_handle].corner_flag;
+    }
+    for( i = 0; i< ndim; i++){
+       GA[ga_handle].scale[i] = (double)GA[ga_handle].nblock[i]
+         / (double)GA[ga_handle].dims[i];
+    }
+    pnga_set_ghost_corner_flag(g_a, i);
+ 
+    /*** determine which portion of the array I am supposed to hold ***/
+    if (p_handle == 0) { /* for mirrored arrays */
+       Integer me_local = (Integer)PGRP_LIST[p_handle].map_proc_list[GAme];
+       pnga_distribution(g_a, me_local, GA[ga_handle].lo, hi);
+    } else {
+       pnga_distribution(g_a, grp_me, GA[ga_handle].lo, hi);
+    }
+    if (GA[ga_handle].num_rstrctd == 0 || GA[ga_handle].has_data == 1) {
+      for( i = 0, nelem=1; i< ndim; i++){
+        /*
+        GA[ga_handle].chunk[i] = ((C_Integer)hi[i]-GA[ga_handle].lo[i]+1);
+        */
+        nelem *= (hi[i]-(Integer)GA[ga_handle].lo[i]+1+2*width[i]);
+      }
+    } else {
+      nelem = 0;
+    }
+    mem_size = nelem * GA[ga_handle].elemsize;
+  } else {
+    mem_size = block_size * GA[ga_handle].elemsize;
+  }
+  GA[ga_handle].id = INVALID_MA_HANDLE;
+  GA[ga_handle].size = (C_Long)mem_size;
+  /* check if everybody has enough memory to fit overlay GA */
+  status = (GA[ga_handle].size <= GA[g_p].size) ? 1 : 0;
+  if (p_handle > 0) {
+    pnga_pgroup_gop(p_handle,pnga_type_f2c(MT_F_INT), &status, 1, "&&");
+  } else {
+    pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "&&");
+  }
+
+  if (status) {
+    GA[ga_handle].overlay = 1;
+    GA[ga_handle].id = GA[g_p].id;
+    for (i=0; i<grp_nproc; i++) {
+      GA[ga_handle].ptr[i] = GA[g_p].ptr[i];
+    }
+  }
+
+  if (GA[ga_handle].distr_type == REGULAR) {
+    /* Finish setting up information for ghost cell updates */
+    if (GA[ga_handle].ghosts == 1) {
+      if (!pnga_set_ghost_info(g_a))
+        pnga_error("Could not allocate update information for ghost cells",0);
+    }
+    /* If array is mirrored, evaluate first and last indices */
+    /* ngai_get_first_last_indices(&g_a); */
+  }
+
+  pnga_pgroup_sync(p_handle);
+  if (status) {
+    status = TRUE;
+  } else {
+    pnga_destroy(g_a);
+    status = FALSE;
+  }
+  return status;
+}
+
+/**
  *  Create an N-dimensional Global Array with ghost cells using an
  *  irregular distribution on a user-specified process group.
  *  This is the master routine. All other creation routines are derived
@@ -3657,30 +3959,34 @@ int local_sync_begin,local_sync_end;
     if(GA[ga_handle].ptr[grp_me]==NULL){
        return TRUE;
     } 
+    if (!GA[ga_handle].overlay) {
 #ifndef AVOID_MA_STORAGE
-    if(gai_uses_shm((int)grp_id)){
+      if(gai_uses_shm((int)grp_id)){
 #endif
-      /* make sure that we free original (before address allignment) pointer */
+        /* make sure that we free original (before address allignment) pointer */
 #ifdef MSG_COMMS_MPI
-      if (grp_id > 0){
-	 ARMCI_Free_group(GA[ga_handle].ptr[grp_me] - GA[ga_handle].id,
-			  &PGRP_LIST[grp_id].group);
-      }
-      else
-#endif
-        if (GA[ga_handle].mem_dev_set) {
-          ARMCI_Free_memdev(GA[ga_handle].ptr[GAme]-GA[ga_handle].id);
-        } else {
-          ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
+        if (grp_id > 0){
+          ARMCI_Free_group(GA[ga_handle].ptr[grp_me] - GA[ga_handle].id,
+              &PGRP_LIST[grp_id].group);
         }
-#ifndef AVOID_MA_STORAGE
-    }else{
-      if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
-    }
+        else
 #endif
+          if (GA[ga_handle].mem_dev_set) {
+            ARMCI_Free_memdev(GA[ga_handle].ptr[GAme]-GA[ga_handle].id);
+          } else {
+            ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
+          }
+#ifndef AVOID_MA_STORAGE
+      }else{
+        if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
+      }
+#endif
+      if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
+      GAstat.curmem -= GA[ga_handle].size;
+    } else {
+      GA[ga_handle].overlay = 0;
+    }
 
-    if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
-    GAstat.curmem -= GA[ga_handle].size;
 
     if(local_sync_end)pnga_pgroup_sync(grp_id);
     return(TRUE);

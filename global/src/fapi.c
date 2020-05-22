@@ -386,6 +386,16 @@ Integer FATR nga_get_dimension_(Integer *g_a)
   return wnga_get_dimension(*g_a);
 }
 
+logical FATR ga_overlay_(Integer *g_a, Integer *g_p)
+{
+  return wnga_overlay(*g_a,*g_p);
+}
+
+logical FATR nga_overlay_(Integer *g_a, Integer *g_p)
+{
+  return wnga_overlay(*g_a,*g_p);
+}
+
 Integer FATR ga_get_pgroup_(Integer *g_a)
 {
   return wnga_get_pgroup(*g_a);

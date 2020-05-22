@@ -508,6 +508,7 @@ check_PROGRAMS += global/testing/testeig
 check_PROGRAMS += global/testing/testmatmult
 check_PROGRAMS += global/testing/testsolve
 check_PROGRAMS += global/testing/test
+check_PROGRAMS += global/testing/overlay
 check_PROGRAMS += global/testing/test_mirrored
 check_PROGRAMS += global/testing/types_test
 check_PROGRAMS += global/testing/field_test
@@ -696,6 +697,7 @@ GLOBAL_PARALLEL_TESTS += global/testing/testeig$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmatmult$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testsolve$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/test$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/overlay$(EXEEXT)
 if HAVE_SCALAPACK
 GLOBAL_PARALLEL_TESTS += global/testing/testspd$(EXEEXT)
 endif
@@ -932,6 +934,7 @@ global_testing_stride_SOURCES              = global/testing/stride.F $(gtsrcf)
 global_testing_testabstract_ops_SOURCES    = global/testing/testabstract_ops.c
 global_testing_test_SOURCES                = global/testing/test.F $(gtsrcf)
 global_testing_test_mirrored_SOURCES       = global/testing/test.F $(gtsrcf)
+global_testing_overlay_SOURCES             = global/testing/overlay.F $(gtsrcf)
 global_testing_testc_SOURCES               = global/testing/testc.c
 global_testing_testeig_SOURCES             = global/testing/testeig.F $(gtsrcf)
 global_testing_testmatmult_SOURCES         = global/testing/testmatmult.F $(gtsrcf)

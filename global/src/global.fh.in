@@ -38,6 +38,7 @@
       integer          ga_ndim
       integer          ga_nnodes
       integer          ga_nodeid
+      logical          ga_overlay
       integer          ga_pgroup_absolute_id
       integer          ga_pgroup_create
       integer          ga_pgroup_duplicate
@@ -116,6 +117,7 @@
       integer          nga_ndim
       integer          nga_nnodes
       integer          nga_nodeid
+      logical          nga_overlay
       integer          nga_pgroup_absolute_id
       integer          nga_pgroup_create
       integer          nga_pgroup_duplicate
@@ -188,6 +190,7 @@
       external ga_ndim
       external ga_nnodes
       external ga_nodeid
+      external ga_overlay
       external ga_pgroup_absolute_id
       external ga_pgroup_create
       external ga_pgroup_duplicate
@@ -269,6 +272,7 @@
       external nga_ndim
       external nga_nnodes
       external nga_nodeid
+      external nga_overlay
       external nga_pgroup_absolute_id
       external nga_pgroup_create
       external nga_pgroup_duplicate

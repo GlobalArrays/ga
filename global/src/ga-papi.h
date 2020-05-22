@@ -86,6 +86,7 @@ extern void pnga_nblock(Integer g_a, Integer *nblock);
 
 extern Integer pnga_nnodes();
 extern Integer pnga_nodeid();
+extern logical pnga_overlay(Integer g_a, Integer g_p);
 extern Integer pnga_pgroup_absolute_id(Integer grp, Integer pid);
 extern Integer pnga_pgroup_create(Integer *list, Integer count);
 extern Integer pnga_pgroup_duplicate(Integer grp);
