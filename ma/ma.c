@@ -114,7 +114,11 @@ extern void* ARMCI_Malloc_local(long bytes);
  **/
 
 typedef unsigned int Guard;   /* for detection of memory trashing */
+#ifdef WIN64
+typedef unsigned long long ulongi; /* for brevity */
+#else
 typedef unsigned long ulongi; /* for brevity */
+#endif
 
 /* allocation request for a block */
 typedef struct _AR
