@@ -66,12 +66,17 @@ long NXTVAL_(long *mproc)
         if (*mproc > 0) {
 #if   SIZEOF_F77_INTEGER == SIZEOF_INT
             int op = ARMCI_FETCH_AND_ADD;
+            rc = ARMCI_Rmw(op,(void*)&local,(void*)pnxtval_counter,1,server);
 #elif SIZEOF_F77_INTEGER == SIZEOF_LONG
+            rc = ARMCI_Rmw(op,(void*)&local,(void*)pnxtval_counter,1,server);
             int op = ARMCI_FETCH_AND_ADD_LONG;
+#else
+#ifdef WIN64
+                Error("nxtval: not implemented",0);
 #else
 #   error
 #endif
-            rc = ARMCI_Rmw(op,(void*)&local,(void*)pnxtval_counter,1,server);
+#endif
         }
     } else {
         /* Not running in parallel ... just do a simulation */
