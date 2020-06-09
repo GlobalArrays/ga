@@ -22,7 +22,7 @@ git clone https://github.com/jemalloc/jemalloc
 cd jemalloc
 export JEPATH="${TRAVIS_ROOT}/jemalloc"
 sh autogen.sh
-./configure--with-jemalloc-prefix=je_ --with-prefix="${JEPATH}"
+./configure --with-jemalloc-prefix=je_ --with-prefix="${JEPATH}"
 make
 make install
 export LD_LIBRARY_PATH="${JEPATH}/lib:${LD_LIBRARY_PATH}"
