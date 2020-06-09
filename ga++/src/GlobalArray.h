@@ -1851,6 +1851,11 @@ class GlobalArray {
   void setBlockCyclic(int dims[]) const;
 
   /**
+   * @copydoc GlobalArray::setBlockCyclic(int[])const
+   */
+  void setBlockCyclic(int64_t dims[]) const;
+
+  /**
    * This subroutine is used to create a global array with a
    * SCALAPACK-type block cyclic data distribution. The user  specifies
    * the dimensions of the processor grid in the array proc_grid. The
@@ -1875,6 +1880,69 @@ class GlobalArray {
    * @param[in] proc_grid processor grid dimensions
    */
   void setBlockCyclicProcGrid(int dims[], int proc_grid[]) const;
+
+  /**
+   * @copydoc GlobalArray::setBlockCyclicProcGrid(int[],int[])const
+   */
+  void setBlockCyclicProcGrid(int64_t dims[], int64_t proc_grid[]) const;
+
+  /**
+   * This subroutine is used to create a global array with a data
+   * distribution similar to the SCALAPACK distribution, with the
+   * important difference that individual blocks are contiguous in memory.
+   * This is distinct from the SCALAPACK distribution, where individual
+   * blocks may be strided. The user  specifies the dimensions of the
+   * processor grid in the array proc_grid. The product of the processor
+   * grid dimensions must equal the number of total number of processors
+   * and the number of dimensions in the processor grid must be the same
+   * as the number of dimensions in the global array. The data blocks are
+   * mapped onto the processor grid in a cyclic manner along each of the
+   * processor grid axes. This is* illustrated below for an array
+   * consisting of 25 data blocks disributed on 6 processors. The 6
+   * processors are configured in a 3 by 2 processor grid. Blocks at the
+   * edge of the array may be smaller than the block size specified in
+   * dims. Most global array operations are insensitive to whether or not
+   * a tiled data distribution is used, although performance may be slower
+   * in some cases if the global array is using a tiled data distribution.
+   * Individual data blocks can be accessesed using the block-cyclic access
+   * functions.
+   *
+   * This is a collective operation.
+   *
+   * @param[in] dims      array of block dimensions
+   * @param[in] proc_grid processor grid dimensions
+   */
+  void setTiledProcGrid(int dims[], int proc_grid[]) const;
+
+  /**
+   * @copydoc GlobalArray::setTiledProcGrid(int[],int[])const
+   */
+  void setTiledProcGrid(int64_t dims[], int64_t proc_grid[]) const;
+
+  /**
+   * This function creates a tiled data distribution where individual tiles can
+   * be different sizes. The tiles themselves are contiguous in memory and are
+   * distributed in a block-cylic fashion based on a user-specified processor
+   * grid. The interface is a combination of the setIrregDistr and the
+   * setTiledProdGrid functions. The mapc array contains the firs index of each
+   * block along each axis, the nblocks array contains the number of blocks
+   * along each axis and the proc_grid array contains the dimensions of the
+   * processor grid. The product of the processor grid dimensions must equal the
+   * size of the processor group that the array is created on.
+   *
+   * This is a collective operation.
+   *
+   * @param[in] mapc      array containing first index of each block along each
+   *                      axis
+   * @param[in] nblocks   number of blocks along each axis
+   * @param[in] proc_grid processor grid dimensions
+   */
+  void setTiledIrregProcGrid(int mapc[], int nblocks[], int proc_grid[]) const;
+
+  /**
+   * @copydoc GlobalArray::setTiledProcGrid(int[],int[])const
+   */
+  void setTiledIrregProcGrid(int64_t mapc[], int64_t nblocks[], int64_t proc_grid[]) const;
 
   /**
    * This function is used to set the chunk array for a global array handle

@@ -24,6 +24,7 @@ static long count_PARMCI_Barrier = 0;
 static long count_PARMCI_Create_mutexes = 0;
 static long count_PARMCI_Destroy_mutexes = 0;
 static long count_PARMCI_Fence = 0;
+static long count_PARMCI_GroupFence = 0;
 static long count_PARMCI_Finalize = 0;
 static long count_PARMCI_Free = 0;
 static long count_PARMCI_Free_local = 0;
@@ -83,6 +84,7 @@ static double time_PARMCI_Barrier = 0;
 static double time_PARMCI_Create_mutexes = 0;
 static double time_PARMCI_Destroy_mutexes = 0;
 static double time_PARMCI_Fence = 0;
+static double time_PARMCI_GroupFence = 0;
 static double time_PARMCI_Finalize = 0;
 static double time_PARMCI_Free = 0;
 static double time_PARMCI_Free_local = 0;
@@ -243,6 +245,19 @@ void ARMCI_Fence(int proc)
     PARMCI_Fence(proc);
     local_stop = MPI_Wtime();
     time_PARMCI_Fence += local_stop - local_start;
+    
+}
+
+void ARMCI_Fence(ARMCI_Group *group)
+{
+    double local_start;
+    double local_stop;
+    
+    ++count_PARMCI_GroupFence;
+    local_start = MPI_Wtime();
+    PARMCI_GroupFence(group);
+    local_stop = MPI_Wtime();
+    time_PARMCI_GroupFence += local_stop - local_start;
     
 }
 

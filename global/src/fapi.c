@@ -386,6 +386,16 @@ Integer FATR nga_get_dimension_(Integer *g_a)
   return wnga_get_dimension(*g_a);
 }
 
+logical FATR ga_overlay_(Integer *g_a, Integer *g_p)
+{
+  return wnga_overlay(*g_a,*g_p);
+}
+
+logical FATR nga_overlay_(Integer *g_a, Integer *g_p)
+{
+  return wnga_overlay(*g_a,*g_p);
+}
+
 Integer FATR ga_get_pgroup_(Integer *g_a)
 {
   return wnga_get_pgroup(*g_a);
@@ -729,6 +739,26 @@ Integer FATR nga_pgroup_create_(Integer *list, Integer *count)
   return wnga_pgroup_create(list, *count);
 }
 
+Integer FATR ga_pgroup_duplicate_(Integer *grp)
+{
+  return wnga_pgroup_duplicate(*grp);
+}
+
+Integer FATR nga_pgroup_duplicate_(Integer *grp)
+{
+  return wnga_pgroup_duplicate(*grp);
+}
+
+Integer FATR ga_pgroup_self_()
+{
+  return wnga_pgroup_self();
+}
+
+Integer FATR nga_pgroup_self_()
+{
+  return wnga_pgroup_self();
+}
+
 logical FATR ga_pgroup_destroy_(Integer *grp)
 {
   return wnga_pgroup_destroy(*grp);
@@ -857,6 +887,20 @@ void FATR nga_set_array_name_(Integer *g_a, char *array_name, int slen)
   wnga_set_array_name(*g_a, buf);
 }
 
+void FATR ga_get_array_name_(Integer *g_a, char *array_name, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(array_name ,slen, buf, FNAM);
+  wnga_get_array_name(*g_a, buf);
+}
+
+void FATR nga_get_array_name_(Integer *g_a, char *array_name, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(array_name ,slen, buf, FNAM);
+  wnga_get_array_name(*g_a, buf);
+}
+
 void FATR ga_set_block_cyclic_(Integer *g_a, Integer *dims)
 {
   wnga_set_block_cyclic(*g_a, dims);
@@ -889,6 +933,20 @@ void FATR nga_set_tiled_proc_grid_(Integer *g_a, Integer *dims,
                                           Integer *proc_grid)
 {
   wnga_set_tiled_proc_grid(*g_a, dims, proc_grid);
+}
+
+void FATR ga_set_tiled_irreg_proc_grid_(Integer *g_a, Integer *mapc,
+                                         Integer *nblocks, 
+                                         Integer *proc_grid)
+{
+  wnga_set_tiled_irreg_proc_grid(*g_a, mapc, nblocks, proc_grid);
+}
+
+void FATR nga_set_tiled_irreg_proc_grid_(Integer *g_a, Integer *mapc,
+                                         Integer *nblocks, 
+                                         Integer *proc_grid)
+{
+  wnga_set_tiled_irreg_proc_grid(*g_a, mapc, nblocks, proc_grid);
 }
 
 void FATR ga_set_chunk_(Integer *g_a, Integer *chunk)
@@ -1015,6 +1073,20 @@ void FATR ga_unset_property_(Integer *g_a)
 void FATR nga_unset_property_(Integer *g_a)
 {
   wnga_unset_property(*g_a);
+}
+
+void FATR ga_set_memory_dev_(Integer *g_a, char *device, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(device, slen, buf, FNAM);
+  wnga_set_memory_dev(*g_a, buf);
+}
+
+void FATR nga_set_memory_dev_(Integer *g_a, char *device, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(device, slen, buf, FNAM);
+  wnga_set_memory_dev(*g_a, buf);
 }
 
 void FATR  ga_terminate_()

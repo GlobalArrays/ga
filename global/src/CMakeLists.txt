@@ -50,6 +50,10 @@ if (ENABLE_SCALAPACK)
        ${GA_FORTRAN_INTERFACE_H_FILES} scalapack.fh)
   set (GA_FORTRAN_INTERFACE_F_FILES
        ${GA_FORTRAN_INTERFACE_F_FILES} scalapack.F)
+  set (GA_C_SCALAPACK_WRAPPER ga_diag_seqc.c)
+endif()
+
+if (ENABLE_F77)
   if (HAVE_LAPACK OR ENABLE_EISPACK)
     set (GA_FORTRAN_INTERFACE_F_FILES
          ${GA_FORTRAN_INTERFACE_F_FILES} ga_diag_seq.F)

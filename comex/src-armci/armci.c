@@ -99,8 +99,12 @@ void armci_init_domains(MPI_Comm comm)
  * and destination buffers. If it is, then a contiguous operation can be used
  * instead of a strided operation. This function is intended for arrays of
  * dimension greater than 1 (contiguous operations can always be used for 1
- * dimensional arrays). This operation does not identify all contiguous cases,
- * since no information is available about the last dimension.
+ * dimensional arrays).
+ * 
+ * The current implementation tries to identify all contiguous cases by using
+ * all information from the stride and count arrays. The old implementation did
+ * not identify all cases of contiguous data transfers.
+ *
  * src_stride: physical dimensions of source buffer
  * dst_stride: physical dimensions of destination buffer
  * count: number of elements being moved in each dimension
@@ -109,13 +113,68 @@ void armci_init_domains(MPI_Comm comm)
 int armci_check_contiguous(int *src_stride, int *dst_stride,
     int *count, int n_stride)
 {
+#if 1
+  /* This is code from the merge between CMX and the current develop branch
+   * (2018/7/5) */
+  int i;
+  int ret = 1;
+  int stridelen = 1;
+  int gap = 0;
+  int src_ld[7], dst_ld[7];
+  /**
+   * Calculate physical dimensions of buffers from stride arrays
+   */
+  src_ld[0] = src_stride[0];
+  dst_ld[0] = dst_stride[0];
+  for (i=1; i<n_stride; i++) {
+    src_ld[i] = src_stride[i]/src_stride[i-1];
+    dst_ld[i] = dst_stride[i]/dst_stride[i-1];
+  }
+  /* NOTE: The count array contains the length of the final dimension and can
+   * be used to evaluate some corner cases
+   */
+  for (i=0; i<n_stride; i++) {
+    /* check for overflow */
+    int tmp = stridelen * count[i];
+    if (stridelen != 0 && tmp / stridelen != count[i]) {
+      ret = 0;
+      break;
+    }
+    stridelen = tmp;
+    if ((count[i] < src_ld[i] || count[i] < dst_ld[i])
+        && gap == 1) {
+      /* Data is definitely strided in memory */
+      ret = 0;
+      break;
+    } else if ((count[i] < src_ld[i] || count[i] < dst_ld[i]) &&
+        gap == 0) {
+      /* First dimension that doesn't match physical dimension */
+      gap = 1;
+    } else if (count[i] != 1 && gap == 1) {
+      /* Found a mismatch between requested block and physical dimensions
+       * indicating a possible stride in memory
+       * */
+      ret = 0;
+      break;
+    }
+  }
+  /**
+   * Everything looks good up to this point but need to verify that last
+   * dimension is 1 if a mismatch between requested block and physical
+   * array dimensions has been found previously
+   */
+  if (gap == 1 && ret == 1 && n_stride > 0) {
+    if (count[n_stride] != 1) ret = 0;
+  }
+  return ret;
+#else
   int i;
   int ret = 1;
   int stridelen = 1;
   /* NOTE: The count array contains the length of the final dimension and could
    * be used to evaluate some corner cases that are not picked up by this
    * algorithm
-   */
+   */ 
   for (i=0; i<n_stride; i++) {
     /* check for overflow */
     int tmp = stridelen * count[i];
@@ -130,6 +189,7 @@ int armci_check_contiguous(int *src_stride, int *dst_stride,
     }
   }
   return ret;
+#endif
 }
 
 /**
@@ -165,7 +225,7 @@ int PARMCI_AccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, voi
 {
   int iret;
   /* check if data is contiguous */
-  if (armci_checkt_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
@@ -248,6 +308,10 @@ int PARMCI_Free(void *ptr)
     return comex_free(ptr, ARMCI_Default_Proc_Group);
 }
 
+int PARMCI_Free_memdev(void *ptr)
+{
+    return comex_free_dev(ptr, ARMCI_Default_Proc_Group);
+}
 
 int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
 {
@@ -271,7 +335,7 @@ int PARMCI_GetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stri
 {
   int iret;
   /* check if data is contiguous */
-  if (armci_checkt_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
@@ -376,8 +440,19 @@ int PARMCI_Malloc(void **ptr_arr, armci_size_t bytes)
     return comex_malloc(ptr_arr, bytes, ARMCI_Default_Proc_Group);
 }
 
+int PARMCI_Malloc_memdev(void **ptr_arr, armci_size_t bytes, const char *device)
+{
+    return comex_malloc(ptr_arr, bytes, ARMCI_Default_Proc_Group);
+}
+
 
 int ARMCI_Malloc_group(void **ptr_arr, armci_size_t bytes, ARMCI_Group *group)
+{
+    return comex_malloc(ptr_arr, bytes, *group);
+}
+
+int ARMCI_Malloc_group_memdev(void **ptr_arr, armci_size_t bytes,
+    ARMCI_Group *group, const char *device)
 {
     return comex_malloc(ptr_arr, bytes, *group);
 }
@@ -462,7 +537,7 @@ int PARMCI_NbAccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, v
 {
   int iret;
   /* check if data is contiguous */
-  if (armci_checkt_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
@@ -497,7 +572,7 @@ int PARMCI_NbGetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_st
 {
   int iret;
   /* check if data is contiguous */
-  if (armci_checkt_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
@@ -532,7 +607,7 @@ int PARMCI_NbPutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_st
 {
   int iret;
   /* check if data is contiguous */
-  if (armci_checkt_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
@@ -591,7 +666,7 @@ int PARMCI_PutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stri
 {
   int iret;
   /* check if data is contiguous */
-  if (armci_checkt_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];

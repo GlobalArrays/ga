@@ -184,7 +184,13 @@ int id,nodeids[mynslave],mynodeid=armci_me-armci_master;
 
 }
 
-
+/*\
+ *  Wrapper on PARMCI_Malloc to keep old code from breaking
+\*/
+int PARMCI_Malloc_memdev(void *ptr_arr[], armci_size_t bytes, const char *device)
+{
+  return PARMCI_Malloc(ptr_arr[],bytes);
+}
 
 int PARMCI_Free(void *ptr)
 {
@@ -195,6 +201,13 @@ int PARMCI_Free(void *ptr)
      return 0;
 }
 
+/*\
+ *  Wrapper on PARMCI_Free to keep old code from breaking
+\*/
+int PARMCI_Free_memdev(void *ptr)
+{
+  return PARMCI_Free(ptr);
+}
 
 int ARMCI_Uses_shm()
 {
@@ -257,6 +270,15 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
     
     ARMCI_PR_DBG("exit",0);
     return(0);
+}
+
+/*\
+ *  Wrapper on PARMCI_Malloc_group to keep old code from breaking
+\*/
+int ARMCI_Malloc_group_memdev(void *ptr_arr[], armci_size_t bytes,
+                       ARMCI_Group *group, const char *device)
+{
+  return ARMCI_Malloc_group(ptr_arr,bytes,group);
 }
 
 

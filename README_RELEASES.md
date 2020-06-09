@@ -47,3 +47,11 @@ GitHub automatically creates zip and tar.gz archives.  However, these do not con
 4. Remove the created autotools directory. We don't want to bundle the autotools with our releases.
 5. Tar the archive back up.
 6. Add the new archive as an artifact of the release.
+
+### Miscellaneous
+
+You need to update the Global Arrays web page at
+[http://hpc.pnl.gov/globalarrays/](http://hpc.pnl.gov/globalarrays/). The files
+for this page can be found at /msrc/webroot/hpc/globalarrays/ on the AFS
+filesystem at PNNL. Relevant files for the current release are index.shtml and 
+shared/rightnav.inc

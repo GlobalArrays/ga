@@ -5,6 +5,7 @@
 #ifndef REQUEST_H_
 #define REQUEST_H_
 
+#include <assert.h>
 #include "comex.h"
 #include "comex_impl.h"
 

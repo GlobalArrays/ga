@@ -196,6 +196,12 @@ int ARMCI_Free(void *ptr)
 }
 
 
+int ARMCI_Free_memdev(void *ptr)
+{
+  return ARMCI_Free(ptr);
+}
+
+
 int ARMCI_Uses_shm()
 {
     int uses=0;
