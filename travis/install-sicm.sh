@@ -21,6 +21,7 @@ export PATH=$TRAVIS_ROOT/bin:$PATH
 git clone https://github.com/jemalloc/jemalloc
 cd jemalloc
 export JEPATH="${TRAVIS_ROOT}/jemalloc"
+sh autogen.sh
 ./configure--with-jemalloc-prefix=je_ --with-prefix="${JEPATH}"
 make
 make install
