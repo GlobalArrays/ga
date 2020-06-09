@@ -17,21 +17,25 @@ sudo apt-get install -qq libhwloc-dev libiomp-dev libnuma-dev libpfm4-dev llvm-3
 # set install directory to current location to not cache jemalloc/SICM
 TRAVIS_ROOT="$1"
 export PATH=$TRAVIS_ROOT/bin:$PATH
-
-# get SICM
-git clone -b ga-sicm https://github.com/lanl/SICM.git
-cd SICM
-
-# install jemalloc
+#install jemalloc
+git clone https://github.com/jemalloc/jemalloc
+cd jemalloc
 export JEPATH="${TRAVIS_ROOT}/jemalloc"
-./install_deps.sh --jemalloc --build_dir "$(pwd)" --install_dir "${TRAVIS_ROOT}"
+./configure--with-jemalloc-prefix=je_ --with-prefix="${JEPATH}"
+make
+make install
 export LD_LIBRARY_PATH="${JEPATH}/lib:${LD_LIBRARY_PATH}"
 export PKG_CONFIG_PATH="${JEPATH}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
+# get SICM
+git clone  https://github.com/lanl/SICM.git
+cd SICM
+
+
 # install SICM
-./autogen.sh
 mkdir -p build
 cd build
-../configure --with-jemalloc="${JEPATH}" --prefix="${TRAVIS_ROOT}/SICM" CFLAGS="-std=gnu99 ${CFLAGS}"
+cmake .. -DCMAKE_INSTALL_PREFIX="${TRAVIS_ROOT}/SICM"
+#../configure --with-jemalloc="${JEPATH}" --prefix="${TRAVIS_ROOT}/SICM" CFLAGS="-std=gnu99 ${CFLAGS}"
 make -j $(nproc --all)
 make -j $(nproc --all) install
