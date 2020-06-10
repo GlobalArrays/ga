@@ -64,5 +64,5 @@ install:
 script:
   - sh ./travis/build-run.sh $TRAVIS_ROOT $PORT $MPI_IMPL
 after_failure:
-  - if [[ "$PORT" == "armci" ]]; then find . -name config.log -exec cat {} ";"; fi
+  -  find . -name config.log -exec cat {} ";"
   - cat ./test-suite.log
