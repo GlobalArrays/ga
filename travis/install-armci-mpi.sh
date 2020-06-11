@@ -27,7 +27,7 @@ else
 fi
 
 ARMCI_MPI_DIR=${TRAVIS_ROOT}/armci-mpi
-
+/bin/rm -rf ${ARMCI_MPI_DIR}
 git clone -b master --depth 10 https://github.com/jeffhammond/armci-mpi.git ${ARMCI_MPI_DIR}
 
 if ! [ -f ${ARMCI_MPI_DIR}/configure ] ; then
