@@ -58,6 +58,7 @@ install:
 
   - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
   - if [[ "$PORT" == "ofi" ]]; then sh ./travis/install-libfabric.sh $TRAVIS_ROOT; fi
+  - if [[ "$PORT" == "armci" ]]; then sh ./travis/install-armci-mpi.sh $TRAVIS_ROOT; fi
   - if [[ ( "$PORT" == "mpi-pr" ) && ( "$TRAVIS_OS_NAME" == "linux" ) ]]; then sh ./travis/install-sicm.sh $HOME/no_cache; fi
 
 script:
