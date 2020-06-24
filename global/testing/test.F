@@ -260,7 +260,7 @@ c
       parameter (maxproc = 4096)
       double precision crap, sum1, sum2, x
       double precision nwords
-      logical found
+      logical found, nfound
       integer lprocs,inode,iproc,nnodes,lproc
 #ifdef USE_RESTRICTED
       integer num_rstrctd
@@ -955,11 +955,12 @@ c         generate unique i,j pairs
 10        continue
           i = iran(n)
           j=iran(n)
-c         if (found(i,j, iv, jv, loop-1) ) goto 10
 #ifndef NGA_GATSCAT
+          if (found(i,j, iv, jv, loop-1) ) goto 10
           iv(loop) = i
           jv(loop) = j
 #else
+          if (nfound(i,j, ijv, loop-1) ) goto 10
           ijv(1,loop) = i
           ijv(2,loop) = j
 #endif
@@ -3895,6 +3896,22 @@ c
       do loop = 1, n
                if(i .eq. iv(loop) .and. j .eq.jv(loop))then
                  found = .true.
+                 goto 99
+               endif
+            enddo
+99    continue
+      return
+      end 
+
+      logical function nfound(i,j, ijv, n)
+      integer n
+      integer i,j, ijv(2,n)
+      integer loop
+
+      nfound = .false.
+      do loop = 1, n
+               if(i .eq. ijv(1,loop) .and. j .eq.ijv(2,loop))then
+                 nfound = .true.
                  goto 99
                endif
             enddo
