@@ -288,7 +288,7 @@ C
       integer ndim,dims(1),chunk(1)
 C
       integer nelements_max, nen_max
-      parameter (nelements_max=10000, nen_max=4)
+      parameter (nelements_max=100000, nen_max=4)
       integer ipack(nelements_max), 
      *        jpack(nelements_max), 
      *        kpack(nelements_max), 
