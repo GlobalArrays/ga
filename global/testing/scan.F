@@ -524,7 +524,6 @@ C     *** velm4: 4 4 4 4 4 4 4 4 4 4 ... nelements
 #else
       count = 0
       call nga_distribution(g_irowmat,me,ilo,ihi,chunk)
-      write(6,'(a,2i8)') 'LO,HI: ',ilo,ihi
       call nga_access(g_irowmat,ilo,ihi,idx,one)
       do i = ilo, ihi
         count = count + int_mb(idx+i-ilo)
