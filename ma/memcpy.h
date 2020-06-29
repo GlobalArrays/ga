@@ -22,7 +22,7 @@
  **/
 
 /* allocate bytes */
-#define bytealloc(nbytes)    malloc((unsigned long)(nbytes))
+#define bytealloc(nbytes)    malloc((size_t)(nbytes))
 
 /* deallocate bytes */
 #define bytefree(pointer)    (void)free((char *)(pointer))

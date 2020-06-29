@@ -1,4 +1,3 @@
-sudo: required
 language: c
 os:
   - linux
@@ -19,7 +18,7 @@ addons:
 cache:
     directories:
         - $HOME/travis
-matrix:
+jobs:
   allow_failures:
     - env: MPI_IMPL=openmpi
 env:
@@ -59,10 +58,11 @@ install:
 
   - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
   - if [[ "$PORT" == "ofi" ]]; then sh ./travis/install-libfabric.sh $TRAVIS_ROOT; fi
+  - if [[ "$PORT" == "armci" ]]; then sh ./travis/install-armci-mpi.sh $TRAVIS_ROOT; fi
   - if [[ ( "$PORT" == "mpi-pr" ) && ( "$TRAVIS_OS_NAME" == "linux" ) ]]; then sh ./travis/install-sicm.sh $HOME/no_cache; fi
 
 script:
   - sh ./travis/build-run.sh $TRAVIS_ROOT $PORT $MPI_IMPL
 after_failure:
-  - if [[ "$PORT" == "armci" ]]; then find . -name config.log -exec cat {} ";"; fi
+  -  find . -name config.log -exec cat {} ";"
   - cat ./test-suite.log
