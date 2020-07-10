@@ -3677,7 +3677,7 @@ void NGA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
     
-    pnga_matmul_patch(&transb, &transa, alpha, beta,
+    wnga_matmul_patch(&transb, &transa, alpha, beta,
 		     b, _ga_blo, _ga_bhi,
 		     a, _ga_alo, _ga_ahi,
 		     c, _ga_clo, _ga_chi);
@@ -3710,7 +3710,73 @@ void NGA_Matmul_patch64(char transa, char transb, void* alpha, void *beta,
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
     
-    pnga_matmul_patch(&transb, &transa, alpha, beta,
+    wnga_matmul_patch(&transb, &transa, alpha, beta,
+		     b, _ga_blo, _ga_bhi,
+		     a, _ga_alo, _ga_ahi,
+		     c, _ga_clo, _ga_chi);
+}
+
+void NGA_Matmul_patch_alt(char transa, char transb, void* alpha, void *beta,
+		      int g_a, int alo[], int ahi[], 
+		      int g_b, int blo[], int bhi[], 
+		      int g_c, int clo[], int chi[]) 
+
+{
+    Integer a=(Integer)g_a;
+    Integer andim = wnga_ndim(a);
+    
+    Integer b=(Integer)g_b;
+    Integer bndim = wnga_ndim(b);
+    
+    Integer c=(Integer)g_c;
+    Integer cndim = wnga_ndim(c);
+    
+    Integer _ga_alo[MAXDIM], _ga_ahi[MAXDIM];
+    Integer _ga_blo[MAXDIM], _ga_bhi[MAXDIM];
+    Integer _ga_clo[MAXDIM], _ga_chi[MAXDIM];
+    COPYINDEX_C2F(alo,_ga_alo, andim);
+    COPYINDEX_C2F(ahi,_ga_ahi, andim);
+    
+    COPYINDEX_C2F(blo,_ga_blo, bndim);
+    COPYINDEX_C2F(bhi,_ga_bhi, bndim);
+    
+    COPYINDEX_C2F(clo,_ga_clo, cndim);
+    COPYINDEX_C2F(chi,_ga_chi, cndim);
+    
+    wnga_matmul_patch_alt(&transb, &transa, alpha, beta,
+		     b, _ga_blo, _ga_bhi,
+		     a, _ga_alo, _ga_ahi,
+		     c, _ga_clo, _ga_chi);
+}
+
+void NGA_Matmul_patch_alt64(char transa, char transb, void* alpha, void *beta,
+                        int g_a, int64_t alo[], int64_t ahi[], 
+                        int g_b, int64_t blo[], int64_t bhi[], 
+                        int g_c, int64_t clo[], int64_t chi[]) 
+
+{
+    Integer a=(Integer)g_a;
+    Integer andim = wnga_ndim(a);
+    
+    Integer b=(Integer)g_b;
+    Integer bndim = wnga_ndim(b);
+    
+    Integer c=(Integer)g_c;
+    Integer cndim = wnga_ndim(c);
+    
+    Integer _ga_alo[MAXDIM], _ga_ahi[MAXDIM];
+    Integer _ga_blo[MAXDIM], _ga_bhi[MAXDIM];
+    Integer _ga_clo[MAXDIM], _ga_chi[MAXDIM];
+    COPYINDEX_C2F(alo,_ga_alo, andim);
+    COPYINDEX_C2F(ahi,_ga_ahi, andim);
+    
+    COPYINDEX_C2F(blo,_ga_blo, bndim);
+    COPYINDEX_C2F(bhi,_ga_bhi, bndim);
+    
+    COPYINDEX_C2F(clo,_ga_clo, cndim);
+    COPYINDEX_C2F(chi,_ga_chi, cndim);
+    
+    wnga_matmul_patch_alt(&transb, &transa, alpha, beta,
 		     b, _ga_blo, _ga_bhi,
 		     a, _ga_alo, _ga_ahi,
 		     c, _ga_clo, _ga_chi);

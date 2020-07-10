@@ -3387,6 +3387,17 @@ void FATR nga_matmul_patch_(
     wnga_matmul_patch(transa, transb, alpha, beta, *g_a, alo, ahi, *g_b, blo, bhi, *g_c, clo, chi);
 }
 
+void FATR nga_matmul_patch_alt_(
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+        char *transa, char *transb, void *alpha, void *beta, Integer *g_a, Integer alo[], Integer ahi[], Integer *g_b, Integer blo[], Integer bhi[], Integer *g_c, Integer clo[], Integer chi[], int alen, int blen
+#else
+        char *transa, int alen, char *transb, int blen, void *alpha, void *beta, Integer *g_a, Integer alo[], Integer ahi[], Integer *g_b, Integer blo[], Integer bhi[], Integer *g_c, Integer clo[], Integer chi[]
+#endif
+        )
+{
+    wnga_matmul_patch_alt(transa, transb, alpha, beta, *g_a, alo, ahi, *g_b, blo, bhi, *g_c, clo, chi);
+}
+
 void FATR ga_matmul_patch_(
 #if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
         char *transa, char *transb, DoublePrecision *alpha, DoublePrecision *beta, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi, int alen, int blen
