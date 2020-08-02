@@ -9,370 +9,275 @@
 #endif
 #define DEBUG 0
 
-/* WARNING: The maximum value NUM_HDLS can assume is 254. If it is any larger,
+/* WARNING: The maximum value NUM_HDLS can assume is 256. If it is any larger,
  * the 8-bit field defined in gai_hbhdl_t will exceed its upper limit of 255 in
  * some parts of the nbutil.c code */
-#define NUM_HDLS 254
+#define NUM_HDLS 256
 
-/*The structure of gai_nbhdl_t is (this is our internal handle)*/
+/**
+ *                      NOTES
+ * The non-blocking GA handle indexes into a list of structs that point to a
+ * linked list of non-blocking ARMCI calls. The first link in the list is
+ * contained in the GA struct. Conversely, each link in the non-blocking list
+ * points to the GA handle that contains the head of the list. When a new GA
+ * non-blocking call is created, the code looks at the list of GA handles and
+ * tries to find one that is not currently being used. If it can't find one, it
+ * calls wait on an existing call and recycles that handle for the new call.
+ *
+ * Similarly, each GA call consists of multiple ARMCI non-blocking calls. The
+ * handles for each of these calls are assembled into a list. If no-handle is
+ * available, the ARMCI_Wait function is called on a handle, freeing it for use.
+ * The handle is also removed from the linked list where it was originally
+ * created.
+ */
+
+/* The structure of gai_nbhdl_t (this is our internal handle) maps directly
+ * to a 32-bit integer*/
 typedef struct {
     unsigned int ihdl_index:8;
     unsigned int ga_nbtag:24;
-}gai_nbhdl_t;
+} gai_nbhdl_t;
 
 
-/*Each element in the armci handle linked list is of type ga_armcihdl_t
+/* Each element in the armci handle linked list is of type ga_armcihdl_t
  * handle: int handle or gai_nbhdl_t struct that represents GA handle for
  *         non-blocking call
  * next: pointer to next element in list
  * previous: pointer to previous element in list
- * index: index into into list_element_array list
- * ga_hdlarr_index: index into ga_ihdl_array list (gives head node?)
+ * ga_hdlarr_index: index that points back to ga_nbhdr_array list.
+ *                  this can be used to remove this link from linked list if
+ *                  this armci request must be cleared to make room for a new
+ *                  request.
+ * active: indicates that this represent an outstanding armci non-blocking
+ * request
  */
-typedef struct struct_armcihdl_t{
-    armci_hdl_t* handle;
+typedef struct struct_armcihdl_t {
+    armci_hdl_t handle;
     struct struct_armcihdl_t *next;
     struct struct_armcihdl_t *previous;
-    int index; /* is this used anywhere? */
     int ga_hdlarr_index;
-}ga_armcihdl_t;
+    int active;
+} ga_armcihdl_t;
 
 
 /* We create an array of type ga_nbhdl_array_t. Each of the elements in this
- * array is the head of the armcihandle linked list that is associated with
+ * array is the head of the armci handle linked list that is associated with
  * each GA call.
  * ahandle: head node in a linked list of ARMCI handles
  * count: total number of ARMCI handles in linked list
+ * ga_nbtag: unique tag that matches tag in handle (gai_nbhdl_t)
+ * If count is 0 or ahandle is null, there are no outstanding armci calls
+ * associated with this GA handle
  */
 typedef struct{
     ga_armcihdl_t *ahandle;
     int count;
     int ga_nbtag;
-} ga_nbhdl_array_t;
+} ga_nbhdr_array_t;
 
+/**
+ * Array of headers for non-blocking GA calls. The ihdl_index element of the
+ * non-blocking handle indexes into this array
+ */
+static ga_nbhdr_array_t ga_ihdl_array[NUM_HDLS];
 
-/* This array is used instead of manually allocating the pointers in
- * list_element_array (below). The pointers in that array point to
- * entries in hdl_array */
-/*armci_hdl_t is defined in armci.h. It is currently an int */
-static armci_hdl_t hdl_array[NUM_HDLS];
+/**
+ * Array of armci handles. This is used to construct linked lists of ARMCI
+ * non-blocking calls
+ */
+static ga_armcihdl_t armci_ihdl_array[NUM_HDLS];
 
+static int lastGAhandle = -1; /* last assigned ga handle */
+static int lastARMCIhandle = -1; /* last assigned armci handle */
 
-/*index of the following array goes into ihdl_index. while waiting for a
- *non-bloking ga call, we first check if
- *(list_element_array[inbhandle->ihdl_index].ga_nbtag == inbhandle->ga_nbtag)
- *if it is, then we complete all the armci handles in the linked list this
- *points to.
-*/
-static ga_nbhdl_array_t ga_ihdl_array[NUM_HDLS];
-
-
-/*this is the array of linked list elements. */
-static ga_armcihdl_t list_element_array[NUM_HDLS] /* = {
-{&(hdl_array[0]), NULL,NULL,0, -1 },{&(hdl_array[1]), NULL,NULL, 1,-1 }, 
-{&(hdl_array[2]), NULL,NULL,2, -1 },{&(hdl_array[3]), NULL,NULL, 3,-1 },
-{&(hdl_array[4]), NULL,NULL,4, -1 },{&(hdl_array[5]), NULL,NULL, 5,-1 }, 
-{&(hdl_array[6]), NULL,NULL,6, -1 },{&(hdl_array[7]), NULL,NULL, 7,-1 }, 
-{&(hdl_array[8]), NULL,NULL,8, -1 },{&(hdl_array[9]), NULL,NULL, 9,-1 },
-{&(hdl_array[10]),NULL,NULL,10,-1 },{&(hdl_array[11]),NULL,NULL,11,-1 },
-{&(hdl_array[12]),NULL,NULL,12,-1 },{&(hdl_array[13]),NULL,NULL,13,-1 },
-{&(hdl_array[14]),NULL,NULL,14,-1 },{&(hdl_array[15]),NULL,NULL,15,-1 },
-{&(hdl_array[16]),NULL,NULL,16,-1 },{&(hdl_array[17]),NULL,NULL,17,-1 },
-{&(hdl_array[18]),NULL,NULL,18,-1 },{&(hdl_array[19]),NULL,NULL,19,-1 }}*/;
-
-
-
-
-
-
-static int nextIHAelement=-1; /*oldest ga_ihdl_array element*/
-static int nextLEAelement=-1; /*oldest list_element_array element*/
-static int ihdl_array_avail[NUM_HDLS]/*={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}*/;
-static int list_ele_avail[NUM_HDLS]/*={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}*/;
-
-/*\ a unique tag for each individual ARMCI call
-\*/
+/**
+ * get a unique tag for each individual ARMCI call
+ */
 static unsigned int ga_nb_tag = 0;
 unsigned int get_next_tag(){
     return((++ga_nb_tag));
 }
 
-/*\ Initialize some data structures used in the non-blocking function calls
-\*/
+/**
+ * Initialize some data structures used in the non-blocking function calls
+ */
 void gai_nb_init()
 {
   int i;
   for (i=0; i<NUM_HDLS; i++) {
-    list_element_array[i].handle = &(hdl_array[i]);
-    list_element_array[i].next = NULL;
-    list_element_array[i].previous = NULL;
-    list_element_array[i].index = i;
-    list_element_array[i].ga_hdlarr_index = -1;
-    ihdl_array_avail[i] = 1;
-    list_ele_avail[i] = 1;
+    ga_ihdl_array[i].ahandle = NULL;
+    ga_ihdl_array[i].count = 0;
+    armci_ihdl_array[i].next = NULL;
+    armci_ihdl_array[i].previous = NULL;
+    armci_ihdl_array[i].active = 0;
+    ARMCI_INIT_HANDLE(&armci_ihdl_array[i].handle);
   }
 }
 
-/*\ the only way to complete a list element! 
- *  does the basic list operation: remove element, update previous and next
- *  links of the previous and next elements in the linked list
- *  prev==null => this was the element pointed by the head(ie, first element).
-\*/
-static void clear_list_element(int index){
-ga_armcihdl_t *listele,*prev,*next;
-    if(DEBUG){
-       printf("\n%ld:clearing handle %d\n",(long)GAme,index);fflush(stdout);
-    }
-    listele = &(list_element_array[index]);
-
-    /*first wait for the armci handle */
-    ARMCI_Wait(listele->handle);
-
-    /*set prev and next links of my prev element and my next element*/
-    prev=listele->previous;
-    next = listele->next;
-    if(prev)
-       prev->next = next;
-    else
-       ga_ihdl_array[listele->ga_hdlarr_index].ahandle=next;
-    if(next)
-       next->previous = prev; 
-
-    /*since one element from the linked list of ARMCI handles is completed,
-     * update the count*/
-    ga_ihdl_array[listele->ga_hdlarr_index].count--;
-
-    /*reset the prev and next pointers and initialize the handle*/
-    listele->next=NULL;
-    listele->previous=NULL;
-    ARMCI_INIT_HANDLE(listele->handle);
-    list_ele_avail[index]=1;
-}
-
-
-/*\ Get the next available list element from the list element array, if 
- *  nothing is available, free element with index nextLEAelement
-\*/
-ga_armcihdl_t* get_armcihdl(){
-int i;
-ga_armcihdl_t *ret_handle;
-
-    /*first see if an element from the list_ele_arr is already available */
-    for(i=0;i<NUM_HDLS;i++)
-       if(list_ele_avail[i]){
-         list_ele_avail[i]=0;
-         ARMCI_INIT_HANDLE(list_element_array[i].handle);
-         if(DEBUG){
-           printf("\n%ld:found a free handle %d\n",(long)GAme,i);fflush(stdout);
-         }
-         return(&(list_element_array[i]));
-       }
-
-    /*nothing is available so best element to clear is nextLEAelement(LRU)*/
-    if(nextLEAelement==-1)
-       nextLEAelement=0;
-    if(DEBUG){
-       printf("\n%ld:have to clear handle %d\n",(long)GAme,nextLEAelement);
-       fflush(stdout);
-    }
-    clear_list_element(nextLEAelement);
-    list_ele_avail[nextLEAelement]=0;
-
-    ret_handle=&(list_element_array[nextLEAelement]);
-
-    /*update the LRU element index */
-    nextLEAelement = (nextLEAelement+1)%NUM_HDLS;
-    return(ret_handle);
-}
-
-/*\ Input is the index to the ga_ihdl_array that has the head of the list.
- *  This function waits for all the elements in the list.
-\*/
-static void free_armci_handle_list(int elementtofree){
-ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
-    /*call clear_list_element for every element in the list*/
-    while(first!=NULL){
-       next=first->next;
-       clear_list_element(first->index);
-       first=next;
-    }
-
-    /*reset the head of the list for reuse*/
-    ga_ihdl_array[elementtofree].count=0;
-    ga_ihdl_array[elementtofree].ga_nbtag=0;
-    ga_ihdl_array[elementtofree].ahandle=NULL;
-    ihdl_array_avail[elementtofree]=1;
-}
-      
-
-/*\ Add the armci handle list element to the end of the list.
-\*/
-static void add_armcihdl_to_list(ga_armcihdl_t *listelement, int headindex){
-  ga_armcihdl_t *first=ga_ihdl_array[headindex].ahandle;
-
-  ga_ihdl_array[headindex].count++;
-  ihdl_array_avail[headindex] = 1;
-  listelement->ga_hdlarr_index = headindex;
-  if(ga_ihdl_array[headindex].ahandle==NULL){
-    ga_ihdl_array[headindex].ahandle=listelement;
-    /* only element in list */
-    listelement->previous= NULL;
-    listelement->next = NULL;
-    return;
-  }
-  while(first->next!=NULL){
-    first=first->next;
-  }
-  first->next=listelement;
-  listelement->previous=first;
-  listelement->next = NULL;
-}
-
-
-/* only element in list */
-/*\ Complete the list of armci handles associated with a particular GA request.
- *  specific=-1 means free the next available one. other values complete the
- *  armci handle list pointed to by head at that "specific" element.
-\*/
-static int get_GAnbhdl_element(int specific){
-int elementtofree,i;
-    if(specific!=-1)elementtofree=specific;
-    else {
-       for(i=0;i<NUM_HDLS;i++)
-         if(ihdl_array_avail[i]){
-           ihdl_array_avail[i]=0;
-           return(i);
-         }
-       if(nextIHAelement==-1)  
-         nextIHAelement=0;       
-       elementtofree=nextIHAelement;
-       nextIHAelement = (elementtofree+1)%NUM_HDLS;
-    }
-    free_armci_handle_list(elementtofree);
-    return(elementtofree);
-}
-
-
-/*\ called from ga_put/get before a call to every non-blocking armci request. 
-\*/
-armci_hdl_t* get_armci_nbhandle(Integer *nbhandle){
+/**
+ * Called from ga_put/get before a call to every non-blocking armci request.
+ * Find an available handle. If none is available, complete an existing
+ * outstanding armci request and return the corresponding handle.
+ */
+armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
+{
+  int i, top, idx, iloc;
   gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
-  ga_armcihdl_t *ret_handle;
-  if(inbhandle->ihdl_index == (NUM_HDLS+1)){
-    inbhandle->ihdl_index = get_GAnbhdl_element(-1);
-    inbhandle->ga_nbtag = get_next_tag();
-    ga_ihdl_array[(inbhandle->ihdl_index)].ga_nbtag=inbhandle->ga_nbtag; 
+  int index = inbhandle->ihdl_index;
+  ga_armcihdl_t* next = ga_ihdl_array[index].ahandle;
+
+  lastARMCIhandle++;
+  lastARMCIhandle = lastARMCIhandle%NUM_HDLS;
+  top = lastARMCIhandle+NUM_HDLS;
+  /* default index if no handles are available */
+  iloc = lastARMCIhandle;
+  for (i=lastARMCIhandle; i<top; i++) {
+    if (armci_ihdl_array[iloc].active == 0) {
+      iloc = i%NUM_HDLS;
+      break;
+    }
   }
-  ret_handle = get_armcihdl(); 
-  add_armcihdl_to_list(ret_handle,inbhandle->ihdl_index);
-  return(ret_handle->handle);
+  /* if selected handle has an outstanding request, complete it */
+  if (armci_ihdl_array[iloc].active == 1) {
+    int iga_hdl = armci_ihdl_array[iloc].ga_hdlarr_index;
+    ARMCI_Wait(&armci_ihdl_array[iloc].handle);
+    /* clean up linked list */
+    if (armci_ihdl_array[iloc].previous != NULL) {
+      armci_ihdl_array[iloc].previous->next = armci_ihdl_array[iloc].next;
+    } else {
+      ga_ihdl_array[iga_hdl].ahandle = armci_ihdl_array[iloc].next;
+      if (armci_ihdl_array[iloc].next != NULL) {
+        armci_ihdl_array[iloc].next->previous = NULL;
+      }
+    }
+    ga_ihdl_array[iga_hdl].count--;
+  }
+  /* Initialize armci handle and add this operation to the linked list
+   * corresponding to nbhandle */
+  ARMCI_INIT_HANDLE(&armci_ihdl_array[iloc].handle);
+  armci_ihdl_array[iloc].active = 1;
+  idx = inbhandle->ihdl_index; 
+  armci_ihdl_array[iloc].previous = NULL;
+  if (ga_ihdl_array[idx].ahandle) {
+    ga_ihdl_array[idx].ahandle->previous = &armci_ihdl_array[iloc];
+  }
+  armci_ihdl_array[iloc].next = ga_ihdl_array[idx].ahandle;
+  ga_ihdl_array[idx].ahandle =  &armci_ihdl_array[iloc];
+  ga_ihdl_array[idx].count++;
+
+  /* reset lastARMCIhandle to iloc */
+  lastARMCIhandle = iloc;
+
+  return &armci_ihdl_array[iloc].handle;
 }
 
-/*\ the wait routine which is called inside nga_nbwait and ga_nbwait
-\*/ 
+/**
+ * the wait routine which is called inside pnga_nbwait. This always returns
+ * zero. The return value is not checked in the code.
+ */ 
 int nga_wait_internal(Integer *nbhandle){
   gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
-  /* always returns zero? */
+  int index = inbhandle->ihdl_index;
   int retval = 0;
-  /* First condition will be true if ga_init_handle was called and
-   * get_armci_hbhandle was not called. Second condition may be true if
-   * the entry in list_element_array was cleared previously when looking
-   * for an available handle.
-   */
-  if(inbhandle->ihdl_index==(NUM_HDLS+1))retval=0;
-  else if(inbhandle->ga_nbtag !=ga_ihdl_array[inbhandle->ihdl_index].ga_nbtag)
-    retval=0;
-  else
-    free_armci_handle_list(inbhandle->ihdl_index);
+  int tag = inbhandle->ga_nbtag;
+  /* check if tags match. If the don't then this request was already completed
+   * so that the handle could be used for another GA non-blocking call. Just
+   * return in this case */
+  if (tag == ga_ihdl_array[index].ga_nbtag) {
+    ga_armcihdl_t* next = ga_ihdl_array[index].ahandle;
+    /* Loop over linked list and complete all remaining armci non-blocking calls */
+    while(next) {
+      ga_armcihdl_t* tmp = next->next;
+      /* Complete the call */
+      ARMCI_Wait(&next->handle);
+      /* reinitialize armci_hlt_t data structure */
+      next->next = NULL;
+      next->previous = NULL;
+      next->active = 0;
+      ARMCI_INIT_HANDLE(&next->handle);
+      next = tmp;
+    }
+  }
 
   return(retval);
 }
 
 
-static int test_list_element(int index)
+/**
+ * the test routine which is called inside nga_nbtest. Return 0 if operation is
+ * completed
+ */ 
+int nga_test_internal(Integer *nbhandle)
 {
-  ga_armcihdl_t *listele;
-  int ret;
-  if(DEBUG){
-    printf("\n%ld:clearing handle %d\n",(long)GAme,index);fflush(stdout);
-  }
-  listele = &(list_element_array[index]);
- 
-  ret = ARMCI_Test(listele->handle);
-  if (ret == 0) {
-    ga_ihdl_array[listele->ga_hdlarr_index].count--;
-    listele->next = NULL;
-    listele->previous = NULL;
-    list_ele_avail[index] = 1;
-  }
-  return ret;
-}
+  gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
+  int index = inbhandle->ihdl_index;
+  int retval = 0;
+  int tag = inbhandle->ga_nbtag;
 
-static int test_armci_handle_list(int elementtofree)
-{
-  ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle;
-  ga_armcihdl_t *next;
-  ga_armcihdl_t *prev = NULL;
-  int done = 1; 
-  /*call test_list_element for every element in the list*/
-  while(first!=NULL){
-    next=first->next;
-    if (test_list_element(first->index) == 0) {
-      /* Remove this element from the list */
-      if (prev == NULL && next == NULL) {
-        /* No elements left, so test is finished */
-        ga_ihdl_array[elementtofree].count = 0;
-        ga_ihdl_array[elementtofree].ga_nbtag = 0;
-        ga_ihdl_array[elementtofree].ahandle = NULL;
-        ihdl_array_avail[elementtofree] = 1;
-        first = NULL;
-        done = 0;
-      } else {
-        if (prev == NULL) {
-          /* this element is the first element in the list */
-          first = next;
-          ga_ihdl_array[elementtofree].ahandle = next;
-        } else {
-          prev->next = next;
-          first = next;
+  /* check if tags match. If the don't then this request was already completed
+   * so that the handle could be used for another GA non-blocking call. Just
+   * return in this case */
+  if (tag == ga_ihdl_array[index].ga_nbtag) {
+    ga_armcihdl_t* next = ga_ihdl_array[index].ahandle;
+    /* Loop over linked list and test all remaining armci non-blocking calls */
+    while(next) {
+      int ret = ARMCI_Test(&next->handle);
+      ga_armcihdl_t *tmp = next->next;
+      if (ret == 0) {
+        /* operation completed so remove it from linked list */
+        if (next->previous != NULL) {
+          next->previous->next = next->next;
+        } else if (next->next != NULL) {
+          ga_ihdl_array[index].ahandle = next->next;
+          next->next->previous = NULL;
         }
+        next->previous = NULL;
+        next->next = NULL;
+        next->active = 0;
+        ga_ihdl_array[index].count--;
       }
-    } else {
-      prev = first;
-      first=next;
+      next = tmp;
     }
+    if (ga_ihdl_array[index].count > 0) retval = 1;
   }
-  return (done);
+
+  return(retval);
 }
 
-/*\ the test routine which is called inside nga_nbtest
-\*/ 
-int nga_test_internal(Integer *nbhandle){
-gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
-int retval = 0;
-  /* First condition will be true if ga_init_handle was called and
-   * get_armci_hbhandle was not called. Second condition may be true if
-   * the entry in list_element_array was cleared previously when looking
-   * for an available handle.
-   */
-    if(inbhandle->ihdl_index==(NUM_HDLS+1)) {
-      retval=0;
-    } else if(inbhandle->ga_nbtag !=
-        ga_ihdl_array[inbhandle->ihdl_index].ga_nbtag) {
-       retval=0;
-    } else {
-       retval = test_armci_handle_list(inbhandle->ihdl_index);
-       /* make sure this index is deactivated if test is complete */
-       if (retval==0) inbhandle->ihdl_index = (NUM_HDLS+1);
-    }
-    
-    return(retval);
-}
-
-/*\ unlike in ARMCI, user doesnt have to initialize handle in GA.
-\*/
+/**
+ * Find a free handle.
+ */
 void ga_init_nbhandle(Integer *nbhandle)
 {
-gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
-    inbhandle->ihdl_index=(NUM_HDLS+1);
+  int i, top, idx, iloc;
+  gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
+  lastGAhandle++;
+  lastGAhandle = lastGAhandle%NUM_HDLS;
+  top = lastGAhandle+NUM_HDLS;
+  /* default index if no handles are available */
+  idx = lastGAhandle;
+  for (i=lastGAhandle; i<top; i++) {
+    iloc = i%NUM_HDLS;
+    if (ga_ihdl_array[i].ahandle == NULL) {
+      idx = iloc;
+      break;
+    }
+  }
+  /* If no free handle is found, clear the oldest handle */
+  if (ga_ihdl_array[idx].ahandle != NULL) {
+    int itmp;
+    gai_nbhdl_t *oldhdl = (gai_nbhdl_t*)&itmp;
+    oldhdl->ihdl_index = idx;
+    oldhdl->ga_nbtag = ga_ihdl_array[idx].ga_nbtag;
+    nga_wait_internal(&itmp);
+  }
+  inbhandle->ihdl_index = idx;
+  inbhandle->ga_nbtag = get_next_tag();
+  ga_ihdl_array[idx].ahandle = NULL;
+  ga_ihdl_array[idx].count = 0;
+  ga_ihdl_array[idx].ga_nbtag = inbhandle->ga_nbtag;
+
+  /* reset lastGAhandle to idx */
+  lastGAhandle = idx;
+  return;
 }

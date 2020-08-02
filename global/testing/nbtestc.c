@@ -15,6 +15,7 @@
 #include "mp3.h"
 
 #define N 128            /* dimension of matrices */
+#define BLOCK 4         /* make sure this value divides N evenly */
 
 int main( int argc, char **argv ) {
   int g_a;
@@ -27,7 +28,7 @@ int main( int argc, char **argv ) {
   int type=MT_C_INT;
   int nelems, ok;
   int *buf, *ptr;
-  ga_nbhdl_t *nbhdl;
+  int *nbhdl;
 
   int heap=3000000, stack=2000000;
 
@@ -61,7 +62,7 @@ int main( int argc, char **argv ) {
   if (me == 0) {
     buf = (int*)malloc(nelems*sizeof(int));
     ptr = buf;
-    nbhdl = (ga_nbhdl_t*)malloc(nproc*sizeof(ga_nbhdl_t));
+    nbhdl = (int*)malloc(nproc*sizeof(int));
     for (n=0; n<nproc; n++) {
       NGA_Distribution(g_a, n, lo, hi);
       isize = (hi[0]-lo[0]+1);
@@ -139,7 +140,6 @@ int main( int argc, char **argv ) {
     while (!NGA_NbTest(&nbhdl[0])) {
       jsize++;
     }
-    free(buf);
   }
   GA_Sync();
   /* Check to see if g_a is filled with correct values */
@@ -166,6 +166,77 @@ int main( int argc, char **argv ) {
       printf("\nNon-blocking put test with multiple processes is OK\n");
     } else {
       printf("\nNbTest fails for non-blocking put to multiple processes\n");
+    }
+  }
+
+  /* Test a very large number of outstanding put handles to see if handles are
+   * being managed properly */
+  GA_Sync();
+  GA_Zero(g_a);
+  if (me == 0) {
+    int idx, jdx;
+    int idim = N/BLOCK;
+    int jdim = N/BLOCK;
+    int *Lnbhdl = (int*)malloc(idim*jdim*sizeof(int));
+    ptr = buf;
+    for (n=0; n<idim*jdim; n++) {
+      idx = n%idim;
+      jdx = (n-idx)/idim;
+      ld = BLOCK;
+      lo[0] = idx*BLOCK;
+      hi[0] = (idx+1)*BLOCK-1;
+      lo[1] = jdx*BLOCK;
+      hi[1] = (jdx+1)*BLOCK-1;
+      for (i=0; i<BLOCK; i++) {
+        for (j=0; j<BLOCK; j++) {
+          ptr[j+ld*i] = j+lo[1] + N*(i+lo[0]);
+        }
+      }
+      NGA_NbPut(g_a, lo, hi, ptr, &ld, &Lnbhdl[n]);
+      /* Buffer may still be in use (until test returns false). Need to
+       * a new buffer for next put */
+      ptr = ptr + BLOCK*BLOCK;
+    }
+    /* Test handles until completion */
+    nleft = idim*jdim-1;
+    while (nleft > 0) {
+      icnt = 0;
+      for (n=0; n<nleft; n++) {
+        if (!NGA_NbTest(&Lnbhdl[n])) {
+          Lnbhdl[icnt] = Lnbhdl[n];
+          icnt++;
+        }
+      }
+      nleft = icnt;
+    }
+    free(Lnbhdl);
+    free(buf);
+  }
+  GA_Sync();
+  /* Check to see if g_a is filled with correct values */
+  NGA_Distribution(g_a, me, lo, hi);
+  NGA_Access(g_a, lo, hi, &ptr, &ld);
+  isize = (hi[0]-lo[0]+1);
+  jsize = (hi[1]-lo[1]+1);
+  ld = jsize;
+  ok = 1;
+  for (i=0; i<isize; i++) {
+    for (j=0; j<jsize; j++) {
+      if (ptr[j+ld*i] != j+lo[1] + N*(i+lo[0])) {
+        ok = 0;
+        printf("p[%d] Mismatch for multi-process non-blocking put."
+            " Expected: %d Actual: %d\n",
+            me,j+lo[1] + N*(i+lo[0]),ptr[j+ld*isize]);
+      }
+    }
+  }
+  NGA_Release(g_a, lo, hi);
+  GA_Igop(&ok,1,"*");
+  if (me == 0) {
+    if (ok) {
+      printf("\nNon-blocking put test with large number of handles is OK\n");
+    } else {
+      printf("\nNbTest fails for large number of handles\n");
     }
   }
 
