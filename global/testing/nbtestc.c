@@ -198,7 +198,7 @@ int main( int argc, char **argv ) {
       ptr = ptr + BLOCK*BLOCK;
     }
     /* Test handles until completion */
-    nleft = idim*jdim-1;
+    nleft = idim*jdim;
     while (nleft > 0) {
       icnt = 0;
       for (n=0; n<nleft; n++) {
