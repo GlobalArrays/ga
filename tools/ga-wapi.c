@@ -1372,7 +1372,7 @@ void wnga_gather(Integer g_a, void *v, Integer subscript[], Integer nv)
     double local_start, local_stop;
     ++count_pnga_gather;
     local_start = MPI_Wtime();
-    pnga_gather(g_a, v, subscript, nv);
+    pnga_gather(g_a, v, subscript, 0, nv);
     local_stop = MPI_Wtime();
     time_pnga_gather += local_stop - local_start;
 }
@@ -2668,7 +2668,7 @@ void wnga_scatter(Integer g_a, void *v, Integer *subscript, Integer nv)
     double local_start, local_stop;
     ++count_pnga_scatter;
     local_start = MPI_Wtime();
-    pnga_scatter(g_a, v, subscript, nv);
+    pnga_scatter(g_a, v, subscript, 0, nv);
     local_stop = MPI_Wtime();
     time_pnga_scatter += local_stop - local_start;
 }
@@ -2690,7 +2690,7 @@ void wnga_scatter_acc(Integer g_a, void *v, Integer subscript[], Integer nv, voi
     double local_start, local_stop;
     ++count_pnga_scatter_acc;
     local_start = MPI_Wtime();
-    pnga_scatter_acc(g_a, v, subscript, nv, alpha);
+    pnga_scatter_acc(g_a, v, subscript, 0, nv, alpha);
     local_stop = MPI_Wtime();
     time_pnga_scatter_acc += local_stop - local_start;
 }
@@ -3405,16 +3405,24 @@ void wnga_initialize()
 {
     ++count_pnga_initialize;
     pnga_initialize();
+    me = pnga_nodeid();
+    nproc = pnga_nnodes();
+    /*
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    */
 }
 
 void wnga_initialize_ltd(Integer limit)
 {
     ++count_pnga_initialize_ltd;
     pnga_initialize_ltd(limit);
+    me = pnga_nodeid();
+    nproc = pnga_nnodes();
+    /*
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    */
 }
 
 void wnga_terminate()
