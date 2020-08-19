@@ -2045,6 +2045,9 @@ int comex_wait(comex_request_t* hdl)
   translate_mpi_error(ierr,"comex_wait:MPI_Win_flush_local");
 #endif
 #endif
+  if (nb_list[*hdl]->active == 0) {
+    printf("comex_wait Error: handle not active\n");
+  }
   nb_list[*hdl]->active = 0;
   if (nb_list[*hdl]->use_type) {
     ierr = MPI_Type_free(&(nb_list[*hdl]->src_type));
@@ -2075,6 +2078,9 @@ int comex_test(comex_request_t* hdl, int *status)
     MPI_Status stat;
     ierr = MPI_Test(&(nb_list[*hdl]->request),&flag,&stat);
     translate_mpi_error(ierr,"comex_test:MPI_Test");
+    if (nb_list[*hdl]->active == 0) {
+      printf("comex_test Error: handle not active\n");
+    }
     if (flag) {
       /* operation is complete */
       *status = 0;

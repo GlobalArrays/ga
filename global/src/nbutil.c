@@ -99,7 +99,7 @@ static int lastARMCIhandle = -1; /* last assigned armci handle */
 
 /**
  * get a unique tag for each individual ARMCI call. These tags currently repeat
- * after 16777216=2^24
+ * after 16777216=2^24 non-blocking calls
  */
 static unsigned int ga_nb_tag = 0;
 unsigned int get_next_tag(){
@@ -124,8 +124,9 @@ void gai_nb_init()
 
 /**
  * Called from ga_put/get before a call to every non-blocking armci request.
- * Find an available handle. If none is available, complete an existing
- * outstanding armci request and return the corresponding handle.
+ * Find an available armic non-blocking handle. If none is available,
+ * complete an existing outstanding armci request and return the
+ * corresponding handle.
  */
 armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
 {
@@ -140,8 +141,9 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
   /* default index if no handles are available */
   iloc = lastARMCIhandle;
   for (i=lastARMCIhandle; i<top; i++) {
-    if (armci_ihdl_array[iloc].active == 0) {
-      iloc = i%NUM_HDLS;
+    idx = i%NUM_HDLS;
+    if (armci_ihdl_array[idx].active == 0) {
+      iloc = idx;
       break;
     }
   }
@@ -151,8 +153,10 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
     ARMCI_Wait(&armci_ihdl_array[iloc].handle);
     /* clean up linked list that this handle used to be a link in */
     if (armci_ihdl_array[iloc].previous != NULL) {
+      /* link is not first in linked list */
       armci_ihdl_array[iloc].previous->next = armci_ihdl_array[iloc].next;
     } else {
+      /* link is first in linked list. Need to update header */
       ga_ihdl_array[iga_hdl].ahandle = armci_ihdl_array[iloc].next;
       if (armci_ihdl_array[iloc].next != NULL) {
         armci_ihdl_array[iloc].next->previous = NULL;
@@ -234,10 +238,17 @@ int nga_test_internal(Integer *nbhandle)
       if (ret == 0) {
         /* operation is completed so remove it from linked list */
         if (next->previous != NULL) {
+          /* operation is not first element in list */
           next->previous->next = next->next;
-        } else if (next->next != NULL) {
+          if (next->next != NULL) {
+            next->next->previous = next->previous;
+          }
+        } else {
+          /* operation is first element in list */
           ga_ihdl_array[index].ahandle = next->next;
-          next->next->previous = NULL;
+          if (next->next != NULL) {
+            next->next->previous = NULL;
+          }
         }
         next->previous = NULL;
         next->next = NULL;
@@ -253,7 +264,7 @@ int nga_test_internal(Integer *nbhandle)
 }
 
 /**
- * Find a free handle.
+ * Find a free GA non-blocking handle.
  */
 void ga_init_nbhandle(Integer *nbhandle)
 {

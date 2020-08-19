@@ -5313,6 +5313,8 @@ STATIC nb_t* nb_wait_for_handle()
       nb_index %= nb_max_outstanding; /* wrap around if needed */
       nb_wait_for_all(nb);
     }
+    /* make sure in_use flag is set to 1 */
+    nb->in_use = 1;
 #endif
 
     return nb;
@@ -5582,6 +5584,7 @@ STATIC void nb_wait_for_all(nb_t *nb)
             nb_wait_for_recv1(nb);
         }
     }
+    nb->in_use = 0;
 }
 
 /* Returns 0 if no outstanding requests */
@@ -5622,6 +5625,7 @@ STATIC int nb_test_for_all(nb_t *nb)
     }
     nb->send_head = save_send_head;
     nb->recv_head = save_recv_head;
+    if (ret == 0) nb->in_use = 0;
     return ret;
 }
 
