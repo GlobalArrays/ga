@@ -1266,6 +1266,18 @@ class GlobalArray {
    * @return number of dimensions aka rank
    */
   int ndim() const;
+
+  /**
+   * This subroutine can be used instead of the allocate function to create a
+   * global array on top of memory allocated for another global array. This can
+   * be used in situations where it is desirable to create and destroy a large
+   * number of global arrays while simultaneously reducing the overhead
+   * associated with global array creation.
+   *
+   * @param[in] g_p handle of parent global array
+   * @return true if allocation is successful
+   */
+  int overlay(const GlobalArray *g_p);
   
   /**
    * The pack subroutine is designed to compress the values in the source vector
@@ -2045,6 +2057,19 @@ class GlobalArray {
   void setPGroup(PGroup *pHandle) const;
 
   /**
+   * Set a property on the global array. The two properties currently supported
+   * are "read_only" and "read_cache". These can both be set on allocated
+   * arrays. "read_only" replicates data across nodes and distributes it within
+   * nodes and "read_cache" stores recent data requests and uses them to satisfy
+   * new requests if there are repeats.
+   *
+   * This is a collective operation.
+   *
+   * @param[in] propert property to assign to global array
+   */
+  void setProperty(char *property);
+
+  /**
    * This function is used to restrict the number of processors in a global
    * array that actually contain data. It can also be used to rearrange the
    * layout of data on a processor from the default distribution. Only the
@@ -2069,7 +2094,23 @@ class GlobalArray {
    * @param[in] hi_proc high end of processor range
    */
   void setRestrictedRange(int lo_proc, int hi_proc) const;
+
+  /**
+   * Specify the type of memory used to allocate the global array. This
+   * functionality uses the SICM library to select between different types of
+   * memory
+   *
+   * @param[in] device type of memory device to use
+   */
+  void setMemoryDev(char *device);
       
+  /**
+   * Clears a property on the global array.
+   *
+   * This is a collective operation.
+   */
+  void unsetProperty();
+
   /**
    * Performs one of the matrix-matrix operations: 
    *
