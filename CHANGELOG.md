@@ -12,6 +12,42 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
 -Added
   - Version function that can be used to report the current version, subversion
     and patch numbers of the current release
+## [5.8] - 2020-09-30
+- Known Bugs
+  - The MPI RMA port remains unreliable for many MPI implementations. Open MPI
+    still reports many failures in the test suit. Intel MPI is better but still
+    reports several failures. It is recommended to use the latest MPI
+    implementations available.
+- Added
+  - Overlay option for creating new GAs on top of existing GAs
+  - The number of progress ranks per node in the progress ranks runtime is now
+    configurable
+  - Functions for duplicating process groups and returning a process group that
+    only contains the calling process
+  - 64-bit versions of block-cyclic data distribution functions to
+    C interface
+  - Non-blocking test function
+  - Read-only property based on caching 
+  - Memory type used for GAs can be specified if GA is built in conjunction with
+    [SICM](https://github.com/lanl/SICM) libraries
+  - GA name can be recovered from handle 
+  - Function for recovering version of build
+- Changed
+  - Non-blocking handle management was completely revamped. This simplifies
+    implementation and removes some bugs. The number of outstanding non-blocking
+    calls was increased to 256
+  - Modified internal function that computes rank of processors on the world
+    communicator so that it does not use the MPI_Comm_translate_ranks function.
+    This function is implemented with a loop that scales as the square of the
+    number of processors and is very slow at large processor counts
+  - modified internal iterators so that block cyclic data distributions work on
+    processor groups
+  - Improved CMake build
+  - Modified ga_print_distribution so that it works on block-cyclic data
+    distributions
+- Fixed
+  - Fixed a non-blocking error that was showing up in nbtest.x
+  
 
 ## [5.7] - 2018-03-30
 - Known Bugs
