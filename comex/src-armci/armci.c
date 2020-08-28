@@ -442,7 +442,7 @@ int PARMCI_Malloc(void **ptr_arr, armci_size_t bytes)
 
 int PARMCI_Malloc_memdev(void **ptr_arr, armci_size_t bytes, const char *device)
 {
-    return comex_malloc(ptr_arr, bytes, ARMCI_Default_Proc_Group);
+    return comex_malloc_mem_dev(ptr_arr, bytes, ARMCI_Default_Proc_Group,device);
 }
 
 
@@ -454,7 +454,7 @@ int ARMCI_Malloc_group(void **ptr_arr, armci_size_t bytes, ARMCI_Group *group)
 int ARMCI_Malloc_group_memdev(void **ptr_arr, armci_size_t bytes,
     ARMCI_Group *group, const char *device)
 {
-    return comex_malloc(ptr_arr, bytes, *group);
+    return comex_malloc_mem_dev(ptr_arr, bytes, *group,device);
 }
 
 
