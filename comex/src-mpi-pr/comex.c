@@ -2133,6 +2133,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     int reg_entries_local_count = 0;
     reg_entry_t *reg_entries_local = NULL;
     int status = 0;
+    printf("p[%d] calling comex_malloc\n",g_state.rank);
 
     /* preconditions */
     COMEX_ASSERT(ptrs);
@@ -2291,7 +2292,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
                     ,nill
 #endif
 #endif
-);
+                  );
             if (is_notifier) {
                 /* does this need to be a memcpy?? */
                 reg_entries_local[reg_entries_local_count++] = reg_entries[i];
@@ -2376,6 +2377,7 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
     idevice.devices = NULL;
 #endif
 
+    printf("p[%d] calling comex_malloc_mem_dev\n",g_state.rank);
     /* preconditions */
     COMEX_ASSERT(ptrs);
 
@@ -4359,6 +4361,7 @@ STATIC void _malloc_handler(
     int i;
     int n;
     reg_entry_t *reg_entries = (reg_entry_t*)payload;
+    printf("p[%d] calling _malloc_handler\n",g_state.rank);
 
 #if DEBUG
     fprintf(stderr, "[%d] _malloc_handler proc=%d\n", g_state.rank, proc);
