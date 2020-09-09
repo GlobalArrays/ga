@@ -147,21 +147,10 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
       break;
     }
   }
-  /*
-  if (iloc == lastARMCIhandle && i > lastARMCIhandle) {
-    printf("p[%d] wait on handle in use\n",GAme);
-  }
-  */
   /* if selected handle has an outstanding request, complete it */
   if (armci_ihdl_array[iloc].active == 1) {
     int iga_hdl = armci_ihdl_array[iloc].ga_hdlarr_index;
-    /*
-    printf("p[%d] (get_armci_handle) calling ARMCI_Wait\n",GAme);
-    */
     ARMCI_Wait(&armci_ihdl_array[iloc].handle);
-    /*
-    printf("p[%d] (get_armci_handle) completed ARMCI_Wait\n",GAme);
-    */
     /* clean up linked list that this handle used to be a link in */
     if (armci_ihdl_array[iloc].previous != NULL) {
       /* link is not first in linked list */
@@ -194,17 +183,6 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
   /* reset lastARMCIhandle to iloc */
   lastARMCIhandle = iloc;
 
-  /* check that all ARMCI handles are active */
-  /*
-  next = ga_ihdl_array[index].ahandle;
-  while(next) {
-    if (next->active != 1) {
-      printf("p[%d] found non-active armci handle\n",GAme);
-    }
-    next = next->next;
-  }
-  */
-
   return &armci_ihdl_array[iloc].handle;
 }
 
@@ -226,13 +204,7 @@ int nga_wait_internal(Integer *nbhandle){
     while(next) {
       ga_armcihdl_t* tmp = next->next;
       /* Complete the call */
-      /*
-      printf("p[%d] (nga_wait_internal) calling ARMCI_Wait active: %d\n",GAme,next->active);
-      */
       ARMCI_Wait(&next->handle);
-      /*
-      printf("p[%d] (nga_wait_internal) completed ARMCI_Wait\n",GAme);
-      */
       /* reinitialize armci_hlt_t data structure */
       next->next = NULL;
       next->previous = NULL;
@@ -322,13 +294,7 @@ void ga_init_nbhandle(Integer *nbhandle)
     gai_nbhdl_t *oldhdl = (gai_nbhdl_t*)&itmp;
     oldhdl->ihdl_index = idx;
     oldhdl->ga_nbtag = ga_ihdl_array[idx].ga_nbtag;
-    /*
-    printf("p[%d] (ga_init_nbhandle) calling nga_wait_internal\n",GAme);
-    */
     nga_wait_internal(&itmp);
-    /*
-    printf("p[%d] (ga_init_nbhandle) completed nga_wait_internal\n",GAme);
-    */
   }
   inbhandle->ihdl_index = idx;
   inbhandle->ga_nbtag = get_next_tag();
