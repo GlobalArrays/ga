@@ -49,7 +49,7 @@ typedef struct {
  *         non-blocking call
  * next: pointer to next element in list
  * previous: pointer to previous element in list
- * ga_hdlarr_index: index that points back to ga_nbhdr_array list.
+ * ga_hdlarr_index: index that points back to ga_nbhdl_array list.
  *                  This can be used to remove this link from GA linked list if
  *                  this armci request must be cleared to make room for a new
  *                  request.
@@ -78,14 +78,14 @@ typedef struct{
     ga_armcihdl_t *ahandle;
     int count;
     int ga_nbtag;
-} ga_nbhdr_array_t;
+} ga_nbhdl_array_t;
 
 /**
  * Array of headers for non-blocking GA calls. The ihdl_index element of the
  * non-blocking handle indexes into this array. The maximum number of
  * outstanding non-blocking GA calls is NUM_HDLS.
  */
-static ga_nbhdr_array_t ga_ihdl_array[NUM_HDLS];
+static ga_nbhdl_array_t ga_ihdl_array[NUM_HDLS];
 
 /**
  * Array of armci handles. This is used to construct linked lists of ARMCI
@@ -147,14 +147,28 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
       break;
     }
   }
+  /*
+  if (iloc == lastARMCIhandle && i > lastARMCIhandle) {
+    printf("p[%d] wait on handle in use\n",GAme);
+  }
+  */
   /* if selected handle has an outstanding request, complete it */
   if (armci_ihdl_array[iloc].active == 1) {
     int iga_hdl = armci_ihdl_array[iloc].ga_hdlarr_index;
+    /*
+    printf("p[%d] (get_armci_handle) calling ARMCI_Wait\n",GAme);
+    */
     ARMCI_Wait(&armci_ihdl_array[iloc].handle);
+    /*
+    printf("p[%d] (get_armci_handle) completed ARMCI_Wait\n",GAme);
+    */
     /* clean up linked list that this handle used to be a link in */
     if (armci_ihdl_array[iloc].previous != NULL) {
       /* link is not first in linked list */
       armci_ihdl_array[iloc].previous->next = armci_ihdl_array[iloc].next;
+      if (armci_ihdl_array[iloc].next != NULL) {
+        armci_ihdl_array[iloc].next->previous = armci_ihdl_array[iloc].previous;
+      }
     } else {
       /* link is first in linked list. Need to update header */
       ga_ihdl_array[iga_hdl].ahandle = armci_ihdl_array[iloc].next;
@@ -180,6 +194,17 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
   /* reset lastARMCIhandle to iloc */
   lastARMCIhandle = iloc;
 
+  /* check that all ARMCI handles are active */
+  /*
+  next = ga_ihdl_array[index].ahandle;
+  while(next) {
+    if (next->active != 1) {
+      printf("p[%d] found non-active armci handle\n",GAme);
+    }
+    next = next->next;
+  }
+  */
+
   return &armci_ihdl_array[iloc].handle;
 }
 
@@ -201,7 +226,13 @@ int nga_wait_internal(Integer *nbhandle){
     while(next) {
       ga_armcihdl_t* tmp = next->next;
       /* Complete the call */
+      /*
+      printf("p[%d] (nga_wait_internal) calling ARMCI_Wait active: %d\n",GAme,next->active);
+      */
       ARMCI_Wait(&next->handle);
+      /*
+      printf("p[%d] (nga_wait_internal) completed ARMCI_Wait\n",GAme);
+      */
       /* reinitialize armci_hlt_t data structure */
       next->next = NULL;
       next->previous = NULL;
@@ -209,6 +240,8 @@ int nga_wait_internal(Integer *nbhandle){
       ARMCI_INIT_HANDLE(&next->handle);
       next = tmp;
     }
+    ga_ihdl_array[index].ahandle = NULL;
+    ga_ihdl_array[index].count = 0;
   }
 
   return(retval);
@@ -289,7 +322,13 @@ void ga_init_nbhandle(Integer *nbhandle)
     gai_nbhdl_t *oldhdl = (gai_nbhdl_t*)&itmp;
     oldhdl->ihdl_index = idx;
     oldhdl->ga_nbtag = ga_ihdl_array[idx].ga_nbtag;
+    /*
+    printf("p[%d] (ga_init_nbhandle) calling nga_wait_internal\n",GAme);
+    */
     nga_wait_internal(&itmp);
+    /*
+    printf("p[%d] (ga_init_nbhandle) completed nga_wait_internal\n",GAme);
+    */
   }
   inbhandle->ihdl_index = idx;
   inbhandle->ga_nbtag = get_next_tag();
