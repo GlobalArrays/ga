@@ -53,7 +53,7 @@ typedef struct {
  *                  This can be used to remove this link from GA linked list if
  *                  this armci request must be cleared to make room for a new
  *                  request.
- * active: indicates that this represent an outstanding ARMCI non-blocking
+ * active: indicates that this represents an outstanding ARMCI non-blocking
  * request
  */
 typedef struct struct_armcihdl_t {
@@ -78,6 +78,7 @@ typedef struct{
     ga_armcihdl_t *ahandle;
     int count;
     int ga_nbtag;
+    int active;
 } ga_nbhdl_array_t;
 
 /**
@@ -115,6 +116,7 @@ void gai_nb_init()
   for (i=0; i<NUM_HDLS; i++) {
     ga_ihdl_array[i].ahandle = NULL;
     ga_ihdl_array[i].count = 0;
+    ga_ihdl_array[i].active = 0;
     armci_ihdl_array[i].next = NULL;
     armci_ihdl_array[i].previous = NULL;
     armci_ihdl_array[i].active = 0;
@@ -199,6 +201,9 @@ int nga_wait_internal(Integer *nbhandle){
    * so the handle can be used for another GA non-blocking call. Just return in
    * this case */
   if (tag == ga_ihdl_array[index].ga_nbtag) {
+    if (ga_ihdl_array[index].active == 0) {
+      printf("p[d] nga_wait_internal: GA NB handle inactive\n");
+    }
     ga_armcihdl_t* next = ga_ihdl_array[index].ahandle;
     /* Loop over linked list and complete all remaining armci non-blocking calls */
     while(next) {
@@ -214,6 +219,7 @@ int nga_wait_internal(Integer *nbhandle){
     }
     ga_ihdl_array[index].ahandle = NULL;
     ga_ihdl_array[index].count = 0;
+    ga_ihdl_array[index].active = 0;
   }
 
   return(retval);
@@ -262,6 +268,10 @@ int nga_test_internal(Integer *nbhandle)
       }
       next = tmp;
     }
+    if (ga_ihdl_array[index].count == 0) {
+      ga_ihdl_array[index].ahandle = NULL;
+      ga_ihdl_array[index].active = 0;
+    }
     if (ga_ihdl_array[index].count > 0) retval = 1;
   }
 
@@ -300,6 +310,7 @@ void ga_init_nbhandle(Integer *nbhandle)
   inbhandle->ga_nbtag = get_next_tag();
   ga_ihdl_array[idx].ahandle = NULL;
   ga_ihdl_array[idx].count = 0;
+  ga_ihdl_array[idx].active = 1;
   ga_ihdl_array[idx].ga_nbtag = inbhandle->ga_nbtag;
 
   /* reset lastGAhandle to idx */
