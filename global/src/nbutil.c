@@ -42,7 +42,7 @@ typedef struct {
 
 
 /* We create an array of type struct_armci_hdl_t. This list represents the
- * number of available ARMCI non-blocking calls are available to create
+ * number of available ARMCI non-blocking calls that are available to create
  * non-blocking GA calls. Each element in the armci handle linked list is of
  * type ga_armcihdl_t.
  * handle: int handle or gai_nbhdl_t struct that represents ARMCI handle for
@@ -102,9 +102,12 @@ static int lastARMCIhandle = -1; /* last assigned armci handle */
  * get a unique tag for each individual ARMCI call. These tags currently repeat
  * after 16777216=2^24 non-blocking calls
  */
-static unsigned int ga_nb_tag = 0;
+static unsigned int ga_nb_tag = -1;
 unsigned int get_next_tag(){
-    return((++ga_nb_tag));
+  ga_nb_tag++;
+  ga_nb_tag = ga_nb_tag%16777216;
+  return ga_nb_tag;
+  /* return(++ga_nb_tag); */
 }
 
 /**
@@ -117,6 +120,7 @@ void gai_nb_init()
     ga_ihdl_array[i].ahandle = NULL;
     ga_ihdl_array[i].count = 0;
     ga_ihdl_array[i].active = 0;
+    ga_ihdl_array[i].ga_nbtag = -1;
     armci_ihdl_array[i].next = NULL;
     armci_ihdl_array[i].previous = NULL;
     armci_ihdl_array[i].active = 0;
@@ -125,7 +129,7 @@ void gai_nb_init()
 }
 
 /**
- * Called from ga_put/get before a call to every non-blocking armci request.
+ * Called from ga_put/get before every call to a non-blocking armci request.
  * Find an available armic non-blocking handle. If none is available,
  * complete an existing outstanding armci request and return the
  * corresponding handle.
@@ -149,7 +153,7 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
       break;
     }
   }
-  /* if selected handle has an outstanding request, complete it */
+  /* if selected handle represents an outstanding request, complete it */
   if (armci_ihdl_array[iloc].active == 1) {
     int iga_hdl = armci_ihdl_array[iloc].ga_hdlarr_index;
     ARMCI_Wait(&armci_ihdl_array[iloc].handle);
