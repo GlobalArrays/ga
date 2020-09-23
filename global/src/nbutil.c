@@ -177,14 +177,13 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
    * corresponding to nbhandle */
   ARMCI_INIT_HANDLE(&armci_ihdl_array[iloc].handle);
   armci_ihdl_array[iloc].active = 1;
-  idx = inbhandle->ihdl_index; 
   armci_ihdl_array[iloc].previous = NULL;
-  if (ga_ihdl_array[idx].ahandle) {
-    ga_ihdl_array[idx].ahandle->previous = &armci_ihdl_array[iloc];
+  if (ga_ihdl_array[index].ahandle) {
+    ga_ihdl_array[index].ahandle->previous = &armci_ihdl_array[iloc];
   }
-  armci_ihdl_array[iloc].next = ga_ihdl_array[idx].ahandle;
-  ga_ihdl_array[idx].ahandle =  &armci_ihdl_array[iloc];
-  ga_ihdl_array[idx].count++;
+  armci_ihdl_array[iloc].next = ga_ihdl_array[index].ahandle;
+  ga_ihdl_array[index].ahandle =  &armci_ihdl_array[iloc];
+  ga_ihdl_array[index].count++;
 
   /* reset lastARMCIhandle to iloc */
   lastARMCIhandle = iloc;
@@ -206,7 +205,7 @@ int nga_wait_internal(Integer *nbhandle){
    * this case */
   if (tag == ga_ihdl_array[index].ga_nbtag) {
     if (ga_ihdl_array[index].active == 0) {
-      printf("p[d] nga_wait_internal: GA NB handle inactive\n");
+      printf("p[%d] nga_wait_internal: GA NB handle inactive\n",GAme);
     }
     ga_armcihdl_t* next = ga_ihdl_array[index].ahandle;
     /* Loop over linked list and complete all remaining armci non-blocking calls */
@@ -303,7 +302,7 @@ void ga_init_nbhandle(Integer *nbhandle)
   }
   /* If no free handle is found, clear the oldest handle */
   if (ga_ihdl_array[idx].ahandle != NULL) {
-    int itmp;
+    Integer itmp;
     /* find value of itmp corresponding to oldest handle */
     gai_nbhdl_t *oldhdl = (gai_nbhdl_t*)&itmp;
     oldhdl->ihdl_index = idx;
