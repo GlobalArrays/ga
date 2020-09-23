@@ -2046,7 +2046,7 @@ int comex_wait(comex_request_t* hdl)
 #endif
 #endif
   if (nb_list[*hdl]->active == 0) {
-    printf("comex_wait Error: handle not active\n");
+    printf("p[%d] comex_wait Error: handle not active\n",l_state.rank);
   }
   nb_list[*hdl]->active = 0;
   if (nb_list[*hdl]->use_type) {
