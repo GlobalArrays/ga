@@ -204,6 +204,18 @@ int comex_init()
     /* World Size */
     status = MPI_Comm_size(l_state.world_comm, &(l_state.size));
     assert(MPI_SUCCESS == status);
+
+    /* Pick up environment variables */
+    {
+      char *value = NULL;
+      nb_max_outstanding = COMEX_MAX_NB_OUTSTANDING; /* default */
+      value = getenv("COMEX_MAX_NB_OUTSTANDING");
+      if (NULL != value) {
+        nb_max_outstanding = atoi(value);
+      }
+      COMEX_ASSERT(nb_max_outstanding > 0);
+    }
+
     
     /* groups */
     comex_group_init();

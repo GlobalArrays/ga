@@ -4,15 +4,17 @@
 
 #include "globalp.h"
 #include "base.h"
+#include "ga-papi.h"
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
 #define DEBUG 0
 
-/* WARNING: The maximum value NUM_HDLS can assume is 256. If it is any larger,
+/* WARNING: The maximum value MAX_NUM_NB_HDLS can assume is 256. If it is any larger,
  * the 8-bit field defined in gai_hbhdl_t will exceed its upper limit of 255 in
  * some parts of the nbutil.c code */
-#define NUM_HDLS 256
+#define MAX_NUM_NB_HDLS 256
+static int nb_max_outstanding = MAX_NUM_NB_HDLS;
 
 /**
  *                      NOTES
@@ -84,16 +86,16 @@ typedef struct{
 /**
  * Array of headers for non-blocking GA calls. The ihdl_index element of the
  * non-blocking handle indexes into this array. The maximum number of
- * outstanding non-blocking GA calls is NUM_HDLS.
+ * outstanding non-blocking GA calls is nb_max_outstanding.
  */
-static ga_nbhdl_array_t ga_ihdl_array[NUM_HDLS];
+static ga_nbhdl_array_t ga_ihdl_array[MAX_NUM_NB_HDLS];
 
 /**
  * Array of armci handles. This is used to construct linked lists of ARMCI
  * non-blocking calls. The maximum number of outstanding ARMCI non-blocking
- * calls is NUM_HDLS.
+ * calls is nb_max_outstanding.
  */
-static ga_armcihdl_t armci_ihdl_array[NUM_HDLS];
+static ga_armcihdl_t armci_ihdl_array[MAX_NUM_NB_HDLS];
 
 static int lastGAhandle = -1; /* last assigned ga handle */
 static int lastARMCIhandle = -1; /* last assigned armci handle */
@@ -116,7 +118,21 @@ unsigned int get_next_tag(){
 void gai_nb_init()
 {
   int i;
-  for (i=0; i<NUM_HDLS; i++) {
+  char *value;
+  /* This is a hideous kluge, but some users want to be able to set this
+   * externally. The fact that only integer handles are exchanged between GA and
+   * the underlying runtime make it very difficult to handle in a more elegant
+   * manner. */
+  nb_max_outstanding = MAX_NUM_NB_HDLS; /* default */
+  value = getenv("COMEX_MAX_NB_OUTSTANDING");
+  if (NULL != value) {
+    nb_max_outstanding = atoi(value);
+  }
+  if (nb_max_outstanding <1 || nb_max_outstanding > MAX_NUM_NB_HDLS) {
+    pnga_error("Illegal number of outstanding Non-block requests specified",
+        nb_max_outstanding);
+  }
+  for (i=0; i<nb_max_outstanding; i++) {
     ga_ihdl_array[i].ahandle = NULL;
     ga_ihdl_array[i].count = 0;
     ga_ihdl_array[i].active = 0;
@@ -142,12 +158,12 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
   ga_armcihdl_t* next = ga_ihdl_array[index].ahandle;
 
   lastARMCIhandle++;
-  lastARMCIhandle = lastARMCIhandle%NUM_HDLS;
-  top = lastARMCIhandle+NUM_HDLS;
+  lastARMCIhandle = lastARMCIhandle%nb_max_outstanding;
+  top = lastARMCIhandle+nb_max_outstanding;
   /* default index if no handles are available */
   iloc = lastARMCIhandle;
   for (i=lastARMCIhandle; i<top; i++) {
-    idx = i%NUM_HDLS;
+    idx = i%nb_max_outstanding;
     if (armci_ihdl_array[idx].active == 0) {
       iloc = idx;
       break;
@@ -289,12 +305,12 @@ void ga_init_nbhandle(Integer *nbhandle)
   int i, top, idx, iloc;
   gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
   lastGAhandle++;
-  lastGAhandle = lastGAhandle%NUM_HDLS;
-  top = lastGAhandle+NUM_HDLS;
+  lastGAhandle = lastGAhandle%nb_max_outstanding;
+  top = lastGAhandle+nb_max_outstanding;
   /* default index if no handles are available */
   idx = lastGAhandle;
   for (i=lastGAhandle; i<top; i++) {
-    iloc = i%NUM_HDLS;
+    iloc = i%nb_max_outstanding;
     if (ga_ihdl_array[iloc].ahandle == NULL) {
       idx = iloc;
       break;
