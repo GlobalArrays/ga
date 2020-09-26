@@ -23,14 +23,15 @@ cd jemalloc
 export JEPATH="${TRAVIS_ROOT}/jemalloc"
 sh autogen.sh
 ./configure --with-jemalloc-prefix=je_ --prefix="${JEPATH}"
-make
-make install
+make -j $(nproc --all)
+make -j $(nproc --all) install
 export LD_LIBRARY_PATH="${JEPATH}/lib:${LD_LIBRARY_PATH}"
 export PKG_CONFIG_PATH="${JEPATH}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
 # get SICM
 git clone  https://github.com/lanl/SICM.git
 cd SICM
+git checkout 5944a56e0ccf159b72ce6fe980745b021216b580
 
 
 # install SICM
