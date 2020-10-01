@@ -199,6 +199,7 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
   }
   armci_ihdl_array[iloc].next = ga_ihdl_array[index].ahandle;
   ga_ihdl_array[index].ahandle =  &armci_ihdl_array[iloc];
+  armci_ihdl_array[iloc].ga_hdlarr_index = index;
   ga_ihdl_array[index].count++;
 
   /* reset lastARMCIhandle to iloc */
