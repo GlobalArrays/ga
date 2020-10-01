@@ -1548,10 +1548,14 @@ int comex_wait(comex_request_t* hdl)
     COMEX_ASSERT(index < nb_max_outstanding);
     nb = &nb_state[index];
 
+#if 0
+    /* this condition will likely be tripped if a blocking operation follows a
+     * non-blocking operation*/
     if (0 == nb->in_use) {
-        fprintf(stderr, "{%d} comex_wait Error: invalid handle\n",
+        fprintf(stderr, "p[%d] comex_wait Error: invalid handle\n",
                 g_state.rank);
     }
+#endif
 
     nb_wait_for_all(nb);
 
@@ -1574,10 +1578,14 @@ int comex_test(comex_request_t* hdl, int *status)
     COMEX_ASSERT(index < nb_max_outstanding);
     nb = &nb_state[index];
 
+#if 0
+    /* this condition will likely be tripped if a blocking operation follows a
+     * non-blocking operation*/
     if (0 == nb->in_use) {
         fprintf(stderr, "{%d} comex_test Error: invalid handle\n",
                 g_state.rank);
     }
+#endif
 
     if (!nb_test_for_all(nb)) {
       /* Completed */
@@ -5300,20 +5308,21 @@ STATIC nb_t* nb_wait_for_handle()
           break;
         }
         nb = &nb_state[loop_index];
-        loop_index++;
-        loop_index %= nb_max_outstanding; /* wrap around if needed */
         if (!nb->in_use) {
           nb_index = loop_index;
           found = 1;
           break;
         }
+        loop_index++;
+        loop_index %= nb_max_outstanding; /* wrap around if needed */
     } while (nb->in_use);
     if (!found) {
       nb = &nb_state[nb_index];
-      nb_index++;
-      nb_index %= nb_max_outstanding; /* wrap around if needed */
       nb_wait_for_all(nb);
     }
+    nb->hdl = nb_index;
+    nb_index++;
+    nb_index %= nb_max_outstanding; /* wrap around if needed */
     /* make sure in_use flag is set to 1 */
     nb->in_use = 1;
 #endif
