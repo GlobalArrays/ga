@@ -491,12 +491,10 @@ static void ngai_gets(char *loc_base_ptr, char *prem,int *stride_rem, char *pbuf
 		      int *count, int nstrides, int proc, int field_off, 
 		      int field_size, int type_size) {
 #if 1
-  armci_hdl_t nbhandle;
   Integer handle;
-  ARMCI_INIT_HANDLE(&nbhandle);
+  ga_init_nbhandle(&handle);
   ngai_nbgets(loc_base_ptr, prem, stride_rem, pbuf, stride_loc, count, nstrides, proc, 
-	      field_off, field_size, type_size, &nbhandle);
-  handle = (Integer)nbhandle;
+	      field_off, field_size, type_size, (armci_hdl_t*)get_armci_nbhandle(&handle));
   nga_wait_internal(&handle);
 #else
   if(field_size<0 || field_size == type_size) {
