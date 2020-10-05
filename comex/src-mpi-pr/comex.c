@@ -5320,6 +5320,7 @@ STATIC nb_t* nb_wait_for_handle()
       nb = &nb_state[nb_index];
       nb_wait_for_all(nb);
     }
+    //nb->hdl = nb_index;
     nb_index++;
     nb_index %= nb_max_outstanding; /* wrap around if needed */
     /* make sure in_use flag is set to 1 */
