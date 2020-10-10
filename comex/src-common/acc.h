@@ -23,24 +23,24 @@ typedef struct {
 #endif
 
 #if HAVE_BLAS
-void sscal(const int *n, const float  *a, const float  *x, const int *incx);
-void dscal(const int *n, const double *a, const double *x, const int *incx);
-void saxpy(const int *n,  const float *a,  const float *x,
-                 const int *incx, float *y, const int *incy);
-void daxpy(const int *n,  const double *a,  const double *x,
-                 const int *incX, double *Y, const int *incy);
-void caxpy(const int *n,  const void *a,  const void *x,
-                 const int *incX, void *Y, const int *incy);
-void zaxpy(const int *n,  const void *a,  const void *x,
-                 const int *incX, void *Y, const int *incy);
-void scopy(const int *n,  const float *x,
-                 const int *incx, float *y, const int *incy);
-void dcopy(const int *n,  const double *x,
-                 const int *incx, double *y, const int *incy);
-void ccopy(const int *n,  const void *x,
-                 const int *incx, void *y, const int *incy);
-void zcopy(const int *n,  const void *x,
-                 const int *incx, void *y, const int *incy);
+void sscal(const BLAS_INT *n, const float  *a, const float  *x, const BLAS_INT *incx);
+void dscal(const BLAS_INT *n, const double *a, const double *x, const BLAS_INT *incx);
+void BLAS_SAXPY(const BLAS_INT *n,  const float *a,  const float *x,
+                 const BLAS_INT *incx, float *y, const BLAS_INT *incy);
+void BLAS_DAXPY(const BLAS_INT *n,  const double *a,  const double *x,
+                 const BLAS_INT *incX, double *Y, const BLAS_INT *incy);
+void BLAS_CAXPY(const BLAS_INT *n,  const void *a,  const void *x,
+                 const BLAS_INT *incX, void *Y, const BLAS_INT *incy);
+void BLAS_ZAXPY(const BLAS_INT *n,  const void *a,  const void *x,
+                 const BLAS_INT *incX, void *Y, const BLAS_INT *incy);
+void BLAS_SCOPY(const BLAS_INT *n,  const float *x,
+                 const BLAS_INT *incx, float *y, const BLAS_INT *incy);
+void BLAS_DCOPY(const BLAS_INT *n,  const double *x,
+                 const BLAS_INT *incx, double *y, const BLAS_INT *incy);
+void BLAS_CCOPY(const BLAS_INT *n,  const void *x,
+                 const BLAS_INT *incx, void *y, const BLAS_INT *incy);
+void BLAS_ZCOPY(const BLAS_INT *n,  const void *x,
+                 const BLAS_INT *incx, void *y, const BLAS_INT *incy);
 #endif
 
 #define IADD_SCALE_REG(A,B,C) (A) += (B) * (C)

@@ -165,6 +165,7 @@ Integer  FATR _NODEID_()
 }
 
 
+long NXTVAL_(long *mproc);
 Integer  FATR _NXTVAL_(Integer *mproc)
 {
     long amproc = *mproc;
