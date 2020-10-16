@@ -404,7 +404,12 @@ and InfiniBand.
 
 [back to top]
 
-The CMake build only supports the MPI-based runtimes so GA can only be built using MPI two-sided, MPI progress ranks, MPI thread multiple, MPI progress threads and MPI-3 (MPI RMA) runtimes. We recommend using MPI two-sided/MPI progress ranks based approach. The CMake build requires CMake Version 3.17 or greater. 
+The CMake build only supports the MPI-based runtimes so GA can only be built using MPI two-sided, MPI progress ranks, MPI thread multiple, MPI progress threads and MPI-3 (MPI RMA) runtimes. We recommend using MPI two-sided/MPI progress ranks based approach. 
+
+### Dependencies
+* CMake (v3.17+)
+* MPI
+* BLAS / LAPACK (Optional)
 
 ### The following options are supported:
 
@@ -440,12 +445,12 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
 
 #### If there is a missing feature that you would like to be added to the CMake build, please submit a feature request to our [GitHub issue tracker](https://github.com/GlobalArrays/ga/issues).
 
-- Example cmake invocation for Linux/MAC users:
+- Sample CMake invocation for Linux/MAC users
 
-   - A minimal invocation with defaults for all options:
-   ```
-   CC=gcc CXX=g++ FC=gfortran cmake -DCMAKE_INSTALL_PREFIX=$HOME/ga_install
-   ```
+    - A minimal invocation with defaults for all options:
+    ```
+    CC=gcc CXX=g++ FC=gfortran cmake -DCMAKE_INSTALL_PREFIX=$HOME/ga_install
+    ```
 
     - A more complete invocation that shows most options:
     ```
@@ -456,16 +461,15 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
     ```
 
 
-- Windows users: A typical invocation of a CMake build inside a Windows Visual Studios command prompt looks like
+- Sample CMake invocation for Windows users. 
+  * `ENABLE_FORTRAN=OFF` option is needed for Windows build.
+  * We do not recommend using the `BLAS` and `PROFILING` options as they are not tested for Windows builds.
+
    ```
-    set CFLAGS="/D _ITERATOR_DEBUG_LEVEL=0"
-    set CXXFLAGS="/D _ITERATOR_DEBUG_LEVEL=0"
-    cmake -Wdev --debug-trycompile ^
-       -G "Visual Studio 10 2010 Win64" ^
-       -D ENABLE_BLAS:BOOL=No ^
-       -D ENABLE_FORTRAN:BOOL=No ^
-       -D ENABLE_CXX:BOOL=Yes ^
-       -D GA_RUNTIME:STRING=MPI_TS ^
+    cmake ^
+       -D ENABLE_FORTRAN=OFF ^
+       -D ENABLE_CXX=ON ^
+       -D GA_RUNTIME=MPI_2SIDED ^
        -D CMAKE_INSTALL_PREFIX:PATH="\my\GA\install\path" ^
        ..
     cmake --build . --config Release
