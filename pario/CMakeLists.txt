@@ -1,9 +1,7 @@
 #
 # module: CMakeLists.txt
 # author: Bruce Palmer
-# description: implements a primative CMake build that can be used to build
-#              GA on Windows-based systems. Only MPI-based runtimes are
-#              supported.
+# description: CMake build for GA. Only MPI-based runtimes are supported.
 # 
 # DISCLAIMER
 #
@@ -93,7 +91,7 @@ install (FILES
   ${EAF_HEADERS}
   ${ELIO_HEADERS}
   ${SF_HEADERS}
-  DESTINATION include
+  DESTINATION include/ga
 )
 
 # -------------------------------------------------------------
