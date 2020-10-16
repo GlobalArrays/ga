@@ -30,75 +30,31 @@
 # file: CMakeLists.txt
 # -------------------------------------------------------------
 
-include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}
-                    ${PROJECT_BINARY_DIR}/gaf2c
+include_directories(BEFORE
+                    ${PROJECT_SOURCE_DIR}/ma
                     ${PROJECT_BINARY_DIR}/ma
-                    ${PROJECT_BINARY_DIR}
-)
+                    ${PROJECT_BINARY_DIR}/gaf2c
+                    ${PROJECT_BINARY_DIR}/global/src
+                    ${PROJECT_SOURCE_DIR}/global/src
+                    ${PROJECT_SOURCE_DIR}/comex/src-armci
+                    ${PROJECT_BINARY_DIR})
 
 # -------------------------------------------------------------
-# MA header installation
+# GA tools headers installation
 # -------------------------------------------------------------
 
-if (ENABLE_FORTRAN)
-  set(FORTRAN_HEADERS maf2c.fh ${CMAKE_CURRENT_BINARY_DIR}/mafdecls.fh)
-endif()
-
-set(MA_HEADERS
-  ma.h
-#  error.h
-  macdecls.h
-  macommon.h
-#  memcpy.h
-  scope.h
-  string-util.h
-  table.h
-  ${FORTRAN_HEADERS}
-  ${CMAKE_CURRENT_BINARY_DIR}/matypes.h
+set(GA_TOOLS_HEADERS
+  ${CMAKE_CURRENT_SOURCE_DIR}/ga-wprof.h
 )
 
-install (FILES
-  ${MA_HEADERS}
+install(FILES
+  ${GA_TOOLS_HEADERS}
   DESTINATION include/ga
 )
 
-# -------------------------------------------------------------
-# MA library installation
-# -------------------------------------------------------------
-
-if (ENABLE_FORTRAN)
-  set(FORTRAN_FILES f2c.c maf.F)
-endif()
-
-add_library(ma OBJECT
-  ma.c
-  error.c
-  string-util.c
-  table.c
-  ${FORTRAN_FILES}
+add_library(ga_tools OBJECT
+  ga-wapi.c
+  ga-wprof.c
 )
 
-if (ENABLE_FORTRAN)
-  ADD_DEPENDENCIES(ga_src GenerateConfigFH)
-endif()
 
-# -------------------------------------------------------------
-# Build MA tests
-# -------------------------------------------------------------
-
-if(ENABLE_TESTS)
-
-  if (ENABLE_FORTRAN)
-    add_executable(testf.x testf.F)
-  endif()
-  add_executable(test-coalesce.x test-coalesce.c)
-  add_executable(test-inquire.x test-inquire.c)
-  #add_executable(testc.x testc.c)
-  if (ENABLE_FORTRAN)
-    target_link_libraries(testf.x ga)
-  endif()
-  target_link_libraries(test-coalesce.x ga)
-  target_link_libraries(test-inquire.x ga)
-  #target_link_libraries(testc.x ga)
-
-endif()
