@@ -9,9 +9,6 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
--Added
-  - Version function that can be used to report the current version, subversion
-    and patch numbers of the current release
 ## [5.8] - 2020-09-30
 - Known Bugs
   - The MPI RMA port remains unreliable for many MPI implementations. Open MPI
@@ -19,6 +16,8 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
     reports several failures. It is recommended to use the latest MPI
     implementations available.
 - Added
+  - Version function that can be used to report the current version, subversion
+    and patch numbers of the current release
   - Overlay option for creating new GAs on top of existing GAs
   - The number of progress ranks per node in the progress ranks runtime is now
     configurable
@@ -28,10 +27,7 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
     C interface
   - Non-blocking test function
   - Read-only property based on caching 
-  - Memory type used for GAs can be specified if GA is built in conjunction with
-    [SICM](https://github.com/lanl/SICM) libraries
   - GA name can be recovered from handle 
-  - Function for recovering version of build
 - Changed
   - Non-blocking handle management was completely revamped. This simplifies
     implementation and removes some bugs. The number of outstanding non-blocking
