@@ -496,7 +496,7 @@ int me, nproc;
     
     do_work();
 
-    if(me==0)printf("Terminating ..\n");
+    if (me == 0) printf("All tests successful\n");
     GA_Terminate();
 
     MP_FINALIZE();
