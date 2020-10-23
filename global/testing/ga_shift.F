@@ -214,6 +214,9 @@ c
      +                       t_destroy
         endif
       end do
+
+      if (me .eq. 0) print *, "All tests successful"
+
 c
 c***  Tidy up the GA package
 c

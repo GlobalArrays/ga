@@ -42,6 +42,9 @@
           write(6,*) 'TESTING DOUBLE COMPLEX'
       endif
 #endif
+
+      if (me .eq. 0) print *, 'All tests successful'
+
       call test_dcpl()
       call ga_terminate()
       call MP_FINALIZE()

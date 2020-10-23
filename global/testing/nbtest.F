@@ -676,7 +676,9 @@ c
         write(6,'(a,f16.8)') 'Average time in ACC work:           ',
      +                     t_accw/dble(i_accw)
       endif
-      
+
+      print *, 'All tests successful'
+
 c
 c***  Tidy up the GA package
 c

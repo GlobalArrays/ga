@@ -36,9 +36,7 @@ c
 c
       call check_dbl(dim, minutes)
 c
-      if(me.eq.0)then
-        print *, 'Test completed succesfuly'
-      endif
+      if (me .eq. 0) print *, 'All tests successful'
 c
       if(ga_nodeid().eq.0)call ga_print_stats()
       call ga_terminate()

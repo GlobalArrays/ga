@@ -100,6 +100,7 @@ c
 c***  Tidy up the GA package
 c
       call ga_sync()
+      if (ga_nodeid() .eq. 0) print *, 'All tests successful'
       write(0,*) 'Calling ga_terminate'
       call ga_terminate()
 c

@@ -67,6 +67,8 @@ c     use mpi_allreduce on integer types -- that's why we use double
         call ga_sync()
       enddo
 
+      if (me .eq. 0) print *, 'All tests successful'
+
       call ga_terminate()
 
       call MP_FINALIZE()

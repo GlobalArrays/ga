@@ -45,6 +45,8 @@ c
 c
       call test_nga_bin()
 
+      if (me .eq. 0) print *, 'All tests successful'
+
 c     if(me.eq.0) call ga_print_stats()
 c
 c***  Tidy up the GA package

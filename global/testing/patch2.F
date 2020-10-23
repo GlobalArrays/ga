@@ -137,7 +137,7 @@ c
       endif
 c
       if (me.eq.0) then
-        write(6,'(a)') 'Successfully completed test of nga_add_patch'
+        write(6,'(a)') 'All tests successful'
       endif
 c
       status = nga_destroy(g_a)

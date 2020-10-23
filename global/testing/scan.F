@@ -47,6 +47,8 @@ c
       call test_nga_pack()                               ! Test PACK/UNPACK
       call test_nga_scan()                               ! Test SCAN_COPY/SCAN_ADD
 
+      if (me .eq. 0) print *, 'All tests successful'
+
 c     if(me.eq.0) call ga_print_stats()
 c
 c***  Tidy up the GA package

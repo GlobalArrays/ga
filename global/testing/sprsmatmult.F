@@ -445,6 +445,9 @@ c
 #if USE_PETSC
       call PetscFinalize(p_ierr)
 #endif
+
+      if (me .eq. 0) print *, 'All tests successful'
+
       call ga_terminate()
 c
 c***  Tidy up after message-passing library

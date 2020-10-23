@@ -47,6 +47,8 @@
       enddo
       call ga_pgroup_set_default(ga_pgroup_get_world())
 
+      if (me .eq. 0) print *, 'All tests successful'
+
       call ga_terminate()
 
       call MP_FINALIZE()

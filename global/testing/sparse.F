@@ -46,6 +46,8 @@ c
       call test_nga_select_elem()                         ! Test global max/min
       call test_ga_patch_enum()                           ! Test enumerate
 
+      if (me .eq. 0) print *, 'All tests successful'
+
 c     if(me.eq.0) call ga_print_stats()
 c
 c***  Tidy up the GA package

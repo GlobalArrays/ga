@@ -27,6 +27,7 @@
       call ga_fill(g_r,1.0d00)
 
       call ga_copy_patch('N',g_r,1,nbfl,1,nbfl,g_2e3c,1,nbfl,1,nbfl)
+      if (ga_nodeid() .eq. 0) print *, 'All tests successful'
       call ga_terminate
       call MP_FINALIZE()
       stop

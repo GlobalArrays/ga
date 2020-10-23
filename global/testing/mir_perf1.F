@@ -35,6 +35,7 @@ c***  Initialize the MA package
 c
 c      call test2D()
       call test1D()
+      if (ga_nodeid() .eq. 0) print *, 'All tests successful'
       call ga_terminate()
 c
       call MP_FINALIZE()
