@@ -16,7 +16,7 @@
 #define DIM 2
 #define SIZE 5
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs, i, j;
   int g_A, g_B, value=5, local_GA[SIZE][SIZE], local_A[SIZE][SIZE], local_B[SIZE][SIZE];  

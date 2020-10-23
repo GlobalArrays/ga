@@ -65,7 +65,7 @@ checking_operator (int rank, int nprocs)
   */
 }
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 
   int rank, nprocs;

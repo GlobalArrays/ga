@@ -157,12 +157,8 @@ int root=0, grp_me=-1;
      GA_Destroy(g_a);
      GA_Destroy(g_b);
 }
-     
 
-
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
 int heap=20000, stack=20000;
 int me, nproc;

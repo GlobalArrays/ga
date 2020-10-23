@@ -11,7 +11,7 @@
 #include"macdecls.h"
 #include"ga_unit.h"
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs;
   int g_A, g_B;

@@ -258,11 +258,8 @@ double *buf;
      GA_Destroy(g_a);
      GA_Destroy(g_b);
 }
-     
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char** argv)
 {
 Integer heap=300000, stack=300000;
 int me, nproc;
