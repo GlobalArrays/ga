@@ -34,7 +34,7 @@ cmake_minimum_required (VERSION 3.17.0 FATAL_ERROR)
 project (GlobalArrays VERSION 5.8.0 LANGUAGES C)
 
 # Append local CMake directory
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
 include(ga-utils)
 
@@ -62,6 +62,7 @@ ga_option(ENABLE_PROFILING OFF)
 ga_option(ENABLE_BLAS OFF)
 ga_option(ENABLE_SCALAPACK OFF)
 ga_option(ENABLE_EISPACK OFF)
+ga_option(USE_DPCPP OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_NO_SYSTEM_FROM_IMPORTED ON)
