@@ -105,12 +105,12 @@ if( NOT blas_LIBRARIES )
         set( blas_LIBRARIES IntelMKL::mkl )
         set(BLAS_INCLUDE_DIRS "${IntelMKL_INCLUDE_DIR}")
         set(BLAS_COMPILE_OPTIONS     "${IntelMKL_C_COMPILE_FLAGS}")
-        set(BLAS_COMPILE_DEFINITIONS "${IntelMKL_COMPILE_DEFINITIONS}")
+        # set(BLAS_COMPILE_DEFINITIONS "${IntelMKL_COMPILE_DEFINITIONS}")
       elseif( ${blas_type} MATCHES "IBMESSL" )
         set( blas_LIBRARIES IBMESSL::essl )
         set(BLAS_INCLUDE_DIRS "${IBMESSL_INCLUDE_DIR}")
         set(BLAS_COMPILE_OPTIONS     "${IBMESSL_C_COMPILE_FLAGS}")
-        set(BLAS_COMPILE_DEFINITIONS "${IBMESSL_COMPILE_DEFINITIONS}")        
+        # set(BLAS_COMPILE_DEFINITIONS "${IBMESSL_COMPILE_DEFINITIONS}")        
       elseif( ${blas_type} MATCHES "BLIS" )
         set( blas_LIBRARIES BLIS::blis )
       elseif( ${blas_type} MATCHES "OpenBLAS" )
@@ -119,7 +119,7 @@ if( NOT blas_LIBRARIES )
         set( blas_LIBRARIES ReferenceBLAS::blas )
         set(BLAS_INCLUDE_DIRS "${ReferenceBLAS_INCLUDE_DIR}")
         set(BLAS_COMPILE_OPTIONS     "${ReferenceBLAS_C_COMPILE_FLAGS}")
-        set(BLAS_COMPILE_DEFINITIONS "${ReferenceBLAS_COMPILE_DEFINITIONS}")           
+        # set(BLAS_COMPILE_DEFINITIONS "${ReferenceBLAS_COMPILE_DEFINITIONS}")           
       endif()
 
       # Propagate integers
@@ -218,7 +218,7 @@ if( BLAS_FOUND AND NOT TARGET BLAS::blas )
   INTERFACE_LINK_LIBRARIES      "${BLAS_LIBRARIES}"
   INTERFACE_INCLUDE_DIRECTORIES "${BLAS_INCLUDE_DIRS}"
   INTERFACE_COMPILE_OPTIONS     "${BLAS_COMPILE_OPTIONS}"
-  INTERFACE_COMPILE_DEFINITIONS "${BLAS_COMPILE_DEFINITIONS}"    
+  # INTERFACE_COMPILE_DEFINITIONS "${BLAS_COMPILE_DEFINITIONS}"    
   )
 
 endif()
