@@ -62,18 +62,19 @@ ga_option(ENABLE_PROFILING OFF)
 ga_option(ENABLE_BLAS OFF)
 ga_option(ENABLE_SCALAPACK OFF)
 ga_option(ENABLE_EISPACK OFF)
-ga_option(USE_DPCPP OFF)
+ga_option(ENABLE_DPCPP OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_NO_SYSTEM_FROM_IMPORTED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# set(CMAKE_LINK_DEPENDS_NO_SHARED ON)
 
 include(${PROJECT_SOURCE_DIR}/cmake/ga-compiler-options.cmake)
 
 if(ENABLE_BLAS)
   if(NOT ENABLE_FORTRAN)
     message(FATAL_ERROR "ENABLE_BLAS=ON needs ENABLE_FORTRAN=ON")
-  endif()
+  endif()  
 endif()
 
 if(MSVC AND ENABLE_FORTRAN)
@@ -332,9 +333,9 @@ if(ENABLE_BLAS)
     INTERFACE
       $<INSTALL_INTERFACE:${BLAS_COMPILE_OPTIONS}>
   )
-  target_compile_definitions(ga
-    PUBLIC ${BLAS_COMPILE_DEFINITIONS}
-  )
+  # target_compile_definitions(ga
+  #   PUBLIC ${BLAS_COMPILE_DEFINITIONS}
+  # )
   if(DEFINED GA_GCC_TOOLCHAIN_FLAG)
     target_compile_options(ga PUBLIC ${GA_GCC_TOOLCHAIN_FLAG})
   endif()

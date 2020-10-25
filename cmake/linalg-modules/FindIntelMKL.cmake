@@ -118,9 +118,9 @@ else()
   set( intelmkl_ILP64_SGIMPT_BLACS_LIBRARY_NAME   "mkl_blacs_sgimpt_ilp64"   )
 endif()
 
-if( intelmkl_PREFERS_STATIC AND USE_DPCPP)
+if( intelmkl_PREFERS_STATIC AND ENABLE_DPCPP)
   set( intelmkl_SYCL_LIBRARY_NAME       "libmkl_sycl.a"         )
-elseif(USE_DPCPP)
+elseif(ENABLE_DPCPP)
   set( intelmkl_SYCL_LIBRARY_NAME       "mkl_sycl"              )
 endif()
 
@@ -197,7 +197,7 @@ find_library( intelmkl_CORE_LIBRARY
   DOC "Intel(R) MKL CORE Library"
 )
 
-if(USE_DPCPP)
+if(ENABLE_DPCPP)
   find_library( intelmkl_SYCL_LIBRARY
     NAMES ${intelmkl_SYCL_LIBRARY_NAME}
     HINTS ${intelmkl_PREFIX}
@@ -210,6 +210,7 @@ if(USE_DPCPP)
   set(intel_SYCL_LIBRARIES ${intelmkl_SYCL_LIBRARY} ${INTEL_SYCL_LIBRARIES})
   # list(APPEND IntelMKL_C_COMPILE_FLAGS ${INTEL_SYCL_FLAGS})
   list(APPEND IntelMKL_INCLUDE_DIR ${INTEL_SYCL_INCLUDE_DIRS})
+  set(USE_DPCPP ON)
 endif() 
 
 # Check version
@@ -311,7 +312,8 @@ find_library( intelmkl_LP64_SCALAPACK_LIBRARY
 
 # Default to LP64
 if( "ilp64" IN_LIST IntelMKL_FIND_COMPONENTS )
-  set( IntelMKL_COMPILE_DEFINITIONS "MKL_ILP64" )
+  set(MKL_ILP64 ON)
+  #set( IntelMKL_COMPILE_DEFINITIONS "MKL_ILP64" )
   if( CMAKE_C_COMPILER_ID MATCHES "GNU" )
     set( IntelMKL_C_COMPILE_FLAGS        "-m64" )
     set( IntelMKL_Fortran_COMPILE_FLAGS  "-m64" "-fdefault-integer-8" )
@@ -407,24 +409,28 @@ if( intelmkl_LIBRARY AND intelmkl_THREAD_LIBRARY AND intelmkl_CORE_LIBRARY )
   set( IntelMKL_LIBRARIES ${IntelMKL_LIBRARIES} "m" "dl" )
 endif()
 
-list(APPEND IntelMKL_COMPILE_DEFINITIONS "BLA_LAPACK_INT=MKL_INT")
-list(APPEND IntelMKL_COMPILE_DEFINITIONS "BLA_LAPACK_COMPLEX8=MKL_Complex8")
-list(APPEND IntelMKL_COMPILE_DEFINITIONS "BLA_LAPACK_COMPLEX16=MKL_Complex16")
-list(APPEND IntelMKL_COMPILE_DEFINITIONS "BLA_VENDOR_MKL")
+# list(APPEND IntelMKL_COMPILE_DEFINITIONS "BLA_LAPACK_INT=MKL_INT")
+# list(APPEND IntelMKL_COMPILE_DEFINITIONS "BLA_LAPACK_COMPLEX8=MKL_Complex8")
+# list(APPEND IntelMKL_COMPILE_DEFINITIONS "BLA_LAPACK_COMPLEX16=MKL_Complex16")
+# list(APPEND IntelMKL_COMPILE_DEFINITIONS "BLA_VENDOR_MKL")
+
+set(BLA_VENDOR_MKL ON)
+set(BLA_LAPACK_INT       "MKL_INT")
+set(BLA_LAPACK_COMPLEX8  "MKL_Complex8")
+set(BLA_LAPACK_COMPLEX16 "MKL_Complex16")
 
 include(FindPackageHandleStandardArgs)
 is_valid(IntelMKL_C_COMPILE_FLAGS __has_cflags)
 if(__has_cflags)
   find_package_handle_standard_args( IntelMKL
     REQUIRED_VARS IntelMKL_LIBRARIES IntelMKL_INCLUDE_DIR 
-      IntelMKL_COMPILE_DEFINITIONS IntelMKL_C_COMPILE_FLAGS 
+      IntelMKL_C_COMPILE_FLAGS 
     VERSION_VAR IntelMKL_VERSION_STRING
     HANDLE_COMPONENTS
   )
 else()
   find_package_handle_standard_args( IntelMKL
-    REQUIRED_VARS IntelMKL_LIBRARIES IntelMKL_INCLUDE_DIR 
-      IntelMKL_COMPILE_DEFINITIONS  
+    REQUIRED_VARS IntelMKL_LIBRARIES IntelMKL_INCLUDE_DIR   
     VERSION_VAR IntelMKL_VERSION_STRING
     HANDLE_COMPONENTS
   )
@@ -437,7 +443,7 @@ if( IntelMKL_FOUND AND NOT TARGET IntelMKL::mkl )
     INTERFACE_INCLUDE_DIRECTORIES "${IntelMKL_INCLUDE_DIR}"
     INTERFACE_LINK_LIBRARIES      "${IntelMKL_LIBRARIES}"
     INTERFACE_COMPILE_OPTIONS     "${IntelMKL_C_COMPILE_FLAGS}"
-    INTERFACE_COMPILE_DEFINITIONS "${IntelMKL_COMPILE_DEFINITIONS}"
+    # INTERFACE_COMPILE_DEFINITIONS "${IntelMKL_COMPILE_DEFINITIONS}"
   )
 
   if( "scalapack" IN_LIST IntelMKL_FIND_COMPONENTS AND NOT scalapack_LIBRARIES )

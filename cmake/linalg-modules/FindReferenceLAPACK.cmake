@@ -49,13 +49,12 @@ include(CommonFunctions)
 # else()
 set( referencelapack_LIBRARY_NAME liblapack.a lapack )
 
-set( referencelapack_SPREFIX "${STAGE_INSTALL_DIR}" )
 set( referencelapack_IPREFIX "${CMAKE_INSTALL_PREFIX}" )
 set( referencelapack_PREFIX ${ReferenceLAPACKROOT} $ENV{ReferenceLAPACKROOT} )
 
 find_library( referencelapack_LIBRARY
   NAMES ${referencelapack_LIBRARY_NAME}
-  HINTS ${referencelapack_SPREFIX} ${referencelapack_IPREFIX} ${referencelapack_PREFIX}
+  HINTS ${referencelapack_IPREFIX} ${referencelapack_PREFIX}
   PATHS ${referencelapack_LIBRARY_DIR} ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} 
   PATH_SUFFIXES lib lib64 lib32
   DOC "ReferenceLAPACK Library"

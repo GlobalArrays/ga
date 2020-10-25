@@ -50,6 +50,9 @@ if (ENABLE_BLAS)
   ga_set_blasroot("IBMESSL"  ESSLROOT)
   ga_set_blasroot("ReferenceBLAS"   ReferenceBLASROOT)
   ga_set_blasroot("ReferenceLAPACK" ReferenceLAPACKROOT)
+  if (ENABLE_DPCPP)
+    ga_set_blasroot("IntelMKL" DPCPP_ROOT)
+  endif()
 endif()
 
 # check for numerical libraries. These should set variables BLAS_FOUND and
@@ -68,6 +71,13 @@ if (ENABLE_BLAS)
     else()
       message(FATAL_ERROR "ENABLE_BLAS=ON, but a LAPACK library was not found")
     endif()
+
+    CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ga_linalg.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/ga_linalg.h )  
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ga_linalg.h
+      DESTINATION include/ga
+    )
+    
 else()
     set(HAVE_BLAS 0)
     set(HAVE_LAPACK 0)
