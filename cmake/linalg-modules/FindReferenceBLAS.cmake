@@ -46,13 +46,12 @@ include(CommonFunctions)
 
 set( referenceblas_LIBRARY_NAME libblis.a blis )
 
-set( referenceblas_SPREFIX "${STAGE_INSTALL_DIR}" )
 set( referenceblas_IPREFIX "${CMAKE_INSTALL_PREFIX}" )
 set( referenceblas_PREFIX ${ReferenceBLASROOT} $ENV{ReferenceBLASROOT} )
 
 find_path( referenceblas_INCLUDE_DIR
   NAMES blis/blis.h
-  HINTS ${referenceblas_SPREFIX} ${referenceblas_IPREFIX} ${referenceblas_PREFIX}
+  HINTS ${referenceblas_IPREFIX} ${referenceblas_PREFIX}
   PATHS ${referenceblas_INCLUDE_DIR}
   PATH_SUFFIXES include
   DOC "Reference BLAS header"
@@ -60,7 +59,7 @@ find_path( referenceblas_INCLUDE_DIR
 
 find_library( referenceblas_LIBRARY
   NAMES ${referenceblas_LIBRARY_NAME}
-  HINTS ${referenceblas_SPREFIX} ${referenceblas_IPREFIX} ${referenceblas_PREFIX}
+  HINTS ${referenceblas_IPREFIX} ${referenceblas_PREFIX}
   PATHS ${referenceblas_LIBRARY_DIR} ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} 
   PATH_SUFFIXES lib lib64 lib32
   DOC "Reference BLAS Library"
@@ -79,25 +78,30 @@ if( referenceblas_LIBRARY )
   set( ReferenceBLAS_LIBRARIES ${referenceblas_LIBRARY} Threads::Threads "m")
 endif()
 
-list(APPEND ReferenceBLAS_COMPILE_DEFINITIONS "BLA_LAPACK_INT=int32_t")
-list(APPEND ReferenceBLAS_COMPILE_DEFINITIONS "BLA_LAPACK_COMPLEX8=std::complex<float>")
-list(APPEND ReferenceBLAS_COMPILE_DEFINITIONS "BLA_LAPACK_COMPLEX16=std::complex<double>")
-list(APPEND ReferenceBLAS_COMPILE_DEFINITIONS "BLA_VENDOR_REFERENCE")
-list(APPEND ReferenceBLAS_COMPILE_DEFINITIONS "USE_BLIS")
+# list(APPEND ReferenceBLAS_COMPILE_DEFINITIONS "BLA_LAPACK_INT=int32_t")
+# list(APPEND ReferenceBLAS_COMPILE_DEFINITIONS "BLA_LAPACK_COMPLEX8=std::complex<float>")
+# list(APPEND ReferenceBLAS_COMPILE_DEFINITIONS "BLA_LAPACK_COMPLEX16=std::complex<double>")
+# list(APPEND ReferenceBLAS_COMPILE_DEFINITIONS "BLA_VENDOR_REFERENCE")
+# list(APPEND ReferenceBLAS_COMPILE_DEFINITIONS "USE_BLIS")
+
+set(USE_BLIS ON)
+set(BLA_VENDOR_REFERENCE ON)
+set(BLA_LAPACK_INT "int32_t")
+set(BLA_LAPACK_COMPLEX8  "std::complex<float>")
+set(BLA_LAPACK_COMPLEX16 "std::complex<double>")
 
 include(FindPackageHandleStandardArgs)
 is_valid(ReferenceBLAS_C_COMPILE_FLAGS __has_cflags)
 if(__has_cflags)
   find_package_handle_standard_args( ReferenceBLAS
     REQUIRED_VARS ReferenceBLAS_LIBRARIES ReferenceBLAS_INCLUDE_DIR 
-      ReferenceBLAS_COMPILE_DEFINITIONS ReferenceBLAS_C_COMPILE_FLAGS 
+    ReferenceBLAS_C_COMPILE_FLAGS 
     VERSION_VAR ReferenceBLAS_VERSION_STRING
     HANDLE_COMPONENTS
   )
 else()
   find_package_handle_standard_args( ReferenceBLAS
-    REQUIRED_VARS ReferenceBLAS_LIBRARIES ReferenceBLAS_INCLUDE_DIR 
-      ReferenceBLAS_COMPILE_DEFINITIONS  
+    REQUIRED_VARS ReferenceBLAS_LIBRARIES ReferenceBLAS_INCLUDE_DIR   
     VERSION_VAR ReferenceBLAS_VERSION_STRING
     HANDLE_COMPONENTS
   )
@@ -110,7 +114,7 @@ if( ReferenceBLAS_FOUND AND NOT TARGET ReferenceBLAS::blas )
     INTERFACE_INCLUDE_DIRECTORIES "${ReferenceBLAS_INCLUDE_DIR}"
     INTERFACE_LINK_LIBRARIES      "${ReferenceBLAS_LIBRARIES}"
     INTERFACE_COMPILE_OPTIONS     "${ReferenceBLAS_C_COMPILE_FLAGS}"
-    INTERFACE_COMPILE_DEFINITIONS "${ReferenceBLAS_COMPILE_DEFINITIONS}"    
+    # INTERFACE_COMPILE_DEFINITIONS "${ReferenceBLAS_COMPILE_DEFINITIONS}"    
   )
 
 endif()
