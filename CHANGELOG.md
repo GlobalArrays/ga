@@ -28,6 +28,13 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
   - Non-blocking test function
   - Read-only property based on caching 
   - GA name can be recovered from handle 
+  - Added profiling capabilities to the GA branch that automatically generates
+    a log file in the running directory. This can be controlled with GAW_FILE_PREFIX
+    environment variable to add a prefix for the log files and the GAW_FMT
+    environment variable to create a CSV format or human readable format. The
+    default format is human readable.
+      - For autotools, add --enable-profile=1 in the configure line
+      - For CMake add -DENABLE_PROFILING=ON
 - Changed
   - Non-blocking handle management was completely revamped. This simplifies
     implementation and removes some bugs. The number of outstanding non-blocking
