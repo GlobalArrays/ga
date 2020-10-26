@@ -337,7 +337,7 @@ if(ENABLE_BLAS)
   #   PUBLIC ${BLAS_COMPILE_DEFINITIONS}
   # )
   if(DEFINED GA_GCC_TOOLCHAIN_FLAG)
-    target_compile_options(ga PUBLIC ${GA_GCC_TOOLCHAIN_FLAG})
+    target_compile_options(ga PUBLIC $<$<COMPILE_LANGUAGE:C,CXX>:${GA_GCC_TOOLCHAIN_FLAG}>)
   endif()
 endif()
 
