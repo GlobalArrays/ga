@@ -28,6 +28,7 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
   - Non-blocking test function
   - Read-only property based on caching 
   - GA name can be recovered from handle 
+  - Added Profiling capabilities back to the GA branch.
 - Changed
   - Non-blocking handle management was completely revamped. This simplifies
     implementation and removes some bugs. The number of outstanding non-blocking
