@@ -73,7 +73,7 @@ if (ENABLE_BLAS)
     endif()
 
     CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ga_linalg.h.in
-    ${CMAKE_CURRENT_BINARY_DIR}/ga_linalg.h )  
+                    ${CMAKE_CURRENT_BINARY_DIR}/ga_linalg.h )
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ga_linalg.h
       DESTINATION include/ga
     )

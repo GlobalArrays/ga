@@ -140,6 +140,7 @@ set (DECOSF 0)
 
 if (CMAKE_SYSTEM_NAME STREQUAL Linux)
   set(LINUX 1)
+  set(LINUX64 1)
 endif()
 
 set(USE_I8 OFF)
