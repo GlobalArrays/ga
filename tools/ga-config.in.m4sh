@@ -2,7 +2,6 @@ dnl run "autom4te -l m4sh ga-config.in.m4sh > ga-config.in"
 AS_INIT
 
 prefix="@prefix@"
-exec_prefix="@exec_prefix@"
 dep_libs="-larmci @GA_MP_LIBS@ @ARMCI_NETWORK_LIBS@"
 AS_IF([test -f "$prefix/bin/armci-config"], [
 dep_libs=`$prefix/bin/armci-config --libs`
@@ -11,7 +10,7 @@ dep_libs=`$prefix/bin/armci-config --libs`
 
 f77="@F77@"
 cc="@CC@"
-cppflags="@SCALAPACK_CPPFLAGS@ @LAPACK_CPPFLAGS@ @BLAS_CPPFLAGS@ @GA_MP_CPPFLAGS@ @ARMCI_NETWORK_CPPFLAGS@ -I@includedir@"
+cppflags="@SCALAPACK_CPPFLAGS@ @LAPACK_CPPFLAGS@ @BLAS_CPPFLAGS@ @GA_MP_CPPFLAGS@ @ARMCI_NETWORK_CPPFLAGS@ -I@prefix@/include"
 network_cppflags="@ARMCI_NETWORK_CPPFLAGS@"
 cflags="@GA_COPT@"
 fflags="@GA_FOPT@ @FFLAG_INT@"
@@ -25,7 +24,7 @@ use_peigs="@enable_peigs@"
 use_elpa="@have_elpa@"
 use_elpa_2015="@have_elpa_2015@"
 use_elpa_2016="@have_elpa_2016@"
-ldflags="@SCALAPACK_LDFLAGS@ @LAPACK_LDFLAGS@ @BLAS_LDFLAGS@ @GA_MP_LDFLAGS@ @ARMCI_NETWORK_LDFLAGS@ -L@libdir@"
+ldflags="@SCALAPACK_LDFLAGS@ @LAPACK_LDFLAGS@ @BLAS_LDFLAGS@ @GA_MP_LDFLAGS@ @ARMCI_NETWORK_LDFLAGS@ -L@prefix@/lib"
 network_ldflags="@ARMCI_NETWORK_LDFLAGS@"
 libs="-lga @SCALAPACK_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ $dep_libs"
 network_libs="@ARMCI_NETWORK_LIBS@"
