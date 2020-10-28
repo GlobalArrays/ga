@@ -47,7 +47,8 @@ validate_transpose(int g_A, int g_B, int* lo, int* hi, int ld)
     }
   
 }
-main(int argc, char **argv)
+
+int main(int argc, char **argv)
 {
   int rank, nprocs, i, j;
   int g_A, g_B, **local_value=NULL;

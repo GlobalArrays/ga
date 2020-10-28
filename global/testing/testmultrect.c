@@ -58,6 +58,10 @@ int main(int argc, char **argv) {
 
     /* Clean up */
     ret = mr_cleanup();
+
+    if (me == 0)
+      printf("All tests successful\n");
+
     GA_Terminate();
     MP_FINALIZE();
 

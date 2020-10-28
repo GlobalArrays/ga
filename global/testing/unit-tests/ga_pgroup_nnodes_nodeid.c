@@ -90,7 +90,7 @@ two_half_pgroup(int rank, int nprocs)
     printf("%d: My ID is %d :: %d --- two\n", rank, GA_Pgroup_nodeid(p_Gtwo), GA_Pgroup_nnodes(p_Gtwo));
 }
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs;
   

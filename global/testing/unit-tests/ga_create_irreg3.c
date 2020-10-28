@@ -29,7 +29,7 @@ create_irreg_ga(int ndim)
   GA_Destroy(g_A);							
 }
 
-main(int argc, char **argv)				
+int main(int argc, char **argv)
 {							
   int rank, nprocs, i;					
 

@@ -57,7 +57,7 @@ op=GA_Ddot(g_A, g_B);
 }
 */
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs;
 

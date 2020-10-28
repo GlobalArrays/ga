@@ -1591,10 +1591,7 @@ test_fun (int type, int dim, int OP)
   return ok;
 }
 
-int
-main (argc, argv)
-  int argc;
-  char **argv;
+int main(int argc, char **argv)
 {
   int heap = 20000, stack = 20000;
   int me, nproc;
