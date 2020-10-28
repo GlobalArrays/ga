@@ -30,12 +30,6 @@
 # file: CMakeLists.txt
 # -------------------------------------------------------------
 
-include_directories(BEFORE #${CMAKE_CURRENT_SOURCE_DIR}
-                           ${PROJECT_SOURCE_DIR}/comex/src-armci
-                           ${PROJECT_BINARY_DIR}
-                           ${CMAKE_CURRENT_BINARY_DIR}
-)
-
 # -------------------------------------------------------------
 # GAF2C header installation
 # -------------------------------------------------------------
@@ -63,6 +57,13 @@ add_library(gaf2c OBJECT
   testarg.c
   drand.c
   ${FORTRAN_FILES}
+)
+
+target_include_directories(gaf2c BEFORE PRIVATE 
+                           #${CMAKE_CURRENT_SOURCE_DIR}
+                           ${PROJECT_SOURCE_DIR}/comex/src-armci
+                           ${PROJECT_BINARY_DIR}
+                           ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 if (ENABLE_FORTRAN)

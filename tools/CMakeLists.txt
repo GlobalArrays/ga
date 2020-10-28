@@ -30,15 +30,6 @@
 # file: CMakeLists.txt
 # -------------------------------------------------------------
 
-include_directories(BEFORE
-                    ${PROJECT_SOURCE_DIR}/ma
-                    ${PROJECT_BINARY_DIR}/ma
-                    ${PROJECT_BINARY_DIR}/gaf2c
-                    ${PROJECT_BINARY_DIR}/global/src
-                    ${PROJECT_SOURCE_DIR}/global/src
-                    ${PROJECT_SOURCE_DIR}/comex/src-armci
-                    ${PROJECT_BINARY_DIR})
-
 # -------------------------------------------------------------
 # GA tools headers installation
 # -------------------------------------------------------------
@@ -58,3 +49,11 @@ add_library(ga_tools OBJECT
 )
 
 
+target_include_directories(ga_tools BEFORE PRIVATE
+                    ${PROJECT_SOURCE_DIR}/ma
+                    ${PROJECT_BINARY_DIR}/ma
+                    ${PROJECT_BINARY_DIR}/gaf2c
+                    ${PROJECT_BINARY_DIR}/global/src
+                    ${PROJECT_SOURCE_DIR}/global/src
+                    ${PROJECT_SOURCE_DIR}/comex/src-armci
+                    ${PROJECT_BINARY_DIR})

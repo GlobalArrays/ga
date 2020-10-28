@@ -74,6 +74,9 @@ int main(int argc, char **argv) {
         GA_Sync();
     }
 
+    if (me == 0)
+      printf("All tests successful\n");
+
     GA_Terminate();
     MP_FINALIZE();
 

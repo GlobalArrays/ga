@@ -197,22 +197,6 @@ find_library( intelmkl_CORE_LIBRARY
   DOC "Intel(R) MKL CORE Library"
 )
 
-if(ENABLE_DPCPP)
-  find_library( intelmkl_SYCL_LIBRARY
-    NAMES ${intelmkl_SYCL_LIBRARY_NAME}
-    HINTS ${intelmkl_PREFIX}
-    PATHS ${intelmkl_LIBRARY_DIR} ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES}
-    PATH_SUFFIXES lib/intel64 lib/ia32
-    DOC "Intel(R) MKL SYCL Library"
-  )
-  find_package(IntelSYCL REQUIRED)
-  #set(intel_SYCL_TARGET Intel::SYCL)
-  set(intel_SYCL_LIBRARIES ${intelmkl_SYCL_LIBRARY} ${INTEL_SYCL_LIBRARIES})
-  # list(APPEND IntelMKL_C_COMPILE_FLAGS ${INTEL_SYCL_FLAGS})
-  list(APPEND IntelMKL_INCLUDE_DIR ${INTEL_SYCL_INCLUDE_DIRS})
-  set(USE_DPCPP ON)
-endif() 
-
 # Check version
 if( EXISTS ${intelmkl_INCLUDE_DIR}/mkl_version.h )
   set( version_pattern 
@@ -239,8 +223,6 @@ if( EXISTS ${intelmkl_INCLUDE_DIR}/mkl_version.h )
   unset( mkl_version )
   unset( version_pattern )
 endif()
-
-
 
 if( intelmkl_INCLUDE_DIR )
   set( IntelMKL_INCLUDE_DIR ${intelmkl_INCLUDE_DIR} )
@@ -272,6 +254,21 @@ if( intelmkl_LP64_LIBRARY )
   set( IntelMKL_lp64_FOUND TRUE )
 endif()
 
+# SYCL
+if(ENABLE_DPCPP)
+  set(USE_DPCPP ON)
+  find_library( intelmkl_SYCL_LIBRARY
+    NAMES ${intelmkl_SYCL_LIBRARY_NAME}
+    HINTS ${intelmkl_PREFIX}
+    PATHS ${intelmkl_LIBRARY_DIR} ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES}
+    PATH_SUFFIXES lib/intel64 lib/ia32
+    DOC "Intel(R) MKL SYCL Library"
+  )
+  find_package(IntelSYCL REQUIRED)
+  #set(intel_SYCL_TARGET Intel::SYCL)
+  set(intel_SYCL_LIBRARIES ${intelmkl_SYCL_LIBRARY} ${INTEL_SYCL_LIBRARIES})
+  # list(APPEND IntelMKL_C_COMPILE_FLAGS ${INTEL_SYCL_FLAGS})
+endif() 
 
 
 # BLACS / ScaLAPACK
@@ -439,12 +436,22 @@ endif()
 if( IntelMKL_FOUND AND NOT TARGET IntelMKL::mkl )
 
   add_library( IntelMKL::mkl INTERFACE IMPORTED )
-  set_target_properties( IntelMKL::mkl PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${IntelMKL_INCLUDE_DIR}"
-    INTERFACE_LINK_LIBRARIES      "${IntelMKL_LIBRARIES}"
-    INTERFACE_COMPILE_OPTIONS     "${IntelMKL_C_COMPILE_FLAGS}"
-    # INTERFACE_COMPILE_DEFINITIONS "${IntelMKL_COMPILE_DEFINITIONS}"
-  )
+  
+  if(ENABLE_DPCPP)
+    set_target_properties( IntelMKL::mkl PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${IntelMKL_INCLUDE_DIR};${INTEL_SYCL_INCLUDE_DIRS}"
+      INTERFACE_LINK_LIBRARIES      "${IntelMKL_LIBRARIES}"
+      INTERFACE_COMPILE_OPTIONS     "${IntelMKL_C_COMPILE_FLAGS}"
+      # INTERFACE_COMPILE_DEFINITIONS "${IntelMKL_COMPILE_DEFINITIONS}"
+    )
+  else()
+    set_target_properties( IntelMKL::mkl PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${IntelMKL_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES      "${IntelMKL_LIBRARIES}"
+      INTERFACE_COMPILE_OPTIONS     "${IntelMKL_C_COMPILE_FLAGS}"
+      # INTERFACE_COMPILE_DEFINITIONS "${IntelMKL_COMPILE_DEFINITIONS}"
+    )
+  endif()
 
   if( "scalapack" IN_LIST IntelMKL_FIND_COMPONENTS AND NOT scalapack_LIBRARIES )
     set( scalapack_LIBRARIES IntelMKL::mkl )

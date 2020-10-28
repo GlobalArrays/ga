@@ -472,12 +472,8 @@ void do_work()
   }
   NGA_Destroy(g_a);
 }
-     
 
-
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
 int heap=20000, stack=20000;
 int me, nproc;
@@ -500,7 +496,7 @@ int me, nproc;
     
     do_work();
 
-    if(me==0)printf("Terminating ..\n");
+    if (me == 0) printf("All tests successful\n");
     GA_Terminate();
 
     MP_FINALIZE();

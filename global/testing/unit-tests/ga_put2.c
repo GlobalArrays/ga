@@ -14,7 +14,7 @@
 #define DIM 2
 #define SIZE 20
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs, i, j;
   int g_A, **local_A=NULL, **local_B=NULL; 

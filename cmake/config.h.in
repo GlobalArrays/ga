@@ -91,6 +91,7 @@
 /* #define BLAS_SIZE ${CM_BLAS_SIZE} */
 
 #cmakedefine LINUX
+#cmakedefine LINUX64
 
 #cmakedefine _FILE_OFFSET_BITS
 #cmakedefine _LARGEFILE_SOURCE

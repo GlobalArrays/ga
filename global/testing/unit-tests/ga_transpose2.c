@@ -31,7 +31,8 @@ validate_transpose(int local_A[][SIZE], int local_B[][SIZE])
     }
   
 }
-main(int argc, char **argv)
+
+int main(int argc, char **argv)
 {
   int rank, nprocs, i, j;
   int g_A, g_B, **local_value=NULL;

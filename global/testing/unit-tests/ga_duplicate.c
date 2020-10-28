@@ -14,7 +14,7 @@
 
 #define DIM 2
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs, i;
   double g_A, g_B; 

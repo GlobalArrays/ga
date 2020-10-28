@@ -17,7 +17,7 @@
 #define DIM 2
 #define SIZE 5
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs, i, j;
   double g_A, g_B; 

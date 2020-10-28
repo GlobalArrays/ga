@@ -70,17 +70,6 @@ set(WAPI_FILES
   ga-wapidefs.h
 )
 
-include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}
-                    ${PROJECT_BINARY_DIR}/gaf2c
-                    ${PROJECT_SOURCE_DIR}/ma
-                    ${PROJECT_BINARY_DIR}/ma
-                    ${PROJECT_SOURCE_DIR}/comex/src-armci
-                    #${PROJECT_SOURCE_DIR}/tcgmsg
-                    ${PROJECT_SOURCE_DIR}/LinAlg/lapack+blas
-                    ${CMAKE_CURRENT_BINARY_DIR}
-                    ${PROJECT_BINARY_DIR}
-)
-
 set(GA_FILES
   base.c
   onesided.c
@@ -131,6 +120,18 @@ add_library(ga_src OBJECT
   ${CMAKE_CURRENT_BINARY_DIR}/ga-wapi.h
   ${CMAKE_CURRENT_BINARY_DIR}/ga-wapidefs.h
   ${GA_FILES}
+)
+
+target_include_directories(ga_src BEFORE PRIVATE
+                    ${CMAKE_CURRENT_SOURCE_DIR}
+                    ${PROJECT_BINARY_DIR}/gaf2c
+                    ${PROJECT_SOURCE_DIR}/ma
+                    ${PROJECT_BINARY_DIR}/ma
+                    ${PROJECT_SOURCE_DIR}/comex/src-armci
+                    #${PROJECT_SOURCE_DIR}/tcgmsg
+                    ${PROJECT_SOURCE_DIR}/LinAlg/lapack+blas
+                    ${CMAKE_CURRENT_BINARY_DIR}
+                    ${PROJECT_BINARY_DIR}
 )
 
 if(ENABLE_FORTRAN)

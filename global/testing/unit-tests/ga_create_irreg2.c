@@ -173,7 +173,7 @@ auto_number2(int rank, int nprocs)
   GA_Destroy(g_B);
 }
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs;
 

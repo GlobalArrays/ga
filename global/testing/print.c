@@ -49,7 +49,11 @@ int main(int argc, char **argv)
         NGA_Release(g_a, &lo, &hi);
     }
 
+    if (GA_Nodeid() == 0)
+      printf("All tests successful\n");
+
     GA_Terminate();
     MP_FINALIZE();
-    exit(EXIT_SUCCESS);
+
+    return 0;
 }

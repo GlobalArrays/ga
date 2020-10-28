@@ -28,7 +28,7 @@ void create_ga(int ndim, int datatypes)
   GA_Destroy(g_A);							
 }
 
-main(int argc, char **argv)				
+int main(int argc, char **argv)
 {							
   int rank, nprocs, i, j;					
 

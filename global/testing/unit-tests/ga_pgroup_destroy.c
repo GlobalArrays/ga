@@ -14,7 +14,7 @@
 #include"macdecls.h"
 #include"ga_unit.h"
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs, i, j;
   int p_Geven, p_Godd, p_size, mod, p_size_mod, *list_even=NULL, *list_odd=NULL;

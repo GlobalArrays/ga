@@ -37,7 +37,7 @@ include_directories(BEFORE
   ${PROJECT_BINARY_DIR}/ma
   ${PROJECT_BINARY_DIR}/gaf2c
   ${PROJECT_SOURCE_DIR}/comex/src-armci
-  ${PROJECT_SOURCE_DIR}/tcgmsg
+  # ${PROJECT_SOURCE_DIR}/tcgmsg
   ${PROJECT_SOURCE_DIR}/LinAlg/lapack+blas
   ${PROJECT_SOURCE_DIR}/global/testing
   ${PROJECT_BINARY_DIR})
