@@ -83,6 +83,16 @@ else()
     set(HAVE_LAPACK 0)
 endif()
 
+if(ENABLE_DPCPP)
+  include( ${CMAKE_CURRENT_LIST_DIR}/linalg-modules/CommonFunctions.cmake )
+  list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/linalg-modules )
+
+  set(USE_DPCPP ON)
+  find_package(IntelSYCL REQUIRED)
+  set(intel_SYCL_TARGET Intel::SYCL)
+  list(REMOVE_AT CMAKE_MODULE_PATH -1)
+endif()
+
 # add definitions to compilers commands here since they are needed by
 # both global/src and global/testing directories
 option(SCALAPACK_I8 "Separately signal that ScalaPACK library has 8 byte ints"
@@ -107,6 +117,10 @@ set(linalg_lib )
 if (HAVE_BLAS)
   list(APPEND linalg_lib ${BLAS_LIBRARIES})
   message(STATUS "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
+  if(ENABLE_DPCPP)
+    list(APPEND linalg_lib ${intel_SYCL_TARGET})
+    message(STATUS "SYCL_LIBRARIES: ${intel_SYCL_TARGET}")
+  endif()
 endif()
 if (HAVE_LAPACK)
   list(APPEND linalg_lib ${LAPACK_LIBRARIES})

@@ -2,13 +2,8 @@ cmake_minimum_required( VERSION 3.17 FATAL_ERROR)
 
 @PACKAGE_INIT@
 
-set(ENABLE_CXX @ENABLE_CXX@)
 set(ENABLE_FORTRAN @ENABLE_FORTRAN@)
 set(ENABLE_BLAS @ENABLE_BLAS@)
-
-if(ENABLE_CXX)
-  enable_language(CXX)
-endif()
 
 set(GA_MPI_LIBS MPI::MPI_C)
 if(ENABLE_FORTRAN)
@@ -32,6 +27,9 @@ if(ENABLE_BLAS)
   set(ENABLE_DPCPP @ENABLE_DPCPP@)
   if(ENABLE_DPCPP)
     set(DPCPP_ROOT @DPCPP_ROOT@)
+    if(NOT TARGET Intel::SYCL)
+      find_package(IntelSYCL REQUIRED)
+    endif()
   endif()
   
   if(NOT TARGET BLAS::blas)
