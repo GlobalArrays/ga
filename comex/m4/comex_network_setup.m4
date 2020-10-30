@@ -230,7 +230,8 @@ AS_IF([test "x$happy" = xyes],
             [# add missing lib to COMEX_NETWORK_LIBS if not there 
              AS_CASE([$COMEX_NETWORK_LIBS], 
                      [*$ac_cv_search_fi_getinfo*], [], 
-                     [COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $ac_cv_search_fi_getinfo"])])]) 
+                     [COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $ac_cv_search_fi_getinfo"])])])
+LT_LIB_DLLOAD
 AS_IF([test "x$happy" = xyes],
     [comex_network=OFI; with_ofi=yes; $1],
     [$2])

@@ -87,15 +87,16 @@ find_package_handle_standard_args(IntelSYCL
         INTEL_SYCL_SUPPORTED)
 
 if(IntelSYCL_FOUND AND NOT TARGET Intel::SYCL)
-    add_library(Intel::SYCL UNKNOWN IMPORTED)
+    add_library(Intel::SYCL INTERFACE IMPORTED)
     # set(imp_libs
     #     $<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,SHARED_LIBRARY>:-fsycl>
     #     ${COMPUTE_RUNTIME_NAME})
     set(INTEL_SYCL_FLAGS -fsycl)
+    #SYCL flags are not exported for now. Code using GA is responsible for adding this flag.
     set_target_properties(Intel::SYCL PROPERTIES
         INTERFACE_LINK_LIBRARIES "${INTEL_SYCL_LIBRARIES}"
         INTERFACE_INCLUDE_DIRECTORIES "${INTEL_SYCL_INCLUDE_DIRS}"
-        INTERFACE_COMPILE_OPTIONS "${INTEL_SYCL_FLAGS}"
+        #INTERFACE_COMPILE_OPTIONS "${INTEL_SYCL_FLAGS}"
         #IMPORTED_LOCATION "${INTEL_SYCL_LIBRARIES}"
     )
     mark_as_advanced(
