@@ -84,13 +84,9 @@ else()
 endif()
 
 if(ENABLE_DPCPP)
-  include( ${CMAKE_CURRENT_LIST_DIR}/linalg-modules/CommonFunctions.cmake )
-  list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/linalg-modules )
-
   set(USE_DPCPP ON)
   find_package(IntelSYCL REQUIRED)
   set(intel_SYCL_TARGET Intel::SYCL)
-  list(REMOVE_AT CMAKE_MODULE_PATH -1)
 endif()
 
 # add definitions to compilers commands here since they are needed by

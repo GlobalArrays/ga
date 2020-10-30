@@ -416,6 +416,13 @@ if(ENABLE_BLAS)
     ${CMAKE_CURRENT_LIST_DIR}/cmake/linalg-modules
     DESTINATION ${INSTALL_CONFIGDIR}
   )
+
+  if(ENABLE_DPCPP)
+    install(FILES
+      ${CMAKE_CURRENT_LIST_DIR}/cmake/FindIntelSYCL.cmake
+      DESTINATION ${INSTALL_CONFIGDIR}
+    )
+  endif()
 endif()
 
 export(EXPORT globalarrays-targets
