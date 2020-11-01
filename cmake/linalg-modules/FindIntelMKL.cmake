@@ -76,6 +76,9 @@ if( "scalapack" IN_LIST IntelMKL_FIND_COMPONENTS AND NOT ("blacs" IN_LIST IntelM
 endif()
 
 set(intelmkl_PREFERS_STATIC ON)
+if(BUILD_SHARED_LIBS)
+  set(intelmkl_PREFERS_STATIC OFF)
+endif()
 
 # MKL lib names
 if( intelmkl_PREFERS_STATIC )
