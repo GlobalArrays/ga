@@ -28,7 +28,7 @@ int main( int argc, char **argv ) {
   int type=MT_C_INT;
   int nelems, ok;
   int *buf, *ptr;
-  int *nbhdl;
+  ga_nbhdl_t *nbhdl;
 
   int heap=3000000, stack=2000000;
 
@@ -62,7 +62,7 @@ int main( int argc, char **argv ) {
   if (me == 0) {
     buf = (int*)malloc(nelems*sizeof(int));
     ptr = buf;
-    nbhdl = (int*)malloc(nproc*sizeof(int));
+    nbhdl = (ga_nbhdl_t*)malloc(nproc*sizeof(ga_nbhdl_t));
     for (n=0; n<nproc; n++) {
       NGA_Distribution(g_a, n, lo, hi);
       isize = (hi[0]-lo[0]+1);
@@ -177,7 +177,7 @@ int main( int argc, char **argv ) {
     int idx, jdx;
     int idim = N/BLOCK;
     int jdim = N/BLOCK;
-    int *Lnbhdl = (int*)malloc(idim*jdim*sizeof(int));
+    ga_nbhdl_t *Lnbhdl = (ga_nbhdl_t*)malloc(idim*jdim*sizeof(ga_nbhdl_t));
     ptr = buf;
     for (n=0; n<idim*jdim; n++) {
       idx = n%idim;

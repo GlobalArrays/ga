@@ -49,7 +49,7 @@ public:
    * @return the new PGroup
    */
   static PGroup* getDefault();
-  
+
   /**
    * This function will return a handle to the mirrored processor group,
    * which can then be used to create a global array using one of the
@@ -71,6 +71,25 @@ public:
    * @return the new PGroup
    */
   static PGroup* getWorld();
+
+  /**
+   * Return a new processor group that is a duplicate of the existing processor
+   * group
+   *
+   * This is collective operation
+   *
+   * @return the new PGroup
+   */
+  PGroup duplicate();
+
+  /**
+   * Return a new processor group that contains only the calling process
+   *
+   * This is local operation
+   *
+   * @return the new PGroup
+   */
+  static PGroup self();
 
   /**
    * This function can be used to reset the default processor group on a

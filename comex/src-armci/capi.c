@@ -239,7 +239,7 @@ int ARMCI_Malloc(void **ptr_arr, armci_size_t bytes)
 int ARMCI_Malloc_memdev(void **ptr_arr, armci_size_t bytes,
     const char *device)
 {
-    return PARMCI_Malloc(ptr_arr, bytes);
+    return PARMCI_Malloc_memdev(ptr_arr, bytes, device);
 }
 
 

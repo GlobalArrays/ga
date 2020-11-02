@@ -587,6 +587,20 @@ public:
    * @return 1 means "yes", "0" means "no".
    */
   int memoryLimited();
+
+  /**
+   * Test for completion of a nonblocking operation locally. This will return 1
+   * if the operation is completed locally and 0 otherwise. If the operation
+   * returns true, the local buffer is ready for use or reuse, depending on the
+   * operation. Once the test has returned true, there is no need to call the
+   * nbWait function on the handle.
+   *
+   * This is a local operation.
+   *
+   * @param[in] nbhandle nonblocking handle
+   * @param[out] true if operation has completed locally
+   */
+  int nbTest(GANbhdl *nbhandle);
   
   /**
    * Force completion of a nonblocking operation locally.

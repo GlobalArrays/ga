@@ -248,7 +248,7 @@ void ARMCI_Fence(int proc)
     
 }
 
-void ARMCI_Fence(ARMCI_Group *group)
+void ARMCI_GroupFence(ARMCI_Group *group)
 {
     double local_start;
     double local_stop;

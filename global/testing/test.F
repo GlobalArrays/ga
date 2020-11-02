@@ -23,6 +23,7 @@ c#define USE_SCALAPACK_DISTR
 c#define USE_TILED_DISTR
 c#define USE_TILED_IRREG_DISTR
 c#define USE_RESTRICTED
+c#define USE_MEMDEV
 
 #ifdef USE_RESTRICTED
 #  define NEW_API
@@ -51,6 +52,11 @@ c#define USE_RESTRICTED
 
 #ifdef USE_TILED_IRREG_DISTR
 #  define BLOCK_CYCLIC
+#endif
+
+#ifdef USE_MEMDEV
+#  define NEW_API
+#  define MEMDEVICE "dram"
 #endif
 
       program main
@@ -353,6 +359,9 @@ c     call setdbg(1)
       p_mirror = ga_pgroup_get_mirror()
       call ga_set_pgroup(g_a,p_mirror)
 #  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_a,MEMDEVICE)
+#  endif
       status = ga_allocate(g_a)
 #else
 #  ifndef MIRROR
@@ -629,6 +638,9 @@ c     overlapping accumulate
 
 #  ifdef MIRROR
       call ga_set_pgroup(g_b,p_mirror)
+#  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_b,MEMDEVICE)
 #  endif
       if (.not.ga_allocate(g_b)) then
 #else
@@ -1086,6 +1098,9 @@ c
 #endif
 #endif
 
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_c,MEMDEVICE)
+#  endif
       if (.not.ga_allocate(g_c)) then
 #else
       if (.not. nga_create(MT_DBL, ndim, dims, 'c', chunk, g_c)) then
@@ -1284,6 +1299,9 @@ c     call setdbg(1)
       p_mirror = ga_pgroup_get_mirror()
       call ga_set_pgroup(g_a,p_mirror)
 #  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_a,MEMDEVICE)
+#  endif
       status = ga_allocate(g_a)
 #else
 #  ifndef MIRROR
@@ -1309,6 +1327,9 @@ c     call setdbg(1)
       call ga_set_array_name(g_b,'b')
 #  ifdef MIRROR
       call ga_set_pgroup(g_b,p_mirror)
+#  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_b,MEMDEVICE)
 #  endif
       if (.not.ga_allocate(g_b)) then
 #else
@@ -1898,6 +1919,9 @@ c     call setdbg(1)
       p_mirror = ga_pgroup_get_mirror()
       call ga_set_pgroup(g_a,p_mirror)
 #  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_a,MEMDEVICE)
+#  endif
       status = ga_allocate(g_a)
 #else
 #  ifndef MIRROR
@@ -1938,6 +1962,9 @@ c     call setdbg(1)
 #endif
 #  ifdef MIRROR
       call ga_set_pgroup(g_b,p_mirror)
+#  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_b,MEMDEVICE)
 #  endif
       if (.not.ga_allocate(g_b)) then
 #else
@@ -2522,6 +2549,9 @@ c
       p_mirror = ga_pgroup_get_mirror()
       call ga_set_pgroup(g_a,p_mirror)
 #  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_a,MEMDEVICE)
+#  endif
       if (.not.ga_allocate(g_a)) then
 #else
 #  ifndef MIRROR
@@ -3059,6 +3089,9 @@ c
       p_mirror = ga_pgroup_get_mirror()
       write(6,*) 'Setting proc config'
       call ga_set_pgroup(g_a,p_mirror)
+#  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_a,MEMDEVICE)
 #  endif
       if (.not.ga_allocate(g_a)) then
 #else

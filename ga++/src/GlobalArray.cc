@@ -649,6 +649,12 @@ GA::GlobalArray::ndim()  const {
   return GA_Ndim(mHandle);
 }
 
+int
+GA::GlobalArray::overlay(const GA::GlobalArray *g_p)
+{
+  return GA_Overlay(mHandle, g_p->mHandle);
+}
+
 void
 GA::GlobalArray::pack(const GA::GlobalArray *g_dest,
                       const GA::GlobalArray *g_mask,
@@ -998,6 +1004,11 @@ GA::GlobalArray::setIrregDistr(int64_t mapc[], int64_t nblock[]) const {
 }
 
 void
+GA::GlobalArray::setProperty(char *property) {
+    GA_Set_property(mHandle, property);
+}
+
+void
 GA::GlobalArray::setRestricted(int list[], int nprocs) const {
     GA_Set_restricted(mHandle, list, nprocs);
 }
@@ -1005,6 +1016,16 @@ GA::GlobalArray::setRestricted(int list[], int nprocs) const {
 void
 GA::GlobalArray::setRestrictedRange(int lo_proc, int hi_proc) const {
     GA_Set_restricted_range(mHandle, lo_proc, hi_proc);
+}
+
+void
+GA::GlobalArray::unsetProperty() {
+    GA_Unset_property(mHandle);
+}
+
+void
+GA::GlobalArray::setMemoryDev(char *device) {
+    GA_Set_memory_dev(mHandle, device);
 }
 
 void
