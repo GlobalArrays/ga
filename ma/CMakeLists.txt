@@ -1,9 +1,7 @@
 #
 # module: CMakeLists.txt
 # author: Bruce Palmer
-# description: implements a primative CMake build that can be used to build
-#              GA on Windows-based systems. Only MPI-based runtimes are
-#              supported.
+# description: CMake build for GA. Only MPI-based runtimes are supported.
 # 
 # DISCLAIMER
 #
@@ -33,21 +31,17 @@
 # -------------------------------------------------------------
 
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}
-                    ${PROJECT_SOURCE_DIR}/gaf2c
+                    ${PROJECT_BINARY_DIR}/gaf2c
+                    ${PROJECT_BINARY_DIR}/ma
+                    ${PROJECT_BINARY_DIR}
 )
-
-if (NOT MSVC)
-set(ctargetlibs ${MPI_C_LIBRARIES} m)
-else()
-set(ctargetlibs ${MPI_C_LIBRARIES})
-endif()
 
 # -------------------------------------------------------------
 # MA header installation
 # -------------------------------------------------------------
 
 if (ENABLE_FORTRAN)
-  set(FORTRAN_HEADERS maf2c.fh mafdecls.fh)
+  set(FORTRAN_HEADERS maf2c.fh ${CMAKE_CURRENT_BINARY_DIR}/mafdecls.fh)
 endif()
 
 set(MA_HEADERS
@@ -55,17 +49,17 @@ set(MA_HEADERS
 #  error.h
   macdecls.h
   macommon.h
-  matypes.h
 #  memcpy.h
   scope.h
   string-util.h
   table.h
   ${FORTRAN_HEADERS}
+  ${CMAKE_CURRENT_BINARY_DIR}/matypes.h
 )
 
 install (FILES
   ${MA_HEADERS}
-  DESTINATION include
+  DESTINATION include/ga
 )
 
 # -------------------------------------------------------------
@@ -92,11 +86,19 @@ endif()
 # Build MA tests
 # -------------------------------------------------------------
 
-add_executable(testf.x testf.F)
-add_executable(test-coalesce.x test-coalesce.c)
-add_executable(test-inquire.x test-inquire.c)
-#add_executable(testc.x testc.c)
-target_link_libraries(testf.x ga ${ctargetlibs})
-target_link_libraries(test-coalesce.x ga ${ctargetlibs})
-target_link_libraries(test-inquire.x ga ${ctargetlibs})
-#target_link_libraries(testc.x ga ${ctargetlibs})
+if(ENABLE_TESTS)
+
+  if (ENABLE_FORTRAN)
+    add_executable(testf.x testf.F)
+  endif()
+  add_executable(test-coalesce.x test-coalesce.c)
+  add_executable(test-inquire.x test-inquire.c)
+  #add_executable(testc.x testc.c)
+  if (ENABLE_FORTRAN)
+    target_link_libraries(testf.x ga)
+  endif()
+  target_link_libraries(test-coalesce.x ga)
+  target_link_libraries(test-inquire.x ga)
+  #target_link_libraries(testc.x ga)
+
+endif()

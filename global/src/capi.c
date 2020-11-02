@@ -646,6 +646,20 @@ void NGA_Set_array_name(int g_a, char *name)
     wnga_set_array_name(aa, name);
 }
 
+void GA_Get_array_name(int g_a, char *name)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_get_array_name(aa, name);
+}
+
+void NGA_Get_array_name(int g_a, char *name)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_get_array_name(aa, name);
+}
+
 void GA_Set_pgroup(int g_a, int p_handle)
 {
   Integer aa, pp;
@@ -673,6 +687,26 @@ void GA_Set_block_cyclic(int g_a, int dims[])
 }
 
 void NGA_Set_block_cyclic(int g_a, int dims[])
+{
+    Integer aa, ndim;
+    Integer _ga_dims[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    COPYC2F(dims,_ga_dims, ndim);
+    wnga_set_block_cyclic(aa, _ga_dims);
+}
+
+void GA_Set_block_cyclic64(int g_a, int64_t dims[])
+{
+    Integer aa, ndim;
+    Integer _ga_dims[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    COPYC2F(dims,_ga_dims, ndim);
+    wnga_set_block_cyclic(aa, _ga_dims);
+}
+
+void NGA_Set_block_cyclic64(int g_a, int64_t dims[])
 {
     Integer aa, ndim;
     Integer _ga_dims[MAXDIM];
@@ -754,6 +788,20 @@ void NGA_Unset_property(int g_a)
     Integer aa;
     aa = (Integer)g_a;
     wnga_unset_property(aa);
+}
+
+void GA_Set_memory_dev(int g_a, char *device)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_set_memory_dev(aa,device);
+}
+
+void NGA_Set_memory_dev(int g_a, char *device)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_set_memory_dev(aa,device);
 }
 
 int GA_Total_blocks(int g_a)
@@ -874,6 +922,30 @@ void NGA_Set_block_cyclic_proc_grid(int g_a, int block[], int proc_grid[])
     wnga_set_block_cyclic_proc_grid(aa, _block, _proc_grid);
 }
 
+void GA_Set_block_cyclic_proc_grid64(int g_a, int64_t block[], int64_t proc_grid[])
+{
+    Integer aa, ndim;
+    Integer _ga_dims[MAXDIM];
+    Integer _ga_lo[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    COPYC2F(block,_ga_dims, ndim);
+    COPYC2F(proc_grid,_ga_lo, ndim);
+    wnga_set_block_cyclic_proc_grid(aa, _ga_dims, _ga_lo);
+}
+
+void NGA_Set_block_cyclic_proc_grid64(int g_a, int64_t block[], int64_t proc_grid[])
+{
+    Integer aa, ndim;
+    Integer _block[MAXDIM];
+    Integer _proc_grid[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    COPYC2F(block,_block, ndim);
+    COPYC2F(proc_grid, _proc_grid, ndim);
+    wnga_set_block_cyclic_proc_grid(aa, _block, _proc_grid);
+}
+
 void GA_Set_tiled_proc_grid(int g_a, int block[], int proc_grid[])
 {
     Integer aa, ndim;
@@ -896,6 +968,101 @@ void NGA_Set_tiled_proc_grid(int g_a, int block[], int proc_grid[])
     COPYC2F(block,_block, ndim);
     COPYC2F(proc_grid, _proc_grid, ndim);
     wnga_set_tiled_proc_grid(aa, _block, _proc_grid);
+}
+
+void GA_Set_tiled_proc_grid64(int g_a, int64_t block[], int64_t proc_grid[])
+{
+    Integer aa, ndim;
+    Integer _ga_dims[MAXDIM];
+    Integer _ga_lo[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    COPYC2F(block,_ga_dims, ndim);
+    COPYC2F(proc_grid,_ga_lo, ndim);
+    wnga_set_tiled_proc_grid(aa, _ga_dims, _ga_lo);
+}
+
+void NGA_Set_tiled_proc_grid64(int g_a, int64_t block[], int64_t proc_grid[])
+{
+    Integer aa, ndim;
+    Integer _block[MAXDIM];
+    Integer _proc_grid[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    COPYC2F(block,_block, ndim);
+    COPYC2F(proc_grid, _proc_grid, ndim);
+    wnga_set_tiled_proc_grid(aa, _block, _proc_grid);
+}
+
+void GA_Set_tiled_irreg_proc_grid(int g_a, int mapc[], int nblocks[],
+    int proc_grid[])
+{
+    Integer aa, ndim;
+    Integer *_ga_map_capi;
+    Integer _nblocks[MAXDIM];
+    Integer _proc_grid[MAXDIM];
+
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    _ga_map_capi = copy_map(nblocks, (int)ndim, mapc);
+    COPYC2F(nblocks,_nblocks, ndim);
+    COPYC2F(proc_grid, _proc_grid, ndim);
+
+    wnga_set_tiled_irreg_proc_grid(aa, _ga_map_capi, _nblocks, _proc_grid);
+    free(_ga_map_capi);
+}
+
+void NGA_Set_tiled_irreg_proc_grid(int g_a, int mapc[], int nblocks[],
+    int proc_grid[])
+{
+    Integer aa, ndim;
+    Integer *_ga_map_capi;
+    Integer _nblocks[MAXDIM];
+    Integer _proc_grid[MAXDIM];
+
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    _ga_map_capi = copy_map(nblocks, (int)ndim, mapc);
+    COPYC2F(nblocks,_nblocks, ndim);
+    COPYC2F(proc_grid, _proc_grid, ndim);
+
+    wnga_set_tiled_irreg_proc_grid(aa, _ga_map_capi, _nblocks, _proc_grid);
+    free(_ga_map_capi);
+}
+
+void GA_Set_tiled_irreg_proc_grid64(int g_a, int64_t mapc[], int64_t nblocks[],
+    int64_t proc_grid[])
+{
+    Integer aa, ndim;
+    Integer *_ga_map_capi;
+    Integer _nblocks[MAXDIM];
+    Integer _proc_grid[MAXDIM];
+
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    _ga_map_capi = copy_map64(nblocks, (int)ndim, mapc);
+    COPYC2F(nblocks,_nblocks, ndim);
+    COPYC2F(proc_grid, _proc_grid, ndim);
+
+    wnga_set_tiled_irreg_proc_grid(aa, _ga_map_capi, _nblocks, _proc_grid);
+    free(_ga_map_capi);
+}
+void NGA_Set_tiled_irreg_proc_grid64(int g_a, int64_t mapc[], int64_t nblocks[],
+    int64_t proc_grid[])
+{
+    Integer aa, ndim;
+    Integer *_ga_map_capi;
+    Integer _nblocks[MAXDIM];
+    Integer _proc_grid[MAXDIM];
+
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(aa);
+    _ga_map_capi = copy_map64(nblocks, (int)ndim, mapc);
+    COPYC2F(nblocks,_nblocks, ndim);
+    COPYC2F(proc_grid, _proc_grid, ndim);
+
+    wnga_set_tiled_irreg_proc_grid(aa, _ga_map_capi, _nblocks, _proc_grid);
+    free(_ga_map_capi);
 }
 
 int GA_Get_pgroup(int g_a)
@@ -1106,6 +1273,22 @@ int NGA_Allocate(int g_a)
   return (int)wnga_allocate(aa);
 }
 
+int GA_Overlay(int g_a, int g_p)
+{
+  Integer aa, bb;
+  aa = (Integer)g_a;
+  bb = (Integer)g_p;
+  return (int)wnga_overlay(aa, bb);
+}
+
+int NGA_Overlay(int g_a, int g_p)
+{
+  Integer aa, bb;
+  aa = (Integer)g_a;
+  bb = (Integer)g_p;
+  return (int)wnga_overlay(aa, bb);
+}
+
 int GA_Pgroup_nodeid(int grp_id)
 {
     Integer agrp_id = (Integer)grp_id;
@@ -1156,6 +1339,28 @@ int NGA_Pgroup_create(int *list, int count)
     grp_id = (int)wnga_pgroup_create(_ga_map_capi,acount);
     free(_ga_map_capi);
     return grp_id;
+}
+
+int GA_Pgroup_duplicate(int grp)
+{
+  Integer pgrp = (Integer)grp;
+  return (int)wnga_pgroup_duplicate(pgrp);
+}
+
+int NGA_Pgroup_duplicate(int grp)
+{
+  Integer pgrp = (Integer)grp;
+  return (int)wnga_pgroup_duplicate(pgrp);
+}
+
+int GA_Pgroup_self()
+{
+  return (int)wnga_pgroup_self();
+}
+
+int NGA_Pgroup_self()
+{
+  return (int)wnga_pgroup_self();
 }
 
 int GA_Pgroup_destroy(int grp)
@@ -3472,7 +3677,7 @@ void NGA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
     
-    pnga_matmul_patch(&transb, &transa, alpha, beta,
+    wnga_matmul_patch(&transb, &transa, alpha, beta,
 		     b, _ga_blo, _ga_bhi,
 		     a, _ga_alo, _ga_ahi,
 		     c, _ga_clo, _ga_chi);
@@ -3505,7 +3710,73 @@ void NGA_Matmul_patch64(char transa, char transb, void* alpha, void *beta,
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
     
-    pnga_matmul_patch(&transb, &transa, alpha, beta,
+    wnga_matmul_patch(&transb, &transa, alpha, beta,
+		     b, _ga_blo, _ga_bhi,
+		     a, _ga_alo, _ga_ahi,
+		     c, _ga_clo, _ga_chi);
+}
+
+void NGA_Matmul_patch_alt(char transa, char transb, void* alpha, void *beta,
+		      int g_a, int alo[], int ahi[], 
+		      int g_b, int blo[], int bhi[], 
+		      int g_c, int clo[], int chi[]) 
+
+{
+    Integer a=(Integer)g_a;
+    Integer andim = wnga_ndim(a);
+    
+    Integer b=(Integer)g_b;
+    Integer bndim = wnga_ndim(b);
+    
+    Integer c=(Integer)g_c;
+    Integer cndim = wnga_ndim(c);
+    
+    Integer _ga_alo[MAXDIM], _ga_ahi[MAXDIM];
+    Integer _ga_blo[MAXDIM], _ga_bhi[MAXDIM];
+    Integer _ga_clo[MAXDIM], _ga_chi[MAXDIM];
+    COPYINDEX_C2F(alo,_ga_alo, andim);
+    COPYINDEX_C2F(ahi,_ga_ahi, andim);
+    
+    COPYINDEX_C2F(blo,_ga_blo, bndim);
+    COPYINDEX_C2F(bhi,_ga_bhi, bndim);
+    
+    COPYINDEX_C2F(clo,_ga_clo, cndim);
+    COPYINDEX_C2F(chi,_ga_chi, cndim);
+    
+    wnga_matmul_patch_alt(&transb, &transa, alpha, beta,
+		     b, _ga_blo, _ga_bhi,
+		     a, _ga_alo, _ga_ahi,
+		     c, _ga_clo, _ga_chi);
+}
+
+void NGA_Matmul_patch_alt64(char transa, char transb, void* alpha, void *beta,
+                        int g_a, int64_t alo[], int64_t ahi[], 
+                        int g_b, int64_t blo[], int64_t bhi[], 
+                        int g_c, int64_t clo[], int64_t chi[]) 
+
+{
+    Integer a=(Integer)g_a;
+    Integer andim = wnga_ndim(a);
+    
+    Integer b=(Integer)g_b;
+    Integer bndim = wnga_ndim(b);
+    
+    Integer c=(Integer)g_c;
+    Integer cndim = wnga_ndim(c);
+    
+    Integer _ga_alo[MAXDIM], _ga_ahi[MAXDIM];
+    Integer _ga_blo[MAXDIM], _ga_bhi[MAXDIM];
+    Integer _ga_clo[MAXDIM], _ga_chi[MAXDIM];
+    COPYINDEX_C2F(alo,_ga_alo, andim);
+    COPYINDEX_C2F(ahi,_ga_ahi, andim);
+    
+    COPYINDEX_C2F(blo,_ga_blo, bndim);
+    COPYINDEX_C2F(bhi,_ga_bhi, bndim);
+    
+    COPYINDEX_C2F(clo,_ga_clo, cndim);
+    COPYINDEX_C2F(chi,_ga_chi, cndim);
+    
+    wnga_matmul_patch_alt(&transb, &transa, alpha, beta,
 		     b, _ga_blo, _ga_bhi,
 		     a, _ga_alo, _ga_ahi,
 		     c, _ga_clo, _ga_chi);
@@ -5026,5 +5297,21 @@ void NGA_Put_field(int g_a, int *lo, int *hi, int foff, int fsize,
   wnga_put_field(a, _alo, _ahi, foff, fsize, buf, _ld);
 }
 
+void GA_Version(int *major, int *minor, int *patch)
+{
+  Integer maj, min, ptch;
+  wnga_version(&maj,&min,&ptch);
+  *major = (int)maj;
+  *minor = (int)min;
+  *patch = (int)ptch;
+}
 
+void NGA_Version(int *major, int *minor, int *patch)
+{
+  Integer maj, min, ptch;
+  wnga_version(&maj,&min,&ptch);
+  *major = (int)maj;
+  *minor = (int)min;
+  *patch = (int)ptch;
+}
 

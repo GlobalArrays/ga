@@ -450,6 +450,13 @@ GA_LAPACK
 GA_SCALAPACK
 GA_ELPA
 
+
+###############################################################################
+# Checks for enabling interfaces to external libraries
+###############################################################################
+GA_SICM
+
+
 ###############################################################################
 # Checks for programs.
 ###############################################################################
@@ -532,6 +539,9 @@ AS_IF([test "x$ga_cv_target" = xLINUX64],
     [AS_CASE([$host_cpu],
         [x86_64|ppc64],
             [AC_DEFINE([NOUSE_MMAP], [1], [Set some mallopt options])])])
+
+AC_CHECK_FUNCS([mallopt], [have_mallopt=1], [have_mallopt=0])
+AC_DEFINE_UNQUOTED([HAVE_MALLOPT], [$have_mallopt], [Define to 1 if you have the 'mallopt' function.])
 
 # Create proper types for our access functions.
 AS_IF([test "x$ac_cv_sizeof_voidp" = "x$ac_cv_sizeof_int"],
@@ -646,4 +656,9 @@ AS_CASE([$ga_msg_comms], [MPI|TCGMSGMPI], [
 AC_MSG_NOTICE([               MPIEXEC=$MPIEXEC])
 ])
 AC_MSG_NOTICE([                NPROCS=$NPROCS])
+if test "x$with_sicm" != "xno"; then :
+AC_MSG_NOTICE([                SICM_CPPFLAGS=$SICM_CPPFLAGS])
+AC_MSG_NOTICE([                SICM_LDFLAGS=$SICM_LDFLAGS])
+AC_MSG_NOTICE([                SICM_LIBS=$SICM_LIBS])
+fi
 AC_MSG_NOTICE([])

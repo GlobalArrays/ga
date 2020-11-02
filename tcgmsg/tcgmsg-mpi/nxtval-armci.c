@@ -16,8 +16,8 @@
 static long pnxtval_counter_val;
 static long *pnxtval_counter=&pnxtval_counter_val;
 int nxtval_installed=0;
-extern int     *tcgi_argc;
-extern char  ***tcgi_argv;
+extern int     tcgi_argc;
+extern char  **tcgi_argv;
 #define INCR 1   /**< increment for NXTVAL */
 #define BUSY -1L /**< indicates somebody else updating counter*/
 #define NXTV_SERVER ((int)NNODES_() -1)
@@ -38,7 +38,7 @@ long NXTVAL_(long *mproc)
     int rc;
     int server = NXTV_SERVER;         /* id of server process */
 
-    install_nxtval(tcgi_argc, tcgi_argv);
+    install_nxtval(&tcgi_argc, &tcgi_argv);
 
     if (SR_parallel) {
         if (DEBUG_) {
@@ -66,12 +66,17 @@ long NXTVAL_(long *mproc)
         if (*mproc > 0) {
 #if   SIZEOF_F77_INTEGER == SIZEOF_INT
             int op = ARMCI_FETCH_AND_ADD;
+            rc = ARMCI_Rmw(op,(void*)&local,(void*)pnxtval_counter,1,server);
 #elif SIZEOF_F77_INTEGER == SIZEOF_LONG
             int op = ARMCI_FETCH_AND_ADD_LONG;
+            rc = ARMCI_Rmw(op,(void*)&local,(void*)pnxtval_counter,1,server);
+#else
+#ifdef WIN64
+                Error("nxtval: not implemented",0);
 #else
 #   error
 #endif
-            rc = ARMCI_Rmw(op,(void*)&local,(void*)pnxtval_counter,1,server);
+#endif
         }
     } else {
         /* Not running in parallel ... just do a simulation */

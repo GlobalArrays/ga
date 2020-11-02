@@ -100,9 +100,11 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
 
 void destroy_array(void *ptr[])
 {
-  ARMCI_Barrier();
+  int check;
 
-  assert(!ARMCI_Free(ptr[me]));
+  ARMCI_Barrier();
+  check = !ARMCI_Free(ptr[me]);
+  assert(check);
 }
 
 #define GNUM_A 3

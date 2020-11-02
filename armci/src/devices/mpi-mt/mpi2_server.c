@@ -58,16 +58,16 @@ void armci_mpi2_server_debug(int rank, const char *format, ...)
 #endif
 
 #if 1
-static inline int MPI_Check (int status)
+static inline int CHECK_Mpi (int status)
 {
     if(status != MPI_SUCCESS) 
     {
        armci_mpi2_server_debug(armci_me, "MPI Check failed.\n");
-       armci_die("MPI_Check failed.", 0);
+       armci_die("CHECK_Mpi failed.", 0);
     }
 }
 #else
-# define MPI_Check(x) x
+# define CHECK_Mpi(x) x
 #endif
 
 void armci_mpi_strided_s2c(int op, void *ptr, int stride_levels, int stride_arr[],
@@ -104,14 +104,14 @@ void armci_mpi_strided_s2c(int op, void *ptr, int stride_levels, int stride_arr[
 
         if(op == SEND)
         {
-           MPI_Check(
+           CHECK_Mpi(
               MPI_Send(((char*)ptr)+idx, count[0], MPI_BYTE, proc,
                        ARMCI_MPI_SERVER2CLIENT_TAG, comm)
               );
         }                      
         else /* ( op == RECV) */
         {
-           MPI_Check(
+           CHECK_Mpi(
               MPI_Recv(((char*)ptr)+idx, count[0], MPI_BYTE, proc,
                        ARMCI_MPI_CLIENT2SERVER_TAG, comm, &status)
               );
@@ -198,7 +198,7 @@ void armci_rcv_req (void *mesg, void *phdr, void *pdescr,
     msginfo = (request_header_t*) MessageRcvBuffer;
     p = * (int *) mesg;
     
-    MPI_Check(
+    CHECK_Mpi(
        MPI_Recv(MessageRcvBuffer, MSG_BUFLEN, MPI_BYTE, p, ARMCI_MPI_CLIENT2SERVER_TAG,
                 ARMCI_COMM_WORLD, &status)
        );
@@ -268,7 +268,7 @@ void armci_WriteToDirect (int to, request_header_t *msginfo, void *data)
         armci_die("armci_WriteToDirect: send request to invalid client", to);
 
     check_comm();
-    MPI_Check(
+    CHECK_Mpi(
             MPI_Send(data, msginfo->datalen, MPI_BYTE, to,
                 ARMCI_MPI_SERVER2CLIENT_TAG, ARMCI_COMM_WORLD)
             );
@@ -309,14 +309,14 @@ void armci_call_data_server()
     {       
 #if 1
        while (!flag) { 
-            MPI_Check(
+            CHECK_Mpi(
                     MPI_Iprobe(MPI_ANY_SOURCE, ARMCI_MPI_CLIENT2SERVER_TAG,
                         ARMCI_COMM_WORLD,
                         &flag, &status)
                     );
        }
 #else
-            MPI_Check(
+            CHECK_Mpi(
                     MPI_Probe(MPI_ANY_SOURCE, ARMCI_MPI_CLIENT2SERVER_TAG,
                         ARMCI_COMM_WORLD,
                         &status)
@@ -355,10 +355,10 @@ void armci_mpi2_server_init_twosided()
     MPI_Status status;
 
     assert(ARMCI_COMM_WORLD != MPI_COMM_NULL);
-    MPI_Check(MPI_Comm_rank(ARMCI_COMM_WORLD, &armci_server_me));
+    CHECK_Mpi(MPI_Comm_rank(ARMCI_COMM_WORLD, &armci_server_me));
     armci_nserver = armci_nclus;
-    MPI_Check(MPI_Get_processor_name(processor_name, &namelen));
-    MPI_Check(MPI_Get_version(&version, &subversion));
+    CHECK_Mpi(MPI_Get_processor_name(processor_name, &namelen));
+    CHECK_Mpi(MPI_Get_version(&version, &subversion));
 
 }
 

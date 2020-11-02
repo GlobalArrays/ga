@@ -245,8 +245,10 @@ int main(int argc, char *argv[])
   rnd_one = RND(0, th_size);
   prndbg(0, "random one = %d\n", rnd_one);
 
-  assert(ptrs1 = calloc(th_size, sizeof(void *)));
-  assert(ptrs2 = calloc(th_size, sizeof(void *)));
+  ptrs1 = calloc(th_size, sizeof(void *));
+  assert(ptrs1);
+  ptrs2 = calloc(th_size, sizeof(void *));
+  assert(ptrs2);
 #ifdef NOTHREADS
   thread_main((void *)(long)0);
 #else
@@ -283,8 +285,10 @@ void *thread_main(void *arg)
   th_idx = (int)(long)arg;
   prndbg(th_idx, "thread %d(%d|%d) STARTED\n", TH_ME, rank, th_idx);
 
-  assert(!ARMCI_MALLOC_MT(ptrs1, ASIZExITERSxTH_BYTES));
-  assert(!ARMCI_MALLOC_MT(ptrs2, ASIZExITERSxTH_BYTES));
+  int check = !ARMCI_MALLOC_MT(ptrs1, ASIZExITERSxTH_BYTES);
+  assert(check);
+  check = !ARMCI_MALLOC_MT(ptrs2, ASIZExITERSxTH_BYTES);
+  assert(check);
 #if 0
   for (i = 0, cbufl = 0; i < th_size; i++) {
     cbufl += sprintf(cbuf + cbufl, " %p", ptrs1[i]);
@@ -300,7 +304,8 @@ void *thread_main(void *arg)
   init_array(th_idx, ptrs2[TH_ME]);
 #endif
 
-  assert(rmt = calloc(th_size, sizeof(int)));
+  rmt = calloc(th_size, sizeof(int));
+  assert(rmt);
 
   PRINTF0T("  TESTING GET/PUT/ACC\n\n");
 
@@ -447,7 +452,8 @@ void test_pairs(int th_idx)
     /* src - addr of remote thread block on my proc/thread */
     dst = &AELEM(ptrs2[TH_ME], rem_th, i, 0);
     /* get from my pair */
-    assert(!ARMCI_Get(src, dst, ASIZE_BYTES, rem_proc));
+    int check = !ARMCI_Get(src, dst, ASIZE_BYTES, rem_proc);
+    assert(check);
   }
 
   MT_BARRIER();
@@ -494,8 +500,11 @@ void test_PutGetAcc(int th_idx, int tgt, int *rmt, int rmt_cnt)
     for (i = 0; i < iters; i++) {
       src = &AELEM(ptrs1[a], b, i, 0); /* a.ptrs1[b] */
       dst = &AELEM(ptrs2[b], a, i, 0); /* b.ptrs2[a] */
-      //            assert(!ARMCI_Put(src, dst, ASIZE_BYTES, b_proc));
-      assert(!ARMCI_PutS(src, stride, dst, stride, count, 1, b_proc));
+      int check;
+      // check = !ARMCI_Put(src, dst, ASIZE_BYTES, b_proc);
+      //      assert(check);
+      check = !ARMCI_PutS(src, stride, dst, stride, count, 1, b_proc);
+      assert(check);
     }
     ARMCI_Fence(b_proc);
   }
@@ -524,7 +533,8 @@ void test_PutGetAcc(int th_idx, int tgt, int *rmt, int rmt_cnt)
     for (i = 0; i < iters; i++) {
       src = &AELEM(ptrs1[b], a, i, 0); /* b.ptrs1[a] */
       dst = &AELEM(ptrs2[a], b, i, 0); /* a.ptrs2[b] */
-      assert(!ARMCI_GetS(src, stride, dst, stride, count, 1, b_proc));
+      check = !ARMCI_GetS(src, stride, dst, stride, count, 1, b_proc);
+      assert(check);
     }
   }
   print_array(th_idx, "GET:ptrs1[TH_ME]", ptrs1[TH_ME]);
@@ -549,7 +559,8 @@ void test_PutGetAcc(int th_idx, int tgt, int *rmt, int rmt_cnt)
     for (i = 0; i < iters; i++) {
       src = &AELEM(ptrs1[a], b, i, 0); /* a.ptrs1[b] */
       dst = &AELEM(ptrs2[b], a, i, 0); /* b.ptrs2[a] */
-      assert(!ARMCI_AccS(ARMCI_ACC_DBL, &scale, src, stride, dst, stride, count, 1, b_proc));
+      check = !ARMCI_AccS(ARMCI_ACC_DBL, &scale, src, stride, dst, stride, count, 1, b_proc);
+      assert(check);
     }
     ARMCI_Fence(b_proc);
   }

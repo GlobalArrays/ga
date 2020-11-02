@@ -1,7 +1,7 @@
 language: c
 os:
-  - osx
   - linux
+  - osx
 compiler:
   - clang
   - gcc
@@ -10,20 +10,29 @@ addons:
   apt:
     packages:
       - gfortran
-matrix:
+  homebrew:
+    packages:
+      - gcc
+      - coreutils
+    update: true
+cache:
+    directories:
+        - $HOME/travis
+jobs:
   allow_failures:
     - env: MPI_IMPL=openmpi
 env:
-  - MPI_IMPL=mpich
-    PORT=sockets
-  - MPI_IMPL=mpich
-    PORT=mpi-ts
-  - MPI_IMPL=mpich
-    PORT=mpi-mt
-  - MPI_IMPL=mpich
-    PORT=mpi-pt
+  # - MPI_IMPL=mpich
+  #   PORT=sockets
+  # - MPI_IMPL=mpich
+  #   PORT=mpi-ts
+  # - MPI_IMPL=mpich
+  #   PORT=mpi-mt
+  # - MPI_IMPL=mpich
+  #   PORT=mpi-pt
   - MPI_IMPL=mpich
     PORT=mpi-pr
+
   - MPI_IMPL=mpich
     PORT=mpi3
   - MPI_IMPL=openmpi
@@ -40,18 +49,20 @@ env:
     PORT=armci
   - MPI_IMPL=openmpi
     PORT=armci
+
 before_install:
   - export TRAVIS_ROOT=$HOME/travis
-  - mkdir $TRAVIS_ROOT
+  - mkdir -p $TRAVIS_ROOT
   - sh ./travis/install-autotools.sh $TRAVIS_ROOT
 install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc || brew upgrade gcc || true; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install coreutils || brew upgrade coreutils || true; fi
+
   - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
   - if [[ "$PORT" == "ofi" ]]; then sh ./travis/install-libfabric.sh $TRAVIS_ROOT; fi
   - if [[ "$PORT" == "armci" ]]; then sh ./travis/install-armci-mpi.sh $TRAVIS_ROOT; fi
+  - if [[ ( "$PORT" == "mpi-pr" ) && ( "$TRAVIS_OS_NAME" == "linux" ) ]]; then sh ./travis/install-sicm.sh $HOME/no_cache; fi
+
 script:
   - sh ./travis/build-run.sh $TRAVIS_ROOT $PORT $MPI_IMPL
 after_failure:
-  - if [[ "$PORT" == "armci" ]]; then find . -name config.log -exec cat {} ";"; fi
+  -  find . -name config.log -exec cat {} ";"
   - cat ./test-suite.log

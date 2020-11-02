@@ -449,7 +449,7 @@ int main(int argc, char **argv) {
     /* *****************************************************************
      * Terminate MPI/TCGMSG-MPI, GA and MA
      * *****************************************************************/
-    if(me==0)printf("Success\n");
+    if (me == 0) printf("All tests successful\n");
     GA_Terminate();
 
     MP_FINALIZE();

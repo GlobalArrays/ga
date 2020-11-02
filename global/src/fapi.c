@@ -386,6 +386,16 @@ Integer FATR nga_get_dimension_(Integer *g_a)
   return wnga_get_dimension(*g_a);
 }
 
+logical FATR ga_overlay_(Integer *g_a, Integer *g_p)
+{
+  return wnga_overlay(*g_a,*g_p);
+}
+
+logical FATR nga_overlay_(Integer *g_a, Integer *g_p)
+{
+  return wnga_overlay(*g_a,*g_p);
+}
+
 Integer FATR ga_get_pgroup_(Integer *g_a)
 {
   return wnga_get_pgroup(*g_a);
@@ -729,6 +739,26 @@ Integer FATR nga_pgroup_create_(Integer *list, Integer *count)
   return wnga_pgroup_create(list, *count);
 }
 
+Integer FATR ga_pgroup_duplicate_(Integer *grp)
+{
+  return wnga_pgroup_duplicate(*grp);
+}
+
+Integer FATR nga_pgroup_duplicate_(Integer *grp)
+{
+  return wnga_pgroup_duplicate(*grp);
+}
+
+Integer FATR ga_pgroup_self_()
+{
+  return wnga_pgroup_self();
+}
+
+Integer FATR nga_pgroup_self_()
+{
+  return wnga_pgroup_self();
+}
+
 logical FATR ga_pgroup_destroy_(Integer *grp)
 {
   return wnga_pgroup_destroy(*grp);
@@ -857,6 +887,20 @@ void FATR nga_set_array_name_(Integer *g_a, char *array_name, int slen)
   wnga_set_array_name(*g_a, buf);
 }
 
+void FATR ga_get_array_name_(Integer *g_a, char *array_name, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(array_name ,slen, buf, FNAM);
+  wnga_get_array_name(*g_a, buf);
+}
+
+void FATR nga_get_array_name_(Integer *g_a, char *array_name, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(array_name ,slen, buf, FNAM);
+  wnga_get_array_name(*g_a, buf);
+}
+
 void FATR ga_set_block_cyclic_(Integer *g_a, Integer *dims)
 {
   wnga_set_block_cyclic(*g_a, dims);
@@ -889,6 +933,20 @@ void FATR nga_set_tiled_proc_grid_(Integer *g_a, Integer *dims,
                                           Integer *proc_grid)
 {
   wnga_set_tiled_proc_grid(*g_a, dims, proc_grid);
+}
+
+void FATR ga_set_tiled_irreg_proc_grid_(Integer *g_a, Integer *mapc,
+                                         Integer *nblocks, 
+                                         Integer *proc_grid)
+{
+  wnga_set_tiled_irreg_proc_grid(*g_a, mapc, nblocks, proc_grid);
+}
+
+void FATR nga_set_tiled_irreg_proc_grid_(Integer *g_a, Integer *mapc,
+                                         Integer *nblocks, 
+                                         Integer *proc_grid)
+{
+  wnga_set_tiled_irreg_proc_grid(*g_a, mapc, nblocks, proc_grid);
 }
 
 void FATR ga_set_chunk_(Integer *g_a, Integer *chunk)
@@ -1015,6 +1073,20 @@ void FATR ga_unset_property_(Integer *g_a)
 void FATR nga_unset_property_(Integer *g_a)
 {
   wnga_unset_property(*g_a);
+}
+
+void FATR ga_set_memory_dev_(Integer *g_a, char *device, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(device, slen, buf, FNAM);
+  wnga_set_memory_dev(*g_a, buf);
+}
+
+void FATR nga_set_memory_dev_(Integer *g_a, char *device, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(device, slen, buf, FNAM);
+  wnga_set_memory_dev(*g_a, buf);
 }
 
 void FATR  ga_terminate_()
@@ -1459,6 +1531,16 @@ void FATR ga_sync_()
 void FATR nga_sync_()
 {
   wnga_sync();
+}
+
+void FATR ga_msg_sync_()
+{
+  wnga_msg_sync();
+}
+
+void FATR nga_msg_sync_()
+{
+  wnga_msg_sync();
 }
 
 /* Routines from global.util.c */
@@ -3305,6 +3387,17 @@ void FATR nga_matmul_patch_(
     wnga_matmul_patch(transa, transb, alpha, beta, *g_a, alo, ahi, *g_b, blo, bhi, *g_c, clo, chi);
 }
 
+void FATR nga_matmul_patch_alt_(
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+        char *transa, char *transb, void *alpha, void *beta, Integer *g_a, Integer alo[], Integer ahi[], Integer *g_b, Integer blo[], Integer bhi[], Integer *g_c, Integer clo[], Integer chi[], int alen, int blen
+#else
+        char *transa, int alen, char *transb, int blen, void *alpha, void *beta, Integer *g_a, Integer alo[], Integer ahi[], Integer *g_b, Integer blo[], Integer bhi[], Integer *g_c, Integer clo[], Integer chi[]
+#endif
+        )
+{
+    wnga_matmul_patch_alt(transa, transb, alpha, beta, *g_a, alo, ahi, *g_b, blo, bhi, *g_c, clo, chi);
+}
+
 void FATR ga_matmul_patch_(
 #if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
         char *transa, char *transb, DoublePrecision *alpha, DoublePrecision *beta, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi, int alen, int blen
@@ -3610,4 +3703,14 @@ void nga_nbput_field_(Integer *g_a, Integer *lo, Integer *hi, Integer *foff, Int
 void nga_put_field_(Integer *g_a, Integer *lo, Integer *hi, Integer *foff, Integer *fsize,
 		   void *buf, Integer *ld) {
   wnga_put_field(*g_a, lo, hi, *foff, *fsize, buf, ld);
+}
+
+void ga_version_(Integer *major, Integer *minor, Integer *patch)
+{
+  wnga_version(major,minor,patch);
+}
+
+void nga_version_(Integer *major, Integer *minor, Integer *patch)
+{
+  wnga_version(major,minor,patch);
 }

@@ -514,7 +514,8 @@ void armci_server_ipc(request_header_t* msginfo, void* descr,
 
    if(rlen==sizeof(ptr)){
 #if defined(PEND_BUFS)
-     memcpy(buffer, &ptr, sizeof(&ptr));
+     /*memcpy(buffer, &ptr, sizeof(&ptr));*/
+     memcpy(buffer, &ptr, sizeof(void*));
      armci_send_data(msginfo, buffer);
 #else
      armci_send_data(msginfo, &ptr);
@@ -638,9 +639,9 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
     request_header_t *msginfo;
     int bytes =0, s, slen=0;
     size_t adr;
-    int bufsize = sizeof(request_header_t),isnonblocking=0;
+    int bufsize = sizeof(request_header_t);/*,isnonblocking=0;*/
 
-    if(nb_handle)isnonblocking=1;
+    /*if(nb_handle)isnonblocking=1;*/
 
     /* compute size of the buffer needed */
     for(s=0; s<len; s++){
@@ -1084,7 +1085,7 @@ void armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int,
     armci_save_strided_dscr(&buf,rem_ptr,rem_stride_arr,count,stride_levels,0);
 
     if(DEBUG_) {
-       printf(" CLIENT :the dest_ptr is %p src is %p\n", rem_ptr,src_ptr);
+       printf(" CLIENT :the dest_ptr is %p src is %p\n", (void*)rem_ptr,src_ptr);
        for(i =0; i<stride_levels; i++)
 	 printf("the value of stride_arr[i] is %d,value of count[i] is %d\n",
                                rem_stride_arr[i], count[i]);

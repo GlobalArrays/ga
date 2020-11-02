@@ -839,8 +839,8 @@ int smallbuf_size = sizeof(buf_smext_t)*(MAX_SMALL_BUFS);
      
 
      if(DEBUG2_){
-	printf("%d:armci_init_bufs: pointer %p, before align ptr=%p bufptr=%p end of region is %p  size=%d extra=%d\n",
-               armci_me,_armci_buffers,tmp,_armci_buffers->buffer,(_armci_buffers+MAX_BUFS),
+	printf("%d:armci_init_bufs: pointer %p, before align ptr=%p bufptr=%p end of region is %p  size=%lu extra=%d\n",
+               armci_me,(void*)_armci_buffers,tmp,_armci_buffers->buffer,(void*)(_armci_buffers+MAX_BUFS),
                MAX_BUFS*sizeof(buf_ext_t),extra);
 	fflush(stdout);
      }
@@ -975,9 +975,8 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
 \*/
 int _armci_buf_test_index(int idx, int called)
 {
-int count,retval=0;
+int retval=0;
 buf_state_t *buf_state = _armci_buf_state->table +idx;
-    count = buf_state->count;
     if(DEBUG_ ){
        printf("%d:buf_test_index:%d op=%d first=%d count=%d called=%d\n",
               armci_me,idx,buf_state->op,buf_state->first,buf_state->count,
@@ -1406,7 +1405,7 @@ int count=1, i;
 #endif
 
     if(DEBUG_ || 0) {
-      printf("%d:buf_get:size=%d max=%d got %d ptr=%p count=%d op=%d to=%d\n",
+      printf("%d:buf_get:size=%d max=%lu got %d ptr=%p count=%d op=%d to=%d\n",
              armci_me,size,MSG_BUFLEN_SMALL,avail,
             _armci_buf_state->buf[avail].buffer, count,operation,to);
       fflush(stdout);

@@ -274,7 +274,8 @@ static int _armci_serv_pendbuf_can_progress(immbuf_t *vbuf) {
       return 1;
     }
 
-    assert(ARMCI_ACC(msginfo->operation));
+    int check = ARMCI_ACC(msginfo->operation);
+    assert(check);
     for(ptr=info->order_head; ptr!=NULL; ptr=ptr->order_next) {
       request_header_t *m = (request_header_t *)ptr->buf;
       assert(m->from == msginfo->from);
@@ -489,7 +490,8 @@ static void _armci_serv_pendbuf_progress_putacc(pendbuf_t *pbuf) {
   void *buffer =((char *)(msginfo+1))+msginfo->dscrlen;
   int *status = &pbuf->status;  
 
-  assert(msginfo->operation==PUT || ARMCI_ACC(msginfo->operation));
+  int check =ARMCI_ACC(msginfo->operation);
+  assert(msginfo->operation==PUT || check);
   assert(sizeof(request_header_t)+msginfo->dscrlen+msginfo->datalen<PENDING_BUF_LEN);
   switch(*status) {
   case INIT:

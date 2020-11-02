@@ -4,10 +4,11 @@
 #include "macommon.h"
 
 #define GA_MAX_DIM 7
+#define GA_MAX_CACHE 10
 
 #define GA_VERSION_MAJOR 5
-#define GA_VERSION_MINOR 7
-#define GA_VERSION_PATCH 1
+#define GA_VERSION_MINOR 8
+#define GA_VERSION_PATCH 0
 
 #define C_CHAR     MT_C_CHAR
 #define C_DBL      MT_C_DBL

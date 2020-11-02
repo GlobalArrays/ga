@@ -368,7 +368,6 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
   SingleComplex ONE_CF = {1.,0.};
   Integer clo[2], chi[2];
 
-  GA_PUSH_NAME("ga_matmul_shmem");
 
   /* to skip accumulate and exploit data locality:
      get chunks according to "C" matrix distribution*/
@@ -483,7 +482,6 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
       do_put = UNSET; /* In the second loop, accumulate should be done */
     }
   }
-  GA_POP_NAME;
 }
 
 
@@ -604,7 +602,6 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
   _iterator_hdl hdl;
   char *ptr_c;
 
-  GA_PUSH_NAME("ga_matmul_regular");
   if(irregular) pnga_error("irregular flag set", 0L);
 
   init_task_list(&state);
@@ -817,7 +814,6 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     } while(chunks_left);
   } /* while(has_more_blocks) */
 
-  GA_POP_NAME;
 }
 
 
@@ -855,7 +851,6 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
   Integer grp_me, a_grp = pnga_get_pgroup(g_a);
   Integer clo[2], chi[2];
 
-  GA_PUSH_NAME("ga_matmul_irreg");
   init_task_list(&taskListC);
   ONE.real =1.; ONE.imag =0.;
   ONE_CF.real =1.; ONE_CF.imag =0.;
@@ -1059,7 +1054,6 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
     }
   }
   /* ----------------------------------------- */
-  GA_POP_NAME;
 }
 
 #if DEBUG_
@@ -1328,7 +1322,6 @@ void pnga_matmul(transa, transb, alpha, beta,
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(local_sync_begin)pnga_pgroup_sync(a_grp);
 
-    GA_PUSH_NAME("pnga_matmul");
 
     if (a_grp != b_grp || a_grp != c_grp)
        pnga_error("Arrays must be defined on same group",0L);
@@ -1439,7 +1432,6 @@ void pnga_matmul(transa, transb, alpha, beta,
        hiC[1] = cjhi;
        pnga_matmul_basic(transa, transb, alpha, beta, g_a, loA, hiA,
          g_b, loB, hiB, g_c, loC, hiC);
-       GA_POP_NAME;   
        return;
 #endif
     }
@@ -1582,7 +1574,6 @@ void pnga_matmul(transa, transb, alpha, beta,
        pnga_pgroup_sync(a_grp);
 #endif
        
-       GA_POP_NAME;   
        if(local_sync_end)pnga_pgroup_sync(a_grp);
 }
 
@@ -1634,7 +1625,6 @@ Integer clo[2], chi[2];
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if(local_sync_begin)pnga_sync();
 
-   GA_PUSH_NAME("ga_matmul_patch");
 
    /* Check to make sure all global arrays are of the same type */
    if (!(pnga_is_mirrored(g_a) == pnga_is_mirrored(g_b) &&
@@ -1890,7 +1880,6 @@ Integer clo[2], chi[2];
    ga_free(a);
 #endif
 
-   GA_POP_NAME;
    if(local_sync_end)pnga_sync();
 
 }
@@ -1920,19 +1909,32 @@ void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
 
 
 /*\ select the 2d plane to be used in matrix multiplication                     
-  \*/
+ *  rank: dimension of original array
+ *  trans: character signifying whether to use transpose
+ *  dims: dimensions of original array
+ *  lo, hi: bounds of patch
+ *  ipos: position of first patch dimension greater than 1
+ *  jpos: position of second patch dimension greater than 1
+ *  vec_idx: indicator of which dimension data is originally located for vectors
+ *  (only applies to transpose flag)
+\*/
   static void  gai_setup_2d_patch(Integer rank, char *trans, Integer dims[],
                                 Integer lo[], Integer hi[],
                                 Integer* ilo, Integer* ihi,
                                 Integer* jlo, Integer* jhi,
                                 Integer* dim1, Integer* dim2,
-                                int* ipos, int* jpos, int *vpos)
+                                int* ipos, int* jpos, int *vpos, int vec_idx)
 {
-    int d,e=0;
+    int d,e=0,f=0;
     char t='n';
+    int reset_t = 0;
+    int tmp;
     
+    /* check to see if more than two dimensions of patch have
+     * size greater than 1*/
     for(d=0; d<rank; d++)
        if( (hi[d]-lo[d])>0 && ++e>2 ) pnga_error("3-D Patch Detected", 0L);
+    /* determine two locations where patch dimensions are greater than 1*/
     *ipos = *jpos = *vpos = -1;
     for(d=0; d<rank; d++){
        if( (*ipos <0) && (hi[d]>lo[d]) ) { *ipos =d; continue; }
@@ -1950,20 +1952,45 @@ void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
     if((*ipos <0) && (*jpos <0)){ *ipos =0; *jpos=1; }
     else{
        
-       /* handle almost trivial case of only one dimension with >1 elements */
-       if(trans == NULL) trans = &t;      
+       if(trans == NULL) {
+         trans = &t;      
+         reset_t = 1;
+       }
+       /* handle almost trivial case of only one dimension with >1 elements.
+        * None of the conditions in this block are true for a 2D block with more
+        * than 1 element in each of the 2 dimensions so no need to specify
+        * condition that e == 1 */
        if(*trans == 'n' || *trans == 'N') {
           if(*ipos == rank-1) (*ipos)--; /* i cannot be the last dimension */
           if(*ipos <0) *ipos = *jpos-1; /* select i dimension based on j */
           if(*jpos <0) *jpos = *ipos+1; /* select j dimenison based on i */
        }
        else {
-          if(*ipos <0) *ipos = *jpos-1; 
+          if(*ipos <0) *ipos = *jpos-1; /* this condition is probably never reached */
           if(*jpos <0) {
-             if(*ipos==0) *jpos = *ipos + 1; 
-             else         *jpos = (*ipos)--;
+            if (vec_idx < 0) {
+              if(*ipos==0) *jpos = *ipos + 1; 
+              else         *jpos = (*ipos)--;
+            } else {
+              if (*ipos < vec_idx) {
+                *jpos = vec_idx;
+              } else if (*ipos > vec_idx) {
+                *jpos = *ipos;
+                *ipos = vec_idx;
+              } else {
+                /* this is probably an error if you get this far */
+                if (*ipos > 0) {
+                  *jpos = *ipos;
+                  *ipos--;
+                } else {
+                  *jpos = 1;
+                  *ipos = 0;
+                }
+              }
+            }
           }
        }
+       if (reset_t) trans = NULL;
     }
     
     *ilo = lo[*ipos]; *ihi = hi[*ipos];
@@ -1988,22 +2015,16 @@ void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
 
 #define  SETINT(tmp,val,n) {int _i; for(_i=0;_i<n; _i++)tmp[_i]=val;}
 
-/*\ MATRIX MULTIPLICATION for 2d patches of multi-dimensional arrays 
- *  
- *  C[lo:hi,lo:hi] = alpha*op(A)[lo:hi,lo:hi] * op(B)[lo:hi,lo:hi]        
- *                 + beta *C[lo:hi,lo:hi]
- *
- *  where:
- *          op(A) = A or A' depending on the transpose flag
- *  [lo:hi,lo:hi] - patch indices _after_ op() operator was applied
- *
-\*/
-#if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak wnga_matmul_patch = pnga_matmul_patch
-#endif
-void pnga_matmul_patch(char *transa, char *transb, void *alpha, void *beta, 
-    Integer g_a, Integer alo[], Integer ahi[], 
-    Integer g_b, Integer blo[], Integer bhi[], 
+/**
+ *  The indices avec_loc, and bvec_loc art designed to handle the special case
+ *  that the patch requested is a 1D vector and the original array contains 3 or
+ *  more dimensions. The original interface cannot handle this case. The
+ *  avec_pos parameter specifies which dimension the original patch (before
+ *  transpose) lies on.
+ */
+void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta, 
+    Integer g_a, Integer alo[], Integer ahi[], int avec_pos,
+    Integer g_b, Integer blo[], Integer bhi[], int bvec_pos,
     Integer g_c, Integer clo[], Integer chi[])
 {
 #ifdef STATBUF
@@ -2040,15 +2061,12 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if(local_sync_begin)pnga_sync();
 
-   GA_PUSH_NAME("nga_matmul_patch");
    if (pnga_total_blocks(g_a) > 0 || pnga_total_blocks(g_b) > 0 ||
        pnga_total_blocks(g_c) > 0) {
      pnga_matmul_basic(transa, transb, alpha, beta, g_a, alo, ahi,
          g_b, blo, bhi, g_c, clo, chi);
-     GA_POP_NAME;
      return;
    }
-
 
    /* Check to make sure all global arrays are of the same type */
    if (!(pnga_is_mirrored(g_a) == pnga_is_mirrored(g_b) &&
@@ -2077,11 +2095,12 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
      pnga_error(" type error",atype);
    
    gai_setup_2d_patch(arank, transa, adims, alo, ahi, &ailo, &aihi,
-                      &ajlo, &ajhi, &adim1, &adim2, &aipos, &ajpos, &avpos);
+                      &ajlo, &ajhi, &adim1, &adim2, &aipos, &ajpos, &avpos, avec_pos);
    gai_setup_2d_patch(brank, transb, bdims, blo, bhi, &bilo, &bihi,
-                      &bjlo, &bjhi, &bdim1, &bdim2, &bipos, &bjpos, &bvpos);
+                      &bjlo, &bjhi, &bdim1, &bdim2, &bipos, &bjpos, &bvpos, bvec_pos);
    gai_setup_2d_patch(crank, NULL, cdims, clo, chi, &cilo, &cihi,
-                      &cjlo, &cjhi, &cdim1, &cdim2, &cipos, &cjpos, &cvpos);
+                      &cjlo, &cjhi, &cdim1, &cdim2, &cipos, &cjpos, &cvpos, -1);
+
 
    /* check if patch indices and dims match */
    if (*transa == 'n' || *transa == 'N'){
@@ -2097,6 +2116,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    }else
       if (bilo <= 0 || bihi > bdim2 || bjlo <= 0 || bjhi > bdim1)
           pnga_error("  g_b indices out of range ", g_b);
+
 
    if (cilo <= 0 || cihi > cdim1 || cjlo <= 0 || cjhi > cdim2)
        pnga_error("  g_c indices out of range ", g_c);
@@ -2346,9 +2366,161 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    ga_free(a);
 #endif
    
-   GA_POP_NAME;
    if(local_sync_end)pnga_sync(); 
 }
+
+/*\ MATRIX MULTIPLICATION for 2d patches of multi-dimensional arrays 
+ *  
+ *  C[lo:hi,lo:hi] = alpha*op(A)[lo:hi,lo:hi] * op(B)[lo:hi,lo:hi]        
+ *                 + beta *C[lo:hi,lo:hi]
+ *
+ *  where:
+ *          op(A) = A or A' depending on the transpose flag
+ *  [lo:hi,lo:hi] - patch indices _after_ op() operator was applied
+ *
+ *  In this interface all patch indices refer to the post-transpose block. For
+ *  example, if the transpose of the block [1:4,2:5] is request, the indices
+ *  [2:5,1:4] should be used for lo and hi. Note that this interface can not
+ *  handle a 1D slice from an array containing more than 2 dimensions.
+ *
+ *
+\*/
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_matmul_patch = pnga_matmul_patch
+#endif
+void pnga_matmul_patch(char *transa, char *transb, void *alpha, void *beta, 
+    Integer g_a, Integer alo[], Integer ahi[], 
+    Integer g_b, Integer blo[], Integer bhi[], 
+    Integer g_c, Integer clo[], Integer chi[])
+{
+  gai_matmul_patch(transa,transb,alpha,beta,g_a,alo,ahi,-1,
+    g_b,blo,bhi,-1,g_c,clo,chi);
+}
+
+/*\ MATRIX MULTIPLICATION for 2d patches of multi-dimensional arrays 
+ *  
+ *  C[lo:hi,lo:hi] = alpha*op(A)[lo:hi,lo:hi] * op(B)[lo:hi,lo:hi]        
+ *                 + beta *C[lo:hi,lo:hi]
+ *
+ *  where:
+ *          op(A) = A or A' depending on the transpose flag
+ *  [lo:hi,lo:hi] - patch indices _after_ op() operator was applied
+ *
+ *  This interface fixes a bug in the original interface that cannot handle a 1D
+ *  slice from an array that is over 3D if the transpose option is used. For
+ *  this interface, all patch indices refer to the pre-transpose block, if the
+ *  transpose option is used.
+ *
+\*/
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_matmul_patch_alt = pnga_matmul_patch_alt
+#endif
+void pnga_matmul_patch_alt(char *transa, char *transb, void *alpha, void *beta, 
+    Integer g_a, Integer alo[], Integer ahi[], 
+    Integer g_b, Integer blo[], Integer bhi[], 
+    Integer g_c, Integer clo[], Integer chi[])
+{
+  int aivec, bivec;
+  int e, d, ipos, jpos;
+  Integer atype, btype, arank, brank, lo, hi;
+  Integer adims[GA_MAX_DIM],bdims[GA_MAX_DIM];
+  /* if the patch is transposed, find the two indices that correspond to the
+   * non-unit dimensions */
+  if (*transa == 't' || *transa == 'T') {
+    pnga_inquire(g_a, &atype, &arank, adims);
+    aivec = -1;
+    if (arank > 2) {
+      ipos = -1;
+      jpos = -1;
+      e = 0;
+      /* find out how many patch dimensions are greater than 1*/
+      for (d=0; d<arank; d++) {
+        if (ahi[d]-alo[d] > 0 && ipos == -1) {
+          ipos = d;
+          e++;
+        } else if (ahi[d]-alo[d] > 0 && jpos == -1) {
+          jpos = d;
+          e++;
+        } else if (ahi[d]-alo[d] > 0) {
+          pnga_error("Patch A has more than 2 dimensions",0);
+        }
+      }
+      if (e == 0) {
+        aivec = -1;
+      } else if (e == 1) {
+        /* array is a vector */
+        aivec = ipos;
+        if (ipos < arank-1) {
+          jpos = ipos + 1;
+        } else {
+          jpos = ipos;
+          ipos--;
+        }
+      } else {
+        aivec = -1;
+      }
+    }
+    lo = alo[0];
+    hi = ahi[0];
+    alo[0] = alo[1];
+    ahi[0] = ahi[1];
+    alo[1] = lo;
+    ahi[1] = hi;
+  }
+  if (*transb == 't' || *transb == 'T') {
+    pnga_inquire(g_b, &btype, &brank, bdims);
+    bivec = -1;
+    if (brank > 2) {
+      ipos = -1;
+      jpos = -1;
+      e = 0;
+      /* find out how many patch dimensions are greater than 1*/
+      for (d=0; d<brank; d++) {
+        if (bhi[d]-blo[d] > 0 && ipos == -1) {
+          ipos = d;
+          e++;
+        } else if (bhi[d]-blo[d] > 0 && jpos == -1) {
+          jpos = d;
+          e++;
+        } else if (bhi[d]-blo[d] > 0) {
+          pnga_error("Patch A has more than 2 dimensions",0);
+        }
+      }
+      if (e == 0) {
+        bivec = -1;
+      } else if (e == 1) {
+        /* array is a vector */
+        bivec = ipos;
+        if (ipos < arank-1) {
+          jpos = ipos + 1;
+        } else {
+          jpos = ipos;
+          ipos--;
+        }
+      } else {
+        bivec = -1;
+      }
+      lo = blo[ipos];
+      hi = bhi[ipos];
+      blo[ipos] = blo[jpos];
+      bhi[ipos] = bhi[jpos];
+      blo[jpos] = lo;
+      bhi[jpos] = hi;
+    } else {
+      lo = blo[0];
+      hi = bhi[0];
+      blo[0] = blo[1];
+      bhi[0] = bhi[1];
+      blo[1] = lo;
+      bhi[1] = hi;
+    }
+  }
+
+
+  gai_matmul_patch(transa,transb,alpha,beta,g_a,alo,ahi,aivec,
+    g_b,blo,bhi,bivec,g_c,clo,chi);
+}
+
 
 /**
  * 1. remove STATBUF
@@ -2424,7 +2596,6 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  GA_PUSH_NAME("nga_matmul_basic");
   /* For the time being, punt on transposes*/
   if (*transa == 't' || *transa == 'T' || *transb == 't' || *transb == 'T') {
     pnga_error("Cannot do basic multiply with tranpose ",0);
@@ -2620,6 +2791,5 @@ void pnga_matmul_basic(char *transa, char *transb, void *alpha, void *beta,
       free(b_buf);
     }
   }
-  GA_POP_NAME;
   if(local_sync_end)pnga_sync(); 
 }

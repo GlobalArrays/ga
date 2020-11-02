@@ -681,7 +681,6 @@ void armci_rcv_strided_data(int proc, request_header_t* msginfo, int datalen,
 #else
     {
       int bytes_buf = 0, bytes_usr = 0, seg_off=0;
-      int ctr=0;
       stride_info_t sinfo;
       char *armci_ReadFromDirectSegment(int proc,request_header_t *msginfo,
 					int datalen, int *bytes_buf);
@@ -846,7 +845,7 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo,
 
 #if defined(GET_NO_SRV_COPY)
     {
-      ARMCI_MEMHDL_T *mhloc=NULL, *mhrem=NULL;
+      ARMCI_MEMHDL_T *mhloc=NULL;/*, *mhrem=NULL;*/
       int nsegs, i;
 /*       printf("%d(s): TRYING to use rdma contig to strided\n",armci_me); */
 /*       fflush(stdout); */
@@ -885,7 +884,10 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo,
 \*/
 void armci_server_ack(request_header_t* msginfo)
 {
+#if defined(PEND_BUFS)
+#else
      int ack=ACK;
+#endif
      if(DEBUG_){
         printf("%d server: sending ACK to %d\n",armci_me,msginfo->from);
         fflush(stdout);
@@ -998,7 +1000,7 @@ void armci_data_server(void *mesg)
                   int src_stride_arr[MAX_STRIDE_LEVEL];    
                   int found;
                   ARMCI_MEMHDL_T *mhandle;
-                  int i,num,id;
+                  int i,num;
                   
                   if(DEBUG1){
                      printf("%d(s) : unpacking dscr\n",armci_me);
@@ -1022,7 +1024,7 @@ void armci_data_server(void *mesg)
                   found = get_armci_region_local_hndl(src_ptr, armci_me,
                                  &mhandle);
                   if(!found){
-                     armci_die("SERVER : local region not found",id);
+                     armci_die("SERVER : local region not found",-1);
                   }
                    
                   num =  armci_post_gather(src_ptr,src_stride_arr,

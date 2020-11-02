@@ -400,55 +400,80 @@ Setting an environment variable MA_USE_ARMCI_MEM forces MA library to use
 ARMCI memory, communication via which can be faster on networks like GM, VIA
 and InfiniBand.
 
-### CMake
+## CMake
 
 [back to top]
 
-We have added a CMake build system that allows GA compilation on Windows platforms.
+The CMake build only supports the MPI-based runtimes so GA can only be built using MPI two-sided, MPI progress ranks, MPI thread multiple, MPI progress threads and MPI-3 (MPI RMA) runtimes. We recommend using MPI two-sided/MPI progress ranks based approach. 
 
-The build system is still fairly new and was added to specifically target Windows platforms, so not all features may be covered.
+### Dependencies
+* CMake (v3.17+)
+* MPI
+* BLAS / LAPACK (Optional)
 
-The CMake build only supports the MPI-based runtimes so GA can only be built using MPI two-sided, MPI progress ranks, MPI thread multiple, MPI progress threads and MPI-3 (MPI RMA) runtimes. We recommend using MPI two-sided/MPI progress ranks based approach. The CMake build requires CMake Version 2.8.8 or greater.
+### The following options are supported:
 
-The CMake build supports the following options
-
-* ENABLE_FORTRAN:BOOL Default is off
-* ENABLE_CXX:BOOL Default is off
-* GA_RUNTIME:STRING Default is MPI_2SIDED. Options are
+* `ENABLE_FORTRAN` [Default:ON]
+* `ENABLE_TESTS` Build GA testsuite. [Default:ON]
+* `GA_RUNTIME` [Default: MPI_2SIDED] Options are
   * MPI_2SIDED (Default) use simple MPI-2 sided runtime
   * MPI_PROGRESS Use progress ranks runtime
   * MPI_MULTITHREADED Use thread multiple runtime
   * MPI_PROGRESS_THREAD Use progress thread runtime
   * MPI_RMA Use MPI RMA based runtime.
-* ENABLE_I8:BOOL Default (off) is to use 4-byte integers
-* ENABLE_BLAS Use an external BLAS library
-* CMAKE_CXX_COMPILER:STRING Specify C++ compiler. This should be the appropriate MPI wrapper (e.g. mpicxx)
-* CMAKE_C_COMPILER:STRING Specify C compiler. This should be the appropriate MPI wrapper (e.g. mpicc)
-* MPI_CXX_COMPILER:STRING Specify the MPI wrapper for the C++ compiler
-* MPI_C_COMPILER:STRING Specify the MPI wrapper for the C compiler
-* GA_EXTRA_LIBS:STRING Specify additional libraries or linker options when building GA
-* MPIEXEC:STRING Specify the command for running MPI executables (e.g. mpiexec)
-* CMAKE_INSTALL_PREFIX:PATH Specify the location of the installed GA header and library directories
-* CMAKE_BUILD_TYPE:STRING The options are
+* `ENABLE_PROFILING` Build GA operation profiler. Does not work when using Clang compilers. [Default:OFF]
+* `GA_EXTRA_LIBS` Specify additional libraries or linker options when building GA.
+* `GCCROOT` Specify root of GCC installation. Only required when building with Clang compilers.
+* `ENABLE_BLAS` Use an external BLAS library. [Default:OFF]
+  * Only `IntelMKL`, `IBMESSL`, `OpenBLAS`, `ReferenceBLAS` (BLIS) and `ReferenceLAPACK` (Netlib) are supported.
+  * Need to provide the following env or cmake variables when building GA when ENABLE_BLAS=ON
+    * `BLAS_VENDOR`: Should be one of `IntelMKL`, `IBMESSL`, `OpenBLAS` [Default: ReferenceBLAS]
+    * Based on the `BLAS_VENDOR` chosen, the following environment/cmake variables should be specified accordingly
+        `MKLROOT`, `ESSLROOT`, `OpenBLASROOT` and `ReferenceBLASROOT`, `ReferenceLAPACKROOT`
+    * Note that it would work to set the above variables as either an enviroment variable or a CMake option.
+    * `NOTE:` `ScaLAPACK` support is not fully ready yet. Please contact us if you need it working with the CMake build.
+
+#### The following options are standard CMake parameters. More information about them can be found in the CMake documentation.
+
+* `CMAKE_INSTALL_PREFIX` Specify the install location for GA.
+* `CMAKE_BUILD_TYPE` [Default:RELEASE] The options are:
   * RELWITHDEBINFO This will be compiled in a release mode but with debugger information (-g) included
   * RELEASE Compiled in release mode and no debugger information is included in the code
   * DEBUG Compiled with internal debugger information
-* CMAKE_VERBOSE_MAKEFILE:STRING Specify whether extensive output is produced during make. This is useful for debugging
+* `BUILD_SHARED_LIBS` Build GA as a shared library. [Default:OFF]
 
-Many of the options above are standard CMake parameters and more information about them can be found in the CMake documentation. A typical invocation of a CMake build inside a Windows Visual Studios command prompt looks like
+#### If there is a missing feature that you would like to be added to the CMake build, please submit a feature request to our [GitHub issue tracker](https://github.com/GlobalArrays/ga/issues).
 
-    set CFLAGS="/D _ITERATOR_DEBUG_LEVEL=0"
-    set CXXFLAGS="/D _ITERATOR_DEBUG_LEVEL=0"
-    cmake -Wdev --debug-trycompile ^
-       -G "Visual Studio 10 2010 Win64" ^
-       -D ENABLE_BLAS:BOOL=No ^
-       -D ENABLE_FORTRAN:BOOL=No ^
-       -D ENABLE_CXX:BOOL=Yes ^
-       -D GA_RUNTIME:STRING=MPI_TS ^
+- Sample CMake invocation for Linux/MAC users
+
+    - A minimal invocation with defaults for all options:
+    ```
+    CC=gcc CXX=g++ FC=gfortran cmake -DCMAKE_INSTALL_PREFIX=$HOME/ga_install
+    ```
+
+    - A more complete invocation that shows most options:
+    ```
+    CC=gcc CXX=g++ FC=gfortran cmake -DCMAKE_INSTALL_PREFIX=$HOME/ga_install \ 
+    -DGA_RUNTIME=MPI_PROGRESS_RANK \
+    -DENABLE_BLAS=ON -DBLAS_VENDOR=IntelMKL -DMKLROOT=/path/to/mkl \
+    -DENABLE_TESTS=ON -DENABLE_FORTRAN=ON -DENABLE_PROFILING=OFF  
+    ```
+
+
+- Sample CMake invocation for Windows users. 
+  * `ENABLE_FORTRAN=OFF` option is needed for Windows build.
+  * We do not recommend using the `BLAS` and `PROFILING` options as they are not tested for Windows builds.
+
+   ```
+    cmake ^
+       -D ENABLE_FORTRAN=OFF ^
+       -D GA_RUNTIME=MPI_2SIDED ^
        -D CMAKE_INSTALL_PREFIX:PATH="\my\GA\install\path" ^
        ..
     cmake --build . --config Release
     cmake --build . --config Release --target install
+   ```
 
+#### Known issues: The CMake build currently does not work with IBM XL compilers.
 
 [back to top]: #table-of-contents

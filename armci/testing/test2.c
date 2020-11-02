@@ -25,10 +25,10 @@
 #   define sleep(x) Sleep(1000*(x))
 #endif
 
-//#define ARMCI_INT     -99
-//#define ARMCI_LONG    -101
-//#define ARMCI_FLOAT   -306
-//#define ARMCI_DOUBLE  -307
+/*#define ARMCI_INT     -99  */
+/*#define ARMCI_LONG    -101 */
+/*#define ARMCI_FLOAT   -306 */
+/*#define ARMCI_DOUBLE  -307 */
 
 #define FLOAT_EPS  ((float) 1.0 / 4096)
 #define DOUBLE_EPS ((double) 1.0 / 16384)
@@ -166,9 +166,10 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
 
 void destroy_array(void *ptr[])
 {
+  int check;
   ARMCI_Barrier();
-
-  assert(!ARMCI_Free(ptr[me]));
+  check = !ARMCI_Free(ptr[me]);
+  assert(check);
 }
 
 

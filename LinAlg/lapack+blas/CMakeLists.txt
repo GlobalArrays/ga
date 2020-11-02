@@ -32,8 +32,6 @@
 # file: CMakeLists.txt
 # -------------------------------------------------------------
 
-include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
-
 # -------------------------------------------------------------
 # LinAlg header installation
 # -------------------------------------------------------------
@@ -125,3 +123,5 @@ add_library(linalg OBJECT
   xgemm.c
   ${FORTRAN_FILES}
 )
+
+target_include_directories(linalg BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_BINARY_DIR})

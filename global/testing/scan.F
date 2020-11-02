@@ -93,7 +93,7 @@ C
       integer nelements, nen
       integer isum, icount, itoff
       double precision result
-      integer i1, i2
+      integer i1, i2, one
 C
 c
 c***  check parallel environment
@@ -106,6 +106,7 @@ c***  check parallel environment
 c
       nelements=20000
       nen=4
+      one = 1
 c
 c***  create a global 1-D array
       ndim=1
@@ -181,7 +182,7 @@ c
 c***  scatter some values into the global array
       call ga_fill(g_sbit2,0)
       call ga_fill(g_src2,0)
-      if(num.gt.0) call nga_get(g_ielm1,ilo,ihi,ielm1,1)
+      if(num.gt.0) call nga_get(g_ielm1,ilo,ihi,ielm1,one)
       do i=ilo,ihi
          ipack(i-ilo+1)=1+nen*(ielm1(i-ilo+1)-1)
          jpack(i-ilo+1)=1
@@ -287,7 +288,7 @@ C
       integer ndim,dims(1),chunk(1)
 C
       integer nelements_max, nen_max
-      parameter (nelements_max=10000, nen_max=4)
+      parameter (nelements_max=100000, nen_max=4)
       integer ipack(nelements_max), 
      *        jpack(nelements_max), 
      *        kpack(nelements_max), 
@@ -307,6 +308,7 @@ C
       integer nelements, nen
       integer isum, icount, itoff
       double precision result
+      GA_ACCESS_INDEX_TYPE idx
       integer i1, i2, ichk
 C
 c
@@ -315,8 +317,9 @@ c***  check parallel environment
       nproc = ga_nnodes()
 c
       nelements=20000
-      nelements=20
+c      nelements=20
       nen=4
+      one = 1
 c
 c***  create a global 1-D array
       ndim=1
@@ -507,16 +510,28 @@ c
 cbjp      print *, num4, (ielm4(i),i=1,min(4,num4))
       do j=0,nproc-1
          if(me.eq.j) then
-            write(6,'(a,i4,a,i8,a,i8,a,i8)') 'me: ',me, ' num4: ',num4,
+            write(6,'(a,i4,a,i8,a,4i8)') 'me: ',me, ' num4: ',num4,
      +            ' ielm4: ', (ielm4(i),i=1,min(4,num4))
             call ffflush(6)
          endif
          call ga_sync()
       enddo
+#if 0
       call nga_scatter_acc(g_velm4,velm4,ielm4,num4,1.0d+00)
 C     *** velm4: 4 4 4 4 4 4 4 4 4 4 ... nelements
       result=ga_ddot(g_velm4,g_velm4)
       if(result.eq.nen*nen*nelements) then
+#else
+      count = 0
+      call nga_distribution(g_irowmat,me,ilo,ihi,chunk)
+      call nga_access(g_irowmat,ilo,ihi,idx,one)
+      do i = ilo, ihi
+        count = count + int_mb(idx+i-ilo)
+      end do
+      call ga_igop(1,count,1,'+')
+      call nga_distribution(g_ielm1,me,ilo,ihi,chunk)
+      if(count.eq.nen*(nelements+1)*nelements/2) then
+#endif
          if (me.eq.0) then
            print *,"Scan_copy successful."
          endif

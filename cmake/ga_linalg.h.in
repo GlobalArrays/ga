@@ -1,0 +1,27 @@
+#pragma once
+
+#cmakedefine ENABLE_BLAS
+
+#cmakedefine BLA_VENDOR_MKL
+#cmakedefine BLA_VENDOR_ESSL
+#cmakedefine BLA_VENDOR_REFERENCE
+#cmakedefine USE_BLIS
+#cmakedefine USE_DPCPP
+
+#if defined(ENABLE_BLAS)
+
+#cmakedefine MKL_ILP64
+#cmakedefine LAPACK_ILP64
+#define BLA_LAPACK_INT ${BLA_LAPACK_INT}
+#define BLA_LAPACK_COMPLEX8 ${BLA_LAPACK_COMPLEX8}
+#define BLA_LAPACK_COMPLEX16 ${BLA_LAPACK_COMPLEX16}
+
+#if defined(BLA_VENDOR_MKL)
+  #include "mkl.h"
+#elif defined(BLA_VENDOR_ESSL)
+  #include "essl.h"
+#elif defined(BLA_VENDOR_REFERENCE)
+  #include "blis/cblas.h"  
+#endif
+
+#endif

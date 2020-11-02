@@ -7,6 +7,7 @@
 #include <mpi.h>
 
 #include "armci.h"
+#include "message.h"
 
 static int me;
 static int nproc;
@@ -91,6 +92,14 @@ static void strided_test(size_t buffer_size, int op)
     void **put_buf;
     void **get_buf;
     double *times;
+    size_t msg_size;
+    int dst = 1;
+    double scale = 1;
+    /* Information for strided data transfer */
+    int levels = 1;
+    int count[2];
+    int stride[1];
+    size_t xdim, ydim;
 
     dst_ptr = (void*)malloc(nproc * sizeof(void*));
     put_buf = (void*)malloc(nproc * sizeof(void*));
@@ -103,18 +112,6 @@ static void strided_test(size_t buffer_size, int op)
     /* initialize what we're putting */
     fill_array((double*)put_buf[me], buffer_size/sizeof(double), me);
 
-    size_t msg_size;
-
-    int dst = 1;
-    double scale = 1;
-
-    /* Information for strided data transfer */
-
-    int levels = 1;
-    int count[2];
-    int stride[1];
-
-    size_t xdim, ydim;
     for (msg_size = 16; msg_size <= buffer_size; msg_size *= 2) {
 
 
@@ -122,12 +119,12 @@ static void strided_test(size_t buffer_size, int op)
         int iter = msg_size > MEDIUM_MESSAGE_SIZE ? ITER_LARGE : ITER_SMALL;
 
         for (xdim = 8; xdim <= msg_size; xdim *=2 ) {
+            double t_start, t_end;
             ydim = msg_size / xdim;
             count[0] = xdim;
             count[1] = ydim;
             stride[0] = xdim;
 
-            double t_start, t_end;
             if (0 == me) {
                 for (j= 0; j < iter + WARMUP; ++j) {
 
@@ -161,10 +158,12 @@ static void strided_test(size_t buffer_size, int op)
 
 
             if (0 == me) {
-                printf("%8zu\t\t%6.2f\t\t%6.2f\t\t%zu\t\t%zu\n",
-                        msg_size,
+                printf("%8lu\t\t%6.2f\t\t%6.2f\t\t%lu\t\t%lu\n",
+                        (unsigned long)msg_size,
                         ((t_end  - t_start))/iter,
-                        msg_size*(nproc-1)*iter/((t_end - t_start)), xdim, ydim);
+                        msg_size*(nproc-1)*iter/((t_end - t_start)),
+                        (unsigned long)xdim,
+                        (unsigned long)ydim);
             }
         }
     }

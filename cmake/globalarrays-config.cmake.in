@@ -1,0 +1,55 @@
+cmake_minimum_required( VERSION 3.17 FATAL_ERROR)
+
+@PACKAGE_INIT@
+
+set(ENABLE_FORTRAN @ENABLE_FORTRAN@)
+set(ENABLE_BLAS @ENABLE_BLAS@)
+
+set(GA_MPI_LIBS MPI::MPI_C)
+if(ENABLE_FORTRAN)
+  enable_language(Fortran)
+  set(GA_MPI_LIBS MPI::MPI_Fortran)
+endif()
+
+if (NOT TARGET Threads::Threads)
+  set(THREADS_PREFER_PTHREAD_FLAG ON)
+  find_package(Threads REQUIRED)
+endif()
+
+if(ENABLE_BLAS)
+  list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}" "${CMAKE_CURRENT_LIST_DIR}/linalg-modules")
+  set(BLAS_VENDOR @BLAS_VENDOR@)
+  set(MKLROOT @MKLROOT@)
+  set(ESSLROOT @ESSLROOT@)
+  set(ReferenceBLASROOT @ReferenceBLASROOT@)
+  set(ReferenceLAPACKROOT @ReferenceLAPACKROOT@)
+
+  set(ENABLE_DPCPP @ENABLE_DPCPP@)
+  if(ENABLE_DPCPP)
+    set(DPCPP_ROOT @DPCPP_ROOT@)
+    if(NOT TARGET Intel::SYCL)
+      find_package(IntelSYCL REQUIRED)
+    endif()
+  endif()
+  
+  if(NOT TARGET BLAS::blas)
+    find_package(BLAS REQUIRED)
+  endif()
+  if(NOT TARGET LAPACK::lapack)
+    find_package(LAPACK REQUIRED)
+  endif()
+  list(REMOVE_AT CMAKE_MODULE_PATH -1)
+  list(REMOVE_AT CMAKE_MODULE_PATH -1)
+endif()
+
+if(NOT TARGET GlobalArrays::ga)
+  include("${CMAKE_CURRENT_LIST_DIR}/globalarrays-targets.cmake")
+endif()
+
+if(NOT TARGET ${GA_MPI_LIBS})
+  find_package(MPI REQUIRED)
+endif()
+
+set(GlobalArrays_FOUND TRUE)
+set(GlobalArrays_LIBRARIES GlobalArrays::ga)
+set(GlobalArrays_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@/ga")

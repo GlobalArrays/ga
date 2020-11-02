@@ -65,7 +65,7 @@ group_of_four(int nprocs)
     printf("-%d\t-%d\t-%d\t-%d\t\n", list_a[i], list_b[i], list_c[i], list_d[i]);
 }
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs;
   int g_A, g_B;

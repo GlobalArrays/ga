@@ -105,9 +105,13 @@ int main(int argc, char **argv)
   }
 #endif
 
+  if (me == 0)
+    printf("All tests successful\n");
+
   GA_Terminate();
   MP_FINALIZE();
-  return(0);
+
+  return 0;
 }
 
 

@@ -116,15 +116,11 @@ struct ga_bytes_t{
 extern long *GAstat_arr;  
 extern struct ga_stat_t GAstat;
 extern struct ga_bytes_t GAbytes;
-extern char **GA_name_stack;    /* stack for names of GA ops */ 
-extern int GA_stack_size;
 extern int _ga_sync_begin;
 extern int _ga_sync_end;
 extern int *_ga_argc;
 extern char ***_ga_argv;
 
-#define  GA_PUSH_NAME(name) (GA_name_stack[GA_stack_size++] = (name)) 
-#define  GA_POP_NAME        (GA_stack_size--)
 
 /* periodic operations */
 #define PERIODIC_GET 1
@@ -155,6 +151,7 @@ extern void    gai_hsort(Integer *list, int num);
 extern void    ga_init_nbhandle(Integer *nbhandle);
 extern int     nga_test_internal(Integer *nbhandle);
 extern int     nga_wait_internal(Integer *nbhandle);
+extern void    gai_nb_init();
 extern int     ga_icheckpoint_init(Integer *gas, int num);
 extern int     ga_icheckpoint(Integer *gas, int num);
 extern int     ga_irecover(int rid);

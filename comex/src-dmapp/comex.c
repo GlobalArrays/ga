@@ -1544,6 +1544,12 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     return COMEX_SUCCESS;
 }
 
+int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
+    const char* device)
+{
+  return comex_malloc(ptrs,size,group);
+}
+
 
 int comex_free(void *ptr, comex_group_t group)
 {
@@ -1589,6 +1595,11 @@ int comex_free(void *ptr, comex_group_t group)
     MPI_Barrier(comm);
 
     return COMEX_SUCCESS;
+}
+
+int comex_free_dev(void *ptr, comex_group_t group)
+{
+  return comex_free(ptr, group);
 }
 
 

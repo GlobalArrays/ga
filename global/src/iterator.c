@@ -36,8 +36,6 @@
 
 #define LARGE_BLOCK_REQ
  
-/*#define PERMUTE_PIDS */
-
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
@@ -77,7 +75,7 @@
 
 /*\ prepare permuted list of processes for remote ops
 \*/
-#define gaPermuteProcList(nproc)                                      \
+#define gaPermuteProcList(nproc,ProcListPerm)                         \
 {                                                                     \
   if((nproc) ==1) ProcListPerm[0]=0;                                  \
   else{                                                               \
@@ -102,7 +100,7 @@
 
 #define gam_GetRangeFromMap(p, ndim, plo, phi){  \
   Integer   _mloc = p* ndim *2;                  \
-            *plo  = (Integer*)_ga_map + _mloc;   \
+            *plo  = hdl->map + _mloc;            \
             *phi  = *plo + ndim;                 \
 }
 
@@ -194,16 +192,15 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
 {
   Integer handle = GA_OFFSET + g_a;
   Integer ndim = GA[handle].ndim;
+  int grp = GA[handle].p_handle;
+  int nproc = pnga_pgroup_nnodes(grp);
   Integer i;
   hdl->g_a = g_a;
   hdl->count = 0;
   hdl->oversize = 0;
-  /*
-  hdl->map = (Integer*)malloc((size_t)(GAnproc*2*ndim+1)*sizeof(Integer));
-  hdl->proclist = (Integer*)malloc((size_t)(GAnproc)*sizeof(Integer));
-  */
-  hdl->map = _ga_map;
-  hdl->proclist = GA_proclist;
+  hdl->map = malloc((size_t)(nproc*2*MAXDIM+1)*sizeof(Integer));
+  hdl->proclist = malloc(nproc*sizeof(Integer));;
+  hdl->proclistperm = malloc(nproc*sizeof(int));
   for (i=0; i<ndim; i++) {
     hdl->lo[i] = lo[i];
     hdl->hi[i] = hi[i];
@@ -211,9 +208,9 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
   /* Standard GA distribution */
   if (GA[handle].distr_type == REGULAR) {
     /* Locate the processors containing some portion of the patch
-     * specified by lo and hi and return the results in _ga_map,
-     * GA_proclist, and np. GA_proclist contains a list of processors
-     * containing some portion of the patch, _ga_map contains
+     * specified by lo and hi and return the results in hdl->map,
+     * hdl->proclist, and np. hdl->proclist contains a list of processors
+     * containing some portion of the patch, hdl->map contains
      * the lower and upper indices of the portion of the patch held
      * by a given processor, and np contains the total number of
      * processors that contain some portion of the patch.
@@ -221,7 +218,7 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     if(!pnga_locate_region(g_a, lo, hi, hdl->map, hdl->proclist, &hdl->nproc ))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
-    gaPermuteProcList(hdl->nproc);
+    gaPermuteProcList(hdl->nproc, hdl->proclistperm);
 
     /* Block-cyclic distribution */
   } else if (GA[handle].distr_type == BLOCK_CYCLIC) {
@@ -262,6 +259,14 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     /* Initialize proc_index and index arrays */
     gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
     gam_find_tile_proc_indices(handle, hdl->iproc, hdl->index);
+  } else if (GA[handle].distr_type == TILED_IRREG)  {
+    int j;
+    hdl->iproc = 0;
+    hdl->offset = 0;
+    hdl->mapc =  GA[handle].mapc;
+    /* Initialize proc_index and index arrays */
+    gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
+    gam_find_tile_proc_indices(handle, hdl->iproc, hdl->index);
   }
 }
 
@@ -286,7 +291,8 @@ void gai_iterator_reset(_iterator_hdl *hdl)
     /* Initialize proc_index and index arrays */
     gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
     gam_find_proc_indices(handle, hdl->iproc, hdl->index);
-  } else if (GA[handle].distr_type == TILED)  {
+  } else if (GA[handle].distr_type == TILED ||
+      GA[handle].distr_type == TILED_IRREG)  {
     hdl->iproc = 0;
     hdl->offset = 0;
     /* Initialize proc_index and index arrays */
@@ -315,116 +321,134 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
   Integer *rank_rstrctd = GA[handle].rank_rstrctd;
   Integer elemsize = GA[handle].elemsize;
   int ndim;
+  int grp = GA[handle].p_handle;
+  int nproc = pnga_pgroup_nnodes(grp);
+  int ok;
   ndim = GA[handle].ndim;
   if (GA[handle].distr_type == REGULAR) {
     Integer *blo, *bhi;
     Integer nelems;
     idx = hdl->count;
-    /* no blocks left, so return */
-    if (idx>=hdl->nproc) return 0;
 
-    p = (Integer)ProcListPerm[idx];
-    *proc = (int)GA_proclist[p];
-    if (p_handle >= 0) {
-      *proc = (int)PGRP_LIST[p_handle].inv_map_proc_list[*proc];
-    }
-#ifdef PERMUTE_PIDS
-    if (GA_Proc_list) *proc = (int)GA_inv_Proc_list[*proc];
-#endif
-    /* Find  visible portion of patch held by processor p and
-     * return the result in plo and phi. Also get actual processor
-     * index corresponding to p and store the result in proc.
+    /* Check to see if range is valid (it may not be valid if user has
+     * created and irregular distribution in which some processors do not have
+     * data). If invalid, skip this block and go to the next one
      */
-    gam_GetRangeFromMap(p, ndim, plo, phi);
-    *proc = (int)GA_proclist[p];
-    blo = *plo;
-    bhi = *phi;
-#ifdef LARGE_BLOCK_REQ
-    /* Check to see if block size will overflow int values and initialize
-     * counter over sub-blocks if the block is too big*/
-    if (!hdl->oversize) {
-      nelems = 1; 
-      for (i=0; i<ndim; i++) nelems *= (bhi[i]-blo[i]+1);
-      if (elemsize*nelems > MAX_INT_VALUE) {
-        Integer maxint = 0;
-        int maxidx;
-        hdl->oversize = 1;
-        /* Figure out block dimensions that correspond to block sizes
-         * that are beneath MAX_INT_VALUE */
-        for (i=0; i<ndim; i++) {
-          hdl->blk_size[i] = (bhi[i]-blo[i]+1);
+    ok = 0;
+    while(!ok) {
+      /* no blocks left, so return */
+      if (idx>=hdl->nproc) return 0;
+      p = (Integer)hdl->proclistperm[idx];
+      *proc = (int)hdl->proclist[p];
+      if (p_handle >= 0) {
+        *proc = (int)PGRP_LIST[p_handle].inv_map_proc_list[*proc];
+      }
+      /* Find  visible portion of patch held by processor p and
+       * return the result in plo and phi. Also get actual processor
+       * index corresponding to p and store the result in proc.
+       */
+      gam_GetRangeFromMap(p, ndim, plo, phi);
+      ok = 1;
+      for (i=0; i<ndim; i++) {
+        if ((*phi)[i]<(*plo)[i]) {
+          ok = 0;
+          break;
         }
-        while (elemsize*nelems > MAX_INT_VALUE) {
-          for (i=0; i<ndim; i++) {
-            if (hdl->blk_size[i] > maxint) {
-              maxidx = i;
-              maxint = hdl->blk_size[i];
+      }
+      if (ok) {
+        *proc = (int)hdl->proclist[p];
+        blo = *plo;
+        bhi = *phi;
+#ifdef LARGE_BLOCK_REQ
+        /* Check to see if block size will overflow int values and initialize
+         * counter over sub-blocks if the block is too big*/
+        if (!hdl->oversize) {
+          nelems = 1; 
+          for (i=0; i<ndim; i++) nelems *= (bhi[i]-blo[i]+1);
+          if (elemsize*nelems > MAX_INT_VALUE) {
+            Integer maxint = 0;
+            int maxidx;
+            hdl->oversize = 1;
+            /* Figure out block dimensions that correspond to block sizes
+             * that are beneath MAX_INT_VALUE */
+            for (i=0; i<ndim; i++) {
+              hdl->blk_size[i] = (bhi[i]-blo[i]+1);
             }
+            while (elemsize*nelems > MAX_INT_VALUE) {
+              for (i=0; i<ndim; i++) {
+                if (hdl->blk_size[i] > maxint) {
+                  maxidx = i;
+                  maxint = hdl->blk_size[i];
+                }
+              }
+              hdl->blk_size[maxidx] /= 2;
+              nelems = 1;
+              for (i=0; i<ndim; i++) nelems *= hdl->blk_size[i];
+            }
+            /* Calculate the number of blocks along each dimension */
+            for (i=0; i<ndim; i++) {
+              hdl->blk_dim[i] = (bhi[i]-blo[i]+1)/hdl->blk_size[i];
+              if (hdl->blk_dim[i]*hdl->blk_size[i] < (bhi[i]-blo[i]+1))
+                hdl->blk_dim[i]++;
+            }
+            /* initialize block counting */
+            for (i=0; i<ndim; i++) hdl->blk_inc[i] = 0;
           }
-          hdl->blk_size[maxidx] /= 2;
-          nelems = 1;
-          for (i=0; i<ndim; i++) nelems *= hdl->blk_size[i];
         }
-        /* Calculate the number of blocks along each dimension */
-        for (i=0; i<ndim; i++) {
-          hdl->blk_dim[i] = (bhi[i]-blo[i]+1)/hdl->blk_size[i];
-          if (hdl->blk_dim[i]*hdl->blk_size[i] < (bhi[i]-blo[i]+1))
-            hdl->blk_dim[i]++;
-        }
-        /* initialize block counting */
-        for (i=0; i<ndim; i++) hdl->blk_inc[i] = 0;
-      }
-    }
 
-    /* Get sub-block bounding dimensions */
-    if (hdl->oversize) {
-      Integer tmp;
-      for (i=0; i<ndim; i++) {
-        hdl->lobuf[i] = blo[i];
-        hdl->hibuf[i] = bhi[i];
-      }
-      *plo = hdl->lobuf;
-      *phi = hdl->hibuf;
-      blo = *plo;
-      bhi = *phi;
-      for (i=0; i<ndim; i++) {
-        hdl->lobuf[i] += hdl->blk_inc[i]*hdl->blk_size[i];
-        tmp = hdl->lobuf[i] + hdl->blk_size[i]-1;
-        if (tmp < hdl->hibuf[i]) hdl->hibuf[i] = tmp;
-      }
-    }
+        /* Get sub-block bounding dimensions */
+        if (hdl->oversize) {
+          Integer tmp;
+          for (i=0; i<ndim; i++) {
+            hdl->lobuf[i] = blo[i];
+            hdl->hibuf[i] = bhi[i];
+          }
+          *plo = hdl->lobuf;
+          *phi = hdl->hibuf;
+          blo = *plo;
+          bhi = *phi;
+          for (i=0; i<ndim; i++) {
+            hdl->lobuf[i] += hdl->blk_inc[i]*hdl->blk_size[i];
+            tmp = hdl->lobuf[i] + hdl->blk_size[i]-1;
+            if (tmp < hdl->hibuf[i]) hdl->hibuf[i] = tmp;
+          }
+        }
 #endif
 
-    if (n_rstrctd == 0) {
-      gam_Location(*proc, handle, blo, prem, ldrem);
-    } else {
-      gam_Location(rank_rstrctd[*proc], handle, blo, prem, ldrem);
-    }
-    if (p_handle >= 0) {
-      *proc = (int)GA_proclist[p];
-      /* BJP */
-      *proc = PGRP_LIST[p_handle].inv_map_proc_list[*proc];
-    }
-#ifdef LARGE_BLOCK_REQ
-    if (!hdl->oversize) {
-#endif
-      hdl->count++;
-#ifdef LARGE_BLOCK_REQ
-    } else {
-      /* update blk_inc array */
-      hdl->blk_inc[0]++; 
-      for (i=0; i<ndim-1; i++) {
-        if (hdl->blk_inc[i] >= hdl->blk_dim[i]) {
-          hdl->blk_inc[i] = 0;
-          hdl->blk_inc[i+1]++;
+        if (n_rstrctd == 0) {
+          gam_Location(*proc, handle, blo, prem, ldrem);
+        } else {
+          gam_Location(rank_rstrctd[*proc], handle, blo, prem, ldrem);
+        }
+        if (p_handle >= 0) {
+          *proc = (int)hdl->proclist[p];
+          /* BJP */
+          *proc = PGRP_LIST[p_handle].inv_map_proc_list[*proc];
         }
       }
-      if (hdl->blk_inc[ndim-1] >= hdl->blk_dim[ndim-1]) {
+#ifdef LARGE_BLOCK_REQ
+      if (!hdl->oversize) {
+#endif
         hdl->count++;
-        hdl->oversize = 0;
+        idx = hdl->count;
+#ifdef LARGE_BLOCK_REQ
+      } else {
+        /* update blk_inc array */
+        hdl->blk_inc[0]++; 
+        for (i=0; i<ndim-1; i++) {
+          if (hdl->blk_inc[i] >= hdl->blk_dim[i]) {
+            hdl->blk_inc[i] = 0;
+            hdl->blk_inc[i+1]++;
+          }
+        }
+        if (hdl->blk_inc[ndim-1] >= hdl->blk_dim[ndim-1]) {
+          hdl->count++;
+          idx = hdl->count;
+          hdl->oversize = 0;
+        }
       }
-    }
 #endif
+    }
     return 1;
   } else {
     Integer offset, l_offset, last, pinv;
@@ -434,8 +458,8 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
     int check1, check2;
     if (GA[handle].distr_type == BLOCK_CYCLIC) {
       /* Simple block-cyclic distribution */
-      if (hdl->iproc >= GAnproc) return 0;
-      /*if (hdl->iproc == GAnproc-1 && hdl->iblock >= blk_tot) return 0;*/
+      if (hdl->iproc >= nproc) return 0;
+      /*if (hdl->iproc == nproc-1 && hdl->iblock >= blk_tot) return 0;*/
       if (hdl->iblock == hdl->iproc) hdl->offset = 0;
       chk = 0;
       /* loop over blocks until a block with data is found */
@@ -476,7 +500,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
             hdl->offset = 0;
             hdl->iproc++;
             hdl->iblock = hdl->iproc;
-            if (hdl->iproc >= GAnproc) return 0;
+            if (hdl->iproc >= nproc) return 0;
           }
         }
       }
@@ -505,7 +529,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         l_offset += hdl->offset;
 
         /* get pointer to data on remote block */
-        pinv = idx%GAnproc;
+        pinv = idx%nproc;
         if (p_handle > 0) {
           pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
         }
@@ -528,21 +552,36 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
       }
       return 1;
     } else if (GA[handle].distr_type == SCALAPACK ||
-        GA[handle].distr_type == TILED) {
+        GA[handle].distr_type == TILED ||
+        GA[handle].distr_type == TILED_IRREG) {
       /* Scalapack-type data distribution */
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer itmp;
       Integer blk_jinc;
       /* Return false at the end of the iteration */
-      if (hdl->iproc >= GAnproc) return 0;
+      if (hdl->iproc >= nproc) return 0;
       chk = 0;
       /* loop over blocks until a block with data is found */
       while (!chk) {
         /* get bounds for current block */
-        for (j = 0; j < ndim; j++) {
-          blo[j] = hdl->blk_size[j]*(hdl->index[j])+1;
-          bhi[j] = hdl->blk_size[j]*(hdl->index[j]+1);
-          if (bhi[j] > GA[handle].dims[j]) bhi[j] = GA[handle].dims[j];
+        if (GA[handle].distr_type == SCALAPACK ||
+            GA[handle].distr_type == TILED) {
+          for (j = 0; j < ndim; j++) {
+            blo[j] = hdl->blk_size[j]*(hdl->index[j])+1;
+            bhi[j] = hdl->blk_size[j]*(hdl->index[j]+1);
+            if (bhi[j] > GA[handle].dims[j]) bhi[j] = GA[handle].dims[j];
+          }
+        } else {
+          offset = 0;
+          for (j = 0; j < ndim; j++) {
+            blo[j] = GA[handle].mapc[offset+hdl->index[j]];
+            if (hdl->index[j] == GA[handle].num_blocks[j]-1) {
+              bhi[j] = GA[handle].dims[j];
+            } else {
+              bhi[j] = GA[handle].mapc[offset+hdl->index[j]+1]-1;
+            }
+            offset += GA[handle].num_blocks[j];
+          }
         }
         /* check to see if this block overlaps with requested block
          * defined by lo and hi */
@@ -565,12 +604,13 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         }
         
         if (!chk) {
-          /* evaluate new offset for block */
+          /* update offset for block */
           itmp = 1;
           for (j=0; j<ndim; j++) {
             itmp *= bhi[j]-blo[j]+1;
           }
           hdl->offset += itmp;
+
           /* increment to next block */
           hdl->index[0] += GA[handle].nblock[0];
           for (j=0; j<ndim; j++) {
@@ -580,10 +620,13 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
             }
           }
           if (hdl->index[ndim-1] >= GA[handle].num_blocks[ndim-1]) {
+            /* last iteration has been completed on current processor. Go
+             * to next processor */
             hdl->iproc++;
-            if (hdl->iproc >= GAnproc) return 0;
+            if (hdl->iproc >= nproc) return 0;
             hdl->offset = 0;
-            if (GA[handle].distr_type == TILED) {
+            if (GA[handle].distr_type == TILED ||
+                GA[handle].distr_type == TILED_IRREG) {
               gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
               gam_find_tile_proc_indices(handle, hdl->iproc, hdl->index);
             } else if (GA[handle].distr_type == SCALAPACK) {
@@ -604,7 +647,8 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
 
         /* evaluate offset within block */
         last = ndim - 1;
-        if (GA[handle].distr_type == TILED) {
+        if (GA[handle].distr_type == TILED ||
+            GA[handle].distr_type == TILED_IRREG) {
           jtot = 1;
           if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
           l_offset = 0;
@@ -639,7 +683,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
               + ((blo[last]-1)/hdl->blk_dim[j])*hdl->blk_size[last])*jtot;
         }
         /* get pointer to data on remote block */
-        pinv = (hdl->iproc)%GAnproc;
+        pinv = (hdl->iproc)%nproc;
         if (p_handle > 0) {
           pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
         }
@@ -663,7 +707,8 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         if (hdl->index[ndim-1] >= GA[handle].num_blocks[ndim-1]) {
           hdl->iproc++;
           hdl->offset = 0;
-          if (GA[handle].distr_type == TILED) {
+          if (GA[handle].distr_type == TILED ||
+              GA[handle].distr_type == TILED_IRREG) {
             gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
             gam_find_tile_proc_indices(handle, hdl->iproc, hdl->index);
           } else if (GA[handle].distr_type == SCALAPACK) {
@@ -679,10 +724,45 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
 }
 
 /**
+ * Return true if this is the last data packet for this iterator
+ */
+int gai_iterator_last(_iterator_hdl *hdl)
+{
+  Integer idx;
+  Integer handle = GA_OFFSET + hdl->g_a;
+  Integer p_handle = GA[handle].p_handle;
+  Integer n_rstrctd = GA[handle].num_rstrctd;
+  Integer *rank_rstrctd = GA[handle].rank_rstrctd;
+  Integer elemsize = GA[handle].elemsize;
+  int ndim;
+  int grp = GA[handle].p_handle;
+  int nproc = pnga_pgroup_nnodes(grp);
+  ndim = GA[handle].ndim;
+  if (GA[handle].distr_type == REGULAR) {
+    idx = hdl->count;
+    /* no blocks left after this iteration */
+    if (idx>=hdl->nproc) return 1;
+  } else {
+    if (GA[handle].distr_type == BLOCK_CYCLIC) {
+      /* Simple block-cyclic distribution */
+      if (hdl->iproc >= nproc) return 1;
+    } else if (GA[handle].distr_type == SCALAPACK ||
+        GA[handle].distr_type == TILED ||
+        GA[handle].distr_type == TILED_IRREG) {
+      if (hdl->iproc >= nproc) return 1;
+    }
+  }
+  return 0;
+}
+
+/**
  * Clean up iterator
  */
 void gai_iterator_destroy(_iterator_hdl *hdl)
 {
+    free(hdl->map);
+    free(hdl->proclist);
+    free(hdl->proclistperm);
 }
 
 /**
@@ -728,6 +808,20 @@ void pnga_local_iterator_init(Integer g_a, _iterator_hdl *hdl)
     /* Calculate some properties associated with data distribution */
     for (j=0; j<ndim; j++)  {
       hdl->blk_size[j] = GA[handle].block_dims[j];
+      hdl->blk_num[j] = GA[handle].num_blocks[j];
+      hdl->blk_inc[j] = GA[handle].nblock[j];
+      hdl->blk_dim[j] = GA[handle].dims[j];
+    }
+    /* Initialize proc_index and index arrays */
+    gam_find_tile_proc_indices(handle, me, hdl->proc_index);
+    gam_find_tile_proc_indices(handle, me, hdl->index);
+  } else if (GA[handle].distr_type == TILED_IRREG) {
+    /* GA uses irregular tiled distribution */
+    int j;
+    Integer me = pnga_pgroup_nodeid(grp);
+    hdl->mapc = GA[handle].mapc;
+    /* Calculate some properties associated with data distribution */
+    for (j=0; j<ndim; j++)  {
       hdl->blk_num[j] = GA[handle].num_blocks[j];
       hdl->blk_inc[j] = GA[handle].nblock[j];
       hdl->blk_dim[j] = GA[handle].dims[j];
@@ -789,6 +883,28 @@ int pnga_local_iterator_next(_iterator_hdl *hdl, Integer plo[],
       plo[i] = hdl->index[i]*hdl->blk_size[i]+1;
       phi[i] = (hdl->index[i]+1)*hdl->blk_size[i];
       if (phi[i] > hdl->blk_dim[i]) phi[i] = hdl->blk_dim[i];
+    }
+    pnga_access_block_grid_ptr(hdl->g_a,hdl->index,ptr,ld);
+    hdl->index[0] += hdl->blk_inc[0];
+    for (i=0; i<ndim; i++) {
+      if (hdl->index[i] >= hdl->blk_num[i] && i<ndim-1) {
+        hdl->index[i] = hdl->proc_index[i];
+        hdl->index[i+1] += hdl->blk_inc[i+1];
+      }
+    }
+  } else if (GA[handle].distr_type == TILED_IRREG) {
+    /* Irregular tiled data distribution */
+    Integer offset = 0;
+    if (hdl->index[ndim-1] >= hdl->blk_num[ndim-1]) return 0;
+    /* Find coordinates of bounding block */
+    for (i=0; i<ndim; i++) {
+      plo[i] = hdl->mapc[offset+hdl->index[i]];
+      if (hdl->index[i] < hdl->blk_num[i]-1) {
+        phi[i] = hdl->mapc[offset+hdl->index[i]+1]-1;
+      } else {
+        phi[i] = GA[handle].dims[i];
+      }
+      offset += GA[handle].num_blocks[i];
     }
     pnga_access_block_grid_ptr(hdl->g_a,hdl->index,ptr,ld);
     hdl->index[0] += hdl->blk_inc[0];

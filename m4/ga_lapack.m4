@@ -19,16 +19,16 @@ AC_DEFUN([GA_C_LAPACK_TEST], [AC_LANG_CONFTEST([AC_LANG_PROGRAM(
 [#ifdef __cplusplus
 extern "C" {
 #endif
-char $dgetrs ();
-char $dsygv ();
-char $lsame ();
+char dgetrs ();
+char dsygv ();
+char lsame ();
 #ifdef __cplusplus
 }
 #endif
 ],
-[[char result = $dgetrs ();
-  char result = $dsygv ();
-  char result = $lsame ();
+[[char result1 = dgetrs ();
+  char result2 = dsygv ();
+  char result3 = lsame ();
 ]])])
 ])
 

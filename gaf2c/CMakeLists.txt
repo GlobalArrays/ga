@@ -1,9 +1,7 @@
 #
 # module: CMakeLists.txt
 # author: Bruce Palmer
-# description: implements a primative CMake build that can be used to build
-#              GA on Windows-based systems. Only MPI-based runtimes are
-#              supported.
+# description: CMake build for GA. Only MPI-based runtimes are supported.
 # 
 # DISCLAIMER
 #
@@ -32,21 +30,18 @@
 # file: CMakeLists.txt
 # -------------------------------------------------------------
 
-include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}
-                           ${PROJECT_SOURCE_DIR}/comex/src-armci
-)
-
 # -------------------------------------------------------------
 # GAF2C header installation
 # -------------------------------------------------------------
 
 set(GAF2C_HEADERS
-  typesf2c.h
+  ${CMAKE_CURRENT_BINARY_DIR}/farg.h  
+  ${CMAKE_CURRENT_BINARY_DIR}/typesf2c.h
 )
 
 install (FILES
   ${GAF2C_HEADERS}
-  DESTINATION include
+  DESTINATION include/ga
 )
 
 # -------------------------------------------------------------
@@ -64,6 +59,13 @@ add_library(gaf2c OBJECT
   ${FORTRAN_FILES}
 )
 
+target_include_directories(gaf2c BEFORE PRIVATE 
+                           #${CMAKE_CURRENT_SOURCE_DIR}
+                           ${PROJECT_SOURCE_DIR}/comex/src-armci
+                           ${PROJECT_BINARY_DIR}
+                           ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 if (ENABLE_FORTRAN)
-  ADD_DEPENDENCIES(ga_src GenerateConfigFH)
+  add_dependencies(ga_src GenerateConfigFH)
 endif()

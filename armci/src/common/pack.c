@@ -202,12 +202,17 @@ void armci_dispatch_strided(void *ptr, int stride_arr[], int count[],
                             int strides, int fit_level, int nb, int bufsize, 
                             void (*fun)(void*,int*,int*,int,void*), void *arg)
 {
-    int  sn,first_call=0;
+    int  sn;
+#       ifdef PIPE_MEDIUM_BUFSIZE_
+    int  first_call=0;
+#       endif
     void *ptr_upd;
 
     /* determine decomposition of the patch to fit in the buffer */
     if(fit_level<0){
+#       ifdef PIPE_MEDIUM_BUFSIZE_
        first_call=1;
+#       endif
        armci_fit_buffer(count, strides, &fit_level, &nb, bufsize);
     }
  

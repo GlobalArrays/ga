@@ -155,6 +155,15 @@ ARMCI_Malloc (void **ptr_arr, armci_size_t bytes)
 }
 
 int
+ARMCI_Malloc_memdev (void **ptr_arr, armci_size_t bytes, const char *device)
+{
+  int rval;
+  rval = PARMCI_Malloc (ptr_arr, bytes);
+  return rval;
+}
+
+
+int
 ARMCI_NbAccS (int optype, void *scale, void *src_ptr, int *src_stride_arr,
 	      void *dst_ptr, int *dst_stride_arr, int *count,
 	      int stride_levels, int proc, armci_hdl_t * nb_handle)
@@ -198,6 +207,14 @@ ARMCI_Free (void *ptr)
 {
   int rval;
   rval = PARMCI_Free (ptr);
+  return rval;
+}
+
+int
+ARMCI_Free_memdev (void *ptr)
+{
+  int rval;
+  rval = PARMCI_Free_memdev (ptr);
   return rval;
 }
 

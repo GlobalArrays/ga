@@ -92,12 +92,8 @@ double buf[N], err, alpha, beta;
      GA_Destroy(g_a);
      GA_Destroy(g_b);
 }
-     
 
-
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
 int heap=20000, stack=20000;
 int me, nproc;
@@ -120,9 +116,9 @@ int me, nproc;
     
     do_work();
 
-    if(me==0)printf("Terminating ..\n");
-    GA_Terminate();
+    if (me == 0) printf("All tests successful\n");
 
+    GA_Terminate();
     MP_FINALIZE();
 
     return 0;

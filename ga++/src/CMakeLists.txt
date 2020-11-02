@@ -32,12 +32,6 @@
 # file: CMakeLists.txt
 # -------------------------------------------------------------
 
-include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}
-                    ${PROJECT_SOURCE_DIR}/global/src
-                    ${PROJECT_SOURCE_DIR}/global/testing
-                    ${PROJECT_SOURCE_DIR}/ma
-                    ${PROJECT_SOURCE_DIR}/gaf2c)
-
 # -------------------------------------------------------------
 # GA++ header installation
 # -------------------------------------------------------------
@@ -53,7 +47,7 @@ set(GAXX_HEADERS
 
 install (FILES
   ${GAXX_HEADERS}
-  DESTINATION include
+  DESTINATION include/ga
 )
 
 # -------------------------------------------------------------
@@ -68,6 +62,15 @@ add_library(ga++
   PGroup.cc
   services.cc
 )
+
+target_include_directories(ga++ BEFORE PRIVATE 
+                    ${CMAKE_CURRENT_BINARY_DIR}
+                    ${PROJECT_SOURCE_DIR}/global/src
+                    ${PROJECT_SOURCE_DIR}/global/testing
+                    ${PROJECT_SOURCE_DIR}/ma
+                    ${PROJECT_BINARY_DIR}/ma
+                    ${PROJECT_BINARY_DIR}/gaf2c
+                    ${PROJECT_BINARY_DIR})
 
 target_link_libraries(ga++)
 

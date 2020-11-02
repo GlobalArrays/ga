@@ -913,6 +913,14 @@ int PARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
     return(0);
 }
 
+/*\
+ * Just a wrapper on PARMCI_Malloc to keep old code from breaking
+\*/
+int PARMCI_Malloc_memdev(void *ptr_arr[], armci_size_t bytes, const char *device)
+{
+  return PARMCI_Malloc(ptr_arr,bytes);
+}
+
 
 
 /*\ shared memory is released to kr_malloc only on process 0
@@ -959,6 +967,11 @@ int PARMCI_Free(void *ptr)
      return 0;
 }
 
+int PARMCI_Free_memdev(void *ptr)
+{
+  return PARMCI_Free(ptr);
+}
+
 
 int ARMCI_Uses_shm()
 {
@@ -978,19 +991,20 @@ int ARMCI_Uses_shm()
 
 int ARMCI_Uses_shm_grp(ARMCI_Group *group) 
 {    
-    int uses=0, grp_me, grp_nproc, grp_nclus;
-    armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
+    int uses=0, grp_me, grp_nproc;
+    /*int grp_nclus;*/
+    /*armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);*/
     ARMCI_PR_DBG("enter",0);
 
     ARMCI_Group_size(group, &grp_nproc);
     ARMCI_Group_rank(group, &grp_me);
-    grp_nclus = grp_attr->grp_nclus;
     
 #if (defined(SYSV) || defined(WIN32) || defined(MMAP) ||defined(HITACHI)) && !defined(NO_SHM)
 #   ifdef RMA_NEEDS_SHMEM
       if(grp_nproc >1) uses= 1; /* always unless serial mode */
 #   else
 #if 0
+      grp_nclus = grp_attr->grp_nclus;
       if(grp_nproc != grp_nclus)uses= 1; /* only when > 1 node used */
 #else
       if(armci_nproc != armci_nclus)uses= 1; /* only when > 1 node used */
@@ -1066,6 +1080,14 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
 #endif
     ARMCI_PR_DBG("exit",0);
     return(0);
+}
+/*\
+ * Just a wrapper on ARMCI_Malloc_group to keep old code from breaking
+\*/
+int ARMCI_Malloc_group_memdev(void *ptr_arr[], armci_size_t bytes,
+                       ARMCI_Group *group, const char *device)
+{
+  return ARMCI_Malloc_group(ptr_arr, bytes, group);
 }
 
 

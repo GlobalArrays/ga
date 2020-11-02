@@ -9,6 +9,49 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
+## [5.8] - 2020-09-30
+- Known Bugs
+  - The MPI RMA port remains unreliable for many MPI implementations. Open MPI
+    still reports many failures in the test suit. Intel MPI is better but still
+    reports several failures. It is recommended to use the latest MPI
+    implementations available.
+- Added
+  - Version function that can be used to report the current version, subversion
+    and patch numbers of the current release
+  - Overlay option for creating new GAs on top of existing GAs
+  - The number of progress ranks per node in the progress ranks runtime is now
+    configurable
+  - Functions for duplicating process groups and returning a process group that
+    only contains the calling process
+  - 64-bit versions of block-cyclic data distribution functions to
+    C interface
+  - Non-blocking test function
+  - Read-only property based on caching 
+  - GA name can be recovered from handle 
+  - Added profiling capabilities to the GA branch that automatically generates
+    a log file in the running directory. This can be controlled with GAW_FILE_PREFIX
+    environment variable to add a prefix for the log files and the GAW_FMT
+    environment variable to create a CSV format or human readable format. The
+    default format is human readable.
+      - For autotools, add --enable-profile=1 in the configure line
+      - For CMake add -DENABLE_PROFILING=ON
+- Changed
+  - Non-blocking handle management was completely revamped. This simplifies
+    implementation and removes some bugs. The number of outstanding non-blocking
+    calls was increased to 256
+  - Modified internal function that computes rank of processors on the world
+    communicator so that it does not use the MPI_Comm_translate_ranks function.
+    This function is implemented with a loop that scales as the square of the
+    number of processors and is very slow at large processor counts
+  - modified internal iterators so that block cyclic data distributions work on
+    processor groups
+  - Improved CMake build
+  - Modified ga_print_distribution so that it works on block-cyclic data
+    distributions
+- Fixed
+  - Fixed a non-blocking error that was showing up in nbtest.x
+  
+
 ## [5.7] - 2018-03-30
 - Known Bugs
   - Some combinations of MPI implementations with the MPI RMA and PR

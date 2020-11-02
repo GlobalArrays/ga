@@ -1,9 +1,7 @@
 #
 # module: CMakeLists.txt
 # author: Bruce Palmer
-# description: implements a primative CMake build that can be used to build
-#              GA on Windows-based systems. Only MPI-based runtimes are
-#              supported.
+# description: CMake build for GA. Only MPI-based runtimes are supported.
 # 
 # DISCLAIMER
 #
@@ -31,15 +29,6 @@
 # -------------------------------------------------------------
 # file: CMakeLists.txt
 # -------------------------------------------------------------
-
-include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}
-                           ${CMAKE_CURRENT_SOURCE_DIR}/dra
-                           ${CMAKE_CURRENT_SOURCE_DIR}/eaf
-                           ${CMAKE_CURRENT_SOURCE_DIR}/elio
-                           ${CMAKE_CURRENT_SOURCE_DIR}/sf
-                           ${PROJECT_SOURCE_DIR}/gaf2c
-                           ${PROJECT_SOURCE_DIR}/ma
-                           ${PROJECT_SOURCE_DIR}/global/src)
 
 # -------------------------------------------------------------
 # PARIO header installation
@@ -93,7 +82,7 @@ install (FILES
   ${EAF_HEADERS}
   ${ELIO_HEADERS}
   ${SF_HEADERS}
-  DESTINATION include
+  DESTINATION include/ga
 )
 
 # -------------------------------------------------------------
@@ -132,7 +121,21 @@ set(SF_FILES
 # PARIO library installation
 # -------------------------------------------------------------
 
+set(PARIO_INC_DIRS  ${CMAKE_CURRENT_SOURCE_DIR}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/dra
+                    ${CMAKE_CURRENT_SOURCE_DIR}/eaf
+                    ${CMAKE_CURRENT_SOURCE_DIR}/elio
+                    ${CMAKE_CURRENT_SOURCE_DIR}/sf
+                    ${PROJECT_SOURCE_DIR}/gaf2c
+                    ${PROJECT_SOURCE_DIR}/ma
+                    ${PROJECT_SOURCE_DIR}/global/src)
+
+add_library(sf OBJECT ${SF_FILES})
 add_library(dra OBJECT ${DRA_FILES})
 add_library(eaf OBJECT ${EAF_FILES})
 add_library(elio OBJECT ${ELIO_FILES})
-add_library(sf OBJECT ${SF_FILES})
+
+target_include_directories(sf   BEFORE PRIVATE ${PARIO_INC_DIRS})
+target_include_directories(dra  BEFORE PRIVATE ${PARIO_INC_DIRS})
+target_include_directories(eaf  BEFORE PRIVATE ${PARIO_INC_DIRS})
+target_include_directories(elio BEFORE PRIVATE ${PARIO_INC_DIRS})

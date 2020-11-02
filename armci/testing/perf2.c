@@ -5,6 +5,7 @@
 #include <sys/time.h>
 
 #include "armci.h"
+#include "message.h"
 
 static int me;
 static int nproc;
@@ -82,6 +83,9 @@ static void contig_test(size_t buffer_size, int op)
     void **put_buf;
     void **get_buf;
     double *times;
+    size_t msg_size;
+    int dst = 1;
+    double scale = 1.0;
 
     dst_ptr = (void*)malloc(nproc * sizeof(void*));
     put_buf = (void*)malloc(nproc * sizeof(void*));
@@ -94,10 +98,6 @@ static void contig_test(size_t buffer_size, int op)
     /* initialize what we're putting */
     fill_array((double*)put_buf[me], buffer_size/sizeof(double), me);
 
-    size_t msg_size;
-
-    int dst = 1;
-    double scale = 1.0;
     for (msg_size = 16; msg_size <= buffer_size; msg_size *= 2) {
 
         int j;
@@ -137,8 +137,8 @@ static void contig_test(size_t buffer_size, int op)
 
 
         if (0 == me) {
-            printf("%8zu\t\t%6.2f\t\t%10.2f\n",
-                    msg_size,
+            printf("%8lu\t\t%6.2f\t\t%10.2f\n",
+                    (unsigned long)msg_size,
                     ((t_end  - t_start))/iter,
                     msg_size*iter/((t_end - t_start)));
         }

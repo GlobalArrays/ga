@@ -12,7 +12,7 @@
 #include"ga.h"
 #include"macdecls.h"
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs, i, j;
   int p_Geven, p_Godd, p_size, *list_even=NULL, *list_odd=NULL;

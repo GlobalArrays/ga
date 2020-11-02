@@ -572,10 +572,12 @@ int comex_fence_proc(int proc, comex_group_t group)
 /* comex_barrier is comex_fence_all + MPI_Barrier */
 int comex_barrier(comex_group_t group)
 {
+    int status;
     MPI_Comm comm;
 
     comex_fence_all(group);
-    assert(COMEX_SUCCESS == comex_group_comm(group, &comm));
+    status = comex_group_comm(group, &comm);
+    assert(COMEX_SUCCESS == status);
     MPI_Barrier(comm);
 
     return COMEX_SUCCESS;
@@ -1314,6 +1316,11 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     return COMEX_SUCCESS;
 }
 
+int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
+        const char* device)
+{
+    return comex_malloc(ptrs,size,group);
+}
 
 int comex_free(void *ptr, comex_group_t group)
 {
@@ -1357,6 +1364,10 @@ int comex_free(void *ptr, comex_group_t group)
     return COMEX_SUCCESS;
 }
 
+int comex_free_dev(void *ptr, comex_group_t group)
+{
+    return comex_free(ptr, group);
+}
 
 static void acquire_remote_lock(int proc)
 {

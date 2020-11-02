@@ -557,9 +557,11 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
 
 void destroy_array(void *ptr[])
 {
+  int rc;
   comex_barrier(COMEX_GROUP_WORLD);
 #if 1
-  assert(!comex_free(ptr[me], COMEX_GROUP_WORLD));
+  rc = comex_free(ptr[me], COMEX_GROUP_WORLD);
+  assert(rc == 0);
 #endif
 }
 
@@ -1520,7 +1522,8 @@ void test_vector_acc()
   comex_barrier(COMEX_GROUP_WORLD);
 
   /* copy my patch into local array c */
-  assert(!comex_get((double *)b[proc], c, bytes, proc, COMEX_GROUP_WORLD));
+  rc = comex_get((double *)b[proc], c, bytes, proc, COMEX_GROUP_WORLD);
+  assert(rc == 0);
 
   /*        scale = alpha*TIMES*nproc; */
   scale = alpha * TIMES * nproc * nproc;

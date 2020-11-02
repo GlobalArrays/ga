@@ -200,6 +200,10 @@ GA::GAServices::memoryLimited() {
   return GA_Memory_limited();
 }
 
+int GA::GAServices::nbTest(GANbhdl *nbhandle) {
+  return NGA_NbTest(nbhandle);
+}
+
 void GA::GAServices::nbWait(GANbhdl *nbhandle) {
   NGA_NbWait(nbhandle);
 }

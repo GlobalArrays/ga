@@ -16,7 +16,6 @@
 #define N 10            /* first dimension  */
 #define NDIM 4          /* number of dimensions */
 #define BASE 0
-#define PERMUTE_ 
 
 /*#define NEW_API*/
 
@@ -241,11 +240,8 @@ double *buf;
      GA_Destroy(g_a);
      GA_Destroy(g_b);
 }
-     
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char** argv)
 {
 Integer heap=300000, stack=300000;
 int me, nproc;
@@ -261,18 +257,6 @@ int me, nproc;
 
     if(!MA_init((Integer)MT_F_DBL, stack/nproc, heap/nproc))
        GA_Error("MA_init failed bytes= %d",stack+heap);   
-
-#ifdef PERMUTE
-      {
-        int i, *list = (int*)malloc(nproc*sizeof(int));
-        if(!list)GA_Error("malloc failed",nproc);
-
-        for(i=0; i<nproc;i++)list[i]=nproc-1-i;
-
-        GA_Register_proclist(list, nproc);
-        free(list);
-      }
-#endif
 
     if(GA_Uses_fapi())GA_Error("Program runs with C API only",1);
     

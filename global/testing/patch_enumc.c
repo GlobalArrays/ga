@@ -126,6 +126,9 @@ int main(int argc, char **argv)
 #endif
     test_C_DCPL();
 
+    if (me == 0)
+      printf("All tests successful\n");
+
     GA_Terminate();
     MP_FINALIZE();
 

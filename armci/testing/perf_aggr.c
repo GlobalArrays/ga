@@ -145,9 +145,11 @@ void create_array(double *a[], int ndim, int dims[])
 /*void destroy_array(void *ptr[])*/
 void destroy_array(double *ptr[])
 {
-  ARMCI_Barrier();
+  int check;
 
-  assert(!ARMCI_Free(ptr[me]));
+  ARMCI_Barrier();
+  check = !ARMCI_Free(ptr[me]);
+  assert(check);
 }
 
 #define MAXELEMS      1000

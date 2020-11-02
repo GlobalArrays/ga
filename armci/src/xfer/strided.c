@@ -77,7 +77,7 @@
     if(armci_prot_switch_fence[__proc]==SERVER_PUT)		\
       PARMCI_Fence(__proc);					\
   }								\
-  else;								\
+  else {}								\
   armci_prot_switch_fence[__proc]=__prot
 #else
 
@@ -112,7 +112,7 @@ void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
 			     void** contextptr,int nbtag,void *mhdl,void *mhdl1);
 #  endif
 #  define ARMCI_NBREM_GET(_p,_s,_sst,_d,_dst,_cou,_lev,_hdl) \
-  armci_client_direct_get((_p),(_s),(_d),(_cou)[0],&((_hdl)->cmpl_info),(_hdl)->tag,(void *)mhloc,(void *)mhrem); \
+  armci_client_direct_get((_p),(_s),(_d),(_cou)[0],(void**)&((_hdl)->cmpl_info),(_hdl)->tag,(void *)mhloc,(void *)mhrem); \
 
 #  define ARMCI_REM_GET(_p,_s,_sst,_d,_dst,_cou,_lev,_hdl) \
   armci_client_direct_get((_p),(_s),(_d),(_cou)[0],NULL,0,(void *)mhloc,(void *)mhrem) \
@@ -1397,9 +1397,6 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #if !defined(LAPI2) || defined(LAPI_RDMA)
   if(!direct){
 #     ifdef ALLOW_PIN
-#if defined(VAPI)
-    extern int armci_max_num_sg_ent;
-#endif
     if(!stride_levels && 
        ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
       DO_FENCE(proc,DIRECT_NBGET);
@@ -1418,6 +1415,12 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     /* for larger strided or 1D reqests buffering can be avoided to send data
      * we can try to bypass the packetization step and send request directly
      */
+    /* JAD 4/17/18
+     * This code was never executed, shown by gcc -Werror=type-limits
+     * 'comparison is always false due to limited range of data type'.
+     * count[0] is an int, LONG_GET_THRESHOLD is 2147483648 (int max).
+     * So this is always false. */
+#if 0
     if(CAN_REQUEST_DIRECTLY && ((count[0]> LONG_GET_THRESHOLD) ||
 				(stride_levels && count[0]>LONG_GET_THRESHOLD_STRIDED) ) ) {
 
@@ -1429,6 +1432,7 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 
     }else
     DefaultPath: /* standard buffered path */
+#endif
 #endif
 #ifdef ARMCIX
       rc = ARMCIX_NbGetS (src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, nb_handle);

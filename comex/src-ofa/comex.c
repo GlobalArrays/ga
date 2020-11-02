@@ -118,6 +118,11 @@ int comex_malloc(void **ptrs, size_t size, comex_group_t group)
     return 0;
 }
 
+int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
+        const char* device)
+{
+    return comex_malloc(ptrs,size,group);
+}
 
 int comex_free(void *ptr, comex_group_t group)
 {
@@ -169,6 +174,10 @@ int comex_free(void *ptr, comex_group_t group)
     return 0;
 }
 
+int comex_free_dev(void *ptr, comex_group_t group)
+{
+    return comex_free(ptr, group);
+}
 
 static void *_comex_malloc_local(size_t size, void **rinfo)
 {
@@ -288,6 +297,8 @@ int comex_init_args(int *argc, char ***argv)
 
 int comex_finalize()
 {
+    int rc;
+
     // Make sure that all outstanding operations are done
     comex_wait_all(COMEX_GROUP_WORLD);
 
@@ -300,7 +311,8 @@ int comex_finalize()
     comex_group_finalize();
 
     // destroy the primary communicator
-    assert(MPI_SUCCESS == MPI_Comm_free(&l_state.world_comm));
+    rc = MPI_Comm_free(&l_state.world_comm);
+    assert(MPI_SUCCESS == rc);
 
     return COMEX_SUCCESS;
 }

@@ -160,6 +160,7 @@ int _armci_barrier_init=0;
 int _armci_barrier_shmem=0;
 
 
+#if 0
 /*\
  * Tree generation code
 \*/
@@ -180,6 +181,7 @@ int r_end,l_end;
    result[r_end]=pos;
    result[pos++]=idlist[index];
 }
+
 static int tree_unique_id=0;
 int armci_msg_generate_tree(int *idlist,int idlen,int *id_tree,int TREE)
 {
@@ -188,6 +190,7 @@ int armci_msg_generate_tree(int *idlist,int idlen,int *id_tree,int TREE)
     _dfs_bintree_parse(idlist,0,idlen,id_tree);
     return tree_unique_id++;
 }
+#endif
 
 /*\
  *  *************************************************************
@@ -224,7 +227,6 @@ void armci_msg_gop_init()
 #if !defined(SGIALTIX) && defined(SYSV) || defined(MMAP) || defined(WIN32)
     if(ARMCI_Uses_shm()){
        char *tmp;
-       double *work;
        int size = sizeof(bufstruct);
        int bytes = size * armci_clus_info[armci_clus_me].nslave;
 #ifdef LAPI
@@ -246,7 +248,6 @@ void armci_msg_gop_init()
 
        if(!tmp) armci_die("armci_msg_init: shm malloc failed\n",size);
        _gop_buffer = ( bufstruct *) tmp;
-       work = GOP_BUF(armci_me)->array; /* each process finds its place */
        GOP_BUF(armci_me)->a.flag=EMPTY;   /* initially buffer is empty */
        GOP_BUF(armci_me)->b.flag=EMPTY;  /* initially buffer is empty */
        if(armci_me == armci_master ){
@@ -2197,13 +2198,10 @@ void armci_msg_group_bcast_scope(int scope, void *buf, int len, int root,
 				 ARMCI_Group *group)
 {
     int up, left, right, Root;
-    int grp_me;
-    ARMCI_iGroup *igroup = armci_get_igroup_from_group(group);
 
     if(!buf)armci_die("armci_msg_bcast: NULL pointer", len);
  
     if(!group)armci_msg_bcast_scope(scope,buf,len,root);
-    else grp_me = igroup->grp_attr.grp_me;
     armci_msg_group_bintree(scope, &Root, &up, &left, &right,group);
  
     if(root !=Root){
@@ -2224,13 +2222,11 @@ armci_msg_group_gop_scope(int scope, void *x, int n, char* op, int type,
 			  ARMCI_Group *group)
 {
     int root, up, left, right, size;
-    int tag=ARMCI_TAG,grp_me;
+    int tag=ARMCI_TAG;
     int ndo, len, lenmes, orign =n, ratio;
     void *origx =x;
-    ARMCI_iGroup *igroup = armci_get_igroup_from_group(group);
  
     if(!group)armci_msg_gop_scope(scope,x,n,op,type);
-    else grp_me = igroup->grp_attr.grp_me;
     if(!x)armci_die("armci_msg_gop: NULL pointer", n);
     if(work==NULL)_allocate_mem_for_work();
  

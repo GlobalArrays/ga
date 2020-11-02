@@ -77,7 +77,8 @@ two_dimension_array(int rank, int val_A, int val_scale)
     }
   GA_Destroy(g_A);
 }
-main(int argc, char **argv)
+
+int main(int argc, char **argv)
 {
   int rank, nprocs;
   int val_scale=5, val_A=5, val_V=3;

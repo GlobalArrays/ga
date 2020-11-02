@@ -16,7 +16,8 @@
 
 #define DIM 2
 #define SIZE 5
-main(int argc, char **argv)
+
+int main(int argc, char **argv)
 {
   int rank, nprocs, i, j;
   int g_A, g_B, g_C, **local_C=NULL, dims[DIM]={SIZE,SIZE}, val1=5, val2=4, alpha=3, beta=2;

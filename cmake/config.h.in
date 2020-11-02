@@ -24,7 +24,7 @@
 
 
 
-#cmakedefine01 ENABLE_FORTRAN
+#cmakedefine01 ENABLE_F77
 #cmakedefine01 NOFORT
 
 #cmakedefine NOUSE_MMAP
@@ -37,10 +37,14 @@
 #cmakedefine01 ENABLE_EISPACK
 
 #cmakedefine ENABLE_CHECKPOINT
-#cmakedefine01 ENABLE_PROFILING
+#define ENABLE_PROFILING ${GA_PROFILING}
 #cmakedefine ENABLE_TRACE
 #cmakedefine01 STATS
 #cmakedefine USE_MALLOC
+
+#cmakedefine01 HAVE_ARMCI_GROUP_COMM
+#cmakedefine01 HAVE_ARMCI_GROUP_COMM_MEMBER
+#cmakedefine01 HAVE_ARMCI_INITIALIZED
 
 #cmakedefine01 HAVE_SYS_WEAK_ALIAS_PRAGMA
 
@@ -83,9 +87,11 @@
 #define SIZEOF_LONG_LONG ${CM_SIZEOF_LONG_LONG}
 #define SIZEOF_SHORT ${CM_SIZEOF_SHORT}
 #define SIZEOF_VOIDP ${CMAKE_SIZEOF_VOID_P}
-#define BLAS_SIZE ${CM_BLAS_SIZE}
+#define BLAS_SIZE ${BLAS_SIZE}
+/* #define BLAS_SIZE ${CM_BLAS_SIZE} */
 
 #cmakedefine LINUX
+#cmakedefine LINUX64
 
 #cmakedefine _FILE_OFFSET_BITS
 #cmakedefine _LARGEFILE_SOURCE

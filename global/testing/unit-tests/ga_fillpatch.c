@@ -62,7 +62,7 @@ fillonly(int rank, int nprocs)
   GA_Destroy(g_A);
 }
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs;
   

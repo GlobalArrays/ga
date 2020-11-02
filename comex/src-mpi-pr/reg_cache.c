@@ -491,7 +491,16 @@ reg_cache_find_intersection(int rank, void *buf, size_t len)
  * @return RR_SUCCESS on success
  */
 reg_entry_t*
-reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped)
+reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped,
+    int use_dev
+#if USE_SICM
+#if SICM_OLD
+    ,sicm_device *device
+#else
+    ,sicm_device_list device
+#endif
+#endif
+    )
 {
     reg_entry_t *node = NULL;
 
@@ -516,9 +525,13 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
     node->rank = rank;
     node->buf = buf;
     node->len = len;
+    node->use_dev = use_dev;
     (void)memcpy(node->name, name, SHM_NAME_SIZE);
     node->mapped = mapped;
     node->next = NULL;
+#if USE_SICM
+    node->device = device;
+#endif
 
     /* push new entry to tail of linked list */
     if (NULL == reg_cache[rank]) {
@@ -612,6 +625,7 @@ reg_return_t reg_cache_nullify(reg_entry_t *node)
     node->len = 0;
     node->mapped = NULL;
     node->rank = -1;
+    node->use_dev = 0;
     (void)memset(node->name, 0, SHM_NAME_SIZE);
 
     return RR_SUCCESS;

@@ -3,18 +3,18 @@
 #include "gaconfig.h"
 #include "typesf2c.h"
 
+#ifdef MSG_COMMS_MPI
+#include <mpi.h>
+#include "ga-mpi.h"
+#endif
+
 extern int _max_global_array;
-extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
-extern Integer *GA_proclist;
 extern int GA_Default_Proc_Group;
-extern int* GA_Proc_list;
-extern int* GA_inv_Proc_list;
 extern int** GA_Update_Flags;
 extern int* GA_Update_Signal;
 extern short int _ga_irreg_flag; 
 extern Integer GA_Debug_flag;
-extern int *ProcListPerm;            /*permuted list of processes */
 
 #define FNAM        31              /* length of array names   */
 #define CACHE_SIZE  512             /* size of the cache inside GA DS*/
@@ -25,7 +25,7 @@ extern int *ProcListPerm;            /*permuted list of processes */
 #define __CRAYX1_PRAGMA(_pragf)
 #endif
 
-enum data_distribution {REGULAR, BLOCK_CYCLIC, SCALAPACK, TILED};
+enum data_distribution {REGULAR, BLOCK_CYCLIC, SCALAPACK, TILED, TILED_IRREG};
 
 typedef int ARMCI_Datatype;
 typedef struct {
@@ -43,6 +43,13 @@ typedef struct {
 typedef Integer C_Integer;
 typedef armci_size_t C_Long;
 
+typedef struct cache_struct{
+  int lo[MAXDIM];
+  int hi[MAXDIM];
+  void* cache_buf;
+  struct cache_struct *next;
+} cache_struct_t;
+
 typedef struct {
        short int  ndim;             /* number of dimensions                 */
        short int  irreg;            /* 0-regular; 1-irregular distribution  */
@@ -56,7 +63,8 @@ typedef struct {
        long id;                     /* ID of shmem region / MA handle       */
        C_Integer  dims[MAXDIM];     /* global array dimensions              */
        C_Integer  chunk[MAXDIM];    /* chunking                             */
-       int  nblock[MAXDIM];         /* number of blocks per dimension       */
+       int  nblock[MAXDIM];         /* number of blocks per dimension in    */
+                                    /* processor grid                       */
        C_Integer  width[MAXDIM];    /* boundary cells per dimension         */
        C_Integer  first[MAXDIM];    /* (Mirrored only) first local element  */
        C_Integer  last[MAXDIM];     /* (Mirrored only) last local element   */
@@ -89,10 +97,18 @@ typedef struct {
 #ifdef ENABLE_CHECKPOINT
        int record_id;               /* record id for writing ga to disk     */
 #endif
+       /* new */
+       int read_cache;              /* flag for read only pointer in cache  */
+       cache_struct_t *cache_head;  /* linked list of cached reads          */
+       int mem_dev_set;             /* flag for setting memory device       */
+       char mem_dev[FNAM+1];        /* memory device type                   */
+       int overlay;                 /* GA uses memory from another GA       */
+
 } global_array_t;
 
 enum property_type { NO_PROPERTY,
-                     READ_ONLY
+                     READ_ONLY,
+                     READ_CACHE /* new */
 };
 
 extern global_array_t *_ga_main_data_structure; 
@@ -110,6 +126,14 @@ extern proc_list_t *_proc_list_main_data_structure;
 extern global_array_t *GA;
 extern proc_list_t *PGRP_LIST;
 
+/*\
+ * Copy of the world communicator used by GA so that applications using MPI
+ * libraries will not use the same communicator that GA uses internally (at
+ * least for the world communictor)
+\*/
+#ifdef MSG_COMMS_MPI
+extern MPI_Comm GA_MPI_World_comm_dup;
+#endif
 
 #define ERR_STR_LEN 256               /* length of string for error reporting */
 
@@ -143,7 +167,6 @@ extern proc_list_t *PGRP_LIST;
    }                                                                           \
    else{                                                                       \
          _index = proc;                                                        \
-         if(GA_inv_Proc_list) _index = GA_inv_Proc_list[proc];                 \
       __CRAYX1_PRAGMA("_CRI novector");                                        \
          for(_d=0; _d<_dim; _d++){                                             \
              _loc = _index% (Integer)nblock[_d];                               \
@@ -159,7 +182,7 @@ extern proc_list_t *PGRP_LIST;
 
 /* this macro finds the block indices for a given block */
 #define gam_find_block_indices(ga_handle,nblock,index) {                       \
-  int _itmp, _i;                                                       \
+  int _itmp, _i;                                                               \
   int _ndim = GA[ga_handle].ndim;                                              \
   _itmp = nblock;                                                              \
   index[0] = _itmp%GA[ga_handle].num_blocks[0];                                \
@@ -181,6 +204,7 @@ extern proc_list_t *PGRP_LIST;
     index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
   }                                                                            \
 }
+/*
 #define gam_find_proc_indices(ga_handle,proc,index) {                          \
   Integer _itmp, _i;                                                           \
   Integer _ndim = GA[ga_handle].ndim;                                          \
@@ -191,8 +215,24 @@ extern proc_list_t *PGRP_LIST;
     index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
   }                                                                            \
 }
+*/
+#define gam_find_proc_indices(ga_handle,proc,index) {                          \
+  Integer _itmp, _i;                                                           \
+  Integer _ndim = GA[ga_handle].ndim;                                          \
+  _itmp = proc;                                                                \
+  index[0] = _itmp%GA[ga_handle].nblock[0];                        \
+  for (_i=1; _i<_ndim; _i++) {                                              \
+    _itmp = (_itmp-index[_i-1])/GA[ga_handle].nblock[_i-1];                    \
+    index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
+  }                                                                            \
+}
 
-/* this macro finds cordinates of the chunk of array owned by processor proc */
+/* this macro finds cordinates of the chunk of array owned by processor proc
+ * ga_handle: global array handle
+ * proc: processor (or block) index
+ * lo: lower indices of elements owned by processor (or block)
+ * hi: upper indices of elements owned by processor (or block)
+ */
 #define ga_ownsM(ga_handle, proc, lo, hi)                                      \
 {                                                                              \
   if (GA[ga_handle].distr_type == REGULAR) {                                   \
@@ -222,9 +262,24 @@ extern proc_list_t *PGRP_LIST;
     int _ndim = GA[ga_handle].ndim;                                            \
     gam_find_block_indices(ga_handle,proc,_index);                             \
     for (_i=0; _i<_ndim; _i++) {                                               \
-      lo[_i] = _index[_i]*GA[ga_handle].block_dims[_i]+1;    \
-      hi[_i] = (_index[_i]+1)*GA[ga_handle].block_dims[_i];  \
+      lo[_i] = _index[_i]*GA[ga_handle].block_dims[_i]+1;                      \
+      hi[_i] = (_index[_i]+1)*GA[ga_handle].block_dims[_i];                    \
       if (hi[_i] > GA[ga_handle].dims[_i]) hi[_i]=GA[ga_handle].dims[_i];      \
+    }                                                                          \
+  } else if (GA[ga_handle].distr_type == TILED_IRREG) {                        \
+    int _index[MAXDIM];                                                        \
+    int _i;                                                                    \
+    int _ndim = GA[ga_handle].ndim;                                            \
+    int _offset = 0;                                                           \
+    gam_find_block_indices(ga_handle,proc,_index);                             \
+    for (_i=0; _i<_ndim; _i++) {                                               \
+      lo[_i] = GA[ga_handle].mapc[_offset+_index[_i]];                         \
+      if (_index[_i] < GA[ga_handle].num_blocks[_i]-1) {                       \
+        hi[_i] = GA[ga_handle].mapc[_offset+_index[_i]+1]-1;                   \
+      } else {                                                                 \
+        hi[_i] = GA[ga_handle].dims[_i];                                     \
+      }                                                                        \
+      _offset += GA[ga_handle].num_blocks[_i];                                   \
     }                                                                          \
   }                                                                            \
 }

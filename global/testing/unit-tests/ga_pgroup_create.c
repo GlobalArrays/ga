@@ -12,7 +12,8 @@
 #include"macdecls.h"
 
 #define PGSIZE 4
-main(int argc, char **argv)
+
+int main(int argc, char **argv)
 {
   int rank, nprocs, i, j;
   int p_Geven, p_Godd, list[PGSIZE], p_size, *list_even=NULL, *list_odd=NULL, even, odd;

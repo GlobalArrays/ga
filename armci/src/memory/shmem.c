@@ -332,7 +332,7 @@ int x=0;
           fprintf(stderr,
                   "incorrect ARMCI_DEFAULT_SHMMAX should be <1,"
                   ARMCI_STRINGIFY(ARMCI_DEFAULT_SHMMAX)
-                  ">mb and 2^N Found=%ld\n",x);
+                  ">mb and 2^N Found=%d\n",x);
           x=0;
        }
      }

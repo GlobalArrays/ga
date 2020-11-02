@@ -51,6 +51,7 @@ void fix_f_string_for_c(char *s, int len)
     }
 }
 
+void $FSUB();
 int main(int argc, char **argv)
 {
     $FSUB();
