@@ -4,15 +4,17 @@
 
 #include "globalp.h"
 #include "base.h"
+#include "ga-papi.h"
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
 #define DEBUG 0
 
-/* WARNING: The maximum value NUM_HDLS can assume is 256. If it is any larger,
+/* WARNING: The maximum value MAX_NUM_NB_HDLS can assume is 256. If it is any larger,
  * the 8-bit field defined in gai_hbhdl_t will exceed its upper limit of 255 in
  * some parts of the nbutil.c code */
-#define NUM_HDLS 256
+#define MAX_NUM_NB_HDLS 256
+static int nb_max_outstanding = MAX_NUM_NB_HDLS;
 
 /**
  *                      NOTES
@@ -42,18 +44,18 @@ typedef struct {
 
 
 /* We create an array of type struct_armci_hdl_t. This list represents the
- * number of available ARMCI non-blocking calls are available to create
+ * number of available ARMCI non-blocking calls that are available to create
  * non-blocking GA calls. Each element in the armci handle linked list is of
  * type ga_armcihdl_t.
  * handle: int handle or gai_nbhdl_t struct that represents ARMCI handle for
  *         non-blocking call
  * next: pointer to next element in list
  * previous: pointer to previous element in list
- * ga_hdlarr_index: index that points back to ga_nbhdr_array list.
+ * ga_hdlarr_index: index that points back to ga_nbhdl_array list.
  *                  This can be used to remove this link from GA linked list if
  *                  this armci request must be cleared to make room for a new
  *                  request.
- * active: indicates that this represent an outstanding ARMCI non-blocking
+ * active: indicates that this represents an outstanding ARMCI non-blocking
  * request
  */
 typedef struct struct_armcihdl_t {
@@ -78,32 +80,36 @@ typedef struct{
     ga_armcihdl_t *ahandle;
     int count;
     int ga_nbtag;
-} ga_nbhdr_array_t;
+    int active;
+} ga_nbhdl_array_t;
 
 /**
  * Array of headers for non-blocking GA calls. The ihdl_index element of the
  * non-blocking handle indexes into this array. The maximum number of
- * outstanding non-blocking GA calls is NUM_HDLS.
+ * outstanding non-blocking GA calls is nb_max_outstanding.
  */
-static ga_nbhdr_array_t ga_ihdl_array[NUM_HDLS];
+static ga_nbhdl_array_t ga_ihdl_array[MAX_NUM_NB_HDLS];
 
 /**
  * Array of armci handles. This is used to construct linked lists of ARMCI
  * non-blocking calls. The maximum number of outstanding ARMCI non-blocking
- * calls is NUM_HDLS.
+ * calls is nb_max_outstanding.
  */
-static ga_armcihdl_t armci_ihdl_array[NUM_HDLS];
+static ga_armcihdl_t armci_ihdl_array[MAX_NUM_NB_HDLS];
 
 static int lastGAhandle = -1; /* last assigned ga handle */
 static int lastARMCIhandle = -1; /* last assigned armci handle */
 
 /**
  * get a unique tag for each individual ARMCI call. These tags currently repeat
- * after 16777216=2^24
+ * after 16777216=2^24 non-blocking calls
  */
-static unsigned int ga_nb_tag = 0;
+static unsigned int ga_nb_tag = -1;
 unsigned int get_next_tag(){
-    return((++ga_nb_tag));
+  ga_nb_tag++;
+  ga_nb_tag = ga_nb_tag%16777216;
+  return ga_nb_tag;
+  /* return(++ga_nb_tag); */
 }
 
 /**
@@ -112,9 +118,25 @@ unsigned int get_next_tag(){
 void gai_nb_init()
 {
   int i;
-  for (i=0; i<NUM_HDLS; i++) {
+  char *value;
+  /* This is a hideous kluge, but some users want to be able to set this
+   * externally. The fact that only integer handles are exchanged between GA and
+   * the underlying runtime make it very difficult to handle in a more elegant
+   * manner. */
+  nb_max_outstanding = MAX_NUM_NB_HDLS; /* default */
+  value = getenv("COMEX_MAX_NB_OUTSTANDING");
+  if (NULL != value) {
+    nb_max_outstanding = atoi(value);
+  }
+  if (nb_max_outstanding <1 || nb_max_outstanding > MAX_NUM_NB_HDLS) {
+    pnga_error("Illegal number of outstanding Non-block requests specified",
+        nb_max_outstanding);
+  }
+  for (i=0; i<nb_max_outstanding; i++) {
     ga_ihdl_array[i].ahandle = NULL;
     ga_ihdl_array[i].count = 0;
+    ga_ihdl_array[i].active = 0;
+    ga_ihdl_array[i].ga_nbtag = -1;
     armci_ihdl_array[i].next = NULL;
     armci_ihdl_array[i].previous = NULL;
     armci_ihdl_array[i].active = 0;
@@ -123,9 +145,10 @@ void gai_nb_init()
 }
 
 /**
- * Called from ga_put/get before a call to every non-blocking armci request.
- * Find an available handle. If none is available, complete an existing
- * outstanding armci request and return the corresponding handle.
+ * Called from ga_put/get before every call to a non-blocking armci request.
+ * Find an available armic non-blocking handle. If none is available,
+ * complete an existing outstanding armci request and return the
+ * corresponding handle.
  */
 armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
 {
@@ -135,24 +158,30 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
   ga_armcihdl_t* next = ga_ihdl_array[index].ahandle;
 
   lastARMCIhandle++;
-  lastARMCIhandle = lastARMCIhandle%NUM_HDLS;
-  top = lastARMCIhandle+NUM_HDLS;
+  lastARMCIhandle = lastARMCIhandle%nb_max_outstanding;
+  top = lastARMCIhandle+nb_max_outstanding;
   /* default index if no handles are available */
   iloc = lastARMCIhandle;
   for (i=lastARMCIhandle; i<top; i++) {
-    if (armci_ihdl_array[iloc].active == 0) {
-      iloc = i%NUM_HDLS;
+    idx = i%nb_max_outstanding;
+    if (armci_ihdl_array[idx].active == 0) {
+      iloc = idx;
       break;
     }
   }
-  /* if selected handle has an outstanding request, complete it */
+  /* if selected handle represents an outstanding request, complete it */
   if (armci_ihdl_array[iloc].active == 1) {
     int iga_hdl = armci_ihdl_array[iloc].ga_hdlarr_index;
     ARMCI_Wait(&armci_ihdl_array[iloc].handle);
     /* clean up linked list that this handle used to be a link in */
     if (armci_ihdl_array[iloc].previous != NULL) {
+      /* link is not first in linked list */
       armci_ihdl_array[iloc].previous->next = armci_ihdl_array[iloc].next;
+      if (armci_ihdl_array[iloc].next != NULL) {
+        armci_ihdl_array[iloc].next->previous = armci_ihdl_array[iloc].previous;
+      }
     } else {
+      /* link is first in linked list. Need to update header */
       ga_ihdl_array[iga_hdl].ahandle = armci_ihdl_array[iloc].next;
       if (armci_ihdl_array[iloc].next != NULL) {
         armci_ihdl_array[iloc].next->previous = NULL;
@@ -164,14 +193,14 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
    * corresponding to nbhandle */
   ARMCI_INIT_HANDLE(&armci_ihdl_array[iloc].handle);
   armci_ihdl_array[iloc].active = 1;
-  idx = inbhandle->ihdl_index; 
   armci_ihdl_array[iloc].previous = NULL;
-  if (ga_ihdl_array[idx].ahandle) {
-    ga_ihdl_array[idx].ahandle->previous = &armci_ihdl_array[iloc];
+  if (ga_ihdl_array[index].ahandle) {
+    ga_ihdl_array[index].ahandle->previous = &armci_ihdl_array[iloc];
   }
-  armci_ihdl_array[iloc].next = ga_ihdl_array[idx].ahandle;
-  ga_ihdl_array[idx].ahandle =  &armci_ihdl_array[iloc];
-  ga_ihdl_array[idx].count++;
+  armci_ihdl_array[iloc].next = ga_ihdl_array[index].ahandle;
+  ga_ihdl_array[index].ahandle =  &armci_ihdl_array[iloc];
+  armci_ihdl_array[iloc].ga_hdlarr_index = index;
+  ga_ihdl_array[index].count++;
 
   /* reset lastARMCIhandle to iloc */
   lastARMCIhandle = iloc;
@@ -192,6 +221,9 @@ int nga_wait_internal(Integer *nbhandle){
    * so the handle can be used for another GA non-blocking call. Just return in
    * this case */
   if (tag == ga_ihdl_array[index].ga_nbtag) {
+    if (ga_ihdl_array[index].active == 0) {
+      printf("p[%d] nga_wait_internal: GA NB handle inactive\n",GAme);
+    }
     ga_armcihdl_t* next = ga_ihdl_array[index].ahandle;
     /* Loop over linked list and complete all remaining armci non-blocking calls */
     while(next) {
@@ -205,6 +237,9 @@ int nga_wait_internal(Integer *nbhandle){
       ARMCI_INIT_HANDLE(&next->handle);
       next = tmp;
     }
+    ga_ihdl_array[index].ahandle = NULL;
+    ga_ihdl_array[index].count = 0;
+    ga_ihdl_array[index].active = 0;
   }
 
   return(retval);
@@ -234,10 +269,17 @@ int nga_test_internal(Integer *nbhandle)
       if (ret == 0) {
         /* operation is completed so remove it from linked list */
         if (next->previous != NULL) {
+          /* operation is not first element in list */
           next->previous->next = next->next;
-        } else if (next->next != NULL) {
+          if (next->next != NULL) {
+            next->next->previous = next->previous;
+          }
+        } else {
+          /* operation is first element in list */
           ga_ihdl_array[index].ahandle = next->next;
-          next->next->previous = NULL;
+          if (next->next != NULL) {
+            next->next->previous = NULL;
+          }
         }
         next->previous = NULL;
         next->next = NULL;
@@ -246,6 +288,10 @@ int nga_test_internal(Integer *nbhandle)
       }
       next = tmp;
     }
+    if (ga_ihdl_array[index].count == 0) {
+      ga_ihdl_array[index].ahandle = NULL;
+      ga_ihdl_array[index].active = 0;
+    }
     if (ga_ihdl_array[index].count > 0) retval = 1;
   }
 
@@ -253,19 +299,19 @@ int nga_test_internal(Integer *nbhandle)
 }
 
 /**
- * Find a free handle.
+ * Find a free GA non-blocking handle.
  */
 void ga_init_nbhandle(Integer *nbhandle)
 {
   int i, top, idx, iloc;
   gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
   lastGAhandle++;
-  lastGAhandle = lastGAhandle%NUM_HDLS;
-  top = lastGAhandle+NUM_HDLS;
+  lastGAhandle = lastGAhandle%nb_max_outstanding;
+  top = lastGAhandle+nb_max_outstanding;
   /* default index if no handles are available */
   idx = lastGAhandle;
   for (i=lastGAhandle; i<top; i++) {
-    iloc = i%NUM_HDLS;
+    iloc = i%nb_max_outstanding;
     if (ga_ihdl_array[iloc].ahandle == NULL) {
       idx = iloc;
       break;
@@ -273,7 +319,7 @@ void ga_init_nbhandle(Integer *nbhandle)
   }
   /* If no free handle is found, clear the oldest handle */
   if (ga_ihdl_array[idx].ahandle != NULL) {
-    int itmp;
+    Integer itmp;
     /* find value of itmp corresponding to oldest handle */
     gai_nbhdl_t *oldhdl = (gai_nbhdl_t*)&itmp;
     oldhdl->ihdl_index = idx;
@@ -284,6 +330,7 @@ void ga_init_nbhandle(Integer *nbhandle)
   inbhandle->ga_nbtag = get_next_tag();
   ga_ihdl_array[idx].ahandle = NULL;
   ga_ihdl_array[idx].count = 0;
+  ga_ihdl_array[idx].active = 1;
   ga_ihdl_array[idx].ga_nbtag = inbhandle->ga_nbtag;
 
   /* reset lastGAhandle to idx */

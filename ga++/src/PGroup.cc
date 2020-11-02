@@ -66,6 +66,21 @@ GA::PGroup::getWorld()
     return pgWorld;
 }
 
+GA::PGroup
+GA::PGroup::duplicate() 
+{
+  GA::PGroup ret;
+  ret.mPHandle = GA_Pgroup_duplicate(mPHandle);
+  return ret;
+}
+
+GA::PGroup
+GA::PGroup::self() 
+{
+  GA::PGroup ret;
+  ret.mPHandle = GA_Pgroup_self();
+  return ret;
+}
 
 void
 GA::PGroup::setDefault(GA::PGroup* p_handle) 

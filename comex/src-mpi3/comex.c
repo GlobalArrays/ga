@@ -204,6 +204,18 @@ int comex_init()
     /* World Size */
     status = MPI_Comm_size(l_state.world_comm, &(l_state.size));
     assert(MPI_SUCCESS == status);
+
+    /* Pick up environment variables */
+    {
+      char *value = NULL;
+      nb_max_outstanding = COMEX_MAX_NB_OUTSTANDING; /* default */
+      value = getenv("COMEX_MAX_NB_OUTSTANDING");
+      if (NULL != value) {
+        nb_max_outstanding = atoi(value);
+      }
+      COMEX_ASSERT(nb_max_outstanding > 0);
+    }
+
     
     /* groups */
     comex_group_init();
@@ -2045,6 +2057,9 @@ int comex_wait(comex_request_t* hdl)
   translate_mpi_error(ierr,"comex_wait:MPI_Win_flush_local");
 #endif
 #endif
+  if (nb_list[*hdl]->active == 0) {
+    printf("p[%d] comex_wait Error: handle not active\n",l_state.rank);
+  }
   nb_list[*hdl]->active = 0;
   if (nb_list[*hdl]->use_type) {
     ierr = MPI_Type_free(&(nb_list[*hdl]->src_type));
@@ -2075,6 +2090,9 @@ int comex_test(comex_request_t* hdl, int *status)
     MPI_Status stat;
     ierr = MPI_Test(&(nb_list[*hdl]->request),&flag,&stat);
     translate_mpi_error(ierr,"comex_test:MPI_Test");
+    if (nb_list[*hdl]->active == 0) {
+      printf("comex_test Error: handle not active\n");
+    }
     if (flag) {
       /* operation is complete */
       *status = 0;

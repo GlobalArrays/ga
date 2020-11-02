@@ -1548,10 +1548,14 @@ int comex_wait(comex_request_t* hdl)
     COMEX_ASSERT(index < nb_max_outstanding);
     nb = &nb_state[index];
 
+#if 0
+    /* this condition will likely be tripped if a blocking operation follows a
+     * non-blocking operation*/
     if (0 == nb->in_use) {
-        fprintf(stderr, "{%d} comex_wait Error: invalid handle\n",
+        fprintf(stderr, "p[%d] comex_wait Error: invalid handle\n",
                 g_state.rank);
     }
+#endif
 
     nb_wait_for_all(nb);
 
@@ -1574,10 +1578,14 @@ int comex_test(comex_request_t* hdl, int *status)
     COMEX_ASSERT(index < nb_max_outstanding);
     nb = &nb_state[index];
 
+#if 0
+    /* this condition will likely be tripped if a blocking operation follows a
+     * non-blocking operation*/
     if (0 == nb->in_use) {
         fprintf(stderr, "{%d} comex_test Error: invalid handle\n",
                 g_state.rank);
     }
+#endif
 
     if (!nb_test_for_all(nb)) {
       /* Completed */
@@ -2291,7 +2299,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
                     ,nill
 #endif
 #endif
-);
+                  );
             if (is_notifier) {
                 /* does this need to be a memcpy?? */
                 reg_entries_local[reg_entries_local_count++] = reg_entries[i];
@@ -2376,6 +2384,7 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
     idevice.devices = NULL;
 #endif
 
+    printf("p[%d] calling comex_malloc_mem_dev\n",g_state.rank);
     /* preconditions */
     COMEX_ASSERT(ptrs);
 
@@ -5299,20 +5308,23 @@ STATIC nb_t* nb_wait_for_handle()
           break;
         }
         nb = &nb_state[loop_index];
-        loop_index++;
-        loop_index %= nb_max_outstanding; /* wrap around if needed */
         if (!nb->in_use) {
           nb_index = loop_index;
           found = 1;
           break;
         }
+        loop_index++;
+        loop_index %= nb_max_outstanding; /* wrap around if needed */
     } while (nb->in_use);
     if (!found) {
       nb = &nb_state[nb_index];
-      nb_index++;
-      nb_index %= nb_max_outstanding; /* wrap around if needed */
       nb_wait_for_all(nb);
     }
+    //nb->hdl = nb_index;
+    nb_index++;
+    nb_index %= nb_max_outstanding; /* wrap around if needed */
+    /* make sure in_use flag is set to 1 */
+    nb->in_use = 1;
 #endif
 
     return nb;
@@ -5582,6 +5594,7 @@ STATIC void nb_wait_for_all(nb_t *nb)
             nb_wait_for_recv1(nb);
         }
     }
+    nb->in_use = 0;
 }
 
 /* Returns 0 if no outstanding requests */
@@ -5622,6 +5635,7 @@ STATIC int nb_test_for_all(nb_t *nb)
     }
     nb->send_head = save_send_head;
     nb->recv_head = save_recv_head;
+    if (ret == 0) nb->in_use = 0;
     return ret;
 }
 

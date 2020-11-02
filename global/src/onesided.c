@@ -491,11 +491,11 @@ static void ngai_gets(char *loc_base_ptr, char *prem,int *stride_rem, char *pbuf
 		      int *count, int nstrides, int proc, int field_off, 
 		      int field_size, int type_size) {
 #if 1
-  armci_hdl_t nbhandle;
-  ARMCI_INIT_HANDLE(&nbhandle);
+  Integer handle;
+  ga_init_nbhandle(&handle);
   ngai_nbgets(loc_base_ptr, prem, stride_rem, pbuf, stride_loc, count, nstrides, proc, 
-	      field_off, field_size, type_size, &nbhandle);
-  ARMCI_Wait(&nbhandle);
+	      field_off, field_size, type_size, (armci_hdl_t*)get_armci_nbhandle(&handle));
+  nga_wait_internal(&handle);
 #else
   if(field_size<0 || field_size == type_size) {
     ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,nstrides,proc);
@@ -1429,16 +1429,16 @@ void ngai_acc_common(Integer g_a,
         }
 #endif
 
-        if(nbhandle) 
+        if(nbhandle) {
           ARMCI_NbAccS(optype, alpha, pbuf, stride_loc, prem,
               stride_rem, count, ndim-1, proc,
               (armci_hdl_t*)get_armci_nbhandle(nbhandle));
-        else {
+        } else {
 #  if !defined(DISABLE_NBOPT)
-          if((loop==0 && gai_iterator_last(&it_hdl)) || loop==1)
+          if((loop==0 && gai_iterator_last(&it_hdl)) || loop==1) {
             ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, 
                 count, ndim-1, proc);
-          else {
+          } else {
             ARMCI_NbAccS(optype, alpha, pbuf, stride_loc, prem, 
                 stride_rem, count, ndim-1, proc,
                 (armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
