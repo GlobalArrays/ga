@@ -12,7 +12,7 @@ set -x
 # install dependencies
 sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 sudo apt-get update -qq
-sudo apt-get install -qq libhwloc-dev libiomp-dev libnuma-dev libpfm4-dev llvm-3.9-dev numactl
+sudo apt-get install -qq libhwloc-dev libiomp-dev libnuma-dev libpfm4-dev llvm-3.9-dev numactl xsltproc
 
 # set install directory to current location to not cache jemalloc/SICM
 TRAVIS_ROOT="$1"
