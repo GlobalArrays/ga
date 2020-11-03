@@ -45,6 +45,9 @@
 include(CommonFunctions)
 
 set( referenceblas_LIBRARY_NAME libblis.a blis )
+if(BUILD_SHARED_LIBS)
+  set( referenceblas_LIBRARY_NAME blis )
+endif()
 
 set( referenceblas_IPREFIX "${CMAKE_INSTALL_PREFIX}" )
 set( referenceblas_PREFIX ${ReferenceBLASROOT} $ENV{ReferenceBLASROOT} )
