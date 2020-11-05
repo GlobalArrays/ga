@@ -409,6 +409,7 @@ if(ENABLE_BLAS)
   install(FILES
     ${CMAKE_CURRENT_LIST_DIR}/cmake/FindBLAS.cmake
     ${CMAKE_CURRENT_LIST_DIR}/cmake/FindLAPACK.cmake
+    ${CMAKE_CURRENT_LIST_DIR}/cmake/FindStandardFortran.cmake
     DESTINATION ${INSTALL_CONFIGDIR}
   )
 
