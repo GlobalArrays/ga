@@ -643,7 +643,7 @@ void test_dim(int ndim)
     /*            sleep(1);*/
 
     /* note that we do not need cmx_fence here since
-     * consectutive operations targeting the same process are ordered */
+     * consecutive operations targeting the same process are ordered */
     (void)cmx_gets((double *)c + idx3, strideA, idx2, strideB,  count, ndim - 1, proc, b);
 
     compare_patches(0., ndim, (double *)a + idx1, loA, hiA, dimsA, (double *)c + idx3, loC, hiC, dimsA);
@@ -965,7 +965,7 @@ void test_vec_small()
     }
   }
   if (me == 0) {
-    printf("\n\tNow veryfying the vector put data for correctness");
+    printf("\n\tNow verifying the vector put data for correctness");
   }
   for (i = 0; i < nproc; i++)if (i != me) {
       cmx_wait(hdl_put + i);
@@ -1011,7 +1011,7 @@ void test_vec_small()
     }
   }
   if (me == 0) {
-    printf("\n\tNow veryfying the vector get data for correctness");
+    printf("\n\tNow verifying the vector get data for correctness");
   }
   for (i = 0; i < nproc; i++)if (i != me) {
       cmx_wait(hdl_get + i);
@@ -1576,7 +1576,7 @@ void test_fetch_add()
   }
 
   if (me == 0) {
-    printf("\nIncrement the shared counter until reaches %d\n", LOOP);
+    printf("\nIncrement the shared counter until it reaches %d\n", LOOP);
     fflush(stdout);
   }
 
