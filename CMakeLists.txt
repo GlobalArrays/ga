@@ -215,6 +215,15 @@ else()
    set (FORTRAN_I4_FLAG -i4)
 endif() 
 
+# check_fortran_compiler_flag("-fallow-argument-mismatch" _fam)
+# ga_is_valid(_fam _fam_flag_exists)
+# if(_fam_flag_exists)
+#   set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
+# endif()
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU" AND CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL "10.1")
+  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
+endif()
+
 # Hardwire these settings. No way to check for Fortran integer size in CMake
 # (that we can find)
 set (CM_SIZEOF_F77_DOUBLE 8)
