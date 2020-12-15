@@ -444,7 +444,7 @@ int print_ga_prof_stats(enum FMT f, FILE *fp, MPI_Comm comm){
    switch(f)
    {
       case CSV_FMT:
-         fprintf(fp, "Func Name, Node, Count, Avg Time, Bytes, Avg  Bytes, min Count, min Time, min Bytes, max Count, max Time, max Bytes\n");
+         fprintf(fp, "Func Name, Count, Avg Time, Bytes, Avg  Bytes, min Count, min Time, min Bytes, max Count, max Time, max Bytes\n");
          break;
       case HUMAN_FMT:
          break;
