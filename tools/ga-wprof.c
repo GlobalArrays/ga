@@ -444,7 +444,7 @@ int print_ga_prof_stats(enum FMT f, FILE *fp, MPI_Comm comm){
    switch(f)
    {
       case CSV_FMT:
-         fprintf(fp, "Func Name, Count, Avg Time, Bytes, Avg  Bytes, min Count, min Time, min Bytes, max Count, max Time, max Bytes\n");
+         fprintf(fp, "Func Name, Count, Avg Time (ms), Bytes, Avg  Bytes, min Count, min Time, min Bytes, max Count, max Time, max Bytes\n");
          break;
       case HUMAN_FMT:
          break;
@@ -455,7 +455,8 @@ int print_ga_prof_stats(enum FMT f, FILE *fp, MPI_Comm comm){
             case CSV_FMT:  
                fprintf(fp, "%s, %"PRIu64", %.3lf, %"PRIu64", %.3lf ,%"PRIu64", %"PRIu64", %"PRIu64", %"PRIu64", %"PRIu64", %"PRIu64"\n",
                       gaw_global_stats[i].name, 
-                      gaw_global_stats[i].count, (double)(gaw_global_stats[i].time/(double)(nproc)), gaw_global_stats[i].total_bytes,
+                      gaw_global_stats[i].count, ((double)(gaw_global_stats[i].time/(double)(nproc)))/1e6, 
+		      gaw_global_stats[i].total_bytes,
 		      (double)(gaw_global_stats[i].total_bytes) / (double)(nproc),
                       gaw_global_min_stats[i].count, gaw_global_min_stats[i].time, gaw_global_min_stats[i].total_bytes,
                       gaw_global_max_stats[i].count, gaw_global_max_stats[i].time, gaw_global_max_stats[i].total_bytes);
