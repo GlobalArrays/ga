@@ -1,0 +1,101 @@
+name: GlobalArrays_CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, macos-10.15]
+        experimental: [false]
+        mpi_impl:
+          - openmpi
+          - mpich
+        armci_network:
+          - mpi3
+          - mpi-ts
+          - ofi
+          - armci
+          - mpi-pr
+        f77:
+          - gfortran-9
+        include:
+          - os: ubuntu-16.04
+            experimental: true 
+            mpi_impl: mpich
+            armci_network: mpi-pr
+            f77: gfortran
+          - os: ubuntu-20.04
+            experimental: true 
+            mpi_impl: mpich
+            armci_network: mpi-ts
+            config_opts: "--disable-f77 --enable-cxx"
+            f77: gfortran-10
+          - os: macos-11.0
+            experimental: true 
+            mpi_impl: mpich
+            armci_network: mpi-ts
+            config_opts: "--disable-static --enable-shared"
+            f77: gfortran-10
+        exclude:
+          - armci_network: mpi-pr
+            mpi_impl: openmpi
+          - armci_network: mpi3
+            mpi_impl: openmpi
+          - armci_network: ofi
+            mpi_impl: openmpi
+      fail-fast: false
+    env:
+        MPI_IMPL: ${{ matrix.mpi_impl }}
+        PORT: ${{ matrix.armci_network }}
+        ARMCI_NETWORK: ${{ matrix.armci_network }}
+        F77: ${{ matrix.f77 }}
+        CONFIG_OPTS: ${{ matrix.config_opts}}
+    continue-on-error: ${{ matrix.experimental }}
+    steps: 
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 40
+      - name: install_packages
+        run: |
+          case "${{ matrix.os }}" in
+          ubuntu*|jessie|stretch|buster)
+          sudo apt-get update -q -y
+          sudo apt-get install -q -y gfortran
+          ;;
+          macos*)
+          brew update
+          brew install gcc coreutils automake
+          ;;
+          esac
+      - name: before_install
+        run: |
+          pwd
+          ls -lart
+          sh ./travis/install-autotools.sh $GITHUB_WORKSPACE/travis
+      - name: install
+        run: |
+          export CI_ROOT=$GITHUB_WORKSPACE/travis
+          ./travis/install-mpi.sh $CI_ROOT $MPI_IMPL
+          if [[ "$PORT" == "ofi" ]]; then ./travis/install-libfabric.sh $CI_ROOT; else true;  fi
+          if [[ "$PORT" == "armci" ]]; then ./travis/install-armci-mpi.sh $CI_ROOT; else true; fi
+          if [[ ( "$PORT" == "mpi-pr" ) && ( $(os) == "ubuntu-16.04" ) ]]; then ./travis/install-sicm.sh $HOME/no_cache; else true; fi
+      - name: compile and test global arrays
+        if: ${{ success() }}
+        run: |
+          ./travis/build-run.sh $GITHUB_WORKSPACE/travis $PORT $MPI_IMPL
+      - name: after_failure
+        if: ${{ failure() }}
+        run: |
+          pwd
+          ls
+          find . -name config.log -exec cat {} ";"
+          cat ./test-suite.log
+  
+
+
+
+     
