@@ -65,7 +65,7 @@ void buffer_init(
             printf("Could not allocate memory for buffers!\n");
             return;
         }
-        bzero(ctxt->buf[i].buffer, sizeof(ctxt->buf[i].buffer));
+        bzero(ctxt->buf[i].buffer, sizeof(double)*(buf_size + ALIGN-1));
 
         /* align buffer address */
         diff = ((long)(ctxt->buf[i].buffer)) % (sizeof(double)*ALIGN);

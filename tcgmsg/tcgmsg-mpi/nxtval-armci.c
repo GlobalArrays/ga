@@ -4,6 +4,9 @@
 
 #include <mpi.h>
 
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #if HAVE_MALLOC_H
 #   include <malloc.h>
 #endif

@@ -488,9 +488,9 @@ int local_sync_begin,local_sync_end;
         for (i=0; i<ndim; i++) {
           total *= nblocks[i];
         }
-        printf("\nTotal of %d blocks on %d processors\n",total,nproc);
+        printf("\nTotal of %ld blocks on %ld processors\n",total,nproc);
         for (i=0; i<nproc; i++) {
-          printf("Distribution on process %d\n",i);
+          printf("Distribution on process %ld\n",i);
           for (j=i; j<total; j += nproc) {
             pnga_distribution(g_a,j,lo,hi);
             sprintf(msg,"  Block=%d\t corresponds to array section: ",(int)j);
@@ -523,16 +523,16 @@ int local_sync_begin,local_sync_end;
 
         printf("\n");
         printf("Number of blocks in each dimension: [");
-        for (i=0; i<ndim-1; i++) printf("%d,",nblocks[i]);
-        printf("%d]\n\n",nblocks[ndim-1]);
+        for (i=0; i<ndim-1; i++) printf("%ld,",nblocks[i]);
+        printf("%ld]\n\n",nblocks[ndim-1]);
 
         pnga_get_proc_grid(g_a,proc_grid);
         printf("Processor grid dimensions: [");
-        for (i=0; i<ndim-1; i++) printf("%d,",proc_grid[i]);
-        printf("%d]\n\n",nblocks[ndim-1]);
+        for (i=0; i<ndim-1; i++) printf("%ld,",proc_grid[i]);
+        printf("%ld]\n\n",nblocks[ndim-1]);
 
         for (i=0; i<nproc; i++) {
-          printf("Distribution on process %d\n",i);
+          printf("Distribution on process %ld\n",i);
           pnga_get_proc_index(g_a,i,proc_idx);
           pnga_get_proc_index(g_a,i,index);
           ok = 1;
@@ -542,25 +542,25 @@ int local_sync_begin,local_sync_end;
             for (j=ndim-1; j>=0; j--) {
               idx = idx*nblocks[j]+index[j];
             }
-            sprintf(msg," idx: %d Block=[",idx);
+            sprintf(msg," idx: %ld Block=[",idx);
             pnga_distribution(g_a,idx,lo,hi);
             ptr = msg + strlen(msg);
             if (fstyle) {
               for (j=0; j<ndim-1; j++) {
-                sprintf(ptr,"%d,",index[j]);
+                sprintf(ptr,"%ld,",index[j]);
                 ptr += strlen(ptr);
               }
-              sprintf(ptr,"%d]",index[ndim-1]);
+              sprintf(ptr,"%ld]",index[ndim-1]);
               ptr += strlen(ptr);
             } else {
               for (j=ndim-1; j>0; j++) {
-                sprintf(ptr,"%d,",index[j]);
+                sprintf(ptr,"%ld,",index[j]);
                 ptr += strlen(ptr);
               }
-              sprintf(ptr,"%d]",index[0]);
+              sprintf(ptr,"%ld]",index[0]);
               ptr += strlen(ptr);
             }
-            sprintf(ptr,"\t corresponds to array section: ",(int)j);
+            sprintf(ptr,"\t corresponds to array section: %d ",(int)j);
             /* for C style need to swap and decremenent by 1 both arrays */
             if(!fstyle){
               for(i=0; i<ndim/2; i++){
