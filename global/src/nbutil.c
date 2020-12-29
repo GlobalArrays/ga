@@ -8,6 +8,9 @@
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #define DEBUG 0
 
 /* WARNING: The maximum value MAX_NUM_NB_HDLS can assume is 256. If it is any larger,
@@ -222,7 +225,7 @@ int nga_wait_internal(Integer *nbhandle){
    * this case */
   if (tag == ga_ihdl_array[index].ga_nbtag) {
     if (ga_ihdl_array[index].active == 0) {
-      printf("p[%d] nga_wait_internal: GA NB handle inactive\n",GAme);
+      printf("p[%ld] nga_wait_internal: GA NB handle inactive\n",GAme);
     }
     ga_armcihdl_t* next = ga_ihdl_array[index].ahandle;
     /* Loop over linked list and complete all remaining armci non-blocking calls */
