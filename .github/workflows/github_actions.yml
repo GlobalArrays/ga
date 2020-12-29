@@ -59,6 +59,16 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 40
+      - name: Cache install steps
+        id: ga-cache-install
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-install-steps
+        with:
+          # cache files are stored in `~/travis` on Linux/macOS
+          path: travis
+          key: ${{ runner.os }}-${{ matrix.mpi_impl}}-${{ matrix.armci_network}}-gabuild
+
       - name: install_packages
         run: |
           case "${{ matrix.os }}" in
@@ -72,6 +82,7 @@ jobs:
           ;;
           esac
       - name: before_install
+        if: steps.ga-cache-install.outputs.cache-hit != 'true'
         run: |
           pwd
           ls -lart
