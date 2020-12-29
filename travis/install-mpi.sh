@@ -57,7 +57,13 @@ cat > mpiimpl.h.patch <<EOF
 EOF
                     patch -p0 < mpiimpl.h.patch
                     mkdir -p build && cd build
-                    ../configure CFLAGS="-w" --prefix=$TRAVIS_ROOT/mpich
+		    GNUMAJOR=`$F77 -dM -E - < /dev/null 2> /dev/null | grep __GNUC__ |cut -c18-`
+		    if [ $GNUMAJOR -ge 10  ]; then
+			FFLAGS_IN="-w -fallow-argument-mismatch -O2"
+		    else
+			FFLAGS_IN="-w -O2"
+		    fi
+                    ../configure CFLAGS="-w" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich
                     make -j ${MAKE_JNUM}
                     make -j ${MAKE_JNUM} install
                 else
