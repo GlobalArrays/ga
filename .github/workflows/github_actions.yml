@@ -52,8 +52,6 @@ jobs:
             mpi_impl: openmpi
           - armci_network: ofi
             mpi_impl: openmpi
-          - os: ubuntu-18.04
-            cc: clang
       fail-fast: false
     env:
         MPI_IMPL: ${{ matrix.mpi_impl }}
