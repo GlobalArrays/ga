@@ -1,6 +1,7 @@
 # GLOBAL ARRAYS
 
 Travis: [![Build Status](https://travis-ci.org/GlobalArrays/ga.svg?branch=master)](https://travis-ci.org/GlobalArrays/ga)
+GH develop branch: [![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2FGlobalArrays%2Fga%2Fbadge%3Fref%3Ddevelop&style=flat)](https://actions-badge.atrox.dev/GlobalArrays/ga/goto?ref=develop)
 
 ## Table of Contents
 
