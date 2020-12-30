@@ -37,7 +37,7 @@ case "$os" in
         echo "Linux"
         case "$MPI_IMPL" in
             mpich)
-                if [ ! -d "$TRAVIS_ROOT/mpich" ]; then
+                if [ ! -d "$TRAVIS_ROOT/mpich" ] || [  ! -x "$TRAVIS_ROOT/mpich/bin/mpicc" ]; then
                     wget --no-check-certificate http://www.mpich.org/static/downloads/3.2/mpich-3.2.tar.gz
                     tar -xzf mpich-3.2.tar.gz
                     cd mpich-3.2
@@ -63,7 +63,12 @@ EOF
 		    else
 			FFLAGS_IN="-w -O2"
 		    fi
-                    ../configure CFLAGS="-w" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich
+		    if [ $(${CC} -dM -E - </dev/null 2> /dev/null |grep __clang__|head -1|cut -c19) ] ; then
+			CFLAGS_in="-w -fPIC"
+		    else
+			CFLAGS_in="-w"
+		    fi
+                    ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich
                     make -j ${MAKE_JNUM}
                     make -j ${MAKE_JNUM} install
                 else
@@ -71,12 +76,17 @@ EOF
                 fi
                 ;;
             openmpi)
-                if [ ! -d "$TRAVIS_ROOT/open-mpi" ]; then
+                if [ ! -d "$TRAVIS_ROOT/open-mpi" ] || [ ! -x "$TRAVIS_ROOT/open-mpi/bin/mpicc" ] ; then
                     wget --no-check-certificate https://www.open-mpi.org/software/ompi/v2.0/downloads/openmpi-2.0.2.tar.bz2
                     tar -xjf openmpi-2.0.2.tar.bz2
                     cd openmpi-2.0.2
                     mkdir -p build && cd build
-                    ../configure CFLAGS="-w" --prefix=$TRAVIS_ROOT/open-mpi \
+		    if [ $(${CC} -dM -E - </dev/null 2> /dev/null |grep __clang__|head -1|cut -c19) ] ; then
+			CFLAGS_in="-w -fPIC"
+		    else
+			CFLAGS_in="-w"
+		    fi
+                    ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" --prefix=$TRAVIS_ROOT/open-mpi \
                                 --without-verbs --without-fca --without-mxm --without-ucx \
                                 --without-portals4 --without-psm --without-psm2 \
                                 --without-libfabric --without-usnic \

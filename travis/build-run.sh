@@ -53,6 +53,17 @@ esac
 
 # Configure and build
 ./autogen.sh $TRAVIS_ROOT
+case "$os" in
+    Darwin)
+        echo "Mac CFLAGS" $CFLAGS
+        ;;
+    Linux)
+	if [ $(${CC} -dM -E - </dev/null 2> /dev/null |grep __clang__|head -1|cut -c19) ] ; then
+	    export CFLAGS="${CFLAGS} -fPIC "
+	fi
+        echo "Linux CFLAGS" $CFLAGS
+        ;;
+esac
 case "x$PORT" in
     xofi)
         ./configure --with-ofi=$TRAVIS_ROOT/libfabric
@@ -61,7 +72,7 @@ case "x$PORT" in
         fi
         ;;
     xarmci)
-        ./configure --with-armci=$TRAVIS_ROOT/external-armci CFLAGS=-pthread LIBS=-lpthread
+        ./configure --with-armci=$TRAVIS_ROOT/external-armci CFLAGS="${CFLAGS} -pthread " LIBS=-lpthread
         ;;
     x)
         ./configure ${CONFIG_OPTS}
