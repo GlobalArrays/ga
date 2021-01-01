@@ -283,10 +283,17 @@ void verify_ga_dgemm(char xt1, char xt2, int num_m, int num_n, int num_k,
     NGA_Get(g_b, lo, hi, tmpb, &dims[1]);
 
     /* compute dgemm sequentially */
+    #if HAVE_BLAS
+    dgemm_(&xt1, &xt2, &num_m, &num_n, &num_k,
+          &alpha, tmpa, &num_m,
+          tmpb, &num_k, &beta,
+          tmpc, &num_m);
+    #else
     xb_dgemm(&xt1, &xt2, &num_m, &num_n, &num_k,
             &alpha, tmpa, &num_m,
             tmpb, &num_k, &beta,
             tmpc, &num_m);
+    #endif
 
     /* after computing c locally, verify it with the values in g_c */
     NGA_Inquire(g_a, &type, &ndim, dims);

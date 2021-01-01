@@ -317,7 +317,12 @@ static void dpatch_test(
     tb = 'n';
     alpha = 1e0;
     beta = 0e0;
+    
+    #if HAVE_BLAS
+    dgemm_(&tb, &ta, &n, &m, &k, &alpha, b, &n, a, &k, &beta, c, &n);
+    #else
     xb_dgemm(&tb, &ta, &n, &m, &k, &alpha, b, &n, a, &k, &beta, c, &n);
+    #endif
 
     /* perform global computation */
     NGA_Matmul_patch(ta, tb, &alpha, &beta, 

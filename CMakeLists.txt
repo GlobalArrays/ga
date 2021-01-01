@@ -30,11 +30,12 @@
 # file: CMakeLists.txt
 # -------------------------------------------------------------
 
-cmake_minimum_required (VERSION 3.17.0 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.18.0 FATAL_ERROR)
 project (GlobalArrays VERSION 5.8.0 LANGUAGES C CXX)
 
 # Append local CMake directory
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/linalg-modules")
 message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
 include(ga-utils)
 
@@ -50,7 +51,7 @@ if (ENABLE_FORTRAN)
 endif()
 
 ga_option(CMAKE_BUILD_TYPE Release)
-ga_option(BLAS_VENDOR ReferenceBLAS)
+ga_option(BLAS_VENDOR BLIS)
 ga_option(ENABLE_TESTS ON)
 ga_option(ENABLE_PROFILING OFF)
 #Options for user provided LinAlg libraries
@@ -105,7 +106,7 @@ option (F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS "Fortran/C interface property" ON)
 
 message(STATUS "Checking MPI ...")
 find_package (MPI REQUIRED)
-set(GA_EXTRA_LIBS ${GA_EXTRA_LIBS} MPI::MPI_C MPI::MPI_CXX)
+set(GA_EXTRA_LIBS ${GA_EXTRA_LIBS} MPI::MPI_C)
 if(ENABLE_FORTRAN)
   list(APPEND GA_EXTRA_LIBS MPI::MPI_Fortran)
 endif()
@@ -267,7 +268,6 @@ CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/global.fh.in
                 ${CMAKE_CURRENT_BINARY_DIR}/global/src/global.fh )
 
 if (ENABLE_FORTRAN)
-message(STATUS "CMAKE_COMMAND:${CMAKE_COMMAND}")
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/config.fh
     COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_BINARY_DIR}/config.h" -D OUTPUT:PATH="${CMAKE_CURRENT_BINARY_DIR}/config.fh" -P ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.cmake DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/config.h
@@ -277,10 +277,14 @@ message(STATUS "CMAKE_COMMAND:${CMAKE_COMMAND}")
     GenerateConfigFH ALL
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/config.fh
   )
+  set_source_files_properties(
+    ${CMAKE_CURRENT_BINARY_DIR}/config.fh
+    PROPERTIES GENERATED TRUE
+  )
 endif()
 
 include_directories(AFTER ${MPI_INCLUDE_PATH})
-add_definitions (-DHAVE_CONFIG_H)
+add_definitions (-DHAVE_CONFIG_H -DOMPI_SKIP_MPICXX)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -304,11 +308,18 @@ endif()
 if(ENABLE_BLAS)
   list(APPEND GA_EXTRA_LIBS ${linalg_lib})
   add_compile_options(${BLAS_COMPILE_OPTIONS})
+  add_compile_definitions(${BLAS_COMPILE_DEFINITIONS})
   #include_directories(${BLAS_INCLUDE_DIRS})
 endif()
 
 if(ENABLE_PROFILING)
   set(ga_profiler $<TARGET_OBJECTS:ga_tools>)
+endif()
+
+if(ENABLE_BLAS)
+  include_directories(LinAlg/lapack+blas)
+else()
+  set(ga_ref_blas $<TARGET_OBJECTS:linalg>)
 endif()
 
 add_library(ga
@@ -320,7 +331,7 @@ add_library(ga
   $<TARGET_OBJECTS:gaf2c>
   $<TARGET_OBJECTS:armci_comex>
   $<TARGET_OBJECTS:ga_src>
-  $<TARGET_OBJECTS:linalg>
+  ${ga_ref_blas}
   ${ga_profiler}
 )
 add_library(GlobalArrays::ga ALIAS ga)
@@ -341,6 +352,10 @@ if(ENABLE_BLAS)
     INTERFACE
       $<INSTALL_INTERFACE:${BLAS_COMPILE_OPTIONS}>
   )
+  target_compile_definitions(ga
+    INTERFACE
+      $<INSTALL_INTERFACE:${BLAS_COMPILE_DEFINITIONS}>
+  )  
 endif()
 
 if(DEFINED GA_GCC_TOOLCHAIN_FLAG)
@@ -356,7 +371,9 @@ add_subdirectory(ga++/src)
 add_subdirectory(ma)
 # add_subdirectory(pario)
 add_subdirectory(gaf2c)
-add_subdirectory(LinAlg/lapack+blas)
+if(NOT ENABLE_BLAS)
+  add_subdirectory(LinAlg/lapack+blas)
+endif()
 
 if(ENABLE_PROFILING)
   add_subdirectory(tools)
@@ -377,7 +394,7 @@ include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/GlobalArrays)
 
 #dra eaf elio sf
-install(TARGETS ma ga_src linalg
+install(TARGETS ma ga_src
     EXPORT globalarrays-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -422,8 +439,6 @@ install(FILES
 
 if(ENABLE_BLAS)
   install(FILES
-    ${CMAKE_CURRENT_LIST_DIR}/cmake/FindBLAS.cmake
-    ${CMAKE_CURRENT_LIST_DIR}/cmake/FindLAPACK.cmake
     ${CMAKE_CURRENT_LIST_DIR}/cmake/FindStandardFortran.cmake
     DESTINATION ${INSTALL_CONFIGDIR}
   )

@@ -407,7 +407,7 @@ and InfiniBand.
 The CMake build only supports the MPI-based runtimes so GA can only be built using MPI two-sided, MPI progress ranks, MPI thread multiple, MPI progress threads and MPI-3 (MPI RMA) runtimes. We recommend using MPI two-sided/MPI progress ranks based approach. 
 
 ### Dependencies
-* CMake (v3.17+)
+* CMake (v3.18+)
 * MPI
 * BLAS / LAPACK (Optional)
 
@@ -417,7 +417,7 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
 * `ENABLE_TESTS` Build GA testsuite. [Default:ON]
 * `GA_RUNTIME` [Default: MPI_2SIDED] Options are
   * MPI_2SIDED (Default) use simple MPI-2 sided runtime
-  * MPI_PROGRESS Use progress ranks runtime
+  * MPI_PROGRESS_RANK Use progress ranks runtime
   * MPI_MULTITHREADED Use thread multiple runtime
   * MPI_PROGRESS_THREAD Use progress thread runtime
   * MPI_RMA Use MPI RMA based runtime.
@@ -425,14 +425,15 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
 * `GA_EXTRA_LIBS` Specify additional libraries or linker options when building GA.
 * `GCCROOT` Specify root of GCC installation. Only required when building with Clang compilers.
 * `ENABLE_BLAS` Use an external BLAS library. [Default:OFF]
-  * Only `IntelMKL`, `IBMESSL`, `OpenBLAS`, `ReferenceBLAS` (BLIS) and `ReferenceLAPACK` (Netlib) are supported.
+  * Only `IntelMKL`, `IBMESSL`, `BLIS`, `ReferenceBLAS`(Netlib) are supported.
   * Need to provide the following env or cmake variables when building GA when ENABLE_BLAS=ON
-    * `BLAS_VENDOR`: Should be one of `IntelMKL`, `IBMESSL`, `OpenBLAS` [Default: ReferenceBLAS]
+    * `BLAS_VENDOR`: Should be one of `IntelMKL`, `IBMESSL`, `BLIS`, `ReferenceBLAS`(Netlib) [Default: `BLIS`]
     * Based on the `BLAS_VENDOR` chosen, the following environment/cmake variables should be specified accordingly
-        `MKLROOT`, `ESSLROOT`, `OpenBLASROOT` and `ReferenceBLASROOT`, `ReferenceLAPACKROOT`
+        `MKLROOT`, `ESSLROOT`, `BLISROOT`, `ReferenceBLASROOT`. `ReferenceLAPACKROOT` needs to be set for all cases except `IntelMKL`.
     * Note that it would work to set the above variables as either an enviroment variable or a CMake option.
-    * `NOTE:` `ScaLAPACK` support is not fully ready yet. Please contact us if you need it working with the CMake build.
-
+    * `LINALG_THREAD_LAYER` Options are `openmp` (default), `sequential` for `IntelMKL` and `smp` (default) for `IBMESSL`. Does not apply to other BLAS libraries.
+    * `LINALG_REQUIRED_COMPONENTS` Options are `lp64` (default) and `ilp64`.
+    * `ENABLE_SCALAPACK` Need to set `ReferenceScaLAPACKROOT` (`lp64` only) unless using `BLAS_VENDOR=IntelMKL`.
 #### The following options are standard CMake parameters. More information about them can be found in the CMake documentation.
 
 * `CMAKE_INSTALL_PREFIX` Specify the install location for GA.

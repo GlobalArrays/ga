@@ -78,8 +78,8 @@ add_library(ma OBJECT
   ${FORTRAN_FILES}
 )
 
-if (ENABLE_FORTRAN)
-  ADD_DEPENDENCIES(ga_src GenerateConfigFH)
+if(ENABLE_FORTRAN)
+  add_dependencies(ma gaf2c)
 endif()
 
 # -------------------------------------------------------------
