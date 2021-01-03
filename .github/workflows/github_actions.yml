@@ -85,7 +85,7 @@ jobs:
           ;;
           macos*)
           brew update
-          brew install gcc coreutils automake
+          brew install gcc coreutils automake || true
           ;;
           esac
       - name: before_install
