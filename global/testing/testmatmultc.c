@@ -22,6 +22,11 @@ void load_ga(int handle, double *f, int dim1, int dim2);
 void verify_ga_dgemm(char xt1, char xt2, int num_m, int num_n, int num_k,
         double alpha, int g_a, int g_b, double beta, int g_c,
         double *tmpa, double *tmpb, double *tmpc);
+#if HAVE_BLAS
+extern void dgemm_(char *, char *, int *, int *, int *, double *, const double *, int *, const double *, int *, double *, double *, int *);
+#else
+extern void xb_dgemm(char *, char *, int *, int *, int *, double *, const double *, int *, const double *, int *, double *, double *, int *);
+#endif
 
 
 #define dgemm_verify 1
