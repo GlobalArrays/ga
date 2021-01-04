@@ -11,10 +11,6 @@ else()
   set( ReferenceBLAS_ILP64_LIBRARY_NAME "blas64" )
 endif()
 
-if( NOT ReferenceBLAS_PREFIX )
-  set( ReferenceBLAS_PREFIX ${ReferenceBLASROOT} $ENV{ReferenceBLASROOT} )
-endif()
-
 find_library( ReferenceBLAS_LP64_LIBRARIES
   NAMES ${ReferenceBLAS_LP64_LIBRARY_NAME}
   HINTS ${ReferenceBLAS_PREFIX}

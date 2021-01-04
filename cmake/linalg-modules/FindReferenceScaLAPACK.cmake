@@ -20,10 +20,6 @@ else()
   set( ReferenceScaLAPACK_ILP64_LIBRARY_NAME "scalapack64" )
 endif()
 
-if( NOT ReferenceScaLAPACK_PREFIX )
-  set( ReferenceScaLAPACK_PREFIX ${ReferenceScaLAPACKROOT} $ENV{ReferenceScaLAPACKROOT} )
-endif()
-
 find_library( ReferenceScaLAPACK_LP64_LIBRARIES
   NAMES ${ReferenceScaLAPACK_LP64_LIBRARY_NAME}
   HINTS ${ReferenceScaLAPACK_PREFIX}

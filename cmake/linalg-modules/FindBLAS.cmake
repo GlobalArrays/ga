@@ -30,15 +30,11 @@ if( NOT BLAS_PREFERENCE_LIST )
   set( BLAS_PREFERENCE_LIST "IntelMKL" "IBMESSL" "BLIS" "OpenBLAS" "ReferenceBLAS" )
 endif()
 
-if (NOT "${BLAS_VENDOR}" IN_LIST BLAS_PREFERENCE_LIST)
-  message(FATAL_ERROR "Unsupported BLAS_VENDOR ${BLAS_VENDOR} specified!!")
-endif()
-
 if( NOT BLAS_LIBRARIES )
 
   message( STATUS "BLAS_LIBRARIES Not Given: Will Perform Search" )
 
-  foreach( blas_type ${BLAS_VENDOR} )
+  foreach( blas_type ${BLAS_PREFERENCE_LIST} )
 
     copy_meta_data( BLAS ${blas_type} )
 

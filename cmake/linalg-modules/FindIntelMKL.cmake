@@ -80,7 +80,7 @@ if( NOT IntelMKL_MPI_LIBRARY )
 endif()
 
 if( NOT IntelMKL_PREFIX )
-  set( IntelMKL_PREFIX ${MKLROOT} $ENV{MKLROOT} )
+  set( IntelMKL_PREFIX $ENV{MKLROOT} )
 endif()
 
 

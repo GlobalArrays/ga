@@ -51,7 +51,7 @@ if (ENABLE_FORTRAN)
 endif()
 
 ga_option(CMAKE_BUILD_TYPE Release)
-ga_option(BLAS_VENDOR BLIS)
+ga_option(LINALG_VENDOR BLIS)
 ga_option(ENABLE_TESTS ON)
 ga_option(ENABLE_PROFILING OFF)
 #Options for user provided LinAlg libraries

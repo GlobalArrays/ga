@@ -9,10 +9,6 @@ else()
   set( OpenBLAS_LIBRARY_NAME "openblas" )
 endif()
 
-if( NOT OpenBLAS_PREFIX )
-  set( OpenBLAS_PREFIX ${OpenBLASROOT} $ENV{OpenBLASROOT} )
-endif()
-
 find_library( OpenBLAS_LIBRARIES
   NAMES ${OpenBLAS_LIBRARY_NAME}
   HINTS ${OpenBLAS_PREFIX}
