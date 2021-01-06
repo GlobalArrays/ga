@@ -55,6 +55,7 @@ if( NOT BLAS_LIBRARIES )
 
       # Generic Components
       #set( BLAS_headers_FOUND   ${${blas_type}_headers_FOUND}   )
+      set( BLAS_sycl_FOUND      ${${blas_type}_sycl_FOUND}      )
       set( BLAS_blacs_FOUND     ${${blas_type}_blacs_FOUND}     )
       set( BLAS_scalapack_FOUND ${${blas_type}_scalapack_FOUND} )
 

@@ -254,7 +254,7 @@ else()
 endif()
 
 # SYCL
-if(ENABLE_DPCPP)
+if( "sycl" IN_LIST IntelMKL_FIND_COMPONENTS )
   find_library( IntelMKL_SYCL_LIBRARY
     NAMES ${IntelMKL_SYCL_LIBRARY_NAME}
     HINTS ${IntelMKL_PREFIX}
@@ -341,7 +341,9 @@ else()
   endif()
 endif()
 
-
+if( IntelMKL_SYCL_LIBRARY )
+  set( IntelMKL_sycl_FOUND TRUE )
+endif()
 
 
 
@@ -360,8 +362,8 @@ if( IntelMKL_LIBRARY AND IntelMKL_THREAD_LIBRARY AND IntelMKL_CORE_LIBRARY )
        ${IntelMKL_THREAD_LIBRARY} 
        ${IntelMKL_CORE_LIBRARY} )
 
-  if(ENABLE_DPCPP)
-    list( APPEND  IntelMKL_BLAS_LAPACK_LIBRARIES ${IntelMKL_SYCL_LIBRARY} )
+  if( "sycl" IN_LIST IntelMKL_FIND_COMPONENTS )
+    list( APPEND IntelMKL_BLAS_LAPACK_LIBRARIES ${IntelMKL_SYCL_LIBRARY} )
   endif()
 
   if( "blacs" IN_LIST IntelMKL_FIND_COMPONENTS )
