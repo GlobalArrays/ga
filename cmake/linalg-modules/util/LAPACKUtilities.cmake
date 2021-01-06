@@ -37,16 +37,11 @@ foreach( _uplo LOWER UPPER )
 
     else()
 
-      #message( STATUS ${_compile_output} )
-
-      # Check for GFORTRAN
-      if( _compile_output MATCHES "_gfortran" )
-
-        message( STATUS "  * Mising GFORTRAN - Adding TO LAPACK LINKER" )
-
-        list( APPEND ${_libs} "gfortran" )
+      # Check for Standard Fortran Libraries
+      if(NOT STANDARDFORTRAN_LIBRARIES)
+        find_dependency(StandardFortran REQUIRED)
+        list( APPEND ${_libs} ${STANDARDFORTRAN_LIBRARIES} )
         set( ${_libs} ${${_libs}} PARENT_SCOPE )
-
       endif()
 
       if( _compile_output MATCHES "logf" )

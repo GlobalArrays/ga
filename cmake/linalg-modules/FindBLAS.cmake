@@ -8,6 +8,7 @@ include( FindPackageHandleStandardArgs )
 
 include( ${CMAKE_CURRENT_LIST_DIR}/util/CommonFunctions.cmake )
 include( ${CMAKE_CURRENT_LIST_DIR}/util/BLASUtilities.cmake   )
+include( ${CMAKE_CURRENT_LIST_DIR}/LinAlgModulesMacros.cmake  )
 
 # SANITY CHECK: Make sure only one integer interface is requested
 if( "ilp64" IN_LIST BLAS_FIND_COMPONENTS AND "lp64" IN_LIST BLAS_FIND_COMPONENTS )
@@ -50,7 +51,7 @@ if( NOT BLAS_LIBRARIES )
       set( BLAS_LIBRARIES           "${${blas_type}_LIBRARIES}"           )
       set( BLAS_COMPILE_DEFINITIONS "${${blas_type}_COMPILE_DEFINITIONS}" )
       set( BLAS_INCLUDE_DIRS        "${${blas_type}_INCLUDE_DIR}"         )
-      set( BLAS_COMPILE_OPTIONS     "${${blas_type}_C_COMPILE_FLAGS}"     )
+      set( BLAS_COMPILE_OPTIONS     "${${blas_type}_COMPILE_OPTIONS}"     )
 
       # Generic Components
       #set( BLAS_headers_FOUND   ${${blas_type}_headers_FOUND}   )
@@ -63,6 +64,8 @@ if( NOT BLAS_LIBRARIES )
 
   endforeach()
 
+else()
+  find_linalg_dependencies( BLAS_LIBRARIES )
 endif()
 
 

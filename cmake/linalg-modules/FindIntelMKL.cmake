@@ -315,6 +315,7 @@ if( "ilp64" IN_LIST IntelMKL_FIND_COMPONENTS )
     set( IntelMKL_Fortran_COMPILE_FLAGS "-i8" )
   endif()
   set( IntelMKL_LIBRARY ${IntelMKL_ILP64_LIBRARY} )
+  set( IntelMKL_COMPILE_OPTIONS ${IntelMKL_C_COMPILE_FLAGS} )
 
   if( IntelMKL_ILP64_BLACS_LIBRARY )
     set( IntelMKL_BLACS_LIBRARY ${IntelMKL_ILP64_BLACS_LIBRARY} )

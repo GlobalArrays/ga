@@ -23,7 +23,7 @@ elseif(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
 elseif(CMAKE_Fortran_COMPILER_ID MATCHES "Flang")
     set(STANDARDFORTRAN_LIBS flang flangrti pgmath)
 else()
-    message(FATAL_ERROR "${CMAKE_Fortran_COMPILER_ID} not supported yet.")
+    message(FATAL_ERROR "${CMAKE_Fortran_COMPILER_ID} is not yet supported by this module.")
 endif()
 
 foreach(STANDARDFORTRAN_LIB ${STANDARDFORTRAN_LIBS})

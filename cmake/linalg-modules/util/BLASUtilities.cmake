@@ -39,14 +39,11 @@ foreach( _uplo LOWER UPPER )
 
     else()
 
-      # Check for GFORTRAN
-      if( _compile_output MATCHES "gfortran" )
-
-        message( STATUS "  * Mising GFORTRAN - Adding TO BLAS LINKER" )
-
-        list( APPEND ${_libs} "gfortran" )
+      # Check for Standard Fortran Libraries
+      if(NOT STANDARDFORTRAN_LIBRARIES)
+        find_dependency(StandardFortran REQUIRED)
+        list( APPEND ${_libs} ${STANDARDFORTRAN_LIBRARIES} )
         set( ${_libs} ${${_libs}} PARENT_SCOPE )
-
       endif()
 
       # Recheck Compiliation
