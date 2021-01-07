@@ -16,6 +16,8 @@
 #include <strings.h>
 #include <sys/errno.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 /* 3rd party headers */
