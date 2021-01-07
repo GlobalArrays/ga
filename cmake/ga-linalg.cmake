@@ -44,6 +44,13 @@ function(ga_set_blasroot __blasvendor __blasvar)
   endif()
 endfunction()
 
+if( "sycl" IN_LIST LINALG_REQUIRED_COMPONENTS )
+  set(ENABLE_DPCPP ON)
+elseif(ENABLE_DPCPP)
+  list(APPEND LINALG_REQUIRED_COMPONENTS "sycl")
+endif()
+
+
 #Check if provided paths are valid and export
 if (ENABLE_BLAS)
   ga_path_exists(LINALG_PREFIX __la_exists)
@@ -67,14 +74,6 @@ if (ENABLE_BLAS)
     set(${LINALG_VENDOR}_PREFERS_STATIC    ${LINALG_PREFER_STATIC})
     set(ReferenceLAPACK_PREFERS_STATIC     ${LINALG_PREFER_STATIC})
     set(ReferenceScaLAPACK_PREFERS_STATIC  ${LINALG_PREFER_STATIC})
-
-    if( "sycl" IN_LIST LINALG_REQUIRED_COMPONENTS )
-      set(ENABLE_DPCPP ON)
-    endif()
-
-    if(ENABLE_DPCPP)
-      list(APPEND LINALG_REQUIRED_COMPONENTS "sycl")
-    endif()
 
     set(BLAS_SIZE 4)
     set(${LINALG_VENDOR}_THREAD_LAYER  ${LINALG_THREAD_LAYER})
