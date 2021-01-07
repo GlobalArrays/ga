@@ -59,6 +59,13 @@ jobs:
             armci_network: mpi-pr
             f77: gfortran
             cc: gcc
+          - os: ubuntu-20.04
+            experimental: true
+            use_cmake: "Y"
+            mpi_impl: openmpi
+            armci_network: mpi-ts
+            f77: gfortran
+            cc: gcc
         exclude:
           - armci_network: mpi-pr
             mpi_impl: openmpi
