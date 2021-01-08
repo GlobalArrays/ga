@@ -45,6 +45,27 @@ jobs:
             config_opts: "--disable-static --enable-shared"
             f77: gfortran-10
             cc: clang
+          - os: macos-10.15
+            experimental: true
+            use_cmake: "Y"
+            mpi_impl: mpich
+            armci_network: mpi-pr
+            f77: gfortran-10
+            cc: clang
+          - os: ubuntu-18.04
+            experimental: true
+            use_cmake: "Y"
+            mpi_impl: openmpi
+            armci_network: mpi-pr
+            f77: gfortran
+            cc: gcc
+          - os: ubuntu-20.04
+            experimental: true
+            use_cmake: "Y"
+            mpi_impl: openmpi
+            armci_network: mpi-ts
+            f77: gfortran
+            cc: gcc
         exclude:
           - armci_network: mpi-pr
             mpi_impl: openmpi
@@ -60,6 +81,7 @@ jobs:
         F77: ${{ matrix.f77 }}
         CC: ${{ matrix.cc }}
         CONFIG_OPTS: ${{ matrix.config_opts}}
+        USE_CMAKE: ${{ matrix.use_cmake }}
     continue-on-error: ${{ matrix.experimental }}
     steps: 
       - name: Checkout code
@@ -105,7 +127,7 @@ jobs:
       - name: compile and test global arrays
         if: ${{ success() }}
         run: |
-          ./travis/build-run.sh $GITHUB_WORKSPACE/apps $PORT $MPI_IMPL
+          ./travis/build-run.sh $GITHUB_WORKSPACE/apps $PORT $MPI_IMPL $USE_CMAKE
       - name: after_failure
         if: ${{ failure() }}
         run: |
@@ -113,6 +135,3 @@ jobs:
           ls
           find . -name config.log -exec cat {} ";"
           cat ./test-suite.log
-
-
-     
