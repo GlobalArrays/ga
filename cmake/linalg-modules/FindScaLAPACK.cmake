@@ -33,8 +33,10 @@ cmake_minimum_required( VERSION 3.17 ) # Require CMake 3.17+
 
 include( CMakeFindDependencyMacro )
 
-include( ${CMAKE_CURRENT_LIST_DIR}/util/CommonFunctions.cmake )
+include( ${CMAKE_CURRENT_LIST_DIR}/util/CommonFunctions.cmake    )
 include( ${CMAKE_CURRENT_LIST_DIR}/util/ScaLAPACKUtilities.cmake )
+include( ${CMAKE_CURRENT_LIST_DIR}/LinAlgModulesMacros.cmake     )
+
 
 # SANITY CHECK
 if( "ilp64" IN_LIST ScaLAPACK_FIND_COMPONENTS AND "lp64" IN_LIST ScaLAPACK_FIND_COMPONENTS )
@@ -119,6 +121,9 @@ if( NOT ScaLAPACK_LIBRARIES )
 
     endforeach()
   endif( LAPACK_HAS_ScaLAPACK )
+
+  else()
+    find_linalg_dependencies( ScaLAPACK_LIBRARIES )
 endif()
 
 # Handle implicit LAPACK linkage

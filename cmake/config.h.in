@@ -1,5 +1,9 @@
 #include "f2c_cmake.h"
 
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE 1
+#endif
+
 #cmakedefine01 HAVE_ASSERT_H
 #cmakedefine01 HAVE_LIMITS_H
 #cmakedefine01 HAVE_MALLOC_H

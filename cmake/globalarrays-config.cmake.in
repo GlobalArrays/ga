@@ -45,7 +45,7 @@ if(ENABLE_BLAS)
   endif()
 
   if(ENABLE_SCALAPACK)
-    set(SCALAPACK_PREFIX @SCALAPACK_PREFIX@)
+    set(ScaLAPACK_PREFIX @ScaLAPACK_PREFIX@)
 
     if(NOT TARGET ScaLAPACK::ScaLAPACK)
       find_package(ScaLAPACK REQUIRED)
@@ -68,7 +68,7 @@ if(NOT TARGET GlobalArrays::ga)
   include("${CMAKE_CURRENT_LIST_DIR}/globalarrays-targets.cmake")
 endif()
 
-if(NOT TARGET ${GA_MPI_LIBS})
+if(NOT TARGET MPI::MPI_C)
   find_package(MPI REQUIRED)
 endif()
 

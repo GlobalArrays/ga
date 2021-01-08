@@ -8,7 +8,8 @@ include( FindPackageHandleStandardArgs )
 
 
 include( ${CMAKE_CURRENT_LIST_DIR}/util/CommonFunctions.cmake )
-include( ${CMAKE_CURRENT_LIST_DIR}/util/LAPACKUtilities.cmake   )
+include( ${CMAKE_CURRENT_LIST_DIR}/util/LAPACKUtilities.cmake )
+include( ${CMAKE_CURRENT_LIST_DIR}/LinAlgModulesMacros.cmake  )
 
 # SANITY CHECK
 if( "ilp64" IN_LIST LAPACK_FIND_COMPONENTS AND "lp64" IN_LIST LAPACK_FIND_COMPONENTS )
@@ -101,7 +102,8 @@ if( NOT LAPACK_LIBRARIES )
     endforeach()
   endif( BLAS_HAS_LAPACK )
 
-
+else()
+  find_linalg_dependencies( LAPACK_LIBRARIES )
 endif()
 
 # Handle implicit LAPACK linkage

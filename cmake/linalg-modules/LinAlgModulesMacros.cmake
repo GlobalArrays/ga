@@ -47,7 +47,7 @@ list( TRANSFORM LINALG_UTIL_FILES
       PREPEND   ${LINALG_MACROS_DIR}/ )
 
 install(
-  FILES ${LINALG_FIND_MODULES}
+  FILES ${LINALG_FIND_MODULES} ${LINALG_MACROS_DIR}/LICENSE.txt
   DESTINATION ${${_dest_dir}}/linalg-cmake-modules
 )
 

@@ -439,6 +439,11 @@ install(FILES
 
 if(ENABLE_BLAS)
   install_linalg_modules (INSTALL_CONFIGDIR)
+  #FIXME: Not sure why this file is not installed via ExternalProject build of GA.
+  install(FILES
+    ${CMAKE_CURRENT_LIST_DIR}/cmake/linalg-modules/FindStandardFortran.cmake
+    DESTINATION ${INSTALL_CONFIGDIR}/linalg-cmake-modules
+  )
   if(ENABLE_DPCPP)
     install(FILES
       ${CMAKE_CURRENT_LIST_DIR}/cmake/FindIntelSYCL.cmake
@@ -447,7 +452,7 @@ if(ENABLE_BLAS)
   endif()
 endif()
 
-export(EXPORT globalarrays-targets
-    FILE ${CMAKE_CURRENT_BINARY_DIR}/globalarrays-targets.cmake
-    NAMESPACE GlobalArrays::)
+# export(EXPORT globalarrays-targets
+#     FILE ${CMAKE_CURRENT_BINARY_DIR}/globalarrays-targets.cmake
+#     NAMESPACE GlobalArrays::)
 
