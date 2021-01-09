@@ -433,7 +433,8 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
     * `LINALG_PREFIX`: Specify root of the LinAlg libraries installation. If the various libraries are in different locations, one needs to set
      `BLAS_PREFIX`, `LAPACK_PREFIX`, `ScaLAPACK_PREFIX` individually. These three options are set to the `LINALG_PREFIX` provided by default unless explicitly set otherwise.
     * `LINALG_THREAD_LAYER`: Options are `openmp` (default), `sequential` for `IntelMKL` and `smp` (default) for `IBMESSL`. Does not apply to other BLAS libraries.
-    * `LINALG_REQUIRED_COMPONENTS`: Options are `lp64` or `ilp64` and `sycl`. [Default:lp64]
+    * `LINALG_REQUIRED_COMPONENTS`: Options are `lp64` or `ilp64`. [Default:lp64]
+    * `LINALG_OPTIONAL_COMPONENTS`: `sycl` [Default:none]
     * `ENABLE_SCALAPACK`: To enable ScaLAPACK discovery.
 #### The following options are standard CMake parameters. More information about them can be found in the CMake documentation.
 

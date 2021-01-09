@@ -44,10 +44,10 @@ function(ga_set_blasroot __blasvendor __blasvar)
   endif()
 endfunction()
 
-if( "sycl" IN_LIST LINALG_REQUIRED_COMPONENTS )
+if( "sycl" IN_LIST LINALG_OPTIONAL_COMPONENTS )
   set(ENABLE_DPCPP ON)
 elseif(ENABLE_DPCPP)
-  list(APPEND LINALG_REQUIRED_COMPONENTS "sycl")
+  list(APPEND LINALG_OPTIONAL_COMPONENTS "sycl")
 endif()
 
 
@@ -67,10 +67,16 @@ endif()
 set(GA_BLAS_ILP64 OFF)
 if (ENABLE_BLAS)
     set(BLAS_PREFERENCE_LIST ${LINALG_VENDOR})
+
     set(LINALG_PREFER_STATIC ON)
     if(BUILD_SHARED_LIBS)
       set(LINALG_PREFER_STATIC OFF)
     endif()
+    
+    if(ENABLE_DPCPP)
+      set(LINALG_THREAD_LAYER "sequential")
+    endif()
+    
     set(${LINALG_VENDOR}_PREFERS_STATIC    ${LINALG_PREFER_STATIC})
     set(ReferenceLAPACK_PREFERS_STATIC     ${LINALG_PREFER_STATIC})
     set(ReferenceScaLAPACK_PREFERS_STATIC  ${LINALG_PREFER_STATIC})
@@ -80,6 +86,14 @@ if (ENABLE_BLAS)
     set(BLAS_REQUIRED_COMPONENTS       ${LINALG_REQUIRED_COMPONENTS})
     set(LAPACK_REQUIRED_COMPONENTS     ${LINALG_REQUIRED_COMPONENTS})
     set(ScaLAPACK_REQUIRED_COMPONENTS  ${LINALG_REQUIRED_COMPONENTS})
+    set(BLAS_OPTIONAL_COMPONENTS       ${LINALG_OPTIONAL_COMPONENTS})
+    set(LAPACK_OPTIONAL_COMPONENTS     ${LINALG_OPTIONAL_COMPONENTS})
+    set(ScaLAPACK_OPTIONAL_COMPONENTS  ${LINALG_OPTIONAL_COMPONENTS})    
+
+    set(use_openmp ON)
+    if("sequential" IN_LIST LINALG_THREAD_LAYER OR ${LINALG_VENDOR} MATCHES "BLIS" OR ${LINALG_VENDOR} MATCHES "IBMESSL")
+      set(use_openmp OFF)
+    endif()
 
     if( "ilp64" IN_LIST LINALG_REQUIRED_COMPONENTS )
       set(BLAS_SIZE 8)
@@ -121,6 +135,34 @@ if (ENABLE_BLAS)
     else()
       message(FATAL_ERROR "ENABLE_BLAS=ON, but a BLAS library was not found")
     endif()
+
+  include(FetchContent)
+  if(NOT TARGET blaspp)
+    FetchContent_Declare(
+      blaspp
+      GIT_REPOSITORY https://bitbucket.org/icl/blaspp.git
+    )
+    FetchContent_MakeAvailable( blaspp )
+  endif()
+
+  if(NOT TARGET lapackpp)
+    FetchContent_Declare(
+      lapackpp
+      GIT_REPOSITORY https://bitbucket.org/icl/lapackpp.git
+    )
+    FetchContent_MakeAvailable( lapackpp )
+  endif()
+
+  if(ENABLE_SCALAPACK)
+    if(NOT TARGET scalapackpp::scalapackpp)
+      FetchContent_Declare(
+        scalapackpp
+        GIT_REPOSITORY https://github.com/wavefunction91/scalapackpp.git
+        GIT_TAG new-cmake-ci
+      )
+      FetchContent_MakeAvailable( scalapackpp )
+    endif()
+  endif()
 
 else()
     set(HAVE_BLAS 0)
@@ -189,7 +231,7 @@ if (HAVE_BLAS)
                   DESTINATION include/ga
   )
 
-  list(APPEND linalg_lib BLAS::BLAS)
+  list(APPEND linalg_lib BLAS::BLAS blaspp)
   message(STATUS "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
   if(ENABLE_DPCPP)
     list(APPEND linalg_lib ${Intel_SYCL_TARGET})
@@ -198,11 +240,11 @@ if (HAVE_BLAS)
 endif()
 
 if (HAVE_LAPACK)
-  list(APPEND linalg_lib LAPACK::LAPACK)
+  list(APPEND linalg_lib LAPACK::LAPACK lapackpp)
   message(STATUS "LAPACK_LIBRARIES: ${LAPACK_LIBRARIES}")
 endif()
 
 if (HAVE_SCALAPACK)
-  list(APPEND linalg_lib ScaLAPACK::ScaLAPACK)
+  list(APPEND linalg_lib ScaLAPACK::ScaLAPACK scalapackpp::scalapackpp)
   message(STATUS "ScaLAPACK_LIBRARIES: ${ScaLAPACK_LIBRARIES}")
 endif()
