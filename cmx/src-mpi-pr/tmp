@@ -1,0 +1,629 @@
+int cmx_gets(
+        void *dst, cmxInt *dst_stride,
+        cmxInt src_offset, cmxInt *src_stride,
+        cmxInt *count, int stride_levels,
+        int proc, cmx_handle_t cmx_hdl)
+{
+    _cmx_request *nb = NULL;
+    int world_proc = -1;
+    cmx_igroup_t *igroup = NULL;
+    void *src = find_alloc_ptr(cmx_hdl, proc);
+  printf("p[%d] (cmx_gets) Got to 1\n",g_state.rank);
+
+    nb = nb_wait_for_handle();
+  printf("p[%d] (cmx_gets) Got to 2\n",g_state.rank);
+
+    igroup = cmx_hdl.group;
+    CHECK_GROUP(igroup,proc);
+    world_proc = _get_world_rank(igroup, proc);
+
+    src = (void*)((char*)src+src_offset);
+  printf("p[%d] (cmx_gets) Got to 3\n",g_state.rank);
+    nb_gets(src, src_stride, dst, dst_stride, count, stride_levels, world_proc, nb);
+  printf("p[%d] (cmx_gets) Got to 4 nb: %p\n",g_state.rank,nb);
+    nb_wait_for_all(nb);
+  printf("p[%d] (cmx_gets) Got to 5\n",g_state.rank);
+
+    return CMX_SUCCESS;
+}
+
+STATIC int _packed_size(int *src_stride, int *count, int stride_levels)
+{
+    int size;
+    int i;
+    int n1dim;  /* number of 1 dim block */
+
+    CMX_ASSERT(stride_levels >= 0);
+    CMX_ASSERT(stride_levels < CMX_MAX_STRIDE_LEVEL);
+    CMX_ASSERT(NULL != src_stride);
+    CMX_ASSERT(NULL != count);
+    CMX_ASSERT(count[0] > 0);
+
+#if DEBUG
+    fprintf(stderr, "[%d] _packed_size(src_stride=%p, count[0]=%d, stride_levels=%d)\n",
+            g_state.rank, src_stride, count[0], stride_levels);
+#endif
+
+    /* number of n-element of the first dimension */
+    n1dim = 1;
+    for(i=1; i<=stride_levels; i++) {
+        n1dim *= count[i];
+    }
+
+    /* allocate packed buffer now that we know the size */
+    size = n1dim * count[0];
+
+    return size;
+}
+
+STATIC void nb_send_common(void *buf, int count, int dest, _cmx_request *nb, int need_free)
+{
+    int retval = 0;
+    message_t *message = NULL;
+
+    CMX_ASSERT(NULL != nb);
+
+    nb->send_size += 1;
+    nb_count_event += 1;
+    nb_count_send += 1;
+
+    message = (message_t*)malloc(sizeof(message_t));
+    message->next = NULL;
+    message->message = buf;
+    message->need_free = need_free;
+    message->stride = NULL;
+    message->iov = NULL;
+    message->datatype = MPI_DATATYPE_NULL;
+
+    if (NULL == nb->send_head) {
+        nb->send_head = message;
+    }
+    if (NULL != nb->send_tail) {
+        nb->send_tail->next = message;
+    }
+    nb->send_tail = message;
+
+    retval = MPI_Isend(buf, count, MPI_CHAR, dest, CMX_TAG, g_state.comm,
+            &(message->request));
+    CHECK_MPI_RETVAL(retval);
+}
+
+STATIC void nb_send_header(void *buf, int count, int dest, _cmx_request *nb)
+{
+    nb_send_common(buf, count, dest, nb, 1);
+}
+
+STATIC void nb_recv_packed(void *buf, int count, int source, _cmx_request *nb, stride_t *stride)
+{
+    int retval = 0;
+    message_t *message = NULL;
+
+    CMX_ASSERT(NULL != buf);
+    CMX_ASSERT(count > 0);
+    CMX_ASSERT(NULL != nb);
+
+#if DEBUG
+    fprintf(stderr, "[%d] nb_recv_packed(buf=%p, count=%d, source=%d, nb=%p)\n",
+            g_state.rank, buf, count, source, nb);
+#endif
+
+    nb->recv_size += 1;
+    nb_count_event += 1;
+    nb_count_recv += 1;
+
+    message = (message_t*)malloc(sizeof(message_t));
+    message->next = NULL;
+    message->message = buf;
+    message->need_free = 1;
+    message->stride = stride;
+    message->iov = NULL;
+    message->datatype = MPI_DATATYPE_NULL;
+
+    if (NULL == nb->recv_head) {
+        nb->recv_head = message;
+    }
+    if (NULL != nb->recv_tail) {
+        nb->recv_tail->next = message;
+    }
+    nb->recv_tail = message;
+
+    retval = MPI_Irecv(buf, count, MPI_CHAR, source, CMX_TAG, g_state.comm,
+            &(message->request));
+    CHECK_MPI_RETVAL(retval);
+}
+
+
+STATIC void nb_recv_datatype(void *buf, MPI_Datatype dt, int source, _cmx_request *nb)
+{
+    int retval = 0;
+    message_t *message = NULL;
+
+    CMX_ASSERT(NULL != buf);
+    CMX_ASSERT(NULL != nb);
+
+#if DEBUG
+    fprintf(stderr, "[%d] nb_recv_datatype(buf=%p, count=%d, source=%d, nb=%p)\n",
+            g_state.rank, buf, count, source, nb);
+#endif
+
+    nb->recv_size += 1;
+    nb_count_event += 1;
+    nb_count_recv += 1;
+
+    message = (message_t*)malloc(sizeof(message_t));
+    message->next = NULL;
+    message->message = buf;
+    message->need_free = 0;
+    message->stride = NULL;
+    message->iov = NULL;
+    message->datatype = dt;
+
+    if (NULL == nb->recv_head) {
+        nb->recv_head = message;
+    }
+    if (NULL != nb->recv_tail) {
+        nb->recv_tail->next = message;
+    }
+    nb->recv_tail = message;
+
+    retval = MPI_Irecv(buf, 1, dt, source, CMX_TAG, g_state.comm,
+            &(message->request));
+    CHECK_MPI_RETVAL(retval);
+}
+
+STATIC void nb_recv(void *buf, int count, int source, _cmx_request *nb)
+{
+    int retval = 0;
+    message_t *message = NULL;
+
+    CMX_ASSERT(NULL != nb);
+
+#if DEBUG
+    fprintf(stderr, "[%d] nb_recv(buf=%p, count=%d, source=%d, nb=%p)\n",
+            g_state.rank, buf, count, source, nb);
+#endif
+
+    nb->recv_size += 1;
+    nb_count_event += 1;
+    nb_count_recv += 1;
+
+    message = (message_t*)malloc(sizeof(message_t));
+    message->next = NULL;
+    message->message = NULL;
+    message->need_free = 0;
+    message->stride = NULL;
+    message->iov = NULL;
+    message->datatype = MPI_DATATYPE_NULL;
+
+    if (NULL == nb->recv_head) {
+        nb->recv_head = message;
+    }
+    if (NULL != nb->recv_tail) {
+        nb->recv_tail->next = message;
+    }
+    nb->recv_tail = message;
+
+    retval = MPI_Irecv(buf, count, MPI_CHAR, source, CMX_TAG, g_state.comm,
+            &(message->request));
+    CHECK_MPI_RETVAL(retval);
+}
+
+STATIC _cmx_request* nb_wait_for_handle()
+{
+    _cmx_request *nb = NULL;
+    int in_use_count = 0;
+    int loop_index = nb_index;
+    int found = 0;
+
+    /* find first handle that isn't associated with a user-level handle */
+    /* make sure the handle we find has processed all events */
+    /* the user can accidentally exhaust the available handles */
+
+#if 0
+    /* NOTE: it looks like this loop just forces completion of the handle
+     * corresponding to nb_index. It should probably test all handles and if it
+     * doesn't find  a free one, then use the one at nb_index */
+    do {
+        ++in_use_count;
+        if (in_use_count > nb_max_outstanding) {
+            fprintf(stderr,
+                    "{%d} nb_wait_for_handle Error: all user-level "
+                    "nonblocking handles have been exhausted\n",
+                    g_state.rank);
+            MPI_Abort(g_state.comm, -1);
+        }
+        nb = &nb_state[nb_index];
+        nb_index++;
+        nb_index %= nb_max_outstanding; /* wrap around if needed */
+        nb_wait_for_all(nb);
+    } while (nb->in_use);
+#else
+    /* look through list for unused handle */
+    do {
+        ++in_use_count;
+        if (in_use_count > nb_max_outstanding) {
+          break;
+        }
+        nb = &nb_state[loop_index];
+        if (!nb->in_use) {
+          nb_index = loop_index;
+          found = 1;
+          break;
+        }
+        loop_index++;
+        loop_index %= nb_max_outstanding; /* wrap around if needed */
+    } while (nb->in_use);
+    if (!found) {
+      nb = &nb_state[nb_index];
+      nb_wait_for_all(nb);
+    }
+    //nb->hdl = nb_index;
+    nb_index++;
+    nb_index %= nb_max_outstanding; /* wrap around if needed */
+    /* make sure in_use flag is set to 1 */
+    nb->in_use = 1;
+#endif
+
+    return nb;
+}
+
+STATIC void nb_wait_for_all(_cmx_request *nb)
+{
+#if DEBUG
+    fprintf(stderr, "[%d] nb_wait_for_all(nb=%p)\n", g_state.rank, nb);
+#endif
+    int world_proc = g_state.rank;
+
+
+    CMX_ASSERT(NULL != nb);
+
+    /* fair processing of requests */
+    printf("p[%d] (nb_wait_for_all) Got to 1 send_head: %p recv_head: %p\n",
+        world_proc,nb->send_head,nb->recv_head);
+    while (NULL != nb->send_head || NULL != nb->recv_head) {
+        if (NULL != nb->send_head) {
+    printf("p[%d] (nb_wait_for_all) Got to 2\n",world_proc);
+            nb_wait_for_send1(nb);
+    printf("p[%d] (nb_wait_for_all) Got to 3\n",world_proc);
+        }
+        if (NULL != nb->recv_head) {
+    printf("p[%d] (nb_wait_for_all) Got to 4\n",world_proc);
+            nb_wait_for_recv1(nb);
+    printf("p[%d] (nb_wait_for_all) Got to 5\n",world_proc);
+        }
+    }
+    printf("p[%d] (nb_wait_for_all) Got to 6\n",world_proc);
+    nb->in_use = 0;
+}
+
+STATIC void nb_get(void *src, void *dst, int bytes, int proc, _cmx_request *nb)
+{
+    CMX_ASSERT(NULL != src);
+    CMX_ASSERT(NULL != dst);
+    CMX_ASSERT(bytes > 0);
+    CMX_ASSERT(proc >= 0);
+    CMX_ASSERT(proc < g_state.size);
+    CMX_ASSERT(NULL != nb);
+
+    if (CMX_ENABLE_GET_SELF) {
+        /* get from self */
+        if (g_state.rank == proc) {
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
+            (void)memcpy(dst, src, bytes);
+            return;
+        }
+    }
+
+    if (CMX_ENABLE_GET_SMP) {
+        /* get from SMP node */
+        // if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) 
+        if (g_state.master[proc] == g_state.master[g_state.rank]) 
+        {
+            reg_entry_t *reg_entry = NULL;
+            void *mapped_offset = NULL;
+
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
+
+            reg_entry = reg_cache_find(proc, src, bytes);
+            CMX_ASSERT(reg_entry);
+            mapped_offset = _get_offset_memory(reg_entry, src);
+            (void)memcpy(dst, mapped_offset, bytes);
+            return;
+        }
+    }
+
+    {
+        header_t *header = NULL;
+        int master_rank = -1;
+
+        master_rank = g_state.master[proc];
+        header = malloc(sizeof(header_t));
+        CMX_ASSERT(header);
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
+        header->operation = OP_GET;
+        header->remote_address = src;
+        header->local_address = dst;
+        header->rank = proc;
+        header->length = bytes;
+        {
+            /* prepost all receives */
+            char *buf = (char*)dst;
+            int bytes_remaining = bytes;
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                nb_recv(buf, size, master_rank, nb);
+                buf += size;
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
+        nb_send_header(header, sizeof(header_t), master_rank, nb);
+    }
+}
+
+STATIC void nb_gets_packed(
+        void *src, int *src_stride, void *dst, int *dst_stride,
+        int *count, int stride_levels, int proc, _cmx_request *nb)
+{
+    int i;
+    stride_t stride_src;
+    stride_t *stride_dst = NULL;
+
+#if DEBUG
+    fprintf(stderr, "[%d] nb_gets_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
+            g_state.rank, src, src_stride, dst, dst_stride,
+            count[0], stride_levels, proc, nb);
+#endif
+
+    CMX_ASSERT(proc >= 0);
+    CMX_ASSERT(proc < g_state.size);
+    CMX_ASSERT(NULL != src);
+    CMX_ASSERT(NULL != dst);
+    CMX_ASSERT(NULL != count);
+    CMX_ASSERT(NULL != nb);
+    CMX_ASSERT(count[0] > 0);
+    CMX_ASSERT(stride_levels >= 0);
+    CMX_ASSERT(stride_levels < CMX_MAX_STRIDE_LEVEL);
+
+    /* copy src info into structure */
+    stride_src.ptr = src;
+    stride_src.stride_levels = stride_levels;
+    stride_src.count[0] = count[0];
+    for (i=0; i<stride_levels; ++i) {
+        stride_src.stride[i] = src_stride[i];
+        stride_src.count[i+1] = count[i+1];
+    }
+    for (/*no init*/; i<CMX_MAX_STRIDE_LEVEL; ++i) {
+        stride_src.stride[i] = -1;
+        stride_src.count[i+1] = -1;
+    }
+
+    CMX_ASSERT(stride_src.stride_levels >= 0);
+    CMX_ASSERT(stride_src.stride_levels < CMX_MAX_STRIDE_LEVEL);
+
+    /* copy dst info into structure */
+    stride_dst = malloc(sizeof(stride_t));
+    CMX_ASSERT(stride_dst);
+    stride_dst->ptr = dst;
+    stride_dst->stride_levels = stride_levels;
+    stride_dst->count[0] = count[0];
+    for (i=0; i<stride_levels; ++i) {
+        stride_dst->stride[i] = dst_stride[i];
+        stride_dst->count[i+1] = count[i+1];
+    }
+    for (/*no init*/; i<CMX_MAX_STRIDE_LEVEL; ++i) {
+        stride_dst->stride[i] = -1;
+        stride_dst->count[i+1] = -1;
+    }
+
+    CMX_ASSERT(stride_dst->stride_levels >= 0);
+    CMX_ASSERT(stride_dst->stride_levels < CMX_MAX_STRIDE_LEVEL);
+
+    {
+        char *message = NULL;
+        int message_size = 0;
+        int recv_size = 0;
+        char *packed_buffer = NULL;
+        header_t *header = NULL;
+        int master_rank = -1;
+
+        master_rank = g_state.master[proc];
+
+        message_size = sizeof(header_t) + sizeof(stride_t);
+        message = malloc(message_size);
+        header = (header_t*)message;
+        CMX_ASSERT(header);
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
+        header->operation = OP_GET_PACKED;
+        header->remote_address = src;
+        header->local_address = dst;
+        header->rank = proc;
+        header->length = 0;
+
+        recv_size = _packed_size(stride_dst->stride,
+                stride_dst->count, stride_dst->stride_levels);
+        CMX_ASSERT(recv_size > 0);
+        packed_buffer = malloc(recv_size);
+        CMX_ASSERT(packed_buffer);
+        {
+            /* prepost all receives backward */
+            char *buf = (char*)packed_buffer + recv_size;
+            int bytes_remaining = recv_size;
+            do {
+                int size = bytes_remaining>max_message_size ?
+                    max_message_size : bytes_remaining;
+                buf -= size;
+                if (size == bytes_remaining) {
+                    /* on the last recv, indicate a packed recv */
+                    nb_recv_packed(buf, size, master_rank, nb, stride_dst);
+                }
+                else {
+                    nb_recv(buf, size, master_rank, nb);
+                }
+                bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+        }
+        (void)memcpy(message+sizeof(header_t), &stride_src, sizeof(stride_t));
+        nb_send_header(message, message_size, master_rank, nb);
+    }
+}
+
+STATIC void nb_gets_datatype(
+        void *src, int *src_stride, void *dst, int *dst_stride,
+        int *count, int stride_levels, int proc, _cmx_request *nb)
+{
+    MPI_Datatype dst_type;
+    int i;
+    stride_t stride_src;
+
+#if DEBUG
+    fprintf(stderr, "[%d] nb_gets_datatype(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
+            g_state.rank, src, src_stride, dst, dst_stride,
+            count[0], stride_levels, proc, nb);
+#endif
+#if DEBUG
+    for (i=0; i<stride_levels; ++i) {
+        fprintf(stderr, "\tsrc_stride[%d]=%d\n", i, src_stride[i]);
+    }
+    for (i=0; i<stride_levels; ++i) {
+        fprintf(stderr, "\tdst_stride[%d]=%d\n", i, dst_stride[i]);
+    }
+    for (i=0; i<stride_levels+1; ++i) {
+        fprintf(stderr, "\tcount[%d]=%d\n", i, count[i]);
+    }
+#endif
+
+    CMX_ASSERT(proc >= 0);
+    CMX_ASSERT(proc < g_state.size);
+    CMX_ASSERT(NULL != src);
+    CMX_ASSERT(NULL != dst);
+    CMX_ASSERT(NULL != count);
+    CMX_ASSERT(NULL != nb);
+    CMX_ASSERT(count[0] > 0);
+    CMX_ASSERT(stride_levels >= 0);
+    CMX_ASSERT(stride_levels < CMX_MAX_STRIDE_LEVEL);
+
+    /* copy src info into structure */
+    MAYBE_MEMSET(&stride_src, 0, sizeof(header_t));
+    stride_src.ptr = src;
+    stride_src.stride_levels = stride_levels;
+    stride_src.count[0] = count[0];
+    for (i=0; i<stride_levels; ++i) {
+        stride_src.stride[i] = src_stride[i];
+        stride_src.count[i+1] = count[i+1];
+    }
+    for (/*no init*/; i<CMX_MAX_STRIDE_LEVEL; ++i) {
+        stride_src.stride[i] = -1;
+        stride_src.count[i+1] = -1;
+    }
+
+    CMX_ASSERT(stride_src.stride_levels >= 0);
+    CMX_ASSERT(stride_src.stride_levels < CMX_MAX_STRIDE_LEVEL);
+
+    {
+        char *message = NULL;
+        int message_size = 0;
+        header_t *header = NULL;
+        int master_rank = -1;
+        int ierr;
+
+        master_rank = g_state.master[proc];
+
+        message_size = sizeof(header_t) + sizeof(stride_t);
+        message = malloc(message_size);
+        header = (header_t*)message;
+        CMX_ASSERT(header);
+        MAYBE_MEMSET(header, 0, sizeof(header_t));
+        header->operation = OP_GET_DATATYPE;
+        header->remote_address = src;
+        header->local_address = dst;
+        header->rank = proc;
+        header->length = 0;
+
+        strided_to_subarray_dtype(dst_stride, count, stride_levels, MPI_BYTE, &dst_type);
+        ierr = MPI_Type_commit(&dst_type);
+        translate_mpi_error(ierr,"nb_gets_datatype:MPI_Type_commit");
+
+        nb_recv_datatype(dst, dst_type, master_rank, nb);
+        (void)memcpy(message+sizeof(header_t), &stride_src, sizeof(stride_t));
+        nb_send_header(message, message_size, master_rank, nb);
+    }
+}
+
+/**
+ * No checking for data consistency. Assume correctness has already been
+ * established elsewhere. Individual elements are assumed to be one byte in size
+ * stride_array: physical dimensions of array
+ * count: number of elements along each array dimension
+ * levels: number of stride levels (should be one less than array dimension)
+ * type: MPI_Datatype returned to calling program
+ */
+STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels, MPI_Datatype base_type, MPI_Datatype *type)
+{
+    int ndims = levels+1;
+    int i = 0;
+    int ierr = 0;
+    int array_of_sizes[7];
+    int array_of_starts[7];
+    int array_of_subsizes[7];
+    int stride = 0;
+
+    ierr = MPI_Type_size(base_type,&stride);
+    translate_mpi_error(ierr,"strided_to_subarray_dtype:MPI_Type_size");
+
+    /* the pointer to the local buffer points to the first data element
+     * in data exchange, not the origin of the local array, so all starts
+     * should be zero */
+    for (i=0; i<levels; i++) {
+        array_of_sizes[i] = stride_array[i]/stride;
+        array_of_starts[i] = 0;
+        array_of_subsizes[i] = count[i];
+        if (array_of_sizes[i] < array_of_subsizes[i]) {
+            fprintf(stderr, "p[%d] ERROR [strided_to_subarray_dtype]\n"
+                    "stride: %d\n"
+                    "stride_array[%d]: %d\n"
+                    "array_of_sizes[%d]: %d\n"
+                    "array_of_subsizes[%d]: %d\n",
+                    g_state.rank,
+                    stride,
+                    i,stride_array[i],
+                    i,array_of_sizes[i],
+                    i,array_of_subsizes[i]);
+        }
+        stride = stride_array[i];
+    }
+    array_of_sizes[levels] = count[levels];
+    array_of_starts[levels] = 0;
+    array_of_subsizes[levels] = count[levels];
+#if DEBUG
+    for (i=0; i<ndims; i++) {
+        fprintf(stderr, "p[%d] ndims: %d sizes[%d]: %d subsizes[%d]: %d starts[%d]: %d\n",
+                g_state.rank,
+                ndims,
+                i,array_of_sizes[i],
+                i,array_of_subsizes[i],
+                i,array_of_starts[i]);
+    }
+#endif
+
+    ierr = MPI_Type_create_subarray(ndims, array_of_sizes,
+            array_of_subsizes, array_of_starts, MPI_ORDER_FORTRAN,
+            base_type, type);
+    if (MPI_SUCCESS != ierr) {
+        fprintf(stderr, "p[%d] Error forming MPI_Datatype for one-sided strided operation."
+                " Check that stride dimensions are compatible with local block"
+                " dimensions\n",g_state.rank);
+        for (i=0; i<levels; i++) {
+            fprintf(stderr, "p[%d] count[%d]: %d stride[%d]: %d\n",
+                    g_state.rank,
+                    i,count[i],
+                    i,stride_array[i]);
+        }
+        fprintf(stderr, "p[%d] count[%d]: %d\n",g_state.rank,i,count[i]);
+        translate_mpi_error(ierr,"strided_to_subarray_dtype:MPI_Type_create_subarray");
+    }
+}
