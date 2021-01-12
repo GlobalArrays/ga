@@ -1878,7 +1878,6 @@ int main(int argc, char *argv[])
     fflush(stdout);
     sleep(1);
   }
-#if 1
   double timer_test_vec_small = timer();
   test_vec_small();
   cmx_fence_all(CMX_GROUP_WORLD);
@@ -1887,7 +1886,6 @@ int main(int argc, char *argv[])
   if (me == 0){
     printf("timer_test_vec_small=%f\n", timer_test_vec_small);
   }
-#endif
 
   if (me == 0) {
     printf("\nTesting atomic accumulate\n");

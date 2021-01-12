@@ -85,6 +85,24 @@ int cmx_group_comm(cmx_igroup_t *group, MPI_Comm *comm)
   return CMX_SUCCESS;
 }
 
+int cmx_group_translate_ranks(int n, cmx_group_t group_from,
+    int *ranks_from, cmx_group_t group_to, int *ranks_to)
+{
+  int i;
+  if (group_from == group_to) {
+    for (i=0; i<n; i++) {
+      ranks_to[i] = ranks_from[i];
+    }
+  } else {
+    int status;
+    status = MPI_Group_translate_ranks(group_from->group, n, ranks_from,
+        group_to->group, ranks_to);
+    if (status != MPI_SUCCESS) {
+      cmx_error("MPI_Group_translate_ranks: Failed ", status);
+    }
+  }
+  return CMX_SUCCESS;
+}
 
 int cmx_group_translate_world(cmx_igroup_t *group, int group_rank, int *world_rank)
 {

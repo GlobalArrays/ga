@@ -74,8 +74,10 @@ seg_cmp(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len, int op)
     int result = 0;
 
     /* preconditions */
+    /*
     CMX_ASSERT(NULL != reg_addr);
     CMX_ASSERT(NULL != oth_addr);
+    */
 
     /* if reg_len = 0 and oth_len = 0 do a direct comparison. This assumes that
      * registered region is zero length and we are just using a small buffer to
@@ -154,8 +156,10 @@ STATIC reg_return_t
 seg_intersects(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len)
 {
     /* preconditions */
+    /*
     CMX_ASSERT(NULL != reg_addr);
     CMX_ASSERT(NULL != oth_addr);
+    */
 
     return seg_cmp(
             reg_addr, reg_len,
@@ -181,8 +185,10 @@ STATIC reg_return_t
 seg_contains(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len)
 {
     /* preconditions */
+    /*
     CMX_ASSERT(NULL != reg_addr);
     CMX_ASSERT(NULL != oth_addr);
+    */
 
     return seg_cmp(
             reg_addr, reg_len,
@@ -213,8 +219,10 @@ reg_entry_intersects(reg_entry_t *reg_entry, void *buf, int len)
             g_state.rank, reg_entry, buf, len);
 #endif
     /* preconditions */
+    /*
     CMX_ASSERT(NULL != reg_entry);
     CMX_ASSERT(NULL != buf);
+    */
     CMX_ASSERT(len >= 0);
 
     return seg_intersects(
@@ -246,7 +254,7 @@ reg_entry_contains(reg_entry_t *reg_entry, void *buf, int len)
 
     /* preconditions */
     CMX_ASSERT(NULL != reg_entry);
-    CMX_ASSERT(NULL != buf);
+    /*CMX_ASSERT(NULL != buf);*/
     CMX_ASSERT(len >= 0);
 
     return seg_contains(
@@ -311,7 +319,6 @@ reg_entry_init(int nprocs)
 #endif
 
     /* preconditions */
-    CMX_ASSERT(NULL == reg_entry);
     CMX_ASSERT(0 == reg_nprocs);
 
     /* keep the number of processors around for later use */
@@ -513,7 +520,7 @@ reg_entry_insert(int world_rank, void *buf, int len, cmx_handle_t *cmx_hdl)
   /* preconditions */
   CMX_ASSERT(NULL != reg_entries);
   CMX_ASSERT(0 <= world_rank && world_rank < reg_nprocs);
-  CMX_ASSERT(NULL != buf);
+  /* CMX_ASSERT(NULL != buf); */
   CMX_ASSERT(len >= 0);
   CMX_ASSERT(NULL == reg_entry_find(world_rank, buf, len));
   CMX_ASSERT(NULL == reg_entry_find_intersection(world_rank, buf, len));
@@ -568,7 +575,7 @@ reg_entry_delete(int rank, void *buf)
     /* preconditions */
     CMX_ASSERT(NULL != reg_entries);
     CMX_ASSERT(0 <= rank && rank < reg_nprocs);
-    CMX_ASSERT(NULL != buf);
+    /* CMX_ASSERT(NULL != buf); */
     CMX_ASSERT(NULL != reg_entry_find(rank, buf, 0));
 
     /* this is more restrictive than reg_entry_find() in that we locate

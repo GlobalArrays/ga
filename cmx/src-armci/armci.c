@@ -228,11 +228,13 @@ int PARMCI_Acc(int optype, void *scale, void *src, void *dst, int bytes, int pro
   reg_entry_t *entry; 
   void *buf;
   MPI_Aint offset;
+  int lproc;
   entry = reg_entry_find(proc,dst,bytes);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   optype = convert_optype(optype);
   offset = (MPI_Aint)dst-(MPI_Aint)buf;
-  return cmx_acc(optype, scale, src, offset, bytes, proc, *(entry->hdl));
+  return cmx_acc(optype, scale, src, offset, bytes, lproc, *(entry->hdl));
 }
 
 
@@ -242,8 +244,10 @@ int PARMCI_AccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, voi
   reg_entry_t *entry; 
   void *buf;
   MPI_Aint offset;
+  int lproc;
   entry = reg_entry_find(proc,dst_ptr,0);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   optype = convert_optype(optype);
   offset = (MPI_Aint)dst_ptr-(MPI_Aint)buf;
   /* check if data is contiguous */
@@ -251,10 +255,10 @@ int PARMCI_AccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, voi
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
-    iret = cmx_acc(optype, scale, src_ptr, offset, lcount, proc, *(entry->hdl));
+    iret = cmx_acc(optype, scale, src_ptr, offset, lcount, lproc, *(entry->hdl));
   } else {
     iret = cmx_accs(optype, scale, src_ptr, src_stride_arr, offset,
-        dst_stride_arr, count, stride_levels, proc, *(entry->hdl));
+        dst_stride_arr, count, stride_levels, lproc, *(entry->hdl));
   }
   return iret;
 }
@@ -266,14 +270,16 @@ int PARMCI_AccV(int op, void *scale, armci_giov_t *darr, int len, int proc)
   reg_entry_t *entry; 
   void *buf;
   cmx_giov_t *adarr = malloc(sizeof(cmx_giov_t) * len);
+  int lproc;
   /* find location of buffer on remote processor. Start by finding a buffer
    * location on the remote array */
   buf = (darr[0].dst_ptr_array)[0];
   entry = reg_entry_find(proc,buf,0);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   convert_giov(darr, adarr, len, buf, 1);
   op = convert_optype(op);
-  rc = cmx_accv(op, scale, adarr, len, proc, *(entry->hdl));
+  rc = cmx_accv(op, scale, adarr, len, lproc, *(entry->hdl));
   free_giov(adarr, len);
   return rc;
 }
@@ -400,10 +406,12 @@ int PARMCI_Get(void *src, void *dst, int bytes, int proc)
   reg_entry_t *entry; 
   void *buf;
   MPI_Aint offset;
+  int lproc;
   entry = reg_entry_find(proc,src,bytes);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   offset = (MPI_Aint)src-(MPI_Aint)buf;
-  return cmx_get(dst, offset, bytes, proc, *(entry->hdl));
+  return cmx_get(dst, offset, bytes, lproc, *(entry->hdl));
 }
 
 
@@ -413,18 +421,20 @@ int PARMCI_GetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stri
   reg_entry_t *entry; 
   void *buf;
   MPI_Aint offset;
+  int lproc;
   entry = reg_entry_find(proc,src_ptr,0);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   offset = (MPI_Aint)src_ptr-(MPI_Aint)buf;
   /* check if data is contiguous */
   if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
-    iret = cmx_get(dst_ptr, offset, lcount, proc, *(entry->hdl));
+    iret = cmx_get(dst_ptr, offset, lcount, lproc, *(entry->hdl));
   } else {
     iret = cmx_gets(dst_ptr, dst_stride_arr, offset, src_stride_arr,
-        count, stride_levels, proc, *(entry->hdl));
+        count, stride_levels, lproc, *(entry->hdl));
   }
   return iret;
 }
@@ -436,13 +446,15 @@ int PARMCI_GetV(armci_giov_t *darr, int len, int proc)
   cmx_giov_t *adarr = malloc(sizeof(cmx_giov_t) * len);
   reg_entry_t *entry; 
   void *buf;
+  int lproc;
   /* find location of buffer on remote processor. Start by finding a buffer
    * location on the remote array */
   buf = (darr[0].src_ptr_array)[0];
   entry = reg_entry_find(proc,buf,0);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   convert_giov(darr, adarr, len, buf, 0);
-  rc = cmx_getv(adarr, len, proc, *(entry->hdl));
+  rc = cmx_getv(adarr, len, lproc, *(entry->hdl));
   free_giov(adarr, len);
   return rc;
 }
@@ -681,15 +693,17 @@ int PARMCI_NbAcc(int optype, void *scale, void *src, void *dst, int bytes, int p
   void *buf;
   MPI_Aint offset;
   nb_t *req;
+  int lproc;
   if (nb_handle == NULL) {
     return PARMCI_Acc(optype, scale, src, dst, bytes, proc);
   }
   entry = reg_entry_find(proc,dst,bytes);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   optype = convert_optype(optype);
   offset = (MPI_Aint)dst-(MPI_Aint)buf;
   get_nb_request(nb_handle, &req);
-  iret = cmx_nbacc(optype, scale, src, offset, bytes, proc, *(entry->hdl),
+  iret = cmx_nbacc(optype, scale, src, offset, bytes, lproc, *(entry->hdl),
       &(req->request));
   return iret;
 }
@@ -703,12 +717,14 @@ int PARMCI_NbAccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, v
   void *buf;
   MPI_Aint offset;
   nb_t *req;
+  int lproc;
   if (nb_handle == NULL) {
     return PARMCI_AccS(optype, scale, src_ptr, src_stride_arr, dst_ptr,
         dst_stride_arr, count, stride_levels, proc);
   }
   entry = reg_entry_find(proc,dst_ptr,0);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   optype = convert_optype(optype);
   offset = (MPI_Aint)dst_ptr-(MPI_Aint)buf;
   get_nb_request(nb_handle, &req);
@@ -717,11 +733,11 @@ int PARMCI_NbAccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, v
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
-    iret = cmx_nbacc(optype, scale, src_ptr, offset, lcount, proc,
+    iret = cmx_nbacc(optype, scale, src_ptr, offset, lcount, lproc,
         *(entry->hdl), &(req->request));
   } else {
     iret = cmx_nbaccs(optype, scale, src_ptr, src_stride_arr, offset,
-        dst_stride_arr, count, stride_levels, proc,
+        dst_stride_arr, count, stride_levels, lproc,
         *(entry->hdl), &(req->request));
   }
   return iret;
@@ -735,6 +751,7 @@ int PARMCI_NbAccV(int op, void *scale, armci_giov_t *darr, int len, int proc, ar
   void *buf;
   nb_t *req;
   cmx_giov_t *adarr;
+  int lproc;
   if (nb_handle == NULL) {
     return PARMCI_AccV(op, scale, darr, len, proc);
   }
@@ -744,10 +761,11 @@ int PARMCI_NbAccV(int op, void *scale, armci_giov_t *darr, int len, int proc, ar
   buf = (darr[0].dst_ptr_array)[0];
   entry = reg_entry_find(proc,buf,0);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   convert_giov(darr, adarr, len, buf, 1);
   op = convert_optype(op);
   get_nb_request(nb_handle, &req);
-  rc = cmx_nbaccv(op, scale, adarr, len, proc, *(entry->hdl), &(req->request));
+  rc = cmx_nbaccv(op, scale, adarr, len, lproc, *(entry->hdl), &(req->request));
   free_giov(adarr, len);
   return rc;
 }
@@ -759,14 +777,16 @@ int PARMCI_NbGet(void *src, void *dst, int bytes, int proc, armci_hdl_t *nb_hand
   void *buf;
   MPI_Aint offset;
   nb_t *req;
+  int lproc;
   if (nb_handle == NULL) {
     return PARMCI_Get(src, dst, bytes, proc);
   }
   entry = reg_entry_find(proc,src,bytes);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   offset = (MPI_Aint)src-(MPI_Aint)buf;
   get_nb_request(nb_handle, &req);
-  iret = cmx_nbget(dst, offset, bytes, proc, *(entry->hdl), &(req->request));
+  iret = cmx_nbget(dst, offset, bytes, lproc, *(entry->hdl), &(req->request));
   return iret;
 }
 
@@ -778,12 +798,14 @@ int PARMCI_NbGetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_st
   void *buf;
   MPI_Aint offset;
   nb_t *req;
+  int lproc;
   if (nb_handle == NULL) {
     return PARMCI_GetS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
         count, stride_levels, proc);
   }
   entry = reg_entry_find(proc,src_ptr,0);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   offset = (MPI_Aint)src_ptr-(MPI_Aint)buf;
   get_nb_request(nb_handle, &req);
   /* check if data is contiguous */
@@ -791,11 +813,11 @@ int PARMCI_NbGetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_st
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
-    iret = cmx_nbget(dst_ptr, offset, lcount, proc,
+    iret = cmx_nbget(dst_ptr, offset, lcount, lproc,
         *(entry->hdl), &(req->request));
   } else {
     iret = cmx_nbgets(dst_ptr, dst_stride_arr, offset, src_stride_arr,
-        count, stride_levels, proc, *(entry->hdl), &(req->request));
+        count, stride_levels, lproc, *(entry->hdl), &(req->request));
   }
   return iret;
 }
@@ -808,6 +830,7 @@ int PARMCI_NbGetV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
   void *buf;
   nb_t *req;
   cmx_giov_t *adarr;
+  int lproc;
   if (nb_handle == NULL) {
     return PARMCI_GetV(darr, len, proc);
   }
@@ -817,9 +840,10 @@ int PARMCI_NbGetV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
   buf = (darr[0].src_ptr_array)[0];
   entry = reg_entry_find(proc,buf,0);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   convert_giov(darr, adarr, len, buf, 0);
   get_nb_request(nb_handle, &req);
-  rc = cmx_nbgetv(adarr, len, proc, *(entry->hdl), &(req->request));
+  rc = cmx_nbgetv(adarr, len, lproc, *(entry->hdl), &(req->request));
   free_giov(adarr, len);
   return rc;
 }
@@ -832,14 +856,16 @@ int PARMCI_NbPut(void *src, void *dst, int bytes, int proc, armci_hdl_t *nb_hand
   void *buf;
   MPI_Aint offset;
   nb_t *req;
+  int lproc;
   if (nb_handle == NULL) {
     return PARMCI_Put(src, dst, bytes, proc);
   }
   entry = reg_entry_find(proc,dst,bytes);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   offset = (MPI_Aint)dst-(MPI_Aint)buf;
   get_nb_request(nb_handle, &req);
-  iret = cmx_nbput(src, offset, bytes, proc, *(entry->hdl), &(req->request));
+  iret = cmx_nbput(src, offset, bytes, lproc, *(entry->hdl), &(req->request));
   return iret;
 }
 
@@ -851,12 +877,14 @@ int PARMCI_NbPutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_st
   void *buf;
   MPI_Aint offset;
   nb_t *req;
+  int lproc;
   if (nb_handle == NULL) {
     return PARMCI_PutS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
         count, stride_levels, proc);
   }
   entry = reg_entry_find(proc,dst_ptr,0);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   offset = (MPI_Aint)dst_ptr-(MPI_Aint)buf;
   get_nb_request(nb_handle, &req);
   /* check if data is contiguous */
@@ -864,11 +892,11 @@ int PARMCI_NbPutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_st
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
-    iret = cmx_nbput(src_ptr, offset, lcount, proc,
+    iret = cmx_nbput(src_ptr, offset, lcount, lproc,
         *(entry->hdl), &(req->request));
   } else {
     iret = cmx_nbputs(src_ptr, src_stride_arr, offset, dst_stride_arr,
-        count, stride_levels, proc, *(entry->hdl), &(req->request));
+        count, stride_levels, lproc, *(entry->hdl), &(req->request));
   }
   return iret;
 }
@@ -881,6 +909,7 @@ int PARMCI_NbPutV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
   void *buf;
   nb_t *req;
   cmx_giov_t *adarr;
+  int lproc;
   if (nb_handle == NULL) {
     return PARMCI_PutV(darr, len, proc);
   }
@@ -890,9 +919,10 @@ int PARMCI_NbPutV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
   buf = (darr[0].dst_ptr_array)[0];
   entry = reg_entry_find(proc,buf,0);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   convert_giov(darr, adarr, len, buf, 1);
   get_nb_request(nb_handle, &req);
-  rc = cmx_nbputv(adarr, len, proc, *(entry->hdl), &(req->request));
+  rc = cmx_nbputv(adarr, len, lproc, *(entry->hdl), &(req->request));
   free_giov(adarr, len);
   return rc;
 }
@@ -927,10 +957,12 @@ int PARMCI_Put(void *src, void *dst, int bytes, int proc)
   reg_entry_t *entry; 
   void *buf;
   MPI_Aint offset;
+  int lproc;
   entry = reg_entry_find(proc,dst,bytes);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   offset = (MPI_Aint)dst-(MPI_Aint)buf;
-  return cmx_put(src, offset, bytes, proc, *(entry->hdl));
+  return cmx_put(src, offset, bytes, lproc, *(entry->hdl));
 }
 
 
@@ -941,18 +973,20 @@ int PARMCI_PutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stri
   void *buf;
   MPI_Aint offset;
   nb_t *req;
+  int lproc;
   entry = reg_entry_find(proc,dst_ptr,0);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   offset = (MPI_Aint)dst_ptr-(MPI_Aint)buf;
   /* check if data is contiguous */
   if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
-    iret = cmx_put(src_ptr, offset, lcount, proc, *(entry->hdl));
+    iret = cmx_put(src_ptr, offset, lcount, lproc, *(entry->hdl));
   } else {
     iret = cmx_puts(src_ptr, src_stride_arr, offset, dst_stride_arr,
-        count, stride_levels, proc, *(entry->hdl));
+        count, stride_levels, lproc, *(entry->hdl));
   }
   return iret;
 }
@@ -978,13 +1012,15 @@ int PARMCI_PutV(armci_giov_t *darr, int len, int proc)
   reg_entry_t *entry; 
   void *buf;
   cmx_giov_t *adarr = malloc(sizeof(cmx_giov_t) * len);
+  int lproc;
   /* find location of buffer on remote processor. Start by finding a buffer
    * location on the remote array */
   buf = (darr[0].dst_ptr_array)[0];
   entry = reg_entry_find(proc,buf,0);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   convert_giov(darr, adarr, len, buf, 1);
-  rc = cmx_putv(adarr, len, proc, *(entry->hdl));
+  rc = cmx_putv(adarr, len, lproc, *(entry->hdl));
   free_giov(adarr, len);
   return rc;
 }
@@ -1026,11 +1062,13 @@ int PARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
   reg_entry_t *entry; 
   void *buf;
   MPI_Aint offset;
+  int lproc;
   entry = reg_entry_find(proc,prem,0);
   buf = entry->buf;
+  cmx_group_translate_ranks(1, CMX_GROUP_WORLD, &proc, entry->hdl->group, &lproc);
   offset = (MPI_Aint)prem-(MPI_Aint)buf;
   op = convert_optype(op);
-  return cmx_rmw(op, ploc, offset, extra, proc, *(entry->hdl));
+  return cmx_rmw(op, ploc, offset, extra, lproc, *(entry->hdl));
 }
 
 

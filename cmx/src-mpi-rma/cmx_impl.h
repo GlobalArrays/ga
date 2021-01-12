@@ -1,5 +1,5 @@
-#ifndef COMEX_IMPL_H_
-#define COMEX_IMPL_H_
+#ifndef CMX_IMPL_H_
+#define CMX_IMPL_H_
 
 #include <semaphore.h>
 
@@ -68,22 +68,4 @@ extern cmx_group_t CMX_GROUP_WORLD;
 #endif
 /* TODO: Problem with this function since cmx_error is defined in cmx.h
  * On the other hand, this function is currently not used */
-#if 0
-
-  static inline void cmx_assert_fail(
-      const char *assertion,
-      const char *file,
-      unsigned int line,
-      const char *function)
-{
-  fprintf(stderr, "[%d] %s:%u: %s: Assertion `%s' failed",
-      l_state.rank, file, line, function, assertion);
-  fflush(stderr);
-#if DEBUG
-  printf("[%d] %s:%u: %s: Assertion `%s' failed",
-      l_state.rank, file, line, function, assertion);
-#endif
-  cmx_error("cmx_assert_fail", -1);
-}
-#endif
 #endif /* CMX_IMPL_H_ */

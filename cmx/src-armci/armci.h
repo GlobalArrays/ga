@@ -5,6 +5,8 @@
 /* for size_t */
 #include <stdlib.h>
 
+#include <stdio.h>
+
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif

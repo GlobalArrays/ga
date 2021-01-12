@@ -36,15 +36,37 @@ cmake_minimum_required (VERSION 2.8.8)
 project (CMX)
 
 option (CMX_RUNTIME, "Protocols using to build CMX" MPI_RMA)
-option (MPI_RMA "use MPI RMA protocols for communication" ON)
+option (USE_MPI_RMA "use MPI RMA protocols for communication" OFF)
+option (USE_MPI_PR "use MPI progress ranks for communication" OFF)
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR} src-common src-armci)
-if (MPI_RMA)
+message (STATUS "CMX_RUNTIME: ${CMX_RUNTIME}")
+if (CMX_RUNTIME STREQUAL "MPI_RMA")
+  message(STATUS "Found MPI_RMA")
+  set (USE_MPI_RMA ON)
+elseif (CMX_RUNTIME STREQUAL "MPI_PR")
+  message(STATUS "Found MPI_PR")
+  set (USE_MPI_PR ON)
+else()
+  message(STATUS "Found default MPI_RMA")
+  set (USE_MPI_RMA ON)
+endif ()
+message (STATUS "USE_MPI_RMA: ${USE_MPI_RMA}")
+message (STATUS "USE_MPI_PR: ${USE_MPI_PR}")
+if (USE_MPI_RMA)
   set(CMX_DEVICE
     src-mpi-rma/cmx.c
     src-mpi-rma/groups.c
   )
   set (CMX_NETWORK_MPI_RMA ON)
   include_directories(AFTER src-mpi-rma)
+elseif (USE_MPI_PR)
+  set(CMX_DEVICE
+    src-mpi-pr/cmx.c
+    src-mpi-pr/groups.c
+    src-mpi-pr/reg_cache.c
+  )
+  set (CMX_NETWORK_MPI_PR ON)
+  include_directories(AFTER src-mpi-pr)
 endif()
 
 set(ARMCI_API
@@ -95,6 +117,23 @@ check_include_files("windows.h" HAVE_WINDOWS_H)
 include(CheckFunctionExists)
 check_function_exists("bzero" HAVE_BZERO)
 
+# check to see if rt library exists. If so, add -lrt to GA_EXTRA_LIBS
+find_library(LIBRT rt PATHS /lib /usr/lib /usr/local/lib)
+if (LIBRT)
+  message(STATUS "VALUE OF LIBRT: ${LIBRT}")
+#  if (CMX_EXTRA_LIBS)
+#    set (CMX_EXTRA_LIBS "${CMX_EXTRA_LIBS} rt")
+#  else()
+#    set (CMX_EXTRA_LIBS rt)
+#  endif()
+#  set (CMAKE_REQUIRED_LIBRARIES "rt ${CMAKE_REQUIRED_LIBRARIES}")
+#  message(STATUS "CMAKE_REQUIRED_LIBRARIES: ${CMAKE_REQUIRED_LIBRARIES}")
+  list(APPEND CMX_EXTRA_LIBS rt)
+else()
+  message(STATUS "NO LIBRT FOUND")
+endif()
+
+
 # -------------------------------------------------------------
 # figure out what BLAS library looks like
 # -------------------------------------------------------------
@@ -103,7 +142,7 @@ option (ENABLE_BLAS "Include external BLAS" ON)
 endif()
 INCLUDE( CheckCSourceCompiles )
 if (ENABLE_BLAS)
-set (CMAKE_REQUIRED_LIBRARIES blas)
+set (CMAKE_REQUIRED_LIBRARIES "blas ${CMAKE_REQUIRED_LIBRARIES}")
 CHECK_C_SOURCE_COMPILES(
 "
 int main(int argc, char *argv[])
@@ -396,7 +435,9 @@ add_library(cmx
  ${CMX_DEVICE}
 )
 
-target_link_libraries(cmx)
+message(STATUS "CMX_EXTRA_LIBS: (${CMX_EXTRA_LIBS})")
+target_link_libraries(cmx PUBLIC ${CMX_EXTRA_LIBS})
+
 
 install (TARGETS
   cmx
@@ -457,4 +498,4 @@ target_link_libraries(shift.x cmx)
 # ARMCI test programs
 # -------------------------------------------------------------
 add_executable(testwrap.x src-armci/testing/testwrap.c)
-target_link_libraries(testwrap.x armci)
+target_link_libraries(testwrap.x armci rt)
