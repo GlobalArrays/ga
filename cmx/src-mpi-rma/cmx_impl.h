@@ -11,6 +11,7 @@
 
 typedef int cmxInt;
 
+
 typedef struct {
   MPI_Comm world_comm;
   int rank;
@@ -45,9 +46,8 @@ typedef struct {
   MPI_Request request;
   MPI_Win win;
   int active;
-#ifdef USE_MPI_FLUSH_LOCAL
+  /* Last element is only needed by the win_flush_local implementation */
   int remote_proc;
-#endif
 } _cmx_request;
 
 typedef cmx_igroup_t* cmx_group_t;
@@ -69,3 +69,7 @@ extern cmx_group_t CMX_GROUP_WORLD;
 /* TODO: Problem with this function since cmx_error is defined in cmx.h
  * On the other hand, this function is currently not used */
 #endif /* CMX_IMPL_H_ */
+
+/*
+#define printf(...) fprintf(stderr, __VA_ARGS__); fflush(stderr)
+*/

@@ -56,6 +56,7 @@ typedef struct {
   int active;
 #ifdef USE_MPI_FLUSH_LOCAL
   int remote_proc;
+  int tag;
 #endif
 } nb_t;
 
@@ -224,17 +225,13 @@ int cmx_put(
     int proc, cmx_handle_t cmx_hdl)
 {
   MPI_Aint displ;
-  int lproc, ierr;
+  int ierr;
   MPI_Win win = cmx_hdl.win;
 #ifdef USE_MPI_REQUESTS
   MPI_Request request;
   MPI_Status status;
 #endif
   displ = (MPI_Aint)(dst_offset);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
 /**
  * All processes called MPI_WIN_LOCK_ALL on the window (win) used for
  * these calls. This call:
@@ -264,7 +261,7 @@ int cmx_put(
  * operations are completed both at the origin and at the target
  */
 #ifdef USE_PRIOR_MPI_WIN_FLUSH
-  ierr = MPI_Win_flush(lproc, reg_win->win);
+  ierr = MPI_Win_flush(proc, reg_win->win);
   translate_mpi_error(ierr,"cmx_put:MPI_Win_flush");
 #endif
 #ifdef USE_MPI_REQUESTS
@@ -274,7 +271,7 @@ int cmx_put(
  * the local communication buffer of a get call should not be accessed after
  * the RMA call until the operation completes at the origin.
  */
-  ierr = MPI_Put(src, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
+  ierr = MPI_Put(src, bytes, MPI_CHAR, proc, displ, bytes, MPI_CHAR,
       win);
   translate_mpi_error(ierr,"cmx_put:MPI_Put");
 /**
@@ -284,7 +281,7 @@ int cmx_put(
  * routine completes, the user may reused any buffers provided to put, get,
  * or accumulate operations
  */
-  ierr = MPI_Win_flush_local(lproc, win);
+  ierr = MPI_Win_flush_local(proc, win);
   translate_mpi_error(ierr,"cmx_put:MPI_Win_flush_local");
 #else
 /**
@@ -296,7 +293,7 @@ int cmx_put(
  * target window. If remote completion is required, MPI_WIN_FLUSH,
  * MPI_WIN_FLUSH_ALL, MPI_WIN_UNLOCK or MPI_WIN_UNLOCK_ALL can be used.
  */
-  ierr = MPI_Rput(src, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
+  ierr = MPI_Rput(src, bytes, MPI_CHAR, proc, displ, bytes, MPI_CHAR,
       win, &request);
   translate_mpi_error(ierr,"cmx_put:MPI_Rput");
 /**
@@ -309,12 +306,12 @@ int cmx_put(
   translate_mpi_error(ierr,"cmx_put:MPI_Wait");
 #endif
 #else
-  ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,win);
+  ierr = MPI_Win_lock(MPI_LOCK_SHARED,proc,0,win);
   translate_mpi_error(ierr,"cmx_put:MPI_Win_lock");
-  ierr = MPI_Put(src, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
+  ierr = MPI_Put(src, bytes, MPI_CHAR, proc, displ, bytes, MPI_CHAR,
       win);
   translate_mpi_error(ierr,"cmx_put:MPI_Put");
-  ierr = MPI_Win_unlock(lproc,win);
+  ierr = MPI_Win_unlock(proc,win);
   translate_mpi_error(ierr,"cmx_put:MPI_Win_unlock");
 #endif
   return CMX_SUCCESS;
@@ -334,42 +331,38 @@ int cmx_get(
     int proc, cmx_handle_t cmx_hdl)
 {
   MPI_Aint displ;
-  int lproc, ierr;
+  int ierr;
   MPI_Win win = cmx_hdl.win;
 #ifdef USE_MPI_REQUESTS
   MPI_Request request;
   MPI_Status status;
 #endif
   displ = (MPI_Aint)(src_offset);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
 #ifdef USE_PRIOR_MPI_WIN_FLUSH
-  ierr = MPI_Win_flush(lproc, reg_win->win);
+  ierr = MPI_Win_flush(proc, reg_win->win);
   translate_mpi_error(ierr,"cmx_get:MPI_Win_flush");
 #endif
 #ifdef USE_MPI_REQUESTS
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Get(dst, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
+  ierr = MPI_Get(dst, bytes, MPI_CHAR, proc, displ, bytes, MPI_CHAR,
       win);
   translate_mpi_error(ierr,"cmx_get:MPI_Get");
-  ierr = MPI_Win_flush_local(lproc, win);
+  ierr = MPI_Win_flush_local(proc, win);
   translate_mpi_error(ierr,"cmx_get:MPI_Win_flush_local");
 #else
-  ierr = MPI_Rget(dst, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
+  ierr = MPI_Rget(dst, bytes, MPI_CHAR, proc, displ, bytes, MPI_CHAR,
       win, &request);
   translate_mpi_error(ierr,"cmx_get:MPI_Rget");
   ierr = MPI_Wait(&request, &status);
   translate_mpi_error(ierr,"cmx_get:MPI_Wait");
 #endif
 #else
-  ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,win);
+  ierr = MPI_Win_lock(MPI_LOCK_SHARED,proc,0,win);
   translate_mpi_error(ierr,"cmx_get:MPI_Win_lock");
-  ierr = MPI_Get(dst, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
+  ierr = MPI_Get(dst, bytes, MPI_CHAR, proc, displ, bytes, MPI_CHAR,
       win);
   translate_mpi_error(ierr,"cmx_get:MPI_Get");
-  ierr = MPI_Win_unlock(lproc,win);
+  ierr = MPI_Win_unlock(proc,win);
   translate_mpi_error(ierr,"cmx_get:MPI_Win_unlock");
 #endif
   return CMX_SUCCESS;
@@ -392,7 +385,7 @@ int cmx_acc(
 {
   MPI_Aint displ, count;
   void *buf_ptr;
-  int i, lproc, ierr;
+  int i, ierr;
   MPI_Win win = cmx_hdl.win;
 #ifdef USE_MPI_REQUESTS
   MPI_Request request;
@@ -400,10 +393,6 @@ int cmx_acc(
 #endif
   MPI_Datatype mpi_type;
   displ = (MPI_Aint)(dst_offset);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   if (op == CMX_ACC_INT) {
     int *buf;
     int *isrc = (int*)src;
@@ -482,30 +471,30 @@ int cmx_acc(
     assert(0);
   }
 #ifdef USE_PRIOR_MPI_WIN_FLUSH
-  ierr = MPI_Win_flush(lproc, reg_win->win);
+  ierr = MPI_Win_flush(proc, reg_win->win);
   translate_mpi_error(ierr,"cmx_acc:MPI_Win_flush");
 #endif
 #ifdef USE_MPI_REQUESTS
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Accumulate(buf_ptr,count,mpi_type,lproc,displ,count,
+  ierr = MPI_Accumulate(buf_ptr,count,mpi_type,proc,displ,count,
       mpi_type,MPI_SUM,win);
   translate_mpi_error(ierr,"cmx_acc:MPI_Accumulate");
-  ierr = MPI_Win_flush_local(lproc, win);
+  ierr = MPI_Win_flush_local(proc, win);
   translate_mpi_error(ierr,"cmx_acc:MPI_Win_flush_local");
 #else
-  ierr = MPI_Raccumulate(buf_ptr,count,mpi_type,lproc,displ,count,
+  ierr = MPI_Raccumulate(buf_ptr,count,mpi_type,proc,displ,count,
       mpi_type,MPI_SUM,win,&request);
   translate_mpi_error(ierr,"cmx_acc:MPI_Raccumulate");
   ierr = MPI_Wait(&request, &status);
   translate_mpi_error(ierr,"cmx_acc:MPI_Wait");
 #endif
 #else
-  ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,win);
+  ierr = MPI_Win_lock(MPI_LOCK_SHARED,proc,0,win);
   translate_mpi_error(ierr,"cmx_acc:MPI_Win_lock");
-  ierr = MPI_Accumulate(buf_ptr,count,mpi_type,lproc,displ,count,
+  ierr = MPI_Accumulate(buf_ptr,count,mpi_type,proc,displ,count,
       mpi_type,MPI_SUM,win);
   translate_mpi_error(ierr,"cmx_acc:MPI_Accumulate");
-  ierr = MPI_Win_unlock(lproc,win);
+  ierr = MPI_Win_unlock(proc,win);
   translate_mpi_error(ierr,"cmx_acc:MPI_Win_unlock");
 #endif
   free(buf_ptr);
@@ -587,7 +576,7 @@ int cmx_puts(
 {
   MPI_Datatype src_type, dst_type;
   MPI_Aint displ;
-  int lproc, ierr;
+  int ierr;
   MPI_Win win = cmx_hdl.win;
 #ifdef USE_MPI_REQUESTS
   MPI_Request request;
@@ -603,39 +592,35 @@ int cmx_puts(
       MPI_BYTE, &src_type);
   strided_to_subarray_dtype(dst_stride_ar, count, stride_levels,
       MPI_BYTE, &dst_type);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   ierr = MPI_Type_commit(&src_type);
   translate_mpi_error(ierr,"cmx_puts:MPI_Type_commit");
   ierr = MPI_Type_commit(&dst_type);
   translate_mpi_error(ierr,"cmx_puts:MPI_Type_commit");
 #ifdef USE_PRIOR_MPI_WIN_FLUSH
-  ierr = MPI_Win_flush(lproc, reg_win->win);
+  ierr = MPI_Win_flush(proc, reg_win->win);
   translate_mpi_error(ierr,"cmx_puts:MPI_Win_flush");
 #endif
 #ifdef USE_MPI_REQUESTS
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Put(src_ptr, 1, src_type, lproc, displ, 1, dst_type,
+  ierr = MPI_Put(src_ptr, 1, src_type, proc, displ, 1, dst_type,
       win);
   translate_mpi_error(ierr,"cmx_puts:MPI_Put");
-  ierr = MPI_Win_flush_local(lproc, win);
+  ierr = MPI_Win_flush_local(proc, win);
   translate_mpi_error(ierr,"cmx_puts:MPI_Win_flush_local");
 #else
-  ierr = MPI_Rput(src_ptr, 1, src_type, lproc, displ, 1, dst_type,
+  ierr = MPI_Rput(src_ptr, 1, src_type, proc, displ, 1, dst_type,
       win, &request);
   translate_mpi_error(ierr,"cmx_puts:MPI_Rput");
   ierr = MPI_Wait(&request, &status);
   translate_mpi_error(ierr,"cmx_puts:MPI_Wait");
 #endif
 #else
-  ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,win);
+  ierr = MPI_Win_lock(MPI_LOCK_SHARED,proc,0,win);
   translate_mpi_error(ierr,"cmx_puts:MPI_Win_lock");
-  ierr = MPI_Put(src_ptr, 1, src_type, lproc, displ, 1, dst_type,
+  ierr = MPI_Put(src_ptr, 1, src_type, proc, displ, 1, dst_type,
       win);
   translate_mpi_error(ierr,"cmx_puts:MPI_Put");
-  ierr = MPI_Win_unlock(lproc,win);
+  ierr = MPI_Win_unlock(proc,win);
   translate_mpi_error(ierr,"cmx_puts:MPI_Win_unlock");
 #endif
   ierr = MPI_Type_free(&src_type);
@@ -667,7 +652,7 @@ int cmx_gets(
 {
   MPI_Datatype src_type, dst_type;
   MPI_Aint displ;
-  int lproc,ierr;
+  int ierr;
   MPI_Win win = cmx_hdl.win;
 #ifdef USE_MPI_REQUESTS
   MPI_Request request;
@@ -683,39 +668,35 @@ int cmx_gets(
       MPI_BYTE, &src_type);
   strided_to_subarray_dtype(dst_stride_ar, count, stride_levels,
       MPI_BYTE, &dst_type);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   ierr = MPI_Type_commit(&src_type);
   translate_mpi_error(ierr,"cmx_gets:MPI_Type_commit");
   ierr = MPI_Type_commit(&dst_type);
   translate_mpi_error(ierr,"cmx_gets:MPI_Type_commit");
 #ifdef USE_PRIOR_MPI_WIN_FLUSH
-  ierr = MPI_Win_flush(lproc, reg_win->win);
+  ierr = MPI_Win_flush(proc, reg_win->win);
   translate_mpi_error(ierr,"cmx_gets:MPI_Win_flush");
 #endif
 #ifdef USE_MPI_REQUESTS
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Get(dst_ptr, 1, dst_type, lproc, displ, 1, src_type,
+  ierr = MPI_Get(dst_ptr, 1, dst_type, proc, displ, 1, src_type,
       win);
   translate_mpi_error(ierr,"cmx_gets:MPI_Get");
-  ierr = MPI_Win_flush_local(lproc, win);
+  ierr = MPI_Win_flush_local(proc, win);
   translate_mpi_error(ierr,"cmx_gets:MPI_Win_flush_local");
 #else
-  ierr = MPI_Rget(dst_ptr, 1, dst_type, lproc, displ, 1, src_type,
+  ierr = MPI_Rget(dst_ptr, 1, dst_type, proc, displ, 1, src_type,
       win, &request);
   translate_mpi_error(ierr,"cmx_gets:MPI_Rget");
   ierr = MPI_Wait(&request, &status);
   translate_mpi_error(ierr,"cmx_gets:MPI_Wait");
 #endif
 #else
-  ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,win);
+  ierr = MPI_Win_lock(MPI_LOCK_SHARED,proc,0,win);
   translate_mpi_error(ierr,"cmx_gets:MPI_Win_lock");
-  ierr = MPI_Get(dst_ptr, 1, dst_type, lproc, displ, 1, src_type,
+  ierr = MPI_Get(dst_ptr, 1, dst_type, proc, displ, 1, src_type,
       win);
   translate_mpi_error(ierr,"cmx_gets:MPI_Get");
-  ierr = MPI_Win_unlock(lproc,win);
+  ierr = MPI_Win_unlock(proc,win);
   translate_mpi_error(ierr,"cmx_gets:MPI_Win_lock");
 #endif
   ierr = MPI_Type_free(&src_type);
@@ -809,7 +790,7 @@ int cmx_accs(
 {
   MPI_Datatype src_type, dst_type;
   MPI_Aint displ;
-  int lproc, i, ierr;
+  int i, ierr;
   void *packbuf;
   cmxInt bufsize;
   cmxInt new_strides[7], new_count[7];
@@ -825,10 +806,6 @@ int cmx_accs(
         dst_offset, count[0], proc, cmx_hdl);
   }
   displ = (MPI_Aint)(dst_offset);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   packbuf = malloc_strided_acc_buffer(src_ptr, src_stride_ar, count,
       stride_levels, &bufsize, new_strides);
 
@@ -919,30 +896,30 @@ int cmx_accs(
   ierr = MPI_Type_commit(&dst_type);
   translate_mpi_error(ierr,"cmx_accs:MPI_Type_commit");
 #ifdef USE_PRIOR_MPI_WIN_FLUSH
-  ierr = MPI_Win_flush(lproc, reg_win->win);
+  ierr = MPI_Win_flush(proc, reg_win->win);
   translate_mpi_error(ierr,"cmx_accs:MPI_Win_flush");
 #endif
 #ifdef USE_MPI_REQUESTS
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Accumulate(packbuf,1,src_type,lproc,displ,1,dst_type,
+  ierr = MPI_Accumulate(packbuf,1,src_type,proc,displ,1,dst_type,
       MPI_SUM,win);
   translate_mpi_error(ierr,"cmx_accs:MPI_Accumulate");
-  ierr = MPI_Win_flush_local(lproc, win);
+  ierr = MPI_Win_flush_local(proc, win);
   translate_mpi_error(ierr,"cmx_accs:MPI_Win_flush_local");
 #else
-  ierr = MPI_Raccumulate(packbuf,1,src_type,lproc,displ,1,dst_type,
+  ierr = MPI_Raccumulate(packbuf,1,src_type,proc,displ,1,dst_type,
       MPI_SUM,win,&request);
   translate_mpi_error(ierr,"cmx_accs:MPI_Raccumulate");
   ierr = MPI_Wait(&request, &status);
   translate_mpi_error(ierr,"cmx_accs:MPI_Wait");
 #endif
 #else
-  ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,win);
+  ierr = MPI_Win_lock(MPI_LOCK_SHARED,proc,0,win);
   translate_mpi_error(ierr,"cmx_accs:MPI_Win_lock");
-  ierr = MPI_Accumulate(packbuf,1,src_type,lproc,displ,1,dst_type,
+  ierr = MPI_Accumulate(packbuf,1,src_type,proc,displ,1,dst_type,
       MPI_SUM,win);
   translate_mpi_error(ierr,"cmx_accs:MPI_Accumulate");
-  ierr = MPI_Win_unlock(lproc,win);
+  ierr = MPI_Win_unlock(proc,win);
   translate_mpi_error(ierr,"cmx_accs:MPI_Win_unlock");
 #endif
   ierr = MPI_Type_free(&src_type);
@@ -1024,7 +1001,7 @@ int cmx_putv(
   MPI_Datatype src_type, dst_type;
   MPI_Aint displ;
   void *src_ptr;
-  int lproc, ierr;
+  int ierr;
   MPI_Win win = cmx_hdl.win;
 #ifdef USE_MPI_REQUESTS
   MPI_Request request;
@@ -1034,39 +1011,35 @@ int cmx_putv(
   displ = 0;
   vector_to_struct_dtype(src_ptr, iov, iov_len,
       MPI_BYTE, &src_type, &dst_type);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   ierr = MPI_Type_commit(&src_type);
   translate_mpi_error(ierr,"cmx_putv:MPI_Type_commit");
   ierr = MPI_Type_commit(&dst_type);
   translate_mpi_error(ierr,"cmx_putv:MPI_Type_commit");
 #ifdef USE_PRIOR_MPI_WIN_FLUSH
-  ierr = MPI_Win_flush(lproc, reg_win->win);
+  ierr = MPI_Win_flush(proc, reg_win->win);
   translate_mpi_error(ierr,"cmx_putv:MPI_Win_flush");
 #endif
 #ifdef USE_MPI_REQUESTS
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Put(src_ptr, 1, src_type, lproc, displ, 1, dst_type,
+  ierr = MPI_Put(src_ptr, 1, src_type, proc, displ, 1, dst_type,
       win);
   translate_mpi_error(ierr,"cmx_putv:MPI_Put");
-  ierr = MPI_Win_flush_local(lproc, win);
+  ierr = MPI_Win_flush_local(proc, win);
   translate_mpi_error(ierr,"cmx_putv:MPI_Win_flush_local");
 #else
-  ierr = MPI_Rput(src_ptr, 1, src_type, lproc, displ, 1, dst_type,
+  ierr = MPI_Rput(src_ptr, 1, src_type, proc, displ, 1, dst_type,
       win, &request);
   translate_mpi_error(ierr,"cmx_putv:MPI_Rput");
   ierr = MPI_Wait(&request, &status);
   translate_mpi_error(ierr,"cmx_putv:MPI_Wait");
 #endif
 #else
-  ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,win);
+  ierr = MPI_Win_lock(MPI_LOCK_SHARED,proc,0,win);
   translate_mpi_error(ierr,"cmx_putv:MPI_Win_lock");
-  ierr = MPI_Put(src_ptr, 1, src_type, lproc, displ, 1, dst_type,
+  ierr = MPI_Put(src_ptr, 1, src_type, proc, displ, 1, dst_type,
       win);
   translate_mpi_error(ierr,"cmx_putv:MPI_Put");
-  ierr = MPI_Win_unlock(lproc,win);
+  ierr = MPI_Win_unlock(proc,win);
   translate_mpi_error(ierr,"cmx_putv:MPI_Win_unlock");
 #endif
   ierr = MPI_Type_free(&src_type);
@@ -1090,7 +1063,7 @@ int cmx_getv(
   MPI_Datatype src_type, dst_type;
   MPI_Aint displ;
   void *dst_ptr;
-  int lproc, ierr;
+  int ierr;
   MPI_Win win = cmx_hdl.win;
 #ifdef USE_MPI_REQUESTS
   MPI_Request request;
@@ -1100,39 +1073,35 @@ int cmx_getv(
   displ = 0;
   vector_to_struct_dtype(dst_ptr, iov, iov_len,
       MPI_BYTE, &dst_type, &src_type);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   ierr = MPI_Type_commit(&src_type);
   translate_mpi_error(ierr,"cmx_getv:MPI_Type_commit");
   ierr = MPI_Type_commit(&dst_type);
   translate_mpi_error(ierr,"cmx_getv:MPI_Type_commit");
 #ifdef USE_PRIOR_MPI_WIN_FLUSH
-  ierr = MPI_Win_flush(lproc, reg_win->win);
+  ierr = MPI_Win_flush(proc, reg_win->win);
   translate_mpi_error(ierr,"cmx_getv:MPI_Win_flush");
 #endif
 #ifdef USE_MPI_REQUESTS
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Get(dst_ptr, 1, dst_type, lproc, displ, 1, src_type,
+  ierr = MPI_Get(dst_ptr, 1, dst_type, proc, displ, 1, src_type,
       win);
   translate_mpi_error(ierr,"cmx_getv:MPI_Get");
-  ierr = MPI_Win_flush_local(lproc, win);
+  ierr = MPI_Win_flush_local(proc, win);
   translate_mpi_error(ierr,"cmx_getv:MPI_Win_flush_local");
 #else
-  ierr = MPI_Rget(dst_ptr, 1, dst_type, lproc, displ, 1, src_type,
+  ierr = MPI_Rget(dst_ptr, 1, dst_type, proc, displ, 1, src_type,
       win, &request);
   translate_mpi_error(ierr,"cmx_getv:MPI_Rget");
   ierr = MPI_Wait(&request, &status);
   translate_mpi_error(ierr,"cmx_getv:MPI_Wait");
 #endif
 #else
-  ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,win);
+  ierr = MPI_Win_lock(MPI_LOCK_SHARED,proc,0,win);
   translate_mpi_error(ierr,"cmx_getv:MPI_Win_lock");
-  ierr = MPI_Get(dst_ptr, 1, dst_type, lproc, displ, 1, src_type,
+  ierr = MPI_Get(dst_ptr, 1, dst_type, proc, displ, 1, src_type,
       win);
   translate_mpi_error(ierr,"cmx_getv:MPI_Get");
-  ierr = MPI_Win_unlock(lproc,win);
+  ierr = MPI_Win_unlock(proc,win);
   translate_mpi_error(ierr,"cmx_getv:MPI_Win_unlock");
 #endif
   ierr = MPI_Type_free(&src_type);
@@ -1381,7 +1350,7 @@ int cmx_accv(
   MPI_Status status;
 #endif
   MPI_Win win = cmx_hdl.win;
-  int lproc, size;
+  int size;
   if (op == CMX_ACC_INT) {
     size = sizeof(int);
     base_type = MPI_INT;
@@ -1405,39 +1374,35 @@ int cmx_accv(
   displ = 0;
   src_ptr = create_vector_buf_and_dtypes(ptr, iov,
       iov_len, size, scale, base_type, &src_type, &dst_type);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   ierr = MPI_Type_commit(&src_type);
   translate_mpi_error(ierr,"cmx_accv:MPI_Type_commit");
   ierr = MPI_Type_commit(&dst_type);
   translate_mpi_error(ierr,"cmx_accv:MPI_Type_commit");
 #ifdef USE_PRIOR_MPI_WIN_FLUSH
-  ierr = MPI_Win_flush(lproc, reg_win->win);
-  translate_mpi_error(ierr,"cmx_getv:MPI_Win_flush");
+  ierr = MPI_Win_flush(proc, reg_win->win);
+  translate_mpi_error(ierr,"cmx_accv:MPI_Win_flush");
 #endif
 #ifdef USE_MPI_REQUESTS
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Accumulate(src_ptr,1,src_type,lproc,displ,1,dst_type,
+  ierr = MPI_Accumulate(src_ptr,1,src_type,proc,displ,1,dst_type,
       MPI_SUM,win);
   translate_mpi_error(ierr,"cmx_accv:MPI_Accumulate");
-  ierr = MPI_Win_flush_local(lproc, win);
+  ierr = MPI_Win_flush_local(proc, win);
   translate_mpi_error(ierr,"cmx_accv:MPI_Win_flush_local");
 #else
-  ierr = MPI_Raccumulate(src_ptr,1,src_type,lproc,displ,1,dst_type,
+  ierr = MPI_Raccumulate(src_ptr,1,src_type,proc,displ,1,dst_type,
       MPI_SUM,win,&request);
   translate_mpi_error(ierr,"cmx_accv:MPI_Raccumulate");
   ierr = MPI_Wait(&request, &status);
   translate_mpi_error(ierr,"cmx_accv:MPI_Wait");
 #endif
 #else
-  ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,win);
+  ierr = MPI_Win_lock(MPI_LOCK_SHARED,proc,0,win);
   translate_mpi_error(ierr,"cmx_accv:MPI_Win_lock");
-  ierr = MPI_Accumulate(src_ptr,1,src_type,lproc,displ,1,dst_type,
+  ierr = MPI_Accumulate(src_ptr,1,src_type,proc,displ,1,dst_type,
       MPI_SUM,win);
   translate_mpi_error(ierr,"cmx_accv:MPI_Accumulate");
-  ierr = MPI_Win_unlock(lproc,win);
+  ierr = MPI_Win_unlock(proc,win);
   translate_mpi_error(ierr,"cmx_accv:MPI_Win_unlock");
 #endif
   ierr = MPI_Type_free(&src_type);
@@ -1675,23 +1640,19 @@ int cmx_nbput(
   }
   MPI_Aint displ;
   void *ptr;
-  int lproc, ierr;
+  int ierr;
   MPI_Win win = cmx_hdl.win;
   MPI_Request request;
   ptr = cmx_hdl.buf;
   displ = (MPI_Aint)(dst_offset);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Put(src, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
+  ierr = MPI_Put(src, bytes, MPI_CHAR, proc, displ, bytes, MPI_CHAR,
       win);
   translate_mpi_error(ierr,"cmx_nbput:MPI_Put");
-  req->remote_proc = lproc;
+  req->remote_proc = proc;
   req->win = win;
 #else
-  ierr = MPI_Rput(src, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
+  ierr = MPI_Rput(src, bytes, MPI_CHAR, proc, displ, bytes, MPI_CHAR,
          win, &request);
   translate_mpi_error(ierr,"cmx_nbput:MPI_Rput");
 #endif
@@ -1725,23 +1686,19 @@ int cmx_nbget(
   }
   MPI_Aint displ;
   void *ptr;
-  int lproc, ierr;
+  int ierr;
   MPI_Win win = cmx_hdl.win;
   MPI_Request request;
   ptr = cmx_hdl.buf;
   displ = (MPI_Aint)(src_offset);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Get(dst, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
+  ierr = MPI_Get(dst, bytes, MPI_CHAR, proc, displ, bytes, MPI_CHAR,
       win);
   translate_mpi_error(ierr,"cmx_nbget:MPI_Get");
-  req->remote_proc = lproc;
+  req->remote_proc = proc;
   req->win = win;
 #else
-  ierr = MPI_Rget(dst, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
+  ierr = MPI_Rget(dst, bytes, MPI_CHAR, proc, displ, bytes, MPI_CHAR,
       win, &request);
   translate_mpi_error(ierr,"cmx_nbget:MPI_Rget");
 #endif
@@ -1779,16 +1736,12 @@ int cmx_nbacc(
   }
   MPI_Aint displ;
   void *ptr;
-  int count, i, lproc, ierr;
+  int count, i, ierr;
   MPI_Win win = cmx_hdl.win;
   MPI_Request request;
   MPI_Status status;
   ptr = cmx_hdl.buf;
   displ = (MPI_Aint)(dst_offset);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   if (op == CMX_ACC_INT) {
     int *buf;
     int *isrc = (int*)src_ptr;
@@ -1799,13 +1752,13 @@ int cmx_nbacc(
       buf[i] = isrc[i]*iscale;
     }
 #ifdef USE_MPI_FLUSH_LOCAL
-    ierr = MPI_Accumulate(buf,count,MPI_INT,lproc,displ,count,
+    ierr = MPI_Accumulate(buf,count,MPI_INT,proc,displ,count,
         MPI_INT,MPI_SUM,win);
     translate_mpi_error(ierr,"cmx_nbacc:MPI_Accumulate");
-    req->remote_proc = lproc;
+    req->remote_proc = proc;
     req->win = win;
 #else
-    ierr = MPI_Raccumulate(buf,count,MPI_INT,lproc,displ,count,
+    ierr = MPI_Raccumulate(buf,count,MPI_INT,proc,displ,count,
         MPI_INT,MPI_SUM,win,&request);
     translate_mpi_error(ierr,"cmx_nbacc:MPI_Raccumulate");
 #endif
@@ -1822,13 +1775,13 @@ int cmx_nbacc(
       buf[i] = lsrc[i]*lscale;
     }
 #ifdef USE_MPI_FLUSH_LOCAL
-    ierr = MPI_Accumulate(buf,count,MPI_LONG,lproc,displ,count,
+    ierr = MPI_Accumulate(buf,count,MPI_LONG,proc,displ,count,
         MPI_LONG,MPI_SUM,win);
     translate_mpi_error(ierr,"cmx_nbacc:MPI_Accumulate");
-    req->remote_proc = lproc;
+    req->remote_proc = proc;
     req->win = win;
 #else
-    ierr = MPI_Raccumulate(buf,count,MPI_LONG,lproc,displ,count,
+    ierr = MPI_Raccumulate(buf,count,MPI_LONG,proc,displ,count,
         MPI_LONG,MPI_SUM,win,&request);
     translate_mpi_error(ierr,"cmx_nbacc:MPI_Raccumulate");
 #endif
@@ -1845,13 +1798,13 @@ int cmx_nbacc(
       buf[i] = fsrc[i]*fscale;
     }
 #ifdef USE_MPI_FLUSH_LOCAL
-    ierr = MPI_Accumulate(buf,count,MPI_FLOAT,lproc,displ,count,
+    ierr = MPI_Accumulate(buf,count,MPI_FLOAT,proc,displ,count,
         MPI_FLOAT,MPI_SUM,win);
     translate_mpi_error(ierr,"cmx_nbacc:MPI_Accumulate");
-    req->remote_proc = lproc;
+    req->remote_proc = proc;
     req->win = win;
 #else
-    ierr = MPI_Raccumulate(buf,count,MPI_FLOAT,lproc,displ,count,
+    ierr = MPI_Raccumulate(buf,count,MPI_FLOAT,proc,displ,count,
         MPI_FLOAT,MPI_SUM,win,&request);
     translate_mpi_error(ierr,"cmx_nbacc:MPI_Raccumulate");
     req->request = request;
@@ -1868,13 +1821,13 @@ int cmx_nbacc(
       buf[i] = dsrc[i]*dscale;
     }
 #ifdef USE_MPI_FLUSH_LOCAL
-    ierr = MPI_Accumulate(buf,count,MPI_DOUBLE,lproc,displ,count,
+    ierr = MPI_Accumulate(buf,count,MPI_DOUBLE,proc,displ,count,
         MPI_DOUBLE,MPI_SUM,win);
     translate_mpi_error(ierr,"cmx_nbacc:MPI_Accumulate");
-    req->remote_proc = lproc;
+    req->remote_proc = proc;
     req->win = win;
 #else
-    ierr = MPI_Raccumulate(buf,count,MPI_DOUBLE,lproc,displ,count,
+    ierr = MPI_Raccumulate(buf,count,MPI_DOUBLE,proc,displ,count,
         MPI_DOUBLE,MPI_SUM,win,&request);
     translate_mpi_error(ierr,"cmx_nbacc:MPI_Raccumulate");
     req->request = request;
@@ -1895,13 +1848,13 @@ int cmx_nbacc(
       buf[2*i+1] = csrc[2*i]*ciscale+csrc[2*i+1]*crscale;
     }
 #ifdef USE_MPI_FLUSH_LOCAL
-    ierr = MPI_Accumulate(buf,count,MPI_FLOAT,lproc,displ,count,
+    ierr = MPI_Accumulate(buf,count,MPI_FLOAT,proc,displ,count,
         MPI_FLOAT,MPI_SUM,win);
     translate_mpi_error(ierr,"cmx_nbacc:MPI_Accumulate");
-    req->remote_proc = lproc;
+    req->remote_proc = proc;
     req->win = win;
 #else
-    ierr = MPI_Raccumulate(buf,count,MPI_FLOAT,lproc,displ,count,
+    ierr = MPI_Raccumulate(buf,count,MPI_FLOAT,proc,displ,count,
         MPI_FLOAT,MPI_SUM,win,&request);
     translate_mpi_error(ierr,"cmx_nbacc:MPI_Raccumulate");
 #endif
@@ -1922,13 +1875,13 @@ int cmx_nbacc(
       buf[2*i+1] = csrc[2*i]*ciscale+csrc[2*i+1]*crscale;
     }
 #ifdef USE_MPI_FLUSH_LOCAL
-    ierr = MPI_Accumulate(buf,count,MPI_DOUBLE,lproc,displ,count,
+    ierr = MPI_Accumulate(buf,count,MPI_DOUBLE,proc,displ,count,
         MPI_DOUBLE,MPI_SUM,win);
     translate_mpi_error(ierr,"cmx_nbacc:MPI_Accumulate");
-    req->remote_proc = lproc;
+    req->remote_proc = proc;
     req->win = win;
 #else
-    ierr = MPI_Raccumulate(buf,count,MPI_DOUBLE,lproc,displ,count,
+    ierr = MPI_Raccumulate(buf,count,MPI_DOUBLE,proc,displ,count,
         MPI_DOUBLE,MPI_SUM,win,&request);
     translate_mpi_error(ierr,"cmx_nbacc:MPI_Raccumulate");
 #endif
@@ -1975,7 +1928,7 @@ int cmx_nbputs(
   MPI_Datatype src_type, dst_type;
   MPI_Aint displ;
   void *ptr;
-  int lproc, ierr;
+  int ierr;
   MPI_Win win = cmx_hdl.win;
   MPI_Request request;
   MPI_Status status;
@@ -1986,20 +1939,16 @@ int cmx_nbputs(
       MPI_BYTE, &src_type);
   strided_to_subarray_dtype(dst_stride, count, stride_levels,
       MPI_BYTE, &dst_type);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   MPI_Type_commit(&src_type);
   MPI_Type_commit(&dst_type);
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Put(src, 1, src_type, lproc, displ, 1, dst_type,
+  ierr = MPI_Put(src, 1, src_type, proc, displ, 1, dst_type,
       win);
   translate_mpi_error(ierr,"cmx_nbputs:MPI_Put");
-  req->remote_proc = lproc;
+  req->remote_proc = proc;
   req->win = win;
 #else
-  ierr = MPI_Rput(src, 1, src_type, lproc, displ, 1, dst_type,
+  ierr = MPI_Rput(src, 1, src_type, proc, displ, 1, dst_type,
       win, &request);
   translate_mpi_error(ierr,"cmx_nbputs:MPI_Rput");
 #endif
@@ -2044,7 +1993,7 @@ int cmx_nbgets(
   MPI_Datatype src_type, dst_type;
   MPI_Aint displ;
   void *ptr;
-  int lproc, ierr;
+  int ierr;
   MPI_Win win = cmx_hdl.win;
   MPI_Request request;
   MPI_Status status;
@@ -2055,20 +2004,16 @@ int cmx_nbgets(
       MPI_BYTE, &src_type);
   strided_to_subarray_dtype(dst_stride, count, stride_levels,
       MPI_BYTE, &dst_type);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   MPI_Type_commit(&src_type);
   MPI_Type_commit(&dst_type);
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Get(dst, 1, dst_type, lproc, displ, 1, src_type,
+  ierr = MPI_Get(dst, 1, dst_type, proc, displ, 1, src_type,
       win);
   translate_mpi_error(ierr,"cmx_nbgets:MPI_Get");
-  req->remote_proc = lproc;
+  req->remote_proc = proc;
   req->win = win;
 #else
-  ierr = MPI_Rget(dst, 1, dst_type, lproc, displ, 1, src_type,
+  ierr = MPI_Rget(dst, 1, dst_type, proc, displ, 1, src_type,
       win, &request);
   translate_mpi_error(ierr,"cmx_nbgets:MPI_Rget");
 #endif
@@ -2117,7 +2062,7 @@ int cmx_nbaccs(
   MPI_Datatype src_type, dst_type;
   MPI_Aint displ;
   void *ptr;
-  int lproc, i, ierr;
+  int i, ierr;
   void *packbuf;
   int bufsize;
   int new_strides[7];
@@ -2126,10 +2071,6 @@ int cmx_nbaccs(
   MPI_Status status;
   ptr = cmx_hdl.buf;
   displ = (MPI_Aint)(dst_offset);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   packbuf = malloc_strided_acc_buffer(src, src_stride, count,
       stride_levels, &bufsize, new_strides);
 
@@ -2207,15 +2148,15 @@ int cmx_nbaccs(
   MPI_Type_commit(&src_type);
   MPI_Type_commit(&dst_type);
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Accumulate(packbuf,1,src_type,lproc,displ,1,dst_type,
+  ierr = MPI_Accumulate(packbuf,1,src_type,proc,displ,1,dst_type,
       MPI_SUM,win);
   translate_mpi_error(ierr,"cmx_nbaccs:MPI_Accumulate");
-  req->remote_proc = lproc;
+  req->remote_proc = proc;
   req->win = win;
 #else
-  ierr = MPI_Raccumulate(packbuf,1,src_type,lproc,displ,1,dst_type,
+  ierr = MPI_Raccumulate(packbuf,1,src_type,proc,displ,1,dst_type,
       MPI_SUM,win,&request);
-  translate_mpi_error(ierr,"cmx_nbaccs:MPI_Rget");
+  translate_mpi_error(ierr,"cmx_nbaccs:MPI_Raccumulate");
 #endif
   req->request = request;
   req->active = 1;
@@ -2249,7 +2190,7 @@ int cmx_nbputv(
   MPI_Datatype src_type, dst_type;
   MPI_Aint displ;
   void *ptr, *src_ptr;
-  int lproc, ierr;
+  int ierr;
   MPI_Win win = cmx_hdl.win;
   MPI_Request request;
   MPI_Status status;
@@ -2261,20 +2202,16 @@ int cmx_nbputv(
   displ = 0;
   vector_to_struct_dtype(src_ptr, iov, iov_len,
       MPI_BYTE, &src_type, &dst_type);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   MPI_Type_commit(&src_type);
   MPI_Type_commit(&dst_type);
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Put(src_ptr, 1, src_type, lproc, displ, 1, dst_type,
+  ierr = MPI_Put(src_ptr, 1, src_type, proc, displ, 1, dst_type,
       win);
   translate_mpi_error(ierr,"cmx_nbputv:MPI_Put");
-  req->remote_proc = lproc;
+  req->remote_proc = proc;
   req->win = win;
 #else
-  ierr = MPI_Rput(src_ptr, 1, src_type, lproc, displ, 1, dst_type,
+  ierr = MPI_Rput(src_ptr, 1, src_type, proc, displ, 1, dst_type,
       win, &request);
   translate_mpi_error(ierr,"cmx_nbputv:MPI_Rput");
 #endif
@@ -2305,17 +2242,10 @@ int cmx_nbgetv(
   MPI_Datatype src_type, dst_type;
   MPI_Aint displ;
   void *ptr, *dst_ptr;
-  int lproc, ierr;
+  int ierr;
   MPI_Win win = cmx_hdl.win;
   MPI_Request request;
   MPI_Status status;
-  /**
-   * ALERT: This is a temporary hack to get the ARMCI interface to work.
-   * The CMX tests work but the corresponding ARMCI interface tests don't
-   * which may reflect issues with the underlying MPI implementation or a
-   * problem with CMX. This issue needs to be revisited.
-   */
-  return cmx_getv(iov, iov_len, proc, cmx_hdl);
   if (req == NULL) {
     return cmx_getv(iov, iov_len, proc, cmx_hdl);
   }
@@ -2324,20 +2254,16 @@ int cmx_nbgetv(
   displ = 0;
   vector_to_struct_dtype(ptr, iov, iov_len,
       MPI_BYTE, &src_type, &dst_type);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   MPI_Type_commit(&src_type);
   MPI_Type_commit(&dst_type);
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Get(dst_ptr, 1, dst_type, lproc, displ, 1, src_type,
+  ierr = MPI_Get(dst_ptr, 1, dst_type, proc, displ, 1, src_type,
       win);
   translate_mpi_error(ierr,"cmx_nbgetv:MPI_Get");
-  req->remote_proc = lproc;
+  req->remote_proc = proc;
   req->win = win;
 #else
-  ierr = MPI_Rget(dst_ptr, 1, dst_type, lproc, displ, 1, src_type,
+  ierr = MPI_Rget(dst_ptr, 1, dst_type, proc, displ, 1, src_type,
       win, &request);
   translate_mpi_error(ierr,"cmx_nbgetv:MPI_Rget");
 #endif
@@ -2376,10 +2302,10 @@ int cmx_nbaccv(
   MPI_Request request;
   MPI_Status status;
   MPI_Win win = cmx_hdl.win;
+  int size, ierr;
   if (req == NULL) {
     return cmx_accv(op, scale, iov, iov_len, proc, cmx_hdl);
   }
-  int lproc, size, ierr;
   if (op == CMX_ACC_INT) {
     size = sizeof(int);
     base_type = MPI_INT;
@@ -2403,20 +2329,16 @@ int cmx_nbaccv(
   displ = 0;
   src_ptr = create_vector_buf_and_dtypes(ptr, iov,
       iov_len, size, scale, base_type, &src_type, &dst_type);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   MPI_Type_commit(&src_type);
   MPI_Type_commit(&dst_type);
 #ifdef USE_MPI_FLUSH_LOCAL
-  ierr = MPI_Accumulate(src_ptr,1,src_type,lproc,displ,1,dst_type,
+  ierr = MPI_Accumulate(src_ptr,1,src_type,proc,displ,1,dst_type,
       MPI_SUM,win);
   translate_mpi_error(ierr,"cmx_nbaccv:MPI_Accumulate");
-  req->remote_proc = lproc;
+  req->remote_proc = proc;
   req->win = win;
 #else
-  ierr = MPI_Raccumulate(src_ptr,1,src_type,lproc,displ,1,dst_type,
+  ierr = MPI_Raccumulate(src_ptr,1,src_type,proc,displ,1,dst_type,
       MPI_SUM,win,&request);
   translate_mpi_error(ierr,"cmx_nbaccv:MPI_Raccumulate");
 #endif
@@ -2447,81 +2369,77 @@ int cmx_rmw(
 {
   MPI_Aint displ;
   void *ptr;
-  int lproc, ierr;
+  int ierr;
   MPI_Win win = cmx_hdl.win;
   ptr = cmx_hdl.buf;
   if (ptr == NULL) return CMX_FAILURE;
   displ = (MPI_Aint)(rem_offset);
-  if (!(get_local_rank_from_win(win, proc, &lproc)
-        == CMX_SUCCESS)) {
-    assert(0);
-  }
   if (op == CMX_FETCH_AND_ADD) {
     int incr = extra;
 #ifdef USE_MPI_REQUESTS
-    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_INT,lproc,displ,
+    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_INT,proc,displ,
         MPI_SUM,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Fetch_and_op");
-    ierr = MPI_Win_flush(lproc,win);
+    ierr = MPI_Win_flush(proc,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Win_flush");
 #else
-    ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,win);
+    ierr = MPI_Win_lock(MPI_LOCK_SHARED,proc,0,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Win_lock");
-    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_INT,lproc,displ,
+    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_INT,proc,displ,
         MPI_SUM,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Fetch_and_op");
-    ierr = MPI_Win_unlock(lproc,win);
+    ierr = MPI_Win_unlock(proc,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Win_unlock");
 #endif
   } else if (op == CMX_FETCH_AND_ADD_LONG) {
     long incr = extra;
 #ifdef USE_MPI_REQUESTS
-    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_LONG,lproc,displ,
+    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_LONG,proc,displ,
         MPI_SUM,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Fetch_and_op");
-    ierr = MPI_Win_flush(lproc,win);
+    ierr = MPI_Win_flush(proc,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Win_flush");
 #else
-    ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,win);
+    ierr = MPI_Win_lock(MPI_LOCK_SHARED,proc,0,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Win_lock");
-    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_LONG,lproc,displ,
+    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_LONG,proc,displ,
         MPI_SUM,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Fetch_and_op");
-    ierr = MPI_Win_unlock(lproc,win);
+    ierr = MPI_Win_unlock(proc,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Win_unlock");
 #endif
   } else if (op == CMX_SWAP) {
     int incr = *((int*)ploc);
 #ifdef USE_MPI_REQUESTS
-    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_INT,lproc,displ,
+    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_INT,proc,displ,
         MPI_REPLACE,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Fetch_and_op");
-    ierr = MPI_Win_flush(lproc,win);
+    ierr = MPI_Win_flush(proc,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Win_flush");
 #else
-    ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,win);
+    ierr = MPI_Win_lock(MPI_LOCK_SHARED,proc,0,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Win_lock");
-    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_INT,lproc,displ,
+    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_INT,proc,displ,
         MPI_REPLACE,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Fetch_and_op");
-    ierr = MPI_Win_unlock(lproc,win);
+    ierr = MPI_Win_unlock(proc,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Win_unlock");
 #endif
   } else if (op == CMX_SWAP_LONG) {
     long incr = *((long*)ploc);
 #ifdef USE_MPI_REQUESTS
-    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_LONG,lproc,displ,
+    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_LONG,proc,displ,
         MPI_REPLACE,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Fetch_and_op");
-    ierr = MPI_Win_flush(lproc,win);
+    ierr = MPI_Win_flush(proc,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Win_flush");
 #else
-    ierr = MPI_Win_lock(MPI_LOCK_SHARED,lproc,0,win);
+    ierr = MPI_Win_lock(MPI_LOCK_SHARED,proc,0,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Win_lock");
-    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_LONG,lproc,displ,
+    ierr = MPI_Fetch_and_op(&incr,ploc,MPI_LONG,proc,displ,
         MPI_REPLACE,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Fetch_and_op");
-    ierr = MPI_Win_unlock(lproc,win);
+    ierr = MPI_Win_unlock(proc,win);
     translate_mpi_error(ierr,"cmx_rmw:MPI_Win_unlock");
 #endif
   } else  {
