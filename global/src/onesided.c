@@ -1030,7 +1030,7 @@ void ngai_get_common(Integer g_a,
             /*             proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle)); */
             ngai_nbgets(buf,prem, stride_rem, pbuf, stride_loc, count, ndim -1,
                 proc,field_off, field_size, size,
-                (armci_hdl_t*)get_armci_nbhandle(nbhandle));
+                (armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
           }
 #endif
         }
