@@ -965,7 +965,7 @@ void test_vec_small()
     }
   }
   if (me == 0) {
-    printf("\n\tNow verifying the vector put data for correctness");
+    printf("\n\tNow verifying the vector put data for correctness\n");
   }
   for (i = 0; i < nproc; i++)if (i != me) {
       cmx_wait(hdl_put + i);
@@ -1011,7 +1011,7 @@ void test_vec_small()
     }
   }
   if (me == 0) {
-    printf("\n\tNow verifying the vector get data for correctness");
+    printf("\n\tNow verifying the vector get data for correctness\n");
   }
   for (i = 0; i < nproc; i++)if (i != me) {
       cmx_wait(hdl_get + i);
