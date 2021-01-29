@@ -136,32 +136,38 @@ if (ENABLE_BLAS)
       message(FATAL_ERROR "ENABLE_BLAS=ON, but a BLAS library was not found")
     endif()
 
-  include(FetchContent)
-  if(NOT TARGET blaspp)
-    FetchContent_Declare(
-      blaspp
-      GIT_REPOSITORY https://bitbucket.org/icl/blaspp.git
-    )
-    FetchContent_MakeAvailable( blaspp )
-  endif()
-
-  if(NOT TARGET lapackpp)
-    FetchContent_Declare(
-      lapackpp
-      GIT_REPOSITORY https://bitbucket.org/icl/lapackpp.git
-    )
-    FetchContent_MakeAvailable( lapackpp )
-  endif()
-
-  if(ENABLE_SCALAPACK)
-    if(NOT TARGET scalapackpp::scalapackpp)
+  if(ENABLE_CXX)
+    include(FetchContent)
+    if(NOT TARGET blaspp)
       FetchContent_Declare(
-        scalapackpp
-        GIT_REPOSITORY https://github.com/wavefunction91/scalapackpp.git
-        GIT_TAG new-cmake-ci
+        blaspp
+        GIT_REPOSITORY https://bitbucket.org/icl/blaspp.git
       )
-      FetchContent_MakeAvailable( scalapackpp )
+      FetchContent_MakeAvailable( blaspp )
     endif()
+
+    if(NOT TARGET lapackpp)
+      FetchContent_Declare(
+        lapackpp
+        GIT_REPOSITORY https://bitbucket.org/icl/lapackpp.git
+      )
+      FetchContent_MakeAvailable( lapackpp )
+    endif()
+
+    if(ENABLE_SCALAPACK)
+      if(NOT TARGET scalapackpp::scalapackpp)
+        FetchContent_Declare(
+          scalapackpp
+          GIT_REPOSITORY https://github.com/wavefunction91/scalapackpp.git
+          GIT_TAG new-cmake-ci
+        )
+        FetchContent_MakeAvailable( scalapackpp )
+      endif()
+    endif()
+
+    set(_la_cxx_blas blaspp)
+    set(_la_cxx_lapack lapackpp)
+    set(_la_cxx_scalapack scalapackpp::scalapackpp)
   endif()
 
 else()
@@ -231,7 +237,7 @@ if (HAVE_BLAS)
                   DESTINATION include/ga
   )
 
-  list(APPEND linalg_lib BLAS::BLAS blaspp)
+  list(APPEND linalg_lib BLAS::BLAS ${_la_cxx_blas})
   message(STATUS "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
   if(ENABLE_DPCPP)
     list(APPEND linalg_lib ${Intel_SYCL_TARGET})
@@ -240,11 +246,11 @@ if (HAVE_BLAS)
 endif()
 
 if (HAVE_LAPACK)
-  list(APPEND linalg_lib LAPACK::LAPACK lapackpp)
+  list(APPEND linalg_lib LAPACK::LAPACK ${_la_cxx_lapack})
   message(STATUS "LAPACK_LIBRARIES: ${LAPACK_LIBRARIES}")
 endif()
 
 if (HAVE_SCALAPACK)
-  list(APPEND linalg_lib ScaLAPACK::ScaLAPACK scalapackpp::scalapackpp)
+  list(APPEND linalg_lib ScaLAPACK::ScaLAPACK ${_la_cxx_scalapack})
   message(STATUS "ScaLAPACK_LIBRARIES: ${ScaLAPACK_LIBRARIES}")
 endif()

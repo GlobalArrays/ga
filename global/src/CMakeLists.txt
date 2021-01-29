@@ -157,5 +157,6 @@ install(FILES
 #  globalp.h
 #  matmul.h
   ${GA_FORTRAN_H_FILES}
+  ${GA_FORTRAN_INTERFACE_H_FILES}
   DESTINATION include/ga
 )

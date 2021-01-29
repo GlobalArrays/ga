@@ -3,6 +3,7 @@ cmake_minimum_required( VERSION 3.17 FATAL_ERROR)
 @PACKAGE_INIT@
 
 set(ENABLE_BLAS       @ENABLE_BLAS@)
+set(ENABLE_CXX        @ENABLE_CXX@)
 set(ENABLE_FORTRAN    @ENABLE_FORTRAN@)
 set(ENABLE_SCALAPACK  @ENABLE_SCALAPACK@)
 set(BUILD_SHARED_LIBS @BUILD_SHARED_LIBS@)
@@ -63,28 +64,30 @@ if(ENABLE_BLAS)
     find_package(BLAS REQUIRED)
   endif()
 
-  get_filename_component(_ga_la_pp "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
-  list(INSERT CMAKE_PREFIX_PATH 0 "${_ga_la_pp}")
+  if(ENABLE_CXX)
+    get_filename_component(_ga_la_pp "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
+    list(INSERT CMAKE_PREFIX_PATH 0 "${_ga_la_pp}")
 
-  set(use_openmp @use_openmp@)
+    set(use_openmp @use_openmp@)
 
-  if(NOT TARGET blaspp)
-    find_package(blaspp REQUIRED)
-  endif()
-
-  if(NOT TARGET lapackpp)
-    find_package(lapackpp REQUIRED)
-  endif()
-
-  if(ENABLE_SCALAPACK)
-    if(NOT TARGET scalapackpp::scalapackpp)
-      find_package(scalapackpp REQUIRED)
+    if(NOT TARGET blaspp)
+      find_package(blaspp REQUIRED)
     endif()
-  endif()
 
-  list(REMOVE_AT CMAKE_PREFIX_PATH 0)
-  list(REMOVE_AT CMAKE_MODULE_PATH 0)
-  list(REMOVE_AT CMAKE_MODULE_PATH 0)
+    if(NOT TARGET lapackpp)
+      find_package(lapackpp REQUIRED)
+    endif()
+
+    if(ENABLE_SCALAPACK)
+      if(NOT TARGET scalapackpp::scalapackpp)
+        find_package(scalapackpp REQUIRED)
+      endif()
+    endif()
+
+    list(REMOVE_AT CMAKE_PREFIX_PATH 0)
+    list(REMOVE_AT CMAKE_MODULE_PATH 0)
+    list(REMOVE_AT CMAKE_MODULE_PATH 0)
+  endif()
 endif()
 
 if(NOT TARGET GlobalArrays::ga)

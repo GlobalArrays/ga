@@ -415,6 +415,7 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
 
 ### The following options are supported:
 
+* `ENABLE_CXX` [Default:ON]
 * `ENABLE_FORTRAN` [Default:ON]
 * `ENABLE_TESTS` Build GA testsuite. [Default:ON]
 * `GA_RUNTIME` [Default: MPI_2SIDED] Options are
@@ -459,7 +460,7 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
     CC=gcc CXX=g++ FC=gfortran cmake -DCMAKE_INSTALL_PREFIX=$HOME/ga_install \ 
     -DGA_RUNTIME=MPI_PROGRESS_RANK \
     -DENABLE_BLAS=ON -DLINALG_VENDOR=IntelMKL -DLINALG_PREFIX=/opt/intel/mkl \
-    -DENABLE_TESTS=ON -DENABLE_FORTRAN=ON -DENABLE_PROFILING=OFF  
+    -DENABLE_TESTS=ON -DENABLE_CXX=ON -DENABLE_FORTRAN=ON -DENABLE_PROFILING=OFF  
     ```
 
 

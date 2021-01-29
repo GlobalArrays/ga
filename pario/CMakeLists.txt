@@ -90,19 +90,21 @@ install (FILES
 # -------------------------------------------------------------
 
 set(DRA_FILES
-    dra/disk.arrays.c
-    dra/buffers.c
     dra/capi.c
+    dra/disk.arrays.c
     dra/disk.param.c
     dra/env.c
-    dra/global.unsup.c
+    dra/buffers.c
+    dra/fortran.c
+    # dra/global.unsup.c
     dra/patch.util.c
-    dra/util.c
+    # dra/util.c
     ${DRA_FORTRAN_FILES}
 )
 
 set(EAF_FILES
     eaf/eaf.c
+    eaf/eaf_f2c.c
     ${EAF_FORTRAN_FILES}
 )
 
@@ -114,6 +116,7 @@ set(ELIO_FILES
 set(SF_FILES
      sf/shared.files.c
      sf/sf_capi.c
+     sf/sf_fortran.c
      ${SF_FORTRAN_FILES}
 )
 
