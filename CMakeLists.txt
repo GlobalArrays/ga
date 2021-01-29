@@ -324,10 +324,10 @@ endif()
 
 add_library(ga
   $<TARGET_OBJECTS:ma>
-  # $<TARGET_OBJECTS:dra>
-  # $<TARGET_OBJECTS:eaf>
-  # $<TARGET_OBJECTS:elio>
-  # $<TARGET_OBJECTS:sf>
+  $<TARGET_OBJECTS:dra>
+  $<TARGET_OBJECTS:eaf>
+  $<TARGET_OBJECTS:elio>
+  $<TARGET_OBJECTS:sf>
   $<TARGET_OBJECTS:gaf2c>
   $<TARGET_OBJECTS:armci_comex>
   $<TARGET_OBJECTS:ga_src>
