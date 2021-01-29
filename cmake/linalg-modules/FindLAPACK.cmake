@@ -56,10 +56,11 @@ if( NOT LAPACK_LIBRARIES )
   if( BLAS_HAS_LAPACK )
 
     message( STATUS "BLAS Has A Full LAPACK Linker" )
-    set( LAPACK_VENDOR  ${BLAS_VENDOR}  )
-    set( LAPACK_IS_LP64 ${BLAS_IS_LP64} )
-    set( LAPACK_blacs_FOUND ${BLAS_blacs_FOUND} )
+    set( LAPACK_VENDOR          ${BLAS_VENDOR}          )
+    set( LAPACK_IS_LP64         ${BLAS_IS_LP64}         )
+    set( LAPACK_blacs_FOUND     ${BLAS_blacs_FOUND}     )
     set( LAPACK_scalapack_FOUND ${BLAS_scalapack_FOUND} )
+    set( LAPACK_sycl_FOUND      ${BLAS_sycl_FOUND}      )
 
   # Else find LAPACK installation consistent with BLAS
   else( BLAS_HAS_LAPACK )
@@ -94,6 +95,7 @@ if( NOT LAPACK_LIBRARIES )
         #set( LAPACK_headers_FOUND   ${${lapack_type}_headers_FOUND}   )
         set( LAPACK_blacs_FOUND     ${${lapack_type}_blacs_FOUND}     )
         set( LAPACK_scalapack_FOUND ${${lapack_type}_scalapack_FOUND} )
+        set( LAPACK_sycl_FOUND      ${${lapack_type}_sycl_FOUND}      )
 
         break() # Break from search loop
 

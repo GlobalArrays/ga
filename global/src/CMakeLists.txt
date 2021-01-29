@@ -55,7 +55,7 @@ if (ENABLE_FORTRAN)
   #if (HAVE_LAPACK OR ENABLE_EISPACK)
   set (GA_FORTRAN_INTERFACE_F_FILES
         ${GA_FORTRAN_INTERFACE_F_FILES} ga_diag_seq.F)
-  #endif()
+  set (GA_FORTRAN_H_FILES ga-mpi.fh)
 endif()
 
 set(target_libraries
@@ -156,6 +156,6 @@ install(FILES
 #  global.h
 #  globalp.h
 #  matmul.h
-  ${GA_FORTRAN_INTERFACE_H_FILES}
+  ${GA_FORTRAN_H_FILES}
   DESTINATION include/ga
 )
