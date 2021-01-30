@@ -426,7 +426,8 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
 * `ENABLE_PROFILING` Build GA operation profiler. Does not work when using Clang compilers. [Default:OFF]
 * `GA_EXTRA_LIBS` Specify additional libraries or linker options when building GA.
 * `GCCROOT` Specify root of GCC installation. Only required when building with Clang compilers.
-* `ENABLE_BLAS` Use an external BLAS library. [Default:OFF]
+* `ENABLE_BLAS` Use an external BLAS library. [Default:ON]
+  * `Note`: Setting `ENABLE_BLAS` to `OFF` builds internal (netlib) `BLAS`.
   * Only `IntelMKL`, `IBMESSL`, `BLIS`, `ReferenceBLAS`(Netlib) are supported.
   * Need to provide the following cmake options if ENABLE_BLAS=ON
     * `LINALG_VENDOR`: Should be one of `IntelMKL`, `IBMESSL`, `BLIS`, `ReferenceBLAS`(Netlib) [Default: `BLIS`]

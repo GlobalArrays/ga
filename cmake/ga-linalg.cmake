@@ -50,9 +50,22 @@ elseif(ENABLE_DPCPP)
   list(APPEND LINALG_OPTIONAL_COMPONENTS "sycl")
 endif()
 
+function(check_ga_blas_options)
+  # ga_is_valid(${LINALG_VENDOR}    _lav_set)
+  ga_is_valid(LINALG_PREFIX     _lap_set)
+  ga_is_valid(BLAS_PREFIX       _lbp_set)
+  ga_is_valid(LAPACK_PREFIX     _llp_set)
+  ga_is_valid(ScaLAPACK_PREFIX  _lsp_set)
+  if(NOT (_lap_set OR _lbp_set OR _llp_set OR _lsp_set) )
+    message(FATAL_ERROR "ENABLE_BLAS=ON but the options \
+    to specify the root of the LinAlg libraries installation \
+    are not set. Please refer to README.md")
+  endif()
+endfunction()
 
 #Check if provided paths are valid and export
 if (ENABLE_BLAS)
+  check_ga_blas_options()
   ga_path_exists(LINALG_PREFIX __la_exists)
   if(NOT __la_exists)
     message(FATAL_ERROR "Could not find the following ${LINALG_VENDOR} installation path at: ${LINALG_PREFIX}")
