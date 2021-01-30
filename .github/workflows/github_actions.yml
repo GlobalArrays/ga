@@ -1,6 +1,14 @@
 name: GlobalArrays_CI
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  release:
+  schedule:
+    - cron: '0 0 * * SUN'
+  repository_dispatch:
+    types: [backend_automation]
+  workflow_dispatch:
 
 jobs:
   build:
