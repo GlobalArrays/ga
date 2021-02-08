@@ -172,7 +172,7 @@ if (ENABLE_BLAS)
         FetchContent_Declare(
           scalapackpp
           GIT_REPOSITORY https://github.com/wavefunction91/scalapackpp.git
-          GIT_TAG new-cmake-ci
+          GIT_TAG 2c040278bac7bd6f0ee2fbd4e2cccd3a3c658ffd
         )
         FetchContent_MakeAvailable( scalapackpp )
       endif()
