@@ -92,7 +92,7 @@ case "x$PORT" in
 esac
     mkdir -p build
     cd build
-    cmake -DMPIEXEC_MAX_NUMPROCS=5 -DGA_RUNTIME="$ga_rt" ../
+    FC=gfortran cmake -DMPIEXEC_MAX_NUMPROCS=5 -DGA_RUNTIME="$ga_rt" ../
 else
 case "x$PORT" in
     xofi)
