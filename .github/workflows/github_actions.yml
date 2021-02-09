@@ -135,7 +135,7 @@ jobs:
       - name: compile and test global arrays
         if: ${{ success() }}
         run: |
-          ./travis/build-run.sh $GITHUB_WORKSPACE/apps $PORT $MPI_IMPL $USE_CMAKE $f77
+          ./travis/build-run.sh $GITHUB_WORKSPACE/apps $PORT $MPI_IMPL $USE_CMAKE $F77
       - name: after_failure
         if: ${{ failure() }}
         run: |
