@@ -90,19 +90,21 @@ install (FILES
 # -------------------------------------------------------------
 
 set(DRA_FILES
-    dra/disk.arrays.c
-    dra/buffers.c
     dra/capi.c
+    dra/disk.arrays.c
     dra/disk.param.c
     dra/env.c
-    dra/global.unsup.c
+    dra/buffers.c
+    dra/fortran.c
+    # dra/global.unsup.c
     dra/patch.util.c
-    dra/util.c
+    # dra/util.c
     ${DRA_FORTRAN_FILES}
 )
 
 set(EAF_FILES
     eaf/eaf.c
+    eaf/eaf_f2c.c
     ${EAF_FORTRAN_FILES}
 )
 
@@ -114,6 +116,7 @@ set(ELIO_FILES
 set(SF_FILES
      sf/shared.files.c
      sf/sf_capi.c
+     sf/sf_fortran.c
      ${SF_FORTRAN_FILES}
 )
 
@@ -122,12 +125,15 @@ set(SF_FILES
 # -------------------------------------------------------------
 
 set(PARIO_INC_DIRS  ${CMAKE_CURRENT_SOURCE_DIR}
+                    ${CMAKE_CURRENT_BINARY_DIR}
+                    ${PROJECT_BINARY_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/dra
                     ${CMAKE_CURRENT_SOURCE_DIR}/eaf
                     ${CMAKE_CURRENT_SOURCE_DIR}/elio
                     ${CMAKE_CURRENT_SOURCE_DIR}/sf
-                    ${PROJECT_SOURCE_DIR}/gaf2c
+                    ${PROJECT_BINARY_DIR}/gaf2c
                     ${PROJECT_SOURCE_DIR}/ma
+                    ${PROJECT_BINARY_DIR}/ma
                     ${PROJECT_SOURCE_DIR}/global/src)
 
 add_library(sf OBJECT ${SF_FILES})
@@ -139,3 +145,10 @@ target_include_directories(sf   BEFORE PRIVATE ${PARIO_INC_DIRS})
 target_include_directories(dra  BEFORE PRIVATE ${PARIO_INC_DIRS})
 target_include_directories(eaf  BEFORE PRIVATE ${PARIO_INC_DIRS})
 target_include_directories(elio BEFORE PRIVATE ${PARIO_INC_DIRS})
+
+if (ENABLE_FORTRAN)
+  add_dependencies(sf GenerateConfigFH)
+  add_dependencies(dra GenerateConfigFH)
+  add_dependencies(eaf GenerateConfigFH)
+  add_dependencies(elio GenerateConfigFH)
+endif()

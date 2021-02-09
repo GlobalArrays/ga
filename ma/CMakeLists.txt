@@ -45,14 +45,14 @@ if (ENABLE_FORTRAN)
 endif()
 
 set(MA_HEADERS
-  ma.h
+  # ma.h
 #  error.h
   macdecls.h
   macommon.h
 #  memcpy.h
-  scope.h
-  string-util.h
-  table.h
+  # scope.h
+  # string-util.h
+  # table.h
   ${FORTRAN_HEADERS}
   ${CMAKE_CURRENT_BINARY_DIR}/matypes.h
 )

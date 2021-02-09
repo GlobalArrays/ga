@@ -3,6 +3,7 @@ cmake_minimum_required( VERSION 3.17 FATAL_ERROR)
 @PACKAGE_INIT@
 
 set(ENABLE_BLAS       @ENABLE_BLAS@)
+set(ENABLE_CXX        @ENABLE_CXX@)
 set(ENABLE_FORTRAN    @ENABLE_FORTRAN@)
 set(ENABLE_SCALAPACK  @ENABLE_SCALAPACK@)
 set(BUILD_SHARED_LIBS @BUILD_SHARED_LIBS@)
@@ -32,6 +33,9 @@ if(ENABLE_BLAS)
   set(BLAS_REQUIRED_COMPONENTS      @LINALG_REQUIRED_COMPONENTS@)
   set(LAPACK_REQUIRED_COMPONENTS    @LINALG_REQUIRED_COMPONENTS@)
   set(ScaLAPACK_REQUIRED_COMPONENTS @LINALG_REQUIRED_COMPONENTS@)
+  set(BLAS_OPTIONAL_COMPONENTS      @LINALG_OPTIONAL_COMPONENTS@)
+  set(LAPACK_OPTIONAL_COMPONENTS    @LINALG_OPTIONAL_COMPONENTS@)
+  set(ScaLAPACK_OPTIONAL_COMPONENTS @LINALG_OPTIONAL_COMPONENTS@)  
 
   set(BLAS_PREFIX @BLAS_PREFIX@)
   set(LAPACK_PREFIX @LAPACK_PREFIX@)
@@ -45,7 +49,7 @@ if(ENABLE_BLAS)
   endif()
 
   if(ENABLE_SCALAPACK)
-    set(SCALAPACK_PREFIX @SCALAPACK_PREFIX@)
+    set(ScaLAPACK_PREFIX @ScaLAPACK_PREFIX@)
 
     if(NOT TARGET ScaLAPACK::ScaLAPACK)
       find_package(ScaLAPACK REQUIRED)
@@ -60,18 +64,40 @@ if(ENABLE_BLAS)
     find_package(BLAS REQUIRED)
   endif()
 
-  list(REMOVE_AT CMAKE_MODULE_PATH 0)
-  list(REMOVE_AT CMAKE_MODULE_PATH 0)
+  if(ENABLE_CXX)
+    get_filename_component(_ga_la_pp "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
+    list(INSERT CMAKE_PREFIX_PATH 0 "${_ga_la_pp}")
+
+    set(use_openmp @use_openmp@)
+
+    if(NOT TARGET blaspp)
+      find_package(blaspp REQUIRED)
+    endif()
+
+    if(NOT TARGET lapackpp)
+      find_package(lapackpp REQUIRED)
+    endif()
+
+    if(ENABLE_SCALAPACK)
+      if(NOT TARGET scalapackpp::scalapackpp)
+        find_package(scalapackpp REQUIRED)
+      endif()
+    endif()
+
+    list(REMOVE_AT CMAKE_PREFIX_PATH 0)
+    list(REMOVE_AT CMAKE_MODULE_PATH 0)
+    list(REMOVE_AT CMAKE_MODULE_PATH 0)
+  endif()
 endif()
 
 if(NOT TARGET GlobalArrays::ga)
   include("${CMAKE_CURRENT_LIST_DIR}/globalarrays-targets.cmake")
 endif()
 
-if(NOT TARGET ${GA_MPI_LIBS})
+if(NOT TARGET MPI::MPI_C)
   find_package(MPI REQUIRED)
 endif()
 
 set(GlobalArrays_FOUND TRUE)
 set(GlobalArrays_LIBRARIES GlobalArrays::ga)
-set(GlobalArrays_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@/ga")
+set(GlobalArrays_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@/ga" "${MPI_C_INCLUDE_DIRS}")

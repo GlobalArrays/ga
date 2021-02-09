@@ -39,6 +39,7 @@ foreach( _uplo LOWER UPPER )
 
       # Check for Standard Fortran Libraries
       if(NOT STANDARDFORTRAN_LIBRARIES)
+        include(CMakeFindDependencyMacro)
         find_dependency(StandardFortran REQUIRED)
         list( APPEND ${_libs} ${STANDARDFORTRAN_LIBRARIES} )
         set( ${_libs} ${${_libs}} PARENT_SCOPE )

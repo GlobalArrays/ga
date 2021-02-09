@@ -1,6 +1,6 @@
 
 #Tmp Fix: segfaults with the presence of -DNDEBUG
-if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID MATCHES "IntelLLVM")
   if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE RELEASE)
     set(__cmbt_upper RELEASE)
@@ -10,7 +10,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang")
   set(CMAKE_C_FLAGS_${__cmbt_upper} "-O3 -g")
 endif()
 
-if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+if(CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "IntelLLVM")
   if(NOT "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Darwin")
       get_filename_component(__GA_GCC_INSTALL_PREFIX "${CMAKE_Fortran_COMPILER}/../.." ABSOLUTE)
       if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
