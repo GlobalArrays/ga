@@ -33,12 +33,19 @@ jobs:
           - clang
           - gcc-9
         include:
+          - os: macos-10.15
+            experimental: true
+            mpi_impl: mpich
+            armci_network: mpi-pr
+            f77: ifort
+            cc: icc
           - os: ubuntu-16.04
             experimental: true 
             mpi_impl: mpich
             armci_network: mpi-pr
             f77: gfortran
             cc: gcc
+            use_sicm: "Y"
           - os: ubuntu-20.04
             experimental: true 
             mpi_impl: mpich
@@ -74,6 +81,12 @@ jobs:
             armci_network: mpi-ts
             f77: gfortran
             cc: gcc
+          - os: ubuntu-20.04
+            experimental: true
+            mpi_impl: intel
+            armci_network: mpi-ts
+            f77: ifort
+            cc: gcc
         exclude:
           - armci_network: mpi-pr
             mpi_impl: openmpi
@@ -90,6 +103,7 @@ jobs:
         CC: ${{ matrix.cc }}
         CONFIG_OPTS: ${{ matrix.config_opts}}
         USE_CMAKE: ${{ matrix.use_cmake }}
+        USE_SICM: ${{ matrix.use_sicm }}
     continue-on-error: ${{ matrix.experimental }}
     steps: 
       - name: Checkout code
@@ -103,8 +117,10 @@ jobs:
           cache-name: cache-install-steps
         with:
           # cache files are stored in `~/apps` on Linux/macOS
-          path: apps
-          key: ${{ runner.os }}-${{ matrix.mpi_impl}}-${{ matrix.armci_network}}-${{ matrix.cc }}-${{ matrix.f77 }}-${{ matrix.config_opts}}-ga-apps
+          path: |
+            apps
+            /opt/intel
+          key: ${{ runner.os }}-${{ matrix.mpi_impl}}-${{ matrix.armci_network}}-${{ matrix.cc }}-${{ matrix.f77 }}-${{ matrix.config_opts}}-ga-apps-v002
 
       - name: install_packages
         run: |
@@ -116,6 +132,7 @@ jobs:
           macos*)
           brew update
           brew install gcc coreutils automake || true
+          if [[ "$FC" == "ifort" ]] || [[ "$CC" == "icc" ]] ; then ./travis/install-intel-mac.sh; else true;  fi
           ;;
           esac
       - name: before_install
@@ -131,7 +148,7 @@ jobs:
           ./travis/install-mpi.sh $CI_ROOT $MPI_IMPL
           if [[ "$PORT" == "ofi" ]]; then ./travis/install-libfabric.sh $CI_ROOT; else true;  fi
           if [[ "$PORT" == "armci" ]]; then ./travis/install-armci-mpi.sh $CI_ROOT; else true; fi
-          if [[ ( "$PORT" == "mpi-pr" ) && ( $(os) == "ubuntu-16.04" ) ]]; then ./travis/install-sicm.sh $HOME/no_cache; else true; fi
+          if [[ "$USE_SICM" == "Y" ]]; then ./travis/install-sicm.sh $HOME/no_cache; else true; fi
       - name: compile and test global arrays
         if: ${{ success() }}
         run: |
