@@ -93,6 +93,7 @@ case "x$PORT" in
 esac
     mkdir -p build
     cd build
+    echo FORTRAN_COMPILER is $FORTRAN_COMPILER
     FC=$FORTRAN_COMPILER cmake -DMPIEXEC_MAX_NUMPROCS=5 -DGA_RUNTIME="$ga_rt" ../
 else
 case "x$PORT" in
