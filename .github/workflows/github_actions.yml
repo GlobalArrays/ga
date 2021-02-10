@@ -119,8 +119,7 @@ jobs:
           # cache files are stored in `~/apps` on Linux/macOS
           path: |
             apps
-            /opt/intel
-          key: ${{ runner.os }}-${{ matrix.mpi_impl}}-${{ matrix.armci_network}}-${{ matrix.cc }}-${{ matrix.f77 }}-${{ matrix.config_opts}}-ga-apps-v002
+          key: ${{ runner.os }}-${{ matrix.mpi_impl}}-${{ matrix.armci_network}}-${{ matrix.cc }}-${{ matrix.f77 }}-${{ matrix.config_opts}}-ga-apps-v003
 
       - name: install_packages
         run: |
@@ -132,9 +131,9 @@ jobs:
           macos*)
           brew update
           brew install gcc coreutils automake || true
-          if [[ "$FC" == "ifort" ]] || [[ "$CC" == "icc" ]] ; then ./travis/install-intel-mac.sh; else true;  fi
           ;;
           esac
+          if [[ "$FC" == "ifort" ]] || [[ "$CC" == "icc" ]] ; then ./travis/install-intel.sh; else true;  fi
       - name: before_install
         if: steps.ga-cache-install.outputs.cache-hit != 'true'
         run: |
@@ -158,5 +157,13 @@ jobs:
         run: |
           pwd
           ls
-          find . -name config.log -exec cat {} ";"
-          cat ./test-suite.log
+          find . -name config.log -exec cat {} ";" || true
+          cat ./test-suite.log || true
+          echo '***** CMakeOutput.log *****'
+          find . -name CMakeOutput.log -exec cat {} ";" || true
+          echo '***** CMakeError.log ******'
+          find . -name CMakeError.log  -exec cat {} ";" || true
+          echo '***********'
+          cat /Users/runner/work/ga/ga/build/CMakeFiles/CMakeOutput.log || true
+          echo '***********'
+          cat /Users/runner/work/ga/ga/build/CMakeFiles/CMakeError.log || true
