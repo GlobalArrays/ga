@@ -3538,9 +3538,13 @@ c     broadcast evals
 #endif
 #if HAVE_ELPA
       subroutine ga_evp_real(g_a, g_b, eval, nb8, mout)
+#if HAVE_ELPA_2017
+      use elpa
+#else
       use ELPA1
 #if HAVE_ELPA_2015 || HAVE_ELPA_2016
       use ELPA2
+#endif
 #endif
       implicit none
 #include "mpif.h"
@@ -3591,6 +3595,9 @@ c
       INTGR4 n
       INTGR4 info,one4,zero4,two4,four4
       integer ga_comm
+#if HAVE_ELPA_2017
+      class(elpa_t), pointer :: e   ! name the ELPA instance "e"
+#endif
       integer mxproc,i
       parameter(mxproc=100000)
 c mpi args should integer*4
@@ -3654,8 +3661,6 @@ celpa
      C     elpa_group, mpierr)
       if(mpierr.ne.0) call ga_error(
      A     'ga-evp_real: mpigroupincl failed ',mpierr)
-
-
       call mpi_comm_create(ga_comm4, elpa_group, elpa_comm,
      W mpierr)
       call ga_sync()
@@ -3723,6 +3728,26 @@ c
      .        -info8)
 c     
 c     
+#if HAVE_ELPA_2017
+      if (elpa_init(20170403) /= ELPA_OK) then ! put here the version number of the API
+           call ga_error('ELPA API version not supported',0) ! which you are using
+      endif
+      call e%set("na", n ,mpierr) ! size of matrix
+      if(mpierr.ne.0) call ga_error(
+     A     'ga-evp_real: e%set na failed ',mpierr)
+      call e%set("local_nrows", mpa,mpierr) ! MPI process local rows of the distributed matrixdo the
+                                                 ! desired task with the *ELPA* library, which could be
+      call e%set("local_ncols", nqa,mpierr) ! MPI process local cols of the distributed matrix
+      call e%set("nblk", nb, mpierr) ! size of block-cylic distribution
+
+      call e%set("mpi_comm_parent", elpa_comm,mpierr) ! global communicator for all processes which have parts of
+                                                         ! the distributed matrix
+      call e%set("process_row", myrow2, mpierr) ! row coordinate of MPI task
+      call e%set("process_col", mycol2, mpierr) ! column coordinate of MPI task
+      mpierr = e%setup()
+      if(mpierr.ne.0) call ga_error(
+     A     'ga-evp_real: e%setup failed ',mpierr)
+#else
 #if HAVE_ELPA_2015 || HAVE_ELPA_2016
            mpierr=get_elpa_communicators (elpa_comm, 
 #else
@@ -3732,7 +3757,13 @@ c
      V        elpa_comm_rows, elpa_comm_cols)
            if(mpierr.ne.0) call ga_error(
      A     'ga-evp_real: get_elpa_row_col failed ',mpierr)
+#endif
+
  
+#if HAVE_ELPA_2017
+         call e%eigenvectors(dbl_mb(adra), eval, dbl_mb(adrb), mpierr)
+         if(mpierr.ne.0)
+#else
 #if HAVE_ELPA_2016
          if(.not.solve_evp_real_2stage_double(
 #elif HAVE_ELPA_2015
@@ -3751,6 +3782,7 @@ c
      E        eval, dbl_mb(adrb), ldb, nb, 
      A        elpa_comm_rows, elpa_comm_cols))
 #endif
+#endif
      E   call ga_error(' solve_evp_real failed',0)
 
          if(iam.eq.0.and.mout4.ne.n) 
@@ -3767,6 +3799,12 @@ c
      $        nb, nb, dbl_mb(adrB),
      &        ldb, mpb, nqB)
 
+#if HAVE_ELPA_2017
+       call elpa_deallocate(e,mpierr)
+       if(mpierr.ne.0) call ga_error(
+     A     'ga-evp_real: elpa_deallocate failed ',mpierr)
+       call elpa_uninit()
+#endif
 c     
 c     
 c     
