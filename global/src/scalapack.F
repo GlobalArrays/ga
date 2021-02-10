@@ -3539,6 +3539,9 @@ c     broadcast evals
 #if HAVE_ELPA
       subroutine ga_evp_real(g_a, g_b, eval, nb8, mout)
 #if HAVE_ELPA_2017
+#ifndef USE_ALLOCATE
+#define USE_ALLOCATE 1
+#endif
       use elpa
 #else
       use ELPA1
@@ -3597,6 +3600,8 @@ c
       integer ga_comm
 #if HAVE_ELPA_2017
       class(elpa_t), pointer :: e  !  ELPA instance 
+#endif
+#ifdef USE_ALLOCATE
 c elpa does not like MA for matrices
       real(kind=C_DOUBLE), allocatable    :: a(:,:)
       real(kind=C_DOUBLE), allocatable    :: b(:,:)
@@ -3693,7 +3698,7 @@ c
          elemA= mpA*nqA
          status = .true.
          if(elemA.ne.0)
-#if HAVE_ELPA_2017
+#ifdef USE_ALLOCATE
      $        allocate(a(mpa,nqa),STAT = stat_alloc)
          status=stat_alloc.eq.0
 #else
@@ -3709,7 +3714,7 @@ c
 c         elemb=max(mpb,nqb)**2
 c     
          if(elemB.ne.0)
-#if HAVE_ELPA_2017
+#ifdef USE_ALLOCATE
      $        allocate(b(mpb,nqb),STAT = stat_alloc)
          status=stat_alloc.eq.0
 #else
@@ -3851,7 +3856,7 @@ c
 c***  deallocate work/SL arrays
 c     
          if ( elemB .ne. 0 ) 
-#if HAVE_ELPA_2017
+#ifdef USE_ALLOCATE
      $        deallocate(b,STAT = stat_alloc)
          status=stat_alloc.eq.0
 #else
@@ -3859,7 +3864,7 @@ c
 #endif
 
          if ( elemA .ne. 0 ) 
-#if HAVE_ELPA_2017
+#ifdef USE_ALLOCATE
      $        deallocate(a,STAT = stat_alloc)
          status=stat_alloc.eq.0
 #else
