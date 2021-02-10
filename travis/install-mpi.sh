@@ -29,7 +29,15 @@ case "$MPI_IMPL" in
 		    FFLAGS_IN="-w -O2"
 		fi
 	    elif [ "$F77" = "ifort" ]; then
-		source /opt/intel/oneapi/setvars.sh --force
+		case "$os" in
+		    Darwin)
+			IONEAPI_ROOT=~/apps/oneapi
+			;;
+		    Linux)
+			IONEAPI_ROOT=/opt/intel/oneapi
+			;;
+		esac
+		source "$IONEAPI_ROOT"/setvars.sh --force || true
 		ifort -V
 		icc -V
 	    fi
@@ -38,7 +46,8 @@ case "$MPI_IMPL" in
 	    else
 		CFLAGS_in="-w"
 	    fi
-            ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich --with-device=ch3
+# --disable-opencl since opencl detection generates -framework opencl on macos that confuses opencl	    
+            ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich --with-device=ch3 --disable-opencl
             make -j ${MAKE_JNUM}
             make -j ${MAKE_JNUM} install
         else
