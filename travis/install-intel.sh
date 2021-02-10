@@ -8,12 +8,55 @@ set -x
 os=`uname`
 
 MAKE_JNUM=4
-
-
 case "$os" in
     Darwin)
-        echo "Mac not read yet"
-        exit 10
+	IONEAPI_ROOT=~/apps/oneapi
+	;;
+    Linux)
+	IONEAPI_ROOT=/opt/intel/oneapi
+	;;
+esac
+#echo "os oneapi root" $os $IONEAPI_ROOT
+#exit 0
+echo stev "$IONEAPI_ROOT/setvars.sh"
+if [ -f "$IONEAPI_ROOT/setvars.sh" ]; then
+    echo "Intel oneapi already installed"
+    source "$IONEAPI_ROOT"/setvars.sh --force || true
+    exit 0
+fi
+case "$os" in
+    Darwin)
+	mkdir -p ~/mntdmg ~/apps/oneapi || true
+	cd ~/Downloads
+	dir_base="17426"
+	dir_hpc="17398"
+	base="m_BaseKit_p_2021.1.0.2427_offline"
+	hpc="m_HPCKit_p_2021.1.0.2681_offline"
+	curl -LJO https://registrationcenter-download.intel.com/akdlm/irc_nas/"$dir_base"/"$base".dmg
+	curl -LJO https://registrationcenter-download.intel.com/akdlm/irc_nas/"$dir_hpc"/"$hpc".dmg
+	echo "installing BaseKit"
+	hdiutil attach "$base".dmg  -mountpoint ~/mntdmg -nobrowse
+	sudo ~/mntdmg/bootstrapper.app/Contents/MacOS/install.sh --cli  --eula accept \
+	     --action install --components default  --install-dir ~/apps/oneapi
+	hdiutil detach ~/mntdmg
+	#
+	echo "installing HPCKit"
+	hdiutil attach "$hpc".dmg  -mountpoint ~/mntdmg -nobrowse
+	sudo ~/mntdmg/bootstrapper.app/Contents/MacOS/install.sh --cli  --eula accept \
+	     --action install --components default --install-dir ~/apps/oneapi
+	hdiutil detach ~/mntdmg
+	ls -lrta ~/apps ||true
+	sudo rm -rf "$IONEAPI_ROOT"/intelpython "$IONEAPI_ROOT"/dal "$IONEAPI_ROOT"/advisor \
+	     "$IONEAPI_ROOT"/ipp "$IONEAPI_ROOT"/conda_channel 	"$IONEAPI_ROOT"/dnnl \
+	     "$IONEAPI_ROOT"/installer "$IONEAPI_ROOT"/vtune_profiler "$IONEAPI_ROOT"/tbb || true
+	source "$IONEAPI_ROOT"/setvars.sh || true
+	ifort -V
+	icc -V
+	# get user ownership of /opt/intel to keep caching happy
+	my_gr=`id -g`
+	my_id=`id -u`
+	sudo chown -R $my_id /opt/intel
+	sudo chgrp -R $my_gr /opt/intel
         ;;
     Linux)
 	export APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
@@ -24,5 +67,5 @@ case "$os" in
 	    && sudo apt-get update \
 	    && sudo apt-get -y install intel-oneapi-ifort intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic  intel-oneapi-mkl \
 	    && sudo apt-get -y install intel-oneapi-mpi-devel
-	source /opt/intel/oneapi/setvars.sh --force || true
+	source "$IONEAPI_ROOT"/setvars.sh --force || true
 esac
