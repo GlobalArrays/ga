@@ -3596,7 +3596,7 @@ c
       INTGR4 info,one4,zero4,two4,four4
       integer ga_comm
 #if HAVE_ELPA_2017
-      class(elpa_t), pointer :: e   ! name the ELPA instance "e"
+      class(elpa_t), pointer :: e  !  ELPA instance 
 c elpa does not like MA for matrices
       real(kind=C_DOUBLE), allocatable    :: a(:,:)
       real(kind=C_DOUBLE), allocatable    :: b(:,:)
@@ -3695,13 +3695,15 @@ c
          if(elemA.ne.0)
 #if HAVE_ELPA_2017
      $        allocate(a(mpa,nqa),STAT = stat_alloc)
-         status=stat_alloc.ne.0
+         status=stat_alloc.eq.0
 #else
      $    status =
      $        ma_push_get(MT_DBL,elemA,'a',ha,adra)
+         stat_alloc=0
 #endif
          if(.not.status) 
-     &        call ga_error('ga_evp_real: mem alloc failed A ', -1)
+     &        call ga_error('ga_evp_real: mem alloc failed A ', 
+     S        stat_alloc)
 c     
          elemB= mpB*nqB
 c         elemb=max(mpb,nqb)**2
@@ -3709,7 +3711,7 @@ c
          if(elemB.ne.0)
 #if HAVE_ELPA_2017
      $        allocate(b(mpb,nqb),STAT = stat_alloc)
-         status=stat_alloc.ne.0
+         status=stat_alloc.eq.0
 #else
      $        status =
      $        ma_push_get(MT_DBL,elemB,'b',hb,adrb)
@@ -3753,21 +3755,39 @@ c
       if (elpa_init(20170403) /= ELPA_OK) then ! put here the version number of the API
            call ga_error('ELPA API version not supported',0) ! which you are using
       endif
+      e => elpa_allocate(mpierr)
+      if(mpierr.ne.0) call ga_error(
+     A     'ga-evp_real: elpa_allocate failed ',mpierr)
       call e%set("na", n ,mpierr) ! size of matrix
       if(mpierr.ne.0) call ga_error(
      A     'ga-evp_real: e%set na failed ',mpierr)
       call e%set("local_nrows", mpa,mpierr) ! MPI process local rows of the distributed matrixdo the
                                                  ! desired task with the *ELPA* library, which could be
+      if(mpierr.ne.0) call ga_error(
+     A     'ga-evp_real: e%set local_nrows failed ',mpierr)
       call e%set("local_ncols", nqa,mpierr) ! MPI process local cols of the distributed matrix
       call e%set("nblk", nb, mpierr) ! size of block-cylic distribution
+      if(mpierr.ne.0) call ga_error(
+     A     'ga-evp_real: e%set local_ncols failed ',mpierr)
 
       call e%set("mpi_comm_parent", elpa_comm,mpierr) ! global communicator for all processes which have parts of
+      if(mpierr.ne.0) call ga_error(
+     A     'ga-evp_real: e%set mpi_comm failed ',mpierr)
                                                          ! the distributed matrix
       call e%set("process_row", myrow2, mpierr) ! row coordinate of MPI task
-      call e%set("process_col", mycol2, mpierr) ! column coordinate of MPI task
-      mpierr = e%setup()
       if(mpierr.ne.0) call ga_error(
+     A     'ga-evp_real: e%set process_row failed ',mpierr)
+      call e%set("process_col", mycol2, mpierr) ! column coordinate of MPI task
+      if(mpierr.ne.0) call ga_error(
+     A     'ga-evp_real: e%set process_col failed ',mpierr)
+      call e%set("nev", mout4, mpierr)
+      if(mpierr.ne.0) call ga_error(
+     A     'ga-evp_real: e%set nev failed ',mpierr)
+      mpierr = e%setup()
+      if(mpierr.ne.ELPA_OK) call ga_error(
      A     'ga-evp_real: e%setup failed ',mpierr)
+c      call e%print_all_parameters()
+
 #else
 #if HAVE_ELPA_2015 || HAVE_ELPA_2016
            mpierr=get_elpa_communicators (elpa_comm, 
@@ -3817,7 +3837,12 @@ c
 c***  copy solution matrix back to g_b
 c     
          call ga_from_SL2(g_b, dimA1, mout4,
-     $        nb, nb, dbl_mb(adrB),
+     $        nb, nb,
+#if HAVE_ELPA_2017
+     $        b, 
+#else
+     D        dbl_mb(adrB),
+#endif
      &        ldb, mpb, nqB)
 
 c     
@@ -3828,7 +3853,7 @@ c
          if ( elemB .ne. 0 ) 
 #if HAVE_ELPA_2017
      $        deallocate(b,STAT = stat_alloc)
-         status=stat_alloc.ne.0
+         status=stat_alloc.eq.0
 #else
      $      status = ma_pop_stack(hb)
 #endif
@@ -3836,7 +3861,7 @@ c
          if ( elemA .ne. 0 ) 
 #if HAVE_ELPA_2017
      $        deallocate(a,STAT = stat_alloc)
-         status=stat_alloc.ne.0
+         status=stat_alloc.eq.0
 #else
      $        status = ma_pop_stack(ha)
 #endif
