@@ -3539,9 +3539,9 @@ c     broadcast evals
 #if HAVE_ELPA
       subroutine ga_evp_real(g_a, g_b, eval, nb8, mout)
 #if HAVE_ELPA_2017
-#ifndef USE_ALLOCATE
-#define USE_ALLOCATE 1
-#endif
+CCC#ifndef USE_ALLOCATE
+CC#define USE_ALLOCATE 1
+CC#endif
       use elpa
 #else
       use ELPA1
@@ -3605,8 +3605,8 @@ c
 c elpa does not like MA for matrices
       real(kind=C_DOUBLE), allocatable    :: a(:,:)
       real(kind=C_DOUBLE), allocatable    :: b(:,:)
-      integer(kind=c_int)         :: stat_alloc
 #endif
+      integer(kind=c_int)         :: stat_alloc
       integer mxproc,i
       parameter(mxproc=100000)
 c mpi args should integer*4
@@ -3731,7 +3731,7 @@ c
 c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
 c     
          call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
-#if HAVE_ELPA_2017
+#if USE_ALLOCATE
      $        a, 
 #else
      $        dbl_mb(adrA), 
@@ -3807,7 +3807,12 @@ c      call e%print_all_parameters()
 
  
 #if HAVE_ELPA_2017
+#if USE_ALLOCATE
          call e%eigenvectors(a, eval, b, mpierr)
+#else
+         call ga_elpa_eigenvectors(e,mpa,
+     D        dbl_mb(adra),eval,dbl_mb(adrb),mpierr)
+#endif
          if(mpierr.ne.0)
 #else
 #if HAVE_ELPA_2016
@@ -3843,7 +3848,7 @@ c***  copy solution matrix back to g_b
 c     
          call ga_from_SL2(g_b, dimA1, mout4,
      $        nb, nb,
-#if HAVE_ELPA_2017
+#if USE_ALLOCATE
      $        b, 
 #else
      D        dbl_mb(adrB),
@@ -3892,6 +3897,20 @@ c     broadcast evals
       
       return
       end
+#if HAVE_ELPA_2017
+      subroutine ga_elpa_eigenvectors(e,lda,a,eval,b,mpierr)
+      use elpa
+      implicit none
+      class(elpa_t), pointer :: e  !  ELPA instance 
+      INTGR4 lda
+      double precision a(lda,*),b(lda,*),eval(*)
+      integer*4 mpierr
+c
+      call e%eigenvectors(a, eval, b, mpierr)
+      return
+      end
+#endif
+c endif for HAS_ELPA
 #endif
       subroutine ga_pzheevd(g_a, g_b, eval, nb8)
       implicit none
