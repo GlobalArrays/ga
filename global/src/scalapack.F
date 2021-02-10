@@ -3597,6 +3597,10 @@ c
       integer ga_comm
 #if HAVE_ELPA_2017
       class(elpa_t), pointer :: e   ! name the ELPA instance "e"
+c elpa does not like MA for matrices
+      real(kind=C_DOUBLE), allocatable    :: a(:,:)
+      real(kind=C_DOUBLE), allocatable    :: b(:,:)
+      integer(kind=c_int)         :: stat_alloc
 #endif
       integer mxproc,i
       parameter(mxproc=100000)
@@ -3688,16 +3692,28 @@ c
 c     
          elemA= mpA*nqA
          status = .true.
-         if(elemA.ne.0)status =
+         if(elemA.ne.0)
+#if HAVE_ELPA_2017
+     $        allocate(a(mpa,nqa),STAT = stat_alloc)
+         status=stat_alloc.ne.0
+#else
+     $    status =
      $        ma_push_get(MT_DBL,elemA,'a',ha,adra)
+#endif
          if(.not.status) 
      &        call ga_error('ga_evp_real: mem alloc failed A ', -1)
 c     
          elemB= mpB*nqB
 c         elemb=max(mpb,nqb)**2
 c     
-         if(elemB.ne.0)status =
+         if(elemB.ne.0)
+#if HAVE_ELPA_2017
+     $        allocate(b(mpb,nqb),STAT = stat_alloc)
+         status=stat_alloc.ne.0
+#else
+     $        status =
      $        ma_push_get(MT_DBL,elemB,'b',hb,adrb)
+#endif
          if(.not.status) 
      &        call ga_error('ga_evp_real: mem alloc failed B ', -1)
 c     
@@ -3708,7 +3724,12 @@ c
 c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
 c     
          call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
-     $        dbl_mb(adrA), lda, mpA, nqA)
+#if HAVE_ELPA_2017
+     $        a, 
+#else
+     $        dbl_mb(adrA), 
+#endif
+     A        lda, mpA, nqA)
          endif
          call ga_sync()
          if(oactive) then
@@ -3761,7 +3782,7 @@ c
 
  
 #if HAVE_ELPA_2017
-         call e%eigenvectors(dbl_mb(adra), eval, dbl_mb(adrb), mpierr)
+         call e%eigenvectors(a, eval, b, mpierr)
          if(mpierr.ne.0)
 #else
 #if HAVE_ELPA_2016
@@ -3799,20 +3820,32 @@ c
      $        nb, nb, dbl_mb(adrB),
      &        ldb, mpb, nqB)
 
+c     
+c     
+c     
+c***  deallocate work/SL arrays
+c     
+         if ( elemB .ne. 0 ) 
+#if HAVE_ELPA_2017
+     $        deallocate(b,STAT = stat_alloc)
+         status=stat_alloc.ne.0
+#else
+     $      status = ma_pop_stack(hb)
+#endif
+
+         if ( elemA .ne. 0 ) 
+#if HAVE_ELPA_2017
+     $        deallocate(a,STAT = stat_alloc)
+         status=stat_alloc.ne.0
+#else
+     $        status = ma_pop_stack(ha)
+#endif
 #if HAVE_ELPA_2017
        call elpa_deallocate(e,mpierr)
        if(mpierr.ne.0) call ga_error(
      A     'ga-evp_real: elpa_deallocate failed ',mpierr)
        call elpa_uninit()
 #endif
-c     
-c     
-c     
-c***  deallocate work/SL arrays
-c     
-         if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
-
-         if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
            call MPI_comm_free( elpa_comm, mpierr)
          if(mpierr.ne.0) call ga_error(
      A     'ga-evp_real: mpicommfree failed ',mpierr)
