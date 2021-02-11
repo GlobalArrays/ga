@@ -3539,9 +3539,9 @@ c     broadcast evals
 #if HAVE_ELPA
       subroutine ga_evp_real(g_a, g_b, eval, nb8, mout)
 #if HAVE_ELPA_2017
-CCC#ifndef USE_ALLOCATE
-CC#define USE_ALLOCATE 1
-CC#endif
+#ifndef USE_ALLOCATE
+#define USE_ALLOCATE 1
+#endif
       use elpa
 #else
       use ELPA1
@@ -3612,10 +3612,12 @@ c elpa does not like MA for matrices
 c mpi args should integer*4
       integer*4 group_world,group_members(mxproc),
      C     ga_comm4,mpierr,elpa_group
-      INTGR4 elpa_comm
 
+      INTGR4 elpa_comm
+      integer*4 elpa_err
       parameter(one4=1,zero4=0,two4=4,four4=4)
       integer info8,dblsize
+      integer*4 n4
 c     
 c     processor dependent; machine dependent
 c     
@@ -3725,6 +3727,7 @@ c
      &        call ga_error('ga_evp_real: mem alloc failed B ', -1)
 c     
 c     
+         n4=n8
          n8 = n
          
 c     
@@ -3760,60 +3763,60 @@ c
       if (elpa_init(20170403) /= ELPA_OK) then ! put here the version number of the API
            call ga_error('ELPA API version not supported',0) ! which you are using
       endif
-      e => elpa_allocate(mpierr)
-      if(mpierr.ne.0) call ga_error(
-     A     'ga-evp_real: elpa_allocate failed ',mpierr)
-      call e%set("na", n ,mpierr) ! size of matrix
-      if(mpierr.ne.0) call ga_error(
-     A     'ga-evp_real: e%set na failed ',mpierr)
-      call e%set("local_nrows", mpa,mpierr) ! MPI process local rows of the distributed matrixdo the
+      e => elpa_allocate(elpa_err)
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: elpa_allocate failed ',elpa_err)
+      call e%set("na", int(n,kind=c_int),elpa_err) ! size of matrix
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: e%set na failed ',elpa_err)
+      call e%set("local_nrows", int(mpa,kind=c_int),elpa_err) ! MPI process local rows of the distributed matrixdo the
                                                  ! desired task with the *ELPA* library, which could be
-      if(mpierr.ne.0) call ga_error(
-     A     'ga-evp_real: e%set local_nrows failed ',mpierr)
-      call e%set("local_ncols", nqa,mpierr) ! MPI process local cols of the distributed matrix
-      call e%set("nblk", nb, mpierr) ! size of block-cylic distribution
-      if(mpierr.ne.0) call ga_error(
-     A     'ga-evp_real: e%set local_ncols failed ',mpierr)
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: e%set local_nrows failed ',elpa_err)
+      call e%set("local_ncols", int(nqa,kind=c_int),elpa_err) ! MPI process local cols of the distributed matrix
+      call e%set("nblk", int(nb,kind=c_int), elpa_err) ! size of block-cylic distribution
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: e%set local_ncols failed ',elpa_err)
 
-      call e%set("mpi_comm_parent", elpa_comm,mpierr) ! global communicator for all processes which have parts of
-      if(mpierr.ne.0) call ga_error(
-     A     'ga-evp_real: e%set mpi_comm failed ',mpierr)
+      call e%set("mpi_comm_parent", int(elpa_comm,kind=c_int),elpa_err) ! global communicator for all processes which have parts of
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: e%set mpi_comm failed ',elpa_err)
                                                          ! the distributed matrix
-      call e%set("process_row", myrow2, mpierr) ! row coordinate of MPI task
-      if(mpierr.ne.0) call ga_error(
-     A     'ga-evp_real: e%set process_row failed ',mpierr)
-      call e%set("process_col", mycol2, mpierr) ! column coordinate of MPI task
-      if(mpierr.ne.0) call ga_error(
-     A     'ga-evp_real: e%set process_col failed ',mpierr)
-      call e%set("nev", mout4, mpierr)
-      if(mpierr.ne.0) call ga_error(
-     A     'ga-evp_real: e%set nev failed ',mpierr)
-      mpierr = e%setup()
-      if(mpierr.ne.ELPA_OK) call ga_error(
-     A     'ga-evp_real: e%setup failed ',mpierr)
+      call e%set("process_row", int(myrow2,kind=c_int), elpa_err) ! row coordinate of MPI task
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: e%set process_row failed ',elpa_err)
+      call e%set("process_col", int(mycol2,kind=c_int), elpa_err) ! column coordinate of MPI task
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: e%set process_col failed ',elpa_err)
+      call e%set("nev", int(mout4,kind=c_int), elpa_err)
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: e%set nev failed ',elpa_err)
+      elpa_err = e%setup()
+      if(elpa_err.ne.ELPA_OK) call ga_error(
+     A     'ga-evp_real: e%setup failed ',elpa_err)
 c      call e%print_all_parameters()
 
 #else
 #if HAVE_ELPA_2015 || HAVE_ELPA_2016
-           mpierr=get_elpa_communicators (elpa_comm, 
+           elpa_err=get_elpa_communicators (elpa_comm, 
 #else
-           mpierr=get_elpa_row_col_comms(elpa_comm,
+           elpa_err=get_elpa_row_col_comms(elpa_comm,
 #endif
      V        myrow2, mycol2, 
      V        elpa_comm_rows, elpa_comm_cols)
-           if(mpierr.ne.0) call ga_error(
-     A     'ga-evp_real: get_elpa_row_col failed ',mpierr)
+           if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: get_elpa_row_col failed ',elpa_err)
 #endif
 
  
 #if HAVE_ELPA_2017
 #if USE_ALLOCATE
-         call e%eigenvectors(a, eval, b, mpierr)
+         call e%eigenvectors(a, eval, b, elpa_err)
 #else
          call ga_elpa_eigenvectors(e,mpa,
-     D        dbl_mb(adra),eval,dbl_mb(adrb),mpierr)
+     D        dbl_mb(adra),eval,dbl_mb(adrb),elpa_err)
 #endif
-         if(mpierr.ne.0)
+         if(elpa_err.ne.0)
 #else
 #if HAVE_ELPA_2016
          if(.not.solve_evp_real_2stage_double(
@@ -3876,9 +3879,9 @@ c
      $        status = ma_pop_stack(ha)
 #endif
 #if HAVE_ELPA_2017
-       call elpa_deallocate(e,mpierr)
-       if(mpierr.ne.0) call ga_error(
-     A     'ga-evp_real: elpa_deallocate failed ',mpierr)
+       call elpa_deallocate(e,elpa_err)
+       if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: elpa_deallocate failed ',elpa_err)
        call elpa_uninit()
 #endif
            call MPI_comm_free( elpa_comm, mpierr)
@@ -3898,15 +3901,17 @@ c     broadcast evals
       return
       end
 #if HAVE_ELPA_2017
-      subroutine ga_elpa_eigenvectors(e,lda,a,eval,b,mpierr)
+      subroutine ga_elpa_eigenvectors(e,lda,a,eval,b,elpa_err)
       use elpa
       implicit none
       class(elpa_t), pointer :: e  !  ELPA instance 
       INTGR4 lda
-      double precision a(lda,*),b(lda,*),eval(*)
-      integer*4 mpierr
+      double precision a(lda,*)
+      double precision b(lda,*)
+      double precision eval(*)
+      integer*4 elpa_err
 c
-      call e%eigenvectors(a, eval, b, mpierr)
+      call e%eigenvectors(a, eval, b, elpa_err)
       return
       end
 #endif
