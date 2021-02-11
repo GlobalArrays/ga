@@ -1,8 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 
 # This should only be run on Linux machines, as OSX does not have NUMA
 # SICM has only been added to mpi-pr
 os=`uname`
+echo " in sicm install. os is " $os
 if [ "$os" != "Linux" ] || [ "$PORT" != "mpi-pr" ]; then
     exit 1;
 fi

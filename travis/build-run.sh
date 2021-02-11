@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 # Exit on error
 set -ev
@@ -21,15 +21,7 @@ MAKE_JNUM=4
 # Capture details of build
 case "$MPI_IMPL" in
     mpich)
-        case "$os" in
-            Darwin)
-                echo "Mac"
-            ;;
-            Linux)
-                echo "Linux"
-                export PATH=$TRAVIS_ROOT/mpich/bin:$PATH
-            ;;
-        esac
+        export PATH=$TRAVIS_ROOT/mpich/bin:$PATH
         mpichversion
         mpicc -show
         ;;
@@ -50,6 +42,9 @@ case "$MPI_IMPL" in
         #ompi_info --arch --config
         mpicc --showme:command
         ;;
+    intel)
+	source /opt/intel/oneapi/setvars.sh --force || true
+	;;
 esac
 
 # Configure and build
@@ -94,7 +89,8 @@ esac
     mkdir -p build
     cd build
     echo FORTRAN_COMPILER is $FORTRAN_COMPILER
-    FC=$FORTRAN_COMPILER cmake -DMPIEXEC_MAX_NUMPROCS=5 -DGA_RUNTIME="$ga_rt" ../
+    mpif90 -show || true
+    FC="$FORTRAN_COMPILER" cmake -DCMAKE_Fortran_COMPILER="$FORTRAN_COMPILER"  -DMPIEXEC_MAX_NUMPROCS=5 -DGA_RUNTIME="$ga_rt" ../
 else
 case "x$PORT" in
     xofi)
@@ -110,8 +106,8 @@ case "x$PORT" in
         ./configure ${CONFIG_OPTS}
         ;;
     xmpi-pr)
-        if [[ "$os" = "Linux" ]] ; then
-            export CFLAGS="-DUSE_SICM=1 -I${HOME}/no_cache/SICM/include/public ${CFLAGS}"
+        if [[ "$USE_SICM" = "Y" ]] ; then
+            export CFLAGS="-DUSE_SICM=1 -I${HOME}/no_cache/SICM/include -I${HOME}/no_cache/SICM/include/public ${CFLAGS}"
             export LDFLAGS="-L${HOME}/no_cache/jemalloc/lib -ljemalloc -L${HOME}/no_cache/SICM/lib -lsicm ${LDFLAGS}"
             export LD_LIBRARY_PATH="${HOME}/no_cache/SICM/lib:${HOME}/no_cache/jemalloc/lib:${LD_LIBRARY_PATH}"
         fi

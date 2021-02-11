@@ -5,19 +5,19 @@ set -x
 
 TRAVIS_ROOT="$1"
 os=`uname`
-if [ "$os" = "Linux" ] ; then
-    case "$MPI_IMPL" in
-        mpich)
-            $TRAVIS_ROOT/mpich/bin/mpichversion
-            $TRAVIS_ROOT/mpich/bin/mpicc -show
-            export MPICC=$TRAVIS_ROOT/mpich/bin/mpicc
-            ;;
-        openmpi)
-            $TRAVIS_ROOT/open-mpi/bin/mpicc --showme:command
-            export MPICC=$TRAVIS_ROOT/open-mpi/bin/mpicc
-            ;;
-    esac
-fi
+case "$MPI_IMPL" in
+    mpich)
+        $TRAVIS_ROOT/mpich/bin/mpichversion
+        $TRAVIS_ROOT/mpich/bin/mpicc -show
+        export MPICC=$TRAVIS_ROOT/mpich/bin/mpicc
+        ;;
+    openmpi)
+	if [ "$os" = "Linux" ] ; then
+	    $TRAVIS_ROOT/open-mpi/bin/mpicc --showme:command
+	    export MPICC=$TRAVIS_ROOT/open-mpi/bin/mpicc
+	fi
+	;;
+esac
 
 if [ ! -z "${MPICC}" ] ; then
     echo "Found MPICC=${MPICC} in your environment.  Using that."
