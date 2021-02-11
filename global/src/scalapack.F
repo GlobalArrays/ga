@@ -2550,6 +2550,9 @@ c
 c     
 c***  copy solution matrix back to g_c
 c     
+         if(.not.ga_allocate(g_b)) 
+     E        call ga_error(' solve_evp_real: ga_allocate failed',0)
+         call ga_zero(g_b)
          call ga_from_SL2(g_b, dimA1, dimB2,
      $        nb, nb, dbl_mb(adrB),
      &        ldb, mpb, nqB)
@@ -3110,6 +3113,10 @@ c
         call SLinit4(g_a)
       else
         call SLinit2(n)
+        if(g_a.ne.g_b) then
+           if(.not.ga_deallocate(g_b))
+     E          call ga_error(' ga_pdsyevd: ga_deallocate failed',0)
+        endif
       endif
       oactive=iam.lt.maxproc
       call ga_sync
@@ -3160,6 +3167,10 @@ c
             if(.not.status) 
      &           call ga_error('ga_pdsyevd: mem alloc failed B ', -1)
          endif
+      endif
+      if(g_a.eq.g_b) then
+         if(.not.ga_deallocate(g_b))
+     E        call ga_error(' ga_pdsyevd: ga_deallocate failed',0)
       endif
       call ga_sync()
       if(oactive) then
@@ -3244,6 +3255,9 @@ c
 c***  copy solution matrix back to g_b
 c     
       if (.not.use_direct) then
+         if(.not.ga_allocate(g_b)) 
+     E        call ga_error(' ga_pdsyevd: ga_allocate failed',0)
+         call ga_zero(g_b)
         call ga_from_SL2(g_b, dimA1, dimB2,
      $       nb, nb, dbl_mb(adrB),
      &       ldb, mpb, nqB)
@@ -3373,7 +3387,10 @@ c***  initialize SL interface
 c     
       call SLinit2(n)
       oactive=iam.lt.maxproc
-      call ga_zero(g_b)
+      if(g_a.ne.g_b) then
+         if(.not.ga_deallocate(g_b))
+     E        call ga_error(' ga_pdsyevr: ga_deallocate failed',0)
+      endif
       if (oactive) then
 c     
 c***  find SBS format parameters
@@ -3408,6 +3425,10 @@ c
          
          call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
      $        dbl_mb(adrA), lda, mpA, nqA)
+         endif
+         if(g_a.eq.g_b) then
+            if(.not.ga_deallocate(g_b))
+     E           call ga_error(' ga_pdsyevr: ga_deallocate failed',0)
          endif
          call ga_sync()
          if(oactive) then
@@ -3511,6 +3532,9 @@ c
 c***  copy solution matrix back to g_b
 c     
          mout4=mout
+         if(.not.ga_allocate(g_b)) 
+     E        call ga_error(' ga_pdsyevr: ga_allocate failed',0)
+         call ga_zero(g_b)
          call ga_from_SL2(g_b, dimA1, mout4,
      $        nb, nb, dbl_mb(adrB),
      &        ldb, mpb, nqB)
@@ -3662,7 +3686,10 @@ c***  initialize SL interface
 c     
       call SLinit2(n)
       oactive=iam.lt.maxproc
-      call ga_zero(g_b)
+      if(g_a.ne.g_b) then
+         if(.not.ga_deallocate(g_b))
+     E        call ga_error(' ga_evp_real: ga_deallocate failed',0)
+      endif
 celpa
       call ga_mpi_comm_pgroup_default(ga_comm)
       ga_comm4=ga_comm
@@ -3748,6 +3775,10 @@ c
 #endif
      A        lda, mpA, nqA)
          endif
+         if(g_a.eq.g_b) then
+            if(.not.ga_deallocate(g_b))
+     E           call ga_error(' ga_evp_real: ga_deallocate failed',0)
+         endif
          call ga_sync()
          if(oactive) then
 c     
@@ -3802,7 +3833,11 @@ c
       elpa_err = e%setup()
       if(elpa_err.ne.ELPA_OK) call ga_error(
      A     'ga-evp_real: e%setup failed ',elpa_err)
-c      call e%print_all_parameters()
+#ifdef ELPA_SOLVER_2STAGE
+      call e%set("solver", ELPA_SOLVER_2STAGE, elpa_err)    ! set solver to 2stage
+      if(elpa_err.ne.ELPA_OK) call ga_error(
+     A     'ga-evp_real: e%set solver failed ',elpa_err)
+#endif
 
 #else
 #if HAVE_ELPA_2015 || HAVE_ELPA_2016
@@ -3856,7 +3891,10 @@ c
 c     
 c     
 c***  copy solution matrix back to g_b
-c     
+c
+         if(.not.ga_allocate(g_b)) 
+     E        call ga_error(' solve_evp_real: ga_allocate failed',0)
+         call ga_zero(g_b)
          call ga_from_SL2(g_b, dimA1, mout4,
      $        nb, nb,
 #if USE_ALLOCATE
