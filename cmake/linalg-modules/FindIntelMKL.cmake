@@ -303,19 +303,9 @@ find_library( IntelMKL_LP64_ScaLAPACK_LIBRARY
 
 # Default to LP64
 if( "ilp64" IN_LIST IntelMKL_FIND_COMPONENTS )
+
   set( IntelMKL_COMPILE_DEFINITIONS "MKL_ILP64" )
-  if( CMAKE_C_COMPILER_ID MATCHES "GNU" )
-    set( IntelMKL_C_COMPILE_FLAGS        "-m64" )
-  endif()
-  if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
-    set( IntelMKL_Fortran_COMPILE_FLAGS  "-m64" "-fdefault-integer-8" )
-  elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Flang" )
-    set( IntelMKL_Fortran_COMPILE_FLAGS  "-fdefault-integer-8" )
-  elseif( CMAKE_C_COMPILER_ID MATCHES "PGI" )
-    set( IntelMKL_Fortran_COMPILE_FLAGS "-i8" )
-  endif()
   set( IntelMKL_LIBRARY ${IntelMKL_ILP64_LIBRARY} )
-  set( IntelMKL_COMPILE_OPTIONS ${IntelMKL_C_COMPILE_FLAGS} )
 
   if( IntelMKL_ILP64_BLACS_LIBRARY )
     set( IntelMKL_BLACS_LIBRARY ${IntelMKL_ILP64_BLACS_LIBRARY} )
@@ -424,19 +414,25 @@ if( IntelMKL_LIBRARY AND IntelMKL_THREAD_LIBRARY AND IntelMKL_CORE_LIBRARY )
   elseif( IntelMKL_THREAD_LAYER MATCHES "tbb" )
 
     if( NOT TARGET tbb )
-      message( FATAL_ERROR "TBB Bindings Not Currently Accessible Through FindIntelMKL" )
+	    #message( FATAL_ERROR "TBB Bindings Not Currently Accessible Through FindIntelMKL" )
       find_dependency( TBB )
     endif()
 
-    list( APPEND IntelMKL_BLAS_LAPACK_LIBRARIES tbb )
+    set( _mkl_tbb_extra_libs tbb )
+    if( IntelMKL_PREFERS_STATIC )
+      list( APPEND _mkl_tbb_extra_libs "stdc++" ) 
+    endif()
+    list( APPEND IntelMKL_BLAS_LAPACK_LIBRARIES ${_mkl_tbb_extra_libs} )
 
     if( IntelMKL_BLACS_LIBRARIES )
-      list( APPEND IntelMKL_BLACS_LIBRARIES tbb )
+      list( APPEND IntelMKL_BLACS_LIBRARIES ${_mkl_tbb_extra_libs} )
     endif()
 
     if( IntelMKL_ScaLAPACK_LIBRARIES )
-      list( APPEND IntelMKL_ScaLAPACK_LIBRARIES tbb )
+      list( APPEND IntelMKL_ScaLAPACK_LIBRARIES ${_mkl_tbb_extra_libs} )
     endif()
+
+    unset( _mkl_tbb_extra_libs )
 
   endif()
 

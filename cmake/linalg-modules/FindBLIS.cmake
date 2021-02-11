@@ -26,8 +26,9 @@ find_path( BLIS_INCLUDE_DIR
 )
   
 if( BLIS_LIBRARIES )
-  find_package( Threads QUIET )
-  set( BLIS_LIBRARIES ${BLIS_LIBRARIES} Threads::Threads "m")
+  if( NOT "m" IN_LIST BLIS_LIBRARIES )
+    list( APPEND BLIS_LIBRARIES "m")
+  endif()
 endif()
 
 # check ILP64

@@ -39,13 +39,9 @@ foreach( _uplo LOWER UPPER )
 
     else()
 
-      # Check for Standard Fortran Libraries
-      if(NOT STANDARDFORTRAN_LIBRARIES)
-        include(CMakeFindDependencyMacro)
-        find_dependency(StandardFortran REQUIRED)
-        list( APPEND ${_libs} ${STANDARDFORTRAN_LIBRARIES} )
-        set( ${_libs} ${${_libs}} PARENT_SCOPE )
-      endif()
+      append_possibly_missing_libs( BLAS _compile_output ${_libs} _new_libs )
+      list( APPEND ${_libs} ${_new_libs} )
+      set( ${_libs} ${${_libs}} PARENT_SCOPE )
 
       # Recheck Compiliation
       check_function_exists_w_results( 
@@ -97,7 +93,6 @@ try_run( _run_result _compile_result ${CMAKE_CURRENT_BINARY_DIR}
   COMPILE_OUTPUT_VARIABLE _compile_output
   RUN_OUTPUT_VARIABLE     _run_output
 )
-
 
 if( ${_run_result} EQUAL 0 )
   set( ${_libs_are_lp64} TRUE PARENT_SCOPE )

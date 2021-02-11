@@ -1,6 +1,14 @@
 name: GlobalArrays_CI
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  release:
+  schedule:
+    - cron: '0 0 * * SUN'
+  repository_dispatch:
+    types: [backend_automation]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -25,12 +33,19 @@ jobs:
           - clang
           - gcc-9
         include:
+          - os: macos-10.15
+            experimental: true
+            mpi_impl: mpich
+            armci_network: mpi-pr
+            f77: ifort
+            cc: icc
           - os: ubuntu-16.04
             experimental: true 
             mpi_impl: mpich
             armci_network: mpi-pr
             f77: gfortran
             cc: gcc
+            use_sicm: "Y"
           - os: ubuntu-20.04
             experimental: true 
             mpi_impl: mpich
@@ -66,6 +81,12 @@ jobs:
             armci_network: mpi-ts
             f77: gfortran
             cc: gcc
+          - os: ubuntu-20.04
+            experimental: true
+            mpi_impl: intel
+            armci_network: mpi-ts
+            f77: ifort
+            cc: gcc
         exclude:
           - armci_network: mpi-pr
             mpi_impl: openmpi
@@ -82,6 +103,7 @@ jobs:
         CC: ${{ matrix.cc }}
         CONFIG_OPTS: ${{ matrix.config_opts}}
         USE_CMAKE: ${{ matrix.use_cmake }}
+        USE_SICM: ${{ matrix.use_sicm }}
     continue-on-error: ${{ matrix.experimental }}
     steps: 
       - name: Checkout code
@@ -95,8 +117,9 @@ jobs:
           cache-name: cache-install-steps
         with:
           # cache files are stored in `~/apps` on Linux/macOS
-          path: apps
-          key: ${{ runner.os }}-${{ matrix.mpi_impl}}-${{ matrix.armci_network}}-${{ matrix.cc }}-${{ matrix.f77 }}-${{ matrix.config_opts}}-ga-apps
+          path: |
+            apps
+          key: ${{ runner.os }}-${{ matrix.mpi_impl}}-${{ matrix.armci_network}}-${{ matrix.cc }}-${{ matrix.f77 }}-${{ matrix.config_opts}}-ga-apps-v003
 
       - name: install_packages
         run: |
@@ -110,6 +133,7 @@ jobs:
           brew install gcc coreutils automake || true
           ;;
           esac
+          if [[ "$FC" == "ifort" ]] || [[ "$CC" == "icc" ]] ; then ./travis/install-intel.sh; else true;  fi
       - name: before_install
         if: steps.ga-cache-install.outputs.cache-hit != 'true'
         run: |
@@ -123,15 +147,23 @@ jobs:
           ./travis/install-mpi.sh $CI_ROOT $MPI_IMPL
           if [[ "$PORT" == "ofi" ]]; then ./travis/install-libfabric.sh $CI_ROOT; else true;  fi
           if [[ "$PORT" == "armci" ]]; then ./travis/install-armci-mpi.sh $CI_ROOT; else true; fi
-          if [[ ( "$PORT" == "mpi-pr" ) && ( $(os) == "ubuntu-16.04" ) ]]; then ./travis/install-sicm.sh $HOME/no_cache; else true; fi
+          if [[ "$USE_SICM" == "Y" ]]; then ./travis/install-sicm.sh $HOME/no_cache; else true; fi
       - name: compile and test global arrays
         if: ${{ success() }}
         run: |
-          ./travis/build-run.sh $GITHUB_WORKSPACE/apps $PORT $MPI_IMPL $USE_CMAKE
+          ./travis/build-run.sh $GITHUB_WORKSPACE/apps $PORT $MPI_IMPL $USE_CMAKE $F77
       - name: after_failure
         if: ${{ failure() }}
         run: |
           pwd
           ls
-          find . -name config.log -exec cat {} ";"
-          cat ./test-suite.log
+          find . -name config.log -exec cat {} ";" || true
+          cat ./test-suite.log || true
+          echo '***** CMakeOutput.log *****'
+          find . -name CMakeOutput.log -exec cat {} ";" || true
+          echo '***** CMakeError.log ******'
+          find . -name CMakeError.log  -exec cat {} ";" || true
+          echo '***********'
+          cat /Users/runner/work/ga/ga/build/CMakeFiles/CMakeOutput.log || true
+          echo '***********'
+          cat /Users/runner/work/ga/ga/build/CMakeFiles/CMakeError.log || true

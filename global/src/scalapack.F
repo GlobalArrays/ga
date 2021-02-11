@@ -3538,9 +3538,16 @@ c     broadcast evals
 #endif
 #if HAVE_ELPA
       subroutine ga_evp_real(g_a, g_b, eval, nb8, mout)
+#if HAVE_ELPA_2017
+#ifndef USE_ALLOCATE
+#define USE_ALLOCATE 1
+#endif
+      use elpa
+#else
       use ELPA1
 #if HAVE_ELPA_2015 || HAVE_ELPA_2016
       use ELPA2
+#endif
 #endif
       implicit none
 #include "mpif.h"
@@ -3591,15 +3598,28 @@ c
       INTGR4 n
       INTGR4 info,one4,zero4,two4,four4
       integer ga_comm
+#if HAVE_ELPA_2017
+      integer(kind=c_int)         :: api_version
+      class(elpa_t), pointer :: e  !  ELPA instance 
+#endif
+#ifdef USE_ALLOCATE
+c elpa does not like MA for matrices
+      real(kind=C_DOUBLE), allocatable    :: a(:,:)
+      real(kind=C_DOUBLE), allocatable    :: b(:,:)
+      real(kind=C_DOUBLE), allocatable    :: ev(:)
+#endif
+      integer(kind=c_int)         :: stat_alloc
       integer mxproc,i
       parameter(mxproc=100000)
 c mpi args should integer*4
       integer*4 group_world,group_members(mxproc),
      C     ga_comm4,mpierr,elpa_group
-      INTGR4 elpa_comm
 
+      INTGR4 elpa_comm
+      integer*4 elpa_err
       parameter(one4=1,zero4=0,two4=4,four4=4)
       integer info8,dblsize
+      integer*4 n4
 c     
 c     processor dependent; machine dependent
 c     
@@ -3653,9 +3673,7 @@ celpa
       call MPI_Group_incl(group_world, maxproc, group_members, 
      C     elpa_group, mpierr)
       if(mpierr.ne.0) call ga_error(
-     A     'ga-evp_real: mpigroupincl failed ',mpierr)
-
-
+     A     'ga-evp_real: mpigroupincl failed ',0)
       call mpi_comm_create(ga_comm4, elpa_group, elpa_comm,
      W mpierr)
       call ga_sync()
@@ -3683,27 +3701,52 @@ c
 c     
          elemA= mpA*nqA
          status = .true.
-         if(elemA.ne.0)status =
-     $        ma_push_get(MT_DBL,elemA,'a',ha,adra)
+         if(elemA.ne.0) then
+#ifdef USE_ALLOCATE
+            allocate(ev(mout),STAT = stat_alloc)
+            if(stat_alloc.ne.0)
+     &           call ga_error('ga_evp_real: mem alloc failed ev ',
+     S           stat_alloc)
+            allocate(a(mpa,nqa),STAT = stat_alloc)
+            status=stat_alloc.eq.0
+#else
+            status =
+     $           ma_push_get(MT_DBL,elemA,'a',ha,adra)
+            stat_alloc=0
+#endif
+         endif
          if(.not.status) 
-     &        call ga_error('ga_evp_real: mem alloc failed A ', -1)
+     &        call ga_error('ga_evp_real: mem alloc failed A ', 
+     S        stat_alloc)
 c     
          elemB= mpB*nqB
 c         elemb=max(mpb,nqb)**2
 c     
-         if(elemB.ne.0)status =
+         if(elemB.ne.0)
+#ifdef USE_ALLOCATE
+     $        allocate(b(mpb,nqb),STAT = stat_alloc)
+         status=stat_alloc.eq.0
+#else
+     $        status =
      $        ma_push_get(MT_DBL,elemB,'b',hb,adrb)
+#endif
          if(.not.status) 
      &        call ga_error('ga_evp_real: mem alloc failed B ', -1)
 c     
 c     
+         n4=n8
          n8 = n
          
 c     
 c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
 c     
          call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
-     $        dbl_mb(adrA), lda, mpA, nqA)
+#if USE_ALLOCATE
+     $        a, 
+#else
+     $        dbl_mb(adrA), 
+#endif
+     A        lda, mpA, nqA)
          endif
          call ga_sync()
          if(oactive) then
@@ -3723,16 +3766,66 @@ c
      .        -info8)
 c     
 c     
-#if HAVE_ELPA_2015 || HAVE_ELPA_2016
-           mpierr=get_elpa_communicators (elpa_comm, 
+#if HAVE_ELPA_2017
+         api_version=20170403
+      if (elpa_init(api_version) .ne. 0) then ! put here the version number of the API
+           call ga_error('ELPA API version not supported',0) ! which you are using
+      endif
+      e => elpa_allocate(elpa_err)
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: elpa_allocate failed ',elpa_err)
+      call e%set("na", int(n,kind=c_int),elpa_err) ! size of matrix
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: e%set na failed ',elpa_err)
+      call e%set("local_nrows", int(mpa,kind=c_int),elpa_err) ! MPI process local rows of the distributed matrixdo the
+                                                 ! desired task with the *ELPA* library, which could be
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: e%set local_nrows failed ',elpa_err)
+      call e%set("local_ncols", int(nqa,kind=c_int),elpa_err) ! MPI process local cols of the distributed matrix
+      call e%set("nblk", int(nb,kind=c_int), elpa_err) ! size of block-cylic distribution
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: e%set local_ncols failed ',elpa_err)
+
+      call e%set("mpi_comm_parent", int(elpa_comm,kind=c_int),elpa_err) ! global communicator for all processes which have parts of
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: e%set mpi_comm failed ',elpa_err)
+                                                         ! the distributed matrix
+      call e%set("process_row", int(myrow2,kind=c_int), elpa_err) ! row coordinate of MPI task
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: e%set process_row failed ',elpa_err)
+      call e%set("process_col", int(mycol2,kind=c_int), elpa_err) ! column coordinate of MPI task
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: e%set process_col failed ',elpa_err)
+      call e%set("nev", int(mout4,kind=c_int), elpa_err)
+      if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: e%set nev failed ',elpa_err)
+      elpa_err = e%setup()
+      if(elpa_err.ne.ELPA_OK) call ga_error(
+     A     'ga-evp_real: e%setup failed ',elpa_err)
+c      call e%print_all_parameters()
+
 #else
-           mpierr=get_elpa_row_col_comms(elpa_comm,
+#if HAVE_ELPA_2015 || HAVE_ELPA_2016
+           elpa_err=get_elpa_communicators (elpa_comm, 
+#else
+           elpa_err=get_elpa_row_col_comms(elpa_comm,
 #endif
      V        myrow2, mycol2, 
      V        elpa_comm_rows, elpa_comm_cols)
-           if(mpierr.ne.0) call ga_error(
-     A     'ga-evp_real: get_elpa_row_col failed ',mpierr)
+           if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: get_elpa_row_col failed ',elpa_err)
+#endif
+
  
+#if HAVE_ELPA_2017
+#if USE_ALLOCATE
+         call e%eigenvectors(a, ev, b, elpa_err)
+#else
+         call ga_elpa_eigenvectors(e,mpa,
+     D        dbl_mb(adra),eval,dbl_mb(adrb),elpa_err)
+#endif
+         if(elpa_err.ne.0)
+#else
 #if HAVE_ELPA_2016
          if(.not.solve_evp_real_2stage_double(
 #elif HAVE_ELPA_2015
@@ -3751,6 +3844,7 @@ c
      E        eval, dbl_mb(adrb), ldb, nb, 
      A        elpa_comm_rows, elpa_comm_cols))
 #endif
+#endif
      E   call ga_error(' solve_evp_real failed',0)
 
          if(iam.eq.0.and.mout4.ne.n) 
@@ -3764,7 +3858,12 @@ c
 c***  copy solution matrix back to g_b
 c     
          call ga_from_SL2(g_b, dimA1, mout4,
-     $        nb, nb, dbl_mb(adrB),
+     $        nb, nb,
+#if USE_ALLOCATE
+     $        b, 
+#else
+     D        dbl_mb(adrB),
+#endif
      &        ldb, mpb, nqB)
 
 c     
@@ -3772,9 +3871,30 @@ c
 c     
 c***  deallocate work/SL arrays
 c     
-         if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
+         if ( elemB .ne. 0 ) 
+#ifdef USE_ALLOCATE
+     $        deallocate(b,STAT = stat_alloc)
+         status=stat_alloc.eq.0
+#else
+     $      status = ma_pop_stack(hb)
+#endif
 
-         if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
+         if ( elemA .ne. 0 ) then
+#ifdef USE_ALLOCATE
+         call dcopy(mout4,ev,1,eval,1)
+         deallocate(ev,STAT = stat_alloc)
+         deallocate(a,STAT = stat_alloc)
+         status=stat_alloc.eq.0
+#else
+             status = ma_pop_stack(ha)
+#endif
+          endif
+#if HAVE_ELPA_2017
+       call elpa_deallocate(e,elpa_err)
+       if(elpa_err.ne.0) call ga_error(
+     A     'ga-evp_real: elpa_deallocate failed ',elpa_err)
+       call elpa_uninit()
+#endif
            call MPI_comm_free( elpa_comm, mpierr)
          if(mpierr.ne.0) call ga_error(
      A     'ga-evp_real: mpicommfree failed ',mpierr)
@@ -3791,6 +3911,24 @@ c     broadcast evals
       
       return
       end
+#if HAVE_ELPA_2017
+#ifndef USE_ALLOCATE
+      subroutine ga_elpa_eigenvectors(e,lda,a,eval,b,elpa_err)
+      use elpa
+      implicit none
+      class(elpa_t), pointer :: e  !  ELPA instance 
+      INTGR4 lda
+      double precision a(lda,*)
+      double precision b(lda,*)
+      double precision eval(*)
+      integer*4 elpa_err
+c
+      call e%eigenvectors(a, eval, b, elpa_err)
+      return
+      end
+#endif      
+#endif
+c endif for HAS_ELPA
 #endif
       subroutine ga_pzheevd(g_a, g_b, eval, nb8)
       implicit none

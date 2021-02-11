@@ -64,6 +64,7 @@ if( NOT ScaLAPACK_LIBRARIES )
 
   # Find LAPACK
   if( NOT TARGET LAPACK::LAPACK )
+    copy_meta_data( ScaLAPACK LAPACK )
     find_dependency( LAPACK 
       COMPONENTS          ${ScaLAPACK_REQUIRED_COMPONENTS}
       OPTIONAL_COMPONENTS ${ScaLAPACK_OPTIONAL_COMPONENTS} scalapack blacs 
@@ -166,6 +167,8 @@ if( ScaLAPACK_LINK_OK )
   else()
     set( ScaLAPACK_lp64_FOUND  FALSE )
     set( ScaLAPACK_ilp64_FOUND TRUE  )
+    find_dependency( ILP64 )
+    list( APPEND ScaLAPACK_COMPILE_OPTIONS "${ILP64_COMPILE_OPTIONS}" )
   endif()
 
 else()
@@ -180,6 +183,10 @@ find_package_handle_standard_args( ScaLAPACK
   REQUIRED_VARS ScaLAPACK_LINK_OK
   HANDLE_COMPONENTS
 )
+
+# Cache variables
+set( ScaLAPACK_IS_LP64   "${ScaLAPACK_IS_LP64}"   CACHE STRING "ScaLAPACK LP64 Flag" FORCE )
+set( ScaLAPACK_LIBRARIES "${ScaLAPACK_LIBRARIES}" CACHE STRING "ScaLAPACK Libraries" FORCE )
 
 if( ScaLAPACK_FOUND AND NOT TARGET ScaLAPACK::ScaLAPACK )
   

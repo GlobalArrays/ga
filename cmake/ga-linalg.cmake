@@ -50,9 +50,22 @@ elseif(ENABLE_DPCPP)
   list(APPEND LINALG_OPTIONAL_COMPONENTS "sycl")
 endif()
 
+function(check_ga_blas_options)
+  # ga_is_valid(${LINALG_VENDOR}    _lav_set)
+  ga_is_valid(LINALG_PREFIX     _lap_set)
+  ga_is_valid(BLAS_PREFIX       _lbp_set)
+  ga_is_valid(LAPACK_PREFIX     _llp_set)
+  ga_is_valid(ScaLAPACK_PREFIX  _lsp_set)
+  if(NOT (_lap_set OR _lbp_set OR _llp_set OR _lsp_set) )
+    message(FATAL_ERROR "ENABLE_BLAS=ON but the options \
+    to specify the root of the LinAlg libraries installation \
+    are not set. Please refer to README.md")
+  endif()
+endfunction()
 
 #Check if provided paths are valid and export
 if (ENABLE_BLAS)
+  check_ga_blas_options()
   ga_path_exists(LINALG_PREFIX __la_exists)
   if(NOT __la_exists)
     message(FATAL_ERROR "Could not find the following ${LINALG_VENDOR} installation path at: ${LINALG_PREFIX}")
@@ -66,7 +79,9 @@ endif()
 # LAPACK_FOUND
 set(GA_BLAS_ILP64 OFF)
 if (ENABLE_BLAS)
-    set(BLAS_PREFERENCE_LIST ${LINALG_VENDOR})
+    set(BLAS_PREFERENCE_LIST      ${LINALG_VENDOR})
+    set(LAPACK_PREFERENCE_LIST    ${LINALG_VENDOR})
+    set(ScaLAPACK_PREFERENCE_LIST ${LINALG_VENDOR})
 
     set(LINALG_PREFER_STATIC ON)
     if(BUILD_SHARED_LIBS)
@@ -91,8 +106,23 @@ if (ENABLE_BLAS)
     set(ScaLAPACK_OPTIONAL_COMPONENTS  ${LINALG_OPTIONAL_COMPONENTS})    
 
     set(use_openmp ON)
-    if("sequential" IN_LIST LINALG_THREAD_LAYER OR ${LINALG_VENDOR} MATCHES "BLIS" OR ${LINALG_VENDOR} MATCHES "IBMESSL")
+    set(_blis_essl_set OFF)
+    
+    if(${LINALG_VENDOR} MATCHES "BLIS" OR ${LINALG_VENDOR} MATCHES "IBMESSL")
+      set(_blis_essl_set ON)
+    endif()
+
+    if("sequential" IN_LIST LINALG_THREAD_LAYER OR _blis_essl_set)
       set(use_openmp OFF)
+    endif()
+
+    if(_blis_essl_set OR ${LINALG_VENDOR} MATCHES "OpenBLAS")
+      if(_blis_essl_set)
+        set(LAPACK_PREFERENCE_LIST ReferenceLAPACK)
+      endif()
+      if(ENABLE_SCALAPACK)
+        set(ScaLAPACK_PREFERENCE_LIST ReferenceScaLAPACK)
+      endif()
     endif()
 
     if( "ilp64" IN_LIST LINALG_REQUIRED_COMPONENTS )
@@ -136,32 +166,38 @@ if (ENABLE_BLAS)
       message(FATAL_ERROR "ENABLE_BLAS=ON, but a BLAS library was not found")
     endif()
 
-  include(FetchContent)
-  if(NOT TARGET blaspp)
-    FetchContent_Declare(
-      blaspp
-      GIT_REPOSITORY https://bitbucket.org/icl/blaspp.git
-    )
-    FetchContent_MakeAvailable( blaspp )
-  endif()
-
-  if(NOT TARGET lapackpp)
-    FetchContent_Declare(
-      lapackpp
-      GIT_REPOSITORY https://bitbucket.org/icl/lapackpp.git
-    )
-    FetchContent_MakeAvailable( lapackpp )
-  endif()
-
-  if(ENABLE_SCALAPACK)
-    if(NOT TARGET scalapackpp::scalapackpp)
+  if(ENABLE_CXX)
+    include(FetchContent)
+    if(NOT TARGET blaspp)
       FetchContent_Declare(
-        scalapackpp
-        GIT_REPOSITORY https://github.com/wavefunction91/scalapackpp.git
-        GIT_TAG new-cmake-ci
+        blaspp
+        GIT_REPOSITORY https://bitbucket.org/icl/blaspp.git
       )
-      FetchContent_MakeAvailable( scalapackpp )
+      FetchContent_MakeAvailable( blaspp )
     endif()
+
+    if(NOT TARGET lapackpp)
+      FetchContent_Declare(
+        lapackpp
+        GIT_REPOSITORY https://bitbucket.org/icl/lapackpp.git
+      )
+      FetchContent_MakeAvailable( lapackpp )
+    endif()
+
+    if(ENABLE_SCALAPACK)
+      if(NOT TARGET scalapackpp::scalapackpp)
+        FetchContent_Declare(
+          scalapackpp
+          GIT_REPOSITORY https://github.com/wavefunction91/scalapackpp.git
+          GIT_TAG 2c040278bac7bd6f0ee2fbd4e2cccd3a3c658ffd
+        )
+        FetchContent_MakeAvailable( scalapackpp )
+      endif()
+    endif()
+
+    set(_la_cxx_blas blaspp)
+    set(_la_cxx_lapack lapackpp)
+    set(_la_cxx_scalapack scalapackpp::scalapackpp)
   endif()
 
 else()
@@ -231,7 +267,7 @@ if (HAVE_BLAS)
                   DESTINATION include/ga
   )
 
-  list(APPEND linalg_lib BLAS::BLAS blaspp)
+  list(APPEND linalg_lib BLAS::BLAS ${_la_cxx_blas})
   message(STATUS "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
   if(ENABLE_DPCPP)
     list(APPEND linalg_lib ${Intel_SYCL_TARGET})
@@ -240,11 +276,11 @@ if (HAVE_BLAS)
 endif()
 
 if (HAVE_LAPACK)
-  list(APPEND linalg_lib LAPACK::LAPACK lapackpp)
+  list(APPEND linalg_lib LAPACK::LAPACK ${_la_cxx_lapack})
   message(STATUS "LAPACK_LIBRARIES: ${LAPACK_LIBRARIES}")
 endif()
 
 if (HAVE_SCALAPACK)
-  list(APPEND linalg_lib ScaLAPACK::ScaLAPACK scalapackpp::scalapackpp)
+  list(APPEND linalg_lib ScaLAPACK::ScaLAPACK ${_la_cxx_scalapack})
   message(STATUS "ScaLAPACK_LIBRARIES: ${ScaLAPACK_LIBRARIES}")
 endif()

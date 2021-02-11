@@ -31,7 +31,7 @@
 # -------------------------------------------------------------
 
 cmake_minimum_required (VERSION 3.18.0 FATAL_ERROR)
-project (GlobalArrays VERSION 5.8.0 LANGUAGES C CXX)
+project (GlobalArrays VERSION 5.8.0 LANGUAGES C)
 
 # Append local CMake directory
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -39,11 +39,17 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/linalg-module
 message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
 include(ga-utils)
 
+ga_option(ENABLE_CXX ON)
 ga_option(ENABLE_FORTRAN ON)
 ga_option(CMAKE_CXX_EXTENSIONS OFF)
 
 set(NOFORT 1)
 set(ENABLE_F77 0)
+
+if(ENABLE_CXX)
+  enable_language(CXX)
+endif()
+
 if (ENABLE_FORTRAN)
   enable_language(Fortran)
   set(NOFORT 0)
@@ -324,10 +330,10 @@ endif()
 
 add_library(ga
   $<TARGET_OBJECTS:ma>
-  # $<TARGET_OBJECTS:dra>
-  # $<TARGET_OBJECTS:eaf>
-  # $<TARGET_OBJECTS:elio>
-  # $<TARGET_OBJECTS:sf>
+  $<TARGET_OBJECTS:dra>
+  $<TARGET_OBJECTS:eaf>
+  $<TARGET_OBJECTS:elio>
+  $<TARGET_OBJECTS:sf>
   $<TARGET_OBJECTS:gaf2c>
   $<TARGET_OBJECTS:armci_comex>
   $<TARGET_OBJECTS:ga_src>
@@ -367,9 +373,11 @@ endif()
 # -------------------------------------------------------------
 add_subdirectory(global/src)
 add_subdirectory(comex)
+if(ENABLE_CXX)
 add_subdirectory(ga++/src)
+endif()
 add_subdirectory(ma)
-# add_subdirectory(pario)
+add_subdirectory(pario)
 add_subdirectory(gaf2c)
 if(NOT ENABLE_BLAS)
   add_subdirectory(LinAlg/lapack+blas)
@@ -441,6 +449,7 @@ if(ENABLE_BLAS)
   install_linalg_modules (INSTALL_CONFIGDIR)
   #FIXME: Not sure why this file is not installed via ExternalProject build of GA.
   install(FILES
+    ${CMAKE_CURRENT_LIST_DIR}/cmake/linalg-modules/FindILP64.cmake
     ${CMAKE_CURRENT_LIST_DIR}/cmake/linalg-modules/FindStandardFortran.cmake
     DESTINATION ${INSTALL_CONFIGDIR}/linalg-cmake-modules
   )
@@ -451,6 +460,9 @@ if(ENABLE_BLAS)
     )
   endif()
 endif()
+
+list(REMOVE_AT CMAKE_MODULE_PATH 0)
+list(REMOVE_AT CMAKE_MODULE_PATH 0)
 
 # export(EXPORT globalarrays-targets
 #     FILE ${CMAKE_CURRENT_BINARY_DIR}/globalarrays-targets.cmake
