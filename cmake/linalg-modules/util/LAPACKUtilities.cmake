@@ -37,22 +37,10 @@ foreach( _uplo LOWER UPPER )
 
     else()
 
-      # Check for Standard Fortran Libraries
-      if(NOT STANDARDFORTRAN_LIBRARIES)
-        include(CMakeFindDependencyMacro)
-        find_dependency(StandardFortran REQUIRED)
-        list( APPEND ${_libs} ${STANDARDFORTRAN_LIBRARIES} )
-        set( ${_libs} ${${_libs}} PARENT_SCOPE )
-      endif()
+      append_possibly_missing_libs( LAPACK _compile_output ${_libs} _new_libs )
+      list( APPEND ${_libs} ${_new_libs} )
+      set( ${_libs} ${${_libs}} PARENT_SCOPE )
 
-      if( _compile_output MATCHES "logf" )
-
-        message( STATUS "  * Mising LIBM - Adding TO LAPACK LINKER" )
-
-        list( APPEND ${_libs} "m" )
-        set( ${_libs} ${${_libs}} PARENT_SCOPE )
-
-      endif()
 
       # Recheck Compiliation
       check_function_exists_w_results( 

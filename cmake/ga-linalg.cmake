@@ -79,7 +79,9 @@ endif()
 # LAPACK_FOUND
 set(GA_BLAS_ILP64 OFF)
 if (ENABLE_BLAS)
-    set(BLAS_PREFERENCE_LIST ${LINALG_VENDOR})
+    set(BLAS_PREFERENCE_LIST      ${LINALG_VENDOR})
+    set(LAPACK_PREFERENCE_LIST    ${LINALG_VENDOR})
+    set(ScaLAPACK_PREFERENCE_LIST ${LINALG_VENDOR})
 
     set(LINALG_PREFER_STATIC ON)
     if(BUILD_SHARED_LIBS)
@@ -104,8 +106,23 @@ if (ENABLE_BLAS)
     set(ScaLAPACK_OPTIONAL_COMPONENTS  ${LINALG_OPTIONAL_COMPONENTS})    
 
     set(use_openmp ON)
-    if("sequential" IN_LIST LINALG_THREAD_LAYER OR ${LINALG_VENDOR} MATCHES "BLIS" OR ${LINALG_VENDOR} MATCHES "IBMESSL")
+    set(_blis_essl_set OFF)
+    
+    if(${LINALG_VENDOR} MATCHES "BLIS" OR ${LINALG_VENDOR} MATCHES "IBMESSL")
+      set(_blis_essl_set ON)
+    endif()
+
+    if("sequential" IN_LIST LINALG_THREAD_LAYER OR _blis_essl_set)
       set(use_openmp OFF)
+    endif()
+
+    if(_blis_essl_set OR ${LINALG_VENDOR} MATCHES "OpenBLAS")
+      if(_blis_essl_set)
+        set(LAPACK_PREFERENCE_LIST ReferenceLAPACK)
+      endif()
+      if(ENABLE_SCALAPACK)
+        set(ScaLAPACK_PREFERENCE_LIST ReferenceScaLAPACK)
+      endif()
     endif()
 
     if( "ilp64" IN_LIST LINALG_REQUIRED_COMPONENTS )

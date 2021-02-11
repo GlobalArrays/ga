@@ -1,11 +1,16 @@
 set( LINALG_MACROS_DIR ${CMAKE_CURRENT_LIST_DIR} )
 
 macro( find_linalg_dependencies _libs )
+  include( CMakeFindDependencyMacro )
   foreach( _lib ${${_libs}} )
-    if (${_lib} MATCHES "OpenMP::OpenMP")
-      find_package(OpenMP)
-    elseif (${_lib} MATCHES "Threads::Threads")
-      find_package(Threads)
+    if (${_lib} MATCHES "OpenMP")
+      find_dependency(OpenMP)
+    elseif (${_lib} MATCHES "Threads")
+      find_dependency(Threads)
+    elseif (${_lib} MATCHES "tbb")
+      find_dependency(TBB)
+    elseif (${_lib} MATCHES "MPI")
+      find_dependency(MPI)  
     endif()
   endforeach()
 endmacro()
@@ -23,6 +28,8 @@ set( LINALG_FIND_MODULES
      FindReferenceLAPACK.cmake
      FindReferenceScaLAPACK.cmake
      FindScaLAPACK.cmake
+     FindILP64.cmake
+     FindTBB.cmake
      FindStandardFortran.cmake
      LinAlgModulesMacros.cmake
 )

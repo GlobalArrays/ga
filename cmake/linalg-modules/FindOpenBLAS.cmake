@@ -25,10 +25,11 @@ find_path( OpenBLAS_INCLUDE_DIR
   DOC "OpenBLAS header"
 )
   
-if( OpenBLAS_LIBRARIES AND OpenBLAS_PREFERS_STATIC)
- find_package( OpenMP QUIET )
- set( OpenBLAS_LIBRARIES ${OpenBLAS_LIBRARIES} OpenMP::OpenMP_C)
-endif()
+#if( OpenBLAS_LIBRARY AND OpenBLAS_PREFERS_STATIC )
+#  include( CMakeFindDependency )
+#  find_package( Threads QUIET )
+#  set( OpenBLAS_LIBRARIES ${OpenBLAS_LIBRARY} Threads::Threads "m")
+#endif()
 
 # check ILP64
 if( OpenBLAS_INCLUDE_DIR )
