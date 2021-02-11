@@ -3599,12 +3599,14 @@ c
       INTGR4 info,one4,zero4,two4,four4
       integer ga_comm
 #if HAVE_ELPA_2017
+      integer(kind=c_int)         :: api_version
       class(elpa_t), pointer :: e  !  ELPA instance 
 #endif
 #ifdef USE_ALLOCATE
 c elpa does not like MA for matrices
       real(kind=C_DOUBLE), allocatable    :: a(:,:)
       real(kind=C_DOUBLE), allocatable    :: b(:,:)
+      real(kind=C_DOUBLE), allocatable    :: ev(:)
 #endif
       integer(kind=c_int)         :: stat_alloc
       integer mxproc,i
@@ -3671,7 +3673,7 @@ celpa
       call MPI_Group_incl(group_world, maxproc, group_members, 
      C     elpa_group, mpierr)
       if(mpierr.ne.0) call ga_error(
-     A     'ga-evp_real: mpigroupincl failed ',mpierr)
+     A     'ga-evp_real: mpigroupincl failed ',0)
       call mpi_comm_create(ga_comm4, elpa_group, elpa_comm,
      W mpierr)
       call ga_sync()
@@ -3699,15 +3701,20 @@ c
 c     
          elemA= mpA*nqA
          status = .true.
-         if(elemA.ne.0)
+         if(elemA.ne.0) then
 #ifdef USE_ALLOCATE
-     $        allocate(a(mpa,nqa),STAT = stat_alloc)
-         status=stat_alloc.eq.0
+            allocate(ev(mout),STAT = stat_alloc)
+            if(stat_alloc.ne.0)
+     &           call ga_error('ga_evp_real: mem alloc failed ev ',
+     S           stat_alloc)
+            allocate(a(mpa,nqa),STAT = stat_alloc)
+            status=stat_alloc.eq.0
 #else
-     $    status =
-     $        ma_push_get(MT_DBL,elemA,'a',ha,adra)
-         stat_alloc=0
+            status =
+     $           ma_push_get(MT_DBL,elemA,'a',ha,adra)
+            stat_alloc=0
 #endif
+         endif
          if(.not.status) 
      &        call ga_error('ga_evp_real: mem alloc failed A ', 
      S        stat_alloc)
@@ -3760,7 +3767,8 @@ c
 c     
 c     
 #if HAVE_ELPA_2017
-      if (elpa_init(20170403) /= ELPA_OK) then ! put here the version number of the API
+         api_version=20170403
+      if (elpa_init(api_version) .ne. 0) then ! put here the version number of the API
            call ga_error('ELPA API version not supported',0) ! which you are using
       endif
       e => elpa_allocate(elpa_err)
@@ -3811,7 +3819,7 @@ c      call e%print_all_parameters()
  
 #if HAVE_ELPA_2017
 #if USE_ALLOCATE
-         call e%eigenvectors(a, eval, b, elpa_err)
+         call e%eigenvectors(a, ev, b, elpa_err)
 #else
          call ga_elpa_eigenvectors(e,mpa,
      D        dbl_mb(adra),eval,dbl_mb(adrb),elpa_err)
@@ -3871,13 +3879,16 @@ c
      $      status = ma_pop_stack(hb)
 #endif
 
-         if ( elemA .ne. 0 ) 
+         if ( elemA .ne. 0 ) then
 #ifdef USE_ALLOCATE
-     $        deallocate(a,STAT = stat_alloc)
+         call dcopy(mout4,ev,1,eval,1)
+         deallocate(ev,STAT = stat_alloc)
+         deallocate(a,STAT = stat_alloc)
          status=stat_alloc.eq.0
 #else
-     $        status = ma_pop_stack(ha)
+             status = ma_pop_stack(ha)
 #endif
+          endif
 #if HAVE_ELPA_2017
        call elpa_deallocate(e,elpa_err)
        if(elpa_err.ne.0) call ga_error(
@@ -3901,6 +3912,7 @@ c     broadcast evals
       return
       end
 #if HAVE_ELPA_2017
+#ifndef USE_ALLOCATE
       subroutine ga_elpa_eigenvectors(e,lda,a,eval,b,elpa_err)
       use elpa
       implicit none
@@ -3914,6 +3926,7 @@ c
       call e%eigenvectors(a, eval, b, elpa_err)
       return
       end
+#endif      
 #endif
 c endif for HAS_ELPA
 #endif
