@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # This configuration file was taken originally from the mpi4py project
 # <http://mpi4py.scipy.org/>, and then modified for Julia
 
@@ -10,6 +10,17 @@ TRAVIS_ROOT="$1"
 MPI_IMPL="$2"
 
 MAKE_JNUM=4
+#check if FC,F77 and CC are defined
+if [[   -z "${CC}" ]]; then
+    CC=cc
+fi
+if [[   -z "${FC}" ]]; then
+    FC=gfortran
+fi
+if [[   -z "${F77}" ]]; then
+    F77="${FC}"
+fi
+
 
 # this is where updated Autotools will be for Linux
 export PATH=$TRAVIS_ROOT/bin:$PATH
