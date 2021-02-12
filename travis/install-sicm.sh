@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 
 # This should only be run on Linux machines, as OSX does not have NUMA
 # SICM has only been added to mpi-pr
