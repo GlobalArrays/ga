@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 # This configuration file was taken originally from the mpi4py project
 # <http://mpi4py.scipy.org/>, and then modified for Julia
 
