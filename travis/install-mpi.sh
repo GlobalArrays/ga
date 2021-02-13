@@ -58,7 +58,7 @@ case "$MPI_IMPL" in
 		CFLAGS_in="-w"
 	    fi
 # --disable-opencl since opencl detection generates -framework opencl on macos that confuses opencl	    
-            ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich --with-device=ch3 --disable-opencl -disable-shared
+            ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich --with-device=ch3 --disable-opencl pac_cv_have_float16=no
             make -j ${MAKE_JNUM}
             make -j ${MAKE_JNUM} install
         else
