@@ -9,7 +9,7 @@ os=`uname`
 TRAVIS_ROOT="$1"
 MPI_IMPL="$2"
 
-MAKE_JNUM=4
+MAKE_JNUM=2
 #check if FC,F77 and CC are defined
 if [[ -z "${CC}" ]]; then
     CC=cc
@@ -35,14 +35,15 @@ case "$MPI_IMPL" in
 	    GFORTRAN_EXTRA=$(echo $F77 | cut -c 1-8)
 	    if [ "$GFORTRAN_EXTRA" = "gfortran" ]; then
 		if [ $GNUMAJOR -ge 10  ]; then
-		    FFLAGS_IN="-w -fallow-argument-mismatch -O2"
+		    FFLAGS_IN="-w -fallow-argument-mismatch -O0"
 		else
-		    FFLAGS_IN="-w -O2"
+		    FFLAGS_IN="-w -O0"
 		fi
 	    elif [ "$F77" = "ifort" ]; then
 		case "$os" in
 		    Darwin)
 			IONEAPI_ROOT=~/apps/oneapi
+			FFLAGS_IN="-O0"
 			;;
 		    Linux)
 			IONEAPI_ROOT=/opt/intel/oneapi
@@ -52,11 +53,7 @@ case "$MPI_IMPL" in
 		ifort -V
 		icc -V
 	    fi
-#	    if [ $(${CC} -dM -E - </dev/null 2> /dev/null |grep __clang__|head -1|cut -c19) ] ; then
-		CFLAGS_in="-w -fPIC"
-#	    else
-#		CFLAGS_in="-w"
-#	    fi
+	    CFLAGS_in="-O0 -w -fPIC"
 # --disable-opencl since opencl detection generates -framework opencl on macos that confuses opencl	    
             ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich --with-device=ch3 --disable-opencl pac_cv_have_float16=no
             make -j ${MAKE_JNUM}
