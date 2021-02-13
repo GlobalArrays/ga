@@ -52,11 +52,11 @@ case "$MPI_IMPL" in
 		ifort -V
 		icc -V
 	    fi
-	    if [ $(${CC} -dM -E - </dev/null 2> /dev/null |grep __clang__|head -1|cut -c19) ] ; then
+#	    if [ $(${CC} -dM -E - </dev/null 2> /dev/null |grep __clang__|head -1|cut -c19) ] ; then
 		CFLAGS_in="-w -fPIC"
-	    else
-		CFLAGS_in="-w"
-	    fi
+#	    else
+#		CFLAGS_in="-w"
+#	    fi
 # --disable-opencl since opencl detection generates -framework opencl on macos that confuses opencl	    
             ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich --with-device=ch3 --disable-opencl pac_cv_have_float16=no
             make -j ${MAKE_JNUM}
