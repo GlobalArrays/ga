@@ -26,6 +26,9 @@ fi
 export PATH=$TRAVIS_ROOT/bin:$PATH
 case "$MPI_IMPL" in
     mpich)
+	if [ "$TRAVIS" == "true" ] && [ "$os" == "Darwin" ]; then
+            brew install mpich || brew upgrade mpich || true
+	else
         if [ ! -d "$TRAVIS_ROOT/mpich" ] || [  ! -x "$TRAVIS_ROOT/mpich/bin/mpicc" ]; then
             wget --no-check-certificate http://www.mpich.org/static/downloads/3.4.1/mpich-3.4.1.tar.gz
             tar -xzf mpich-3.4.1.tar.gz
@@ -61,7 +64,7 @@ case "$MPI_IMPL" in
         else
             echo "MPICH already installed"
         fi
-    
+	fi
 	;;
     openmpi)
 	case "$os" in
