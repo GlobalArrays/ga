@@ -7,9 +7,10 @@ TRAVIS_ROOT="$1"
 os=`uname`
 case "$MPI_IMPL" in
     mpich)
-        $TRAVIS_ROOT/mpich/bin/mpichversion
-        $TRAVIS_ROOT/mpich/bin/mpicc -show
-        export MPICC=$TRAVIS_ROOT/mpich/bin/mpicc
+	export PATH=$TRAVIS_ROOT/mpich/bin:$PATH
+        mpichversion
+        mpicc -show
+        export MPICC=mpicc
         ;;
     openmpi)
 	if [ "$os" = "Linux" ] ; then
