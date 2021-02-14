@@ -56,10 +56,10 @@ before_install:
   - sh ./travis/install-autotools.sh $TRAVIS_ROOT
 install:
 
-  - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
+  -  ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
   - if [[ "$PORT" == "ofi" ]]; then sh ./travis/install-libfabric.sh $TRAVIS_ROOT; fi
-  - if [[ "$PORT" == "armci" ]]; then sh ./travis/install-armci-mpi.sh $TRAVIS_ROOT; fi
-  - if [[ ( "$PORT" == "mpi-pr" ) && ( "$TRAVIS_OS_NAME" == "linux" ) ]]; then sh ./travis/install-sicm.sh $HOME/no_cache; fi
+  - if [[ "$PORT" == "armci" ]]; then  ./travis/install-armci-mpi.sh $TRAVIS_ROOT; fi
+  - if [[ ( "$PORT" == "mpi-pr" ) && ( "$TRAVIS_OS_NAME" == "linux" ) ]]; then  ./travis/install-sicm.sh $HOME/no_cache; fi
 
 script:
   - sh ./travis/build-run.sh $TRAVIS_ROOT $PORT $MPI_IMPL
