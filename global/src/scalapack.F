@@ -2451,6 +2451,9 @@ c
      &        call ga_error('ga_pdsyevx: mem alloc failed ifail  ', -1)
       endif
       call ga_sync()
+      if (.not.ga_deallocate(g_b)) 
+     $  call ga_error('ga_pdsyevx: ga_deallocate failed',0)
+
       if(oactive) then
          
 c     
@@ -2549,10 +2552,15 @@ c
 c     
 c     
 c***  copy solution matrix back to g_c
-c     
+c
+       end if ! oactive
+
          if(.not.ga_allocate(g_b)) 
      E        call ga_error(' solve_evp_real: ga_allocate failed',0)
          call ga_zero(g_b)
+
+       if (oactive) then
+
          call ga_from_SL2(g_b, dimA1, dimB2,
      $        nb, nb, dbl_mb(adrB),
      &        ldb, mpb, nqB)
@@ -3253,15 +3261,21 @@ c
 c     
 c     
 c***  copy solution matrix back to g_b
-c     
+c
+      endif !oactive
+
       if (.not.use_direct) then
          if(.not.ga_allocate(g_b)) 
      E        call ga_error(' ga_pdsyevd: ga_allocate failed',0)
          call ga_zero(g_b)
-        call ga_from_SL2(g_b, dimA1, dimB2,
-     $       nb, nb, dbl_mb(adrB),
-     &       ldb, mpb, nqB)
+         if (oactive) then 
+          call ga_from_SL2(g_b, dimA1, dimB2,
+     $         nb, nb, dbl_mb(adrB),
+     &         ldb, mpb, nqB)
+        endif
       endif
+
+      if (oactive) then
 c     
 c     
 c     
@@ -3274,7 +3288,7 @@ c
         if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
       endif
 c     
-      endif
+      endif ! oactive
       call ga_sync()
       if(maxproc.lt.nnodes.or.dima1.le.nb) then
 c     broadcast evals
@@ -3532,9 +3546,13 @@ c
 c***  copy solution matrix back to g_b
 c     
          mout4=mout
+       endif ! oactive
+
          if(.not.ga_allocate(g_b)) 
      E        call ga_error(' ga_pdsyevr: ga_allocate failed',0)
          call ga_zero(g_b)
+
+       if (oactive) then
          call ga_from_SL2(g_b, dimA1, mout4,
      $        nb, nb, dbl_mb(adrB),
      &        ldb, mpb, nqB)
@@ -3549,7 +3567,7 @@ c
          if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
          if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
 c     
-      endif
+      endif ! oactive
       call ga_sync()
       if(maxproc.lt.nnodes.or.dima1.le.nb) then
 c     broadcast evals
@@ -3892,9 +3910,13 @@ c
 c     
 c***  copy solution matrix back to g_b
 c
+       endif ! oactive
+
          if(.not.ga_allocate(g_b)) 
      E        call ga_error(' solve_evp_real: ga_allocate failed',0)
          call ga_zero(g_b)
+
+       if (oactive) then  
          call ga_from_SL2(g_b, dimA1, mout4,
      $        nb, nb,
 #if USE_ALLOCATE
