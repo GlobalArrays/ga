@@ -30,7 +30,8 @@
 # file: CMakeLists.txt
 # -------------------------------------------------------------
 
-cmake_minimum_required (VERSION 3.18.0 FATAL_ERROR)
+#cmake_minimum_required (VERSION 3.18.0 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.17.0 FATAL_ERROR)
 project (GlobalArrays VERSION 5.8.0 LANGUAGES C)
 
 # Append local CMake directory
@@ -43,12 +44,17 @@ ga_option(ENABLE_CXX ON)
 ga_option(ENABLE_FORTRAN ON)
 ga_option(ENABLE_COVERAGE OFF)
 ga_option(CMAKE_CXX_EXTENSIONS OFF)
+ga_option(ENABLE_CUDA OFF)
 
 set(NOFORT 1)
 set(ENABLE_F77 0)
 
 if(ENABLE_CXX)
   enable_language(CXX)
+endif()
+
+if (ENABLE_CUDA)
+  enable_language(CUDA)
 endif()
 
 if (ENABLE_FORTRAN)
@@ -368,6 +374,12 @@ if(NOT "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Darwin")
   if(NOT MSVC)
     list(APPEND GA_EXTRA_LIBS rt)
   endif()
+endif()
+
+if (NOT ENABLE_CUDA)
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  add_compile_options($<$<C_COMPILER_ID:GNU>:-fno-aggressive-loop-optimizations>)
+endif()
 endif()
 
 if(ENABLE_BLAS)
