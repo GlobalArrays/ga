@@ -50,6 +50,10 @@ elseif (MPI_PR)
     src-mpi-pr/groups.c
     src-mpi-pr/reg_cache.c
   )
+  if (ENABLE_CUDA)
+    message(STATUS "Setting Compiler for utils.cu to CUDA")
+    set(COMEX_CUDA_DEVICE src-mpi-pr/utils.cu)
+  endif()
   set (COMEX_NETWORK_MPI_PR ON)
   include_directories(AFTER src-mpi-pr)
 elseif (MPI3)
@@ -118,12 +122,14 @@ set(ARMCI_FILES
 add_library(armci_comex OBJECT
   ${ARMCI_FILES}
   ${COMEX_DEVICE}
+  ${COMEX_CUDA_DEVICE}
 )
 target_compile_definitions(armci_comex PRIVATE HAVE_CONFIG_H)
 
 add_library(armci
   ${ARMCI_FILES}
   ${COMEX_DEVICE}
+  ${COMEX_CUDA_DEVICE}
 )
 target_compile_definitions(armci PRIVATE HAVE_CONFIG_H)
 
@@ -139,6 +145,7 @@ install(TARGETS armci
 
 add_library(comex
  ${COMEX_DEVICE}
+  ${COMEX_CUDA_DEVICE}
 )
 
 add_library(GlobalArrays::comex ALIAS comex)
