@@ -37,7 +37,6 @@ endif ()
 # ga_add_parallel_test
 # -------------------------------------------------------------
 function(ga_add_parallel_test test_name test_program)
-  set(GA_TEST_NPROCS ${MPIEXEC_MAX_NUMPROCS})
   if(DEFINED ARGV2)
     set(GA_TEST_NPROCS ${ARGV2})
   endif()
