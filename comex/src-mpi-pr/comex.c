@@ -751,7 +751,7 @@ int comex_finalize()
     MPI_Barrier(g_state.comm);
 
     /* reg_cache */
-    reg_cache_destroy(g_state.size);
+    reg_cache_destroy();
 
     /* destroy the groups */
 #if DEBUG
@@ -3286,7 +3286,7 @@ STATIC void _progress_server()
     MPI_Barrier(g_state.comm);
 
     /* reg_cache */
-    reg_cache_destroy(g_state.size);
+    reg_cache_destroy();
 
     // destroy the communicators
 #if DEBUG
