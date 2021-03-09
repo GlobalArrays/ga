@@ -739,7 +739,7 @@ int cmx_finalize()
     _translate_mpi_error(ierr, "cmx_finalize:MPI_Barrier");
 
     /* reg_cache */
-    reg_cache_destroy(g_state.size);
+    reg_cache_destroy();
 
     /* destroy the groups */
 #if DEBUG
@@ -3508,7 +3508,7 @@ STATIC void _progress_server()
     _translate_mpi_error(ierr, "_progress_server:MPI_Barrier");
 
     /* reg_cache */
-    reg_cache_destroy(g_state.size);
+    reg_cache_destroy();
 
     // destroy the communicators
 #if DEBUG
