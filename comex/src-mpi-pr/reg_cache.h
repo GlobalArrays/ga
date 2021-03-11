@@ -29,6 +29,7 @@ typedef struct _reg_entry_t {
     void *mapped;               /**< starting address of mmap'd region */
     int rank;                   /**< rank where this region lives */
     int use_dev;                /**< memory is on a device */
+    int dev_id;                 /**< ID of device supplying memory */
 #if ENABLE_SYSV
     char name[2*SHM_NAME_SIZE];   /**< name of region */
     key_t key;
@@ -52,11 +53,12 @@ typedef struct _reg_entry_t {
 reg_return_t reg_cache_init(int nprocs);
 reg_return_t reg_cache_destroy();
 reg_entry_t *reg_cache_find(int rank, void *buf, size_t len);
+<<<<<<< HEAD
 reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len, const char *name,
 #if ENABLE_SYSV
     key_t key,
 #endif
-    void *mapped, int use_dev
+    void *mapped, int use_dev, int dev_id,
 #if USE_SICM
 #if SICM_OLD
     ,sicm_device *device

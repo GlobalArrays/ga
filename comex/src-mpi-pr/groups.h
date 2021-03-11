@@ -12,6 +12,15 @@
 
 #include "comex.h"
 
+#ifdef ENABLE_DEVICE
+extern int numDevices();
+extern void setDevice(int id);
+extern void mallocDevice(void **buf, int size);
+extern void freeDevice(void *buf);
+extern void copyToDevice(void *hostptr, void *devptr, int bytes);
+extern void copyToHost(void *hostptr, void *devptr, int bytes);
+#endif
+
 typedef struct {
     MPI_Comm comm;  /**< whole comm; all ranks */
     MPI_Group group;/**< whole group; all ranks */
@@ -34,6 +43,10 @@ typedef struct group_link {
     int size;               /**< comm size */
     int rank;               /**< comm rank */
     int *world_ranks;       /**< list of ranks in MPI_COMM_WORLD */
+#ifdef ENABLE_DEVICE
+    int is_dev_group;       /**< flag indicating this group is defined for devices */
+    int dev_id;             /**< device ID bound to this process */
+#endif
 } comex_igroup_t;
 
 /** list of worker groups */

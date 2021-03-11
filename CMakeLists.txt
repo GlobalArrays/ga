@@ -378,8 +378,10 @@ endif()
 
 if (NOT ENABLE_CUDA)
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-  add_compile_options($<$<C_COMPILER_ID:GNU>:-fno-aggressive-loop-optimizations>)
+  add_compile_options(-fno-aggressive-loop-optimizations)
 endif()
+else()
+  add_compile_definitions(ENABLE_DEVICE)
 endif()
 
 if(ENABLE_BLAS)

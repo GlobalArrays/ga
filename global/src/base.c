@@ -397,6 +397,7 @@ void pnga_initialize()
        GA[i].rank_rstrctd = (C_Integer*)0;
        GA[i].property = NO_PROPERTY;
        GA[i].mem_dev_set = 0;
+       GA[i].dev_set = 0;
 #ifdef ENABLE_CHECKPOINT
        GA[i].record_id = 0;
 #endif
@@ -2322,6 +2323,21 @@ void pnga_set_memory_dev(Integer g_a, char *device) {
 }
 
 /**
+ *  Set the device on a global array. Set to true if global array is located on
+ *  device
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_device = pnga_set_device
+#endif
+void pnga_set_device(Integer g_a, Integer flag) {
+  Integer ga_handle = g_a + GA_OFFSET;
+  int i, ilen;
+#if ENABLE_DEVICE
+  GA[ga_handle].dev_set = flag;
+#endif
+}
+
+/**
  *  Clear property from global array.
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -2516,6 +2532,11 @@ logical pnga_allocate(Integer g_a)
   Integer blk[MAXDIM];
   Integer grp_me=GAme, grp_nproc=GAnproc;
   Integer block_size = 0;
+  Integer dev_set = 0;
+  int     ndev = 0;
+  Integer *list;
+  int     *ilist;
+  int     *iIDs;
 
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
   if (GA[ga_handle].ndim == -1)
@@ -2538,6 +2559,28 @@ logical pnga_allocate(Integer g_a)
 
   ndim = GA[ga_handle].ndim;
   for (i=0; i<ndim; i++) width[i] = (C_Integer)GA[ga_handle].width[i];
+
+#ifdef ENABLE_DEVICE
+  printf("p[%d] GA_Allocate: Got to 1\n",GAme);
+  dev_set = GA[ga_handle].dev_set;
+  if (dev_set) {
+    list = (Integer*)malloc(grp_nproc*sizeof(Integer));
+    ilist = (int*)malloc(grp_nproc*sizeof(int));
+    iIDs = (int*)malloc(grp_nproc*sizeof(int));
+  printf("p[%d] GA_Allocate: Got to 2 p_handle: %d\n",GAme,p_handle);
+    if (p_handle > 0) {
+      ARMCI_Device_host_list(ilist, iIDs, &ndev, &PGRP_LIST[p_handle].group);
+    } else {
+      ARMCI_Group world_g;
+      ARMCI_Group_get_world(&world_g);
+      ARMCI_Device_host_list(ilist, iIDs, &ndev, &world_g);
+    }
+  printf("p[%d] GA_Allocate: Got to 3\n",GAme);
+    for (i=0; i<ndev; i++) list[i] = (Integer)ilist[i];
+    pnga_set_restricted(g_a, list, ndev);
+  printf("p[%d] GA_Allocate: Got to 4\n",GAme);
+  }
+#endif
 
   /* The data distribution has not been specified by the user. Create
      default distribution */
@@ -2566,20 +2609,24 @@ logical pnga_allocate(Integer g_a)
        ddb(ndim, dims, PGRP_LIST[p_handle].map_nproc, blk, pe);
 #endif
     else
-       if (GA[ga_handle].num_rstrctd == 0) {
-         /* Data is normally distributed on processors */
+      if (GA[ga_handle].num_rstrctd == 0 && !dev_set) {
+        /* Data is normally distributed on processors */
 #if OLD_DISTRIBUTION
-         ddb_h2(ndim, dims, grp_nproc,0.0,(Integer)0, blk, pe);
+        ddb_h2(ndim, dims, grp_nproc,0.0,(Integer)0, blk, pe);
 #else
-         ddb(ndim, dims, grp_nproc, blk, pe);
+        ddb(ndim, dims, grp_nproc, blk, pe);
 #endif
-       } else {
-         /* Data is only distributed on subset of processors */
+      } else {
+        if (!dev_set) {
+          /* Data is only distributed on subset of processors */
 #if OLD_DISTRIBUTION
-         ddb_h2(ndim, dims, GA[ga_handle].num_rstrctd, 0.0, (Integer)0, blk, pe);
+          ddb_h2(ndim, dims, GA[ga_handle].num_rstrctd, 0.0, (Integer)0, blk, pe);
 #else
-         ddb(ndim, dims, GA[ga_handle].num_rstrctd, blk, pe);
+          ddb(ndim, dims, GA[ga_handle].num_rstrctd, blk, pe);
 #endif
+        } else {
+          ddb_h2(ndim, dims, GA[ga_handle].num_rstrctd, 0.0, (Integer)0, blk, pe);
+        }
        }
 
     for(d=0, map=mapALL; d< ndim; d++){
@@ -2813,6 +2860,15 @@ logical pnga_allocate(Integer g_a)
       status = !gai_get_devmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
           GA[ga_handle].type, &GA[ga_handle].id, p_handle,
           GA[ga_handle].mem_dev_set, GA[ga_handle].mem_dev);
+#ifdef ENABLE_DEVICE
+    } else if (dev_set) {
+  printf("p[%d] GA_Allocate: Got to 5\n",GAme);
+      if (ARMCI_Device_process()) {
+  printf("p[%d] GA_Allocate: Got to 6\n",GAme);
+        ARMCI_Malloc_dev((void**)GA[ga_handle].ptr, mem_size, &PGRP_LIST[p_handle].group);
+      }
+  printf("p[%d] GA_Allocate: Got to 7\n",GAme);
+#endif
     } else {
       status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
           GA[ga_handle].type, &GA[ga_handle].id, p_handle);
@@ -2830,6 +2886,13 @@ logical pnga_allocate(Integer g_a)
     /* If array is mirrored, evaluate first and last indices */
     /* ngai_get_first_last_indices(&g_a); */
   }
+#ifdef ENABLE_DEVICE
+  if (dev_set) {
+    free(list);
+    free(ilist);
+    free(iIDs);
+  }
+#endif
 
   pnga_pgroup_sync(p_handle);
   if (status) {
@@ -5000,6 +5063,22 @@ Integer pnga_pgroup_nnodes(Integer grp)
        return (Integer)PGRP_LIST[(int)grp].map_nproc;
     else
        return ((Integer)GAnproc);
+}
+
+/**
+ * Return number of devices in group grp
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_num_dev =  pnga_pgroup_num_dev
+#endif
+
+Integer pnga_pgroup_num_dev(Integer grp)
+{
+#ifdef ENABLE_DEVICE
+  return ARMCI_Num_dev(&PGRP_LIST[grp].group);
+#else
+  return 0;
+#endif
 }
 
 /**
