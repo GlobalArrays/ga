@@ -98,8 +98,12 @@ typedef struct {
     op_t operation;
     void *remote_address;
     void *local_address;
-    int rank; /**< rank of target (rank of sender is iprobe_status.MPI_SOURCE */
+    int rank; /**< rank of target (rank of sender is iprobe_status.MPI_SOURCE) */
     int length; /**< length of message/payload not including header */
+#ifdef ENABLE_DEVICE
+    int use_dev;
+    int dev_id;
+#endif
 } header_t;
 
 
@@ -328,6 +332,13 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device *device)
 STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device_list device);
 #endif
 int _comex_free_local_memdev(void *ptr);
+#endif
+#ifdef ENABLE_DEVICE
+STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, int device_id);
+STATIC int _comex_free_local_memdev(void *ptr);
+int comex_num_devices(comex_group_t group);
+int comex_device_process();
+void comex_device_host_list(int *hosts, int *devIDs, int *ndev, comex_group_t group);
 #endif
 STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory);
 STATIC int _is_master(void);
@@ -1402,7 +1413,7 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
 #endif
 #else
     reg_entry = reg_cache_insert(
-            g_state.rank, memory, size, name, memory, 0);
+            g_state.rank, memory, size, name, memory, 0, -1);
 #endif
 
     if (NULL == reg_entry) {
@@ -1458,6 +1469,36 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device_list dev
 }
 #endif
 
+#ifdef ENABLE_DEVICE
+STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, int device_id)
+{
+    char *name = NULL;
+    void *memory = NULL;
+    reg_entry_t *reg_entry = NULL;
+
+    if (0 == size) {
+        return NULL;
+    }
+
+    /* if this process is not hosting a device, then assert */
+    COMEX_ASSERT(comex_device_process());
+    /* allocate device memory */
+    setDevice(device_id); 
+    mallocDevice(&memory, size);
+
+    /* register the memory locally */
+    reg_entry = reg_cache_insert(
+            g_state.rank, memory, size, name, memory, 1, device_id);
+
+    if (NULL == reg_entry) {
+        comex_error("_comex_malloc_local_memdev: reg_cache_insert", -1);
+    }
+
+    free(name);
+
+    return reg_entry;
+}
+#endif
 
 int comex_free_local(void *ptr)
 {
@@ -1536,6 +1577,30 @@ int _comex_free_local_memdev(void *ptr)
 }
 #endif
 
+#ifdef ENABLE_DEVICE
+int _comex_free_local_memdev(void *ptr)
+{
+    int retval = 0;
+    reg_entry_t *reg_entry = NULL;
+
+    if (NULL == ptr) {
+        return COMEX_SUCCESS;
+    }
+
+    /* find the registered memory */
+    reg_entry = reg_cache_find(g_state.rank, ptr, 0);
+
+    /* unmap the memory */
+    freeDevice(ptr);
+
+    /* delete the reg_cache entry */
+    retval = reg_cache_delete(g_state.rank, ptr);
+    COMEX_ASSERT(RR_SUCCESS == retval);
+
+    return COMEX_SUCCESS;
+}
+#endif
+
 
 int comex_wait_proc(int proc, comex_group_t group)
 {
@@ -1559,7 +1624,7 @@ int comex_wait(comex_request_t* hdl)
     /* this condition will likely be tripped if a blocking operation follows a
      * non-blocking operation*/
     if (0 == nb->in_use) {
-        fprintf(stderr, "p[%d] comex_wait Error: invalid handle\n",
+        fprintf(stderr, "p[%d] comex_wait error: invalid handle\n",
                 g_state.rank);
     }
 #endif
@@ -1589,7 +1654,7 @@ int comex_test(comex_request_t* hdl, int *status)
     /* this condition will likely be tripped if a blocking operation follows a
      * non-blocking operation*/
     if (0 == nb->in_use) {
-        fprintf(stderr, "{%d} comex_test Error: invalid handle\n",
+        fprintf(stderr, "{%d} comex_test error: invalid handle\n",
                 g_state.rank);
     }
 #endif
@@ -2306,6 +2371,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
                     ,nill
 #endif
 #endif
+                    ,-1
                   );
             if (is_notifier) {
                 /* does this need to be a memcpy?? */
@@ -2568,6 +2634,146 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
     return COMEX_SUCCESS;
 #endif
 }
+
+#ifdef ENABLE_DEVICE
+int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
+{
+    comex_igroup_t *igroup = NULL;
+    reg_entry_t *reg_entries = NULL;
+    reg_entry_t my_reg;
+    size_t size_entries = 0;
+    int my_master = -1;
+    int my_world_rank = -1;
+    int has_dev = 0;
+    int num_dev = 0;
+    int *host_list;
+    int *dev_list;
+    int ndev;
+    int devid=-1;
+    int i = 0;
+    int is_notifier = 0;
+    int reg_entries_local_count = 0;
+    reg_entry_t *reg_entries_local = NULL;
+    int status = 0;
+
+    /* preconditions */
+    COMEX_ASSERT(ptrs);
+    
+    has_dev = comex_device_process();
+    COMEX_ASSERT(!has_dev && size > 0);
+    num_dev = comex_num_devices(group);
+    host_list = (int*)malloc(num_dev*sizeof(int));
+    dev_list = (int*)malloc(num_dev*sizeof(int));
+    comex_device_host_list(host_list, dev_list, &ndev, group);
+
+
+    /* is this needed? */
+    comex_barrier(group);
+
+    igroup = comex_get_igroup_from_group(group);
+    my_world_rank = _get_world_rank(igroup, igroup->rank);
+    my_master = g_state.master[my_world_rank];
+
+#if MASTER_IS_SMALLEST_SMP_RANK
+    is_notifier = _smallest_world_rank_with_same_hostid(igroup) == g_state.rank;
+#else
+    is_notifier = _largest_world_rank_with_same_hostid(igroup) == g_state.rank;
+#endif
+    if (is_notifier) {
+        reg_entries_local = malloc(sizeof(reg_entry_t)*g_state.node_size);
+    }
+
+    /* allocate space for registration cache entries */
+    size_entries = sizeof(reg_entry_t) * igroup->size;
+    reg_entries = malloc(size_entries);
+    MAYBE_MEMSET(reg_entries, 0, sizeof(reg_entry_t)*igroup->size);
+
+    /* allocate and register segment */
+    MAYBE_MEMSET(&my_reg, 0, sizeof(reg_entry_t));
+    if (0 == size) {
+        reg_cache_nullify(&my_reg);
+    } else {
+      /* allocate memory on device mapped to this process */
+      int devid = dev_list[igroup->rank];
+      my_reg = *_comex_malloc_local_memdev(sizeof(char)*size, devid);
+    }
+
+    /* exchange buffer address via reg entries */
+    reg_entries[igroup->rank] = my_reg;
+    status = MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
+            reg_entries, sizeof(reg_entry_t), MPI_BYTE, igroup->comm);
+    COMEX_ASSERT(MPI_SUCCESS == status);
+
+    /* insert reg entries into local registration cache */
+    for (i=0; i<igroup->size; ++i) {
+        if (NULL == reg_entries[i].buf) {
+            /* a proc did not allocate (size==0) */
+        }
+        else if (g_state.rank == reg_entries[i].rank) {
+            /* we already registered our own memory, but pr hasn't */
+            if (is_notifier) {
+                /* does this need to be a memcpy?? */
+                reg_entries_local[reg_entries_local_count++] = reg_entries[i];
+            }
+        }
+        else if (g_state.hostid[reg_entries[i].rank]
+                == g_state.hostid[my_world_rank]) {
+            /* same smp node, need to mmap */
+            /* open remote shared memory object */
+            void *memory = reg_entries[i].buf;
+            int dev = reg_entries[i].dev_id;
+            (void)reg_cache_insert(
+                    reg_entries[i].rank,
+                    reg_entries[i].buf,
+                    reg_entries[i].len,
+                    reg_entries[i].name,
+                    memory, 1, dev);
+            if (is_notifier) {
+                /* does this need to be a memcpy?? */
+                reg_entries_local[reg_entries_local_count++] = reg_entries[i];
+            }
+        }
+    }
+
+    /* assign the ptr array to return to caller */
+    for (i=0; i<igroup->size; ++i) {
+        ptrs[i] = reg_entries[i].buf;
+    }
+
+    /* send reg entries to my master */
+    /* first non-master rank in an smp node sends the message to master */
+    if (is_notifier) {
+        nb_t *nb = NULL;
+        int reg_entries_local_size = 0;
+        int message_size = 0;
+        char *message = NULL;
+        header_t *header = NULL;
+
+        reg_entries_local_size = sizeof(reg_entry_t)*reg_entries_local_count;
+        message_size = sizeof(header_t) + reg_entries_local_size;
+        message = malloc(message_size);
+        COMEX_ASSERT(message);
+        header = (header_t*)message;
+        header->operation = OP_MALLOC;
+        header->remote_address = NULL;
+        header->local_address = NULL;
+        header->rank = 0;
+        header->length = reg_entries_local_count;
+        (void)memcpy(message+sizeof(header_t), reg_entries_local, reg_entries_local_size);
+        nb = nb_wait_for_handle();
+        nb_recv(NULL, 0, my_master, nb); /* prepost ack */
+        nb_send_header(message, message_size, my_master, nb);
+        nb_wait_for_all(nb);
+        free(reg_entries_local);
+    }
+
+    free(reg_entries);
+
+    comex_barrier(group);
+
+    return COMEX_SUCCESS;
+}
+#endif
 
 
 /* one unnamed semaphore per world process */
@@ -3337,20 +3543,42 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(
             reg_entry, header->remote_address);
-    if (use_eager) {
+#ifdef ENABLE_DEVICE
+    if (!header->use_dev) {
+#endif
+      if (use_eager) {
         (void)memcpy(mapped_offset, payload, header->length);
-    }
-    else {
+      }
+      else {
         char *buf = (char*)mapped_offset;
         int bytes_remaining = header->length;
         do {
-            int size = bytes_remaining>max_message_size ?
-                max_message_size : bytes_remaining;
-            server_recv(buf, size, proc);
-            buf += size;
-            bytes_remaining -= size;
+          int size = bytes_remaining>max_message_size ?
+            max_message_size : bytes_remaining;
+          server_recv(buf, size, proc);
+          buf += size;
+          bytes_remaining -= size;
         } while (bytes_remaining > 0);
+      }
+#ifdef ENABLE_DEVICE
+    } else {
+      setDevice(header->dev_id);
+      if (use_eager) {
+        copyToDevice(payload, mapped_offset, header->length);
+      }
+      else {
+        char *buf = (char*)mapped_offset;
+        int bytes_remaining = header->length;
+        do {
+          int size = bytes_remaining>max_message_size ?
+            max_message_size : bytes_remaining;
+          server_recv(buf, size, proc);
+          buf += size;
+          bytes_remaining -= size;
+        } while (bytes_remaining > 0);
+      }
     }
+#endif
 }
 
 
@@ -4432,6 +4660,7 @@ STATIC void _malloc_handler(
                     reg_entries[i].name,
                     memory
                     ,reg_entries[i].use_dev
+                    ,reg_entries[i].dev_id
 #if USE_SICM
                     ,reg_entries[i].device
 #endif
@@ -4457,7 +4686,6 @@ STATIC void _malloc_handler(
 
     server_send(NULL, 0, proc); /* ack */
 }
-
 
 STATIC void _free_handler(header_t *header, char *payload, int proc)
 {

@@ -40,6 +40,12 @@ comex_group_world_t g_state = {
 /* the HEAD of the group linked list */
 comex_igroup_t *group_list = NULL;
 
+#ifdef ENABLE_DEVICE
+int _comex_dev_flag;
+int _comex_dev_id;
+#endif
+
+
 #define RANK_OR_PID (g_state.rank >= 0 ? g_state.rank : getpid())
 
 /* static functions implemented in this file */
@@ -100,6 +106,10 @@ static void _create_group_and_igroup(
     new_group_list_item->size = -1;
     new_group_list_item->rank = -1;
     new_group_list_item->world_ranks = NULL;
+#ifdef ENABLE_DEVICE
+    new_group_list_item->is_dev_group = 0;
+    new_group_list_item->dev_id = -1;
+#endif
 
     /* find the last group in the group linked list and insert */
     if (group_list) {
@@ -134,6 +144,22 @@ int comex_group_rank(comex_group_t group, int *rank)
     return COMEX_SUCCESS;
 }
 
+#ifdef ENABLE_DEVICE
+int comex_group_dev_id(comex_group_t group, int *id)
+{
+    comex_igroup_t *igroup = comex_get_igroup_from_group(group);
+    *id = igroup->dev_id;
+
+#if DEBUG
+    printf("[%d] comex_group_dev_id(group=%d, *id=%d)\n",
+            RANK_OR_PID, group, *id);
+#endif
+
+    if (id >= 0) return COMEX_SUCCESS;
+    return COMEX_FAILURE;
+}
+#endif
+
 
 int comex_group_size(comex_group_t group, int *size)
 {
@@ -147,6 +173,73 @@ int comex_group_size(comex_group_t group, int *size)
 
     return COMEX_SUCCESS;
 }
+
+#ifdef ENABLE_DEVICE
+/* return the total number of devices associate with processors on the group */
+int comex_num_devices(comex_group_t group)
+{
+    comex_igroup_t *igroup = comex_get_igroup_from_group(group);
+    int dev_status = 0;
+    int dev_tot;
+    int ierr;
+    MPI_Comm comm = igroup->comm;
+    if (_comex_dev_flag) dev_status++;
+    MPI_Allreduce(&dev_status, &dev_tot, 1, MPI_INT, MPI_SUM, comm);
+    return dev_tot; 
+}
+
+/* return true if this process is bound to a device */
+int comex_device_process()
+{
+  return _comex_dev_flag;
+}
+
+/**
+ * list of processes that own devices
+ * @param[out] list return a list of processors that host devices
+ * @param[out] devIDs list of devices IDs for each process hosting a device
+ * @param[out] ndev total number of devices hosted by processes in group
+ * @param[in] group collection of processes
+ */
+void comex_device_host_list(int *list, int *devIDs, int *ndev, comex_group_t group)
+{
+    int i, icnt;
+    comex_igroup_t *igroup = comex_get_igroup_from_group(group);
+    int me = igroup->rank;
+    int size = igroup->size;
+    MPI_Comm comm = igroup->comm;
+    int *thost = (int*)malloc(size*sizeof(int));
+    int *fhost = (int*)malloc(size*sizeof(int));
+    int *t_ids = (int*)malloc(size*sizeof(int));
+    int *f_ids = (int*)malloc(size*sizeof(int));
+    for (i=0; i<size; i++) thost[i] = 0;
+    for (i=0; i<size; i++) fhost[i] = 0;
+    for (i=0; i<size; i++) t_ids[i] = 0;
+    for (i=0; i<size; i++) f_ids[i] = 0;
+    if (_comex_dev_flag) {
+      thost[me] = 1;
+      t_ids[me] = igroup->dev_id+1;
+    }
+    MPI_Allreduce(thost, fhost, size, MPI_INT, MPI_SUM, comm);
+    MPI_Allreduce(t_ids, f_ids, size, MPI_INT, MPI_SUM, comm);
+    icnt = 0;
+    for (i=0; i<size; i++) {
+      if (fhost[i] > 0) {
+        list[icnt] = i;
+        devIDs[icnt] = f_ids[i]-1;
+        icnt++;
+      }
+    }
+    *ndev = icnt;
+
+    free(thost);
+    free(thost);
+    free(t_ids);
+    free(f_ids);
+    return; 
+}
+
+#endif
 
 
 int comex_group_comm(comex_group_t group, MPI_Comm *comm)
@@ -341,7 +434,13 @@ int comex_group_create(
         local_ldr_pos = grp_me;
         while(n>lvl) {
             int tag=0;
+            /* ^ is bitwise XOR operation. Bit is 1 if bits are different, 0 otherwise
+             * It looks like local_ldr_pos^lvl is a way of generating another
+             * processor rank that can be used as a remote process. It may result in
+             * remote_ldr_pos = local_ldr_pos (e.g.  local_ldr_pos = 1 and lvl = 2) */
             int remote_ldr_pos = local_ldr_pos^lvl;
+            /* If n is a power of 2, it looks like this condition is always satisfied.
+             * May not be if n is not a power of 2 */
             if (remote_ldr_pos < n) {
                 int remote_leader = pid_list[remote_ldr_pos];
                 MPI_Comm peer_comm = *comm_parent;
@@ -357,7 +456,15 @@ int comex_group_create(
                 COMEX_ASSERT(MPI_SUCCESS == status);
                 comm = comm2;
             }
+            /* & is bitwise AND operation. Bit is 1 if both bits are 1
+             * ~ operator is bitwise NOT operator. Inverts all bits,
+             * so ~0 is a string of 1 bits. lvl is a power of 2, so its bitwise
+             * representation is a 1 at the position represented by the power of 2 and
+             * zeros everywhere else. (~0)^lvl is the inverse of this with a string of
+             * 1s everywhere except at the position represented by lvl.  The final
+             * bitwise AND operation with local_ldr_pos */
             local_ldr_pos &= ((~0)^lvl);
+            /* left shift the bits 1 space. Same as multiply by 2 */
             lvl<<=1;
         }
         *comm_child = comm;
@@ -372,6 +479,12 @@ int comex_group_create(
         COMEX_ASSERT(MPI_SUCCESS == status);
         status = MPI_Comm_rank(igroup_child->comm, &(igroup_child->rank));
         COMEX_ASSERT(MPI_SUCCESS == status);
+#ifdef ENABLE_DEVICE
+        if (igroup_parent->is_dev_group) {
+          igroup_child->is_dev_group = 1;
+          igroup_child->dev_id = igroup_parent->dev_id;
+        }
+#endif
     }
 #if DEBUG
     printf("[%d] comex_group_create after crazy logic\n", RANK_OR_PID);
@@ -401,6 +514,11 @@ void comex_group_init()
     comex_igroup_t *igroup = NULL;
     long *sorted = NULL;
     int count = 0;
+#ifdef ENABLE_DEVICE
+    int num_dev = 0; 
+    _comex_dev_flag = 0;
+    _comex_dev_id = -1;
+#endif
     
     /* populate g_state */
 
@@ -476,7 +594,7 @@ void comex_group_init()
             }
         }
     }
-    /* Get nuber of Progress-Ranks per node from environment variable
+    /* Get number of Progress-Ranks per node from environment variable
      * equal to 1 by default */
     int num_progress_ranks_per_node = get_num_progress_ranks_per_node();
     /* Perform check on the number of Progress-Ranks */
@@ -495,6 +613,22 @@ void comex_group_init()
     g_state.master[g_state.rank] = get_my_master_rank_with_same_hostid(g_state.rank, 
         split_group_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
         num_progress_ranks_per_node, is_node_ranks_packed);
+#ifdef ENABLE_DEVICE
+    /* find out if this process is bound to a device */
+    if (g_state.master[g_state.rank] == smallest_rank_with_same_hostid) {
+      int inc = g_state.rank - smallest_rank_with_same_hostid - 1;
+      if (inc < numDevices() && inc >= 0) {
+        _comex_dev_flag = 1;
+        _comex_dev_id = inc;
+      }
+    } else {
+      int inc = g_state.rank - smallest_rank_with_same_hostid;
+      if (inc < numDevices() && inc >= 0) {
+        _comex_dev_flag = 1;
+        _comex_dev_id = inc;
+      }
+    }
+#endif
 #if DEBUG
     printf("[%d] rank; split_group_size: %d\n", g_state.rank, split_group_size);
     printf("[%d] rank; largest_rank_with_same_hostid[%d]; my master is:[%d]\n",

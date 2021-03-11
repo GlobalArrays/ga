@@ -22,6 +22,7 @@ typedef int comex_request_t;
 typedef int comex_group_t;
 
 #define COMEX_GROUP_WORLD 0
+#define COMEX_GROUP_DEVICE_WORLD 1
 #define COMEX_GROUP_NULL -1
 
 #define COMEX_SUCCESS 0
@@ -534,6 +535,22 @@ extern int comex_malloc(
 extern int comex_malloc_mem_dev(
         void **ptr_arr, size_t bytes, comex_group_t group, const char *device);
 
+#ifdef ENABLE_DEVICE
+/**
+ * Collective allocation of registered memory and exchange of addresses on
+ * a device.
+ *
+ * @param[out] ptr_arr array of memory addresses
+ *             w.r.t. each process's address space
+ * @param[in] bytes how many bytes to allocate locally
+ * @param[in] group the group to which the calling process belongs
+ * @param[in] device character string describing memory device
+ * @return COMEX_SUCCESS on success
+ */
+extern int comex_malloc_dev(
+        void **ptr_arr, size_t bytes, comex_group_t group);
+#endif
+
 /**
  * Collective free of memory given the original local pointer.
  *
@@ -699,6 +716,29 @@ extern int comex_wait_all(comex_group_t group);
  * @return COMEX_SUCCESS on sucess
  */
 extern int comex_wait_proc(int proc, comex_group_t group);
+
+#ifdef ENABLE_DEVICE
+/**
+ * Return the number of devices in the group
+ * @param[in] group
+ * @return number of devices in group
+ */
+extern int comex_num_devices(comex_group_t group);
+
+/**
+ * @return true if rank hosts a device
+ */
+extern int comex_device_process();
+
+/**
+ * return a list of host ranks for devices in group
+ * @param[out] list of host ranks
+ * @param[out] list of device IDs
+ * @param[in] group 
+ */
+extern void comex_device_host_list(int *list, int *devIDs, int *ndev, comex_group_t group);
+
+#endif
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

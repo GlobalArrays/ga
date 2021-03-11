@@ -859,6 +859,16 @@ Integer FATR nga_pgroup_nodeid_(Integer *grp)
   return wnga_pgroup_nodeid(*grp);
 }
 
+Integer FATR ga_pgroup_num_dev_(Integer *grp)
+{
+  return wnga_pgroup_num_dev(*grp);
+}
+
+Integer FATR nga_pgroup_num_dev_(Integer *grp)
+{
+  return wnga_pgroup_num_dev(*grp);
+}
+
 void FATR ga_proc_topology_(Integer* g_a, Integer* proc, Integer* pr,
                             Integer *pc)
 {
@@ -1097,6 +1107,16 @@ void FATR nga_set_memory_dev_(Integer *g_a, char *device, int slen)
   char buf[FNAM];
   ga_f2cstring(device, slen, buf, FNAM);
   wnga_set_memory_dev(*g_a, buf);
+}
+
+void FATR ga_set_device_(Integer *g_a, Integer flag)
+{
+  wnga_set_device(*g_a, flag);
+}
+
+void FATR nga_set_device_(Integer *g_a, Integer flag)
+{
+  wnga_set_device(*g_a, flag);
 }
 
 void FATR  ga_terminate_()

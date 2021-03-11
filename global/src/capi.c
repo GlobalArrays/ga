@@ -804,6 +804,22 @@ void NGA_Set_memory_dev(int g_a, char *device)
     wnga_set_memory_dev(aa,device);
 }
 
+void GA_Set_device(int g_a, int flag)
+{
+    Integer aa;
+    Integer iflag = (Integer)flag;
+    aa = (Integer)g_a;
+    wnga_set_device(aa,iflag);
+}
+
+void NGA_Set_device(int g_a, int flag)
+{
+    Integer aa;
+    Integer iflag = (Integer)flag;
+    aa = (Integer)g_a;
+    wnga_set_device(aa,iflag);
+}
+
 int GA_Total_blocks(int g_a)
 {
     Integer aa;
@@ -1325,6 +1341,18 @@ int NGA_Pgroup_nnodes(int grp_id)
 {
     Integer agrp_id = (Integer)grp_id;
     return (int)wnga_pgroup_nnodes(agrp_id);
+}
+
+int GA_Pgroup_num_dev(int grp_id)
+{
+    Integer agrp_id = (Integer)grp_id;
+    return (int)wnga_pgroup_num_dev(agrp_id);
+}
+
+int NGA_Pgroup_num_dev(int grp_id)
+{
+    Integer agrp_id = (Integer)grp_id;
+    return (int)wnga_pgroup_num_dev(agrp_id);
 }
 
 int GA_Pgroup_create(int *list, int count)

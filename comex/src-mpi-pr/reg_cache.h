@@ -26,6 +26,7 @@ typedef struct _reg_entry_t {
     int rank;                   /**< rank where this region lives */
     char name[SHM_NAME_SIZE];   /**< name of region */
     int use_dev;                /**< memory is on a device */
+    int dev_id;                 /**< ID of device supplying memory */
 #if USE_SICM
 #if SICM_OLD
     sicm_device *device;         /**< pointer to SICM device */
@@ -44,7 +45,7 @@ reg_return_t reg_cache_init(int nprocs);
 reg_return_t reg_cache_destroy();
 reg_entry_t *reg_cache_find(int rank, void *buf, size_t len);
 reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len,
-    const char *name, void *mapped, int use_dev
+    const char *name, void *mapped, int use_dev, int dev_id
 #if USE_SICM
 #if SICM_OLD
     ,sicm_device *device

@@ -101,6 +101,7 @@ extern Integer pnga_pgroup_split(Integer grp, Integer grp_num);
 extern Integer pnga_pgroup_split_irreg(Integer grp, Integer mycolor);
 extern Integer pnga_pgroup_nnodes(Integer grp);
 extern Integer pnga_pgroup_nodeid(Integer grp);
+extern Integer pnga_pgroup_num_dev(Integer grp);
 extern void pnga_proc_topology(Integer g_a, Integer proc, Integer* subscript);
 extern void pnga_randomize(Integer g_a, void* val);
 extern Integer pnga_get_pgroup(Integer g_a);
@@ -124,6 +125,7 @@ extern void pnga_set_restricted_range(Integer g_a, Integer lo_proc, Integer hi_p
 extern void pnga_set_property(Integer g_a, char *property);
 extern void pnga_unset_property(Integer g_a);
 extern void pnga_set_memory_dev(Integer g_a, char *device);
+extern void pnga_set_device(Integer g_a, Integer flag);
 extern void pnga_terminate();
 extern Integer pnga_total_blocks(Integer g_a);
 extern void pnga_unlock(Integer mutex);

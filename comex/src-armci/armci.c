@@ -915,4 +915,27 @@ int ARMCI_Same_node(int proc)
 }
 
 
-
+#ifdef ENABLE_DEVICE
+int ARMCI_Num_dev(ARMCI_Group *group)
+{
+  return comex_num_devices(*group);
+}
+int ARMCI_Device_process()
+{
+  return comex_device_process();
+}
+/**
+ * @param[out] list return a list of processors that host devices
+ * @param[out] devIDs list of devices IDs for each process hosting a device
+ * @param[out] ndev total number of devices hosted by processes in group
+ * @param[in] group collection of processes
+ */
+void ARMCI_Device_host_list(int *list, int *devIDs, int *ndev, ARMCI_Group *group)
+{
+  comex_device_host_list(list, devIDs, ndev, *group);
+}
+int ARMCI_Malloc_dev(void **ptr_array, armci_size_t bytes, ARMCI_Group *group)
+{
+  return  comex_malloc_dev(ptr_array, (size_t)bytes, *group);
+}
+#endif
