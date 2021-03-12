@@ -166,6 +166,8 @@ else
 # patch for ifx -loopopt=0 issue
     wget https://github.com/autotools-mirror/autoconf/commit/ae26b9b44c183c41b84fc36ff70082713295d621.patch
     patch -p1 < ae26b9b44c183c41b84fc36ff70082713295d621.patch
+    # patch for ifort libclang_rt.osx.a https://github.com/nwchemgit/nwchem/issues/171
+    patch -p1 <  ${TOP}/../travis/ifort_ldflags.patch
     ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
     if [ "x$?" != "x0" ] ; then
         echo FAILURE 3
