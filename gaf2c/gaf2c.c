@@ -8,6 +8,9 @@
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 
 #include "farg.h"
 #include "message.h"

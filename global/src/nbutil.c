@@ -8,6 +8,9 @@
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #define DEBUG 0
 
 /* WARNING: The maximum value MAX_NUM_NB_HDLS can assume is 256. If it is any larger,
