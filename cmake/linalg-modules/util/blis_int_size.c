@@ -1,3 +1,4 @@
+#if 0
 //#define BLIS_PARAM_MACRO_DEFS_H
 //#define BLIS_OBJ_MACRO_DEFS_H
 //#define BLIS_MISC_MACRO_DEFS_H
@@ -30,7 +31,7 @@ void bli_thread_range_sub
        thrinfo_t* thread,
        dim_t      n,
        dim_t      bf,
-       bool       handle_edge_low,
+       bool_t     handle_edge_low,
        dim_t*     start,
        dim_t*     end
      ){ }
@@ -67,7 +68,7 @@ void bli_obj_scalar_detach
        obj_t* a,
        obj_t* alpha
      ){ }
-bool bli_obj_imag_is_zero( obj_t* a ){ }
+bool_t bli_obj_imag_is_zero( obj_t* a ){ }
 double round( double x) {}
 
 int main() {
@@ -75,3 +76,11 @@ int main() {
   if( blis_int_size == 32 ) return 0;
   else                      return 1;
 }
+#else
+#include <blis/blis.h>
+int main() {
+  int blis_int_size = BLIS_BLAS_INT_TYPE_SIZE;
+  if( blis_int_size == 32 ) return 0;
+  else                      return 1;
+}
+#endif

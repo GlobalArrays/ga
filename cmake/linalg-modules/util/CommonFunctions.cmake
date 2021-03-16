@@ -61,9 +61,9 @@ endfunction()
 
 function( copy_meta_data _src _dest )
 
-  if( ${_src}_LIBRARIES AND NOT ${_dest}_LIBRARIES )
-    set( ${_dest}_LIBRARIES ${${_src}_LIBRARIES} PARENT_SCOPE )
-  endif()
+	#if( ${_src}_LIBRARIES AND NOT ${_dest}_LIBRARIES )
+  	#  set( ${_dest}_LIBRARIES ${${_src}_LIBRARIES} PARENT_SCOPE )
+  	#endif()
 
   if( ${_src}_PREFIX AND NOT ${_dest}_PREFIX )
     set( ${_dest}_PREFIX ${${_src}_PREFIX} PARENT_SCOPE )
@@ -147,7 +147,7 @@ function( append_possibly_missing_libs _linker_test __compile_output _orig_libs 
 
   set( _tmp_libs )
   # Check for missing Fortran symbols
-  if( ${__compile_output} MATCHES "fortran" )
+  if( ${__compile_output} MATCHES "fortran" OR ${__compile_output} MATCHES "f90_" )
     message( STATUS 
       "  * Missing Standard Fortran Libs - Adding to ${_linker_test} linker" )
     # Check for Standard Fortran Libraries

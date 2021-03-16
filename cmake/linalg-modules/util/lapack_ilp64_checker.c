@@ -29,7 +29,12 @@ int main() {
   //   Valid for MKL, OpenBLAS, NETLIB (Reference) LAPACK, and ESSL
   DSYEV_NAME( "N","L", fake_two_ptr, A, true_two_ptr, W, &WORK, LWORK, INFO );
 
+#if 0
   if( INFO[0] == 0 ) return 0;
   else               return -1;
+#else
+  if( INFO[0] == 0 ) printf("XXXX LAPACK IS LP64 XXXX\n" );
+  else               printf("XXXX LAPACK IS ILP64 XXXX\n");
+#endif
 };
 

@@ -35,10 +35,15 @@ int main() {
   double sum = 0.;
   int i;
   for( i = 0; i < 4; ++i ) sum += C[i];
-  //printf("BLAS LP64 CHECK = %.1f\n", sum);
 
+
+#if 0
   if( ((int)sum) == 8 ) return 0;
   else                  return 1;
+#else
+  if( ((int)sum) == 8 ) printf("XXXX BLAS IS LP64 XXXX\n" );
+  else                  printf("XXXX BLAS IS ILP64 XXXX\n");
+#endif
 
   return 0;
 };

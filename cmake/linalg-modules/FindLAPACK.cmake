@@ -29,7 +29,7 @@ endforeach()
 fill_out_prefix( LAPACK )
 
 if( NOT LAPACK_PREFERENCE_LIST )
-  set( LAPACK_PREFERENCE_LIST "ReferenceLAPACK" )
+	set( LAPACK_PREFERENCE_LIST "ReferenceLAPACK" "FLAME" )
 endif()
 
 if( NOT LAPACK_LIBRARIES )
