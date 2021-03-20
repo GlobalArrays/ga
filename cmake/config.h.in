@@ -60,6 +60,7 @@
 
 #cmakedefine01 MSG_COMMS_MPI
 #cmakedefine01 ENABLE_ARMCI_MEM_OPTION
+#cmakedefine ENABLE_CUDA_MEM
 
 #cmakedefine01 HAVE_BLAS
 #cmakedefine01 HAVE_LAPACK

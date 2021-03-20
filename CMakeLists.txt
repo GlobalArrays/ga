@@ -108,6 +108,7 @@ endif()
 
 option (MSG_COMMS_MPI "Using MPI runtime for communication" ON)
 option (ENABLE_ARMCI_MEM_OPTION "User option for managing memory" ON)
+option (ENABLE_CUDA_MEM "User option for CUDA memory" OFF)
 option (F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS "Fortran/C interface property" ON)
 
 message(STATUS "Checking MPI ...")
