@@ -45,14 +45,14 @@ if (ENABLE_FORTRAN)
 endif()
 
 set(MA_HEADERS
-  ma.h
+  # ma.h
 #  error.h
   macdecls.h
   macommon.h
 #  memcpy.h
-  scope.h
-  string-util.h
-  table.h
+  # scope.h
+  # string-util.h
+  # table.h
   ${FORTRAN_HEADERS}
   ${CMAKE_CURRENT_BINARY_DIR}/matypes.h
 )
@@ -78,8 +78,8 @@ add_library(ma OBJECT
   ${FORTRAN_FILES}
 )
 
-if (ENABLE_FORTRAN)
-  ADD_DEPENDENCIES(ga_src GenerateConfigFH)
+if(ENABLE_FORTRAN)
+  add_dependencies(ma gaf2c)
 endif()
 
 # -------------------------------------------------------------

@@ -1273,6 +1273,20 @@ int NGA_Allocate(int g_a)
   return (int)wnga_allocate(aa);
 }
 
+int GA_Deallocate(int g_a)
+{
+  Integer aa;
+  aa = (Integer)g_a;
+  return (int)wnga_deallocate(aa);
+}
+
+int NGA_Deallocate(int g_a)
+{
+  Integer aa;
+  aa = (Integer)g_a;
+  return (int)wnga_deallocate(aa);
+}
+
 int GA_Overlay(int g_a, int g_p)
 {
   Integer aa, bb;

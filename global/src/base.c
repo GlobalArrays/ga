@@ -3915,7 +3915,6 @@ int local_sync_begin,local_sync_end;
     GA[ga_handle].cache = NULL;
     GA[ga_handle].actv = 0;     
     GA[ga_handle].actv_handle = 0;     
-    GA[ga_handle].mem_dev_set = 0;     
 
     if (GA[ga_handle].num_rstrctd > 0) {
       GA[ga_handle].num_rstrctd = 0;
@@ -3986,10 +3985,99 @@ int local_sync_begin,local_sync_end;
     } else {
       GA[ga_handle].overlay = 0;
     }
+    GA[ga_handle].mem_dev_set = 0;     
 
 
     if(local_sync_end)pnga_pgroup_sync(grp_id);
     return(TRUE);
+}
+
+/**
+ *  Deallocate memory for a Global Array but leave other parameters. Allocate
+ *  can then be called on this handle again
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_deallocate =  pnga_deallocate
+#endif
+
+logical pnga_deallocate(Integer g_a)
+{
+  Integer ga_handle = GA_OFFSET + g_a, grp_id, grp_me=GAme;
+  int local_sync_begin,local_sync_end;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  grp_id = (Integer)GA[ga_handle].p_handle;
+  if(local_sync_begin)pnga_pgroup_sync(grp_id);
+
+  if (grp_id > 0) grp_me = PGRP_LIST[grp_id].map_proc_list[GAme];
+  else grp_me=GAme;
+
+  /* fails if handle is out of range or array not active */
+  if(ga_handle < 0 || ga_handle >= _max_global_array){
+    return FALSE;
+  }
+  if(GA[ga_handle].actv==0){
+    return FALSE;
+  }
+  if (GA[ga_handle].cache)
+    free(GA[ga_handle].cache);
+  GA[ga_handle].cache = NULL;
+  GA[ga_handle].actv = 0;     
+
+  if (GA[ga_handle].property == READ_CACHE) {
+    if (GA[ga_handle].cache_head != NULL) {
+      cache_struct_t *next;
+      next = GA[ga_handle].cache_head->next;
+      if (GA[ga_handle].cache_head->cache_buf)
+        free(GA[ga_handle].cache_head->cache_buf);
+      free(GA[ga_handle].cache_head);
+      while (next) {
+        GA[ga_handle].cache_head = next;
+        next = next->next;
+        if (GA[ga_handle].cache_head->cache_buf)
+          free(GA[ga_handle].cache_head->cache_buf);
+        free(GA[ga_handle].cache_head);
+      }
+    }
+  }
+  GA[ga_handle].cache_head = NULL;
+
+  if(GA[ga_handle].ptr[grp_me]==NULL){
+    return TRUE;
+  } 
+  if (!GA[ga_handle].overlay) {
+#ifndef AVOID_MA_STORAGE
+    if(gai_uses_shm((int)grp_id)){
+#endif
+      /* make sure that we free original (before address allignment) pointer */
+#ifdef MSG_COMMS_MPI
+      if (grp_id > 0){
+        ARMCI_Free_group(GA[ga_handle].ptr[grp_me] - GA[ga_handle].id,
+            &PGRP_LIST[grp_id].group);
+      }
+      else
+#endif
+        if (GA[ga_handle].mem_dev_set) {
+          ARMCI_Free_memdev(GA[ga_handle].ptr[GAme]-GA[ga_handle].id);
+        } else {
+          ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
+        }
+#ifndef AVOID_MA_STORAGE
+    }else{
+      if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
+    }
+#endif
+    if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
+    GAstat.curmem -= GA[ga_handle].size;
+  } else {
+    printf("Warning: Trying to deallocate an overlay array\n");
+    GA[ga_handle].overlay = 0;
+  }
+
+
+  if(local_sync_end)pnga_pgroup_sync(grp_id);
+  return(TRUE);
 }
 
     

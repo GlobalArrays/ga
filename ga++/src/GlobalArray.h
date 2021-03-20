@@ -504,6 +504,13 @@ class GlobalArray {
   int allocate() const;
 
   /**
+   * Deallocate internal memory etc. to create a global array
+   *
+   * @return TODO
+   */
+  int deallocate() const;
+
+  /**
    * This function can be used to preallocate internal buffers that are used by
    * the gather, scatter and scatter accumulate calls. This avoids repeated
    * memory allocations in these calls that can reduce performance. The value of

@@ -1,0 +1,169 @@
+name: GlobalArrays_CI
+
+on:
+  push:
+  pull_request:
+  release:
+  schedule:
+    - cron: '0 0 * * SUN'
+  repository_dispatch:
+    types: [backend_automation]
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, macos-10.15]
+        experimental: [false]
+        mpi_impl:
+          - openmpi
+          - mpich
+        armci_network:
+          - mpi3
+          - mpi-ts
+          - ofi
+          - armci
+          - mpi-pr
+        f77:
+          - gfortran-9
+        cc:
+          - clang
+          - gcc-9
+        include:
+          - os: macos-10.15
+            experimental: true
+            mpi_impl: mpich
+            armci_network: mpi-pr
+            f77: ifort
+            cc: icc
+          - os: ubuntu-16.04
+            experimental: true 
+            mpi_impl: mpich
+            armci_network: mpi-pr
+            f77: gfortran
+            cc: gcc
+            use_sicm: "Y"
+          - os: ubuntu-20.04
+            experimental: true 
+            mpi_impl: mpich
+            armci_network: mpi-ts
+            config_opts: "--disable-f77 --enable-cxx"
+            f77: gfortran-10
+            cc: gcc-10
+          - os: macos-10.15
+            experimental: true 
+            mpi_impl: mpich
+            armci_network: mpi-ts
+            config_opts: "--disable-static --enable-shared"
+            f77: gfortran-10
+            cc: clang
+          - os: macos-10.15
+            experimental: true
+            use_cmake: "Y"
+            mpi_impl: mpich
+            armci_network: mpi-pr
+            f77: gfortran-10
+            cc: clang
+          - os: ubuntu-18.04
+            experimental: true
+            use_cmake: "Y"
+            mpi_impl: openmpi
+            armci_network: mpi-pr
+            f77: gfortran
+            cc: gcc
+          - os: ubuntu-20.04
+            experimental: true
+            use_cmake: "Y"
+            mpi_impl: openmpi
+            armci_network: mpi-ts
+            f77: gfortran
+            cc: gcc
+          - os: ubuntu-20.04
+            experimental: true
+            mpi_impl: intel
+            armci_network: mpi-ts
+            f77: ifort
+            cc: gcc
+        exclude:
+          - armci_network: mpi-pr
+            mpi_impl: openmpi
+          - armci_network: mpi3
+            mpi_impl: openmpi
+          - armci_network: ofi
+            mpi_impl: openmpi
+      fail-fast: false
+    env:
+        MPI_IMPL: ${{ matrix.mpi_impl }}
+        PORT: ${{ matrix.armci_network }}
+        ARMCI_NETWORK: ${{ matrix.armci_network }}
+        F77: ${{ matrix.f77 }}
+        CC: ${{ matrix.cc }}
+        CONFIG_OPTS: ${{ matrix.config_opts}}
+        USE_CMAKE: ${{ matrix.use_cmake }}
+        USE_SICM: ${{ matrix.use_sicm }}
+    continue-on-error: ${{ matrix.experimental }}
+    steps: 
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 40
+      - name: Cache install steps
+        id: ga-cache-install
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-install-steps
+        with:
+          # cache files are stored in `~/apps` on Linux/macOS
+          path: |
+            apps
+          key: ${{ runner.os }}-${{ matrix.mpi_impl}}-${{ matrix.armci_network}}-${{ matrix.cc }}-${{ matrix.f77 }}-${{ matrix.config_opts}}-ga-apps-v003
+
+      - name: install_packages
+        run: |
+          case "${{ matrix.os }}" in
+          ubuntu*|jessie|stretch|buster)
+          sudo apt-get update -q -y
+          sudo apt-get install -q -y gfortran
+          ;;
+          macos*)
+          brew update
+          brew install gcc coreutils automake || true
+          ;;
+          esac
+          if [[ "$FC" == "ifort" ]] || [[ "$CC" == "icc" ]] ; then ./travis/install-intel.sh; else true;  fi
+      - name: before_install
+        if: steps.ga-cache-install.outputs.cache-hit != 'true'
+        run: |
+          pwd
+          ls -lart
+          mkdir -p $GITHUB_WORKSPACE/apps
+          sh ./travis/install-autotools.sh $GITHUB_WORKSPACE/apps
+      - name: install
+        run: |
+          export CI_ROOT=$GITHUB_WORKSPACE/apps
+          ./travis/install-mpi.sh $CI_ROOT $MPI_IMPL
+          if [[ "$PORT" == "ofi" ]]; then ./travis/install-libfabric.sh $CI_ROOT; else true;  fi
+          if [[ "$PORT" == "armci" ]]; then ./travis/install-armci-mpi.sh $CI_ROOT; else true; fi
+          if [[ "$USE_SICM" == "Y" ]]; then ./travis/install-sicm.sh $HOME/no_cache; else true; fi
+      - name: compile and test global arrays
+        if: ${{ success() }}
+        run: |
+          ./travis/build-run.sh $GITHUB_WORKSPACE/apps $PORT $MPI_IMPL $USE_CMAKE $F77
+      - name: after_failure
+        if: ${{ failure() }}
+        run: |
+          pwd
+          ls
+          find . -name config.log -exec cat {} ";" || true
+          cat ./test-suite.log || true
+          echo '***** CMakeOutput.log *****'
+          find . -name CMakeOutput.log -exec cat {} ";" || true
+          echo '***** CMakeError.log ******'
+          find . -name CMakeError.log  -exec cat {} ";" || true
+          echo '***********'
+          cat /Users/runner/work/ga/ga/build/CMakeFiles/CMakeOutput.log || true
+          echo '***********'
+          cat /Users/runner/work/ga/ga/build/CMakeFiles/CMakeError.log || true

@@ -1,8 +1,10 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # This should only be run on Linux machines, as OSX does not have NUMA
 # SICM has only been added to mpi-pr
-if [ "$TRAVIS_OS_NAME" != "linux" ] || [ "$PORT" != "mpi-pr" ]; then
+os=`uname`
+echo " in sicm install. os is " $os
+if [ "$os" != "Linux" ] || [ "$PORT" != "mpi-pr" ]; then
     exit 1;
 fi
 
@@ -12,7 +14,7 @@ set -x
 # install dependencies
 sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 sudo apt-get update -qq
-sudo apt-get install -qq libhwloc-dev libiomp-dev libnuma-dev libpfm4-dev llvm-3.9-dev numactl xsltproc
+sudo apt-get install -qq libhwloc-dev libomp5 libiomp-dev libnuma-dev libpfm4-dev llvm-3.9-dev numactl xsltproc
 
 # set install directory to current location to not cache jemalloc/SICM
 TRAVIS_ROOT="$1"

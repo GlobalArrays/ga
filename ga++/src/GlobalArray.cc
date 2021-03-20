@@ -263,6 +263,11 @@ GA::GlobalArray::allocate() const {
   return GA_Allocate(mHandle);
 }
 
+int
+GA::GlobalArray::deallocate() const {
+  return GA_Deallocate(mHandle);
+}
+
 void  
 GA::GlobalArray::allocGatscatBuf(int nelems) const {
   NGA_Alloc_gatscat_buf(nelems);

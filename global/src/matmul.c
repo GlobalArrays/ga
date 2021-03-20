@@ -1981,7 +1981,7 @@ void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
                 /* this is probably an error if you get this far */
                 if (*ipos > 0) {
                   *jpos = *ipos;
-                  *ipos--;
+		  // fix for -Wunused             *ipos--;
                 } else {
                   *jpos = 1;
                   *ipos = 0;

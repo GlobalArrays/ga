@@ -2,8 +2,11 @@ cmake_minimum_required( VERSION 3.17 FATAL_ERROR)
 
 @PACKAGE_INIT@
 
-set(ENABLE_FORTRAN @ENABLE_FORTRAN@)
-set(ENABLE_BLAS @ENABLE_BLAS@)
+set(ENABLE_BLAS       @ENABLE_BLAS@)
+set(ENABLE_CXX        @ENABLE_CXX@)
+set(ENABLE_FORTRAN    @ENABLE_FORTRAN@)
+set(ENABLE_SCALAPACK  @ENABLE_SCALAPACK@)
+set(BUILD_SHARED_LIBS @BUILD_SHARED_LIBS@)
 
 set(GA_MPI_LIBS MPI::MPI_C)
 if(ENABLE_FORTRAN)
@@ -17,12 +20,29 @@ if (NOT TARGET Threads::Threads)
 endif()
 
 if(ENABLE_BLAS)
-  list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}" "${CMAKE_CURRENT_LIST_DIR}/linalg-modules")
-  set(BLAS_VENDOR @BLAS_VENDOR@)
-  set(MKLROOT @MKLROOT@)
-  set(ESSLROOT @ESSLROOT@)
-  set(ReferenceBLASROOT @ReferenceBLASROOT@)
-  set(ReferenceLAPACKROOT @ReferenceLAPACKROOT@)
+  list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_LIST_DIR}")
+  list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_LIST_DIR}/linalg-cmake-modules")
+
+  set(LINALG_VENDOR @LINALG_VENDOR@)
+  
+  set(BLAS_PREFERENCE_LIST      @LINALG_VENDOR@)
+  set(LAPACK_PREFERENCE_LIST    @LAPACK_PREFERENCE_LIST@)
+  set(ScaLAPACK_PREFERENCE_LIST @ScaLAPACK_PREFERENCE_LIST@)
+
+  set(@LINALG_VENDOR@_PREFERS_STATIC    @LINALG_PREFER_STATIC@)
+  set(ReferenceLAPACK_PREFERS_STATIC    @LINALG_PREFER_STATIC@)
+  set(ReferenceScaLAPACK_PREFERS_STATIC @LINALG_PREFER_STATIC@)
+
+  set(@LINALG_VENDOR@_THREAD_LAYER  @LINALG_THREAD_LAYER@)
+  set(BLAS_REQUIRED_COMPONENTS      @LINALG_REQUIRED_COMPONENTS@)
+  set(LAPACK_REQUIRED_COMPONENTS    @LINALG_REQUIRED_COMPONENTS@)
+  set(ScaLAPACK_REQUIRED_COMPONENTS @LINALG_REQUIRED_COMPONENTS@)
+  set(BLAS_OPTIONAL_COMPONENTS      @LINALG_OPTIONAL_COMPONENTS@)
+  set(LAPACK_OPTIONAL_COMPONENTS    @LINALG_OPTIONAL_COMPONENTS@)
+  set(ScaLAPACK_OPTIONAL_COMPONENTS @LINALG_OPTIONAL_COMPONENTS@)  
+
+  set(BLAS_PREFIX @BLAS_PREFIX@)
+  set(LAPACK_PREFIX @LAPACK_PREFIX@)
 
   set(ENABLE_DPCPP @ENABLE_DPCPP@)
   if(ENABLE_DPCPP)
@@ -31,25 +51,62 @@ if(ENABLE_BLAS)
       find_package(IntelSYCL REQUIRED)
     endif()
   endif()
-  
-  if(NOT TARGET BLAS::blas)
-    find_package(BLAS REQUIRED)
+
+  if(ENABLE_SCALAPACK)
+    set(ScaLAPACK_PREFIX @ScaLAPACK_PREFIX@)
+
+    if(NOT TARGET ScaLAPACK::ScaLAPACK)
+      find_package(ScaLAPACK REQUIRED)
+    endif()
   endif()
-  if(NOT TARGET LAPACK::lapack)
+
+  if(NOT TARGET LAPACK::LAPACK)
     find_package(LAPACK REQUIRED)
   endif()
-  list(REMOVE_AT CMAKE_MODULE_PATH -1)
-  list(REMOVE_AT CMAKE_MODULE_PATH -1)
+
+  if(NOT TARGET BLAS::BLAS)
+    find_package(BLAS REQUIRED)
+  endif()
+
+  if(ENABLE_CXX)
+    get_filename_component(_ga_la_pp "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
+    list(INSERT CMAKE_PREFIX_PATH 0 "${_ga_la_pp}")
+
+    set(use_openmp @use_openmp@)
+
+    if(NOT TARGET blaspp)
+      find_package(blaspp REQUIRED)
+    endif()
+
+    if(NOT TARGET lapackpp)
+      find_package(lapackpp REQUIRED)
+    endif()
+
+    if(ENABLE_SCALAPACK)
+      if(NOT TARGET scalapackpp::scalapackpp)
+        find_package(scalapackpp REQUIRED)
+      endif()
+    endif()
+
+    list(REMOVE_AT CMAKE_PREFIX_PATH 0)
+    list(REMOVE_AT CMAKE_MODULE_PATH 0)
+    list(REMOVE_AT CMAKE_MODULE_PATH 0)
+  endif()
 endif()
 
 if(NOT TARGET GlobalArrays::ga)
   include("${CMAKE_CURRENT_LIST_DIR}/globalarrays-targets.cmake")
 endif()
 
-if(NOT TARGET ${GA_MPI_LIBS})
+if(NOT TARGET MPI::MPI_C)
+  find_package(MPI REQUIRED)
+endif()
+
+
+if(NOT TARGET MPI::MPI_Fortran)
   find_package(MPI REQUIRED)
 endif()
 
 set(GlobalArrays_FOUND TRUE)
 set(GlobalArrays_LIBRARIES GlobalArrays::ga)
-set(GlobalArrays_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@/ga")
+set(GlobalArrays_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@/ga" "${MPI_C_INCLUDE_DIRS}")
