@@ -2540,27 +2540,20 @@ logical pnga_allocate(Integer g_a)
   for (i=0; i<ndim; i++) width[i] = (C_Integer)GA[ga_handle].width[i];
 
 #ifdef ENABLE_DEVICE
-  printf("p[%d] GA_Allocate: Got to 1\n",GAme);
   dev_set = GA[ga_handle].dev_set;
   if (dev_set) {
     list = (Integer*)malloc(grp_nproc*sizeof(Integer));
     ilist = (int*)malloc(grp_nproc*sizeof(int));
     iIDs = (int*)malloc(grp_nproc*sizeof(int));
-  printf("p[%d] GA_Allocate: Got to 2 p_handle: %d\n",GAme,p_handle);
     if (p_handle > 0) {
       ARMCI_Device_host_list(ilist, iIDs, &ndev, &PGRP_LIST[p_handle].group);
     } else {
       ARMCI_Group world_g;
-  printf("p[%d] GA_Allocate: Got to 2a\n",GAme);
       ARMCI_Group_get_world(&world_g);
-  printf("p[%d] GA_Allocate: Got to 2b\n",GAme);
       ARMCI_Device_host_list(ilist, iIDs, &ndev, &world_g);
-  printf("p[%d] GA_Allocate: Got to 2c\n",GAme);
     }
-  printf("p[%d] GA_Allocate: Got to 3\n",GAme);
     for (i=0; i<ndev; i++) list[i] = (Integer)ilist[i];
     pnga_set_restricted(g_a, list, ndev);
-  printf("p[%d] GA_Allocate: Got to 4\n",GAme);
   }
 #endif
 
@@ -2737,7 +2730,6 @@ logical pnga_allocate(Integer g_a)
       offset += GA[ga_handle].num_blocks[i];
     }
   }
-  printf("p[%d] GA_Allocate: Got to 5\n",GAme);
 
   GAstat.numcre ++;
 
@@ -2800,7 +2792,6 @@ logical pnga_allocate(Integer g_a)
         pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "&&");
      }
   }else status = 1;
-  printf("p[%d] GA_Allocate: Got to 6 size: %d\n",GAme,mem_size);
 
   if (status) {
     if (GA[ga_handle].mem_dev_set) {
@@ -2809,18 +2800,14 @@ logical pnga_allocate(Integer g_a)
           GA[ga_handle].mem_dev_set, GA[ga_handle].mem_dev);
 #ifdef ENABLE_DEVICE
     } else if (dev_set) {
-  printf("p[%d] GA_Allocate: Got to 7\n",GAme);
-  printf("p[%d] GA_Allocate: Got to 8 mem_size: %d\n",GAme,mem_size);
     if (p_handle > 0) {
       ARMCI_Malloc_dev((void**)GA[ga_handle].ptr, mem_size, &PGRP_LIST[p_handle].group);
     } else {
       int zero = 0;
       ARMCI_Malloc_dev((void**)GA[ga_handle].ptr, mem_size, &zero);
     }
-  printf("p[%d] GA_Allocate: Got to 9 ptr: %p\n",GAme,GA[ga_handle].ptr[GAme]);
 #endif
     } else {
-  printf("p[%d] GA_Allocate: Got to 10 mem_size: %d\n",GAme,mem_size);
       status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
           GA[ga_handle].type, &GA[ga_handle].id, p_handle);
     }
@@ -2828,7 +2815,6 @@ logical pnga_allocate(Integer g_a)
      GA[ga_handle].ptr[grp_me]=NULL;
   }
 
-  printf("p[%d] GA_Allocate: Got to 11\n",GAme);
   if (GA[ga_handle].distr_type == REGULAR) {
     /* Finish setting up information for ghost cell updates */
     if (GA[ga_handle].ghosts == 1) {
@@ -2845,7 +2831,6 @@ logical pnga_allocate(Integer g_a)
     free(iIDs);
   }
 #endif
-  printf("p[%d] GA_Allocate: Got to 12\n",GAme);
 
   pnga_pgroup_sync(p_handle);
   if (status) {
@@ -2857,7 +2842,6 @@ logical pnga_allocate(Integer g_a)
     pnga_destroy(g_a);
     status = FALSE;
   }
-  printf("p[%d] GA_Allocate: Got to 13\n",GAme);
   return status;
 }
 
@@ -4035,13 +4019,11 @@ int local_sync_begin,local_sync_end;
       pnga_pgroup_destroy(GA[ga_handle].p_handle);
     }
 
-          printf("p[%d] (ga_destroy) checking local buffer size: %d\n",GAme,GA[ga_handle].size);
-          /*
+    /*
     if(GA[ga_handle].ptr[grp_me]==NULL){
-       return TRUE;
+      return TRUE;
     } 
     */
-          printf("p[%d] (ga_destroy) local buffer not null\n",GAme);
     if (!GA[ga_handle].overlay) {
 #ifndef AVOID_MA_STORAGE
       if(gai_uses_shm((int)grp_id)){
@@ -4049,7 +4031,6 @@ int local_sync_begin,local_sync_end;
         /* make sure that we free original (before address allignment) pointer */
 #ifdef MSG_COMMS_MPI
         if (grp_id > 0){
-          printf("p[%d] (ga_destroy) Calling ARMCI_Free_group\n",GAme);
           if (GA[ga_handle].dev_set) {
             ARMCI_Free_group(GA[ga_handle].ptr[grp_me] - GA[ga_handle].id,
                 &PGRP_LIST[grp_id].group);
@@ -4061,14 +4042,12 @@ int local_sync_begin,local_sync_end;
         else
 #endif
           if (GA[ga_handle].mem_dev_set) {
-          printf("p[%d] (ga_destroy) Calling ARMCI_Free_memdev\n",GAme);
             ARMCI_Free_memdev(GA[ga_handle].ptr[GAme]-GA[ga_handle].id);
           } else {
-          printf("p[%d] (ga_destroy) Calling ARMCI_Free\n",GAme);
-          if (GA[ga_handle].dev_set) {
-            ARMCI_Free(GA[ga_handle].ptr[GAme]);
-          } else {
-            ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
+            if (GA[ga_handle].dev_set) {
+              ARMCI_Free(GA[ga_handle].ptr[GAme]);
+            } else {
+              ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
             }
           }
 #ifndef AVOID_MA_STORAGE
