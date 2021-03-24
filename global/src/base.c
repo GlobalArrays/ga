@@ -2551,8 +2551,11 @@ logical pnga_allocate(Integer g_a)
       ARMCI_Device_host_list(ilist, iIDs, &ndev, &PGRP_LIST[p_handle].group);
     } else {
       ARMCI_Group world_g;
+  printf("p[%d] GA_Allocate: Got to 2a\n",GAme);
       ARMCI_Group_get_world(&world_g);
+  printf("p[%d] GA_Allocate: Got to 2b\n",GAme);
       ARMCI_Device_host_list(ilist, iIDs, &ndev, &world_g);
+  printf("p[%d] GA_Allocate: Got to 2c\n",GAme);
     }
   printf("p[%d] GA_Allocate: Got to 3\n",GAme);
     for (i=0; i<ndev; i++) list[i] = (Integer)ilist[i];
@@ -2734,6 +2737,7 @@ logical pnga_allocate(Integer g_a)
       offset += GA[ga_handle].num_blocks[i];
     }
   }
+  printf("p[%d] GA_Allocate: Got to 5\n",GAme);
 
   GAstat.numcre ++;
 
@@ -2796,6 +2800,7 @@ logical pnga_allocate(Integer g_a)
         pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "&&");
      }
   }else status = 1;
+  printf("p[%d] GA_Allocate: Got to 6 size: %d\n",GAme,mem_size);
 
   if (status) {
     if (GA[ga_handle].mem_dev_set) {
@@ -2804,14 +2809,18 @@ logical pnga_allocate(Integer g_a)
           GA[ga_handle].mem_dev_set, GA[ga_handle].mem_dev);
 #ifdef ENABLE_DEVICE
     } else if (dev_set) {
-  printf("p[%d] GA_Allocate: Got to 5\n",GAme);
-      if (ARMCI_Device_process()) {
-  printf("p[%d] GA_Allocate: Got to 6\n",GAme);
-        ARMCI_Malloc_dev((void**)GA[ga_handle].ptr, mem_size, &PGRP_LIST[p_handle].group);
-      }
   printf("p[%d] GA_Allocate: Got to 7\n",GAme);
+  printf("p[%d] GA_Allocate: Got to 8 mem_size: %d\n",GAme,mem_size);
+    if (p_handle > 0) {
+      ARMCI_Malloc_dev((void**)GA[ga_handle].ptr, mem_size, &PGRP_LIST[p_handle].group);
+    } else {
+      int zero = 0;
+      ARMCI_Malloc_dev((void**)GA[ga_handle].ptr, mem_size, &zero);
+    }
+  printf("p[%d] GA_Allocate: Got to 9 ptr: %p\n",GAme,GA[ga_handle].ptr[GAme]);
 #endif
     } else {
+  printf("p[%d] GA_Allocate: Got to 10 mem_size: %d\n",GAme,mem_size);
       status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
           GA[ga_handle].type, &GA[ga_handle].id, p_handle);
     }
@@ -2819,6 +2828,7 @@ logical pnga_allocate(Integer g_a)
      GA[ga_handle].ptr[grp_me]=NULL;
   }
 
+  printf("p[%d] GA_Allocate: Got to 11\n",GAme);
   if (GA[ga_handle].distr_type == REGULAR) {
     /* Finish setting up information for ghost cell updates */
     if (GA[ga_handle].ghosts == 1) {
@@ -2835,6 +2845,7 @@ logical pnga_allocate(Integer g_a)
     free(iIDs);
   }
 #endif
+  printf("p[%d] GA_Allocate: Got to 12\n",GAme);
 
   pnga_pgroup_sync(p_handle);
   if (status) {
@@ -2846,6 +2857,7 @@ logical pnga_allocate(Integer g_a)
     pnga_destroy(g_a);
     status = FALSE;
   }
+  printf("p[%d] GA_Allocate: Got to 13\n",GAme);
   return status;
 }
 
@@ -3400,6 +3412,7 @@ int i, nproc,grp_me=GAme;
 #   ifdef GA_ELEM_PADDING
        bytes += (C_Long)item_size; 
 #   endif
+       printf("p[%d] gai_get_shmem bytes: %d\n",GAme,bytes);
 
 #endif
 
@@ -3463,6 +3476,7 @@ int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
 	       int grp_id)
 {
 #ifdef AVOID_MA_STORAGE
+  printf("p[%d] Calling gai_get_shmem bytes: %d\n",GAme,bytes);
    return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
 #else
 Integer handle = INVALID_MA_HANDLE, index;
@@ -3475,7 +3489,10 @@ char *ptr = (char*)0;
      grp_me = PGRP_LIST[grp_id].map_proc_list[GAme];
    }
  
-   if(gai_uses_shm(grp_id)) return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
+   if(gai_uses_shm(grp_id)) {
+  printf("p[%d] Calling gai_get_shmem bytes: %d\n",GAme,bytes);
+     return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
+   }
    else{
      nelem = bytes/((C_Long)item_size) + 1;
      if(bytes)
@@ -4018,9 +4035,13 @@ int local_sync_begin,local_sync_end;
       pnga_pgroup_destroy(GA[ga_handle].p_handle);
     }
 
+          printf("p[%d] (ga_destroy) checking local buffer size: %d\n",GAme,GA[ga_handle].size);
+          /*
     if(GA[ga_handle].ptr[grp_me]==NULL){
        return TRUE;
     } 
+    */
+          printf("p[%d] (ga_destroy) local buffer not null\n",GAme);
     if (!GA[ga_handle].overlay) {
 #ifndef AVOID_MA_STORAGE
       if(gai_uses_shm((int)grp_id)){
@@ -4028,15 +4049,27 @@ int local_sync_begin,local_sync_end;
         /* make sure that we free original (before address allignment) pointer */
 #ifdef MSG_COMMS_MPI
         if (grp_id > 0){
-          ARMCI_Free_group(GA[ga_handle].ptr[grp_me] - GA[ga_handle].id,
-              &PGRP_LIST[grp_id].group);
+          printf("p[%d] (ga_destroy) Calling ARMCI_Free_group\n",GAme);
+          if (GA[ga_handle].dev_set) {
+            ARMCI_Free_group(GA[ga_handle].ptr[grp_me] - GA[ga_handle].id,
+                &PGRP_LIST[grp_id].group);
+          } else {
+            ARMCI_Free_group(GA[ga_handle].ptr[grp_me],
+                &PGRP_LIST[grp_id].group);
+          }
         }
         else
 #endif
           if (GA[ga_handle].mem_dev_set) {
+          printf("p[%d] (ga_destroy) Calling ARMCI_Free_memdev\n",GAme);
             ARMCI_Free_memdev(GA[ga_handle].ptr[GAme]-GA[ga_handle].id);
           } else {
+          printf("p[%d] (ga_destroy) Calling ARMCI_Free\n",GAme);
+          if (GA[ga_handle].dev_set) {
+            ARMCI_Free(GA[ga_handle].ptr[GAme]);
+          } else {
             ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
+            }
           }
 #ifndef AVOID_MA_STORAGE
       }else{

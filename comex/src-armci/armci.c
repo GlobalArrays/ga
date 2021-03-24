@@ -920,6 +920,7 @@ int ARMCI_Num_dev(ARMCI_Group *group)
 {
   return comex_num_devices(*group);
 }
+
 int ARMCI_Device_process()
 {
   return comex_device_process();
@@ -934,8 +935,11 @@ void ARMCI_Device_host_list(int *list, int *devIDs, int *ndev, ARMCI_Group *grou
 {
   comex_device_host_list(list, devIDs, ndev, *group);
 }
+
 int ARMCI_Malloc_dev(void **ptr_array, armci_size_t bytes, ARMCI_Group *group)
 {
+  printf("p[%d] (ARMCI_malloc_dev) Got to 1 group: %d\n",_my_node_id, *group);
   return  comex_malloc_dev(ptr_array, (size_t)bytes, *group);
+  printf("p[%d] (ARMCI_malloc_dev) Got to 2\n",_my_node_id);
 }
 #endif

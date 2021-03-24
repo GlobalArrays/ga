@@ -381,7 +381,9 @@ reg_cache_find(int rank, void *buf, size_t len)
 {
     reg_entry_t *entry = NULL;
     reg_entry_t *runner = NULL;
+    printf("p[%d] (reg_cache_find) buf: %p\n",g_state.rank,buf);
 
+    if (buf == NULL) return entry;
 #if DEBUG
     printf("[%d] reg_cache_find(rank=%d, buf=%p, len=%d)\n",
             g_state.rank, rank, buf, len);
@@ -448,6 +450,7 @@ reg_cache_find_intersection(int rank, void *buf, size_t len)
     reg_entry_t *entry = NULL;
     reg_entry_t *runner = NULL;
 
+    if (buf == NULL) return entry;
 #if DEBUG
     printf("[%d] reg_cache_find_intersection(rank=%d, buf=%p, len=%d)\n",
             g_state.rank, rank, buf, len);
@@ -488,7 +491,7 @@ reg_cache_find_intersection(int rank, void *buf, size_t len)
  * @pre NULL == reg_cache_find(rank, buf, 0)
  * @pre NULL == reg_cache_find_intersection(rank, buf, 0)
  *
- * @return RR_SUCCESS on success
+ * @return pointer to new node
  */
 reg_entry_t*
 reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped,
@@ -509,30 +512,43 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
             g_state.rank, rank, buf, len, name, mapped);
 #endif
 
+    if (buf == 0) {
+      return (reg_entry_t*)NULL;
+    }
     /* preconditions */
+    printf("p[%d] (reg_cache_insert) Got to 1 buf: %p mapped: %p\n",g_state.rank,buf,mapped);
     COMEX_ASSERT(NULL != reg_cache);
     COMEX_ASSERT(0 <= rank && rank < reg_nprocs);
     COMEX_ASSERT(NULL != buf);
     COMEX_ASSERT(len >= 0);
     COMEX_ASSERT(NULL == reg_cache_find(rank, buf, len));
     COMEX_ASSERT(NULL == reg_cache_find_intersection(rank, buf, len));
+    printf("p[%d] (reg_cache_insert) Got to 2\n",g_state.rank);
 
     /* allocate the new entry */
     node = (reg_entry_t *)malloc(sizeof(reg_entry_t));
     COMEX_ASSERT(node);
+    printf("p[%d] (reg_cache_insert) Got to 2a\n",g_state.rank);
 
     /* initialize the new entry */
+    if (len == 0 && buf != NULL) {
+      printf("p[%d] (reg_cache_insert) ALERT len: %d buf: %p\n",g_state.rank,len,buf);
+    }
+
     node->rank = rank;
     node->buf = buf;
     node->len = len;
     node->use_dev = use_dev;
     node->dev_id = dev_id;
-    (void)memcpy(node->name, name, SHM_NAME_SIZE);
+    printf("p[%d] (reg_cache_insert) Got to 2b\n",g_state.rank);
+    if (name != NULL) (void)memcpy(node->name, name, SHM_NAME_SIZE);
+    printf("p[%d] (reg_cache_insert) Got to 2c\n",g_state.rank);
     node->mapped = mapped;
     node->next = NULL;
 #if USE_SICM
     node->device = device;
 #endif
+    printf("p[%d] (reg_cache_insert) Got to 3\n",g_state.rank);
 
     /* push new entry to tail of linked list */
     if (NULL == reg_cache[rank]) {
@@ -545,6 +561,7 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
         }
         runner->next = node;
     }
+    printf("p[%d] (reg_cache_insert) Got to 4\n",g_state.rank);
 
     return node;
 }
@@ -572,6 +589,7 @@ reg_cache_delete(int rank, void *buf)
     reg_return_t status = RR_FAILURE;
     reg_entry_t *runner = NULL;
     reg_entry_t *previous_runner = NULL;
+    if (buf == NULL) return RR_SUCCESS;
 
 #if DEBUG
     printf("[%d] reg_cache_delete(rank=%d, buf=%p)\n",
@@ -596,6 +614,7 @@ reg_cache_delete(int rank, void *buf)
     }
     /* we should have found an entry */
     if (NULL == runner) {
+      printf("p[%d] (reg_cache_delete) rank: %d buf: %p\n",g_state.rank,rank,buf);
         COMEX_ASSERT(0);
         return RR_FAILURE;
     }

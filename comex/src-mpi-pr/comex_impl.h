@@ -46,7 +46,7 @@
     FILE *comex_trace_file;
 #   define printf(...) fprintf(comex_trace_file, __VA_ARGS__); fflush(comex_trace_file)
 #else
-#   define printf(...) fprintf(stderr, __VA_ARGS__); fflush(stderr)
+/*#   define printf(...) fprintf(stderr, __VA_ARGS__); fflush(stderr) */
 #endif
 
 #define COMEX_STRINGIFY(x) #x

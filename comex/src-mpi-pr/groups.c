@@ -178,13 +178,16 @@ int comex_group_size(comex_group_t group, int *size)
 /* return the total number of devices associate with processors on the group */
 int comex_num_devices(comex_group_t group)
 {
+    printf("p[%d] (comex_num_devices) Got to 1 group: %d\n",g_state.rank,group);
     comex_igroup_t *igroup = comex_get_igroup_from_group(group);
     int dev_status = 0;
     int dev_tot;
     int ierr;
     MPI_Comm comm = igroup->comm;
     if (_comex_dev_flag) dev_status++;
+    printf("p[%d] (comex_num_devices) Got to 2\n",g_state.rank);
     MPI_Allreduce(&dev_status, &dev_tot, 1, MPI_INT, MPI_SUM, comm);
+    printf("p[%d] (comex_num_devices) Got to 3\n",g_state.rank);
     return dev_tot; 
 }
 
@@ -203,6 +206,7 @@ int comex_device_process()
  */
 void comex_device_host_list(int *list, int *devIDs, int *ndev, comex_group_t group)
 {
+    printf("p[%d] (comex_device_host_list) Got to 1\n",g_state.rank);
     int i, icnt;
     comex_igroup_t *igroup = comex_get_igroup_from_group(group);
     int me = igroup->rank;
@@ -216,12 +220,15 @@ void comex_device_host_list(int *list, int *devIDs, int *ndev, comex_group_t gro
     for (i=0; i<size; i++) fhost[i] = 0;
     for (i=0; i<size; i++) t_ids[i] = 0;
     for (i=0; i<size; i++) f_ids[i] = 0;
+    printf("p[%d] (comex_device_host_list) Got to 2 dev_id: %d\n",g_state.rank,igroup->dev_id);
     if (_comex_dev_flag) {
       thost[me] = 1;
-      t_ids[me] = igroup->dev_id+1;
+      t_ids[me] = _comex_dev_id+1;
     }
+    printf("p[%d] (comex_device_host_list) Got to 3\n",g_state.rank);
     MPI_Allreduce(thost, fhost, size, MPI_INT, MPI_SUM, comm);
     MPI_Allreduce(t_ids, f_ids, size, MPI_INT, MPI_SUM, comm);
+    printf("p[%d] (comex_device_host_list) Got to 4\n",g_state.rank);
     icnt = 0;
     for (i=0; i<size; i++) {
       if (fhost[i] > 0) {
@@ -231,11 +238,17 @@ void comex_device_host_list(int *list, int *devIDs, int *ndev, comex_group_t gro
       }
     }
     *ndev = icnt;
+    printf("p[%d] (comex_device_host_list) Got to 5 icnt: %d\n",g_state.rank,icnt);
 
     free(thost);
-    free(thost);
+    free(fhost);
     free(t_ids);
     free(f_ids);
+    printf("p[%d] (comex_device_host_list) Got to 6 ndev: %d\n",g_state.rank,*ndev);
+    for (i=0; i<*ndev; i++) {
+      printf("p[%d] (comex_device_host_list) host[%d]: %d ID[%d]: %d\n",g_state.rank,i,
+          list[i],i,devIDs[i]);
+    }
     return; 
 }
 
@@ -615,6 +628,7 @@ void comex_group_init()
         num_progress_ranks_per_node, is_node_ranks_packed);
 #ifdef ENABLE_DEVICE
     /* find out if this process is bound to a device */
+    printf("p[%d] Number of devices: %d\n",g_state.rank,numDevices());
     if (g_state.master[g_state.rank] == smallest_rank_with_same_hostid) {
       int inc = g_state.rank - smallest_rank_with_same_hostid - 1;
       if (inc < numDevices() && inc >= 0) {
@@ -628,6 +642,7 @@ void comex_group_init()
         _comex_dev_id = inc;
       }
     }
+    printf("p[%d] _comex_dev_flag: %d _comex_dev_id: %d\n",g_state.rank,_comex_dev_flag,_comex_dev_id);
 #endif
 #if DEBUG
     printf("[%d] rank; split_group_size: %d\n", g_state.rank, split_group_size);
@@ -697,6 +712,10 @@ void comex_group_init()
         COMEX_ASSERT(MPI_SUCCESS == status);
         _igroup_set_world_ranks(igroup);
         COMEX_ASSERT(igroup->world_ranks != NULL);
+#ifdef ENABLE_DEVICE
+        igroup->dev_id = _comex_dev_id;
+        igroup->is_dev_group = _comex_dev_flag;
+#endif
 #if DEBUG
         printf("Creating comm: I AM WORKER[%ld]\n", g_state.rank);
 #endif
@@ -721,6 +740,9 @@ void comex_group_init()
         printf("[%d] world %d/%d\tI'm a worker\n",
             RANK_OR_PID, g_state.rank, g_state.size);
     }
+#endif
+#ifdef ENABLE_DEVICE
+    printf("p[%d] dev_flag: %d dev_id: %d\n",g_state.rank,_comex_dev_flag,_comex_dev_id);
 #endif
 }
 

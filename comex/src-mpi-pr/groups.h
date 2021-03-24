@@ -19,6 +19,8 @@ extern void mallocDevice(void **buf, int size);
 extern void freeDevice(void *buf);
 extern void copyToDevice(void *hostptr, void *devptr, int bytes);
 extern void copyToHost(void *hostptr, void *devptr, int bytes);
+extern int _comex_dev_flag;
+extern int _comex_dev_id;
 #endif
 
 typedef struct {
