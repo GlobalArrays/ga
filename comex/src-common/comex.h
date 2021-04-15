@@ -738,6 +738,14 @@ extern int comex_device_process();
  */
 extern void comex_device_host_list(int *list, int *devIDs, int *ndev, comex_group_t group);
 
+
+/**
+ * set values on the device to a specific value
+ * @param[in] ptr pointer to device memory that needs to be set
+ * @param[in] val integer representation of the value of each bytes
+ * @param[in] size number of bytes that should be set
+ */
+extern void comex_device_memset(void *ptr, int val, size_t size);
 #endif
 
 #if defined(__cplusplus) || defined(c_plusplus)

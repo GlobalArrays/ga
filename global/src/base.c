@@ -3396,7 +3396,6 @@ int i, nproc,grp_me=GAme;
 #   ifdef GA_ELEM_PADDING
        bytes += (C_Long)item_size; 
 #   endif
-       printf("p[%d] gai_get_shmem bytes: %d\n",GAme,bytes);
 
 #endif
 

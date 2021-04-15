@@ -31,7 +31,7 @@
 # -------------------------------------------------------------
 
 #cmake_minimum_required (VERSION 3.18.0 FATAL_ERROR)
-cmake_minimum_required (VERSION 3.17.0 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.15.0 FATAL_ERROR)
 project (GlobalArrays VERSION 5.8.0 LANGUAGES C)
 
 # Append local CMake directory

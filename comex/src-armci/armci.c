@@ -940,4 +940,9 @@ int ARMCI_Malloc_dev(void **ptr_array, armci_size_t bytes, ARMCI_Group *group)
 {
   return  comex_malloc_dev(ptr_array, (size_t)bytes, *group);
 }
+
+void ARMCI_Device_memset(void *ptr, int val, armci_size_t bytes)
+{
+  comex_device_memset(ptr, val, (size_t)bytes);
+}
 #endif

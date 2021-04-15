@@ -64,6 +64,9 @@ void pnga_zero(Integer g_a)
   Integer _hi[MAXDIM];
   /*register Integer i;*/
   int local_sync_begin,local_sync_end;
+#ifdef ENABLE_DEVICE
+  int dev_set = GA[g_a+GA_OFFSET].dev_set;
+#endif
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -122,7 +125,15 @@ void pnga_zero(Integer g_a)
 /*         break; */
 /*         default: pnga_error(" wrong data type ",type); */
 /*       } */
+#ifdef ENABLE_DEVICE
+      if (dev_set) {
+        ARMCI_Device_memset(ptr, 0, GAsizeofM(type)*elems);
+      } else {
+#endif
       memset(ptr, 0, GAsizeofM(type)*elems);
+#ifdef ENABLE_DEVICE
+      }
+#endif
 
       /* release access to the data */
       pnga_release_update(g_a, _lo, _hi);
@@ -161,7 +172,15 @@ void pnga_zero(Integer g_a)
 /*       break; */
 /*       default: pnga_error(" wrong data type ",type); */
 /*     } */
+#ifdef ENABLE_DEVICE
+      if (dev_set) {
+        ARMCI_Device_memset(ptr, 0, GAsizeofM(type)*elems);
+      } else {
+#endif
       memset(ptr, 0, GAsizeofM(type)*elems);
+#ifdef ENABLE_DEVICE
+      }
+#endif
 
     /* release access to the data */
     pnga_release_update_block_segment(g_a, me);

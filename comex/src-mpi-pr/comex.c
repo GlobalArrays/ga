@@ -338,6 +338,7 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, int device_id);
 int comex_num_devices(comex_group_t group);
 int comex_device_process();
 void comex_device_host_list(int *hosts, int *devIDs, int *ndev, comex_group_t group);
+void comex_device_memset(void* ptr, int val, size_t bytes);
 #endif
 STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory);
 STATIC int _is_master(void);
@@ -812,6 +813,7 @@ int comex_put(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
+    printf("p[%d]  calling comex_put\n",g_state.rank);
 
     nb = nb_wait_for_handle();
 
@@ -833,6 +835,7 @@ int comex_get(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
+    printf("p[%d]  calling comex_get\n",g_state.rank);
 
     nb = nb_wait_for_handle();
 
@@ -878,6 +881,7 @@ int comex_puts(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
+    printf("p[%d]  calling comex_puts\n",g_state.rank);
 
     nb = nb_wait_for_handle();
 
@@ -901,6 +905,7 @@ int comex_gets(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
+    printf("p[%d]  calling comex_gets\n",g_state.rank);
 
     nb = nb_wait_for_handle();
 
@@ -1484,6 +1489,7 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, int device_id)
     /* allocate device memory */
     setDevice(device_id); 
     mallocDevice(&memory, size);
+    printf("p[%d] mallocDevice buf: %p size: %d id: %d\n",g_state.rank,memory,size,device_id);
 
     /* register the memory locally */
     reg_entry = reg_cache_insert(
@@ -1703,6 +1709,7 @@ int comex_nbput(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
+    printf("p[%d]  calling comex_nbput\n",g_state.rank);
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -1731,6 +1738,7 @@ int comex_nbget(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
+    printf("p[%d]  calling comex_nbget\n",g_state.rank);
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -1790,6 +1798,7 @@ int comex_nbputs(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
+    printf("p[%d]  calling comex_nbputs\n",g_state.rank);
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -1820,6 +1829,7 @@ int comex_nbgets(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
+    printf("p[%d]  calling comex_nbgets\n",g_state.rank);
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -4792,6 +4802,9 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
 STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory)
 {
     ptrdiff_t offset = 0;
+#ifdef ENABLE_DEVICE
+    return memory;
+#endif
 
     COMEX_ASSERT(reg_entry);
 #if DEBUG_VERBOSE
@@ -5920,6 +5933,7 @@ STATIC void nb_wait_all()
 
 STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 {
+    int on_host = 0;
     COMEX_ASSERT(NULL != src);
     COMEX_ASSERT(NULL != dst);
     COMEX_ASSERT(bytes > 0);
@@ -5931,6 +5945,9 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
     printf("[%d] nb_put(src=%p, dst=%p, bytes=%d, proc=%d, nb=%p)\n",
             g_state.rank, src, dst, bytes, proc, nb);
 #endif
+#ifdef ENABLE_DEVICE
+    on_host = isHostPointer(src);
+#endif
 
     if (COMEX_ENABLE_PUT_SELF) {
         /* put to self */
@@ -5938,7 +5955,24 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             if (fence_array[g_state.master[proc]]) {
                 _fence_master(g_state.master[proc]);
             }
+#ifdef ENABLE_DEVICE
+            {
+              reg_entry_t *reg_entry = NULL;
+              reg_entry = reg_cache_find(proc, dst, bytes);
+              COMEX_ASSERT(reg_entry);
+              if (reg_entry->use_dev && on_host) {
+                printf("p[%d] (nb_put) calling copyToDevice on proc dst: %p\n",g_state.rank,dst);
+                setDevice(reg_entry->dev_id);
+                copyToDevice(src, dst, bytes);
+              } else if (reg_entry->use_dev && !on_host) {
+                copyDevToDev(src, dst, bytes);
+              } else {
+                (void)memcpy(dst, src, bytes);
+              }
+            }
+#else
             (void)memcpy(dst, src, bytes);
+#endif
             return;
         }
     }
@@ -5957,8 +5991,21 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 
             reg_entry = reg_cache_find(proc, dst, bytes);
             COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_DEVICE
+            mapped_offset = _get_offset_memory(reg_entry, dst);
+            if (reg_entry->use_dev && on_host) {
+                printf("p[%d] (nb_put) calling copyToDevice on node dst: %p\n",g_state.rank,dst);
+              setDevice(reg_entry->dev_id);
+              copyToDevice(src, mapped_offset, bytes);
+            } else if (reg_entry->use_dev && !on_host) {
+              copyDevToDev(src, mapped_offset, bytes);
+            } else {
+              (void)memcpy(mapped_offset, src, bytes);
+            }
+#else
             mapped_offset = _get_offset_memory(reg_entry, dst);
             (void)memcpy(mapped_offset, src, bytes);
+#endif
             return;
         }
     }
@@ -5969,6 +6016,8 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header_t *header = NULL;
         int master_rank = -1;
         int use_eager = _eager_check(bytes);
+        reg_entry_t *reg_entry = NULL;
+        int on_host=0;
 
         master_rank = g_state.master[proc];
         /* only fence on the master */
@@ -5987,8 +6036,21 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->local_address = src;
         header->rank = proc;
         header->length = bytes;
+#ifdef ENABLE_DEVICE
+        reg_entry = reg_cache_find(proc, dst, bytes);
+        header->use_dev = reg_entry->use_dev;
+        header->dev_id = reg_entry->dev_id;
+#endif
         if (use_eager) {
+#ifdef ENABLE_DEVICE
+            if (on_host) {
+              (void)memcpy(message+sizeof(header_t), src, bytes);
+            } else {
+              copyToHost(message+sizeof(header_t), src, bytes);
+            }
+#else
             (void)memcpy(message+sizeof(header_t), src, bytes);
+#endif
             nb_send_header(message, message_size, master_rank, nb);
         }
         else {
@@ -6009,20 +6071,43 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 
 STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 {
+    int on_host = 0;
     COMEX_ASSERT(NULL != src);
     COMEX_ASSERT(NULL != dst);
     COMEX_ASSERT(bytes > 0);
     COMEX_ASSERT(proc >= 0);
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != nb);
+#ifdef ENABLE_DEVICE
+    on_host = isHostPointer(dst);
+#endif
 
+    /*
+    printf("p[%d] calling nb_get on_host: %d\n",g_state.rank,on_host);
+    */
     if (COMEX_ENABLE_GET_SELF) {
         /* get from self */
         if (g_state.rank == proc) {
             if (fence_array[g_state.master[proc]]) {
                 _fence_master(g_state.master[proc]);
             }
+#ifdef ENABLE_DEVICE
+            {
+              reg_entry_t *reg_entry = NULL;
+              reg_entry = reg_cache_find(proc, src, bytes);
+              COMEX_ASSERT(reg_entry);
+              if (reg_entry->use_dev && on_host) {
+                setDevice(reg_entry->dev_id);
+                copyToHost(dst, src, bytes);
+              } else if (reg_entry->use_dev && !on_host) {
+                copyDevToDev(src, dst, bytes);
+              } else {
+                (void)memcpy(dst, src, bytes);
+              }
+            }
+#else
             (void)memcpy(dst, src, bytes);
+#endif
             return;
         }
     }
@@ -6041,8 +6126,23 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 
             reg_entry = reg_cache_find(proc, src, bytes);
             COMEX_ASSERT(reg_entry);
+            /*
+              printf("p[%d] reg_entry->use_dev: %d on node proc: %d\n",g_state.rank,reg_entry->use_dev,proc);
+              */
+#ifdef ENABLE_DEVICE
+            mapped_offset = _get_offset_memory(reg_entry, src);
+            if (reg_entry->use_dev && on_host) {
+              setDevice(reg_entry->dev_id);
+              copyToHost(dst, mapped_offset, bytes);
+            } else if (reg_entry->use_dev && !on_host) {
+              copyDevToDev(mapped_offset, dst, bytes);
+            } else {
+              (void)memcpy(dst, mapped_offset, bytes);
+            }
+#else
             mapped_offset = _get_offset_memory(reg_entry, src);
             (void)memcpy(dst, mapped_offset, bytes);
+#endif
             return;
         }
     }
@@ -6050,6 +6150,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
     {
         header_t *header = NULL;
         int master_rank = -1;
+        reg_entry_t *reg_entry = NULL;
 
         master_rank = g_state.master[proc];
         header = malloc(sizeof(header_t));
@@ -6060,6 +6161,11 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->local_address = dst;
         header->rank = proc;
         header->length = bytes;
+#ifdef ENABLE_DEVICE
+        reg_entry = reg_cache_find(proc, src, bytes);
+        header->use_dev = reg_entry->use_dev;
+        header->dev_id = reg_entry->dev_id;
+#endif
         {
             /* prepost all receives */
             char *buf = (char*)dst;
@@ -6210,6 +6316,10 @@ STATIC void nb_puts(
     int n1dim;  /* number of 1 dim block */
     int src_bvalue[7], src_bunit[7];
     int dst_bvalue[7], dst_bunit[7];
+#ifdef ENABLE_DEVICE
+    reg_entry_t *reg_entry;
+    int on_host = isHostPointer(src);
+#endif
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_puts(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -6224,6 +6334,19 @@ STATIC void nb_puts(
     }
 
     /* if not a strided put to self or SMP, use datatype algorithm */
+#ifdef ENABLE_DEVICE
+    if (COMEX_ENABLE_PUT_DATATYPE
+            && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
+            && (!COMEX_ENABLE_PUT_SMP
+                || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+            && (_packed_size(src_stride, count, stride_levels) > COMEX_PUT_DATATYPE_THRESHOLD)) {
+        reg_entry = reg_cache_find(proc, dst, 0);
+        if (!reg_entry->use_dev && !on_host) {
+          nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
+          return;
+        }
+    }
+#else
     if (COMEX_ENABLE_PUT_DATATYPE
             && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_PUT_SMP
@@ -6232,6 +6355,7 @@ STATIC void nb_puts(
         nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
+#endif
 
     /* if not a strided put to self or SMP, use packed algorithm */
     if (COMEX_ENABLE_PUT_PACKED
@@ -6485,6 +6609,10 @@ STATIC void nb_gets(
     int n1dim;  /* number of 1 dim block */
     int src_bvalue[7], src_bunit[7];
     int dst_bvalue[7], dst_bunit[7];
+#ifdef ENABLE_DEVICE
+    reg_entry_t *reg_entry;
+    int on_host = isHostPointer(dst);
+#endif
 
     /* if not actually a strided get */
     if (0 == stride_levels) {
@@ -6492,7 +6620,19 @@ STATIC void nb_gets(
         return;
     }
 
-    /* if not a strided get from self or SMP, use datatype algorithm */
+#ifdef ENABLE_DEVICE
+    if (COMEX_ENABLE_GET_DATATYPE
+            && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
+            && (!COMEX_ENABLE_GET_SMP
+                || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+            && (_packed_size(src_stride, count, stride_levels) > COMEX_GET_DATATYPE_THRESHOLD)) {
+        reg_entry = reg_cache_find(proc, dst, 0);
+        if (!reg_entry->use_dev && !on_host) {
+          nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
+          return;
+        }
+    }
+#else
     if (COMEX_ENABLE_GET_DATATYPE
             && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_GET_SMP
@@ -6501,6 +6641,7 @@ STATIC void nb_gets(
         nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
+#endif
 
     /* if not a strided get from self or SMP, use packed algorithm */
     if (COMEX_ENABLE_GET_PACKED
@@ -7418,3 +7559,9 @@ STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels,
     }
 }
 
+#ifdef ENABLE_DEVICE
+void comex_device_memset(void *ptr, int val, size_t bytes)
+{
+  deviceMemset(ptr,val,bytes);
+}
+#endif

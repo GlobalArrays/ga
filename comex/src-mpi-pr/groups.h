@@ -19,6 +19,9 @@ extern void mallocDevice(void **buf, int size);
 extern void freeDevice(void *buf);
 extern void copyToDevice(void *hostptr, void *devptr, int bytes);
 extern void copyToHost(void *hostptr, void *devptr, int bytes);
+extern void copyDevToDev(void *src, void *dst, int bytes);
+extern void deviceMemset(void *ptr, int val, size_t bytes);
+extern int isHostPointer(void *ptr);
 extern int _comex_dev_flag;
 extern int _comex_dev_id;
 #endif
