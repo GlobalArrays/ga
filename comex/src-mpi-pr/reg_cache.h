@@ -52,8 +52,7 @@ typedef struct _reg_entry_t {
 
 reg_return_t reg_cache_init(int nprocs);
 reg_return_t reg_cache_destroy();
-reg_entry_t *reg_cache_find(int rank, void *buf, size_t len);
-<<<<<<< HEAD
+reg_entry_t *reg_cache_find(int rank, void *buf, size_t len, int dev_id);
 reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len, const char *name,
 #if ENABLE_SYSV
     key_t key,
@@ -67,7 +66,7 @@ reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len, const char *name,
 #endif
 #endif
     );
-reg_return_t reg_cache_delete(int rank, void *buf);
+reg_return_t reg_cache_delete(int rank, void *buf, int dev_id);
 reg_return_t reg_cache_nullify(reg_entry_t *entry);
 
 #endif /* _REG_CACHE_H_ */
