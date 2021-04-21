@@ -2552,6 +2552,9 @@ logical pnga_allocate(Integer g_a)
       ARMCI_Group_get_world(&world_g);
       ARMCI_Device_host_list(ilist, iIDs, &ndev, &world_g);
     }
+    if (ndev == 0) {
+      pnga_error("No devices available to host global array",0);
+    }
     for (i=0; i<ndev; i++) list[i] = (Integer)ilist[i];
     pnga_set_restricted(g_a, list, ndev);
   }

@@ -560,14 +560,16 @@ extern int comex_malloc_dev(
  */
 extern int comex_free(void *ptr, comex_group_t group);
 
+#ifdef ENABLE_DEVICE
 /**
- * Collective free of memory on a specified device given the original local pointer.
+ * Collective free of memory on devices given the original local pointer.
  *
  * @param[in] ptr the original local memory allocated using comex_malloc
  * @param[in] group the group to which the calling process belongs
  * @return COMEX_SUCCESS on success
  */
 extern int comex_free_dev(void *ptr, comex_group_t group);
+#endif
 
 /**
  * Local (noncollective) allocation of registered memory.
@@ -587,6 +589,31 @@ extern void* comex_malloc_local(size_t bytes);
  * @return COMEX_SUCCESS on success
  */
 extern int comex_free_local(void *ptr);
+
+#ifdef ENABLE_DEVICE
+
+/**
+ * Local (noncollective) allocation of registered memory on a device.
+ *
+ * Using memory allocated here may have performance benefits when used as a
+ * communication buffer.
+ *
+ * @param[in] bytes how many bytes to allocate locally
+ * @param[in] dev_id device ID
+ * @return COMEX_SUCCESS on success
+ */
+extern void* comex_malloc_dev_local(size_t bytes, int dev_id);
+
+/**
+ * Local (noncollective) free of memory allocated by comex_malloc_local.
+ *
+ * @param[in] the original local memory allocated using comex_malloc_local
+ * @param[in] dev_id device ID
+ * @return COMEX_SUCCESS on success
+ */
+extern int comex_free_dev_local(void *ptr, int dev_id);
+
+#endif
 
 /**
  * Flush all outgoing messages from me to the given proc.

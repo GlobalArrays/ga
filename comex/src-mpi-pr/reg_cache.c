@@ -29,16 +29,16 @@ static int reg_nprocs = 0; /**< number of caches (one per process) */
 
 
 /* the static functions in this module */
-static reg_return_t seg_cmp(void *reg_addr, size_t reg_len,
-                            void *oth_addr, size_t oth_len, int op);
-static reg_return_t seg_intersects(void *reg_addr, size_t reg_len,
-                                   void *oth_addr, size_t oth_len);
-static reg_return_t seg_contains(void *reg_addr, size_t reg_len,
-                                 void *oth_addr, size_t oth_len);
+static reg_return_t seg_cmp(void *reg_addr, size_t reg_len, int reg_id,
+                            void *oth_addr, size_t oth_len, int oth_id, int op);
+static reg_return_t seg_intersects(void *reg_addr, size_t reg_len, int reg_id,
+                                   void *oth_addr, size_t oth_len, int oth_id);
+static reg_return_t seg_contains(void *reg_addr, size_t reg_len, int reg_id,
+                                 void *oth_addr, size_t oth_len, int oth_id);
 static reg_return_t reg_entry_intersects(reg_entry_t *reg_entry,
-                                         void *buf, size_t len);
+                                         void *buf, size_t len, int dev_id);
 static reg_return_t reg_entry_contains(reg_entry_t *reg_entry,
-                                       void *buf, size_t len);
+                                       void *buf, size_t len, int dev_id);
 
 #define TEST_FOR_INTERSECTION 0
 #define TEST_FOR_CONTAINMENT 1
@@ -49,8 +49,10 @@ static reg_return_t reg_entry_contains(reg_entry_t *reg_entry,
  *
  * @param[in] reg_addr  starting address of original segment
  * @param[in] reg_len   length of original segment
+ * @param[in] reg_id    device ID of original segment
  * @param[in] oth_addr  starting address of other segment
  * @param[in] oth_len   length of other segment
+ * @param[in] oth_id    device ID of other segment
  * @param[in] op        op to perform, either TEST_FOR_INTERSECTION or
  *                      TEST_FOR_CONTAINMENT
  *
@@ -60,7 +62,7 @@ static reg_return_t reg_entry_contains(reg_entry_t *reg_entry,
  * @return RR_SUCCESS on success
  */
 STATIC reg_return_t
-seg_cmp(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len, int op)
+seg_cmp(void *reg_addr, size_t reg_len, int reg_id, void *oth_addr, size_t oth_len, int oth_id, int op)
 {
     ptrdiff_t reg_beg = 0;
     ptrdiff_t reg_end = 0;
@@ -86,8 +88,9 @@ seg_cmp(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len, int op)
 
     switch (op) {
         case TEST_FOR_INTERSECTION:
-            result = (reg_beg >= oth_beg && reg_beg <  oth_end) ||
-                     (reg_end >  oth_beg && reg_end <= oth_end);
+            result = ((reg_beg >= oth_beg && reg_beg <  oth_end) ||
+                     (reg_end >  oth_beg && reg_end <= oth_end)
+                     && reg_id == oth_id);
 #if DEBUG
             printf("[%d] TEST_FOR_INTERSECTION "
                     "(%td >= %td [%d] && %td < %td [%d]) ||"
@@ -100,7 +103,8 @@ seg_cmp(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len, int op)
 #endif
             break;
         case TEST_FOR_CONTAINMENT:
-            result = reg_beg <= oth_beg && reg_end >= oth_end;
+            result = reg_beg <= oth_beg && reg_end >= oth_end
+              && reg_id == oth_id;
 #if DEBUG
             printf("[%d] TEST_FOR_CONTAINMENT "
                     "%td <= %td [%d] && %td >= %td [%d]\n",
@@ -127,8 +131,10 @@ seg_cmp(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len, int op)
  *
  * @param[in] reg_addr starting address of original segment
  * @param[in] reg_len  length of original segment
+ * @param[in] reg_id   device ID of original segment
  * @param[in] oth_addr starting address of other segment
  * @param[in] oth_len  length of other segment
+ * @param[in] oth_id   device ID of other segment
  *
  * @pre NULL != reg_beg
  * @pre NULL != oth_beg
@@ -136,15 +142,16 @@ seg_cmp(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len, int op)
  * @return RR_SUCCESS on success
  */
 STATIC reg_return_t
-seg_intersects(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len)
+seg_intersects(void *reg_addr, size_t reg_len, int reg_id,
+    void *oth_addr, size_t oth_len, int oth_id)
 {
     /* preconditions */
     COMEX_ASSERT(NULL != reg_addr);
     COMEX_ASSERT(NULL != oth_addr);
 
     return seg_cmp(
-            reg_addr, reg_len,
-            oth_addr, oth_len,
+            reg_addr, reg_len, reg_id,
+            oth_addr, oth_len, oth_id,
             TEST_FOR_INTERSECTION);
 }
 
@@ -154,8 +161,10 @@ seg_intersects(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len)
  *
  * @param[in] reg_addr starting address of original segment
  * @param[in] reg_len  length of original segment
+ * @param[in] reg_id   device ID of original segment
  * @param[in] oth_addr starting address of other segment
  * @param[in] oth_len  length of other segment
+ * @param[in] oth_id   device ID of other segment
  *
  * @pre NULL != reg_beg
  * @pre NULL != oth_beg
@@ -163,15 +172,16 @@ seg_intersects(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len)
  * @return RR_SUCCESS on success
  */
 STATIC reg_return_t
-seg_contains(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len)
+seg_contains(void *reg_addr, size_t reg_len, int reg_id,
+    void *oth_addr, size_t oth_len, int oth_id)
 {
     /* preconditions */
     COMEX_ASSERT(NULL != reg_addr);
     COMEX_ASSERT(NULL != oth_addr);
 
     return seg_cmp(
-            reg_addr, reg_len,
-            oth_addr, oth_len,
+            reg_addr, reg_len, reg_id,
+            oth_addr, oth_len, oth_id,
             TEST_FOR_CONTAINMENT);
 }
 
@@ -182,6 +192,7 @@ seg_contains(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len)
  * @param[in] reg_entry the registration entry
  * @param[in] buf       starting address for the contiguous memory region
  * @param[in] len       length of the contiguous memory region
+ * @param[in] dev_id    device ID, if applicable
  *
  * @pre NULL != reg_entry
  * @pre NULL != buf
@@ -190,7 +201,7 @@ seg_contains(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len)
  * @return RR_SUCCESS on success
  */
 STATIC reg_return_t
-reg_entry_intersects(reg_entry_t *reg_entry, void *buf, size_t len)
+reg_entry_intersects(reg_entry_t *reg_entry, void *buf, size_t len, int dev_id)
 {
 #if DEBUG
     printf("[%d] reg_entry_intersects(reg_entry=%p, buf=%p, len=%d)\n",
@@ -202,8 +213,8 @@ reg_entry_intersects(reg_entry_t *reg_entry, void *buf, size_t len)
     COMEX_ASSERT(len >= 0);
 
     return seg_intersects(
-            reg_entry->buf, reg_entry->len,
-            buf, len);
+            reg_entry->buf, reg_entry->len, reg_entry->dev_id,
+            buf, len, dev_id);
 }
 
 
@@ -213,6 +224,7 @@ reg_entry_intersects(reg_entry_t *reg_entry, void *buf, size_t len)
  * @param[in] reg_entry the registration entry
  * @param[in] buf       starting address for the contiguous memory region
  * @param[in] len       length of the contiguous memory region
+ * @param[in] dev_id    device ID, if applicable
  *
  * @pre NULL != reg_entry
  * @pre NULL != buf
@@ -221,7 +233,7 @@ reg_entry_intersects(reg_entry_t *reg_entry, void *buf, size_t len)
  * @return RR_SUCCESS on success
  */
 STATIC reg_return_t
-reg_entry_contains(reg_entry_t *reg_entry, void *buf, size_t len)
+reg_entry_contains(reg_entry_t *reg_entry, void *buf, size_t len, int dev_id)
 {
 #if DEBUG
     printf("[%d] reg_entry_contains(reg_entry=%p, buf=%p, len=%d)\n",
@@ -234,8 +246,8 @@ reg_entry_contains(reg_entry_t *reg_entry, void *buf, size_t len)
     COMEX_ASSERT(len >= 0);
 
     return seg_contains(
-            reg_entry->buf, reg_entry->len,
-            buf, len);
+            reg_entry->buf, reg_entry->len, reg_entry->dev_id,
+            buf, len, dev_id);
 }
 
 
@@ -370,6 +382,7 @@ reg_cache_destroy()
  * @param[in] rank  rank of the process
  * @param[in] buf   starting address of the buffer
  * @parma[in] len   length of the buffer
+ * @parma[in] dev_id  device ID (if used)
  * 
  * @pre 0 <= rank && rank < reg_nprocs
  * @pre reg_cache_init() was previously called
@@ -377,7 +390,7 @@ reg_cache_destroy()
  * @return the reg cache entry, or NULL on failure
  */
 reg_entry_t*
-reg_cache_find(int rank, void *buf, size_t len)
+reg_cache_find(int rank, void *buf, size_t len, int dev_id)
 {
     reg_entry_t *entry = NULL;
     reg_entry_t *runner = NULL;
@@ -395,7 +408,7 @@ reg_cache_find(int rank, void *buf, size_t len)
     runner = reg_cache[rank];
 
     while (runner && NULL == entry) {
-        if (RR_SUCCESS == reg_entry_contains(runner, buf, len)) {
+        if (RR_SUCCESS == reg_entry_contains(runner, buf, len, dev_id)) {
             entry = runner;
 #if DEBUG
             printf("[%d] reg_cache_find entry found\n"
@@ -412,7 +425,7 @@ reg_cache_find(int rank, void *buf, size_t len)
 #ifndef NDEBUG
     /* we COMEX_ASSERT that the found entry was unique */
     while (runner) {
-        if (RR_SUCCESS == reg_entry_contains(runner, buf, len)) {
+        if (RR_SUCCESS == reg_entry_contains(runner, buf, len, dev_id)) {
 #if DEBUG
             printf("[%d] reg_cache_find duplicate found\n"
                     "reg_entry=%p buf=%p len=%d\n"
@@ -437,6 +450,7 @@ reg_cache_find(int rank, void *buf, size_t len)
  * @param[in] rank  rank of the process
  * @param[in] buf   starting address of the buffer
  * @parma[in] len   length of the buffer
+ * @parma[in] dev_id  device ID (if used)
  * 
  * @pre 0 <= rank && rank < reg_nprocs
  * @pre reg_cache_init() was previously called
@@ -444,7 +458,7 @@ reg_cache_find(int rank, void *buf, size_t len)
  * @return the reg cache entry, or NULL on failure
  */
 reg_entry_t*
-reg_cache_find_intersection(int rank, void *buf, size_t len)
+reg_cache_find_intersection(int rank, void *buf, size_t len, int dev_id)
 {
     reg_entry_t *entry = NULL;
     reg_entry_t *runner = NULL;
@@ -462,7 +476,7 @@ reg_cache_find_intersection(int rank, void *buf, size_t len)
     runner = reg_cache[rank];
 
     while (runner && NULL == entry) {
-        if (RR_SUCCESS == reg_entry_intersects(runner, buf, len)) {
+        if (RR_SUCCESS == reg_entry_intersects(runner, buf, len, dev_id)) {
             entry = runner;
         }
         runner = runner->next;
@@ -470,7 +484,7 @@ reg_cache_find_intersection(int rank, void *buf, size_t len)
 
     /* we COMEX_ASSERT that the found entry was unique */
     while (runner) {
-        if (RR_SUCCESS == reg_entry_contains(runner, buf, len)) {
+        if (RR_SUCCESS == reg_entry_contains(runner, buf, len, dev_id)) {
             COMEX_ASSERT(0);
         }
         runner = runner->next;
@@ -519,8 +533,8 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
     COMEX_ASSERT(0 <= rank && rank < reg_nprocs);
     COMEX_ASSERT(NULL != buf);
     COMEX_ASSERT(len >= 0);
-    COMEX_ASSERT(NULL == reg_cache_find(rank, buf, len));
-    COMEX_ASSERT(NULL == reg_cache_find_intersection(rank, buf, len));
+    COMEX_ASSERT(NULL == reg_cache_find(rank, buf, len, dev_id));
+    COMEX_ASSERT(NULL == reg_cache_find_intersection(rank, buf, len, dev_id));
 
     /* allocate the new entry */
     node = (reg_entry_t *)malloc(sizeof(reg_entry_t));
@@ -562,6 +576,7 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
  *
  * @param[in] rank
  * @param[in] buf
+ * @param[in] dev_id device ID, if applicable
  *
  * @pre 0 <= rank && rank < reg_nprocs
  * @pre NULL != buf
@@ -572,7 +587,7 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
  *         RR_FAILURE otherwise
  */
 reg_return_t
-reg_cache_delete(int rank, void *buf)
+reg_cache_delete(int rank, void *buf, int dev_id)
 {
     reg_return_t status = RR_FAILURE;
     reg_entry_t *runner = NULL;
@@ -588,13 +603,13 @@ reg_cache_delete(int rank, void *buf)
     COMEX_ASSERT(NULL != reg_cache);
     COMEX_ASSERT(0 <= rank && rank < reg_nprocs);
     COMEX_ASSERT(NULL != buf);
-    COMEX_ASSERT(NULL != reg_cache_find(rank, buf, 0));
+    COMEX_ASSERT(NULL != reg_cache_find(rank, buf, 0, dev_id));
 
     /* this is more restrictive than reg_cache_find() in that we locate
      * exactlty the same region starting address */
     runner = reg_cache[rank];
     while (runner) {
-        if (runner->buf == buf) {
+        if (runner->buf == buf && runner->dev_id == dev_id) {
             break;
         }
         previous_runner = runner;

@@ -147,6 +147,7 @@ typedef struct {
 typedef struct {
     int rank;
     void *ptr;
+    int dev_id;
 } rank_ptr_t;
 
 
@@ -158,6 +159,8 @@ static char *sem_name = NULL;       /* local semaphore name */
 static sem_t **semaphores = NULL;   /* semaphores for locking within SMP node */
 static int initialized = 0;         /* for comex_initialized(), 0=false */
 static char *fence_array = NULL;
+
+static int *_device_map = NULL;
 
 static nb_t *nb_state = NULL;       /* keep track of all nonblocking operations */
 static int nb_max_outstanding = COMEX_MAX_NB_OUTSTANDING;
@@ -655,6 +658,12 @@ int comex_init()
     /* Synch - Sanity Check */
     /* This barrier is on the world worker group */
     MPI_Barrier(group_list->comm);
+
+    /* create a host to device map */
+    _device_map = (int*)malloc(sizeof(int)*group_list->size);
+    _device_map[group_list->rank] = _comex_dev_id;
+    status = MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
+                        _device_map, 1, MPI_INT, group_list->comm);
 
 #if DEBUG
     fprintf(stderr, "[%d] comex_init() success\n", g_state.rank);
@@ -1519,12 +1528,9 @@ int comex_free_local(void *ptr)
     }
 
     /* find the registered memory */
-    reg_entry = reg_cache_find(g_state.rank, ptr, 0);
+    reg_entry = reg_cache_find(g_state.rank, ptr, 0, -1);
 
     /* unmap the memory */
-#ifdef ENABLE_DEVICE
-    if (!reg_entry->use_dev) {
-#endif
     retval = munmap(ptr, reg_entry->len);
     if (-1 == retval) {
         perror("comex_free_local: munmap");
@@ -1537,6 +1543,46 @@ int comex_free_local(void *ptr)
         perror("comex_free_local: shm_unlink");
         comex_error("comex_free_local: shm_unlink", retval);
     }
+
+    /* delete the reg_cache entry */
+    retval = reg_cache_delete(g_state.rank, ptr, -1);
+    COMEX_ASSERT(RR_SUCCESS == retval);
+
+    return COMEX_SUCCESS;
+}
+#ifdef ENABLE_DEVICE
+int comex_free_dev_local(void *ptr, int dev_id)
+{
+    int retval = 0;
+    reg_entry_t *reg_entry = NULL;
+
+#if DEBUG
+    fprintf(stderr, "[%d] comex_free_dev_local(ptr=%p)\n", g_state.rank, ptr);
+#endif
+
+    if (NULL == ptr) {
+        return COMEX_SUCCESS;
+    }
+
+    /* find the registered memory */
+    reg_entry = reg_cache_find(g_state.rank, ptr, 0, dev_id);
+
+    /* unmap the memory */
+#ifdef ENABLE_DEVICE
+    if (!reg_entry->use_dev) {
+#endif
+    retval = munmap(ptr, reg_entry->len);
+    if (-1 == retval) {
+        perror("comex_free_dev_local: munmap");
+        comex_error("comex_free_dev_local: munmap", retval);
+    }
+
+    /* remove the shared memory object */
+    retval = shm_unlink(reg_entry->name);
+    if (-1 == retval) {
+        perror("comex_free_dev_local: shm_unlink");
+        comex_error("comex_free_dev_local: shm_unlink", retval);
+    }
 #ifdef ENABLE_DEVICE
     } else {
       setDevice(reg_entry->dev_id);
@@ -1545,11 +1591,12 @@ int comex_free_local(void *ptr)
 #endif
 
     /* delete the reg_cache entry */
-    retval = reg_cache_delete(g_state.rank, ptr);
+    retval = reg_cache_delete(g_state.rank, ptr, dev_id);
     COMEX_ASSERT(RR_SUCCESS == retval);
 
     return COMEX_SUCCESS;
 }
+#endif
 
 #if USE_SICM
 int _comex_free_local_memdev(void *ptr)
@@ -1590,32 +1637,6 @@ int _comex_free_local_memdev(void *ptr)
     return COMEX_SUCCESS;
 }
 #endif
-
-#ifdef ENABLE_DEVICE
-int _comex_free_local_dev(void *ptr)
-{
-    int retval = 0;
-    reg_entry_t *reg_entry = NULL;
-
-    if (NULL == ptr) {
-        return COMEX_SUCCESS;
-    }
-
-    /* find the registered memory */
-    reg_entry = reg_cache_find(g_state.rank, ptr, 0);
-
-    /* set the device and free memory */
-    setDevice(reg_entry->dev_id);
-    freeDevice(ptr);
-
-    /* delete the reg_cache entry */
-    retval = reg_cache_delete(g_state.rank, ptr);
-    COMEX_ASSERT(RR_SUCCESS == retval);
-
-    return COMEX_SUCCESS;
-}
-#endif
-
 
 int comex_wait_proc(int proc, comex_group_t group)
 {
@@ -3054,6 +3075,7 @@ int comex_free(void *ptr, comex_group_t group)
           /* does this need to be a memcpy? */
           rank_ptrs[reg_entries_local_count].rank = world_ranks[i];
           rank_ptrs[reg_entries_local_count].ptr = ptrs[i];
+          rank_ptrs[reg_entries_local_count].dev_id = -1;
           reg_entries_local_count++;
         }
       } else if (NULL == ptrs[i]) {
@@ -3074,7 +3096,7 @@ int comex_free(void *ptr, comex_group_t group)
 
         if (ptrs[i] == NULL) continue;
         /* find the registered memory */
-        reg_entry = reg_cache_find(world_ranks[i], ptrs[i], 0);
+        reg_entry = reg_cache_find(world_ranks[i], ptrs[i], 0, -1);
 
 #if DEBUG && DEBUG_VERBOSE
         fprintf(stderr, "[%d] comex_free found reg entry\n", g_state.rank);
@@ -3096,7 +3118,7 @@ int comex_free(void *ptr, comex_group_t group)
             g_state.rank);
 #endif
 
-        reg_cache_delete(world_ranks[i], ptrs[i]);
+        reg_cache_delete(world_ranks[i], ptrs[i], -1);
 
 #if DEBUG && DEBUG_VERBOSE
         fprintf(stderr, "[%d] comex_free deleted reg cache entry\n", g_state.rank);
@@ -3155,6 +3177,189 @@ int comex_free(void *ptr, comex_group_t group)
 #endif
 }
 
+#ifdef ENABLE_DEVICE
+int comex_free_dev(void *ptr, comex_group_t group)
+{
+    comex_igroup_t *igroup = NULL;
+    int my_world_rank = -1;
+    int *world_ranks = NULL;
+    int my_master = -1;
+    void **ptrs = NULL;
+    int *dev_ids = NULL;
+    int i = 0;
+    int is_notifier = 0;
+    int reg_entries_local_count = 0;
+    rank_ptr_t *rank_ptrs = NULL;
+    int status = 0;
+    int use_dev = 0;
+
+    comex_barrier(group);
+
+#if DEBUG
+    fprintf(stderr, "[%d] comex_free(ptr=%p, group=%d)\n", g_state.rank, ptr, group);
+#endif
+
+    igroup = comex_get_igroup_from_group(group);
+    world_ranks = _get_world_ranks(igroup);
+    my_world_rank = world_ranks[igroup->rank];
+    my_master = g_state.master[my_world_rank];
+
+#if DEBUG && DEBUG_VERBOSE
+    fprintf(stderr, "[%d] comex_free my_master=%d\n", g_state.rank, my_master);
+#endif
+
+    int num_progress_ranks_per_node = get_num_progress_ranks_per_node();
+    int is_node_ranks_packed = get_progress_rank_distribution_on_node();
+    int smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
+    int largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
+    is_notifier = g_state.rank == get_my_master_rank_with_same_hostid(g_state.rank,
+        g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+        num_progress_ranks_per_node, is_node_ranks_packed);
+    if (is_notifier) {
+      rank_ptrs = malloc(sizeof(rank_ptr_t)*g_state.node_size);
+    }
+
+    /* allocate receive buffer for exchange of pointers */
+    ptrs = (void **)malloc(sizeof(void *) * igroup->size);
+    dev_ids = (int *)malloc(sizeof(int) * igroup->size);
+    COMEX_ASSERT(ptrs);
+    ptrs[igroup->rank] = ptr;
+    if (ptr == NULL) {
+      dev_ids[igroup->rank] = -1;
+    } else {
+      dev_ids[igroup->rank] = _comex_dev_id;
+    }
+
+#if DEBUG && DEBUG_VERBOSE
+    fprintf(stderr, "[%d] comex_free ptrs allocated and assigned\n",
+        g_state.rank);
+#endif
+
+    /* exchange of pointers */
+    status = MPI_Allgather(MPI_IN_PLACE, sizeof(void *), MPI_BYTE,
+        ptrs, sizeof(void *), MPI_BYTE, igroup->comm);
+    status = MPI_Allgather(MPI_IN_PLACE, sizeof(int), MPI_BYTE,
+        dev_ids, sizeof(int), MPI_BYTE, igroup->comm);
+    COMEX_ASSERT(MPI_SUCCESS == status);
+
+#if DEBUG && DEBUG_VERBOSE
+    fprintf(stderr, "[%d] comex_free ptrs exchanged\n", g_state.rank);
+#endif
+
+    /* remove all pointers from registration cache */
+    for (i=0; i<igroup->size; ++i) {
+      if (i == igroup->rank) {
+#if DEBUG && DEBUG_VERBOSE
+        fprintf(stderr, "[%d] comex_free found self at %d\n", g_state.rank, i);
+#endif
+        if (is_notifier) {
+          /* does this need to be a memcpy? */
+          rank_ptrs[reg_entries_local_count].rank = world_ranks[i];
+          rank_ptrs[reg_entries_local_count].ptr = ptrs[i];
+          rank_ptrs[reg_entries_local_count].dev_id = dev_ids[i];
+          reg_entries_local_count++;
+        }
+      } else if (NULL == ptrs[i]) {
+#if DEBUG && DEBUG_VERBOSE
+        fprintf(stderr, "[%d] comex_free found NULL at %d\n", g_state.rank, i);
+#endif
+      } else if (g_state.master[world_ranks[i]] == 
+          g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
+            g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+            num_progress_ranks_per_node, is_node_ranks_packed)] ) {
+        /* same SMP node */
+        reg_entry_t *reg_entry = NULL;
+        int retval = 0;
+
+#if DEBUG && DEBUG_VERBOSE
+        fprintf(stderr, "[%d] comex_free same hostid at %d\n", g_state.rank, i);
+#endif
+
+        if (ptrs[i] == NULL) continue;
+        /* find the registered memory */
+        reg_entry = reg_cache_find(world_ranks[i], ptrs[i], 1, dev_ids[i]);
+
+#if DEBUG && DEBUG_VERBOSE
+        fprintf(stderr, "[%d] comex_free found reg entry\n", g_state.rank);
+#endif
+
+        if (!reg_entry->use_dev) {
+          /* unmap the memory */
+          retval = munmap(reg_entry->mapped, reg_entry->len);
+          if (-1 == retval) {
+            perror("comex_free: munmap");
+            comex_error("comex_free: munmap", retval);
+          }
+        } else {
+          use_dev = 1;
+        }
+
+#if DEBUG && DEBUG_VERBOSE
+        fprintf(stderr, "[%d] comex_free unmapped mapped memory in reg entry\n",
+            g_state.rank);
+#endif
+
+        reg_cache_delete(world_ranks[i], ptrs[i], dev_ids[i]);
+
+#if DEBUG && DEBUG_VERBOSE
+        fprintf(stderr, "[%d] comex_free deleted reg cache entry\n", g_state.rank);
+#endif
+
+        if (is_notifier) {
+          /* does this need to be a memcpy? */
+          rank_ptrs[reg_entries_local_count].rank = world_ranks[i];
+          rank_ptrs[reg_entries_local_count].ptr = ptrs[i];
+          rank_ptrs[reg_entries_local_count].dev_id = dev_ids[i];
+          reg_entries_local_count++;
+        }
+      } else {
+        printf("p[%d] Unknown case in comex_free\n");
+        COMEX_ASSERT(0);
+      }
+    }
+
+    /* send ptrs to my master */
+    /* first non-master rank in an SMP node sends the message to master */
+    if (is_notifier) {
+      nb_t *nb = NULL;
+      int rank_ptrs_local_size = 0;
+      int message_size = 0;
+      char *message = NULL;
+      header_t *header = NULL;
+
+      rank_ptrs_local_size = sizeof(rank_ptr_t) * reg_entries_local_count;
+      message_size = sizeof(header_t) + rank_ptrs_local_size;
+      message = malloc(message_size);
+      COMEX_ASSERT(message);
+      header = (header_t*)message;
+      header->operation = OP_FREE;
+      header->remote_address = NULL;
+      header->local_address = NULL;
+      header->rank = 0;
+      header->length = reg_entries_local_count;
+      (void)memcpy(message+sizeof(header_t), rank_ptrs, rank_ptrs_local_size);
+      nb = nb_wait_for_handle();
+      nb_recv(NULL, 0, my_master, nb); /* prepost ack */
+      nb_send_header(message, message_size, my_master, nb);
+      nb_wait_for_all(nb);
+      free(rank_ptrs);
+    }
+
+    /* free ptrs array */
+    free(ptrs);
+    free(world_ranks);
+
+    /* remove my ptr from reg cache and free ptr */
+    comex_free_local(ptr);
+
+    /* Is this needed? */
+    comex_barrier(group);
+
+    return COMEX_SUCCESS;
+}
+#endif
+
+#if 0
 int comex_free_dev(void *ptr, comex_group_t group)
 {
 #if USE_SICM
@@ -3273,7 +3478,7 @@ int comex_free_dev(void *ptr, comex_group_t group)
 
             if (ptrs[i] == NULL) continue;
             /* find the registered memory */
-            reg_entry = reg_cache_find(world_ranks[i], ptrs[i], 0);
+            reg_entry = reg_cache_find(world_ranks[i], ptrs[i], 0, -1);
             COMEX_ASSERT(reg_entry);
 
 #if DEBUG && DEBUG_VERBOSE
@@ -3288,7 +3493,7 @@ int comex_free_dev(void *ptr, comex_group_t group)
                     g_state.rank);
 #endif
 
-            reg_cache_delete(world_ranks[i], ptrs[i]);
+            reg_cache_delete(world_ranks[i], ptrs[i], -1);
 
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] comex_free_dev deleted reg cache entry\n", g_state.rank);
@@ -3345,6 +3550,7 @@ int comex_free_dev(void *ptr, comex_group_t group)
   return comex_free(ptr, group);
 #endif
 }
+#endif
 
 
 STATIC void _progress_server()
@@ -3549,7 +3755,7 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
 #endif
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length);
+            header->rank, header->remote_address, header->length, header->dev_id);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(
             reg_entry, header->remote_address);
@@ -3626,7 +3832,7 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
 #endif
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, stride->count[0]);
+            header->rank, header->remote_address, stride->count[0], header->dev_id);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(
             reg_entry, header->remote_address);
@@ -3702,7 +3908,7 @@ STATIC void _put_datatype_handler(header_t *header, char *payload, int proc)
 #endif
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, stride->count[0]);
+            header->rank, header->remote_address, stride->count[0], header->dev_id);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(
             reg_entry, header->remote_address);
@@ -3785,7 +3991,7 @@ STATIC void _put_iov_handler(header_t *header, int proc)
     packed_index = 0;
     for (i=0; i<limit; ++i) {
         reg_entry = reg_cache_find(
-                header->rank, dst[i], bytes);
+                header->rank, dst[i], bytes, header->dev_id);
         COMEX_ASSERT(reg_entry);
         mapped_offset = _get_offset_memory(
                 reg_entry, dst[i]);
@@ -3823,7 +4029,7 @@ STATIC void _get_handler(header_t *header, int proc)
     COMEX_ASSERT(OP_GET == header->operation);
     
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length);
+            header->rank, header->remote_address, header->length, header->dev_id);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
@@ -3867,7 +4073,7 @@ STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
     COMEX_ASSERT(stride_src->stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length);
+            header->rank, header->remote_address, header->length, header->dev_id);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
@@ -3930,7 +4136,7 @@ STATIC void _get_datatype_handler(header_t *header, char *payload, int proc)
 #endif
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length);
+            header->rank, header->remote_address, header->length, header->dev_id);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
@@ -4010,7 +4216,7 @@ STATIC void _get_iov_handler(header_t *header, int proc)
     packed_index = 0;
     for (i=0; i<limit; ++i) {
         reg_entry = reg_cache_find(
-                header->rank, src[i], bytes);
+                header->rank, src[i], bytes, header->dev_id);
         COMEX_ASSERT(reg_entry);
         mapped_offset = _get_offset_memory(reg_entry, src[i]);
 
@@ -4072,7 +4278,7 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
     use_eager = _eager_check(sizeof_scale+header->length);
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length);
+            header->rank, header->remote_address, header->length, header->dev_id);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
@@ -4193,7 +4399,7 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
     }
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length);
+            header->rank, header->remote_address, header->length, header->dev_id);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
@@ -4367,7 +4573,7 @@ STATIC void _acc_iov_handler(header_t *header, char *scale, int proc)
     packed_index = 0;
     for (i=0; i<limit; ++i) {
         reg_entry = reg_cache_find(
-                header->rank, dst[i], bytes);
+                header->rank, dst[i], bytes, header->dev_id);
         COMEX_ASSERT(reg_entry);
         mapped_offset = _get_offset_memory(reg_entry, dst[i]);
 
@@ -4431,7 +4637,7 @@ STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc)
     COMEX_ASSERT(OP_FETCH_AND_ADD == header->operation);
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length);
+            header->rank, header->remote_address, header->length, header->dev_id);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
     
@@ -4474,7 +4680,7 @@ STATIC void _swap_handler(header_t *header, char *payload, int proc)
     COMEX_ASSERT(OP_SWAP == header->operation);
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length);
+            header->rank, header->remote_address, header->length, header->dev_id);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
     
@@ -4747,7 +4953,12 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
 #endif
 
             /* find the registered memory */
-            reg_entry = reg_cache_find(rank_ptrs[i].rank, rank_ptrs[i].ptr, 0);
+            if (rank_ptrs[i].dev_id < 0) {
+              reg_entry = reg_cache_find(rank_ptrs[i].rank, rank_ptrs[i].ptr, 0, -1);
+            } else {
+              reg_entry = reg_cache_find(rank_ptrs[i].rank, rank_ptrs[i].ptr, 1,
+                  rank_ptrs[i].dev_id);
+            }
             COMEX_ASSERT(reg_entry);
 
 #if DEBUG && DEBUG_VERBOSE
@@ -4763,7 +4974,9 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
               retval = munmap(reg_entry->mapped, reg_entry->len);
             }
 #else
-            retval = munmap(reg_entry->mapped, reg_entry->len);
+            if (!reg_entry->use_dev) {
+              retval = munmap(reg_entry->mapped, reg_entry->len);
+            }
 #endif
             if (-1 == retval) {
                 perror("_free_handler: munmap");
@@ -4775,7 +4988,7 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
                     g_state.rank);
 #endif
 
-            reg_cache_delete(rank_ptrs[i].rank, rank_ptrs[i].ptr);
+            reg_cache_delete(rank_ptrs[i].rank, rank_ptrs[i].ptr, rank_ptrs[i].dev_id);
 
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] _free_handler deleted reg cache entry\n",
@@ -5958,7 +6171,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
             {
               reg_entry_t *reg_entry = NULL;
-              reg_entry = reg_cache_find(proc, dst, bytes);
+              reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
                 printf("p[%d] (nb_put) calling copyToDevice on proc dst: %p\n",g_state.rank,dst);
@@ -5989,7 +6202,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
                 _fence_master(g_state.master[proc]);
             }
 
-            reg_entry = reg_cache_find(proc, dst, bytes);
+            reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
             COMEX_ASSERT(reg_entry);
 #ifdef ENABLE_DEVICE
             mapped_offset = _get_offset_memory(reg_entry, dst);
@@ -6037,7 +6250,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->rank = proc;
         header->length = bytes;
 #ifdef ENABLE_DEVICE
-        reg_entry = reg_cache_find(proc, dst, bytes);
+        reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
         header->use_dev = reg_entry->use_dev;
         header->dev_id = reg_entry->dev_id;
 #endif
@@ -6094,7 +6307,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
             {
               reg_entry_t *reg_entry = NULL;
-              reg_entry = reg_cache_find(proc, src, bytes);
+              reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc]);
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
                 setDevice(reg_entry->dev_id);
@@ -6124,7 +6337,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
                 _fence_master(g_state.master[proc]);
             }
 
-            reg_entry = reg_cache_find(proc, src, bytes);
+            reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc]);
             COMEX_ASSERT(reg_entry);
             /*
               printf("p[%d] reg_entry->use_dev: %d on node proc: %d\n",g_state.rank,reg_entry->use_dev,proc);
@@ -6162,7 +6375,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->rank = proc;
         header->length = bytes;
 #ifdef ENABLE_DEVICE
-        reg_entry = reg_cache_find(proc, src, bytes);
+        reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc]);
         header->use_dev = reg_entry->use_dev;
         header->dev_id = reg_entry->dev_id;
 #endif
@@ -6218,7 +6431,7 @@ STATIC void nb_acc(int datatype, void *scale,
                 _fence_master(g_state.master[proc]);
             }
 
-            reg_entry = reg_cache_find(proc, dst, bytes);
+            reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
             COMEX_ASSERT(reg_entry);
             mapped_offset = _get_offset_memory(reg_entry, dst);
             sem_wait(semaphores[proc]);
@@ -6340,7 +6553,7 @@ STATIC void nb_puts(
             && (!COMEX_ENABLE_PUT_SMP
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])
             && (_packed_size(src_stride, count, stride_levels) > COMEX_PUT_DATATYPE_THRESHOLD)) {
-        reg_entry = reg_cache_find(proc, dst, 0);
+        reg_entry = reg_cache_find(proc, dst, 0, _device_map[proc]);
         if (!reg_entry->use_dev && !on_host) {
           nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
           return;
@@ -6626,7 +6839,7 @@ STATIC void nb_gets(
             && (!COMEX_ENABLE_GET_SMP
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])
             && (_packed_size(src_stride, count, stride_levels) > COMEX_GET_DATATYPE_THRESHOLD)) {
-        reg_entry = reg_cache_find(proc, dst, 0);
+        reg_entry = reg_cache_find(proc, dst, 0, _device_map[proc]);
         if (!reg_entry->use_dev && !on_host) {
           nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
           return;

@@ -145,7 +145,7 @@ install(TARGETS armci
 
 add_library(comex
  ${COMEX_DEVICE}
-  ${COMEX_CUDA_DEVICE}
+ ${COMEX_CUDA_DEVICE}
 )
 
 add_library(GlobalArrays::comex ALIAS comex)
@@ -157,3 +157,30 @@ install(TARGETS comex
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
+
+
+# -------------------------------------------------------------
+#  Add ARMCI and ComEx test executables
+# -------------------------------------------------------------
+#message(STATUS "Checking MPI ...")
+#find_package (MPI REQUIRED)
+
+#add_executable (cmx_perf.x testing/perf.c)
+#add_executable (perf_amo.x testing/perf_amo.c)
+#add_executable (perf_contig.x testing/perf_contig.c)
+#add_executable (perf_strided.x testing/perf_strided.c)
+#add_executable (shift.x testing/shift.c)
+#add_executable (cmx_test.x testing/test.c)
+#if (ENABLE_CUDA)
+#endif()
+
+#set(COMEX_TEST_NPROCS_1 1)
+#set(COMEX_TEST_NPROCS_2 2)
+#set(COMEX_TEST_NPROCS_4 4)
+#if(MPI_PR)
+#  set(COMEX_TEST_NPROCS_1 2)
+#  set(COMEX_TEST_NPROCS_2 3)
+#  set(COMEX_TEST_NPROCS_4 5)
+#endif()
+
+
