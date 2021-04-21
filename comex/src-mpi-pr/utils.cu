@@ -31,8 +31,8 @@ void mallocDevice(void **buf, size_t size)
 {
   cudaPointerAttributes attr;
   cudaError_t err;
-  cudaMallocManaged(buf, (int)size);
-  printf("cudaMallocManaged buffer: %p\n",*buf);
+  cudaMalloc(buf, (int)size);
+  printf("cudaMalloc buffer: %p\n",*buf);
   err = cudaPointerGetAttributes(&attr, *buf);
   printf("mallocDevice buf: %p device: %d\n",attr.devicePointer,attr.device);
 }
