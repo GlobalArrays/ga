@@ -78,7 +78,7 @@ void copyDevToDev(void *srcptr, void *dstptr, int bytes)
 /**
  * set values on the device to a specific value
  * ptr: pointer to device memory that needs to be set
- * val: integer representation of the value of each bytes
+ * val: integer representation of the value of each byte
  * size: number of bytes that should be set
  */
 void deviceMemset(void *ptr, int val, size_t bytes)
