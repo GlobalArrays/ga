@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 #if defined(__cplusplus) || defined(c_plusplus)
-extern "c" {
+extern "C" {
 #endif
 
 typedef struct {

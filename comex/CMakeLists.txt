@@ -52,7 +52,10 @@ elseif (MPI_PR)
   )
   if (ENABLE_CUDA)
     message(STATUS "Setting Compiler for utils.cu to CUDA")
-    set(COMEX_CUDA_DEVICE src-mpi-pr/utils.cu)
+    set(COMEX_CUDA_DEVICE
+      src-mpi-pr/utils.cu
+      src-mpi-pr/dev_cache.cu
+    )
   endif()
   set (COMEX_NETWORK_MPI_PR ON)
   include_directories(AFTER src-mpi-pr)
