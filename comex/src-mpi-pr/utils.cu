@@ -12,6 +12,7 @@ int numDevices()
 {
   int ngpus;
   cudaGetDeviceCount(&ngpus);
+  printf("number of devices found: %d\n",ngpus);
   return ngpus;
 }
 
