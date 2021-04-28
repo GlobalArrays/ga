@@ -555,10 +555,12 @@ int comex_init()
     MPI_Barrier(group_list->comm);
 
     /* create a host to device map */
+#ifdef ENABLE_DEVICE
     _device_map = (int*)malloc(sizeof(int)*group_list->size);
     _device_map[group_list->rank] = _comex_dev_id;
     status = MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
                         _device_map, 1, MPI_INT, group_list->comm);
+#endif
 
 #if DEBUG
     fprintf(stderr, "[%d] comex_init() success\n", g_state.rank);
@@ -2685,6 +2687,8 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
             void *memory;
             cudaIpcOpenMemHandle(&memory, reg_entries[i].handle, cudaIpcMemLazyEnablePeerAccess);
             cudaIpcCloseMemHandle(memory);
+            printf("p[%d] pointer to allocation on process %d dev: %d: %p\n",g_state.rank,
+                reg_entries[i].rank,reg_entries[i].dev_id,memory);
             reg_entries[i].buf = memory;
             int dev = reg_entries[i].dev_id;
             if (memory != NULL) {
@@ -3052,6 +3056,7 @@ int comex_free(void *ptr, comex_group_t group)
           /* does this need to be a memcpy? */
           rank_ptrs[reg_entries_local_count].rank = world_ranks[i];
           rank_ptrs[reg_entries_local_count].ptr = ptrs[i];
+          rank_ptrs[reg_entries_local_count].dev_id = -1;
           reg_entries_local_count++;
         }
       } else {
@@ -4769,7 +4774,7 @@ STATIC void _malloc_handler(
 #endif
     }
     else if (g_state.hostid[reg_entries[i].rank]
-        == g_state.hostid[g_state.rank] && !reg_entries[i].use_dev) {
+        == g_state.hostid[g_state.rank]) {
       /* same SMP node, need to mmap */
       /* attach to remote shared memory object */
       void *memory;
@@ -4802,6 +4807,7 @@ STATIC void _malloc_handler(
           reg_entries[i].name,
           memory);
 #endif
+      printf("p[%d] reg_entries[%d].dev_id: %d\n",g_state.rank,i,reg_entries[i].dev_id);
       (void)reg_cache_insert(
           reg_entries[i].rank,
           reg_entries[i].buf,
@@ -4817,28 +4823,7 @@ STATIC void _malloc_handler(
           ,reg_entries[i].handle
 #endif
           );
-#ifdef ENABLE_DEVICE
-    } else if (reg_entries[i].use_dev) {
-      void *memory = reg_entries[i].buf;
-      /*
-      setDevice(reg_entries[i].dev_id);
-      mallocDevice(&memory, reg_entries[i].len);
-      */
-      (void)reg_cache_insert(
-          reg_entries[i].rank,
-          reg_entries[i].buf,
-          reg_entries[i].len,
-          reg_entries[i].name,
-          memory
-          ,reg_entries[i].use_dev
-          ,reg_entries[i].dev_id
-#ifdef ENABLE_DEVICE
-          ,reg_entries[i].handle
-#endif
-          );
-#endif
-    }
-    else {
+    } else {
 #if 0
       /* remote SMP node */
       /* i.e. we know about the mem but don't have local shared access */
@@ -4892,6 +4877,7 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
 #endif
 
             /* find the registered memory */
+            printf("p[%d] rank_ptrs[%d].dev_id: %d\n",g_state.rank,i,rank_ptrs[i].dev_id);
             if (rank_ptrs[i].dev_id < 0) {
               reg_entry = reg_cache_find(rank_ptrs[i].rank, rank_ptrs[i].ptr, 0, -1);
             } else {
@@ -4957,6 +4943,7 @@ STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory)
 #ifdef ENABLE_DEVICE
     if (reg_entry->use_dev) {
       cudaIpcOpenMemHandle(&memory, reg_entry->handle, cudaIpcMemLazyEnablePeerAccess);
+      printf("p[%d] opened memory %p on device %d\n",g_state.rank,memory,reg_entry->dev_id);
       return memory;
     }
 #endif
@@ -6112,7 +6099,11 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
             {
               reg_entry_t *reg_entry = NULL;
+              printf("p[%d] _device_map[%d]: %d\n",g_state.rank,proc,_device_map[proc]);
               reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
+              if (reg_entry == NULL) {
+                reg_entry = reg_cache_find(proc, dst, bytes, -1);
+              }
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
                 printf("p[%d] (nb_put) calling copyToDevice on proc dst: %p\n",g_state.rank,dst);
@@ -6143,6 +6134,9 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             }
 
             reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
+            if (reg_entry == NULL) {
+              reg_entry = reg_cache_find(proc, dst, bytes, -1);
+            }
             COMEX_ASSERT(reg_entry);
 #ifdef ENABLE_DEVICE
             mapped_offset = _get_offset_memory(reg_entry, dst);
@@ -6194,6 +6188,9 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->length = bytes;
 #ifdef ENABLE_DEVICE
         reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
+        if (reg_entry == NULL) {
+          reg_entry = reg_cache_find(proc, dst, bytes, -1);
+        }
         header->use_dev = reg_entry->use_dev;
         header->dev_id = reg_entry->dev_id;
 #endif
@@ -6251,6 +6248,9 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
             {
               reg_entry_t *reg_entry = NULL;
               reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc]);
+              if (reg_entry == NULL) {
+                reg_entry = reg_cache_find(proc, src, bytes, -1);
+              }
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
                 setDevice(reg_entry->dev_id);
@@ -6281,6 +6281,9 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
             }
 
             reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc]);
+            if (reg_entry == NULL) {
+              reg_entry = reg_cache_find(proc, src, bytes, -1);
+            }
             COMEX_ASSERT(reg_entry);
             /*
               printf("p[%d] reg_entry->use_dev: %d on node proc: %d\n",g_state.rank,reg_entry->use_dev,proc);
@@ -6322,6 +6325,9 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->length = bytes;
 #ifdef ENABLE_DEVICE
         reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc]);
+        if (reg_entry == NULL) {
+          reg_entry = reg_cache_find(proc, src, bytes, -1);
+        }
         header->use_dev = reg_entry->use_dev;
         header->dev_id = reg_entry->dev_id;
 #endif

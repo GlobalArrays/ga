@@ -615,6 +615,8 @@ void comex_group_init()
         num_progress_ranks_per_node, is_node_ranks_packed);
 #ifdef ENABLE_DEVICE
     /* find out if this process is bound to a device */
+    printf("p[%d] master_rank %d smallest_rank %d\n",g_state.rank,
+        g_state.master[g_state.rank],smallest_rank_with_same_hostid);
     if (g_state.master[g_state.rank] == smallest_rank_with_same_hostid) {
       int inc = g_state.rank - smallest_rank_with_same_hostid - 1;
       if (inc < numDevices() && inc >= 0) {
@@ -628,6 +630,8 @@ void comex_group_init()
         _comex_dev_id = inc;
       }
     }
+    printf("p[%d] _comex_dev_id: %d _comex_dev_flag: %d num_dev: %d\n",
+        g_state.rank,_comex_dev_id,_comex_dev_flag,numDevices());
 #endif
 #if DEBUG
     printf("[%d] rank; split_group_size: %d\n", g_state.rank, split_group_size);
