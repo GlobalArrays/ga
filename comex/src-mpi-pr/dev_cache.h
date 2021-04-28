@@ -21,11 +21,13 @@ typedef struct _dev_entry_t {
  * documentation is in the *.c file
  */
 
-void dev_cache_init(int op, comex_group_t group);
-void dev_cache_destroy();
-void dev_cache_exchange(void *ptr, void **ptrs, comex_igroup_t group);
 #if 0
-void dev_cache_insert(void *ptr, comex_group_t group);
+static void dev_cache_init(MPI_Comm comm);
+static void dev_cache_destroy();
+static void dev_cache_exchange(void *ptr, void ***ptrs, comex_group_t group);
+static void dev_cache_insert(int rank, void *ptr);
+#endif
+#if 0
 void dev_cache_launch(void *ptr, int op);
 void dev_cache_open(int rank, void *ptr);
 void dev_cache_close(int rank, void *ptr);

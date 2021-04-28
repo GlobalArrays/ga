@@ -57,6 +57,14 @@ sicm_device_list nill;
 
 #include "comex_structs.h"
 
+#ifdef ENABLE_DEVICE
+#include <cuda_runtime.h>
+extern void dev_cache_init(MPI_Comm comm);
+extern void dev_cache_destroy();
+extern void dev_cache_exchange(void *ptr, void ***ptrs, comex_group_t group);
+extern void dev_cache_insert(int rank, void *ptr);
+#endif
+
 /* static state */
 static int *num_mutexes = NULL;     /**< (all) how many mutexes on each process */
 static int **mutexes = NULL;        /**< (masters) value is rank of lock holder */
@@ -171,7 +179,7 @@ STATIC void _mutex_destroy_handler(header_t *header, int proc);
 STATIC void _lock_handler(header_t *header, int proc);
 STATIC void _unlock_handler(header_t *header, int proc);
 STATIC void _malloc_handler(header_t *header, char *payload, int proc);
-STATIC void _malloc_dev_handler(header_t *header, char *payload, int proc);
+STATIC void _malloc_dev_handler(header_t *header, int proc);
 STATIC void _free_handler(header_t *header, char *payload, int proc);
 
 /* worker functions */
@@ -1384,6 +1392,9 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
     key_t key;
     char file[SHM_NAME_SIZE+10];
 #endif
+#ifdef ENABLE_DEVICE
+    cudaIpcMemHandle_t handle;
+#endif
 
 #if DEBUG
     fprintf(stderr, "[%d] _comex_malloc_local(size=%lu)\n",
@@ -1423,7 +1434,11 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
             g_state.rank, memory, size, name, key, memory, 0);
 #else
     reg_entry = reg_cache_insert(
-            g_state.rank, memory, size, name, memory, 0, -1);
+            g_state.rank, memory, size, name, memory, 0, -1
+#ifdef ENABLE_DEVICE
+            , handle
+#endif
+            );
 #endif
 #endif
 
@@ -1580,6 +1595,7 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, int device_id)
     char *name = NULL;
     void *memory = NULL;
     reg_entry_t *reg_entry = NULL;
+    cudaIpcMemHandle_t handle;
 
     if (0 == size) {
         return NULL;
@@ -1590,11 +1606,12 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, int device_id)
     /* allocate device memory */
     setDevice(device_id); 
     mallocDevice(&memory, size);
+    cudaIpcGetMemHandle(&handle, memory);
     printf("p[%d] mallocDevice buf: %p size: %d id: %d\n",g_state.rank,memory,size,device_id);
 
     /* register the memory locally */
     reg_entry = reg_cache_insert(
-            g_state.rank, memory, size, name, memory, 1, device_id);
+            g_state.rank, memory, size, name, memory, 1, device_id, handle);
 
     if (NULL == reg_entry) {
         comex_error("_comex_malloc_local_memdev: reg_cache_insert", -1);
@@ -2516,6 +2533,8 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
                 reg_entries[i].key);
 #else
             void *memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
+#ifdef ENABLE_DEVICE
+            cudaIpcMemHandle_t handle;
 #endif
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] comex_malloc registering "
@@ -2548,6 +2567,9 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 #endif
 #endif
                     ,-1
+#ifdef ENABLE_DEVICE
+                    ,handle
+#endif
                   );
             if (is_notifier) {
                 /* does this need to be a memcpy?? */
@@ -2732,6 +2754,9 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
             /* open remote shared memory object */
             void *memory = _shm_attach_memdev(reg_entries[i].name,
                 reg_entries[i].len, idevice);
+#ifdef ENABLE_DEVICE
+            cudaIpcMemHandle_t handle;
+#endif
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] comex_malloc registering "
                     "rank=%d buf=%p len=%lu name=%s map=%p\n",
@@ -2747,7 +2772,11 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
                     reg_entries[i].buf,
                     reg_entries[i].len,
                     reg_entries[i].name,
-                    memory, 1, idevice);
+                    memory, 1, idevice
+#ifdef ENABLE_DEVICE
+                    ,handle
+#endif
+                    );
             if (is_notifier) {
                 /* does this need to be a memcpy?? */
                 reg_entries_local[reg_entries_local_count++] = reg_entries[i];
@@ -2871,7 +2900,7 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
         reg_cache_nullify(&my_reg);
     } else {
       /* allocate memory on device mapped to this process */
-      int devid = dev_list[igroup->rank];
+      int devid = dev_list[my_world_rank];
       my_reg = *_comex_malloc_local_memdev(sizeof(char)*size, devid);
     }
 
@@ -2897,7 +2926,10 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
                 == g_state.hostid[my_world_rank]) {
             /* same smp node, need to mmap */
             /* open remote shared memory object */
-            void *memory = reg_entries[i].buf;
+            void *memory;
+            cudaIpcOpenMemHandle(&memory, reg_entries[i].handle, cudaIpcMemLazyEnablePeerAccess);
+            cudaIpcCloseMemHandle(memory);
+            reg_entries[i].buf = memory;
             int dev = reg_entries[i].dev_id;
             if (memory != NULL) {
               (void)reg_cache_insert(
@@ -2905,7 +2937,11 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
                   reg_entries[i].buf,
                   reg_entries[i].len,
                   reg_entries[i].name,
-                  memory, 1, dev);
+                  memory, 1, dev
+#ifdef ENABLE_DEVICE
+                  ,reg_entries[i].handle
+#endif
+                  );
             }
             if (is_notifier) {
                 /* does this need to be a memcpy?? */
@@ -2936,7 +2972,7 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
         header->operation = OP_MALLOC;
         header->remote_address = NULL;
         header->local_address = NULL;
-        header->rank = 0;
+        header->rank = my_world_rank;
         header->length = reg_entries_local_count;
         (void)memcpy(message+sizeof(header_t), reg_entries_local, reg_entries_local_size);
         nb = nb_wait_for_handle();
@@ -3828,9 +3864,6 @@ STATIC void _progress_server()
                 break;
             case OP_MALLOC:
                 _malloc_handler(header, payload, source);
-                break;
-            case OP_MALLOC_DEV:
-                _malloc_dev_handler(header, payload, source);
                 break;
             case OP_FREE:
                 _free_handler(header, payload, source);
@@ -5007,6 +5040,17 @@ STATIC void _malloc_handler(
 #else
             memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
 #endif
+#ifdef ENABLE_DEVICE
+        if (reg_entries[i].use_dev) {
+          cudaIpcOpenMemHandle(&memory,reg_entries[i].handle,
+              cudaIpcMemLazyEnablePeerAccess);
+          cudaIpcCloseMemHandle(memory);
+        } else {
+          memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
+        }
+#else
+        memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
+#endif
 #if USE_SICM
       }
 #endif
@@ -5034,6 +5078,9 @@ STATIC void _malloc_handler(
 #if USE_SICM
           ,reg_entries[i].device
 #endif
+#ifdef ENABLE_DEVICE
+          ,reg_entries[i].handle
+#endif
           );
 #ifdef ENABLE_DEVICE
     } else if (reg_entries[i].use_dev) {
@@ -5050,6 +5097,9 @@ STATIC void _malloc_handler(
           memory
           ,reg_entries[i].use_dev
           ,reg_entries[i].dev_id
+#ifdef ENABLE_DEVICE
+          ,reg_entries[i].handle
+#endif
           );
 #endif
     }
@@ -5072,19 +5122,6 @@ STATIC void _malloc_handler(
 #endif
 
   server_send(NULL, 0, proc); /* ack */
-}
-
-STATIC void _malloc_dev_handler(
-        header_t *header, char *payload, int proc)
-{
-  int i;
-  int n, rank;
-
-  COMEX_ASSERT(header);
-  COMEX_ASSERT(header->operation == OP_MALLOC_DEV);
-  n = header->length;
-  rank = header->rank;
-
 }
 
 STATIC void _free_handler(header_t *header, char *payload, int proc)
@@ -5198,9 +5235,11 @@ STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory)
 {
     ptrdiff_t offset = 0;
 #ifdef ENABLE_DEVICE
-    return memory;
+    if (reg_entry->use_dev) {
+      cudaIpcOpenMemHandle(&memory, reg_entry->handle, cudaIpcMemLazyEnablePeerAccess);
+      return memory;
+    }
 #endif
-
     COMEX_ASSERT(reg_entry);
 #if DEBUG_VERBOSE
     fprintf(stderr, "[%d] _get_offset_memory reg_entry->buf=%p memory=%p\n",
@@ -6469,7 +6508,6 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
                 printf("p[%d] (nb_put) calling copyToDevice on proc dst: %p\n",g_state.rank,dst);
-                setDevice(reg_entry->dev_id);
                 copyToDevice(src, dst, bytes);
               } else if (reg_entry->use_dev && !on_host) {
                 copyDevToDev(src, dst, bytes);
@@ -6502,10 +6540,13 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             mapped_offset = _get_offset_memory(reg_entry, dst);
             if (reg_entry->use_dev && on_host) {
                 printf("p[%d] (nb_put) calling copyToDevice on node dst: %p\n",g_state.rank,dst);
-              setDevice(reg_entry->dev_id);
               copyToDevice(src, mapped_offset, bytes);
+              cudaIpcCloseMemHandle(mapped_offset);
             } else if (reg_entry->use_dev && !on_host) {
               copyDevToDev(src, mapped_offset, bytes);
+              cudaIpcCloseMemHandle(mapped_offset);
+            } else if (!reg_entry->use_dev && !on_host) {
+              copyToHost(mapped_offset, src, bytes);
             } else {
               (void)memcpy(mapped_offset, src, bytes);
             }
@@ -6639,10 +6680,13 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
             mapped_offset = _get_offset_memory(reg_entry, src);
             if (reg_entry->use_dev && on_host) {
-              setDevice(reg_entry->dev_id);
               copyToHost(dst, mapped_offset, bytes);
+              cudaIpcCloseMemHandle(mapped_offset);
             } else if (reg_entry->use_dev && !on_host) {
               copyDevToDev(mapped_offset, dst, bytes);
+              cudaIpcCloseMemHandle(mapped_offset);
+            } else if (!reg_entry->use_dev && !on_host) {
+              copyToDevice(mapped_offset, dst, bytes);
             } else {
               (void)memcpy(dst, mapped_offset, bytes);
             }
@@ -8145,4 +8189,461 @@ void comex_device_memset(void *ptr, int val, size_t bytes)
 {
   deviceMemset(ptr,val,bytes);
 }
+
+/**
+ * struct for passing around cudaMe
+ */
+typedef struct _dev_entry_t {
+  struct _dev_entry_t *next;  /**< next memory region in list */
+  int rank;                   /**< rank of processor holding memory region */
+  void *ptr;                  /**< pointer to device memory segment */
+  cudaIpcMemHandle_t handle;  /**< cuda memory handle for pointer */
+} dev_entry_t;
+
+/* The purpose of this code is to wrap cudaIpc code so that the calling program
+ * can access cudaMalloc'ed segments from any processor on the same CMP node. It
+ * mimics the reg_cache code */
+
+/* avoid name mangling by the CUDA compiler */
+#if 0
+extern "C" {
+
+extern comex_group_world_t g_state;
+extern void _fence_master(int master_rank);
+extern nb_t* nb_wait_for_handle();
+extern void nb_recv(void *buf, int count, int source, nb_t *nb);
+extern void nb_send_header(void *buf, int count, int dest, nb_t *nb);
+extern void nb_wait_for_all(nb_t *nb);
+
+#endif
+/* the static members in this module */
+static dev_entry_t **dev_cache = NULL; /**< list of caches (one per process) */
+static int dev_nprocs = 0; /**< number of caches (one per process) */
+
+static cudaIpcMemHandle_t *mem_handles = NULL;
+
+static char *_mem_list_names;
+
+/*
+void dev_cache_init(MPI_Comm comm);
+void dev_cache_insert(int rank, void *ptr);
+void dev_cache_exchange(void *ptr, void **ptrs, comex_igroup_t group);
+void dev_cache_launch(void *ptr, int op);
+void dev_cache_open(int rank, void *ptr);
+void dev_cache_close(int rank, void *ptr);
+void dev_cache_remove(void *ptr);
+void dev_cache_destroy();
+*/
+
+/**
+ * Create internal data structures for the registration cache.
+ *
+ * @param[in] nprocs    number of device caches to create i.e. one per
+ *                      process
+ * @param[in] rank      rank of calling process
+ * @param[in] comm      world communicator
+ *
+ * @pre this function is called once to initialize the internal data
+ * structures and cannot be called again until reg_cache_destroy() has been
+ * called
+ *
+ * @see dev_cache_destroy()
+ *
+ * @return RR_SUCCESS on success
+ */
+void dev_cache_init(MPI_Comm comm)
+{
+  int i = 0;
+  int fd = 0;
+  int retval = 0;
+  int size;
+  char name[31];
+  int rank;
+
+  /* preconditions */
+  COMEX_ASSERT(NULL == dev_cache);
+  COMEX_ASSERT(0 == dev_nprocs);
+
+  /* keep the number of caches around for later use */
+  MPI_Comm_size(comm,&dev_nprocs);
+  MPI_Comm_rank(comm,&rank);
+
+  /* allocate the registration cache list: */
+  dev_cache = (dev_entry_t **)malloc(sizeof(dev_entry_t*) * dev_nprocs); 
+
+  size = 31*dev_nprocs;
+  _mem_list_names = (char*)malloc(size);
+  memset(_mem_list_names,0,size);
+  sprintf(name,"/CMX_______________%10d\n",rank);
+  MPI_Allgather(name, 31, MPI_CHAR, _mem_list_names, 31, MPI_CHAR,
+      comm);
+  /* create shared memory segment */
+  fd = shm_open(name, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
+  if (-1 == fd && EEXIST == errno) {
+    retval = shm_unlink(name);
+    if (-1 == retval) {
+      comex_error("dev_cache_init: shm_unlink", retval);
+    }
+  }
+
+  /* try a second time */
+  if (-1 == fd) {
+    fd = shm_open(name, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
+  }
+
+  /* finally report error if needed */
+  if (-1 == fd) {
+    comex_error("dev_cache_init: shm_open", retval);
+  }
+
+  /* set the size of my shared memory object */
+  size = dev_nprocs *sizeof(cudaIpcMemHandle_t);
+  retval = ftruncate(fd, size);
+
+  /* map into local address space */
+  mem_handles = (cudaIpcMemHandle_t*)mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+
+  /* close file descriptor */
+  retval = close(fd);
+  if (-1 == retval) {
+    comex_error("dev_cache_init: close", -1);
+  }
+
+  /* initialize the registration cache list: */
+  for (i = 0; i < dev_nprocs; ++i) {
+    dev_cache[i] = NULL;
+  }
+}
+
+
+/**
+ * Deregister and destroy all cache entries and associated buffers.
+ *
+ * @pre this function is called once to destroy the internal data structures
+ * and cannot be called again until dev_cache_init() has been called
+ *
+ * @see dev_cache_init()
+ */
+void dev_cache_destroy()
+{
+    int i = 0;
+    int size = 0;
+    int retval = 0;
+
+    /* preconditions */
+    COMEX_ASSERT(NULL != dev_cache);
+    COMEX_ASSERT(0 != dev_nprocs);
+
+    for (i = 0; i < dev_nprocs; ++i) {
+        dev_entry_t *runner = dev_cache[i];
+
+        while (runner) {
+            dev_entry_t *previous = runner; /* pointer to previous runner */
+
+            /* get next runner */
+            runner = runner->next;
+            /* destroy the entry */
+            free(previous);
+        }
+    }
+
+    /* free registration cache list */
+    free(dev_cache);
+    dev_cache = NULL;
+
+    /* free memory handles list */
+    /* unmap the memory */
+    size = 31*dev_nprocs;
+    retval = munmap(mem_handles, size);
+    if (-1 == retval) {
+      comex_error("dev_cache_destroy: munmap", retval);
+    }
+
+    /* remove the shared memory object */
+    retval = shm_unlink(_mem_list_names);
+    if (-1 == retval) {
+      comex_error("dev_cash_destroy: shm_unlink", retval);
+    }
+
+    free(_mem_list_names);
+    /* reset the number of caches */
+    dev_nprocs = 0;
+}
+
+/**
+ * Exchange pointers between all ranks in the allocation.
+ *
+ * @param[in] ptr pointer to device allocation on calling processor
+ * @param[out] ptrs list of pointers to all allocations
+ * @param[in] group group containing all processes in the allocation
+ */
+void dev_cache_exchange(void *ptr, void ***ptrs, comex_group_t group)
+{
+  int prog_rank;
+  comex_igroup_t *igroup = comex_get_igroup_from_group(group);
+  int fd = 0;
+  int retval = 0;
+  int rank = igroup->rank;
+  int nprocs = igroup->size;
+  MPI_Comm comm = igroup->comm;
+  int wrank, tmp, size, i;
+  nb_t *nb = NULL;
+  void *g_ptr;
+
+  /* get world rank */
+  comex_group_translate_world(group, rank, &wrank);
+  prog_rank = g_state.master[wrank];
+
+  cudaIpcMemHandle_t *g_mem_handles;
+  if (ptr != NULL) {
+    cudaIpcGetMemHandle(&mem_handles[wrank],ptr);
+  }
+  /* send this handle to the progress rank and get a mapped address back */
+  /* start by copying this handle to progress rank */
+  fd = shm_open(&_mem_list_names[31*prog_rank], O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
+  size = nprocs*sizeof(void*);
+  g_mem_handles = (cudaIpcMemHandle_t*)mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+  g_mem_handles[rank] = mem_handles[wrank];
+  retval = close(fd);
+  /* copy memory handle to other processors on SMP node */
+  MPI_Comm_size(comm, &nprocs);
+  for (i=0; i<nprocs; i++) {
+    /* get world rank of process */
+    comex_group_translate_world(group,i, &tmp);
+    if (i == rank) {
+      /* copy cudaIpcMemHandle_t to progrss rank */
+      fd = shm_open(&_mem_list_names[31*prog_rank], O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
+      g_mem_handles = (cudaIpcMemHandle_t*)mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+      g_mem_handles[rank] = mem_handles[wrank];
+      retval = close(fd);
+    } else if (g_state.master[tmp] == prog_rank) {
+      /* both calling process and process i have same progress rank copy mem
+       * handle so copy cudaIpcMemHandle_t to remote process */
+      fd = shm_open(&_mem_list_names[31*tmp], O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
+      g_mem_handles = (cudaIpcMemHandle_t*)mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+      g_mem_handles[rank] = mem_handles[wrank];
+      retval = close(fd);
+    }
+  }
+  /* need to sync across all processors, including progress ranks */
+  _fence_master(prog_rank);
+  comex_fence_all(group);
+  comex_wait_all(group);
+  for (i=0; i<nprocs; i++) {
+    /* get world rank of process */
+    comex_group_translate_world(group,i, &tmp);
+    if (i == rank) {
+    } else if (g_state.master[tmp] == prog_rank) {
+      /* both calling process and process i have same progress rank copy mem
+       * handle so copy cudaIpcMemHandle_t to remote process */
+      fd = shm_open(&_mem_list_names[31*tmp], O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
+      g_mem_handles = (cudaIpcMemHandle_t*)mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+      mem_handles[wrank] = g_mem_handles[rank];
+      retval = close(fd);
+    }
+  }
+  /* everybody should have a memory handle for all allocations on the same SMP
+   * node. Now need to come * up with a global list of pointers. Each process
+   * needs to get a pointer from its progress rank*/
+  *ptrs = (void**)malloc(sizeof(void*));
+  nb = nb_wait_for_handle();
+  header_t *header = (header_t*)malloc(sizeof(header_t));
+  COMEX_ASSERT(header);
+  MAYBE_MEMSET(header, 0, sizeof(header_t));
+  header->operation = OP_MALLOC_DEV;
+  header->rank = wrank;
+  header->length = sizeof(void*);
+  /* prepost receive */
+  nb_recv(&g_ptr, size, prog_rank, nb);
+  nb_send_header(header, sizeof(header_t), prog_rank, nb);
+  nb_wait_for_all(nb);
+  MPI_Allgather(&g_ptr, sizeof(void*), MPI_BYTE, *ptrs, sizeof(void*), MPI_BYTE,
+      igroup->comm);
+  
+}
+
+/**
+ * Create a new registration entry based on the given members. This must be done
+ * right after calling dev_cache_exchange and before another call to
+ * dev_cache_exchange
+ *
+ * @pre 0 <= rank && rank < reg_nprocs
+ * @pre NULL != buf
+ * @pre 0 <= len
+ * @pre reg_cache_init() was previously called
+ * @pre NULL == reg_cache_find(rank, buf, 0)
+ * @pre NULL == reg_cache_find_intersection(rank, buf, 0)
+ * @param rank world rank of target processor 
+ * @param buf  pointer to GPU memory allocation
+ *
+ * @return pointer to new node
+ */
+void dev_cache_insert(int rank, void *buf)
+{
+  dev_entry_t *node = NULL;
+
+  if (buf == NULL) {
+    return;
+  }
+  /* preconditions */
+  COMEX_ASSERT(0 <= rank && rank < dev_nprocs);
+  /* TODO: May need to do something about this
+     COMEX_ASSERT(NULL == dev_cache_find(rank, buf, len, dev_id));
+   */
+
+  /* allocate the new entry */
+  node = (dev_entry_t *)malloc(sizeof(dev_entry_t));
+  COMEX_ASSERT(node);
+
+  /* initialize the new entry */
+  node->rank = rank;
+  node->ptr = buf;
+  node->handle = mem_handles[rank];
+  node->next = NULL;
+
+  /* push new entry to tail of linked list */
+  if (NULL == dev_cache[rank]) {
+    dev_cache[rank] = node;
+  } else {
+    dev_entry_t *runner = dev_cache[rank];
+    while (runner->next) {
+      runner = runner->next;
+    }
+    runner->next = node;
+  }
+}
+
+
+/**
+ * Locate a registration cache entry which contains the given segment
+ * completely.
+ *
+ * @param[in] rank  rank of the process in world group
+ * @param[in] buf   starting address of the buffer
+ * 
+ * @pre 0 <= rank && rank < reg_nprocs
+ * @pre reg_cache_init() was previously called
+ *
+ * @return the reg cache entry, or NULL on failure
+ */
+void dev_cache_open(int rank, void *buf)
+{
+    dev_entry_t *entry = NULL;
+    dev_entry_t *runner = NULL;
+    void *ptr;
+
+    /* preconditions */
+    COMEX_ASSERT(NULL != buf);
+    COMEX_ASSERT(0 <= rank && rank < dev_nprocs);
+
+    runner = dev_cache[rank];
+
+    while (runner && NULL == entry) {
+        if (runner->ptr == buf) {
+            entry = runner;
+        }
+        runner = runner->next;
+    }
+
+    /* we COMEX_ASSERT that the found entry was unique */
+    while (runner) {
+        if (runner->ptr == buf) {
+            COMEX_ASSERT(0);
+        }
+        runner = runner->next;
+    }
+
+      cudaIpcOpenMemHandle(&ptr, entry->handle, cudaIpcMemLazyEnablePeerAccess);
+}
+#if 0
+
+/**
+ * Removes the reg cache entry associated with the given rank and buffer.
+ *
+ * If this process owns the buffer, it will unregister the buffer, as well.
+ *
+ * @param[in] rank
+ * @param[in] buf
+ * @param[in] dev_id device ID, if applicable
+ *
+ * @pre 0 <= rank && rank < reg_nprocs
+ * @pre NULL != buf
+ * @pre reg_cache_init() was previously called
+ * @pre NULL != reg_cache_find(rank, buf, 0)
+ *
+ * @return RR_SUCCESS on success
+ *         RR_FAILURE otherwise
+ */
+reg_return_t
+reg_cache_delete(int rank, void *buf, int dev_id)
+{
+    reg_return_t status = RR_FAILURE;
+    reg_entry_t *runner = NULL;
+    reg_entry_t *previous_runner = NULL;
+    if (buf == NULL) return RR_SUCCESS;
+
+#if DEBUG
+    printf("[%d] reg_cache_delete(rank=%d, buf=%p)\n",
+            g_state.rank, rank, buf);
+#endif
+
+    /* preconditions */
+    COMEX_ASSERT(NULL != reg_cache);
+    COMEX_ASSERT(0 <= rank && rank < reg_nprocs);
+    COMEX_ASSERT(NULL != buf);
+    COMEX_ASSERT(NULL != reg_cache_find(rank, buf, 0, dev_id));
+
+    /* this is more restrictive than reg_cache_find() in that we locate
+     * exactlty the same region starting address */
+    runner = reg_cache[rank];
+    while (runner) {
+        if (runner->buf == buf && runner->dev_id == dev_id) {
+            break;
+        }
+        previous_runner = runner;
+        runner = runner->next;
+    }
+    /* we should have found an entry */
+    if (NULL == runner) {
+      printf("p[%d] (reg_cache_delete) rank: %d buf: %p\n",g_state.rank,rank,buf);
+        COMEX_ASSERT(0);
+        return RR_FAILURE;
+    }
+
+    /* pop the entry out of the linked list */
+    if (previous_runner) {
+        previous_runner->next = runner->next;
+    }
+    else {
+        reg_cache[rank] = reg_cache[rank]->next;
+    }
+
+    status = reg_entry_destroy(rank, runner);
+
+    return status;
+}
+
+
+reg_return_t reg_cache_nullify(reg_entry_t *node)
+{
+#if DEBUG
+    printf("[%d] reg_cache_nullify(node=%p)\n",
+            g_state.rank, node);
+#endif
+
+    node->next = NULL;
+    node->buf = NULL;
+    node->len = 0;
+    node->mapped = NULL;
+    node->rank = -1;
+    node->use_dev = 0;
+    node->dev_id = -1;
+    (void)memset(node->name, 0, SHM_NAME_SIZE);
+
+    return RR_SUCCESS;
+}
+#endif
+#if 0
+}
+#endif
 #endif
