@@ -16,6 +16,7 @@ MPI_Comm ARMCI_COMM_WORLD;
 
 int _number_of_procs_per_node = 1;
 int _my_node_id;
+int _armci_me;
 ARMCI_Group ARMCI_Node_group;
 
 /**
@@ -31,6 +32,7 @@ void armci_init_domains(MPI_Comm comm)
   int ncnt;
 
   status = MPI_Comm_rank(comm, &rank);
+  _armci_me = rank;
   assert(MPI_SUCCESS == status);
   status = MPI_Comm_size(comm, &size);
   assert(MPI_SUCCESS == status);
@@ -305,11 +307,13 @@ void PARMCI_Finalize()
 
 int PARMCI_Free(void *ptr)
 {
+  printf("p[%d] Calling comex_free\n",_armci_me);
     return comex_free(ptr, ARMCI_Default_Proc_Group);
 }
 
 int PARMCI_Free_memdev(void *ptr)
 {
+  printf("p[%d] Calling comex_free_dev\n",_armci_me);
     return comex_free_dev(ptr, ARMCI_Default_Proc_Group);
 }
 

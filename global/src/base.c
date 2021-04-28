@@ -4026,6 +4026,7 @@ int local_sync_begin,local_sync_end;
       return TRUE;
     } 
     */
+    printf("p[%d] calling GA_Destroy\n",GAme);
     if (!GA[ga_handle].overlay) {
 #ifndef AVOID_MA_STORAGE
       if(gai_uses_shm((int)grp_id)){
@@ -4044,11 +4045,14 @@ int local_sync_begin,local_sync_end;
         else
 #endif
           if (GA[ga_handle].mem_dev_set) {
+    printf("p[%d] (1) calling ARMCI_Free_memdev\n",GAme);
             ARMCI_Free_memdev(GA[ga_handle].ptr[GAme]-GA[ga_handle].id);
           } else {
             if (GA[ga_handle].dev_set) {
-              ARMCI_Free(GA[ga_handle].ptr[GAme]);
+    printf("p[%d] (2) calling ARMCI_Free_memdev\n",GAme);
+              ARMCI_Free_memdev(GA[ga_handle].ptr[GAme]);
             } else {
+    printf("p[%d] calling ARMCI_Free\n",GAme);
               ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
             }
           }

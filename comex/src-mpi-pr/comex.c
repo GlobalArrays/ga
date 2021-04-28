@@ -2262,9 +2262,9 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 #endif
         }
         else if (g_state.rank == reg_entries[i].rank) {
-            /* we already registered our own memory, but PR hasn't */
+            /* we already registered our own memory in _comex_malloc_local, but PR hasn't */
 #if DEBUG && DEBUG_VERBOSE
-            fprintf(stderr, "[%d] comex_malloc found self at %d\n",
+            fprintf(stderr, "[%d] comex_malloc found self at %d\n" in _comex_malloc_local,
                     g_state.rank, i);
 #endif
             if (is_notifier) {
@@ -3123,6 +3123,7 @@ int comex_free_dev(void *ptr, comex_group_t group)
     int use_dev = 0;
 
     comex_barrier(group);
+    printf("p[%d] calling comex_free_dev ptr: %p\n",g_state.rank,ptr);
 
 #if DEBUG
     fprintf(stderr, "[%d] comex_free(ptr=%p, group=%d)\n", g_state.rank, ptr, group);
@@ -3158,6 +3159,17 @@ int comex_free_dev(void *ptr, comex_group_t group)
     } else {
       dev_ids[igroup->rank] = _comex_dev_id;
     }
+        if (_comex_dev_id >= 0) {
+          int buf[8];
+          int q;
+          cudaMemcpy(buf,ptr,32,cudaMemcpyDeviceToHost);
+          printf("p[%d] buf[%d]:",g_state.rank,i);
+          for (q=0; q<8; q++) {
+            printf(" %d",buf[q]);
+          }
+          printf("\n");
+        }
+    printf("p[%d] rank: %d dev_ids: %d ptr: %p\n",g_state.rank,igroup->rank,dev_ids[igroup->rank],ptrs[igroup->rank]);
 
 #if DEBUG && DEBUG_VERBOSE
     fprintf(stderr, "[%d] comex_free ptrs allocated and assigned\n",
@@ -3170,6 +3182,7 @@ int comex_free_dev(void *ptr, comex_group_t group)
     status = MPI_Allgather(MPI_IN_PLACE, sizeof(int), MPI_BYTE,
         dev_ids, sizeof(int), MPI_BYTE, igroup->comm);
     COMEX_ASSERT(MPI_SUCCESS == status);
+    printf("p[%d] rank: %d dev_ids: %d ptr: %p\n",g_state.rank,igroup->rank,dev_ids[igroup->rank],ptrs[igroup->rank]);
 
 #if DEBUG && DEBUG_VERBOSE
     fprintf(stderr, "[%d] comex_free ptrs exchanged\n", g_state.rank);
@@ -3197,8 +3210,8 @@ int comex_free_dev(void *ptr, comex_group_t group)
             g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
             num_progress_ranks_per_node, is_node_ranks_packed)] ) {
         /* same SMP node */
-        reg_entry_t *reg_entry = NULL;
         int retval = 0;
+        reg_entry_t *reg_entry;
 
 #if DEBUG && DEBUG_VERBOSE
         fprintf(stderr, "[%d] comex_free same hostid at %d\n", g_state.rank, i);
@@ -3206,29 +3219,24 @@ int comex_free_dev(void *ptr, comex_group_t group)
 
         if (ptrs[i] == NULL) continue;
         /* find the registered memory */
-        reg_entry = reg_cache_find(world_ranks[i], ptrs[i], 1, dev_ids[i]);
+        reg_entry = reg_cache_find(world_ranks[i], ptrs[i], 0, dev_ids[i]);
 
 #if DEBUG && DEBUG_VERBOSE
         fprintf(stderr, "[%d] comex_free found reg entry\n", g_state.rank);
 #endif
 
-        if (!reg_entry->use_dev) {
-          /* unmap the memory */
-          retval = munmap(reg_entry->mapped, reg_entry->len);
-          if (-1 == retval) {
-            perror("comex_free: munmap");
-            comex_error("comex_free: munmap", retval);
-          }
-        } else {
-          use_dev = 1;
-        }
+#if DEBUG && DEBUG_VERBOSE
+        fprintf(stderr, "[%d] comex_free found reg entry\n", g_state.rank);
+#endif
 
 #if DEBUG && DEBUG_VERBOSE
         fprintf(stderr, "[%d] comex_free unmapped mapped memory in reg entry\n",
             g_state.rank);
 #endif
 
-        reg_cache_delete(world_ranks[i], ptrs[i], dev_ids[i]);
+        printf("p[%d] calling reg_cache_delete i: %d wrank: %d ptr: %p dev_id: %d\n",
+            g_state.rank,i,world_ranks[i],reg_entry->buf,dev_ids[i]);
+        if (dev_ids[i] >= 0) reg_cache_delete(world_ranks[i], reg_entry->buf, dev_ids[i]);
 
 #if DEBUG && DEBUG_VERBOSE
         fprintf(stderr, "[%d] comex_free deleted reg cache entry\n", g_state.rank);
@@ -3276,6 +3284,7 @@ int comex_free_dev(void *ptr, comex_group_t group)
 
     /* free ptrs array */
     free(ptrs);
+    free(dev_ids);
     free(world_ranks);
 
     /* remove my ptr from reg cache and free ptr */
@@ -3284,6 +3293,7 @@ int comex_free_dev(void *ptr, comex_group_t group)
     /* Is this needed? */
     comex_barrier(group);
 
+    printf("p[%d] completed comex_free_dev\n",g_state.rank);
     return COMEX_SUCCESS;
 }
 #endif
@@ -4788,6 +4798,7 @@ STATIC void _malloc_handler(
         if (reg_entries[i].use_dev) {
           cudaIpcOpenMemHandle(&memory,reg_entries[i].handle,cudaIpcMemLazyEnablePeerAccess);
           cudaIpcCloseMemHandle(memory);
+          printf("p[%d] progress rank pointer: %p\n",g_state.rank,memory);
         } else {
           memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
         }

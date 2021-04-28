@@ -526,6 +526,8 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
 {
     reg_entry_t *node = NULL;
 
+    printf("p[%d] reg_cache_insert rank: %d buf: %p mapped: %p dev_id: %d\n",
+        g_state.rank,rank,buf,mapped,dev_id);
 #if DEBUG
     printf("[%d] reg_cache_insert(rank=%d, buf=%p, len=%ld, name=%s, mapped=%p)\n",
             g_state.rank, rank, buf, len, name, mapped);
@@ -601,6 +603,7 @@ reg_cache_delete(int rank, void *buf, int dev_id)
     reg_return_t status = RR_FAILURE;
     reg_entry_t *runner = NULL;
     reg_entry_t *previous_runner = NULL;
+      printf("p[%d] initial rank: %d buf: %p dev_id: %d\n",rank,buf,dev_id);
     if (buf == NULL) return RR_SUCCESS;
 
 #if DEBUG
@@ -612,6 +615,9 @@ reg_cache_delete(int rank, void *buf, int dev_id)
     COMEX_ASSERT(NULL != reg_cache);
     COMEX_ASSERT(0 <= rank && rank < reg_nprocs);
     COMEX_ASSERT(NULL != buf);
+    if (NULL == reg_cache_find(rank, buf, 0, dev_id)) {
+      printf("p[%d] rank: %d buf: %p dev_id: %d\n",rank,buf,dev_id);
+    }
     COMEX_ASSERT(NULL != reg_cache_find(rank, buf, 0, dev_id));
 
     /* this is more restrictive than reg_cache_find() in that we locate
