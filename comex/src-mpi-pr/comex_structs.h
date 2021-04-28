@@ -63,7 +63,6 @@ typedef struct lock_link {
     int rank;
 } lock_t;
 
-
 typedef struct {
     void *ptr;
     int stride_levels;

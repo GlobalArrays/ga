@@ -15,6 +15,9 @@
 
 /* 3rd party headers */
 #include <mpi.h>
+#ifdef ENABLE_DEVICE
+#include <cuda_runtime.h>
+#endif
 
 /* our headers */
 #include "comex.h"
@@ -516,6 +519,9 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
     ,sicm_device_list device
 #endif
 #endif
+#ifdef ENABLE_DEVICE
+    ,cudaIpcMemHandle_t handle
+#endif
     )
 {
     reg_entry_t *node = NULL;
@@ -549,6 +555,9 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
     if (name != NULL) (void)memcpy(node->name, name, SHM_NAME_SIZE);
     node->mapped = mapped;
     node->next = NULL;
+#ifdef ENABLE_DEVICE
+    node->handle = handle;
+#endif
 #if USE_SICM
     node->device = device;
 #endif

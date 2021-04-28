@@ -54,6 +54,7 @@ endif()
 
 if (ENABLE_CUDA)
   enable_language(CUDA)
+  find_package (CUDA REQUIRED)
 endif()
 
 if (ENABLE_FORTRAN)

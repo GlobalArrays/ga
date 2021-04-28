@@ -26,6 +26,9 @@
  * mimics the reg_cache code */
 #define STATIC static inline
 
+/* avoid name mangling by the CUDA compiler */
+extern "C" {
+
 extern comex_group_world_t g_state;
 extern void _fence_master(int master_rank);
 extern nb_t* nb_wait_for_handle();
@@ -42,8 +45,8 @@ static cudaIpcMemHandle_t *mem_handles = NULL;
 static char *_mem_list_names;
 
 /*
-void dev_cache_init(int op, comex_group_t group);
-void dev_cache_insert(void *ptr, comex_group_t group);
+void dev_cache_init(MPI_Comm comm);
+void dev_cache_insert(int rank, void *ptr);
 void dev_cache_exchange(void *ptr, void **ptrs, comex_igroup_t group);
 void dev_cache_launch(void *ptr, int op);
 void dev_cache_open(int rank, void *ptr);
@@ -68,21 +71,22 @@ void dev_cache_destroy();
  *
  * @return RR_SUCCESS on success
  */
-void dev_cache_init(comex_group_t group)
+void dev_cache_init(MPI_Comm comm)
 {
   int i = 0;
   int fd = 0;
   int retval = 0;
   int size;
   char name[31];
-  comex_igroup_t *igroup = comex_get_igroup_from_group(group);
+  int rank;
 
   /* preconditions */
   COMEX_ASSERT(NULL == dev_cache);
   COMEX_ASSERT(0 == dev_nprocs);
 
   /* keep the number of caches around for later use */
-  dev_nprocs = igroup->size;
+  MPI_Comm_size(comm,&dev_nprocs);
+  MPI_Comm_rank(comm,&rank);
 
   /* allocate the registration cache list: */
   dev_cache = (dev_entry_t **)malloc(sizeof(dev_entry_t*) * dev_nprocs); 
@@ -90,9 +94,9 @@ void dev_cache_init(comex_group_t group)
   size = 31*dev_nprocs;
   _mem_list_names = (char*)malloc(size);
   memset(_mem_list_names,0,size);
-  sprintf(name,"/CMX_______________%10d\n",igroup->rank);
+  sprintf(name,"/CMX_______________%10d\n",rank);
   MPI_Allgather(name, 31, MPI_CHAR, _mem_list_names, 31, MPI_CHAR,
-      igroup->comm);
+      comm);
   /* create shared memory segment */
   fd = shm_open(name, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
   if (-1 == fd && EEXIST == errno) {
@@ -207,7 +211,7 @@ void dev_cache_exchange(void *ptr, void ***ptrs, comex_group_t group)
   void *g_ptr;
 
   /* get world rank */
-  comex_group_translate_world(group,rank, &wrank);
+  comex_group_translate_world(group, rank, &wrank);
   prog_rank = g_state.master[wrank];
 
   cudaIpcMemHandle_t *g_mem_handles;
@@ -230,14 +234,14 @@ void dev_cache_exchange(void *ptr, void ***ptrs, comex_group_t group)
       /* copy cudaIpcMemHandle_t to progrss rank */
       fd = shm_open(&_mem_list_names[31*prog_rank], O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
       g_mem_handles = (cudaIpcMemHandle_t*)mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-      g_mem_handles[rank] = mem_handles[rank];
+      g_mem_handles[rank] = mem_handles[wrank];
       retval = close(fd);
     } else if (g_state.master[tmp] == prog_rank) {
       /* both calling process and process i have same progress rank copy mem
        * handle so copy cudaIpcMemHandle_t to remote process */
       fd = shm_open(&_mem_list_names[31*tmp], O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
       g_mem_handles = (cudaIpcMemHandle_t*)mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-      g_mem_handles[rank] = mem_handles[rank];
+      g_mem_handles[rank] = mem_handles[wrank];
       retval = close(fd);
     }
   }
@@ -245,6 +249,19 @@ void dev_cache_exchange(void *ptr, void ***ptrs, comex_group_t group)
   _fence_master(prog_rank);
   comex_fence_all(group);
   comex_wait_all(group);
+  for (i=0; i<nprocs; i++) {
+    /* get world rank of process */
+    comex_group_translate_world(group,i, &tmp);
+    if (i == rank) {
+    } else if (g_state.master[tmp] == prog_rank) {
+      /* both calling process and process i have same progress rank copy mem
+       * handle so copy cudaIpcMemHandle_t to remote process */
+      fd = shm_open(&_mem_list_names[31*tmp], O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
+      g_mem_handles = (cudaIpcMemHandle_t*)mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+      mem_handles[wrank] = g_mem_handles[rank];
+      retval = close(fd);
+    }
+  }
   /* everybody should have a memory handle for all allocations on the same SMP
    * node. Now need to come * up with a global list of pointers. Each process
    * needs to get a pointer from its progress rank*/
@@ -265,9 +282,10 @@ void dev_cache_exchange(void *ptr, void ***ptrs, comex_group_t group)
   
 }
 
-#if 0
 /**
- * Create a new registration entry based on the given members.
+ * Create a new registration entry based on the given members. This must be done
+ * right after calling dev_cache_exchange and before another call to
+ * dev_cache_exchange
  *
  * @pre 0 <= rank && rank < reg_nprocs
  * @pre NULL != buf
@@ -275,44 +293,44 @@ void dev_cache_exchange(void *ptr, void ***ptrs, comex_group_t group)
  * @pre reg_cache_init() was previously called
  * @pre NULL == reg_cache_find(rank, buf, 0)
  * @pre NULL == reg_cache_find_intersection(rank, buf, 0)
+ * @param rank world rank of target processor 
+ * @param buf  pointer to GPU memory allocation
  *
  * @return pointer to new node
  */
 void dev_cache_insert(int rank, void *buf)
 {
-    dev_cache_t *node = NULL;
+  dev_entry_t *node = NULL;
 
-    if (buf == NULL) {
-      return;
+  if (buf == NULL) {
+    return;
+  }
+  /* preconditions */
+  COMEX_ASSERT(0 <= rank && rank < dev_nprocs);
+  /* TODO: May need to do something about this
+     COMEX_ASSERT(NULL == dev_cache_find(rank, buf, len, dev_id));
+   */
+
+  /* allocate the new entry */
+  node = (dev_entry_t *)malloc(sizeof(dev_entry_t));
+  COMEX_ASSERT(node);
+
+  /* initialize the new entry */
+  node->rank = rank;
+  node->ptr = buf;
+  node->handle = mem_handles[rank];
+  node->next = NULL;
+
+  /* push new entry to tail of linked list */
+  if (NULL == dev_cache[rank]) {
+    dev_cache[rank] = node;
+  } else {
+    dev_entry_t *runner = dev_cache[rank];
+    while (runner->next) {
+      runner = runner->next;
     }
-    /* preconditions */
-    COMEX_ASSERT(0 <= rank && rank < dev_nprocs);
-    /* TODO: May need to do something about this
-    COMEX_ASSERT(NULL == dev_cache_find(rank, buf, len, dev_id));
-    */
-
-    /* allocate the new entry */
-    node = (dev_entry_t *)malloc(sizeof(dev_entry_t));
-    COMEX_ASSERT(node);
-
-    /* initialize the new entry */
-    node->rank = rank;
-    node->ptr = buf;
-    node->next = NULL;
-
-    /* push new entry to tail of linked list */
-    if (NULL == reg_cache[rank]) {
-        reg_cache[rank] = node;
-    }
-    else {
-        reg_entry_t *runner = reg_cache[rank];
-        while (runner->next) {
-            runner = runner->next;
-        }
-        runner->next = node;
-    }
-
-    return node;
+    runner->next = node;
+  }
 }
 
 
@@ -320,10 +338,8 @@ void dev_cache_insert(int rank, void *buf)
  * Locate a registration cache entry which contains the given segment
  * completely.
  *
- * @param[in] rank  rank of the process
+ * @param[in] rank  rank of the process in world group
  * @param[in] buf   starting address of the buffer
- * @parma[in] len   length of the buffer
- * @parma[in] dev_id  device ID (if used)
  * 
  * @pre 0 <= rank && rank < reg_nprocs
  * @pre reg_cache_init() was previously called
@@ -332,56 +348,34 @@ void dev_cache_insert(int rank, void *buf)
  */
 void dev_cache_open(int rank, void *buf)
 {
-    reg_entry_t *entry = NULL;
-    reg_entry_t *runner = NULL;
-
-    if (buf == NULL) return entry;
-#if DEBUG
-    printf("[%d] reg_cache_find(rank=%d, buf=%p, len=%d)\n",
-            g_state.rank, rank, buf, len);
-#endif
+    dev_entry_t *entry = NULL;
+    dev_entry_t *runner = NULL;
+    void *ptr;
 
     /* preconditions */
-    COMEX_ASSERT(NULL != reg_cache);
-    COMEX_ASSERT(0 <= rank && rank < reg_nprocs);
+    COMEX_ASSERT(NULL != buf);
+    COMEX_ASSERT(0 <= rank && rank < dev_nprocs);
 
-    runner = reg_cache[rank];
+    runner = dev_cache[rank];
 
     while (runner && NULL == entry) {
-        if (RR_SUCCESS == reg_entry_contains(runner, buf, len, dev_id)) {
+        if (runner->ptr == buf) {
             entry = runner;
-#if DEBUG
-            printf("[%d] reg_cache_find entry found\n"
-                    "reg_entry=%p buf=%p len=%d\n"
-                    "rank=%d buf=%p len=%zu name=%s mapped=%p\n",
-                    g_state.rank, runner, buf, len,
-                    runner->rank, runner->buf, runner->len,
-                    runner->name, runner->mapped);
-#endif
         }
         runner = runner->next;
     }
 
-#ifndef NDEBUG
     /* we COMEX_ASSERT that the found entry was unique */
     while (runner) {
-        if (RR_SUCCESS == reg_entry_contains(runner, buf, len, dev_id)) {
-#if DEBUG
-            printf("[%d] reg_cache_find duplicate found\n"
-                    "reg_entry=%p buf=%p len=%d\n"
-                    "rank=%d buf=%p len=%zu name=%s mapped=%p\n",
-                    g_state.rank, runner, buf, len,
-                    runner->rank, runner->buf, runner->len,
-                    runner->name, runner->mapped);
-#endif
+        if (runner->ptr == buf) {
             COMEX_ASSERT(0);
         }
         runner = runner->next;
     }
-#endif
 
-    return entry;
+      cudaIpcOpenMemHandle(&ptr, entry->handle, cudaIpcMemLazyEnablePeerAccess);
 }
+#if 0
 
 /**
  * Removes the reg cache entry associated with the given rank and buffer.
@@ -469,3 +463,4 @@ reg_return_t reg_cache_nullify(reg_entry_t *node)
     return RR_SUCCESS;
 }
 #endif
+}

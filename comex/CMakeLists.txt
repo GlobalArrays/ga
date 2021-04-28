@@ -36,7 +36,8 @@ option (COMEX_NETWORK_MPI3 "use MPI RMA protocols for communication" OFF)
 option (COMEX_NETWORK_MPI_MT "use MPI multi-threading protocol for communication" OFF)
 option (COMEX_NETWORK_MPI_PT "use MPI progress threads protocol for communication" OFF)
 
-include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR} src-common)
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR} src-common
+   ${CUDA_INCLUDE_DIRS})
 if (MPI_TS)
   set(COMEX_DEVICE
     src-mpi/comex.c
@@ -45,16 +46,21 @@ if (MPI_TS)
   set (COMEX_NETWORK_MPI_TS ON)
   include_directories(AFTER src-mpi)
 elseif (MPI_PR)
-  set(COMEX_DEVICE
-    src-mpi-pr/comex.c
-    src-mpi-pr/groups.c
-    src-mpi-pr/reg_cache.c
-  )
   if (ENABLE_CUDA)
     message(STATUS "Setting Compiler for utils.cu to CUDA")
     set(COMEX_CUDA_DEVICE
       src-mpi-pr/utils.cu
-      src-mpi-pr/dev_cache.cu
+    )
+    set(COMEX_DEVICE
+      src-mpi-pr/comex.c
+      src-mpi-pr/groups.c
+      src-mpi-pr/reg_cache.c
+    )
+  else()
+    set(COMEX_DEVICE
+      src-mpi-pr/comex.c
+      src-mpi-pr/groups.c
+      src-mpi-pr/reg_cache.c
     )
   endif()
   set (COMEX_NETWORK_MPI_PR ON)
@@ -138,7 +144,7 @@ target_compile_definitions(armci PRIVATE HAVE_CONFIG_H)
 
 add_library(GlobalArrays::armci ALIAS armci)
 
-target_link_libraries(armci)
+target_link_libraries(armci PUBLIC ${CUDA_LIBRARIES})
 
 install(TARGETS armci
     EXPORT globalarrays-targets
@@ -153,7 +159,7 @@ add_library(comex
 
 add_library(GlobalArrays::comex ALIAS comex)
 
-target_link_libraries(comex)
+target_link_libraries(comex PUBLIC ${CUDA_LIBRARIES})
 
 install(TARGETS comex
     EXPORT globalarrays-targets

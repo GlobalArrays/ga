@@ -6,6 +6,9 @@
 //#include <sicm_impl.h>
 #endif
 #include <stddef.h>
+#ifdef ENABLE_DEVICE
+#include <cuda_runtime.h>
+#endif
 
 /**
  * Enumerate the return codes for registration cache functions.
@@ -34,6 +37,9 @@ typedef struct _reg_entry_t {
     sicm_device_list device;         /**< pointer to SICM device */
 #endif
 #endif
+#ifdef ENABLE_DEVICE
+    cudaIpcMemHandle_t handle;    /**< handle to GPU memory segment */
+#endif
 } reg_entry_t;
 
 /* functions
@@ -52,6 +58,9 @@ reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len,
 #else
     ,sicm_device_list device
 #endif
+#endif
+#ifdef ENABLE_DEVICE
+    ,cudaIpcMemHandle_t handle
 #endif
     );
 reg_return_t reg_cache_delete(int rank, void *buf, int dev_id);
