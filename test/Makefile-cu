@@ -1,0 +1,15 @@
+GA_DIR=/people/d3g293/tmp/ga-dev/build_cmake/install
+
+CFLAGS= -I${GA_DIR}/include/ga
+
+FCFLAGS= -L${GA_DIR}/lib -L${GA_DIR}/lib64 -lgfortran -lga -larmci -lblas -llapack -lrt -lm
+
+CUDAFLAGS=-L/share/apps/cuda/10.1/lib64 -L/share/apps/cuda/10.1/lib -lcudart
+
+MPIFLAGS= -I/share/apps/openmpi-gpu/3.1.3/gcc/8.3.0/include -L/share/apps/openmpi-gpu/3.1.3/gcc/8.3.0/lib -lmpi
+
+cuda_test: cuda_test.cu
+	nvcc -g cuda_test.cu -o cuda_test ${CFLAGS} ${FCFLAGS} ${MPIFLAGS} ${CUDAFLAGS}
+
+clean:
+	rm cuda_test
