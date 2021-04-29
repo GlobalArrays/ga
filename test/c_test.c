@@ -158,8 +158,10 @@ int main(int argc, char **argv) {
   NGA_Put(g_a, lo, hi, buf, &ld);
   printf("p[%d] Completed NGA_Put\n",rank);
   GA_Sync();
-#if 0
   NGA_Distribution(g_a,rank,tlo,thi);
+  printf("p[%d] lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
+      rank,tlo[0],thi[0],tlo[1],thi[1]);
+#if 0
   printf("p[%d] Completed NGA_Distribution\n",rank);
   if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
     int tnelem = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
