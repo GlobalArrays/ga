@@ -4953,7 +4953,8 @@ STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory)
     ptrdiff_t offset = 0;
 #ifdef ENABLE_DEVICE
     if (reg_entry->use_dev) {
-      cudaIpcOpenMemHandle(&memory, reg_entry->handle, cudaIpcMemLazyEnablePeerAccess);
+      void *ret;
+      cudaIpcOpenMemHandle(&ret, reg_entry->handle, cudaIpcMemLazyEnablePeerAccess);
       printf("p[%d] opened memory %p on device %d\n",g_state.rank,memory,reg_entry->dev_id);
       return memory;
     }
@@ -6117,7 +6118,9 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
               }
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
-                printf("p[%d] (nb_put) calling copyToDevice on proc dst: %p\n",g_state.rank,dst);
+              int *ip = (int*)src;
+                printf("p[%d] src: %d %d %d %d\n",g_state.rank,ip[0],ip[1],ip[2],ip[3]);
+                printf("p[%d] (nb_put) calling copyToDevice on same proc: %d dst: %p\n",g_state.rank,proc,dst);
                 copyToDevice(src, dst, bytes);
               } else if (reg_entry->use_dev && !on_host) {
                 copyDevToDev(src, dst, bytes);
@@ -6152,7 +6155,9 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
             mapped_offset = _get_offset_memory(reg_entry, dst);
             if (reg_entry->use_dev && on_host) {
-                printf("p[%d] (nb_put) calling copyToDevice on node dst: %p\n",g_state.rank,dst);
+              int *ip = (int*)src;
+                printf("p[%d] src: %d %d %d %d\n",g_state.rank,ip[0],ip[1],ip[2],ip[3]);
+                printf("p[%d] (nb_put) calling copyToDevice on same node proc: %d dst: %p\n",g_state.rank,proc,dst);
               copyToDevice(src, mapped_offset, bytes);
               cudaIpcCloseMemHandle(mapped_offset);
             } else if (reg_entry->use_dev && !on_host) {

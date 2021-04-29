@@ -2766,6 +2766,8 @@ logical pnga_allocate(Integer g_a)
     } else {
        pnga_distribution(g_a, grp_me, GA[ga_handle].lo, hi);
     }
+    printf("p[%d] allocate lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
+        GAme,GA[ga_handle].lo[0],hi[0],GA[ga_handle].lo[1],hi[1]);
     if (GA[ga_handle].num_rstrctd == 0 || GA[ga_handle].has_data == 1) {
       for( i = 0, nelem=1; i< ndim; i++){
         /*
