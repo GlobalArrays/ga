@@ -1,0 +1,13 @@
+CFLAGS= -I/share/apps/cuda/10.1/include
+
+FCFLAGS= -L${GA_DIR}/lib -L${GA_DIR}/lib64 -lgfortran -lga -larmci -lblas -llapack -lrt -lm
+
+CUDAFLAGS=-L/share/apps/cuda/10.1/lib64 -L/share/apps/cuda/10.1/lib -lcudart
+
+MPIFLAGS= -I/share/apps/openmpi-gpu/3.1.3/gcc/8.3.0/include -L/share/apps/openmpi-gpu/3.1.3/gcc/8.3.0/lib -lmpi
+
+ipc_test: ipc_test.c
+	mpicc -g ipc_test.c -o ipc_test ${CFLAGS} ${MPIFLAGS} ${CUDAFLAGS}
+
+clean:
+	rm ipc_test
