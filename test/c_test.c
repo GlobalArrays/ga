@@ -7,7 +7,7 @@
 #include "macdecls.h"
 
 #define DIM 2
-#define DIMSIZE 4
+#define DIMSIZE 1024
 #define MAX_FACTOR 256
 
 void factor(int p, int *idx, int *idy) {
@@ -147,11 +147,6 @@ int main(int argc, char **argv) {
       buf[idx] = ii*DIMSIZE+jj;
     }
   }
-  printf("p[%d] buf:",rank);
-  for (i=0; i<nelem; i++) {
-    printf(" %d",buf[i]);
-  }
-  printf("\n");
 
   printf("p[%d] Call NGA_Put\n",rank);
   /* copy data to global array */
@@ -202,7 +197,6 @@ int main(int argc, char **argv) {
   NGA_Get(g_a, lo, hi, buf, &ld);
   printf("p[%d] Completed NGA_Get\n",rank);
   GA_Sync();
-#if 1
 
   printf("p[%d] local patch lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",rank,
       lo[0],hi[0],lo[1],hi[1]);
@@ -225,7 +219,6 @@ int main(int argc, char **argv) {
     if (rank == 0) printf("Get is okay\n");
   }
 
-#endif
   GA_Destroy(g_a);
   if (rank == 0) printf("Completed GA_Destroy\n");
   GA_Terminate();
