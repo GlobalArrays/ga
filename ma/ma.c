@@ -2517,14 +2517,13 @@ public Boolean MA_init(
 #ifdef ENABLE_CUDA_MEM
     if(getenv("MA_USE_CUDA_MEM"))
     {
-        /* this is an enum but we do not include the header */
         void * temp_ptr = NULL;
         int cuda_error = 0;                  // cudaSuccess 0
         unsigned int cuda_mem_flags = 0x01;  // cudaMemAttachGlobal 0x01
         cuda_error = cudaMallocManaged(&temp_ptr, total_bytes, cuda_mem_flags);
-	if (cuda_error == 0) {
+        if (cuda_error == 0) {
           ma_segment = temp_ptr;
-	} else {
+        } else {
           ma_segment = NULL;
         }
     }
