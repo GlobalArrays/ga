@@ -25,7 +25,9 @@
 #include "scope.h"
 #include "table.h"
 
-#ifdef ENABLE_ARMCI_MEM_OPTION
+#if defined(ENABLE_CUDA_MEM)
+extern int cudaMallocManaged(void** devPtr, size_t size, unsigned int flags);
+#elif defined(ENABLE_ARMCI_MEM_OPTION)
 extern void* ARMCI_Malloc_local(long bytes);
 #endif
 
@@ -2512,14 +2514,30 @@ public Boolean MA_init(
     mallopt(M_TRIM_THRESHOLD, -1);
 #endif
     /* allocate the segment of memory */
-#ifdef ENABLE_ARMCI_MEM_OPTION
+#ifdef ENABLE_CUDA_MEM
+    if(getenv("MA_USE_CUDA_MEM"))
+    {
+        void * temp_ptr = NULL;
+        int cuda_error = 0;                  // cudaSuccess 0
+        unsigned int cuda_mem_flags = 0x01;  // cudaMemAttachGlobal 0x01
+        cuda_error = cudaMallocManaged(&temp_ptr, total_bytes, cuda_mem_flags);
+        if (cuda_error == 0) {
+          ma_segment = temp_ptr;
+        } else {
+          ma_segment = NULL;
+        }
+    }
+    else
+#elif defined(ENABLE_ARMCI_MEM_OPTION)
     if(getenv("MA_USE_ARMCI_MEM"))
     {
         ma_segment = (Pointer)ARMCI_Malloc_local(total_bytes);
     }
     else
 #endif
+    {
         ma_segment = (Pointer)bytealloc(total_bytes);
+    }
     if (ma_segment == (Pointer)NULL)
     {
         (void)sprintf(ma_ebuf,
