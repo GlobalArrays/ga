@@ -3634,8 +3634,10 @@ int comex_free_dev(void *ptr, comex_group_t group)
 #endif
 
         if (ptrs[i] == NULL) continue;
+        /*
         cudaIpcOpenMemHandle(&ptrs[i],handles[i],cudaIpcMemLazyEnablePeerAccess);
         cudaIpcCloseMemHandle(ptrs[i]);
+        */
         printf("p[%d] (comex_free_dev) Got to 5 i: %d wrank: %d ptr: %p id: %d\n",
             g_state.rank,i,world_ranks[i],ptrs[i],dev_ids[i]);
         /* find the registered memory */
@@ -3672,11 +3674,13 @@ int comex_free_dev(void *ptr, comex_group_t group)
     /* send ptrs to my master */
     /* first non-master rank in an SMP node sends the message to master */
     if (is_notifier) {
+        printf("p[%d] (comex_free_dev) Got to 10\n",g_state.rank);
       nb_t *nb = NULL;
       int rank_ptrs_local_size = 0;
       int message_size = 0;
       char *message = NULL;
       header_t *header = NULL;
+        printf("p[%d] (comex_free_dev) Got to 11\n",g_state.rank);
 
       rank_ptrs_local_size = sizeof(rank_ptr_t) * reg_entries_local_count;
       message_size = sizeof(header_t) + rank_ptrs_local_size;
@@ -3690,19 +3694,29 @@ int comex_free_dev(void *ptr, comex_group_t group)
       header->length = reg_entries_local_count;
       (void)memcpy(message+sizeof(header_t), rank_ptrs, rank_ptrs_local_size);
       nb = nb_wait_for_handle();
+        printf("p[%d] (comex_free_dev) Got to 12\n",g_state.rank);
       nb_recv(NULL, 0, my_master, nb); /* prepost ack */
+        printf("p[%d] (comex_free_dev) Got to 13\n",g_state.rank);
       nb_send_header(message, message_size, my_master, nb);
+        printf("p[%d] (comex_free_dev) Got to 14\n",g_state.rank);
       nb_wait_for_all(nb);
+        printf("p[%d] (comex_free_dev) Got to 15\n",g_state.rank);
       free(rank_ptrs);
+        printf("p[%d] (comex_free_dev) Got to 16\n",g_state.rank);
     }
+
+        printf("p[%d] (comex_free_dev) Got to 17 rank %d ptr %p dev_id %d\n",g_state.rank,
+            igroup->rank,ptr,dev_ids[igroup->rank]);
+
+    /* remove my ptr from reg cache and free ptr */
+    comex_free_dev_local(ptr,dev_ids[igroup->rank]);
+        printf("p[%d] (comex_free_dev) Got to 18\n",g_state.rank);
 
     /* free ptrs array */
     free(ptrs);
     free(dev_ids);
     free(world_ranks);
-
-    /* remove my ptr from reg cache and free ptr */
-    comex_free_local(ptr);
+        printf("p[%d] (comex_free_dev) Got to 19\n",g_state.rank);
 
     /* Is this needed? */
     comex_barrier(group);
