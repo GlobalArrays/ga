@@ -621,6 +621,10 @@ int _comex_init(MPI_Comm comm)
     _device_map[group_list->rank] = _comex_dev_id;
     status = MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
                         _device_map, 1, MPI_INT, group_list->comm);
+    printf("p[%d] Group rank: %d Group size: %d\n",group_list->rank,group_list->size);
+    for (i=0; i<group_list->size; i++) {
+      printf("p[%d] device_map[%d]: %d\n",group_list->rank,i,_device_map[i]);
+    }
 #endif
 
 #if DEBUG
@@ -2924,14 +2928,14 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
             /* same SMP node, need to mmap */
             /* open remote shared memory object */
             void *memory;
-#if 0
+#if 1
             cudaIpcOpenMemHandle(&memory, reg_entries[i].handle, cudaIpcMemLazyEnablePeerAccess);
             cudaIpcCloseMemHandle(memory);
             if (reg_entries[i].len == 0 && reg_entries[i].buf != NULL) {
               printf("p[%d] (comex_malloc) ALERT reg_entries[%d].len: %d memory: %p\n",
                   g_state.rank,i,reg_entries[i].len,memory);
             }
-            reg_entries[i].buf = memory;
+            reg_entries[i].mapped = memory;
 #else
             memory = reg_entries[i].buf;
 #endif
@@ -5394,8 +5398,9 @@ STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory)
     if (reg_entry->use_dev) {
       void *ret;
       cudaIpcOpenMemHandle(&ret, reg_entry->handle, cudaIpcMemLazyEnablePeerAccess);
-      printf("p[%d] opened memory %p on device %d\n",g_state.rank,memory,reg_entry->dev_id);
+      printf("p[%d] opened ret %p memory %p buf %p on device %d\n",g_state.rank,ret,memory,reg_entry->buf,reg_entry->dev_id);
       offset = ((char*)memory)-((char*)reg_entry->buf);
+      printf("p[%d] offset %d\n",g_state.rank,offset);
       //return memory;
       return ret+offset;
     }
@@ -6664,11 +6669,8 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
             {
               reg_entry_t *reg_entry = NULL;
-              printf("p[%d] _device_map[%d]: %d\n",g_state.rank,proc,_device_map[proc]);
+              printf("p[%d] _device_map[%d]: %d dst: %p\n",g_state.rank,proc,_device_map[proc],dst);
               reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
-              if (reg_entry == NULL) {
-                reg_entry = reg_cache_find(proc, dst, bytes, -1);
-              }
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
               int *ip = (int*)src;
@@ -6700,20 +6702,18 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             }
 
             reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
-            if (reg_entry == NULL) {
-              reg_entry = reg_cache_find(proc, dst, bytes, -1);
-            }
             COMEX_ASSERT(reg_entry);
 #ifdef ENABLE_DEVICE
             mapped_offset = _get_offset_memory(reg_entry, dst);
             if (reg_entry->use_dev && on_host) {
               int *ip = (int*)src;
-                printf("p[%d] (nb_put) calling copyToDevice on same node proc: %d dst: %p\n",g_state.rank,proc,dst);
+                printf("p[%d] (nb_put) calling copyToDevice on same node proc: %d dst: %p mapped_offset: %p\n",
+                    g_state.rank,proc,dst,mapped_offset);
               copyToDevice(src, mapped_offset, bytes);
-              cudaIpcCloseMemHandle(mapped_offset);
+              cudaIpcCloseMemHandle(reg_entry->mapped);
             } else if (reg_entry->use_dev && !on_host) {
               copyDevToDev(src, mapped_offset, bytes);
-              cudaIpcCloseMemHandle(mapped_offset);
+              cudaIpcCloseMemHandle(reg_entry->mapped);
             } else if (!reg_entry->use_dev && !on_host) {
               copyToHost(mapped_offset, src, bytes);
             } else {
@@ -6814,10 +6814,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
             {
               reg_entry_t *reg_entry = NULL;
-              reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc]);
-              if (reg_entry == NULL) {
-                reg_entry = reg_cache_find(proc, src, bytes, -1);
-              }
+              reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc] );
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
                 setDevice(reg_entry->dev_id);
@@ -6848,21 +6845,21 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
             }
 
             reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc]);
-            if (reg_entry == NULL) {
-              reg_entry = reg_cache_find(proc, src, bytes, -1);
-            }
             COMEX_ASSERT(reg_entry);
             /*
               printf("p[%d] reg_entry->use_dev: %d on node proc: %d\n",g_state.rank,reg_entry->use_dev,proc);
               */
 #ifdef ENABLE_DEVICE
+            printf("p[%d] original value of src %p\n",g_state.rank,src);
             mapped_offset = _get_offset_memory(reg_entry, src);
             if (reg_entry->use_dev && on_host) {
+                printf("p[%d] (nb_get) calling copyToDevice on same node proc: %d src: %p mapped_offset: %p\n",
+                    g_state.rank,proc,src,mapped_offset);
               copyToHost(dst, mapped_offset, bytes);
-              cudaIpcCloseMemHandle(mapped_offset);
+              cudaIpcCloseMemHandle(reg_entry->mapped);
             } else if (reg_entry->use_dev && !on_host) {
               copyDevToDev(mapped_offset, dst, bytes);
-              cudaIpcCloseMemHandle(mapped_offset);
+              cudaIpcCloseMemHandle(reg_entry->mapped);
             } else if (!reg_entry->use_dev && !on_host) {
               copyToDevice(mapped_offset, dst, bytes);
             } else {
@@ -6892,9 +6889,6 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->length = bytes;
 #ifdef ENABLE_DEVICE
         reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc]);
-        if (reg_entry == NULL) {
-          reg_entry = reg_cache_find(proc, src, bytes, -1);
-        }
         header->use_dev = reg_entry->use_dev;
         header->dev_id = reg_entry->dev_id;
 #endif
