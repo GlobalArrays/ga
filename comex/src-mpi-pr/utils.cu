@@ -12,7 +12,6 @@ int numDevices()
 {
   int ngpus;
   cudaGetDeviceCount(&ngpus);
-  printf("number of devices found: %d\n",ngpus);
   return ngpus;
 }
 
@@ -33,9 +32,7 @@ void mallocDevice(void **buf, size_t size)
   cudaPointerAttributes attr;
   cudaError_t err;
   cudaMalloc(buf, (int)size);
-  printf("cudaMalloc buffer: %p\n",*buf);
   err = cudaPointerGetAttributes(&attr, *buf);
-  printf("mallocDevice buf: %p device: %d\n",attr.devicePointer,attr.device);
 }
 
 /* free unified memory
