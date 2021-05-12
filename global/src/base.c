@@ -2766,8 +2766,6 @@ logical pnga_allocate(Integer g_a)
     } else {
        pnga_distribution(g_a, grp_me, GA[ga_handle].lo, hi);
     }
-    printf("p[%d] allocate lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
-        GAme,GA[ga_handle].lo[0],hi[0],GA[ga_handle].lo[1],hi[1]);
     if (GA[ga_handle].num_rstrctd == 0 || GA[ga_handle].has_data == 1) {
       for( i = 0, nelem=1; i< ndim; i++){
         /*
@@ -4028,7 +4026,6 @@ int local_sync_begin,local_sync_end;
       return TRUE;
     } 
     */
-    printf("p[%d] calling GA_Destroy\n",GAme);
     if (!GA[ga_handle].overlay) {
 #ifndef AVOID_MA_STORAGE
       if(gai_uses_shm((int)grp_id)){
@@ -4047,14 +4044,11 @@ int local_sync_begin,local_sync_end;
         else
 #endif
           if (GA[ga_handle].mem_dev_set) {
-    printf("p[%d] (1) calling ARMCI_Free_memdev\n",GAme);
             ARMCI_Free_memdev(GA[ga_handle].ptr[GAme]-GA[ga_handle].id);
           } else {
             if (GA[ga_handle].dev_set) {
-    printf("p[%d] (2) calling ARMCI_Free_memdev\n",GAme);
               ARMCI_Free_memdev(GA[ga_handle].ptr[GAme]);
             } else {
-    printf("p[%d] calling ARMCI_Free\n",GAme);
               ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
             }
           }

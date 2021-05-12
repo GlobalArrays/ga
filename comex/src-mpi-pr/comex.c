@@ -556,10 +556,6 @@ int comex_init()
     _device_map[group_list->rank] = _comex_dev_id;
     status = MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
                         _device_map, 1, MPI_INT, group_list->comm);
-    printf("p[%d] Group rank: %d Group size: %d\n",group_list->rank,group_list->size);
-    for (i=0; i<group_list->size; i++) {
-      printf("p[%d] device_map[%d]: %d\n",group_list->rank,i,_device_map[i]);
-    }
 #endif
 
 #if DEBUG
@@ -719,7 +715,6 @@ int comex_put(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
-    printf("p[%d]  calling comex_put\n",g_state.rank);
 
     nb = nb_wait_for_handle();
 
@@ -741,7 +736,6 @@ int comex_get(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
-    printf("p[%d]  calling comex_get\n",g_state.rank);
 
     nb = nb_wait_for_handle();
 
@@ -787,7 +781,6 @@ int comex_puts(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
-    printf("p[%d]  calling comex_puts\n",g_state.rank);
 
     nb = nb_wait_for_handle();
 
@@ -811,7 +804,6 @@ int comex_gets(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
-    printf("p[%d]  calling comex_gets\n",g_state.rank);
 
     nb = nb_wait_for_handle();
 
@@ -1404,7 +1396,6 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, int device_id)
     setDevice(device_id); 
     mallocDevice(&memory, size);
     cudaIpcGetMemHandle(&handle, memory);
-    printf("p[%d] mallocDevice buf: %p size: %d id: %d\n",g_state.rank,memory,size,device_id);
 
     /* register the memory locally */
     reg_entry = reg_cache_insert(
@@ -1636,7 +1627,6 @@ int comex_nbput(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
-    printf("p[%d]  calling comex_nbput\n",g_state.rank);
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -1665,7 +1655,6 @@ int comex_nbget(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
-    printf("p[%d]  calling comex_nbget\n",g_state.rank);
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -1725,7 +1714,6 @@ int comex_nbputs(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
-    printf("p[%d]  calling comex_nbputs\n",g_state.rank);
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -1756,7 +1744,6 @@ int comex_nbgets(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
-    printf("p[%d]  calling comex_nbgets\n",g_state.rank);
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -2413,7 +2400,6 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
     idevice.devices = NULL;
 #endif
 
-    printf("p[%d] calling comex_malloc_mem_dev\n",g_state.rank);
     /* preconditions */
     COMEX_ASSERT(ptrs);
 
@@ -3283,7 +3269,6 @@ int comex_free_dev(void *ptr, comex_group_t group)
     int use_dev = 0;
 
     comex_barrier(group);
-    printf("p[%d] calling comex_free_dev ptr: %p\n",g_state.rank,ptr);
 
 #if DEBUG
     fprintf(stderr, "[%d] comex_free(ptr=%p, group=%d)\n", g_state.rank, ptr, group);
@@ -3322,7 +3307,6 @@ int comex_free_dev(void *ptr, comex_group_t group)
       dev_ids[igroup->rank] = _comex_dev_id;
       handles[igroup->rank] = my_reg->handle;
     }
-    printf("p[%d] rank: %d dev_ids: %d ptr: %p\n",g_state.rank,igroup->rank,dev_ids[igroup->rank],ptrs[igroup->rank]);
 
 #if DEBUG && DEBUG_VERBOSE
     fprintf(stderr, "[%d] comex_free ptrs allocated and assigned\n",
@@ -3332,30 +3316,22 @@ int comex_free_dev(void *ptr, comex_group_t group)
     /* exchange of pointers */
     status = MPI_Allgather(MPI_IN_PLACE, sizeof(void *), MPI_BYTE,
         ptrs, sizeof(void *), MPI_BYTE, igroup->comm);
-    if (status != MPI_SUCCESS) printf("p[%d] problem with allgather ptrs\n",g_state.rank);
     status = MPI_Allgather(MPI_IN_PLACE, sizeof(int), MPI_BYTE,
         dev_ids, sizeof(int), MPI_BYTE, igroup->comm);
     status = MPI_Allgather(MPI_IN_PLACE, sizeof(cudaIpcMemHandle_t), MPI_BYTE,
         handles, sizeof(cudaIpcMemHandle_t), MPI_BYTE, igroup->comm);
-    for (i=0; i<igroup->size; i++) {
-      printf("p[%d] i: %d ptr: %p ID: %d\n",g_state.rank,i,ptrs[i],dev_ids[i]);
-    }
-    if (status != MPI_SUCCESS) printf("p[%d] problem with allgather dev_ids\n",g_state.rank);
     COMEX_ASSERT(MPI_SUCCESS == status);
-    printf("p[%d] rank: %d dev_ids: %d ptr: %p\n",g_state.rank,igroup->rank,dev_ids[igroup->rank],ptrs[igroup->rank]);
 
 #if DEBUG && DEBUG_VERBOSE
     fprintf(stderr, "[%d] comex_free ptrs exchanged\n", g_state.rank);
 #endif
 
     /* remove all pointers from registration cache */
-        printf("p[%d] (comex_free_dev) igroup->size: %d\n",g_state.rank,igroup->size);
     for (i=0; i<igroup->size; ++i) {
       if (i == igroup->rank) {
 #if DEBUG && DEBUG_VERBOSE
         fprintf(stderr, "[%d] comex_free found self at %d\n", g_state.rank, i);
 #endif
-        printf("p[%d] (comex_free_dev) Got to 1\n",g_state.rank);
         if (is_notifier) {
           /* does this need to be a memcpy? */
           rank_ptrs[reg_entries_local_count].rank = world_ranks[i];
@@ -3363,18 +3339,15 @@ int comex_free_dev(void *ptr, comex_group_t group)
           rank_ptrs[reg_entries_local_count].dev_id = dev_ids[i];
           reg_entries_local_count++;
         }
-        printf("p[%d] (comex_free_dev) Got to 2\n",g_state.rank);
       } else if (NULL == ptrs[i]) {
 #if DEBUG && DEBUG_VERBOSE
         fprintf(stderr, "[%d] comex_free found NULL at %d\n", g_state.rank, i);
 #endif
-        printf("p[%d] (comex_free_dev) Got to 3\n",g_state.rank);
       } else if (g_state.master[world_ranks[i]] == 
           g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
             g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
             num_progress_ranks_per_node, is_node_ranks_packed)] ) {
         /* same SMP node */
-        printf("p[%d] (comex_free_dev) Got to 4\n",g_state.rank);
         int retval = 0;
         reg_entry_t *reg_entry;
 
@@ -3387,20 +3360,14 @@ int comex_free_dev(void *ptr, comex_group_t group)
         cudaIpcOpenMemHandle(&ptrs[i],handles[i],cudaIpcMemLazyEnablePeerAccess);
         cudaIpcCloseMemHandle(ptrs[i]);
         */
-        printf("p[%d] (comex_free_dev) Got to 5 i: %d wrank: %d ptr: %p id: %d\n",
-            g_state.rank,i,world_ranks[i],ptrs[i],dev_ids[i]);
         /* find the registered memory */
         reg_entry = reg_cache_find(world_ranks[i], ptrs[i], 0, dev_ids[i]);
-        printf("p[%d] reg_entry: %p\n",g_state.rank,reg_entry);
 
 #if DEBUG && DEBUG_VERBOSE
         fprintf(stderr, "[%d] comex_free_dev found reg entry\n", g_state.rank);
 #endif
 
-        printf("p[%d] (comex_free_dev) Got to 6 i: %d wrank: %d ptr: %p id: %d\n",
-            g_state.rank,i,world_ranks[i],ptrs[i],dev_ids[i]);
         reg_cache_delete(world_ranks[i], ptrs[i], dev_ids[i]);
-        printf("p[%d] (comex_free_dev) Got to 7\n",g_state.rank);
 
 #if DEBUG && DEBUG_VERBOSE
         fprintf(stderr, "[%d] comex_free deleted reg cache entry\n", g_state.rank);
@@ -3418,18 +3385,15 @@ int comex_free_dev(void *ptr, comex_group_t group)
         COMEX_ASSERT(0);
       }
     }
-        printf("p[%d] (comex_free_dev) Got to 9\n",g_state.rank);
 
     /* send ptrs to my master */
     /* first non-master rank in an SMP node sends the message to master */
     if (is_notifier) {
-        printf("p[%d] (comex_free_dev) Got to 10\n",g_state.rank);
       nb_t *nb = NULL;
       int rank_ptrs_local_size = 0;
       int message_size = 0;
       char *message = NULL;
       header_t *header = NULL;
-        printf("p[%d] (comex_free_dev) Got to 11\n",g_state.rank);
 
       rank_ptrs_local_size = sizeof(rank_ptr_t) * reg_entries_local_count;
       message_size = sizeof(header_t) + rank_ptrs_local_size;
@@ -3443,34 +3407,24 @@ int comex_free_dev(void *ptr, comex_group_t group)
       header->length = reg_entries_local_count;
       (void)memcpy(message+sizeof(header_t), rank_ptrs, rank_ptrs_local_size);
       nb = nb_wait_for_handle();
-        printf("p[%d] (comex_free_dev) Got to 12\n",g_state.rank);
       nb_recv(NULL, 0, my_master, nb); /* prepost ack */
-        printf("p[%d] (comex_free_dev) Got to 13\n",g_state.rank);
       nb_send_header(message, message_size, my_master, nb);
-        printf("p[%d] (comex_free_dev) Got to 14\n",g_state.rank);
       nb_wait_for_all(nb);
-        printf("p[%d] (comex_free_dev) Got to 15\n",g_state.rank);
       free(rank_ptrs);
-        printf("p[%d] (comex_free_dev) Got to 16\n",g_state.rank);
     }
 
-        printf("p[%d] (comex_free_dev) Got to 17 rank %d ptr %p dev_id %d\n",g_state.rank,
-            igroup->rank,ptr,dev_ids[igroup->rank]);
 
     /* remove my ptr from reg cache and free ptr */
     comex_free_dev_local(ptr,dev_ids[igroup->rank]);
-        printf("p[%d] (comex_free_dev) Got to 18\n",g_state.rank);
 
     /* free ptrs array */
     free(ptrs);
     free(dev_ids);
     free(world_ranks);
-        printf("p[%d] (comex_free_dev) Got to 19\n",g_state.rank);
 
     /* Is this needed? */
     comex_barrier(group);
 
-    printf("p[%d] completed comex_free_dev\n",g_state.rank);
     return COMEX_SUCCESS;
 }
 #endif
@@ -4975,7 +4929,6 @@ STATIC void _malloc_handler(
         if (reg_entries[i].use_dev) {
           cudaIpcOpenMemHandle(&memory,reg_entries[i].handle,cudaIpcMemLazyEnablePeerAccess);
           cudaIpcCloseMemHandle(memory);
-          printf("p[%d] progress rank pointer: %p\n",g_state.rank,memory);
         } else {
           memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
         }
@@ -4995,7 +4948,6 @@ STATIC void _malloc_handler(
           reg_entries[i].name,
           memory);
 #endif
-      printf("p[%d] reg_entries[%d].dev_id: %d\n",g_state.rank,i,reg_entries[i].dev_id);
       (void)reg_cache_insert(
           reg_entries[i].rank,
           reg_entries[i].buf,
@@ -5065,7 +5017,6 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
 #endif
 
             /* find the registered memory */
-            printf("p[%d] rank_ptrs[%d].dev_id: %d\n",g_state.rank,i,rank_ptrs[i].dev_id);
             if (rank_ptrs[i].dev_id < 0) {
               reg_entry = reg_cache_find(rank_ptrs[i].rank, rank_ptrs[i].ptr, 0, -1);
             } else {
@@ -5132,10 +5083,7 @@ STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory)
     if (reg_entry->use_dev) {
       void *ret;
       cudaIpcOpenMemHandle(&ret, reg_entry->handle, cudaIpcMemLazyEnablePeerAccess);
-      printf("p[%d] opened ret %p memory %p buf %p on device %d\n",g_state.rank,ret,memory,reg_entry->buf,reg_entry->dev_id);
       offset = ((char*)memory)-((char*)reg_entry->buf);
-      printf("p[%d] offset %d\n",g_state.rank,offset);
-      //return memory;
       return ret+offset;
     }
 #endif
@@ -6291,12 +6239,10 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
             {
               reg_entry_t *reg_entry = NULL;
-              printf("p[%d] _device_map[%d]: %d dst: %p\n",g_state.rank,proc,_device_map[proc],dst);
               reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
               int *ip = (int*)src;
-                printf("p[%d] (nb_put) calling copyToDevice on same proc: %d dst: %p\n",g_state.rank,proc,dst);
                 copyToDevice(src, dst, bytes);
               } else if (reg_entry->use_dev && !on_host) {
                 copyDevToDev(src, dst, bytes);
@@ -6329,8 +6275,6 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             mapped_offset = _get_offset_memory(reg_entry, dst);
             if (reg_entry->use_dev && on_host) {
               int *ip = (int*)src;
-                printf("p[%d] (nb_put) calling copyToDevice on same node proc: %d dst: %p mapped_offset: %p\n",
-                    g_state.rank,proc,dst,mapped_offset);
               copyToDevice(src, mapped_offset, bytes);
               cudaIpcCloseMemHandle(reg_entry->mapped);
             } else if (reg_entry->use_dev && !on_host) {
@@ -6472,11 +6416,8 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
               printf("p[%d] reg_entry->use_dev: %d on node proc: %d\n",g_state.rank,reg_entry->use_dev,proc);
               */
 #ifdef ENABLE_DEVICE
-            printf("p[%d] original value of src %p\n",g_state.rank,src);
             mapped_offset = _get_offset_memory(reg_entry, src);
             if (reg_entry->use_dev && on_host) {
-                printf("p[%d] (nb_get) calling copyToDevice on same node proc: %d src: %p mapped_offset: %p\n",
-                    g_state.rank,proc,src,mapped_offset);
               copyToHost(dst, mapped_offset, bytes);
               cudaIpcCloseMemHandle(reg_entry->mapped);
             } else if (reg_entry->use_dev && !on_host) {

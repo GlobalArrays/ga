@@ -307,13 +307,11 @@ void PARMCI_Finalize()
 
 int PARMCI_Free(void *ptr)
 {
-  printf("p[%d] Calling comex_free\n",_armci_me);
     return comex_free(ptr, ARMCI_Default_Proc_Group);
 }
 
 int PARMCI_Free_memdev(void *ptr)
 {
-  printf("p[%d] Calling comex_free_dev\n",_armci_me);
     return comex_free_dev(ptr, ARMCI_Default_Proc_Group);
 }
 

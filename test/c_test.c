@@ -96,7 +96,6 @@ int main(int argc, char **argv) {
 
   nprocs = GA_Nnodes();  
   rank = GA_Nodeid();   
-  printf("Found GA rank %d\n",rank);
 
   /* Divide matrix up into pieces that are owned by each processor */
   factor(nprocs, &pdx, &pdy);
@@ -121,7 +120,6 @@ int main(int argc, char **argv) {
     hi[1] = DIMSIZE-1;
   }
   nelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
-  printf("p[%d] nelem: %d\n",rank,nelem);
 
   /* create a global array and initialize it to zero */
   g_a = NGA_Create_handle();
@@ -138,7 +136,6 @@ int main(int argc, char **argv) {
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   buf = (int*)malloc(nsize*sizeof(int));
   ld = (hi[1]-lo[1]+1);
-  printf("p[%d] lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",rank,lo[0],hi[0],lo[1],hi[1]);
   for (ii = lo[0]; ii<=hi[0]; ii++) {
     i = ii-lo[0];
     for (jj = lo[1]; jj<=hi[1]; jj++) {
@@ -148,14 +145,10 @@ int main(int argc, char **argv) {
     }
   }
 
-  printf("p[%d] Call NGA_Put\n",rank);
   /* copy data to global array */
   NGA_Put(g_a, lo, hi, buf, &ld);
-  printf("p[%d] Completed NGA_Put\n",rank);
   GA_Sync();
   NGA_Distribution(g_a,rank,tlo,thi);
-  printf("p[%d] lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
-      rank,tlo[0],thi[0],tlo[1],thi[1]);
 #if 0
   printf("p[%d] Completed NGA_Distribution\n",rank);
   if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
@@ -193,13 +186,9 @@ int main(int argc, char **argv) {
   for (i=0; i<nsize; i++) buf[i] = 0;
 
   /* copy data from global array to local buffer */
-  printf("p[%d] Call NGA_Get\n",rank);
   NGA_Get(g_a, lo, hi, buf, &ld);
-  printf("p[%d] Completed NGA_Get\n",rank);
   GA_Sync();
 
-  printf("p[%d] local patch lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",rank,
-      lo[0],hi[0],lo[1],hi[1]);
   ok = 1;
   for (ii = lo[0]; ii<=hi[0]; ii++) {
     i = ii-lo[0];
