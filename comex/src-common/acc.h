@@ -159,4 +159,31 @@ static inline void _acc(
 #undef MUL_CPL
 #undef BLAS_INT
 
+#ifdef ENABLE_DEVICE
+/**
+ * Skip the intense macro usage and just do this the old-fashion way
+ * @param op type of operation including data type
+ * @param bytes number of bytes
+ * @param dst destination buffer (on device)
+ * @param src source buffer
+ * @param scale factor for scaling value before accumalation
+ */
+static inline void _acc_dev(
+        const int op,
+        const int bytes,
+        void * const restrict dst,
+        const void * const restrict src,
+        const void * const restrict scale)
+{
+  if (op == COMEX_ACC_DBL) {
+  } else if (op == COMEX_ACC_FLT) {
+  } else if (op == COMEX_ACC_INT) {
+  } else if (op == COMEX_ACC_LNG) {
+  } else if (op == COMEX_ACC_DCP) {
+  } else if (op == COMEX_ACC_CPL) {
+  } else {
+  }
+}
+#endif
+
 #endif /* _COMEX_COMMON_ACC_H_ */
