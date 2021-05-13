@@ -137,7 +137,7 @@ typedef struct {
 typedef struct lock_link {
     struct lock_link *next;
     int rank;
-} lock_t;
+} comex_lock_t;
 
 typedef struct {
     void *ptr;
