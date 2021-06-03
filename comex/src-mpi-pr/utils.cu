@@ -11,7 +11,12 @@ extern "C" {
 int numDevices()
 {
   int ngpus;
-  cudaGetDeviceCount(&ngpus);
+  cudaError_t err;
+  err = cudaGetDeviceCount(&ngpus);
+  /*cuDeviceGetCount(&ngpus); */
+  if (err != cudaSuccess) {
+    printf("Error encountered by cudaGetDeviceCount\n");
+  }
   return ngpus;
 }
 

@@ -144,7 +144,11 @@ target_compile_definitions(armci PRIVATE HAVE_CONFIG_H)
 
 add_library(GlobalArrays::armci ALIAS armci)
 
-target_link_libraries(armci PUBLIC ${CUDA_LIBRARIES})
+if(ENABLE_CUDA)
+  cuda_add_cublas_to_target(armci)
+else()
+  target_link_libraries(armci PUBLIC ${CUDA_LIBRARIES})
+endif()
 
 install(TARGETS armci
     EXPORT globalarrays-targets
@@ -159,7 +163,11 @@ add_library(comex
 
 add_library(GlobalArrays::comex ALIAS comex)
 
-target_link_libraries(comex PUBLIC ${CUDA_LIBRARIES})
+if(ENABLE_CUDA)
+  cuda_add_cublas_to_target(comex)
+else()
+  target_link_libraries(comex PUBLIC ${CUDA_LIBRARIES})
+endif()
 
 install(TARGETS comex
     EXPORT globalarrays-targets

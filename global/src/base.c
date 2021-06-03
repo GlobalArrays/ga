@@ -2803,19 +2803,21 @@ logical pnga_allocate(Integer g_a)
           GA[ga_handle].mem_dev_set, GA[ga_handle].mem_dev);
 #ifdef ENABLE_DEVICE
     } else if (dev_set) {
-    if (p_handle > 0) {
-      ARMCI_Malloc_dev((void**)GA[ga_handle].ptr, mem_size, &PGRP_LIST[p_handle].group);
-    } else {
-      int zero = 0;
-      ARMCI_Malloc_dev((void**)GA[ga_handle].ptr, mem_size, &zero);
-    }
+      if (p_handle > 0) {
+        ARMCI_Malloc_dev((void**)GA[ga_handle].ptr, mem_size, &PGRP_LIST[p_handle].group);
+      } else {
+        int zero = 0;
+        ARMCI_Malloc_dev((void**)GA[ga_handle].ptr, mem_size, &zero);
+      }
+      GA[ga_handle].id = 0;
 #endif
     } else {
       status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
           GA[ga_handle].type, &GA[ga_handle].id, p_handle);
     }
   } else {
-     GA[ga_handle].ptr[grp_me]=NULL;
+   GA[ga_handle].ptr[grp_me]=NULL;
+   GA[ga_handle].id = 0;
   }
 
   if (GA[ga_handle].distr_type == REGULAR) {
@@ -3462,7 +3464,6 @@ int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
 	       int grp_id)
 {
 #ifdef AVOID_MA_STORAGE
-  printf("p[%d] Calling gai_get_shmem bytes: %d\n",GAme,bytes);
    return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
 #else
 Integer handle = INVALID_MA_HANDLE, index;
@@ -3476,7 +3477,6 @@ char *ptr = (char*)0;
    }
  
    if(gai_uses_shm(grp_id)) {
-  printf("p[%d] Calling gai_get_shmem bytes: %d\n",GAme,bytes);
      return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
    }
    else{
@@ -4033,7 +4033,7 @@ int local_sync_begin,local_sync_end;
         /* make sure that we free original (before address allignment) pointer */
 #ifdef MSG_COMMS_MPI
         if (grp_id > 0){
-          if (GA[ga_handle].dev_set) {
+          if (!GA[ga_handle].dev_set) {
             ARMCI_Free_group(GA[ga_handle].ptr[grp_me] - GA[ga_handle].id,
                 &PGRP_LIST[grp_id].group);
           } else {
