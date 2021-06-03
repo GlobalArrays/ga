@@ -3,6 +3,11 @@
 
 #include "comex.h"
 
+#ifdef ENABLE_DEVICE
+#include <cuda_runtime.h>
+#include "cublas_v2.h"
+#endif
+
 /* needed for complex accumulate */
 typedef struct {
     double real;
@@ -175,14 +180,27 @@ static inline void _acc_dev(
         const void * const restrict src,
         const void * const restrict scale)
 {
+  cublasHandle_t handle;
+  cublasCreate(&handle);
   if (op == COMEX_ACC_DBL) {
+    const int n = bytes/sizeof(double);
+    cublasDaxpy(handle,n,scale,src,1,dst,1);
   } else if (op == COMEX_ACC_FLT) {
+    const int n = bytes/sizeof(float);
+    cublasSaxpy(handle,n,scale,src,1,dst,1);
   } else if (op == COMEX_ACC_INT) {
+    const int n = bytes/sizeof(int);
   } else if (op == COMEX_ACC_LNG) {
+    const int n = bytes/sizeof(long);
   } else if (op == COMEX_ACC_DCP) {
+    const int n = bytes/sizeof(DoubleComplex);
+    cublasZaxpy(handle,n,scale,src,1,dst,1);
   } else if (op == COMEX_ACC_CPL) {
+    const int n = bytes/sizeof(SingleComplex);
+    cublasCaxpy(handle,n,scale,src,1,dst,1);
   } else {
   }
+  cublasDestroy(handle);
 }
 #endif
 

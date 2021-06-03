@@ -126,10 +126,6 @@ typedef struct {
     void *local_address;
     int rank; /**< rank of target (rank of sender is iprobe_status.MPI_SOURCE) */
     int length; /**< length of message/payload not including header */
-#ifdef ENABLE_DEVICE
-    int use_dev;
-    int dev_id;
-#endif
 } header_t;
 
 
@@ -352,8 +348,8 @@ STATIC int _eager_check(int extra_bytes);
 STATIC int _packed_size(int *src_stride, int *count, int stride_levels);
 STATIC char* pack(char *src, int *src_stride,
                 int *count, int stride_levels, int *size);
-STATIC void unpack(char *packed_buffer,
-                char *dst, int *dst_stride, int *count, int stride_levels);
+STATIC void unpack(char *packed_buffer, char *dst, int *dst_stride, int *count,
+    int stride_levels, int dev_flag);
 STATIC char* _generate_shm_name(int rank);
 STATIC reg_entry_t* _comex_malloc_local(size_t size);
 #if USE_SICM
@@ -693,6 +689,13 @@ int _comex_init(MPI_Comm comm)
     status = _set_affinity(g_state.node_rank);
     COMEX_ASSERT(0 == status);
 
+    /* create a host to device map */
+#ifdef ENABLE_DEVICE
+    _device_map = (int*)malloc(sizeof(int)*g_state.size);
+    _device_map[g_state.rank] = _comex_dev_id;
+    status = MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
+                        _device_map, 1, MPI_INT, g_state.comm);
+#endif
     if (_is_master()) {
         /* TODO: wasteful O(p) storage... */
         mutexes = (int**)malloc(sizeof(int*) * g_state.size);
@@ -727,13 +730,14 @@ int _comex_init(MPI_Comm comm)
     /* This barrier is on the world worker group */
     MPI_Barrier(group_list->comm);
 
-    /* create a host to device map */
+    /*
 #ifdef ENABLE_DEVICE
     _device_map = (int*)malloc(sizeof(int)*group_list->size);
     _device_map[group_list->rank] = _comex_dev_id;
     status = MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
                         _device_map, 1, MPI_INT, group_list->comm);
 #endif
+*/
 
 #if DEBUG
     fprintf(stderr, "[%d] comex_init() success\n", g_state.rank);
@@ -1321,6 +1325,7 @@ STATIC char* pack(
     }
 
     /* allocate packed buffer now that we know the size */
+    printf("p[%d] (pack) n1dim %d count %d\n",g_state.rank,n1dim,count[0]);
     packed_buffer = malloc(n1dim * count[0]);
     COMEX_ASSERT(packed_buffer);
 
@@ -1356,58 +1361,64 @@ STATIC char* pack(
 
 
 STATIC void unpack(char *packed_buffer,
-        char *dst, int *dst_stride, int *count, int stride_levels)
+        char *dst, int *dst_stride, int *count, int stride_levels, int dev_flag)
 {
-    int i, j;
-    long dst_idx;  /* index offset of current block position to ptr */
-    int n1dim;  /* number of 1 dim block */
-    int dst_bvalue[7], dst_bunit[7];
-    int packed_index = 0;
+  int i, j;
+  long dst_idx;  /* index offset of current block position to ptr */
+  int n1dim;  /* number of 1 dim block */
+  int dst_bvalue[7], dst_bunit[7];
+  int packed_index = 0;
 
-    COMEX_ASSERT(stride_levels >= 0);
-    COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
-    COMEX_ASSERT(NULL != packed_buffer);
-    COMEX_ASSERT(NULL != dst);
-    COMEX_ASSERT(NULL != dst_stride);
-    COMEX_ASSERT(NULL != count);
-    COMEX_ASSERT(count[0] > 0);
+  COMEX_ASSERT(stride_levels >= 0);
+  COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
+  COMEX_ASSERT(NULL != packed_buffer);
+  COMEX_ASSERT(NULL != dst);
+  COMEX_ASSERT(NULL != dst_stride);
+  COMEX_ASSERT(NULL != count);
+  COMEX_ASSERT(count[0] > 0);
 
 #if DEBUG
-    fprintf(stderr, "[%d] unpack(dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d)\n",
-            g_state.rank, dst, dst_stride, count[0], stride_levels);
+  fprintf(stderr, "[%d] unpack(dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d)\n",
+      g_state.rank, dst, dst_stride, count[0], stride_levels);
 #endif
 
-    /* number of n-element of the first dimension */
-    n1dim = 1;
-    for(i=1; i<=stride_levels; i++) {
-        n1dim *= count[i];
+  /* number of n-element of the first dimension */
+  n1dim = 1;
+  for(i=1; i<=stride_levels; i++) {
+    n1dim *= count[i];
+  }
+
+  /* calculate the destination indices */
+  dst_bvalue[0] = 0; dst_bvalue[1] = 0; dst_bunit[0] = 1; dst_bunit[1] = 1;
+
+  for(i=2; i<=stride_levels; i++) {
+    dst_bvalue[i] = 0;
+    dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+  }
+
+  for(i=0; i<n1dim; i++) {
+    dst_idx = 0;
+    for(j=1; j<=stride_levels; j++) {
+      dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+      if((i+1) % dst_bunit[j] == 0) {
+        dst_bvalue[j]++;
+      }
+      if(dst_bvalue[j] > (count[j]-1)) {
+        dst_bvalue[j] = 0;
+      }
     }
 
-    /* calculate the destination indices */
-    dst_bvalue[0] = 0; dst_bvalue[1] = 0; dst_bunit[0] = 1; dst_bunit[1] = 1;
-
-    for(i=2; i<=stride_levels; i++) {
-        dst_bvalue[i] = 0;
-        dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+    if (!dev_flag) {
+      (void)memcpy(&dst[dst_idx], &packed_buffer[packed_index], count[0]);
+#ifdef ENABLE_DEVICE
+    } else {
+      copyToDevice(&packed_buffer[packed_index], &dst[dst_idx], count[0]);
+#endif
     }
+    packed_index += count[0];
+  }
 
-    for(i=0; i<n1dim; i++) {
-        dst_idx = 0;
-        for(j=1; j<=stride_levels; j++) {
-            dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
-            if((i+1) % dst_bunit[j] == 0) {
-                dst_bvalue[j]++;
-            }
-            if(dst_bvalue[j] > (count[j]-1)) {
-                dst_bvalue[j] = 0;
-            }
-        }
-
-        (void)memcpy(&dst[dst_idx], &packed_buffer[packed_index], count[0]);
-        packed_index += count[0];
-    }
-
-    COMEX_ASSERT(packed_index == n1dim*count[0]);
+  COMEX_ASSERT(packed_index == n1dim*count[0]);
 }
 
 
@@ -3568,8 +3579,6 @@ int comex_free(void *ptr, comex_group_t group)
           reg_entries_local_count++;
         }
       } else {
-        printf("p[%d] Unknown case in comex_free\n");
-        COMEX_ASSERT(0);
       }
     }
 
@@ -3660,7 +3669,7 @@ int comex_free_dev(void *ptr, comex_group_t group)
     /* allocate receive buffer for exchange of pointers */
     ptrs = (void **)malloc(sizeof(void *) * igroup->size);
     dev_ids = (int *)malloc(sizeof(int) * igroup->size);
-    handles = (int *)malloc(sizeof(cudaIpcMemHandle_t) * igroup->size);
+    handles = (cudaIpcMemHandle_t*)malloc(sizeof(cudaIpcMemHandle_t) * igroup->size);
     COMEX_ASSERT(ptrs);
     ptrs[igroup->rank] = ptr;
     if (ptr == NULL) {
@@ -3744,8 +3753,6 @@ int comex_free_dev(void *ptr, comex_group_t group)
           reg_entries_local_count++;
         }
       } else {
-        printf("p[%d] Unknown case in comex_free\n");
-        COMEX_ASSERT(0);
       }
     }
 
@@ -4191,12 +4198,19 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
 #endif
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length, header->dev_id);
+            header->rank, header->remote_address, header->length, -1);
+#ifdef ENABLE_DEVICE
+    if (!reg_entry) {
+      reg_entry = reg_cache_find(
+              header->rank, header->remote_address, header->length, _device_map[header->rank]);
+    }
+#endif
+
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(
             reg_entry, header->remote_address);
 #ifdef ENABLE_DEVICE
-    if (!header->use_dev) {
+    if (!reg_entry->use_dev) {
 #endif
       if (use_eager) {
         (void)memcpy(mapped_offset, payload, header->length);
@@ -4214,7 +4228,7 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
       }
 #ifdef ENABLE_DEVICE
     } else {
-      setDevice(header->dev_id);
+      setDevice(_device_map[header->rank]);
       if (use_eager) {
         copyToDevice(payload, mapped_offset, header->length);
       }
@@ -4229,6 +4243,7 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
           bytes_remaining -= size;
         } while (bytes_remaining > 0);
       }
+      cudaIpcCloseMemHandle(reg_entry->mapped);
     }
 #endif
 }
@@ -4268,7 +4283,13 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
 #endif
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, stride->count[0], header->dev_id);
+            header->rank, header->remote_address, stride->count[0], -1);
+#ifdef ENABLE_DEVICE
+    if (!reg_entry) {
+      reg_entry = reg_cache_find(
+            header->rank, header->remote_address, stride->count[0], _device_map[header->rank]);
+    }
+#endif
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(
             reg_entry, header->remote_address);
@@ -4276,7 +4297,7 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
     if (use_eager) {
         packed_buffer = payload+sizeof(stride_t);
         unpack(packed_buffer, mapped_offset,
-                stride->stride, stride->count, stride->stride_levels);
+                stride->stride, stride->count, stride->stride_levels, reg_entry->use_dev);
     }
     else {
         if ((unsigned)header->length > static_server_buffer_size) {
@@ -4300,12 +4321,17 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
         }
 
         unpack(packed_buffer, mapped_offset,
-                stride->stride, stride->count, stride->stride_levels);
+                stride->stride, stride->count, stride->stride_levels, reg_entry->use_dev);
 
         if ((unsigned)header->length > static_server_buffer_size) {
             free(packed_buffer);
         }
     }
+#ifdef ENABLE_DEVICE
+    if (reg_entry->use_dev) {
+      cudaIpcCloseMemHandle(reg_entry->mapped);
+    }
+#endif
 }
 
 
@@ -4344,7 +4370,13 @@ STATIC void _put_datatype_handler(header_t *header, char *payload, int proc)
 #endif
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, stride->count[0], header->dev_id);
+            header->rank, header->remote_address, stride->count[0], -1);
+#ifdef ENABLE_DEVICE
+    if (!reg_entry) {
+      reg_entry = reg_cache_find(
+              header->rank, header->remote_address, stride->count[0], _device_map[header->rank]);
+    }
+#endif
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(
             reg_entry, header->remote_address);
@@ -4427,7 +4459,13 @@ STATIC void _put_iov_handler(header_t *header, int proc)
     packed_index = 0;
     for (i=0; i<limit; ++i) {
         reg_entry = reg_cache_find(
-                header->rank, dst[i], bytes, header->dev_id);
+                header->rank, dst[i], bytes, -1);
+#ifdef ENABLE_DEVICE
+        if (!reg_entry) {
+          reg_entry = reg_cache_find(
+                  header->rank, dst[i], bytes, _device_map[header->rank]);
+        }
+#endif
         COMEX_ASSERT(reg_entry);
         mapped_offset = _get_offset_memory(
                 reg_entry, dst[i]);
@@ -4462,10 +4500,19 @@ STATIC void _get_handler(header_t *header, int proc)
             header->length);
 #endif
 
+    printf("p[%d] (get_handler) Got to 1\n",g_state.rank);
     COMEX_ASSERT(OP_GET == header->operation);
     
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length, header->dev_id);
+            header->rank, header->remote_address, header->length, -1);
+#ifdef ENABLE_DEVICE
+    if (!reg_entry) {
+      printf("p[%d] (get_handler) Got to 2 rank %d buf %p id %d\n",g_state.rank,
+          header->rank, header->remote_address, _device_map[header->rank]);
+      reg_entry = reg_cache_find(
+              header->rank, header->remote_address, header->length, _device_map[header->rank]);
+    }
+#endif
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
@@ -4503,13 +4550,20 @@ STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
             header->length);
 #endif
 
+    printf("p[%d] (get_packed_handler) Got to 1\n",g_state.rank);
     assert(OP_GET_PACKED == header->operation);
 
     COMEX_ASSERT(stride_src->stride_levels >= 0);
     COMEX_ASSERT(stride_src->stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length, header->dev_id);
+            header->rank, header->remote_address, header->length, -1);
+#ifdef ENABLE_DEVICE
+    if (!reg_entry) {
+      reg_entry = reg_cache_find(
+              header->rank, header->remote_address, header->length, _device_map[header->rank]);
+    }
+#endif
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
@@ -4529,6 +4583,11 @@ STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
             bytes_remaining -= size;
         } while (bytes_remaining > 0);
     }
+#ifdef ENABLE_DEVICE
+    if (reg_entry->use_dev) {
+      cudaIpcCloseMemHandle(reg_entry->mapped);
+    }
+#endif
 
     free(packed_buffer);
 }
@@ -4572,7 +4631,13 @@ STATIC void _get_datatype_handler(header_t *header, char *payload, int proc)
 #endif
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length, header->dev_id);
+            header->rank, header->remote_address, header->length, -1);
+#ifdef ENABLE_DEVICE
+    if (!reg_entry) {
+      reg_entry = reg_cache_find(
+              header->rank, header->remote_address, header->length, _device_map[header->rank]);
+    }
+#endif
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
@@ -4652,7 +4717,13 @@ STATIC void _get_iov_handler(header_t *header, int proc)
     packed_index = 0;
     for (i=0; i<limit; ++i) {
         reg_entry = reg_cache_find(
-                header->rank, src[i], bytes, header->dev_id);
+                header->rank, src[i], bytes, -1);
+#ifdef ENABLE_DEVICE
+        if (!reg_entry) {
+          reg_entry = reg_cache_find(
+                  header->rank, src[i], bytes, _device_map[header->rank]);
+        }
+#endif
         COMEX_ASSERT(reg_entry);
         mapped_offset = _get_offset_memory(reg_entry, src[i]);
 
@@ -4714,7 +4785,13 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
     use_eager = _eager_check(sizeof_scale+header->length);
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length, header->dev_id);
+            header->rank, header->remote_address, header->length, -1);
+#ifdef ENABLE_DEVICE
+    if (!reg_entry) {
+      reg_entry = reg_cache_find(
+              header->rank, header->remote_address, header->length, _device_map[header->rank]);
+    }
+#endif
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
@@ -4835,7 +4912,13 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
     }
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length, header->dev_id);
+            header->rank, header->remote_address, header->length, -1);
+#ifdef ENABLE_DEVICE
+    if (!reg_entry) {
+      reg_entry = reg_cache_find(
+              header->rank, header->remote_address, header->length, _device_map[header->rank]);
+    }
+#endif
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
@@ -5009,7 +5092,13 @@ STATIC void _acc_iov_handler(header_t *header, char *scale, int proc)
     packed_index = 0;
     for (i=0; i<limit; ++i) {
         reg_entry = reg_cache_find(
-                header->rank, dst[i], bytes, header->dev_id);
+                header->rank, dst[i], bytes, -1);
+#ifdef ENABLE_DEVICE
+        if (!reg_entry) {
+          reg_entry = reg_cache_find(
+                  header->rank, dst[i], bytes, _device_map[header->rank]);
+        }
+#endif
         COMEX_ASSERT(reg_entry);
         mapped_offset = _get_offset_memory(reg_entry, dst[i]);
 
@@ -5073,7 +5162,13 @@ STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc)
     COMEX_ASSERT(OP_FETCH_AND_ADD == header->operation);
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length, header->dev_id);
+            header->rank, header->remote_address, header->length, -1);
+#ifdef ENABLE_DEVICE
+    if (!reg_entry) {
+      reg_entry = reg_cache_find(
+              header->rank, header->remote_address, header->length, _device_map[header->rank]);
+    }
+#endif
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
     
@@ -5116,7 +5211,13 @@ STATIC void _swap_handler(header_t *header, char *payload, int proc)
     COMEX_ASSERT(OP_SWAP == header->operation);
 
     reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length, header->dev_id);
+            header->rank, header->remote_address, header->length, -1);
+#ifdef ENABLE_DEVICE
+    if (!reg_entry) {
+      reg_entry = reg_cache_find(
+              header->rank, header->remote_address, header->length, _device_map[header->rank]);
+    }
+#endif
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
     
@@ -6396,6 +6497,7 @@ STATIC void nb_wait_for_send1(nb_t *nb)
     COMEX_ASSERT(NULL != nb);
     COMEX_ASSERT(NULL != nb->send_head);
 
+    printf("p[%d] (nb_wait_for_send1) Got to 1\n",g_state.rank);
     {
         MPI_Status status;
         int retval = 0;
@@ -6426,6 +6528,7 @@ STATIC void nb_wait_for_send1(nb_t *nb)
             nb->send_tail = NULL;
         }
     }
+    printf("p[%d] (nb_wait_for_send1) Got to 2\n",g_state.rank);
 }
 
 
@@ -6497,6 +6600,9 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
         int retval = 0;
         message_t *message_to_free = NULL;
 
+    printf("p[%d] (nb_wait_for_recv1) Got to 1\n",g_state.rank);
+    printf("p[%d] (nb_wait_for_recv1) Got to 1 nb %p\n",g_state.rank,nb);
+    printf("p[%d] (nb_wait_for_recv1) Got to 1 nb->recv_head %p\n",g_state.rank,nb->recv_head);
         retval = MPI_Wait(&(nb->recv_head->request), &status);
         CHECK_MPI_RETVAL(retval);
 
@@ -6508,8 +6614,10 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
             COMEX_ASSERT(stride->stride);
             COMEX_ASSERT(stride->count);
             COMEX_ASSERT(stride->stride_levels);
+    printf("p[%d] (nb_wait_for_recv1) Got to 2\n",g_state.rank);
             unpack(nb->recv_head->message, stride->ptr,
-                    stride->stride, stride->count, stride->stride_levels);
+                    stride->stride, stride->count, stride->stride_levels,0);
+    printf("p[%d] (nb_wait_for_recv1) Got to 3\n",g_state.rank);
             free(stride);
         }
 
@@ -6527,9 +6635,11 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
             free(iov);
         }
 
+    printf("p[%d] (nb_wait_for_recv1) Got to 4\n",g_state.rank);
         if (nb->recv_head->need_free) {
             free(nb->recv_head->message);
         }
+    printf("p[%d] (nb_wait_for_recv1) Got to 5\n",g_state.rank);
 
         if (MPI_DATATYPE_NULL != nb->recv_head->datatype) {
             retval = MPI_Type_free(&nb->recv_head->datatype);
@@ -6549,6 +6659,7 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
             nb->recv_tail = NULL;
         }
     }
+    printf("p[%d] (nb_wait_for_recv1) Got to 6\n",g_state.rank);
 }
 
 
@@ -6582,7 +6693,7 @@ STATIC int nb_test_for_recv1(nb_t *nb, message_t **save_recv_head,
             COMEX_ASSERT(stride->count);
             COMEX_ASSERT(stride->stride_levels);
             unpack(nb->recv_head->message, stride->ptr,
-                stride->stride, stride->count, stride->stride_levels);
+                stride->stride, stride->count, stride->stride_levels,0);
             free(stride);
           }
 
@@ -6744,7 +6855,10 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
             {
               reg_entry_t *reg_entry = NULL;
-              reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
+              reg_entry = reg_cache_find(proc, dst, bytes, -1);
+              if (!reg_entry) {
+                reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
+              }
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
               int *ip = (int*)src;
@@ -6774,7 +6888,12 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
                 _fence_master(g_state.master[proc]);
             }
 
-            reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
+            reg_entry = reg_cache_find(proc, dst, bytes, -1);
+#ifdef ENABLE_DEVICE
+            if (!reg_entry) {
+              reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
+            }
+#endif
             COMEX_ASSERT(reg_entry);
 #ifdef ENABLE_DEVICE
             mapped_offset = _get_offset_memory(reg_entry, dst);
@@ -6824,14 +6943,6 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->local_address = src;
         header->rank = proc;
         header->length = bytes;
-#ifdef ENABLE_DEVICE
-        reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
-        if (reg_entry == NULL) {
-          reg_entry = reg_cache_find(proc, dst, bytes, -1);
-        }
-        header->use_dev = reg_entry->use_dev;
-        header->dev_id = reg_entry->dev_id;
-#endif
         if (use_eager) {
 #ifdef ENABLE_DEVICE
             if (on_host) {
@@ -6885,7 +6996,10 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
             {
               reg_entry_t *reg_entry = NULL;
-              reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc] );
+              reg_entry = reg_cache_find(proc, src, bytes, -1);
+              if (!reg_entry) {
+                reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc] );
+              }
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
                 setDevice(reg_entry->dev_id);
@@ -6915,7 +7029,12 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
                 _fence_master(g_state.master[proc]);
             }
 
-            reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc]);
+            reg_entry = reg_cache_find(proc, src, bytes, -1);
+#ifdef ENABLE_DEVICE
+            if (!reg_entry) {
+              reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc]);
+            }
+#endif
             COMEX_ASSERT(reg_entry);
             /*
               printf("p[%d] reg_entry->use_dev: %d on node proc: %d\n",g_state.rank,reg_entry->use_dev,proc);
@@ -6955,11 +7074,6 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->local_address = dst;
         header->rank = proc;
         header->length = bytes;
-#ifdef ENABLE_DEVICE
-        reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc]);
-        header->use_dev = reg_entry->use_dev;
-        header->dev_id = reg_entry->dev_id;
-#endif
         {
             /* prepost all receives */
             char *buf = (char*)dst;
@@ -6980,12 +7094,16 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 STATIC void nb_acc(int datatype, void *scale,
         void *src, void *dst, int bytes, int proc, nb_t *nb)
 {
+    int on_host;
     COMEX_ASSERT(NULL != src);
     COMEX_ASSERT(NULL != dst);
     COMEX_ASSERT(bytes > 0);
     COMEX_ASSERT(proc >= 0);
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != nb);
+#ifdef ENABLE_DEVICE
+    on_host = isHostPointer(src);
+#endif
 
     if (COMEX_ENABLE_ACC_SELF) {
         /* acc to self */
@@ -6994,6 +7112,39 @@ STATIC void nb_acc(int datatype, void *scale,
                 _fence_master(g_state.master[proc]);
             }
 #ifdef ENABLE_DEVICE
+            sem_wait(semaphores[proc]);
+            {
+              reg_entry_t *reg_entry = NULL;
+              reg_entry = reg_cache_find(proc, src, bytes, -1);
+              if (!reg_entry) {
+                reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc] );
+              }
+              COMEX_ASSERT(reg_entry);
+              if (reg_entry->use_dev && on_host) {
+                /* src is on host and dst is on device */
+                void *ptr;
+                /* create buffer on device */
+                setDevice(reg_entry->dev_id);
+                mallocDevice(&ptr,bytes);
+                copyToDevice(src, ptr, bytes);
+                _acc_dev(datatype, bytes, dst, ptr, scale);
+                freeDevice(ptr);
+              } else if (reg_entry->use_dev && !on_host) {
+                /* src and dst are on device */
+                _acc_dev(datatype, bytes, dst, src, scale);
+              } else if (reg_entry->use_dev && !on_host) {
+                /* src is on device and dst is on host */
+                void *ptr;
+                ptr = (void*)malloc(bytes);
+                copyToHost(ptr, src, bytes);
+                _acc(datatype, bytes, dst, ptr, scale);
+                free(ptr);
+              } else {
+                /* src and dst are on host */
+                _acc(datatype, bytes, dst, src, scale);
+              }
+            }
+            sem_post(semaphores[proc]);
 #else
             sem_wait(semaphores[proc]);
             _acc(datatype, bytes, dst, src, scale);
@@ -7015,7 +7166,12 @@ STATIC void nb_acc(int datatype, void *scale,
                 _fence_master(g_state.master[proc]);
             }
 
-            reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
+            reg_entry = reg_cache_find(proc, dst, bytes, -1);
+#ifdef ENABLE_DEVICE
+            if (!reg_entry) {
+              reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
+            }
+#endif
             COMEX_ASSERT(reg_entry);
             mapped_offset = _get_offset_memory(reg_entry, dst);
 #ifdef ENABLE_DEVICE
@@ -7141,7 +7297,7 @@ STATIC void nb_puts(
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])
             && (_packed_size(src_stride, count, stride_levels) > COMEX_PUT_DATATYPE_THRESHOLD)) {
         reg_entry = reg_cache_find(proc, dst, 0, _device_map[proc]);
-        if (!reg_entry->use_dev && !on_host) {
+        if (reg_entry && !reg_entry->use_dev && !on_host) {
           nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
           return;
         }
@@ -7272,6 +7428,7 @@ STATIC void nb_puts_packed(
         header_t *header = NULL;
         int master_rank = -1;
         int use_eager = _eager_check(sizeof(stride_t)+packed_index);
+        reg_entry_t *reg_entry;
 
         master_rank = g_state.master[proc];
         /* only fence on the master */
@@ -7414,6 +7571,7 @@ STATIC void nb_gets(
     int on_host = isHostPointer(dst);
 #endif
 
+    printf("p[%d] (nb_gets) Got to 1\n",g_state.rank);
     /* if not actually a strided get */
     if (0 == stride_levels) {
         nb_get(src, dst, count[0], proc, nb);
@@ -7426,9 +7584,11 @@ STATIC void nb_gets(
             && (!COMEX_ENABLE_GET_SMP
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])
             && (_packed_size(src_stride, count, stride_levels) > COMEX_GET_DATATYPE_THRESHOLD)) {
-        reg_entry = reg_cache_find(proc, dst, 0, _device_map[proc]);
-        if (!reg_entry->use_dev && !on_host) {
+        reg_entry = reg_cache_find(proc, src, 0, 0);
+        if (reg_entry && !reg_entry->use_dev && !on_host) {
+    printf("p[%d] (nb_gets) Got to 2\n",g_state.rank);
           nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
+    printf("p[%d] (nb_gets) Got to 3\n",g_state.rank);
           return;
         }
     }
@@ -7448,10 +7608,13 @@ STATIC void nb_gets(
             && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_GET_SMP
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+    printf("p[%d] (nb_gets) Got to 4\n",g_state.rank);
         nb_gets_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
+    printf("p[%d] (nb_gets) Got to 5\n",g_state.rank);
         return;
     }
 
+    printf("p[%d] (nb_gets) Got to 6\n",g_state.rank);
     /* number of n-element of the first dimension */
     n1dim = 1;
     for(i=1; i<=stride_levels; i++) {
@@ -7496,6 +7659,7 @@ STATIC void nb_gets(
         nb_get((char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
+    printf("p[%d] (nb_gets) Got to 7\n",g_state.rank);
 }
 
 
@@ -7564,6 +7728,7 @@ STATIC void nb_gets_packed(
         char *packed_buffer = NULL;
         header_t *header = NULL;
         int master_rank = -1;
+        reg_entry_t *reg_entry = NULL;
 
         master_rank = g_state.master[proc];
 
@@ -7996,6 +8161,7 @@ STATIC void nb_putv_packed(comex_giov_t *iov, int proc, nb_t *nb)
 
     {
         header_t *header = NULL;
+        reg_entry_t *reg_entry = NULL;
         int master_rank = g_state.master[proc];
 
         /* only fence on the master */
