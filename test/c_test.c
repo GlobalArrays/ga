@@ -148,6 +148,7 @@ int main(int argc, char **argv) {
   /* copy data to global array */
   NGA_Put(g_a, lo, hi, buf, &ld);
   GA_Sync();
+  if (rank == 0) printf("Completed GA put\n");
   NGA_Distribution(g_a,rank,tlo,thi);
 #if 0
   printf("p[%d] Completed NGA_Distribution\n",rank);
@@ -186,6 +187,7 @@ int main(int argc, char **argv) {
   for (i=0; i<nsize; i++) buf[i] = 0;
 
   /* copy data from global array to local buffer */
+  if (rank == 0) printf("Calling GA get\n",rank);
   NGA_Get(g_a, lo, hi, buf, &ld);
   GA_Sync();
 
@@ -209,8 +211,8 @@ int main(int argc, char **argv) {
   }
 
   GA_Destroy(g_a);
-  if (rank == 0) printf("Completed GA_Destroy\n");
+  if (rank == 0) printf("Completed GA destroy\n");
   GA_Terminate();
-  if (rank == 0) printf("Completed GA_Terminate\n");
+  if (rank == 0) printf("Completed GA terminate\n");
   MPI_Finalize();
 }

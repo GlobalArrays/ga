@@ -4245,15 +4245,12 @@ STATIC void _get_handler(header_t *header, int proc)
             header->length);
 #endif
 
-    printf("p[%d] (get_handler) Got to 1\n",g_state.rank);
     COMEX_ASSERT(OP_GET == header->operation);
     
     reg_entry = reg_cache_find(
             header->rank, header->remote_address, header->length, -1);
 #ifdef ENABLE_DEVICE
     if (!reg_entry) {
-      printf("p[%d] (get_handler) Got to 2 rank %d buf %p id %d\n",g_state.rank,
-          header->rank, header->remote_address, _device_map[header->rank]);
       reg_entry = reg_cache_find(
               header->rank, header->remote_address, header->length, _device_map[header->rank]);
     }
@@ -4295,7 +4292,6 @@ STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
             header->length);
 #endif
 
-    printf("p[%d] (get_packed_handler) Got to 1\n",g_state.rank);
     assert(OP_GET_PACKED == header->operation);
 
     COMEX_ASSERT(stride_src->stride_levels >= 0);
@@ -5160,8 +5156,6 @@ STATIC void _malloc_handler(
           reg_entries[i].name,
           memory);
 #endif
-      printf("p[%d] (malloc_handler) rank %d buf %p mapped %p id %d\n",
-          g_state.rank,reg_entries[i].rank,reg_entries[i].buf,memory,reg_entries[i].dev_id);
       (void)reg_cache_insert(
           reg_entries[i].rank,
           reg_entries[i].buf,
@@ -6105,7 +6099,6 @@ STATIC void nb_wait_for_send1(nb_t *nb)
     COMEX_ASSERT(NULL != nb);
     COMEX_ASSERT(NULL != nb->send_head);
 
-    printf("p[%d] (nb_wait_for_send1) Got to 1\n",g_state.rank);
     {
         MPI_Status status;
         int retval = 0;
@@ -6136,7 +6129,6 @@ STATIC void nb_wait_for_send1(nb_t *nb)
             nb->send_tail = NULL;
         }
     }
-    printf("p[%d] (nb_wait_for_send1) Got to 2\n",g_state.rank);
 }
 
 
@@ -6208,9 +6200,6 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
         int retval = 0;
         message_t *message_to_free = NULL;
 
-    printf("p[%d] (nb_wait_for_recv1) Got to 1\n",g_state.rank);
-    printf("p[%d] (nb_wait_for_recv1) Got to 1 nb %p\n",g_state.rank,nb);
-    printf("p[%d] (nb_wait_for_recv1) Got to 1 nb->recv_head %p\n",g_state.rank,nb->recv_head);
         retval = MPI_Wait(&(nb->recv_head->request), &status);
         CHECK_MPI_RETVAL(retval);
 
@@ -6222,10 +6211,8 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
             COMEX_ASSERT(stride->stride);
             COMEX_ASSERT(stride->count);
             COMEX_ASSERT(stride->stride_levels);
-    printf("p[%d] (nb_wait_for_recv1) Got to 2\n",g_state.rank);
             unpack(nb->recv_head->message, stride->ptr,
                     stride->stride, stride->count, stride->stride_levels,0);
-    printf("p[%d] (nb_wait_for_recv1) Got to 3\n",g_state.rank);
             free(stride);
         }
 
@@ -6243,11 +6230,9 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
             free(iov);
         }
 
-    printf("p[%d] (nb_wait_for_recv1) Got to 4\n",g_state.rank);
         if (nb->recv_head->need_free) {
             free(nb->recv_head->message);
         }
-    printf("p[%d] (nb_wait_for_recv1) Got to 5\n",g_state.rank);
 
         if (MPI_DATATYPE_NULL != nb->recv_head->datatype) {
             retval = MPI_Type_free(&nb->recv_head->datatype);
@@ -6267,7 +6252,6 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
             nb->recv_tail = NULL;
         }
     }
-    printf("p[%d] (nb_wait_for_recv1) Got to 6\n",g_state.rank);
 }
 
 
@@ -7179,7 +7163,6 @@ STATIC void nb_gets(
     int on_host = isHostPointer(dst);
 #endif
 
-    printf("p[%d] (nb_gets) Got to 1\n",g_state.rank);
     /* if not actually a strided get */
     if (0 == stride_levels) {
         nb_get(src, dst, count[0], proc, nb);
@@ -7194,9 +7177,7 @@ STATIC void nb_gets(
             && (_packed_size(src_stride, count, stride_levels) > COMEX_GET_DATATYPE_THRESHOLD)) {
         reg_entry = reg_cache_find(proc, src, 0, 0);
         if (reg_entry && !reg_entry->use_dev && !on_host) {
-    printf("p[%d] (nb_gets) Got to 2\n",g_state.rank);
           nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
-    printf("p[%d] (nb_gets) Got to 3\n",g_state.rank);
           return;
         }
     }
@@ -7216,13 +7197,10 @@ STATIC void nb_gets(
             && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_GET_SMP
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
-    printf("p[%d] (nb_gets) Got to 4\n",g_state.rank);
         nb_gets_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
-    printf("p[%d] (nb_gets) Got to 5\n",g_state.rank);
         return;
     }
 
-    printf("p[%d] (nb_gets) Got to 6\n",g_state.rank);
     /* number of n-element of the first dimension */
     n1dim = 1;
     for(i=1; i<=stride_levels; i++) {
@@ -7267,7 +7245,6 @@ STATIC void nb_gets(
         nb_get((char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
-    printf("p[%d] (nb_gets) Got to 7\n",g_state.rank);
 }
 
 
