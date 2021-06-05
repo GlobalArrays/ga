@@ -172,6 +172,7 @@ if (ENABLE_BLAS)
       FetchContent_Declare(
         blaspp
         GIT_REPOSITORY https://bitbucket.org/icl/blaspp.git
+        GIT_TAG 2021.04.00
       )
       FetchContent_MakeAvailable( blaspp )
     endif()
@@ -180,6 +181,7 @@ if (ENABLE_BLAS)
       FetchContent_Declare(
         lapackpp
         GIT_REPOSITORY https://bitbucket.org/icl/lapackpp.git
+        GIT_TAG 2021.04.00
       )
       FetchContent_MakeAvailable( lapackpp )
     endif()
