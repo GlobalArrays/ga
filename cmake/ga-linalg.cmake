@@ -117,6 +117,7 @@ if (ENABLE_BLAS)
     endif()
 
     if(_blis_essl_set OR ${LINALG_VENDOR} MATCHES "OpenBLAS")
+      set(use_openmp OFF)
       if(_blis_essl_set)
         set(LAPACK_PREFERENCE_LIST ReferenceLAPACK)
       endif()
