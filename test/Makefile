@@ -5,7 +5,7 @@ CUDA_DIR=/share/apps/cuda/10.2
 
 CFLAGS= -I${GA_DIR}/include/ga
 
-FCFLAGS= -L${GA_DIR}/lib -L${GA_DIR}/lib64 -pthread -lga -larmci -lblas -llapack -lrt -lm
+FCFLAGS= -L${GA_DIR}/lib -L${GA_DIR}/lib64 -pthread -lga -larmci -lblas -llapack -lrt -lm -lstdc++
 
 CUDAFLAGS=-L${CUDA_DIR}/lib64 -L${CUDA_DIR}/lib -lcudart -lcublas
 

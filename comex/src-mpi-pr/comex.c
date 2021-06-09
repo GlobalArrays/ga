@@ -6988,7 +6988,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
               }
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
-                setDevice(reg_entry->dev_id);
+                //setDevice(reg_entry->dev_id);
                 copyToHost(dst, src, bytes);
               } else if (reg_entry->use_dev && !on_host) {
                 copyDevToDev(src, dst, bytes);
@@ -7101,12 +7101,13 @@ STATIC void nb_acc(int datatype, void *scale,
             sem_wait(semaphores[proc]);
             {
               reg_entry_t *reg_entry = NULL;
-              reg_entry = reg_cache_find(proc, src, bytes, -1);
+              reg_entry = reg_cache_find(proc, dst, bytes, -1);
               if (!reg_entry) {
-                reg_entry = reg_cache_find(proc, src, bytes, _device_map[proc] );
+                reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc] );
               }
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
+                int i;
                 /* src is on host and dst is on device */
                 void *ptr;
                 /* create buffer on device */
@@ -7159,8 +7160,38 @@ STATIC void nb_acc(int datatype, void *scale,
             }
 #endif
             COMEX_ASSERT(reg_entry);
-            mapped_offset = _get_offset_memory(reg_entry, dst);
 #ifdef ENABLE_DEVICE
+            sem_wait(semaphores[proc]);
+            {
+              mapped_offset = _get_offset_memory(reg_entry, dst);
+              if (reg_entry->use_dev && on_host) {
+                int i;
+                /* src is on host and dst is on device */
+                void *ptr;
+                /* create buffer on device (no need to set device,
+                 * this already happened implicitly in _get_offset_memory */
+                mallocDevice(&ptr,bytes);
+                copyToDevice(src, ptr, bytes);
+                _acc_dev(datatype, bytes, mapped_offset, ptr, scale);
+                freeDevice(ptr);
+                cudaIpcCloseMemHandle(reg_entry->mapped);
+              } else if (reg_entry->use_dev && !on_host) {
+                /* src and dst are on device */
+                _acc_dev(datatype, bytes, mapped_offset, src, scale);
+                cudaIpcCloseMemHandle(reg_entry->mapped);
+              } else if (reg_entry->use_dev && !on_host) {
+                /* src is on device and dst is on host */
+                void *ptr;
+                ptr = (void*)malloc(bytes);
+                copyToHost(ptr, src, bytes);
+                _acc(datatype, bytes, mapped_offset, ptr, scale);
+                free(ptr);
+              } else {
+                /* src and dst are on host */
+                _acc(datatype, bytes, mapped_offset, src, scale);
+              }
+            }
+            sem_post(semaphores[proc]);
 #else
             sem_wait(semaphores[proc]);
             _acc(datatype, bytes, mapped_offset, src, scale);

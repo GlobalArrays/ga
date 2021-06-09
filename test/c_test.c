@@ -7,7 +7,7 @@
 #include "macdecls.h"
 
 #define DIM 2
-#define DIMSIZE 1024
+#define DIMSIZE 4
 #define MAX_FACTOR 256
 
 void factor(int p, int *idx, int *idy) {
@@ -87,6 +87,7 @@ int main(int argc, char **argv) {
   int ok;
   int *ptr;
   int nelem;
+  int one;
   
 
   MPI_Init(&argc, &argv);
@@ -208,6 +209,42 @@ int main(int argc, char **argv) {
     printf("Mismatch found on process %d after Get\n",rank);
   } else {
     if (rank == 0) printf("Get is okay\n");
+  }
+
+  /* reset values in buf */
+  for (ii = lo[0]; ii<=hi[0]; ii++) {
+    i = ii-lo[0];
+    for (jj = lo[1]; jj<=hi[1]; jj++) {
+      j = jj-lo[1];
+      idx = i*ld+j;
+      buf[idx] = ii*DIMSIZE+jj;
+    }
+  }
+
+  /* accumulate data to global array */
+  if (rank == 0) printf("Calling GA acc\n",rank);
+  one = 1;
+  NGA_Acc(g_a, lo, hi, buf, &ld, &one);
+  GA_Sync();
+  if (rank == 0) printf("Calling GA get\n",rank);
+  NGA_Get(g_a, lo, hi, buf, &ld);
+  ok = 1;
+  for (ii = lo[0]; ii<=hi[0]; ii++) {
+    i = ii-lo[0];
+    for (jj = lo[1]; jj<=hi[1]; jj++) {
+      j = jj-lo[1];
+      idx = i*ld+j;
+      if (buf[idx] != 2*(ii*DIMSIZE+jj)) {
+        if (ok) printf("p[%d] (%d,%d) expected: %d actual[%d]: %d\n",rank,ii,jj,
+            2*(ii*DIMSIZE+jj),idx,buf[idx]);
+        ok = 0;
+      }
+    }
+  }
+  if (!ok) {
+    printf("Mismatch found on process %d after Acc\n",rank);
+  } else {
+    if (rank == 0) printf("Acc is okay\n");
   }
 
   GA_Destroy(g_a);

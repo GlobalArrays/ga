@@ -165,6 +165,7 @@ static inline void _acc(
 #undef BLAS_INT
 
 #ifdef ENABLE_DEVICE
+extern void deviceIaxpy(int *dst, const int *src, const int *scale, int n);
 /**
  * Skip the intense macro usage and just do this the old-fashion way
  * @param op type of operation including data type
@@ -190,6 +191,7 @@ static inline void _acc_dev(
     cublasSaxpy(handle,n,scale,src,1,dst,1);
   } else if (op == COMEX_ACC_INT) {
     const int n = bytes/sizeof(int);
+    deviceIaxpy(dst, src, scale, n);
   } else if (op == COMEX_ACC_LNG) {
     const int n = bytes/sizeof(long);
   } else if (op == COMEX_ACC_DCP) {
