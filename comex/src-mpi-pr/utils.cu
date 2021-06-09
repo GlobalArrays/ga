@@ -106,4 +106,16 @@ int isHostPointer(void *ptr)
   return 0;
 }
 
+__global__ void iaxpy_kernel(int *dst, const int *src, int scale)
+{
+  int i = threadIdx.x;
+
+  dst[i] = dst[i] + scale*src[i];
+}
+
+void deviceIaxpy(int *dst, const int *src, const int *scale, int n)
+{
+  iaxpy_kernel<<<1,n>>>(dst, src, *scale);
+}
+
 };
