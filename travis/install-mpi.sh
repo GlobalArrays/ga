@@ -72,6 +72,7 @@ case "$MPI_IMPL" in
 		echo "Mac"
 		# Homebrew is at 1.10.2, which is broken for STRIDED/IOV=DIRECT.
 		brew info open-mpi
+		brew update
 		brew install open-mpi || brew upgrade open-mpi || true
 		;;
 	    Linux)
