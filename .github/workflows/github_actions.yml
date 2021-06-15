@@ -39,7 +39,7 @@ jobs:
             armci_network: mpi-pr
             f77: ifort
             cc: icc
-          - os: ubuntu-16.04
+          - os: ubuntu-18.04
             experimental: true 
             mpi_impl: mpich
             armci_network: mpi-pr
