@@ -109,7 +109,7 @@ else
     if [ -f secure_snprintf.patch ] ; then
         echo secure_snprintf.patch already exists! Using existing copy.
     else
-        ${download} secure_snprintf.patch https://raw.githubusercontent.com/macports/macports-ports/master/devel/m4/files/secure_snprintf.patch
+	${download} secure_snprintf.patch https://raw.githubusercontent.com/macports/macports-ports/edf0ee1e2cf/devel/m4/files/secure_snprintf.patch
     fi
     if patch -p0 -N < secure_snprintf.patch ; then
         echo patch applied
