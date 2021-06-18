@@ -28,10 +28,10 @@ case "$os" in
     Darwin)
 	mkdir -p ~/mntdmg ~/apps/oneapi || true
 	cd ~/Downloads
-	dir_base="17426"
-	dir_hpc="17398"
-	base="m_BaseKit_p_2021.1.0.2427_offline"
-	hpc="m_HPCKit_p_2021.1.0.2681_offline"
+	dir_base="17714"
+	dir_hpc="17643"
+	base="m_BaseKit_p_2021.2.0.2855_offline"
+	hpc="m_HPCKit_p_2021.2.0.2903_offline"
 	curl -LJO https://registrationcenter-download.intel.com/akdlm/irc_nas/"$dir_base"/"$base".dmg
 	curl -LJO https://registrationcenter-download.intel.com/akdlm/irc_nas/"$dir_hpc"/"$hpc".dmg
 	echo "installing BaseKit"
