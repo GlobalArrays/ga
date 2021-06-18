@@ -11,6 +11,9 @@
 #if HAVE_MEMORY_H
 #   include <memory.h>
 #endif
+#if HAVE_STRINGS_H
+#   include <strings.h>
+#endif
 #if HAVE_STDLIB_H
 #   include <stdlib.h>
 #endif
