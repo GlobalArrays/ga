@@ -165,7 +165,12 @@ else
     cp ${TOP}/bin/config.sub ./build-aux/config.sub
 # patch for ifx -loopopt=0 issue
     # patch for ifort libclang_rt.osx.a https://github.com/nwchemgit/nwchem/issues/171
-    patch -p1 <  ${TOP}/../travis/ifort_ldflags.patch
+    if [ -f  ${TOP}/../travis/ifort_ldflags.patch ] ; then
+	cp ${TOP}/../travis/ifort_ldflags.patch .
+    else
+	${download} ifort_ldflags.patch https://raw.githubusercontent.com/GlobalArrays/ga/master/travis/ifort_ldflags.patch
+    fi
+    patch -p1 <  ifort_ldflags.patch
     ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
     if [ "x$?" != "x0" ] ; then
         echo FAILURE 3
