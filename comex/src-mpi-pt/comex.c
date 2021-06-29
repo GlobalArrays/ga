@@ -456,6 +456,11 @@ int comex_finalize()
 
     free(fence_array);
 
+    free(nb_state);
+#ifdef DEBUG
+    printf(" %d freed nb_state ptr %p \n", g_state.rank, nb_state);
+#endif
+
     MPI_Barrier(g_state.comm);
 
     /* reg_cache */

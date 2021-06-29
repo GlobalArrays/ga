@@ -4131,6 +4131,9 @@ Integer i, handle;
 
     pnga_sync();
     ARMCI_Finalize();
+#ifdef MSG_COMMS_MPI
+    MPI_Comm_free(&GA_MPI_World_comm_dup);
+#endif
     ARMCIinitialized = 0;
     GAinitialized = 0;
     //GA_Internal_Threadsafe_Unlock();
