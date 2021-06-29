@@ -2667,7 +2667,8 @@ public Integer MA_inquire_avail(Integer datatype)
 
     /* try space between heap and stack */
     gap_length = (size_t)(ma_sp - ma_hp);
-    if (gap_length > 0)
+    /*  if (gap_length > 0)*/
+    if (ma_sp > ma_hp)
         nelem_gap = ma_nelem(ma_hp, (ulongi)gap_length, datatype);
     else
         nelem_gap = 0;
@@ -2732,7 +2733,8 @@ public Integer MA_inquire_heap(Integer datatype)
 
     /* try space between heap and partition */
     gap_length = (size_t)(ma_partition - ma_hp);
-    if (gap_length > 0)
+    /*    if (gap_length > 0)*/
+    if (ma_partition > ma_hp)
         nelem_gap = ma_nelem(ma_hp, (ulongi)gap_length, datatype);
     else
         nelem_gap = 0;
@@ -2873,7 +2875,8 @@ public Integer MA_inquire_heap_no_partition(Integer datatype)
 
     /* try space between heap and stack */
     gap_length = (size_t)(ma_sp - ma_hp);
-    if (gap_length > 0)
+    /*   if (gap_length > 0) */
+    if (ma_sp > ma_hp)
         nelem_gap = ma_nelem(ma_hp, (ulongi)gap_length, datatype);
     else
         nelem_gap = 0;
@@ -2940,7 +2943,8 @@ public Integer MA_inquire_stack(Integer datatype)
 
     /* try space between partition and stack */
     gap_length = (size_t)(ma_sp - ma_partition);
-    if (gap_length > 0)
+    /*    if (gap_length > 0) */
+    if (ma_sp > ma_partition)
         nelem_gap = ma_nelem(ma_partition, (ulongi)gap_length, datatype);
     else
         nelem_gap = 0;
@@ -3076,7 +3080,8 @@ public Integer MA_inquire_stack_no_partition(Integer datatype)
 
     /* try space between heap and stack */
     gap_length = (size_t)(ma_sp - ma_hp);
-    if (gap_length > 0)
+    /*    if (gap_length > 0)*/
+    if (ma_sp > ma_hp)
         nelem_gap = ma_nelem(ma_hp, (ulongi)gap_length, datatype);
     else
         nelem_gap = 0;
