@@ -748,6 +748,11 @@ int comex_finalize()
 
     free(fence_array);
 
+    free(nb_state);
+#ifdef DEBUG
+    printf(" %d freed nb_state ptr %p \n", g_state.rank, nb_state);
+#endif
+
     MPI_Barrier(g_state.comm);
 
     /* reg_cache */
@@ -3299,6 +3304,11 @@ STATIC void _progress_server()
 
 #if DEBUG_TO_FILE
     fclose(comex_trace_file);
+#endif
+
+    free(nb_state);
+#ifdef DEBUG
+    printf(" %d freed nb_state ptr %p \n", g_state.rank, nb_state);
 #endif
 
     // assume this is the end of a user's application
