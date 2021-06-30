@@ -4228,13 +4228,14 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
       }
 #ifdef ENABLE_DEVICE
     } else {
-      setDevice(_device_map[header->rank]);
+      /*setDevice(_device_map[header->rank]);*/
       if (use_eager) {
         copyToDevice(payload, mapped_offset, header->length);
       }
       else {
         char *buf = (char*)mapped_offset;
         int bytes_remaining = header->length;
+#if 0
         do {
           int size = bytes_remaining>max_message_size ?
             max_message_size : bytes_remaining;
@@ -4242,6 +4243,18 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
           buf += size;
           bytes_remaining -= size;
         } while (bytes_remaining > 0);
+#else
+        char *tbuf = (char*)malloc(max_message_size);
+        do {
+          int size = bytes_remaining>max_message_size ?
+            max_message_size : bytes_remaining;
+          server_recv(tbuf, size, proc);
+          copyToDevice(tbuf, buf, size);
+          buf += size;
+          bytes_remaining -= size;
+        } while (bytes_remaining > 0);
+        free(tbuf);
+#endif
       }
       cudaIpcCloseMemHandle(reg_entry->mapped);
     }
@@ -4308,6 +4321,9 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
         }
 
         {
+#ifdef ENABLE_DEVICE
+          if (!reg_entry->use_dev) {
+#endif
             /* we receive the buffer backwards */
             char *buf = packed_buffer + header->length;
             int bytes_remaining = header->length;
@@ -4318,6 +4334,22 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
                 server_recv(buf, size, proc);
                 bytes_remaining -= size;
             } while (bytes_remaining > 0);
+#ifdef ENABLE_DEVICE
+          } else {
+            char *tbuf = (char*)malloc(max_message_size);
+            char *buf = packed_buffer + header->length;
+            int bytes_remaining = header->length;
+            do {
+              int size = bytes_remaining>max_message_size ?
+                max_message_size : bytes_remaining;
+              buf -= size;
+              server_recv(tbuf, size, proc);
+              copyToDevice(tbuf, buf, size);
+              bytes_remaining -= size;
+            } while (bytes_remaining > 0);
+            free(tbuf);
+          }
+#endif
         }
 
         unpack(packed_buffer, mapped_offset,
@@ -4513,6 +4545,9 @@ STATIC void _get_handler(header_t *header, int proc)
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
+#ifdef ENABLE_DEVICE
+    if (!reg_entry->use_dev) {
+#endif
     {
         char *buf = (char*)mapped_offset;
         int bytes_remaining = header->length;
@@ -4524,6 +4559,23 @@ STATIC void _get_handler(header_t *header, int proc)
             bytes_remaining -= size;
         } while (bytes_remaining > 0);
     }
+#ifdef ENABLE_DEVICE
+    } else {
+      char *tbuf = (char*)malloc(max_message_size);
+      char *buf = (char*)mapped_offset;
+      int bytes_remaining = header->length;
+      do {
+        int size = bytes_remaining>max_message_size ?
+          max_message_size : bytes_remaining;
+        copyToHost(tbuf, buf, size);
+        server_send(tbuf, size, proc);
+        buf += size;
+        bytes_remaining -= size;
+      } while (bytes_remaining > 0);
+      free(tbuf);
+      cudaIpcCloseMemHandle(reg_entry->mapped);
+    }
+#endif
 }
 
 
@@ -4791,6 +4843,9 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
+#ifdef ENABLE_DEVICE
+    if (!reg_entry->use_dev) {
+#endif
     if (use_eager) {
         acc_buffer = scale + sizeof_scale;
     }
@@ -4832,6 +4887,39 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
             free(acc_buffer);
         }
     }
+#ifdef ENABLE_DEVICE
+    } else {
+      void *dev_buffer;
+      /* Assume no static buffer available. Create buffer to receive data */
+      acc_buffer = malloc(header->length);
+      /* Create buffer on device */
+      mallocDevice(&dev_buffer, header->length);
+      {
+        char *buf = (char*)acc_buffer;
+        int bytes_remaining = header->length;
+
+        do {
+          int size = bytes_remaining>max_message_size ?
+            max_message_size : bytes_remaining;
+          server_recv(buf, size, proc);
+          buf += size;
+          bytes_remaining -= size;
+        } while (bytes_remaining > 0);
+      }
+      copyToDevice(acc_buffer, dev_buffer, header->length);
+      if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
+        sem_wait(semaphores[header->rank]);
+        _acc_dev(acc_type, header->length, mapped_offset, dev_buffer, scale);
+        sem_post(semaphores[header->rank]);
+      }
+      else {
+        _acc_dev(acc_type, header->length, mapped_offset, dev_buffer, scale);
+      }
+      free(acc_buffer);
+      freeDevice(dev_buffer);
+      cudaIpcCloseMemHandle(reg_entry->mapped);
+    }
+#endif
 }
 
 
@@ -4849,6 +4937,7 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
 #if DEBUG
     fprintf(stderr, "[%d] _acc_packed_handler\n", g_state.rank);
 #endif
+      printf("p[%d] (_acc_packed_handler)\n",g_state.rank);
 
     switch (header->operation) {
         case OP_ACC_INT_PACKED:
@@ -4911,6 +5000,7 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
             header->rank, header->remote_address, header->length, -1);
 #ifdef ENABLE_DEVICE
     if (!reg_entry) {
+      printf("p[%d] (_acc_packed_handler) Looking for ptr on device\n",g_state.rank);
       reg_entry = reg_cache_find(
               header->rank, header->remote_address, header->length, _device_map[header->rank]);
     }
@@ -4918,6 +5008,9 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
+#ifdef ENABLE_DEVICE
+    if (!reg_entry->use_dev) {
+#endif
     if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
         sem_wait(semaphores[header->rank]);
     }
@@ -4989,6 +5082,92 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
             free(acc_buffer);
         }
     }
+#ifdef ENABLE_DEVICE
+    } else {
+      if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
+        sem_wait(semaphores[header->rank]);
+      }
+      {
+        char *packed_buffer = acc_buffer;
+        char *dst = mapped_offset;
+        int *dst_stride = stride->stride;
+        int *count = stride->count;
+        int stride_levels = stride->stride_levels;
+        int i, j;
+        long dst_idx;  /* index offset of current block position to ptr */
+        int n1dim;  /* number of 1 dim block */
+        int dst_bvalue[7], dst_bunit[7];
+        int packed_index = 0;
+        void *dev_buffer;
+
+        /* allocate dev_buffer on device and copy contents of acc_buffer*/
+        mallocDevice(&dev_buffer, header->length);
+        copyToDevice(acc_buffer, dev_buffer, header->length);
+
+
+        COMEX_ASSERT(stride_levels >= 0);
+        COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
+        COMEX_ASSERT(NULL != packed_buffer);
+        COMEX_ASSERT(NULL != dst);
+        COMEX_ASSERT(NULL != dst_stride);
+        COMEX_ASSERT(NULL != count);
+        COMEX_ASSERT(count[0] > 0);
+
+#if DEBUG
+        fprintf(stderr, "[%d] unpack(dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d)\n",
+            g_state.rank, dst, dst_stride, count[0], stride_levels);
+#endif
+        /* create buffer on device and copy contents of acc_buffer to device
+         * buffer */
+
+        /* number of n-element of the first dimension */
+        n1dim = 1;
+        for(i=1; i<=stride_levels; i++) {
+          n1dim *= count[i];
+        }
+
+        /* calculate the destination indices */
+        dst_bvalue[0] = 0; dst_bvalue[1] = 0; dst_bunit[0] = 1; dst_bunit[1] = 1;
+
+        for(i=2; i<=stride_levels; i++) {
+          dst_bvalue[i] = 0;
+          dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+        }
+
+        for(i=0; i<n1dim; i++) {
+          dst_idx = 0;
+          for(j=1; j<=stride_levels; j++) {
+            dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+            if((i+1) % dst_bunit[j] == 0) {
+              dst_bvalue[j]++;
+            }
+            if(dst_bvalue[j] > (count[j]-1)) {
+              dst_bvalue[j] = 0;
+            }
+          }
+
+          _acc_dev(acc_type, count[0], dst+sizeof_scale*dst_idx,
+              (char*)dev_buffer+sizeof_scale*packed_index, scale);
+          packed_index += count[0];
+        }
+        freeDevice(dev_buffer);
+
+        COMEX_ASSERT(packed_index == n1dim*count[0]);
+      }
+      cudaIpcCloseMemHandle(reg_entry->mapped);
+      if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
+        sem_post(semaphores[header->rank]);
+      }
+
+      if (use_eager) {
+      }
+      else {
+        if ((unsigned)header->length > static_server_buffer_size) {
+          free(acc_buffer);
+        }
+      }
+    }
+#endif
 }
 
 
