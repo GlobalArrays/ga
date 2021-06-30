@@ -138,6 +138,7 @@ int main(int argc, char **argv) {
   NGA_Allocate(g_a);
   if (rank == 0) printf("Completed GA allocate\n");
   GA_Zero(g_a);
+  if (rank == 0) printf("Completed GA zero\n");
 
   /* allocate a local buffer and initialize it with values*/
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
@@ -154,8 +155,9 @@ int main(int argc, char **argv) {
 
   /* copy data to global array */
   NGA_Put(g_a, lo, hi, buf, &ld);
-  GA_Sync();
   if (rank == 0) printf("Completed GA put\n");
+  GA_Sync();
+  if (rank == 0) printf("Completed GA sync\n");
   NGA_Distribution(g_a,rank,tlo,thi);
 #if 0
   printf("p[%d] Completed NGA_Distribution\n",rank);

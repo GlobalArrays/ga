@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <mpi.h>
 
 #include <cuda_runtime.h>
 
@@ -34,10 +35,7 @@ void setDevice(int id)
  */
 void mallocDevice(void **buf, size_t size)
 {
-  cudaPointerAttributes attr;
-  cudaError_t err;
   cudaMalloc(buf, (int)size);
-  err = cudaPointerGetAttributes(&attr, *buf);
 }
 
 /* free unified memory
