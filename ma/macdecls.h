@@ -102,6 +102,13 @@ extern void MA_trace(Boolean value);
 extern Boolean MA_verify_allocator_stuff();
 extern void MA_set_error_callback(void(*func)());
 
+extern Boolean MA_count_heap(
+    Integer     datatype,       /**< of elements in this block */
+    Integer     nelem           /**< # of elements in this block */);
+extern Boolean MA_uncount_heap(
+    Integer     datatype,       /**< of elements in this block */
+    Integer     nelem           /**< # of elements in this block */);
+
 extern void ma_set_error_callback();
 
 /**

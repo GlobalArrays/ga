@@ -430,9 +430,9 @@ typedef enum
     FID_MA_sizeof_overhead,
     FID_MA_summarize_allocated_blocks,
     FID_MA_trace,
-    FID_MA_verify_allocator_stuff,
     FID_MA_count_heap,
-    FID_MA_uncount_heap
+    FID_MA_uncount_heap,
+    FID_MA_verify_allocator_stuff
 } FID;
 
 /* MA usage statistics */
