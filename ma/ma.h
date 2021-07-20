@@ -50,5 +50,7 @@ extern void MAi_summarize_allocated_blocks(int index_base);
 #define f2c_trace_                      F77_FUNC_(f2c_trace,F2C_TRACE)
 #define f2c_verify_allocator_stuff_     F77_FUNC_(f2c_verify_allocator_stuff,F2C_VERIFY_ALLOCATOR_STUFF)
 #define ma_set_sizes_                   F77_FUNC_(ma_set_sizes,MA_SET_SIZES)
+#define f2c_count_heap_                 F77_FUNC_(f2c_count_heap,F2C_COUNT_HEAP)
+#define f2c_uncount_heap_               F77_FUNC_(f2c_uncount_heap,F2C_UNCOUNT_HEAP)
 
 #endif /* _ma_h */
