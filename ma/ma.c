@@ -430,7 +430,9 @@ typedef enum
     FID_MA_sizeof_overhead,
     FID_MA_summarize_allocated_blocks,
     FID_MA_trace,
-    FID_MA_verify_allocator_stuff
+    FID_MA_verify_allocator_stuff,
+    FID_MA_count_heap,
+    FID_MA_uncount_heap
 } FID;
 
 /* MA usage statistics */
@@ -3682,4 +3684,152 @@ public Boolean MA_verify_allocator_stuff()
     return MA_FALSE;
 
 #endif /* VERIFY */
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * Add the size of an _external_ allocation (i.e. Fortran allocate) to MA stats
+ * to allow applications (e.g. NWChem) to accurately track their memory
+ * consumption.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
+ */
+/* ------------------------------------------------------------------------- */
+
+public Boolean MA_count_heap(
+    Integer       datatype,     /* of elements in the block */
+    Integer       nelem,        /* # of elements in the block */
+    const char  * name          /* assigned to this block by client */
+    )
+{
+    ulongi nbytes;
+
+#ifdef STATS
+    ma_stats.calls[(int)FID_MA_count_heap]++;
+#endif /* STATS */
+
+    if (ma_trace)
+    (void)printf("MA: counting '%s' (%d)\n", name, (int)nelem);
+
+    /* verify initialization */
+    if (!ma_initialized)
+    {
+        (void)sprintf(ma_ebuf,
+            "block '%s', MA not yet initialized",
+            name);
+        ma_error(EL_Nonfatal, ET_External, "MA_count_heap", ma_ebuf);
+        return MA_FALSE;
+    }
+
+    /* verify datatype */
+    if (!mt_valid(datatype))
+    {
+        (void)sprintf(ma_ebuf,
+            "block '%s', invalid datatype: %ld",
+            name, (size_t)datatype);
+        ma_error(EL_Nonfatal, ET_External, "MA_count_heap", ma_ebuf);
+        return MA_FALSE;
+    }
+
+    /* verify nelem */
+    if (nelem < 0)
+    {
+        (void)sprintf(ma_ebuf,
+            "block '%s', invalid nelem: %ld",
+            name, (size_t)nelem);
+        ma_error(EL_Nonfatal, ET_External, "MA_count_heap", ma_ebuf);
+        return MA_FALSE;
+    }
+
+    /* convert datatype to internal (index-suitable) value */
+    datatype = mt_import(datatype);
+
+    /* compute the number of bytes in an element */
+    nbytes = ma_sizeof[datatype];
+
+    /* total number of bytes */
+    nbytes *= nelem;
+
+#ifdef STATS
+    ma_stats.hblocks++;
+    ma_stats.hblocks_max = max(ma_stats.hblocks, ma_stats.hblocks_max);
+    ma_stats.hbytes += nbytes;
+    ma_stats.hbytes_max = max(ma_stats.hbytes, ma_stats.hbytes_max);
+#endif /* STATS */
+
+    return MA_TRUE;
+
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * Subtract the size of an _external_ allocation (i.e. Fortran allocate) to MA stats
+ * to allow applications (e.g. NWChem) to accurately track their memory
+ * consumption.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
+ */
+/* ------------------------------------------------------------------------- */
+
+public Boolean MA_uncount_heap(
+    Integer       datatype,     /* of elements in the block */
+    Integer       nelem,        /* # of elements in the block */
+    const char  * name          /* assigned to this block by client */
+    )
+{
+    ulongi nbytes;
+
+#ifdef STATS
+    ma_stats.calls[(int)FID_MA_uncount_heap]++;
+#endif /* STATS */
+
+    if (ma_trace)
+    (void)printf("MA: uncounting '%s' (%d)\n", name, (int)nelem);
+
+    /* verify initialization */
+    if (!ma_initialized)
+    {
+        (void)sprintf(ma_ebuf,
+            "block '%s', MA not yet initialized",
+            name);
+        ma_error(EL_Nonfatal, ET_External, "MA_uncount_heap", ma_ebuf);
+        return MA_FALSE;
+    }
+
+    /* verify datatype */
+    if (!mt_valid(datatype))
+    {
+        (void)sprintf(ma_ebuf,
+            "block '%s', invalid datatype: %ld",
+            name, (size_t)datatype);
+        ma_error(EL_Nonfatal, ET_External, "MA_uncount_heap", ma_ebuf);
+        return MA_FALSE;
+    }
+
+    /* verify nelem */
+    if (nelem < 0)
+    {
+        (void)sprintf(ma_ebuf,
+            "block '%s', invalid nelem: %ld",
+            name, (size_t)nelem);
+        ma_error(EL_Nonfatal, ET_External, "MA_uncount_heap", ma_ebuf);
+        return MA_FALSE;
+    }
+
+    /* convert datatype to internal (index-suitable) value */
+    datatype = mt_import(datatype);
+
+    /* compute the number of bytes in an element */
+    nbytes = ma_sizeof[datatype];
+
+    /* total number of bytes */
+    nbytes *= nelem;
+
+#ifdef STATS
+    ma_stats.hblocks--;
+    ma_stats.hbytes -= nbytes;
+#endif /* STATS */
+
+    return MA_TRUE;
+
 }
