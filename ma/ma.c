@@ -3698,8 +3698,7 @@ public Boolean MA_verify_allocator_stuff()
 
 public Boolean MA_count_heap(
     Integer       datatype,     /* of elements in the block */
-    Integer       nelem,        /* # of elements in the block */
-    const char  * name          /* assigned to this block by client */
+    Integer       nelem         /* # of elements in the block */
     )
 {
     ulongi nbytes;
@@ -3709,14 +3708,12 @@ public Boolean MA_count_heap(
 #endif /* STATS */
 
     if (ma_trace)
-    (void)printf("MA: counting '%s' (%d)\n", name, (int)nelem);
+    (void)printf("MA: counting (%d)\n", (int)nelem);
 
     /* verify initialization */
     if (!ma_initialized)
     {
-        (void)sprintf(ma_ebuf,
-            "block '%s', MA not yet initialized",
-            name);
+        (void)sprintf(ma_ebuf, "MA not yet initialized");
         ma_error(EL_Nonfatal, ET_External, "MA_count_heap", ma_ebuf);
         return MA_FALSE;
     }
@@ -3724,9 +3721,7 @@ public Boolean MA_count_heap(
     /* verify datatype */
     if (!mt_valid(datatype))
     {
-        (void)sprintf(ma_ebuf,
-            "block '%s', invalid datatype: %ld",
-            name, (size_t)datatype);
+        (void)sprintf(ma_ebuf, "invalid datatype: %ld", (size_t)datatype);
         ma_error(EL_Nonfatal, ET_External, "MA_count_heap", ma_ebuf);
         return MA_FALSE;
     }
@@ -3734,9 +3729,7 @@ public Boolean MA_count_heap(
     /* verify nelem */
     if (nelem < 0)
     {
-        (void)sprintf(ma_ebuf,
-            "block '%s', invalid nelem: %ld",
-            name, (size_t)nelem);
+        (void)sprintf(ma_ebuf, "invalid nelem: %ld", (size_t)nelem);
         ma_error(EL_Nonfatal, ET_External, "MA_count_heap", ma_ebuf);
         return MA_FALSE;
     }
@@ -3758,7 +3751,6 @@ public Boolean MA_count_heap(
 #endif /* STATS */
 
     return MA_TRUE;
-
 }
 
 /* ------------------------------------------------------------------------- */
@@ -3773,8 +3765,7 @@ public Boolean MA_count_heap(
 
 public Boolean MA_uncount_heap(
     Integer       datatype,     /* of elements in the block */
-    Integer       nelem,        /* # of elements in the block */
-    const char  * name          /* assigned to this block by client */
+    Integer       nelem         /* # of elements in the block */
     )
 {
     ulongi nbytes;
@@ -3784,14 +3775,12 @@ public Boolean MA_uncount_heap(
 #endif /* STATS */
 
     if (ma_trace)
-    (void)printf("MA: uncounting '%s' (%d)\n", name, (int)nelem);
+    (void)printf("MA: uncounting (%d)\n", (int)nelem);
 
     /* verify initialization */
     if (!ma_initialized)
     {
-        (void)sprintf(ma_ebuf,
-            "block '%s', MA not yet initialized",
-            name);
+        (void)sprintf(ma_ebuf, "MA not yet initialized");
         ma_error(EL_Nonfatal, ET_External, "MA_uncount_heap", ma_ebuf);
         return MA_FALSE;
     }
@@ -3799,9 +3788,7 @@ public Boolean MA_uncount_heap(
     /* verify datatype */
     if (!mt_valid(datatype))
     {
-        (void)sprintf(ma_ebuf,
-            "block '%s', invalid datatype: %ld",
-            name, (size_t)datatype);
+        (void)sprintf(ma_ebuf, "invalid datatype: %ld", (size_t)datatype);
         ma_error(EL_Nonfatal, ET_External, "MA_uncount_heap", ma_ebuf);
         return MA_FALSE;
     }
@@ -3809,9 +3796,7 @@ public Boolean MA_uncount_heap(
     /* verify nelem */
     if (nelem < 0)
     {
-        (void)sprintf(ma_ebuf,
-            "block '%s', invalid nelem: %ld",
-            name, (size_t)nelem);
+        (void)sprintf(ma_ebuf, "invalid nelem: %ld", (size_t)nelem);
         ma_error(EL_Nonfatal, ET_External, "MA_uncount_heap", ma_ebuf);
         return MA_FALSE;
     }
@@ -3831,5 +3816,4 @@ public Boolean MA_uncount_heap(
 #endif /* STATS */
 
     return MA_TRUE;
-
 }
