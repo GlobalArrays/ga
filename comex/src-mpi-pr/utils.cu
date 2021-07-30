@@ -88,7 +88,7 @@ void deviceMemset(void *ptr, int val, size_t bytes)
 }
 
 /* is pointer located on host?
- * return 1 is data is only located on host, 0 otherwise
+ * return 1 data is located on host, 0 otherwise
  * ptr: pointer to data
  */
 int isHostPointer(void *ptr)
@@ -114,6 +114,38 @@ __global__ void iaxpy_kernel(int *dst, const int *src, int scale)
 void deviceIaxpy(int *dst, const int *src, const int *scale, int n)
 {
   iaxpy_kernel<<<1,n>>>(dst, src, *scale);
+}
+
+__global__ void inc_int_kernel(int *target, const int *inc)
+{
+  int i = threadIdx.x;
+  target[i] += inc[i];
+}
+
+void deviceAddInt(int *ptr, const int inc)
+{
+  void *buf;
+  void *ibuf = (void*)(&inc);
+  cudaMalloc(&buf, sizeof(int));
+  copyToDevice(&ibuf, buf, sizeof(int));  
+  inc_int_kernel<<<1,1>>>(ptr, (int*)buf);
+  cudaFree(buf);
+}
+
+__global__ void inc_long_kernel(long *target, const long *inc)
+{
+  int i = threadIdx.x;
+  target[i] += inc[i];
+}
+
+void deviceAddLong(long *ptr, const long inc)
+{
+  void *buf;
+  void *lbuf = (void*)(&lbuf);
+  cudaMalloc(&buf, sizeof(long));
+  copyToDevice(&lbuf, buf, sizeof(long));  
+  inc_long_kernel<<<1,1>>>(ptr, (long*)buf);
+  cudaFree(buf);
 }
 
 };

@@ -114,7 +114,6 @@ typedef enum {
     OP_UNLOCK,
     OP_QUIT,
     OP_MALLOC,
-    OP_MALLOC_DEV,
     OP_FREE,
     OP_NULL
 } op_t;
@@ -347,7 +346,7 @@ STATIC int _eager_check(int extra_bytes);
 /* other functions */
 STATIC int _packed_size(int *src_stride, int *count, int stride_levels);
 STATIC char* pack(char *src, int *src_stride,
-                int *count, int stride_levels, int *size);
+                int *count, int stride_levels, int *size, int is_dev);
 STATIC void unpack(char *packed_buffer, char *dst, int *dst_stride, int *count,
     int stride_levels, int dev_flag);
 STATIC char* _generate_shm_name(int rank);
@@ -1296,7 +1295,7 @@ STATIC int _packed_size(int *src_stride, int *count, int stride_levels)
 
 
 STATIC char* pack(
-        char *src, int *src_stride, int *count, int stride_levels, int *size)
+        char *src, int *src_stride, int *count, int stride_levels, int *size, int is_dev)
 {
     int i, j;
     long src_idx;  /* index offset of current block position to ptr */
@@ -1325,7 +1324,6 @@ STATIC char* pack(
     }
 
     /* allocate packed buffer now that we know the size */
-    printf("p[%d] (pack) n1dim %d count %d\n",g_state.rank,n1dim,count[0]);
     packed_buffer = malloc(n1dim * count[0]);
     COMEX_ASSERT(packed_buffer);
 
@@ -1349,7 +1347,14 @@ STATIC char* pack(
             }
         }
 
-        (void)memcpy(&packed_buffer[packed_index], &src[src_idx], count[0]);
+#ifdef ENABLE_DEVICE
+        if (is_dev) {
+          copyToHost((void*)&packed_buffer[packed_index], &src[src_idx], count[0]);
+        } else
+#endif
+        {
+          (void)memcpy(&packed_buffer[packed_index], &src[src_idx], count[0]);
+        }
         packed_index += count[0];
     }
 
@@ -1368,6 +1373,7 @@ STATIC void unpack(char *packed_buffer,
   int n1dim;  /* number of 1 dim block */
   int dst_bvalue[7], dst_bunit[7];
   int packed_index = 0;
+  int *tmp;
 
   COMEX_ASSERT(stride_levels >= 0);
   COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
@@ -1417,6 +1423,9 @@ STATIC void unpack(char *packed_buffer,
     }
     packed_index += count[0];
   }
+  tmp = (int*)malloc(4*sizeof(int));
+  copyToHost((void*)tmp,(void*)dst,4*sizeof(int));
+  free(tmp);
 
   COMEX_ASSERT(packed_index == n1dim*count[0]);
 }
@@ -4336,18 +4345,16 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
             } while (bytes_remaining > 0);
 #ifdef ENABLE_DEVICE
           } else {
-            char *tbuf = (char*)malloc(max_message_size);
             char *buf = packed_buffer + header->length;
             int bytes_remaining = header->length;
             do {
               int size = bytes_remaining>max_message_size ?
                 max_message_size : bytes_remaining;
               buf -= size;
-              server_recv(tbuf, size, proc);
-              copyToDevice(tbuf, buf, size);
+              server_recv(buf, size, proc);
+
               bytes_remaining -= size;
             } while (bytes_remaining > 0);
-            free(tbuf);
           }
 #endif
         }
@@ -4617,7 +4624,7 @@ STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
 
     packed_buffer = pack(mapped_offset,
             stride_src->stride, stride_src->count, stride_src->stride_levels,
-            &packed_index);
+            &packed_index, reg_entry->use_dev);
 
     {
         /* we send the buffer backwards */
@@ -4937,7 +4944,6 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
 #if DEBUG
     fprintf(stderr, "[%d] _acc_packed_handler\n", g_state.rank);
 #endif
-      printf("p[%d] (_acc_packed_handler)\n",g_state.rank);
 
     switch (header->operation) {
         case OP_ACC_INT_PACKED:
@@ -5000,7 +5006,6 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
             header->rank, header->remote_address, header->length, -1);
 #ifdef ENABLE_DEVICE
     if (!reg_entry) {
-      printf("p[%d] (_acc_packed_handler) Looking for ptr on device\n",g_state.rank);
       reg_entry = reg_cache_find(
               header->rank, header->remote_address, header->length, _device_map[header->rank]);
     }
@@ -5347,6 +5352,9 @@ STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc)
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
     
+#ifdef ENABLE_DEVICE
+    if (!reg_entry->use_dev) {
+#endif
     if (sizeof(int) == header->length) {
         value_int = malloc(sizeof(int));
         *value_int = *((int*)mapped_offset); /* "fetch" */
@@ -5364,6 +5372,28 @@ STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc)
     else {
         COMEX_ASSERT(0);
     }
+#ifdef ENABLE_DEVICE
+    } else {
+      if (sizeof(int) == header->length) {
+        value_int = malloc(sizeof(int));
+        copyToHost(value_int,mapped_offset,sizeof(int)); /* "fetch" */
+        deviceAddInt(mapped_offset, *((int*)payload)); /* "add" */
+        server_send(value_int, sizeof(int), proc);
+        free(value_int);
+      }
+      else if (sizeof(long) == header->length) {
+        value_long = malloc(sizeof(long));
+        copyToHost(value_long,mapped_offset,sizeof(long)); /* "fetch" */
+        deviceAddLong(mapped_offset, *((long*)payload)); /* "add" */
+        server_send(value_long, sizeof(long), proc);
+        free(value_long);
+      }
+      else {
+        COMEX_ASSERT(0);
+      }
+      cudaIpcCloseMemHandle(reg_entry->mapped);
+    }
+#endif
 }
 
 
@@ -5753,7 +5783,7 @@ STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory)
       void *ret;
       cudaIpcOpenMemHandle(&ret, reg_entry->handle, cudaIpcMemLazyEnablePeerAccess);
       offset = ((char*)memory)-((char*)reg_entry->buf);
-      return ret+offset;
+      return (void*)((char*)ret+offset);
     }
 #endif
     COMEX_ASSERT(reg_entry);
@@ -7573,6 +7603,7 @@ STATIC void nb_puts_packed(
     int packed_index = 0;
     char *packed_buffer = NULL;
     stride_t stride;
+    int is_dev = !isHostPointer(src);
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_puts_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -7613,7 +7644,7 @@ STATIC void nb_puts_packed(
     }
 #endif
 
-    packed_buffer = pack(src, src_stride, count, stride_levels, &packed_index);
+    packed_buffer = pack(src, src_stride, count, stride_levels, &packed_index, is_dev);
 
     COMEX_ASSERT(NULL != packed_buffer);
     COMEX_ASSERT(packed_index > 0);
@@ -7624,7 +7655,6 @@ STATIC void nb_puts_packed(
         header_t *header = NULL;
         int master_rank = -1;
         int use_eager = _eager_check(sizeof(stride_t)+packed_index);
-        reg_entry_t *reg_entry;
 
         master_rank = g_state.master[proc];
         /* only fence on the master */
@@ -7917,7 +7947,6 @@ STATIC void nb_gets_packed(
         char *packed_buffer = NULL;
         header_t *header = NULL;
         int master_rank = -1;
-        reg_entry_t *reg_entry = NULL;
 
         master_rank = g_state.master[proc];
 
@@ -8130,6 +8159,7 @@ STATIC void nb_accs_packed(
     int packed_index = 0;
     char *packed_buffer = NULL;
     stride_t stride;
+    int is_dev = !isHostPointer(dst);
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_accs_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -8174,7 +8204,7 @@ STATIC void nb_accs_packed(
     }
 #endif
 
-    packed_buffer = pack(src, src_stride, count, stride_levels, &packed_index);
+    packed_buffer = pack(src, src_stride, count, stride_levels, &packed_index, is_dev);
 
     COMEX_ASSERT(NULL != packed_buffer);
     COMEX_ASSERT(packed_index > 0);
