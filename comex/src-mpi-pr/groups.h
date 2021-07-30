@@ -22,6 +22,8 @@ extern void copyToHost(void *hostptr, void *devptr, int bytes);
 extern void copyDevToDev(void *src, void *dst, int bytes);
 extern void deviceMemset(void *ptr, int val, size_t bytes);
 extern int isHostPointer(void *ptr);
+extern void deviceAddInt(int *ptr, const int inc);
+extern void deviceAddLong(long *ptr, const long inc);
 extern int _comex_dev_flag;
 extern int _comex_dev_id;
 #endif
