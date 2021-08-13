@@ -182,13 +182,16 @@ static inline void _acc_dev(
         const void * const restrict scale)
 {
   cublasHandle_t handle;
-  cublasCreate(&handle);
   if (op == COMEX_ACC_DBL) {
     const int n = bytes/sizeof(double);
+    cublasCreate(&handle);
     cublasDaxpy(handle,n,scale,src,1,dst,1);
+    cublasDestroy(handle);
   } else if (op == COMEX_ACC_FLT) {
     const int n = bytes/sizeof(float);
+    cublasCreate(&handle);
     cublasSaxpy(handle,n,scale,src,1,dst,1);
+    cublasDestroy(handle);
   } else if (op == COMEX_ACC_INT) {
     const int n = bytes/sizeof(int);
     deviceIaxpy(dst, src, scale, n);
@@ -196,13 +199,16 @@ static inline void _acc_dev(
     const int n = bytes/sizeof(long);
   } else if (op == COMEX_ACC_DCP) {
     const int n = bytes/sizeof(DoubleComplex);
+    cublasCreate(&handle);
     cublasZaxpy(handle,n,scale,src,1,dst,1);
+    cublasDestroy(handle);
   } else if (op == COMEX_ACC_CPL) {
     const int n = bytes/sizeof(SingleComplex);
+    cublasCreate(&handle);
     cublasCaxpy(handle,n,scale,src,1,dst,1);
+    cublasDestroy(handle);
   } else {
   }
-  cublasDestroy(handle);
 }
 #endif
 

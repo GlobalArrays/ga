@@ -574,6 +574,10 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
         runner->next = node;
     }
 
+    /*
+    printf("p[%d] reg_cache_insert buf: %p map: %p dev_id: %d node: %p\n",g_state.rank,
+        buf,mapped,dev_id,node);
+        */
     return node;
 }
 
