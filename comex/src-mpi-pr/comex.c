@@ -1029,6 +1029,7 @@ int comex_accs(
     igroup = comex_get_igroup_from_group(group);
     world_proc = _get_world_rank(igroup, proc);
 
+    printf("p[%d] (comex_accs) calling nb_accs\n",g_state.rank);
     nb_accs(datatype, scale,
             src, src_stride, dst, dst_stride, count, stride_levels, world_proc, nb);
     nb_wait_for_all(nb);
@@ -1733,6 +1734,8 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, int device_id)
     setDevice(device_id); 
     mallocDevice(&memory, size);
     cudaIpcGetMemHandle(&handle, memory);
+    printf("p[%d] _comex_malloc_local_memdev buf: %p device: %d\n",
+        g_state.rank,memory,device_id);
 
     /* register the memory locally */
     reg_entry = reg_cache_insert(
@@ -2157,6 +2160,7 @@ int comex_nbaccs(
     igroup = comex_get_igroup_from_group(group);
     world_proc = _get_world_rank(igroup, proc);
 
+    printf("p[%d] (comex_nbaccs) calling nb_accs\n",g_state.rank);
     nb_accs(datatype, scale,
             src, src_stride, dst, dst_stride, count, stride_levels, world_proc, nb);
 
@@ -4330,9 +4334,6 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
         }
 
         {
-#ifdef ENABLE_DEVICE
-          if (!reg_entry->use_dev) {
-#endif
             /* we receive the buffer backwards */
             char *buf = packed_buffer + header->length;
             int bytes_remaining = header->length;
@@ -4343,20 +4344,6 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
                 server_recv(buf, size, proc);
                 bytes_remaining -= size;
             } while (bytes_remaining > 0);
-#ifdef ENABLE_DEVICE
-          } else {
-            char *buf = packed_buffer + header->length;
-            int bytes_remaining = header->length;
-            do {
-              int size = bytes_remaining>max_message_size ?
-                max_message_size : bytes_remaining;
-              buf -= size;
-              server_recv(buf, size, proc);
-
-              bytes_remaining -= size;
-            } while (bytes_remaining > 0);
-          }
-#endif
         }
 
         unpack(packed_buffer, mapped_offset,
@@ -4368,6 +4355,7 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
     }
 #ifdef ENABLE_DEVICE
     if (reg_entry->use_dev) {
+      printf("p[%d] _put_packed_handler close IPC %p\n",g_state.rank,reg_entry->mapped);
       cudaIpcCloseMemHandle(reg_entry->mapped);
     }
 #endif
@@ -4622,6 +4610,8 @@ STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
+    printf("p[%d] calling pack from _get_packed_handler offset: %p address: %p rank: %d\n",
+        g_state.rank, mapped_offset, header->remote_address, header->rank);
     packed_buffer = pack(mapped_offset,
             stride_src->stride, stride_src->count, stride_src->stride_levels,
             &packed_index, reg_entry->use_dev);
@@ -4640,6 +4630,7 @@ STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
     }
 #ifdef ENABLE_DEVICE
     if (reg_entry->use_dev) {
+      printf("p[%d] _get_packed_handler close IPC %p\n",g_state.rank,reg_entry->mapped);
       cudaIpcCloseMemHandle(reg_entry->mapped);
     }
 #endif
@@ -4805,10 +4796,14 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
     void *mapped_offset = NULL;
     char *acc_buffer = NULL;
     int use_eager = 0;
+#ifdef ENABLE_DEVICE
+    void *dev_buffer;
+#endif
 
 #if DEBUG
     fprintf(stderr, "[%d] _acc_handler\n", g_state.rank);
 #endif
+    printf("p[%d] calling _acc_handler\n",g_state.rank);
 
     switch (header->operation) {
         case OP_ACC_INT:
@@ -4843,6 +4838,9 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
             header->rank, header->remote_address, header->length, -1);
 #ifdef ENABLE_DEVICE
     if (!reg_entry) {
+      /* Create buffer on device before opening memory handle */
+      setDevice(_device_map[header->rank]);
+      mallocDevice(&dev_buffer, header->length);
       reg_entry = reg_cache_find(
               header->rank, header->remote_address, header->length, _device_map[header->rank]);
     }
@@ -4896,11 +4894,8 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
     }
 #ifdef ENABLE_DEVICE
     } else {
-      void *dev_buffer;
       /* Assume no static buffer available. Create buffer to receive data */
       acc_buffer = malloc(header->length);
-      /* Create buffer on device */
-      mallocDevice(&dev_buffer, header->length);
       {
         char *buf = (char*)acc_buffer;
         int bytes_remaining = header->length;
@@ -4916,15 +4911,17 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
       copyToDevice(acc_buffer, dev_buffer, header->length);
       if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
         sem_wait(semaphores[header->rank]);
+        printf("p[%d] (_acc_handler) calling _acc_dev at 1\n",g_state.rank);
         _acc_dev(acc_type, header->length, mapped_offset, dev_buffer, scale);
         sem_post(semaphores[header->rank]);
       }
       else {
+        printf("p[%d] (_acc_handler) calling _acc_dev at 2\n",g_state.rank);
         _acc_dev(acc_type, header->length, mapped_offset, dev_buffer, scale);
       }
       free(acc_buffer);
-      freeDevice(dev_buffer);
       cudaIpcCloseMemHandle(reg_entry->mapped);
+      freeDevice(dev_buffer);
     }
 #endif
 }
@@ -4940,11 +4937,15 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
     char *acc_buffer = NULL;
     stride_t *stride = NULL;
     int use_eager = 0;
+#ifdef ENABLE_DEVICE
+    void *dev_buffer;
+#endif
 
 #if DEBUG
     fprintf(stderr, "[%d] _acc_packed_handler\n", g_state.rank);
 #endif
 
+    printf("p[%d] _acc_packed_handler Got to 1\n",g_state.rank);
     switch (header->operation) {
         case OP_ACC_INT_PACKED:
             acc_type = COMEX_ACC_INT;
@@ -4977,6 +4978,22 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
     scale = payload;
     stride = (stride_t*)(payload + sizeof_scale);
 
+    reg_entry = reg_cache_find(
+            header->rank, header->remote_address, header->length, -1);
+    printf("p[%d] _acc_packed_handler %p = reg_cache_find(%d,%p,%d,-1)\n",g_state.rank,
+        reg_entry,header->rank, header->remote_address, header->length);
+#ifdef ENABLE_DEVICE
+    if (!reg_entry) {
+      /* Need to create temporary device buffer here before opening memory handle */
+      setDevice(_device_map[header->rank]);
+      mallocDevice(&dev_buffer, header->length);
+      reg_entry = reg_cache_find(
+              header->rank, header->remote_address, header->length, _device_map[header->rank]);
+    printf("p[%d] _acc_packed_handler %p = reg_cache_find(%d,%p,%d,%d)\n",g_state.rank,
+        reg_entry,header->rank, header->remote_address, header->length, _device_map[header->rank]);
+    }
+#endif
+
     if (use_eager) {
         acc_buffer = payload+sizeof_scale+sizeof(stride_t);
     }
@@ -5002,16 +5019,10 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
         }
     }
 
-    reg_entry = reg_cache_find(
-            header->rank, header->remote_address, header->length, -1);
-#ifdef ENABLE_DEVICE
-    if (!reg_entry) {
-      reg_entry = reg_cache_find(
-              header->rank, header->remote_address, header->length, _device_map[header->rank]);
-    }
-#endif
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
+    printf("p[%d] unpacking from _acc_packed_handler offset: %p address: %p rank: %d\n",
+        g_state.rank, mapped_offset, header->remote_address, header->rank);
 
 #ifdef ENABLE_DEVICE
     if (!reg_entry->use_dev) {
@@ -5103,10 +5114,10 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
         int n1dim;  /* number of 1 dim block */
         int dst_bvalue[7], dst_bunit[7];
         int packed_index = 0;
-        void *dev_buffer;
+        int *tbuf = (int*)acc_buffer;
 
+        printf("p[%d] acc_buffer: %d %d %d %d\n",g_state.rank,tbuf[0],tbuf[1],tbuf[2],tbuf[3]);
         /* allocate dev_buffer on device and copy contents of acc_buffer*/
-        mallocDevice(&dev_buffer, header->length);
         copyToDevice(acc_buffer, dev_buffer, header->length);
 
 
@@ -5151,15 +5162,16 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
             }
           }
 
-          _acc_dev(acc_type, count[0], dst+sizeof_scale*dst_idx,
-              (char*)dev_buffer+sizeof_scale*packed_index, scale);
+          _acc_dev(acc_type, count[0], dst+dst_idx,
+              (char*)dev_buffer+packed_index, scale);
           packed_index += count[0];
         }
-        freeDevice(dev_buffer);
 
         COMEX_ASSERT(packed_index == n1dim*count[0]);
       }
+      printf("p[%d] _acc_packed_handler close IPC %p\n",g_state.rank,reg_entry->mapped);
       cudaIpcCloseMemHandle(reg_entry->mapped);
+      freeDevice(dev_buffer);
       if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
         sem_post(semaphores[header->rank]);
       }
@@ -5609,6 +5621,8 @@ STATIC void _malloc_handler(
           cudaIpcOpenMemHandle(&memory,reg_entries[i].handle,
               cudaIpcMemLazyEnablePeerAccess);
           cudaIpcCloseMemHandle(memory);
+          printf("p[%d] malloc_handler buf: %p mapped: %p device: %d proc: %d\n",
+              g_state.rank,reg_entries[i].buf,memory,reg_entries[i].dev_id,proc);
         } else {
           memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
         }
@@ -5783,6 +5797,11 @@ STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory)
       void *ret;
       cudaIpcOpenMemHandle(&ret, reg_entry->handle, cudaIpcMemLazyEnablePeerAccess);
       offset = ((char*)memory)-((char*)reg_entry->buf);
+      /*
+      printf("p[%d] _get_offset_memory ret: %p mem(in): %p buf: %p offset: %d devID: %d map: %p return: %p\n",g_state.rank,ret,
+          memory,reg_entry->buf,offset,reg_entry->dev_id,reg_entry->mapped,(void*)((char*)ret+offset));
+          */
+      reg_entry->mapped = ret;
       return (void*)((char*)ret+offset);
     }
 #endif
@@ -7320,6 +7339,7 @@ STATIC void nb_acc(int datatype, void *scale,
                 /* src is on host and dst is on device */
                 void *ptr;
                 /* create buffer on device */
+                printf("p[%d] calling _acc_dev on self\n",g_state.rank);
                 setDevice(reg_entry->dev_id);
                 mallocDevice(&ptr,bytes);
                 copyToDevice(src, ptr, bytes);
@@ -7381,6 +7401,7 @@ STATIC void nb_acc(int datatype, void *scale,
                  * this already happened implicitly in _get_offset_memory */
                 mallocDevice(&ptr,bytes);
                 copyToDevice(src, ptr, bytes);
+                printf("p[%d] calling _acc_dev on node\n",g_state.rank);
                 _acc_dev(datatype, bytes, mapped_offset, ptr, scale);
                 freeDevice(ptr);
                 cudaIpcCloseMemHandle(reg_entry->mapped);
@@ -7603,7 +7624,9 @@ STATIC void nb_puts_packed(
     int packed_index = 0;
     char *packed_buffer = NULL;
     stride_t stride;
+#ifdef ENABLE_DEVICE
     int is_dev = !isHostPointer(src);
+#endif
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_puts_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -8085,12 +8108,17 @@ STATIC void nb_accs(
     int n1dim;  /* number of 1 dim block */
     int src_bvalue[7], src_bunit[7];
     int dst_bvalue[7], dst_bunit[7];
+#ifdef ENABLE_DEVICE
+    reg_entry_t *reg_entry;
+    int on_host = isHostPointer(src);
+#endif
 
     /* if not actually a strided acc */
     if (0 == stride_levels) {
         nb_acc(datatype, scale, src, dst, count[0], proc, nb);
         return;
     }
+    printf("p[%d] (nb_accs) Got to 1 proc: %d\n",g_state.rank,proc);
 
     /* if not a strided acc to self or SMP, use packed algorithm */
     if (COMEX_ENABLE_ACC_PACKED
@@ -8159,7 +8187,9 @@ STATIC void nb_accs_packed(
     int packed_index = 0;
     char *packed_buffer = NULL;
     stride_t stride;
-    int is_dev = !isHostPointer(dst);
+#ifdef ENABLE_DEVICE
+    int is_dev = !isHostPointer(src);
+#endif
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_accs_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -8177,6 +8207,7 @@ STATIC void nb_accs_packed(
     COMEX_ASSERT(count[0] > 0);
     COMEX_ASSERT(stride_levels >= 0);
     COMEX_ASSERT(stride_levels < COMEX_MAX_STRIDE_LEVEL);
+    printf("p[%d] (nb_accs_packed) Got to 1\n",g_state.rank);
 
     /* copy dst info into structure */
     stride.ptr = dst;
