@@ -4064,7 +4064,6 @@ int local_sync_begin,local_sync_end;
     }
     GA[ga_handle].mem_dev_set = 0;     
 
-
     if(local_sync_end)pnga_pgroup_sync(grp_id);
     return(TRUE);
 }

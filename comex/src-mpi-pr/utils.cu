@@ -127,7 +127,7 @@ void deviceAddInt(int *ptr, const int inc)
   void *buf;
   void *ibuf = (void*)(&inc);
   cudaMalloc(&buf, sizeof(int));
-  copyToDevice(&ibuf, buf, sizeof(int));  
+  copyToDevice(ibuf, buf, sizeof(int));  
   inc_int_kernel<<<1,1>>>(ptr, (int*)buf);
   cudaFree(buf);
 }
@@ -143,7 +143,7 @@ void deviceAddLong(long *ptr, const long inc)
   void *buf;
   void *lbuf = (void*)(&lbuf);
   cudaMalloc(&buf, sizeof(long));
-  copyToDevice(&lbuf, buf, sizeof(long));  
+  copyToDevice(lbuf, buf, sizeof(long));  
   inc_long_kernel<<<1,1>>>(ptr, (long*)buf);
   cudaFree(buf);
 }
