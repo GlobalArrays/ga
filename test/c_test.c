@@ -5,9 +5,11 @@
 #include "mpi.h"
 #include "ga.h"
 #include "macdecls.h"
+#include <cuda_runtime.h>
 
 #define DIM 1024
-#define DIMSIZE 4
+#define DIMSIZE 256
+#define MAXCOUNT 10000
 #define MAX_FACTOR 256
 
 void factor(int p, int *idx, int *idy) {
@@ -77,6 +79,7 @@ int main(int argc, char **argv) {
   int i, j, ii, jj, idx;
   int rank, nprocs;
   int ipx, ipy;
+  int isx, isy;
   int pdx, pdy;
   int xinc, yinc;
   int ndim, nsize;
@@ -90,6 +93,8 @@ int main(int argc, char **argv) {
   int nelem;
   int one;
   double one_r;
+  int zero = 0;
+  int icnt;
   
 
   MPI_Init(&argc, &argv);
@@ -114,6 +119,9 @@ int main(int argc, char **argv) {
   yinc = DIMSIZE/pdy;
   ipx = rank%pdx;
   ipy = (rank-ipx)/pdx;
+  isx = (ipx+1)%pdx;
+  isy = (ipy+1)%pdy;
+  /* Guarantee some data exchange between nodes */
   lo[0] = ipx*xinc;
   lo[1] = ipy*yinc;
   if (ipx<pdx-1) {
@@ -140,6 +148,7 @@ int main(int argc, char **argv) {
   GA_Zero(g_a);
   if (rank == 0) printf("Completed GA zero\n");
 
+  /* printf("p[%d] Process owns [%d:%d][%d:%d]\n",rank,lo[0],hi[0],lo[1],hi[1]); */
   /* allocate a local buffer and initialize it with values*/
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   buf = (int*)malloc(nsize*sizeof(int));
@@ -160,36 +169,35 @@ int main(int argc, char **argv) {
   if (rank == 0) printf("Completed GA sync\n");
   NGA_Distribution(g_a,rank,tlo,thi);
 #if 0
-  printf("p[%d] Completed NGA_Distribution\n",rank);
+  if (rank == 0) printf("Completed NGA_Distribution\n",rank);
   if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
+    int *tbuf;
     int tnelem = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
+    tbuf = (int*)malloc(tnelem*sizeof(int));
     NGA_Access(g_a,tlo,thi,&ptr,&tld);
-    printf("p[%d] Completed NGA_Access lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
-        rank,tlo[0],thi[0],tlo[1],thi[1]);
+    for (i=0; i<tnelem; i++) tbuf[i] = 0;
+    cudaMemcpy(tbuf, ptr, tnelem*sizeof(int), cudaMemcpyDeviceToHost);
     ok = 1;
     for (ii = tlo[0]; ii<=thi[0]; ii++) {
       i = ii-tlo[0];
       for (jj=tlo[1]; jj<=thi[1]; jj++) {
         j = jj-tlo[1];
         idx = i*tld+j;
-        if (ptr[idx] != ii*DIMSIZE+jj) {
+        if (tbuf[idx] != ii*DIMSIZE+jj) {
           if (ok) printf("p[%d] (%d,%d) expected: %d actual[%d]: %d\n",rank,ii,jj,ii*DIMSIZE+jj,
-              idx,ptr[idx]);
+              idx,tbuf[idx]);
           ok = 0;
         }
       }
     }
     if (!ok) {
-      printf("Mismatch found on process %d after Put\n",rank);
+      printf("Mismatch found for put on process %d after Put\n",rank);
     } else {
-      printf("Put is okay on process %d\n",rank);
+      if (rank==0) printf("Put is okay\n");
     }
-    printf("p[%d] ptr:",rank);
-    for (i=0; i<tnelem; i++) {
-      printf(" %d",ptr[i]);
-    }
-    printf("\n");
+    free(tbuf);
   }
+  GA_Sync();
 #endif
 
   /* zero out local buffer */
@@ -214,7 +222,7 @@ int main(int argc, char **argv) {
     }
   }
   if (!ok) {
-    printf("Mismatch found on process %d after Get\n",rank);
+    printf("Mismatch found for get on process %d after Get\n",rank);
   } else {
     if (rank == 0) printf("Get is okay\n");
   }
@@ -234,8 +242,35 @@ int main(int argc, char **argv) {
   one = 1;
   NGA_Acc(g_a, lo, hi, buf, &ld, &one);
   GA_Sync();
+#if 0
+  if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
+    int *tbuf;
+    int tnelem = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
+    tbuf = (int*)malloc(tnelem*sizeof(int));
+    NGA_Access(g_a,tlo,thi,&ptr,&tld);
+    for (i=0; i<tnelem; i++) tbuf[i] = 0;
+    cudaMemcpy(tbuf, ptr, tnelem*sizeof(int), cudaMemcpyDeviceToHost);
+    if (tnelem > 0) {
+      printf("p[%d] acc buffer:",rank);
+      for (i=0; i<tnelem; i++) printf(" %d",tbuf[i]);
+      printf("\n"); 
+    }
+    free(tbuf);
+  }
+#endif
+  /* reset values in buf */
+  for (ii = lo[0]; ii<=hi[0]; ii++) {
+    i = ii-lo[0];
+    for (jj = lo[1]; jj<=hi[1]; jj++) {
+      j = jj-lo[1];
+      idx = i*ld+j;
+      buf[idx] = 0;
+    }
+  }
+
   if (rank == 0) printf("Calling GA get\n",rank);
   NGA_Get(g_a, lo, hi, buf, &ld);
+  GA_Sync();
   ok = 1;
   for (ii = lo[0]; ii<=hi[0]; ii++) {
     i = ii-lo[0];
@@ -259,6 +294,7 @@ int main(int argc, char **argv) {
   GA_Destroy(g_a);
   if (rank == 0) printf("Completed GA destroy\n");
 
+#if 1
   if (rank == 0) printf("  Testing double precision arrays\n");
   /* create a global array and initialize it to zero */
   g_a = NGA_Create_handle();
@@ -355,7 +391,37 @@ int main(int argc, char **argv) {
 
   free(rbuf);
   GA_Destroy(g_a);
+
+#if 1
+  if (rank == 0) printf("Test read-increment function\n");
+  /* create a global array and initialize it to zero */
+  g_a = NGA_Create_handle();
+  NGA_Set_data(g_a, one, &one, C_INT);
+  NGA_Set_device(g_a, 1);
+  NGA_Allocate(g_a);
+  GA_Zero(g_a);
+  if (rank == 0) printf("Created and initialized global array with 1 element\n");
+  icnt = 0;
+  while (icnt<MAXCOUNT) {
+    icnt = NGA_Read_inc(g_a,&zero,(long)one);
+    if (icnt%1000 == 0) printf("p[%d] current value of counter: %d\n",rank,icnt);
+  }
+  GA_Sync();
+  if (rank == 0) {
+    NGA_Get(g_a,&zero,&zero,&i,&zero);
+    if (i != MAXCOUNT+nprocs) {
+      printf ("Mismatch found for read-increment expected: %d actual: %d\n",
+          MAXCOUNT+nprocs,i);
+    } else {
+      printf("Read-increment is OK\n");
+    }
+  }
+
+  
+  GA_Destroy(g_a);
+#endif
   if (rank == 0) printf("Completed GA destroy\n");
+#endif
   GA_Terminate();
   if (rank == 0) printf("Completed GA terminate\n");
   MPI_Finalize();
