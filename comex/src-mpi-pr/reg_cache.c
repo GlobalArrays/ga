@@ -15,9 +15,6 @@
 
 /* 3rd party headers */
 #include <mpi.h>
-#ifdef ENABLE_DEVICE
-#include <cuda_runtime.h>
-#endif
 
 /* our headers */
 #include "comex.h"
@@ -525,7 +522,7 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name,
 #endif
 #endif
 #ifdef ENABLE_DEVICE
-    ,cudaIpcMemHandle_t handle
+    ,devMemHandle_t handle
 #endif
     )
 {

@@ -11,7 +11,7 @@
 #include <sys/ipc.h>
 #endif
 #ifdef ENABLE_DEVICE
-#include <cuda_runtime.h>
+#include "dev_utils.h"
 #endif
 
 /**
@@ -47,7 +47,7 @@ typedef struct _reg_entry_t {
 #endif
 #endif
 #ifdef ENABLE_DEVICE
-    cudaIpcMemHandle_t handle;    /**< handle to GPU memory segment */
+    devMemHandle_t handle;    /**< handle to GPU memory segment */
 #endif
 } reg_entry_t;
 
@@ -72,7 +72,7 @@ reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len, const char *name,
 #endif
 #endif
 #ifdef ENABLE_DEVICE
-    ,cudaIpcMemHandle_t handle
+    ,devMemHandle_t handle
 #endif
     );
 reg_return_t reg_cache_delete(int rank, void *buf, int dev_id);
