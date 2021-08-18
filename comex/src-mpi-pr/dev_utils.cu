@@ -4,6 +4,7 @@
 #include <mpi.h>
 
 #include <cuda_runtime.h>
+#include "dev_mem_handle.h"
 
 /* avoid name mangling by the CUDA compiler */
 extern "C" {
@@ -146,6 +147,21 @@ void deviceAddLong(long *ptr, const long inc)
   copyToDevice(lbuf, buf, sizeof(long));  
   inc_long_kernel<<<1,1>>>(ptr, (long*)buf);
   cudaFree(buf);
+}
+
+int deviceGetMemHandle(devMemHandle_t *handle, void *memory)
+{
+  return cudaIpcGetMemHandle(&handle->handle, memory);
+}
+
+int deviceOpenMemHandle(void **memory, devMemHandle_t handle)
+{
+ return cudaIpcOpenMemHandle(memory, handle.handle,cudaIpcMemLazyEnablePeerAccess);
+}
+
+int deviceCloseMemHandle(void *memory)
+{
+ return cudaIpcCloseMemHandle(memory);
 }
 
 };

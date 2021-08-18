@@ -37,7 +37,7 @@ sicm_device_list nill;
 #include "acc.h"
 
 #ifdef ENABLE_DEVICE
-#include <cuda_runtime.h>
+#include "dev_utils.h"
 #endif
 
 #define XSTR(x) #x
@@ -1343,9 +1343,6 @@ STATIC void unpack(char *packed_buffer,
     }
     packed_index += count[0];
   }
-  tmp = (int*)malloc(4*sizeof(int));
-  copyToHost((void*)tmp,(void*)dst,4*sizeof(int));
-  free(tmp);
 
   COMEX_ASSERT(packed_index == n1dim*count[0]);
 }
@@ -1416,7 +1413,7 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
     void *memory = NULL;
     reg_entry_t *reg_entry = NULL;
 #ifdef ENABLE_DEVICE
-    cudaIpcMemHandle_t handle;
+    devMemHandle_t handle;
 #endif
 
 #if DEBUG
@@ -1515,7 +1512,7 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, int device_id)
     char *name = NULL;
     void *memory = NULL;
     reg_entry_t *reg_entry = NULL;
-    cudaIpcMemHandle_t handle;
+    devMemHandle_t handle;
 
     if (0 == size) {
         return NULL;
@@ -1526,7 +1523,7 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, int device_id)
     /* allocate device memory */
     setDevice(device_id); 
     mallocDevice(&memory, size);
-    cudaIpcGetMemHandle(&handle, memory);
+    deviceGetMemHandle(&handle, memory);
 
     /* register the memory locally */
     reg_entry = reg_cache_insert(
@@ -2413,7 +2410,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
             /* open remote shared memory object */
             void *memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
 #ifdef ENABLE_DEVICE
-            cudaIpcMemHandle_t handle;
+            devMemHandle_t handle;
 #endif
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] comex_malloc registering "
@@ -2630,7 +2627,7 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
             void *memory = _shm_attach_memdev(reg_entries[i].name,
                 reg_entries[i].len, idevice);
 #ifdef ENABLE_DEVICE
-            cudaIpcMemHandle_t handle;
+            devMemHandle_t handle;
 #endif
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] comex_malloc registering "
@@ -2802,8 +2799,8 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
             /* open remote shared memory object */
             void *memory;
 #if 1
-            cudaIpcOpenMemHandle(&memory, reg_entries[i].handle, cudaIpcMemLazyEnablePeerAccess);
-            cudaIpcCloseMemHandle(memory);
+            deviceOpenMemHandle(&memory, reg_entries[i].handle);
+            deviceCloseMemHandle(memory);
             if (reg_entries[i].len == 0 && reg_entries[i].buf != NULL) {
               printf("p[%d] (comex_malloc) ALERT reg_entries[%d].len: %d memory: %p\n",
                   g_state.rank,i,reg_entries[i].len,memory);
@@ -2960,8 +2957,8 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
             /* same smp node, need to mmap */
             /* open remote shared memory object */
             void *memory;
-            cudaIpcOpenMemHandle(&memory, reg_entries[i].handle, cudaIpcMemLazyEnablePeerAccess);
-            cudaIpcCloseMemHandle(memory);
+            deviceOpenMemHandle(&memory, reg_entries[i].handle);
+            deviceCloseMemHandle(memory);
             printf("p[%d] pointer to allocation on process %d dev: %d: %p\n",g_state.rank,
                 reg_entries[i].rank,reg_entries[i].dev_id,memory);
             reg_entries[i].buf = memory;
@@ -3389,7 +3386,7 @@ int comex_free_dev(void *ptr, comex_group_t group)
     int my_master = -1;
     void **ptrs = NULL;
     int *dev_ids = NULL;
-    cudaIpcMemHandle_t *handles;
+    devMemHandle_t *handles;
     int i = 0;
     int is_notifier = 0;
     int reg_entries_local_count = 0;
@@ -3426,7 +3423,7 @@ int comex_free_dev(void *ptr, comex_group_t group)
     /* allocate receive buffer for exchange of pointers */
     ptrs = (void **)malloc(sizeof(void *) * igroup->size);
     dev_ids = (int *)malloc(sizeof(int) * igroup->size);
-    handles = (cudaIpcMemHandle_t*)malloc(sizeof(cudaIpcMemHandle_t) * igroup->size);
+    handles = (devMemHandle_t*)malloc(sizeof(devMemHandle_t) * igroup->size);
     COMEX_ASSERT(ptrs);
     ptrs[igroup->rank] = ptr;
     if (ptr == NULL) {
@@ -3447,8 +3444,8 @@ int comex_free_dev(void *ptr, comex_group_t group)
         ptrs, sizeof(void *), MPI_BYTE, igroup->comm);
     status = MPI_Allgather(MPI_IN_PLACE, sizeof(int), MPI_BYTE,
         dev_ids, sizeof(int), MPI_BYTE, igroup->comm);
-    status = MPI_Allgather(MPI_IN_PLACE, sizeof(cudaIpcMemHandle_t), MPI_BYTE,
-        handles, sizeof(cudaIpcMemHandle_t), MPI_BYTE, igroup->comm);
+    status = MPI_Allgather(MPI_IN_PLACE, sizeof(devMemHandle_t), MPI_BYTE,
+        handles, sizeof(devMemHandle_t), MPI_BYTE, igroup->comm);
     COMEX_ASSERT(MPI_SUCCESS == status);
 
 #if DEBUG && DEBUG_VERBOSE
@@ -3486,8 +3483,8 @@ int comex_free_dev(void *ptr, comex_group_t group)
 
         if (ptrs[i] == NULL) continue;
         /*
-        cudaIpcOpenMemHandle(&ptrs[i],handles[i],cudaIpcMemLazyEnablePeerAccess);
-        cudaIpcCloseMemHandle(ptrs[i]);
+        deviceOpenMemHandle(&ptrs[i],handles[i]);
+        deviceCloseMemHandle(ptrs[i]);
         */
         /* find the registered memory */
         reg_entry = reg_cache_find(world_ranks[i], ptrs[i], 0, dev_ids[i]);
@@ -4010,7 +4007,7 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
         free(tbuf);
 #endif
       }
-      cudaIpcCloseMemHandle(reg_entry->mapped);
+      deviceCloseMemHandle(reg_entry->mapped);
     }
 #endif
 }
@@ -4096,7 +4093,7 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
     }
 #ifdef ENABLE_DEVICE
     if (reg_entry->use_dev) {
-      cudaIpcCloseMemHandle(reg_entry->mapped);
+      deviceCloseMemHandle(reg_entry->mapped);
     }
 #endif
 }
@@ -4308,7 +4305,7 @@ STATIC void _get_handler(header_t *header, int proc)
         bytes_remaining -= size;
       } while (bytes_remaining > 0);
       free(tbuf);
-      cudaIpcCloseMemHandle(reg_entry->mapped);
+      deviceCloseMemHandle(reg_entry->mapped);
     }
 #endif
 }
@@ -4368,7 +4365,7 @@ STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
     }
 #ifdef ENABLE_DEVICE
     if (reg_entry->use_dev) {
-      cudaIpcCloseMemHandle(reg_entry->mapped);
+      deviceCloseMemHandle(reg_entry->mapped);
     }
 #endif
 
@@ -4654,7 +4651,7 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
         _acc_dev(acc_type, header->length, mapped_offset, dev_buffer, scale);
       }
       free(acc_buffer);
-      cudaIpcCloseMemHandle(reg_entry->mapped);
+      deviceCloseMemHandle(reg_entry->mapped);
       freeDevice(dev_buffer);
     }
 #endif
@@ -4895,7 +4892,7 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
 
         COMEX_ASSERT(packed_index == n1dim*count[0]);
       }
-      cudaIpcCloseMemHandle(reg_entry->mapped);
+      deviceCloseMemHandle(reg_entry->mapped);
       freeDevice(dev_buffer);
       if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
         sem_post(semaphores[header->rank]);
@@ -5128,7 +5125,7 @@ STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc)
       else {
         COMEX_ASSERT(0);
       }
-      cudaIpcCloseMemHandle(reg_entry->mapped);
+      deviceCloseMemHandle(reg_entry->mapped);
     }
 #endif
 }
@@ -5336,8 +5333,8 @@ STATIC void _malloc_handler(
 #endif
 #ifdef ENABLE_DEVICE
         if (reg_entries[i].use_dev) {
-          cudaIpcOpenMemHandle(&memory,reg_entries[i].handle,cudaIpcMemLazyEnablePeerAccess);
-          cudaIpcCloseMemHandle(memory);
+          deviceOpenMemHandle(&memory,reg_entries[i].handle);
+          deviceCloseMemHandle(memory);
         } else {
           memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
         }
@@ -5491,7 +5488,7 @@ STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory)
 #ifdef ENABLE_DEVICE
     if (reg_entry->use_dev) {
       void *ret;
-      cudaIpcOpenMemHandle(&ret, reg_entry->handle, cudaIpcMemLazyEnablePeerAccess);
+      deviceOpenMemHandle(&ret, reg_entry->handle);
       offset = ((char*)memory)-((char*)reg_entry->buf);
       reg_entry->mapped = ret;
       return (void*)((char*)ret+offset);
@@ -6694,10 +6691,10 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             if (reg_entry->use_dev && on_host) {
               int *ip = (int*)src;
               copyToDevice(src, mapped_offset, bytes);
-              cudaIpcCloseMemHandle(reg_entry->mapped);
+              deviceCloseMemHandle(reg_entry->mapped);
             } else if (reg_entry->use_dev && !on_host) {
               copyDevToDev(src, mapped_offset, bytes);
-              cudaIpcCloseMemHandle(reg_entry->mapped);
+              deviceCloseMemHandle(reg_entry->mapped);
             } else if (!reg_entry->use_dev && !on_host) {
               copyToHost(mapped_offset, src, bytes);
             } else {
@@ -6834,10 +6831,10 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
             mapped_offset = _get_offset_memory(reg_entry, src);
             if (reg_entry->use_dev && on_host) {
               copyToHost(dst, mapped_offset, bytes);
-              cudaIpcCloseMemHandle(reg_entry->mapped);
+              deviceCloseMemHandle(reg_entry->mapped);
             } else if (reg_entry->use_dev && !on_host) {
               copyDevToDev(mapped_offset, dst, bytes);
-              cudaIpcCloseMemHandle(reg_entry->mapped);
+              deviceCloseMemHandle(reg_entry->mapped);
             } else if (!reg_entry->use_dev && !on_host) {
               copyToDevice(mapped_offset, dst, bytes);
             } else {
@@ -6965,10 +6962,10 @@ STATIC void nb_acc(int datatype, void *scale,
             }
 #endif
             COMEX_ASSERT(reg_entry);
+            mapped_offset = _get_offset_memory(reg_entry, dst);
 #ifdef ENABLE_DEVICE
             sem_wait(semaphores[proc]);
             {
-              mapped_offset = _get_offset_memory(reg_entry, dst);
               if (reg_entry->use_dev && on_host) {
                 int i;
                 /* src is on host and dst is on device */
@@ -6979,11 +6976,11 @@ STATIC void nb_acc(int datatype, void *scale,
                 copyToDevice(src, ptr, bytes);
                 _acc_dev(datatype, bytes, mapped_offset, ptr, scale);
                 freeDevice(ptr);
-                cudaIpcCloseMemHandle(reg_entry->mapped);
+                deviceCloseMemHandle(reg_entry->mapped);
               } else if (reg_entry->use_dev && !on_host) {
                 /* src and dst are on device */
                 _acc_dev(datatype, bytes, mapped_offset, src, scale);
-                cudaIpcCloseMemHandle(reg_entry->mapped);
+                deviceCloseMemHandle(reg_entry->mapped);
               } else if (reg_entry->use_dev && !on_host) {
                 /* src is on device and dst is on host */
                 void *ptr;
@@ -7201,6 +7198,8 @@ STATIC void nb_puts_packed(
     stride_t stride;
 #ifdef ENABLE_DEVICE
     int is_dev = !isHostPointer(src);
+#else
+    int is_dev = 0;
 #endif
 
 #if DEBUG
@@ -7763,6 +7762,8 @@ STATIC void nb_accs_packed(
     stride_t stride;
 #ifdef ENABLE_DEVICE
     int is_dev = !isHostPointer(src);
+#else
+    int is_dev = -1;
 #endif
 
 #if DEBUG
