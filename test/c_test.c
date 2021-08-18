@@ -393,7 +393,7 @@ int main(int argc, char **argv) {
   GA_Destroy(g_a);
 
 #if 1
-  if (rank == 0) printf("Test read-increment function\n");
+  if (rank == 0) printf("  Testing read-increment function\n");
   /* create a global array and initialize it to zero */
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a, one, &one, C_INT);
