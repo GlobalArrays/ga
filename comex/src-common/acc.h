@@ -166,6 +166,7 @@ static inline void _acc(
 
 #ifdef ENABLE_DEVICE
 extern void deviceIaxpy(int *dst, const int *src, const int *scale, int n);
+extern void deviceLaxpy(long *dst, const long *src, const long *scale, int n);
 /**
  * Skip the intense macro usage and just do this the old-fashion way
  * @param op type of operation including data type
@@ -197,6 +198,7 @@ static inline void _acc_dev(
     deviceIaxpy(dst, src, scale, n);
   } else if (op == COMEX_ACC_LNG) {
     const int n = bytes/sizeof(long);
+    deviceLaxpy(dst, src, scale, n);
   } else if (op == COMEX_ACC_DCP) {
     const int n = bytes/sizeof(DoubleComplex);
     cublasCreate(&handle);

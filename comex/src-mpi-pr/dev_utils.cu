@@ -105,16 +105,94 @@ int isHostPointer(void *ptr)
   return 0;
 }
 
+#if 1
+__global__ void iaxpy_kernel(int *dst, const int *src, int scale, int n)
+{
+  int index = blockIdx.x*blockDim.x+threadIdx.x;
+  int stride = blockDim.x*gridDim.x;
+  int i;
+  for (i=index; i<n; i += stride) {
+    dst[i] = dst[i] + scale*src[i];
+  }
+}
+#else
 __global__ void iaxpy_kernel(int *dst, const int *src, int scale)
 {
   int i = threadIdx.x;
 
   dst[i] = dst[i] + scale*src[i];
 }
+#endif
 
-void deviceIaxpy(int *dst, const int *src, const int *scale, int n)
+void deviceIaxpy(int *dst, int *src, const int *scale, int n)
 {
+#if 1
+  int nblocks = (n+1023)/1024;
+  iaxpy_kernel<<<nblocks,1024>>>(dst, src, *scale, n);
+#else
+#if 1
+  int nblk = n/1024;
+  int rmndr = n%1024;
+  int i;
+  int *lsrc = src;
+  int *ldst = dst;
+  for (i=0; i<nblk; i++) {
+    iaxpy_kernel<<<1,1024>>>(ldst, lsrc, *scale);
+    lsrc += 1024;
+    ldst += 1024;
+  }
+  if (rmndr > 0) {
+    iaxpy_kernel<<<1,rmndr>>>(ldst, lsrc, *scale);
+  }
+#else
   iaxpy_kernel<<<1,n>>>(dst, src, *scale);
+#endif
+#endif
+}
+
+#if 1
+__global__ void laxpy_kernel(long *dst, const long *src, long scale, int n)
+{
+  int index = blockIdx.x*blockDim.x+threadIdx.x;
+  int stride = blockDim.x*gridDim.x;
+  int i;
+  for (i=index; i<n; i += stride) {
+    dst[i] = dst[i] + scale*src[i];
+  }
+}
+#else
+__global__ void laxpy_kernel(long *dst, const long *src, long scale)
+{
+  int i = threadIdx.x;
+
+  dst[i] = dst[i] + scale*src[i];
+}
+#endif
+
+void deviceLaxpy(long *dst, long *src, const long *scale, int n)
+{
+#if 1
+  int nblocks = (n+1023)/1024;
+  laxpy_kernel<<<nblocks,1024>>>(dst, src, *scale, n);
+#else
+#if 1
+  int nblk = n/1024;
+  int rmndr = n%1024;
+  int i;
+  long *lsrc = src;
+  long *ldst = dst;
+  for (i=0; i<nblk; i++) {
+    laxpy_kernel<<<1,1024>>>(ldst, lsrc, *scale);
+    lsrc += 1024;
+    ldst += 1024;
+  }
+  if (rmndr > 0) {
+    laxpy_kernel<<<1,rmndr>>>(ldst, lsrc, *scale);
+  }
+#else
+  laxpy_kernel<<<1,n>>>(dst, src, *scale);
+#endif
+#endif
 }
 
 __global__ void inc_int_kernel(int *target, const int *inc)
@@ -125,12 +203,19 @@ __global__ void inc_int_kernel(int *target, const int *inc)
 
 void deviceAddInt(int *ptr, const int inc)
 {
+#if 0
   void *buf;
   void *ibuf = (void*)(&inc);
   cudaMalloc(&buf, sizeof(int));
   copyToDevice(ibuf, buf, sizeof(int));  
   inc_int_kernel<<<1,1>>>(ptr, (int*)buf);
   cudaFree(buf);
+#else
+  int tmp;
+  copyToHost(&tmp,ptr,sizeof(int));
+  tmp += inc;
+  copyToDevice(&tmp,ptr,sizeof(int));
+#endif
 }
 
 __global__ void inc_long_kernel(long *target, const long *inc)
@@ -141,12 +226,19 @@ __global__ void inc_long_kernel(long *target, const long *inc)
 
 void deviceAddLong(long *ptr, const long inc)
 {
+#if 0
   void *buf;
   void *lbuf = (void*)(&lbuf);
   cudaMalloc(&buf, sizeof(long));
   copyToDevice(lbuf, buf, sizeof(long));  
   inc_long_kernel<<<1,1>>>(ptr, (long*)buf);
   cudaFree(buf);
+#else
+  long tmp;
+  copyToHost(&tmp,ptr,sizeof(long));
+  tmp += inc;
+  copyToDevice(&tmp,ptr,sizeof(long));
+#endif
 }
 
 int deviceGetMemHandle(devMemHandle_t *handle, void *memory)
