@@ -84,6 +84,8 @@ int pdx, pdy;
 double tput, tget, tacc, tinc;
 int get_cnt,put_cnt,acc_cnt;
 double put_bw, get_bw, acc_bw;
+double t_put, t_get, t_acc, t_sync, t_chk, t_tot;
+double t_create, t_free;
 
 void test_int_array(int on_device)
 {
@@ -114,6 +116,8 @@ void test_int_array(int on_device)
   g_ok = 1;
   a_ok = 1;
 
+  t_tot = 0.0;
+
   ndim = 2;
   dims[0] = DIMSIZE;
   dims[1] = DIMSIZE;
@@ -139,16 +143,19 @@ void test_int_array(int on_device)
   nelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
 
   /* create a global array and initialize it to zero */
+  tbeg = GA_Wtime();
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a, ndim, dims, C_INT);
   NGA_Set_device(g_a, on_device);
   NGA_Allocate(g_a);
+  t_create += (GA_Wtime()-tbeg);
 
   /* allocate a local buffer and initialize it with values*/
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   buf = (int*)malloc(nsize*sizeof(int));
 
   for (n=0; n<NLOOP; n++) {
+    tbeg = GA_Wtime();
     GA_Zero(g_a);
     ld = (hi[1]-lo[1]+1);
     for (ii = lo[0]; ii<=hi[0]; ii++) {
@@ -159,12 +166,17 @@ void test_int_array(int on_device)
         buf[idx] = ii*DIMSIZE+jj;
       }
     }
+    t_chk += (GA_Wtime()-tbeg);
     /* copy data to global array */
     tbeg = GA_Wtime();
     NGA_Put(g_a, lo, hi, buf, &ld);
     tput += (GA_Wtime()-tbeg);
+    t_put += (GA_Wtime()-tbeg);
     put_cnt += nsize;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
+    tbeg = GA_Wtime();
     NGA_Distribution(g_a,rank,tlo,thi);
 #if 0
     if (rank == 0) printf("Completed NGA_Distribution\n",rank);
@@ -195,19 +207,26 @@ void test_int_array(int on_device)
       }
       free(tbuf);
     }
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
 #endif
 
     /* zero out local buffer */
     for (i=0; i<nsize; i++) buf[i] = 0;
+    t_chk += (GA_Wtime()-tbeg);
 
     /* copy data from global array to local buffer */
     tbeg = GA_Wtime();
     NGA_Get(g_a, lo, hi, buf, &ld);
     tget += (GA_Wtime()-tbeg);
+    t_get += (GA_Wtime()-tbeg);
     get_cnt += nsize;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
 
+    tbeg = GA_Wtime();
     for (ii = lo[0]; ii<=hi[0]; ii++) {
       i = ii-lo[0];
       for (jj = lo[1]; jj<=hi[1]; jj++) {
@@ -230,14 +249,19 @@ void test_int_array(int on_device)
         buf[idx] = ii*DIMSIZE+jj;
       }
     }
+    t_chk += (GA_Wtime()-tbeg);
 
     /* accumulate data to global array */
     one = 1;
     tbeg = GA_Wtime();
     NGA_Acc(g_a, lo, hi, buf, &ld, &one);
     tacc += (GA_Wtime()-tbeg);
+    t_acc += (GA_Wtime()-tbeg);
+    tbeg = GA_Wtime();
     acc_cnt += nsize;
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
+    tbeg = GA_Wtime();
 #if 0
     if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
       int *tbuf;
@@ -263,12 +287,17 @@ void test_int_array(int on_device)
         buf[idx] = 0;
       }
     }
+    t_chk += (GA_Wtime()-tbeg);
 
     tbeg = GA_Wtime();
     NGA_Get(g_a, lo, hi, buf, &ld);
     tget += (GA_Wtime()-tbeg);
+    t_get += (GA_Wtime()-tbeg);
     get_cnt += nsize;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
+    tbeg = GA_Wtime();
     for (ii = lo[0]; ii<=hi[0]; ii++) {
       i = ii-lo[0];
       for (jj = lo[1]; jj<=hi[1]; jj++) {
@@ -281,10 +310,13 @@ void test_int_array(int on_device)
         }
       }
     }
+    t_chk += (GA_Wtime()-tbeg);
   }
 
   free(buf);
+  tbeg = GA_Wtime();
   GA_Destroy(g_a);
+  t_free += (GA_Wtime()-tbeg);
 
   if (!g_ok) {
     printf("Mismatch found for get on process %d after Get\n",rank);
@@ -303,9 +335,9 @@ void test_int_array(int on_device)
   GA_Dgop(&tput, 1, "+");
   GA_Dgop(&tget, 1, "+");
   GA_Dgop(&tacc, 1, "+");
-  put_bw = (double)(put_cnt*sizeof(int))/tput;
-  get_bw = (double)(get_cnt*sizeof(int))/tget;
-  acc_bw = (double)(acc_cnt*sizeof(int))/tacc;
+  put_bw = (double)(put_cnt*sizeof(double))/tput;
+  get_bw = (double)(get_cnt*sizeof(double))/tget;
+  acc_bw = (double)(acc_cnt*sizeof(double))/tacc;
 }
 
 void print_bw()
@@ -376,17 +408,20 @@ void test_dbl_array(int on_device)
   nelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
 
   /* create a global array and initialize it to zero */
+  tbeg = GA_Wtime();
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a, ndim, dims, C_DBL);
   NGA_Set_device(g_a, on_device);
   NGA_Allocate(g_a);
   GA_Zero(g_a);
+  t_create += (GA_Wtime()-tbeg);
 
   /* allocate a local buffer and initialize it with values*/
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   buf = (double*)malloc(nsize*sizeof(double));
 
   for (n=0; n<NLOOP; n++) {
+    tbeg = GA_Wtime();
     GA_Zero(g_a);
     ld = (hi[1]-lo[1]+1);
     for (ii = lo[0]; ii<=hi[0]; ii++) {
@@ -397,12 +432,17 @@ void test_dbl_array(int on_device)
         buf[idx] = (double)(ii*DIMSIZE+jj);
       }
     }
+    t_chk += (GA_Wtime()-tbeg);
     /* copy data to global array */
     tbeg = GA_Wtime();
     NGA_Put(g_a, lo, hi, buf, &ld);
     tput += (GA_Wtime() - tbeg);
+    t_put += (GA_Wtime() - tbeg);
     put_cnt += nelem;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
+    tbeg = GA_Wtime();
     NGA_Distribution(g_a,rank,tlo,thi);
 #if 0
     if (rank == 0) printf("Completed NGA_Distribution\n",rank);
@@ -433,19 +473,26 @@ void test_dbl_array(int on_device)
       }
       free(tbuf);
     }
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
 #endif
 
     /* zero out local buffer */
     for (i=0; i<nsize; i++) buf[i] = 0.0;
+    t_chk += (GA_Wtime()-tbeg);
 
     /* copy data from global array to local buffer */
     tbeg = GA_Wtime();
     NGA_Get(g_a, lo, hi, buf, &ld);
     tget += (GA_Wtime() - tbeg);
+    t_get += (GA_Wtime() - tbeg);
     get_cnt += nelem;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
 
+    tbeg = GA_Wtime();
     g_ok = 1;
     for (ii = lo[0]; ii<=hi[0]; ii++) {
       i = ii-lo[0];
@@ -469,14 +516,19 @@ void test_dbl_array(int on_device)
         buf[idx] = (double)(ii*DIMSIZE+jj);
       }
     }
+    t_chk += (GA_Wtime()-tbeg);
 
     /* accumulate data to global array */
     one = 1.0;
     tbeg = GA_Wtime();
     NGA_Acc(g_a, lo, hi, buf, &ld, &one);
     tacc += (GA_Wtime() - tbeg);
+    t_acc += (GA_Wtime() - tbeg);
     acc_cnt += nelem;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
+    tbeg = GA_Wtime();
 #if 0
     if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
       int *tbuf;
@@ -502,12 +554,17 @@ void test_dbl_array(int on_device)
         buf[idx] = 0.0;
       }
     }
+    t_chk += (GA_Wtime()-tbeg);
 
     tbeg = GA_Wtime();
     NGA_Get(g_a, lo, hi, buf, &ld);
     tget += (GA_Wtime() - tbeg);
+    t_get += (GA_Wtime() - tbeg);
     get_cnt += nelem;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
+    tbeg = GA_Wtime();
     a_ok = 1;
     for (ii = lo[0]; ii<=hi[0]; ii++) {
       i = ii-lo[0];
@@ -521,9 +578,12 @@ void test_dbl_array(int on_device)
         }
       }
     }
+    t_chk += (GA_Wtime()-tbeg);
   }
   free(buf);
+  tbeg = GA_Wtime();
   GA_Destroy(g_a);
+  t_free += (GA_Wtime()-tbeg);
 
   if (!g_ok) {
     printf("Mismatch found for get on process %d after Get\n",rank);
@@ -558,10 +618,12 @@ void test_read_inc(int on_device)
   /* create a global array and initialize it to zero */
   zero = 0;
   one = 1;
+  tbeg = GA_Wtime();
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a, one, &one, C_INT);
   NGA_Set_device(g_a, on_device);
   NGA_Allocate(g_a);
+  t_create += (GA_Wtime()-tbeg);
 
   GA_Zero(g_a);
   if (rank == 0) printf("Created and initialized global array with 1 element\n");
@@ -573,7 +635,10 @@ void test_read_inc(int on_device)
     ri_cnt++;
     if (icnt%1000 == 0) printf("  current value of counter: %d read on process %d\n",icnt,rank);
   }
+
+  tbeg = GA_Wtime();
   GA_Sync();
+  t_sync += (GA_Wtime()-tbeg);
   if (rank == 0) {
     NGA_Get(g_a,&zero,&zero,&i,&zero);
     if (i != MAXCOUNT+nprocs) {
@@ -583,7 +648,9 @@ void test_read_inc(int on_device)
       printf("Read-increment is OK\n");
     }
   }
+  tbeg = GA_Wtime();
   GA_Destroy(g_a);
+  t_free += (GA_Wtime()-tbeg);
   GA_Igop(&ri_cnt, 1, "+");
   GA_Dgop(&t_ri, 1, "+");
   t_ri /= ((double)ri_cnt);
@@ -619,10 +686,12 @@ void test_int_1d_array(int on_device)
 
   one = 1;
   nelem = BLOCK1*nprocs;
+  tbeg = GA_Wtime();
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a, one, &nelem, C_INT);
   NGA_Set_device(g_a, on_device);
   NGA_Allocate(g_a);
+  t_create += (GA_Wtime()-tbeg);
   if (rank == 0) printf("Created and initialized 1D global array of size %d\n",nelem);
 
   /* allocate a local buffer and initialize it with values*/
@@ -637,29 +706,40 @@ void test_int_1d_array(int on_device)
   buf = (int*)malloc(nsize*sizeof(int));
   ld = 1;
   for (n=0; n<NLOOP; n++) {
+    tbeg = GA_Wtime();
     GA_Zero(g_a);
     for (ii = tlo[0]; ii<=thi[0]; ii++) {
       i = ii-tlo[0];
       buf[i] = ii;
     }
+    t_chk += (GA_Wtime()-tbeg);
 
     /* copy data to global array */
     tbeg = GA_Wtime();
     NGA_Put(g_a, tlo, thi, buf, &ld);
     tput += (GA_Wtime()-tbeg);
+    t_put += (GA_Wtime()-tbeg);
     put_cnt += nsize;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
 
+    tbeg = GA_Wtime();
     /* zero out local buffer */
     for (i=0; i<nsize; i++) buf[i] = 0;
+    t_chk += (GA_Wtime()-tbeg);
 
     /* copy data from global array to local buffer */
     tbeg = GA_Wtime();
     NGA_Get(g_a, tlo, thi, buf, &ld);
     tget += (GA_Wtime()-tbeg);
+    t_get += (GA_Wtime()-tbeg);
     get_cnt += nsize;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
 
+    tbeg = GA_Wtime();
     g_ok = 1;
     for (ii = tlo[0]; ii<=thi[0]; ii++) {
       i = ii-tlo[0];
@@ -674,13 +754,18 @@ void test_int_1d_array(int on_device)
       i = ii-tlo[0];
       buf[i] = ii;
     }
+    t_chk += (GA_Wtime()-tbeg);
 
     /* accumulate data to global array */
     tbeg = GA_Wtime();
     NGA_Acc(g_a, tlo, thi, buf, &ld, &one);
     tacc += (GA_Wtime()-tbeg);
+    t_acc += (GA_Wtime()-tbeg);
     acc_cnt += nsize;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
+    tbeg = GA_Wtime();
 #if 0
     NGA_Distribution(g_a,rank,lo,hi);
     if (lo[0]<=hi[0]) {
@@ -704,12 +789,17 @@ void test_int_1d_array(int on_device)
       i = ii-tlo[0];
       buf[i] = 0;
     }
+    t_chk += (GA_Wtime()-tbeg);
 
     tbeg = GA_Wtime();
     NGA_Get(g_a, tlo, thi, buf, &ld);
     tget += (GA_Wtime()-tbeg);
+    t_get += (GA_Wtime()-tbeg);
     get_cnt += nsize;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
+    tbeg = GA_Wtime();
     a_ok = 1;
     for (ii = tlo[0]; ii<=thi[0]; ii++) {
       i = ii-tlo[0];
@@ -718,9 +808,12 @@ void test_int_1d_array(int on_device)
         a_ok = 0;
       }
     }
+    t_chk += (GA_Wtime()-tbeg);
   }
   free(buf);
+  tbeg = GA_Wtime();
   GA_Destroy(g_a);
+  t_free += (GA_Wtime()-tbeg);
 
   if (!g_ok) {
     printf("Mismatch found for get on process %d after Get\n",rank);
@@ -768,10 +861,12 @@ void test_dbl_1d_array(int on_device)
 
   one = 1.0;
   nelem = BLOCK1*nprocs;
+  tbeg = GA_Wtime();
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a, one, &nelem, C_DBL);
   NGA_Set_device(g_a, on_device);
   NGA_Allocate(g_a);
+  t_create += (GA_Wtime()-tbeg);
   if (rank == 0) printf("Created and initialized 1D global array of size %d\n",nelem);
 
   /* allocate a local buffer and initialize it with values*/
@@ -786,18 +881,23 @@ void test_dbl_1d_array(int on_device)
   buf = (double*)malloc(nsize*sizeof(double));
   ld = 1;
   for (n=0; n<NLOOP; n++) { 
+    tbeg = GA_Wtime();
     GA_Zero(g_a);
     for (ii = tlo[0]; ii<=thi[0]; ii++) {
       i = ii-tlo[0];
       buf[i] = (double)ii;
     }
+    t_chk += (GA_Wtime()-tbeg);
 
     /* copy data to global array */
     tbeg = GA_Wtime();
     NGA_Put(g_a, tlo, thi, buf, &ld);
     tput += (GA_Wtime()-tbeg);
+    t_put += (GA_Wtime()-tbeg);
     put_cnt += nsize;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
 
     /* zero out local buffer */
     for (i=0; i<nsize; i++) buf[i] = 0.0;
@@ -806,9 +906,13 @@ void test_dbl_1d_array(int on_device)
     tbeg = GA_Wtime();
     NGA_Get(g_a, tlo, thi, buf, &ld);
     tget += (GA_Wtime()-tbeg);
+    t_get += (GA_Wtime()-tbeg);
     get_cnt += nsize;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
 
+    tbeg = GA_Wtime();
     g_ok = 1;
     for (ii = tlo[0]; ii<=thi[0]; ii++) {
       i = ii-tlo[0];
@@ -823,13 +927,18 @@ void test_dbl_1d_array(int on_device)
       i = ii-tlo[0];
       buf[i] = (double)ii;
     }
+    t_chk += (GA_Wtime()-tbeg);
 
     /* accumulate data to global array */
     tbeg = GA_Wtime();
     NGA_Acc(g_a, tlo, thi, buf, &ld, &one);
     tacc += (GA_Wtime()-tbeg);
+    t_acc += (GA_Wtime()-tbeg);
     acc_cnt += nsize;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
+    tbeg = GA_Wtime();
 #if 0
     NGA_Distribution(g_a,rank,lo,hi);
     if (lo[0]<=hi[0]) {
@@ -853,12 +962,17 @@ void test_dbl_1d_array(int on_device)
       i = ii-tlo[0];
       buf[i] = 0.0;
     }
+    t_chk += (GA_Wtime()-tbeg);
 
     tbeg = GA_Wtime();
     NGA_Get(g_a, tlo, thi, buf, &ld);
     tget += (GA_Wtime()-tbeg);
+    t_get += (GA_Wtime()-tbeg);
     get_cnt += nsize;
+    tbeg = GA_Wtime();
     GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
+    tbeg = GA_Wtime();
     a_ok = 1;
     for (ii = tlo[0]; ii<=thi[0]; ii++) {
       i = ii-tlo[0];
@@ -867,9 +981,12 @@ void test_dbl_1d_array(int on_device)
         a_ok = 0;
       }
     }
+    t_chk += (GA_Wtime()-tbeg);
   }
   free(buf);
+  tbeg = GA_Wtime();
   GA_Destroy(g_a);
+  t_free += (GA_Wtime()-tbeg);
   if (!g_ok) {
     printf("Mismatch found for get on process %d after Get\n",rank);
   } else {
@@ -899,13 +1016,23 @@ int main(int argc, char **argv) {
   double one_r;
   int zero = 0;
   int icnt;
+  double tbeg;
   
+  t_put = 0.0;
+  t_get = 0.0;
+  t_acc = 0.0;
+  t_sync = 0.0;
+  t_chk = 0.0;
+  t_create = 0.0;
+  t_free = 0.0;
+  t_tot = 0.0;
 
   MPI_Init(&argc, &argv);
 
 
   GA_Initialize();
 
+  tbeg = GA_Wtime();
   nprocs = GA_Nnodes();  
   rank = GA_Nodeid();   
 
@@ -952,6 +1079,35 @@ int main(int argc, char **argv) {
   test_dbl_1d_array(0);
   print_bw();
 
+  t_tot = GA_Wtime()-tbeg;
+  /* Print out timing stats */
+  GA_Dgop(&t_put,1,"+");
+  GA_Dgop(&t_get,1,"+");
+  GA_Dgop(&t_acc,1,"+");
+  GA_Dgop(&t_tot,1,"+");
+  GA_Dgop(&t_sync,1,"+");
+  GA_Dgop(&t_chk,1,"+");
+  GA_Dgop(&t_create,1,"+");
+  GA_Dgop(&t_free,1,"+");
+  GA_Dgop(&t_chk,1,"+");
+  t_put /= ((double)nprocs);
+  t_get /= ((double)nprocs);
+  t_acc /= ((double)nprocs);
+  t_tot /= ((double)nprocs);
+  t_sync /= ((double)nprocs);
+  t_chk /= ((double)nprocs);
+  t_create /= ((double)nprocs);
+  t_free /= ((double)nprocs);
+  if (rank == 0) {
+    printf("Total time in PUT:    %16.4e\n",t_put);
+    printf("Total time in GET:    %16.4e\n",t_get);
+    printf("Total time in ACC:    %16.4e\n",t_acc);
+    printf("Total time in SYNC :  %16.4e\n",t_sync);
+    printf("Total time in CHECK:  %16.4e\n",t_chk);
+    printf("Total time in CREATE: %16.4e\n",t_create);
+    printf("Total time in FREE :  %16.4e\n",t_free);
+    printf("Total time:           %16.4e\n",t_tot);
+  }
   GA_Terminate();
   if (rank == 0) printf("Completed GA terminate\n");
   MPI_Finalize();

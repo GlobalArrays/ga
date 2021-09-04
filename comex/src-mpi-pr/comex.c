@@ -250,6 +250,71 @@ void SigSegvHandler(int sig)
 }
 #endif
 
+#define XENABLE_PROFILE
+#ifdef ENABLE_PROFILE
+  static int t_level = -1;
+  static double t_beg[10];
+  static double t_nb_put = 0.0;
+  static double t_nb_get = 0.0;
+  static double t_nb_acc = 0.0;
+  static double t_nb_puts = 0.0;
+  static double t_nb_gets = 0.0;
+  static double t_nb_accs = 0.0;
+  static double t_nb_puts_packed = 0.0;
+  static double t_nb_gets_packed = 0.0;
+  static double t_nb_accs_packed = 0.0;
+  static double t_nb_puts_datatype = 0.0;
+  static double t_nb_gets_datatype = 0.0;
+  static double t_nb_accs_datatype = 0.0;
+  static double t_cpy_to_host = 0.0;
+  static double t_cpy_to_dev = 0.0;
+  static double t_open_ipc = 0.0;
+  static double t_close_ipc = 0.0;
+  static double t_malloc_buf = 0.0;
+  static double t_free_buf = 0.0;
+#  define PROFILE_BEG()                 \
+{                                       \
+  t_level++;                            \
+  t_beg[t_level] = MPI_Wtime();         \
+  COMEX_ASSERT(t_level < 10);           \
+}
+#  define PROFILE_END(var)              \
+{                                       \
+  var += (MPI_Wtime()-t_beg[t_level]);  \
+  t_level--;                            \
+  COMEX_ASSERT(t_level >= -1);           \
+}
+#  define PROFILE_PRINT(proc)           \
+{                                       \
+   char filename[128];                  \
+   FILE *_fd;                           \
+   sprintf(filename,"ga_prof.%d",proc); \
+   _fd = fopen(filename,"w");           \
+   fprintf(_fd," nb_put:           %16.4e\n",t_nb_put);           \
+   fprintf(_fd," nb_puts:          %16.4e\n",t_nb_puts);          \
+   fprintf(_fd," nb_puts_packed:   %16.4e\n",t_nb_puts_packed);   \
+   fprintf(_fd," nb_puts_datatype: %16.4e\n",t_nb_puts_datatype); \
+   fprintf(_fd," nb_get:           %16.4e\n",t_nb_get);           \
+   fprintf(_fd," nb_gets:          %16.4e\n",t_nb_gets);          \
+   fprintf(_fd," nb_gets_packed:   %16.4e\n",t_nb_gets_packed);   \
+   fprintf(_fd," nb_gets_datatype: %16.4e\n",t_nb_gets_datatype); \
+   fprintf(_fd," nb_acc:           %16.4e\n",t_nb_acc);           \
+   fprintf(_fd," nb_accs:          %16.4e\n",t_nb_accs);          \
+   fprintf(_fd," nb_accs_packed:   %16.4e\n",t_nb_accs_packed);   \
+   fprintf(_fd," nb_accs_datatype: %16.4e\n",t_nb_accs_datatype); \
+   fprintf(_fd," copy to host:     %16.4e\n",t_cpy_to_host);      \
+   fprintf(_fd," copy to device:   %16.4e\n",t_cpy_to_dev);       \
+   fprintf(_fd," IPC open:         %16.4e\n",t_open_ipc);         \
+   fprintf(_fd," IPC close:        %16.4e\n",t_close_ipc);        \
+   fprintf(_fd," malloc buffer:    %16.4e\n",t_malloc_buf);       \
+   fprintf(_fd," free buffer:      %16.4e\n",t_free_buf);       \
+}
+#else
+#  define PROFILE_BEG()
+#  define PROFILE_END(var)
+#  define PROFILE_PRINT(proc)
+#endif
+
 /* static function declarations */
 
 /* error checking */
@@ -882,6 +947,7 @@ int comex_finalize()
     fclose(comex_trace_file);
 #endif
 
+    PROFILE_PRINT(g_state.rank);
     return COMEX_SUCCESS;
 }
 
@@ -1349,7 +1415,9 @@ STATIC char* pack(
 
 #ifdef ENABLE_DEVICE
         if (is_dev) {
+          PROFILE_BEG()
           copyToHost((void*)&packed_buffer[packed_index], &src[src_idx], count[0]);
+          PROFILE_END(t_cpy_to_host)
         } else
 #endif
         {
@@ -1418,7 +1486,9 @@ STATIC void unpack(char *packed_buffer,
       (void)memcpy(&dst[dst_idx], &packed_buffer[packed_index], count[0]);
 #ifdef ENABLE_DEVICE
     } else {
+      PROFILE_BEG()
       copyToDevice(&packed_buffer[packed_index], &dst[dst_idx], count[0]);
+      PROFILE_END(t_cpy_to_dev)
 #endif
     }
     packed_index += count[0];
@@ -3044,8 +3114,12 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
             /* open remote shared memory object */
             void *memory;
 #if 1
+            PROFILE_BEG()
             deviceOpenMemHandle(&memory, reg_entries[i].handle);
+            PROFILE_END(t_open_ipc)
+            PROFILE_BEG()
             deviceCloseMemHandle(memory);
+            PROFILE_END(t_close_ipc)
             if (reg_entries[i].len == 0 && reg_entries[i].buf != NULL) {
               printf("p[%d] (comex_malloc) ALERT reg_entries[%d].len: %d memory: %p\n",
                   g_state.rank,i,reg_entries[i].len,memory);
@@ -3202,8 +3276,12 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
             /* same smp node, need to mmap */
             /* open remote shared memory object */
             void *memory;
+            PROFILE_BEG()
             deviceOpenMemHandle(&memory, reg_entries[i].handle);
+            PROFILE_END(t_open_ipc)
+            PROFILE_BEG()
             deviceCloseMemHandle(memory);
+            PROFILE_END(t_close_ipc)
             printf("p[%d] pointer to allocation on process %d dev: %d: %p\n",g_state.rank,
                 reg_entries[i].rank,reg_entries[i].dev_id,memory);
             reg_entries[i].buf = memory;
@@ -3734,10 +3812,6 @@ int comex_free_dev(void *ptr, comex_group_t group)
 #endif
 
         if (ptrs[i] == NULL) continue;
-        /*
-        deviceOpenMemHandle(&ptrs[i],handles[i]);
-        deviceCloseMemHandle(ptrs[i]);
-        */
         /* find the registered memory */
         reg_entry = reg_cache_find(world_ranks[i], ptrs[i], 0, dev_ids[i]);
 
@@ -4178,7 +4252,7 @@ STATIC void _progress_server()
 #if DEBUG
     printf(" %d freed nb_state ptr %p \n", g_state.rank, nb_state);
 #endif
-
+    PROFILE_PRINT(g_state.rank);
     if (!init_from_comm) {
       // assume this is the end of a user's application if initialized from
       // world communicator
@@ -4236,7 +4310,9 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
     } else {
       /*setDevice(_device_map[header->rank]);*/
       if (use_eager) {
+        PROFILE_BEG()
         copyToDevice(payload, mapped_offset, header->length);
+        PROFILE_END(t_cpy_to_dev)
       }
       else {
         char *buf = (char*)mapped_offset;
@@ -4255,14 +4331,18 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
           int size = bytes_remaining>max_message_size ?
             max_message_size : bytes_remaining;
           server_recv(tbuf, size, proc);
+          PROFILE_BEG()
           copyToDevice(tbuf, buf, size);
+          PROFILE_END(t_cpy_to_dev)
           buf += size;
           bytes_remaining -= size;
         } while (bytes_remaining > 0);
         free(tbuf);
 #endif
       }
+      PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
+      PROFILE_END(t_close_ipc)
     }
 #endif
 }
@@ -4348,7 +4428,9 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
     }
 #ifdef ENABLE_DEVICE
     if (reg_entry->use_dev) {
+      PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
+      PROFILE_END(t_close_ipc)
     }
 #endif
 }
@@ -4554,13 +4636,17 @@ STATIC void _get_handler(header_t *header, int proc)
       do {
         int size = bytes_remaining>max_message_size ?
           max_message_size : bytes_remaining;
+        PROFILE_BEG()
         copyToHost(tbuf, buf, size);
+        PROFILE_END(t_cpy_to_host)
         server_send(tbuf, size, proc);
         buf += size;
         bytes_remaining -= size;
       } while (bytes_remaining > 0);
       free(tbuf);
+      PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
+      PROFILE_END(t_close_ipc)
     }
 #endif
 }
@@ -4620,7 +4706,9 @@ STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
     }
 #ifdef ENABLE_DEVICE
     if (reg_entry->use_dev) {
+      PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
+      PROFILE_END(t_close_ipc)
     }
 #endif
 
@@ -4896,7 +4984,9 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
           bytes_remaining -= size;
         } while (bytes_remaining > 0);
       }
+      PROFILE_BEG()
       copyToDevice(acc_buffer, dev_buffer, header->length);
+      PROFILE_END(t_cpy_to_dev)
       if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
         sem_wait(semaphores[header->rank]);
         _acc_dev(acc_type, header->length, mapped_offset, dev_buffer, scale);
@@ -4906,7 +4996,9 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
         _acc_dev(acc_type, header->length, mapped_offset, dev_buffer, scale);
       }
       free(acc_buffer);
+      PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
+      PROFILE_END(t_close_ipc)
       freeDevice(dev_buffer);
     }
 #endif
@@ -5096,7 +5188,9 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
         int *tbuf = (int*)acc_buffer;
 
         /* allocate dev_buffer on device and copy contents of acc_buffer*/
+        PROFILE_BEG()
         copyToDevice(acc_buffer, dev_buffer, header->length);
+        PROFILE_END(t_cpy_to_dev)
 
 
         COMEX_ASSERT(stride_levels >= 0);
@@ -5147,7 +5241,9 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
 
         COMEX_ASSERT(packed_index == n1dim*count[0]);
       }
+      PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
+      PROFILE_END(t_close_ipc)
       freeDevice(dev_buffer);
       if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
         sem_post(semaphores[header->rank]);
@@ -5365,22 +5461,28 @@ STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc)
     } else {
       if (sizeof(int) == header->length) {
         value_int = malloc(sizeof(int));
+        PROFILE_BEG()
         copyToHost(value_int,mapped_offset,sizeof(int)); /* "fetch" */
+        PROFILE_END(t_cpy_to_host)
         deviceAddInt(mapped_offset, *((int*)payload)); /* "add" */
         server_send(value_int, sizeof(int), proc);
         free(value_int);
       }
       else if (sizeof(long) == header->length) {
         value_long = malloc(sizeof(long));
+        PROFILE_BEG()
         copyToHost(value_long,mapped_offset,sizeof(long)); /* "fetch" */
         deviceAddLong(mapped_offset, *((long*)payload)); /* "add" */
+        PROFILE_END(t_cpy_to_host)
         server_send(value_long, sizeof(long), proc);
         free(value_long);
       }
       else {
         COMEX_ASSERT(0);
       }
+      PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
+      PROFILE_END(t_close_ipc)
     }
 #endif
 }
@@ -5595,8 +5697,12 @@ STATIC void _malloc_handler(
 #endif
 #ifdef ENABLE_DEVICE
         if (reg_entries[i].use_dev) {
+          PROFILE_BEG()
           deviceOpenMemHandle(&memory,reg_entries[i].handle);
+          PROFILE_END(t_open_ipc)
+          PROFILE_BEG()
           deviceCloseMemHandle(memory);
+          PROFILE_END(t_close_ipc)
         } else {
           memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
         }
@@ -5769,7 +5875,9 @@ STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory)
 #ifdef ENABLE_DEVICE
     if (reg_entry->use_dev) {
       void *ret;
+      PROFILE_BEG()
       deviceOpenMemHandle(&ret, reg_entry->handle);
+      PROFILE_END(t_open_ipc)
       offset = ((char*)memory)-((char*)reg_entry->buf);
       reg_entry->mapped = ret;
       return (void*)((char*)ret+offset);
@@ -7021,6 +7129,8 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
     COMEX_ASSERT(proc >= 0);
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != nb);
+    /**********/
+    PROFILE_BEG();
 
 #if DEBUG
     printf("[%d] nb_put(src=%p, dst=%p, bytes=%d, proc=%d, nb=%p)\n",
@@ -7046,7 +7156,9 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
               int *ip = (int*)src;
+                PROFILE_BEG()
                 copyToDevice(src, dst, bytes);
+                PROFILE_END(t_cpy_to_dev)
               } else if (reg_entry->use_dev && !on_host) {
                 copyDevToDev(src, dst, bytes);
               } else {
@@ -7056,6 +7168,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #else
             (void)memcpy(dst, src, bytes);
 #endif
+            PROFILE_END(t_nb_put)
             return;
         }
     }
@@ -7083,13 +7196,21 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             mapped_offset = _get_offset_memory(reg_entry, dst);
             if (reg_entry->use_dev && on_host) {
               int *ip = (int*)src;
+              PROFILE_BEG()
               copyToDevice(src, mapped_offset, bytes);
+              PROFILE_END(t_cpy_to_dev)
+              PROFILE_BEG()
               deviceCloseMemHandle(reg_entry->mapped);
+              PROFILE_END(t_close_ipc)
             } else if (reg_entry->use_dev && !on_host) {
               copyDevToDev(src, mapped_offset, bytes);
+              PROFILE_BEG()
               deviceCloseMemHandle(reg_entry->mapped);
+              PROFILE_END(t_close_ipc)
             } else if (!reg_entry->use_dev && !on_host) {
+              PROFILE_BEG()
               copyToHost(mapped_offset, src, bytes);
+              PROFILE_END(t_cpy_to_host)
             } else {
               (void)memcpy(mapped_offset, src, bytes);
             }
@@ -7097,6 +7218,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             mapped_offset = _get_offset_memory(reg_entry, dst);
             (void)memcpy(mapped_offset, src, bytes);
 #endif
+            PROFILE_END(t_nb_put)
             return;
         }
     }
@@ -7132,7 +7254,9 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             if (on_host) {
               (void)memcpy(message+sizeof(header_t), src, bytes);
             } else {
+              PROFILE_BEG()
               copyToHost(message+sizeof(header_t), src, bytes);
+              PROFILE_END(t_cpy_to_host)
             }
 #else
             (void)memcpy(message+sizeof(header_t), src, bytes);
@@ -7152,6 +7276,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             } while (bytes_remaining > 0);
         }
     }
+    PROFILE_END(t_nb_put)
 }
 
 
@@ -7167,6 +7292,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
     on_host = isHostPointer(dst);
 #endif
+    PROFILE_BEG();
 
     /*
     printf("p[%d] calling nb_get on_host: %d\n",g_state.rank,on_host);
@@ -7187,7 +7313,9 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
                 //setDevice(reg_entry->dev_id);
+                PROFILE_BEG()
                 copyToHost(dst, src, bytes);
+                PROFILE_END(t_cpy_to_host)
               } else if (reg_entry->use_dev && !on_host) {
                 copyDevToDev(src, dst, bytes);
               } else {
@@ -7197,6 +7325,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #else
             (void)memcpy(dst, src, bytes);
 #endif
+            PROFILE_END(t_nb_get);
             return;
         }
     }
@@ -7223,13 +7352,21 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
             mapped_offset = _get_offset_memory(reg_entry, src);
             if (reg_entry->use_dev && on_host) {
+              PROFILE_BEG()
               copyToHost(dst, mapped_offset, bytes);
+              PROFILE_END(t_cpy_to_host)
+              PROFILE_BEG()
               deviceCloseMemHandle(reg_entry->mapped);
+              PROFILE_END(t_close_ipc)
             } else if (reg_entry->use_dev && !on_host) {
               copyDevToDev(mapped_offset, dst, bytes);
+              PROFILE_BEG()
               deviceCloseMemHandle(reg_entry->mapped);
+              PROFILE_END(t_close_ipc)
             } else if (!reg_entry->use_dev && !on_host) {
+              PROFILE_BEG()
               copyToDevice(mapped_offset, dst, bytes);
+              PROFILE_END(t_cpy_to_dev)
             } else {
               (void)memcpy(dst, mapped_offset, bytes);
             }
@@ -7237,6 +7374,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
             mapped_offset = _get_offset_memory(reg_entry, src);
             (void)memcpy(dst, mapped_offset, bytes);
 #endif
+            PROFILE_END(t_nb_get);
             return;
         }
     }
@@ -7269,6 +7407,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         }
         nb_send_header(header, sizeof(header_t), master_rank, nb);
     }
+    PROFILE_END(t_nb_get);
 }
 
 
@@ -7285,6 +7424,7 @@ STATIC void nb_acc(int datatype, void *scale,
 #ifdef ENABLE_DEVICE
     on_host = isHostPointer(src);
 #endif
+    PROFILE_BEG()
 
     if (COMEX_ENABLE_ACC_SELF) {
         /* acc to self */
@@ -7308,7 +7448,9 @@ STATIC void nb_acc(int datatype, void *scale,
                 /* create buffer on device */
                 setDevice(reg_entry->dev_id);
                 mallocDevice(&ptr,bytes);
+                PROFILE_BEG()
                 copyToDevice(src, ptr, bytes);
+                PROFILE_END(t_cpy_to_dev)
                 _acc_dev(datatype, bytes, dst, ptr, scale);
                 freeDevice(ptr);
               } else if (reg_entry->use_dev && !on_host) {
@@ -7318,7 +7460,9 @@ STATIC void nb_acc(int datatype, void *scale,
                 /* src is on device and dst is on host */
                 void *ptr;
                 ptr = (void*)malloc(bytes);
+                PROFILE_BEG()
                 copyToHost(ptr, src, bytes);
+                PROFILE_END(t_cpy_to_host)
                 _acc(datatype, bytes, dst, ptr, scale);
                 free(ptr);
               } else {
@@ -7332,6 +7476,7 @@ STATIC void nb_acc(int datatype, void *scale,
             _acc(datatype, bytes, dst, src, scale);
             sem_post(semaphores[proc]);
 #endif
+            PROFILE_END(t_nb_acc)
             return;
         }
     }
@@ -7366,19 +7511,27 @@ STATIC void nb_acc(int datatype, void *scale,
                 /* create buffer on device (no need to set device,
                  * this already happened implicitly in _get_offset_memory */
                 mallocDevice(&ptr,bytes);
+                PROFILE_BEG()
                 copyToDevice(src, ptr, bytes);
+                PROFILE_END(t_cpy_to_dev)
                 _acc_dev(datatype, bytes, mapped_offset, ptr, scale);
                 freeDevice(ptr);
+                PROFILE_BEG()
                 deviceCloseMemHandle(reg_entry->mapped);
+                PROFILE_END(t_close_ipc)
               } else if (reg_entry->use_dev && !on_host) {
                 /* src and dst are on device */
                 _acc_dev(datatype, bytes, mapped_offset, src, scale);
+                PROFILE_BEG()
                 deviceCloseMemHandle(reg_entry->mapped);
+                PROFILE_END(t_close_ipc)
               } else if (reg_entry->use_dev && !on_host) {
                 /* src is on device and dst is on host */
                 void *ptr;
                 ptr = (void*)malloc(bytes);
+                PROFILE_BEG()
                 copyToHost(ptr, src, bytes);
+                PROFILE_END(t_cpy_to_host)
                 _acc(datatype, bytes, mapped_offset, ptr, scale);
                 free(ptr);
               } else {
@@ -7392,6 +7545,7 @@ STATIC void nb_acc(int datatype, void *scale,
             _acc(datatype, bytes, mapped_offset, src, scale);
             sem_post(semaphores[proc]);
 #endif
+            PROFILE_END(t_nb_acc)
             return;
         }
     }
@@ -7472,6 +7626,7 @@ STATIC void nb_acc(int datatype, void *scale,
             } while (bytes_remaining > 0);
         }
     }
+    PROFILE_END(t_nb_acc)
 }
 
 
@@ -7488,6 +7643,7 @@ STATIC void nb_puts(
     reg_entry_t *reg_entry;
     int on_host = isHostPointer(src);
 #endif
+    PROFILE_BEG()
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_puts(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -7497,6 +7653,7 @@ STATIC void nb_puts(
 
     /* if not actually a strided put */
     if (0 == stride_levels) {
+        PROFILE_END(t_nb_puts)
         nb_put(src, dst, count[0], proc, nb);
         return;
     }
@@ -7511,6 +7668,7 @@ STATIC void nb_puts(
         reg_entry = reg_cache_find(proc, dst, 0, _device_map[proc]);
         if (reg_entry && !reg_entry->use_dev && !on_host) {
           nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
+          PROFILE_END(t_nb_puts)
           return;
         }
     }
@@ -7521,6 +7679,7 @@ STATIC void nb_puts(
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])
             && (_packed_size(src_stride, count, stride_levels) > COMEX_PUT_DATATYPE_THRESHOLD)) {
         nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
+        PROFILE_END(t_nb_puts)
         return;
     }
 #endif
@@ -7531,6 +7690,7 @@ STATIC void nb_puts(
             && (!COMEX_ENABLE_PUT_SMP
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
         nb_puts_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
+        PROFILE_END(t_nb_puts)
         return;
     }
 
@@ -7578,6 +7738,7 @@ STATIC void nb_puts(
         nb_put((char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
+    PROFILE_END(t_nb_puts)
 }
 
 
@@ -7601,6 +7762,7 @@ STATIC void nb_puts_packed(
             count[0], stride_levels, proc, nb);
 #endif
 
+    PROFILE_BEG()
     COMEX_ASSERT(proc >= 0);
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != src);
@@ -7689,6 +7851,7 @@ STATIC void nb_puts_packed(
             } while (bytes_remaining > 0);
         }
     }
+    PROFILE_END(t_nb_puts_packed)
 }
 
 
@@ -7709,6 +7872,7 @@ STATIC void nb_puts_datatype(
             count[0], stride_levels, proc, nb);
 #endif
 
+    PROFILE_BEG()
     COMEX_ASSERT(proc >= 0);
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != src_ptr);
@@ -7770,6 +7934,7 @@ STATIC void nb_puts_datatype(
         nb_send_header(message, message_size, master_rank, nb);
         nb_send_datatype(src_ptr, src_type, master_rank, nb);
     }
+    PROFILE_END(t_nb_puts_datatype)
 }
 
 
@@ -7787,8 +7952,10 @@ STATIC void nb_gets(
     int on_host = isHostPointer(dst);
 #endif
 
+    PROFILE_BEG()
     /* if not actually a strided get */
     if (0 == stride_levels) {
+        PROFILE_END(t_nb_gets)
         nb_get(src, dst, count[0], proc, nb);
         return;
     }
@@ -7802,6 +7969,7 @@ STATIC void nb_gets(
         reg_entry = reg_cache_find(proc, src, 0, 0);
         if (reg_entry && !reg_entry->use_dev && !on_host) {
           nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
+          PROFILE_END(t_nb_gets)
           return;
         }
     }
@@ -7812,6 +7980,7 @@ STATIC void nb_gets(
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])
             && (_packed_size(src_stride, count, stride_levels) > COMEX_GET_DATATYPE_THRESHOLD)) {
         nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
+        PROFILE_END(t_nb_gets)
         return;
     }
 #endif
@@ -7822,6 +7991,7 @@ STATIC void nb_gets(
             && (!COMEX_ENABLE_GET_SMP
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
         nb_gets_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
+        PROFILE_END(t_nb_gets)
         return;
     }
 
@@ -7869,6 +8039,7 @@ STATIC void nb_gets(
         nb_get((char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
+    PROFILE_END(t_nb_gets)
 }
 
 
@@ -7886,6 +8057,7 @@ STATIC void nb_gets_packed(
             count[0], stride_levels, proc, nb);
 #endif
 
+    PROFILE_BEG()
     COMEX_ASSERT(proc >= 0);
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != src);
@@ -7977,6 +8149,7 @@ STATIC void nb_gets_packed(
         (void)memcpy(message+sizeof(header_t), &stride_src, sizeof(stride_t));
         nb_send_header(message, message_size, master_rank, nb);
     }
+    PROFILE_END(t_nb_gets_packed)
 }
 
 
@@ -7988,6 +8161,7 @@ STATIC void nb_gets_datatype(
     int i;
     stride_t stride_src;
 
+    PROFILE_BEG()
 #if DEBUG
     fprintf(stderr, "[%d] nb_gets_datatype(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
             g_state.rank, src, src_stride, dst, dst_stride,
@@ -8060,6 +8234,7 @@ STATIC void nb_gets_datatype(
         (void)memcpy(message+sizeof(header_t), &stride_src, sizeof(stride_t));
         nb_send_header(message, message_size, master_rank, nb);
     }
+    PROFILE_END(t_nb_gets_datatype)
 }
 
 
@@ -8080,8 +8255,10 @@ STATIC void nb_accs(
     int on_host = isHostPointer(src);
 #endif
 
+    PROFILE_BEG()
     /* if not actually a strided acc */
     if (0 == stride_levels) {
+        PROFILE_END(t_nb_accs)
         nb_acc(datatype, scale, src, dst, count[0], proc, nb);
         return;
     }
@@ -8092,6 +8269,7 @@ STATIC void nb_accs(
             && (!COMEX_ENABLE_ACC_SMP
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
         nb_accs_packed(datatype, scale, src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
+        PROFILE_END(t_nb_accs)
         return;
     }
 
@@ -8139,6 +8317,7 @@ STATIC void nb_accs(
         nb_acc(datatype, scale, (char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
+    PROFILE_END(t_nb_accs)
 }
 
 
@@ -8159,6 +8338,7 @@ STATIC void nb_accs_packed(
     int is_dev = -1;
 #endif
 
+    PROFILE_BEG()
 #if DEBUG
     fprintf(stderr, "[%d] nb_accs_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
             g_state.rank, src, src_stride, dst, dst_stride,
@@ -8291,6 +8471,7 @@ STATIC void nb_accs_packed(
             } while (bytes_remaining > 0);
         }
     }
+    PROFILE_END(t_nb_accs_packed)
 }
 
 
