@@ -471,22 +471,30 @@ find_package_handle_standard_args( IntelMKL
   HANDLE_COMPONENTS
 )
 
-#if( IntelMKL_FOUND AND NOT TARGET IntelMKL::mkl )
-#
-#  add_library( IntelMKL::mkl INTERFACE IMPORTED )
-#  set_target_properties( IntelMKL::mkl PROPERTIES
-#    INTERFACE_INCLUDE_DIRECTORIES "${IntelMKL_INCLUDE_DIR}"
-#    INTERFACE_LINK_LIBRARIES      "${IntelMKL_LIBRARIES}"
-#    INTERFACE_COMPILE_OPTIONS     "${IntelMKL_C_COMPILE_FLAGS}"
-#    INTERFACE_COMPILE_DEFINITIONS "${IntelMKL_COMPILE_DEFINITIONS}"
-#  )
-#
-#  if( "scalapack" IN_LIST IntelMKL_FIND_COMPONENTS AND NOT scalapack_LIBRARIES )
-#    set( scalapack_LIBRARIES IntelMKL::mkl )
-#  endif()
-#
-#  if( "blacs" IN_LIST IntelMKL_FIND_COMPONENTS AND NOT blacs_LIBRARIES )
-#    set( blacs_LIBRARIES IntelMKL::mkl )
-#  endif()
-#
-#endif()
+if( IntelMKL_FOUND )
+
+  if( IntelMKL_BLAS_LAPACK_LIBRARIES AND NOT TARGET IntelMKL::IntelMKL )
+    add_library( IntelMKL::IntelMKL INTERFACE IMPORTED )
+    set_target_properties( IntelMKL::IntelMKL PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${IntelMKL_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES      "${IntelMKL_BLAS_LAPACK_LIBRARIES}"
+    )
+  endif()
+
+  if( IntelMKL_BLACS_LIBRARIES AND NOT TARGET IntelMKL::BLACS )
+    add_library( IntelMKL::BLACS INTERFACE IMPORTED )
+    set_target_properties( IntelMKL::BLACS PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${IntelMKL_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES      "${IntelMKL_BLACS_LIBRARIES}"
+    )
+  endif()
+
+  if( IntelMKL_ScaLAPACK_LIBRARIES AND NOT TARGET IntelMKL::ScaLAPACK )
+    add_library( IntelMKL::ScaLAPACK INTERFACE IMPORTED )
+    set_target_properties( IntelMKL::ScaLAPACK PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${IntelMKL_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES      "${IntelMKL_ScaLAPACK_LIBRARIES}"
+    )
+  endif()
+
+endif()

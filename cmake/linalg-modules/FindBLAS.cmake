@@ -26,6 +26,7 @@ foreach( _comp ${BLAS_FIND_COMPONENTS} )
   endif()
 endforeach()
 
+emulate_kitware_linalg_modules( BLAS )
 fill_out_prefix( BLAS )
 
 if( NOT BLAS_PREFERENCE_LIST )
