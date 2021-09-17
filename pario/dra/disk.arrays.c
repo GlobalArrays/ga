@@ -1543,7 +1543,7 @@ void dai_exec_callback(char *buf, int caller)
     buffer = (char*) (buf + sizeof(buf_info));
     if (caller == WAIT) {/* call blocking nga_move() */
         nga_move(arg->op, arg->transp, arg->gs_a, arg->ds_a, arg->ds_chunk, buffer, arg->ld, NULL);
-        free_buf(&buf_ctxt, buf);
+        ga_dra_free_buf(&buf_ctxt, buf);
     }
     else if (caller == PROBE) /* call non-blocking nga_move() */
         nga_move(arg->op, arg->transp, arg->gs_a, arg->ds_a, arg->ds_chunk, buffer, arg->ld, &(bi->ga_movhdl));
@@ -1653,7 +1653,7 @@ Integer FATR dra_probe_(
                 k = 0;
             }
             else {
-                free_buf(&buf_ctxt, bufs[i]);
+                ga_dra_free_buf(&buf_ctxt, bufs[i]);
             }
         }
         else if (op_code == DRA_OP_READ) {
@@ -1664,7 +1664,7 @@ Integer FATR dra_probe_(
                     k = 0;
                 }
                 else { /* ga op complete, free this buf */
-                    free_buf(&buf_ctxt, bufs[i]);
+                    ga_dra_free_buf(&buf_ctxt, bufs[i]);
                 }
             }
             else { /* if aligned read, last op is a disk read */
@@ -1681,7 +1681,7 @@ Integer FATR dra_probe_(
                     if (bi->callback == OFF && pnga_nbtest(ga_movhdl) == 0)
                         k = 0;
                     else if (bi->callback == OFF && pnga_nbtest(ga_movhdl) ==1) {
-                        free_buf(&buf_ctxt, bufs[i]);
+                        ga_dra_free_buf(&buf_ctxt, bufs[i]);
                     }
                     else if (bi->callback == ON) {/* need to call callback */
                         k = 0;
