@@ -42,6 +42,6 @@ void buf_terminate(buf_context_t *ctxt);
 void buf_complete_call(buf_context_t *ctxt, int call_id);
 int buf_get_call_id(buf_context_t *ctxt, char *buf);
 int get_bufs_of_call_id(buf_context_t *ctxt, int call_id, int *n_buf, char *bufs[]);
-void free_buf(buf_context_t *ctxt, char *buf);
+void ga_dra_free_buf(buf_context_t *ctxt, char *buf);
 
 #endif /* BUFFERS_H_ */
