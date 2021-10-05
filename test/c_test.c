@@ -12,7 +12,7 @@
 #define BLOCK1 65536
 */
 #define BLOCK1 65530
-#define DIMSIZE 1024
+#define DIMSIZE 256
 #define MAXCOUNT 10000
 #define MAX_FACTOR 256
 #define NLOOP 10
@@ -85,6 +85,7 @@ double tput, tget, tacc, tinc;
 int get_cnt,put_cnt,acc_cnt;
 double put_bw, get_bw, acc_bw;
 double t_put, t_get, t_acc, t_sync, t_chk, t_tot;
+double t_vput;
 double t_create, t_free;
 
 void test_int_array(int on_device)
@@ -1009,6 +1010,236 @@ void test_dbl_1d_array(int on_device)
   acc_bw = (double)(acc_cnt*sizeof(double))/tacc;
 }
 
+void test_dbl_scatter(int on_device)
+{
+  int g_a;
+  int i, j, ii, jj, idx, n;
+  int ipx, ipy;
+  int isx, isy;
+  int xinc, yinc;
+  int ndim, nsize;
+  int dims[2], lo[2], hi[2];
+  int tld, tlo[2], thi[2];
+  double *buf;
+  double *tbuf;
+  int nelem;
+  int ld;
+  int p_ok, g_ok, a_ok;
+  double *ptr;
+  double one;
+  double tbeg;
+  double *vals;
+  int *subsBuf;
+  int **subsArray;
+  int nvals;
+  int arraysize;
+  int icnt;
+
+
+  tput = 0.0;
+  tget = 0.0;
+  tacc = 0.0;
+  put_cnt = 0;
+  get_cnt = 0;
+  acc_cnt = 0;
+  p_ok = 1;
+  g_ok = 1;
+  a_ok = 1;
+
+
+  ndim = 2;
+  dims[0] = DIMSIZE;
+  dims[1] = DIMSIZE;
+  xinc = DIMSIZE/pdx;
+  yinc = DIMSIZE/pdy;
+  ipx = rank%pdx;
+  ipy = (rank-ipx)/pdx;
+  isx = (ipx+1)%pdx;
+  isy = (ipy+1)%pdy;
+  /* Guarantee some data exchange between nodes */
+  lo[0] = isx*xinc;
+  lo[1] = isy*yinc;
+  if (isx<pdx-1) {
+    hi[0] = (isx+1)*xinc-1;
+  } else {
+    hi[0] = DIMSIZE-1;
+  }
+  if (isy<pdy-1) {
+    hi[1] = (isy+1)*yinc-1;
+  } else {
+    hi[1] = DIMSIZE-1;
+  }
+  nelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+  /* Set up arrays for scattering values */
+  arraysize = dims[0]*dims[1];
+  nvals = arraysize/nprocs;
+  if (nvals*nprocs != arraysize) {
+    int delta = arraysize-nvals*nprocs;
+    if (rank<delta) nvals++;
+  }
+
+  /* create a global array and initialize it to zero */
+  tbeg = GA_Wtime();
+  g_a = NGA_Create_handle();
+  NGA_Set_data(g_a, ndim, dims, C_DBL);
+  NGA_Set_device(g_a, on_device);
+  NGA_Allocate(g_a);
+  GA_Zero(g_a);
+  t_create += (GA_Wtime()-tbeg);
+
+  /* allocate a local buffer for checking values*/
+  nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+  buf = (double*)malloc(nsize*sizeof(double));
+
+  /* allocate buffers for scatter operation */
+  vals = (double*)malloc(nvals*sizeof(double));
+  subsBuf = (int*)malloc(2*nvals*sizeof(int));
+  subsArray = (int**)malloc(nvals*sizeof(int*));
+  /* initialize indices */
+  icnt = 0;
+  for (n=rank; n<arraysize; n+=nprocs)
+  {
+    j = n%dims[1]; 
+    i = (n-j)/dims[1];
+    vals[icnt] = (double)(i*dims[1]+j);
+    subsArray[icnt] = &subsBuf[2*icnt];
+    subsArray[icnt][0] = i;
+    subsArray[icnt][1] = j;
+    icnt++;
+  }
+
+  for (n=0; n<NLOOP; n++) {
+    tbeg = GA_Wtime();
+    GA_Zero(g_a);
+    ld = (hi[1]-lo[1]+1);
+    for (ii = lo[0]; ii<=hi[0]; ii++) {
+      i = ii-lo[0];
+      for (jj = lo[1]; jj<=hi[1]; jj++) {
+        j = jj-lo[1];
+        idx = i*ld+j;
+        buf[idx] = 0.0;
+      }
+    }
+    t_chk += (GA_Wtime()-tbeg);
+    /* copy data to global array */
+    tbeg = GA_Wtime();
+    NGA_Scatter(g_a, vals, subsArray, nvals);
+    tput += (GA_Wtime() - tbeg);
+    t_put += (GA_Wtime() - tbeg);
+    put_cnt += nvals;
+    tbeg = GA_Wtime();
+    GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
+    tbeg = GA_Wtime();
+    NGA_Distribution(g_a,rank,tlo,thi);
+
+    /* zero out local buffer */
+    for (i=0; i<nvals; i++) vals[i] = 0.0;
+    t_chk += (GA_Wtime()-tbeg);
+
+    /* gather data from global array to local buffer */
+    tbeg = GA_Wtime();
+    NGA_Gather(g_a, vals, subsArray, nvals);
+    tget += (GA_Wtime() - tbeg);
+    t_get += (GA_Wtime() - tbeg);
+    get_cnt += nelem;
+    tbeg = GA_Wtime();
+    GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
+
+    /* check values */
+    tbeg = GA_Wtime();
+    g_ok = 1;
+    icnt = 0;
+    for (n=rank; n<arraysize; n+=nprocs)
+    {
+      j = n%dims[1]; 
+      i = (n-j)/dims[1];
+      if (vals[icnt] != (double)(i*dims[1]+j)) {
+        if (g_ok) printf("p[%d] (%d,%d) expected: %f actual[%d]: %f\n",rank,i,j,
+            (double)(i*DIMSIZE+j),n,vals[n]);
+        g_ok = 0;
+      }
+      icnt++;
+    }
+    t_chk += (GA_Wtime()-tbeg);
+
+    /* accumulate data to global array */
+    one = 1.0;
+    tbeg = GA_Wtime();
+    NGA_Scatter_acc(g_a, vals, subsArray, nvals, &one);
+    tacc += (GA_Wtime() - tbeg);
+    t_acc += (GA_Wtime() - tbeg);
+    acc_cnt += nelem;
+    tbeg = GA_Wtime();
+    GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
+    tbeg = GA_Wtime();
+    /* reset values in buf */
+    for (ii = lo[0]; ii<=hi[0]; ii++) {
+      i = ii-lo[0];
+      for (jj = lo[1]; jj<=hi[1]; jj++) {
+        j = jj-lo[1];
+        idx = i*ld+j;
+        buf[idx] = 0.0;
+      }
+    }
+    t_chk += (GA_Wtime()-tbeg);
+
+    tbeg = GA_Wtime();
+    NGA_Get(g_a, lo, hi, buf, &ld);
+    tget += (GA_Wtime() - tbeg);
+    t_get += (GA_Wtime() - tbeg);
+    get_cnt += nelem;
+    tbeg = GA_Wtime();
+    GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
+    tbeg = GA_Wtime();
+    a_ok = 1;
+    for (ii = lo[0]; ii<=hi[0]; ii++) {
+      i = ii-lo[0];
+      for (jj = lo[1]; jj<=hi[1]; jj++) {
+        j = jj-lo[1];
+        idx = i*ld+j;
+        if (buf[idx] != (double)(2*(ii*DIMSIZE+jj))) {
+          if (a_ok) printf("p[%d] (%d,%d) expected: %d actual[%d]: %d\n",rank,ii,jj,
+              (double)(2*(ii*DIMSIZE+jj)),idx,buf[idx]);
+          a_ok = 0;
+        }
+      }
+    }
+    t_chk += (GA_Wtime()-tbeg);
+  }
+  free(buf);
+  free(vals);
+  free(subsBuf);
+  free(subsArray);
+  tbeg = GA_Wtime();
+  GA_Destroy(g_a);
+  t_free += (GA_Wtime()-tbeg);
+
+  if (!g_ok) {
+    printf("Mismatch found for gather on process %d after Get\n",rank);
+  } else {
+    if (rank == 0) printf("Gather is okay\n");
+  }
+  if (!a_ok) {
+    printf("Mismatch found on process %d after scatteracc\n",rank);
+  } else {
+    if (rank == 0) printf("Scatter_acc is okay\n");
+  }
+
+  GA_Igop(&put_cnt, 1, "+");
+  GA_Igop(&get_cnt, 1, "+");
+  GA_Igop(&acc_cnt, 1, "+");
+  GA_Dgop(&tput, 1, "+");
+  GA_Dgop(&tget, 1, "+");
+  GA_Dgop(&tacc, 1, "+");
+  put_bw = (double)(put_cnt*sizeof(double))/tput;
+  get_bw = (double)(get_cnt*sizeof(double))/tget;
+  acc_bw = (double)(acc_cnt*sizeof(double))/tacc;
+}
+
 int main(int argc, char **argv) {
 
   int g_a;
@@ -1030,6 +1261,7 @@ int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
 
 
+  MA_init(C_DBL, 2000000, 2000000);
   GA_Initialize();
 
   tbeg = GA_Wtime();
@@ -1078,6 +1310,15 @@ int main(int argc, char **argv) {
   if (rank == 0) printf("  Testing contiguous one-sided operations for doubles on host\n");
   test_dbl_1d_array(0);
   print_bw();
+
+  if (rank == 0) printf("  Testing scatter/gather operations for doubles on device\n");
+  test_dbl_scatter(1);
+  print_bw();
+
+  if (rank == 0) printf("  Testing scatter/gather operations for doubles on host\n");
+  test_dbl_scatter(0);
+  print_bw();
+
 
   t_tot = GA_Wtime()-tbeg;
   /* Print out timing stats */
