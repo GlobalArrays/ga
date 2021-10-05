@@ -224,7 +224,7 @@ void SigSegvHandler(int sig)
 }
 #endif
 
-#define XENABLE_PROFILE
+#define ENABLE_PROFILE
 #ifdef ENABLE_PROFILE
   static int t_level = -1;
   static double t_beg[10];
@@ -281,7 +281,8 @@ void SigSegvHandler(int sig)
    fprintf(_fd," IPC open:         %16.4e\n",t_open_ipc);         \
    fprintf(_fd," IPC close:        %16.4e\n",t_close_ipc);        \
    fprintf(_fd," malloc buffer:    %16.4e\n",t_malloc_buf);       \
-   fprintf(_fd," free buffer:      %16.4e\n",t_free_buf);       \
+   fprintf(_fd," free buffer:      %16.4e\n",t_free_buf);         \
+   fprintf(_fd," Final t_level:    %d\n",t_level);                \
 }
 #else
 #  define PROFILE_BEG()
@@ -4317,7 +4318,20 @@ STATIC void _put_iov_handler(header_t *header, int proc)
         mapped_offset = _get_offset_memory(
                 reg_entry, dst[i]);
 
-        (void)memcpy(mapped_offset, &packed_buffer[packed_index], bytes);
+#ifdef ENABLE_DEVICE
+        if (!reg_entry->use_dev) {
+#endif
+          (void)memcpy(mapped_offset, &packed_buffer[packed_index], bytes);
+#ifdef ENABLE_DEVICE
+        } else {
+          PROFILE_BEG()
+          copyToDevice(&packed_buffer[packed_index], mapped_offset, bytes);
+          PROFILE_END(t_cpy_to_dev)
+          PROFILE_BEG()
+          deviceCloseMemHandle(reg_entry->mapped);
+          PROFILE_END(t_close_ipc)
+        }
+#endif
         packed_index += bytes;
     }
     COMEX_ASSERT(packed_index == bytes*limit);
@@ -4594,9 +4608,23 @@ STATIC void _get_iov_handler(header_t *header, int proc)
         }
 #endif
         COMEX_ASSERT(reg_entry);
-        mapped_offset = _get_offset_memory(reg_entry, src[i]);
+#ifdef ENABLE_DEVICE
+        if (reg_entry->use_dev) {
+          mapped_offset = _get_offset_memory(reg_entry, src[i]);
+          PROFILE_BEG()
+          copyToHost(&packed_buffer[packed_index], mapped_offset, bytes);
+          PROFILE_END(t_cpy_to_host)
+          PROFILE_BEG()
+          deviceCloseMemHandle(reg_entry->mapped);
+          PROFILE_END(t_close_ipc)
+        } else {
+#endif
+          mapped_offset = _get_offset_memory(reg_entry, src[i]);
 
-        (void)memcpy(&packed_buffer[packed_index], mapped_offset, bytes);
+          (void)memcpy(&packed_buffer[packed_index], mapped_offset, bytes);
+#ifdef ENABLE_DEVICE
+        }
+#endif
         packed_index += bytes;
     }
     COMEX_ASSERT(packed_index == bytes*limit);
@@ -5113,7 +5141,27 @@ STATIC void _acc_iov_handler(header_t *header, char *scale, int proc)
         COMEX_ASSERT(reg_entry);
         mapped_offset = _get_offset_memory(reg_entry, dst[i]);
 
+#ifdef ENABLE_DEVICE
+        if (!reg_entry->use_dev) {
+#endif
         _acc(acc_type, bytes, mapped_offset, &packed_buffer[packed_index], scale);
+#ifdef ENABLE_DEVICE
+        } else {
+          /* src is on host and dst is on device */
+          void *ptr;
+          /* create buffer on device (no need to set device,
+           * this already happened implicitly in _get_offset_memory */
+          mallocDevice(&ptr,bytes);
+          PROFILE_BEG()
+          copyToDevice(&packed_buffer[packed_index], ptr, bytes);
+          PROFILE_END(t_cpy_to_dev)
+          _acc_dev(acc_type, bytes, mapped_offset, ptr, scale);
+          freeDevice(ptr);
+          PROFILE_BEG()
+          deviceCloseMemHandle(reg_entry->mapped);
+          PROFILE_END(t_close_ipc)
+        }
+#endif
         packed_index += bytes;
     }
     COMEX_ASSERT(packed_index == bytes*limit);
