@@ -9,6 +9,20 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
+## [5.8.1]
+- Known Bugs
+- Added
+  - Added support in MA for CUDA managed memory. Provided by Jeff Hammond.
+  - Added a GA_Deallocate function that deallocates memory but leaves GA in
+    place. GA_Allocate can be called later on the handle. This can be used for
+    memory management.
+- Changed
+- Fixed
+  - Slurm conflict for free_buf symbol in DRA library. Fixed by Michael Klemm.
+  - Deallocate GA_MPI_World_comm_dup in GA_Terminate.
+  - Dependency of CMake build on C++ is configurable.
+  - Improved CMake integration of linear algebra libraries
+
 ## [5.8] - 2020-09-30
 - Known Bugs
   - The MPI RMA port remains unreliable for many MPI implementations. Open MPI
