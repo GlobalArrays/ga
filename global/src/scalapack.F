@@ -3787,8 +3787,8 @@ c
 c     
          if(elemB.ne.0) then
 #ifdef USE_ALLOCATE
-     $        allocate(b(mpb,nqb),STAT = stat_alloc)
-         status=stat_alloc.eq.0
+            allocate(b(mpb,nqb),STAT = stat_alloc)
+            status=stat_alloc.eq.0
 #else
      $        status =
      $        ma_push_get(MT_DBL,elemB,'b',hb,adrb)
