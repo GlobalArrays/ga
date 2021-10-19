@@ -240,12 +240,16 @@ void SigSegvHandler(int sig)
   static double t_nb_puts_datatype = 0.0;
   static double t_nb_gets_datatype = 0.0;
   static double t_nb_accs_datatype = 0.0;
+  static double t_nb_putv = 0.0;
+  static double t_nb_getv = 0.0;
+  static double t_nb_accv = 0.0;
   static double t_cpy_to_host = 0.0;
   static double t_cpy_to_dev = 0.0;
   static double t_open_ipc = 0.0;
   static double t_close_ipc = 0.0;
   static double t_malloc_buf = 0.0;
   static double t_free_buf = 0.0;
+  static double t_total = 0.0;
 #  define PROFILE_BEG()                 \
 {                                       \
   t_level++;                            \
@@ -268,20 +272,24 @@ void SigSegvHandler(int sig)
    fprintf(_fd," nb_puts:          %16.4e\n",t_nb_puts);          \
    fprintf(_fd," nb_puts_packed:   %16.4e\n",t_nb_puts_packed);   \
    fprintf(_fd," nb_puts_datatype: %16.4e\n",t_nb_puts_datatype); \
+   fprintf(_fd," nb_putv:          %16.4e\n",t_nb_putv);          \
    fprintf(_fd," nb_get:           %16.4e\n",t_nb_get);           \
    fprintf(_fd," nb_gets:          %16.4e\n",t_nb_gets);          \
    fprintf(_fd," nb_gets_packed:   %16.4e\n",t_nb_gets_packed);   \
    fprintf(_fd," nb_gets_datatype: %16.4e\n",t_nb_gets_datatype); \
+   fprintf(_fd," nb_getv:          %16.4e\n",t_nb_getv);          \
    fprintf(_fd," nb_acc:           %16.4e\n",t_nb_acc);           \
    fprintf(_fd," nb_accs:          %16.4e\n",t_nb_accs);          \
    fprintf(_fd," nb_accs_packed:   %16.4e\n",t_nb_accs_packed);   \
    fprintf(_fd," nb_accs_datatype: %16.4e\n",t_nb_accs_datatype); \
+   fprintf(_fd," nb_accv:          %16.4e\n",t_nb_accv);          \
    fprintf(_fd," copy to host:     %16.4e\n",t_cpy_to_host);      \
    fprintf(_fd," copy to device:   %16.4e\n",t_cpy_to_dev);       \
    fprintf(_fd," IPC open:         %16.4e\n",t_open_ipc);         \
    fprintf(_fd," IPC close:        %16.4e\n",t_close_ipc);        \
    fprintf(_fd," malloc buffer:    %16.4e\n",t_malloc_buf);       \
    fprintf(_fd," free buffer:      %16.4e\n",t_free_buf);         \
+   fprintf(_fd," total:            %16.4e\n",t_total);            \
    fprintf(_fd," Final t_level:    %d\n",t_level);                \
 }
 #else
@@ -896,6 +904,7 @@ int comex_put(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
 
@@ -906,6 +915,7 @@ int comex_put(
     nb_put(src, dst, bytes, world_proc, nb);
     nb_wait_for_all(nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -917,6 +927,7 @@ int comex_get(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
 
@@ -927,6 +938,7 @@ int comex_get(
     nb_get(src, dst, bytes, world_proc, nb);
     nb_wait_for_all(nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -939,6 +951,7 @@ int comex_acc(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
 
@@ -949,6 +962,7 @@ int comex_acc(
     nb_acc(datatype, scale, src, dst, bytes, world_proc, nb);
     nb_wait_for_all(nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -962,6 +976,7 @@ int comex_puts(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
 
@@ -972,6 +987,7 @@ int comex_puts(
     nb_puts(src, src_stride, dst, dst_stride, count, stride_levels, world_proc, nb);
     nb_wait_for_all(nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -985,6 +1001,7 @@ int comex_gets(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
 
@@ -995,6 +1012,7 @@ int comex_gets(
     nb_gets(src, src_stride, dst, dst_stride, count, stride_levels, world_proc, nb);
     nb_wait_for_all(nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -1009,6 +1027,7 @@ int comex_accs(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
 
@@ -1020,6 +1039,7 @@ int comex_accs(
             src, src_stride, dst, dst_stride, count, stride_levels, world_proc, nb);
     nb_wait_for_all(nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -1031,6 +1051,7 @@ int comex_putv(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
 
@@ -1041,6 +1062,7 @@ int comex_putv(
     nb_putv(iov, iov_len, world_proc, nb);
     nb_wait_for_all(nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -1052,6 +1074,7 @@ int comex_getv(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
 
@@ -1062,6 +1085,7 @@ int comex_getv(
     nb_getv(iov, iov_len, world_proc, nb);
     nb_wait_for_all(nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -1074,6 +1098,7 @@ int comex_accv(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
 
@@ -1084,6 +1109,7 @@ int comex_accv(
     nb_accv(datatype, scale, iov, iov_len, world_proc, nb);
     nb_wait_for_all(nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -1826,6 +1852,7 @@ int comex_nbput(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -1841,6 +1868,7 @@ int comex_nbput(
 
     nb_put(src, dst, bytes, world_proc, nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -1854,6 +1882,7 @@ int comex_nbget(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -1869,6 +1898,7 @@ int comex_nbget(
 
     nb_get(src, dst, bytes, world_proc, nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -1883,6 +1913,7 @@ int comex_nbacc(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -1898,6 +1929,7 @@ int comex_nbacc(
 
     nb_acc(datatype, scale, src, dst, bytes, world_proc, nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -1913,6 +1945,7 @@ int comex_nbputs(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -1928,6 +1961,7 @@ int comex_nbputs(
 
     nb_puts(src, src_stride, dst, dst_stride, count, stride_levels, world_proc, nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -1943,6 +1977,7 @@ int comex_nbgets(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -1958,6 +1993,7 @@ int comex_nbgets(
 
     nb_gets(src, src_stride, dst, dst_stride, count, stride_levels, world_proc, nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -1974,6 +2010,7 @@ int comex_nbaccs(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -1990,6 +2027,7 @@ int comex_nbaccs(
     nb_accs(datatype, scale,
             src, src_stride, dst, dst_stride, count, stride_levels, world_proc, nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -2003,6 +2041,7 @@ int comex_nbputv(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -2018,6 +2057,7 @@ int comex_nbputv(
 
     nb_putv(iov, iov_len, world_proc, nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -2031,6 +2071,7 @@ int comex_nbgetv(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -2046,6 +2087,7 @@ int comex_nbgetv(
 
     nb_getv(iov, iov_len, world_proc, nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -2060,6 +2102,7 @@ int comex_nbaccv(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
+    PROFILE_BEG()
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -2075,6 +2118,7 @@ int comex_nbaccv(
 
     nb_accv(datatype, scale, iov, iov_len, world_proc, nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -2094,6 +2138,7 @@ int comex_rmw(
     int master_rank = 0;
     comex_igroup_t *igroup = NULL;
     nb_t *nb = NULL;
+    PROFILE_BEG()
 
 #if DEBUG
     fprintf(stderr, "[%d] comex_rmw(%d, %p, %p, %d, %d)\n",
@@ -2156,6 +2201,7 @@ int comex_rmw(
     nb_send_header(message, sizeof(header_t)+length, master_rank, nb);
     nb_wait_for_all(nb);
 
+    PROFILE_END(t_total)
     return COMEX_SUCCESS;
 }
 
@@ -4254,6 +4300,7 @@ STATIC void _put_iov_handler(header_t *header, int proc)
     int bytes = 0;
     void **src = NULL;
     void **dst = NULL;
+    void *ptr = NULL;
 
 #if DEBUG
     fprintf(stderr, "[%d] _put_iov_handler proc=%d\n", g_state.rank, proc);
@@ -4305,35 +4352,37 @@ STATIC void _put_iov_handler(header_t *header, int proc)
     server_recv(packed_buffer, bytes * limit, proc);
 
     packed_index = 0;
-    for (i=0; i<limit; ++i) {
-        reg_entry = reg_cache_find(
-                header->rank, dst[i], bytes, -1);
+    reg_entry = reg_cache_find(header->rank, dst[0], bytes, -1);
 #ifdef ENABLE_DEVICE
-        if (!reg_entry) {
-          reg_entry = reg_cache_find(
-                  header->rank, dst[i], bytes, _device_map[header->rank]);
-        }
-#endif
-        COMEX_ASSERT(reg_entry);
-        mapped_offset = _get_offset_memory(
-                reg_entry, dst[i]);
-
-#ifdef ENABLE_DEVICE
-        if (!reg_entry->use_dev) {
-#endif
-          (void)memcpy(mapped_offset, &packed_buffer[packed_index], bytes);
-#ifdef ENABLE_DEVICE
-        } else {
-          PROFILE_BEG()
-          copyToDevice(&packed_buffer[packed_index], mapped_offset, bytes);
-          PROFILE_END(t_cpy_to_dev)
-          PROFILE_BEG()
-          deviceCloseMemHandle(reg_entry->mapped);
-          PROFILE_END(t_close_ipc)
-        }
-#endif
-        packed_index += bytes;
+    if (!reg_entry) {
+      reg_entry = reg_cache_find(header->rank, dst[0], bytes,
+          _device_map[header->rank]);
     }
+#endif
+    COMEX_ASSERT(reg_entry);
+    mapped_offset = _get_offset_memory(reg_entry, dst[0]);
+#ifdef ENABLE_DEVICE
+    if (!reg_entry->use_dev) {
+#endif
+      for (i=0; i<limit; ++i) {
+        ptr = mapped_offset + (ptrdiff_t)(dst[i]-dst[0]);
+        (void)memcpy(ptr, &packed_buffer[packed_index], bytes);
+        packed_index += bytes;
+      }
+#ifdef ENABLE_DEVICE
+    } else {
+      for (i=0; i<limit; ++i) {
+        ptr = mapped_offset + (ptrdiff_t)(dst[i]-dst[0]);
+        PROFILE_BEG()
+        copyToDevice(&packed_buffer[packed_index], ptr, bytes);
+        PROFILE_END(t_cpy_to_dev)
+        packed_index += bytes;
+      }
+      PROFILE_BEG()
+      deviceCloseMemHandle(reg_entry->mapped);
+      PROFILE_END(t_close_ipc)
+    }
+#endif
     COMEX_ASSERT(packed_index == bytes*limit);
 
     if ((unsigned)(bytes*limit) > static_server_buffer_size) {
@@ -4549,6 +4598,7 @@ STATIC void _get_iov_handler(header_t *header, int proc)
     int bytes = 0;
     void **src = NULL;
     void **dst = NULL;
+    void *ptr = NULL;
 
 #if DEBUG
     fprintf(stderr, "[%d] _get_iov_handler proc=%d\n", g_state.rank, proc);
@@ -4598,35 +4648,38 @@ STATIC void _get_iov_handler(header_t *header, int proc)
     }
 
     packed_index = 0;
-    for (i=0; i<limit; ++i) {
-        reg_entry = reg_cache_find(
-                header->rank, src[i], bytes, -1);
+    reg_entry = reg_cache_find(
+        header->rank, src[0], bytes, -1);
 #ifdef ENABLE_DEVICE
-        if (!reg_entry) {
-          reg_entry = reg_cache_find(
-                  header->rank, src[i], bytes, _device_map[header->rank]);
-        }
-#endif
-        COMEX_ASSERT(reg_entry);
-#ifdef ENABLE_DEVICE
-        if (reg_entry->use_dev) {
-          mapped_offset = _get_offset_memory(reg_entry, src[i]);
-          PROFILE_BEG()
-          copyToHost(&packed_buffer[packed_index], mapped_offset, bytes);
-          PROFILE_END(t_cpy_to_host)
-          PROFILE_BEG()
-          deviceCloseMemHandle(reg_entry->mapped);
-          PROFILE_END(t_close_ipc)
-        } else {
-#endif
-          mapped_offset = _get_offset_memory(reg_entry, src[i]);
-
-          (void)memcpy(&packed_buffer[packed_index], mapped_offset, bytes);
-#ifdef ENABLE_DEVICE
-        }
-#endif
-        packed_index += bytes;
+    if (!reg_entry) {
+      reg_entry = reg_cache_find(
+          header->rank, src[0], bytes, _device_map[header->rank]);
     }
+#endif
+    COMEX_ASSERT(reg_entry);
+    mapped_offset = _get_offset_memory(reg_entry, src[0]);
+#ifdef ENABLE_DEVICE
+    if (!reg_entry->use_dev) {
+#endif
+      for (i=0; i<limit; ++i) {
+        ptr = mapped_offset + (ptrdiff_t)(src[i]-src[0]);
+        (void)memcpy(&packed_buffer[packed_index], ptr, bytes);
+        packed_index += bytes;
+      }
+#ifdef ENABLE_DEVICE
+    } else {
+      for (i=0; i<limit; ++i) {
+        ptr = mapped_offset + (ptrdiff_t)(src[i]-src[0]);
+        PROFILE_BEG()
+        copyToHost(&packed_buffer[packed_index], ptr, bytes);
+        PROFILE_END(t_cpy_to_host)
+        packed_index += bytes;
+      }
+      PROFILE_BEG()
+      deviceCloseMemHandle(reg_entry->mapped);
+      PROFILE_END(t_close_ipc)
+    }
+#endif
     COMEX_ASSERT(packed_index == bytes*limit);
 
     server_send(packed_buffer, packed_index, proc);
@@ -5050,6 +5103,7 @@ STATIC void _acc_iov_handler(header_t *header, char *scale, int proc)
     void **dst = NULL;
     int sizeof_scale = 0;
     int acc_type = 0;
+    void *ptr = NULL;
 
 #if DEBUG
     fprintf(stderr, "[%d] _acc_iov_handler proc=%d\n", g_state.rank, proc);
@@ -5129,41 +5183,45 @@ STATIC void _acc_iov_handler(header_t *header, char *scale, int proc)
         sem_wait(semaphores[header->rank]);
     }
     packed_index = 0;
-    for (i=0; i<limit; ++i) {
-        reg_entry = reg_cache_find(
-                header->rank, dst[i], bytes, -1);
+    reg_entry = reg_cache_find(
+        header->rank, dst[0], bytes, -1);
 #ifdef ENABLE_DEVICE
-        if (!reg_entry) {
-          reg_entry = reg_cache_find(
-                  header->rank, dst[i], bytes, _device_map[header->rank]);
-        }
-#endif
-        COMEX_ASSERT(reg_entry);
-        mapped_offset = _get_offset_memory(reg_entry, dst[i]);
-
-#ifdef ENABLE_DEVICE
-        if (!reg_entry->use_dev) {
-#endif
-        _acc(acc_type, bytes, mapped_offset, &packed_buffer[packed_index], scale);
-#ifdef ENABLE_DEVICE
-        } else {
-          /* src is on host and dst is on device */
-          void *ptr;
-          /* create buffer on device (no need to set device,
-           * this already happened implicitly in _get_offset_memory */
-          mallocDevice(&ptr,bytes);
-          PROFILE_BEG()
-          copyToDevice(&packed_buffer[packed_index], ptr, bytes);
-          PROFILE_END(t_cpy_to_dev)
-          _acc_dev(acc_type, bytes, mapped_offset, ptr, scale);
-          freeDevice(ptr);
-          PROFILE_BEG()
-          deviceCloseMemHandle(reg_entry->mapped);
-          PROFILE_END(t_close_ipc)
-        }
-#endif
-        packed_index += bytes;
+    if (!reg_entry) {
+      reg_entry = reg_cache_find(
+          header->rank, dst[0], bytes, _device_map[header->rank]);
     }
+#endif
+    COMEX_ASSERT(reg_entry);
+    mapped_offset = _get_offset_memory(reg_entry, dst[0]);
+#ifdef ENABLE_DEVICE
+    if (!reg_entry->use_dev) {
+#endif
+      for (i=0; i<limit; ++i) {
+        ptr = mapped_offset + (ptrdiff_t)(dst[i]-dst[0]);
+        _acc(acc_type, bytes, ptr, &packed_buffer[packed_index], scale);
+        packed_index += bytes;
+      }
+#ifdef ENABLE_DEVICE
+    } else {
+      /* src is on host and dst is on device */
+      void *dbuf;
+      /* create buffer on device (no need to set device,
+       * this already happened implicitly in _get_offset_memory */
+      mallocDevice(&dbuf,bytes);
+      for (i=0; i<limit; ++i) {
+        PROFILE_BEG()
+        copyToDevice(&packed_buffer[packed_index], dbuf, bytes);
+        PROFILE_END(t_cpy_to_dev)
+        ptr = mapped_offset + (ptrdiff_t)(dst[i]-dst[0]);
+        _acc_dev(acc_type, bytes, ptr, dbuf, scale);
+        packed_index += bytes;
+      }
+      freeDevice(ptr);
+      PROFILE_BEG()
+      deviceCloseMemHandle(reg_entry->mapped);
+      PROFILE_END(t_close_ipc)
+    }
+#endif
     COMEX_ASSERT(packed_index == bytes*limit);
     if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
         sem_post(semaphores[header->rank]);
@@ -8135,6 +8193,7 @@ STATIC void nb_putv(
         comex_giov_t *iov, int iov_len,
         int proc, nb_t *nb)
 {
+    PROFILE_BEG()
     int i = 0;
 
     for (i=0; i<iov_len; ++i) {
@@ -8156,6 +8215,7 @@ STATIC void nb_putv(
             }
         }
     }
+    PROFILE_END(t_nb_putv)
 }
 
 
@@ -8242,6 +8302,7 @@ STATIC void nb_getv(
 {
     int i = 0;
 
+    PROFILE_BEG()
     for (i=0; i<iov_len; ++i) {
         /* if not a vector get from self, use packed algorithm */
         if (COMEX_ENABLE_GET_IOV
@@ -8261,6 +8322,7 @@ STATIC void nb_getv(
             }
         }
     }
+    PROFILE_END(t_nb_getv)
 }
 
 
@@ -8354,6 +8416,7 @@ STATIC void nb_accv(
 {
     int i = 0;
 
+    PROFILE_BEG()
     for (i=0; i<iov_len; ++i) {
         /* if not a vector acc to self, use packed algorithm */
         if (COMEX_ENABLE_ACC_IOV
@@ -8373,6 +8436,7 @@ STATIC void nb_accv(
             }
         }
     }
+    PROFILE_END(t_nb_getv)
 }
 
 
