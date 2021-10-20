@@ -1619,7 +1619,9 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, int device_id)
     COMEX_ASSERT(comex_device_process());
     /* allocate device memory */
     setDevice(device_id); 
+    PROFILE_BEG()
     mallocDevice(&memory, size);
+    PROFILE_END(t_malloc_buf)
     deviceGetMemHandle(&handle, memory);
 
     /* register the memory locally */
@@ -1708,7 +1710,9 @@ int comex_free_dev_local(void *ptr, int dev_id)
 #ifdef ENABLE_DEVICE
     } else {
       setDevice(reg_entry->dev_id);
+      PROFILE_BEG()
       freeDevice(ptr);
+      PROFILE_END(t_free_buf);
     }
 #endif
 
@@ -4743,7 +4747,9 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
     if (!reg_entry) {
       /* Create buffer on device before opening memory handle */
       setDevice(_device_map[header->rank]);
+      PROFILE_BEG()
       mallocDevice(&dev_buffer, header->length);
+      PROFILE_END(t_malloc_buf)
       reg_entry = reg_cache_find(
               header->rank, header->remote_address, header->length, _device_map[header->rank]);
     }
@@ -4826,7 +4832,9 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
       PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
       PROFILE_END(t_close_ipc)
+      PROFILE_BEG()
       freeDevice(dev_buffer);
+      PROFILE_END(t_free_buf);
     }
 #endif
 }
@@ -4888,7 +4896,9 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
     if (!reg_entry) {
       /* Need to create temporary device buffer here before opening memory handle */
       setDevice(_device_map[header->rank]);
+      PROFILE_BEG()
       mallocDevice(&dev_buffer, header->length);
+      PROFILE_END(t_malloc_buf)
       reg_entry = reg_cache_find(
               header->rank, header->remote_address, header->length, _device_map[header->rank]);
     }
@@ -5071,7 +5081,9 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
       PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
       PROFILE_END(t_close_ipc)
+      PROFILE_BEG()
       freeDevice(dev_buffer);
+      PROFILE_END(t_free_buf);
       if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
         sem_post(semaphores[header->rank]);
       }
@@ -5207,7 +5219,9 @@ STATIC void _acc_iov_handler(header_t *header, char *scale, int proc)
       void *dbuf;
       /* create buffer on device (no need to set device,
        * this already happened implicitly in _get_offset_memory */
+      PROFILE_BEG()
       mallocDevice(&dbuf,bytes);
+      PROFILE_END(t_malloc_buf)
       for (i=0; i<limit; ++i) {
         PROFILE_BEG()
         copyToDevice(&packed_buffer[packed_index], dbuf, bytes);
@@ -5216,7 +5230,9 @@ STATIC void _acc_iov_handler(header_t *header, char *scale, int proc)
         _acc_dev(acc_type, bytes, ptr, dbuf, scale);
         packed_index += bytes;
       }
+      PROFILE_BEG()
       freeDevice(ptr);
+      PROFILE_END(t_free_buf);
       PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
       PROFILE_END(t_close_ipc)
@@ -7161,12 +7177,16 @@ STATIC void nb_acc(int datatype, void *scale,
                 void *ptr;
                 /* create buffer on device */
                 setDevice(reg_entry->dev_id);
+                PROFILE_BEG()
                 mallocDevice(&ptr,bytes);
+                PROFILE_END(t_malloc_buf)
                 PROFILE_BEG()
                 copyToDevice(src, ptr, bytes);
                 PROFILE_END(t_cpy_to_dev)
                 _acc_dev(datatype, bytes, dst, ptr, scale);
+                PROFILE_BEG()
                 freeDevice(ptr);
+                PROFILE_END(t_free_buf);
               } else if (reg_entry->use_dev && !on_host) {
                 /* src and dst are on device */
                 _acc_dev(datatype, bytes, dst, src, scale);
@@ -7224,12 +7244,16 @@ STATIC void nb_acc(int datatype, void *scale,
                 void *ptr;
                 /* create buffer on device (no need to set device,
                  * this already happened implicitly in _get_offset_memory */
+                PROFILE_BEG()
                 mallocDevice(&ptr,bytes);
+                PROFILE_END(t_malloc_buf)
                 PROFILE_BEG()
                 copyToDevice(src, ptr, bytes);
                 PROFILE_END(t_cpy_to_dev)
                 _acc_dev(datatype, bytes, mapped_offset, ptr, scale);
+                PROFILE_BEG()
                 freeDevice(ptr);
+                PROFILE_END(t_free_buf);
                 PROFILE_BEG()
                 deviceCloseMemHandle(reg_entry->mapped);
                 PROFILE_END(t_close_ipc)
