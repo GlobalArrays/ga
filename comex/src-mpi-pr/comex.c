@@ -8615,7 +8615,7 @@ STATIC void nb_putv(
     int on_host = isHostPointer(iov[0].src[0]);
 #endif
 
-        /* if not a vector put to self, use packed algorithm */
+    /* if not a vector put to self, use packed algorithm */
     if (COMEX_ENABLE_PUT_IOV
         && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
         && (!COMEX_ENABLE_PUT_SMP
@@ -8625,6 +8625,7 @@ STATIC void nb_putv(
           }
         }
         else if (COMEX_ENABLE_PUT_SELF && g_state.rank == proc) {
+          /* put to same process */
             if (fence_array[g_state.master[proc]]) {
                 _fence_master(g_state.master[proc]);
             }
@@ -8676,11 +8677,90 @@ STATIC void nb_putv(
                     (void)memcpy(dst[j], src[j], bytes);
                   }
                 }
-#ifdef ENABLE_DEVICE
               }
+        } else if (COMEX_ENABLE_PUT_SELF &&
+          g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+          /* put to process on same SMP node */
+          int j;
+          void **src;
+          void **dst;
+          int bytes = 0;
+          int limit;
+          reg_entry_t *reg_entry = NULL;
+          reg_entry = reg_cache_find(proc, iov[0].dst[0], bytes, -1);
+#ifdef ENABLE_DEVICE
+          if (!reg_entry) {
+            reg_entry = reg_cache_find(proc, iov[0].dst[0], bytes, _device_map[proc]);
+          }
 #endif
-
+          COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_DEVICE
+          if (reg_entry->use_dev && on_host) {
+            /* device to host */
+            void *mapped_offset;
+            void *ptr;
+            void *dst0;
+            mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+            dst0 = iov[0].dst[0];
+            for (i=0; i<iov_len; ++i) {
+              src = iov[i].src;
+              dst = iov[i].dst;
+              bytes = iov[i].bytes;
+              limit = iov[i].count;
+              for (j=0; j<limit; j++) {
+                ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
+                PROFILE_BEG()
+                copyToDevice(src[j], ptr, bytes);
+                PROFILE_END(t_cpy_to_dev)
+              }
+            }
+            PROFILE_BEG()
+            deviceCloseMemHandle(reg_entry->mapped);
+            PROFILE_END(t_close_ipc)
+          } else if (reg_entry->use_dev && on_host) {
+            /* device to device */
+            void *mapped_offset;
+            void *ptr;
+            void *dst0;
+            mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+            dst0 = iov[0].dst[0];
+            for (i=0; i<iov_len; ++i) {
+              src = iov[i].src;
+              dst = iov[i].dst;
+              bytes = iov[i].bytes;
+              limit = iov[i].count;
+              for (j=0; j<limit; j++) {
+                ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
+                PROFILE_BEG()
+                copyDevToDev(src[j], ptr, bytes);
+                PROFILE_END(t_cpy_to_dev)
+              }
+            }
+            PROFILE_BEG()
+            deviceCloseMemHandle(reg_entry->mapped);
+            PROFILE_END(t_close_ipc)
+          } else {
+#endif
+            /* host to host */
+            void *mapped_offset;
+            void *ptr;
+            void *dst0;
+            mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+            dst0 = iov[0].dst[0];
+            for (i=0; i<iov_len; ++i) {
+              src = iov[i].src;
+              dst = iov[i].dst;
+              bytes = iov[i].bytes;
+              limit = iov[i].count;
+              for (j=0; j<limit; j++) {
+                ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
+                (void)memcpy(ptr,src[j],bytes);
+              }
+            }
+          }
+#ifdef ENABLE_DEVICE
         }
+#endif
         else {
           for (i=0; i<iov_len; i++) {
             int j;
@@ -8962,6 +9042,7 @@ STATIC void nb_accv(
                     || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
             nb_accv_packed(datatype, scale, &iov[i], proc, nb);
         }
+#if 1
         else if (COMEX_ENABLE_PUT_SELF && g_state.rank == proc) {
             if (fence_array[g_state.master[proc]]) {
                 _fence_master(g_state.master[proc]);
@@ -8993,9 +9074,9 @@ STATIC void nb_accv(
                   PROFILE_END(t_malloc_buf)
                   for (j=0; j<limit; j++) {
                     PROFILE_BEG()
-                    copyToDevice(src, ptr, bytes);
+                    copyToDevice(src[j], ptr, bytes);
                     PROFILE_END(t_cpy_to_dev)
-                    _acc_dev(datatype, bytes, dst, ptr, scale);
+                    _acc_dev(datatype, bytes, dst[j], ptr, scale);
                   }
                   PROFILE_BEG()
                   freeDevice(ptr);
@@ -9015,7 +9096,7 @@ STATIC void nb_accv(
                   mallocDevice(&ptr,bytes);
                   PROFILE_END(t_malloc_buf)
                   for (j=0; j<limit; j++) {
-                    _acc_dev(datatype, bytes, dst, src, scale);
+                    _acc_dev(datatype, bytes, dst[j], src[j], scale);
                   }
                 }
               } else {
@@ -9027,13 +9108,14 @@ STATIC void nb_accv(
                   bytes = iov[i].bytes;
                   limit = iov[i].count;
                   for (j=0; j<limit; j++) {
-                    _acc(datatype, bytes, dst, src, scale);
+                    _acc(datatype, bytes, dst[j], src[j], scale);
                   }
                 }
 #ifdef ENABLE_DEVICE
               }
 #endif
         }
+#endif
         else {
             int j;
             void **src = iov[i].src;
