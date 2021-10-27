@@ -1155,8 +1155,9 @@ void test_dbl_scatter(int on_device)
     {
       j = n%dims[1]; 
       i = (n-j)/dims[1];
-      if (vals[icnt] != (double)(i*dims[1]+j)) {
-        if (g_ok) printf("p[%d] (%d,%d) expected: %f actual[%d]: %f\n",rank,i,j,
+      if (fabs(vals[icnt]-(double)(i*dims[1]+j)) > 1.0e-12) {
+      /* if (vals[icnt] != (double)(i*dims[1]+j)) { */
+        if (g_ok) printf("p[%d] put/get (%d,%d) expected: %f actual[%d]: %f\n",rank,i,j,
             (double)(i*DIMSIZE+j),n,vals[n]);
         g_ok = 0;
       }
@@ -1201,8 +1202,9 @@ void test_dbl_scatter(int on_device)
       for (jj = lo[1]; jj<=hi[1]; jj++) {
         j = jj-lo[1];
         idx = i*ld+j;
-        if (buf[idx] != (double)(2*(ii*DIMSIZE+jj))) {
-          if (a_ok) printf("p[%d] (%d,%d) expected: %d actual[%d]: %d\n",rank,ii,jj,
+        if (fabs(buf[idx]-(double)(2*(ii*dims[1]+jj))) > 1.0e-12) {
+        /* if (buf[idx] != (double)(2*(ii*DIMSIZE+jj))) { */
+          if (a_ok) printf("p[%d] acc (%d,%d) expected: %f actual[%d]: %f\n",rank,ii,jj,
               (double)(2*(ii*DIMSIZE+jj)),idx,buf[idx]);
           a_ok = 0;
         }
