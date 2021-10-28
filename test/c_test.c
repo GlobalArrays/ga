@@ -352,6 +352,7 @@ void print_bw()
   printf("//      Put (MB/sec) //     Get (MB/sec) //     Acc (MB/sec) //\n");
   printf("//  %15.4e  // %15.4e  // %15.4e  //\n",put_bw*rB,get_bw*rB,acc_bw*rB);
   printf("///////////////////////////////////////////////////////////////\n");
+  printf("\n\n");
 }
 
 void test_dbl_array(int on_device)
@@ -660,6 +661,7 @@ void test_read_inc(int on_device)
     printf("//                  micro seconds per read-increment         //\n");
     printf("//               %15.4f                             //\n",t_ri*1.0e6);
     printf("///////////////////////////////////////////////////////////////\n");
+    printf("\n\n");
   }
 }
 
