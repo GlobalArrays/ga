@@ -3,7 +3,7 @@ GA_DIR=/qfs/people/d3g293/tmp/ga-cuda/build_cuda/install
 CUDA_DIR=/share/apps/cuda/10.2
 #CUDA_DIR=/share/apps/cuda/10.1.243
 
-CFLAGS= -I${GA_DIR}/include/ga
+CFLAGS= -I${GA_DIR}/include/ga -I/share/apps/cuda/10.2/include
 
 FCFLAGS= -L${GA_DIR}/lib -L${GA_DIR}/lib64 -pthread -lga -larmci -lblas -llapack -lrt -lm -lstdc++
 
