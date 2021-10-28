@@ -8285,7 +8285,9 @@ STATIC void nb_putv(
                     (void)memcpy(dst[j], src[j], bytes);
                   }
                 }
+#ifdef ENABLE_DEVICE
               }
+#endif
         } else if (COMEX_ENABLE_PUT_SELF &&
           g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
           /* put to process on same SMP node */
@@ -8365,10 +8367,10 @@ STATIC void nb_putv(
                 (void)memcpy(ptr,src[j],bytes);
               }
             }
-          }
 #ifdef ENABLE_DEVICE
-        }
+          }
 #endif
+        }
         else {
           for (i=0; i<iov_len; i++) {
             int j;
