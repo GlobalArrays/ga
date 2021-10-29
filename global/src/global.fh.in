@@ -167,9 +167,6 @@
       double precision nga_wtime
       double complex   nga_zdot
       double complex   nga_zdot_patch
-      logical          nga_sprs_array_create
-      logical          nga_sprs_array_assemble
-      logical          nga_sprs_array_destroy
 !
       external ga_allocate
       external ga_deallocate
@@ -338,13 +335,5 @@
       external nga_wtime
       external nga_zdot
       external nga_zdot_patch
-      external nga_sprs_array_create
-      external nga_sprs_array_add_element
-      external nga_sprs_array_assemble
-      external nga_sprs_array_row_distribution
-      external nga_sprs_array_column_distribution
-      external nga_sprs_array_access_col_block
-      external nga_sprs_array_matvec_multiply
-      external nga_sprs_array_destroy
 !
 #define GA_ACCESS_INDEX_TYPE @GA_ACCESS_INDEX_TYPE@
