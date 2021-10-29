@@ -138,6 +138,9 @@
       logical          nga_set_update5_info
       integer          nga_solve
       integer          nga_spd_invert
+      logical          nga_sprs_array_assemble
+      logical          nga_sprs_array_create
+      logical          nga_sprs_array_destroy
       integer          nga_total_blocks
       logical          nga_update2_ghosts
       logical          nga_update3_ghosts
@@ -153,9 +156,6 @@
       double precision nga_wtime
       double complex   nga_zdot
       double complex   nga_zdot_patch
-      logical          nga_sprs_array_create
-      logical          nga_sprs_array_assemble
-      logical          nga_sprs_array_destroy
 !
       external ga_allocate
       external ga_deallocate
@@ -295,6 +295,9 @@
       external nga_set_update5_info
       external nga_solve
       external nga_spd_invert
+      external nga_sprs_array_assemble
+      external nga_sprs_array_create
+      external nga_sprs_array_destroy
       external nga_total_blocks
       external nga_update2_ghosts
       external nga_update3_ghosts
@@ -310,13 +313,5 @@
       external nga_wtime
       external nga_zdot
       external nga_zdot_patch
-      external nga_sprs_array_create
-      external nga_sprs_array_add_element
-      external nga_sprs_array_assemble
-      external nga_sprs_array_row_distribution
-      external nga_sprs_array_column_distribution
-      external nga_sprs_array_access_col_block
-      external nga_sprs_array_matvec_multiply
-      external nga_sprs_array_destroy
 !
 #define GA_ACCESS_INDEX_TYPE @GA_ACCESS_INDEX_TYPE@
