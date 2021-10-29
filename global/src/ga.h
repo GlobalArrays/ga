@@ -330,6 +330,7 @@ extern void          NGA_Set_irreg_distr(int g_a, int map[], int block[]);
 extern void          NGA_Set_irreg_flag(int g_a, int flag);
 extern void          NGA_Set_memory_limit(size_t limit);
 extern void          NGA_Set_pgroup(int g_a, int p_handle);
+extern void          NGA_Set_property(int g_a, char *property);
 extern void          NGA_Set_restricted(int g_a, int list[], int size);
 extern void          NGA_Set_restricted_range(int g_a, int lo_proc, int hi_proc);
 extern void          NGA_Set_property(int g_a, char *property);
@@ -337,6 +338,15 @@ extern void          NGA_Set_tiled_proc_grid(int g_a, int block[], int proc_grid
 extern void          NGA_Set_tiled_irreg_proc_grid(int g_a, int mapc[], int nblocks[], int proc_grid[]);
 extern void          NGA_Unset_property(int g_a);
 extern void          NGA_Set_memory_dev(int g_a, char *device);
+extern void          NGA_Sprs_array_access_col_block(int s_a, int icol, int **idx, int **jdx, void *val);
+extern void          NGA_Sprs_array_access_col_block64(int s_a, int icol, long **idx, long **jdx, void *val);
+extern void          NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void *val);
+extern int           NGA_Sprs_array_assemble(int s_a);
+extern int           NGA_Sprs_array_create(int idim, int jdim, int type);
+extern void          NGA_Sprs_array_column_distribution(int s_a, int iproc, int *lo, int *hi);
+extern int           NGA_Sprs_array_destroy(Integer s_a);
+extern void          NGA_Sprs_array_matvec_multiply(int s_a, int g_a, int g_v);
+extern void          NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo, int *hi);
 extern void          NGA_Strided_acc(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[], void *alpha); 
 extern void          NGA_Strided_get(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[]); 
 extern void          NGA_Strided_put(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[]); 
@@ -344,6 +354,7 @@ extern void          NGA_Sync(void);
 extern void          NGA_Terminate(void);
 extern int           NGA_Total_blocks(int g_a);   
 extern void          NGA_Unlock(int mutex);
+extern void          NGA_Unset_property(int g_a);
 extern void          NGA_Update_ghosts(int g_a);
 extern int           NGA_Update_ghost_dir(int g_a, int dimension, int idir, int flag);
 extern void          NGA_Update_ghosts_nb(int g_a, ga_nbhdl_t *nbhandle);
@@ -356,15 +367,6 @@ extern double        NGA_Wtime(void);
 extern DoubleComplex NGA_Zdot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
 extern void          NGA_Zero(int g_a); 
 extern void          NGA_Zero_patch(int g_a, int lo[], int hi[]);
-extern int           NGA_Sprs_array_create(int idim, int jdim, int type);
-extern void          NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void *val);
-extern int           NGA_Sprs_array_assemble(int s_a);
-extern void          NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo, int *hi);
-extern void          NGA_Sprs_array_column_distribution(int s_a, int iproc, int *lo, int *hi);
-extern void          NGA_Sprs_array_access_col_block(int s_a, int icol, int **idx, int **jdx, void *val);
-extern void          NGA_Sprs_array_access_col_block64(int s_a, int icol, long **idx, long **jdx, void *val);
-extern void          NGA_Sprs_array_matvec_multiply(int s_a, int g_a, int g_v);
-extern int           NGA_Sprs_array_destroy(Integer s_a);
 
 /* 64 bit APIs */
 

@@ -110,8 +110,8 @@ int main(int argc, char **argv) {
   double xinc_m, yinc_m, zinc_m;
   double alpha, beta, residual;
   int nsave;
-  int heap=3000000, stack=2000000;
-  int iterations = 1000;
+  int heap=10000000, stack=10000000;
+  int iterations = 10000;
   double tol, twopi;
   FILE *PHI;
   /* Intitialize a message passing library */
