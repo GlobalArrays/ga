@@ -108,7 +108,6 @@ extern int           GA_Nnodes(void);
 extern int           GA_Nodeid(void);
 extern void          GA_Norm1(int g_a, double *nm);
 extern void          GA_Norm_infinity(int g_a, double *nm);
-extern int           GA_Overlay(int g_a, int g_p);
 extern int           GA_Pgroup_absolute_id(int pgroup, int pid);
 extern void          GA_Pgroup_brdcst(int grp, void *buf, int lenbuf, int root);
 extern void          GA_Pgroup_cgop(int grp, SingleComplex x[], int n, char *op);
@@ -384,14 +383,10 @@ extern void          GA_Patch_enum(int g_a, int lo, int hi, void *start, void *i
 extern void          GA_Recip_patch64(int g_a,int64_t *lo, int64_t *hi);
 extern void          GA_Scan_add64(int g_a, int g_b, int g_sbit, int64_t lo, int64_t hi, int excl);
 extern void          GA_Scan_copy64(int g_a, int g_b, int g_sbit, int64_t lo, int64_t hi);
-extern void          GA_Set_block_cyclic64(int g_a, int64_t dims[]);
-extern void          GA_Set_block_cyclic_proc_grid64(int g_a, int64_t block[], int64_t proc_grid[]);
 extern void          GA_Set_chunk64(int g_a, int64_t chunk[]);
 extern void          GA_Set_data64(int g_a, int ndim, int64_t dims[], int type);
 extern void          GA_Set_ghosts64(int g_a, int64_t width[]);
 extern void          GA_Set_irreg_distr64(int g_a, int64_t map[], int64_t block[]);
-extern void          GA_Set_tiled_proc_grid64(int g_a, int64_t block[], int64_t proc_grid[]);
-extern void          GA_Set_tiled_irreg_proc_grid64(int g_a, int64_t mapc[], int64_t nblocks[], int64_t proc_grid[]);
 extern void          GA_Sgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k, float alpha, int g_a, int g_b, float beta,  int g_c );
 extern void          GA_Step_bound_info_patch64(int g_xx, int64_t xxlo[], int64_t xxhi[], int g_vv, int64_t vvlo[], int64_t vvhi[], int g_xxll, int64_t xxlllo[], int64_t xxllhi[], int64_t g_xxuu,  int64_t xxuulo[], int64_t xxuuhi[], void *boundmin, void *wolfemin, void *boundmax);
 extern void          GA_Step_max_patch64(int g_a, int64_t alo[], int64_t  ahi[], int g_b, int64_t blo[], int64_t  bhi[], void *step);
@@ -453,18 +448,18 @@ extern void          NGA_Scatter_flat64(int g_a, void *v, int64_t subsArray[], i
 extern void          NGA_Scatter_acc64(int g_a, void *v, int64_t* subsArray[], int64_t n, void *alpha);
 extern void          NGA_Scatter_acc_flat64(int g_a, void *v, int64_t subsArray[], int64_t n, void *alpha);
 extern void          NGA_Select_elem64(int g_a, char* op, void* val, int64_t* index);
-extern void          NGA_Set_block_cyclic64(int g_a, int64_t dims[]);
-extern void          NGA_Set_block_cyclic_proc_grid64(int g_a, int64_t block[], int64_t proc_grid[]);
 extern void          NGA_Set_data64(int g_a, int ndim, int64_t dims[], int type);
 extern void          NGA_Set_ghosts64(int g_a, int64_t width[]);
 extern void          NGA_Set_irreg_distr64(int g_a, int64_t map[], int64_t block[]);
-extern void          NGA_Set_tiled_proc_grid64(int g_a, int64_t block[], int64_t proc_grid[]);
-extern void          NGA_Set_tiled_irreg_proc_grid64(int g_a, int64_t mapc[], int64_t nblocks[], int64_t proc_grid[]);
 extern void          NGA_Strided_acc64(int g_a, int64_t lo[], int64_t hi[], int64_t skip[], void* buf, int64_t  ld[], void *alpha); 
 extern void          NGA_Strided_get64(int g_a, int64_t lo[], int64_t hi[], int64_t skip[], void* buf, int64_t  ld[]); 
 extern void          NGA_Strided_put64(int g_a, int64_t lo[], int64_t hi[], int64_t skip[], void* buf, int64_t  ld[]); 
 extern DoubleComplex NGA_Zdot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[], int g_b, char t_b, int64_t blo[], int64_t bhi[]);
 extern void          NGA_Zero_patch64(int g_a, int64_t lo[], int64_t hi[]);
+extern int           NGA_Sprs_array_create64(int64_t idim, int64_t jdim, int type);
+extern void          NGA_Sprs_array_add_element64(int s_a, int64_t idx, int64_t jdx, void *val);
+extern void          NGA_Sprs_array_row_distribution64(int s_a, int iproc, int64_t *lo, int64_t *hi);
+extern void          NGA_Sprs_array_column_distribution64(int s_a, int iproc, int64_t *lo, int64_t *hi);
 
 #ifdef __cplusplus
 }
