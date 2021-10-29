@@ -8927,6 +8927,79 @@ STATIC void nb_getv(
             }
 #endif
         }
+        else if (COMEX_ENABLE_GET_SELF && 
+                   g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+            int j;
+            void **src;
+            void **dst;
+            int bytes = 0;
+            int limit;
+            void *mapped_offset;
+            void *ptr;
+            void *src0;
+            reg_entry_t *reg_entry = NULL;
+            reg_entry = reg_cache_find(proc, iov[0].src[0], bytes, -1);
+#ifdef ENABLE_DEVICE
+            if (!reg_entry) {
+              reg_entry = reg_cache_find(proc, iov[0].src[0], bytes, _device_map[proc]);
+            }
+            COMEX_ASSERT(reg_entry);
+            if (reg_entry->use_dev && on_host) {
+              /* device to host */
+              mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0]);
+              src0 = iov[0].src[0];
+              for (i=0; i<iov_len; ++i) {
+                src = iov[i].src;
+                dst = iov[i].dst;
+                bytes = iov[i].bytes;
+                limit = iov[i].count;
+                for (j=0; j<limit; j++) {
+                  ptr = mapped_offset + (ptrdiff_t)(src[j]-src0);
+                  PROFILE_BEG()
+                  copyToHost(dst[j], ptr, bytes);
+                  PROFILE_END(t_cpy_to_host)
+                }
+              }
+              PROFILE_BEG()
+              deviceCloseMemHandle(reg_entry->mapped);
+              PROFILE_END(t_close_ipc)
+            } else if (reg_entry->use_dev && !on_host) {
+              /* device to device */
+              mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0]);
+              src0 = iov[0].src[0];
+              for (i=0; i<iov_len; ++i) {
+                src = iov[i].src;
+                dst = iov[i].dst;
+                bytes = iov[i].bytes;
+                limit = iov[i].count;
+                for (j=0; j<limit; j++) {
+                  ptr = mapped_offset + (ptrdiff_t)(src[j]-src0);
+                  PROFILE_BEG()
+                  copyDevToDev(dst[j], ptr, bytes);
+                  PROFILE_END(t_cpy_to_host)
+                }
+              }
+              PROFILE_BEG()
+              deviceCloseMemHandle(reg_entry->mapped);
+              PROFILE_END(t_close_ipc)
+            } else {
+#endif
+              mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0]);
+              src0 = iov[0].src[0];
+              for (i=0; i<iov_len; i++) {
+                src = iov[i].src;
+                dst = iov[i].dst;
+                bytes = iov[i].bytes;
+                limit = iov[i].count;
+                for (j=0; j<limit; j++) {
+                  ptr = mapped_offset + (ptrdiff_t)(src[j]-src0);
+                  (void)memcpy(dst[j], ptr, bytes);
+                }
+              }
+#ifdef ENABLE_DEVICE
+            }
+#endif
+        }
         else {
             int j;
             void **src = iov[i].src;
