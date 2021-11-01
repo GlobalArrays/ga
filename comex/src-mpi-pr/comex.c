@@ -250,7 +250,7 @@ void SigSegvHandler(int sig)
 }
 #endif
 
-#define ENABLE_PROFILE
+#define ENABLE_XPROFILE
 #ifdef ENABLE_PROFILE
   static int t_level = -1;
   static double t_beg[10];
@@ -8688,6 +8688,9 @@ STATIC void nb_putv(
           void **dst;
           int bytes = 0;
           int limit;
+          if (fence_array[g_state.master[proc]]) {
+            _fence_master(g_state.master[proc]);
+          }
           reg_entry_t *reg_entry = NULL;
           reg_entry = reg_cache_find(proc, iov[0].dst[0], bytes, -1);
 #ifdef ENABLE_DEVICE
@@ -8764,6 +8767,7 @@ STATIC void nb_putv(
 #endif
         }
         else {
+          printf("p[%d] Calling separate puts for vector\n",g_state.rank);
           for (i=0; i<iov_len; i++) {
             int j;
             void **src = iov[i].src;
@@ -9001,14 +9005,17 @@ STATIC void nb_getv(
 #endif
         }
         else {
+          printf("p[%d] Calling separate gets for vector\n",g_state.rank);
+          for (i=0; i<iov_len; ++i) {
             int j;
             void **src = iov[i].src;
             void **dst = iov[i].dst;
             int bytes = iov[i].bytes;
             int limit = iov[i].count;
             for (j=0; j<limit; ++j) {
-                nb_get(src[j], dst[j], bytes, proc, nb);
+              nb_get(src[j], dst[j], bytes, proc, nb);
             }
+          }
         }
     }
     PROFILE_END(t_nb_getv)
@@ -9117,7 +9124,6 @@ STATIC void nb_accv(
                     || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
             nb_accv_packed(datatype, scale, &iov[i], proc, nb);
         }
-#if 1
         else if (COMEX_ENABLE_PUT_SELF && g_state.rank == proc) {
             if (fence_array[g_state.master[proc]]) {
                 _fence_master(g_state.master[proc]);
@@ -9171,8 +9177,14 @@ STATIC void nb_accv(
                   mallocDevice(&ptr,bytes);
                   PROFILE_END(t_malloc_buf)
                   for (j=0; j<limit; j++) {
-                    _acc_dev(datatype, bytes, dst[j], src[j], scale);
+                    PROFILE_BEG()
+                    copyDevToDev(src[j], ptr, bytes);
+                    PROFILE_END(t_cpy_to_dev)
+                    _acc_dev(datatype, bytes, dst[j], ptr, scale);
                   }
+                  PROFILE_BEG()
+                  freeDevice(ptr);
+                  PROFILE_END(t_free_buf);
                 }
               } else {
 #endif
@@ -9190,8 +9202,108 @@ STATIC void nb_accv(
               }
 #endif
         }
+        else if (COMEX_ENABLE_PUT_SELF &&
+                   g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+            if (fence_array[g_state.master[proc]]) {
+                _fence_master(g_state.master[proc]);
+            }
+              int j;
+              void **src;
+              void **dst;
+              int bytes = 0;
+              int limit;
+              void *mapped_offset;
+              void *dst0;
+              reg_entry_t *reg_entry = NULL;
+              reg_entry = reg_cache_find(proc, iov[0].dst[0], bytes, -1);
+#ifdef ENABLE_DEVICE
+              if (!reg_entry) {
+                reg_entry = reg_cache_find(proc, iov[0].dst[0], bytes, _device_map[proc]);
+              }
+              COMEX_ASSERT(reg_entry);
+              if (reg_entry->use_dev && on_host) {
+                /* device to host */
+                for (i=0; i<iov_len; ++i) {
+                  void *ptr;
+                  void *l_ptr;
+                  src = iov[i].src;
+                  dst = iov[i].dst;
+                  bytes = iov[i].bytes;
+                  limit = iov[i].count;
+                  /* create buffer on device */
+                  setDevice(reg_entry->dev_id);
+                  PROFILE_BEG()
+                  mallocDevice(&ptr,bytes);
+                  PROFILE_END(t_malloc_buf)
+                  mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+                  dst0 = iov[0].dst[0];
+                  for (j=0; j<limit; j++) {
+                    l_ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
+                    PROFILE_BEG()
+                    copyToDevice(src[j], ptr, bytes);
+                    PROFILE_END(t_cpy_to_dev)
+                    _acc_dev(datatype, bytes, l_ptr, ptr, scale);
+                  }
+                  PROFILE_BEG()
+                  deviceCloseMemHandle(reg_entry->mapped);
+                  PROFILE_END(t_close_ipc)
+                  PROFILE_BEG()
+                  freeDevice(ptr);
+                  PROFILE_END(t_free_buf);
+                }
+              } else if (reg_entry->use_dev && !on_host) {
+                /* device to device */
+                for (i=0; i<iov_len; ++i) {
+                  void *ptr;
+                  void *l_ptr;
+                  src = iov[i].src;
+                  dst = iov[i].dst;
+                  bytes = iov[i].bytes;
+                  limit = iov[i].count;
+                  /* create buffer on device */
+                  setDevice(reg_entry->dev_id);
+                  PROFILE_BEG()
+                  mallocDevice(&ptr,bytes);
+                  PROFILE_END(t_malloc_buf)
+                  mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+                  dst0 = iov[0].dst[0];
+                  for (j=0; j<limit; j++) {
+                    l_ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
+                    PROFILE_BEG()
+                    copyDevToDev(src[j], ptr, bytes);
+                    PROFILE_END(t_cpy_to_dev)
+                    _acc_dev(datatype, bytes, l_ptr, ptr, scale);
+                  }
+                  PROFILE_BEG()
+                  deviceCloseMemHandle(reg_entry->mapped);
+                  PROFILE_END(t_close_ipc)
+                  PROFILE_BEG()
+                  freeDevice(ptr);
+                  PROFILE_END(t_free_buf);
+                }
+              } else {
 #endif
+                /* host to host */
+                for (i=0; i<iov_len; ++i) {
+                  void *l_ptr;
+                  src = iov[i].src;
+                  dst = iov[i].dst;
+                  bytes = iov[i].bytes;
+                  limit = iov[i].count;
+                  mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+                  dst0 = iov[0].dst[0];
+                  for (j=0; j<limit; j++) {
+                    l_ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
+                    _acc(datatype, bytes, l_ptr, src[j], scale);
+                  }
+                }
+#ifdef ENABLE_DEVICE
+              }
+#endif
+        }
         else {
+          printf("p[%d] Calling separate accs for vector\n",g_state.rank);
+          for (i=0; i<iov_len; i++) {
             int j;
             void **src = iov[i].src;
             void **dst = iov[i].dst;
@@ -9200,6 +9312,7 @@ STATIC void nb_accv(
             for (j=0; j<limit; ++j) {
                 nb_acc(datatype, scale, src[j], dst[j], bytes, proc, nb);
             }
+          }
         }
     }
     PROFILE_END(t_nb_getv)
