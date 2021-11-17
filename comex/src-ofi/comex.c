@@ -1174,7 +1174,7 @@ fn_fail:
     return COMEX_FAILURE;
 }
 
-int comex_init()
+int _comex_init(MPI_Comm comm)
 {
     int status;
 
@@ -1188,7 +1188,7 @@ int comex_init()
     assert(init_flag);
 
     /* Duplicate the World Communicator */
-    status = MPI_Comm_dup(MPI_COMM_WORLD, &(l_state.world_comm));
+    status = MPI_Comm_dup(comm, &(l_state.world_comm));
     assert(MPI_SUCCESS == status);
     assert(l_state.world_comm);
 
@@ -1202,7 +1202,7 @@ int comex_init()
 
     /* Evaluate local-proc information: local comm & rank */
     MPI_Comm local_comm;
-    status = MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &local_comm);
+    status = MPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &local_comm);
     assert(MPI_SUCCESS == status);
     assert(local_comm);
 
@@ -1238,6 +1238,16 @@ fn_success:
 
 fn_fail:
     return COMEX_FAILURE;
+}
+
+int comex_init()
+{
+  return _comex_init(MPI_COMM_WORLD);
+}
+
+int comex_init_comm(MPI_Comm comm)
+{
+  return _comex_init(comm);
 }
 
 int comex_init_args(int* argc, char*** argv)
