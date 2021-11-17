@@ -355,7 +355,7 @@ STATIC void translate_mpi_error(int ierr, const char* location);
 STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels, MPI_Datatype base_type, MPI_Datatype *type);
 
 
-int comex_init()
+int _comex_init(MPI_Comm comm)
 {
     int status = 0;
     int init_flag = 0;
@@ -375,7 +375,7 @@ int comex_init()
 
 
     /* groups */
-    comex_group_init();
+    comex_group_init(comm);
 
     /* env vars */
     {
@@ -650,6 +650,18 @@ int comex_init()
 #endif
 
     return COMEX_SUCCESS;
+}
+
+
+int comex_init()
+{
+  return _comex_init(MPI_COMM_WORLD);
+}
+
+
+int comex_init_comm(MPI_Comm comm)
+{
+  return _comex_init(comm);
 }
 
 

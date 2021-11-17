@@ -423,6 +423,18 @@ int PARMCI_Init_args(int *argc, char ***argv)
 }
 
 
+int PARMCI_Init_mpi_comm(MPI_Comm comm)
+{
+    int rc = comex_init_comm(comm);
+    assert(COMEX_SUCCESS == rc);
+    rc = comex_group_comm(comm, &ARMCI_COMM_WORLD);
+    assert(COMEX_SUCCESS == rc);
+    ARMCI_Default_Proc_Group = 0;
+    armci_init_domains(ARMCI_COMM_WORLD);
+    return rc;
+}
+
+
 int PARMCI_Initialized()
 {
     return comex_initialized();

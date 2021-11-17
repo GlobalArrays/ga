@@ -1357,7 +1357,7 @@ int comex_free_local(void *ptr)
 }
 
 
-int comex_init()
+int _comex_init(MPI_Comm comm)
 {
     int status;
     int init_flag;
@@ -1373,7 +1373,7 @@ int comex_init()
     assert(init_flag);
     
     /* Duplicate the World Communicator */
-    status = MPI_Comm_dup(MPI_COMM_WORLD, &(l_state.world_comm));
+    status = MPI_Comm_dup(comm, &(l_state.world_comm));
     assert(MPI_SUCCESS == status);
     assert(l_state.world_comm); 
 
@@ -1413,6 +1413,18 @@ int comex_init()
     comex_barrier(COMEX_GROUP_WORLD);
 
     return COMEX_SUCCESS;
+}
+
+
+int comex_init()
+{
+  return _comex_init(MPI_COMM_WORLD);
+}
+
+
+int comex_init_comm(MPI_Comm comm)
+{
+  return _comex_init(comm);
 }
 
 
