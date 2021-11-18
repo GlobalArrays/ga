@@ -246,7 +246,7 @@ void armci_msg_gop_init()
           fflush(stdout);
        }
 
-       if(!tmp) armci_die("armci_msg_init: shm malloc failed\n",size);
+       if(!tmp) armci_die("armci_msg_gop_init: shm malloc failed\n",size);
        _gop_buffer = ( bufstruct *) tmp;
        GOP_BUF(armci_me)->a.flag=EMPTY;   /* initially buffer is empty */
        GOP_BUF(armci_me)->b.flag=EMPTY;  /* initially buffer is empty */
@@ -510,6 +510,15 @@ void armci_msg_init(int *argc, char ***argv)
     }
 #endif
 }
+
+#ifdef MSG_COMMS_MPI
+void armci_msg_init_comm(MPI_Comm comm)
+{
+    if (!PARMCI_Initialized()) {
+        MPI_Comm_dup(MPI_COMM_WORLD, &ARMCI_COMM_WORLD);
+    }
+}
+#endif
 
 
 int armci_msg_me()
