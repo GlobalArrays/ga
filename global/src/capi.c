@@ -119,6 +119,18 @@ void NGA_Initialize()
   wnga_initialize();
 }
 
+int GA_Initialize_comm(MPI_Comm comm)
+{
+  _ga_initialize_c = 1;
+  return wnga_initialize_comm(comm);
+}
+
+int NGA_Initialize_comm(MPI_Comm comm)
+{
+  _ga_initialize_c = 1;
+  return wnga_initialize_comm(comm);
+}
+
 int GA_Initialized()
 {
     return wnga_initialized();
