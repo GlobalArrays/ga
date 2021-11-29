@@ -468,6 +468,18 @@ void FATR nga_initialize_()
   wnga_initialize();
 }
 
+logical FATR ga_initialize_comm_(MPI_Comm comm)
+{
+  _ga_initialize_f=1;
+  return wnga_initialize_comm(comm);
+}
+
+logical FATR nga_initialize_comm_(MPI_Comm comm)
+{
+  _ga_initialize_f=1;
+  return wnga_initialize_comm(comm);
+}
+
 void FATR ga_initialize_ltd_(Integer *limit)
 {
   _ga_initialize_f=1;

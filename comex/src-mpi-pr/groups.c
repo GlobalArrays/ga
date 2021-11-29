@@ -432,7 +432,7 @@ void comex_group_init(MPI_Comm comm)
             g_state.hostid, 1, MPI_LONG, g_state.comm);
     COMEX_ASSERT(MPI_SUCCESS == status);
      /* First create a temporary node communicator and then
-      * split further into number of gruoups within the node */
+      * split further into number of groups within the node */
      MPI_Comm temp_node_comm;
      int temp_node_size;
     /* create node comm */

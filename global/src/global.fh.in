@@ -27,6 +27,7 @@
       integer          ga_get_pgroup_size
       logical          ga_has_ghosts
       integer          ga_idot
+      logical          ga_initialize_comm
       logical          ga_initialized
       integer          ga_inquire_memory
       integer          ga_is_mirrored
@@ -106,6 +107,7 @@
       logical          nga_has_ghosts
       integer          nga_idot
       integer          nga_idot_patch
+      logical          nga_initialize_comm
       logical          nga_initialized
       integer          nga_inquire_memory
       integer          nga_is_mirrored
