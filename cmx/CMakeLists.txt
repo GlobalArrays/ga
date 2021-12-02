@@ -31,6 +31,9 @@
 # -------------------------------------------------------------
 
 cmake_minimum_required(VERSION 3.8)
+
+project(CMX_Runtime)
+
 find_package(MPI)
 
 include_directories(AFTER ${MPI_INCLUDE_PATH})
@@ -112,3 +115,5 @@ install(TARGETS cmx
 # -------------------------------------------------------------
 add_executable(unit_env.x testing/unit_env.cpp)
 target_link_libraries(unit_env.x cmx)
+add_executable(unit_group.x testing/unit_group.cpp)
+target_link_libraries(unit_group.x cmx)

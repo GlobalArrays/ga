@@ -72,11 +72,21 @@ bool Environment::test(cmx_request_t *hdl)
 }
 
 /**
+ * Get world group
+ * @return pointer to world group
+ */
+Group* Environment::getWorldGroup()
+{
+  return p_CMX_GROUP_WORLD;
+}
+
+/**
  * Initialize CMX environment.
  */
 Environment::Environment()
 {
   p_Impl = new p_Environment();
+  p_CMX_GROUP_WORLD = new Group(p_Impl->getWorldGroup());
 }
 
 /**

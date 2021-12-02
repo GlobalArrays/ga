@@ -139,6 +139,12 @@ cmx_group_world_t* getGlobalState();
  */
 void p_error(const std::string msg, int code);
 
+/**
+ * Get group corresponding to world group
+ * @return pointer to world group
+ */
+p_Group* getWorldGroup();
+
 public:
 /* server functions */
 void server_send(void *buf, int count, int dest);

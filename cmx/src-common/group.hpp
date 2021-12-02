@@ -8,7 +8,7 @@
 
 namespace CMX {
 
-class CMX_Group {
+class Group {
 
 public:
 
@@ -18,12 +18,12 @@ public:
  * @param[in] n number of processes in the new group
  * @param[in] pid_list list of process ranks in the new group
  */
-CMX_Group(int n, int *pid_list, CMX_Group *group);
+Group(int n, int *pid_list, Group *group);
 
 /**
  * Destructor
  */
-~CMX_Group();
+~Group();
 
 /**
  * Return the rank of process in group
@@ -49,6 +49,13 @@ int barrier();
  */
 MPI_Comm MPIComm();
 
+/**
+ * Construct a group directly from existing p_Group. This is needed for the
+ * world group
+ * @param[in] group pointer to an implementation instance
+ */
+Group(p_Group *group);
+
 protected:
 
 /**
@@ -59,7 +66,7 @@ protected:
  * @param[in] pid_list list of process ranks in the new group
  * @param[in] comm MPI commuicator that defines ranks in pid_list
  */
-CMX_Group(int n, int *pid_list, MPI_Comm comm);
+Group(int n, int *pid_list, MPI_Comm comm);
 
 private:
 

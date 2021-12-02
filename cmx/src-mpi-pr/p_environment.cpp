@@ -5886,4 +5886,13 @@ int p_Environment::get_my_rank_to_free(int rank, int split_group_size,
   return my_rank_to_free;
 }
 
+/**
+ * Get group corresponding to world group
+ * @return pointer to world group
+ */
+p_Group* p_Environment::getWorldGroup()
+{
+  return p_CMX_GROUP_WORLD;
+}
+
 } // namespace CMX

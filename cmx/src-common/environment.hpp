@@ -60,7 +60,6 @@ void waitAll(p_Group *group);
  */
 bool test(cmx_request_t *hdl);
 
-#if 0
 /**
  * Translates the ranks of processes in one group to those in another group. The
  * group making the call is the "from" group, the group in the argument list is
@@ -72,7 +71,7 @@ bool test(cmx_request_t *hdl);
  * @param[out] ranks_to array of corresponding ranks in group_to
  * @return CMX_SUCCESS on success
  */
-virtual int translateRanks(int n, int *ranks_from, CMX_Group *group_to, int *ranks_to);
+int translateRanks(int n, int *ranks_from, Group *group_to, int *ranks_to);
 
 /**
  * Translate the given rank from its group to its corresponding rank in the
@@ -83,13 +82,13 @@ virtual int translateRanks(int n, int *ranks_from, CMX_Group *group_to, int *ran
  * @param[out] world_ranks the corresponding world rank
  * @return CMX_SUCCESS on success
  */
-virtual int translateWorld(int n, int *group_ranks, int *world_ranks);
+int translateWorld(int n, int *group_ranks, int *world_ranks);
 
 /**
  * Get world group
  * @return pointer to world group
  */
-virtual CMX_Group* getWorldGroup();
+Group* getWorldGroup();
 
 /**
  * Abort CMX, printing the msg, and exiting with code.
@@ -97,7 +96,6 @@ virtual CMX_Group* getWorldGroup();
  * @param[in] code the code to exit with
  */
 void error(char *msg, int code);
-#endif
 
 protected:
 
@@ -109,14 +107,17 @@ Environment();
 /**
  * Terminate CMX environment and clean up resources.
  */
-~Environment();
+virtual ~Environment();
 
 private:
 
 p_Environment *p_Impl;
+
 static Environment *p_instance;
 
-CMX_Group *p_WORLD_GROUP;
+Group *p_CMX_GROUP_WORLD;
+
+friend Group::Group(p_Group *group);
 
 };
 }

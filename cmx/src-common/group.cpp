@@ -11,9 +11,19 @@ namespace CMX {
  * @param[in] pid_list list of process ranks in the new group
  * @param[in] comm MPI commuicator that defines ranks in pid_list
  */
-CMX_Group::CMX_Group(int n, int *pid_list, MPI_Comm comm)
+Group::Group(int n, int *pid_list, MPI_Comm comm)
 {
   p_group = new p_Group(n, pid_list, comm);
+}
+
+/**
+ * Construct a group directly from existing p_Group. This is needed for the
+ * world group
+ * @param[in] group pointer to an implementation instance
+ */
+Group::Group(p_Group *group)
+{
+  p_group = group;
 }
 
 /**
@@ -22,7 +32,7 @@ CMX_Group::CMX_Group(int n, int *pid_list, MPI_Comm comm)
  * @param[in] n number of processes in the new group
  * @param[in] pid_list list of process ranks in the new group
  */
-CMX_Group::CMX_Group(int n, int *pid_list, CMX_Group *group)
+Group::Group(int n, int *pid_list, Group *group)
 {
   p_group = new p_Group(n, pid_list, group->p_group);
 }
@@ -30,7 +40,7 @@ CMX_Group::CMX_Group(int n, int *pid_list, CMX_Group *group)
 /**
  * Destructor
  */
-CMX_Group::~CMX_Group()
+Group::~Group()
 {
   delete p_group;
 }
@@ -39,7 +49,7 @@ CMX_Group::~CMX_Group()
  * Return the rank of process in group
  * @return rank of calling process in group
  */
-int CMX_Group::rank()
+int Group::rank()
 {
   return p_group->rank();
 }
@@ -48,7 +58,7 @@ int CMX_Group::rank()
  * Return size of group
  * @return size
  */
-int CMX_Group::size()
+int Group::size()
 {
   return p_group->size();
 }
@@ -57,7 +67,7 @@ int CMX_Group::size()
  * Perform a barrier over all communication in the group
  * @return CMX_SUCCESS on success
  */
-int CMX_Group::barrier()
+int Group::barrier()
 {
   p_group->barrier();
 }
@@ -66,7 +76,7 @@ int CMX_Group::barrier()
  * Return internal MPI_Comm, if there is one
  * @return MPI communicator
  */
-MPI_Comm CMX_Group::MPIComm()
+MPI_Comm Group::MPIComm()
 {
   return p_group->MPIComm();
 }
