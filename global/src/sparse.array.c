@@ -591,8 +591,8 @@ logical pnga_sprs_array_assemble(Integer s_a)
           icnt++;
           jcnt++;
         }
+        if (top[j] >= 0) (ildx+i*(nrows+1))[nrows] = (long)icnt; 
       }
-      if (top[j] >= 0) (ildx+i*(nrows+1))[nrows] = (long)icnt; 
     } else {
       for (j=0; j<nrows; j++) {
         irow = top[j];
@@ -604,8 +604,8 @@ logical pnga_sprs_array_assemble(Integer s_a)
           icnt++;
           jcnt++;
         }
+        if (top[j] >= 0) (isdx+i*(nrows+1))[nrows] = (int)icnt; 
       }
-      if (top[j] >= 0) (isdx+i*(nrows+1))[nrows] = (int)icnt; 
     }
     /* TODO: (maybe) sort each row so that individual elements are arrange in
      * order of increasing j */

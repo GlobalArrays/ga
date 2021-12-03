@@ -458,6 +458,7 @@ extern void          NGA_Scatter_acc_flat64(int g_a, void *v, int64_t subsArray[
 extern void          NGA_Select_elem64(int g_a, char* op, void* val, int64_t* index);
 extern void          NGA_Set_block_cyclic64(int g_a, int64_t dims[]);
 extern void          NGA_Set_block_cyclic_proc_grid64(int g_a, int64_t block[], int64_t proc_grid[]);
+extern void          NGA_Set_chunk64(int g_a, int64_t chunk[]);
 extern void          NGA_Set_data64(int g_a, int ndim, int64_t dims[], int type);
 extern void          NGA_Set_ghosts64(int g_a, int64_t width[]);
 extern void          NGA_Set_irreg_distr64(int g_a, int64_t map[], int64_t block[]);
