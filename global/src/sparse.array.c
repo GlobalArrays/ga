@@ -771,6 +771,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
         } else {
           printf("\n");
         }
+        if (top[j] >= 0) (ildx+i*(nrows+1))[nrows] = (long)icnt; 
       }
      */
     } else {
@@ -785,6 +786,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
           jcnt++;
           row_nnz[j]++;
         }
+        if (top[j] >= 0) (isdx+i*(nrows+1))[nrows] = (int)icnt; 
       }
       if (icnt > 0) (isdx+i*(nrows+1))[nrows] = (int)icnt; 
     }
