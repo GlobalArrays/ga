@@ -132,7 +132,7 @@ char* get_buf(buf_context_t *ctxt, int call_id)
 
 
 /** function to free a buffer */
-void free_buf(buf_context_t *ctxt, char *buf)
+void ga_dra_free_buf(buf_context_t *ctxt, char *buf)
 {
     int i;
     for (i = 0; i < ctxt->nbuf; i++) {

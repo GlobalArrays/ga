@@ -168,10 +168,12 @@ if (ENABLE_BLAS)
     endif()
 
   if(ENABLE_CXX)
-    set(ICL_GIT_TAG 2021.04.00)
-    set(SPP_GIT_TAG 2c040278bac7bd6f0ee2fbd4e2cccd3a3c658ffd)
+    set(BPP_GIT_TAG 0c63c240f445f6f6b9b5d4f24ed0869271aef4d4)
+    set(LPP_GIT_TAG 13301a133f146f9d9b1a2f466bc19fe092c149e1)
+    set(SPP_GIT_TAG ed0b33f76494c6862389ead47d739fa53f627f24)
     if(ENABLE_DEV_MODE)
-      set(ICL_GIT_TAG master)
+      set(BPP_GIT_TAG master)
+      set(LPP_GIT_TAG master)
       set(SPP_GIT_TAG master)
     endif()
     include(FetchContent)
@@ -179,7 +181,7 @@ if (ENABLE_BLAS)
       FetchContent_Declare(
         blaspp
         GIT_REPOSITORY https://bitbucket.org/icl/blaspp.git
-        GIT_TAG ${ICL_GIT_TAG}
+        GIT_TAG ${BPP_GIT_TAG}
       )
       FetchContent_MakeAvailable( blaspp )
     endif()
@@ -188,7 +190,7 @@ if (ENABLE_BLAS)
       FetchContent_Declare(
         lapackpp
         GIT_REPOSITORY https://bitbucket.org/icl/lapackpp.git
-        GIT_TAG ${ICL_GIT_TAG}
+        GIT_TAG ${LPP_GIT_TAG}
       )
       FetchContent_MakeAvailable( lapackpp )
     endif()
