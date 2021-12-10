@@ -219,6 +219,23 @@ void SigSegvHandler(int sig)
 
     comex_error("Segmentation Violation error, status=",(int) sig);
 }
+static int AR_caught_sigfpe=0;
+void (*SigFpeOrig)(int);
+void SigFpeHandler(int sig)
+{
+    char name[256];
+    AR_caught_sig= sig;
+    AR_caught_sigfpe=1;
+    if (-1 == gethostname(name, 256)) {
+        perror("gethostname");
+        comex_error("gethostname failed", errno);
+    }
+    fprintf(stderr,"%d(%s:%d): FPE ... pausing\n",
+            g_state.rank, name, getpid());
+    pause();
+
+    comex_error("FPE error, status=",(int) sig);
+}
 #endif
 
 /* static function declarations */
@@ -609,6 +626,9 @@ int comex_init()
 #if PAUSE_ON_ERROR
     if ((SigSegvOrig=signal(SIGSEGV, SigSegvHandler)) == SIG_ERR) {
         comex_error("signal(SIGSEGV, ...) error", -1);
+    }
+    if ((SigFpeOrig=signal(SIGFPE, SigFpeHandler)) == SIG_ERR) {
+        comex_error("signal(SIGFPE, ...) error", -1);
     }
 #endif
 
