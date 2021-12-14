@@ -1807,7 +1807,7 @@ void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_g
     GA[ga_handle].nblock[i] = proc_grid[i];
     tot *= proc_grid[i];
   }
-  if (tot != GAnproc)
+  if (tot != pnga_pgroup_nnodes(GA[ga_handle].p_handle))
     pnga_error("Number of processors in processor grid must equal available processors",0);
   /* evaluate number of blocks in each dimension */
   for (i=0; i<GA[ga_handle].ndim; i++) {
@@ -1851,7 +1851,7 @@ void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid)
     GA[ga_handle].nblock[i] = proc_grid[i];
     tot *= proc_grid[i];
   }
-  if (tot != GAnproc)
+  if (tot != pnga_pgroup_nnodes(GA[ga_handle].p_handle))
     pnga_error("Number of processors in processor grid must equal available processors",0);
   /* evaluate number of blocks in each dimension */
   for (i=0; i<GA[ga_handle].ndim; i++) {
@@ -1929,7 +1929,7 @@ void pnga_set_tiled_irreg_proc_grid(Integer g_a, Integer *mapc, Integer *nblocks
     GA[ga_handle].nblock[i] = proc_grid[i];
     tot *= proc_grid[i];
   }
-  if (tot != GAnproc)
+  if (tot != pnga_pgroup_nnodes(GA[ga_handle].p_handle))
     pnga_error("Number of processors in processor grid must equal available processors",0);
   /* Find total number of blocks */
   jsize = 1;
