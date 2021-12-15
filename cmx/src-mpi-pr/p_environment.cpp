@@ -378,6 +378,8 @@ p_Environment::~p_Environment()
   if (!_initialized) {
     return;
   }
+  /* just return if this is a progress rank */
+  if (g_state.rank == g_state.master[g_state.rank]) return;
 
   p_CMX_GROUP_WORLD->barrier();
 
@@ -408,8 +410,8 @@ p_Environment::~p_Environment()
 
   num_progress_ranks_per_node = get_num_progress_ranks_per_node();
   is_node_ranks_packed = get_progress_rank_distribution_on_node();
-  smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(group_list);
-  largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(group_list);
+  smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(p_CMX_GROUP_WORLD);
+  largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(p_CMX_GROUP_WORLD);
   my_rank_to_free = get_my_rank_to_free(g_state.rank,
       g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
       num_progress_ranks_per_node, is_node_ranks_packed);
@@ -5113,9 +5115,8 @@ void p_Environment::_group_init(void)
     status = MPI_Comm_size(comm, &size);
     std::vector<int> ranks(size);
     for (i=0; i<size; i++) ranks[i] = i;
-    group = new p_Group(size, &ranks[0], comm);
-    group->setWorldRanks(comm);
-    p_CMX_GROUP_WORLD = group;
+    p_CMX_GROUP_WORLD = new p_Group(size, &ranks[0], comm);
+    p_CMX_GROUP_WORLD->setWorldRanks(comm);
   }
   status = MPI_Comm_split(MPI_COMM_WORLD, proc_split_group_stamp,
       g_state.rank, &(g_state.node_comm));

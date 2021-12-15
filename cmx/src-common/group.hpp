@@ -2,6 +2,8 @@
 #ifndef _CMX_COMMON_GROUP_H
 #define _CMX_COMMON_GROUP_H
 
+#include <memory>
+
 #include <mpi.h>
 
 #include "cmx_impl.hpp"
@@ -49,13 +51,6 @@ int barrier();
  */
 MPI_Comm MPIComm();
 
-/**
- * Construct a group directly from existing p_Group. This is needed for the
- * world group
- * @param[in] group pointer to an implementation instance
- */
-Group(p_Group *group);
-
 protected:
 
 /**
@@ -68,9 +63,18 @@ protected:
  */
 Group(int n, int *pid_list, MPI_Comm comm);
 
+/**
+ * Construct a group directly from existing p_Group. This is needed for the
+ * world group
+ * @param[in] group pointer to an implementation instance
+ */
+Group(p_Group* group);
+
 private:
 
-p_Group *p_group;
+friend class Environment;
+
+p_Group* p_group;
 };
 
 } // namespace CMX

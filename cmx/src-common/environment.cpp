@@ -45,6 +45,16 @@ Environment *Environment::instance(int *argc, char ***argv)
 }
 
 /**
+ * clean up environment and shut down libraries
+ */
+void Environment::finalize()
+{
+//  delete p_CMX_GROUP_WORLD;
+//  printf("Cleaned up group\n");
+  delete p_Impl;
+}
+
+/**
  * wait for completion of non-blocking handle
  * @param hdl non-blocking request handle
  */
@@ -94,6 +104,7 @@ Environment::Environment()
  */
 Environment::~Environment()
 {
+  delete p_CMX_GROUP_WORLD;
   delete p_Impl;
 }
 

@@ -23,6 +23,7 @@ static void CMXError(char *msg, int code)
 }
 
 class Environment {
+
 public:
 
 /**
@@ -51,6 +52,11 @@ void wait(cmx_request_t *hdl);
  * @param group
  */
 void waitAll(p_Group *group);
+
+/**
+ * clean up environment and shut down libraries
+ */
+void finalize();
 
 /**
  * test for completion of non-blocking handle. If test is true, operation has
@@ -117,7 +123,6 @@ static Environment *p_instance;
 
 Group *p_CMX_GROUP_WORLD;
 
-friend Group::Group(p_Group *group);
 
 };
 }

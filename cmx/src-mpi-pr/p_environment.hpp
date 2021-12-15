@@ -18,6 +18,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <string>
+#include <memory>
 
 /* 3rd party headers */
 #include <mpi.h>
@@ -282,7 +283,7 @@ private:
 
 p_Environment *p_instance;
 
-p_Group *p_CMX_GROUP_WORLD;
+p_Group* p_CMX_GROUP_WORLD;
 
 /* useful for debugging */
 int _cmx_me;

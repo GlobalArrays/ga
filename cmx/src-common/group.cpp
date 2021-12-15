@@ -21,7 +21,7 @@ Group::Group(int n, int *pid_list, MPI_Comm comm)
  * world group
  * @param[in] group pointer to an implementation instance
  */
-Group::Group(p_Group *group)
+Group::Group(p_Group* group)
 {
   p_group = group;
 }
@@ -42,7 +42,6 @@ Group::Group(int n, int *pid_list, Group *group)
  */
 Group::~Group()
 {
-  delete p_group;
 }
 
 /**
