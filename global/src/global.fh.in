@@ -3,6 +3,7 @@
       parameter (ga_max_dim = GA_MAX_DIM)
 !
       logical          ga_allocate
+      logical          ga_deallocate
       complex          ga_cdot
       complex          ga_cdot_patch
       integer          ga_cluster_nnodes
@@ -71,6 +72,7 @@
       double complex   ga_zdot
       double complex   ga_zdot_patch
       logical          nga_allocate
+      logical          nga_deallocate
       complex          nga_cdot
       complex          nga_cdot_patch
       integer          nga_cluster_nnodes
