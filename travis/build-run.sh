@@ -112,7 +112,12 @@ case "x$PORT" in
         ./configure --with-${PORT} ${CONFIG_OPTS}
         ;;
     x*)
-        ./configure --with-${PORT} ${CONFIG_OPTS}
+	if [[ "$MPI_IMPL" = "intel" ]] ; then
+	    #hack to get scalapack going
+	    ./configure --with-${PORT} ${CONFIG_OPTS} LIBS=" -L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -ldl" CC=icc
+	else
+            ./configure --with-${PORT} ${CONFIG_OPTS}
+	fi
         ;;
 esac
 fi
