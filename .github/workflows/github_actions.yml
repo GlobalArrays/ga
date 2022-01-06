@@ -33,6 +33,20 @@ jobs:
           - clang
           - gcc-9
         include:
+          - os: ubuntu-latest
+            experimental: true
+            mpi_impl: intel
+            armci_network: sockets
+            config_opts: --enable-i4 --with-blas=-lmkl_rt --with-scalapack=-lmkl_scalapack_lp64
+            f77: ifort
+            cc: gcc
+          - os: ubuntu-latest
+            experimental: true
+            mpi_impl: openmpi
+            armci_network: mpi-ts
+            config_opts: --enable-i4 --without-blas --enable-cxx --disable-f77
+            f77: gfortran
+            cc: gcc
           - os: macos-10.15
             experimental: true
             mpi_impl: mpich
