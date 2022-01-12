@@ -2732,6 +2732,10 @@ logical pnga_allocate(Integer g_a)
     }
     mem_size = nelem * GA[ga_handle].elemsize;
   } else {
+    for( i = 0; i< ndim; i++){
+       GA[ga_handle].scale[i] = (double)GA[ga_handle].num_blocks[i]
+         / (double)GA[ga_handle].dims[i];
+    }
     mem_size = block_size * GA[ga_handle].elemsize;
   }
   GA[ga_handle].id = INVALID_MA_HANDLE;
@@ -3047,6 +3051,10 @@ logical pnga_overlay(Integer g_a, Integer g_parent)
     }
     mem_size = nelem * GA[ga_handle].elemsize;
   } else {
+    for( i = 0; i< ndim; i++){
+       GA[ga_handle].scale[i] = (double)GA[ga_handle].num_blocks[i]
+         / (double)GA[ga_handle].dims[i];
+    }
     mem_size = block_size * GA[ga_handle].elemsize;
   }
   GA[ga_handle].id = INVALID_MA_HANDLE;
@@ -4707,7 +4715,72 @@ logical pnga_locate_region( Integer g_a,
       ga_UpdateSubscriptM(ndim,proc_subscript,procT,procB,GA[ga_handle].nblock);
       (*np)++;
     }
-  } else {
+  } else if (GA[ga_handle].distr_type == TILED_IRREG) {
+    Integer nproc = pnga_pgroup_nnodes(GA[ga_handle].p_handle);
+    /* find "processor coordinates" for the top left corner and store them
+     * in ProcT */
+    for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
+      findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].num_blocks[d], 
+          GA[ga_handle].scale[d], lo[d], &procT[d]);
+      dpos += GA[ga_handle].num_blocks[d];
+    }
+
+    /* find "processor coordinates" for the right bottom corner and store
+     * them in procB */
+#ifdef __crayx1
+#pragma _CRI novector
+#endif
+    for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
+      findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].num_blocks[d], 
+          GA[ga_handle].scale[d], hi[d], &procB[d]);
+      dpos += GA[ga_handle].num_blocks[d];
+    }
+
+    *np = 0;
+
+    /* Find total number of processors containing data and return the
+     * result in elems. Also find the lowest "processor coordinates" of the
+     * processor block containing data and return these in proc_subscript.
+     */
+    ga_InitLoopM(&elems, ndim, proc_subscript, procT,procB,GA[ga_handle].num_blocks);
+
+    /* p_handle = (Integer)GA[ga_handle].p_handle; */
+    for(i= 0; i< elems; i++){ 
+      Integer _lo[MAXDIM], _hi[MAXDIM];
+      Integer  offset;
+
+      /* convert i to owner processor id using the current values in
+         proc_subscript */
+      ga_ComputeIndexM(&proc, ndim, proc_subscript, GA[ga_handle].num_blocks); 
+      proc = proc%nproc;
+      /* get range of global array indices that are owned by owner */
+      ga_ownsM(ga_handle, proc, _lo, _hi);
+
+      offset = *np *(ndim*2); /* location in map to put patch range */
+
+#ifdef __crayx1
+#pragma _CRI novector
+#endif
+      for(d = 0; d< ndim; d++)
+        map[d + offset ] = lo[d] < _lo[d] ? _lo[d] : lo[d];
+#ifdef __crayx1
+#pragma _CRI novector
+#endif
+      for(d = 0; d< ndim; d++)
+        map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
+
+      owner = proc;
+      if (GA[ga_handle].num_rstrctd == 0) {
+        proclist[i] = owner;
+      } else {
+        proclist[i] = GA[ga_handle].rstrctd_list[owner];
+      }
+      /* Update to proc_subscript so that it corresponds to the next
+       * processor in the block of processors containing the patch */
+      ga_UpdateSubscriptM(ndim,proc_subscript,procT,procB,GA[ga_handle].num_blocks);
+      (*np)++;
+    }
+  } else if (GA[ga_handle].distr_type == BLOCK_CYCLIC) {
     Integer nblocks = GA[ga_handle].block_total;
     Integer chk, j, tlo[MAXDIM], thi[MAXDIM], cnt;
     Integer offset;
@@ -4745,12 +4818,130 @@ logical pnga_locate_region( Integer g_a,
         map[offset + ndim + j] = hi[j] > thi[j] ? thi[j] : hi[j];
       }
     }
+  } else if (GA[ga_handle].distr_type == SCALAPACK ||
+             GA[ga_handle].distr_type == TILED) {
+    /* find min and max block coordinates of region */
+    Integer min[MAXDIM], max[MAXDIM];
+    Integer count[MAXDIM];
+    Integer total_blocks = 1;
+    Integer cnt = 0;
+    Integer offset;
+    for (i=0; i<ndim; i++) {
+      min[i] = (lo[i]-1)/GA[ga_handle].block_dims[i];
+      max[i] = (hi[i]-1)/GA[ga_handle].block_dims[i];
+      total_blocks *= (max[i]-min[i]+1);
+      count[i] = min[i];
+    }
+    while (count[ndim-1]<=max[ndim-1]) {
+      /* Calculate block index */
+      Integer idx = 0;
+      Integer iproc;
+      Integer p_handle = GA[ga_handle].p_handle;
+      Integer size = pnga_pgroup_nnodes(p_handle);
+      for (i=ndim-1; i>=0; i--) {
+        idx = GA[ga_handle].num_blocks[i]*idx+count[i];
+      }
+      iproc = idx%size;
+      if (GA[ga_handle].num_rstrctd == 0) {
+        proclist[i] = iproc;
+      } else {
+        proclist[i] = GA[ga_handle].rstrctd_list[iproc];
+      }
+      if (p_handle > 0) {
+        iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
+      }
+      proclist[cnt] = iproc;
+      /* store informatin on this block */
+      np[cnt] = idx;
+      offset = 2*cnt*ndim;
+      for (i=0; i<ndim; i++) {
+        map[offset+i] = count[i]*GA[ga_handle].block_dims[i]+1;
+        map[offset+ndim+i] = (count[i]+1)*GA[ga_handle].block_dims[i];
+        if (map[offset+ndim+i] > GA[ga_handle].dims[i])
+          map[offset+ndim+i] = GA[ga_handle].dims[i];
+      }
+      cnt++;
+      /* Increment count array */
+      for (i=0; i<ndim; i++) {
+        count[i]++;
+        if (count[i] > max[i]) {
+          count[i] = min[i];
+          if (i<ndim-1) {
+            count[i+1]++;
+          }
+        }
+      }
+    }
   }
   return(TRUE);
 }
 #ifdef __crayx1
 #pragma _CRI inline pnga_locate_region
 #endif
+
+/**
+ *  Locate individual patches,the owner of specified patch, offsets for the
+ *  start of the patch, and strides for the patch of a Global Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_locate_offsets =  pnga_locate_offsets
+#endif
+
+logical pnga_locate_offsets( Integer g_a,
+                            Integer *lo,
+                            Integer *hi,
+                            Integer *map,
+                            Integer *proclist,
+                            Integer *smap,
+                            void    **ptr,
+                            C_Long  *offsets,
+                            Integer *np)
+/*    g_a      [input]  global array handle
+      lo       [input]  lower indices of patch in global array
+      hi       [input]  upper indices of patch in global array
+      map      [output] list of lower and upper indices for portion of
+                        patch that exists on each processor containing a
+                        portion of the patch. The map is constructed so
+                        that for a D dimensional global array, the first
+                        D elements are the lower indices on the first
+                        processor in proclist, the next D elements are
+                        the upper indices of the first processor in
+                        proclist, the next D elements are the lower
+                        indices for the second processor in proclist, and
+                        so on.
+      proclist [output] list of processors containing some portion of the
+                        patch
+      smap     [output] list of strides for each patch. The first D-1 entries
+                        are the strides for the first patch, the second D-1
+                        entries are the strides for the second patch, etc.
+      ptr      [output] pointer location of the start of the memory allocation on
+                        the processor holding the patch
+      offsets  [output] offset from the start of the memory allocation
+      np       [output] total number of processors containing a portion
+                        of the patch
+
+      For a block cyclic data distribution, this function returns a list of
+      blocks that cover the region along with the lower and upper indices of
+      each block.
+*/
+{
+  /* get basic information about individual blocks composing region defined by
+   * lo and hi */
+  pnga_locate_region(g_a,lo,hi,map,proclist,np);
+  {
+    Integer nbl, n; 
+    Integer *blo, *bhi;
+    Integer tlo[MAXDIM], thi[MAXDIM];
+    Integer len;
+    nbl = *np;
+    for (n=0; n<nbl; n++) {
+      pnga_distribution(g_a,proclist[n],tlo,thi);
+      /*
+      pnga_access_block_segment_ptr(g_a, proc,  ptr, len)
+      */
+    }
+  }
+}
 
 /**
  *  Returns the processor grid for the global array

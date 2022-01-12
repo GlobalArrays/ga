@@ -31,6 +31,7 @@ c#define USE_MEMDEV
 
 #define MEM_INC 1000
 
+#if 0
 #ifdef BLOCK_CYCLIC
 #  define NEW_API
 #  undef MIRROR
@@ -38,6 +39,7 @@ c#define USE_MEMDEV
 #  undef USE_SCALAPACK_DISTR
 #  undef USE_TILED_DISTR
 #  undef USE_TILED_IRREG_DISTR
+#endif
 #endif
 
 #ifdef USE_SCALAPACK_DISTR
@@ -90,7 +92,9 @@ c
 #ifdef USE_RESTRICTED
       ma_heap = 2*ma_heap
 #endif
-      print *, 'util_mdtob(', ma_heap, ')=', util_mdtob(ma_heap)
+      if(ga_nodeid().eq.0)then
+        print *, 'util_mdtob(', ma_heap, ')=', util_mdtob(ma_heap)
+      endif
       call GA_set_memory_limit(util_mdtob(ma_heap))
 c
       call ga_version(version,subversion,patch)
@@ -103,6 +107,31 @@ c
          write(6,'(a,i1,a,i1,a,i1)') ' Version ',version,'.',
      +      subversion,'.',patch
          call ffflush(6)
+#ifdef BLOCK_CYCLIC
+         print *,' '
+         print *,' Testing block-cyclic arrays '
+         print *,' '
+#endif
+#ifdef USE_SCALAPACK_DISTR
+         print *,' '
+         print *,' Testing ScaLAPACK distributed arrays '
+         print *,' '
+#endif
+#ifdef USE_TILED_DISTR
+         print *,' '
+         print *,' Testing tiled-distributed arrays '
+         print *,' '
+#endif
+#ifdef USE_TILED_IRREG_DISTR
+         print *,' '
+         print *,' Testing irregular tiled-distributed arrays '
+         print *,' '
+#endif
+#ifdef USE_RESTRICTED
+         print *,' '
+         print *,' Testing restricted arrays '
+         print *,' '
+#endif
       endif
 c
 c***  Initialize the MA package
