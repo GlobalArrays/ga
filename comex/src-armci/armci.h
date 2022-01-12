@@ -375,6 +375,13 @@ extern void ARMCI_SET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle);
 
 extern void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle);
 
+/* Request a valid pointer to remote data */
+extern void* ARMCI_Access(void *ptr, /* pointer returned by ARMCI_Malloc */
+                          int proc  /* process hosting remote data*/);
+
+/* Release remote pointer */
+extern void ARMIC_Release(void *ptr /* mapped pointer */);
+
 /*
 #define ARMCI_INIT_HANDLE(hdl) do {((double *)((hdl)->data))[0]=0; \
   ((double *)((hdl)->data))[1]=0; }while(0)

@@ -774,6 +774,16 @@ int PARMCI_WaitProc(int proc)
     return comex_wait_proc(proc, COMEX_GROUP_WORLD);
 }
 
+void* ARMCI_Access(void *ptr, int proc)
+{
+  return comex_access(ptr, proc);
+}
+
+extern void ARMIC_Release(void *ptr)
+{
+  comex_release(ptr);
+}
+
 
 int parmci_notify(int proc)
 {

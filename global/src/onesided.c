@@ -1539,7 +1539,7 @@ Integer  ow,i,p_handle;
      ow = GA[handle].rank_rstrctd[ow];
    }
    gam_Location(ow,handle, lo, &lptr, ld);
-   *(char**)ptr = lptr; 
+   *(void**)ptr = ARMCI_Access((void*)lptr,ow);
 }
 
 /*\ RETURN A POINTER TO BEGINNING OF LOCAL DATA BLOCK
@@ -1761,7 +1761,7 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
 
   lptr = GA[handle].ptr[inode]+offset*GA[handle].elemsize;
 
-  *(char**)ptr = lptr; 
+  *(void**)ptr = ARMCI_Access((void*)lptr,inode);
 }
 
 /**
@@ -1804,6 +1804,7 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
       offset += tsum;
     }
     lptr = GA[handle].ptr[inode]+offset*GA[handle].elemsize;
+    *(void**)lptr = ARMCI_Access((void*)lptr,inode);
 
     ga_ownsM(handle,index,lo,hi); 
     for (i=0; i<ndim-1; i++) {
@@ -1856,7 +1857,7 @@ void pnga_access_block_segment_ptr(Integer g_a, Integer proc, void* ptr, Integer
   lptr = GA[handle].ptr[index];
 
   *len = GA[handle].size/GA[handle].elemsize;
-  *(char**)ptr = lptr; 
+  *(void**)ptr = ARMCI_Access(lptr,index);
 }
 
 /**
@@ -1898,6 +1899,7 @@ unsigned long    lref=0, lptr;
       ow = PGRP_LIST[p_handle].map_proc_list[ow];
 
    gam_Location(ow,handle, lo, &ptr, ld);
+   ptr = (char*)ARMCI_Access(ptr,ow);
 
    /*
     * return patch address as the distance elements from the reference address

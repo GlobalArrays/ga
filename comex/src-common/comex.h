@@ -45,14 +45,14 @@ typedef int comex_group_t;
 /**
  * Initialize comex.
  *
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_init();
 
 /**
  * Initialize comex with command line arguments.
  *
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_init_args(int *argc, char ***argv);
 
@@ -67,7 +67,7 @@ extern int comex_initialized();
 /**
  * Terminate comex and clean up resources.
  *
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_finalize();
 
@@ -103,7 +103,7 @@ extern int comex_group_create(
  * Marks the group for deallocation.
  *
  * @param[in] group group to be destroyed
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_group_free(comex_group_t group);
 
@@ -112,7 +112,7 @@ extern int comex_group_free(comex_group_t group);
  *
  * @param[in] group group handle
  * @param[out] rank rank of the calling process in the group
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_group_rank(comex_group_t group, int *rank);
 
@@ -121,7 +121,7 @@ extern int comex_group_rank(comex_group_t group, int *rank);
  *
  * @param[in] group group handle
  * @param[out] size number of processes in the group
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_group_size(comex_group_t group, int *size);
 
@@ -134,7 +134,7 @@ extern int comex_group_size(comex_group_t group, int *size);
  *
  * @param[in] group group handle
  * @param[out] comm the communicator handle
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_group_comm(comex_group_t group, MPI_Comm *comm);
 
@@ -146,7 +146,7 @@ extern int comex_group_comm(comex_group_t group, MPI_Comm *comm);
  * @param[in] ranks_from array of zer or more valid ranks in group_from
  * @param[in] group_to the group to translate ranks to 
  * @param[out] ranks_to array of corresponding ranks in group_to
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_group_translate_ranks(int n,
         comex_group_t group_from, int *ranks_from,
@@ -161,7 +161,7 @@ extern int comex_group_translate_ranks(int n,
  * @param[in] group the group to translate from
  * @param[in] group_rank the rank to translate from
  * @param[out] world_rank the corresponding world rank
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_group_translate_world(
         comex_group_t group, int group_rank, int *world_rank);
@@ -173,7 +173,7 @@ extern int comex_group_translate_world(
  * operations barrier.
  *
  * @param[in] group the group to perform the collective barrier over
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_barrier(comex_group_t group);
 
@@ -186,7 +186,7 @@ extern int comex_barrier(comex_group_t group);
  * @param[in] proc remote process(or) id
  * @param[in] group the calling process and remote process must belong to the
  *            same group
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_put(
         void *src, void *dst, int bytes,
@@ -236,7 +236,7 @@ extern int comex_putv(
  * @param[in] group the calling process and remote process must belong to the
  *            same group
  * @param[out] nb_handle nonblocking request object
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_nbput(
         void *src, void *dst, int bytes,
@@ -413,7 +413,7 @@ extern int comex_nbaccv(
  * @param[in] proc remote process(or) id
  * @param[in] group the calling process and remote process must belong to the
  *            same group
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_get(
         void *src, void *dst, int bytes,
@@ -463,7 +463,7 @@ extern int comex_getv(
  * @param[in] group the calling process and remote process must belong to the
  *            same group
  * @param[out] nb_handle nonblocking request object
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_nbget(
         void *src, void *dst, int bytes,
@@ -657,7 +657,7 @@ extern int comex_unlock(int mutex, int proc);
  *            amount to increment the remote value by
  * @param[in] proc remote process(or) id
  * @param[in] group group handle
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_rmw(
         int op, void *ploc, void *prem, int extra,
@@ -667,7 +667,7 @@ extern int comex_rmw(
  * Waits for completion of non-blocking comex operations with explicit handles.
  *
  * @param[in] nb_handle the handle
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_wait(comex_request_t *nb_handle);
 
@@ -677,7 +677,7 @@ extern int comex_wait(comex_request_t *nb_handle);
  *
  * @param[in] nb_handle the handle
  * @param[out] status 0-completed, 1-in progress
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_test(comex_request_t *nb_handle, int *status);
 
@@ -685,7 +685,7 @@ extern int comex_test(comex_request_t *nb_handle, int *status);
  * Wait for all outstanding implicit non-blocking operations to finish.
  *
  * @param[in] group group handle
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_wait_all(comex_group_t group);
 
@@ -696,9 +696,24 @@ extern int comex_wait_all(comex_group_t group);
  * @param[in] proc proc for which all the outstanding non-blocking operations
  * have to be completed
  * @param[in] group group handle
- * @return COMEX_SUCCESS on sucess
+ * @return COMEX_SUCCESS on success
  */
 extern int comex_wait_proc(int proc, comex_group_t group);
+
+/**
+ * Access a valid pointer if requested data is on same node
+ * @param ptr[in] relative to value returned by comex_malloc
+ * @param proc[in] rank of process hosting data
+ * @return valid pointer in address space of call process
+ */
+extern void* comex_access(void *ptr, int proc);
+
+/**
+ * Release pointer. This is most likely a no-op.
+ * @param ptr[in] valid local pointer
+ * @param proc[in] rank of process hosting data
+ */
+extern void comex_release(void *ptr);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

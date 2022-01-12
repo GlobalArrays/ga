@@ -7173,3 +7173,15 @@ STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels,
     }
 }
 
+void* comex_access(void *ptr, int proc)
+{
+  reg_entry_t *reg_entry;
+  reg_entry = reg_cache_find(proc, ptr, 0);
+  COMEX_ASSERT(reg_entry);
+  return _get_offset_memory(reg_entry, ptr);
+}
+
+void comex_release(void *ptr)
+{
+  /* No action taken */
+}
