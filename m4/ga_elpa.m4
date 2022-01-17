@@ -243,8 +243,8 @@ AS_IF([test $ga_elpa_2017_ok = no],
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_elpa_2017_ok])])
 
-# check elpa2016 fisecond
-AS_IF([test $ga_elpa_2016_ok = no],
+# check elpa2016 second
+AS_IF([test $ga_elpa_2017_ok = no && test $ga_elpa_2016_ok = no],
     [AC_MSG_CHECKING([for ELPA 2016 with user-supplied flags])
      LIBS="$ELPA_LIBS $SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
      GA_RUN_ELPA_2016_TEST()
@@ -252,7 +252,7 @@ AS_IF([test $ga_elpa_2016_ok = no],
      AC_MSG_RESULT([$ga_elpa_2016_ok])])
 
 # check elpa2015 third
-AS_IF([test $ga_elpa_2015_ok = no],
+AS_IF([test $ga_elpa_2017_ok = no && test $ga_elpa_2016_ok = no && test $ga_elpa_2015_ok = no],
     [AC_MSG_CHECKING([for ELPA 2015 with user-supplied flags])
      LIBS="$ELPA_LIBS $SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
      GA_RUN_ELPA_2015_TEST()
