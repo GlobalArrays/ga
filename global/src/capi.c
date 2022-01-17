@@ -2709,6 +2709,59 @@ int NGA_Locate_region64(int g_a,int64_t lo[],int64_t hi[],int64_t map[],int proc
      return (int)np_actual;
 }
 
+int NGA_Locate_offsets(int g_a,int lo[],int hi[],int map[], int procs[], int smap[], void **ptr, int offsets[])
+{
+     logical st;
+     Integer a=(Integer)g_a, np_guess, np_actual;
+     Integer ndim = wnga_ndim(a);
+     Integer *tmap, *tsmap;
+     Integer *toffsets;
+     int i;
+     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
+     Integer *_ga_map_capi;
+     COPYINDEX_C2F(lo,_ga_lo,ndim);
+     COPYINDEX_C2F(hi,_ga_hi,ndim);
+     st = wnga_locate_nnodes(a, _ga_lo, _ga_hi, &np_guess);
+     tmap = (Integer *)malloc( (int)(np_guess*2*ndim *sizeof(Integer)));
+     if (ndim > 1) {
+       tsmap = (Integer *)malloc( (int)(np_guess*2*(ndim-1) *sizeof(Integer)));
+     }
+     if(!map)GA_Error("NGA_Locate_offsets: unable to allocate memory",g_a);
+     _ga_map_capi = (Integer*)malloc(np_guess*sizeof(Integer));
+     toffsets = (Integer*)malloc(np_guess*sizeof(Integer));
+
+     st = wnga_locate_offsets(a,_ga_lo, _ga_hi, tmap, _ga_map_capi, tsmap, ptr, toffsets, &np_actual);
+     assert(np_guess == np_actual);
+     if(st==FALSE){
+       free(tmap);
+       free(_ga_map_capi);
+       free(tsmap);
+       free(toffsets);
+       return 0;
+     }
+
+     COPY(int,_ga_map_capi,procs, np_actual);
+     COPY(int,toffsets,offsets, np_actual);
+
+        /* might have to swap lo/hi when copying */
+
+     for(i=0; i< np_actual*2; i++){
+        Integer *ptmap = tmap+i*ndim;
+        int *pmap = map +i*ndim;
+        COPYINDEX_F2C(ptmap, pmap, ndim);  
+     }
+     for(i=0; i< np_actual; i++){
+        Integer *ptmap = tsmap+i*(ndim-1);
+        int *pmap = smap +i*(ndim-1);
+        COPYINDEX_F2C(ptmap, pmap, ndim-1);  
+     }
+     free(tmap);
+     free(_ga_map_capi);
+     free(tsmap);
+     free(toffsets);
+     return (int)np_actual;
+}
+
 int NGA_Locate_num_blocks(int g_a, int *lo, int *hi)
 {
   Integer ret;

@@ -4595,7 +4595,6 @@ logical pnga_locate_nnodes( Integer g_a,
 #pragma _CRI inline nga_locate_nnodes_
 #endif
 
-
 /**
  *  Locate individual patches and their owner of specified patch of a
  *  Global Array
@@ -4752,7 +4751,7 @@ logical pnga_locate_region( Integer g_a,
       /* convert i to owner processor id using the current values in
          proc_subscript */
       ga_ComputeIndexM(&proc, ndim, proc_subscript, GA[ga_handle].num_blocks); 
-      proc = proc%nproc;
+      proclist[i] = proc;
       /* get range of global array indices that are owned by owner */
       ga_ownsM(ga_handle, proc, _lo, _hi);
 
@@ -4769,12 +4768,6 @@ logical pnga_locate_region( Integer g_a,
       for(d = 0; d< ndim; d++)
         map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
 
-      owner = proc;
-      if (GA[ga_handle].num_rstrctd == 0) {
-        proclist[i] = owner;
-      } else {
-        proclist[i] = GA[ga_handle].rstrctd_list[owner];
-      }
       /* Update to proc_subscript so that it corresponds to the next
        * processor in the block of processors containing the patch */
       ga_UpdateSubscriptM(ndim,proc_subscript,procT,procB,GA[ga_handle].num_blocks);
@@ -4841,16 +4834,7 @@ logical pnga_locate_region( Integer g_a,
       for (i=ndim-1; i>=0; i--) {
         idx = GA[ga_handle].num_blocks[i]*idx+count[i];
       }
-      iproc = idx%size;
-      if (GA[ga_handle].num_rstrctd == 0) {
-        proclist[i] = iproc;
-      } else {
-        proclist[i] = GA[ga_handle].rstrctd_list[iproc];
-      }
-      if (p_handle > 0) {
-        iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
-      }
-      proclist[cnt] = iproc;
+      proclist[cnt] = idx;
       /* store informatin on this block */
       np[cnt] = idx;
       offset = 2*cnt*ndim;
@@ -4894,21 +4878,20 @@ logical pnga_locate_offsets( Integer g_a,
                             Integer *proclist,
                             Integer *smap,
                             void    **ptr,
-                            C_Long  *offsets,
+                            Integer *offsets,
                             Integer *np)
 /*    g_a      [input]  global array handle
       lo       [input]  lower indices of patch in global array
       hi       [input]  upper indices of patch in global array
       map      [output] list of lower and upper indices for portion of
-                        patch that exists on each processor containing a
-                        portion of the patch. The map is constructed so
-                        that for a D dimensional global array, the first
-                        D elements are the lower indices on the first
-                        processor in proclist, the next D elements are
-                        the upper indices of the first processor in
-                        proclist, the next D elements are the lower
-                        indices for the second processor in proclist, and
-                        so on.
+                        patch from each block containing a portion of the
+                        patch. The map is constructed so that for a
+                        D-dimensional global array, the first D elements
+                        are the lower indices on the first processor in
+                        proclist, the next D elements are the upper indices
+                        of the first processor in proclist, the next D
+                        elements are the lower indices for the second
+                        processor in proclist, and so on.
       proclist [output] list of processors containing some portion of the
                         patch
       smap     [output] list of strides for each patch. The first D-1 entries
@@ -4916,7 +4899,7 @@ logical pnga_locate_offsets( Integer g_a,
                         entries are the strides for the second patch, etc.
       ptr      [output] pointer location of the start of the memory allocation on
                         the processor holding the patch
-      offsets  [output] offset from the start of the memory allocation
+      offsets  [output] offset from the start of the memory allocation (in bytes)
       np       [output] total number of processors containing a portion
                         of the patch
 
@@ -4926,19 +4909,27 @@ logical pnga_locate_offsets( Integer g_a,
 */
 {
   /* get basic information about individual blocks composing region defined by
-   * lo and hi */
+   * lo and hi. For block-cyclic arrays, proclist returns the block indices */
   pnga_locate_region(g_a,lo,hi,map,proclist,np);
   {
-    Integer nbl, n; 
+    Integer nbl, n, j, ga_handle, ndim; 
     Integer *blo, *bhi;
     Integer tlo[MAXDIM], thi[MAXDIM];
-    Integer len;
+    Integer ld[MAXDIM];
+    Integer len, offset, nproc;
+    void *lptr;
     nbl = *np;
+    ga_handle = GA_OFFSET + g_a;
+    ndim = GA[ga_handle].ndim;
+    nproc = pnga_pgroup_nnodes(GA[ga_handle].p_handle);
     for (n=0; n<nbl; n++) {
       pnga_distribution(g_a,proclist[n],tlo,thi);
-      /*
-      pnga_access_block_segment_ptr(g_a, proc,  ptr, len)
-      */
+      for (j=0; j<ndim-1; j++) {
+        smap[n*(ndim-1)+j] = thi[j]-tlo[j]+1;
+      }
+      pnga_access_block_segment_ptr(g_a, proclist[n]%nproc, &ptr[n], &len);
+      pnga_access_block_ptr(g_a, proclist[n], &lptr, ld);
+      offsets[n] = (Integer)(lptr - ptr[n]);
     }
   }
 }

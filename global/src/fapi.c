@@ -620,6 +620,19 @@ logical FATR nga_locate_region_( Integer *g_a,
   return wnga_locate_region(*g_a, lo, hi, map, proclist, np);
 }
 
+logical FATR nga_locate_offsets_( Integer *g_a,
+                                  Integer *lo,
+                                  Integer *hi,
+                                  Integer *map,
+                                  Integer *proclist,
+                                  Integer *smap,
+                                  void   **ptr,
+                                  Integer *offsets,
+                                  Integer *np)
+{
+  return wnga_locate_offsets(*g_a, lo, hi, map, proclist, smap, ptr, offsets, np);
+}
+
 void FATR ga_lock_(Integer *mutex)
 {
   wnga_lock(*mutex);

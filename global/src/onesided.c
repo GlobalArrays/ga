@@ -1783,6 +1783,7 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
   Integer  handle = GA_OFFSET + g_a;
   Integer  i, j/*, p_handle*/, nblocks, offset, tsum, inode;
   Integer ndim, lo[MAXDIM], hi[MAXDIM], index;
+  Integer nprocs = pnga_pgroup_nnodes(GA[handle].p_handle);
 
   
   /*p_handle = GA[handle].p_handle;*/
@@ -1792,10 +1793,13 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
   if (index < 0 || index >= nblocks)
     pnga_error("block index outside allowed values",index);
 
-  if (GA[handle].distr_type == BLOCK_CYCLIC) {
+  if (GA[handle].distr_type == REGULAR) {
+    lptr = GA[handle].ptr[index];
+    *(void**)lptr = ARMCI_Access((void*)lptr,index);
+  } else if (GA[handle].distr_type == BLOCK_CYCLIC) {
     offset = 0;
-    inode = index%GAnproc;
-    for (i=inode; i<index; i += GAnproc) {
+    inode = index%nprocs;
+    for (i=inode; i<index; i += nprocs) {
       ga_ownsM(handle,i,lo,hi); 
       tsum = 1;
       for (j=0; j<ndim; j++) {

@@ -75,6 +75,9 @@ extern Integer pnga_locate_num_blocks(Integer g_a, Integer *lo, Integer *hi);
 extern logical pnga_locate_nnodes(Integer g_a, Integer *lo, Integer *hi, Integer *np);
 extern logical pnga_locate_region(Integer g_a, Integer *lo, Integer *hi,
                                   Integer *map, Integer *proclist, Integer *np);
+extern logical pnga_locate_offsets(Integer g_a, Integer *lo, Integer *hi,
+                                  Integer *map, Integer *proclist, Integer *smap,
+                                  void **ptrs, Integer *offsets, Integer *np);
 extern void pnga_lock(Integer mutex);
 extern Integer pnga_ndim(Integer g_a);
 extern void pnga_mask_sync(Integer begin, Integer end);
