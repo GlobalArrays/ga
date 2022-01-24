@@ -31,6 +31,7 @@ c#define USE_MEMDEV
 
 #define MEM_INC 1000
 
+#if 0
 #ifdef BLOCK_CYCLIC
 #  define NEW_API
 #  undef MIRROR
@@ -38,6 +39,7 @@ c#define USE_MEMDEV
 #  undef USE_SCALAPACK_DISTR
 #  undef USE_TILED_DISTR
 #  undef USE_TILED_IRREG_DISTR
+#endif
 #endif
 
 #ifdef USE_SCALAPACK_DISTR
@@ -104,6 +106,26 @@ c
      +      subversion,'.',patch
          call ffflush(6)
       endif
+#ifdef BLOCK_CYCLIC
+      if (me.eq.0) print *,' '
+      if (me.eq.0) print *,' Testing block-cyclic layout'
+      if (me.eq.0) print *,' '
+#endif
+#ifdef USE_SCALAPACK_DISTR
+      if (me.eq.0) print *,' '
+      if (me.eq.0) print *,' Testing ScaLAPACK block-cyclic layout'
+      if (me.eq.0) print *,' '
+#endif
+#ifdef USE_TILED_DISTR
+      if (me.eq.0) print *,' '
+      if (me.eq.0) print *,' Testing tiled layout'
+      if (me.eq.0) print *,' '
+#endif
+#ifdef USE_TILED_IRREG_DISTR
+      if (me.eq.0) print *,' '
+      if (me.eq.0) print *,' Testing irregular tiled layout'
+      if (me.eq.0) print *,' '
+#endif
 c
 c***  Initialize the MA package
 c     MA must be initialized before any global array is allocated
