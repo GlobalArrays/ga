@@ -129,6 +129,26 @@ c
          print *,' '
 #endif
       endif
+#ifdef BLOCK_CYCLIC
+      if (me.eq.0) print *,' '
+      if (me.eq.0) print *,' Testing block-cyclic layout'
+      if (me.eq.0) print *,' '
+#endif
+#ifdef USE_SCALAPACK_DISTR
+      if (me.eq.0) print *,' '
+      if (me.eq.0) print *,' Testing ScaLAPACK block-cyclic layout'
+      if (me.eq.0) print *,' '
+#endif
+#ifdef USE_TILED_DISTR
+      if (me.eq.0) print *,' '
+      if (me.eq.0) print *,' Testing tiled layout'
+      if (me.eq.0) print *,' '
+#endif
+#ifdef USE_TILED_IRREG_DISTR
+      if (me.eq.0) print *,' '
+      if (me.eq.0) print *,' Testing irregular tiled layout'
+      if (me.eq.0) print *,' '
+#endif
 c
 c***  Initialize the MA package
 c     MA must be initialized before any global array is allocated
