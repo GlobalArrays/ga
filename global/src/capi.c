@@ -832,6 +832,40 @@ void NGA_Set_device(int g_a, int flag)
     wnga_set_device(aa,iflag);
 }
 
+void GA_Device_host_list(int *list, int *devIDs, int *ndev, int grp)
+{
+  Integer gg = (Integer)grp;
+  Integer nsize = wnga_pgroup_nnodes(gg);
+  Integer *tlist = (Integer*)malloc(nsize*sizeof(Integer));
+  Integer *tids = (Integer*)malloc(nsize*sizeof(Integer));
+  Integer tndev, i;
+  wnga_device_host_list(tlist, tids, &tndev, gg);
+  for (i=0; i<tndev; i++) {
+    list[i] = (int)tlist[i];
+    devIDs[i] = (int)tids[i];
+  }
+  *ndev = (int)tndev;
+  free(tlist);
+  free(tids);
+}
+
+void NGA_Device_host_list(int *list, int *devIDs, int *ndev, int grp)
+{
+  Integer gg = (Integer)grp;
+  Integer nsize = wnga_pgroup_nnodes(gg);
+  Integer *tlist = (Integer*)malloc(nsize*sizeof(Integer));
+  Integer *tids = (Integer*)malloc(nsize*sizeof(Integer));
+  Integer tndev, i;
+  wnga_device_host_list(tlist, tids, &tndev, gg);
+  for (i=0; i<tndev; i++) {
+    list[i] = (int)tlist[i];
+    devIDs[i] = (int)tids[i];
+  }
+  *ndev = (int)tndev;
+  free(tlist);
+  free(tids);
+}
+
 int GA_Total_blocks(int g_a)
 {
     Integer aa;

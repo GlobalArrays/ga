@@ -52,6 +52,7 @@ extern Integer pnga_create_handle();
 extern logical pnga_create_mutexes(Integer num);
 extern logical pnga_destroy(Integer g_a);
 extern logical pnga_destroy_mutexes();
+extern void pnga_device_host_list(Integer *list, Integer *devIDs, Integer *ndev, Integer grp);
 extern void pnga_distribution(Integer g_a, Integer proc, Integer *lo, Integer *hi);
 extern logical pnga_duplicate(Integer g_a, Integer *g_b, char *array_name);
 extern void pnga_fill(Integer g_a, void* val);

@@ -968,4 +968,13 @@ void ARMCI_Device_memset(void *ptr, int val, armci_size_t bytes)
 {
   comex_device_memset(ptr, val, (size_t)bytes);
 }
+
+/**
+ * @param[in] host_ptr pointer to buffer on host
+ * @param[in] dev_ptr pointer to buffer on device
+ * @param[in] bytes number of bytes to copy
+ */
+void ARMCI_Copy_to_dev(void *host_ptr, void *dev_ptr, armci_size_t bytes)
+{
+}
 #endif

@@ -781,6 +781,14 @@ extern void comex_device_host_list(int *list, int *devIDs, int *ndev, comex_grou
  * @param[in] size number of bytes that should be set
  */
 extern void comex_device_memset(void *ptr, int val, size_t size);
+
+/**
+ * @param[in] host_ptr pointer to buffer on host
+ * @param[in] dev_ptr pointer to buffer on device
+ * @param[in] bytes number of bytes to copy
+ */
+extern void comex_copy_to_device(void *host_ptr, void *dev_ptr, size_t bytes);
+
 #endif
 
 #if defined(__cplusplus) || defined(c_plusplus)
