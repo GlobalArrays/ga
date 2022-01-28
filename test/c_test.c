@@ -81,11 +81,15 @@ void factor(int p, int *idx, int *idy) {
 int nprocs, rank;
 int pdx, pdy;
 
+int *list;
+int *devIDs;
+int ndev;
+
 double tput, tget, tacc, tinc;
 int get_cnt,put_cnt,acc_cnt;
 double put_bw, get_bw, acc_bw;
 double t_put, t_get, t_acc, t_sync, t_chk, t_tot;
-double t_vput;
+double t_vput, t_rdinc;
 double t_create, t_free;
 
 void test_int_array(int on_device)
@@ -106,6 +110,7 @@ void test_int_array(int on_device)
   int *ptr;
   int one;
   double tbeg;
+  double zero = 0.0;
 
   tput = 0.0;
   tget = 0.0;
@@ -147,6 +152,9 @@ void test_int_array(int on_device)
   tbeg = GA_Wtime();
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a, ndim, dims, C_INT);
+  if (!on_device) {
+    NGA_Set_restricted(g_a, list, ndev);
+  }
   NGA_Set_device(g_a, on_device);
   NGA_Allocate(g_a);
   t_create += (GA_Wtime()-tbeg);
@@ -158,6 +166,7 @@ void test_int_array(int on_device)
   for (n=0; n<NLOOP; n++) {
     tbeg = GA_Wtime();
     GA_Zero(g_a);
+    GA_Fill(g_a,&zero);
     ld = (hi[1]-lo[1]+1);
     for (ii = lo[0]; ii<=hi[0]; ii++) {
       i = ii-lo[0];
@@ -413,6 +422,9 @@ void test_dbl_array(int on_device)
   tbeg = GA_Wtime();
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a, ndim, dims, C_DBL);
+  if (!on_device) {
+    NGA_Set_restricted(g_a, list, ndev);
+  }
   NGA_Set_device(g_a, on_device);
   NGA_Allocate(g_a);
   GA_Zero(g_a);
@@ -613,16 +625,23 @@ void test_read_inc(int on_device)
 {
   int g_a;
   int one;
-  int icnt, zero, i;
+  int icnt, zero, i, nvals;
   int ri_cnt = 0;
   double tbeg;
   double t_ri = 0.0;
+  int *bins;
   /* create a global array and initialize it to zero */
   zero = 0;
   one = 1;
+  nvals = MAXCOUNT/1000;
+  bins = (int*)malloc((nvals+1)*sizeof(int));
+  for (i=0; i<nvals+1; i++) bins[i] = 0;
   tbeg = GA_Wtime();
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a, one, &one, C_INT);
+  if (!on_device) {
+    NGA_Set_restricted(g_a, list, ndev);
+  }
   NGA_Set_device(g_a, on_device);
   NGA_Allocate(g_a);
   t_create += (GA_Wtime()-tbeg);
@@ -630,20 +649,29 @@ void test_read_inc(int on_device)
   GA_Zero(g_a);
   if (rank == 0) printf("Created and initialized global array with 1 element\n");
   icnt = 0;
-  while (icnt<MAXCOUNT) {
+  while (icnt<MAXCOUNT+1) {
     tbeg = GA_Wtime();
     icnt = NGA_Read_inc(g_a,&zero,(long)one);
     t_ri += (GA_Wtime()-tbeg);
     ri_cnt++;
-    if (icnt%1000 == 0) printf("  current value of counter: %d read on process %d\n",icnt,rank);
+    if (icnt%1000 == 0) {
+      i = icnt/1000;
+      if (i<=nvals) bins[i] = rank;
+    }
   }
 
   tbeg = GA_Wtime();
   GA_Sync();
   t_sync += (GA_Wtime()-tbeg);
+  GA_Igop(bins, nvals+1, "+");
+  if (rank == 0) {
+    for (i=0; i<=nvals; i++) {
+      printf("  current value of counter: %d read on process %d\n",i*1000,bins[i]);
+    }
+  }
   if (rank == 0) {
     NGA_Get(g_a,&zero,&zero,&i,&zero);
-    if (i != MAXCOUNT+nprocs) {
+    if (i != MAXCOUNT+1+nprocs) {
       printf ("Mismatch found for read-increment expected: %d actual: %d\n",
           MAXCOUNT+nprocs,i);
     } else {
@@ -653,6 +681,7 @@ void test_read_inc(int on_device)
   tbeg = GA_Wtime();
   GA_Destroy(g_a);
   t_free += (GA_Wtime()-tbeg);
+  t_rdinc += t_ri;
   GA_Igop(&ri_cnt, 1, "+");
   GA_Dgop(&t_ri, 1, "+");
   t_ri /= ((double)ri_cnt);
@@ -663,6 +692,7 @@ void test_read_inc(int on_device)
     printf("///////////////////////////////////////////////////////////////\n");
     printf("\n\n");
   }
+  free(bins);
 }
 
 void test_int_1d_array(int on_device)
@@ -692,6 +722,9 @@ void test_int_1d_array(int on_device)
   tbeg = GA_Wtime();
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a, one, &nelem, C_INT);
+  if (!on_device) {
+    NGA_Set_restricted(g_a, list, ndev);
+  }
   NGA_Set_device(g_a, on_device);
   NGA_Allocate(g_a);
   t_create += (GA_Wtime()-tbeg);
@@ -867,6 +900,9 @@ void test_dbl_1d_array(int on_device)
   tbeg = GA_Wtime();
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a, one, &nelem, C_DBL);
+  if (!on_device) {
+    NGA_Set_restricted(g_a, list, ndev);
+  }
   NGA_Set_device(g_a, on_device);
   NGA_Allocate(g_a);
   t_create += (GA_Wtime()-tbeg);
@@ -1084,6 +1120,9 @@ void test_dbl_scatter(int on_device)
   tbeg = GA_Wtime();
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a, ndim, dims, C_DBL);
+  if (!on_device) {
+    NGA_Set_restricted(g_a, list, ndev);
+  }
   NGA_Set_device(g_a, on_device);
   NGA_Allocate(g_a);
   GA_Zero(g_a);
@@ -1249,6 +1288,7 @@ int main(int argc, char **argv) {
   int g_a;
   double *rbuf;
   double one_r;
+  double t_sum;
   int zero = 0;
   int icnt;
   double tbeg;
@@ -1258,6 +1298,7 @@ int main(int argc, char **argv) {
   t_acc = 0.0;
   t_sync = 0.0;
   t_chk = 0.0;
+  t_rdinc = 0.0;
   t_create = 0.0;
   t_free = 0.0;
   t_tot = 0.0;
@@ -1271,6 +1312,11 @@ int main(int argc, char **argv) {
   tbeg = GA_Wtime();
   nprocs = GA_Nnodes();  
   rank = GA_Nodeid();   
+
+  /* create list of GPU hosts */
+  list = (int*)malloc(nprocs*sizeof(int));
+  devIDs = (int*)malloc(nprocs*sizeof(int));
+  NGA_Device_host_list(list, devIDs, &ndev, NGA_Pgroup_get_default());
 
   /* Divide matrix up into pieces that are owned by each processor */
   factor(nprocs, &pdx, &pdy);
@@ -1332,6 +1378,7 @@ int main(int argc, char **argv) {
   GA_Dgop(&t_tot,1,"+");
   GA_Dgop(&t_sync,1,"+");
   GA_Dgop(&t_chk,1,"+");
+  GA_Dgop(&t_rdinc,1,"+");
   GA_Dgop(&t_create,1,"+");
   GA_Dgop(&t_free,1,"+");
   GA_Dgop(&t_chk,1,"+");
@@ -1341,18 +1388,27 @@ int main(int argc, char **argv) {
   t_tot /= ((double)nprocs);
   t_sync /= ((double)nprocs);
   t_chk /= ((double)nprocs);
+  t_rdinc /= ((double)nprocs);
   t_create /= ((double)nprocs);
   t_free /= ((double)nprocs);
+  t_sum = t_put + t_get + t_acc + t_sync + t_chk;
+  t_sum = t_sum + t_rdinc + t_create + t_free;
   if (rank == 0) {
-    printf("Total time in PUT:    %16.4e\n",t_put);
-    printf("Total time in GET:    %16.4e\n",t_get);
-    printf("Total time in ACC:    %16.4e\n",t_acc);
-    printf("Total time in SYNC :  %16.4e\n",t_sync);
-    printf("Total time in CHECK:  %16.4e\n",t_chk);
-    printf("Total time in CREATE: %16.4e\n",t_create);
-    printf("Total time in FREE :  %16.4e\n",t_free);
-    printf("Total time:           %16.4e\n",t_tot);
+    printf("Total time in PUT:       %16.4e\n",t_put);
+    printf("Total time in GET:       %16.4e\n",t_get);
+    printf("Total time in ACC:       %16.4e\n",t_acc);
+    printf("Total time in SYNC :     %16.4e\n",t_sync);
+    printf("Total time in CHECK:     %16.4e\n",t_chk);
+    printf("Total time in READ/INC:  %16.4e\n",t_rdinc);
+    printf("Total time in CREATE:    %16.4e\n",t_create);
+    printf("Total time in FREE :     %16.4e\n",t_free);
+    printf("Total monitored time:    %16.4e\n",t_sum);
+    printf("Total time:              %16.4e\n",t_tot);
   }
+
+  free(list);
+  free(devIDs);
+  
   GA_Terminate();
   if (rank == 0) printf("Completed GA terminate\n");
   MPI_Finalize();

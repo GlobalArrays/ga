@@ -408,6 +408,7 @@ extern int ARMCI_Device_process();
 extern void ARMCI_Device_host_list(int *list, int *devIDs, int *ndev, ARMCI_Group *group);
 extern int ARMCI_Malloc_dev(void **ptr_array, armci_size_t bytes, ARMCI_Group *group);
 extern void ARMCI_Device_memset(void *ptr, int val, armci_size_t bytes);
+extern void ARMCI_Copy_to_dev(void *host_ptr, void *dev_ptr, armci_size_t bytes);
 #endif
 
 #if defined(__cplusplus) || defined(c_plusplus)

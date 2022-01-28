@@ -1119,6 +1119,16 @@ void FATR nga_set_device_(Integer *g_a, Integer flag)
   wnga_set_device(*g_a, flag);
 }
 
+void FATR ga_device_host_list(Integer *list, Integer *devIDs, Integer *ndev, Integer *grp)
+{
+  wnga_device_host_list(list, devIDs, ndev, *grp);
+}
+
+void FATR nga_device_host_list(Integer *list, Integer *devIDs, Integer *ndev, Integer *grp)
+{
+  wnga_device_host_list(list, devIDs, ndev, *grp);
+}
+
 void FATR  ga_terminate_()
 {
   wnga_terminate();

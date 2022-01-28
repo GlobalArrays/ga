@@ -2311,7 +2311,7 @@ void pnga_set_memory_dev(Integer g_a, char *device) {
 void pnga_set_device(Integer g_a, Integer flag) {
   Integer ga_handle = g_a + GA_OFFSET;
   int i, ilen;
-#if ENABLE_DEVICE
+#ifdef ENABLE_DEVICE
   GA[ga_handle].dev_set = flag;
 #endif
 }
@@ -4334,6 +4334,43 @@ void pnga_randomize(Integer g_a, void* val)
 }
 
 /**
+ * Utility function for implementing fill operation
+ * type: data type
+ * elems: number data type elements
+ * ptr: pointer to location to be filled
+ * val: pointer to data value will be used to fill ptr
+ */
+void gai_fillvec(int type, C_Long elems, void *ptr, void *val)
+{
+  int i;
+  switch (type){
+    case C_DCPL: 
+      for(i=0; i<elems;i++)((DoubleComplex*)ptr)[i]=*(DoubleComplex*)val;
+      break;
+    case C_SCPL: 
+      for(i=0; i<elems;i++)((SingleComplex*)ptr)[i]=*(SingleComplex*)val;
+      break;
+    case C_DBL:  
+      for(i=0; i<elems;i++)((double*)ptr)[i]=*(double*)val;
+      break;
+    case C_INT:  
+      for(i=0; i<elems;i++)((int*)ptr)[i]=*(int*)val;
+      break;
+    case C_FLOAT:
+      for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*)val;
+      break;     
+    case C_LONG:
+      for(i=0; i<elems;i++)((long*)ptr)[i]=*(long*)val;
+      break;
+    case C_LONGLONG:
+      for(i=0; i<elems;i++)((long long*)ptr)[i]=*( long long*)val;
+      break;
+    default:
+      pnga_error("type not supported",type);
+  }
+}
+
+/**
  * Fill array with value
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -4348,6 +4385,9 @@ void pnga_fill(Integer g_a, void* val)
   C_Long elems;
   Integer grp_id;
   Integer num_blocks;
+#ifdef ENABLE_DEVICE
+  int dev_set = GA[g_a+GA_OFFSET].dev_set;
+#endif
 
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
@@ -4361,73 +4401,50 @@ void pnga_fill(Integer g_a, void* val)
   elems = GA[handle].size/((C_Long)GA[handle].elemsize);
   num_blocks = GA[handle].block_total;
 
-  if (num_blocks < 0) {
-    /* Bruce..Please CHECK if this is correct */
-    if (grp_id >= 0){  
-      Integer grp_me = PGRP_LIST[GA[handle].p_handle].map_proc_list[GAme];
-      ptr = GA[handle].ptr[grp_me];
+#ifdef ENABLE_DEVICE
+  if (!dev_set) {
+#endif
+    if (num_blocks < 0) {
+      /* Bruce..Please CHECK if this is correct */
+      if (grp_id >= 0){  
+        Integer grp_me = PGRP_LIST[GA[handle].p_handle].map_proc_list[GAme];
+        ptr = GA[handle].ptr[grp_me];
+      }
+      else ptr = GA[handle].ptr[GAme];
+      gai_fillvec(GA[handle].type, elems, ptr, val);
+    } else {
+      Integer I_elems = (Integer)elems;
+      pnga_access_block_segment_ptr(g_a,GAme,&ptr,&I_elems);
+      elems = (C_Long)I_elems;
+      gai_fillvec(GA[handle].type, elems, ptr, val);
+      pnga_release_block_segment(g_a,GAme);
     }
-    else  ptr = GA[handle].ptr[GAme];
-
-    switch (GA[handle].type){
-      case C_DCPL: 
-        for(i=0; i<elems;i++)((DoubleComplex*)ptr)[i]=*(DoubleComplex*)val;
-        break;
-      case C_SCPL: 
-        for(i=0; i<elems;i++)((SingleComplex*)ptr)[i]=*(SingleComplex*)val;
-        break;
-      case C_DBL:  
-        for(i=0; i<elems;i++)((double*)ptr)[i]=*(double*)val;
-        break;
-      case C_INT:  
-        for(i=0; i<elems;i++)((int*)ptr)[i]=*(int*)val;
-        break;
-      case C_FLOAT:
-        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*)val;
-        break;     
-      case C_LONG:
-        for(i=0; i<elems;i++)((long*)ptr)[i]=*(long*)val;
-        break;
-      case C_LONGLONG:
-        for(i=0; i<elems;i++)((long long*)ptr)[i]=*( long long*)val;
-        break;
-      default:
-        pnga_error("type not supported",GA[handle].type);
-    }
+#ifdef ENABLE_DEVICE
   } else {
+    char *tbuf;
     Integer I_elems = (Integer)elems;
-    pnga_access_block_segment_ptr(g_a,GAme,&ptr,&I_elems);
-    elems = (C_Long)I_elems;
-    switch (GA[handle].type){
-      case C_DCPL: 
-        for(i=0; i<elems;i++)((DoubleComplex*)ptr)[i]=*(DoubleComplex*)val;
-        break;
-      case C_SCPL: 
-        for(i=0; i<elems;i++)((SingleComplex*)ptr)[i]=*(SingleComplex*)val;
-        break;
-      case C_DBL:  
-        for(i=0; i<elems;i++)((double*)ptr)[i]=*(double*)val;
-        break;
-      case C_INT:  
-        for(i=0; i<elems;i++)((int*)ptr)[i]=*(int*)val;
-        break;
-      case C_FLOAT:
-        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*)val;
-        break;     
-      case C_LONG:
-        for(i=0; i<elems;i++)((long*)ptr)[i]=*(long*)val;
-        break;
-      case C_LONGLONG:
-        for(i=0; i<elems;i++)((long long*)ptr)[i]=*(long long*)val;
-        break;
-      default:
-        pnga_error("type not supported",GA[handle].type);
+    if (num_blocks < 0) {
+      if (grp_id >= 0){  
+        Integer grp_me = PGRP_LIST[GA[handle].p_handle].map_proc_list[GAme];
+        ptr = GA[handle].ptr[grp_me];
+      }
+      else ptr = GA[handle].ptr[GAme];
+      tbuf = (char*)malloc(elems*GA[handle].elemsize);
+      gai_fillvec(GA[handle].type, elems, tbuf, val);
+      ARMCI_Copy_to_dev(tbuf, ptr, GA[handle].elemsize*elems);
+    } else {
+      pnga_access_block_segment_ptr(g_a,GAme,&ptr,&I_elems);
+      elems = (C_Long)I_elems;
+      tbuf = (char*)malloc(elems*GA[handle].elemsize);
+      gai_fillvec(GA[handle].type, elems, tbuf, val);
+      ARMCI_Copy_to_dev(tbuf, ptr, GA[handle].elemsize*elems);
+      pnga_release_block_segment(g_a,GAme);
     }
-    pnga_release_block_segment(g_a,GAme);
+    free(tbuf);
   }
+#endif
 
   if(local_sync_end)pnga_pgroup_sync(grp_id);
-
 }
 
 /**
@@ -4950,7 +4967,11 @@ Integer pnga_pgroup_nnodes(Integer grp)
 Integer pnga_pgroup_num_dev(Integer grp)
 {
 #ifdef ENABLE_DEVICE
-  return ARMCI_Num_dev(&PGRP_LIST[grp].group);
+  if (grp >= 0) {
+    return ARMCI_Num_dev(&PGRP_LIST[grp].group);
+  }
+  return ARMCI_Num_dev(0);
+
 #else
   return 0;
 #endif
@@ -5672,6 +5693,35 @@ void pnga_get_block_info(Integer g_a, Integer *num_blocks, Integer *block_dims)
   return;
 }
 
+#ifdef ENABLE_DEVICE
+/**
+ *  Set the value of internal debug flag
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_device_host_list =  pnga_device_host_list
+#endif
+
+void pnga_device_host_list(Integer *list, Integer *devIDs, Integer *ndev, Integer grp)
+{
+  Integer nsize = pnga_pgroup_nnodes(grp);
+  int *tlist = (int*)malloc(nsize*sizeof(int));
+  int *tids = (int*)malloc(nsize*sizeof(int));
+  int i, tndev;
+  int zero = 0;
+  if (grp >= 0) {
+    ARMCI_Device_host_list(tlist, tids, &tndev, &PGRP_LIST[grp].group);
+  } else {
+    ARMCI_Device_host_list(tlist, tids, &tndev, &zero);
+  }
+  for (i=0; i<tndev; i++) {
+    list[i] = (Integer)tlist[i];
+    devIDs[i] = (Integer)tids[i];
+  }
+  *ndev = (Integer)tndev;
+  free(tlist);
+  free(tids);
+}
+#endif
 /**
  *  Set the value of internal debug flag
  */

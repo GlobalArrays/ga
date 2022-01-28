@@ -9135,4 +9135,9 @@ void comex_device_memset(void *ptr, int val, size_t bytes)
 {
   deviceMemset(ptr,val,bytes);
 }
+
+void comex_copy_to_device(void *host_ptr, void *dev_ptr, size_t bytes)
+{
+  copyToDevice(host_ptr, dev_ptr, bytes);
+}  
 #endif
