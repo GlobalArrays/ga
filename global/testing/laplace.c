@@ -6,8 +6,9 @@
 #include "ga.h"
 #include "mp3.h"
 
-//#define WRITE_VTK
-#define NDIM 128
+#define WRITE_VTK
+#define CG_SOLVE 0
+#define NDIM 512
 
 /**
  *  Solve Laplace's equation on a cubic domain using the sparse matrix
@@ -87,6 +88,7 @@ void grid_factor(int p, int xdim, int ydim, int zdim,
 
 int main(int argc, char **argv) {
   int s_a, g_b, g_x, g_p, g_r, g_t;
+  int g_s, g_v, g_rm;
   int one;
   int64_t one_64;
   int me, nproc;
@@ -108,7 +110,8 @@ int main(int argc, char **argv) {
   double ir, jr, ldr;
   double xinc_p, yinc_p, zinc_p;
   double xinc_m, yinc_m, zinc_m;
-  double alpha, beta, residual;
+  double alpha, beta, rho, rho_m, omega, m_omega, residual;
+  double rv,ts,tt;
   int nsave;
   int heap=10000000, stack=10000000;
   int iterations = 10000;
@@ -362,16 +365,17 @@ int main(int argc, char **argv) {
   NGA_Set_data64(g_b,one,&cdim,C_DBL);
   NGA_Allocate(g_b);
   GA_Zero(g_b);
-  g_x = GA_Duplicate(g_b, "dup_x");
-  g_r = GA_Duplicate(g_b, "dup_r");
-  g_p = GA_Duplicate(g_b, "dup_p");
-  g_t = GA_Duplicate(g_b, "dup_t");
-  /* accumulate boundary values to right hand side vector */
   NGA_Scatter_acc64(g_b,vbuf,iptr,ncnt,&one_r);
   GA_Sync();
   free(ibuf);
   free(iptr);
   free(vbuf);
+#if CG_SOLVE
+  g_x = GA_Duplicate(g_b, "dup_x");
+  g_r = GA_Duplicate(g_b, "dup_r");
+  g_p = GA_Duplicate(g_b, "dup_p");
+  g_t = GA_Duplicate(g_b, "dup_t");
+  /* accumulate boundary values to right hand side vector */
   if (me == 0) {
     printf("\nRight hand side vector completed. Starting\n");
     printf("conjugate gradient iterations.\n\n");
@@ -415,6 +419,79 @@ int main(int argc, char **argv) {
   } else {
     if (me==0) printf("Solution converged\n");
   }
+  NGA_Destroy(g_r);
+  NGA_Destroy(g_p);
+  NGA_Destroy(g_t);
+#else
+  g_x = GA_Duplicate(g_b, "dup_x");
+  g_r = GA_Duplicate(g_b, "dup_r");
+  g_rm = GA_Duplicate(g_b, "dup_rm");
+  g_p = GA_Duplicate(g_b, "dup_p");
+  g_v = GA_Duplicate(g_b, "dup_v");
+  g_s = GA_Duplicate(g_b, "dup_s");
+  g_t = GA_Duplicate(g_b, "dup_t");
+  /* accumulate boundary values to right hand side vector */
+  if (me == 0) {
+    printf("\nRight hand side vector completed. Starting\n");
+    printf("BiCG-STAB iterations.\n\n");
+  }
+
+  /* Solve Laplace's equation using conjugate gradient method */
+  one_r = 1.0;
+  m_one_r = -1.0;
+  GA_Zero(g_x);
+  /* Initial guess is zero, so Ax = 0 and r = b */
+  GA_Copy(g_b, g_r);
+  GA_Copy(g_b, g_rm);
+  ncnt = 0;
+  GA_Norm_infinity(g_r, &tol);
+  /* Start iteration loop */
+  while (tol > 1.0e-5 && ncnt < iterations) {
+    if (me==0) printf("Iteration: %d Tolerance: %e\n",(int)ncnt+1,tol);
+    rho = GA_Ddot(g_r,g_rm);
+    if (rho == 0.0) {
+      GA_Error("BiCG-STAB method fails",0);
+    }
+    if (ncnt == 0) {
+      GA_Copy(g_rm,g_p);
+    } else {
+      beta = (rho/rho_m)*(alpha/omega);
+      m_omega = -omega;
+      GA_Add(&one_r,g_p,&m_omega,g_v,g_p);
+      GA_Add(&one_r,g_rm,&beta,g_p,g_p);
+    }
+    NGA_Sprs_array_matvec_multiply(s_a, g_p, g_v);
+    rv = GA_Ddot(g_r,g_v);
+    alpha = -rho/rv;
+    GA_Add(&one_r,g_rm,&alpha,g_v,g_s);
+    alpha = -alpha;
+    GA_Norm_infinity(g_s, &tol);
+    if (tol < 1.0e-05) {
+      GA_Add(&one_r,g_x,&alpha,g_p,g_x);
+    }
+    NGA_Sprs_array_matvec_multiply(s_a, g_s, g_t);
+    ts = GA_Ddot(g_t,g_s);
+    tt = GA_Ddot(g_t,g_t);
+    omega = ts/tt;
+    m_omega = -omega;
+    GA_Add(&one_r,g_x,&alpha,g_p,g_x);
+    GA_Add(&one_r,g_x,&omega,g_s,g_x);
+    GA_Add(&one_r,g_s,&m_omega,g_t,g_rm);
+    GA_Norm_infinity(g_rm, &tol);
+    if (tol < 1.0e-05) break;
+    if (omega == 0) {
+      GA_Error("BiCG-STAB method cannot continue",0);
+    }
+    ncnt++;
+    rho_m = rho;
+  }
+  NGA_Destroy(g_r);
+  NGA_Destroy(g_rm);
+  NGA_Destroy(g_p);
+  NGA_Destroy(g_v);
+  NGA_Destroy(g_s);
+  NGA_Destroy(g_t);
+#endif
 
   /* Write solution to file */
 #ifdef WRITE_VTK
@@ -452,9 +529,6 @@ int main(int argc, char **argv) {
   NGA_Sprs_array_destroy(s_a);
   NGA_Destroy(g_b);
   NGA_Destroy(g_x);
-  NGA_Destroy(g_r);
-  NGA_Destroy(g_p);
-  NGA_Destroy(g_t);
 
   NGA_Terminate();
   /**
