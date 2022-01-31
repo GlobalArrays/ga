@@ -540,7 +540,7 @@ void ngai_put_common(Integer g_a,
 		     Integer field_size,
 		     Integer *nbhandle) 
 {
-  Integer  p, np, handle=GA_OFFSET + g_a;
+  Integer  p, np=0, handle=GA_OFFSET + g_a;
   Integer  idx, elems, size, p_handle;
   int proc, ndim, loop, cond;
   int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
@@ -919,7 +919,7 @@ void ngai_get_common(Integer g_a,
                       buf[]: Local buffer that array patch will be copied into
                       ld[]:  Array of physical ndim-1 dimensions of local buffer */
 
-  Integer  p, np, handle=GA_OFFSET + g_a;
+  Integer  p, np=0, handle=GA_OFFSET + g_a;
   Integer  idx, elems, size, p_handle;
   int proc, ndim, loop, cond;
   int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
@@ -1350,7 +1350,7 @@ void ngai_acc_common(Integer g_a,
                    void    *alpha,
                    Integer *nbhandle)
 {
-  Integer  p, np, handle=GA_OFFSET + g_a;
+  Integer  p, np=0, handle=GA_OFFSET + g_a;
   Integer  idx, elems, size, type, p_handle, ga_nbhandle;
   int optype=-1, loop, ndim, cond;
   int proc;
@@ -4233,7 +4233,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
      skip[]: Array of skips for each dimension
      buf[]:  Local buffer that patch will be copied from
      ld[]:   ndim-1 physical dimensions of local buffer */
-  Integer p, np, handle = GA_OFFSET + g_a;
+  Integer p, np=0, handle = GA_OFFSET + g_a;
   Integer idx, size, nstride, p_handle, nproc;
   Integer ldrem[MAXDIM];
   Integer idx_buf, *blo, *bhi;
@@ -4313,7 +4313,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
      skip[]: Array of skips for each dimension
      buf[]:  Local buffer that patch will be copied from
      ld[]:   ndim-1 physical dimensions of local buffer */
-  Integer p, np, handle = GA_OFFSET + g_a;
+  Integer p, np=0, handle = GA_OFFSET + g_a;
   Integer idx, size, nstride, p_handle, nproc;
   int i, proc, ndim;
   Integer ldrem[MAXDIM];
@@ -4396,7 +4396,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
      buf[]:  Local buffer that patch will be copied from
      ld[]:   ndim-1 physical dimensions of local buffer
      alpha:  muliplicative scale factor */
-  Integer p, np, handle = GA_OFFSET + g_a;
+  Integer p, np=0, handle = GA_OFFSET + g_a;
   Integer idx, size, nstride, type, p_handle, nproc;
   int i, optype=-1, proc, ndim;
   Integer ldrem[MAXDIM];
