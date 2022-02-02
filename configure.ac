@@ -354,6 +354,7 @@ GA_F77_FIXED
 GA_F77_MISMATCH_TYPE
 GA_F77_INTEGER_SIZE
 GA_GNU_LOOP_OPT
+GA_F77_LOOP
 
 # Checks for Fortran typedefs, structures, and compiler characteristics.
 AC_OPENMP
