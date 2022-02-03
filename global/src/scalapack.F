@@ -3605,7 +3605,7 @@ c     broadcast evals
 #endif
 #endif
       implicit none
-#include "mpif.h"
+c#include "mpif.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "scalapack.fh"

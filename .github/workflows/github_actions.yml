@@ -34,6 +34,12 @@ jobs:
           - gcc-9
         include:
           - os: ubuntu-latest
+            experimental: true 
+            mpi_impl: mpich
+            armci_network: mpi-ts
+            f77: gfortran-11
+            cc: gcc-11
+          - os: ubuntu-latest
             experimental: true
             mpi_impl: intel
             armci_network: sockets
@@ -140,6 +146,7 @@ jobs:
           case "${{ matrix.os }}" in
           ubuntu*|jessie|stretch|buster)
           sudo apt-get update -q -y
+          if [[ "$FC" == "gfortran-11" ]] || [[ "$CC" == "gcc-11" ]]; then sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && sudo apt-get -y install gcc-11 gfortran-11 g++-11; fi
           sudo apt-get install -q -y gfortran
           ;;
           macos*)
