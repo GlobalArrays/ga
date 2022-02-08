@@ -2850,10 +2850,10 @@ void *alpha, *beta;
     pnga_local_iterator_init(g_B, &hdl_b);
     pnga_local_iterator_init(g_c, &hdl_c);
     while (pnga_local_iterator_next(&hdl_c,loC,hiC,&C_ptr,ldC)) {
-      pnga_local_iterator_next(&hdl_a,loA,hiA,&A_ptr,ldA);
-      pnga_local_iterator_next(&hdl_b,loB,hiB,&B_ptr,ldB);
       Integer idx, lod[MAXDIM]/*, hid[MAXDIM]*/;
       Integer offset, jtot, last;
+      pnga_local_iterator_next(&hdl_a,loA,hiA,&A_ptr,ldA);
+      pnga_local_iterator_next(&hdl_b,loB,hiB,&B_ptr,ldB);
       /* make temporary copies of loC and hiC since pnga_patch_intersect
          destroys original versions */
       for (j=0; j<cndim; j++) {

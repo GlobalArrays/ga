@@ -1806,6 +1806,9 @@ void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_g
     jsize = GA[ga_handle].dims[i]/dims[i];
     if (GA[ga_handle].dims[i]%dims[i] != 0) jsize++;
     GA[ga_handle].num_blocks[i] = jsize;
+    if (proc_grid[i] < 1)
+      pnga_error("Processor grid dimensions must all be greater than zero",0);
+    GA[ga_handle].nblock[i] = proc_grid[i];
   }
   jsize = 1;
   for (i=0; i<GA[ga_handle].ndim; i++) {
@@ -1840,6 +1843,9 @@ void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid)
     jsize = GA[ga_handle].dims[i]/dims[i];
     if (GA[ga_handle].dims[i]%dims[i] != 0) jsize++;
     GA[ga_handle].num_blocks[i] = jsize;
+    if (proc_grid[i] < 1)
+      pnga_error("Processor grid dimensions must all be greater than zero",0);
+    GA[ga_handle].nblock[i] = proc_grid[i];
   }
   jsize = 1;
   for (i=0; i<GA[ga_handle].ndim; i++) {
@@ -1892,6 +1898,9 @@ void pnga_set_tiled_irreg_proc_grid(Integer g_a, Integer *mapc, Integer *nblocks
   for (i=0; i<GA[ga_handle].ndim; i++) {
     maplen += nblocks[i];
     GA[ga_handle].num_blocks[i] = (C_Integer)nblocks[i];
+    if (proc_grid[i] < 1)
+      pnga_error("Processor grid dimensions must all be greater than zero",0);
+    GA[ga_handle].nblock[i] = proc_grid[i];
   }
   GA[ga_handle].mapc = (C_Integer*)malloc((maplen+1)*sizeof(C_Integer*));
   for (i=0; i<maplen; i++) {
@@ -2457,7 +2466,7 @@ logical pnga_allocate(Integer g_a)
   Integer hi[MAXDIM];
   Integer ga_handle = g_a + GA_OFFSET;
   Integer d, width[MAXDIM], ndim;
-  Integer mem_size, nelem;
+  Integer mem_size, nelem, pnum;
   Integer i, status, maplen=0, p_handle;
   Integer dims[MAXDIM], chunk[MAXDIM];
   Integer pe[MAXDIM], *pmap[MAXDIM], *map;
@@ -2607,7 +2616,12 @@ logical pnga_allocate(Integer g_a)
     for (i=0; i<GA[ga_handle].ndim; i++) {
       tot *= GA[ga_handle].nblock[i];
     }
-    if (tot != pnga_pgroup_nnodes(GA[ga_handle].p_handle))
+    if (GA[ga_handle].num_rstrctd == 0) {
+      pnum = pnga_pgroup_nnodes(GA[ga_handle].p_handle);
+    } else {
+      pnum = GA[ga_handle].num_rstrctd;
+    }
+    if (tot != pnum)
       pnga_error("Number of processors in processor grid must equal available processors",0);
     for (i=0; i<ndim; i++) {
       skip = GA[ga_handle].nblock[i];
@@ -2631,7 +2645,12 @@ logical pnga_allocate(Integer g_a)
     for (i=0; i<GA[ga_handle].ndim; i++) {
       tot *= GA[ga_handle].nblock[i];
     }
-    if (tot != pnga_pgroup_nnodes(GA[ga_handle].p_handle))
+    if (GA[ga_handle].num_rstrctd == 0) {
+      pnum = pnga_pgroup_nnodes(GA[ga_handle].p_handle);
+    } else {
+      pnum = GA[ga_handle].num_rstrctd;
+    }
+    if (tot != pnum)
       pnga_error("Number of processors in processor grid must equal available processors",0);
     for (i=0; i<ndim; i++) {
       skip = GA[ga_handle].nblock[i];
@@ -2656,7 +2675,12 @@ logical pnga_allocate(Integer g_a)
     for (i=0; i<GA[ga_handle].ndim; i++) {
       tot *= GA[ga_handle].nblock[i];
     }
-    if (tot != pnga_pgroup_nnodes(GA[ga_handle].p_handle))
+    if (GA[ga_handle].num_rstrctd == 0) {
+      pnum = pnga_pgroup_nnodes(GA[ga_handle].p_handle);
+    } else {
+      pnum = GA[ga_handle].num_rstrctd;
+    }
+    if (tot != pnum)
       pnga_error("Number of processors in processor grid must equal available processors",0);
     for (i=0; i<ndim; i++) {
       skip = GA[ga_handle].nblock[i];

@@ -316,8 +316,8 @@ extern MPI_Comm GA_MPI_World_comm_dup;
   for (_i=0; _i<_ndim; _i++) {                                                 \
     _index2[_i] = index[_i]%GA[ga_handle].nblock[_i];                          \
   }                                                                            \
-  proc = _index2[0];                                                           \
-  for (_i=1; _i < _ndim; _i++) {                                               \
+  proc = _index2[_ndim-1];                                                           \
+  for (_i=_ndim-2; _i >= 0; _i--) {                                               \
     proc = proc*GA[ga_handle].nblock[_i]+_index2[_i];                          \
   }                                                                            \
 }

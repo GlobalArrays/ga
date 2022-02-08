@@ -234,6 +234,13 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     int *proc_grid = GA[handle].nblock;
     /*num_blocks = GA[handle].num_blocks;*/
     block_dims = GA[handle].block_dims;
+    /* blk_dim: length of one repeat unit
+     * blk_num: number of repeat units
+     * blk_inc: number of elements in last incomplete repeat unit
+     * blk_ld: length of complete blocks in repeat unit. Does not
+     *         account for partial block at end
+     * hlf_blk: number of full blocks in partial repeat unit
+     */
     for (j=0; j<ndim; j++)  {
       hdl->blk_size[j] = block_dims[j];
       hdl->blk_dim[j] = block_dims[j]*proc_grid[j];

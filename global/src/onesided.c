@@ -1755,7 +1755,7 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
     factor = 1;
     for (i = 0; i<ndim; i++) {
       offset += ((index[i]-proc_index[i])/proc_grid[i])*block_dims[i]*factor;
-      if (i<ndim-1) factor *= ld[i];
+      factor *= ld[i];
     }
   }
 
