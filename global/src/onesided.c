@@ -1682,11 +1682,27 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
      offset for the requested block. */
   if (GA[handle].distr_type == TILED) {
     for (i=0; i<ndim; i++) {
+      int ldim;
+      /*
       block_idx[i] = 0;
       block_count[i] = 0;
       lld[i] = 0;
       lo = 0;
       hi = -1;
+      */
+      block_idx[i] = (index[i]-proc_index[i]+1)/proc_grid[i];
+      ldim = (num_blocks[i]-proc_index[i]+1)/proc_grid[i];
+      if ((num_blocks[i]-proc_index[i]+1)%proc_grid[i] == 0) {
+        if (dims[i]%block_dims[i] != 0) {
+          lld[i] = (ldim-1)*block_dims[i] + dims[i]%block_dims[i];
+        } else {
+          lld[i] = ldim*block_dims[i];
+        }
+      } else {
+        lld[i] = ldim *block_dims[i];
+      }
+      block_count[i] = ldim;
+      /*
       for (j=proc_index[i]; j<num_blocks[i]; j += proc_grid[i]) {
         lo = j*block_dims[i] + 1;
         hi = (j+1)*block_dims[i];
@@ -1695,6 +1711,7 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
         if (j<index[i]) block_idx[i]++;
         block_count[i]++;
       }
+      */
     }
 
     /* Evaluate offset for requested block. The algorithm used goes like this:
@@ -1718,7 +1735,7 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
         factor *= lld[j];
       }
       for (j=i; j<ndim; j++) {
-        if (j > i && block_idx[j] > block_count[j]-1) {
+        if (j > i && block_idx[j] == block_count[j]-1) {
           factor *= ldims[j];
         } else {
           factor *= block_dims[j];
