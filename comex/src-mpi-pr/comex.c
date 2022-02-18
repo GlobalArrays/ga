@@ -7277,7 +7277,6 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
               }
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
-              int *ip = (int*)src;
                 PROFILE_BEG()
                 copyToDevice(src, dst, bytes);
                 PROFILE_END(t_cpy_to_dev)
@@ -7317,7 +7316,6 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
             mapped_offset = _get_offset_memory(reg_entry, dst);
             if (reg_entry->use_dev && on_host) {
-              int *ip = (int*)src;
               PROFILE_BEG()
               copyToDevice(src, mapped_offset, bytes);
               PROFILE_END(t_cpy_to_dev)
@@ -7795,7 +7793,9 @@ STATIC void nb_puts(
             && (!COMEX_ENABLE_PUT_SMP
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])
             && (_packed_size(src_stride, count, stride_levels) > COMEX_PUT_DATATYPE_THRESHOLD)) {
-        reg_entry = reg_cache_find(proc, dst, 0, _device_map[proc]);
+      /* only use this branch if data is on host. Don't bother with arrays
+       * hosted on device */
+        reg_entry = reg_cache_find(proc, dst, 0, -1);
         if (reg_entry && !reg_entry->use_dev && !on_host) {
           nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
           PROFILE_END(t_nb_puts)
@@ -7824,6 +7824,122 @@ STATIC void nb_puts(
         return;
     }
 
+
+#ifdef ENABLE_DEVICE
+    /* find out if remote processor is on a GPU */
+    reg_entry = reg_cache_find(proc, dst, 0, -1);
+    if (!reg_entry) {
+      reg_entry = reg_cache_find(proc, dst, 0, _device_map[proc]);
+    }
+    COMEX_ASSERT(reg_entry);
+    if (reg_entry->use_dev &&  g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+      /* destination data must be on same node */
+      if (proc == g_state.rank) {
+        /* number of n-element of the first dimension */
+        n1dim = 1;
+        for(i=1; i<=stride_levels; i++) {
+          n1dim *= count[i];
+        }
+
+        /* calculate the destination indices */
+        src_bvalue[0] = 0; src_bvalue[1] = 0; src_bunit[0] = 1; src_bunit[1] = 1;
+        dst_bvalue[0] = 0; dst_bvalue[1] = 0; dst_bunit[0] = 1; dst_bunit[1] = 1;
+
+        for(i=2; i<=stride_levels; i++) {
+          src_bvalue[i] = 0;
+          dst_bvalue[i] = 0;
+          src_bunit[i] = src_bunit[i-1] * count[i-1];
+          dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+        }
+
+        /* index mangling */
+        for(i=0; i<n1dim; i++) {
+          src_idx = 0;
+          dst_idx = 0;
+          for(j=1; j<=stride_levels; j++) {
+            src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+            if((i+1) % src_bunit[j] == 0) {
+              src_bvalue[j]++;
+            }
+            if(src_bvalue[j] > (count[j]-1)) {
+              src_bvalue[j] = 0;
+            }
+          }
+
+          for(j=1; j<=stride_levels; j++) {
+            dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+            if((i+1) % dst_bunit[j] == 0) {
+              dst_bvalue[j]++;
+            }
+            if(dst_bvalue[j] > (count[j]-1)) {
+              dst_bvalue[j] = 0;
+            }
+          }
+          if (on_host) {
+            PROFILE_BEG()
+            copyToDevice((char*)src+src_idx, (char*)dst+dst_idx, count[0]);
+            PROFILE_END(t_cpy_to_dev)
+          } else {
+            copyDevToDev((char*)src+src_idx, (char*)dst+dst_idx, count[0]);
+          }
+        }
+      } else {
+        /* get mapped pointer */
+        void *mapped_offset = _get_offset_memory(reg_entry, dst);
+        /* number of n-element of the first dimension */
+        n1dim = 1;
+        for(i=1; i<=stride_levels; i++) {
+          n1dim *= count[i];
+        }
+
+        /* calculate the destination indices */
+        src_bvalue[0] = 0; src_bvalue[1] = 0; src_bunit[0] = 1; src_bunit[1] = 1;
+        dst_bvalue[0] = 0; dst_bvalue[1] = 0; dst_bunit[0] = 1; dst_bunit[1] = 1;
+
+        for(i=2; i<=stride_levels; i++) {
+          src_bvalue[i] = 0;
+          dst_bvalue[i] = 0;
+          src_bunit[i] = src_bunit[i-1] * count[i-1];
+          dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+        }
+
+        /* index mangling */
+        for(i=0; i<n1dim; i++) {
+          src_idx = 0;
+          dst_idx = 0;
+          for(j=1; j<=stride_levels; j++) {
+            src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+            if((i+1) % src_bunit[j] == 0) {
+              src_bvalue[j]++;
+            }
+            if(src_bvalue[j] > (count[j]-1)) {
+              src_bvalue[j] = 0;
+            }
+          }
+
+          for(j=1; j<=stride_levels; j++) {
+            dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+            if((i+1) % dst_bunit[j] == 0) {
+              dst_bvalue[j]++;
+            }
+            if(dst_bvalue[j] > (count[j]-1)) {
+              dst_bvalue[j] = 0;
+            }
+          }
+          if (on_host) {
+            PROFILE_BEG()
+            copyToDevice((char*)src+src_idx, (char*)mapped_offset+dst_idx, count[0]);
+            PROFILE_END(t_cpy_to_dev)
+          } else {
+            copyDevToDev((char*)src+src_idx, (char*)mapped_offset+dst_idx, count[0]);
+          }
+        }
+        PROFILE_BEG()
+        deviceCloseMemHandle(reg_entry->mapped);
+        PROFILE_END(t_close_ipc)
+      }
+    } else {
+#endif
     /* number of n-element of the first dimension */
     n1dim = 1;
     for(i=1; i<=stride_levels; i++) {
@@ -7868,6 +7984,9 @@ STATIC void nb_puts(
         nb_put((char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
+#ifdef ENABLE_DEVICE
+    }
+#endif
     PROFILE_END(t_nb_puts)
 }
 
@@ -8096,7 +8215,9 @@ STATIC void nb_gets(
             && (!COMEX_ENABLE_GET_SMP
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])
             && (_packed_size(src_stride, count, stride_levels) > COMEX_GET_DATATYPE_THRESHOLD)) {
-        reg_entry = reg_cache_find(proc, src, 0, 0);
+      /* only use this branch if data is on host. Don't bother with arrays
+       * hosted on device */
+        reg_entry = reg_cache_find(proc, src, 0, -1);
         if (reg_entry && !reg_entry->use_dev && !on_host) {
           nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
           PROFILE_END(t_nb_gets)
@@ -8125,6 +8246,123 @@ STATIC void nb_gets(
         return;
     }
 
+#ifdef ENABLE_DEVICE
+    /* find out if remote processor is on a GPU */
+    reg_entry = reg_cache_find(proc, src, 0, -1);
+    if (!reg_entry) {
+      reg_entry = reg_cache_find(proc, src, 0, _device_map[proc]);
+    }
+    COMEX_ASSERT(reg_entry);
+    if (reg_entry->use_dev &&  g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+      /* destination data must be on same node */
+      if (proc == g_state.rank) {
+        /* number of n-element of the first dimension */
+        n1dim = 1;
+        for(i=1; i<=stride_levels; i++) {
+          n1dim *= count[i];
+        }
+
+        /* calculate the destination indices */
+        src_bvalue[0] = 0; src_bvalue[1] = 0; src_bunit[0] = 1; src_bunit[1] = 1;
+        dst_bvalue[0] = 0; dst_bvalue[1] = 0; dst_bunit[0] = 1; dst_bunit[1] = 1;
+
+        for(i=2; i<=stride_levels; i++) {
+          src_bvalue[i] = 0;
+          dst_bvalue[i] = 0;
+          src_bunit[i] = src_bunit[i-1] * count[i-1];
+          dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+        }
+
+        for(i=0; i<n1dim; i++) {
+          src_idx = 0;
+          for(j=1; j<=stride_levels; j++) {
+            src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+            if((i+1) % src_bunit[j] == 0) {
+              src_bvalue[j]++;
+            }
+            if(src_bvalue[j] > (count[j]-1)) {
+              src_bvalue[j] = 0;
+            }
+          }
+
+          dst_idx = 0;
+
+          for(j=1; j<=stride_levels; j++) {
+            dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+            if((i+1) % dst_bunit[j] == 0) {
+              dst_bvalue[j]++;
+            }
+            if(dst_bvalue[j] > (count[j]-1)) {
+              dst_bvalue[j] = 0;
+            }
+          }
+
+          if (on_host) {
+            PROFILE_BEG()
+            copyToHost((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
+            PROFILE_END(t_cpy_to_host)
+          } else {
+            copyDevToDev((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
+          }
+        }
+      } else {
+        /* get mapped pointer */
+        void *mapped_offset = _get_offset_memory(reg_entry, src);
+        /* number of n-element of the first dimension */
+        n1dim = 1;
+        for(i=1; i<=stride_levels; i++) {
+          n1dim *= count[i];
+        }
+
+        /* calculate the destination indices */
+        src_bvalue[0] = 0; src_bvalue[1] = 0; src_bunit[0] = 1; src_bunit[1] = 1;
+        dst_bvalue[0] = 0; dst_bvalue[1] = 0; dst_bunit[0] = 1; dst_bunit[1] = 1;
+
+        for(i=2; i<=stride_levels; i++) {
+          src_bvalue[i] = 0;
+          dst_bvalue[i] = 0;
+          src_bunit[i] = src_bunit[i-1] * count[i-1];
+          dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+        }
+
+        for(i=0; i<n1dim; i++) {
+          src_idx = 0;
+          for(j=1; j<=stride_levels; j++) {
+            src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+            if((i+1) % src_bunit[j] == 0) {
+              src_bvalue[j]++;
+            }
+            if(src_bvalue[j] > (count[j]-1)) {
+              src_bvalue[j] = 0;
+            }
+          }
+
+          dst_idx = 0;
+
+          for(j=1; j<=stride_levels; j++) {
+            dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+            if((i+1) % dst_bunit[j] == 0) {
+              dst_bvalue[j]++;
+            }
+            if(dst_bvalue[j] > (count[j]-1)) {
+              dst_bvalue[j] = 0;
+            }
+          }
+
+          if (on_host) {
+            PROFILE_BEG()
+            copyToHost((char*)dst+dst_idx, (char*)mapped_offset+src_idx, count[0]);
+            PROFILE_END(t_cpy_to_dev)
+          } else {
+            copyDevToDev((char*)dst+dst_idx, (char*)mapped_offset+src_idx, count[0]);
+          }
+        }
+        PROFILE_BEG()
+        deviceCloseMemHandle(reg_entry->mapped);
+        PROFILE_END(t_close_ipc);
+      }
+    } else {
+#endif
     /* number of n-element of the first dimension */
     n1dim = 1;
     for(i=1; i<=stride_levels; i++) {
@@ -8169,6 +8407,9 @@ STATIC void nb_gets(
         nb_get((char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
+#ifdef ENABLE_DEVICE
+    }
+#endif
     PROFILE_END(t_nb_gets)
 }
 
