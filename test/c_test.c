@@ -15,7 +15,7 @@
 #define DIMSIZE 256
 #define MAXCOUNT 10000
 #define MAX_FACTOR 256
-#define NLOOP 10
+#define NLOOP 1 //10
 
 void factor(int p, int *idx, int *idy) {
   int i, j;                              
@@ -243,8 +243,8 @@ void test_int_array(int on_device)
         j = jj-lo[1];
         idx = i*ld+j;
         if (buf[idx] != ii*DIMSIZE+jj) {
-          if (g_ok) printf("p[%d] (%d,%d) expected: %d actual[%d]: %d\n",rank,ii,jj,ii*DIMSIZE+jj,
-              idx,buf[idx]);
+          if (g_ok) printf("p[%d] (%d,%d) (acc get) expected: %d actual[%d]: %d device: %d\n",rank,ii,jj,ii*DIMSIZE+jj,
+              idx,buf[idx],on_device);
           g_ok = 0;
         }
       }
@@ -314,8 +314,8 @@ void test_int_array(int on_device)
         j = jj-lo[1];
         idx = i*ld+j;
         if (buf[idx] != 2*(ii*DIMSIZE+jj)) {
-          if (a_ok) printf("p[%d] (%d,%d) expected: %d actual[%d]: %d\n",rank,ii,jj,
-              2*(ii*DIMSIZE+jj),idx,buf[idx]);
+          if (a_ok) printf("p[%d] (%d,%d) (acc acc) expected: %d actual[%d]: %d device: %d\n",rank,ii,jj,
+              2*(ii*DIMSIZE+jj),idx,buf[idx],on_device);
           a_ok = 0;
         }
       }
@@ -1331,6 +1331,7 @@ int main(int argc, char **argv) {
   test_int_array(0);
   print_bw();
 
+#if 0
   if (rank == 0) printf("  Testing double precision array on device\n");
   test_dbl_array(1);
   print_bw();
@@ -1368,6 +1369,7 @@ int main(int argc, char **argv) {
   if (rank == 0) printf("  Testing scatter/gather operations for doubles on host\n");
   test_dbl_scatter(0);
   print_bw();
+#endif
 
 
   t_tot = GA_Wtime()-tbeg;

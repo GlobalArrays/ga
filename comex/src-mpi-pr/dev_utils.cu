@@ -13,11 +13,13 @@ extern "C" {
 int numDevices()
 {
   int ngpus;
-  cudaError_t err;
-  err = cudaGetDeviceCount(&ngpus);
+  cudaError_t ierr;
+  ierr = cudaGetDeviceCount(&ngpus);
   /*cuDeviceGetCount(&ngpus); */
-  if (err != cudaSuccess) {
-    printf("Error encountered by cudaGetDeviceCount\n");
+  if (ierr != cudaSuccess) {
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    printf("p[%d] Error encountered by cudaGetDeviceCount\n",rank);
   }
   return ngpus;
 }
@@ -27,7 +29,14 @@ int numDevices()
  */
 void setDevice(int id)
 {
-  cudaSetDevice(id);
+  cudaError_t ierr = cudaSetDevice(id);
+  if (ierr != cudaSuccess) {
+    int rank, err=0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const char *msg = cudaGetErrorString(ierr);
+    printf("p[%d] cudaSetDevice id: %d msg: %s\n",rank,id,msg);
+    MPI_Abort(MPI_COMM_WORLD,err);
+  }
 }
 
 /* allocate a unified memory buffer
@@ -36,7 +45,14 @@ void setDevice(int id)
  */
 void mallocDevice(void **buf, size_t size)
 {
-  cudaMalloc(buf, (int)size);
+  cudaError_t ierr =cudaMalloc(buf, (int)size);
+  if (ierr != cudaSuccess) {
+    int rank, err=0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const char *msg = cudaGetErrorString(ierr);
+    printf("p[%d] cudaMalloc buf: %p size: %d msg: %s\n",rank,*buf,size,msg);
+    MPI_Abort(MPI_COMM_WORLD,err);
+  }
 }
 
 /* free unified memory
@@ -44,7 +60,14 @@ void mallocDevice(void **buf, size_t size)
  */
 void freeDevice(void *buf)
 {
-  cudaFree(buf);
+  cudaError_t ierr = cudaFree(buf);
+  if (ierr != cudaSuccess) {
+    int rank, err=0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const char *msg = cudaGetErrorString(ierr);
+    printf("p[%d] cudaFree buf: %p msg: %s\n",rank,buf,msg);
+    MPI_Abort(MPI_COMM_WORLD,err);
+  }
 }
 
 /* copy data from host buffer to unified memory
@@ -54,7 +77,14 @@ void freeDevice(void *buf)
  */
 void copyToDevice(void *hostptr, void *devptr, int bytes)
 {
-  cudaMemcpy(devptr, hostptr, bytes, cudaMemcpyHostToDevice); 
+  cudaError_t ierr = cudaMemcpy(devptr, hostptr, bytes, cudaMemcpyHostToDevice);
+  if (ierr != cudaSuccess) {
+    int rank, err=0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const char *msg = cudaGetErrorString(ierr);
+    printf("p[%d] cudaMemcpy to device msg: %s\n",rank,msg);
+    MPI_Abort(MPI_COMM_WORLD,err);
+  }
 }
 
 /* copy data from unified memory to host buffer
@@ -64,7 +94,14 @@ void copyToDevice(void *hostptr, void *devptr, int bytes)
  */
 void copyToHost(void *hostptr, void *devptr, int bytes)
 {
-  cudaMemcpy(hostptr, devptr, bytes, cudaMemcpyDeviceToHost); 
+  cudaError_t ierr = cudaMemcpy(hostptr, devptr, bytes, cudaMemcpyDeviceToHost); 
+  if (ierr != cudaSuccess) {
+    int rank, err=0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const char *msg = cudaGetErrorString(ierr);
+    printf("p[%d] cudaMemcpy to host msg: %s\n",rank,msg);
+    MPI_Abort(MPI_COMM_WORLD,err);
+  }
 }
 
 /* copy data between devices using unified memory
@@ -74,7 +111,14 @@ void copyToHost(void *hostptr, void *devptr, int bytes)
  */
 void copyDevToDev(void *srcptr, void *dstptr, int bytes)
 {
-  cudaMemcpy(dstptr, srcptr, bytes, cudaMemcpyDeviceToDevice); 
+  cudaError_t ierr = cudaMemcpy(dstptr, srcptr, bytes, cudaMemcpyDeviceToDevice); 
+  if (ierr != cudaSuccess) {
+    int rank, err=0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const char *msg = cudaGetErrorString(ierr);
+    printf("p[%d] cudaMemcpy dev to dev msg: %s\n",rank,msg);
+    MPI_Abort(MPI_COMM_WORLD,err);
+  }
 }
 
 /**
@@ -85,7 +129,14 @@ void copyDevToDev(void *srcptr, void *dstptr, int bytes)
  */
 void deviceMemset(void *ptr, int val, size_t bytes)
 {
-  cudaMemset(ptr, val, bytes);
+  cudaError_t ierr = cudaMemset(ptr, val, bytes);
+  if (ierr != cudaSuccess) {
+    int rank, err=0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const char *msg = cudaGetErrorString(ierr);
+    printf("p[%d] cudaMemset ptr: %p bytes: %d msg: %s\n",rank,ptr,bytes,msg);
+    MPI_Abort(MPI_COMM_WORLD,err);
+  }
 }
 
 /* is pointer located on host?
@@ -95,7 +146,10 @@ void deviceMemset(void *ptr, int val, size_t bytes)
 int isHostPointer(void *ptr)
 {
   cudaPointerAttributes attr;
+  cudaError_t tmp;
   cudaError_t  err = cudaPointerGetAttributes(&attr, ptr);
+  /* Remove this error so that it doesn't trip up other error code */
+  tmp = cudaGetLastError();
   /* Assume that if Cuda doesn't know anything about the pointer, it is on the
    * host */
   if (err != cudaSuccess) return 1;
@@ -105,7 +159,6 @@ int isHostPointer(void *ptr)
   return 0;
 }
 
-#if 1
 __global__ void iaxpy_kernel(int *dst, const int *src, int scale, int n)
 {
   int index = blockIdx.x*blockDim.x+threadIdx.x;
@@ -115,42 +168,22 @@ __global__ void iaxpy_kernel(int *dst, const int *src, int scale, int n)
     dst[i] = dst[i] + scale*src[i];
   }
 }
-#else
-__global__ void iaxpy_kernel(int *dst, const int *src, int scale)
-{
-  int i = threadIdx.x;
-
-  dst[i] = dst[i] + scale*src[i];
-}
-#endif
 
 void deviceIaxpy(int *dst, int *src, const int *scale, int n)
 {
-#if 1
+  cudaError_t ierr;
   int nblocks = (n+1023)/1024;
   iaxpy_kernel<<<nblocks,1024>>>(dst, src, *scale, n);
-#else
-#if 1
-  int nblk = n/1024;
-  int rmndr = n%1024;
-  int i;
-  int *lsrc = src;
-  int *ldst = dst;
-  for (i=0; i<nblk; i++) {
-    iaxpy_kernel<<<1,1024>>>(ldst, lsrc, *scale);
-    lsrc += 1024;
-    ldst += 1024;
+  ierr = cudaGetLastError();
+  if (ierr != cudaSuccess) {
+    int rank, err=0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const char *msg = cudaGetErrorString(ierr);
+    printf("p[%d] deviceIaxpy dst: %p src: %p scale: %d n: %d msg: %s\n",rank,dst,src,*scale,n,msg);
+    MPI_Abort(MPI_COMM_WORLD,err);
   }
-  if (rmndr > 0) {
-    iaxpy_kernel<<<1,rmndr>>>(ldst, lsrc, *scale);
-  }
-#else
-  iaxpy_kernel<<<1,n>>>(dst, src, *scale);
-#endif
-#endif
 }
 
-#if 1
 __global__ void laxpy_kernel(long *dst, const long *src, long scale, int n)
 {
   int index = blockIdx.x*blockDim.x+threadIdx.x;
@@ -160,39 +193,11 @@ __global__ void laxpy_kernel(long *dst, const long *src, long scale, int n)
     dst[i] = dst[i] + scale*src[i];
   }
 }
-#else
-__global__ void laxpy_kernel(long *dst, const long *src, long scale)
-{
-  int i = threadIdx.x;
-
-  dst[i] = dst[i] + scale*src[i];
-}
-#endif
 
 void deviceLaxpy(long *dst, long *src, const long *scale, int n)
 {
-#if 1
   int nblocks = (n+1023)/1024;
   laxpy_kernel<<<nblocks,1024>>>(dst, src, *scale, n);
-#else
-#if 1
-  int nblk = n/1024;
-  int rmndr = n%1024;
-  int i;
-  long *lsrc = src;
-  long *ldst = dst;
-  for (i=0; i<nblk; i++) {
-    laxpy_kernel<<<1,1024>>>(ldst, lsrc, *scale);
-    lsrc += 1024;
-    ldst += 1024;
-  }
-  if (rmndr > 0) {
-    laxpy_kernel<<<1,rmndr>>>(ldst, lsrc, *scale);
-  }
-#else
-  laxpy_kernel<<<1,n>>>(dst, src, *scale);
-#endif
-#endif
 }
 
 __global__ void inc_int_kernel(int *target, const int *inc)
@@ -203,19 +208,10 @@ __global__ void inc_int_kernel(int *target, const int *inc)
 
 void deviceAddInt(int *ptr, const int inc)
 {
-#if 0
-  void *buf;
-  void *ibuf = (void*)(&inc);
-  cudaMalloc(&buf, sizeof(int));
-  copyToDevice(ibuf, buf, sizeof(int));  
-  inc_int_kernel<<<1,1>>>(ptr, (int*)buf);
-  cudaFree(buf);
-#else
   int tmp;
   copyToHost(&tmp,ptr,sizeof(int));
   tmp += inc;
   copyToDevice(&tmp,ptr,sizeof(int));
-#endif
 }
 
 __global__ void inc_long_kernel(long *target, const long *inc)
@@ -226,19 +222,10 @@ __global__ void inc_long_kernel(long *target, const long *inc)
 
 void deviceAddLong(long *ptr, const long inc)
 {
-#if 0
-  void *buf;
-  void *lbuf = (void*)(&lbuf);
-  cudaMalloc(&buf, sizeof(long));
-  copyToDevice(lbuf, buf, sizeof(long));  
-  inc_long_kernel<<<1,1>>>(ptr, (long*)buf);
-  cudaFree(buf);
-#else
   long tmp;
   copyToHost(&tmp,ptr,sizeof(long));
   tmp += inc;
   copyToDevice(&tmp,ptr,sizeof(long));
-#endif
 }
 
 int deviceGetMemHandle(devMemHandle_t *handle, void *memory)
