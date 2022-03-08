@@ -8719,15 +8719,12 @@ STATIC void nb_accs(
         }
       } else {
         void *mapped_offset = _get_offset_memory(reg_entry, dst);
-        void *ptr;
+        void *ptr = NULL;
         printf("p[%d] node proc: %d dev_id: %d mapped_offset: %p count: %d\n",
             g_state.rank,proc,reg_entry->dev_id,mapped_offset,count[0]);
         /* create buffer on device */
         if (on_host) {
           setDevice(reg_entry->dev_id);
-          PROFILE_BEG()
-          mallocDevice(&ptr,count[0]);
-          PROFILE_END(t_malloc_buf)
         printf("p[%d] allocate GPU: %p dev_id: %d count: %d\n",
             g_state.rank,ptr,reg_entry->dev_id,count[0]);
         }
@@ -8773,6 +8770,9 @@ STATIC void nb_accs(
           }
 
           if (on_host) {
+          PROFILE_BEG()
+          mallocDevice(&ptr,count[0]);
+          PROFILE_END(t_malloc_buf)
         printf("p[%d] i: %d src: %p src_idx: %d ptr: %p dst: %p dst_idx: %d\n",
             g_state.rank,i,src+src_idx,src_idx,ptr,mapped_offset+dst_idx,dst_idx);
             PROFILE_BEG()
@@ -8780,6 +8780,9 @@ STATIC void nb_accs(
             PROFILE_END(t_cpy_to_dev)
             _acc_dev(datatype, count[0], (char*)mapped_offset+dst_idx,
                 ptr, scale);
+          PROFILE_BEG()
+          freeDevice(ptr);
+          PROFILE_END(t_free_buf)
           } else {
             _acc_dev(datatype, count[0], (char*)mapped_offset+dst_idx,
                 (char*)src+src_idx, scale);
@@ -8787,9 +8790,6 @@ STATIC void nb_accs(
         }
         if (on_host) {
         printf("p[%d] free ptr: %p\n",g_state.rank,ptr);
-          PROFILE_BEG()
-          freeDevice(ptr);
-          PROFILE_END(t_free_buf)
         }
         PROFILE_BEG()
         deviceCloseMemHandle(reg_entry->mapped);
