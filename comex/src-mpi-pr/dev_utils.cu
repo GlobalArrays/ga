@@ -46,6 +46,7 @@ void setDevice(int id)
 void mallocDevice(void **buf, size_t size)
 {
   cudaError_t ierr =cudaMalloc(buf, (int)size);
+  cudaDeviceSynchronize();
   if (ierr != cudaSuccess) {
     int rank, err=0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -78,6 +79,7 @@ void freeDevice(void *buf)
 void copyToDevice(void *hostptr, void *devptr, int bytes)
 {
   cudaError_t ierr = cudaMemcpy(devptr, hostptr, bytes, cudaMemcpyHostToDevice);
+  cudaDeviceSynchronize();
   if (ierr != cudaSuccess) {
     int rank, err=0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -174,6 +176,7 @@ void deviceIaxpy(int *dst, int *src, const int *scale, int n)
   cudaError_t ierr;
   int nblocks = (n+1023)/1024;
   iaxpy_kernel<<<nblocks,1024>>>(dst, src, *scale, n);
+  cudaDeviceSynchronize();
   ierr = cudaGetLastError();
   if (ierr != cudaSuccess) {
     int rank, err=0;
@@ -235,7 +238,15 @@ int deviceGetMemHandle(devMemHandle_t *handle, void *memory)
 
 int deviceOpenMemHandle(void **memory, devMemHandle_t handle)
 {
- return cudaIpcOpenMemHandle(memory, handle.handle,cudaIpcMemLazyEnablePeerAccess);
+  cudaError_t ierr;
+  ierr = cudaIpcOpenMemHandle(memory, handle.handle, cudaIpcMemLazyEnablePeerAccess);
+  if (ierr != cudaSuccess) {
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const char *msg = cudaGetErrorString(ierr);
+    printf("p[%d] cudaIpcOpenMemHandle msg: %s\n",rank,msg);
+  }
+  return ierr;
 }
 
 int deviceCloseMemHandle(void *memory)
