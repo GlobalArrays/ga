@@ -92,6 +92,8 @@ install (FILES
   DESTINATION include
 )
 
+find_library(LIBRT rt PATHS /lib /usr/lib /usr/local/lib)
+
 # -------------------------------------------------------------
 # CMX library installation
 # -------------------------------------------------------------
@@ -117,3 +119,5 @@ add_executable(unit_env.x testing/unit_env.cpp)
 target_link_libraries(unit_env.x cmx)
 add_executable(unit_group.x testing/unit_group.cpp)
 target_link_libraries(unit_group.x cmx)
+add_executable(unit_cmx.x testing/unit_cmx.cpp)
+target_link_libraries(unit_cmx.x cmx)

@@ -12,6 +12,8 @@
 #define MAYBE_MEMSET(a,b,c) ((void)0)
 #endif
 
+CMX::p_Environment *CMX::p_Environment::p_instance = NULL;
+
 namespace CMX {
 
 /* world group state */
@@ -365,6 +367,18 @@ p_Environment::p_Environment()
 #if DEBUG
   fprintf(stderr, "[%d] cmx_init() success\n", g_state.rank);
 #endif
+}
+
+/**
+   * Return an instance of the p_Environment singleton
+    * @return pointer to p_Environment singleton
+     */
+p_Environment *p_Environment::instance()
+{
+  if (p_instance == NULL) {
+    p_instance = new p_Environment();
+  }
+  return p_instance;
 }
 
 p_Environment::~p_Environment()

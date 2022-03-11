@@ -22,6 +22,8 @@ static void CMXError(char *msg, int code)
   MPI_Abort(MPI_COMM_WORLD,code);
 }
 
+class p_Environment;
+
 class Environment {
 
 public:
@@ -51,7 +53,7 @@ void wait(cmx_request_t *hdl);
  * wait for completion of non-blocking handles associated with a particular group
  * @param group
  */
-void waitAll(p_Group *group);
+void waitAll(Group *group);
 
 /**
  * clean up environment and shut down libraries
@@ -117,12 +119,13 @@ virtual ~Environment();
 
 private:
 
-p_Environment *p_Impl;
+static p_Environment *p_Impl;
 
 static Environment *p_instance;
 
 Group *p_CMX_GROUP_WORLD;
 
+//friend class p_Environment;
 
 };
 }

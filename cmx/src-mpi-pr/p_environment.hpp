@@ -79,32 +79,11 @@ extern int _initialized;         /* for cmx_initialized(), 0=false */
 class p_Environment {
 public:
 
-#if 0
 /**
  * Return an instance of the p_Environment singleton
  * @return pointer to p_Environment singleton
  */
 static p_Environment *instance(); 
-
-/**
- * Return an instance of the p_Environment singleton. Initialize instance
- * with argc and argv if it does not already exist
- * @param[in] argc number of arguments
- * @param[in] argv list of arguments
- * @return pointer to p_Environment singleton
- */
-static p_Environment *instance(int *argc, char ***argv); 
-#endif
-
-/**
- * Initialize CMX environment.
- */
-p_Environment();
-
-/**
- * Terminate CMX environment and clean up resources.
- */
-~p_Environment();
 
 /**
  * wait for completion of non-blocking handle
@@ -147,34 +126,8 @@ void p_error(const std::string msg, int code);
 p_Group* getWorldGroup();
 
 public:
-/* server functions */
-void server_send(void *buf, int count, int dest);
-void server_send_datatype(void *buf, MPI_Datatype dt, int dest);
-void server_recv(void *buf, int count, int source);
-void server_recv_datatype(void *buf, MPI_Datatype dt, int source);
-void _progress_server();
-void _put_handler(header_t *header, char *payload, int proc);
-void _put_packed_handler(header_t *header, char *payload, int proc);
-void _put_datatype_handler(header_t *header, char *payload, int proc);
-void _put_iov_handler(header_t *header, int proc);
-void _get_handler(header_t *header, int proc);
-void _get_packed_handler(header_t *header, char *payload, int proc);
-void _get_datatype_handler(header_t *header, char *payload, int proc);
-void _get_iov_handler(header_t *header, int proc);
-void _acc_handler(header_t *header, char *scale, int proc);
-void _acc_packed_handler(header_t *header, char *payload, int proc);
-void _acc_iov_handler(header_t *header, char *scale, int proc);
-void _fence_handler(header_t *header, int proc);
-void _fetch_and_add_handler(header_t *header, char *payload, int proc);
-void _swap_handler(header_t *header, char *payload, int proc);
-void _mutex_create_handler(header_t *header, int proc);
-void _mutex_destroy_handler(header_t *header, int proc);
-void _lock_handler(header_t *header, int proc);
-void _unlock_handler(header_t *header, int proc);
-void _malloc_handler(header_t *header, char *payload, int proc);
-void _free_handler(header_t *header, char *payload, int proc);
 
-/* worker functions */
+/* worker functions. Invoked by global arrays to send messages to progress rank */
 void nb_send_common(void *buf, int count, int dest, _cmx_request *nb, int need_free);
 void nb_send_datatype(void *buf, MPI_Datatype dt, int dest, _cmx_request *nb);
 void nb_send_header(void *buf, int count, int dest, _cmx_request *nb);
@@ -236,34 +189,58 @@ int nb_test_for_send1(_cmx_request *nb, message_t **save_send_head,
 int nb_test_for_recv1(_cmx_request *nb, message_t **save_recv_head,
         message_t **prev);
 
+/* allocate/free functions */
+void* malloc_local(size_t size);
+int free_local(void *ptr);
+
+private:
+
+/**
+ * Initialize CMX environment.
+ */
+p_Environment();
+
+/**
+ * Terminate CMX environment and clean up resources.
+ */
+~p_Environment();
+
+/* server functions */
+void _progress_server();
+void server_send(void *buf, int count, int dest);
+void server_send_datatype(void *buf, MPI_Datatype dt, int dest);
+void server_recv(void *buf, int count, int source);
+void server_recv_datatype(void *buf, MPI_Datatype dt, int source);
+void _put_handler(header_t *header, char *payload, int proc);
+void _put_packed_handler(header_t *header, char *payload, int proc);
+void _put_datatype_handler(header_t *header, char *payload, int proc);
+void _put_iov_handler(header_t *header, int proc);
+void _get_handler(header_t *header, int proc);
+void _get_packed_handler(header_t *header, char *payload, int proc);
+void _get_datatype_handler(header_t *header, char *payload, int proc);
+void _get_iov_handler(header_t *header, int proc);
+void _acc_handler(header_t *header, char *scale, int proc);
+void _acc_packed_handler(header_t *header, char *payload, int proc);
+void _acc_iov_handler(header_t *header, char *scale, int proc);
+void _fence_handler(header_t *header, int proc);
+void _fetch_and_add_handler(header_t *header, char *payload, int proc);
+void _swap_handler(header_t *header, char *payload, int proc);
+void _mutex_create_handler(header_t *header, int proc);
+void _mutex_destroy_handler(header_t *header, int proc);
+void _lock_handler(header_t *header, int proc);
+void _unlock_handler(header_t *header, int proc);
+void _malloc_handler(header_t *header, char *payload, int proc);
+void _free_handler(header_t *header, char *payload, int proc);
+
 /* group functions */
 void _group_init(void);
 
-/* other functions */
-int _packed_size(int *src_stride, int *count, int stride_levels);
-char* pack(char *src, int *src_stride,
-    int *count, int stride_levels, int *size);
-void unpack(char *packed_buffer,
-    char *dst, int *dst_stride, int *count, int stride_levels);
-char* _generate_shm_name(int rank);
-void* malloc_local(size_t size);
-reg_entry_t* _malloc_local(size_t size);
-int free_local(void *ptr);
-void* _get_offset_memory(reg_entry_t *reg_entry, void *memory);
-int _is_master(void);
+/* information on network */
 int _get_world_rank(p_Group *group, int rank);
 int* _get_world_ranks(p_Group *group);
 int _smallest_world_rank_with_same_hostid(p_Group *group);
 int _largest_world_rank_with_same_hostid(p_Group *group);
-void _malloc_semaphore(void);
-void _free_semaphore(void);
-void* _shm_create(const char *name, size_t size);
-void* _shm_attach(const char *name, size_t size);
-void* _shm_map(int fd, size_t size);
-int _set_affinity(int cpu);
-void _translate_mpi_error(int ierr, const char* location);
-void strided_to_subarray_dtype(int *stride_array, int *count, int levels,
-    MPI_Datatype base_type, MPI_Datatype *type);
+long xgethostid();
 int get_num_progress_ranks_per_node();
 int get_progress_rank_distribution_on_node();
 int get_my_master_rank_with_same_hostid(int rank, int split_group_size,
@@ -272,16 +249,37 @@ int get_my_master_rank_with_same_hostid(int rank, int split_group_size,
 int get_my_rank_to_free(int rank, int split_group_size,
     int smallest_rank_with_same_hostid, int largest_rank_with_same_hostid,
     int num_progress_ranks_per_node, int is_node_ranks_packed);
+
+/* pack/unpack data */
+int _packed_size(int *src_stride, int *count, int stride_levels);
+char* pack(char *src, int *src_stride,
+    int *count, int stride_levels, int *size);
+void unpack(char *packed_buffer,
+    char *dst, int *dst_stride, int *count, int stride_levels);
+void strided_to_subarray_dtype(int *stride_array, int *count, int levels,
+    MPI_Datatype base_type, MPI_Datatype *type);
+
+/* other functions */
+char* _generate_shm_name(int rank);
+void* _get_offset_memory(reg_entry_t *reg_entry, void *memory);
+int _is_master(void);
+void _malloc_semaphore(void);
+void _free_semaphore(void);
+void* _shm_create(const char *name, size_t size);
+void* _shm_attach(const char *name, size_t size);
+void* _shm_map(int fd, size_t size);
+int _set_affinity(int cpu);
+static int cmplong(const void *p1, const void *p2);
+reg_entry_t* _malloc_local(size_t size);
+
+/* MPI utility functions */
+void _translate_mpi_error(int ierr, const char* location);
 void check_mpi_retval(int retval, const char *file, int line);
 const char *str_mpi_retval(int retval);
-long xgethostid();
-static int cmplong(const void *p1, const void *p2);
-
-
 
 private:
 
-p_Environment *p_instance;
+static p_Environment *p_instance;
 
 p_Group* p_CMX_GROUP_WORLD;
 

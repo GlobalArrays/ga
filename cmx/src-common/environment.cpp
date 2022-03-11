@@ -21,8 +21,10 @@ Environment* Environment::instance()
       char **argv;
       MPI_Init(&argc, &argv);
     }
-    p_instance = new Environment();
+    p_instance = Environment::instance();
   }
+  p_Impl = NULL;
+  p_Impl = p_Environment::instance();
   return p_instance;
 }
 
@@ -39,8 +41,9 @@ Environment *Environment::instance(int *argc, char ***argv)
     if (!flag) {
       MPI_Init(argc, argv);
     }
-    p_instance = new Environment();
+    p_instance = Environment::instance();
   }
+  p_Impl = p_Environment::instance();
   return p_instance;
 }
 
@@ -51,7 +54,7 @@ void Environment::finalize()
 {
 //  delete p_CMX_GROUP_WORLD;
 //  printf("Cleaned up group\n");
-  delete p_Impl;
+//  delete p_Impl;
 }
 
 /**
@@ -60,14 +63,16 @@ void Environment::finalize()
  */
 void Environment::wait(cmx_request_t *hdl)
 {
+  p_Impl->wait(hdl);
 }
 
 /**
  * wait for completion of non-blocking handles associated with a particular group
  * @param group
  */
-void Environment::waitAll(p_Group *group)
+void Environment::waitAll(Group *group)
 {
+  p_Impl->waitAll(group->p_group);
 }
 
 /**
@@ -78,7 +83,7 @@ void Environment::waitAll(p_Group *group)
  */
 bool Environment::test(cmx_request_t *hdl)
 {
-  return false;
+  return p_Impl->test(hdl);
 }
 
 /**
@@ -95,7 +100,6 @@ Group* Environment::getWorldGroup()
  */
 Environment::Environment()
 {
-  p_Impl = new p_Environment();
   p_CMX_GROUP_WORLD = new Group(p_Impl->getWorldGroup());
 }
 
@@ -105,7 +109,6 @@ Environment::Environment()
 Environment::~Environment()
 {
   delete p_CMX_GROUP_WORLD;
-  delete p_Impl;
 }
 
 };

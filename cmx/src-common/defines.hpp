@@ -20,6 +20,7 @@
 
 #define CMX_MAX_STRIDE_LEVEL 8
 
+#if 0
 #define CMX_NOT_SET 0
 #define CMX_INT     1
 #define CMX_LONG    2
@@ -28,6 +29,7 @@
 #define CMX_COMPLEX 5
 #define CMX_DCMPLX  6
 #define CMX_USER    7
+#endif
 
 typedef int cmxInt;
 
