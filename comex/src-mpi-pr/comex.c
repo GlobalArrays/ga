@@ -8326,6 +8326,7 @@ STATIC void nb_accs(
           PROFILE_END(t_free_buf)
         }
       } else {
+        setDevice(reg_entry->dev_id);
         void *mapped_offset = _get_offset_memory(reg_entry, dst);
         void *ptr;
         printf("p[%d] node proc: %d dev_id: %d mapped_offset: %p count: %d\n",
