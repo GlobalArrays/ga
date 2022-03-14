@@ -241,10 +241,11 @@ int deviceOpenMemHandle(void **memory, devMemHandle_t handle)
   cudaError_t ierr;
   ierr = cudaIpcOpenMemHandle(memory, handle.handle, cudaIpcMemLazyEnablePeerAccess);
   if (ierr != cudaSuccess) {
-    int rank;
+    int rank, err=0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     const char *msg = cudaGetErrorString(ierr);
     printf("p[%d] cudaIpcOpenMemHandle msg: %s\n",rank,msg);
+    MPI_Abort(MPI_COMM_WORLD,err);
   }
   return ierr;
 }
