@@ -1331,7 +1331,6 @@ int main(int argc, char **argv) {
   test_int_array(0);
   print_bw();
 
-#if 0
   if (rank == 0) printf("  Testing double precision array on device\n");
   test_dbl_array(1);
   print_bw();
@@ -1369,7 +1368,6 @@ int main(int argc, char **argv) {
   if (rank == 0) printf("  Testing scatter/gather operations for doubles on host\n");
   test_dbl_scatter(0);
   print_bw();
-#endif
 
 
   t_tot = GA_Wtime()-tbeg;
