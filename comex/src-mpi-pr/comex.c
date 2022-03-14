@@ -5231,7 +5231,7 @@ STATIC void _acc_iov_handler(header_t *header, char *scale, int proc)
         packed_index += bytes;
       }
       PROFILE_BEG()
-      freeDevice(ptr);
+      freeDevice(dbuf);
       PROFILE_END(t_free_buf);
       PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
@@ -7232,6 +7232,9 @@ STATIC void nb_acc(int datatype, void *scale,
             }
 #endif
             COMEX_ASSERT(reg_entry);
+            if (reg_entry->use_dev) {
+              setDevice(reg_entry->dev_id);
+            }
             mapped_offset = _get_offset_memory(reg_entry, dst);
 #ifdef ENABLE_DEVICE
             sem_wait(semaphores[proc]);
@@ -7242,6 +7245,7 @@ STATIC void nb_acc(int datatype, void *scale,
                 void *ptr;
                 /* create buffer on device (no need to set device,
                  * this already happened implicitly in _get_offset_memory */
+                setDevice(reg_entry->dev_id);
                 PROFILE_BEG()
                 mallocDevice(&ptr,bytes);
                 PROFILE_END(t_malloc_buf)
@@ -8326,15 +8330,16 @@ STATIC void nb_accs(
           PROFILE_END(t_free_buf)
         }
       } else {
-        void *mapped_offset = _get_offset_memory(reg_entry, dst);
+        void *mapped_offset;
         void *ptr = NULL;
-        printf("p[%d] node proc: %d dev_id: %d mapped_offset: %p count: %d\n",
-            g_state.rank,proc,reg_entry->dev_id,mapped_offset,count[0]);
+        setDevice(reg_entry->dev_id);
+        mapped_offset = _get_offset_memory(reg_entry, dst);
         /* create buffer on device */
         if (on_host) {
           setDevice(reg_entry->dev_id);
-        printf("p[%d] allocate GPU: %p dev_id: %d count: %d\n",
-            g_state.rank,ptr,reg_entry->dev_id,count[0]);
+          PROFILE_BEG()
+          mallocDevice(&ptr,count[0]);
+          PROFILE_END(t_malloc_buf)
         }
         /* number of n-element of the first dimension */
         n1dim = 1;
@@ -8378,26 +8383,20 @@ STATIC void nb_accs(
           }
 
           if (on_host) {
-          PROFILE_BEG()
-          mallocDevice(&ptr,count[0]);
-          PROFILE_END(t_malloc_buf)
-        printf("p[%d] i: %d src: %p src_idx: %d ptr: %p dst: %p dst_idx: %d\n",
-            g_state.rank,i,src+src_idx,src_idx,ptr,mapped_offset+dst_idx,dst_idx);
             PROFILE_BEG()
             copyToDevice((char*)src+src_idx, ptr, count[0]);
             PROFILE_END(t_cpy_to_dev)
             _acc_dev(datatype, count[0], (char*)mapped_offset+dst_idx,
                 ptr, scale);
-          PROFILE_BEG()
-          freeDevice(ptr);
-          PROFILE_END(t_free_buf)
           } else {
             _acc_dev(datatype, count[0], (char*)mapped_offset+dst_idx,
                 (char*)src+src_idx, scale);
           }
         }
         if (on_host) {
-        printf("p[%d] free ptr: %p\n",g_state.rank,ptr);
+          PROFILE_BEG()
+          freeDevice(ptr);
+          PROFILE_END(t_free_buf)
         }
         PROFILE_BEG()
         deviceCloseMemHandle(reg_entry->mapped);
@@ -8772,7 +8771,6 @@ STATIC void nb_putv(
 #endif
         }
         else {
-          printf("p[%d] Calling separate puts for vector\n",g_state.rank);
           for (i=0; i<iov_len; i++) {
             int j;
             void **src = iov[i].src;
@@ -9010,7 +9008,6 @@ STATIC void nb_getv(
 #endif
         }
         else {
-          printf("p[%d] Calling separate gets for vector\n",g_state.rank);
           for (i=0; i<iov_len; ++i) {
             int j;
             void **src = iov[i].src;
@@ -9307,7 +9304,6 @@ STATIC void nb_accv(
 #endif
         }
         else {
-          printf("p[%d] Calling separate accs for vector\n",g_state.rank);
           for (i=0; i<iov_len; i++) {
             int j;
             void **src = iov[i].src;
