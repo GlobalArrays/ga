@@ -1131,6 +1131,7 @@ void FATR nga_set_device_(Integer *g_a, Integer flag)
   wnga_set_device(*g_a, flag);
 }
 
+#ifdef ENABLE_DEVICE
 void FATR ga_device_host_list(Integer *list, Integer *devIDs, Integer *ndev, Integer *grp)
 {
   wnga_device_host_list(list, devIDs, ndev, *grp);
@@ -1140,6 +1141,7 @@ void FATR nga_device_host_list(Integer *list, Integer *devIDs, Integer *ndev, In
 {
   wnga_device_host_list(list, devIDs, ndev, *grp);
 }
+#endif
 
 void FATR  ga_terminate_()
 {

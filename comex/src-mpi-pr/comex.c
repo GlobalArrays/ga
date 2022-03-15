@@ -250,7 +250,7 @@ void SigSegvHandler(int sig)
 }
 #endif
 
-#define ENABLE_XPROFILE
+#define ENABLE_PROFILE
 #ifdef ENABLE_PROFILE
   static int t_level = -1;
   static double t_beg[10];
@@ -275,6 +275,7 @@ void SigSegvHandler(int sig)
   static double t_close_ipc = 0.0;
   static double t_malloc_buf = 0.0;
   static double t_free_buf = 0.0;
+  static double t_set_dev = 0.0;
   static double t_total = 0.0;
 #  define PROFILE_BEG()                 \
 {                                       \
@@ -315,8 +316,10 @@ void SigSegvHandler(int sig)
    fprintf(_fd," IPC close:        %16.4e\n",t_close_ipc);        \
    fprintf(_fd," malloc buffer:    %16.4e\n",t_malloc_buf);       \
    fprintf(_fd," free buffer:      %16.4e\n",t_free_buf);         \
+   fprintf(_fd," set device:       %16.4e\n",t_set_dev);          \
    fprintf(_fd," total:            %16.4e\n",t_total);            \
    fprintf(_fd," Final t_level:    %d\n",t_level);                \
+   fclose(_fd);                                                   \
 }
 #else
 #  define PROFILE_BEG()
@@ -1824,7 +1827,9 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, int device_id)
     /* if this process is not hosting a device, then assert */
     COMEX_ASSERT(comex_device_process());
     /* allocate device memory */
+    PROFILE_BEG()
     setDevice(device_id); 
+    PROFILE_END(t_set_dev)
     PROFILE_BEG()
     mallocDevice(&memory, size);
     PROFILE_END(t_malloc_buf)
@@ -1947,7 +1952,9 @@ int comex_free_dev_local(void *ptr, int dev_id)
     }
 #ifdef ENABLE_DEVICE
     } else {
+      PROFILE_BEG()
       setDevice(reg_entry->dev_id);
+      PROFILE_END(t_set_dev);
       PROFILE_BEG()
       freeDevice(ptr);
       PROFILE_END(t_free_buf);
@@ -5000,7 +5007,9 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
 #ifdef ENABLE_DEVICE
     if (!reg_entry) {
       /* Create buffer on device before opening memory handle */
+      PROFILE_BEG()
       setDevice(_device_map[header->rank]);
+      PROFILE_END(t_set_dev)
       PROFILE_BEG()
       mallocDevice(&dev_buffer, header->length);
       PROFILE_END(t_malloc_buf)
@@ -5149,7 +5158,9 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
 #ifdef ENABLE_DEVICE
     if (!reg_entry) {
       /* Need to create temporary device buffer here before opening memory handle */
+      PROFILE_BEG()
       setDevice(_device_map[header->rank]);
+      PROFILE_END(t_set_dev)
       PROFILE_BEG()
       mallocDevice(&dev_buffer, header->length);
       PROFILE_END(t_malloc_buf)
@@ -5997,6 +6008,9 @@ STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory)
 #ifdef ENABLE_DEVICE
     if (reg_entry->use_dev) {
       void *ret;
+      PROFILE_BEG()
+      setDevice(reg_entry->dev_id);
+      PROFILE_END(t_set_dev)
       PROFILE_BEG()
       deviceOpenMemHandle(&ret, reg_entry->handle);
       PROFILE_END(t_open_ipc)
@@ -7566,7 +7580,9 @@ STATIC void nb_acc(int datatype, void *scale,
                 /* src is on host and dst is on device */
                 void *ptr;
                 /* create buffer on device */
+                PROFILE_BEG()
                 setDevice(reg_entry->dev_id);
+                PROFILE_END(t_set_dev)
                 PROFILE_BEG()
                 mallocDevice(&ptr,bytes);
                 PROFILE_END(t_malloc_buf)
@@ -7624,9 +7640,6 @@ STATIC void nb_acc(int datatype, void *scale,
             }
 #endif
             COMEX_ASSERT(reg_entry);
-            if (reg_entry->use_dev) {
-              setDevice(reg_entry->dev_id);
-            }
             mapped_offset = _get_offset_memory(reg_entry, dst);
 #ifdef ENABLE_DEVICE
             sem_wait(semaphores[proc]);
@@ -7637,7 +7650,9 @@ STATIC void nb_acc(int datatype, void *scale,
                 void *ptr;
                 /* create buffer on device (no need to set device,
                  * this already happened implicitly in _get_offset_memory */
+                PROFILE_BEG()
                 setDevice(reg_entry->dev_id);
+                PROFILE_END(t_set_dev)
                 PROFILE_BEG()
                 mallocDevice(&ptr,bytes);
                 PROFILE_END(t_malloc_buf)
@@ -8661,7 +8676,9 @@ STATIC void nb_accs(
         void *ptr;
         /* create buffer on device */
         if (on_host) {
+          PROFILE_BEG()
           setDevice(reg_entry->dev_id);
+          PROFILE_END(t_set_dev)
           PROFILE_BEG()
           mallocDevice(&ptr,count[0]);
           PROFILE_END(t_malloc_buf)
@@ -8724,11 +8741,12 @@ STATIC void nb_accs(
       } else {
         void *mapped_offset;
         void *ptr = NULL;
-        setDevice(reg_entry->dev_id);
         mapped_offset = _get_offset_memory(reg_entry, dst);
         /* create buffer on device */
         if (on_host) {
+          PROFILE_BEG()
           setDevice(reg_entry->dev_id);
+          PROFILE_END(t_set_dev)
           PROFILE_BEG()
           mallocDevice(&ptr,count[0]);
           PROFILE_END(t_malloc_buf)
@@ -9543,7 +9561,9 @@ STATIC void nb_accv(
                   bytes = iov[i].bytes;
                   limit = iov[i].count;
                   /* create buffer on device */
+                  PROFILE_BEG()
                   setDevice(reg_entry->dev_id);
+                  PROFILE_END(t_set_dev)
                   PROFILE_BEG()
                   mallocDevice(&ptr,bytes);
                   PROFILE_END(t_malloc_buf)
@@ -9566,7 +9586,9 @@ STATIC void nb_accv(
                   bytes = iov[i].bytes;
                   limit = iov[i].count;
                   /* create buffer on device */
+                  PROFILE_BEG()
                   setDevice(reg_entry->dev_id);
+                  PROFILE_END(t_set_dev)
                   PROFILE_BEG()
                   mallocDevice(&ptr,bytes);
                   PROFILE_END(t_malloc_buf)
@@ -9625,7 +9647,9 @@ STATIC void nb_accv(
                   bytes = iov[i].bytes;
                   limit = iov[i].count;
                   /* create buffer on device */
+                  PROFILE_BEG()
                   setDevice(reg_entry->dev_id);
+                  PROFILE_END(t_set_dev)
                   PROFILE_BEG()
                   mallocDevice(&ptr,bytes);
                   PROFILE_END(t_malloc_buf)
@@ -9655,7 +9679,9 @@ STATIC void nb_accv(
                   bytes = iov[i].bytes;
                   limit = iov[i].count;
                   /* create buffer on device */
+                  PROFILE_BEG()
                   setDevice(reg_entry->dev_id);
+                  PROFILE_END(t_set_dev)
                   PROFILE_BEG()
                   mallocDevice(&ptr,bytes);
                   PROFILE_END(t_malloc_buf)

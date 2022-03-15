@@ -832,6 +832,7 @@ void NGA_Set_device(int g_a, int flag)
     wnga_set_device(aa,iflag);
 }
 
+#ifdef ENABLE_DEVICE
 void GA_Device_host_list(int *list, int *devIDs, int *ndev, int grp)
 {
   Integer gg = (Integer)grp;
@@ -865,6 +866,7 @@ void NGA_Device_host_list(int *list, int *devIDs, int *ndev, int grp)
   free(tlist);
   free(tids);
 }
+#endif
 
 int GA_Total_blocks(int g_a)
 {
