@@ -68,7 +68,7 @@ int Group::size()
  */
 int Group::barrier()
 {
-  p_group->barrier();
+  return p_group->barrier();
 }
 
 /**

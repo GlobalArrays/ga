@@ -166,6 +166,10 @@ int p_Group::size()
 int p_Group::barrier()
 {
   int status = MPI_Barrier(p_comm);
+  if (status == MPI_SUCCESS) {
+    return CMX_SUCCESS;
+  }
+  return CMX_FAILURE;
 }
 
 /**
