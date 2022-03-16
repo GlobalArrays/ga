@@ -4,9 +4,12 @@
 
 #include "environment.hpp"
 
-CMX::Environment *CMX::Environment::p_instance = NULL;
+
 
 namespace CMX {
+
+Environment *Environment::p_instance = NULL;
+p_Environment *Environment::p_Impl = NULL;
 
 /**
  * Initialize the environment
