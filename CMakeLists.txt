@@ -236,6 +236,12 @@ if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU" AND CMAKE_Fortran_COMPILER_VERSION V
   set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
 endif()
 
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  add_compile_options(-fno-aggressive-loop-optimizations)
+elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-aggressive-loop-optimizations")
+endif()
+
 # Hardwire these settings. No way to check for Fortran integer size in CMake
 # (that we can find)
 set (CM_SIZEOF_F77_DOUBLE 8)
@@ -310,10 +316,6 @@ if(NOT "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Darwin")
   if(NOT MSVC)
     list(APPEND GA_EXTRA_LIBS rt)
   endif()
-endif()
-
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-  add_compile_options(-fno-aggressive-loop-optimizations)
 endif()
 
 if(ENABLE_BLAS)
