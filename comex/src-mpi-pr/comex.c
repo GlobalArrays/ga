@@ -5160,8 +5160,8 @@ STATIC void nb_recv_datatype(void *buf, MPI_Datatype dt, int source, nb_t *nb)
     COMEX_ASSERT(NULL != nb);
 
 #if DEBUG
-    fprintf(stderr, "[%d] nb_recv_datatype(buf=%p, count=%d, source=%d, nb=%p)\n",
-            g_state.rank, buf, count, source, nb);
+    fprintf(stderr, "[%d] nb_recv_datatype(buf=%p, source=%d, nb=%p)\n",
+            g_state.rank, buf, source, nb);
 #endif
 
     nb->recv_size += 1;
