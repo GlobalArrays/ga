@@ -87,8 +87,13 @@ esac
     mkdir -p build
     cd build
     echo FORTRAN_COMPILER is $FORTRAN_COMPILER
+    echo mpif90 is `which mpif90`
+    cat `which mpif90` |sed -e 's/-fallow-argument-mismatch//' > mpif90
+    chmod +x mpif90
+    export PATH=.:$PATH
     mpif90 -show || true
-    FC="$FORTRAN_COMPILER" cmake -DCMAKE_Fortran_COMPILER="$FORTRAN_COMPILER"  -DMPIEXEC_MAX_NUMPROCS=5 -DGA_RUNTIME="$ga_rt" ../
+    FC="$FORTRAN_COMPILER" cmake -DMPI_Fortran_COMPILER=./mpif90   -DMPIEXEC_MAX_NUMPROCS=5 -DGA_RUNTIME="$ga_rt" ../
+    rm ./mpif90
 else
 case "x$PORT" in
     xofi)
