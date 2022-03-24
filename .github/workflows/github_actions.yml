@@ -34,11 +34,18 @@ jobs:
           - gcc-9
         include:
           - os: ubuntu-latest
-            experimental: true 
+            experimental: true
             mpi_impl: mpich
             armci_network: mpi-ts
             f77: gfortran-11
             cc: gcc-11
+          - os: ubuntu-18.04
+            experimental: true
+            mpi_impl: mpich
+            armci_network: mpi-pr
+            f77: gfortran-10
+            cc: gcc-10
+            use_cmake: "Y"
           - os: ubuntu-latest
             experimental: true
             mpi_impl: intel
