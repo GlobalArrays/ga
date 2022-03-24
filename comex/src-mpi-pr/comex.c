@@ -353,7 +353,7 @@ STATIC void* _shm_map_arena(int fd, size_t size, sicm_arena arena);
 STATIC int _set_affinity(int cpu);
 STATIC void translate_mpi_error(int ierr, const char* location);
 STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels, MPI_Datatype base_type, MPI_Datatype *type);
-
+STATIC void check_devshm(int fd);
 
 int comex_init()
 {
@@ -4717,6 +4717,7 @@ STATIC void* _shm_create(const char *name, size_t size)
     if (-1 == fd) {
         fd = shm_open(name, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
     }
+    check_devshm(fd);
 
     /* finally report error if needed */
     if (-1 == fd) {
@@ -4734,6 +4735,7 @@ STATIC void* _shm_create(const char *name, size_t size)
     /* map into local address space */
     mapped = _shm_map(fd, size);
 
+    check_devshm(fd);
     /* close file descriptor */
     retval = close(fd);
     if (-1 == retval) {
@@ -4823,6 +4825,7 @@ STATIC void* _shm_attach(const char *name, size_t size)
 
     /* map into local address space */
     mapped = _shm_map(fd, size);
+    check_devshm(fd);
     /* close file descriptor */
     retval = close(fd);
     if (-1 == retval) {
@@ -4889,6 +4892,7 @@ STATIC void* _shm_map_arena(int fd, size_t size, sicm_arena arena)
 STATIC void* _shm_map(int fd, size_t size)
 {
     void *memory  = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    check_devshm(fd);
     if (MAP_FAILED == memory) {
         perror("_shm_map: mmap");
         comex_error("_shm_map: mmap", -1);
@@ -7172,4 +7176,26 @@ STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels,
         translate_mpi_error(ierr,"strided_to_subarray_dtype:MPI_Type_create_subarray");
     }
 }
-
+STATIC void check_devshm(int fd){
+#ifdef __linux__
+#include <sys/vfs.h>
+  struct stat finfo;
+  struct statfs ufs_statfs;
+  fstat(fd, &finfo);
+  fstatfs(fd, &ufs_statfs);
+#if DEBUG
+  fprintf(stderr, "[%d] /dev/shm filesize %lu  \n",
+	  g_state.rank, (long)finfo.st_size);
+    fprintf(stderr, "[%d] /dev/shm size %lu  bsize %ld \n",
+  	  g_state.rank, (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize), (long) ufs_statfs.f_bsize);
+#endif
+  if ( (long)finfo.st_size > (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize) )  {
+    fprintf(stderr, "[%d] /dev/shm fs has size %lu new shm area has size %ld need to increase /dev/shm by %ld bytes\n",
+	    g_state.rank, (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize), (long) finfo.st_size, (long)finfo.st_size - (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize));
+    perror("check_devshm: /dev/shm out of space");
+    _free_semaphore();
+    comex_error("check_devshm: /dev/shm out of space", -1);
+    
+  }
+#endif
+}
