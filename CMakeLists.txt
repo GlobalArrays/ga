@@ -116,6 +116,16 @@ message(STATUS "Checking MPI ...")
 find_package (MPI REQUIRED)
 set(GA_EXTRA_LIBS ${GA_EXTRA_LIBS} MPI::MPI_C)
 if(ENABLE_FORTRAN)
+  #macos fix for clang+gfortran build
+  #linking MPI::MPI_Fortran adds the flag to clang compile line
+  if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+    get_target_property(_mpif_ico MPI::MPI_Fortran INTERFACE_COMPILE_OPTIONS)
+    if(_mpif_ico)
+      string(REPLACE "-fallow-argument-mismatch" "" _mpif_ico ${_mpif_ico})
+      separate_arguments(_mpif_ico)
+      set_target_properties(MPI::MPI_Fortran PROPERTIES INTERFACE_COMPILE_OPTIONS "${_mpif_ico}")
+    endif()
+  endif()
   list(APPEND GA_EXTRA_LIBS MPI::MPI_Fortran)
 endif()
 
