@@ -33,4 +33,12 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "IntelLL
   endif()
 endif()
 
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  if(CMAKE_C_COMPILER_VERSION VERSION_EQUAL CMAKE_Fortran_COMPILER_VERSION)
+    message(STATUS "Check GNU compiler versions.")
+  else()
+    message(STATUS "GNU C and Fortran compiler versions do not match")
+    message(FATAL_ERROR "GNU Compiler versions provided: gcc: ${CMAKE_Fortran_COMPILER_VERSION}, gfortran version: ${CMAKE_C_COMPILER_VERSION}")
+  endif()
+endif()
 
