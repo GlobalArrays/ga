@@ -88,6 +88,7 @@ esac
     cd build
     echo FORTRAN_COMPILER is $FORTRAN_COMPILER
     mpif90 -show || true
+    echo CC is $CC
     FC="$FORTRAN_COMPILER" cmake -DMPIEXEC_MAX_NUMPROCS=5 -DGA_RUNTIME="$ga_rt" ../
 else
 case "x$PORT" in
