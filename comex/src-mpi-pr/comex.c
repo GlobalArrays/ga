@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/types.h>
 
 /* 3rd party headers */
 #include <mpi.h>
@@ -353,7 +354,10 @@ STATIC void* _shm_map_arena(int fd, size_t size, sicm_arena arena);
 STATIC int _set_affinity(int cpu);
 STATIC void translate_mpi_error(int ierr, const char* location);
 STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels, MPI_Datatype base_type, MPI_Datatype *type);
-STATIC void check_devshm(int fd);
+STATIC void check_devshm(int fd, size_t size);
+static int devshm_initialized = 0;
+static long devshm_fs_left = 0;
+static long devshm_fs_initial = 0;
 
 int comex_init()
 {
@@ -1477,6 +1481,7 @@ int comex_free_local(void *ptr)
 
     /* unmap the memory */
     retval = munmap(ptr, reg_entry->len);
+    check_devshm(0, -(reg_entry->len));
     if (-1 == retval) {
         perror("comex_free_local: munmap");
         comex_error("comex_free_local: munmap", retval);
@@ -2865,6 +2870,7 @@ int comex_free(void *ptr, comex_group_t group)
 
             /* unmap the memory */
             retval = munmap(reg_entry->mapped, reg_entry->len);
+	    check_devshm(0, -(reg_entry->len));
             if (-1 == retval) {
                 perror("comex_free: munmap");
                 comex_error("comex_free: munmap", retval);
@@ -4509,6 +4515,8 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
             }
 #else
             retval = munmap(reg_entry->mapped, reg_entry->len);
+	    // boh?
+	    	    check_devshm(0, -(reg_entry->len));
 #endif
             if (-1 == retval) {
                 perror("_free_handler: munmap");
@@ -4694,6 +4702,8 @@ STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup)
 
 STATIC void* _shm_create(const char *name, size_t size)
 {
+#include <unistd.h>
+#include <sys/types.h>
     void *mapped = NULL;
     int fd = 0;
     int retval = 0;
@@ -4717,7 +4727,6 @@ STATIC void* _shm_create(const char *name, size_t size)
     if (-1 == fd) {
         fd = shm_open(name, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
     }
-    check_devshm(fd);
 
     /* finally report error if needed */
     if (-1 == fd) {
@@ -4726,6 +4735,7 @@ STATIC void* _shm_create(const char *name, size_t size)
     }
 
     /* set the size of my shared memory object */
+    check_devshm(fd, size);
     retval = ftruncate(fd, size);
     if (-1 == retval) {
         perror("_shm_create: ftruncate");
@@ -4735,7 +4745,7 @@ STATIC void* _shm_create(const char *name, size_t size)
     /* map into local address space */
     mapped = _shm_map(fd, size);
 
-    check_devshm(fd);
+    //    check_devshm(fd);
     /* close file descriptor */
     retval = close(fd);
     if (-1 == retval) {
@@ -4825,7 +4835,7 @@ STATIC void* _shm_attach(const char *name, size_t size)
 
     /* map into local address space */
     mapped = _shm_map(fd, size);
-    check_devshm(fd);
+    //    check_devshm(fd, size);
     /* close file descriptor */
     retval = close(fd);
     if (-1 == retval) {
@@ -4892,7 +4902,7 @@ STATIC void* _shm_map_arena(int fd, size_t size, sicm_arena arena)
 STATIC void* _shm_map(int fd, size_t size)
 {
     void *memory  = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    check_devshm(fd);
+    //    check_devshm(fd, size);
     if (MAP_FAILED == memory) {
         perror("_shm_map: mmap");
         comex_error("_shm_map: mmap", -1);
@@ -7176,26 +7186,42 @@ STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels,
         translate_mpi_error(ierr,"strided_to_subarray_dtype:MPI_Type_create_subarray");
     }
 }
-STATIC void check_devshm(int fd){
+STATIC void check_devshm(int fd, size_t size){
 #ifdef __linux__
 #include <sys/vfs.h>
   struct stat finfo;
   struct statfs ufs_statfs;
-  fstat(fd, &finfo);
-  fstatfs(fd, &ufs_statfs);
-#if DEBUG
-  fprintf(stderr, "[%d] /dev/shm filesize %lu  \n",
-	  g_state.rank, (long)finfo.st_size);
-    fprintf(stderr, "[%d] /dev/shm size %lu  bsize %ld \n",
-  	  g_state.rank, (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize), (long) ufs_statfs.f_bsize);
+  long newspace;
+  if (!devshm_initialized) {
+    fstatfs(fd, &ufs_statfs);
+    devshm_initialized = 1;
+#if 1    
+    fprintf(stderr, "[%d] init /dev/shm size %ld  bsize %ld  nodesize %ld \n",
+	    g_state.rank, (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize), (long) ufs_statfs.f_bsize, (long)  g_state.node_size);
 #endif
-  if ( (long)finfo.st_size > (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize) )  {
-    fprintf(stderr, "[%d] /dev/shm fs has size %lu new shm area has size %ld need to increase /dev/shm by %ld bytes\n",
-	    g_state.rank, (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize), (long) finfo.st_size, (long)finfo.st_size - (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize));
-    perror("check_devshm: /dev/shm out of space");
-    _free_semaphore();
+    devshm_fs_initial =  (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize);
+    devshm_fs_left = devshm_fs_initial;
+  }
+  //  if (size > 0) {
+    newspace = (long) ( size*(g_state.node_size -1));
+    //  }else{
+    //    newspace = (long) ( size);
+    //  }
+  if ( newspace > devshm_fs_left )  {
+    fprintf(stderr, "[%d] /dev/shm fs has size %ld new shm area has size %ld need to increase /dev/shm by %ld bytes\n",
+	    g_state.rank, devshm_fs_left, newspace, newspace - devshm_fs_left);
+        perror("check_devshm: /dev/shm out of space");
+    //    _free_semaphore();
     comex_error("check_devshm: /dev/shm out of space", -1);
     
+  }else{
+    devshm_fs_left -=  newspace ;
   }
+  // reset 
+  if (devshm_fs_left > devshm_fs_initial) devshm_fs_left=devshm_fs_initial;
+#if 1
+  fprintf(stderr, "[%d] /dev/shm filesize %ld space left %ld \n",
+	  g_state.rank, newspace, devshm_fs_left);
+#endif
 #endif
 }
