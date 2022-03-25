@@ -10018,6 +10018,7 @@ STATIC void count_open_fds(void) {
 #ifdef ENABLE_DEVICE
 void comex_device_memset(void *ptr, int val, size_t bytes)
 {
+  setDevice(_comex_dev_id);
   deviceMemset(ptr,val,bytes);
 }
 
