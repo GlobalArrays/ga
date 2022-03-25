@@ -7195,7 +7195,7 @@ STATIC void check_devshm(int fd, size_t size){
   if (!devshm_initialized) {
     fstatfs(fd, &ufs_statfs);
     devshm_initialized = 1;
-#if 1    
+#if DEBUG
     fprintf(stderr, "[%d] init /dev/shm size %ld  bsize %ld  nodesize %ld \n",
 	    g_state.rank, (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize), (long) ufs_statfs.f_bsize, (long)  g_state.node_size);
 #endif
@@ -7219,7 +7219,7 @@ STATIC void check_devshm(int fd, size_t size){
   }
   // reset 
   if (devshm_fs_left > devshm_fs_initial) devshm_fs_left=devshm_fs_initial;
-#if 1
+#if DEBUG
   fprintf(stderr, "[%d] /dev/shm filesize %ld space left %ld \n",
 	  g_state.rank, newspace, devshm_fs_left);
 #endif
