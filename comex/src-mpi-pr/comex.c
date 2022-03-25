@@ -9552,6 +9552,7 @@ STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels,
 #ifdef ENABLE_DEVICE
 void comex_device_memset(void *ptr, int val, size_t bytes)
 {
+  setDevice(_comex_dev_id);
   deviceMemset(ptr,val,bytes);
 }
 
