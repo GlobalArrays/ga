@@ -7195,18 +7195,27 @@ STATIC void check_devshm(int fd, size_t size){
   if (!devshm_initialized) {
     fstatfs(fd, &ufs_statfs);
     devshm_initialized = 1;
-#if DEBUG
-    fprintf(stderr, "[%d] init /dev/shm size %ld  bsize %ld  nodesize %ld \n",
-	    g_state.rank, (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize), (long) ufs_statfs.f_bsize, (long)  g_state.node_size);
-#endif
     devshm_fs_initial =  (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize);
     devshm_fs_left = devshm_fs_initial;
+#define DEBUGSHM 1
+#if DEBUGSHM
+    fprintf(stderr, "[%d] init /dev/shm size %ld  bsize %ld  nodesize %ld \n",
+	    g_state.rank, devshm_fs_initial, (long) ufs_statfs.f_bsize, (long)  g_state.node_size);
+#endif
   }
   //  if (size > 0) {
     newspace = (long) ( size*(g_state.node_size -1));
     //  }else{
     //    newspace = (long) ( size);
     //  }
+    if(newspace>0){
+      // noo fd for space<0
+    fstatfs(fd, &ufs_statfs);
+#ifdef DEBUGSHM
+    fprintf(stderr, "[%d] /dev/shm filesize %ld inital devshm space %ld current /dev/shm space %ld \n",
+	    g_state.rank,  newspace,  devshm_fs_initial,  (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize));
+#endif
+    }
   if ( newspace > devshm_fs_left )  {
     fprintf(stderr, "[%d] /dev/shm fs has size %ld new shm area has size %ld need to increase /dev/shm by %ld bytes\n",
 	    g_state.rank, devshm_fs_left, newspace, newspace - devshm_fs_left);
@@ -7217,9 +7226,11 @@ STATIC void check_devshm(int fd, size_t size){
   }else{
     devshm_fs_left -=  newspace ;
   }
-  // reset 
-  if (devshm_fs_left > devshm_fs_initial) devshm_fs_left=devshm_fs_initial;
-#if DEBUG
+  if (devshm_fs_left > devshm_fs_initial) {
+  // reset
+    devshm_fs_left=devshm_fs_initial;
+  }
+#if DEBUGSHM
   fprintf(stderr, "[%d] /dev/shm filesize %ld space left %ld \n",
 	  g_state.rank, newspace, devshm_fs_left);
 #endif
