@@ -38,7 +38,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_Fortran_COMPILER_ID STREQUAL "GN
     message(STATUS "Check GNU compiler versions.")
   else()
     message(STATUS "GNU C and Fortran compiler versions do not match")
-    message(FATAL_ERROR "GNU Compiler versions provided: gcc: ${CMAKE_Fortran_COMPILER_VERSION}, gfortran version: ${CMAKE_C_COMPILER_VERSION}")
+    message(FATAL_ERROR "GNU Compiler versions provided: gcc: ${CMAKE_C_COMPILER_VERSION}, gfortran version: ${CMAKE_Fortran_COMPILER_VERSION}")
   endif()
 endif()
 
