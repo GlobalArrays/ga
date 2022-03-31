@@ -7192,15 +7192,17 @@ STATIC void check_devshm(int fd, size_t size){
   struct stat finfo;
   struct statfs ufs_statfs;
   long newspace;
+  if (g_state.rank == (g_state.node_size -1))  return;
   if (!devshm_initialized) {
     fstatfs(fd, &ufs_statfs);
     devshm_initialized = 1;
     devshm_fs_initial =  (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize);
     devshm_fs_left = devshm_fs_initial;
 #define DEBUGSHM 1
+#define CONVERT_TO_M 1048576
 #if DEBUGSHM
-    fprintf(stderr, "[%d] init /dev/shm size %ld  bsize %ld  nodesize %ld \n",
-	    g_state.rank, devshm_fs_initial, (long) ufs_statfs.f_bsize, (long)  g_state.node_size);
+    fprintf(stderr, "[%d] nodesize %d init /dev/shm size %ld  bsize %ld  nodesize %ld \n",
+	    g_state.rank, g_state.node_size, devshm_fs_initial/CONVERT_TO_M, (long) ufs_statfs.f_bsize, (long)  g_state.node_size);
 #endif
   }
   //  if (size > 0) {
@@ -7212,13 +7214,13 @@ STATIC void check_devshm(int fd, size_t size){
       // noo fd for space<0
     fstatfs(fd, &ufs_statfs);
 #ifdef DEBUGSHM
-    fprintf(stderr, "[%d] /dev/shm filesize %ld inital devshm space %ld current /dev/shm space %ld \n",
-	    g_state.rank,  newspace,  devshm_fs_initial,  (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize));
+    fprintf(stderr, "[%d] /dev/shm filesize %ld filesize*np %ld initial devshm space %ld current /dev/shm space %ld \n",
+	    g_state.rank,  (long) size/CONVERT_TO_M, newspace/CONVERT_TO_M,  devshm_fs_initial/CONVERT_TO_M,  (long)((ufs_statfs.f_bavail * ufs_statfs.f_bsize)/CONVERT_TO_M));
 #endif
     }
   if ( newspace > devshm_fs_left )  {
-    fprintf(stderr, "[%d] /dev/shm fs has size %ld new shm area has size %ld need to increase /dev/shm by %ld bytes\n",
-	    g_state.rank, devshm_fs_left, newspace, newspace - devshm_fs_left);
+    fprintf(stderr, "[%d] /dev/shm fs has size %ld new shm area has size %ld need to increase /dev/shm by %ld Mbytes\n",
+	    g_state.rank, devshm_fs_left/CONVERT_TO_M, newspace/CONVERT_TO_M, (newspace - devshm_fs_left)/CONVERT_TO_M);
         perror("check_devshm: /dev/shm out of space");
     //    _free_semaphore();
     comex_error("check_devshm: /dev/shm out of space", -1);
@@ -7232,7 +7234,7 @@ STATIC void check_devshm(int fd, size_t size){
   }
 #if DEBUGSHM
   fprintf(stderr, "[%d] /dev/shm filesize %ld space left %ld \n",
-	  g_state.rank, newspace, devshm_fs_left);
+	  g_state.rank, newspace/CONVERT_TO_M, devshm_fs_left/CONVERT_TO_M);
 #endif
 #endif
 }
