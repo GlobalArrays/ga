@@ -15,7 +15,7 @@
 #define DIMSIZE 256
 #define MAXCOUNT 10000
 #define MAX_FACTOR 256
-#define NLOOP 1 //10
+#define NLOOP 10
 
 void factor(int p, int *idx, int *idy) {
   int i, j;                              

@@ -15,7 +15,7 @@
 #define DIMSIZE 256
 #define MAXCOUNT 10000
 #define MAX_FACTOR 256
-#define NLOOP 1 //10
+#define NLOOP 10
 
 void factor(int p, int *idx, int *idy) {
   int i, j;                              
@@ -345,9 +345,9 @@ void test_int_array(int on_device)
   GA_Dgop(&tput, 1, "+");
   GA_Dgop(&tget, 1, "+");
   GA_Dgop(&tacc, 1, "+");
-  put_bw = (double)(put_cnt*sizeof(double))/tput;
-  get_bw = (double)(get_cnt*sizeof(double))/tget;
-  acc_bw = (double)(acc_cnt*sizeof(double))/tacc;
+  put_bw = (double)(put_cnt*sizeof(int))/tput;
+  get_bw = (double)(get_cnt*sizeof(int))/tget;
+  acc_bw = (double)(acc_cnt*sizeof(int))/tacc;
 }
 
 void print_bw()
