@@ -3,6 +3,7 @@
 #endif
 
 #include <assert.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -618,48 +619,101 @@ void comex_group_finalize()
 }
 
 
-static long xgethostid()
-{
 #if defined(__bgp__)
 #warning BGP
-    long nodeid;
+
+static long xgethostid()
+{
     int matched,midplane,nodecard,computecard;
+    _BGP_Personality_t personality;
     char rack_row,rack_col;
     char location[128];
     char location_clean[128];
+
     (void) memset(location, '\0', 128);
     (void) memset(location_clean, '\0', 128);
-    _BGP_Personality_t personality;
+
     Kernel_GetPersonality(&personality, sizeof(personality));
     BGP_Personality_getLocationString(&personality, location);
+
     matched = sscanf(location, "R%c%c-M%1d-N%2d-J%2d",
             &rack_row, &rack_col, &midplane, &nodecard, &computecard);
+
     assert(matched == 5);
+
     sprintf(location_clean, "%2d%02d%1d%02d%02d",
             (int)rack_row, (int)rack_col, midplane, nodecard, computecard);
-    nodeid = atol(location_clean);
+
+    return atol(location_clean);
+}
+
 #elif defined(__bgq__)
 #warning BGQ
-    int nodeid;
+
+static long xgethostid()
+{
     MPIX_Hardware_t hw;
+
     MPIX_Hardware(&hw);
 
-    nodeid = hw.Coords[0] * hw.Size[1] * hw.Size[2] * hw.Size[3] * hw.Size[4]
-        + hw.Coords[1] * hw.Size[2] * hw.Size[3] * hw.Size[4]
-        + hw.Coords[2] * hw.Size[3] * hw.Size[4]
-        + hw.Coords[3] * hw.Size[4]
-        + hw.Coords[4];
+    return hw.Coords[0] * hw.Size[1] * hw.Size[2] * hw.Size[3] * hw.Size[4] +
+           hw.Coords[1] * hw.Size[2] * hw.Size[3] * hw.Size[4] +
+           hw.Coords[2] * hw.Size[3] * hw.Size[4] +
+           hw.Coords[3] * hw.Size[4] +
+           hw.Coords[4];
+}
+
 #elif defined(__CRAYXT) || defined(__CRAYXE)
 #warning CRAY
-    int nodeid;
+
+static long xgethostid()
+{
+    long nodeid;
+
 #  if defined(__CRAYXT)
     PMI_Portals_get_nid(g_state.rank, &nodeid);
 #  elif defined(__CRAYXE)
     PMI_Get_nid(g_state.rank, &nodeid);
 #  endif
-#else
-    long nodeid = gethostid();
-#endif
 
     return nodeid;
 }
+
+#else
+
+static long xgethostid(void)
+{
+    const char *src[] = {
+        "/etc/hostid",
+        "/etc/machine-id",
+        NULL
+    };
+    char data[32] = {0};
+    long nodeid = 0;
+    ssize_t n;
+    int i, fd;
+
+    for (i = 0; src[i]; ++i) {
+        fd = open(src[i], O_RDONLY | O_LARGEFILE, 0);
+        if (fd >= 0)
+            break;
+    }
+
+    if (fd < 0)
+        return gethostid();
+
+    n = read(fd, &data, sizeof(data));
+    close(fd);
+
+    if (n < 0) {
+        perror("xgethostid: read(id)");
+        comex_error("xgethostid: Failed on hostid reading", n);
+    }
+
+    for (i = 0; i < n; i += sizeof(long))
+        nodeid ^= *(long *)&data[i];
+
+    return nodeid;
+}
+
+#endif
