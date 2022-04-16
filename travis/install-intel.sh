@@ -68,4 +68,9 @@ case "$os" in
 	    && sudo apt-get -y install intel-oneapi-ifort intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic  intel-oneapi-mkl \
 	    && sudo apt-get -y install intel-oneapi-mpi-devel
 	source "$IONEAPI_ROOT"/setvars.sh --force || true
+	which mpif90
+	mpif90 -show
 esac
+which ifort
+ifort -V
+echo ""##### end of  install-intel.sh ####"
