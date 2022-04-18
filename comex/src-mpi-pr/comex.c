@@ -379,6 +379,8 @@ int comex_init()
 
     /* env vars */
     {
+        int armci_verbose;
+
         char *value = NULL;
         nb_max_outstanding = COMEX_MAX_NB_OUTSTANDING; /* default */
         value = getenv("COMEX_MAX_NB_OUTSTANDING");
@@ -503,7 +505,16 @@ int comex_init()
         }
 
 #if DEBUG
-        if (0 == g_state.rank) {
+        armci_verbose = 1;
+#else
+        armci_verbose = 0;
+#endif
+        value = getenv("ARMCI_VERBOSE");
+        if (NULL != value) {
+            armci_verbose = atoi(value);
+        }
+
+        if (armci_verbose && 0 == g_state.rank) {
             printf("COMEX_MAX_NB_OUTSTANDING=%d\n", nb_max_outstanding);
             printf("COMEX_STATIC_BUFFER_SIZE=%d\n", static_server_buffer_size);
             printf("COMEX_MAX_MESSAGE_SIZE=%d\n", max_message_size);
@@ -526,7 +537,6 @@ int comex_init()
             printf("COMEX_ENABLE_ACC_IOV=%d\n", COMEX_ENABLE_ACC_IOV);
             fflush(stdout);
         }
-#endif
     }
 
     /* mutexes */
