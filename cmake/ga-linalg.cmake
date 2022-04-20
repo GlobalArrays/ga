@@ -177,6 +177,7 @@ if (ENABLE_BLAS)
       set(SPP_GIT_TAG master)
     endif()
     include(FetchContent)
+    set( gpu_backend "none" CACHE STRING "GPU backend to use" FORCE)
     if(NOT TARGET blaspp)
       FetchContent_Declare(
         blaspp
