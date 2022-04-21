@@ -4720,6 +4720,13 @@ STATIC void* _shm_create(const char *name, size_t size)
 
     /* finally report error if needed */
     if (-1 == fd) {
+      if (errno == EMFILE) {
+        printf("The per process limit on the number of open file"
+            " descriptors has been reached (relevant to PR runtime)\n");
+      } else if (errno = ENFILE) {
+        printf("The system-wide limit on the total number of open files"
+            " has been reached (relevant to PR runtime)\n");
+      }
         perror("_shm_create: shm_open");
         comex_error("_shm_create: shm_open", fd);
     }
@@ -4727,6 +4734,10 @@ STATIC void* _shm_create(const char *name, size_t size)
     /* set the size of my shared memory object */
     retval = ftruncate(fd, size);
     if (-1 == retval) {
+      if (errno == EFAULT) {
+        printf("File descriptor points outside the processes allocated"
+            " address space\n");
+      }
         perror("_shm_create: ftruncate");
         comex_error("_shm_create: ftruncate", retval);
     }
@@ -4817,6 +4828,13 @@ STATIC void* _shm_attach(const char *name, size_t size)
     /* attach to shared memory segment */
     fd = shm_open(name, O_RDWR, S_IRUSR|S_IWUSR);
     if (-1 == fd) {
+      if (errno == EMFILE) {
+        printf("The per process limit on the number of open file"
+            " descriptors has been reached (relevant to PR runtime)\n");
+      } else if (errno = ENFILE) {
+        printf("The system-wide limit on the total number of open files"
+            " has been reached (relevant to PR runtime)\n");
+      }
         perror("_shm_attach: shm_open");
         comex_error("_shm_attach: shm_open", -1);
     }
@@ -4890,6 +4908,16 @@ STATIC void* _shm_map(int fd, size_t size)
 {
     void *memory  = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     if (MAP_FAILED == memory) {
+      if (errno == EBADF) {
+        printf("File descriptor used in mmap is bad\n");
+      } else if (errno == ENFILE) {
+        printf("The system-wid limit on the total number of open files"
+            " has been reached\n");
+      } else if (errno == ENODEV) {
+        printf("The system does not support memory mapping\n");
+      } else if (errno == ENOMEM) {
+        printf("The processes maximum number of mappings has been exceeded\n");
+      }
         perror("_shm_map: mmap");
         comex_error("_shm_map: mmap", -1);
     }

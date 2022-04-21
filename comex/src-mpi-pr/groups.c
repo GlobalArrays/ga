@@ -441,6 +441,8 @@ void comex_group_init()
     sorted = (long*)malloc(sizeof(long) * g_state.size);
     (void)memcpy(sorted, g_state.hostid, sizeof(long)*g_state.size);
     qsort(sorted, g_state.size, sizeof(long), cmplong);
+    /* count is number of distinct host IDs that are lower than
+     * the host ID of this rank */
     for (i=0; i<g_state.size-1; ++i) {
         if (sorted[i] == g_state.hostid[g_state.rank]) 
         {
@@ -454,6 +456,7 @@ void comex_group_init()
 #if DEBUG
     printf("count: %d\n", count);
 #endif
+    /* split based on the value of count */
     status = MPI_Comm_split(MPI_COMM_WORLD, count,
             g_state.rank, &temp_node_comm);
     int node_group_size, node_group_rank;
