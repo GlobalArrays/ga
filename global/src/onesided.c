@@ -1540,6 +1540,9 @@ Integer  ow,i,p_handle;
    }
    gam_Location(ow,handle, lo, &lptr, ld);
    *(char**)ptr = lptr; 
+#ifdef ENABLE_DEVICE
+   if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 }
 
 /*\ RETURN A POINTER TO BEGINNING OF LOCAL DATA BLOCK
@@ -1762,6 +1765,9 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   lptr = GA[handle].ptr[inode]+offset*GA[handle].elemsize;
 
   *(char**)ptr = lptr; 
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 }
 
 /**
@@ -1819,7 +1825,9 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
     pnga_access_block_grid_ptr(g_a, indices, &lptr, ld);
   }
   *(char**)ptr = lptr; 
-
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 }
 
 /**
@@ -1857,6 +1865,9 @@ void pnga_access_block_segment_ptr(Integer g_a, Integer proc, void* ptr, Integer
 
   *len = GA[handle].size/GA[handle].elemsize;
   *(char**)ptr = lptr; 
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 }
 
 /**
@@ -1948,6 +1959,9 @@ unsigned long    lref=0, lptr;
    }
 #endif
 
+#ifdef ENABLE_DEVICE
+   if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
    /* adjust index for Fortran addressing */
    (*index) ++ ;
    FLUSH_CACHE;

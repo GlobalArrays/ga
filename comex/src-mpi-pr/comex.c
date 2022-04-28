@@ -9560,4 +9560,9 @@ void comex_copy_to_device(void *host_ptr, void *dev_ptr, size_t bytes)
 {
   copyToDevice(host_ptr, dev_ptr, bytes);
 }  
+
+void comex_set_local_dev()
+{
+  if (_comex_dev_id >= 0) setDevice(_comex_dev_id);
+}
 #endif

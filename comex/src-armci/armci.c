@@ -960,4 +960,12 @@ void ARMCI_Device_memset(void *ptr, int val, armci_size_t bytes)
 void ARMCI_Copy_to_dev(void *host_ptr, void *dev_ptr, armci_size_t bytes)
 {
 }
+
+/**
+ * Set context to device hosted on this process
+ */
+extern void ARMCI_Set_local_dev()
+{
+  comex_set_local_dev();
+}
 #endif
