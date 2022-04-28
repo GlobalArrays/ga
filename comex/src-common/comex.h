@@ -621,6 +621,11 @@ extern void* comex_malloc_dev_local(size_t bytes, int dev_id);
  */
 extern int comex_free_dev_local(void *ptr, int dev_id);
 
+/**
+ * Set context to device hosted by this process. This is a no-op if no
+ * device is mapped to this process.
+ */
+extern void comex_set_local_dev();
 #endif
 
 /**
