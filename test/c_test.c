@@ -111,6 +111,7 @@ void test_int_array(int on_device)
   int one;
   double tbeg;
   double zero = 0.0;
+  int ok;
 
   tput = 0.0;
   tget = 0.0;
@@ -188,38 +189,40 @@ void test_int_array(int on_device)
     t_sync += (GA_Wtime()-tbeg);
     tbeg = GA_Wtime();
     NGA_Distribution(g_a,rank,tlo,thi);
-#if 0
-    if (rank == 0) printf("Completed NGA_Distribution\n",rank);
-    if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
-      int *tbuf;
-      int tnelem = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
-      tbuf = (int*)malloc(tnelem*sizeof(int));
-      NGA_Access(g_a,tlo,thi,&ptr,&tld);
-      for (i=0; i<tnelem; i++) tbuf[i] = 0;
-      cudaMemcpy(tbuf, ptr, tnelem*sizeof(int), cudaMemcpyDeviceToHost);
-      p_ok = 1;
-      for (ii = tlo[0]; ii<=thi[0]; ii++) {
-        i = ii-tlo[0];
-        for (jj=tlo[1]; jj<=thi[1]; jj++) {
-          j = jj-tlo[1];
-          idx = i*tld+j;
-          if (tbuf[idx] != ii*DIMSIZE+jj) {
-            if (ok) printf("p[%d] (%d,%d) expected: %d actual[%d]: %d\n",rank,ii,jj,ii*DIMSIZE+jj,
-                idx,tbuf[idx]);
-            p_ok = 0;
+#if 1
+    if (on_device) {
+      if (n == 0 && rank == 0) printf("\nCheck access function\n",rank);
+      if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
+        int *tbuf;
+        int tnelem = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
+        tbuf = (int*)malloc(tnelem*sizeof(int));
+        NGA_Access(g_a,tlo,thi,&ptr,&tld);
+        for (i=0; i<tnelem; i++) tbuf[i] = 0;
+        cudaMemcpy(tbuf, ptr, tnelem*sizeof(int), cudaMemcpyDeviceToHost);
+        ok = 1;
+        for (ii = tlo[0]; ii<=thi[0]; ii++) {
+          i = ii-tlo[0];
+          for (jj=tlo[1]; jj<=thi[1]; jj++) {
+            j = jj-tlo[1];
+            idx = i*tld+j;
+            if (tbuf[idx] != ii*DIMSIZE+jj) {
+              if (ok) printf("p[%d] (%d,%d) expected: %d actual[%d]: %d\n",
+                  rank,ii,jj,ii*DIMSIZE+jj,idx,tbuf[idx]);
+              ok = 0;
+            }
           }
         }
+        if (!ok) {
+          printf("Mismatch found for put on process %d after Put\n",rank);
+        } else if (n==0 && rank==0 && ok) {
+          printf("Access function is okay\n\n");
+        }
+        free(tbuf);
       }
-      if (!ok) {
-        printf("Mismatch found for put on process %d after Put\n",rank);
-      } else {
-        if (rank==0) printf("Put is okay\n");
-      }
-      free(tbuf);
+      tbeg = GA_Wtime();
+      GA_Sync();
+      t_sync += (GA_Wtime()-tbeg);
     }
-    tbeg = GA_Wtime();
-    GA_Sync();
-    t_sync += (GA_Wtime()-tbeg);
 #endif
 
     /* zero out local buffer */
