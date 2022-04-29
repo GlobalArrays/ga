@@ -672,6 +672,9 @@ void ngai_put_common(Integer g_a,
 #endif
 
   gai_iterator_destroy(&it_hdl);
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 }
 
 
@@ -1042,6 +1045,9 @@ void ngai_get_common(Integer g_a,
 #endif
 
   gai_iterator_destroy(&it_hdl);
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 }
 
 /**
@@ -1450,6 +1456,9 @@ void ngai_acc_common(Integer g_a,
   GA_Internal_Threadsafe_Unlock();
 
   gai_iterator_destroy(&it_hdl);
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 }
 
 /**
@@ -2388,6 +2397,9 @@ int rc=0;
   if(rc) pnga_error("scatter/_acc failed in armci",rc);
 
   free(ptr_src);
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 
 }
 
@@ -2679,6 +2691,9 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
     free(buf2);
     free(buf1);
 
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 }
 
 /**
@@ -2749,6 +2764,9 @@ Integer subscrpt[2];
   }while (first< nv);
 
   pnga_free(int_ptr);
+#ifdef ENABLE_DEVICE
+  if (GA[GA_OFFSET+g_a].dev_set) ARMCI_Set_local_dev();
+#endif
 
 }
 
@@ -3338,7 +3356,14 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
 
     free(buf2); free(buf1);
     
+<<<<<<< HEAD
     pnga_free(proc);
+=======
+    ga_free(proc);
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
+>>>>>>> 5a5c5e3... Added a set local device call at the end of all one-sided operations
 }
 
 /**
@@ -3600,6 +3625,9 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
       pnga_free(header);
     }
 
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 }
 
 /**
@@ -3957,6 +3985,9 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
 
     free(buf2);
     free(buf1);
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 }
 
 /**
@@ -4056,6 +4087,9 @@ void *pval;
        return (Integer) ivalue;
    else
        return (Integer) lvalue;
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 }
 
 /**
@@ -4307,6 +4341,9 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       ARMCI_PutS(pbuf, stride_loc, prem, stride_rem, count, nstride-1, proc);
   }
   gai_iterator_destroy(&it_hdl);
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 }
 
 /**
@@ -4387,6 +4424,9 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       ARMCI_GetS(prem, stride_rem, pbuf, stride_loc, count, nstride-1, proc);
   }
   gai_iterator_destroy(&it_hdl);
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 }
 
 /**
@@ -4480,4 +4520,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
           nstride-1, proc);
   }
   gai_iterator_destroy(&it_hdl);
+#ifdef ENABLE_DEVICE
+  if (GA[handle].dev_set) ARMCI_Set_local_dev();
+#endif
 }
