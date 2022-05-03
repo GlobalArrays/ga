@@ -3737,45 +3737,50 @@ void nga_version_(Integer *major, Integer *minor, Integer *patch)
   wnga_version(major,minor,patch);
 }
 
-logical nga_sprs_array_create_(Integer idim, Integer jdim, Integer type)
+logical nga_sprs_array_create_(Integer *idim, Integer *jdim, Integer *type)
 {
-  return wnga_sprs_array_create(idim,jdim,type,sizeof(Integer));
+  return wnga_sprs_array_create(*idim,*jdim,*type,sizeof(Integer));
 }
 
-void nga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *val)
+void nga_sprs_array_add_element_(Integer *s_a, Integer *idx, Integer *jdx, void *val)
 {
-  wnga_sprs_array_add_element(s_a,idx,jdx,val);
+  wnga_sprs_array_add_element(*s_a,*idx,*jdx,val);
 }
 
-logical nga_sprs_array_assemble(Integer s_a)
+logical nga_sprs_array_assemble_(Integer *s_a)
 {
-  return wnga_sprs_array_assemble(s_a);
+  return wnga_sprs_array_assemble(*s_a);
 }
 
-void nga_sprs_array_row_distribution(Integer s_a, Integer iproc, Integer *lo,
+void nga_sprs_array_row_distribution_(Integer *s_a, Integer *iproc, Integer *lo,
     Integer *hi)
 {
-  wnga_sprs_array_row_distribution(s_a, iproc, lo, hi);
+  wnga_sprs_array_row_distribution(*s_a, *iproc, lo, hi);
 }
 
-void nga_sprs_array_column_distribution(Integer s_a, Integer iproc, Integer *lo,
+void nga_sprs_array_column_distribution_(Integer *s_a, Integer *iproc, Integer *lo,
     Integer *hi)
 {
-  wnga_sprs_array_column_distribution(s_a, iproc, lo, hi);
+  wnga_sprs_array_column_distribution(*s_a, *iproc, lo, hi);
 }
 
-void nga_sprs_array_access_col_block(Integer s_a, Integer icol,
+void nga_sprs_array_access_col_block_(Integer *s_a, Integer *icol,
         Integer **idx, Integer **jdx, void *val)
 {
-  wnga_sprs_array_access_col_block(s_a, icol, idx, jdx, val);
+  wnga_sprs_array_access_col_block(*s_a, *icol, idx, jdx, val);
 }
 
-void nga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
+void nga_sprs_array_col_block_list_(Integer *s_a, Integer *idx, Integer *n)
 {
-  wnga_sprs_array_matvec_multiply(s_a, g_a, g_v);
+  wnga_sprs_array_col_block_list(*s_a, &idx, n);
 }
 
-logical nga_sprs_array_destroy(Integer s_a)
+void nga_sprs_array_matvec_multiply_(Integer *s_a, Integer *g_a, Integer *g_v)
 {
-  return wnga_sprs_array_destroy(s_a);
+  wnga_sprs_array_matvec_multiply(*s_a, *g_a, *g_v);
+}
+
+logical nga_sprs_array_destroy_(Integer *s_a)
+{
+  return wnga_sprs_array_destroy(*s_a);
 }

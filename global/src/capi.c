@@ -5352,7 +5352,7 @@ int NGA_Sprs_array_create64(int64_t idim, int64_t jdim, int type)
 {
   Integer i = (Integer)idim;
   Integer j = (Integer)jdim;
-  return (int)wnga_sprs_array_create(i,j,type,sizeof(long));
+  return (int)wnga_sprs_array_create(i,j,type,sizeof(int64_t));
 }
 
 void NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void *val)
@@ -5418,7 +5418,7 @@ void NGA_Sprs_array_column_distribution64(int s_a, int iproc, int64_t *lo, int64
 }
 
 void NGA_Sprs_array_access_col_block(int s_a, int icol, int **idx, int **jdx,
-    void *val)
+    void **val)
 {
   Integer sa = (Integer)s_a;
   Integer ic = (Integer)icol;
@@ -5426,11 +5426,25 @@ void NGA_Sprs_array_access_col_block(int s_a, int icol, int **idx, int **jdx,
 }
 
 void NGA_Sprs_array_access_col_block64(int s_a, int icol, long **idx, long **jdx,
-    void *val)
+    void **val)
 {
   Integer sa = (Integer)s_a;
   Integer ic = (Integer)icol;
   wnga_sprs_array_access_col_block(sa,ic,idx,jdx,val);
+}
+
+void NGA_Sprs_array_col_block_list(int s_a, int **idx, int *n)
+{
+  Integer *Idx;
+  Integer i,N;
+  Integer sa = s_a;
+  wnga_sprs_array_col_block_list(sa, &Idx, &N);
+  *n = N;
+  *idx = (int*)malloc(N*sizeof(int));
+  for (i=0; i<N; i++) {
+    (*idx)[i] = (int)(Idx[i]);
+  }
+  free(Idx);
 }
 
 void NGA_Sprs_array_matvec_multiply(int s_a, int g_a, int g_v)
@@ -5441,7 +5455,7 @@ void NGA_Sprs_array_matvec_multiply(int s_a, int g_a, int g_v)
   wnga_sprs_array_matvec_multiply(sa, ga, gv);
 }
 
-int NGA_Sprs_array_destroy(Integer s_a)
+int NGA_Sprs_array_destroy(int s_a)
 {
   Integer sa = (Integer)s_a;
   wnga_sprs_array_destroy(sa);
