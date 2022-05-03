@@ -771,7 +771,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
         } else {
           printf("\n");
         }
-        if (top[j] >= 0) (ildx+i*(nrows+1))[nrows] = (long)icnt; 
+        if (top[j] >= 0) (ildx+i*(nrows+1))[nrows] = (int64_t)icnt; 
       }
      */
     } else {
@@ -1361,7 +1361,7 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
 
   Integer ilo, ihi, jlo, jhi, klo, khi;
   double *vsum, *vbuf, *vptr;
-  long *iptr = NULL, *jptr = NULL;
+  int64_t *iptr = NULL, *jptr = NULL;
   Integer i, j, iproc, ncols;
   double one_r = 1.0;
   Integer one = 1;
@@ -1372,6 +1372,7 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   /* Check that g_hdl and v_hdl are both vectors and that sizes
    * match */
+  if (local_sync_begin) pnga_sync();
   pnga_inquire(g_a, &atype, &arank, dims);
   adim = dims[0];
   pnga_inquire(g_v, &vtype, &vrank, dims);
@@ -1419,7 +1420,7 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
     khi = ihi + 1;
     pnga_acc(g_v,&klo,&khi,vsum,&one,&one_r);
   }
-  pnga_sync();
+  if (local_sync_end)  pnga_sync();
   free(vsum);
 }
 
