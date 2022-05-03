@@ -338,13 +338,14 @@ extern void          NGA_Set_tiled_proc_grid(int g_a, int block[], int proc_grid
 extern void          NGA_Set_tiled_irreg_proc_grid(int g_a, int mapc[], int nblocks[], int proc_grid[]);
 extern void          NGA_Unset_property(int g_a);
 extern void          NGA_Set_memory_dev(int g_a, char *device);
-extern void          NGA_Sprs_array_access_col_block(int s_a, int icol, int **idx, int **jdx, void *val);
-extern void          NGA_Sprs_array_access_col_block64(int s_a, int icol, long **idx, long **jdx, void *val);
+extern void          NGA_Sprs_array_access_col_block(int s_a, int icol, int **idx, int **jdx, void **val);
+extern void          NGA_Sprs_array_access_col_block64(int s_a, int icol, long **idx, long **jdx, void **val);
 extern void          NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void *val);
 extern int           NGA_Sprs_array_assemble(int s_a);
 extern int           NGA_Sprs_array_create(int idim, int jdim, int type);
 extern void          NGA_Sprs_array_column_distribution(int s_a, int iproc, int *lo, int *hi);
-extern int           NGA_Sprs_array_destroy(Integer s_a);
+extern void          NGA_Sprs_array_col_block_list(int s_a, int **idx, int *n);
+extern int           NGA_Sprs_array_destroy(int s_a);
 extern void          NGA_Sprs_array_matvec_multiply(int s_a, int g_a, int g_v);
 extern void          NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo, int *hi);
 extern void          NGA_Strided_acc(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[], void *alpha); 

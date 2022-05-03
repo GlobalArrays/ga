@@ -8,7 +8,7 @@
 
 //#define WRITE_VTK
 #define CG_SOLVE 0
-#define NDIM 64
+#define NDIM 256
 
 /**
  *  Solve Laplace's equation on a cubic domain using the sparse matrix
@@ -96,11 +96,15 @@ typedef struct {
   double *b_vec_new; /* new values of vector B on this processor */
   double *dot_buf; /* array for holding increments */
   double *dot; /* current value of dot product */
+  double *norm_buf; /* array for holding norm estimates */
+  double *norm; /* current value of norm infinity */
   int g_a; /* handle of array A */
   int g_b; /* handle of array B */
   int g_dot;   /* global array containing dot product */
+  int g_norm;   /* global array containing infinity norm */
   int64_t vlen;    /* length of vectors A and B on this processor */
   int actv;  /* flag indicating whether this handle is active */
+  int counter; /* counter to keep track of number of async iterations */
 } async_dot_struct;
 
 
@@ -124,6 +128,8 @@ void init_async_dot()
     _dot_handles[i].b_vec_new = NULL;
     _dot_handles[i].dot_buf = NULL;
     _dot_handles[i].dot = NULL;
+    _dot_handles[i].norm_buf = NULL;
+    _dot_handles[i].norm = NULL;
   }
 }
 
@@ -169,7 +175,7 @@ int new_async_dot(int g_a, int g_b, double *dot)
   _dot_handles[handle].vlen = ahi-alo+1;
   vlen = _dot_handles[handle].vlen;
   if (vlen != bhi-blo+1) {
-    GA_Error("Error (init_async_doc): Vector distributions must be the same",0);
+    GA_Error("Error (init_async_dot): Vector distributions must be the same",0);
   }
   aptr_old = (double*)malloc(vlen*sizeof(double));
   bptr_old = (double*)malloc(vlen*sizeof(double));
@@ -181,6 +187,7 @@ int new_async_dot(int g_a, int g_b, double *dot)
   _dot_handles[handle].a_vec_new = aptr_new;
   _dot_handles[handle].b_vec_new = bptr_new;
   _dot_handles[handle].dot_buf = dot_buf;
+  _dot_handles[handle].counter = 0;
   
   NGA_Get64(g_a,&alo,&ahi,aptr_new,&ld);
   NGA_Get64(g_b,&blo,&bhi,bptr_new,&ld);
@@ -197,6 +204,17 @@ int new_async_dot(int g_a, int g_b, double *dot)
   _dot_handles[handle].g_dot = g_dot;
   *_dot_handles[handle].dot = GA_Ddot(g_a, g_b);
   *dot = *_dot_handles[handle].dot;
+  if (g_a == g_b) {
+    int g_norm;
+    g_norm = NGA_Create_handle();
+    NGA_Set_data64(g_norm, 1, &nprocs, C_DBL);
+    NGA_Set_chunk64(g_norm, &one);
+    NGA_Allocate(g_norm);
+    NGA_Access64(g_norm, &lme, &lme, &_dot_handles[handle].norm, &ld);
+    GA_Norm_infinity(g_a,_dot_handles[handle].norm);
+    _dot_handles[handle].g_norm = g_norm;
+    _dot_handles[handle].norm_buf = (double*)malloc(nprocs*sizeof(double));
+  }
   GA_Sync();
   return handle;
 }
@@ -220,80 +238,110 @@ void async_dot(int handle, double *dot)
   double dot_inc, AB, ab;
   double one = 1.0;
 
-  a_vec_old = _dot_handles[handle].a_vec_old;
-  b_vec_old = _dot_handles[handle].b_vec_old;
-  a_vec_new = _dot_handles[handle].a_vec_new;
-  b_vec_new = _dot_handles[handle].b_vec_new;
-  dot_buf = _dot_handles[handle].dot_buf;
-  vlen = _dot_handles[handle].vlen;
-  g_dot = _dot_handles[handle].g_dot;
-  g_a = _dot_handles[handle].g_a;
-  g_b = _dot_handles[handle].g_b;
-#if 0
-  *dot = GA_Ddot(g_a,g_b);
-#else
-  /*
-  {
-    double tmpbuf[4];
-    int ilo = 0;
-    int ihi = nprocs-1;
-    NGA_Get(g_a,&ilo,&ihi,tmpbuf,&dd);
-    printf("p[%d] g_a:",me);
-    for (i=0; i<nprocs; i++) {
-      printf(" %16.8e",tmpbuf[i]);
-    }
-    printf("\n");
-    NGA_Get(g_a,&ilo,&ihi,tmpbuf,&dd);
-    printf("p[%d] g_b:",me);
-    for (i=0; i<nprocs; i++) {
-      printf(" %16.8e",tmpbuf[i]);
-    }
-    printf("\n");
-  }
-  */
+  if (_dot_handles[handle].counter%3 != 0) {
+    a_vec_old = _dot_handles[handle].a_vec_old;
+    b_vec_old = _dot_handles[handle].b_vec_old;
+    a_vec_new = _dot_handles[handle].a_vec_new;
+    b_vec_new = _dot_handles[handle].b_vec_new;
+    dot_buf = _dot_handles[handle].dot_buf;
+    vlen = _dot_handles[handle].vlen;
+    g_dot = _dot_handles[handle].g_dot;
+    g_a = _dot_handles[handle].g_a;
+    g_b = _dot_handles[handle].g_b;
 
+    NGA_Distribution64(g_a,me,&alo,&ahi);
+    NGA_Distribution64(g_b,me,&blo,&bhi);
+    NGA_Get64(g_a, &alo, &ahi, a_vec_new, &ld);
+    NGA_Get64(g_b, &blo, &bhi, b_vec_new, &ld);
+    dot_inc = 0.0;
+    AB = 0.0;
+    ab = 0.0;
+    for (i=0; i<vlen; i++) {
+      AB += a_vec_old[i]*b_vec_old[i];
+      ab += a_vec_new[i]*b_vec_new[i];
+      a_vec_old[i] = a_vec_new[i];
+      b_vec_old[i] = b_vec_new[i];
+    }
+    dot_inc = ab-AB;
+    for (i=0; i<nprocs; i++) {
+      dot_buf[i] = dot_inc;
+    }
+    lo = 0;
+    hi = nprocs-1;
+    /* Add increment to copy of dot product on every processor */
+    NGA_Acc(g_dot,&lo,&hi,dot_buf,&dd,&one);
+    //  if (me==0) printf("p[%d] g_dot: %d dot product: %e\n",me,g_dot,*dot);
+  } else {
+    a_vec_old = _dot_handles[handle].a_vec_old;
+    b_vec_old = _dot_handles[handle].b_vec_old;
+    a_vec_new = _dot_handles[handle].a_vec_new;
+    b_vec_new = _dot_handles[handle].b_vec_new;
+    vlen = _dot_handles[handle].vlen;
+    g_a = _dot_handles[handle].g_a;
+    g_b = _dot_handles[handle].g_b;
+    NGA_Distribution64(g_a,me,&alo,&ahi);
+    NGA_Distribution64(g_b,me,&blo,&bhi);
+    NGA_Get64(g_a, &alo, &ahi, a_vec_new, &ld);
+    NGA_Get64(g_b, &blo, &bhi, b_vec_new, &ld);
+    for (i=0; i<vlen; i++) {
+      a_vec_old[i] = a_vec_new[i];
+      b_vec_old[i] = b_vec_new[i];
+    }
+    *_dot_handles[handle].dot = GA_Ddot(g_a, g_b);
+  }
+  _dot_handles[handle].counter++;
+  *dot = *_dot_handles[handle].dot;
+}
+
+/**
+ * Calculate current value of asynchronous infinity norm
+ * handle: asynchronous dot product handle
+ * dot: estimated value of current dot infinity norm
+ */
+void async_norm_infinity(int handle, double *norm)
+{
+  double *norm_buf;
+  double *a_vec_new;
+  int64_t alo, ahi, ld;
+  int64_t vlen;
+  int lo, hi, dd;
+  int me = GA_Nodeid();
+  int nprocs = GA_Nnodes();
+  int i;
+  int g_dot, g_a;
+  double one = 1.0;
+
+  a_vec_new = _dot_handles[handle].a_vec_new;
+  norm_buf = _dot_handles[handle].norm_buf;
+  g_a = _dot_handles[handle].g_a;
+#if 0
   NGA_Distribution64(g_a,me,&alo,&ahi);
-  NGA_Distribution64(g_b,me,&blo,&bhi);
   NGA_Get64(g_a, &alo, &ahi, a_vec_new, &ld);
-  NGA_Get64(g_b, &blo, &bhi, b_vec_new, &ld);
-  dot_inc = 0.0;
-  AB = 0.0;
-  ab = 0.0;
-  for (i=0; i<vlen; i++) {
-    AB += a_vec_old[i]*b_vec_old[i];
-    ab += a_vec_new[i]*b_vec_new[i];
-    a_vec_old[i] = a_vec_new[i];
-    b_vec_old[i] = b_vec_new[i];
-  }
-  dot_inc = ab-AB;
-  /*
-  printf("p[%d] nprocs: %d handle: %d ab: %e AB: %e dot_inc: %e\n",me,nprocs,handle,ab,AB,dot_inc);
-  printf("p[%d]",me);
-  */
-  for (i=0; i<nprocs; i++) {
-    dot_buf[i] = dot_inc;
-    /*
-    printf(" %e",dot_buf[i]);
-    */
-  }
-  /*
-  printf(" one: %f\n",one);
-  */
   lo = 0;
   hi = nprocs-1;
-  /* Add increment to copy of dot product on every processor */
-  NGA_Acc(g_dot,&lo,&hi,dot_buf,&dd,&one);
-  //GA_Sync();
-  *dot = *_dot_handles[handle].dot;
+  NGA_Get(_dot_handles[handle].g_norm,&lo,&hi,norm_buf,&dd);
+  GA_Sync();
+  vlen = _dot_handles[handle].vlen;
   /*
-  printf("p[%d] *dot: %e\n",me,*dot);
-  lo = me;
-  hi = me;
-  NGA_Get(g_dot,&lo,&hi,dot,&dd);
-  printf("p[%d] lo: %d hi: %d dot: %e\n",me,lo,hi,*dot);
+  if (GA_Nodeid() == 0) {
+     for (i=0; i<nprocs; i++) {
+       printf("handle: %d process: %d infinity norm: %f\n",handle,i,norm_buf[i]);
+     }
+  }
   */
+  *norm = 0.0;
+  for (i=0; i<vlen; i++) {
+    if (fabs(a_vec_new[i]) > *norm) *norm = fabs(a_vec_new[i]);
+  }
+  // printf("p[%d] handle: %d norm: %e\n",GA_Nodeid(),handle,*norm);
+  norm_buf[me] = *norm;
+  *_dot_handles[handle].norm = *norm;
+  for (i=0; i<nprocs; i++) {
+    if (fabs(norm_buf[i]) > *norm) *norm = fabs(norm_buf[i]);
+  }
+#else
+  GA_Norm_infinity(g_a,norm);
 #endif
-  if (me==0) printf("p[%d] g_dot: %d dot product: %e\n",me,g_dot,*dot);
 }
 
 /**
@@ -318,6 +366,12 @@ void destroy_async_dot(int handle)
   _dot_handles[handle].dot_buf = NULL;
   _dot_handles[handle].dot = NULL;
   _dot_handles[handle].actv = 0;
+  if (_dot_handles[handle].g_a == _dot_handles[handle].g_b) {
+    int g_norm = _dot_handles[handle].g_norm;
+    NGA_Release64(g_norm, &me, &me);
+    NGA_Destroy(g_norm);
+    free(_dot_handles[handle].norm_buf);
+  }
 }
 
 void terminate_async_dot()
@@ -335,7 +389,8 @@ void terminate_async_dot()
  */
 
 int main(int argc, char **argv) {
-  int s_a, g_b, g_x, g_p, g_r, g_t;
+  int s_a, g_b, g_x, g_p, g_r, g_rt, g_rm, g_s, g_v, g_t;
+  int g_nrm, g_ns;
   int one;
   int64_t one_64;
   int me, nproc;
@@ -355,6 +410,7 @@ int main(int argc, char **argv) {
   double one_r = 1.0;
   double m_one_r = -1.0;
   double ir, jr, ldr;
+  double rho, rho_m, omega, m_omega, rv, tt, ts;
   double xinc_p, yinc_p, zinc_p;
   double xinc_m, yinc_m, zinc_m;
   double alpha, beta, residual;
@@ -364,6 +420,7 @@ int main(int argc, char **argv) {
   double tol, twopi;
   FILE *PHI;
   int d_rr, d_tp, d_rho, d_rv, d_ts, d_tt;
+  int mask0, mask1;
   /* Intitialize a message passing library */
   one = 1;
   one_64 = 1;
@@ -620,6 +677,13 @@ int main(int argc, char **argv) {
   free(iptr);
   free(vbuf);
 #define SYNCHED 0
+#if SYNCHED
+  mask0 = 1;
+  mask1 = 1;
+#else
+  mask0 = 0;
+  mask1 = 0;
+#endif
 #if CG_SOLVE
   g_x = GA_Duplicate(g_b, "dup_x");
   g_r = GA_Duplicate(g_b, "dup_r");
@@ -651,6 +715,7 @@ int main(int argc, char **argv) {
   /* Start iteration loop */
   while (tol > 1.0e-5 && ncnt < iterations) {
     if (me==0) printf("Iteration: %d Tolerance: %e\n",(int)ncnt+1,tol);
+    GA_Mask_sync(mask0,mask1);
     NGA_Sprs_array_matvec_multiply(s_a, g_p, g_t);
     //printf("p[%d] Got to 1\n",me);
 #if SYNCHED
@@ -661,20 +726,24 @@ int main(int argc, char **argv) {
     //printf("p[%d] Alpha1: %e\n",me,alpha);
     alpha = residual/alpha;
     //printf("p[%d] Alpha2: %e\n",me,alpha);
+    GA_Mask_sync(mask0,mask1);
     GA_Add(&one_r,g_x,&alpha,g_p,g_x);
     alpha = -alpha;
+    GA_Mask_sync(mask0,mask1);
     GA_Add(&one_r,g_r,&alpha,g_t,g_r);
-#if SYNCHED
-    GA_Norm_infinity(g_r, &tol);
-#endif
     beta = residual;
 #if SYNCHED
     residual = GA_Ddot(g_r,g_r);
 #else
     async_dot(d_rr,&residual);
 #endif
-    if (me==0) printf("p[%d] Residual: %e\n",me,residual);
+//    if (me==0) printf("p[%d] Residual: %e\n",me,residual);
+#if SYNCHED
+    GA_Norm_infinity(g_r, &tol);
+#else
     tol =residual/((double)cdim);
+#endif
+    printf("p[%d] Tolerance: %f\n",me,tol);
     beta = residual/beta;
     GA_Add(&one_r,g_r,&beta,g_p,g_p); 
     ncnt++;
@@ -703,7 +772,7 @@ int main(int argc, char **argv) {
    * Cambridge University Press, Cambridge, 2003.
    */
   g_x = GA_Duplicate(g_b, "dup_x");
-  g_r = GA_Duplicate(g_b, "dup_r");
+  g_rt = GA_Duplicate(g_b, "dup_rt");
   g_rm = GA_Duplicate(g_b, "dup_rm");
   g_p = GA_Duplicate(g_b, "dup_p");
   g_v = GA_Duplicate(g_b, "dup_v");
@@ -720,24 +789,36 @@ int main(int argc, char **argv) {
   m_one_r = -1.0;
   GA_Zero(g_x);
   /* Initial guess is zero, so Ax = 0 and r = b */
-  GA_Copy(g_b, g_r);
+  GA_Copy(g_b, g_rt);
   GA_Copy(g_b, g_rm);
   ncnt = 0;
 #if SYNCHED
-  GA_Norm_infinity(g_r, &tol);
+  GA_Norm_infinity(g_rm, &tol);
+#else
+  mask0 = 1;
+  mask1 = 1;
+  g_nrm = new_async_dot(g_rm,g_rm,&tol);
+  async_norm_infinity(g_nrm, &tol);
+  GA_Sync();
 #endif
+  if (me==0) printf("tol at 1: %f\n",tol);
   /* Start iteration loop */
   while (tol > 1.0e-5 && ncnt < iterations) {
     if (me==0) printf("Iteration: %d Tolerance: %e\n",(int)ncnt+1,tol);
+#if 1
+    rho = GA_Ddot(g_rt,g_rm);
+#else
 #if SYNCHED
-    rho = GA_Ddot(g_r,g_rm);
+    rho = GA_Ddot(g_rt,g_rm);
 #else
     if (ncnt == 0) {
-      d_rho = new_async_dot(g_r,g_rm,&rho);
+      d_rho = new_async_dot(g_rt,g_rm,&rho);
     } else {
       async_dot(d_rho,&rho);
     }
 #endif
+#endif
+  if (me==0) printf("rho at 1: %f\n",rho);
     if (rho == 0.0) {
       GA_Error("BiCG-STAB method fails",0);
     }
@@ -746,27 +827,49 @@ int main(int argc, char **argv) {
     } else {
       beta = (rho/rho_m)*(alpha/omega);
       m_omega = -omega;
+      GA_Mask_sync(mask0,mask1);
       GA_Add(&one_r,g_p,&m_omega,g_v,g_p);
+      GA_Mask_sync(mask0,mask1);
       GA_Add(&one_r,g_rm,&beta,g_p,g_p);
     }
+  if (me==0) printf("rho at 1a: %f\n",rho);
+    GA_Mask_sync(mask0,mask1);
     NGA_Sprs_array_matvec_multiply(s_a, g_p, g_v);
+  if (me==0) printf("rho at 1b: %f\n",rho);
+#if 1
+    rv = GA_Ddot(g_rt,g_v);
+#else
 #if SYNCHED
-    rv = GA_Ddot(g_r,g_v);
+    rv = GA_Ddot(g_rt,g_v);
 #else
     if (ncnt == 0) {
-      d_rv = new_async_dot(g_r,g_v,&rv);
+      d_rv = new_async_dot(g_rt,g_v,&rv);
     } else {
       async_dot(d_rv,&rv);
     }
 #endif
+#endif
+  if (me==0) printf("rv at 1: %f\n",rv);
     alpha = -rho/rv;
     GA_Add(&one_r,g_rm,&alpha,g_v,g_s);
     alpha = -alpha;
+#if SYNCHED
     GA_Norm_infinity(g_s, &tol);
+#else
+    if (ncnt  == 0) {
+      g_ns = new_async_dot(g_s,g_s,&tol);
+      async_norm_infinity(g_ns, &tol);
+    } else {
+      async_norm_infinity(g_ns, &tol);
+    }
+#endif
+    if (me==0) printf("tol at 2: %f\n",tol);
     if (tol < 1.0e-05) {
+      GA_Mask_sync(mask0,mask1);
       GA_Add(&one_r,g_x,&alpha,g_p,g_x);
       break;
     }
+    GA_Mask_sync(mask0,mask1);
     NGA_Sprs_array_matvec_multiply(s_a, g_s, g_t);
 #if SYNCHED
     ts = GA_Ddot(g_t,g_s);
@@ -780,12 +883,28 @@ int main(int argc, char **argv) {
       async_dot(d_tt,&tt);
     }
 #endif
+    if (me==0) printf("ts at 1: %f\n",ts);
+    if (me==0) printf("tt at 1: %f\n",tt);
     omega = ts/tt;
     m_omega = -omega;
+    GA_Mask_sync(mask0,mask1);
     GA_Add(&one_r,g_x,&alpha,g_p,g_x);
+    ts = GA_Ddot(g_x,g_x);
+    if (me==0) printf("norm of x at 1: %f\n",ts);
+    GA_Mask_sync(mask0,mask1);
     GA_Add(&one_r,g_x,&omega,g_s,g_x);
+    ts = GA_Ddot(g_x,g_x);
+    if (me==0) printf("norm of x at 2: %f\n",ts);
+    GA_Mask_sync(mask0,mask1);
     GA_Add(&one_r,g_s,&m_omega,g_t,g_rm);
+    ts = GA_Ddot(g_rm,g_rm);
+    if (me==0) printf("norm of r at 1: %f\n",ts);
+#if SYNCHED
     GA_Norm_infinity(g_rm, &tol);
+#else
+    async_norm_infinity(g_nrm, &tol);
+#endif
+    if (me==0) printf("tol at 3: %f\n",tol);
     if (tol < 1.0e-05) break;
     if (omega == 0) {
       GA_Error("BiCG-STAB method cannot continue",0);
@@ -797,6 +916,8 @@ int main(int argc, char **argv) {
   destroy_async_dot(d_rv);
   destroy_async_dot(d_ts);
   destroy_async_dot(d_tt);
+  destroy_async_dot(g_ns);
+  destroy_async_dot(g_nrm);
   NGA_Destroy(g_x);
   NGA_Destroy(g_r);
   NGA_Destroy(g_rm);
