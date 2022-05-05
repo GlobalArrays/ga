@@ -388,6 +388,7 @@ void k_solve(int s_a, int g_b, int g_ref, int *g_x)
           xptr[icol] -= val*axdot;
           if (fabs(val*axdot) > maxinc) maxinc = fabs(val*axdot);
         }
+#endif
       }
 #endif
     }
@@ -415,6 +416,7 @@ void k_solve(int s_a, int g_b, int g_ref, int *g_x)
           xi += val*xptr[icol];
         }
       }
+  //    printf("Ax[%d]: %f b[%d]: %f\n",i,xi,i,my_rhs[i]);
       if (fabs(xi-my_rhs[i]) > residual) {
         residual = fabs(xi-my_rhs[i]);
       }
