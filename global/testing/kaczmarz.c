@@ -7,8 +7,8 @@
 #include "mp3.h"
 
 #define WRITE_VTK
-#define CG_SOLVE 0
 #define NDIM 256
+#define MAX_ITERATIONS 10000
 
 /**
  *  Solve Laplace's equation on a cubic domain using the sparse matrix
@@ -171,7 +171,7 @@ void k_solve(int s_a, int g_b, int *g_x)
 {
   int nblocks;
   int *list;
-  int i, j, nb, icnt, g_cvg;
+  int i, j, nb, icnt, g_cvg, g_maxr;
   int converged = 0;
   int converged_tracker = 0;
   int me = GA_Nodeid();
@@ -184,11 +184,15 @@ void k_solve(int s_a, int g_b, int *g_x)
   double **blk_ptrs;
   double *diag_ptr;
   double *normA;
+  double *maxr;
+  int64_t *b_n;
   int64_t **m_idx;
   int64_t **m_jdx;
   int64_t *m_jlo;
   double **m_vals;
-  int iteration_max = 10000;
+  double *resbuf;
+  int tlo, thi, tld;
+  int iteration_max = MAX_ITERATIONS;
   int iter;
   int *seq;
   int irow;
@@ -203,20 +207,29 @@ void k_solve(int s_a, int g_b, int *g_x)
   NGA_Set_data(g_cvg,one,&one,C_INT);
   NGA_Allocate(g_cvg);
   GA_Zero(g_cvg);
+  g_maxr = NGA_Create_handle();
+  NGA_Set_data(g_maxr,one,&nprocs,C_DBL);
+  NGA_Allocate(g_maxr);
+  GA_Zero(g_maxr);
+  NGA_Distribution(g_maxr,me,&tlo,&thi);
+  NGA_Access(g_maxr,&tlo,&thi,&maxr,&tld);
   /* Find out which column blocks are non-zero */
   NGA_Sprs_array_col_block_list(s_a, &list, &nblocks);
   blk_ptrs = (double**)malloc((nblocks-1)*sizeof(double*));
+  b_n = (int64_t*)malloc(nblocks*sizeof(int64_t*));
   m_idx = (int64_t**)malloc(nblocks*sizeof(int64_t*));
   m_jdx = (int64_t**)malloc(nblocks*sizeof(int64_t*));
   m_jlo = (int64_t*)malloc(nblocks*sizeof(int64_t));
   m_vals = (double**)malloc(nblocks*sizeof(double*));
+  resbuf = (double*)malloc(nprocs*sizeof(double));
   /* Find total data on processes corresponding to non-zero column blocks
    * (but not including block on diagonal) */
   total = 0;
   for (i=0; i<nblocks; i++) {
     int lo, hi;
+    NGA_Distribution(*g_x, list[i], &lo, &hi);
+    b_n[i] = hi-lo+1;
     if (list[i] != me) {
-      NGA_Distribution(*g_x, list[i], &lo, &hi);
       total += (int64_t)(hi-lo+1);
     }
   }
@@ -257,7 +270,7 @@ void k_solve(int s_a, int g_b, int *g_x)
       int64_t *idx = m_idx[nb];
       int64_t *jdx = m_jdx[nb];
       double *vals = m_vals[nb];
-      int64_t jnum = idx[i+1]-idx[i]+1;
+      int64_t jnum = idx[i+1]-idx[i];
       int64_t jstart = idx[i];
       for (j=0; j<jnum; j++) {
         double val = vals[jstart+j];
@@ -265,6 +278,7 @@ void k_solve(int s_a, int g_b, int *g_x)
       }
     }
   }
+
   /* get pointers etc. to my slice of the solution vector */
   NGA_Access64(*g_x, &my_lo, &my_hi, &my_vals, &ld64);
   NGA_Access64(g_b, &my_lo, &my_hi, &my_rhs, &ld64);
@@ -290,7 +304,7 @@ void k_solve(int s_a, int g_b, int *g_x)
     for (i=0; i<my_n; i++) {
       int irow = seq[i];
       double axdot = 0.0;
-      int jmax = 0;
+      double xmb = 0.0;
       /* loop through all blocks and calculate inner product of x and
        * row irow of sparse matrix */
       icnt = 0;
@@ -307,10 +321,9 @@ void k_solve(int s_a, int g_b, int *g_x)
         }
         int64_t jnum = idx[irow+1]-idx[irow];
         int64_t jstart = idx[irow];
-        if (jnum > jmax) jmax = jnum;
         for (j=0; j<jnum; j++) {
           int64_t icol = jdx[jstart+j]-m_jlo[nb];
-          if (icol < 0 || icol >= my_n)
+          if (icol < 0 || icol >= b_n[nb])
             printf("p[%d] Illegal column index: %ld\n",me,icol);
           double val = vals[jstart+j];
           axdot += val*xptr[icol];
@@ -330,6 +343,18 @@ void k_solve(int s_a, int g_b, int *g_x)
         int64_t *jdx = m_jdx[nb];
         double *vals = m_vals[nb];
         double *xptr;
+#if 1
+        if (list[nb] == me) {
+          xptr = my_vals;
+          int64_t jnum = idx[irow+1]-idx[irow];
+          int64_t jstart = idx[irow];
+          for (j=0; j<jnum; j++) {
+            int64_t icol = jdx[jstart+j]-m_jlo[nb];
+            double val = vals[jstart+j];
+            xptr[icol] -= val*axdot;
+          }
+        }
+#else
         if (list[nb] != me) {
           xptr = blk_ptrs[icnt];
           icnt++;
@@ -343,6 +368,7 @@ void k_solve(int s_a, int g_b, int *g_x)
           double val = vals[jstart+j];
           xptr[icol] -= val*axdot;
         }
+#endif
       }
     }
     /* Check for convergence */
@@ -369,10 +395,12 @@ void k_solve(int s_a, int g_b, int *g_x)
           xi += val*xptr[icol];
         }
       }
+  //    printf("Ax[%d]: %f b[%d]: %f\n",i,xi,i,my_rhs[i]);
       if (fabs(xi-my_rhs[i]) > residual) {
         residual = fabs(xi-my_rhs[i]);
       }
     }
+    *maxr = residual;
     /* Only call read-increment if local convergence has changed
      * since the last cycle of row updates */
     if (residual < tolerance && !converged_tracker) {
@@ -391,7 +419,13 @@ void k_solve(int s_a, int g_b, int *g_x)
 //    res_max = residual;
 //    GA_Dgop(&res_max, 1, "max");
     if (me == 0) {
-      printf("Iteration: %d Residual: %f\n",iter,residual);
+      int imax=nprocs-1;
+      double resmax = 0.0;
+      NGA_Get(g_maxr,&zero,&imax,resbuf,&one);
+      for (i=0; i<nprocs; i++) {
+        if (resmax < resbuf[i]) resmax = resbuf[i];
+      }
+      printf("Iteration: %d Residual: %f\n",iter,resmax);
     }
 //    GA_Sync();
     iter++;
@@ -399,6 +433,11 @@ void k_solve(int s_a, int g_b, int *g_x)
 
   NGA_Release64(g_b,&my_lo, &my_hi);
   NGA_Release_update64(*g_x,&my_lo, &my_hi);
+  NGA_Release(g_maxr,&tlo, &thi);
+  NGA_Destroy(g_cvg);
+  NGA_Destroy(g_maxr);
+  free(resbuf);
+  free(b_n);
   free(m_idx);
   free(m_jdx);
   free(m_jlo);
@@ -632,6 +671,7 @@ int main(int argc, char **argv) {
         y = ((double)j+0.5)*h;
         z = 1.0;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
+        if (vbuf[ncnt] == 0.0) printf("x: %f y: %f z: %f\n",x,y,z);
         ibuf[ncnt] = i + j*ldx + (zdim-1)*ldxy;
         ncnt++;
       }
@@ -645,6 +685,7 @@ int main(int argc, char **argv) {
         y = 0.0;
         z = ((double)k+0.5)*h;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
+        if (vbuf[ncnt] == 0.0) printf("x: %f y: %f z: %f\n",x,y,z);
         ibuf[ncnt] = i + k*ldxy;
         ncnt++;
       }
@@ -657,6 +698,7 @@ int main(int argc, char **argv) {
         y = 1.0;
         z = ((double)k+0.5)*h;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
+        if (vbuf[ncnt] == 0.0) printf("x: %f y: %f z: %f\n",x,y,z);
         ibuf[ncnt] = i + (ydim-1)*ldx + k*ldxy;
         ncnt++;
       }
@@ -670,6 +712,7 @@ int main(int argc, char **argv) {
         y = ((double)j+0.5)*h;
         z = ((double)k+0.5)*h;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
+        if (vbuf[ncnt] == 0.0) printf("x: %f y: %f z: %f\n",x,y,z);
         ibuf[ncnt] = j*ldx + k*ldxy;
         ncnt++;
       }
@@ -682,6 +725,7 @@ int main(int argc, char **argv) {
         y = ((double)j+0.5)*h;
         z = ((double)k+0.5)*h;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
+        if (vbuf[ncnt] == 0.0) printf("x: %f y: %f z: %f\n",x,y,z);
         ibuf[ncnt] = (xdim-1) + j*ldx + k*ldxy;
         ncnt++;
       }
@@ -711,8 +755,9 @@ int main(int argc, char **argv) {
   free(ibuf);
   free(iptr);
   free(vbuf);
+  GA_Norm_infinity(g_b, &x);
   if (me == 0) {
-    printf("\n    Right hand side completed\n");
+    printf("\n    Right hand side completed. Maximum value of RHS: %e\n",x);
   }
 
   /* Matrix and right hand side have been constructed. Begin solution
