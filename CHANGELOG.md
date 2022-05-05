@@ -8,6 +8,17 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
+- Known Bugs
+- Added
+  - Setting ARMCI_VERBOSE=1 at runtime will also dump configuration details for
+    ComEx runtime
+- Changed
+  - Updated compiler settings in CMake build if Fujitsu compilers are detected
+- Fixed
+  - Fixed gcc toolchain checks in CMake for clang build
+  - Fixed tiled arrays so that they work with restricted arrays and fixed some
+    additional bugs in block cyclic distributions
+  - Removed several memory leaks
 
 ## [5.8] - 2020-09-30
 - Known Bugs
