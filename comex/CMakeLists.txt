@@ -48,21 +48,21 @@ if (MPI_TS)
 elseif (MPI_PR)
   if (ENABLE_CUDA)
     message(STATUS "Setting Compiler for dev_utils.cu to CUDA")
-    set(COMEX_CUDA_DEVICE
+    set(COMEX_GPU_DEVICE
       src-mpi-pr/dev_utils.cu
     )
-    set(COMEX_DEVICE
-      src-mpi-pr/comex.c
-      src-mpi-pr/groups.c
-      src-mpi-pr/reg_cache.c
-    )
-  else()
-    set(COMEX_DEVICE
-      src-mpi-pr/comex.c
-      src-mpi-pr/groups.c
-      src-mpi-pr/reg_cache.c
+  elseif (ENABLE_HIP)
+    message(STATUS "Setting Compiler for dev_utils_hip.cpp to HIP")
+    set(COMEX_GPU_DEVICE
+      src-mpi-pr/dev_utils_hip.cpp
     )
   endif()
+  set(COMEX_DEVICE
+    src-mpi-pr/comex.c
+    src-mpi-pr/groups.c
+    src-mpi-pr/reg_cache.c
+  )
+  
   set (COMEX_NETWORK_MPI_PR ON)
   include_directories(AFTER src-mpi-pr)
 elseif (MPI3)
@@ -131,23 +131,23 @@ set(ARMCI_FILES
 add_library(armci_comex OBJECT
   ${ARMCI_FILES}
   ${COMEX_DEVICE}
-  ${COMEX_CUDA_DEVICE}
+  ${COMEX_GPU_DEVICE}
 )
 target_compile_definitions(armci_comex PRIVATE HAVE_CONFIG_H)
 
 add_library(armci
   ${ARMCI_FILES}
   ${COMEX_DEVICE}
-  ${COMEX_CUDA_DEVICE}
+  ${COMEX_GPU_DEVICE}
 )
 target_compile_definitions(armci PRIVATE HAVE_CONFIG_H)
 
 add_library(GlobalArrays::armci ALIAS armci)
 
-if(ENABLE_CUDA)
-  cuda_add_cublas_to_target(armci)
-else()
-  target_link_libraries(armci PUBLIC ${CUDA_LIBRARIES})
+if(ENABLE_HIP)
+  target_link_libraries(armci PUBLIC roc::rocblas hip::device)
+elseif(ENABLE_CUDA)
+  target_link_libraries(armci PUBLIC CUDA::cublas)
 endif()
 
 install(TARGETS armci
@@ -158,15 +158,15 @@ install(TARGETS armci
 
 add_library(comex
  ${COMEX_DEVICE}
- ${COMEX_CUDA_DEVICE}
+ ${COMEX_GPU_DEVICE}
 )
 
 add_library(GlobalArrays::comex ALIAS comex)
 
-if(ENABLE_CUDA)
-  cuda_add_cublas_to_target(comex)
-else()
-  target_link_libraries(comex PUBLIC ${CUDA_LIBRARIES})
+if(ENABLE_HIP)
+  target_link_libraries(comex PUBLIC roc::rocblas hip::device)
+elseif(ENABLE_CUDA)
+  target_link_libraries(comex PUBLIC CUDA::cublas)
 endif()
 
 install(TARGETS comex

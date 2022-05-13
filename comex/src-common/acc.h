@@ -3,10 +3,6 @@
 
 #include "comex.h"
 
-#ifdef ENABLE_DEVICE
-#include <cuda_runtime.h>
-#include "cublas_v2.h"
-#endif
 
 /* needed for complex accumulate */
 typedef struct {
@@ -164,54 +160,5 @@ static inline void _acc(
 #undef MUL_CPL
 #undef BLAS_INT
 
-#ifdef ENABLE_DEVICE
-extern void deviceIaxpy(int *dst, const int *src, const int *scale, int n);
-extern void deviceLaxpy(long *dst, const long *src, const long *scale, int n);
-/**
- * Skip the intense macro usage and just do this the old-fashion way
- * @param op type of operation including data type
- * @param bytes number of bytes
- * @param dst destination buffer (on device)
- * @param src source buffer
- * @param scale factor for scaling value before accumalation
- */
-static inline void _acc_dev(
-        const int op,
-        const int bytes,
-        void * const restrict dst,
-        const void * const restrict src,
-        const void * const restrict scale)
-{
-  cublasHandle_t handle;
-  if (op == COMEX_ACC_DBL) {
-    const int n = bytes/sizeof(double);
-    cublasCreate(&handle);
-    cublasDaxpy(handle,n,scale,src,1,dst,1);
-    cublasDestroy(handle);
-  } else if (op == COMEX_ACC_FLT) {
-    const int n = bytes/sizeof(float);
-    cublasCreate(&handle);
-    cublasSaxpy(handle,n,scale,src,1,dst,1);
-    cublasDestroy(handle);
-  } else if (op == COMEX_ACC_INT) {
-    const int n = bytes/sizeof(int);
-    deviceIaxpy(dst, src, scale, n);
-  } else if (op == COMEX_ACC_LNG) {
-    const int n = bytes/sizeof(long);
-    deviceLaxpy(dst, src, scale, n);
-  } else if (op == COMEX_ACC_DCP) {
-    const int n = bytes/sizeof(DoubleComplex);
-    cublasCreate(&handle);
-    cublasZaxpy(handle,n,scale,src,1,dst,1);
-    cublasDestroy(handle);
-  } else if (op == COMEX_ACC_CPL) {
-    const int n = bytes/sizeof(SingleComplex);
-    cublasCreate(&handle);
-    cublasCaxpy(handle,n,scale,src,1,dst,1);
-    cublasDestroy(handle);
-  } else {
-  }
-}
-#endif
 
 #endif /* _COMEX_COMMON_ACC_H_ */
