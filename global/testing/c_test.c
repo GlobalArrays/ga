@@ -5,7 +5,12 @@
 #include "mpi.h"
 #include "ga.h"
 #include "macdecls.h"
+
+#if defined(ENABLE_HIP)
+#include <hip/hip_runtime.h>
+#elif defined(ENABLE_CUDA) 
 #include <cuda_runtime.h>
+#endif
 
 /*
 #define BLOCK1 1024*1024
