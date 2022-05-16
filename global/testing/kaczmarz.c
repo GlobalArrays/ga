@@ -202,6 +202,9 @@ void k_solve(int s_a, int g_b, int g_ref, int *g_x)
   for (i=0; i<nblocks; i++) {
     int lo, hi;
     NGA_Distribution(*g_x, list[i], &lo, &hi);
+    if (list[i] == me) {
+      printf("p[%d] x_lo: %d x_hi: %d\n",me,lo,hi);
+    }
     b_n[i] = hi-lo+1;
     if (list[i] != me) {
       total += (int64_t)(hi-lo+1);
@@ -388,7 +391,6 @@ void k_solve(int s_a, int g_b, int g_ref, int *g_x)
           xptr[icol] -= val*axdot;
           if (fabs(val*axdot) > maxinc) maxinc = fabs(val*axdot);
         }
-#endif
       }
 #endif
     }
@@ -416,7 +418,6 @@ void k_solve(int s_a, int g_b, int g_ref, int *g_x)
           xi += val*xptr[icol];
         }
       }
-  //    printf("Ax[%d]: %f b[%d]: %f\n",i,xi,i,my_rhs[i]);
       if (fabs(xi-my_rhs[i]) > residual) {
         residual = fabs(xi-my_rhs[i]);
       }
@@ -462,10 +463,12 @@ void k_solve(int s_a, int g_b, int g_ref, int *g_x)
       error = sqrt(error);
     }
     if (me == 0) {
+//      printf("p[%d] Find max residual for iteration: %d\n",me,iter);
       int imax=nprocs-1;
       double resmax = 0.0;
       NGA_Get(g_maxr,&zero,&imax,resbuf,&one);
       for (i=0; i<nprocs; i++) {
+        //printf("p[%d] iteration: %d resbuf[%d]: %f\n",me,iter,i,resbuf[i]);
         if (resmax < resbuf[i]) resmax = resbuf[i];
       }
       printf("Iteration: %d Residual: %f error: %f\n",iter,resmax,error);
@@ -1105,6 +1108,34 @@ int main(int argc, char **argv) {
     }
    
   }
+
+#if 0
+  g_ax = GA_Duplicate(g_x, "tmp_ax");
+  NGA_Sprs_array_matvec_multiply(s_a, g_x, g_ax);
+  if (me == 0) {
+    double *axtmp = (double*)malloc(rdim*sizeof(double));
+    double *btmp = (double*)malloc(rdim*sizeof(double));
+    double *xtmp = (double*)malloc(rdim*sizeof(double));
+    int tlo = 0;
+    int thi = (int)(rdim-1);
+    NGA_Get(g_ax,&tlo,&thi,axtmp,&one);
+    NGA_Get(g_b,&tlo,&thi,btmp,&one);
+    NGA_Get(g_x,&tlo,&thi,xtmp,&one);
+    for (i=0; i<rdim; i++) {
+      if (fabs(axtmp[i]-btmp[i]) > 1.0) {
+        printf("Ax[%ld]: %f b[%ld]: %f x[%ld]: %f XXX\n",
+            i,axtmp[i],i,btmp[i],i,xtmp[i]);
+      } else {
+        printf("Ax[%ld]: %f b[%ld]: %f x[%ld]: %f\n",i,axtmp[i],i,btmp[i],i,xtmp[i]);
+      }
+    }
+    free(axtmp);
+    free(xtmp);
+    free(btmp);
+  }
+  GA_Destroy(g_ax);
+#endif
+  
 
   /* Write solution to file */
 #ifdef WRITE_VTK
