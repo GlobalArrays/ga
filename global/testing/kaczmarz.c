@@ -7,7 +7,7 @@
 #include "mp3.h"
 
 #define WRITE_VTK
-#define NDIM 256
+#define NDIM 128
 #define MAX_ITERATIONS 10000
 
 /**
@@ -171,9 +171,11 @@ void k_solve(int s_a, int g_b, int *g_x)
 {
   int nblocks;
   int *list;
-  int i, j, nb, icnt, g_cvg, g_maxr;
+  int i, j, nb, icnt, g_cvg, g_maxr, g_ax;
+  int my_nb;
   int converged = 0;
   int converged_tracker = 0;
+  int recheck_converged = 0;
   int me = GA_Nodeid();
   int nprocs = GA_Nnodes();
   int64_t my_lo, my_hi, my_n, ld64;
@@ -189,6 +191,7 @@ void k_solve(int s_a, int g_b, int *g_x)
   int64_t **m_idx;
   int64_t **m_jdx;
   int64_t *m_jlo;
+  int64_t ilast;
   double **m_vals;
   double *resbuf;
   int tlo, thi, tld;
@@ -199,6 +202,11 @@ void k_solve(int s_a, int g_b, int *g_x)
   int one = 1;
   int zero = 0;
   double tolerance = 1.0e-5;
+  double maxax;
+  double axmb;
+  double axtmp;
+  double maxinc;
+  int maxrow;
   /* Create solution vector */
   *g_x = GA_Duplicate(g_b, "dup_x");
   GA_Zero(*g_x);
@@ -211,11 +219,17 @@ void k_solve(int s_a, int g_b, int *g_x)
   NGA_Set_data(g_maxr,one,&nprocs,C_DBL);
   NGA_Allocate(g_maxr);
   GA_Zero(g_maxr);
+  g_ax = NGA_Create_handle();
+  NGA_Set_data(g_ax,one,&nprocs,C_DBL);
+  NGA_Allocate(g_ax);
+  GA_Zero(g_ax);
   NGA_Distribution(g_maxr,me,&tlo,&thi);
   NGA_Access(g_maxr,&tlo,&thi,&maxr,&tld);
   /* Find out which column blocks are non-zero */
   NGA_Sprs_array_col_block_list(s_a, &list, &nblocks);
-  blk_ptrs = (double**)malloc((nblocks-1)*sizeof(double*));
+  if (nblocks>1) {
+    blk_ptrs = (double**)malloc((nblocks-1)*sizeof(double*));
+  }
   b_n = (int64_t*)malloc(nblocks*sizeof(int64_t*));
   m_idx = (int64_t**)malloc(nblocks*sizeof(int64_t*));
   m_jdx = (int64_t**)malloc(nblocks*sizeof(int64_t*));
@@ -228,14 +242,21 @@ void k_solve(int s_a, int g_b, int *g_x)
   for (i=0; i<nblocks; i++) {
     int lo, hi;
     NGA_Distribution(*g_x, list[i], &lo, &hi);
+    if (list[i] == me) {
+      printf("p[%d] x_lo: %d x_hi: %d\n",me,lo,hi);
+    }
     b_n[i] = hi-lo+1;
     if (list[i] != me) {
       total += (int64_t)(hi-lo+1);
+    } else {
+      my_nb = i;
     }
   }
   xblocks = (double*)malloc(total*sizeof(double));
   /* set up blk_ptrs */
-  blk_ptrs[0] = NULL;
+  if (nblocks > 1) {
+    blk_ptrs[0] = NULL;
+  }
   icnt = 0;
   for (i=0; i<nblocks; i++) {
     int lo, hi;
@@ -244,8 +265,9 @@ void k_solve(int s_a, int g_b, int *g_x)
       if (icnt == 0) {
         blk_ptrs[icnt] = xblocks;
       } else {
-        blk_ptrs[icnt] = blk_ptrs[icnt-1] + (hi-lo+1);
+        blk_ptrs[icnt] = blk_ptrs[icnt-1] + ilast;
       }
+      ilast = (int64_t)(hi-lo+1);
       icnt++;
     }
   }
@@ -256,12 +278,13 @@ void k_solve(int s_a, int g_b, int *g_x)
     NGA_Sprs_array_column_distribution64(s_a, list[i], &ilo, &ihi);
     m_jlo[i] = ilo;
     NGA_Sprs_array_access_col_block64(s_a, list[i], &m_idx[i], &m_jdx[i], &tmp_ptr);
-    if (tmp_ptr == NULL) printf("Null values pointer for row block %d column block %d\n",
-        me,list[i]);
+    if (tmp_ptr == NULL) printf("Null values pointer for row block %d"
+        " column block %d\n",me,list[i]);
     m_vals[i] = (double*)tmp_ptr;
   }
   /* find the norm of each row of matrix s_a */
   NGA_Sprs_array_row_distribution64(s_a, me, &my_lo, &my_hi);
+  //printf("p[%d] my_lo: %ld my_hi: %ld\n",me,my_lo,my_hi);
   my_n = my_hi - my_lo + 1;
   normA = (double*)malloc(my_n*sizeof(double));
   for (i=0; i<my_n; i++) {
@@ -282,11 +305,47 @@ void k_solve(int s_a, int g_b, int *g_x)
   /* get pointers etc. to my slice of the solution vector */
   NGA_Access64(*g_x, &my_lo, &my_hi, &my_vals, &ld64);
   NGA_Access64(g_b, &my_lo, &my_hi, &my_rhs, &ld64);
+#if 0
+  {
+    int max = nprocs-1;
+    maxax = 0.0;
+    for (i=0; i<my_n; i++) {
+      if (fabs(my_rhs[i])>maxax) maxax = fabs(my_rhs[i]);
+    }
+    NGA_Put(g_ax,&me,&me,&maxax,&one);
+    GA_Sync();
+    if (me==0) {
+      double *abuf = (double*)malloc(nprocs*sizeof(double));
+      NGA_Get(g_ax,&zero,&max,abuf,&one);
+      for (nb=0; nb<nprocs; nb++) {
+        printf("p[%d] iteration: %d max RHS[%d]: %f\n",me,iter,nb,abuf[nb]);
+      }
+      free(abuf);
+    }
+  }
+#endif
+  /* Normalize A and b by row norm of A */
+  for (i=0; i<my_n; i++) {
+    icnt = 0;
+    normA[i] = sqrt(normA[i]);
+    for (nb = 0; nb<nblocks; nb++) {
+      int64_t *idx = m_idx[nb];
+      int64_t *jdx = m_jdx[nb];
+      double *vals = m_vals[nb];
+      int64_t jnum = idx[i+1]-idx[i];
+      int64_t jstart = idx[i];
+      for (j=0; j<jnum; j++) {
+        int64_t icol = jdx[jstart+j]-m_jlo[nb];
+        vals[jstart+j] /= normA[i];
+      }
+    }
+    my_rhs[i] /= normA[i];
+    normA[i] = 1.0;
+  }
   seq = (int*)malloc(my_n*sizeof(int));
-  ran3(-323892+me);
   /* start iteration loop */
   iter = 0;
-  while (!converged && iter < iteration_max) {
+  while (!converged && iter < iteration_max && !recheck_converged) {
     double residual;
     double res_max;
     /* Update values of solution */
@@ -294,13 +353,16 @@ void k_solve(int s_a, int g_b, int *g_x)
     for (nb = 0; nb<nblocks; nb++) {
       if (list[nb] != me) {
         int lo, hi, ld; 
-        NGA_Distribution(g_b, list[nb], &lo, &hi);
-        NGA_Get(g_b, &lo, &hi, blk_ptrs[icnt], &ld);
+        NGA_Distribution(*g_x, list[nb], &lo, &hi);
+        NGA_Get(*g_x, &lo, &hi, blk_ptrs[icnt], &ld);
         icnt++;
       }
     }
 
     reorder(seq, my_n);
+    maxax = 0.0;
+    axmb = 0.0;
+    maxinc = 0.0;
     for (i=0; i<my_n; i++) {
       int irow = seq[i];
       double axdot = 0.0;
@@ -331,30 +393,43 @@ void k_solve(int s_a, int g_b, int *g_x)
       }
       /* Finish calculating update to x[irow] */
       if (normA[irow] != 0.0) {
+        axtmp = axdot;
         axdot -= my_rhs[irow];
         axdot /= normA[irow];
+        if (fabs(axdot) >  axmb) {
+          maxax = axtmp;
+          axmb = fabs(axdot);
+          maxrow = irow;
+        }
       } else {
         GA_Error("Row of matrix is all zeros!",irow);
       }
       /* Update vector elements */
+#if 1
+      {
+        double *xptr = my_vals;
+        int64_t *idx = m_idx[my_nb];
+        int64_t *jdx = m_jdx[my_nb];
+        double *vals = m_vals[my_nb];
+        int64_t jnum = idx[irow+1]-idx[irow];
+        int64_t jstart = idx[irow];
+        for (j=0; j<jnum; j++) {
+          int64_t icol = jdx[jstart+j]-m_jlo[my_nb];
+          double val = vals[jstart+j];
+          if (icol < 0 || icol >= my_n) {
+            printf("p[%d] icol out of bounds icol: %ld my_n: %ld\n",me,icol,my_n);
+          }
+          xptr[icol] -= val*axdot;
+          if (fabs(val*axdot) > maxinc) maxinc = fabs(val*axdot);
+        }
+      }
+#else
       icnt = 0;
       for (nb = 0; nb<nblocks; nb++) {
         int64_t *idx = m_idx[nb];
         int64_t *jdx = m_jdx[nb];
         double *vals = m_vals[nb];
         double *xptr;
-#if 1
-        if (list[nb] == me) {
-          xptr = my_vals;
-          int64_t jnum = idx[irow+1]-idx[irow];
-          int64_t jstart = idx[irow];
-          for (j=0; j<jnum; j++) {
-            int64_t icol = jdx[jstart+j]-m_jlo[nb];
-            double val = vals[jstart+j];
-            xptr[icol] -= val*axdot;
-          }
-        }
-#else
         if (list[nb] != me) {
           xptr = blk_ptrs[icnt];
           icnt++;
@@ -368,10 +443,10 @@ void k_solve(int s_a, int g_b, int *g_x)
           double val = vals[jstart+j];
           xptr[icol] -= val*axdot;
         }
-#endif
       }
+#endif
     }
-    /* Check for convergence */
+    /* Calculate maximum residual on this process */
     residual = 0.0;
     for (i=0; i<my_n; i++) {
       double xi=0.0;
@@ -395,12 +470,13 @@ void k_solve(int s_a, int g_b, int *g_x)
           xi += val*xptr[icol];
         }
       }
-  //    printf("Ax[%d]: %f b[%d]: %f\n",i,xi,i,my_rhs[i]);
       if (fabs(xi-my_rhs[i]) > residual) {
         residual = fabs(xi-my_rhs[i]);
       }
     }
     *maxr = residual;
+    //printf("p[%d] iteration: %d residual: %f\n",me,iter,residual);
+    /* Check for convergence */
     /* Only call read-increment if local convergence has changed
      * since the last cycle of row updates */
     if (residual < tolerance && !converged_tracker) {
@@ -414,26 +490,108 @@ void k_solve(int s_a, int g_b, int *g_x)
     if (converged_tracker) {
       int ld;
       NGA_Get(g_cvg, &zero, &zero, &icnt, &ld);
-      if (icnt >= nprocs) converged = 1;
+      // printf("p[%d] iteration: %d icnt: %d nprocs: %d\n",me,iter,icnt,nprocs);
+      if (!converged) {
+        if (icnt >= nprocs) converged = 1;
+      } else {
+        if (icnt >= nprocs) {
+          recheck_converged = 1;
+        } else {
+          converged = 0;
+        }
+      }
+    } else {
+      converged = 0;
     }
-//    res_max = residual;
-//    GA_Dgop(&res_max, 1, "max");
+#if 0
+    {
+      double resmax = residual;
+      GA_Dgop(&resmax, 1, "max");
+      if (me == 0) {
+        printf("Iteration: %d Residual: %f\n",iter,resmax);
+      }
+    }
+#else
     if (me == 0) {
+//      printf("p[%d] Find max residual for iteration: %d\n",me,iter);
       int imax=nprocs-1;
       double resmax = 0.0;
       NGA_Get(g_maxr,&zero,&imax,resbuf,&one);
       for (i=0; i<nprocs; i++) {
+        //printf("p[%d] iteration: %d resbuf[%d]: %f\n",me,iter,i,resbuf[i]);
         if (resmax < resbuf[i]) resmax = resbuf[i];
       }
       printf("Iteration: %d Residual: %f\n",iter,resmax);
     }
-//    GA_Sync();
+#endif
+    //GA_Sync();
     iter++;
   }
+#if 1
+  {
+    int max = nprocs-1;
+    NGA_Put(g_ax,&me,&me,&maxax,&one);
+    GA_Sync();
+    if (me==0) {
+      double *abuf = (double*)malloc(nprocs*sizeof(double));
+      NGA_Get(g_ax,&zero,&max,abuf,&one);
+      for (nb=0; nb<nprocs; nb++) {
+        printf("p[%d] iteration: %d amax[%d]: %f\n",me,iter,nb,abuf[nb]);
+      }
+      free(abuf);
+    }
+    GA_Sync();
+    NGA_Put(g_ax,&me,&me,&axmb,&one);
+    GA_Sync();
+    if (me==0) {
+      double *abuf = (double*)malloc(nprocs*sizeof(double));
+      NGA_Get(g_ax,&zero,&max,abuf,&one);
+      for (nb=0; nb<nprocs; nb++) {
+        printf("p[%d] iteration: %d max (ax-b)/a2[%d]: %f\n",me,iter,nb,abuf[nb]);
+      }
+      free(abuf);
+    }
+    GA_Sync();
+    axtmp = fabs(maxax-my_rhs[maxrow]);
+    NGA_Put(g_ax,&me,&me,&axtmp,&one);
+    GA_Sync();
+    if (me==0) {
+      double *abuf = (double*)malloc(nprocs*sizeof(double));
+      NGA_Get(g_ax,&zero,&max,abuf,&one);
+      for (nb=0; nb<nprocs; nb++) {
+        printf("p[%d] iteration: %d max ax-b[%d]: %f\n",me,iter,nb,abuf[nb]);
+      }
+      free(abuf);
+    }
+    GA_Sync();
+    NGA_Put(g_ax,&me,&me,&maxinc,&one);
+    GA_Sync();
+    if (me==0) {
+      double *abuf = (double*)malloc(nprocs*sizeof(double));
+      NGA_Get(g_ax,&zero,&max,abuf,&one);
+      for (nb=0; nb<nprocs; nb++) {
+        printf("p[%d] iteration: %d max increment[%d]: %f\n",me,iter,nb,abuf[nb]);
+      }
+      free(abuf);
+    }
+    GA_Sync();
+    NGA_Put(g_ax,&me,&me,&my_rhs[maxrow],&one);
+    GA_Sync();
+    if (me==0) {
+      double *abuf = (double*)malloc(nprocs*sizeof(double));
+      NGA_Get(g_ax,&zero,&max,abuf,&one);
+      for (nb=0; nb<nprocs; nb++) {
+        printf("p[%d] iteration: %d max RHS[%d]: %f\n",me,iter,nb,abuf[nb]);
+      }
+      free(abuf);
+    }
+  }
+#endif
+  printf("p[%d] Final iteration value: %d\n",me,iter);
 
   NGA_Release64(g_b,&my_lo, &my_hi);
   NGA_Release_update64(*g_x,&my_lo, &my_hi);
-  NGA_Release(g_maxr,&tlo, &thi);
+  NGA_Release(g_maxr,&me, &me);
   NGA_Destroy(g_cvg);
   NGA_Destroy(g_maxr);
   free(resbuf);
@@ -442,15 +600,16 @@ void k_solve(int s_a, int g_b, int *g_x)
   free(m_jdx);
   free(m_jlo);
   free(m_vals);
-  free(blk_ptrs);
+  if (nblocks > 1) {
+    free(blk_ptrs);
+  }
   free(xblocks);
   free(seq);
   free(list);
 }
 
 int main(int argc, char **argv) {
-  int s_a, g_b, g_x, g_p, g_r, g_t;
-  int g_s, g_v, g_rm;
+  int s_a, g_b, g_x, g_ax;
   int one;
   int64_t one_64;
   int me, nproc;
@@ -488,9 +647,7 @@ int main(int argc, char **argv) {
 
   /* Initialize GA */
   NGA_Initialize();
-
   /* initialize random number generator */
-  x = ran3(-32823);
 
   /* Interior points of the grid run from 0 to NDIM-1, boundary points are located
    * at -1 and NDIM for each of the axes */
@@ -507,6 +664,7 @@ int main(int argc, char **argv) {
   me = GA_Nodeid();
   nproc = GA_Nnodes();
   twopi = 8.0*atan(1.0);
+  x = ran3(-32823+me);
 
   heap /= nproc;
   stack /= nproc;
@@ -671,7 +829,6 @@ int main(int argc, char **argv) {
         y = ((double)j+0.5)*h;
         z = 1.0;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-        if (vbuf[ncnt] == 0.0) printf("x: %f y: %f z: %f\n",x,y,z);
         ibuf[ncnt] = i + j*ldx + (zdim-1)*ldxy;
         ncnt++;
       }
@@ -685,7 +842,6 @@ int main(int argc, char **argv) {
         y = 0.0;
         z = ((double)k+0.5)*h;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-        if (vbuf[ncnt] == 0.0) printf("x: %f y: %f z: %f\n",x,y,z);
         ibuf[ncnt] = i + k*ldxy;
         ncnt++;
       }
@@ -698,7 +854,6 @@ int main(int argc, char **argv) {
         y = 1.0;
         z = ((double)k+0.5)*h;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-        if (vbuf[ncnt] == 0.0) printf("x: %f y: %f z: %f\n",x,y,z);
         ibuf[ncnt] = i + (ydim-1)*ldx + k*ldxy;
         ncnt++;
       }
@@ -712,7 +867,6 @@ int main(int argc, char **argv) {
         y = ((double)j+0.5)*h;
         z = ((double)k+0.5)*h;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-        if (vbuf[ncnt] == 0.0) printf("x: %f y: %f z: %f\n",x,y,z);
         ibuf[ncnt] = j*ldx + k*ldxy;
         ncnt++;
       }
@@ -725,7 +879,6 @@ int main(int argc, char **argv) {
         y = ((double)j+0.5)*h;
         z = ((double)k+0.5)*h;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-        if (vbuf[ncnt] == 0.0) printf("x: %f y: %f z: %f\n",x,y,z);
         ibuf[ncnt] = (xdim-1) + j*ldx + k*ldxy;
         ncnt++;
       }
@@ -764,6 +917,34 @@ int main(int argc, char **argv) {
    * loop using Kaczmarz algorithm */
 
   k_solve(s_a, g_b, &g_x);
+
+#if 0
+  g_ax = GA_Duplicate(g_x, "tmp_ax");
+  NGA_Sprs_array_matvec_multiply(s_a, g_x, g_ax);
+  if (me == 0) {
+    double *axtmp = (double*)malloc(rdim*sizeof(double));
+    double *btmp = (double*)malloc(rdim*sizeof(double));
+    double *xtmp = (double*)malloc(rdim*sizeof(double));
+    int tlo = 0;
+    int thi = (int)(rdim-1);
+    NGA_Get(g_ax,&tlo,&thi,axtmp,&one);
+    NGA_Get(g_b,&tlo,&thi,btmp,&one);
+    NGA_Get(g_x,&tlo,&thi,xtmp,&one);
+    for (i=0; i<rdim; i++) {
+      if (fabs(axtmp[i]-btmp[i]) > 1.0) {
+        printf("Ax[%ld]: %f b[%ld]: %f x[%ld]: %f XXX\n",
+            i,axtmp[i],i,btmp[i],i,xtmp[i]);
+      } else {
+        printf("Ax[%ld]: %f b[%ld]: %f x[%ld]: %f\n",i,axtmp[i],i,btmp[i],i,xtmp[i]);
+      }
+    }
+    free(axtmp);
+    free(xtmp);
+    free(btmp);
+  }
+  GA_Destroy(g_ax);
+#endif
+  
 
   /* Write solution to file */
 #ifdef WRITE_VTK
