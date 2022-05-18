@@ -202,9 +202,6 @@ void k_solve(int s_a, int g_b, int g_ref, int *g_x)
   for (i=0; i<nblocks; i++) {
     int lo, hi;
     NGA_Distribution(*g_x, list[i], &lo, &hi);
-    if (list[i] == me) {
-      printf("p[%d] x_lo: %d x_hi: %d\n",me,lo,hi);
-    }
     b_n[i] = hi-lo+1;
     if (list[i] != me) {
       total += (int64_t)(hi-lo+1);
@@ -349,7 +346,6 @@ void k_solve(int s_a, int g_b, int g_ref, int *g_x)
         GA_Error("Row of matrix is all zeros!",irow);
       }
       /* Update vector elements */
-#if 1
       {
         double *xptr = my_vals;
         int64_t *idx = m_idx[my_nb];
@@ -463,12 +459,10 @@ void k_solve(int s_a, int g_b, int g_ref, int *g_x)
       error = sqrt(error);
     }
     if (me == 0) {
-//      printf("p[%d] Find max residual for iteration: %d\n",me,iter);
       int imax=nprocs-1;
       double resmax = 0.0;
       NGA_Get(g_maxr,&zero,&imax,resbuf,&one);
       for (i=0; i<nprocs; i++) {
-        //printf("p[%d] iteration: %d resbuf[%d]: %f\n",me,iter,i,resbuf[i]);
         if (resmax < resbuf[i]) resmax = resbuf[i];
       }
       printf("Iteration: %d Residual: %f error: %f\n",iter,resmax,error);
