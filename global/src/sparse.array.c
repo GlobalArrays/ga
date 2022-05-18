@@ -89,6 +89,9 @@ void sai_init_sparse_arrays()
     SPA[i].idx = NULL;
     SPA[i].jdx = NULL;
     SPA[i].val = NULL;
+    SPA[i].g_data = GA_OFFSET-1;
+    SPA[i].g_i = GA_OFFSET-1;
+    SPA[i].g_j = GA_OFFSET-1;
   }
 }
 
