@@ -7,7 +7,7 @@
 #include "mp3.h"
 
 #define WRITE_VTK
-#define NDIM 128
+#define NDIM 64
 #define MAX_ITERATIONS 10000
 
 /**
@@ -142,7 +142,6 @@ void reorder(int *seq, int N)
   double rn;
   int me = GA_Nodeid();
   for (i=0; i<N; i++) seq[i] = i;
-#if 1
   for (i=0; i<N; i++) {
     /* randomly pick location at higher index value */
     rn = (double)(N-1 - i);  
@@ -153,21 +152,9 @@ void reorder(int *seq, int N)
     seq[i] = jdx;
     seq[j+i] = idx;
   }
-#else
-  for (i=0; i<N; i++) {
-    /* randomly pick two locations in seq */
-    idx = (int)(rn*ran3());
-    if (idx>=N) idx=N-1;
-    jdx = (int)(rn*ran3());
-    if (jdx>=N) jdx=N-1;
-    itmp = seq[idx];
-    seq[idx] = seq[jdx];
-    seq[jdx] = itmp;
-  }
-#endif
 }
 
-void k_solve(int s_a, int g_b, int *g_x)
+void k_solve(int s_a, int g_b, int g_ref, int *g_x)
 {
   int nblocks;
   int *list;
@@ -194,6 +181,12 @@ void k_solve(int s_a, int g_b, int *g_x)
   int64_t ilast;
   double **m_vals;
   double *resbuf;
+  double *refptr;
+  double *ebuf;
+  double *maxe;
+  double *eptr;
+  double g_err;
+  double error;
   int tlo, thi, tld;
   int iteration_max = MAX_ITERATIONS;
   int iter;
@@ -225,6 +218,17 @@ void k_solve(int s_a, int g_b, int *g_x)
   GA_Zero(g_ax);
   NGA_Distribution(g_maxr,me,&tlo,&thi);
   NGA_Access(g_maxr,&tlo,&thi,&maxr,&tld);
+
+  g_err = NGA_Create_handle();
+  NGA_Set_data(g_err,one,&nprocs,C_DBL);
+  NGA_Allocate(g_err);
+  GA_Zero(g_err);
+  NGA_Distribution(g_err,me,&tlo,&thi);
+  NGA_Access(g_err,&tlo,&thi,&maxe,&tld);
+  NGA_Distribution(g_ref,me,&tlo,&thi);
+  NGA_Access(g_ref,&tlo,&thi,&eptr,&tld);
+
+
   /* Find out which column blocks are non-zero */
   NGA_Sprs_array_col_block_list(s_a, &list, &nblocks);
   if (nblocks>1) {
@@ -236,15 +240,13 @@ void k_solve(int s_a, int g_b, int *g_x)
   m_jlo = (int64_t*)malloc(nblocks*sizeof(int64_t));
   m_vals = (double**)malloc(nblocks*sizeof(double*));
   resbuf = (double*)malloc(nprocs*sizeof(double));
+  ebuf = (double*)malloc(nprocs*sizeof(double));
   /* Find total data on processes corresponding to non-zero column blocks
    * (but not including block on diagonal) */
   total = 0;
   for (i=0; i<nblocks; i++) {
     int lo, hi;
     NGA_Distribution(*g_x, list[i], &lo, &hi);
-    if (list[i] == me) {
-      printf("p[%d] x_lo: %d x_hi: %d\n",me,lo,hi);
-    }
     b_n[i] = hi-lo+1;
     if (list[i] != me) {
       total += (int64_t)(hi-lo+1);
@@ -305,26 +307,8 @@ void k_solve(int s_a, int g_b, int *g_x)
   /* get pointers etc. to my slice of the solution vector */
   NGA_Access64(*g_x, &my_lo, &my_hi, &my_vals, &ld64);
   NGA_Access64(g_b, &my_lo, &my_hi, &my_rhs, &ld64);
-#if 0
-  {
-    int max = nprocs-1;
-    maxax = 0.0;
-    for (i=0; i<my_n; i++) {
-      if (fabs(my_rhs[i])>maxax) maxax = fabs(my_rhs[i]);
-    }
-    NGA_Put(g_ax,&me,&me,&maxax,&one);
-    GA_Sync();
-    if (me==0) {
-      double *abuf = (double*)malloc(nprocs*sizeof(double));
-      NGA_Get(g_ax,&zero,&max,abuf,&one);
-      for (nb=0; nb<nprocs; nb++) {
-        printf("p[%d] iteration: %d max RHS[%d]: %f\n",me,iter,nb,abuf[nb]);
-      }
-      free(abuf);
-    }
-  }
-#endif
   /* Normalize A and b by row norm of A */
+#if 0
   for (i=0; i<my_n; i++) {
     icnt = 0;
     normA[i] = sqrt(normA[i]);
@@ -342,6 +326,7 @@ void k_solve(int s_a, int g_b, int *g_x)
     my_rhs[i] /= normA[i];
     normA[i] = 1.0;
   }
+#endif
   seq = (int*)malloc(my_n*sizeof(int));
   /* start iteration loop */
   iter = 0;
@@ -405,7 +390,6 @@ void k_solve(int s_a, int g_b, int *g_x)
         GA_Error("Row of matrix is all zeros!",irow);
       }
       /* Update vector elements */
-#if 1
       {
         double *xptr = my_vals;
         int64_t *idx = m_idx[my_nb];
@@ -423,28 +407,6 @@ void k_solve(int s_a, int g_b, int *g_x)
           if (fabs(val*axdot) > maxinc) maxinc = fabs(val*axdot);
         }
       }
-#else
-      icnt = 0;
-      for (nb = 0; nb<nblocks; nb++) {
-        int64_t *idx = m_idx[nb];
-        int64_t *jdx = m_jdx[nb];
-        double *vals = m_vals[nb];
-        double *xptr;
-        if (list[nb] != me) {
-          xptr = blk_ptrs[icnt];
-          icnt++;
-        } else {
-          xptr = my_vals;
-        }
-        int64_t jnum = idx[irow+1]-idx[irow];
-        int64_t jstart = idx[irow];
-        for (j=0; j<jnum; j++) {
-          int64_t icol = jdx[jstart+j]-m_jlo[nb];
-          double val = vals[jstart+j];
-          xptr[icol] -= val*axdot;
-        }
-      }
-#endif
     }
     /* Calculate maximum residual on this process */
     residual = 0.0;
@@ -475,9 +437,8 @@ void k_solve(int s_a, int g_b, int *g_x)
       }
     }
     *maxr = residual;
-    //printf("p[%d] iteration: %d residual: %f\n",me,iter,residual);
-    /* Check for convergence */
-    /* Only call read-increment if local convergence has changed
+    /* Check for convergence
+     * Only call read-increment if local convergence has changed
      * since the last cycle of row updates */
     if (residual < tolerance && !converged_tracker) {
       NGA_Read_inc(g_cvg,&zero,1);
@@ -490,7 +451,6 @@ void k_solve(int s_a, int g_b, int *g_x)
     if (converged_tracker) {
       int ld;
       NGA_Get(g_cvg, &zero, &zero, &icnt, &ld);
-      // printf("p[%d] iteration: %d icnt: %d nprocs: %d\n",me,iter,icnt,nprocs);
       if (!converged) {
         if (icnt >= nprocs) converged = 1;
       } else {
@@ -503,31 +463,32 @@ void k_solve(int s_a, int g_b, int *g_x)
     } else {
       converged = 0;
     }
-#if 0
+    /* estimate absolute error */
     {
-      double resmax = residual;
-      GA_Dgop(&resmax, 1, "max");
-      if (me == 0) {
-        printf("Iteration: %d Residual: %f\n",iter,resmax);
+      int imax=nprocs-1;
+      error = 0.0;
+      for (i=0; i<my_n; i++) {
+        error += pow((my_vals[i]-eptr[i]),2);
       }
+      *maxe = error;
+      NGA_Get(g_err,&zero,&imax,ebuf,&one);
+      error = 0.0;
+      for (i=0; i<nprocs; i++) error += ebuf[i];
+      error = sqrt(error);
     }
-#else
     if (me == 0) {
-//      printf("p[%d] Find max residual for iteration: %d\n",me,iter);
       int imax=nprocs-1;
       double resmax = 0.0;
       NGA_Get(g_maxr,&zero,&imax,resbuf,&one);
       for (i=0; i<nprocs; i++) {
-        //printf("p[%d] iteration: %d resbuf[%d]: %f\n",me,iter,i,resbuf[i]);
         if (resmax < resbuf[i]) resmax = resbuf[i];
       }
-      printf("Iteration: %d Residual: %f\n",iter,resmax);
+      printf("Iteration: %d Residual: %f error: %f\n",iter,resmax,error);
     }
-#endif
     //GA_Sync();
     iter++;
   }
-#if 1
+#if 0
   {
     int max = nprocs-1;
     NGA_Put(g_ax,&me,&me,&maxax,&one);
@@ -587,14 +548,16 @@ void k_solve(int s_a, int g_b, int *g_x)
     }
   }
 #endif
-  printf("p[%d] Final iteration value: %d\n",me,iter);
 
   NGA_Release64(g_b,&my_lo, &my_hi);
   NGA_Release_update64(*g_x,&my_lo, &my_hi);
   NGA_Release(g_maxr,&me, &me);
+  NGA_Release(g_err,&me, &me);
   NGA_Destroy(g_cvg);
   NGA_Destroy(g_maxr);
+  NGA_Destroy(g_err);
   free(resbuf);
+  free(ebuf);
   free(b_n);
   free(m_idx);
   free(m_jdx);
@@ -608,8 +571,64 @@ void k_solve(int s_a, int g_b, int *g_x)
   free(list);
 }
 
+void cg_solve(int s_a, int g_b, int *g_x)
+{
+  double alpha, beta, tol;
+  int g_r, g_p, g_t;
+  int me = GA_Nnodes();
+  double one_r;
+  double m_one_r;
+  double residual;
+  int ncnt;
+  int iterations = 10000;
+  *g_x = GA_Duplicate(g_b, "dup_x");
+  g_r = GA_Duplicate(g_b, "dup_r");
+  g_p = GA_Duplicate(g_b, "dup_p");
+  g_t = GA_Duplicate(g_b, "dup_t");
+  /* accumulate boundary values to right hand side vector */
+  if (me == 0) {
+    printf("\nRight hand side vector completed. Starting\n");
+    printf("conjugate gradient iterations.\n\n");
+  }
+
+  /* Solve Laplace's equation using conjugate gradient method */
+  one_r = 1.0;
+  m_one_r = -1.0;
+  GA_Zero(*g_x);
+  /* Initial guess is zero, so Ax = 0 and r = b */
+  GA_Copy(g_b, g_r);
+  GA_Copy(g_r, g_p);
+  residual = GA_Ddot(g_r,g_r);
+  GA_Norm_infinity(g_r, &tol);
+  ncnt = 0;
+  /* Start iteration loop */
+  while (tol > 1.0e-5 && ncnt < iterations) {
+    if (me==0) printf("Iteration: %d Tolerance: %e\n",(int)ncnt+1,tol);
+    NGA_Sprs_array_matvec_multiply(s_a, g_p, g_t);
+    alpha = GA_Ddot(g_t,g_p);
+    alpha = residual/alpha;
+    GA_Add(&one_r,*g_x,&alpha,g_p,*g_x);
+    alpha = -alpha;
+    GA_Add(&one_r,g_r,&alpha,g_t,g_r);
+    GA_Norm_infinity(g_r, &tol);
+    beta = residual;
+    residual = GA_Ddot(g_r,g_r);
+    beta = residual/beta;
+    GA_Add(&one_r,g_r,&beta,g_p,g_p);
+    ncnt++;
+  }
+  if (ncnt == iterations) {
+    if (me==0) printf("Conjugate gradient solution failed to converge\n");
+  } else {
+    if (me==0) printf("Conjugate gradient solution converged\n");
+  }
+  NGA_Destroy(g_r);
+  NGA_Destroy(g_p);
+  NGA_Destroy(g_t);
+}
+
 int main(int argc, char **argv) {
-  int s_a, g_b, g_x, g_ax;
+  int s_a, g_b, g_x, g_ref, g_ax;
   int one;
   int64_t one_64;
   int me, nproc;
@@ -916,7 +935,8 @@ int main(int argc, char **argv) {
   /* Matrix and right hand side have been constructed. Begin solution
    * loop using Kaczmarz algorithm */
 
-  k_solve(s_a, g_b, &g_x);
+  cg_solve(s_a, g_b, &g_ref);
+  k_solve(s_a, g_b, g_ref, &g_x);
 
 #if 0
   g_ax = GA_Duplicate(g_x, "tmp_ax");
