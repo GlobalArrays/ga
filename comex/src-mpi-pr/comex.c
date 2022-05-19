@@ -6903,7 +6903,11 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
                 copyToDevice(src, dst, bytes);
                 PROFILE_END(t_cpy_to_dev)
               } else if (reg_entry->use_dev && !on_host) {
+                comex_set_local_dev();
                 copyDevToDev(src, dst, bytes);
+              } else if (!reg_entry->use_dev && !on_host) {
+                comex_set_local_dev();
+                copyToHost(dst, src, bytes);
               } else {
                 (void)memcpy(dst, src, bytes);
               }
@@ -6945,11 +6949,13 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
               deviceCloseMemHandle(reg_entry->mapped);
               PROFILE_END(t_close_ipc)
             } else if (reg_entry->use_dev && !on_host) {
+              comex_set_local_dev();
               copyDevToDev(src, mapped_offset, bytes);
               PROFILE_BEG()
               deviceCloseMemHandle(reg_entry->mapped);
               PROFILE_END(t_close_ipc)
             } else if (!reg_entry->use_dev && !on_host) {
+              comex_set_local_dev();
               PROFILE_BEG()
               copyToHost(mapped_offset, src, bytes);
               PROFILE_END(t_cpy_to_host)
@@ -6972,7 +6978,6 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
         int master_rank = -1;
         int use_eager = _eager_check(bytes);
         reg_entry_t *reg_entry = NULL;
-        int on_host=0;
 
         master_rank = g_state.master[proc];
         /* only fence on the master */
@@ -7006,16 +7011,47 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             nb_send_header(message, message_size, master_rank, nb);
         }
         else {
-            char *buf = (char*)src;
+            char *buf;
             int bytes_remaining = bytes;
+#ifdef ENABLE_DEVICE
+            void *tsrc;
+            if (on_host) {
+#endif
+              buf = (char*)src;
+#ifdef ENABLE_DEVICE
+            } else {
+              buf = (char*)malloc(max_message_size*sizeof(char));
+              tsrc = src;
+            }
+#endif
             nb_send_header(header, sizeof(header_t), master_rank, nb);
             do {
                 int size = bytes_remaining>max_message_size ?
                     max_message_size : bytes_remaining;
+#ifdef ENABLE_DEVICE
+                if (!on_host) {
+                  comex_set_local_dev();
+                  copyToHost((void*)buf,tsrc,size);
+                }
+#endif
+                
                 nb_send_buffer(buf, size, master_rank, nb);
-                buf += size;
+#ifdef ENABLE_DEVICE
+                nb_wait_for_all(nb);
+                nb->in_use = 0;
+                if (on_host) {
+#endif
+                  buf += size;
+#ifdef ENABLE_DEVICE
+                } else {
+                  tsrc += size;
+                }
+#endif
                 bytes_remaining -= size;
             } while (bytes_remaining > 0);
+#ifdef ENABLE_DEVICE
+            if (!on_host) free(buf);
+#endif
         }
     }
     PROFILE_END(t_nb_put)
@@ -7036,9 +7072,6 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #endif
     PROFILE_BEG();
 
-    /*
-    printf("p[%d] calling nb_get on_host: %d\n",g_state.rank,on_host);
-    */
     if (COMEX_ENABLE_GET_SELF) {
         /* get from self */
         if (g_state.rank == proc) {
@@ -7054,12 +7087,17 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
               }
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
-                //setDevice(reg_entry->dev_id);
+                /* copy from device to host */
                 PROFILE_BEG()
                 copyToHost(dst, src, bytes);
                 PROFILE_END(t_cpy_to_host)
               } else if (reg_entry->use_dev && !on_host) {
+                /* copy from device to device */
                 copyDevToDev(src, dst, bytes);
+              } else if (!reg_entry->use_dev && !on_host) {
+                /* copy from host to device */
+                comex_set_local_dev();
+                copyToDevice(src, dst, bytes);
               } else {
                 (void)memcpy(dst, src, bytes);
               }
@@ -7135,19 +7173,37 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->local_address = dst;
         header->rank = proc;
         header->length = bytes;
-        {
-            /* prepost all receives */
-            char *buf = (char*)dst;
-            int bytes_remaining = bytes;
-            do {
-                int size = bytes_remaining>max_message_size ?
-                    max_message_size : bytes_remaining;
-                nb_recv(buf, size, master_rank, nb);
-                buf += size;
-                bytes_remaining -= size;
-            } while (bytes_remaining > 0);
+        if (on_host) {
+          /* prepost all receives */
+          char *buf = (char*)dst;
+          int bytes_remaining = bytes;
+          do {
+            int size = bytes_remaining>max_message_size ?
+              max_message_size : bytes_remaining;
+            nb_recv(buf, size, master_rank, nb);
+            buf += size;
+            bytes_remaining -= size;
+          } while (bytes_remaining > 0);
+          nb_send_header(header, sizeof(header_t), master_rank, nb);
+        } else {
+          /* create temporary buffer on host */
+          char *buf = (char*)malloc(bytes*sizeof(char));
+          /* prepost all receives */
+          void *tbuf = (void*)buf;
+          int bytes_remaining = bytes;
+          do {
+            int size = bytes_remaining>max_message_size ?
+              max_message_size : bytes_remaining;
+            nb_recv(tbuf, size, master_rank, nb);
+            tbuf += size;
+            bytes_remaining -= size;
+          } while (bytes_remaining > 0);
+          nb_send_header(header, sizeof(header_t), master_rank, nb);
+          nb_wait_for_all(nb);
+          comex_set_local_dev();
+          copyToDevice(buf, dst, bytes);
+          free(buf);
         }
-        nb_send_header(header, sizeof(header_t), master_rank, nb);
     }
     PROFILE_END(t_nb_get);
 }
@@ -7204,7 +7260,7 @@ STATIC void nb_acc(int datatype, void *scale,
               } else if (reg_entry->use_dev && !on_host) {
                 /* src and dst are on device */
                 _acc_dev(datatype, bytes, dst, src, scale);
-              } else if (reg_entry->use_dev && !on_host) {
+              } else if (!reg_entry->use_dev && !on_host) {
                 /* src is on device and dst is on host */
                 void *ptr;
                 ptr = (void*)malloc(bytes);
@@ -7280,7 +7336,7 @@ STATIC void nb_acc(int datatype, void *scale,
                 PROFILE_BEG()
                 deviceCloseMemHandle(reg_entry->mapped);
                 PROFILE_END(t_close_ipc)
-              } else if (reg_entry->use_dev && !on_host) {
+              } else if (!reg_entry->use_dev && !on_host) {
                 /* src is on device and dst is on host */
                 void *ptr;
                 ptr = (void*)malloc(bytes);
@@ -7364,21 +7420,63 @@ STATIC void nb_acc(int datatype, void *scale,
         header->length = bytes;
         (void)memcpy(message+sizeof(header_t), scale, scale_size);
         if (use_eager) {
-            (void)memcpy(message+sizeof(header_t)+scale_size,
-                    src, bytes);
-            nb_send_header(message, message_size, master_rank, nb);
+#ifdef ENABLE_DEVICE
+          if (on_host) {
+            (void)memcpy(message+sizeof(header_t), src, bytes);
+          } else {
+            PROFILE_BEG()
+              copyToHost(message+sizeof(header_t), src, bytes);
+            PROFILE_END(t_cpy_to_host)
+          }
+#else
+
+          (void)memcpy(message+sizeof(header_t)+scale_size,
+              src, bytes);
+#endif
+          nb_send_header(message, message_size, master_rank, nb);
         }
         else {
-            char *buf = (char*)src;
-            int bytes_remaining = bytes;
-            nb_send_header(message, message_size, master_rank, nb);
-            do {
-                int size = bytes_remaining>max_message_size ?
-                    max_message_size : bytes_remaining;
-                nb_send_buffer(buf, size, master_rank, nb);
-                buf += size;
-                bytes_remaining -= size;
-            } while (bytes_remaining > 0);
+#ifdef ENABLE_DEVICE
+          char *buf;
+          void *tsrc;
+          if (on_host) {
+            buf = (char*)src;
+          } else {
+            buf = (char*)malloc(max_message_size*sizeof(char));
+            tsrc = src;
+          }
+#else
+          char *buf = (char*)src;
+#endif
+          int bytes_remaining = bytes;
+          nb_send_header(message, message_size, master_rank, nb);
+          do {
+            int size = bytes_remaining>max_message_size ?
+              max_message_size : bytes_remaining;
+#ifdef ENABLE_DEVICE
+            if (!on_host) {
+              comex_set_local_dev();
+              copyToHost((void*)buf,tsrc,size);
+            }
+#endif
+            nb_send_buffer(buf, size, master_rank, nb);
+#ifdef ENABLE_DEVICE
+            if (on_host) {
+              buf += size;
+            } else {
+              tsrc += size;
+            }
+#else
+            buf += size;
+#endif
+            bytes_remaining -= size;
+          } while (bytes_remaining > 0);
+#ifdef ENABLE_DEVICE
+          if (!on_host) {
+            nb_wait_for_all(nb);
+            free(buf);
+          }
+#endif
         }
     }
     PROFILE_END(t_nb_acc)
