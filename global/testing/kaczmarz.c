@@ -627,17 +627,44 @@ void cg_solve(int s_a, int g_b, int *g_x)
   NGA_Destroy(g_t);
 }
 
+int idim, jdim, kdim;
+int64_t *sizes, *offsets;
+int64_t *_ilo, *_ihi, *_jlo, *_jhi, *_klo, *_khi;
+int64_t ilo, ihi, jlo, jhi, klo, khi;
+int ipx, ipy, ipz, idx, idy, idz;
+
+int getIndex(int i, int j, int k)
+{
+  int ix, iy, iz, pdx, index;
+  int ldx, ldy;
+  int ii, jj, kk;
+  ix = idx;
+  if (i > ihi) ix++;
+  if (i < ilo) ix--;
+  iy = idy;
+  if (j > jhi) iy++;
+  if (j < jlo) iy--;
+  iz = idz;
+  if (k > khi) iz++;
+  if (k < klo) iz--;
+  pdx = ix + iy*ipx + iz*ipx*ipy;
+  ldx = _ihi[pdx]-_ilo[pdx]+1;
+  ldy = _jhi[pdx]-_jlo[pdx]+1;
+  ii = i-_ilo[pdx];
+  jj = j-_jlo[pdx];
+  kk = k-_klo[pdx];
+  index = ii + jj*ldx + kk*ldx*ldy;
+  return index+offsets[pdx];
+}
+
 int main(int argc, char **argv) {
   int s_a, g_b, g_x, g_ref, g_ax;
   int one;
   int64_t one_64;
   int me, nproc;
-  int idim, jdim, kdim;
   int64_t xdim, ydim, zdim;
   int64_t rdim, cdim, rdx, cdx;
   int64_t ldx, ldxy;
-  int ipx, ipy, ipz, idx, idy, idz;
-  int64_t ilo, ihi, jlo, jhi, klo, khi;
   int64_t i, j, k, ncnt;
   int  iproc, ld;
   double x, y, z, val, h, rxdim, rydim, rzdim;
@@ -652,6 +679,7 @@ int main(int argc, char **argv) {
   double ir, jr, ldr;
   double xinc_p, yinc_p, zinc_p;
   double xinc_m, yinc_m, zinc_m;
+  int64_t tlo, thi;
   double alpha, beta, rho, rho_m, omega, m_omega, residual;
   double rv,ts,tt;
   int nsave;
@@ -722,6 +750,45 @@ int main(int argc, char **argv) {
   } else {
     khi = zdim-1;
   }
+  /* redefine idim, jdim, kdim */
+  idim = ihi-ilo+1;
+  jdim = jhi-jlo+1;
+  kdim = khi-klo+1;
+  sizes = (int64_t*)malloc(nproc*sizeof(int64_t));
+  offsets = (int64_t*)malloc(nproc*sizeof(int64_t));
+  _ilo = (int64_t*)malloc(nproc*sizeof(int64_t));
+  _ihi = (int64_t*)malloc(nproc*sizeof(int64_t));
+  _jlo = (int64_t*)malloc(nproc*sizeof(int64_t));
+  _jhi = (int64_t*)malloc(nproc*sizeof(int64_t));
+  _klo = (int64_t*)malloc(nproc*sizeof(int64_t));
+  _khi = (int64_t*)malloc(nproc*sizeof(int64_t));
+
+  for (i=0; i<nproc; i++) {
+    sizes[i] = 0;
+    offsets[i] = 0;
+    _ilo[i] = 0;
+    _ihi[i] = 0;
+    _jlo[i] = 0;
+    _jhi[i] = 0;
+    _klo[i] = 0;
+    _khi[i] = 0;
+  }
+  sizes[me] = (ihi-ilo+1)*(jhi-jlo+1)*(khi-klo+1);
+  _ilo[me] = ilo;
+  _ihi[me] = ihi;
+  _jlo[me] = jlo;
+  _jhi[me] = jhi;
+  _klo[me] = klo;
+  _khi[me] = khi;
+  GA_Lgop(sizes,nproc,"+");
+  GA_Lgop(_ilo,nproc,"+");
+  GA_Lgop(_ihi,nproc,"+");
+  GA_Lgop(_jlo,nproc,"+");
+  GA_Lgop(_jhi,nproc,"+");
+  GA_Lgop(_klo,nproc,"+");
+  GA_Lgop(_khi,nproc,"+");
+  offsets[0] = 0; 
+  for (i=1; i<nproc; i++) offsets[i] = offsets[i-1]+sizes[i-1];
  
   /* create sparse array */
   rdim = xdim*ydim*zdim;
@@ -766,46 +833,46 @@ int main(int argc, char **argv) {
           zinc_p = 1.0;
           zinc_m = 1.0;
         }
-        rdx = i + j*ldx + k*ldxy;
+        rdx = getIndex(i,j,k);
         val = -(xinc_p+xinc_m+yinc_p+yinc_m+zinc_p+zinc_m)/(h*h);
         NGA_Sprs_array_add_element64(s_a,rdx,rdx,&val);
         if (i+1 < xdim) {
-          cdx = i+1 + j*ldx + k*ldxy;
+          cdx = getIndex(i+1,j,k);
           val = xinc_p/(h*h);
           NGA_Sprs_array_add_element64(s_a,rdx,cdx,&val);
         } else {
           ncnt++;
         }
         if (i-1 >= 0) {
-          cdx = i-1 + j*ldx + k*ldxy;
+          cdx = getIndex(i-1,j,k);
           val = xinc_m/(h*h);
           NGA_Sprs_array_add_element64(s_a,rdx,cdx,&val);
         } else {
           ncnt++;
         }
         if (j+1 < ydim) {
-          cdx = i + (j+1)*ldx + k*ldxy;
+          cdx = getIndex(i,j+1,k);
           val = yinc_p/(h*h);
           NGA_Sprs_array_add_element64(s_a,rdx,cdx,&val);
         } else {
           ncnt++;
         }
         if (j-1 >= 0) {
-          cdx = i + (j-1)*ldx + k*ldxy;
+          cdx = getIndex(i,j-1,k);
           val = yinc_m/(h*h);
           NGA_Sprs_array_add_element64(s_a,rdx,cdx,&val);
         } else {
           ncnt++;
         }
         if (k+1 < zdim) {
-          cdx = i + j*ldx + (k+1)*ldxy;
+          cdx = getIndex(i,j,k+1);
           val = zinc_p/(h*h);
           NGA_Sprs_array_add_element64(s_a,rdx,cdx,&val);
         } else {
           ncnt++;
         }
         if (k-1 >= 0) {
-          cdx = i + j*ldx + (k-1)*ldxy;
+          cdx = getIndex(i,j,k-1);
           val = zinc_m/(h*h);
           NGA_Sprs_array_add_element64(s_a,rdx,cdx,&val);
         } else {
@@ -836,7 +903,7 @@ int main(int argc, char **argv) {
         y = ((double)j+0.5)*h;
         z = 0.0;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-        ibuf[ncnt] = i + j*ldx;
+        ibuf[ncnt] = getIndex(i,j,0);
         ncnt++;
       }
     }
@@ -848,7 +915,7 @@ int main(int argc, char **argv) {
         y = ((double)j+0.5)*h;
         z = 1.0;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-        ibuf[ncnt] = i + j*ldx + (zdim-1)*ldxy;
+        ibuf[ncnt] = getIndex(i,j,zdim-1);
         ncnt++;
       }
     }
@@ -861,7 +928,7 @@ int main(int argc, char **argv) {
         y = 0.0;
         z = ((double)k+0.5)*h;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-        ibuf[ncnt] = i + k*ldxy;
+        ibuf[ncnt] = getIndex(i,0,k);
         ncnt++;
       }
     }
@@ -873,7 +940,7 @@ int main(int argc, char **argv) {
         y = 1.0;
         z = ((double)k+0.5)*h;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-        ibuf[ncnt] = i + (ydim-1)*ldx + k*ldxy;
+        ibuf[ncnt] = getIndex(i,ydim-1,k);
         ncnt++;
       }
     }
@@ -886,7 +953,7 @@ int main(int argc, char **argv) {
         y = ((double)j+0.5)*h;
         z = ((double)k+0.5)*h;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-        ibuf[ncnt] = j*ldx + k*ldxy;
+        ibuf[ncnt] = getIndex(0,j,k);
         ncnt++;
       }
     }
@@ -898,7 +965,7 @@ int main(int argc, char **argv) {
         y = ((double)j+0.5)*h;
         z = ((double)k+0.5)*h;
         vbuf[ncnt] = -2.0*(cos(twopi*x)+cos(twopi*y)+cos(twopi*z))/(h*h);
-        ibuf[ncnt] = (xdim-1) + j*ldx + k*ldxy;
+        ibuf[ncnt] = getIndex(xdim-1,j,k);
         ncnt++;
       }
     }
@@ -910,8 +977,8 @@ int main(int argc, char **argv) {
   imap = (int64_t*)malloc(nproc*sizeof(int64_t));
   lmap = (long*)malloc(nproc*sizeof(long));
   for (i=0; i<nproc; i++) lmap[i] = 0;
-  NGA_Sprs_array_row_distribution64(s_a, me, &ilo, &ihi);
-  lmap[me] = (long)ilo;
+  NGA_Sprs_array_row_distribution64(s_a, me, &tlo, &thi);
+  lmap[me] = (long)tlo;
   GA_Lgop(lmap, nproc, "+");
   for (i=0; i<nproc; i++) imap[i] = (int64_t)lmap[i];
   nproc64 = nproc;
@@ -927,6 +994,14 @@ int main(int argc, char **argv) {
   free(ibuf);
   free(iptr);
   free(vbuf);
+  free(sizes);
+  free(offsets);
+  free(_ilo);
+  free(_ihi);
+  free(_jlo);
+  free(_jhi);
+  free(_klo);
+  free(_khi);
   GA_Norm_infinity(g_b, &x);
   if (me == 0) {
     printf("\n    Right hand side completed. Maximum value of RHS: %e\n",x);
@@ -968,34 +1043,83 @@ int main(int argc, char **argv) {
 
   /* Write solution to file */
 #ifdef WRITE_VTK
-  if (me == 0) {
-    vbuf = (double*)malloc(xdim*ydim*sizeof(double));
-    PHI = fopen("phi.vtk","w");
-    fprintf(PHI,"# vtk DataFile Version 3.0\n");
-    fprintf(PHI,"Laplace Equation Solution\n");
-    fprintf(PHI,"ASCII\n");
-    fprintf(PHI,"DATASET STRUCTURED_POINTS\n");
-    fprintf(PHI,"DIMENSIONS %ld %ld %ld\n",xdim,ydim,zdim);
-    fprintf(PHI,"ORIGIN %12.6f %12.6f %12.6f\n",0.5*h,0.5*h,0.5*h);
-    fprintf(PHI,"SPACING %12.6f %12.6f %12.6f\n",h,h,h);
-    fprintf(PHI," \n");    
-    fprintf(PHI,"POINT_DATA %ld\n",xdim*ydim*zdim);
-    fprintf(PHI,"SCALARS Phi float\n");
-    fprintf(PHI,"LOOKUP_TABLE default\n");
-    for (k=0; k<zdim; k++) {
-      ilo = k*xdim*ydim;
-      ihi = ilo + xdim*ydim - 1;
-      NGA_Get64(g_x,&ilo,&ihi,vbuf,&one_64);
-      for (j=0; j<ydim; j++) {
-        for (i=0; i<xdim; i++) {
-          fprintf(PHI," %12.6f",vbuf[i+j*xdim]);
-          if (i%5 == 0) fprintf(PHI,"\n");
-        }
-        if ((xdim-1)%5 != 0) fprintf(PHI,"\n");
-      }
+  {
+    int g_v;
+    int64_t lo[3], hi[3];
+    int64_t dims[3];
+    int ndim = 3;
+    double *transpose;
+    int ix, iy, iz;
+    int64_t nelem = idim*jdim*kdim;
+    double *xptr;
+    int64_t lld[3];
+
+    /* create global array to reformat data */
+    NGA_Distribution64(g_x, me, &tlo, &thi);
+    NGA_Access64(g_x, &tlo, &thi, &xptr, &one_64);
+    dims[0] = xdim;
+    dims[1] = ydim;
+    dims[2] = zdim;
+    lo[0] = ilo;
+    lo[1] = jlo;
+    lo[2] = klo;
+    hi[0] = ihi;
+    hi[1] = jhi;
+    hi[2] = khi;
+    g_v = NGA_Create_handle();
+    NGA_Set_data64(g_v,ndim,dims,C_DBL);
+    NGA_Allocate(g_v);
+    transpose = (double*)malloc(idim*jdim*kdim*sizeof(double));
+    for (i=0; i<nelem; i++) {
+      int n = i;
+      ix = n%idim;
+      n = (n-ix)/idim;
+      iy = n%jdim;
+      iz = (n-iy)/jdim;
+      transpose[ix*jdim*kdim + iy*kdim + iz] = xptr[i];
     }
-    fclose(PHI);
-    free(vbuf);
+    NGA_Release64(g_x, &tlo, &thi);
+    lld[0] = hi[1]-lo[1]+1;
+    lld[1] = hi[2]-lo[2]+1;
+    NGA_Put64(g_v,lo,hi,transpose,lld);
+    GA_Sync();
+    free(transpose);
+    /* transpose data */
+    if (me == 0) {
+      vbuf = (double*)malloc(xdim*ydim*sizeof(double));
+      PHI = fopen("phi.vtk","w");
+      fprintf(PHI,"# vtk DataFile Version 3.0\n");
+      fprintf(PHI,"Laplace Equation Solution\n");
+      fprintf(PHI,"ASCII\n");
+      fprintf(PHI,"DATASET STRUCTURED_POINTS\n");
+      fprintf(PHI,"DIMENSIONS %ld %ld %ld\n",xdim,ydim,zdim);
+      fprintf(PHI,"ORIGIN %12.6f %12.6f %12.6f\n",0.5*h,0.5*h,0.5*h);
+      fprintf(PHI,"SPACING %12.6f %12.6f %12.6f\n",h,h,h);
+      fprintf(PHI," \n");    
+      fprintf(PHI,"POINT_DATA %ld\n",xdim*ydim*zdim);
+      fprintf(PHI,"SCALARS Phi float\n");
+      fprintf(PHI,"LOOKUP_TABLE default\n");
+      lo[0] = 0;
+      lo[1] = 0;
+      hi[0] = xdim-1;
+      hi[1] = ydim-1;
+      lld[0] = ydim;
+      lld[1] = 1;
+      for (k=0; k<zdim; k++) {
+        lo[2] = k;
+        hi[2] = k;
+        NGA_Get64(g_v,lo,hi,vbuf,lld);
+        for (j=0; j<ydim; j++) {
+          for (i=0; i<xdim; i++) {
+            fprintf(PHI," %12.6f",vbuf[i+j*xdim]);
+            if (i%5 == 0) fprintf(PHI,"\n");
+          }
+          if ((xdim-1)%5 != 0) fprintf(PHI,"\n");
+        }
+      }
+      fclose(PHI);
+      free(vbuf);
+    }
   }
 #endif
 
