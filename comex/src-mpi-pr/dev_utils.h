@@ -11,6 +11,7 @@ extern void freeDevice(void *buf);
 extern void copyToDevice(void *hostptr, void *devptr, int bytes);
 extern void copyToHost(void *hostptr, void *devptr, int bytes);
 extern void copyDevToDev(void *src, void *dst, int bytes);
+extern void copyPeerToPeer(void *srcptr, int srcID, void *dstptr, int dstID, int bytes);
 extern void deviceMemset(void *ptr, int val, size_t bytes);
 extern int isHostPointer(void *ptr);
 extern void deviceAddInt(int *ptr, const int inc);
