@@ -7309,7 +7309,6 @@ STATIC void nb_acc(int datatype, void *scale,
             sem_wait(semaphores[proc]);
             {
               if (reg_entry->use_dev && on_host) {
-                int i;
                 /* src is on host and dst is on device */
                 void *ptr;
                 /* create buffer on device (no need to set device,
@@ -7331,8 +7330,23 @@ STATIC void nb_acc(int datatype, void *scale,
                 deviceCloseMemHandle(reg_entry->mapped);
                 PROFILE_END(t_close_ipc)
               } else if (reg_entry->use_dev && !on_host) {
-                /* src and dst are on device */
-                _acc_dev(datatype, bytes, mapped_offset, src, scale);
+                /* src and dst are on devices but not the same device. Copy
+                 * data to a temporary buffer on the same device as the comex
+                 * allocation and then launch _acc_dev kernel */
+                void *ptr;
+                PROFILE_BEG()
+                setDevice(reg_entry->dev_id);
+                PROFILE_END(t_set_dev)
+                PROFILE_BEG()
+                mallocDevice(&ptr,bytes);
+                PROFILE_END(t_malloc_buf)
+                PROFILE_BEG()
+                copyPeerToPeer(src, _comex_dev_id, ptr, reg_entry->dev_id, bytes);
+                PROFILE_END(t_cpy_to_dev)
+                _acc_dev(datatype, bytes, mapped_offset, ptr, scale);
+                PROFILE_BEG()
+                freeDevice(ptr);
+                PROFILE_END(t_free_buf);
                 PROFILE_BEG()
                 deviceCloseMemHandle(reg_entry->mapped);
                 PROFILE_END(t_close_ipc)

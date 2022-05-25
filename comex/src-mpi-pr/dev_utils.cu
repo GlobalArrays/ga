@@ -71,6 +71,26 @@ void freeDevice(void *buf)
   }
 }
 
+/* is pointer located on host?
+ * return 1 data is located on host, 0 otherwise
+ * ptr: pointer to data
+ */
+int isHostPointer(void *ptr)
+{
+  cudaPointerAttributes attr;
+  cudaError_t  tmp;
+  cudaError_t  err = cudaPointerGetAttributes(&attr, ptr);
+  /* Remove this error so that it doesn't trip up other error code */
+  tmp = cudaGetLastError();
+  /* Assume that if Cuda doesn't know anything about the pointer, it is on the
+   * host */
+  if (err != cudaSuccess) return 1;
+  if (attr.devicePointer == NULL) {
+    return  1;
+  }
+  return 0;
+}
+
 /* copy data from host buffer to unified memory
  * hostptr: pointer to allocation on host
  * devptr: pointer to allocation on device
@@ -97,6 +117,7 @@ void copyToDevice(void *hostptr, void *devptr, int bytes)
 void copyToHost(void *hostptr, void *devptr, int bytes)
 {
   cudaError_t ierr = cudaMemcpy(hostptr, devptr, bytes, cudaMemcpyDeviceToHost); 
+  cudaDeviceSynchronize();
   if (ierr != cudaSuccess) {
     int rank, err=0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -106,19 +127,41 @@ void copyToHost(void *hostptr, void *devptr, int bytes)
   }
 }
 
-/* copy data between devices using unified memory
+/* copy data between buffers on same device
  * srcptr: source pointer
  * dstptr: destination pointer
  * bytes: number of bytes to copy
  */
 void copyDevToDev(void *srcptr, void *dstptr, int bytes)
 {
-  cudaError_t ierr = cudaMemcpy(dstptr, srcptr, bytes, cudaMemcpyDeviceToDevice); 
+  cudaError_t ierr;
+  ierr = cudaMemcpy(dstptr, srcptr, bytes, cudaMemcpyDeviceToDevice); 
+  cudaDeviceSynchronize();
   if (ierr != cudaSuccess) {
     int rank, err=0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     const char *msg = cudaGetErrorString(ierr);
     printf("p[%d] cudaMemcpy dev to dev msg: %s\n",rank,msg);
+    MPI_Abort(MPI_COMM_WORLD,err);
+  }
+}
+
+/* copy data between buffers on different devices
+ * srcptr: source pointer
+ * srcID: device ID of source
+ * dstptr: destination pointer
+ * dstID: device ID of destination
+ * bytes: number of bytes to copy
+ */
+void copyPeerToPeer(void *srcptr, int srcID, void *dstptr, int dstID, int bytes)
+{
+  cudaError_t ierr;
+  ierr = cudaMemcpyPeer(dstptr,dstID,srcptr,srcID,bytes);
+  if (ierr != cudaSuccess) {
+    int rank, err=0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const char *msg = cudaGetErrorString(ierr);
+    printf("p[%d] cudaMemcpyPeer dev to dev msg: %s\n",rank,msg);
     MPI_Abort(MPI_COMM_WORLD,err);
   }
 }
@@ -139,26 +182,6 @@ void deviceMemset(void *ptr, int val, size_t bytes)
     printf("p[%d] cudaMemset ptr: %p bytes: %d msg: %s\n",rank,ptr,bytes,msg);
     MPI_Abort(MPI_COMM_WORLD,err);
   }
-}
-
-/* is pointer located on host?
- * return 1 data is located on host, 0 otherwise
- * ptr: pointer to data
- */
-int isHostPointer(void *ptr)
-{
-  cudaPointerAttributes attr;
-  cudaError_t tmp;
-  cudaError_t  err = cudaPointerGetAttributes(&attr, ptr);
-  /* Remove this error so that it doesn't trip up other error code */
-  tmp = cudaGetLastError();
-  /* Assume that if Cuda doesn't know anything about the pointer, it is on the
-   * host */
-  if (err != cudaSuccess) return 1;
-  if (attr.devicePointer == NULL) {
-    return  1;
-  }
-  return 0;
 }
 
 __global__ void iaxpy_kernel(int *dst, const int *src, int scale, int n)
