@@ -1029,7 +1029,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
         i = ii-tlo[0];
         if (tbuf[i] != ii) {
-          if (g_ok) printf("p[%d] index: %d expected: %f actual: %f\n",rank,i,ii,buf[i]);
+          if (g_ok) printf("p[%d] index: %d expected: %f actual: %f\n",rank,i,ii,tbuf[i]);
           g_ok = 0;
         }
       }
@@ -1173,7 +1173,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
   acc_bw = (double)(acc_cnt*sizeof(int))/tacc;
 }
 
-void test_dbl_1d_array(int on_device)
+void test_dbl_1d_array(int on_device, int local_buf_on_device)
 {
   int g_a;
   int i, ii, ld, n;
@@ -1217,14 +1217,31 @@ void test_dbl_1d_array(int on_device)
     thi[0] = nelem-1;
   }
   nsize = thi[0]-tlo[0]+1;
-  buf = (double*)malloc(nsize*sizeof(double));
+  if (local_buf_on_device) {
+    void *tbuf;
+    cudaMalloc(&tbuf,(int)(nsize*sizeof(double)));
+    buf = (double*)tbuf;
+  } else {
+    buf = (double*)malloc(nsize*sizeof(double));
+  }
   ld = 1;
   for (n=0; n<NLOOP; n++) { 
     tbeg = GA_Wtime();
     GA_Zero(g_a);
-    for (ii = tlo[0]; ii<=thi[0]; ii++) {
-      i = ii-tlo[0];
-      buf[i] = (double)ii;
+    if (local_buf_on_device) {
+      double *tbuf = (double*)malloc(nsize*sizeof(double));
+      for (ii = tlo[0]; ii<=thi[0]; ii++) {
+        i = ii-tlo[0];
+        tbuf[i] = (double)ii;
+      }
+      cudaMemcpy(buf, tbuf, nsize*sizeof(double), cudaMemcpyHostToDevice);
+      cudaDeviceSynchronize();
+      free(tbuf);
+    } else {
+      for (ii = tlo[0]; ii<=thi[0]; ii++) {
+        i = ii-tlo[0];
+        buf[i] = (double)ii;
+      }
     }
     t_chk += (GA_Wtime()-tbeg);
 
@@ -1239,7 +1256,15 @@ void test_dbl_1d_array(int on_device)
     t_sync += (GA_Wtime()-tbeg);
 
     /* zero out local buffer */
-    for (i=0; i<nsize; i++) buf[i] = 0.0;
+    if (local_buf_on_device) {
+      double *tbuf = (double*)malloc(nsize*sizeof(double));
+      for (i=0; i<nsize; i++) tbuf[i] = 0;
+      cudaMemcpy(buf, tbuf, nsize*sizeof(double), cudaMemcpyHostToDevice);
+      cudaDeviceSynchronize();
+      free(tbuf);
+    } else {
+      for (i=0; i<nsize; i++) buf[i] = 0.0;
+    }
 
     /* copy data from global array to local buffer */
     tbeg = GA_Wtime();
@@ -1253,18 +1278,45 @@ void test_dbl_1d_array(int on_device)
 
     tbeg = GA_Wtime();
     g_ok = 1;
-    for (ii = tlo[0]; ii<=thi[0]; ii++) {
-      i = ii-tlo[0];
-      if (buf[i] != (double)ii) {
-        if (g_ok) printf("p[%d] index: %d expected: %f actual: %f\n",rank,i,(double)ii,buf[i]);
-        g_ok = 0;
+    if (local_buf_on_device) {
+      double *tbuf = (double*)malloc(nsize*sizeof(double));
+      cudaMemcpy(tbuf, buf, nsize*sizeof(double), cudaMemcpyDeviceToHost);
+      cudaDeviceSynchronize();
+      for (ii = tlo[0]; ii<=thi[0]; ii++) {
+        i = ii-tlo[0];
+        if (tbuf[i] != (double)ii) {
+          if (g_ok) printf("p[%d] index: %d expected: %f actual: %f\n",
+              rank,i,(double)ii,tbuf[i]);
+          g_ok = 0;
+        }
+      }
+      free(tbuf);
+    } else {
+      for (ii = tlo[0]; ii<=thi[0]; ii++) {
+        i = ii-tlo[0];
+        if (buf[i] != (double)ii) {
+          if (g_ok) printf("p[%d] index: %d expected: %f actual: %f\n",
+              rank,i,(double)ii,buf[i]);
+          g_ok = 0;
+        }
       }
     }
 
     /* reset values in buf */
-    for (ii = tlo[0]; ii<=thi[0]; ii++) {
-      i = ii-tlo[0];
-      buf[i] = (double)ii;
+    if (local_buf_on_device) {
+      double *tbuf = (double*)malloc(nsize*sizeof(double));
+      for (ii= tlo[0]; ii<=thi[0]; ii++) {
+        i = ii-tlo[0];
+        tbuf[i] = (double)ii;
+      }
+      cudaMemcpy(buf, tbuf, nsize*sizeof(double), cudaMemcpyHostToDevice);
+      cudaDeviceSynchronize();
+      free(tbuf);
+    } else {
+      for (ii = tlo[0]; ii<=thi[0]; ii++) {
+        i = ii-tlo[0];
+        buf[i] = (double)ii;
+      }
     }
     t_chk += (GA_Wtime()-tbeg);
 
@@ -1297,9 +1349,20 @@ void test_dbl_1d_array(int on_device)
     }
 #endif
     /* reset values in buf */
-    for (ii = tlo[0]; ii<=thi[0]; ii++) {
-      i = ii-tlo[0];
-      buf[i] = 0.0;
+    if (local_buf_on_device) {
+      double *tbuf = (double*)malloc(nsize*sizeof(double));
+      for (ii= tlo[0]; ii<=thi[0]; ii++) {
+        i = ii-tlo[0];
+        tbuf[i] = 0.0;
+      }
+      cudaMemcpy(buf, tbuf, nsize*sizeof(double), cudaMemcpyHostToDevice);
+      cudaDeviceSynchronize();
+      free(tbuf);
+    } else {
+      for (ii = tlo[0]; ii<=thi[0]; ii++) {
+        i = ii-tlo[0];
+        buf[i] = 0.0;
+      }
     }
     t_chk += (GA_Wtime()-tbeg);
 
@@ -1313,16 +1376,36 @@ void test_dbl_1d_array(int on_device)
     t_sync += (GA_Wtime()-tbeg);
     tbeg = GA_Wtime();
     a_ok = 1;
-    for (ii = tlo[0]; ii<=thi[0]; ii++) {
-      i = ii-tlo[0];
-      if (buf[i] != (double)(2*ii)) {
-        if (a_ok) printf("p[%d] index: %d expected: %f actual: %f\n",rank,i,(double)(2*ii),buf[i]);
-        a_ok = 0;
+    if (local_buf_on_device) {
+      double *tbuf = (double*)malloc(nsize*sizeof(double));
+      cudaMemcpy(tbuf, buf, nsize*sizeof(double), cudaMemcpyDeviceToHost);
+      cudaDeviceSynchronize();
+      for (ii = tlo[0]; ii<=thi[0]; ii++) {
+        i = ii-tlo[0];
+        if (tbuf[i] != (double)(2*ii)) {
+          if (a_ok) printf("p[%d] index: %d expected: %d actual: %d\n",
+              rank,i,(double)(2*ii),tbuf[i]);
+          a_ok = 0;
+        }
+      }
+      free(tbuf);
+    } else {
+      for (ii = tlo[0]; ii<=thi[0]; ii++) {
+        i = ii-tlo[0];
+        if (buf[i] != (double)(2*ii)) {
+          if (a_ok) printf("p[%d] index: %d expected: %f actual: %f\n",
+              rank,i,(double)(2*ii),buf[i]);
+          a_ok = 0;
+        }
       }
     }
     t_chk += (GA_Wtime()-tbeg);
   }
-  free(buf);
+  if (local_buf_on_device) {
+    cudaFree(buf);
+  } else {
+    free(buf);
+  }
   tbeg = GA_Wtime();
   GA_Destroy(g_a);
   t_free += (GA_Wtime()-tbeg);
@@ -1686,16 +1769,28 @@ int main(int argc, char **argv) {
       " for integer array\n on host, local buffer on device\n");
   test_int_1d_array(0,1);
   print_bw();
+
+  if (rank == 0) printf("  Testing contiguous one-sided operations"
+      " for doubles array\n on device, local buffer on host\n");
+  test_dbl_1d_array(1,0);
+  print_bw();
+
+  if (rank == 0) printf("  Testing contiguous one-sided operations"
+      " for doubles array\n on device, local buffer on device\n");
+  test_dbl_1d_array(1,1);
+  print_bw();
+
+  if (rank == 0) printf("  Testing contiguous one-sided operations"
+      " for doubles array\n on host, local buffer on host\n");
+  test_dbl_1d_array(0,0);
+  print_bw();
+
+  if (rank == 0) printf("  Testing contiguous one-sided operations"
+      " for doubles array\n on host, local buffer on device\n");
+  test_dbl_1d_array(0,1);
+  print_bw();
+
 #if 0
-
-  if (rank == 0) printf("  Testing contiguous one-sided operations for doubles on device\n");
-  test_dbl_1d_array(1);
-  print_bw();
-
-  if (rank == 0) printf("  Testing contiguous one-sided operations for doubles on host\n");
-  test_dbl_1d_array(0);
-  print_bw();
-
   if (rank == 0) printf("  Testing scatter/gather operations for doubles on device\n");
   test_dbl_scatter(1);
   print_bw();
