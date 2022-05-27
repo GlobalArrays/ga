@@ -575,7 +575,7 @@ void cg_solve(int s_a, int g_b, int *g_x)
 {
   double alpha, beta, tol;
   int g_r, g_p, g_t;
-  int me = GA_Nnodes();
+  int me = GA_Nodeid();
   double one_r;
   double m_one_r;
   double residual;
@@ -620,7 +620,7 @@ void cg_solve(int s_a, int g_b, int *g_x)
   if (ncnt == iterations) {
     if (me==0) printf("Conjugate gradient solution failed to converge\n");
   } else {
-    if (me==0) printf("Conjugate gradient solution converged\n");
+    if (me==0) printf("Conjugate gradient solution converged after %d iterations\n",ncnt);
   }
   NGA_Destroy(g_r);
   NGA_Destroy(g_p);
@@ -631,10 +631,12 @@ int idim, jdim, kdim;
 int64_t *sizes, *offsets;
 int64_t *_ilo, *_ihi, *_jlo, *_jhi, *_klo, *_khi;
 int64_t ilo, ihi, jlo, jhi, klo, khi;
+int64_t xdim, ydim, zdim;
 int ipx, ipy, ipz, idx, idy, idz;
 
 int getIndex(int i, int j, int k)
 {
+#if 1
   int ix, iy, iz, pdx, index;
   int ldx, ldy;
   int ii, jj, kk;
@@ -655,6 +657,15 @@ int getIndex(int i, int j, int k)
   kk = k-_klo[pdx];
   index = ii + jj*ldx + kk*ldx*ldy;
   return index+offsets[pdx];
+#else
+  if (i < 0) i = xdim-1;
+  if (i >= xdim) i = 0;
+  if (j < 0) j = ydim-1;
+  if (j >= ydim) j = 0;
+  if (k < 0) k = zdim-1;
+  if (k >= zdim) k = 0;
+  return i + xdim*j + k*xdim*ydim;
+#endif
 }
 
 int main(int argc, char **argv) {
@@ -662,7 +673,6 @@ int main(int argc, char **argv) {
   int one;
   int64_t one_64;
   int me, nproc;
-  int64_t xdim, ydim, zdim;
   int64_t rdim, cdim, rdx, cdx;
   int64_t ldx, ldxy;
   int64_t i, j, k, ncnt;
@@ -687,6 +697,7 @@ int main(int argc, char **argv) {
   int iterations = 10000;
   double tol, twopi;
   FILE *PHI;
+  double tbeg, t_cgsolve, t_ksolve;
   /* Intitialize a message passing library */
   one = 1;
   one_64 = 1;
@@ -713,6 +724,8 @@ int main(int argc, char **argv) {
   twopi = 8.0*atan(1.0);
   x = ran3(-32823+me);
 
+  t_cgsolve = 0.0;
+  t_ksolve = 0.0;
   heap /= nproc;
   stack /= nproc;
   if(! MA_init(MT_F_DBL, stack, heap))
@@ -1010,8 +1023,20 @@ int main(int argc, char **argv) {
   /* Matrix and right hand side have been constructed. Begin solution
    * loop using Kaczmarz algorithm */
 
+  tbeg = GA_Wtime();
   cg_solve(s_a, g_b, &g_ref);
+  t_cgsolve = GA_Wtime()-tbeg;
+  tbeg = GA_Wtime();
   k_solve(s_a, g_b, g_ref, &g_x);
+  t_ksolve = GA_Wtime()-tbeg;
+  GA_Dgop(&t_cgsolve,1,"+");
+  t_cgsolve /= ((double)nproc);
+  GA_Dgop(&t_ksolve,1,"+");
+  t_ksolve /= ((double)nproc);
+  if (me == 0) {
+    printf("Elapsed time in CG solver:       %16.4f\n",t_cgsolve);
+    printf("Elapsed time in Kaczmarz solver: %16.4f\n",t_ksolve);
+  }
 
 #if 0
   g_ax = GA_Duplicate(g_x, "tmp_ax");
@@ -1043,6 +1068,7 @@ int main(int argc, char **argv) {
 
   /* Write solution to file */
 #ifdef WRITE_VTK
+#if 1
   {
     int g_v;
     int64_t lo[3], hi[3];
@@ -1069,6 +1095,7 @@ int main(int argc, char **argv) {
     g_v = NGA_Create_handle();
     NGA_Set_data64(g_v,ndim,dims,C_DBL);
     NGA_Allocate(g_v);
+    /* transpose data */
     transpose = (double*)malloc(idim*jdim*kdim*sizeof(double));
     for (i=0; i<nelem; i++) {
       int n = i;
@@ -1084,7 +1111,6 @@ int main(int argc, char **argv) {
     NGA_Put64(g_v,lo,hi,transpose,lld);
     GA_Sync();
     free(transpose);
-    /* transpose data */
     if (me == 0) {
       vbuf = (double*)malloc(xdim*ydim*sizeof(double));
       PHI = fopen("phi.vtk","w");
@@ -1121,6 +1147,38 @@ int main(int argc, char **argv) {
       free(vbuf);
     }
   }
+#else
+    if (me == 0) {
+      vbuf = (double*)malloc(xdim*ydim*sizeof(double));
+      PHI = fopen("phi.vtk","w");
+      fprintf(PHI,"# vtk DataFile Version 3.0\n");
+      fprintf(PHI,"Laplace Equation Solution\n");
+      fprintf(PHI,"ASCII\n");
+      fprintf(PHI,"DATASET STRUCTURED_POINTS\n");
+      fprintf(PHI,"DIMENSIONS %ld %ld %ld\n",xdim,ydim,zdim);
+      fprintf(PHI,"ORIGIN %12.6f %12.6f %12.6f\n",0.5*h,0.5*h,0.5*h);
+      fprintf(PHI,"SPACING %12.6f %12.6f %12.6f\n",h,h,h);
+      fprintf(PHI," \n");    
+      fprintf(PHI,"POINT_DATA %ld\n",xdim*ydim*zdim);
+      fprintf(PHI,"SCALARS Phi float\n");
+      fprintf(PHI,"LOOKUP_TABLE default\n");
+      for (k=0; k<zdim; k++) {
+        ilo = k*xdim*ydim;
+        ihi = ilo + xdim*ydim - 1;
+        NGA_Get64(g_x,&ilo,&ihi,vbuf,&one_64);
+        for (j=0; j<ydim; j++) {
+          for (i=0; i<xdim; i++) {
+            fprintf(PHI," %12.6f",vbuf[i+j*xdim]);
+            if (i%5 == 0) fprintf(PHI,"\n");
+          }
+          if ((xdim-1)%5 != 0) fprintf(PHI,"\n");
+        }
+      }
+
+      fclose(PHI);
+      free(vbuf);
+    }
+#endif
 #endif
 
   NGA_Sprs_array_destroy(s_a);
