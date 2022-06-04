@@ -7208,9 +7208,9 @@ STATIC void check_devshm(int fd, size_t size){
     devshm_initialized = 1;
     devshm_fs_initial =  (long)(ufs_statfs.f_bavail * ufs_statfs.f_bsize);
     devshm_fs_left = devshm_fs_initial;
-#define DEBUGSHM 1
+// #define DEBUGSHM 1
 #define CONVERT_TO_M 1048576
-#if DEBUGSHM
+#ifdef DEBUGSHM
     fprintf(stderr, "[%d] nodesize %d init /dev/shm size %ld  bsize %ld  nodesize %ld \n",
 	    g_state.rank, g_state.node_size, devshm_fs_initial/CONVERT_TO_M, (long) ufs_statfs.f_bsize, (long)  g_state.node_size);
 #endif
@@ -7242,7 +7242,7 @@ STATIC void check_devshm(int fd, size_t size){
   // reset
     devshm_fs_left=devshm_fs_initial;
   }
-#if DEBUGSHM
+#ifdef DEBUGSHM
   fprintf(stderr, "[%d] /dev/shm filesize %ld space left %ld \n",
 	  g_state.rank, newspace/CONVERT_TO_M, devshm_fs_left/CONVERT_TO_M);
 #endif
