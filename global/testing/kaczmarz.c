@@ -6,6 +6,8 @@
 #include "ga.h"
 #include "mp3.h"
 
+#define OLD_XDIST
+
 #define WRITE_VTK
 #define NDIM 64
 #define MAX_ITERATIONS 10000
@@ -636,7 +638,7 @@ int ipx, ipy, ipz, idx, idy, idz;
 
 int getIndex(int i, int j, int k)
 {
-#if 1
+#ifndef OLD_DIST
   int ix, iy, iz, pdx, index;
   int ldx, ldy;
   int ii, jj, kk;
@@ -658,12 +660,14 @@ int getIndex(int i, int j, int k)
   index = ii + jj*ldx + kk*ldx*ldy;
   return index+offsets[pdx];
 #else
+  /*
   if (i < 0) i = xdim-1;
   if (i >= xdim) i = 0;
   if (j < 0) j = ydim-1;
   if (j >= ydim) j = 0;
   if (k < 0) k = zdim-1;
   if (k >= zdim) k = 0;
+  */
   return i + xdim*j + k*xdim*ydim;
 #endif
 }
@@ -737,6 +741,12 @@ int main(int argc, char **argv) {
     printf("Solving Laplace's equation on %d processors\n",nproc);
     printf("\n    Using %d X %d X %d processor grid\n",ipx,ipy,ipz);
     printf("\n    Grid size is %d X %d X %d\n",idim,jdim,kdim);
+#ifdef OLD_DIST
+    printf("\n    Using slab decomposition\n");
+#else
+    printf("\n    Using block decomposition\n");
+#endif
+
   }
   /* figure out process location in proc grid */
   i = me;
@@ -1068,7 +1078,7 @@ int main(int argc, char **argv) {
 
   /* Write solution to file */
 #ifdef WRITE_VTK
-#if 1
+#ifndef OLD_DIST
   {
     int g_v;
     int64_t lo[3], hi[3];
@@ -1132,16 +1142,18 @@ int main(int argc, char **argv) {
       lld[0] = ydim;
       lld[1] = 1;
       for (k=0; k<zdim; k++) {
+        int crtcnt = 0;
         lo[2] = k;
         hi[2] = k;
         NGA_Get64(g_v,lo,hi,vbuf,lld);
         for (j=0; j<ydim; j++) {
           for (i=0; i<xdim; i++) {
             fprintf(PHI," %12.6f",vbuf[i+j*xdim]);
-            if (i%5 == 0) fprintf(PHI,"\n");
+            crtcnt++;
+            if (crtcnt%5 == 0) fprintf(PHI,"\n");
           }
-          if ((xdim-1)%5 != 0) fprintf(PHI,"\n");
         }
+        if (crtcnt%5 != 0) fprintf(PHI,"\n");
       }
       fclose(PHI);
       free(vbuf);
@@ -1163,16 +1175,18 @@ int main(int argc, char **argv) {
       fprintf(PHI,"SCALARS Phi float\n");
       fprintf(PHI,"LOOKUP_TABLE default\n");
       for (k=0; k<zdim; k++) {
+        int crtcnt = 0;
         ilo = k*xdim*ydim;
         ihi = ilo + xdim*ydim - 1;
         NGA_Get64(g_x,&ilo,&ihi,vbuf,&one_64);
         for (j=0; j<ydim; j++) {
           for (i=0; i<xdim; i++) {
             fprintf(PHI," %12.6f",vbuf[i+j*xdim]);
-            if (i%5 == 0) fprintf(PHI,"\n");
+            crtcnt++;
+            if (crtcnt%5 == 0) fprintf(PHI,"\n");
           }
-          if ((xdim-1)%5 != 0) fprintf(PHI,"\n");
         }
+        if (crtcnt%5 != 0) fprintf(PHI,"\n");
       }
 
       fclose(PHI);
