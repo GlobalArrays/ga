@@ -30,8 +30,7 @@
 # file: CMakeLists.txt
 # -------------------------------------------------------------
 
-cmake_minimum_required (VERSION 3.22.0 FATAL_ERROR)
-# cmake_minimum_required (VERSION 3.15.0 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.18.0 FATAL_ERROR)
 project (GlobalArrays VERSION 5.8.0 LANGUAGES C)
 
 # Append local CMake directory
@@ -52,6 +51,12 @@ set(ENABLE_F77 0)
 
 if(ENABLE_CXX)
   enable_language(CXX)
+endif()
+
+if (ENABLE_CUDA OR ENABLE_HIP)
+  if(${CMAKE_MINOR_VERSION} LESS "22") 
+    message(FATAL_ERROR "GPU build requires CMake versions >= 3.22.0")
+  endif()
 endif()
 
 if (ENABLE_CUDA)
