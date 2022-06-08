@@ -1123,13 +1123,38 @@ int main(int argc, char **argv) {
         printf("Ax[%ld]: %f b[%ld]: %f x[%ld]: %f\n",i,axtmp[i],i,btmp[i],i,xtmp[i]);
       }
     }
-    free(axtmp);
-    free(xtmp);
-    free(btmp);
+    if (diff_min_zero) {
+      printf("p[%d] found minimum difference of zero\n",me);
+    }
+    /* find global minimum and maximum difference */
+    GA_Dgop(&diff_min,1,"min");
+    GA_Dgop(&diff_max,1,"max");
+    bins = (int*)malloc(NUM_BINS*sizeof(int));
+    for (i=0; i<NUM_BINS; i++) {
+      bins[i] = 0;
+    }
+    lmin = log10(diff_min);
+    lmax = log10(diff_max);
+    bin_size = (lmax-lmin)/((double)NUM_BINS);
+    /* Bin up differences locally */
+    for (i=0; i<nelem; i++) {
+      double diff = fabs(xptr[i]-kptr[i]);
+      ibin = (int)((log10(diff)-lmin)/bin_size+0.5);
+      if (ibin >= NUM_BINS) ibin--;
+      bins[ibin]++;
+    }
+    /* Bin up differences globally */
+    GA_Igop(bins,NUM_BINS,"+");
+    if (me == 0) {
+      printf("Log_10 minimum difference: %f\n",lmin);
+      printf("Log_10 maximum difference: %f\n",lmax);
+      for (i=0; i<NUM_BINS; i++) {
+        printf("  Bin center: %f number of entries %d\n",
+            lmin+((double)i+0.5)*bin_size,bins[i]);
+      }
+    }
+   
   }
-  GA_Destroy(g_ax);
-#endif
-  
 
   /* Write solution to file */
 #ifdef WRITE_VTK
