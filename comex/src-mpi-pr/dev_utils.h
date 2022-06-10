@@ -14,6 +14,7 @@ extern void copyDevToDev(void *src, void *dst, int bytes);
 extern void copyPeerToPeer(void *srcptr, int srcID, void *dstptr, int dstID, int bytes);
 extern void deviceMemset(void *ptr, int val, size_t bytes);
 extern int isHostPointer(void *ptr);
+extern int getDeviceID(void *ptr);
 extern void deviceAddInt(int *ptr, const int inc);
 extern void deviceAddLong(long *ptr, const long inc);
 extern int deviceGetMemHandle(devMemHandle_t *handle, void *memory);
