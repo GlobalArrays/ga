@@ -12,7 +12,7 @@
 #define BLOCK1 65536
 */
 #define BLOCK1 65530
-#define DIMSIZE 256
+#define DIMSIZE 8
 #define MAXCOUNT 10000
 #define MAX_FACTOR 256
 #define NLOOP 10
@@ -81,10 +81,12 @@ void factor(int p, int *idx, int *idy) {
 //int nprocs, rank, wrank;
 int nprocs, rank;
 int pdx, pdy;
+int wrank;
 
 int *list;
 int *devIDs;
 int ndev;
+int my_dev;
 
 double tput, tget, tacc, tinc;
 int get_cnt,put_cnt,acc_cnt;
@@ -165,6 +167,7 @@ void test_int_array(int on_device, int local_buf_on_device)
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   if (local_buf_on_device) {
     void *tbuf;
+    cudaSetDevice(my_dev);
     cudaMalloc(&tbuf,(int)(nsize*sizeof(int)));
     buf = (int*)tbuf;
   } else {
@@ -554,6 +557,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   if (local_buf_on_device) {
     void *tbuf;
+    cudaSetDevice(my_dev);
     cudaMalloc(&tbuf,(int)(nsize*sizeof(double)));
     buf = (double*)tbuf;
   } else {
@@ -961,6 +965,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
   nsize = thi[0]-tlo[0]+1;
   if (local_buf_on_device) {
     void *tbuf;
+    cudaSetDevice(my_dev);
     cudaMalloc(&tbuf,(int)(nsize*sizeof(int)));
     buf = (int*)tbuf;
   } else {
@@ -1219,6 +1224,7 @@ void test_dbl_1d_array(int on_device, int local_buf_on_device)
   nsize = thi[0]-tlo[0]+1;
   if (local_buf_on_device) {
     void *tbuf;
+    cudaSetDevice(my_dev);
     cudaMalloc(&tbuf,(int)(nsize*sizeof(double)));
     buf = (double*)tbuf;
   } else {
@@ -1431,7 +1437,7 @@ void test_dbl_1d_array(int on_device, int local_buf_on_device)
   acc_bw = (double)(acc_cnt*sizeof(double))/tacc;
 }
 
-void test_dbl_scatter(int on_device)
+void test_dbl_scatter(int on_device, int local_buf_on_device)
 {
   int g_a;
   int i, j, ii, jj, idx, n;
@@ -1455,7 +1461,6 @@ void test_dbl_scatter(int on_device)
   int nvals;
   int arraysize;
   int icnt;
-
 
   tput = 0.0;
   tget = 0.0;
@@ -1516,20 +1521,34 @@ void test_dbl_scatter(int on_device)
   buf = (double*)malloc(nsize*sizeof(double));
 
   /* allocate buffers for scatter operation */
-  vals = (double*)malloc(nvals*sizeof(double));
+  tbuf = (double*)malloc(nvals*sizeof(double));
   subsBuf = (int*)malloc(2*nvals*sizeof(int));
   subsArray = (int**)malloc(nvals*sizeof(int*));
+  if (local_buf_on_device) {
+    void *vbuf;
+    cudaSetDevice(my_dev);
+    cudaMalloc(&vbuf, nvals*sizeof(double));
+    vals = (double*)vbuf;
+  } else {
+    vals = (double*)malloc(nvals*sizeof(double));
+  }
   /* initialize indices */
   icnt = 0;
   for (n=rank; n<arraysize; n+=nprocs)
   {
     j = n%dims[1]; 
     i = (n-j)/dims[1];
-    vals[icnt] = (double)(i*dims[1]+j);
+    tbuf[icnt] = (double)(i*dims[1]+j);
     subsArray[icnt] = &subsBuf[2*icnt];
     subsArray[icnt][0] = i;
     subsArray[icnt][1] = j;
     icnt++;
+  }
+  if (local_buf_on_device) {
+    cudaMemcpy(vals, tbuf, nvals*sizeof(double), cudaMemcpyHostToDevice);
+    cudaDeviceSynchronize();
+  } else {
+    for (i=0; i<nvals; i++) vals[i] = tbuf[i];
   }
 
   for (n=0; n<NLOOP; n++) {
@@ -1556,9 +1575,55 @@ void test_dbl_scatter(int on_device)
     t_sync += (GA_Wtime()-tbeg);
     tbeg = GA_Wtime();
     NGA_Distribution(g_a,rank,tlo,thi);
+    if (n == 0) {
+      if (rank == 0) printf("Completed NGA_Distribution\n",rank);
+      if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
+        int tnelem = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
+        double *tbuf;
+        if (on_device) {
+          tbuf = (double*)malloc(tnelem*sizeof(double));
+          NGA_Access(g_a,tlo,thi,&ptr,&tld);
+          for (i=0; i<tnelem; i++) tbuf[i] = 0.0;
+          cudaMemcpy(tbuf, ptr, tnelem*sizeof(double), cudaMemcpyDeviceToHost);
+        } else {
+          NGA_Access(g_a,tlo,thi,&tbuf,&tld);
+        }
+        p_ok = 1;
+        for (ii = tlo[0]; ii<=thi[0]; ii++) {
+          i = ii-tlo[0];
+          for (jj=tlo[1]; jj<=thi[1]; jj++) {
+            j = jj-tlo[1];
+            idx = i*tld+j;
+            if (tbuf[idx] != (double)(ii*DIMSIZE+jj)) {
+              if (p_ok) printf("p[%d] (%d,%d) expected: %f actual[%d]: %f\n",rank,ii,jj,
+                  (double)(ii*DIMSIZE+jj),idx,tbuf[idx]);
+              p_ok = 0;
+            }
+          }
+        }
+        if (!p_ok) {
+          printf("Mismatch found for scatter on process %d after Put\n",rank);
+        } else {
+          if (rank==0) printf("Scatter is okay\n");
+        }
+        NGA_Release(g_a,tlo,thi);
+        if (on_device) {
+          free(tbuf);
+        }
+      }
+    }
+    tbeg = GA_Wtime();
+    GA_Sync();
+    t_sync += (GA_Wtime()-tbeg);
 
     /* zero out local buffer */
-    for (i=0; i<nvals; i++) vals[i] = 0.0;
+    if (local_buf_on_device) {
+      for (i=0; i<nvals; i++) tbuf[i] = 0.0;
+      cudaMemcpy(vals, tbuf, nvals*sizeof(double), cudaMemcpyHostToDevice);
+      cudaDeviceSynchronize();
+    } else {
+      for (i=0; i<nvals; i++) vals[i] = 0.0;
+    }
     t_chk += (GA_Wtime()-tbeg);
 
     /* gather data from global array to local buffer */
@@ -1575,17 +1640,32 @@ void test_dbl_scatter(int on_device)
     tbeg = GA_Wtime();
     g_ok = 1;
     icnt = 0;
-    for (n=rank; n<arraysize; n+=nprocs)
-    {
-      j = n%dims[1]; 
-      i = (n-j)/dims[1];
-      if (fabs(vals[icnt]-(double)(i*dims[1]+j)) > 1.0e-12) {
-      /* if (vals[icnt] != (double)(i*dims[1]+j)) { */
-        if (g_ok) printf("p[%d] put/get (%d,%d) expected: %f actual[%d]: %f\n",rank,i,j,
-            (double)(i*DIMSIZE+j),n,vals[n]);
-        g_ok = 0;
+    if (local_buf_on_device) {
+      cudaMemcpy(tbuf, vals, nvals*sizeof(double), cudaMemcpyDeviceToHost);
+      cudaDeviceSynchronize();
+      for (n=rank; n<arraysize; n+=nprocs)
+      {
+        j = n%dims[1]; 
+        i = (n-j)/dims[1];
+        if (fabs(tbuf[icnt]-(double)(i*dims[1]+j)) > 1.0e-12) {
+          if (g_ok) printf("p[%d] put/get (%d,%d) expected: %f actual[%d]: %f\n",wrank,i,j,
+              (double)(i*DIMSIZE+j),n,tbuf[icnt]);
+          g_ok = 0;
+        }
+        icnt++;
       }
-      icnt++;
+    } else {
+      for (n=rank; n<arraysize; n+=nprocs)
+      {
+        j = n%dims[1]; 
+        i = (n-j)/dims[1];
+        if (fabs(vals[icnt]-(double)(i*dims[1]+j)) > 1.0e-12) {
+          if (g_ok) printf("p[%d] put/get (%d,%d) expected: %f actual[%d]: %f\n",rank,i,j,
+              (double)(i*DIMSIZE+j),n,vals[icnt]);
+          g_ok = 0;
+        }
+        icnt++;
+      }
     }
     t_chk += (GA_Wtime()-tbeg);
 
@@ -1627,7 +1707,6 @@ void test_dbl_scatter(int on_device)
         j = jj-lo[1];
         idx = i*ld+j;
         if (fabs(buf[idx]-(double)(2*(ii*dims[1]+jj))) > 1.0e-12) {
-        /* if (buf[idx] != (double)(2*(ii*DIMSIZE+jj))) { */
           if (a_ok) printf("p[%d] acc (%d,%d) expected: %f actual[%d]: %f\n",rank,ii,jj,
               (double)(2*(ii*DIMSIZE+jj)),idx,buf[idx]);
           a_ok = 0;
@@ -1637,7 +1716,12 @@ void test_dbl_scatter(int on_device)
     t_chk += (GA_Wtime()-tbeg);
   }
   free(buf);
-  free(vals);
+  free(tbuf);
+  if (local_buf_on_device) {
+    cudaFree(vals);
+  } else {
+    free(vals);
+  }
   free(subsBuf);
   free(subsArray);
   tbeg = GA_Wtime();
@@ -1675,6 +1759,8 @@ int main(int argc, char **argv) {
   int zero = 0;
   int icnt;
   double tbeg;
+  int local_buf_on_device;
+  int i;
   
   t_put = 0.0;
   t_get = 0.0;
@@ -1696,13 +1782,23 @@ int main(int argc, char **argv) {
   nprocs = GA_Nnodes();  
   rank = GA_Nodeid();   
   // wrank = rank;
-  // MPI_Comm_rank(MPI_COMM_WORLD,&wrank);
+  MPI_Comm_rank(MPI_COMM_WORLD,&wrank);
 
   /* create list of GPU hosts */
   list = (int*)malloc(nprocs*sizeof(int));
   devIDs = (int*)malloc(nprocs*sizeof(int));
   NGA_Device_host_list(list, devIDs, &ndev, NGA_Pgroup_get_default());
+  /* Determine if the process host a device */
+  local_buf_on_device = 0;
+  for (i=0; i<ndev; i++) {
+     if (rank == list[i]) {
+       local_buf_on_device = 1;
+       my_dev = devIDs[i];
+       break;
+     }
+  }
 
+#if 1
   /* Divide matrix up into pieces that are owned by each processor */
   factor(nprocs, &pdx, &pdy);
   if (rank == 0) {
@@ -1713,7 +1809,7 @@ int main(int argc, char **argv) {
   print_bw();
 
   if (rank == 0) printf("  Testing integer array on device, local buffer on device\n");
-  test_int_array(1,1);
+  test_int_array(1,local_buf_on_device);
   print_bw();
 
   if (rank == 0) printf("  Testing integer array on host, local buffer on host\n");
@@ -1721,7 +1817,7 @@ int main(int argc, char **argv) {
   print_bw();
 
   if (rank == 0) printf("  Testing integer array on host, local buffer on device\n");
-  test_int_array(0,1);
+  test_int_array(0,local_buf_on_device);
   print_bw();
 
   if (rank == 0) printf("  Testing double precision array on device,"
@@ -1731,7 +1827,7 @@ int main(int argc, char **argv) {
 
   if (rank == 0) printf("  Testing double precision array on device,"
       " local buffer on device\n");
-  test_dbl_array(1,1);
+  test_dbl_array(1,local_buf_on_device);
   print_bw();
 
   if (rank == 0) printf("  Testing double precision array on host,"
@@ -1741,7 +1837,7 @@ int main(int argc, char **argv) {
 
   if (rank == 0) printf("  Testing double precision array on host,"
       " local buffer on device\n");
-  test_dbl_array(0,1);
+  test_dbl_array(0,local_buf_on_device);
   print_bw();
 
   if (rank == 0) printf("  Testing read-increment function on device\n");
@@ -1751,55 +1847,67 @@ int main(int argc, char **argv) {
   test_read_inc(0);
   
   if (rank == 0) printf("  Testing contiguous one-sided operations"
-      " for integer array\n on device, local buffer on host\n");
+      " for integer array\n  on device, local buffer on host\n");
   test_int_1d_array(1,0);
   print_bw();
 
   if (rank == 0) printf("  Testing contiguous one-sided operations"
-      " for integer array\n on device, local buffer on device\n");
-  test_int_1d_array(1,1);
+      " for integer array\n  on device, local buffer on device\n");
+  test_int_1d_array(1,local_buf_on_device);
   print_bw();
 
   if (rank == 0) printf("  Testing contiguous one-sided operations"
-      " for integer array\n on host, local buffer on host\n");
+      " for integer array\n  on host, local buffer on host\n");
   test_int_1d_array(0,0);
   print_bw();
 
   if (rank == 0) printf("  Testing contiguous one-sided operations"
-      " for integer array\n on host, local buffer on device\n");
-  test_int_1d_array(0,1);
+      " for integer array\n  on host, local buffer on device\n");
+  test_int_1d_array(0,local_buf_on_device);
   print_bw();
 
   if (rank == 0) printf("  Testing contiguous one-sided operations"
-      " for doubles array\n on device, local buffer on host\n");
+      " for doubles array\n  on device, local buffer on host\n");
   test_dbl_1d_array(1,0);
   print_bw();
 
   if (rank == 0) printf("  Testing contiguous one-sided operations"
-      " for doubles array\n on device, local buffer on device\n");
-  test_dbl_1d_array(1,1);
+      " for doubles array\n  on device, local buffer on device\n");
+  test_dbl_1d_array(1,local_buf_on_device);
   print_bw();
 
   if (rank == 0) printf("  Testing contiguous one-sided operations"
-      " for doubles array\n on host, local buffer on host\n");
+      " for doubles array\n  on host, local buffer on host\n");
   test_dbl_1d_array(0,0);
   print_bw();
 
   if (rank == 0) printf("  Testing contiguous one-sided operations"
-      " for doubles array\n on host, local buffer on device\n");
-  test_dbl_1d_array(0,1);
-  print_bw();
-
-#if 0
-  if (rank == 0) printf("  Testing scatter/gather operations for doubles on device\n");
-  test_dbl_scatter(1);
-  print_bw();
-
-  if (rank == 0) printf("  Testing scatter/gather operations for doubles on host\n");
-  test_dbl_scatter(0);
+      " for doubles array\n  on host, local buffer on device\n");
+  test_dbl_1d_array(0,local_buf_on_device);
   print_bw();
 #endif
 
+  if (rank == 0) printf("  Testing scatter/gather operations for double"
+      " array\n  on device, local buffer on host\n");
+  test_dbl_scatter(1,0);
+  print_bw();
+
+  if (rank == 0) printf("  Testing scatter/gather operations for double"
+      " array\n  on device, local buffer on device\n");
+  test_dbl_scatter(1,local_buf_on_device);
+  print_bw();
+
+#if 1
+  if (rank == 0) printf("  Testing scatter/gather operations for double"
+      " array\n  on host, local buffer on host\n");
+  test_dbl_scatter(0,0);
+  print_bw();
+
+  if (rank == 0) printf("  Testing scatter/gather operations for double"
+      " array\n  on host, local buffer on device\n");
+  test_dbl_scatter(0,local_buf_on_device);
+  print_bw();
+#endif
 
   t_tot = GA_Wtime()-tbeg;
   /* Print out timing stats */

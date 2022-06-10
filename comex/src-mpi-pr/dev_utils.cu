@@ -84,11 +84,37 @@ int isHostPointer(void *ptr)
   tmp = cudaGetLastError();
   /* Assume that if Cuda doesn't know anything about the pointer, it is on the
    * host */
-  if (err != cudaSuccess) return 1;
-  if (attr.devicePointer == NULL) {
+  if (err != cudaSuccess) {
+    return 1;
+  }
+
+  if (attr.type == cudaMemoryTypeHost) {
     return  1;
   }
   return 0;
+}
+
+/* return local ID of device hosting buffer. Return -1
+ * if buffer is on host
+ * ptr: pointer to data
+ */
+int getDeviceID(void *ptr)
+{
+  cudaPointerAttributes attr;
+  cudaError_t  tmp;
+  cudaError_t  err = cudaPointerGetAttributes(&attr, ptr);
+  /* Remove this error so that it doesn't trip up other error code */
+  tmp = cudaGetLastError();
+  /* Assume that if Cuda doesn't know anything about the pointer, it is on the
+   * host */
+  if (err != cudaSuccess) {
+    return -1;
+  }
+
+  if (attr.type == cudaMemoryTypeDevice) {
+    return  attr.device;
+  }
+  return -1;
 }
 
 /* copy data from host buffer to unified memory

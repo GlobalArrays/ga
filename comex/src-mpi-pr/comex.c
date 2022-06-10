@@ -2321,6 +2321,7 @@ int comex_nbgetv(
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
     PROFILE_BEG()
+      printf("p[%d] (comex_nbgetv) begin operation\n",g_state.rank);
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -2337,6 +2338,7 @@ int comex_nbgetv(
     nb_getv(iov, iov_len, world_proc, nb);
 
     PROFILE_END(t_total)
+      printf("p[%d] (comex_nbgetv) end operation\n",g_state.rank);
     return COMEX_SUCCESS;
 }
 
@@ -7057,10 +7059,22 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
             char *message = nb->recv_head->message;
             int off = 0;
             comex_giov_t *iov = nb->recv_head->iov;
+#ifdef ENABLE_DEVICE
+            if (isHostPointer(iov->dst[0])) {
+#endif
             for (i=0; i<iov->count; ++i) {
                 (void)memcpy(iov->dst[i], &message[off], iov->bytes);
                 off += iov->bytes;
             }
+#ifdef ENABLE_DEVICE
+            } else {
+              comex_set_local_dev();
+              for (i=0; i<iov->count; ++i) {
+                copyToDevice(&message[off], iov->dst[i], iov->bytes);
+                off += iov->bytes;
+              }
+            }
+#endif
             free(iov->src);
             free(iov->dst);
             free(iov);
@@ -9168,7 +9182,7 @@ STATIC void nb_putv(
               }
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
-                /* device to host */
+                /* host to device */
                 for (i=0; i<iov_len; ++i) {
                   src = iov[i].src;
                   dst = iov[i].dst;
@@ -9188,7 +9202,20 @@ STATIC void nb_putv(
                   bytes = iov[i].bytes;
                   limit = iov[i].count;
                   for (j=0; j<limit; j++) {
-                    copyDevToDev(src[j], dst[j], limit*bytes);
+                    copyDevToDev(src[j], dst[j], bytes);
+                  }
+                }
+              } else if (!reg_entry->use_dev && !on_host) {
+                /* device to host */
+                for (i=0; i<iov_len; ++i) {
+                  src = iov[i].src;
+                  dst = iov[i].dst;
+                  bytes = iov[i].bytes;
+                  limit = iov[i].count;
+                  for (j=0; j<limit; j++) {
+                    PROFILE_BEG()
+                    copyToHost(dst[j], src[j], bytes);
+                    PROFILE_END(t_cpy_to_dev)
                   }
                 }
               } else {
@@ -9227,7 +9254,7 @@ STATIC void nb_putv(
           COMEX_ASSERT(reg_entry);
 #ifdef ENABLE_DEVICE
           if (reg_entry->use_dev && on_host) {
-            /* device to host */
+            /* host to device */
             void *mapped_offset;
             void *ptr;
             void *dst0;
@@ -9248,7 +9275,7 @@ STATIC void nb_putv(
             PROFILE_BEG()
             deviceCloseMemHandle(reg_entry->mapped);
             PROFILE_END(t_close_ipc)
-          } else if (reg_entry->use_dev && on_host) {
+          } else if (reg_entry->use_dev && !on_host) {
             /* device to device */
             void *mapped_offset;
             void *ptr;
@@ -9264,6 +9291,28 @@ STATIC void nb_putv(
                 ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
                 PROFILE_BEG()
                 copyDevToDev(src[j], ptr, bytes);
+                PROFILE_END(t_cpy_to_dev)
+              }
+            }
+            PROFILE_BEG()
+            deviceCloseMemHandle(reg_entry->mapped);
+            PROFILE_END(t_close_ipc)
+          } else if (!reg_entry->use_dev && !on_host) {
+            /* device to host */
+            void *mapped_offset;
+            void *ptr;
+            void *dst0;
+            mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+            dst0 = iov[0].dst[0];
+            for (i=0; i<iov_len; ++i) {
+              src = iov[i].src;
+              dst = iov[i].dst;
+              bytes = iov[i].bytes;
+              limit = iov[i].count;
+              for (j=0; j<limit; j++) {
+                ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
+                PROFILE_BEG()
+                copyToHost(ptr, src[j], bytes);
                 PROFILE_END(t_cpy_to_dev)
               }
             }
@@ -9321,11 +9370,19 @@ STATIC void nb_putv_packed(comex_giov_t *iov, int proc, nb_t *nb)
     char *packed_buffer = NULL;
     int packed_size = 0;
     int packed_index = 0;
+#ifdef ENABLE_DEVICE
+    int on_host;
+    void **tsrc;
+    void *tbuf;
+#endif
 
     src = iov->src;
     dst = iov->dst;
     bytes = iov->bytes;
     limit = iov->count;
+#ifdef ENABLE_DEVICE
+    on_host = isHostPointer(src[0]);
+#endif
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_putv_packed limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
@@ -9356,10 +9413,30 @@ STATIC void nb_putv_packed(comex_giov_t *iov, int proc, nb_t *nb)
     packed_buffer = malloc(packed_size);
     COMEX_ASSERT(packed_buffer);
     packed_index = 0;
+#ifdef ENABLE_DEVICE
+    if (on_host) {
+      tsrc = src;
+    } else {
+      tbuf = malloc(limit*bytes);
+      tsrc = (void**)malloc(limit*sizeof(void*));
+      tsrc[0] = tbuf;
+      for (i=1; i<limit; i++) {
+        tsrc[i] = tsrc[i-1]+bytes;
+      }
+      for (i=0; i<limit; i++) {
+        copyToHost(tsrc[i],src[i],bytes);
+      }
+    }
+    for (i=0; i<limit; ++i) {
+      (void)memcpy(&packed_buffer[packed_index], tsrc[i], bytes);
+      packed_index += bytes;
+    }
+#else
     for (i=0; i<limit; ++i) {
         (void)memcpy(&packed_buffer[packed_index], src[i], bytes);
         packed_index += bytes;
     }
+#endif
     COMEX_ASSERT(packed_index == bytes*limit);
 
     {
@@ -9382,6 +9459,12 @@ STATIC void nb_putv_packed(comex_giov_t *iov, int proc, nb_t *nb)
         nb_send_header(iov_buf, iov_size, master_rank, nb);
         nb_send_header(packed_buffer, packed_size, master_rank, nb);
     }
+#ifdef ENABLE_DEVICE
+    if (!on_host) {
+      free(tbuf);
+      free(tsrc);
+    }
+#endif
 }
 
 
@@ -9392,6 +9475,8 @@ STATIC void nb_getv(
     int i = 0;
 #ifdef ENABLE_DEVICE
     int on_host = isHostPointer(iov[0].dst[0]);
+    int devBufID = -1;
+    if (!on_host) devBufID = getDeviceID(iov[0].dst[0]);
 #endif
 
     PROFILE_BEG()
@@ -9436,8 +9521,25 @@ STATIC void nb_getv(
                 dst = iov[i].dst;
                 bytes = iov[i].bytes;
                 limit = iov[i].count;
+                if (devBufID == reg_entry->dev_id) {
+                  for (j=0; j<limit; j++) {
+                    copyDevToDev(src[j], dst[j], bytes);
+                  }
+                } else {
+                  for (j=0; j<limit; j++) {
+                    copyPeerToPeer(src[j], reg_entry->dev_id, dst[j], devBufID, bytes);
+                  }
+                }
+              }
+            } else if (!reg_entry->use_dev && !on_host) {
+              /* host to device */
+              for (i=0; i<iov_len; ++i) {
+                src = iov[i].src;
+                dst = iov[i].dst;
+                bytes = iov[i].bytes;
+                limit = iov[i].count;
                 for (j=0; j<limit; j++) {
-                  copyDevToDev(dst[j], src[j], bytes);
+                  copyToDevice(src[j], dst[j], bytes);
                 }
               }
             } else {
@@ -9501,10 +9603,34 @@ STATIC void nb_getv(
                 dst = iov[i].dst;
                 bytes = iov[i].bytes;
                 limit = iov[i].count;
+                if (devBufID == reg_entry->dev_id) {
+                  for (j=0; j<limit; j++) {
+                    ptr = mapped_offset + (ptrdiff_t)(src[j]-src0);
+                    copyDevToDev(ptr, dst[j], bytes);
+                  }
+                } else {
+                  for (j=0; j<limit; j++) {
+                    ptr = mapped_offset + (ptrdiff_t)(src[j]-src0);
+                    copyPeerToPeer(ptr, reg_entry->dev_id, dst[j], devBufID, bytes);
+                  }
+                }
+              }
+              PROFILE_BEG()
+              deviceCloseMemHandle(reg_entry->mapped);
+              PROFILE_END(t_close_ipc)
+            } else if (!reg_entry->use_dev && !on_host) {
+              /* host to device */
+              mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0]);
+              src0 = iov[0].src[0];
+              for (i=0; i<iov_len; ++i) {
+                src = iov[i].src;
+                dst = iov[i].dst;
+                bytes = iov[i].bytes;
+                limit = iov[i].count;
                 for (j=0; j<limit; j++) {
                   ptr = mapped_offset + (ptrdiff_t)(src[j]-src0);
                   PROFILE_BEG()
-                  copyDevToDev(dst[j], ptr, bytes);
+                  copyToDevice(ptr, dst[j], bytes);
                   PROFILE_END(t_cpy_to_host)
                 }
               }
@@ -9665,7 +9791,7 @@ STATIC void nb_accv(
               }
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
-                /* device to host */
+                /* host to device */
                 for (i=0; i<iov_len; ++i) {
                   void *ptr;
                   src = iov[i].src;
@@ -9713,6 +9839,24 @@ STATIC void nb_accv(
                   PROFILE_BEG()
                   freeDevice(ptr);
                   PROFILE_END(t_free_buf);
+                }
+              } else if (!reg_entry->use_dev && !on_host) {
+                /* device to host */
+                for (i=0; i<iov_len; ++i) {
+                  void *ptr;
+                  src = iov[i].src;
+                  dst = iov[i].dst;
+                  bytes = iov[i].bytes;
+                  limit = iov[i].count;
+                  /* create buffer on host */
+                  ptr = malloc(bytes);
+                  for (j=0; j<limit; j++) {
+                    PROFILE_BEG()
+                    copyToHost(ptr, src[j], bytes);
+                    PROFILE_END(t_cpy_to_host)
+                    _acc(datatype, bytes, dst[j], ptr, scale);
+                  }
+                  free(ptr);
                 }
               } else {
 #endif
@@ -9750,7 +9894,7 @@ STATIC void nb_accv(
               }
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
-                /* device to host */
+                /* host to device */
                 for (i=0; i<iov_len; ++i) {
                   void *ptr;
                   void *l_ptr;
@@ -9812,6 +9956,31 @@ STATIC void nb_accv(
                   PROFILE_BEG()
                   freeDevice(ptr);
                   PROFILE_END(t_free_buf);
+                }
+              } else if (!reg_entry->use_dev && !on_host) {
+                /* device to host */
+                for (i=0; i<iov_len; ++i) {
+                  void *ptr;
+                  void *l_ptr;
+                  src = iov[i].src;
+                  dst = iov[i].dst;
+                  bytes = iov[i].bytes;
+                  limit = iov[i].count;
+                  /* create buffer on host */
+                  ptr = malloc(bytes);
+                  mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+                  dst0 = iov[0].dst[0];
+                  for (j=0; j<limit; j++) {
+                    l_ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
+                    PROFILE_BEG()
+                    copyToHost(ptr, src[j], bytes);
+                    PROFILE_END(t_cpy_to_host)
+                    _acc(datatype, bytes, l_ptr, ptr, scale);
+                  }
+                  PROFILE_BEG()
+                  deviceCloseMemHandle(reg_entry->mapped);
+                  PROFILE_END(t_close_ipc)
+                  free(ptr);
                 }
               } else {
 #endif
@@ -9866,14 +10035,21 @@ STATIC void nb_accv_packed(
     char *packed_buffer = NULL;
     int packed_size = 0;
     int packed_index = 0;
+#ifdef ENABLE_DEVICE
+    int on_host;
+    void **tsrc;
+    void *tbuf;
+#endif
 
     src = iov->src;
     dst = iov->dst;
     bytes = iov->bytes;
     limit = iov->count;
+#ifdef ENABLE_DEVICE
+    on_host = isHostPointer(src[0]);
+#endif
 
 #if DEBUG
-    fprintf(stderr, "[%d] nb_accv_packed limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
             g_state.rank, limit, bytes, src[0], dst[0]);
 #endif
 
@@ -9901,10 +10077,30 @@ STATIC void nb_accv_packed(
     packed_buffer = malloc(packed_size);
     COMEX_ASSERT(packed_buffer);
     packed_index = 0;
+#ifdef ENABLE_DEVICE
+    if (on_host) {
+      tsrc = src;
+    } else {
+      tbuf = malloc(limit*bytes);
+      tsrc = (void**)malloc(limit*sizeof(void*));
+      tsrc[0] = tbuf;
+      for (i=1; i<limit; i++) {
+        tsrc[i] = tsrc[i-1]+bytes;
+      }
+      for (i=0; i<limit; i++) {
+        copyToHost(tsrc[i],src[i],bytes);
+      }
+    }
+    for (i=0; i<limit; ++i) {
+      (void)memcpy(&packed_buffer[packed_index], tsrc[i], bytes);
+      packed_index += bytes;
+    }
+#else
     for (i=0; i<limit; ++i) {
         (void)memcpy(&packed_buffer[packed_index], src[i], bytes);
         packed_index += bytes;
     }
+#endif
     COMEX_ASSERT(packed_index == bytes*limit);
 
     {
@@ -9960,6 +10156,12 @@ STATIC void nb_accv_packed(
         nb_send_header(iov_buf, iov_size, master_rank, nb);
         nb_send_header(packed_buffer, packed_size, master_rank, nb);
     }
+#ifdef ENABLE_DEVICE
+    if (!on_host) {
+      free(tbuf);
+      free(tsrc);
+    }
+#endif
 }
 
 /**
