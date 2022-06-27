@@ -12,7 +12,7 @@
 #define NDIM 64
 #define MAX_ITERATIONS 10000
 
-#define NUM_BINS 20
+#define NUM_BINS 40
 
 /**
  *  Solve Laplace's equation on a cubic domain using the sparse matrix
@@ -1113,6 +1113,11 @@ int main(int argc, char **argv) {
         printf("  Bin center: %f number of entries %d\n",
             lmin+((double)i+0.5)*bin_size,bins[i]);
       }
+      PHI = fopen("edist.dat","w");
+      for (i=0; i<NUM_BINS; i++) {
+        fprintf(PHI,"%f %d\n",lmin+((double)i+0.5)*bin_size,bins[i]);
+      }
+      fclose(PHI);
     }
    
   }
@@ -1121,7 +1126,7 @@ int main(int argc, char **argv) {
 #ifdef WRITE_VTK
 #ifndef OLD_DIST
   {
-    int g_v;
+    int g_v, g_ex;
     int64_t lo[3], hi[3];
     int64_t dims[3];
     int ndim = 3;
@@ -1160,10 +1165,29 @@ int main(int argc, char **argv) {
     lld[0] = hi[1]-lo[1]+1;
     lld[1] = hi[2]-lo[2]+1;
     NGA_Put64(g_v,lo,hi,transpose,lld);
+
+    NGA_Access64(g_ref, &tlo, &thi, &xptr, &one_64);
+    g_ex = NGA_Create_handle();
+    NGA_Set_data64(g_ex,ndim,dims,C_DBL);
+    NGA_Allocate(g_ex);
+    /* transpose data */
+    for (i=0; i<nelem; i++) {
+      int n = i;
+      ix = n%idim;
+      n = (n-ix)/idim;
+      iy = n%jdim;
+      iz = (n-iy)/jdim;
+      transpose[ix*jdim*kdim + iy*kdim + iz] = xptr[i];
+    }
+    NGA_Release64(g_ref, &tlo, &thi);
+    lld[0] = hi[1]-lo[1]+1;
+    lld[1] = hi[2]-lo[2]+1;
+    NGA_Put64(g_ex,lo,hi,transpose,lld);
     GA_Sync();
     free(transpose);
     if (me == 0) {
       vbuf = (double*)malloc(xdim*ydim*sizeof(double));
+      double *exbuf = (double*)malloc(xdim*ydim*sizeof(double));
       PHI = fopen("phi.vtk","w");
       fprintf(PHI,"# vtk DataFile Version 3.0\n");
       fprintf(PHI,"Laplace Equation Solution\n");
@@ -1196,9 +1220,29 @@ int main(int argc, char **argv) {
         }
         if (crtcnt%5 != 0) fprintf(PHI,"\n");
       }
+      fprintf(PHI,"SCALARS Diff float\n");
+      fprintf(PHI,"LOOKUP_TABLE default\n");
+      for (k=0; k<zdim; k++) {
+        int crtcnt = 0;
+        lo[2] = k;
+        hi[2] = k;
+        NGA_Get64(g_v,lo,hi,vbuf,lld);
+        NGA_Get64(g_ex,lo,hi,exbuf,lld);
+        for (j=0; j<ydim; j++) {
+          for (i=0; i<xdim; i++) {
+            fprintf(PHI," %12.6f",fabs(vbuf[i+j*xdim]-exbuf[i+j*xdim]));
+            crtcnt++;
+            if (crtcnt%5 == 0) fprintf(PHI,"\n");
+          }
+        }
+        if (crtcnt%5 != 0) fprintf(PHI,"\n");
+      }
       fclose(PHI);
       free(vbuf);
+      free(exbuf);
     }
+    GA_Destroy(g_v);
+    GA_Destroy(g_ex);
   }
 #else
     if (me == 0) {
