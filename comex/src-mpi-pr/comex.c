@@ -2083,7 +2083,6 @@ int comex_nbgetv(
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
     PROFILE_BEG()
-      printf("p[%d] (comex_nbgetv) begin operation\n",g_state.rank);
 
     nb = nb_wait_for_handle();
     _hdl = nb_get_handle_index();
@@ -2100,7 +2099,6 @@ int comex_nbgetv(
     nb_getv(iov, iov_len, world_proc, nb);
 
     PROFILE_END(t_total)
-      printf("p[%d] (comex_nbgetv) end operation\n",g_state.rank);
     return COMEX_SUCCESS;
 }
 
@@ -6651,14 +6649,19 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
 
         if (NULL != nb->recv_head->stride) {
             stride_t *stride = nb->recv_head->stride;
+#ifdef ENABLE_DEVICE
+            int on_dev = !isHostPointer(stride->ptr);
+#else
+            int on_dev = 0;
+#endif
             COMEX_ASSERT(nb->recv_head->message);
             COMEX_ASSERT(stride);
             COMEX_ASSERT(stride->ptr);
             COMEX_ASSERT(stride->stride);
             COMEX_ASSERT(stride->count);
             COMEX_ASSERT(stride->stride_levels);
-            unpack(nb->recv_head->message, stride->ptr,
-                    stride->stride, stride->count, stride->stride_levels,0);
+              unpack(nb->recv_head->message, stride->ptr,
+                    stride->stride, stride->count, stride->stride_levels,on_dev);
             free(stride);
         }
 
@@ -6718,7 +6721,7 @@ STATIC int nb_test_for_recv1(nb_t *nb, message_t **save_recv_head,
     message_t **prev)
 {
 #if DEBUG
-    fprintf(stderr, "[%d] nb_wait_for_recv1(nb=%p)\n", g_state.rank, nb);
+    fprintf(stderr, "[%d] nb_test_for_recv1(nb=%p)\n", g_state.rank, nb);
 #endif
 
     COMEX_ASSERT(NULL != nb);
@@ -6736,6 +6739,7 @@ STATIC int nb_test_for_recv1(nb_t *nb, message_t **save_recv_head,
         if (flag) {
           if (NULL != nb->recv_head->stride) {
             stride_t *stride = nb->recv_head->stride;
+            int on_dev= !isHostPointer(stride->ptr);
             COMEX_ASSERT(nb->recv_head->message);
             COMEX_ASSERT(stride);
             COMEX_ASSERT(stride->ptr);
@@ -6743,7 +6747,7 @@ STATIC int nb_test_for_recv1(nb_t *nb, message_t **save_recv_head,
             COMEX_ASSERT(stride->count);
             COMEX_ASSERT(stride->stride_levels);
             unpack(nb->recv_head->message, stride->ptr,
-                stride->stride, stride->count, stride->stride_levels,0);
+                stride->stride, stride->count, stride->stride_levels,on_dev);
             free(stride);
           }
 
@@ -8050,12 +8054,23 @@ STATIC void nb_gets(
             }
           }
 
-          if (on_host) {
+          if (reg_entry->use_dev && on_host) {
+            /* device to host */
             PROFILE_BEG()
             copyToHost((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
             PROFILE_END(t_cpy_to_host)
+          } else if (!reg_entry->use_dev && on_host) {
+            /* host to device */
+            PROFILE_BEG()
+            copyToDevice((char*)src+src_idx, (char*)dst+dst_idx, count[0]);
+            PROFILE_END(t_cpy_to_dev)
+          } else if (reg_entry->use_dev && !on_host) {
+            /* device to device */
+            comex_set_local_dev();
+            copyDevToDev((char*)src+src_idx, (char*)dst+dst_idx, count[0]);
           } else {
-            copyDevToDev((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
+            /* host to host */
+            memcpy((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
           }
         }
       } else {
@@ -8102,12 +8117,23 @@ STATIC void nb_gets(
             }
           }
 
-          if (on_host) {
+          if (reg_entry->use_dev && on_host) {
+            /* device to host */
             PROFILE_BEG()
             copyToHost((char*)dst+dst_idx, (char*)mapped_offset+src_idx, count[0]);
+            PROFILE_END(t_cpy_to_host)
+          } else if (!reg_entry->use_dev && on_host) {
+            /* host to device */
+            PROFILE_BEG()
+            copyToDevice((char*)mapped_offset+src_idx, (char*)dst+dst_idx, count[0]);
             PROFILE_END(t_cpy_to_dev)
+          } else if (reg_entry->use_dev && !on_host) {
+            /* device to device */
+            comex_set_local_dev();
+            copyDevToDev((char*)mapped_offset+src_idx, (char*)dst+dst_idx, count[0]);
           } else {
-            copyDevToDev((char*)dst+dst_idx, (char*)mapped_offset+src_idx, count[0]);
+            /* host to host */
+            memcpy((char*)dst+dst_idx, (char*)mapped_offset+src_idx, count[0]);
           }
         }
         PROFILE_BEG()
@@ -8171,9 +8197,12 @@ STATIC void nb_gets_packed(
         void *src, int *src_stride, void *dst, int *dst_stride,
         int *count, int stride_levels, int proc, nb_t *nb)
 {
-    int i;
+    int i, j;
     stride_t stride_src;
     stride_t *stride_dst = NULL;
+#ifdef ENABLE_DEVICE
+    int on_host = isHostPointer(dst);
+#endif
 
 #if DEBUG
     fprintf(stderr, "[%d] nb_gets_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -8197,30 +8226,31 @@ STATIC void nb_gets_packed(
     stride_src.stride_levels = stride_levels;
     stride_src.count[0] = count[0];
     for (i=0; i<stride_levels; ++i) {
-        stride_src.stride[i] = src_stride[i];
-        stride_src.count[i+1] = count[i+1];
+      stride_src.stride[i] = src_stride[i];
+      stride_src.count[i+1] = count[i+1];
     }
+
     for (/*no init*/; i<COMEX_MAX_STRIDE_LEVEL; ++i) {
-        stride_src.stride[i] = -1;
-        stride_src.count[i+1] = -1;
+      stride_src.stride[i] = -1;
+      stride_src.count[i+1] = -1;
     }
 
     COMEX_ASSERT(stride_src.stride_levels >= 0);
     COMEX_ASSERT(stride_src.stride_levels < COMEX_MAX_STRIDE_LEVEL);
 
+    stride_dst = (stride_t*)malloc(sizeof(stride_t));
     /* copy dst info into structure */
-    stride_dst = malloc(sizeof(stride_t));
     COMEX_ASSERT(stride_dst);
     stride_dst->ptr = dst;
     stride_dst->stride_levels = stride_levels;
     stride_dst->count[0] = count[0];
     for (i=0; i<stride_levels; ++i) {
-        stride_dst->stride[i] = dst_stride[i];
-        stride_dst->count[i+1] = count[i+1];
+      stride_dst->stride[i] = dst_stride[i];
+      stride_dst->count[i+1] = count[i+1];
     }
     for (/*no init*/; i<COMEX_MAX_STRIDE_LEVEL; ++i) {
-        stride_dst->stride[i] = -1;
-        stride_dst->count[i+1] = -1;
+      stride_dst->stride[i] = -1;
+      stride_dst->count[i+1] = -1;
     }
 
     COMEX_ASSERT(stride_dst->stride_levels >= 0);
@@ -8272,6 +8302,7 @@ STATIC void nb_gets_packed(
         }
         (void)memcpy(message+sizeof(header_t), &stride_src, sizeof(stride_t));
         nb_send_header(message, message_size, master_rank, nb);
+
     }
     PROFILE_END(t_nb_gets_packed)
 }
@@ -8476,15 +8507,13 @@ STATIC void nb_accs(
         void *mapped_offset;
         void *ptr = NULL;
         mapped_offset = _get_offset_memory(reg_entry, dst);
-        /* create buffer on device */
-        if (on_host) {
-          PROFILE_BEG()
-          setDevice(reg_entry->dev_id);
-          PROFILE_END(t_set_dev)
-          PROFILE_BEG()
-          mallocDevice(&ptr,count[0]);
-          PROFILE_END(t_malloc_buf)
-        }
+        /* create buffer on same device as dst*/
+        PROFILE_BEG()
+        setDevice(reg_entry->dev_id);
+        PROFILE_END(t_set_dev)
+        PROFILE_BEG()
+        mallocDevice(&ptr,count[0]);
+        PROFILE_END(t_malloc_buf)
         /* number of n-element of the first dimension */
         n1dim = 1;
         for(i=1; i<=stride_levels; i++) {
@@ -8533,8 +8562,10 @@ STATIC void nb_accs(
             _acc_dev(datatype, count[0], (char*)mapped_offset+dst_idx,
                 ptr, scale);
           } else {
+            copyPeerToPeer((char*)src+src_idx, _comex_dev_id, ptr,
+                reg_entry->dev_id, count[0]);
             _acc_dev(datatype, count[0], (char*)mapped_offset+dst_idx,
-                (char*)src+src_idx, scale);
+                ptr, scale);
           }
         }
         if (on_host) {
