@@ -17,10 +17,10 @@
 #define BLOCK1 65536
 */
 #define BLOCK1 65530
-#define DIMSIZE 8
+#define DIMSIZE 256
 #define MAXCOUNT 10000
 #define MAX_FACTOR 256
-#define NLOOP 10
+#define NLOOP 1
 
 void factor(int p, int *idx, int *idy) {
   int i, j;                              
@@ -311,8 +311,7 @@ void test_int_array(int on_device, int local_buf_on_device)
             idx = i*ld+j;
             if (tbuf[idx] != ii*DIMSIZE+jj) {
               if (g_ok) printf("p[%d] (%d,%d) (get) expected: %d"
-                  " actual[%d]: %d device: %d\n",rank,ii,jj,ii*DIMSIZE+jj,
-                  idx,tbuf[idx],on_device);
+                  " actual[%d]: %d\n",rank,ii,jj,ii*DIMSIZE+jj,idx,tbuf[idx]);
               g_ok = 0;
             }
           }
@@ -327,8 +326,7 @@ void test_int_array(int on_device, int local_buf_on_device)
           idx = i*ld+j;
           if (buf[idx] != ii*DIMSIZE+jj) {
             if (g_ok) printf("p[%d] (%d,%d) (get) expected: %d"
-                " actual[%d]: %d device: %d\n",rank,ii,jj,ii*DIMSIZE+jj,
-                idx,buf[idx],on_device);
+                " actual[%d]: %d\n",rank,ii,jj,ii*DIMSIZE+jj,idx,buf[idx]);
             g_ok = 0;
           }
         }
@@ -419,9 +417,9 @@ void test_int_array(int on_device, int local_buf_on_device)
             j = jj-lo[1];
             idx = i*ld+j;
             if (tbuf[idx] != 2*(ii*DIMSIZE+jj)) {
-              if (a_ok) printf("p[%d] (%d,%d) (acc acc) expected: %d"
+              if (a_ok) printf("p[%d] (%d,%d) (acc) expected: %d"
                   " actual[%d]: %d device: %d\n",rank,ii,jj,
-                  2*(ii*DIMSIZE+jj),idx,buf[idx],on_device);
+                  2*(ii*DIMSIZE+jj),idx,tbuf[idx],on_device);
               a_ok = 0;
             }
           }
@@ -435,7 +433,7 @@ void test_int_array(int on_device, int local_buf_on_device)
           j = jj-lo[1];
           idx = i*ld+j;
           if (buf[idx] != 2*(ii*DIMSIZE+jj)) {
-            if (a_ok) printf("p[%d] (%d,%d) (acc acc) expected: %d"
+            if (a_ok) printf("p[%d] (%d,%d) (acc) expected: %d"
                 " actual[%d]: %d device: %d\n",rank,ii,jj,
                 2*(ii*DIMSIZE+jj),idx,buf[idx],on_device);
             a_ok = 0;
@@ -1803,11 +1801,12 @@ int main(int argc, char **argv) {
      }
   }
 
-#if 1
   /* Divide matrix up into pieces that are owned by each processor */
   factor(nprocs, &pdx, &pdy);
   if (rank == 0) {
     printf("  Test run on %d procs configured on %d X %d grid\n",nprocs,pdx,pdy);
+    printf("\n  2D arrays are of size %d X %d\n",DIMSIZE,DIMSIZE);
+    printf("\n  1D arrays are of size %d\n",BLOCK1*nprocs);
   }
   if (rank == 0) printf("  Testing integer array on device, local buffer on host\n");
   test_int_array(1,0);
@@ -1890,7 +1889,6 @@ int main(int argc, char **argv) {
       " for doubles array\n  on host, local buffer on device\n");
   test_dbl_1d_array(0,local_buf_on_device);
   print_bw();
-#endif
 
   if (rank == 0) printf("  Testing scatter/gather operations for double"
       " array\n  on device, local buffer on host\n");
@@ -1902,7 +1900,6 @@ int main(int argc, char **argv) {
   test_dbl_scatter(1,local_buf_on_device);
   print_bw();
 
-#if 1
   if (rank == 0) printf("  Testing scatter/gather operations for double"
       " array\n  on host, local buffer on host\n");
   test_dbl_scatter(0,0);
@@ -1912,7 +1909,6 @@ int main(int argc, char **argv) {
       " array\n  on host, local buffer on device\n");
   test_dbl_scatter(0,local_buf_on_device);
   print_bw();
-#endif
 
   t_tot = GA_Wtime()-tbeg;
   /* Print out timing stats */
