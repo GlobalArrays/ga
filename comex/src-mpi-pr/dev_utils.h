@@ -12,7 +12,7 @@ extern int numDevices();
 extern void setDevice(int id);
 extern void mallocDevice(void **buf, int size);
 extern void freeDevice(void *buf);
-extern void copyToDevice(void *hostptr, void *devptr, int bytes);
+extern void copyToDevice(void *devptr, void *hostptr, int bytes);
 extern void copyToHost(void *hostptr, void *devptr, int bytes);
 extern void copyDevToDev(void *src, void *dst, int bytes);
 extern void copyPeerToPeer(void *srcptr, int srcID, void *dstptr, int dstID, int bytes);
