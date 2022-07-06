@@ -6922,7 +6922,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
                 PROFILE_END(t_cpy_to_dev)
               } else if (reg_entry->use_dev && !on_host) {
                 comex_set_local_dev();
-                copyDevToDev(src, dst, bytes);
+                copyDevToDev(dst, src, bytes);
               } else if (!reg_entry->use_dev && !on_host) {
                 comex_set_local_dev();
                 copyToHost(dst, src, bytes);
@@ -6968,7 +6968,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
               PROFILE_END(t_close_ipc)
             } else if (reg_entry->use_dev && !on_host) {
               comex_set_local_dev();
-              copyDevToDev(src, mapped_offset, bytes);
+              copyDevToDev(mapped_offset, src, bytes);
               PROFILE_BEG()
               deviceCloseMemHandle(reg_entry->mapped);
               PROFILE_END(t_close_ipc)
@@ -7111,7 +7111,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
                 PROFILE_END(t_cpy_to_host)
               } else if (reg_entry->use_dev && !on_host) {
                 /* copy from device to device */
-                copyDevToDev(src, dst, bytes);
+                copyDevToDev(dst, src, bytes);
               } else if (!reg_entry->use_dev && !on_host) {
                 /* copy from host to device */
                 comex_set_local_dev();
@@ -7157,7 +7157,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
               deviceCloseMemHandle(reg_entry->mapped);
               PROFILE_END(t_close_ipc)
             } else if (reg_entry->use_dev && !on_host) {
-              copyDevToDev(mapped_offset, dst, bytes);
+              copyDevToDev(dst, mapped_offset, bytes);
               PROFILE_BEG()
               deviceCloseMemHandle(reg_entry->mapped);
               PROFILE_END(t_close_ipc)
@@ -7359,7 +7359,7 @@ STATIC void nb_acc(int datatype, void *scale,
                 mallocDevice(&ptr,bytes);
                 PROFILE_END(t_malloc_buf)
                 PROFILE_BEG()
-                copyPeerToPeer(src, _comex_dev_id, ptr, reg_entry->dev_id, bytes);
+                copyPeerToPeer(ptr, reg_entry->dev_id, src, _comex_dev_id, bytes);
                 PROFILE_END(t_cpy_to_dev)
                 _acc_dev(datatype, bytes, mapped_offset, ptr, scale);
                 PROFILE_BEG()
@@ -7637,7 +7637,7 @@ STATIC void nb_puts(
             copyToDevice((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
             PROFILE_END(t_cpy_to_dev)
           } else {
-            copyDevToDev((char*)src+src_idx, (char*)dst+dst_idx, count[0]);
+            copyDevToDev((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
           }
         }
       } else {
@@ -7688,7 +7688,7 @@ STATIC void nb_puts(
             copyToDevice((char*)mapped_offset+dst_idx, (char*)src+src_idx, count[0]);
             PROFILE_END(t_cpy_to_dev)
           } else {
-            copyDevToDev((char*)src+src_idx, (char*)mapped_offset+dst_idx, count[0]);
+            copyDevToDev((char*)mapped_offset+dst_idx, (char*)src+src_idx, count[0]);
           }
         }
         PROFILE_BEG()
@@ -8067,7 +8067,7 @@ STATIC void nb_gets(
           } else if (reg_entry->use_dev && !on_host) {
             /* device to device */
             comex_set_local_dev();
-            copyDevToDev((char*)src+src_idx, (char*)dst+dst_idx, count[0]);
+            copyDevToDev((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
           } else {
             /* host to host */
             memcpy((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
@@ -8130,7 +8130,7 @@ STATIC void nb_gets(
           } else if (reg_entry->use_dev && !on_host) {
             /* device to device */
             comex_set_local_dev();
-            copyDevToDev((char*)mapped_offset+src_idx, (char*)dst+dst_idx, count[0]);
+            copyDevToDev((char*)dst+dst_idx, (char*)mapped_offset+src_idx, count[0]);
           } else {
             /* host to host */
             memcpy((char*)dst+dst_idx, (char*)mapped_offset+src_idx, count[0]);
@@ -8562,8 +8562,8 @@ STATIC void nb_accs(
             _acc_dev(datatype, count[0], (char*)mapped_offset+dst_idx,
                 ptr, scale);
           } else {
-            copyPeerToPeer((char*)src+src_idx, _comex_dev_id, ptr,
-                reg_entry->dev_id, count[0]);
+            copyPeerToPeer(ptr, reg_entry->dev_id, (char*)src+src_idx,
+                _comex_dev_id, count[0]);
             _acc_dev(datatype, count[0], (char*)mapped_offset+dst_idx,
                 ptr, scale);
           }
@@ -8841,7 +8841,7 @@ STATIC void nb_putv(
                   bytes = iov[i].bytes;
                   limit = iov[i].count;
                   for (j=0; j<limit; j++) {
-                    copyDevToDev(src[j], dst[j], bytes);
+                    copyDevToDev(dst[j], src[j], bytes);
                   }
                 }
               } else if (!reg_entry->use_dev && !on_host) {
@@ -8929,7 +8929,7 @@ STATIC void nb_putv(
               for (j=0; j<limit; j++) {
                 ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
                 PROFILE_BEG()
-                copyDevToDev(src[j], ptr, bytes);
+                copyDevToDev(ptr, src[j], bytes);
                 PROFILE_END(t_cpy_to_dev)
               }
             }
@@ -9162,11 +9162,11 @@ STATIC void nb_getv(
                 limit = iov[i].count;
                 if (devBufID == reg_entry->dev_id) {
                   for (j=0; j<limit; j++) {
-                    copyDevToDev(src[j], dst[j], bytes);
+                    copyDevToDev(dst[j], src[j], bytes);
                   }
                 } else {
                   for (j=0; j<limit; j++) {
-                    copyPeerToPeer(src[j], reg_entry->dev_id, dst[j], devBufID, bytes);
+                    copyPeerToPeer(dst[j], devBufID, src[j], reg_entry->dev_id, bytes);
                   }
                 }
               }
@@ -9245,12 +9245,12 @@ STATIC void nb_getv(
                 if (devBufID == reg_entry->dev_id) {
                   for (j=0; j<limit; j++) {
                     ptr = mapped_offset + (ptrdiff_t)(src[j]-src0);
-                    copyDevToDev(ptr, dst[j], bytes);
+                    copyDevToDev(dst[j], ptr, bytes);
                   }
                 } else {
                   for (j=0; j<limit; j++) {
                     ptr = mapped_offset + (ptrdiff_t)(src[j]-src0);
-                    copyPeerToPeer(ptr, reg_entry->dev_id, dst[j], devBufID, bytes);
+                    copyPeerToPeer(dst[j], devBufID, ptr, reg_entry->dev_id, bytes);
                   }
                 }
               }
@@ -9471,7 +9471,7 @@ STATIC void nb_accv(
                   PROFILE_END(t_malloc_buf)
                   for (j=0; j<limit; j++) {
                     PROFILE_BEG()
-                    copyDevToDev(src[j], ptr, bytes);
+                    copyDevToDev(ptr, src[j], bytes);
                     PROFILE_END(t_cpy_to_dev)
                     _acc_dev(datatype, bytes, dst[j], ptr, scale);
                   }
@@ -9585,7 +9585,7 @@ STATIC void nb_accv(
                   for (j=0; j<limit; j++) {
                     l_ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
                     PROFILE_BEG()
-                    copyDevToDev(src[j], ptr, bytes);
+                    copyDevToDev(ptr, src[j], bytes);
                     PROFILE_END(t_cpy_to_dev)
                     _acc_dev(datatype, bytes, l_ptr, ptr, scale);
                   }
