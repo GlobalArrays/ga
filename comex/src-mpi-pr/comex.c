@@ -1437,7 +1437,7 @@ STATIC void unpack(char *packed_buffer,
 #ifdef ENABLE_DEVICE
     } else {
       PROFILE_BEG()
-      copyToDevice(&packed_buffer[packed_index], &dst[dst_idx], count[0]);
+      copyToDevice(&dst[dst_idx], &packed_buffer[packed_index], count[0]);
       PROFILE_END(t_cpy_to_dev)
 #endif
     }
@@ -4115,7 +4115,7 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
       /*setDevice(_device_map[header->rank]);*/
       if (use_eager) {
         PROFILE_BEG()
-        copyToDevice(payload, mapped_offset, header->length);
+        copyToDevice(mapped_offset, payload, header->length);
         PROFILE_END(t_cpy_to_dev)
       }
       else {
@@ -4136,7 +4136,7 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
             max_message_size : bytes_remaining;
           server_recv(tbuf, size, proc);
           PROFILE_BEG()
-          copyToDevice(tbuf, buf, size);
+          copyToDevice(buf, tbuf, size);
           PROFILE_END(t_cpy_to_dev)
           buf += size;
           bytes_remaining -= size;
@@ -4385,7 +4385,7 @@ STATIC void _put_iov_handler(header_t *header, int proc)
       for (i=0; i<limit; ++i) {
         ptr = mapped_offset + (ptrdiff_t)(dst[i]-dst[0]);
         PROFILE_BEG()
-        copyToDevice(&packed_buffer[packed_index], ptr, bytes);
+        copyToDevice(ptr, &packed_buffer[packed_index], bytes);
         PROFILE_END(t_cpy_to_dev)
         packed_index += bytes;
       }
@@ -4827,7 +4827,7 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
         } while (bytes_remaining > 0);
       }
       PROFILE_BEG()
-      copyToDevice(acc_buffer, dev_buffer, header->length);
+      copyToDevice(dev_buffer, acc_buffer, header->length);
       PROFILE_END(t_cpy_to_dev)
       if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
         sem_wait(semaphores[header->rank]);
@@ -5037,7 +5037,7 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
 
         /* allocate dev_buffer on device and copy contents of acc_buffer*/
         PROFILE_BEG()
-        copyToDevice(acc_buffer, dev_buffer, header->length);
+        copyToDevice(dev_buffer, acc_buffer, header->length);
         PROFILE_END(t_cpy_to_dev)
 
 
@@ -5235,7 +5235,7 @@ STATIC void _acc_iov_handler(header_t *header, char *scale, int proc)
       PROFILE_END(t_malloc_buf)
       for (i=0; i<limit; ++i) {
         PROFILE_BEG()
-        copyToDevice(&packed_buffer[packed_index], dbuf, bytes);
+        copyToDevice(dbuf, &packed_buffer[packed_index], bytes);
         PROFILE_END(t_cpy_to_dev)
         ptr = mapped_offset + (ptrdiff_t)(dst[i]-dst[0]);
         _acc_dev(acc_type, bytes, ptr, dbuf, scale);
@@ -6681,7 +6681,7 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
             } else {
               comex_set_local_dev();
               for (i=0; i<iov->count; ++i) {
-                copyToDevice(&message[off], iov->dst[i], iov->bytes);
+                copyToDevice(iov->dst[i], &message[off], iov->bytes);
                 off += iov->bytes;
               }
             }
@@ -6918,7 +6918,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
                 PROFILE_BEG()
-                copyToDevice(src, dst, bytes);
+                copyToDevice(dst, src, bytes);
                 PROFILE_END(t_cpy_to_dev)
               } else if (reg_entry->use_dev && !on_host) {
                 comex_set_local_dev();
@@ -6961,7 +6961,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             mapped_offset = _get_offset_memory(reg_entry, dst);
             if (reg_entry->use_dev && on_host) {
               PROFILE_BEG()
-              copyToDevice(src, mapped_offset, bytes);
+              copyToDevice(mapped_offset, src, bytes);
               PROFILE_END(t_cpy_to_dev)
               PROFILE_BEG()
               deviceCloseMemHandle(reg_entry->mapped);
@@ -7115,7 +7115,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
               } else if (!reg_entry->use_dev && !on_host) {
                 /* copy from host to device */
                 comex_set_local_dev();
-                copyToDevice(src, dst, bytes);
+                copyToDevice(dst, src, bytes);
               } else {
                 (void)memcpy(dst, src, bytes);
               }
@@ -7163,7 +7163,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
               PROFILE_END(t_close_ipc)
             } else if (!reg_entry->use_dev && !on_host) {
               PROFILE_BEG()
-              copyToDevice(mapped_offset, dst, bytes);
+              copyToDevice(dst, mapped_offset, bytes);
               PROFILE_END(t_cpy_to_dev)
             } else {
               (void)memcpy(dst, mapped_offset, bytes);
@@ -7219,7 +7219,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
           nb_send_header(header, sizeof(header_t), master_rank, nb);
           nb_wait_for_all(nb);
           comex_set_local_dev();
-          copyToDevice(buf, dst, bytes);
+          copyToDevice(dst, buf, bytes);
           free(buf);
         }
     }
@@ -7269,7 +7269,7 @@ STATIC void nb_acc(int datatype, void *scale,
                 mallocDevice(&ptr,bytes);
                 PROFILE_END(t_malloc_buf)
                 PROFILE_BEG()
-                copyToDevice(src, ptr, bytes);
+                copyToDevice(ptr, src, bytes);
                 PROFILE_END(t_cpy_to_dev)
                 _acc_dev(datatype, bytes, dst, ptr, scale);
                 PROFILE_BEG()
@@ -7338,7 +7338,7 @@ STATIC void nb_acc(int datatype, void *scale,
                 mallocDevice(&ptr,bytes);
                 PROFILE_END(t_malloc_buf)
                 PROFILE_BEG()
-                copyToDevice(src, ptr, bytes);
+                copyToDevice(ptr, src, bytes);
                 PROFILE_END(t_cpy_to_dev)
                 _acc_dev(datatype, bytes, mapped_offset, ptr, scale);
                 PROFILE_BEG()
@@ -7634,7 +7634,7 @@ STATIC void nb_puts(
           }
           if (on_host) {
             PROFILE_BEG()
-            copyToDevice((char*)src+src_idx, (char*)dst+dst_idx, count[0]);
+            copyToDevice((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
             PROFILE_END(t_cpy_to_dev)
           } else {
             copyDevToDev((char*)src+src_idx, (char*)dst+dst_idx, count[0]);
@@ -7685,7 +7685,7 @@ STATIC void nb_puts(
           }
           if (on_host) {
             PROFILE_BEG()
-            copyToDevice((char*)src+src_idx, (char*)mapped_offset+dst_idx, count[0]);
+            copyToDevice((char*)mapped_offset+dst_idx, (char*)src+src_idx, count[0]);
             PROFILE_END(t_cpy_to_dev)
           } else {
             copyDevToDev((char*)src+src_idx, (char*)mapped_offset+dst_idx, count[0]);
@@ -8062,7 +8062,7 @@ STATIC void nb_gets(
           } else if (!reg_entry->use_dev && on_host) {
             /* host to device */
             PROFILE_BEG()
-            copyToDevice((char*)src+src_idx, (char*)dst+dst_idx, count[0]);
+            copyToDevice((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
             PROFILE_END(t_cpy_to_dev)
           } else if (reg_entry->use_dev && !on_host) {
             /* device to device */
@@ -8125,7 +8125,7 @@ STATIC void nb_gets(
           } else if (!reg_entry->use_dev && on_host) {
             /* host to device */
             PROFILE_BEG()
-            copyToDevice((char*)mapped_offset+src_idx, (char*)dst+dst_idx, count[0]);
+            copyToDevice((char*)dst+dst_idx, (char*)mapped_offset+src_idx, count[0]);
             PROFILE_END(t_cpy_to_dev)
           } else if (reg_entry->use_dev && !on_host) {
             /* device to device */
@@ -8491,7 +8491,7 @@ STATIC void nb_accs(
 
           if (on_host) {
             PROFILE_BEG()
-            copyToDevice((char*)src+src_idx, ptr, count[0]);
+            copyToDevice(ptr, (char*)src+src_idx, count[0]);
             PROFILE_END(t_cpy_to_dev)
             _acc_dev(datatype, count[0], (char*)dst+dst_idx, ptr, scale);
           } else {
@@ -8557,7 +8557,7 @@ STATIC void nb_accs(
 
           if (on_host) {
             PROFILE_BEG()
-            copyToDevice((char*)src+src_idx, ptr, count[0]);
+            copyToDevice(ptr, (char*)src+src_idx, count[0]);
             PROFILE_END(t_cpy_to_dev)
             _acc_dev(datatype, count[0], (char*)mapped_offset+dst_idx,
                 ptr, scale);
@@ -8829,7 +8829,7 @@ STATIC void nb_putv(
                   limit = iov[i].count;
                   for (j=0; j<limit; j++) {
                     PROFILE_BEG()
-                    copyToDevice(src[j], dst[j], bytes);
+                    copyToDevice(dst[j], src[j], bytes);
                     PROFILE_END(t_cpy_to_dev)
                   }
                 }
@@ -8907,7 +8907,7 @@ STATIC void nb_putv(
               for (j=0; j<limit; j++) {
                 ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
                 PROFILE_BEG()
-                copyToDevice(src[j], ptr, bytes);
+                copyToDevice(ptr, src[j], bytes);
                 PROFILE_END(t_cpy_to_dev)
               }
             }
@@ -9178,7 +9178,7 @@ STATIC void nb_getv(
                 bytes = iov[i].bytes;
                 limit = iov[i].count;
                 for (j=0; j<limit; j++) {
-                  copyToDevice(src[j], dst[j], bytes);
+                  copyToDevice(dst[j], src[j], bytes);
                 }
               }
             } else {
@@ -9269,7 +9269,7 @@ STATIC void nb_getv(
                 for (j=0; j<limit; j++) {
                   ptr = mapped_offset + (ptrdiff_t)(src[j]-src0);
                   PROFILE_BEG()
-                  copyToDevice(ptr, dst[j], bytes);
+                  copyToDevice(dst[j], ptr, bytes);
                   PROFILE_END(t_cpy_to_host)
                 }
               }
@@ -9446,7 +9446,7 @@ STATIC void nb_accv(
                   PROFILE_END(t_malloc_buf)
                   for (j=0; j<limit; j++) {
                     PROFILE_BEG()
-                    copyToDevice(src[j], ptr, bytes);
+                    copyToDevice(ptr, src[j], bytes);
                     PROFILE_END(t_cpy_to_dev)
                     _acc_dev(datatype, bytes, dst[j], ptr, scale);
                   }
@@ -9553,7 +9553,7 @@ STATIC void nb_accv(
                   for (j=0; j<limit; j++) {
                     l_ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
                     PROFILE_BEG()
-                    copyToDevice(src[j], ptr, bytes);
+                    copyToDevice(ptr, src[j], bytes);
                     PROFILE_END(t_cpy_to_dev)
                     _acc_dev(datatype, bytes, l_ptr, ptr, scale);
                   }
@@ -9903,7 +9903,7 @@ void comex_device_memset(void *ptr, int val, size_t bytes)
 
 void comex_copy_to_device(void *host_ptr, void *dev_ptr, size_t bytes)
 {
-  copyToDevice(host_ptr, dev_ptr, bytes);
+  copyToDevice(dev_ptr, host_ptr, bytes);
 }  
 
 void comex_set_local_dev()
