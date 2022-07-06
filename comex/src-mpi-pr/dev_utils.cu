@@ -118,11 +118,11 @@ int getDeviceID(void *ptr)
 }
 
 /* copy data from host buffer to unified memory
- * hostptr: pointer to allocation on host
  * devptr: pointer to allocation on device
+ * hostptr: pointer to allocation on host
  * bytes: number of bytes to copy
  */
-void copyToDevice(void *hostptr, void *devptr, int bytes)
+void copyToDevice(void *devptr, void *hostptr, int bytes)
 {
   cudaError_t ierr = cudaMemcpy(devptr, hostptr, bytes, cudaMemcpyHostToDevice);
   cudaDeviceSynchronize();
@@ -263,7 +263,7 @@ void deviceAddInt(int *ptr, const int inc)
   int tmp;
   copyToHost(&tmp,ptr,sizeof(int));
   tmp += inc;
-  copyToDevice(&tmp,ptr,sizeof(int));
+  copyToDevice(ptr,&tmp,sizeof(int));
 }
 
 __global__ void inc_long_kernel(long *target, const long *inc)
@@ -277,7 +277,7 @@ void deviceAddLong(long *ptr, const long inc)
   long tmp;
   copyToHost(&tmp,ptr,sizeof(long));
   tmp += inc;
-  copyToDevice(&tmp,ptr,sizeof(long));
+  copyToDevice(ptr,&tmp,sizeof(long));
 }
 
 int deviceGetMemHandle(devMemHandle_t *handle, void *memory)
