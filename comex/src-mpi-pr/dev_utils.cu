@@ -154,11 +154,11 @@ void copyToHost(void *hostptr, void *devptr, int bytes)
 }
 
 /* copy data between buffers on same device
- * srcptr: source pointer
  * dstptr: destination pointer
+ * srcptr: source pointer
  * bytes: number of bytes to copy
  */
-void copyDevToDev(void *srcptr, void *dstptr, int bytes)
+void copyDevToDev(void *dstptr, void *srcptr, int bytes)
 {
   cudaError_t ierr;
   ierr = cudaMemcpy(dstptr, srcptr, bytes, cudaMemcpyDeviceToDevice); 
@@ -173,13 +173,13 @@ void copyDevToDev(void *srcptr, void *dstptr, int bytes)
 }
 
 /* copy data between buffers on different devices
- * srcptr: source pointer
- * srcID: device ID of source
  * dstptr: destination pointer
  * dstID: device ID of destination
+ * srcptr: source pointer
+ * srcID: device ID of source
  * bytes: number of bytes to copy
  */
-void copyPeerToPeer(void *srcptr, int srcID, void *dstptr, int dstID, int bytes)
+void copyPeerToPeer(void *dstptr, int dstID, void *srcptr, int srcID, int bytes)
 {
   cudaError_t ierr;
   ierr = cudaMemcpyPeer(dstptr,dstID,srcptr,srcID,bytes);
