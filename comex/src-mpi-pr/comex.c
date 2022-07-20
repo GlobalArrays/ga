@@ -39,6 +39,9 @@ sicm_device_list nill;
 #ifdef ENABLE_DEVICE
 #include "dev_utils.h"
 #endif
+#ifdef ENABLE_NVTX
+#include "nvToolsExt.h"
+#endif
 
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
@@ -54,6 +57,14 @@ sicm_device_list nill;
 
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
+
+#ifdef ENABLE_NVTX
+#define RANGE_PUSH(x) nvtxRangePushA(x)
+#define RANGE_POP() nvtxRangePop()
+#else
+#define RANGE_PUSH(x) ((void)0)
+#define RANGE_POP() ((void)0)
+#endif
 
 /* data structures */
 
@@ -224,7 +235,7 @@ void SigSegvHandler(int sig)
 }
 #endif
 
-#define ENABLE_XPROFILE
+#define ENABLE_PROFILE
 #ifdef ENABLE_PROFILE
   static int t_level = -1;
   static double t_beg[10];
@@ -4071,6 +4082,7 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
     reg_entry_t *reg_entry = NULL;
     void *mapped_offset = NULL;
     int use_eager = _eager_check(header->length);
+    RANGE_PUSH("_put_handler");
 
 #if DEBUG
     fprintf(stderr, "[%d] _put_handler rem=%p loc=%p rem_rank=%d len=%d\n",
@@ -4149,6 +4161,7 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
       PROFILE_END(t_close_ipc)
     }
 #endif
+    RANGE_POP();
 }
 
 
@@ -4171,6 +4184,7 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
             header->rank,
             header->length);
 #endif
+    RANGE_PUSH("_put_packed_handler");
 
     stride = (stride_t*)payload;
     COMEX_ASSERT(stride->stride_levels >= 0);
@@ -4237,6 +4251,7 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
       PROFILE_END(t_close_ipc)
     }
 #endif
+    RANGE_POP();
 }
 
 
@@ -4420,6 +4435,7 @@ STATIC void _get_handler(header_t *header, int proc)
             header->rank,
             header->length);
 #endif
+    RANGE_PUSH("_get_handler");
 
     COMEX_ASSERT(OP_GET == header->operation);
     
@@ -4469,6 +4485,7 @@ STATIC void _get_handler(header_t *header, int proc)
       PROFILE_END(t_close_ipc)
     }
 #endif
+    RANGE_POP();
 }
 
 
@@ -4492,6 +4509,7 @@ STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
             header->length);
 #endif
 
+    RANGE_PUSH("_get_packed_handler");
     assert(OP_GET_PACKED == header->operation);
 
     COMEX_ASSERT(stride_src->stride_levels >= 0);
@@ -4533,6 +4551,7 @@ STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
 #endif
 
     free(packed_buffer);
+    RANGE_POP();
 }
 
 
@@ -4719,6 +4738,7 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
     fprintf(stderr, "[%d] _acc_handler\n", g_state.rank);
 #endif
 
+    RANGE_PUSH("_acc_handler");
     switch (header->operation) {
         case OP_ACC_INT:
             acc_type = COMEX_ACC_INT;
@@ -4846,6 +4866,7 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
       PROFILE_END(t_free_buf);
     }
 #endif
+    RANGE_POP();
 }
 
 
@@ -4867,6 +4888,7 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
     fprintf(stderr, "[%d] _acc_packed_handler\n", g_state.rank);
 #endif
 
+    RANGE_PUSH("_acc_packed_handler");
     switch (header->operation) {
         case OP_ACC_INT_PACKED:
             acc_type = COMEX_ACC_INT;
@@ -5108,6 +5130,7 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
       }
     }
 #endif
+    RANGE_POP();
 }
 
 
@@ -6800,6 +6823,7 @@ STATIC int nb_test_for_recv1(nb_t *nb, message_t **save_recv_head,
 
 STATIC void nb_wait_for_all(nb_t *nb)
 {
+  RANGE_PUSH("nv_wait_for_all");
 #if DEBUG
     fprintf(stderr, "[%d] nb_wait_for_all(nb=%p)\n", g_state.rank, nb);
 #endif
@@ -6816,6 +6840,7 @@ STATIC void nb_wait_for_all(nb_t *nb)
         }
     }
     nb->in_use = 0;
+    RANGE_POP();
 }
 
 /* Returns 0 if no outstanding requests */
@@ -6885,6 +6910,7 @@ STATIC void nb_wait_all()
 STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 {
     int on_host = 0;
+    RANGE_PUSH("nb_put");
     COMEX_ASSERT(NULL != src);
     COMEX_ASSERT(NULL != dst);
     COMEX_ASSERT(bytes > 0);
@@ -7073,12 +7099,14 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
         }
     }
     PROFILE_END(t_nb_put)
+    RANGE_POP();
 }
 
 
 STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 {
     int on_host = 0;
+    RANGE_PUSH("nb_get");
     COMEX_ASSERT(NULL != src);
     COMEX_ASSERT(NULL != dst);
     COMEX_ASSERT(bytes > 0);
@@ -7224,6 +7252,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         }
     }
     PROFILE_END(t_nb_get);
+    RANGE_POP();
 }
 
 
@@ -7231,6 +7260,7 @@ STATIC void nb_acc(int datatype, void *scale,
         void *src, void *dst, int bytes, int proc, nb_t *nb)
 {
     int on_host;
+    RANGE_PUSH("nb_acc");
     COMEX_ASSERT(NULL != src);
     COMEX_ASSERT(NULL != dst);
     COMEX_ASSERT(bytes > 0);
@@ -7512,6 +7542,7 @@ STATIC void nb_acc(int datatype, void *scale,
         }
     }
     PROFILE_END(t_nb_acc)
+    RANGE_POP();
 }
 
 
@@ -7528,6 +7559,7 @@ STATIC void nb_puts(
     reg_entry_t *reg_entry;
     int on_host = isHostPointer(src);
 #endif
+    RANGE_PUSH("nb_puts");
     PROFILE_BEG()
 
 #if DEBUG
@@ -7745,6 +7777,7 @@ STATIC void nb_puts(
     }
 #endif
     PROFILE_END(t_nb_puts)
+    RANGE_POP();
 }
 
 
@@ -7768,6 +7801,7 @@ STATIC void nb_puts_packed(
             count[0], stride_levels, proc, nb);
 #endif
 
+    RANGE_PUSH("nb_puts_packed");
     PROFILE_BEG()
     COMEX_ASSERT(proc >= 0);
     COMEX_ASSERT(proc < g_state.size);
@@ -7858,6 +7892,7 @@ STATIC void nb_puts_packed(
         }
     }
     PROFILE_END(t_nb_puts_packed)
+    RANGE_POP();
 }
 
 
@@ -7958,6 +7993,7 @@ STATIC void nb_gets(
     int on_host = isHostPointer(dst);
 #endif
 
+    RANGE_PUSH("nb_gets");
     PROFILE_BEG()
     /* if not actually a strided get */
     if (0 == stride_levels) {
@@ -8190,6 +8226,7 @@ STATIC void nb_gets(
     }
 #endif
     PROFILE_END(t_nb_gets)
+    RANGE_POP();
 }
 
 
@@ -8210,6 +8247,7 @@ STATIC void nb_gets_packed(
             count[0], stride_levels, proc, nb);
 #endif
 
+    RANGE_PUSH("nb_gets_packed");
     PROFILE_BEG()
     COMEX_ASSERT(proc >= 0);
     COMEX_ASSERT(proc < g_state.size);
@@ -8305,6 +8343,7 @@ STATIC void nb_gets_packed(
 
     }
     PROFILE_END(t_nb_gets_packed)
+    RANGE_POP();
 }
 
 
@@ -8410,6 +8449,7 @@ STATIC void nb_accs(
     int on_host = isHostPointer(src);
 #endif
 
+    RANGE_PUSH("nb_accs");
     PROFILE_BEG()
     /* if not actually a strided acc */
     if (0 == stride_levels) {
@@ -8627,6 +8667,7 @@ STATIC void nb_accs(
     }
 #endif
     PROFILE_END(t_nb_accs)
+    RANGE_POP();
 }
 
 
@@ -8647,6 +8688,7 @@ STATIC void nb_accs_packed(
     int is_dev = -1;
 #endif
 
+    RANGE_PUSH("nb_accs_packed");
     PROFILE_BEG()
 #if DEBUG
     fprintf(stderr, "[%d] nb_accs_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -8781,6 +8823,7 @@ STATIC void nb_accs_packed(
         }
     }
     PROFILE_END(t_nb_accs_packed)
+    RANGE_POP();
 }
 
 
