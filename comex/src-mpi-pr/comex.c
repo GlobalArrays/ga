@@ -6823,7 +6823,7 @@ STATIC int nb_test_for_recv1(nb_t *nb, message_t **save_recv_head,
 
 STATIC void nb_wait_for_all(nb_t *nb)
 {
-  RANGE_PUSH("nv_wait_for_all");
+    RANGE_PUSH("nb_wait_for_all");
 #if DEBUG
     fprintf(stderr, "[%d] nb_wait_for_all(nb=%p)\n", g_state.rank, nb);
 #endif
@@ -6960,6 +6960,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             (void)memcpy(dst, src, bytes);
 #endif
             PROFILE_END(t_nb_put)
+            RANGE_POP();
             return;
         }
     }
@@ -7011,6 +7012,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             (void)memcpy(mapped_offset, src, bytes);
 #endif
             PROFILE_END(t_nb_put)
+            RANGE_POP();
             return;
         }
     }
@@ -7152,6 +7154,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
             (void)memcpy(dst, src, bytes);
 #endif
             PROFILE_END(t_nb_get);
+            RANGE_POP();
             return;
         }
     }
@@ -7201,6 +7204,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
             (void)memcpy(dst, mapped_offset, bytes);
 #endif
             PROFILE_END(t_nb_get);
+            RANGE_POP();
             return;
         }
     }
@@ -7329,6 +7333,7 @@ STATIC void nb_acc(int datatype, void *scale,
             sem_post(semaphores[proc]);
 #endif
             PROFILE_END(t_nb_acc)
+            RANGE_POP();
             return;
         }
     }
@@ -7419,6 +7424,7 @@ STATIC void nb_acc(int datatype, void *scale,
             sem_post(semaphores[proc]);
 #endif
             PROFILE_END(t_nb_acc)
+            RANGE_POP();
             return;
         }
     }
@@ -7571,6 +7577,7 @@ STATIC void nb_puts(
     /* if not actually a strided put */
     if (0 == stride_levels) {
         PROFILE_END(t_nb_puts)
+        RANGE_POP();
         nb_put(src, dst, count[0], proc, nb);
         return;
     }
@@ -7588,6 +7595,7 @@ STATIC void nb_puts(
         if (reg_entry && !reg_entry->use_dev && !on_host) {
           nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
           PROFILE_END(t_nb_puts)
+          RANGE_POP();
           return;
         }
     }
@@ -7599,6 +7607,7 @@ STATIC void nb_puts(
             && (_packed_size(src_stride, count, stride_levels) > COMEX_PUT_DATATYPE_THRESHOLD)) {
         nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         PROFILE_END(t_nb_puts)
+        RANGE_POP();
         return;
     }
 #endif
@@ -7610,6 +7619,7 @@ STATIC void nb_puts(
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
         nb_puts_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         PROFILE_END(t_nb_puts)
+        RANGE_POP();
         return;
     }
 
@@ -7998,6 +8008,7 @@ STATIC void nb_gets(
     /* if not actually a strided get */
     if (0 == stride_levels) {
         PROFILE_END(t_nb_gets)
+        RANGE_POP();
         nb_get(src, dst, count[0], proc, nb);
         return;
     }
@@ -8014,6 +8025,7 @@ STATIC void nb_gets(
         if (reg_entry && !reg_entry->use_dev && !on_host) {
           nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
           PROFILE_END(t_nb_gets)
+          RANGE_POP();
           return;
         }
     }
@@ -8025,6 +8037,7 @@ STATIC void nb_gets(
             && (_packed_size(src_stride, count, stride_levels) > COMEX_GET_DATATYPE_THRESHOLD)) {
         nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         PROFILE_END(t_nb_gets)
+        RANGE_POP();
         return;
     }
 #endif
@@ -8036,6 +8049,7 @@ STATIC void nb_gets(
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
         nb_gets_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         PROFILE_END(t_nb_gets)
+        RANGE_POP();
         return;
     }
 
@@ -8454,6 +8468,7 @@ STATIC void nb_accs(
     /* if not actually a strided acc */
     if (0 == stride_levels) {
         PROFILE_END(t_nb_accs)
+        RANGE_POP();
         nb_acc(datatype, scale, src, dst, count[0], proc, nb);
         return;
     }
@@ -8465,6 +8480,7 @@ STATIC void nb_accs(
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
         nb_accs_packed(datatype, scale, src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         PROFILE_END(t_nb_accs)
+        RANGE_POP();
         return;
     }
 
