@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#include <mpi.h>
 
 #include <cuda_runtime.h>
 #include "dev_mem_handle.h"
 
 /* avoid name mangling by the CUDA compiler */
 extern "C" {
+
+extern int MPI_Wrapper_world_rank();
+extern void MPI_Wrapper_abort(int err);
 
 /* return the number of GPUs visible from this processor*/
 int numDevices()
@@ -17,8 +19,7 @@ int numDevices()
   ierr = cudaGetDeviceCount(&ngpus);
   /*cuDeviceGetCount(&ngpus); */
   if (ierr != cudaSuccess) {
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int rank = MPI_Wrapper_world_rank();
     printf("p[%d] Error encountered by cudaGetDeviceCount\n",rank);
   }
   return ngpus;
@@ -31,11 +32,11 @@ void setDevice(int id)
 {
   cudaError_t ierr = cudaSetDevice(id);
   if (ierr != cudaSuccess) {
-    int rank, err=0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int err=0;
+    int rank = MPI_Wrapper_world_rank();
     const char *msg = cudaGetErrorString(ierr);
     printf("p[%d] cudaSetDevice id: %d msg: %s\n",rank,id,msg);
-    MPI_Abort(MPI_COMM_WORLD,err);
+    MPI_Wrapper_abort(err);
   }
 }
 
@@ -48,11 +49,11 @@ void mallocDevice(void **buf, size_t size)
   cudaError_t ierr =cudaMalloc(buf, (int)size);
   cudaDeviceSynchronize();
   if (ierr != cudaSuccess) {
-    int rank, err=0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int err=0;
+    int rank = MPI_Wrapper_world_rank();
     const char *msg = cudaGetErrorString(ierr);
     printf("p[%d] cudaMalloc buf: %p size: %d msg: %s\n",rank,*buf,size,msg);
-    MPI_Abort(MPI_COMM_WORLD,err);
+    MPI_Wrapper_abort(err);
   }
 }
 
@@ -63,11 +64,11 @@ void freeDevice(void *buf)
 {
   cudaError_t ierr = cudaFree(buf);
   if (ierr != cudaSuccess) {
-    int rank, err=0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int err=0;
+    int rank = MPI_Wrapper_world_rank();
     const char *msg = cudaGetErrorString(ierr);
     printf("p[%d] cudaFree buf: %p msg: %s\n",rank,buf,msg);
-    MPI_Abort(MPI_COMM_WORLD,err);
+    MPI_Wrapper_abort(err);
   }
 }
 
@@ -127,11 +128,11 @@ void copyToDevice(void *devptr, void *hostptr, int bytes)
   cudaError_t ierr = cudaMemcpy(devptr, hostptr, bytes, cudaMemcpyHostToDevice);
   cudaDeviceSynchronize();
   if (ierr != cudaSuccess) {
-    int rank, err=0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int err=0;
+    int rank = MPI_Wrapper_world_rank();
     const char *msg = cudaGetErrorString(ierr);
     printf("p[%d] cudaMemcpy to device msg: %s\n",rank,msg);
-    MPI_Abort(MPI_COMM_WORLD,err);
+    MPI_Wrapper_abort(err);
   }
 }
 
@@ -145,11 +146,11 @@ void copyToHost(void *hostptr, void *devptr, int bytes)
   cudaError_t ierr = cudaMemcpy(hostptr, devptr, bytes, cudaMemcpyDeviceToHost); 
   cudaDeviceSynchronize();
   if (ierr != cudaSuccess) {
-    int rank, err=0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int err=0;
+    int rank = MPI_Wrapper_world_rank();
     const char *msg = cudaGetErrorString(ierr);
     printf("p[%d] cudaMemcpy to host msg: %s\n",rank,msg);
-    MPI_Abort(MPI_COMM_WORLD,err);
+    MPI_Wrapper_abort(err);
   }
 }
 
@@ -164,11 +165,11 @@ void copyDevToDev(void *dstptr, void *srcptr, int bytes)
   ierr = cudaMemcpy(dstptr, srcptr, bytes, cudaMemcpyDeviceToDevice); 
   cudaDeviceSynchronize();
   if (ierr != cudaSuccess) {
-    int rank, err=0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int err=0;
+    int rank = MPI_Wrapper_world_rank();
     const char *msg = cudaGetErrorString(ierr);
     printf("p[%d] cudaMemcpy dev to dev msg: %s\n",rank,msg);
-    MPI_Abort(MPI_COMM_WORLD,err);
+    MPI_Wrapper_abort(err);
   }
 }
 
@@ -184,11 +185,11 @@ void copyPeerToPeer(void *dstptr, int dstID, void *srcptr, int srcID, int bytes)
   cudaError_t ierr;
   ierr = cudaMemcpyPeer(dstptr,dstID,srcptr,srcID,bytes);
   if (ierr != cudaSuccess) {
-    int rank, err=0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int err=0;
+    int rank = MPI_Wrapper_world_rank();
     const char *msg = cudaGetErrorString(ierr);
     printf("p[%d] cudaMemcpyPeer dev to dev msg: %s\n",rank,msg);
-    MPI_Abort(MPI_COMM_WORLD,err);
+    MPI_Wrapper_abort(err);
   }
 }
 
@@ -202,11 +203,11 @@ void deviceMemset(void *ptr, int val, size_t bytes)
 {
   cudaError_t ierr = cudaMemset(ptr, val, bytes);
   if (ierr != cudaSuccess) {
-    int rank, err=0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int err=0;
+    int rank = MPI_Wrapper_world_rank();
     const char *msg = cudaGetErrorString(ierr);
     printf("p[%d] cudaMemset ptr: %p bytes: %d msg: %s\n",rank,ptr,bytes,msg);
-    MPI_Abort(MPI_COMM_WORLD,err);
+    MPI_Wrapper_abort(err);
   }
 }
 
@@ -228,11 +229,11 @@ void deviceIaxpy(int *dst, int *src, const int *scale, int n)
   cudaDeviceSynchronize();
   ierr = cudaGetLastError();
   if (ierr != cudaSuccess) {
-    int rank, err=0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int err=0;
+    int rank = MPI_Wrapper_world_rank();
     const char *msg = cudaGetErrorString(ierr);
     printf("p[%d] deviceIaxpy dst: %p src: %p scale: %d n: %d msg: %s\n",rank,dst,src,*scale,n,msg);
-    MPI_Abort(MPI_COMM_WORLD,err);
+    MPI_Wrapper_abort(err);
   }
 }
 
@@ -290,11 +291,11 @@ int deviceOpenMemHandle(void **memory, devMemHandle_t handle)
   cudaError_t ierr;
   ierr = cudaIpcOpenMemHandle(memory, handle.handle, cudaIpcMemLazyEnablePeerAccess);
   if (ierr != cudaSuccess) {
-    int rank, err=0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int err=0;
+    int rank = MPI_Wrapper_world_rank();
     const char *msg = cudaGetErrorString(ierr);
     printf("p[%d] cudaIpcOpenMemHandle msg: %s\n",rank,msg);
-    MPI_Abort(MPI_COMM_WORLD,err);
+    MPI_Wrapper_abort(err);
   }
   return ierr;
 }
