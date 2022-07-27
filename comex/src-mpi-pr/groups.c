@@ -799,5 +799,25 @@ static long xgethostid()
     long nodeid = gethostid();
 #endif
 
+    char name[256];
+    gethostname(name, 128);
+    int i;
+    long newid=0;
+    int a0 = (int)'a';
+    int z0 = (int)'z';
+    long factor = 1;
+    for (i=11; i>=0; i--) {
+	    if (name[i] >= a0 && name[i] <= z0) {
+		    newid += ((int)name[i]-a0)*factor;
+	    } else if (name[i] >= (int)'0' && name[i] <= '9') {
+		    newid += ((int)name[i]-(int)'0')*factor;
+	    } else {
+		    printf("Incorrect character encountered\n");
+		    MPI_Abort(MPI_COMM_WORLD,1);
+	    } 
+
+	    factor *= 36;
+    }
+    nodeid = newid;
     return nodeid;
 }
