@@ -58,7 +58,6 @@ void mallocDevice(void **buf, size_t size)
 {
   cudaError_t ierr =cudaMalloc(buf, (int)size);
   cudaDeviceSynchronize();
-  printf("p[%d] allocate device buffer: %p\n",MPI_Wrapper_world_rank(),*buf);
   if (ierr != cudaSuccess) {
     int err=0;
     int rank = MPI_Wrapper_world_rank();
