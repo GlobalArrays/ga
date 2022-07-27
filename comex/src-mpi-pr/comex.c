@@ -58,6 +58,8 @@ sicm_device_list nill;
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
 
+#define XNO_GPU_AWARE_MPI
+
 #ifdef ENABLE_NVTX
 #define RANGE_PUSH(x) nvtxRangePushA(x)
 #define RANGE_POP() nvtxRangePop()
@@ -4133,15 +4135,7 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
       else {
         char *buf = (char*)mapped_offset;
         int bytes_remaining = header->length;
-#if 0
-        do {
-          int size = bytes_remaining>max_message_size ?
-            max_message_size : bytes_remaining;
-          server_recv(buf, size, proc);
-          buf += size;
-          bytes_remaining -= size;
-        } while (bytes_remaining > 0);
-#else
+#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
         char *tbuf = (char*)malloc(max_message_size);
         do {
           int size = bytes_remaining>max_message_size ?
@@ -4154,6 +4148,14 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
           bytes_remaining -= size;
         } while (bytes_remaining > 0);
         free(tbuf);
+#else
+        do {
+          int size = bytes_remaining>max_message_size ?
+            max_message_size : bytes_remaining;
+          server_recv(buf, size, proc);
+          buf += size;
+          bytes_remaining -= size;
+        } while (bytes_remaining > 0);
 #endif
       }
       PROFILE_BEG()
@@ -7059,12 +7061,12 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
         else {
             char *buf;
             int bytes_remaining = bytes;
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
             void *tsrc;
             if (on_host) {
 #endif
               buf = (char*)src;
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
             } else {
               buf = (char*)malloc(max_message_size*sizeof(char));
               tsrc = src;
@@ -7074,7 +7076,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             do {
                 int size = bytes_remaining>max_message_size ?
                     max_message_size : bytes_remaining;
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
                 if (!on_host) {
                   comex_set_local_dev();
                   copyToHost((void*)buf,tsrc,size);
@@ -7082,20 +7084,20 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #endif
                 
                 nb_send_buffer(buf, size, master_rank, nb);
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
                 nb_wait_for_all(nb);
                 nb->in_use = 0;
                 if (on_host) {
 #endif
                   buf += size;
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
                 } else {
                   tsrc += size;
                 }
 #endif
                 bytes_remaining -= size;
             } while (bytes_remaining > 0);
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
             if (!on_host) free(buf);
 #endif
         }
