@@ -195,6 +195,7 @@ void copyDevToDev(void *dstptr, void *srcptr, int bytes)
 {
   cudaError_t ierr;
   ierr = cudaMemcpy(dstptr, srcptr, bytes, cudaMemcpyDeviceToDevice); 
+  cudaErrCheck(ierr);
   cudaDeviceSynchronize();
   if (ierr != cudaSuccess) {
     int err=0;
@@ -216,6 +217,7 @@ void copyPeerToPeer(void *dstptr, int dstID, void *srcptr, int srcID, int bytes)
 {
   cudaError_t ierr;
   ierr = cudaMemcpyPeer(dstptr,dstID,srcptr,srcID,bytes);
+  cudaErrCheck(ierr);
   if (ierr != cudaSuccess) {
     int err=0;
     int rank = MPI_Wrapper_world_rank();
@@ -317,6 +319,7 @@ int deviceGetMemHandle(devMemHandle_t *handle, void *memory)
 {
   cudaError_t ierr;
   ierr = cudaIpcGetMemHandle(&handle->handle, memory);
+  cudaErrCheck(ierr);
   if (ierr != cudaSuccess) {
     int err=0;
     int rank = MPI_Wrapper_world_rank();
@@ -331,6 +334,7 @@ int deviceOpenMemHandle(void **memory, devMemHandle_t handle)
 {
   cudaError_t ierr;
   ierr = cudaIpcOpenMemHandle(memory, handle.handle, cudaIpcMemLazyEnablePeerAccess);
+  cudaErrCheck(ierr);
   if (ierr != cudaSuccess) {
     int err=0;
     int rank = MPI_Wrapper_world_rank();
