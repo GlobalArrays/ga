@@ -56,9 +56,13 @@ sicm_device_list nill;
 #endif
 
 #define XSTR(x) #x
-#define STR(x) XSTR(x)
+#define TR(x) XSTR(x)
 
-#define XNO_GPU_AWARE_MPI
+#define XUSE_GPU_AWARE_MPI
+
+#ifndef USE_GPU_AWARE_MPI
+#define NO_GPU_AWARE_MPI
+#endif
 
 #ifdef ENABLE_NVTX
 #define RANGE_PUSH(x) nvtxRangePushA(x)
