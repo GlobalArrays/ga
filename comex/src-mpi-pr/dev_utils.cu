@@ -97,10 +97,11 @@ int isHostPointer(void *ptr)
   /* Assume that if Cuda doesn't know anything about the pointer, it is on the
    * host */
   if (err != cudaSuccess) {
+    cudaErrCheck(err);
     return 1;
   }
 
-  if (attr.type == cudaMemoryTypeHost) {
+  if (attr.type == cudaMemoryTypeHost || attr.type == cudaMemoryTypeUnregistered) {
     return  1;
   }
   return 0;
