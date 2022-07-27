@@ -5,6 +5,16 @@
 #include <cuda_runtime.h>
 #include "dev_mem_handle.h"
 
+#define cudaErrCheck(stat)                                                                                             \
+  {                                                                                                                    \
+    cudaErrCheck_((stat), __FILE__, __LINE__);                                                                         \
+  }
+
+void cudaErrCheck_(cudaError_t stat, const char *file, int line)
+{
+  if (stat != cudaSuccess) { fprintf(stderr, "CUDA Error: %s %s %d\n", cudaGetErrorString(stat), file, line); }
+}
+
 /* avoid name mangling by the CUDA compiler */
 extern "C" {
 
@@ -48,6 +58,7 @@ void mallocDevice(void **buf, size_t size)
 {
   cudaError_t ierr =cudaMalloc(buf, (int)size);
   cudaDeviceSynchronize();
+  printf("p[%d] allocate device buffer: %p\n",MPI_Wrapper_world_rank(),*buf);
   if (ierr != cudaSuccess) {
     int err=0;
     int rank = MPI_Wrapper_world_rank();
@@ -144,14 +155,35 @@ void copyToDevice(void *devptr, void *hostptr, int bytes)
 void copyToHost(void *hostptr, void *devptr, int bytes)
 {
   cudaError_t ierr = cudaMemcpy(hostptr, devptr, bytes, cudaMemcpyDeviceToHost); 
-  cudaDeviceSynchronize();
+  cudaErrCheck(ierr);
   if (ierr != cudaSuccess) {
+    cudaPointerAttributes src_attr, dst_attr;
+    char hosttype[32];
+    char devtype[32];
+    int hostid, devid;
     int err=0;
-    int rank = MPI_Wrapper_world_rank();
     const char *msg = cudaGetErrorString(ierr);
-    printf("p[%d] cudaMemcpy to host msg: %s\n",rank,msg);
+    cudaErrCheck(cudaPointerGetAttributes(&dst_attr, hostptr));
+    if (dst_attr.type == cudaMemoryTypeDevice) {
+	    strcpy(hosttype,"device");
+	    hostid = dst_attr.device;
+    } else {
+	    strcpy(hosttype,"host");
+	    hostid = -1;
+    }
+    cudaErrCheck(cudaPointerGetAttributes(&src_attr, devptr));
+    if (src_attr.type == cudaMemoryTypeDevice) {
+	    strcpy(devtype,"device");
+	    devid = src_attr.device;
+    } else {
+	    strcpy(devtype,"host");
+	    devid = -1;
+    }
+    int rank = MPI_Wrapper_world_rank();
+    printf("p[%d] cudaMemcpy to host dev: %d on %s host: %d on %s msg: %s\n",rank,hostid,hosttype,devid,devtype,msg);
     MPI_Wrapper_abort(err);
   }
+  cudaDeviceSynchronize();
 }
 
 /* copy data between buffers on same device
@@ -283,7 +315,16 @@ void deviceAddLong(long *ptr, const long inc)
 
 int deviceGetMemHandle(devMemHandle_t *handle, void *memory)
 {
-  return cudaIpcGetMemHandle(&handle->handle, memory);
+  cudaError_t ierr;
+  ierr = cudaIpcGetMemHandle(&handle->handle, memory);
+  if (ierr != cudaSuccess) {
+    int err=0;
+    int rank = MPI_Wrapper_world_rank();
+    const char *msg = cudaGetErrorString(ierr);
+    printf("p[%d] cudaGetMemHandle msg: %s\n",rank,msg);
+    MPI_Wrapper_abort(err);
+  }
+  return ierr;
 }
 
 int deviceOpenMemHandle(void **memory, devMemHandle_t handle)
