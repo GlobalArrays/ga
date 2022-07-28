@@ -17,10 +17,10 @@
 #define BLOCK1 65536
 */
 #define BLOCK1 65530
-#define DIMSIZE 256
+#define DIMSIZE 2048
 #define MAXCOUNT 10000
 #define MAX_FACTOR 256
-#define NLOOP 1
+#define NLOOP 10
 
 void factor(int p, int *idx, int *idy) {
   int i, j;                              
@@ -1787,6 +1787,11 @@ int main(int argc, char **argv) {
   // wrank = rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&wrank);
 
+  int nodeid = GA_Cluster_nodeid();
+  if (rank == 0) {
+    printf("  Number of processors per node %d\n",GA_Cluster_nprocs(nodeid));
+    printf("\n  Number of nodes %d\n",GA_Cluster_nnodes());
+  }
   /* create list of GPU hosts */
   list = (int*)malloc(nprocs*sizeof(int));
   devIDs = (int*)malloc(nprocs*sizeof(int));
@@ -1804,9 +1809,10 @@ int main(int argc, char **argv) {
   /* Divide matrix up into pieces that are owned by each processor */
   factor(nprocs, &pdx, &pdy);
   if (rank == 0) {
-    printf("  Test run on %d procs configured on %d X %d grid\n",nprocs,pdx,pdy);
+    printf("\n  Test run on %d procs configured on %d X %d grid\n",nprocs,pdx,pdy);
     printf("\n  2D arrays are of size %d X %d\n",DIMSIZE,DIMSIZE);
     printf("\n  1D arrays are of size %d\n",BLOCK1*nprocs);
+    printf("\n  Number of loops in each test %d\n\n",NLOOP);
   }
   if (rank == 0) printf("  Testing integer array on device, local buffer on host\n");
   test_int_array(1,0);
