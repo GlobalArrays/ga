@@ -58,7 +58,7 @@ sicm_device_list nill;
 #define XSTR(x) #x
 #define TR(x) XSTR(x)
 
-#define XUSE_GPU_AWARE_MPI
+#define USE_GPU_AWARE_MPI
 
 #ifndef USE_GPU_AWARE_MPI
 #define NO_GPU_AWARE_MPI
@@ -4456,7 +4456,7 @@ STATIC void _get_handler(header_t *header, int proc)
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
     if (!reg_entry->use_dev) {
 #endif
     {
@@ -4470,7 +4470,14 @@ STATIC void _get_handler(header_t *header, int proc)
             bytes_remaining -= size;
         } while (bytes_remaining > 0);
     }
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && !defined(NO_GPU_AWARE_MPI))
+    if (reg_entry->use_dev) {
+      PROFILE_BEG()
+      deviceCloseMemHandle(reg_entry->mapped);
+      PROFILE_END(t_close_ipc)
+    }
+#endif
+#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
     } else {
       char *tbuf = (char*)malloc(max_message_size);
       char *buf = (char*)mapped_offset;
@@ -7229,7 +7236,9 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->local_address = dst;
         header->rank = proc;
         header->length = bytes;
+#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
         if (on_host) {
+#endif
           /* prepost all receives */
           char *buf = (char*)dst;
           int bytes_remaining = bytes;
@@ -7241,6 +7250,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
             bytes_remaining -= size;
           } while (bytes_remaining > 0);
           nb_send_header(header, sizeof(header_t), master_rank, nb);
+#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
         } else {
           /* create temporary buffer on host */
           char *buf = (char*)malloc(bytes*sizeof(char));
@@ -7260,6 +7270,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
           copyToDevice(dst, buf, bytes);
           free(buf);
         }
+#endif
     }
     PROFILE_END(t_nb_get);
     RANGE_POP();
@@ -8557,6 +8568,7 @@ STATIC void nb_accs(
             PROFILE_END(t_cpy_to_dev)
             _acc_dev(datatype, count[0], (char*)dst+dst_idx, ptr, scale);
           } else {
+            comex_set_local_dev();
             _acc_dev(datatype, count[0], (char*)dst+dst_idx, (char*)src+src_idx, scale);
           }
         }
