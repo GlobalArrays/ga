@@ -96,7 +96,6 @@ int isHostPointer(void *ptr)
   /* Assume that if Cuda doesn't know anything about the pointer, it is on the
    * host */
   if (err != cudaSuccess) {
-    cudaErrCheck(err);
     return 1;
   }
 
@@ -266,6 +265,22 @@ void deviceIaxpy(int *dst, int *src, const int *scale, int n)
     int err=0;
     int rank = MPI_Wrapper_world_rank();
     const char *msg = cudaGetErrorString(ierr);
+    cudaPointerAttributes src_attr;
+    cudaPointerAttributes dst_attr;
+    cudaError_t  perr = cudaPointerGetAttributes(&src_attr, src);
+    if (perr != cudaSuccess || src_attr.type == cudaMemoryTypeHost ||
+        src_attr.type == cudaMemoryTypeUnregistered) {
+      printf("p[%d] deviceIaxpy src pointer is on host\n",rank);
+    } else if (src_attr.type == cudaMemoryTypeDevice)  {
+      printf("p[%d] deviceIaxpy src pointer is on device %d\n",rank,src_attr.device);
+    }
+    perr = cudaPointerGetAttributes(&dst_attr, src);
+    if (perr != cudaSuccess || dst_attr.type == cudaMemoryTypeHost ||
+        dst_attr.type == cudaMemoryTypeUnregistered) {
+      printf("p[%d] deviceIaxpy src pointer is on host\n",rank);
+    } else if (dst_attr.type == cudaMemoryTypeDevice)  {
+      printf("p[%d] deviceIaxpy dst pointer is on device %d\n",rank,dst_attr.device);
+    }
     printf("p[%d] deviceIaxpy dst: %p src: %p scale: %d n: %d msg: %s\n",rank,dst,src,*scale,n,msg);
     MPI_Wrapper_abort(err);
   }
