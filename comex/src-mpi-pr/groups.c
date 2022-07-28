@@ -799,6 +799,7 @@ static long xgethostid()
     long nodeid = gethostid();
 #endif
 
+#if 0
     char name[256];
     gethostname(name, 128);
     int i;
@@ -819,5 +820,6 @@ static long xgethostid()
 	    factor *= 36;
     }
     nodeid = newid;
+#endif
     return nodeid;
 }
