@@ -21,6 +21,13 @@ if [[ -z "${F77}" ]]; then
     F77="${FC}"
 fi
 
+if [ "$F77" == "gfortran" ] && [ "$os" == "Darwin" ]; then
+    if [[ ! -x "$(command -v gfortran)" ]]; then
+	echo gfortran undefined
+	echo symbolic link gfortran-12
+	ln -sf /usr/local/bin/gfortran-12 /usr/local/bin/gfortran
+    fi
+fi
 
 # this is where updated Autotools will be for Linux
 export PATH=$TRAVIS_ROOT/bin:$PATH
@@ -37,6 +44,8 @@ case "$MPI_IMPL" in
             mkdir -p build && cd build
 	    GNUMAJOR=`$F77 -dM -E - < /dev/null 2> /dev/null | grep __GNUC__ |cut -c18-`	
 	    GFORTRAN_EXTRA=$(echo $F77 | cut -c 1-8)
+	    echo MPICH F77 is `which "$F77"`
+	    echo F77 version is `"$F77" -v`
 	    if [ "$GFORTRAN_EXTRA" = "gfortran" ]; then
 		if [ $GNUMAJOR -ge 10  ]; then
 		    FFLAGS_IN="-w -fallow-argument-mismatch -O1"
