@@ -60,10 +60,6 @@ sicm_device_list nill;
 
 #define USE_GPU_AWARE_MPI
 
-#ifndef USE_GPU_AWARE_MPI
-#define NO_GPU_AWARE_MPI
-#endif
-
 #ifdef ENABLE_NVTX
 #define RANGE_PUSH(x) nvtxRangePushA(x)
 #define RANGE_POP() nvtxRangePop()
@@ -4139,7 +4135,7 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
       else {
         char *buf = (char*)mapped_offset;
         int bytes_remaining = header->length;
-#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
         char *tbuf = (char*)malloc(max_message_size);
         do {
           int size = bytes_remaining>max_message_size ?
@@ -4456,7 +4452,7 @@ STATIC void _get_handler(header_t *header, int proc)
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
-#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
     if (!reg_entry->use_dev) {
 #endif
     {
@@ -4470,14 +4466,14 @@ STATIC void _get_handler(header_t *header, int proc)
             bytes_remaining -= size;
         } while (bytes_remaining > 0);
     }
-#if (defined(ENABLE_DEVICE) && !defined(NO_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && defined(USE_GPU_AWARE_MPI))
     if (reg_entry->use_dev) {
       PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
       PROFILE_END(t_close_ipc)
     }
 #endif
-#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
     } else {
       char *tbuf = (char*)malloc(max_message_size);
       char *buf = (char*)mapped_offset;
@@ -7072,12 +7068,12 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
         else {
             char *buf;
             int bytes_remaining = bytes;
-#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
             void *tsrc;
             if (on_host) {
 #endif
               buf = (char*)src;
-#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
             } else {
               buf = (char*)malloc(max_message_size*sizeof(char));
               tsrc = src;
@@ -7087,7 +7083,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             do {
                 int size = bytes_remaining>max_message_size ?
                     max_message_size : bytes_remaining;
-#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
                 if (!on_host) {
                   comex_set_local_dev();
                   copyToHost((void*)buf,tsrc,size);
@@ -7095,20 +7091,20 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #endif
                 
                 nb_send_buffer(buf, size, master_rank, nb);
-#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
                 nb_wait_for_all(nb);
                 nb->in_use = 0;
                 if (on_host) {
 #endif
                   buf += size;
-#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
                 } else {
                   tsrc += size;
                 }
 #endif
                 bytes_remaining -= size;
             } while (bytes_remaining > 0);
-#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
             if (!on_host) free(buf);
 #endif
         }
@@ -7236,7 +7232,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->local_address = dst;
         header->rank = proc;
         header->length = bytes;
-#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
         if (on_host) {
 #endif
           /* prepost all receives */
@@ -7250,7 +7246,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
             bytes_remaining -= size;
           } while (bytes_remaining > 0);
           nb_send_header(header, sizeof(header_t), master_rank, nb);
-#if (defined(ENABLE_DEVICE) && defined(NO_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
         } else {
           /* create temporary buffer on host */
           char *buf = (char*)malloc(bytes*sizeof(char));
@@ -9219,6 +9215,7 @@ STATIC void nb_getv(
             COMEX_ASSERT(reg_entry);
             if (reg_entry->use_dev && on_host) {
               /* device to host */
+              setDevice(reg_entry->dev_id);
               for (i=0; i<iov_len; ++i) {
                 src = iov[i].src;
                 dst = iov[i].dst;
@@ -9232,6 +9229,7 @@ STATIC void nb_getv(
               }
             } else if (reg_entry->use_dev && !on_host) {
               /* device to device */
+              comex_set_local_dev();
               for (i=0; i<iov_len; ++i) {
                 src = iov[i].src;
                 dst = iov[i].dst;
@@ -9249,6 +9247,7 @@ STATIC void nb_getv(
               }
             } else if (!reg_entry->use_dev && !on_host) {
               /* host to device */
+              comex_set_local_dev();
               for (i=0; i<iov_len; ++i) {
                 src = iov[i].src;
                 dst = iov[i].dst;
@@ -9293,6 +9292,7 @@ STATIC void nb_getv(
             COMEX_ASSERT(reg_entry);
             if (reg_entry->use_dev && on_host) {
               /* device to host */
+              setDevice(reg_entry->dev_id);
               mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0]);
               src0 = iov[0].src[0];
               for (i=0; i<iov_len; ++i) {
@@ -9314,6 +9314,7 @@ STATIC void nb_getv(
               /* device to device */
               mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0]);
               src0 = iov[0].src[0];
+              comex_set_local_dev();
               for (i=0; i<iov_len; ++i) {
                 src = iov[i].src;
                 dst = iov[i].dst;
@@ -9338,6 +9339,7 @@ STATIC void nb_getv(
               /* host to device */
               mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0]);
               src0 = iov[0].src[0];
+              comex_set_local_dev();
               for (i=0; i<iov_len; ++i) {
                 src = iov[i].src;
                 dst = iov[i].dst;

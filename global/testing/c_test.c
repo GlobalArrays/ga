@@ -18,6 +18,7 @@
 */
 #define BLOCK1 65530
 #define DIMSIZE 2048
+#define SMLDIM 256
 #define MAXCOUNT 10000
 #define MAX_FACTOR 256
 #define NLOOP 10
@@ -198,17 +199,6 @@ void test_int_array(int on_device, int local_buf_on_device)
         }
         cudaMemcpy(buf, tbuf, tnelem*sizeof(int), cudaMemcpyHostToDevice);
         cudaDeviceSynchronize();
-        /* check values */
-#if 0
-        for (i=0; i<tnelem; i++) {
-          tbuf[i] = 0.0;
-        }
-        cudaMemcpy(tbuf, buf, tnelem*sizeof(int), cudaMemcpyDeviceToHost);
-        cudaDeviceSynchronize();
-        for (i=0; i<5; i++) {
-          printf("p[%d] tbuf[%d]: %d\n",rank,i,tbuf[i]);
-        }
-#endif
         free(tbuf);
       }
     } else {
@@ -1477,10 +1467,10 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
 
 
   ndim = 2;
-  dims[0] = DIMSIZE;
-  dims[1] = DIMSIZE;
-  xinc = DIMSIZE/pdx;
-  yinc = DIMSIZE/pdy;
+  dims[0] = SMLDIM;
+  dims[1] = SMLDIM;
+  xinc = SMLDIM/pdx;
+  yinc = SMLDIM/pdy;
   ipx = rank%pdx;
   ipy = (rank-ipx)/pdx;
   isx = (ipx+1)%pdx;
@@ -1491,12 +1481,12 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
   if (isx<pdx-1) {
     hi[0] = (isx+1)*xinc-1;
   } else {
-    hi[0] = DIMSIZE-1;
+    hi[0] = SMLDIM-1;
   }
   if (isy<pdy-1) {
     hi[1] = (isy+1)*yinc-1;
   } else {
-    hi[1] = DIMSIZE-1;
+    hi[1] = SMLDIM-1;
   }
   nelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   /* Set up arrays for scattering values */
@@ -1576,6 +1566,7 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
     tbeg = GA_Wtime();
     GA_Sync();
     t_sync += (GA_Wtime()-tbeg);
+#if 1
     tbeg = GA_Wtime();
     NGA_Distribution(g_a,rank,tlo,thi);
     if (n == 0) {
@@ -1597,9 +1588,9 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
           for (jj=tlo[1]; jj<=thi[1]; jj++) {
             j = jj-tlo[1];
             idx = i*tld+j;
-            if (tbuf[idx] != (double)(ii*DIMSIZE+jj)) {
+            if (tbuf[idx] != (double)(ii*SMLDIM+jj)) {
               if (p_ok) printf("p[%d] (%d,%d) expected: %f actual[%d]: %f\n",rank,ii,jj,
-                  (double)(ii*DIMSIZE+jj),idx,tbuf[idx]);
+                  (double)(ii*SMLDIM+jj),idx,tbuf[idx]);
               p_ok = 0;
             }
           }
@@ -1652,7 +1643,7 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
         i = (n-j)/dims[1];
         if (fabs(tbuf[icnt]-(double)(i*dims[1]+j)) > 1.0e-12) {
           if (g_ok) printf("p[%d] put/get (%d,%d) expected: %f actual[%d]: %f\n",wrank,i,j,
-              (double)(i*DIMSIZE+j),n,tbuf[icnt]);
+              (double)(i*SMLDIM+j),n,tbuf[icnt]);
           g_ok = 0;
         }
         icnt++;
@@ -1664,7 +1655,7 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
         i = (n-j)/dims[1];
         if (fabs(vals[icnt]-(double)(i*dims[1]+j)) > 1.0e-12) {
           if (g_ok) printf("p[%d] put/get (%d,%d) expected: %f actual[%d]: %f\n",rank,i,j,
-              (double)(i*DIMSIZE+j),n,vals[icnt]);
+              (double)(i*SMLDIM+j),n,vals[icnt]);
           g_ok = 0;
         }
         icnt++;
@@ -1711,12 +1702,13 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
         idx = i*ld+j;
         if (fabs(buf[idx]-(double)(2*(ii*dims[1]+jj))) > 1.0e-12) {
           if (a_ok) printf("p[%d] acc (%d,%d) expected: %f actual[%d]: %f\n",rank,ii,jj,
-              (double)(2*(ii*DIMSIZE+jj)),idx,buf[idx]);
+              (double)(2*(ii*SMLDIM+jj)),idx,buf[idx]);
           a_ok = 0;
         }
       }
     }
     t_chk += (GA_Wtime()-tbeg);
+#endif
   }
   free(buf);
   free(tbuf);
