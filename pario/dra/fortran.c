@@ -43,6 +43,10 @@ Integer FATR dra_create_(
         )
 {
     ga_f2cstring(name, nlen, cname, DRA_MAX_NAME);
+    /* workaround for flen=0 on macos-12 */
+    if (flen == 0 ){
+      flen = strlen(filename);
+    }
     ga_f2cstring(filename, flen, cfilename, DRA_MAX_FNAME);
     return drai_create(type, dim1, dim2, cname, cfilename,
             mode, reqdim1, reqdim2,d_a);
