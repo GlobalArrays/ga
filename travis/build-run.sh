@@ -163,3 +163,24 @@ then
 else
     mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
 fi
+TEST_NAME=./pario/dra/ntest.x
+if test -x $TEST_NAME
+then
+    echo "Running fortran-based test"
+else
+    TEST_NAME=./pario/dra/ntestc.x
+    if test -x $TEST_NAME
+    then
+        echo "Running C-based test"
+    else
+        echo "No suitable test was found"
+        exit 1
+    fi
+fi
+
+if test "x$PORT" = "xmpi-pr"
+then
+    mpirun -n 5 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
+else
+    mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
+fi
