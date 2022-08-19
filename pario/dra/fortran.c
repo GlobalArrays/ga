@@ -80,6 +80,10 @@ Integer FATR ndra_create_(
         )
 {
     ga_f2cstring(name, nlen, cname, DRA_MAX_NAME);
+    /* workaround for flen=0 on macos-12 */
+    if (flen == 0 ){
+      flen = strlen(filename);
+    } 
     ga_f2cstring(filename, flen, cfilename, DRA_MAX_FNAME);
     return ndrai_create(type, ndim, dims, cname, cfilename, mode, reqdims, d_a);
 }
@@ -99,8 +103,8 @@ Integer FATR dra_open_(
 #endif
         )
 {
-    ga_f2cstring(filename, flen, cfilename, DRA_MAX_FNAME);
-    return drai_open(cfilename, mode, d_a);
+  ga_f2cstring(filename, flen, cfilename, DRA_MAX_FNAME);
+  return drai_open(cfilename, mode, d_a);
 }
 
 
@@ -195,6 +199,10 @@ Integer ndra_create_config_(
         )
 {
     ga_f2cstring(name, nlen, cname, DRA_MAX_NAME);
+    /* workaround for flen=0 on macos-12 */
+    if (flen == 0 ){
+      flen = strlen(filename);
+    }
     ga_f2cstring(filename, flen, cfilename, DRA_MAX_FNAME);
     return ndrai_create_config(type, ndim, dims, cname, cfilename,
             mode, reqdims, numfiles, numioprocs, d_a);
