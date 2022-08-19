@@ -49,6 +49,7 @@ c     if(me.eq.0)print *, 'all done ...'
 
 
       subroutine test_io_int
+      use iso_c_binding
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
@@ -115,7 +116,7 @@ c
       req(3) = 1
       ndim = 3
       if(ndra_create(MT_INT, ndim, dims, 'array A', 
-     &   FNAME, 
+     &   trim(FNAME)//c_null_char, 
      &   DRA_RW,    req, d_a).ne.0)
      $   CALL ga_error('ndra_create failed: ',0)
       if (me.eq.0) print *,'OK'
@@ -133,7 +134,8 @@ c
       if (me.eq.0) print*,' '
 c
       if(me.eq.0) print *, 'Opening Existing Disk Array'
-      if(dra_open(FNAME ,DRA_R, d_a).ne.0)
+      if(dra_open(trim(FNAME)//c_null_char ,
+     D     DRA_R, d_a).ne.0)
      &            call ga_error('dra_open failed',0)
 c     
       if(ndra_inquire(d_a, type, ndim, dims, name, filename).ne.0)
@@ -183,6 +185,7 @@ c
 
 
       subroutine test_io_dbl
+      use iso_c_binding
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
@@ -252,7 +255,7 @@ c
       req(2) = n
       req(3) = 3
       if(ndra_create(MT_DBL, ndim, dims, 'A', 
-     &      FNAME, 
+     &      trim(FNAME)//c_null_char, 
      &      DRA_RW, req, d_a).ne.0)
      $   CALL ga_error('ndra_create failed: ',0)
 c
@@ -265,7 +268,7 @@ c
       if(dra_close(d_a).ne.0)call ga_error('dra_close failed: ',d_a)
 c
       if(me.eq.0) print *, 'Checking ndra_read'
-      if(dra_open(FNAME,DRA_R, d_a).ne.0)
+      if(dra_open(trim(FNAME)//c_null_char,DRA_R, d_a).ne.0)
      &            call ga_error('dra_open failed',0)
       if(ndra_read(g_b, d_a, req).ne.0)
      $   CALL ga_error('ndra_read failed:',0)
@@ -337,7 +340,7 @@ c
       req(2) = n
       req(3) = 2
       if(ndra_create(MT_DBL, ndim, dims, 'A', 
-     &      FNAME, 
+     &      trim(FNAME)//c_null_char, 
      &      DRA_RW, req, d_a).ne.0)
      $   CALL ga_error('dra_create failed: ',0)
       if (me.eq.0) print*,' OK'
