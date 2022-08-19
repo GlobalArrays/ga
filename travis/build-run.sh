@@ -163,6 +163,9 @@ then
 else
     mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
 fi
+if [ "$USE_CMAKE" = "Y" ] ; then
+    echo "skipping dra test when using cmake"
+else
 TEST_NAME=./pario/dra/ntest.x
 if test -x $TEST_NAME
 then
@@ -183,4 +186,5 @@ then
     mpirun -n 5 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
 else
     mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
+fi
 fi
