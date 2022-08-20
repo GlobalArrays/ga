@@ -127,35 +127,35 @@ extern Integer ndrai_create_config(Integer *type, Integer *ndim, Integer dims[],
 #ifdef F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 extern Integer FATR dra_create_(Integer *type, Integer *dim1, Integer *dim2,
         char *name, char *filename, Integer *mode, Integer *reqdim1,
-        Integer *reqdim2, Integer *d_a, int nlen, int flen);
+        Integer *reqdim2, Integer *d_a, size_t nlen, size_t flen);
 extern Integer FATR ndra_create_(Integer *type, Integer *ndim, Integer dims[],
         char *name, char *filename, Integer *mode, Integer  reqdims[],
-        Integer *d_a, int nlen, int flen);
+        Integer *d_a, size_t nlen, size_t flen);
 extern Integer FATR dra_open_(char *filename, Integer *mode, Integer *d_a,
-        int flen);
+        size_t flen);
 extern Integer FATR dra_inquire_(Integer *d_a, Integer *type, Integer *dim1,
-        Integer *dim2, char *name, char *filename, int nlen, int flen);
+        Integer *dim2, char *name, char *filename, size_t nlen, size_t flen);
 extern Integer FATR ndra_inquire_(Integer *d_a, Integer *type, Integer *ndim,
-        Integer dims[], char *name, char *filename, int nlen, int flen);
+        Integer dims[], char *name, char *filename, size_t nlen, size_t flen);
 extern Integer ndra_create_config_(Integer *type, Integer *ndim,
         Integer dims[], char *name, char *filename, Integer *mode,
         Integer reqdims[], Integer *numfiles, Integer *numioprocs,
-        Integer *d_a, int nlen, int flen);
+        Integer *d_a, size_t nlen, size_t flen);
 #else /* F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS */
 extern Integer FATR dra_create_(Integer *type, Integer *dim1, Integer *dim2,
-        char *name, int nlen, char *filename, int flen, Integer *mode,
+        char *name, size_t nlen, char *filename, size_t flen, Integer *mode,
         Integer *reqdim1, Integer *reqdim2, Integer *d_a);
 extern Integer FATR ndra_create_(Integer *type, Integer *ndim, Integer  dims[],
-        char *name, int nlen, char *filename, int flen, Integer *mode,
+        char *name, size_t nlen, char *filename, size_t flen, Integer *mode,
         Integer  reqdims[], Integer *d_a);
-extern Integer FATR dra_open_(char *filename, int flen, Integer *mode,
+extern Integer FATR dra_open_(char *filename, size_t flen, Integer *mode,
         Integer *d_a);
 extern Integer FATR dra_inquire_(Integer *d_a, Integer *type, Integer *dim1,
-        Integer *dim2, char *name, int nlen, char *filename, int flen);
+        Integer *dim2, char *name, size_t nlen, char *filename, size_t flen);
 extern Integer FATR ndra_inquire_(Integer *d_a, Integer *type, Integer *ndim,
-        Integer dims[], char *name, int nlen, char *filename, int flen);
+        Integer dims[], char *name, size_t nlen, char *filename, size_t flen);
 extern Integer ndra_create_config_(Integer *type, Integer *ndim,
-        Integer dims[], char *name, int nlen, char *filename, int flen,
+        Integer dims[], char *name, size_t nlen, char *filename, size_t flen,
         Integer *mode, Integer reqdims[], Integer *numfiles,
         Integer *numioprocs, Integer *d_a);
 #endif /* F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS */
