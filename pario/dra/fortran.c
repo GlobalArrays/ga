@@ -25,16 +25,16 @@ Integer FATR dra_create_(
         Integer *reqdim1,
         Integer *reqdim2,
         Integer *d_a,
-        int  nlen,
-        int  flen
+        size_t  nlen,
+        size_t  flen
 #else
         Integer *type,
         Integer *dim1,
         Integer *dim2,
         char    *name,
-        int  nlen,
+        size_t  nlen,
         char    *filename,
-        int  flen,
+        size_t  flen,
         Integer *mode,
         Integer *reqdim1,
         Integer *reqdim2,
@@ -43,10 +43,6 @@ Integer FATR dra_create_(
         )
 {
     ga_f2cstring(name, nlen, cname, DRA_MAX_NAME);
-    /* workaround for flen=0 on macos-12 */
-    if (flen == 0 ){
-      flen = strlen(filename);
-    }
     ga_f2cstring(filename, flen, cfilename, DRA_MAX_FNAME);
     return drai_create(type, dim1, dim2, cname, cfilename,
             mode, reqdim1, reqdim2,d_a);
@@ -63,16 +59,16 @@ Integer FATR ndra_create_(
         Integer *mode,
         Integer  reqdims[],
         Integer *d_a,
-        int  nlen,
-        int  flen
+        size_t  nlen,
+        size_t  flen
 #else
         Integer *type,
         Integer *ndim,
         Integer  dims[],
         char    *name,
-        int  nlen,
+        size_t  nlen,
         char    *filename,
-        int  flen,
+        size_t  flen,
         Integer *mode,
         Integer  reqdims[],
         Integer *d_a
@@ -80,10 +76,6 @@ Integer FATR ndra_create_(
         )
 {
     ga_f2cstring(name, nlen, cname, DRA_MAX_NAME);
-    /* workaround for flen=0 on macos-12 */
-    if (flen == 0 ){
-      flen = strlen(filename);
-    } 
     ga_f2cstring(filename, flen, cfilename, DRA_MAX_FNAME);
     return ndrai_create(type, ndim, dims, cname, cfilename, mode, reqdims, d_a);
 }
@@ -94,17 +86,17 @@ Integer FATR dra_open_(
         char    *filename,
         Integer *mode,
         Integer *d_a,
-        int      flen
+        size_t      flen
 #else
         char    *filename,
-        int      flen,
+        size_t      flen,
         Integer *mode,
         Integer *d_a
 #endif
         )
 {
-  ga_f2cstring(filename, flen, cfilename, DRA_MAX_FNAME);
-  return drai_open(cfilename, mode, d_a);
+    ga_f2cstring(filename, flen, cfilename, DRA_MAX_FNAME);
+    return drai_open(cfilename, mode, d_a);
 }
 
 
@@ -116,17 +108,17 @@ Integer FATR dra_inquire_(
         Integer *dim2,
         char    *name,
         char    *filename,
-        int      nlen,
-        int      flen
+        size_t      nlen,
+        size_t      flen
 #else
         Integer *d_a,
         Integer *type,
         Integer *dim1,
         Integer *dim2,
         char    *name,
-        int      nlen,
+        size_t      nlen,
         char    *filename,
-        int      flen
+        size_t      flen
 #endif
         )
 {
@@ -146,17 +138,17 @@ Integer FATR ndra_inquire_(
         Integer  dims[],
         char    *name,
         char    *filename,
-        int      nlen,
-        int      flen
+        size_t      nlen,
+        size_t      flen
 #else
         Integer *d_a,
         Integer *type,
         Integer *ndim,
         Integer  dims[],
         char    *name,
-        int      nlen,
+        size_t      nlen,
         char    *filename,
-        int      flen
+        size_t      flen
 #endif
         )
 {
@@ -180,16 +172,16 @@ Integer ndra_create_config_(
         Integer *numfiles, 
         Integer *numioprocs,
         Integer *d_a,
-        int      nlen,
-        int      flen
+        size_t      nlen,
+        size_t      flen
 #else
         Integer *type,
         Integer *ndim,
         Integer  dims[],
         char    *name,
-        int      nlen,
+        size_t      nlen,
         char    *filename,
-        int      flen,
+        size_t      flen,
         Integer *mode, 
         Integer  reqdims[],
         Integer *numfiles, 
@@ -199,10 +191,6 @@ Integer ndra_create_config_(
         )
 {
     ga_f2cstring(name, nlen, cname, DRA_MAX_NAME);
-    /* workaround for flen=0 on macos-12 */
-    if (flen == 0 ){
-      flen = strlen(filename);
-    }
     ga_f2cstring(filename, flen, cfilename, DRA_MAX_FNAME);
     return ndrai_create_config(type, ndim, dims, cname, cfilename,
             mode, reqdims, numfiles, numioprocs, d_a);
