@@ -21,6 +21,13 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+/* System V headers */
+#define ENABLE_SYSV
+#ifdef ENABLE_SYSV
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#endif
+
 /* 3rd party headers */
 #include <mpi.h>
 #if USE_SICM
@@ -1475,6 +1482,11 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device_list dev
 
 int comex_free_local(void *ptr)
 {
+#ifdef ENABLE_SYSV
+    key_t key;
+    int shm_id;
+    char file[SHM_NAME_SIZE+10];
+#endif
     int retval = 0;
     reg_entry_t *reg_entry = NULL;
 
@@ -1489,6 +1501,14 @@ int comex_free_local(void *ptr)
     /* find the registered memory */
     reg_entry = reg_cache_find(g_state.rank, ptr, 0);
 
+#ifdef ENABLE_SYSV
+    sprintf(file,"/dev/shm/%s\0",reg_entry->name);
+    key = ftok(file,'G');
+    shm_id = shmget(key,reg_entry->len,0600);
+    shmdt(reg_entry->mapped);
+    shmctl(shm_id, IPC_RMID, NULL);
+    remove(file);
+#else
     /* unmap the memory */
     retval = munmap(ptr, reg_entry->len);
     check_devshm(0, -(reg_entry->len));
@@ -1503,6 +1523,7 @@ int comex_free_local(void *ptr)
         perror("comex_free_local: shm_unlink");
         comex_error("comex_free_local: shm_unlink", retval);
     }
+#endif
 
     /* delete the reg_cache entry */
     retval = reg_cache_delete(g_state.rank, ptr);
@@ -4712,6 +4733,24 @@ STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup)
 
 STATIC void* _shm_create(const char *name, size_t size)
 {
+#ifdef ENABLE_SYSV
+  FILE *fp;
+  int shm_id;
+  key_t key;
+  char file[SHM_NAME_SIZE+10];
+  void *mapped = NULL;
+  sprintf(file,"/dev/shm/%s\0",name);
+  fp = fopen(file,"w");
+  fprintf(fp,"0\n");
+  fclose(fp);
+  key = ftok(file,'G');
+  shm_id = shmget(key,size,IPC_CREAT|0600);
+  if (shm_id == -1) {
+    comex_error("_shm_create: shmget failed", shm_id);
+  }
+  mapped = shmat(shm_id, NULL, 0);
+  return mapped;
+#else
 #include <unistd.h>
 #include <sys/types.h>
     void *mapped = NULL;
@@ -4764,6 +4803,7 @@ STATIC void* _shm_create(const char *name, size_t size)
     }
 
     return mapped;
+#endif
 }
 
 #if USE_SICM
@@ -4827,6 +4867,20 @@ STATIC void* _shm_create_memdev(const char *name, size_t size, sicm_device_list 
 
 STATIC void* _shm_attach(const char *name, size_t size)
 {
+#ifdef ENABLE_SYSV
+  int shm_id;
+  key_t key;
+  char file[SHM_NAME_SIZE+10];
+  void *mapped = NULL;
+  sprintf(file,"/dev/shm/%s\0",name);
+  key = ftok(file,'G');
+  shm_id = shmget(key,size,0600);
+  if (shm_id == -1) {
+    comex_error("_shm_attach: shmget failed", shm_id);
+  }
+  mapped = shmat(shm_id, NULL, 0);
+  return mapped;
+#else
     void *mapped = NULL;
     int fd = 0;
     int retval = 0;
@@ -4854,6 +4908,7 @@ STATIC void* _shm_attach(const char *name, size_t size)
     }
 
     return mapped;
+#endif
 }
 
 #if USE_SICM
