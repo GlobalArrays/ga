@@ -5458,5 +5458,11 @@ void NGA_Sprs_array_matvec_multiply(int s_a, int g_a, int g_v)
 int NGA_Sprs_array_destroy(int s_a)
 {
   Integer sa = (Integer)s_a;
-  wnga_sprs_array_destroy(sa);
+  return wnga_sprs_array_destroy(sa);
+}
+
+void NGA_Sprs_array_export(int s_a, const char* file)
+{
+  Integer sa = (Integer)s_a;
+  wnga_sprs_array_export(sa, file);
 }

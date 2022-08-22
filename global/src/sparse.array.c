@@ -286,12 +286,15 @@ logical pnga_sprs_array_assemble(Integer s_a)
   if (!pnga_allocate(g_offset)) ret = 0;
   pnga_zero(g_offset);
   offset = (int64_t*)malloc(nproc*sizeof(int64_t));
+  for (i=0; i<nproc; i++) offset[i] = 0;
   for (i=0; i<nproc; i++) {
     /* internal indices are unit based, so iproc needs
      * to be incremented by 1 */
     iproc = (i+me)%nproc+1;
     /* C indices are still zero based so need to subtract 1 from iproc */
     if (count[iproc-1] > 0) {
+      /* offset locations are not deterministic, but do guarantee that a space is
+       * available to hold data going to each processor */
       offset[iproc-1] = (int64_t)pnga_read_inc(g_offset,&iproc,count[iproc-1]);
     }
   }
@@ -657,7 +660,12 @@ void pnga_sprs_array_row_distribution(Integer s_a, Integer iproc, Integer *lo,
 {
   Integer hdl = GA_OFFSET + s_a;
   *lo = SPA[hdl].ilo;
-  *hi = SPA[hdl].ihi;
+  if (iproc == pnga_pgroup_nodeid(SPA[hdl].grp)) {
+    *lo = SPA[hdl].ilo;
+    *hi = SPA[hdl].ihi;
+  } else {
+    pnga_sprs_array_column_distribution(s_a, iproc, lo, hi);
+  }
 }
 
 /**
@@ -919,4 +927,304 @@ logical pnga_sprs_array_destroy(Integer s_a)
   SPA[hdl].active = 0;
   SPA[hdl].ready = 0;
   return ret;
+}
+
+/**
+ * Print out values of sparse matrix using i,j,val format. Only non-zero
+ * value of matrix are printed. This routine gathers all data on one process so
+ * it may cause a memory overflow for a large matrix
+ * @param s_a sparse array hande
+ * @param file name of file to store sparse array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_export =  pnga_sprs_array_export
+#endif
+void pnga_sprs_array_export(Integer s_a, const char* file)
+{
+  Integer hdl = GA_OFFSET + s_a;
+  int size  = SPA[hdl].size;
+  int type = SPA[hdl].type;
+  char frmt[32];
+  char *cptr;
+  int i;
+  int offset;
+  Integer nlen_data;
+  Integer nlen_j;
+  Integer nlen_i;
+  Integer dim;
+  Integer type_t;
+  Integer tcnt;
+  int idx_size = SPA[hdl].idx_size;
+  void *vptr;
+  void *iptr;
+  void *jptr;
+  Integer lo, hi, ld;
+  char op[2];
+  FILE *SPRS;
+  int *ilo, *ihi;
+  Integer me = pnga_pgroup_nodeid(SPA[hdl].grp);
+  Integer nprocs = pnga_pgroup_nnodes(SPA[hdl].grp);
+  Integer iproc, iblock;
+  Integer nblocks;
+  int *istart;
+  int icnt;
+  Integer g_blks;
+  Integer one = 1;
+
+  printf("p[%ld] (export) Got to 1\n",me);
+  /* find low and hi row indices on each processor */
+  ilo = (int*)malloc(nprocs*sizeof(int));
+  ihi = (int*)malloc(nprocs*sizeof(int));
+  for (iproc=0; iproc<nprocs; iproc++) {
+    ilo[iproc] = 0;
+    ihi[iproc] = 0;
+  }
+  ilo[me] = (int)SPA[hdl].ilo;
+  ihi[me] = (int)SPA[hdl].ihi;
+  printf("p[%ld] ORIG ILO: %d IHI: %d\n",me,ilo[me],ihi[me]);
+  op[0] = '+';
+  op[1] = '\0';
+  pnga_pgroup_gop(SPA[hdl].grp,C_INT,ilo,nprocs,op);
+  pnga_pgroup_gop(SPA[hdl].grp,C_INT,ihi,nprocs,op);
+  printf("p[%ld] (export) Got to 2 nprocs: %ld\n",me,nprocs);
+
+  /* find proc indices of non-zero column blocks on each processor */
+  istart = (int*)malloc((nprocs+1)*sizeof(int));
+  for (iproc=0; iproc<nprocs+1; iproc++) {
+    istart[iproc] = 0;
+  }
+  istart[me] = (int)SPA[hdl].nblocks;
+  pnga_pgroup_gop(SPA[hdl].grp,C_INT,istart,nprocs,op);
+  {
+    int ilast = 0;
+    icnt = 0;
+    for (iproc=0; iproc<nprocs; iproc++) {
+      icnt += ilast;
+      ilast = istart[iproc];
+      istart[iproc] = (int)icnt;
+    }
+    icnt += ilast;
+    istart[nprocs] = icnt;
+  }
+  for (i=0; i<nprocs; i++) {
+    printf("p[%ld] ISTART[%d]: %d\n",me,(int)i,(int)istart[i]);
+  }
+    
+  printf("p[%ld] (export) Got to 3 icnt: %d\n",me,icnt);
+  g_blks = pnga_create_handle();
+  lo = (Integer)icnt;
+  pnga_set_data(g_blks,one,&lo,MT_F_INT);
+  pnga_set_pgroup(g_blks,SPA[hdl].grp);
+  pnga_allocate(g_blks);
+  /* assign non-zero blocks to g_blks */
+  lo = (Integer)(istart[me]+1);
+  hi = (Integer)istart[me+1];
+  printf("p[%ld] (export) Got to 4 lo: %ld hi: %ld\n",me,lo,hi);
+  printf("p[%ld] block IDs:",me);
+  for (i=0; i<SPA[hdl].nblocks; i++) {
+    printf(" %ld",SPA[hdl].blkidx[i]);
+  }
+  printf("\n");
+  pnga_put(g_blks,&lo,&hi,SPA[hdl].blkidx,&one);
+  pnga_pgroup_sync(SPA[hdl].grp);
+  printf("p[%ld] (export) Got to 5\n",me);
+
+  /* format print statement */
+  if (idx_size == 4) {
+    strncpy(frmt,"\%d \%d",5);
+    offset = 5;
+  } else {
+    strncpy(frmt,"\%ld \%ld",7);
+    offset = 7;
+  }
+  cptr = frmt+offset;
+  if (type == C_FLOAT || type == C_DBL) {
+    strncpy(cptr," \%14.6e",7);
+    offset = 7;
+  } else if (type == C_INT) {
+    strncpy(cptr," \%d",3);
+    offset = 3;
+  } else if (type == C_LONG) {
+    strncpy(cptr," \%ld",4);
+    offset = 4;
+  } else if (type == C_SCPL || type == C_DCPL) {
+    strncpy(cptr," \%14.6e \%14.6e",14);
+    offset = 14;
+  } 
+  cptr += offset;
+  cptr[0] = '\n';
+  cptr++;
+  cptr[0] = '\0';
+  tcnt = 0;
+  printf("FORMAT: (%s)\n",frmt);
+
+  if (me == 0) {
+    /* open file */
+    SPRS = fopen(file,"w");
+    /* Loop over all processors */
+    for (iproc = 0; iproc<nprocs; iproc++) {
+      /* find out how much data is on each process, allocate
+       * local buffers to hold it and copy data to local buffer */
+      /* Copy data from global arrays to local buffers */
+      Integer iilo, iihi;
+      int ibl;
+      Integer *blkptr;
+      Integer count;
+      ld = 1;
+      pnga_distribution(SPA[hdl].g_data, iproc, &lo, &hi);
+      nlen_data = hi-lo+1;
+      vptr = malloc(nlen_data*size);
+      pnga_get(SPA[hdl].g_data,&lo,&hi,vptr,&ld);
+
+      pnga_distribution(SPA[hdl].g_i, iproc, &lo, &hi);
+      nlen_i = hi-lo+1;
+      iptr = malloc(nlen_i*idx_size);
+      pnga_get(SPA[hdl].g_i,&lo,&hi,iptr,&ld);
+
+      pnga_distribution(SPA[hdl].g_j, iproc, &lo, &hi);
+      nlen_j = hi-lo+1;
+      jptr = malloc(nlen_j*idx_size);
+      pnga_get(SPA[hdl].g_j,&lo,&hi,jptr,&ld);
+      /*
+      printf("p[%ld] N_DATA: %ld N_I: %ld N_J: %ld\n",me,nlen_data,nlen_i,nlen_j);
+      for (i=0; i<nlen_data; i++) {
+        printf("IDX: %d J: %ld VAL: %f\n",i,((int64_t*)jptr)[i],((double*)vptr)[i]);
+      }
+      for (i=0; i<nlen_i; i++) {
+        printf("IDX: %d I: %ld\n",i,((int64_t*)iptr)[i]);
+      }
+      */
+      printf("PROCESS %ld\n",iproc);
+      printf("IDX: %ld\n",nlen_i);
+      for (i=0; i<nlen_i; i++) {
+        printf(" %ld",((Integer*)iptr)[i]);
+        if ((i+1)%10 == 0) printf("\n     ");
+      }
+      if (nlen_i%10 != 0) printf("\n");
+      printf("JDX: %ld\n",nlen_j);
+      for (i=0; i<nlen_j; i++) {
+        printf(" %ld",((Integer*)jptr)[i]);
+        if ((i+1)%10 == 0) printf("\n     ");
+      }
+      if (nlen_j%10 != 0) printf("\n");
+      printf("VAL: %ld\n",nlen_data);
+      for (i=0; i<nlen_data; i++) {
+        printf(" %f",((double*)vptr)[i]);
+        if ((i+1)%10 == 0) printf("\n     ");
+      }
+      if (nlen_data%10 != 0) printf("\n");
+
+
+
+      nblocks = SPA[hdl].nblocks;
+      /* loop over column blocks in row block */
+      printf("ILO: %d IHI: %d on PROC: %d NBLOCKS: %d\n",
+          (int)ilo[iproc],(int)ihi[iproc],(int)iproc,(int)nblocks);
+      blkptr = (Integer*)malloc(nblocks*sizeof(Integer));
+      lo = (Integer)(istart[iproc]+1);
+      hi = (Integer)istart[iproc+1];
+      printf("LO: %ld HI: %ld on PROC: %d NBLOCKS: %d\n",
+          lo,hi,(int)iproc,(int)nblocks);
+      pnga_get(g_blks,&lo,&hi,blkptr,&one);
+      offset = 0;
+      count = 0;
+      for (ibl = 0; ibl<nblocks; ibl++) {
+        Integer joffset = count;
+        iblock = blkptr[ibl];
+        /* write out data to file */
+        /* loop over rows on processor iproc */
+        iilo = ilo[iproc];
+        iihi = ihi[iproc];
+        nlen_i = iihi-iilo+1;
+        /* iilo = ilo[iblock]; */
+        //pnga_sprs_array_column_distribution(s_a,iblock,&iilo,&iihi);
+        printf("p[%ld] BLOCK: %ld NLEN: %d IPROC: %ld IILO: %ld\n",
+            me,iblock,(int)nlen_i,iproc,iilo);
+        if (idx_size == 4) {
+          int i, j;
+          Integer *idx = (Integer*)iptr;
+          Integer *jdx = (Integer*)jptr;
+          for (i=0; i<nlen_i; i++) {
+            int tlo = idx[i+offset];
+            int thi = idx[i+offset+1];
+            count += (Integer)(thi-tlo);
+            for (j=tlo; j<thi; j++) {
+              if (type == C_FLOAT) {
+                float val = ((float*)vptr)[j+joffset];
+                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
+              } else if (type == C_DBL) {
+                double val = ((double*)vptr)[j+joffset];
+                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
+              } else if (type == C_INT) {
+                int val = ((int*)vptr)[j];
+                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
+              } else if (type == C_LONG) {
+                int64_t val = ((int64_t*)vptr)[j+joffset];
+                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
+              } else if (type == C_SCPL) {
+                float rval = ((float*)vptr)[2*(j+joffset)];
+                float ival = ((float*)vptr)[2*(j+joffset)+1];
+                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],rval,ival);
+              } else if (type == C_DCPL) {
+                double rval = ((double*)vptr)[2*(j+joffset)];
+                double ival = ((double*)vptr)[2*(j+joffset)+1];
+                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],rval,ival);
+              }
+            }
+          }
+        } else {
+          int64_t i, j;
+          int64_t *idx = (int64_t*)iptr;
+          int64_t *jdx = (int64_t*)jptr;
+          for (i=0; i<nlen_i; i++) {
+            int64_t tlo = idx[i+offset];
+            int64_t thi = idx[i+offset+1];
+            count += (Integer)(thi-tlo);
+            printf("p[%ld] row: %ld tlo: %ld thi: %ld iilo: %ld count: %ld\n",me,i,tlo,thi,iilo,count);
+            printf("line: %ld block: %ld nonzeros: %ld\n",i+iilo,(Integer)ibl,thi-tlo+1);
+            for (j=tlo; j<thi; j++) {
+              if (type == C_FLOAT) {
+                float val = ((float*)vptr)[j+joffset];
+                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
+              } else if (type == C_DBL) {
+                double val = ((double*)vptr)[j+joffset];
+                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
+              } else if (type == C_INT) {
+                int val = ((int*)vptr)[j];
+                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
+              } else if (type == C_LONG) {
+                int64_t val = ((int64_t*)vptr)[j+joffset];
+                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
+              } else if (type == C_SCPL) {
+                float rval = ((float*)vptr)[2*(j+joffset)];
+                float ival = ((float*)vptr)[2*(j+joffset)+1];
+                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],rval,ival);
+              } else if (type == C_DCPL) {
+                double rval = ((double*)vptr)[2*(j+joffset)];
+                double ival = ((double*)vptr)[2*(j+joffset)+1];
+                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],rval,ival);
+              }
+            }
+          }
+          printf("p[%ld] Finished block %ld\n",me,iblock);
+        }
+        offset += (nlen_i+1);
+      }
+      printf("p[%ld] Finished process %ld\n",me,iproc);
+      free(blkptr);
+      printf("p[%ld] freed blkptr \n",me);
+
+      /* free local buffers */
+      free(vptr);
+      printf("p[%ld] freed vptr \n",me);
+      free(jptr);
+      printf("p[%ld] freed jptr \n",me);
+      free(iptr);
+      printf("p[%ld] freed iptr \n",me);
+    }
+    fclose(SPRS);
+  }
+  free(ilo);
+  free(ihi);
+  pnga_pgroup_sync(SPA[hdl].grp);
 }

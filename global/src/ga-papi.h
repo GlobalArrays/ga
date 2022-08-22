@@ -408,4 +408,5 @@ extern void pnga_sprs_array_access_col_block(Integer s_a, Integer icol, void *id
 extern void pnga_sprs_array_col_block_list(Integer s_a, Integer **idx, Integer *n);
 extern void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v);
 extern logical pnga_sprs_array_destroy(Integer s_a);
+extern void pnga_sprs_array_export(Integer s_a, const char* file);
 #endif /* PAPI_H_ */
