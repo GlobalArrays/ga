@@ -1602,21 +1602,6 @@ void pnga_sprs_array_export(Integer s_a, const char* file)
       /* Copy data from global arrays to local buffers */
       Integer iilo, iihi, istride, ioffset, itop;
       int ibl;
-      ld = 1;
-      pnga_distribution(SPA[hdl].g_data, iproc, &lo, &hi);
-      nlen_data = hi-lo+1;
-      vptr = malloc(nlen_data*size);
-      pnga_get(SPA[hdl].g_data,&lo,&hi,vptr,&ld);
-
-      pnga_distribution(SPA[hdl].g_i, iproc, &lo, &hi);
-      nlen_i = hi-lo+1;
-      iptr = malloc(nlen_i*idx_size);
-      pnga_get(SPA[hdl].g_i,&lo,&hi,iptr,&ld);
-
-      pnga_distribution(SPA[hdl].g_j, iproc, &lo, &hi);
-      nlen_j = hi-lo+1;
-      jptr = malloc(nlen_j*idx_size);
-      pnga_get(SPA[hdl].g_j,&lo,&hi,jptr,&ld);
 
       nblocks = nblock[iproc];
       /* loop over rows. Not the most efficient way of printing out information
