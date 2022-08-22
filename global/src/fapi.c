@@ -3772,3 +3772,10 @@ logical nga_sprs_array_destroy_(Integer *s_a)
 {
   return wnga_sprs_array_destroy(*s_a);
 }
+
+void nga_sprs_array_export_(Integer *s_a, const char* file, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(file ,slen, buf, FNAM);
+  wnga_sprs_array_export(*s_a, buf);
+}
