@@ -491,7 +491,11 @@ reg_cache_find_intersection(int rank, void *buf, size_t len)
  * @return RR_SUCCESS on success
  */
 reg_entry_t*
-reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped,
+reg_cache_insert(int rank, void *buf, size_t len, const char *name,
+#ifdef ENABLE_SYSV
+    key_t key,
+#endif
+    void *mapped,
     int use_dev
 #if USE_SICM
 #if SICM_OLD
@@ -527,6 +531,9 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
     node->len = len;
     node->use_dev = use_dev;
     (void)memcpy(node->name, name, SHM_NAME_SIZE);
+#ifdef ENABLE_SYSV
+    node->key = key;
+#endif
     node->mapped = mapped;
     node->next = NULL;
 #if USE_SICM
@@ -547,6 +554,33 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
 
     return node;
 }
+
+#ifdef ENABLE_SYSV
+/**
+ * Find registration entry based on name
+ * @param name character string defining registration entry
+ * @return registration entry corresponding to name
+ */
+reg_entry_t*
+reg_cache_from_name(const char* name)
+{
+  int rank, i;
+  /* loop over all ranks to find a registration corresponding to this name*/
+  for (i=g_state.rank; i<g_state.rank+g_state.size; i++) {
+    rank = i%g_state.size;
+    reg_entry_t *runner = reg_cache[rank];
+    while (runner) {
+      if (strcmp(runner->name,name) == 0) {
+        /* registration entries with this name should have the same key,
+         * so just return the first one you find */
+        return runner;
+      }
+      runner = runner->next;
+    }
+  }
+  return (reg_entry_t*)NULL;
+}
+#endif
 
 
 /**
