@@ -48,7 +48,7 @@ get_filename_component(INTEL_SYCL_BINARY_DIR ${CMAKE_CXX_COMPILER} PATH)
 
 # Try to find Intel SYCL version.hpp header
 find_path(INTEL_SYCL_INCLUDE_DIRS
-    NAMES sycl/version.hpp
+    NAMES sycl/sycl.hpp
     PATHS
       ${dpcpp_root_hints}
       "${INTEL_SYCL_BINARY_DIR}/.."
