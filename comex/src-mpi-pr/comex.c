@@ -177,6 +177,7 @@ static char *static_server_buffer = NULL;
 static int static_server_buffer_size = 0;
 static int eager_threshold = -1;
 static int max_message_size = -1;
+static int use_dev_shm = 1;
 
 static int COMEX_ENABLE_PUT_SELF = ENABLE_PUT_SELF;
 static int COMEX_ENABLE_GET_SELF = ENABLE_GET_SELF;
@@ -620,6 +621,21 @@ int comex_init()
    }
 #endif
 #endif
+
+#ifdef ENABLE_SYSV
+   /* if using SYSTEM V instead of POSIX SHM, check if /dev/shm exist */
+   {
+     struct stat sb;
+     if (stat("/dev/shm", &sb) == 0 && S_ISDIR(sb.st_mode)) {
+       use_dev_shm = 1;
+     } else if (stat("/tmp", &sb) == 0 && S_ISDIR(sb.st_mode)) {
+       use_dev_shm = 0;
+     } else {
+       comex_error("No directory available for System V memory\n",-1);
+     }
+   }
+#endif
+
 
     /* reg_cache */
     /* note: every process needs a reg cache and it's always based on the
@@ -4774,7 +4790,11 @@ STATIC void* _shm_create(const char *name,
   int shm_id;
   char file[SHM_NAME_SIZE+10];
   void *mapped = NULL;
-  sprintf(file,"/dev/shm/%s\0",name);
+  if (use_dev_shm) {
+    sprintf(file,"/dev/shm/%s\0",name);
+  } else {
+    sprintf(file,"/tmp/%s\0",name);
+  }
   fp = fopen(file,"w");
   fprintf(fp,"0\n");
   fclose(fp);
