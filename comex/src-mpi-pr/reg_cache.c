@@ -555,34 +555,6 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name,
     return node;
 }
 
-#ifdef ENABLE_SYSV
-/**
- * Find registration entry based on name
- * @param name character string defining registration entry
- * @return registration entry corresponding to name
- */
-reg_entry_t*
-reg_cache_from_name(const char* name)
-{
-  int rank, i;
-  /* loop over all ranks to find a registration corresponding to this name*/
-  for (i=g_state.rank; i<g_state.rank+g_state.size; i++) {
-    rank = i%g_state.size;
-    reg_entry_t *runner = reg_cache[rank];
-    while (runner) {
-      if (strcmp(runner->name,name) == 0) {
-        /* registration entries with this name should have the same key,
-         * so just return the first one you find */
-        return runner;
-      }
-      runner = runner->next;
-    }
-  }
-  return (reg_entry_t*)NULL;
-}
-#endif
-
-
 /**
  * Removes the reg cache entry associated with the given rank and buffer.
  *

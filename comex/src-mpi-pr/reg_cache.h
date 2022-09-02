@@ -68,8 +68,5 @@ reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len,
     );
 reg_return_t reg_cache_delete(int rank, void *buf);
 reg_return_t reg_cache_nullify(reg_entry_t *entry);
-#ifdef ENABLE_SYSV
-reg_entry_t* reg_cache_from_name(const char* name);
-#endif
 
 #endif /* _REG_CACHE_H_ */
