@@ -491,7 +491,11 @@ reg_cache_find_intersection(int rank, void *buf, size_t len)
  * @return RR_SUCCESS on success
  */
 reg_entry_t*
-reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped)
+reg_cache_insert(int rank, void *buf, size_t len, const char *name,
+#ifdef ENABLE_SYSV
+    key_t key,
+#endif
+    void *mapped)
 {
     reg_entry_t *node = NULL;
 
@@ -516,6 +520,9 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
     node->rank = rank;
     node->buf = buf;
     node->len = len;
+#ifdef ENABLE_SYSV
+    node->key = key;
+#endif
     (void)memcpy(node->name, name, SHM_NAME_SIZE);
     node->mapped = mapped;
     node->next = NULL;
