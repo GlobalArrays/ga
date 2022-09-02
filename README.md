@@ -233,9 +233,10 @@ Any application code which only makes GA function calls can remain unchanged.
                         the software. If you experience mysterious faults,
                         consider rebuilding without optimization by using this
                         option.
+--enable-sysv           Enable System V Shared Memory.
 --enable-peigs          Enable Parallel Eigensystem Solver interface. This
                         will build the stubs required to call into the peigs
-                        library (external). 
+                        library (external).              
 --enable-checkpoint     Enable checkpointing.  Untested.  For use with old
                         X-based visualization tool.
 --enable-profile        Enable profiling. Not sure what this does, sorry.
@@ -423,6 +424,7 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
   * MPI_MULTITHREADED Use thread multiple runtime
   * MPI_PROGRESS_THREAD Use progress thread runtime
   * MPI_RMA Use MPI RMA based runtime.
+* `ENABLE_SYSV` Enable System V Shared Memory
 * `ENABLE_PROFILING` Build GA operation profiler. Does not work when using Clang compilers. [Default:OFF]
 * `GA_EXTRA_LIBS` Specify additional libraries or linker options when building GA.
 * `GCCROOT` Specify root of GCC installation. Only required when building with Clang compilers.

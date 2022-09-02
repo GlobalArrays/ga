@@ -273,6 +273,7 @@ network_cppflags="@ARMCI_NETWORK_CPPFLAGS@"
 cflags="@GA_COPT@"
 fflags="@GA_FOPT@ @FFLAG_INT@"
 fint="@FFLAG_INT@"
+enable_sysv="@enable_sysv@"
 blas_size="@blas_size@"
 scalapack_size="@scalapack_size@"
 use_blas="@have_blas@"
@@ -329,6 +330,7 @@ Options:
   --network_libs
   --network_cppflags
   --enable-f77
+  --enable-sysv
   --version
   --help
 "
@@ -409,6 +411,8 @@ do
     result="$result $sicm_dev" ;;
   -enable-f77 | --enable-f77 )
     result="$result $enable_f77" ;;
+  -enable-sysv | --enable-sysv )
+    result="$result $enable_sysv" ;;    
   # This is an error.
   *) $as_echo "unrecognized option: \`$1'
 Try \`$0 --help' for more information."; exit ;;

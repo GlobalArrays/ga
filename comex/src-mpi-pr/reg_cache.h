@@ -6,7 +6,7 @@
 //#include <sicm_impl.h>
 #endif
 #include <stddef.h>
-#define ENABLE_SYSV
+// #define ENABLE_SYSV
 #ifdef ENABLE_SYSV
 #include <sys/ipc.h>
 #endif

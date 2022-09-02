@@ -60,6 +60,7 @@ ga_option(CMAKE_BUILD_TYPE Release)
 ga_option(LINALG_VENDOR BLIS)
 ga_option(ENABLE_TESTS ON)
 ga_option(ENABLE_PROFILING OFF)
+ga_option(ENABLE_SYSV OFF)
 #Options for user provided LinAlg libraries
 ga_option(ENABLE_BLAS OFF)
 ga_option(ENABLE_SCALAPACK OFF)
