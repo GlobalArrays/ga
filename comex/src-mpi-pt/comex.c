@@ -18,8 +18,8 @@
 #include <signal.h>
 
 /* System V headers */
-#define XENABLE_SYSV
-#ifdef ENABLE_SYSV
+// #define ENABLE_SYSV
+#if ENABLE_SYSV
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/stat.h>
@@ -266,7 +266,7 @@ STATIC int _smallest_world_rank_with_same_hostid(comex_igroup_t *group);
 STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup);
 STATIC void _malloc_semaphore(void);
 STATIC void _free_semaphore(void);
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
 STATIC void* _shm_create(const char *name, key_t *key, size_t size);
 STATIC void* _shm_attach(const char *name, size_t size, key_t key);
 #else
@@ -337,7 +337,7 @@ int comex_init()
     nb_count_recv = 0;
     nb_count_recv_processed = 0;
 
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     /* if using SYSTEM V instead of POSIX SHM, check if /dev/shm exist */
     {
       struct stat sb;
@@ -1093,7 +1093,7 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
     char *name = NULL;
     void *memory = NULL;
     reg_entry_t *reg_entry = NULL;
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     key_t key;
     char file[SHM_NAME_SIZE+10];
 #endif
@@ -1109,7 +1109,7 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
 
     /* create my shared memory object */
     name = _generate_shm_name(g_state.rank);
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     memory = _shm_create(name, &key, size);
 #else
     memory = _shm_create(name, size);
@@ -1122,7 +1122,7 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
 #endif
 
     /* register the memory locally */
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     reg_entry = reg_cache_insert(
             g_state.rank, memory, size, name, key, memory);
 #else
@@ -1141,7 +1141,7 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
 
 int comex_free_local(void *ptr)
 {
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     key_t key;
     int shm_id;
     char file[SHM_NAME_SIZE+10];
@@ -1160,7 +1160,7 @@ int comex_free_local(void *ptr)
     /* find the registered memory */
     reg_entry = reg_cache_find(g_state.rank, ptr, 0);
 
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     shm_id = shmget(reg_entry->key,reg_entry->len,0600);
     shmdt(reg_entry->mapped);
     shmctl(shm_id, IPC_RMID, NULL);
@@ -1853,7 +1853,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
                 == g_state.hostid[my_world_rank]) {
             /* same SMP node, need to mmap */
             /* open remote shared memory object */
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
             void *memory = _shm_attach(reg_entries[i].name, reg_entries[i].len,
                 reg_entries[i].key);
 #else
@@ -1874,7 +1874,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
                     reg_entries[i].buf,
                     reg_entries[i].len,
                     reg_entries[i].name,
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
                     reg_entries[i].key,
 #endif
                     memory);
@@ -3313,7 +3313,7 @@ STATIC void _malloc_handler(
                 == g_state.hostid[g_state.rank]) {
             /* same SMP node, need to mmap */
             /* attach to remote shared memory object */
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
             void *memory = _shm_attach(reg_entries[i].name, reg_entries[i].len,
                 reg_entries[i].key);
 #else
@@ -3334,7 +3334,7 @@ STATIC void _malloc_handler(
                     reg_entries[i].buf,
                     reg_entries[i].len,
                     reg_entries[i].name,
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
                     reg_entries[i].key,
 #endif
                     memory);
@@ -3550,12 +3550,12 @@ STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup)
 
 
 STATIC void* _shm_create(const char *name,
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     key_t *key,
 #endif
     size_t size)
 {
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
   FILE *fp;
   int shm_id;
   char file[SHM_NAME_SIZE+10];
@@ -3628,7 +3628,7 @@ STATIC void* _shm_create(const char *name,
 }
 
 
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
 STATIC void* _shm_attach(const char *name, size_t size, key_t key)
 {
   int shm_id;

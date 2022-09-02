@@ -492,7 +492,7 @@ reg_cache_find_intersection(int rank, void *buf, size_t len)
  */
 reg_entry_t*
 reg_cache_insert(int rank, void *buf, size_t len, const char *name,
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     key_t key,
 #endif
     void *mapped)
@@ -520,7 +520,7 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name,
     node->rank = rank;
     node->buf = buf;
     node->len = len;
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     node->key = key;
 #endif
     (void)memcpy(node->name, name, SHM_NAME_SIZE);

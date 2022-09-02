@@ -23,7 +23,7 @@
 
 /* System V headers */
 // #define ENABLE_SYSV
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #endif
@@ -346,7 +346,7 @@ STATIC int _smallest_world_rank_with_same_hostid(comex_igroup_t *group);
 STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup);
 STATIC void _malloc_semaphore(void);
 STATIC void _free_semaphore(void);
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
 STATIC void* _shm_create(const char *name, key_t *key, size_t size);
 STATIC void* _shm_attach(const char *name, size_t size, key_t key);
 #else
@@ -622,7 +622,7 @@ int comex_init()
 #endif
 #endif
 
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
    /* if using SYSTEM V instead of POSIX SHM, check if /dev/shm exist */
    {
      struct stat sb;
@@ -1413,7 +1413,7 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
     char *name = NULL;
     void *memory = NULL;
     reg_entry_t *reg_entry = NULL;
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     key_t key;
     char file[SHM_NAME_SIZE+10];
 #endif
@@ -1429,7 +1429,7 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
 
     /* create my shared memory object */
     name = _generate_shm_name(g_state.rank);
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     memory = _shm_create(name, &key, size);
 #else
     memory = _shm_create(name, size);
@@ -1451,7 +1451,7 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
             g_state.rank, memory, size, name, memory, 0, nill);
 #endif
 #else
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     reg_entry = reg_cache_insert(
             g_state.rank, memory, size, name, key, memory, 0);
 #else
@@ -1513,10 +1513,30 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device_list dev
 }
 #endif
 
+/* Utility function to translate errors from shmget */
+void shmget_err(int shm_id)
+{
+  if (shm_id == -1) {
+    if (EACCES == errno) {
+      fprintf(stderr,"shmget error EACCES\n");
+    } else if (EEXIST == errno) {
+      fprintf(stderr,"shmget error EEXIST\n");
+    } else if (EINVAL == errno) {
+      fprintf(stderr,"shmget error EINVAL\n");
+    } else if (ENOENT == errno) {
+      fprintf(stderr,"shmget error ENOENT\n");
+    } else if (ENOMEM == errno) {
+      fprintf(stderr,"shmget error ENOMEM\n");
+    } else {
+      fprintf(stderr,"shmget error is unknown\n");
+    }
+  }
+  comex_error("shmget memory failure", errno);
+}
 
 int comex_free_local(void *ptr)
 {
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     key_t key;
     int shm_id;
     char file[SHM_NAME_SIZE+10];
@@ -1535,8 +1555,9 @@ int comex_free_local(void *ptr)
     /* find the registered memory */
     reg_entry = reg_cache_find(g_state.rank, ptr, 0);
 
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     shm_id = shmget(reg_entry->key,reg_entry->len,0600);
+    shmget_err(shm_id);
     shmdt(reg_entry->mapped);
     shmctl(shm_id, IPC_RMID, NULL);
     remove(file);
@@ -2350,7 +2371,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
             {
             /* same SMP node, need to mmap */
             /* open remote shared memory object */
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
             void *memory = _shm_attach(reg_entries[i].name, reg_entries[i].len,
                 reg_entries[i].key);
 #else
@@ -2371,7 +2392,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
                     reg_entries[i].buf,
                     reg_entries[i].len,
                     reg_entries[i].name,
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
                     reg_entries[i].key,
 #endif
                     memory,0
@@ -4488,7 +4509,7 @@ STATIC void _malloc_handler(
                 reg_entries[i].device);
           } else {
 #endif
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
             memory = _shm_attach(reg_entries[i].name, reg_entries[i].len,
                 reg_entries[i].key);
 #else
@@ -4512,7 +4533,7 @@ STATIC void _malloc_handler(
                     reg_entries[i].buf,
                     reg_entries[i].len,
                     reg_entries[i].name,
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
                     reg_entries[i].key,
 #endif
                     memory
@@ -4780,12 +4801,12 @@ STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup)
 
 
 STATIC void* _shm_create(const char *name,
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     key_t *key,
 #endif
     size_t size)
 {
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
   FILE *fp;
   int shm_id;
   char file[SHM_NAME_SIZE+10];
@@ -4800,6 +4821,7 @@ STATIC void* _shm_create(const char *name,
   fclose(fp);
   *key = ftok(file,'G');
   shm_id = shmget(*key,size,IPC_CREAT|0600);
+  shmget_err(shm_id);
   if (shm_id == -1) {
     comex_error("_shm_create: shmget failed", shm_id);
   }
@@ -4919,12 +4941,13 @@ STATIC void* _shm_create_memdev(const char *name, size_t size, sicm_device_list 
 }
 #endif
 
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
 STATIC void* _shm_attach(const char *name, size_t size, key_t key)
 {
   int shm_id;
   void *mapped = NULL;
   shm_id = shmget(key,size,0600);
+  shmget_err(shm_id);
   if (shm_id == -1) {
     comex_error("_shm_attach: shmget failed", shm_id);
   }

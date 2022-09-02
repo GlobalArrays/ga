@@ -7,7 +7,7 @@
 #endif
 #include <stddef.h>
 // #define ENABLE_SYSV
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
 #include <sys/ipc.h>
 #endif
 
@@ -29,7 +29,7 @@ typedef struct _reg_entry_t {
     void *mapped;               /**< starting address of mmap'd region */
     int rank;                   /**< rank where this region lives */
     int use_dev;                /**< memory is on a device */
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     char name[2*SHM_NAME_SIZE];   /**< name of region */
     key_t key;
 #else
@@ -53,7 +53,7 @@ reg_return_t reg_cache_init(int nprocs);
 reg_return_t reg_cache_destroy();
 reg_entry_t *reg_cache_find(int rank, void *buf, size_t len);
 reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len,
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     const char *name, key_t key, void *mapped, int use_dev
 #else
     const char *name, void *mapped, int use_dev

@@ -2,8 +2,8 @@
 #define _REG_CACHE_H_
 
 #include <stddef.h>
-#define XENABLE_SYSV
-#ifdef ENABLE_SYSV
+// #define ENABLE_SYSV
+#if ENABLE_SYSV
 #include <sys/ipc.h>
 #endif
 
@@ -22,7 +22,7 @@ typedef struct _reg_entry_t {
     int rank;                   /**< rank where this region lives */
     void *buf;                  /**< starting address of region */
     size_t len;                 /**< length of region */
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     key_t key;
     char name[SHM_NAME_SIZE];   /**< name of region */
 #else
@@ -41,7 +41,7 @@ reg_return_t reg_cache_init(int nprocs);
 reg_return_t reg_cache_destroy();
 reg_entry_t *reg_cache_find(int rank, void *buf, size_t len);
 reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len, const char *name,
-#ifdef ENABLE_SYSV
+#if ENABLE_SYSV
     key_t key,
 #endif
     void *mapped);
