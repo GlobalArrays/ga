@@ -768,7 +768,7 @@ int comex_finalize()
     // is_notifier = g_state.rank == smallest_rank_with_same_hostid + g_state.node_size*
     //   ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size);
     // if (_smallest_world_rank_with_same_hostid(group_list) == g_state.rank) 
-    if(is_notifier == my_rank_to_free == g_state.rank)
+    if((is_notifier = my_rank_to_free) == g_state.rank)
     {
         int my_master = -1;
         header_t *header = NULL;
