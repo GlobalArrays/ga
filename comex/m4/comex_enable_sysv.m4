@@ -1,7 +1,7 @@
-# GA_ENABLE_SYSV
-# ---------------
+# COMEX_ENABLE_SYSV
+# -----------------
 # Whether to enable System V shared memory.
-AC_DEFUN([GA_ENABLE_SYSV],
+AC_DEFUN([COMEX_ENABLE_SYSV],
 [AC_ARG_ENABLE([sysv],
     [AS_HELP_STRING([--enable-sysv], [enable System V shared memory])],
     [],

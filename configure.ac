@@ -439,9 +439,6 @@ GA_F77_LD_OVERRIDE
 
 AC_LANG_POP([Fortran 77])
 
-# SysV shared memory
-GA_ENABLE_SYSV
-
 ###############################################################################
 # Checks for BLAS/LAPACK/SCALAPACK require both C and Fortran features to
 # have been detected. Further, they assume the current AC_LANG is C.

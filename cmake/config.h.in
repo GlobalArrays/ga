@@ -40,7 +40,6 @@
 
 #cmakedefine01 ENABLE_EISPACK
 
-#cmakedefine01 ENABLE_SYSV
 #cmakedefine ENABLE_CHECKPOINT
 #define ENABLE_PROFILING ${GA_PROFILING}
 #cmakedefine ENABLE_TRACE
