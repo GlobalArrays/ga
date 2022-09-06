@@ -768,7 +768,7 @@ int comex_finalize()
     // is_notifier = g_state.rank == smallest_rank_with_same_hostid + g_state.node_size*
     //   ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size);
     // if (_smallest_world_rank_with_same_hostid(group_list) == g_state.rank) 
-    if(is_notifier = my_rank_to_free == g_state.rank)
+    if((is_notifier = my_rank_to_free) == g_state.rank)
     {
         int my_master = -1;
         header_t *header = NULL;
@@ -1517,6 +1517,7 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device_list dev
 void shmget_err(int shm_id)
 {
   if (shm_id == -1) {
+  perror("shmget");
     if (EACCES == errno) {
       fprintf(stderr,"shmget error EACCES\n");
     } else if (EEXIST == errno) {
@@ -1527,11 +1528,13 @@ void shmget_err(int shm_id)
       fprintf(stderr,"shmget error ENOENT\n");
     } else if (ENOMEM == errno) {
       fprintf(stderr,"shmget error ENOMEM\n");
-    } else {
+    } else if (ENOSPC == errno) {
+      fprintf(stderr,"shmget error ENOSPC\n");
+   } else {
       fprintf(stderr,"shmget error is unknown\n");
     }
+    comex_error("shmget memory failure", errno);
   }
-  comex_error("shmget memory failure", errno);
 }
 
 int comex_free_local(void *ptr)
@@ -4613,10 +4616,16 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
             } else {
               retval = munmap(reg_entry->mapped, reg_entry->len);
             }
+#if ENABLE_SYSV
+	    shm_id = shmget(reg_entry->key,reg_entry->len,(IPC_CREAT | 00600));
+	    shmdt(reg_entry->mapped);
+	    shmctl(shm_id, IPC_RMID, NULL);
+	    remove(file);
+	    retval = 0;
 #else
             retval = munmap(reg_entry->mapped, reg_entry->len);
-	    // boh?
-	    	    check_devshm(0, -(reg_entry->len));
+	    check_devshm(0, -(reg_entry->len));
+#endif
 #endif
             if (-1 == retval) {
                 perror("_free_handler: munmap");
@@ -4812,9 +4821,9 @@ STATIC void* _shm_create(const char *name,
   char file[SHM_NAME_SIZE+10];
   void *mapped = NULL;
   if (use_dev_shm) {
-    sprintf(file,"/dev/shm/%s\0",name);
+    sprintf(file,"/dev/shm/%s",name);
   } else {
-    sprintf(file,"/tmp/%s\0",name);
+    sprintf(file,"/tmp/%s",name);
   }
   fp = fopen(file,"w");
   fprintf(fp,"0\n");
