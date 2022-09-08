@@ -1514,10 +1514,10 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device_list dev
 #endif
 
 /* Utility function to translate errors from shmget */
-void shmget_err(int shm_id)
+void _shmget_err(int shm_id)
 {
   if (shm_id == -1) {
-  perror("shmget");
+    perror("shmget");
     if (EACCES == errno) {
       fprintf(stderr,"shmget error EACCES\n");
     } else if (EEXIST == errno) {
@@ -1530,10 +1530,9 @@ void shmget_err(int shm_id)
       fprintf(stderr,"shmget error ENOMEM\n");
     } else if (ENOSPC == errno) {
       fprintf(stderr,"shmget error ENOSPC\n");
-   } else {
+    } else {
       fprintf(stderr,"shmget error is unknown\n");
     }
-    comex_error("shmget memory failure", errno);
   }
 }
 
@@ -1560,7 +1559,7 @@ int comex_free_local(void *ptr)
 
 #if ENABLE_SYSV
     shm_id = shmget(reg_entry->key,reg_entry->len,0600);
-    shmget_err(shm_id);
+    _shmget_err(shm_id);
     shmdt(reg_entry->mapped);
     shmctl(shm_id, IPC_RMID, NULL);
     remove(file);
@@ -2964,12 +2963,16 @@ int comex_free(void *ptr, comex_group_t group)
 #endif
 
             /* unmap the memory */
+#if ENABLE_SYSV
+            shmdt(reg_entry->mapped);
+#else
             retval = munmap(reg_entry->mapped, reg_entry->len);
-	    check_devshm(0, -(reg_entry->len));
+            check_devshm(0, -(reg_entry->len));
             if (-1 == retval) {
-                perror("comex_free: munmap");
-                comex_error("comex_free: munmap", retval);
+              perror("comex_free: munmap");
+              comex_error("comex_free: munmap", retval);
             }
+#endif
 
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] comex_free unmapped mapped memory in reg entry\n",
@@ -4617,14 +4620,14 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
               retval = munmap(reg_entry->mapped, reg_entry->len);
             }
 #if ENABLE_SYSV
-	    shm_id = shmget(reg_entry->key,reg_entry->len,(IPC_CREAT | 00600));
-	    shmdt(reg_entry->mapped);
-	    shmctl(shm_id, IPC_RMID, NULL);
-	    remove(file);
-	    retval = 0;
+            shm_id = shmget(reg_entry->key,reg_entry->len,(IPC_CREAT | 00600));
+            shmdt(reg_entry->mapped);
+            shmctl(shm_id, IPC_RMID, NULL);
+            remove(file);
+            retval = 0;
 #else
             retval = munmap(reg_entry->mapped, reg_entry->len);
-	    check_devshm(0, -(reg_entry->len));
+            check_devshm(0, -(reg_entry->len));
 #endif
 #endif
             if (-1 == retval) {
@@ -4830,7 +4833,7 @@ STATIC void* _shm_create(const char *name,
   fclose(fp);
   *key = ftok(file,'G');
   shm_id = shmget(*key,size,IPC_CREAT|0600);
-  shmget_err(shm_id);
+  _shmget_err(shm_id);
   if (shm_id == -1) {
     comex_error("_shm_create: shmget failed", shm_id);
   }
@@ -4956,7 +4959,7 @@ STATIC void* _shm_attach(const char *name, size_t size, key_t key)
   int shm_id;
   void *mapped = NULL;
   shm_id = shmget(key,size,0600);
-  shmget_err(shm_id);
+  _shmget_err(shm_id);
   if (shm_id == -1) {
     comex_error("_shm_attach: shmget failed", shm_id);
   }
