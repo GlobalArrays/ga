@@ -2199,11 +2199,15 @@ int comex_free(void *ptr, comex_group_t group)
 #endif
 
             /* unmap the memory */
+#if ENABLE_SYSV
+            shmdt(reg_entry->mapped);
+#else
             retval = munmap(reg_entry->mapped, reg_entry->len);
             if (-1 == retval) {
                 perror("comex_free: munmap");
                 comex_error("comex_free: munmap", retval);
             }
+#endif
 
 #if DEBUG && DEBUG_VERBOSE
             printf("[%d] comex_free unmapped mapped memory in reg entry\n",
@@ -3366,6 +3370,9 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
     int i = 0;
     int n = header->length;
     rank_ptr_t *rank_ptrs = (rank_ptr_t*)payload;
+#if ENABLE_SYSV
+    int shm_id;
+#endif
 
 #if DEBUG
     printf("[%d] _free_handler proc=%d\n", g_state.rank, proc);
@@ -3402,11 +3409,17 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
 #endif
 
             /* unmap the memory */
+#if ENABLE_SYSV
+            shm_id = shmget(reg_entry->key,reg_entry->len,00600);
+            shmdt(reg_entry->mapped);
+            retval = 0;
+#else
             retval = munmap(reg_entry->mapped, reg_entry->len);
             if (-1 == retval) {
                 perror("_free_handler: munmap");
                 comex_error("_free_handler: munmap", retval);
             }
+#endif
 
 #if DEBUG && DEBUG_VERBOSE
             printf("[%d] _free_handler unmapped mapped memory in reg entry\n",

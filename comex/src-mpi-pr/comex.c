@@ -1516,19 +1516,20 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device_list dev
 /* Utility function to translate errors from shmget */
 void _shmget_err(int shm_id)
 {
+  int lerr = errno;
   if (shm_id == -1) {
     perror("shmget");
-    if (EACCES == errno) {
+    if (EACCES == lerr) {
       fprintf(stderr,"shmget error EACCES\n");
-    } else if (EEXIST == errno) {
+    } else if (EEXIST == lerr) {
       fprintf(stderr,"shmget error EEXIST\n");
-    } else if (EINVAL == errno) {
+    } else if (EINVAL == lerr) {
       fprintf(stderr,"shmget error EINVAL\n");
-    } else if (ENOENT == errno) {
+    } else if (ENOENT == lerr) {
       fprintf(stderr,"shmget error ENOENT\n");
-    } else if (ENOMEM == errno) {
+    } else if (ENOMEM == lerr) {
       fprintf(stderr,"shmget error ENOMEM\n");
-    } else if (ENOSPC == errno) {
+    } else if (ENOSPC == lerr) {
       fprintf(stderr,"shmget error ENOSPC\n");
     } else {
       fprintf(stderr,"shmget error is unknown\n");
@@ -4576,6 +4577,9 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
     int i = 0;
     int n = header->length;
     rank_ptr_t *rank_ptrs = (rank_ptr_t*)payload;
+#if ENABLE_SYSV
+    int shm_id;
+#endif
 
 #if DEBUG
     fprintf(stderr, "[%d] _free_handler proc=%d\n", g_state.rank, proc);
@@ -4620,10 +4624,9 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
               retval = munmap(reg_entry->mapped, reg_entry->len);
             }
 #if ENABLE_SYSV
-            shm_id = shmget(reg_entry->key,reg_entry->len,(IPC_CREAT | 00600));
+            shm_id = shmget(reg_entry->key,reg_entry->len,00600);
+            _shmget_err(shm_id);
             shmdt(reg_entry->mapped);
-            shmctl(shm_id, IPC_RMID, NULL);
-            remove(file);
             retval = 0;
 #else
             retval = munmap(reg_entry->mapped, reg_entry->len);
