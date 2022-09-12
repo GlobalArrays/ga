@@ -488,12 +488,6 @@ if(ENABLE_BLAS)
     ${CMAKE_CURRENT_LIST_DIR}/cmake/linalg-modules/FindStandardFortran.cmake
     DESTINATION ${INSTALL_CONFIGDIR}/linalg-cmake-modules
   )
-  if(ENABLE_DPCPP)
-    install(FILES
-      ${CMAKE_CURRENT_LIST_DIR}/cmake/FindIntelSYCL.cmake
-      DESTINATION ${INSTALL_CONFIGDIR}
-    )
-  endif()
 endif()
 
 list(REMOVE_AT CMAKE_MODULE_PATH 0)
