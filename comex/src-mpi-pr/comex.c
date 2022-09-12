@@ -1534,6 +1534,13 @@ void _shmget_err(int shm_id)
     } else {
       fprintf(stderr,"shmget error is unknown\n");
     }
+    /*
+    {
+      char buf[128];
+      sprintf(buf,"ipcs -a > shmdev%d.dbg\n",g_state.rank);
+      system(buf);
+    }
+    */
   }
 }
 
@@ -1561,8 +1568,15 @@ int comex_free_local(void *ptr)
 #if ENABLE_SYSV
     shm_id = shmget(reg_entry->key,reg_entry->len,0600);
     _shmget_err(shm_id);
+    /* printf("p[%d] DETACH SHM\n",g_state.rank); */
     shmdt(reg_entry->mapped);
+    /* printf("p[%d] DESTROY SHM\n",g_state.rank); */
     shmctl(shm_id, IPC_RMID, NULL);
+    if (use_dev_shm) {
+      sprintf(file,"/dev/shm/%s",reg_entry->name);
+    } else {
+      sprintf(file,"/tmp/%s",reg_entry->name);
+    }
     remove(file);
 #else
     /* unmap the memory */
@@ -2965,6 +2979,7 @@ int comex_free(void *ptr, comex_group_t group)
 
             /* unmap the memory */
 #if ENABLE_SYSV
+            /* printf("p[%d] DETACH SHM\n",g_state.rank); */
             shmdt(reg_entry->mapped);
 #else
             retval = munmap(reg_entry->mapped, reg_entry->len);
@@ -4626,6 +4641,7 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
 #if ENABLE_SYSV
             shm_id = shmget(reg_entry->key,reg_entry->len,00600);
             _shmget_err(shm_id);
+            printf("p[%d] DETACH SHM\n",g_state.rank);
             shmdt(reg_entry->mapped);
             retval = 0;
 #else
@@ -4835,11 +4851,13 @@ STATIC void* _shm_create(const char *name,
   fprintf(fp,"0\n");
   fclose(fp);
   *key = ftok(file,'G');
+  /* printf("p[%d] CREATE SHM\n",g_state.rank); */
   shm_id = shmget(*key,size,IPC_CREAT|0600);
   _shmget_err(shm_id);
   if (shm_id == -1) {
     comex_error("_shm_create: shmget failed", shm_id);
   }
+  /* printf("p[%d] ATTACH SHM\n",g_state.rank); */
   mapped = shmat(shm_id, NULL, 0);
   return mapped;
 #else
@@ -4966,6 +4984,7 @@ STATIC void* _shm_attach(const char *name, size_t size, key_t key)
   if (shm_id == -1) {
     comex_error("_shm_attach: shmget failed", shm_id);
   }
+  /* printf("p[%d] ATTACH SHM\n",g_state.rank); */
   mapped = shmat(shm_id, NULL, 0);
   return mapped;
 }
