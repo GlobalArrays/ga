@@ -1164,6 +1164,11 @@ int comex_free_local(void *ptr)
     shm_id = shmget(reg_entry->key,reg_entry->len,0600);
     shmdt(reg_entry->mapped);
     shmctl(shm_id, IPC_RMID, NULL);
+    if (use_dev_shm) {
+      sprintf(file,"/dev/shm/%s\0",reg_entry->name);
+    } else {
+      sprintf(file,"/tmp/%s\0",reg_entry->name);
+    }
     remove(file);
 #else
     /* unmap the memory */
@@ -3410,7 +3415,7 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
 
             /* unmap the memory */
 #if ENABLE_SYSV
-            shm_id = shmget(reg_entry->key,reg_entry->len,00600);
+            shm_id = shmget(reg_entry->key,reg_entry->len,0600);
             shmdt(reg_entry->mapped);
             retval = 0;
 #else
