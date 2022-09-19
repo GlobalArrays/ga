@@ -3180,6 +3180,9 @@
 #define nga_sprs_array_matvec_multiply_ F77_FUNC_(nga_sprs_array_matvec_multiply,NGA_SPRS_ARRAY_MATVEC_MULTIPLY)
 #define nga_sprs_array_destroy_ F77_FUNC_(nga_sprs_array_destroy,NGA_SPRS_ARRAY_DESTROY)
 #define nga_sprs_array_export_ F77_FUNC_(nga_sprs_array_export,NGA_SPRS_ARRAY_EXPORT)
+#define nga_sprs_array_get_diag_ F77_FUNC_(nga_sprs_array_get_diag,NGA_SPRS_ARRAY_GET_DIAG)
+#define nga_sprs_array_diag_left_multiply_ F77_FUNC_(nga_sprs_array_diag_left_multiply,NGA_SPRS_ARRAY_DIAG_LEFT_MULTIPLY)
+#define nga_sprs_array_shift_diag_ F77_FUNC_(nga_sprs_array_shift_diag,NGA_SPRS_ARRAY_SHIFT_DIAG)
 /* the missing functions are either complex type or strangely named */
 
 #define gai_cdot_patch_     F77_FUNC_(gai_cdot_patch,GAI_CDOT_PATCH)

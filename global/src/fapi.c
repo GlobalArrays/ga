@@ -3779,3 +3779,18 @@ void nga_sprs_array_export_(Integer *s_a, const char* file, int slen)
   ga_f2cstring(file ,slen, buf, FNAM);
   wnga_sprs_array_export(*s_a, buf);
 }
+
+void nga_sprs_array_get_diag_(Integer *s_a, Integer *g_d)
+{
+  wnga_sprs_array_get_diag(*s_a, g_d);
+}
+
+void nga_sprs_array_diag_left_multiply_(Integer *s_a, Integer *g_d)
+{
+  wnga_sprs_array_diag_left_multiply(*s_a, *g_d);
+}
+
+void nga_sprs_array_shift_diag_(Integer *s_a, void *shift)
+{
+  wnga_sprs_array_shift_diag(*s_a, shift);
+}

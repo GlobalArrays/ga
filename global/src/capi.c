@@ -5454,3 +5454,24 @@ void NGA_Sprs_array_export(int s_a, const char* file)
   Integer sa = (Integer)s_a;
   wnga_sprs_array_export(sa, file);
 }
+
+void NGA_Sprs_array_get_diag(int s_a, int *g_d)
+{
+  Integer sa = (Integer)s_a;
+  Integer gd;
+  wnga_sprs_array_get_diag(sa, &gd);
+  *g_d = (int)gd;
+}
+
+void NGA_Sprs_array_diag_left_multiply(int s_a, int g_d)
+{
+  Integer sa = (Integer)s_a;
+  Integer gd = (Integer)g_d;
+  wnga_sprs_array_diag_left_multiply(sa, gd);
+}
+
+void NGA_Sprs_array_shift_diag(int s_a, void *shift)
+{
+  Integer sa = (Integer)s_a;
+  wnga_sprs_array_shift_diag(sa, shift);
+}
