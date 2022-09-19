@@ -1635,9 +1635,10 @@ int comex_free_local(void *ptr)
     sprintf(ebuf,"p[%d] (shmget in comex_free_local) flags: 0600, key: %d, name: %s\n",
       g_state.rank,reg_entry->key,reg_entry->name);
     _shmget_err(shm_id,ebuf);
-    /* printf("p[%d] DETACH SHM mapped: %s\n",g_state.rank,reg_entry->name); */
+    printf("p[%d] DETACH SHM name: %s key: %d\n",g_state.rank,reg_entry->name, reg_entry->key);
     _shmdt_err(shmdt(reg_entry->mapped));
-    /* printf("p[%d] DESTROY SHM\n",g_state.rank); */
+    printf("p[%d] DESTROY SHM name: %s key: %d\n",g_state.rank,reg_entry->name,
+        reg_entry->key);
     _shmctl_err(shmctl(shm_id, IPC_RMID, NULL));
     if (use_dev_shm) {
       sprintf(file,"/dev/shm/%s",reg_entry->name);
@@ -3046,7 +3047,8 @@ int comex_free(void *ptr, comex_group_t group)
 
             /* unmap the memory */
 #if ENABLE_SYSV
-            /* printf("p[%d] DETACH SHM mapped: %s\n",g_state.rank,reg_entry->name); */
+            printf("p[%d] DETACH SHM name: %s key: %d\n",g_state.rank,reg_entry->name,
+                reg_entry->key);
             _shmdt_err(shmdt(reg_entry->mapped));
 #else
             retval = munmap(reg_entry->mapped, reg_entry->len);
@@ -4712,7 +4714,7 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
             shm_id = shmget(reg_entry->key,reg_entry->len,0600);
             _shmget_err(shm_id);
             */
-            /* printf("p[%d] DETACH SHM mapped: %s\n",g_state.rank,reg_entry->name); */
+            printf("p[%d] DETACH SHM name: %s key: %d\n",g_state.rank,reg_entry->name, reg_entry->key);
             _shmdt_err(shmdt(reg_entry->mapped));
             retval = 0;
 #else
@@ -4922,7 +4924,7 @@ STATIC void* _shm_create(const char *name,
   fprintf(fp,"0\n");
   fclose(fp);
   *key = ftok(file,'G');
-  /* printf("p[%d] CREATE SHM\n",g_state.rank); */
+  printf("p[%d] CREATE SHM name: %s key; %d\n",g_state.rank,name,*key);
   sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|IPC_EXCL|0600, key: %d, name: %s\n",
       g_state.rank,*key,name);
   shm_id = shmget(*key,size,IPC_CREAT| IPC_EXCL |0600);
@@ -4931,7 +4933,7 @@ STATIC void* _shm_create(const char *name,
     comex_error("_shm_create: shmget failed", shm_id);
   }
   mapped = shmat(shm_id, NULL, 0);
-  /* printf("p[%d] ATTACH SHM mapped: %s\n",g_state.rank,name); */
+  printf("p[%d] ATTACH SHM name: %s key: %d\n",g_state.rank,name,*key);
   _shmat_err(mapped);
  /* _shmctl_err(shmctl(shm_id, IPC_RMID, NULL)); */
   return mapped;
@@ -5063,7 +5065,7 @@ STATIC void* _shm_attach(const char *name, size_t size, key_t key)
     comex_error("_shm_attach: shmget failed", shm_id);
   }
   mapped = shmat(shm_id, NULL, 0);
-  /* printf("p[%d] ATTACH SHM mapped: %s\n",g_state.rank,name); */
+  printf("p[%d] ATTACH SHM name: %s key: %d\n",g_state.rank,name,key);
   _shmat_err(mapped);
   return mapped;
 }
