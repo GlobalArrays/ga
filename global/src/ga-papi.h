@@ -409,4 +409,7 @@ extern void pnga_sprs_array_col_block_list(Integer s_a, Integer **idx, Integer *
 extern void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v);
 extern logical pnga_sprs_array_destroy(Integer s_a);
 extern void pnga_sprs_array_export(Integer s_a, const char* file);
+extern void pnga_sprs_array_get_diag(Integer s_a, Integer *g_d);
+extern void pnga_sprs_array_diag_left_multiply(Integer s_a, Integer g_d);
+extern void pnga_sprs_array_shift_diag(Integer s_a, void *shift);
 #endif /* PAPI_H_ */
