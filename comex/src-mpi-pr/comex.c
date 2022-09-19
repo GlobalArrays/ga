@@ -1514,11 +1514,12 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device_list dev
 #endif
 
 /* Utility function to translate errors from shmget */
-void _shmget_err(int shm_id)
+void _shmget_err(int shm_id, const char* buf)
 {
   int lerr = errno;
   if (shm_id == -1) {
     perror("shmget");
+    fprintf(stderr,"%s",buf);
     if (EACCES == lerr) {
       fprintf(stderr,"p[%d] shmget error EACCES\n",g_state.rank);
     } else if (EEXIST == lerr) {
@@ -1613,6 +1614,7 @@ int comex_free_local(void *ptr)
     key_t key;
     int shm_id;
     char file[SHM_NAME_SIZE+10];
+    char ebuf[128];
 #endif
     int retval = 0;
     reg_entry_t *reg_entry = NULL;
@@ -1630,7 +1632,9 @@ int comex_free_local(void *ptr)
 
 #if ENABLE_SYSV
     shm_id = shmget(reg_entry->key,reg_entry->len,0600);
-    _shmget_err(shm_id);
+    sprintf(ebuf,"p[%d] (shmget in comex_free_local) flags: 0600, key: %d, name: %s\n",
+      g_state.rank,reg_entry->key,reg_entry->name);
+    _shmget_err(shm_id,ebuf);
     /* printf("p[%d] DETACH SHM mapped: %s\n",g_state.rank,reg_entry->name); */
     _shmdt_err(shmdt(reg_entry->mapped));
     /* printf("p[%d] DESTROY SHM\n",g_state.rank); */
@@ -4907,6 +4911,7 @@ STATIC void* _shm_create(const char *name,
   FILE *fp;
   int shm_id;
   char file[SHM_NAME_SIZE+10];
+  char ebuf[128];
   void *mapped = NULL;
   if (use_dev_shm) {
     sprintf(file,"/dev/shm/%s",name);
@@ -4918,8 +4923,10 @@ STATIC void* _shm_create(const char *name,
   fclose(fp);
   *key = ftok(file,'G');
   /* printf("p[%d] CREATE SHM\n",g_state.rank); */
+  sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|IPC_EXCL|0600, key: %d, name: %s\n",
+      g_state.rank,*key,name);
   shm_id = shmget(*key,size,IPC_CREAT| IPC_EXCL |0600);
-  _shmget_err(shm_id);
+  _shmget_err(shm_id, ebuf);
   if (shm_id == -1) {
     comex_error("_shm_create: shmget failed", shm_id);
   }
@@ -5047,8 +5054,11 @@ STATIC void* _shm_attach(const char *name, size_t size, key_t key)
 {
   int shm_id;
   void *mapped = NULL;
+  char ebuf[128];
+  sprintf(ebuf,"p[%d] (shmget in shm_attach) flags: 0600, key: %d, name: %s\n",
+      g_state.rank,key,name);
   shm_id = shmget(key,size,0600);
-  _shmget_err(shm_id);
+  _shmget_err(shm_id, ebuf);
   if (shm_id == -1) {
     comex_error("_shm_attach: shmget failed", shm_id);
   }
