@@ -16,7 +16,7 @@ typedef struct {
   Integer nprocs;   /* number of processors containing this array */
   Integer nblocks;  /* number of non-zero sparse blocks contained on this process */
   Integer *blkidx;  /* array containing indices of non-zero blocks */
-  Integer *blksize; /* array containining sizes of non-zero blocks */
+  Integer *blksize; /* array containing sizes of non-zero blocks */
   Integer *offset;  /* array containing starting index in g_i for each block (int) */
   Integer *idx;     /* local buffer containing i indices */
   Integer *jdx;     /* local buffer containing j indices */
