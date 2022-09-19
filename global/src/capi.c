@@ -5475,3 +5475,9 @@ void NGA_Sprs_array_shift_diag(int s_a, void *shift)
   Integer sa = (Integer)s_a;
   wnga_sprs_array_shift_diag(sa, shift);
 }
+
+int NGA_Sprs_array_duplicate(int s_a)
+{
+  Integer sa = (Integer)s_a;
+  return (int)wnga_sprs_array_duplicate(sa);
+}

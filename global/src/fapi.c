@@ -3725,7 +3725,7 @@ void nga_version_(Integer *major, Integer *minor, Integer *patch)
   wnga_version(major,minor,patch);
 }
 
-logical nga_sprs_array_create_(Integer *idim, Integer *jdim, Integer *type)
+Integer nga_sprs_array_create_(Integer *idim, Integer *jdim, Integer *type)
 {
   return wnga_sprs_array_create(*idim,*jdim,*type,sizeof(Integer));
 }
@@ -3773,7 +3773,7 @@ logical nga_sprs_array_destroy_(Integer *s_a)
   return wnga_sprs_array_destroy(*s_a);
 }
 
-void nga_sprs_array_export_(Integer *s_a, const char* file, int slen)
+void nga_sprs_array_export_(Integer *s_a, char* file, int slen)
 {
   char buf[FNAM];
   ga_f2cstring(file ,slen, buf, FNAM);
@@ -3793,4 +3793,9 @@ void nga_sprs_array_diag_left_multiply_(Integer *s_a, Integer *g_d)
 void nga_sprs_array_shift_diag_(Integer *s_a, void *shift)
 {
   wnga_sprs_array_shift_diag(*s_a, shift);
+}
+
+Integer nga_sprs_array_duplicate_(Integer *s_a)
+{
+  return wnga_sprs_array_duplicate(*s_a);
 }

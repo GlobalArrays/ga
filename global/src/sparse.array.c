@@ -128,7 +128,7 @@ void sai_terminate_sparse_arrays()
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_sprs_array_create =  pnga_sprs_array_create
 #endif
-logical pnga_sprs_array_create(Integer idim, Integer jdim, Integer type, Integer size)
+Integer pnga_sprs_array_create(Integer idim, Integer jdim, Integer type, Integer size)
 {
   Integer i, hdl, s_a;
   GAvalidtypeM(pnga_type_f2c((int)type));
@@ -1488,4 +1488,58 @@ void pnga_sprs_array_shift_diag(Integer s_a, void *shift)
     }
   }
   pnga_pgroup_sync(grp);
+}
+
+/**
+ * @param s_a sparse array that is to be duplicated
+ * @return handle of duplicate array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_duplicate =  pnga_sprs_array_duplicate
+#endif
+Integer pnga_sprs_array_duplicate(Integer s_a)
+{
+  Integer hdl = GA_OFFSET + s_a;
+  Integer new_hdl;
+  Integer grp = SPA[hdl].grp;
+  Integer me = pnga_pgroup_nodeid(grp);
+  Integer nproc = pnga_pgroup_nnodes(grp);
+  Integer s_dup;
+  Integer i;
+
+  /* create new array with same properties as old array */
+  s_dup = pnga_sprs_array_create(SPA[hdl].idim,SPA[hdl].jdim,SPA[hdl].type,
+      SPA[hdl].idx_size);
+  /* find handle for new array and duplicate internal GAs */
+  new_hdl = GA_OFFSET + s_dup;
+  if (!pnga_duplicate(SPA[hdl].g_data,&SPA[new_hdl].g_data,"sparse_data_copy")) {
+    pnga_error("(pnga_sprs_array_duplicate) Could not duplicate g_data",0);
+  }
+  if (!pnga_duplicate(SPA[hdl].g_i,&SPA[new_hdl].g_i,"sparse_i_index_copy")) {
+    pnga_error("(pnga_sprs_array_duplicate) Could not duplicate g_i",0);
+  }
+  if (!pnga_duplicate(SPA[hdl].g_j,&SPA[new_hdl].g_j,"sparse_i_index_copy")) {
+    pnga_error("(pnga_sprs_array_duplicate) Could not duplicate g_i",0);
+  }
+  /* copy remaining data structures */
+  SPA[new_hdl].ilo = SPA[hdl].ilo;
+  SPA[new_hdl].ihi = SPA[hdl].ihi;
+  SPA[new_hdl].nblocks = SPA[hdl].nblocks;
+  SPA[new_hdl].nval = SPA[hdl].nval;
+  SPA[new_hdl].maxval = SPA[hdl].maxval;
+  SPA[new_hdl].ready = SPA[hdl].ready;
+  if (SPA[new_hdl].nblocks > 0) {
+    SPA[new_hdl].blkidx
+      = (Integer*)malloc(SPA[new_hdl].nblocks*sizeof(Integer));
+    SPA[new_hdl].blksize
+      = (Integer*)malloc(SPA[new_hdl].nblocks*sizeof(Integer));
+    SPA[new_hdl].offset
+      = (Integer*)malloc(SPA[new_hdl].nblocks*sizeof(Integer));
+  }
+  for (i=0; i<SPA[new_hdl].nblocks; i++) {
+    SPA[new_hdl].blkidx[i] = SPA[hdl].blkidx[i];
+    SPA[new_hdl].blksize[i] = SPA[hdl].blksize[i];
+    SPA[new_hdl].offset[i] = SPA[hdl].offset[i];
+  }
+  return s_dup;
 }
