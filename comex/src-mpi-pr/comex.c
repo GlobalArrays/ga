@@ -4925,9 +4925,9 @@ STATIC void* _shm_create(const char *name,
   fprintf(fp,"0\n");
   fclose(fp);
   *key = ftok(file,token);
-  printf("p[%d] CREATE SHM name: %s key; %d\n",g_state.rank,name,*key);
-  sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|IPC_EXCL|0600, key: %d, name: %s\n",
-      g_state.rank,*key,name);
+  printf("p[%d] CREATE SHM name: %s key: %d id: %c\n",g_state.rank,name,*key,token);
+  sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|IPC_EXCL|0600, key: %d, name: %s id: %c\n",
+      g_state.rank,*key,name,token);
   shm_id = shmget(*key,size,IPC_CREAT| IPC_EXCL |0600);
   _shmget_err(shm_id, ebuf);
   if (shm_id == -1) {
@@ -4936,7 +4936,6 @@ STATIC void* _shm_create(const char *name,
   mapped = shmat(shm_id, NULL, 0);
   printf("p[%d] ATTACH SHM name: %s key: %d\n",g_state.rank,name,*key);
   _shmat_err(mapped);
- /* _shmctl_err(shmctl(shm_id, IPC_RMID, NULL)); */
   return mapped;
 #else
 #include <unistd.h>
