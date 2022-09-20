@@ -4915,6 +4915,7 @@ STATIC void* _shm_create(const char *name,
   char file[SHM_NAME_SIZE+10];
   char ebuf[128];
   void *mapped = NULL;
+  char token = (char)(g_state.rank%256);
   if (use_dev_shm) {
     sprintf(file,"/dev/shm/%s",name);
   } else {
@@ -4923,7 +4924,7 @@ STATIC void* _shm_create(const char *name,
   fp = fopen(file,"w");
   fprintf(fp,"0\n");
   fclose(fp);
-  *key = ftok(file,'G');
+  *key = ftok(file,token);
   printf("p[%d] CREATE SHM name: %s key; %d\n",g_state.rank,name,*key);
   sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|IPC_EXCL|0600, key: %d, name: %s\n",
       g_state.rank,*key,name);
