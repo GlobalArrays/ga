@@ -178,6 +178,7 @@ static int static_server_buffer_size = 0;
 static int eager_threshold = -1;
 static int max_message_size = -1;
 static int use_dev_shm = 1;
+static int token_counter = 0;
 
 static int COMEX_ENABLE_PUT_SELF = ENABLE_PUT_SELF;
 static int COMEX_ENABLE_GET_SELF = ENABLE_GET_SELF;
@@ -634,6 +635,7 @@ int comex_init()
        comex_error("No directory available for System V memory\n",-1);
      }
    }
+   token_counter = g_state.rank;
 #endif
 
 
@@ -1363,6 +1365,21 @@ STATIC char* _generate_shm_name(int rank)
     COMEX_ASSERT(rank >= 0);
     name = malloc(SHM_NAME_SIZE*sizeof(char));
     COMEX_ASSERT(name);
+    if (counter[0] == 0 && counter[1] == 0 && counter[2] == 0
+        && counter[3] == 0 && counter[4] == 0 && counter[5] == 0) {
+      int n = rank;
+      counter[0] = n%limit;
+      n = (n-counter[0])/limit;
+      counter[1] = n%limit;
+      n = (n-counter[1])/limit;
+      counter[2] = n%limit;
+      n = (n-counter[2])/limit;
+      counter[3] = n%limit;
+      n = (n-counter[3])/limit;
+      counter[4] = n%limit;
+      n = (n-counter[4])/limit;
+      counter[5] = n%limit;
+    }
     snprintf_retval = snprintf(name, SHM_NAME_SIZE,
             "/cmx%010u%010u%c%c%c%c%c%c", getuid(), getpid(),
             letters[counter[5]],
@@ -4915,7 +4932,8 @@ STATIC void* _shm_create(const char *name,
   char file[SHM_NAME_SIZE+10];
   char ebuf[128];
   void *mapped = NULL;
-  char token = (char)(g_state.rank%256);
+  char token = (char)(token_counter%256);
+  token_counter ++;
   if (use_dev_shm) {
     sprintf(file,"/dev/shm/%s",name);
   } else {
@@ -4925,7 +4943,7 @@ STATIC void* _shm_create(const char *name,
   fprintf(fp,"0\n");
   fclose(fp);
   *key = ftok(file,token);
-  printf("p[%d] CREATE SHM name: %s key: %d id: %c\n",g_state.rank,name,*key,token);
+  printf("p[%d] CREATE SHM name: %s key: %d id: %d\n",g_state.rank,name,*key,(int)token);
   sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|IPC_EXCL|0600, key: %d, name: %s id: %c\n",
       g_state.rank,*key,name,token);
   shm_id = shmget(*key,size,IPC_CREAT| IPC_EXCL |0600);
