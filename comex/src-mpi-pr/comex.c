@@ -1381,7 +1381,11 @@ STATIC char* _generate_shm_name(int rank)
       counter[5] = n%limit;
     }
     snprintf_retval = snprintf(name, SHM_NAME_SIZE,
+#if ENABLE_SYSV
+            "/cmx%010u%010u%c%c%c%c%c%c", getuid()+token_counter, getpid(),
+#else
             "/cmx%010u%010u%c%c%c%c%c%c", getuid(), getpid(),
+#endif
             letters[counter[5]],
             letters[counter[4]],
             letters[counter[3]],
@@ -1603,7 +1607,7 @@ void _shmctl_err(int flag)
 {
   int lerr = errno;
   if (flag == -1) {
-    perror("shmdt");
+    perror("shmctl");
     if (EACCES == lerr) {
       fprintf(stderr,"p[%d] shmctl error EACCES\n",g_state.rank);
     } else if (EFAULT == lerr) {
@@ -4944,8 +4948,8 @@ STATIC void* _shm_create(const char *name,
   fclose(fp);
   *key = ftok(file,token);
   /* printf("p[%d] CREATE SHM name: %s key: %d id: %d\n",g_state.rank,name,*key,(int)token); */
-  sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|IPC_EXCL|0600, key: %d, name: %s id: %c\n",
-      g_state.rank,*key,name,token);
+  sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|0600, key: %d, name: %s id: %d\n",
+      g_state.rank,*key,name,(int)token);
   shm_id = shmget(*key,size,IPC_CREAT| IPC_EXCL |0600);
   _shmget_err(shm_id, ebuf);
   if (shm_id == -1) {
