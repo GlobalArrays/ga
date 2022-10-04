@@ -132,9 +132,8 @@ target_include_directories(ga_src BEFORE PRIVATE
                     ${PROJECT_SOURCE_DIR}/LinAlg/lapack+blas
                     ${CMAKE_CURRENT_BINARY_DIR}
                     ${PROJECT_BINARY_DIR}
+                    ${MPI_C_INCLUDE_DIRS}
 )
-
-target_link_libraries(ga_src PRIVATE MPI::MPI_C)
 
 if(ENABLE_FORTRAN)
   add_dependencies(ga_src gaf2c)
