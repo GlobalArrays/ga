@@ -120,6 +120,7 @@ add_library(armci_comex OBJECT
   ${COMEX_DEVICE}
 )
 target_compile_definitions(armci_comex PRIVATE HAVE_CONFIG_H)
+target_link_libraries(armci_comex PRIVATE MPI::MPI_C)
 
 add_library(armci
   ${ARMCI_FILES}
@@ -129,7 +130,7 @@ target_compile_definitions(armci PRIVATE HAVE_CONFIG_H)
 
 add_library(GlobalArrays::armci ALIAS armci)
 
-target_link_libraries(armci)
+target_link_libraries(armci PRIVATE MPI::MPI_C)
 
 install(TARGETS armci
     EXPORT globalarrays-targets
@@ -143,7 +144,7 @@ add_library(comex
 
 add_library(GlobalArrays::comex ALIAS comex)
 
-target_link_libraries(comex)
+target_link_libraries(comex PRIVATE MPI::MPI_C)
 
 install(TARGETS comex
     EXPORT globalarrays-targets

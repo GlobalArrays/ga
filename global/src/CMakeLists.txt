@@ -134,6 +134,8 @@ target_include_directories(ga_src BEFORE PRIVATE
                     ${PROJECT_BINARY_DIR}
 )
 
+target_link_libraries(ga_src PRIVATE MPI::MPI_C)
+
 if(ENABLE_FORTRAN)
   add_dependencies(ga_src gaf2c)
 endif()
