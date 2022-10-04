@@ -44,6 +44,8 @@ sicm_device_list nill;
 #include "reg_cache.h"
 #include "acc.h"
 
+#define ENABLE_FTOK 0
+
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
 
@@ -1666,7 +1668,9 @@ int comex_free_local(void *ptr)
     } else {
       sprintf(file,"/tmp/%s",reg_entry->name);
     }
+#if ENABLE_FTOK
     remove(file);
+#endif
 #else
     /* unmap the memory */
     retval = munmap(ptr, reg_entry->len);
@@ -4943,11 +4947,16 @@ STATIC void* _shm_create(const char *name,
   } else {
     sprintf(file,"/tmp/%s",name);
   }
+#if ENABLE_FTOK
   fp = fopen(file,"w");
   fprintf(fp,"0\n");
   fclose(fp);
   *key = ftok(file,token);
   /* printf("p[%d] CREATE SHM name: %s key: %d id: %d\n",g_state.rank,name,*key,(int)token); */
+#else
+  *key = (key_t)token_counter;
+  token_counter += g_state.size;
+#endif
   sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|0600, key: %d, name: %s id: %d\n",
       g_state.rank,*key,name,(int)token);
   shm_id = shmget(*key,size,IPC_CREAT| IPC_EXCL |0600);
