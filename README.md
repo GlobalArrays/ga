@@ -236,7 +236,7 @@ Any application code which only makes GA function calls can remain unchanged.
 --enable-sysv           Enable System V Shared Memory.
 --enable-peigs          Enable Parallel Eigensystem Solver interface. This
                         will build the stubs required to call into the peigs
-                        library (external).              
+                        library (external).
 --enable-checkpoint     Enable checkpointing.  Untested.  For use with old
                         X-based visualization tool.
 --enable-profile        Enable profiling. Not sure what this does, sorry.

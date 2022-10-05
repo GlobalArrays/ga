@@ -181,7 +181,7 @@ if(ENABLE_PROFILING)
 endif()
 if(USE_CRAYSHASTA)
   set(__CRAYXE 1)
-  list(APPEND GA_EXTRA_LIBS pmi2)
+  # list(APPEND GA_EXTRA_LIBS pmi2)
 endif()
 
 # hardwire ARMCI configuration options
@@ -489,12 +489,6 @@ if(ENABLE_BLAS)
     ${CMAKE_CURRENT_LIST_DIR}/cmake/linalg-modules/FindStandardFortran.cmake
     DESTINATION ${INSTALL_CONFIGDIR}/linalg-cmake-modules
   )
-  if(ENABLE_DPCPP)
-    install(FILES
-      ${CMAKE_CURRENT_LIST_DIR}/cmake/FindIntelSYCL.cmake
-      DESTINATION ${INSTALL_CONFIGDIR}
-    )
-  endif()
 endif()
 
 list(REMOVE_AT CMAKE_MODULE_PATH 0)
