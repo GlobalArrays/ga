@@ -138,6 +138,7 @@ static sem_t **semaphores = NULL;   /* semaphores for locking within SMP node */
 static int initialized = 0;         /* for comex_initialized(), 0=false */
 static char *fence_array = NULL;
 static pthread_t progress_thread;
+static int token_counter = 0;
 
 static nb_t *nb_state = NULL;       /* keep track of all nonblocking operations */
 static int nb_max_outstanding = COMEX_MAX_NB_OUTSTANDING;
@@ -349,6 +350,7 @@ int comex_init()
         comex_error("No directory available for System V memory\n",-1);
       }
     }
+    token_counter = g_state.rank;
 #endif
 
     /* reg_cache */
@@ -1138,6 +1140,100 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
     return reg_entry;
 }
 
+/* Utility function to translate errors from shmget */
+void _shmget_err(int shm_id, const char* buf)
+{
+  int lerr = errno; 
+  if (shm_id == -1) {
+    perror("shmget");
+    fprintf(stderr,"%s",buf);
+    if (EACCES == lerr) {
+      fprintf(stderr,"p[%d] shmget error EACCES\n",g_state.rank);
+    } else if (EEXIST == lerr) {
+      fprintf(stderr,"p[%d] shmget error EEXIST\n",g_state.rank);
+    } else if (EINVAL == lerr) {
+      fprintf(stderr,"p[%d] shmget error EINVAL\n",g_state.rank);
+    } else if (ENOENT == lerr) {
+      fprintf(stderr,"p[%d] shmget error ENOENT\n",g_state.rank);
+    } else if (ENOMEM == lerr) {
+      fprintf(stderr,"p[%d] shmget error ENOMEM\n",g_state.rank);
+    } else if (ENOSPC == lerr) {
+      fprintf(stderr,"p[%d] shmget error ENOSPC\n",g_state.rank);
+    } else {
+      fprintf(stderr,"p[%d] shmget error is unknown\n",g_state.rank);
+    }
+    /*
+    {
+      char buf[128];
+      sprintf(buf,"ipcs -a >
+      shmdev%d.dbg\n",g_state.rank);
+      system(buf);
+    }
+    */
+  }
+}
+
+/* Utility function to translate errors from shmat */
+void _shmat_err(void *ptr)
+{
+  int lerr = errno;
+  if (ptr == (void*)-1) {
+    perror("shmat");
+    if (EACCES == lerr) {
+      fprintf(stderr,"p[%d] shmat error EACCES\n",g_state.rank);
+    } else if (EIDRM == lerr) {
+      fprintf(stderr,"p[%d] shmat error EIDRM\n",g_state.rank);
+    } else if (EINVAL == lerr) {
+      fprintf(stderr,"p[%d] shmat error EINVAL\n",g_state.rank);
+    } else if (ENOMEM == lerr) {
+      fprintf(stderr,"p[%d] shmat error ENOMEM\n",g_state.rank);
+    } else if (ENOMEM == lerr) {
+      fprintf(stderr,"p[%d] shmat error ENOMEM\n",g_state.rank);
+    } else {
+      fprintf(stderr,"p[%d] shmat error is unknown\n",g_state.rank);
+    }
+  }
+}
+
+/* Utility function to translate errors from shmdt */
+void _shmdt_err(int flag)
+{
+  int lerr = errno;
+  if (flag == -1) {
+    perror("shmdt");
+    if (EINVAL == lerr) {
+      fprintf(stderr,"p[%d] shmdt error EINVAL\n",g_state.rank);
+    } else {
+      fprintf(stderr,"p[%d] shmdt error is unknown\n",g_state.rank);
+    }
+  }
+}
+
+/* Utility function to translate errors from shmctl */
+void _shmctl_err(int flag)
+{
+  int lerr = errno;
+  if (flag == -1) {
+    perror("shmctl");
+    if (EACCES == lerr) {
+      fprintf(stderr,"p[%d] shmctl error EACCES\n",g_state.rank);
+    } else if (EFAULT == lerr) {
+      fprintf(stderr,"p[%d] shmctl error EFAULT\n",g_state.rank);
+    } else if (EIDRM == lerr) {
+      fprintf(stderr,"p[%d] shmctl error EIDRM\n",g_state.rank);
+    } else if (EINVAL == lerr) {
+      fprintf(stderr,"p[%d] shmctl error EINVAL\n",g_state.rank);
+    } else if (ENOMEM == lerr) {
+      fprintf(stderr,"p[%d] shmctl error ENOMEM\n",g_state.rank);
+    } else if (EOVERFLOW == lerr) {
+      fprintf(stderr,"p[%d] shmctl error EOVERFLOW\n",g_state.rank);
+    } else if (EPERM == lerr) {
+      fprintf(stderr,"p[%d] shmctl error EPERM\n",g_state.rank);
+    } else {
+      fprintf(stderr,"p[%d] shmctl error is unknown\n",g_state.rank);
+    }
+  }
+}
 
 int comex_free_local(void *ptr)
 {
@@ -1145,6 +1241,7 @@ int comex_free_local(void *ptr)
     key_t key;
     int shm_id;
     char file[SHM_NAME_SIZE+10];
+    char ebuf[128];
 #endif
     int retval = 0;
     reg_entry_t *reg_entry = NULL;
@@ -1162,8 +1259,14 @@ int comex_free_local(void *ptr)
 
 #if ENABLE_SYSV
     shm_id = shmget(reg_entry->key,reg_entry->len,0600);
-    shmdt(reg_entry->mapped);
-    shmctl(shm_id, IPC_RMID, NULL);
+    sprintf(ebuf,"p[%d] (shmget in comex_free_local) flags: 0600, key: %d, name: %s\n",
+              g_state.rank,reg_entry->key,reg_entry->name);
+    _shmget_err(shm_id,ebuf);
+    /* printf("p[%d] DETACH SHM name: %s key: %d\n",g_state.rank,reg_entry->name, reg_entry->key); */
+    _shmdt_err(shmdt(reg_entry->mapped));
+    /* printf("p[%d] DESTROY SHM name: %s key: %d\n",g_state.rank,reg_entry->name,
+                reg_entry->key); */
+    _shmctl_err(shmctl(shm_id, IPC_RMID, NULL));
     if (use_dev_shm) {
       sprintf(file,"/dev/shm/%s\0",reg_entry->name);
     } else {
@@ -2205,7 +2308,9 @@ int comex_free(void *ptr, comex_group_t group)
 
             /* unmap the memory */
 #if ENABLE_SYSV
-            shmdt(reg_entry->mapped);
+            /* printf("p[%d] DETACH SHM name: %s key: %d\n",g_state.rank,reg_entry->name,
+                                reg_entry->key); */
+            _shmdt_err(shmdt(reg_entry->mapped));
 #else
             retval = munmap(reg_entry->mapped, reg_entry->len);
             if (-1 == retval) {
@@ -3415,8 +3520,12 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
 
             /* unmap the memory */
 #if ENABLE_SYSV
+            /*
             shm_id = shmget(reg_entry->key,reg_entry->len,0600);
-            shmdt(reg_entry->mapped);
+            */
+            /* printf("p[%d] DETACH SHM name: %s key: %d\n",g_state.rank,reg_entry->name,
+                                reg_entry->key); */
+            _shmdt_err(shmdt(reg_entry->mapped));
             retval = 0;
 #else
             retval = munmap(reg_entry->mapped, reg_entry->len);
@@ -3577,7 +3686,10 @@ STATIC void* _shm_create(const char *name,
   FILE *fp;
   int shm_id;
   char file[SHM_NAME_SIZE+10];
+  char ebuf[128];
   void *mapped = NULL;
+  char token = (char)(token_counter%256);
+  token_counter++;
   if (use_dev_shm) {
     sprintf(file,"/dev/shm/%s\0",name);
   } else {
@@ -3586,12 +3698,18 @@ STATIC void* _shm_create(const char *name,
   fp = fopen(file,"w");
   fprintf(fp,"0\n");
   fclose(fp);
-  *key = ftok(file,'G');
+  *key = ftok(file,token);
+  /* printf("p[%d] CREATE SHM name: %s key: %d id: %d\n",g_state.rank,name,*key,(int)token); */
+  sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|0600, key: %d, name: %s id: %d\n",
+      g_state.rank,*key,name,(int)token);
   shm_id = shmget(*key,size,IPC_CREAT|0600);
+  _shmget_err(shm_id, ebuf);
   if (shm_id == -1) {
     comex_error("_shm_create: shmget failed", shm_id);
   }
   mapped = shmat(shm_id, NULL, 0);
+  /* printf("p[%d] ATTACH SHM name: %s key: %d\n",g_state.rank,name,*key); */
+  _shmat_err(mapped);
   return mapped;
 #else
     void *mapped = NULL;
@@ -3651,11 +3769,17 @@ STATIC void* _shm_attach(const char *name, size_t size, key_t key)
 {
   int shm_id;
   void *mapped = NULL;
+  char ebuf[128];
+  sprintf(ebuf,"p[%d] (shmget in shm_attach) flags: 0600, key: %d, name: %s\n",
+      g_state.rank,key,name);
   shm_id = shmget(key,size,0600);
+  _shmget_err(shm_id, ebuf);
   if (shm_id == -1) {
     comex_error("_shm_attach: shmget failed", shm_id);
   }
   mapped = shmat(shm_id, NULL, 0);
+  /* printf("p[%d] ATTACH SHM name: %s key: %d\n",g_state.rank,name,key); */
+  _shmat_err(mapped);
   return mapped;
 }
 #else
