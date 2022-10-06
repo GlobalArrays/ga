@@ -29,7 +29,7 @@
 # This is used to specify a time out for global array unit tests. It's 60
 # seconds by default, but may need to be longer on some platforms.
 if (NOT GLOBALARRAYS_TEST_TIMEOUT) 
-  set (GLOBALARRAYS_TEST_TIMEOUT 180 
+  set (GLOBALARRAYS_TEST_TIMEOUT 240 
     CACHE STRING "Time out for global array unit tests.")
 endif ()
 

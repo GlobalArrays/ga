@@ -122,12 +122,12 @@ if (ENABLE_FORTRAN)
   ga_add_parallel_test (simple_groups      "simple_groups.F ffflush.F"     )
   ga_add_parallel_test (simple_groups_comm "simple_groups_comm.F ffflush.F")
 
-# ga_add_parallel_test (nga-onesided nga-onesided.F ffflush.F util.c)
-# ga_add_parallel_test (nga-patch nga-patch.F ffflush.F util.c)
-# ga_add_parallel_test (nga-periodic nga-periodic.F ffflush.F util.c)
-# ga_add_parallel_test (nga-scatter nga-scatter.F ffflush.F)
-# ga_add_parallel_test (ngatest ngatest.F ffflush.F util.c)
-# ga_add_parallel_test (nga-util nga-util.F ffflush.F)
+  ga_add_parallel_test (nga-onesided   "ngatest_src/generated/nga-onesided.F ffflush.F util.c")
+  ga_add_parallel_test (nga-patch      "ngatest_src/generated/nga-patch.F    ffflush.F util.c")
+  ga_add_parallel_test (nga-periodic   "ngatest_src/generated/nga-periodic.F ffflush.F util.c")
+  ga_add_parallel_test (nga-scatter    "ngatest_src/generated/nga-scatter.F  ffflush.F util.c")
+  ga_add_parallel_test (ngatest        "ngatest_src/generated/ngatest.F      ffflush.F util.c")
+  ga_add_parallel_test (nga-util       "ngatest_src/generated/nga-util.F     ffflush.F util.c")
 
 endif()
 
