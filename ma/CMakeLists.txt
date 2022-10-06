@@ -87,18 +87,9 @@ endif()
 # -------------------------------------------------------------
 
 if(ENABLE_TESTS)
-
   if (ENABLE_FORTRAN)
-    add_executable(testf.x testf.F)
+    ga_add_parallel_test(testf testf.F)
   endif()
-  add_executable(test-coalesce.x test-coalesce.c)
-  add_executable(test-inquire.x test-inquire.c)
-  #add_executable(testc.x testc.c)
-  if (ENABLE_FORTRAN)
-    target_link_libraries(testf.x ga)
-  endif()
-  target_link_libraries(test-coalesce.x ga)
-  target_link_libraries(test-inquire.x ga)
-  #target_link_libraries(testc.x ga)
-
+  ga_add_parallel_test(test-coalesce test-coalesce.c)
+  ga_add_parallel_test(test-inquire test-inquire.c)
 endif()
