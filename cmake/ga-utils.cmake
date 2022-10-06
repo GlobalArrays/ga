@@ -37,13 +37,17 @@ endif ()
 # ga_add_parallel_test
 # -------------------------------------------------------------
 function(ga_add_parallel_test test_name test_srcs)
-  # if(DEFINED ARGV2)
-  #   set(GA_TEST_NPROCS ${ARGV2})
-  # endif()
-  set(GA_TEST_NPROCS 5)
+  set(GA_TEST_NPROCS 4)
+  if(MPI_PR)
+    set(GA_TEST_NPROCS 5)
+  endif()
+  if(DEFINED ARGV2)
+    set(GA_TEST_NPROCS ${ARGV2})
+  endif()
+
   set(__ga_mpiexec ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${GA_TEST_NPROCS})
   if(MPI_LAUNCH_CMD)
-    set(__ga_mpiexec ${MPI_LAUNCH_CMD})
+    set(__ga_mpiexec ${MPI_LAUNCH_CMD} ${MPIEXEC_NUMPROC_FLAG} ${GA_TEST_NPROCS})
   endif()
 
   separate_arguments(test_srcs)

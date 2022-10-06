@@ -43,6 +43,13 @@ include_directories(BEFORE
   ${PROJECT_BINARY_DIR})
 
 
+set(TEST_NPROCS_1 1)
+set(TEST_NPROCS_2 2)
+if(MPI_PR)
+  set(TEST_NPROCS_1 2)
+  set(TEST_NPROCS_2 3)
+endif()
+
 # -------------------------------------------------------------
 # Build test executables
 # -------------------------------------------------------------
@@ -122,12 +129,12 @@ if (ENABLE_FORTRAN)
   ga_add_parallel_test (simple_groups      "simple_groups.F ffflush.F"     )
   ga_add_parallel_test (simple_groups_comm "simple_groups_comm.F ffflush.F")
 
-  ga_add_parallel_test (nga-onesided   "ngatest_src/generated/nga-onesided.F ffflush.F util.c")
-  ga_add_parallel_test (nga-patch      "ngatest_src/generated/nga-patch.F    ffflush.F util.c")
-  ga_add_parallel_test (nga-periodic   "ngatest_src/generated/nga-periodic.F ffflush.F util.c")
-  ga_add_parallel_test (nga-scatter    "ngatest_src/generated/nga-scatter.F  ffflush.F util.c")
-  ga_add_parallel_test (ngatest        "ngatest_src/generated/ngatest.F      ffflush.F util.c")
-  ga_add_parallel_test (nga-util       "ngatest_src/generated/nga-util.F     ffflush.F util.c")
+  ga_add_parallel_test (nga-onesided   "ngatest_src/generated/nga-onesided.F ffflush.F util.c" ${TEST_NPROCS_2})
+  ga_add_parallel_test (nga-patch      "ngatest_src/generated/nga-patch.F    ffflush.F util.c" ${TEST_NPROCS_1})
+  ga_add_parallel_test (nga-periodic   "ngatest_src/generated/nga-periodic.F ffflush.F util.c"                 )
+  ga_add_parallel_test (nga-scatter    "ngatest_src/generated/nga-scatter.F  ffflush.F util.c"                 )
+  ga_add_parallel_test (ngatest        "ngatest_src/generated/ngatest.F      ffflush.F util.c" ${TEST_NPROCS_1})
+  ga_add_parallel_test (nga-util       "ngatest_src/generated/nga-util.F     ffflush.F util.c"                 )
 
 endif()
 
