@@ -207,6 +207,9 @@ int comex_init()
 
     /* Pick up environment variables */
     {
+      int armci_verbose;
+      int me;
+
       char *value = NULL;
       nb_max_outstanding = COMEX_MAX_NB_OUTSTANDING; /* default */
       value = getenv("COMEX_MAX_NB_OUTSTANDING");
@@ -214,6 +217,22 @@ int comex_init()
         nb_max_outstanding = atoi(value);
       }
       COMEX_ASSERT(nb_max_outstanding > 0);
+
+#if DEBUG
+      armci_verbose = 1;
+#else
+      armci_verbose = 0;
+#endif
+      value = getenv("ARMCI_VERBOSE");
+      if (NULL != value) {
+          armci_verbose = atoi(value);
+      }
+
+      if (armci_verbose && 0 == l_state.rank) {
+            printf("COMEX_MAX_NB_OUTSTANDING=%d\n", nb_max_outstanding);
+            fflush(stdout);
+      }
+
     }
 
     

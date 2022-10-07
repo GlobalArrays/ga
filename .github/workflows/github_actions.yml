@@ -16,7 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-18.04, macos-10.15]
+        os: [ubuntu-20.04, macos-11]
         experimental: [false]
         mpi_impl:
           - openmpi
@@ -28,17 +28,24 @@ jobs:
           - armci
           - mpi-pr
         f77:
-          - gfortran-9
+          - gfortran
         cc:
           - clang
-          - gcc-9
+          - gcc
         include:
           - os: ubuntu-latest
-            experimental: true 
+            experimental: true
             mpi_impl: mpich
             armci_network: mpi-ts
             f77: gfortran-11
             cc: gcc-11
+          - os: ubuntu-20.04
+            experimental: true
+            mpi_impl: mpich
+            armci_network: mpi-pr
+            f77: gfortran-10
+            cc: gcc-10
+            use_cmake: "Y"
           - os: ubuntu-latest
             experimental: true
             mpi_impl: intel
@@ -53,41 +60,41 @@ jobs:
             config_opts: --enable-i4 --without-blas --enable-cxx --disable-f77
             f77: gfortran
             cc: gcc
-          - os: macos-10.15
+          - os: macos-11
             experimental: true
             mpi_impl: mpich
             armci_network: mpi-pr
             f77: ifort
             cc: icc
-          - os: ubuntu-18.04
+          - os: ubuntu-20.04
             experimental: true 
             mpi_impl: mpich
             armci_network: mpi-pr
             f77: gfortran
             cc: gcc
             use_sicm: "Y"
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             experimental: true 
             mpi_impl: mpich
             armci_network: mpi-ts
             config_opts: "--disable-f77 --enable-cxx"
             f77: gfortran-10
             cc: gcc-10
-          - os: macos-10.15
+          - os: macos-12
             experimental: true 
             mpi_impl: mpich
             armci_network: mpi-ts
             config_opts: "--disable-static --enable-shared"
-            f77: gfortran-10
+            f77: gfortran
             cc: clang
-          - os: macos-10.15
+          - os: macos-12
             experimental: true
             use_cmake: "Y"
             mpi_impl: mpich
             armci_network: mpi-pr
-            f77: gfortran-10
+            f77: gfortran
             cc: clang
-          - os: ubuntu-18.04
+          - os: ubuntu-20.04
             experimental: true
             use_cmake: "Y"
             mpi_impl: openmpi
@@ -155,6 +162,8 @@ jobs:
           ;;
           esac
           if [[ "$FC" == "ifort" ]] || [[ "$CC" == "icc" ]] ; then ./travis/install-intel.sh; else true;  fi
+          echo FC is `which "$FC"`
+          echo FC compiler version `"$FC" -v`
       - name: before_install
         if: steps.ga-cache-install.outputs.cache-hit != 'true'
         run: |

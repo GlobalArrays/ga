@@ -177,6 +177,7 @@ if (ENABLE_BLAS)
       set(SPP_GIT_TAG master)
     endif()
     include(FetchContent)
+    set( gpu_backend "none" CACHE STRING "GPU backend to use" FORCE)
     if(NOT TARGET blaspp)
       FetchContent_Declare(
         blaspp
@@ -219,8 +220,6 @@ endif()
 
 if(ENABLE_DPCPP)
   set(USE_DPCPP ON)
-  find_package(IntelSYCL REQUIRED)
-  set(Intel_SYCL_TARGET Intel::SYCL)
 endif()
 
 if (ENABLE_SCALAPACK)
@@ -280,10 +279,6 @@ if (HAVE_BLAS)
 
   list(APPEND linalg_lib BLAS::BLAS ${_la_cxx_blas})
   message(STATUS "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
-  if(ENABLE_DPCPP)
-    list(APPEND linalg_lib ${Intel_SYCL_TARGET})
-    message(STATUS "SYCL_LIBRARIES: ${Intel_SYCL_TARGET}")
-  endif()
 endif()
 
 if (HAVE_LAPACK)

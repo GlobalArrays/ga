@@ -116,6 +116,16 @@ message(STATUS "Checking MPI ...")
 find_package (MPI REQUIRED)
 set(GA_EXTRA_LIBS ${GA_EXTRA_LIBS} MPI::MPI_C)
 if(ENABLE_FORTRAN)
+  #macos fix for clang+gfortran build
+  #linking MPI::MPI_Fortran adds the flag to clang compile line
+  if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+    get_target_property(_mpif_ico MPI::MPI_Fortran INTERFACE_COMPILE_OPTIONS)
+    if(_mpif_ico)
+      string(REPLACE "-fallow-argument-mismatch" "" _mpif_ico ${_mpif_ico})
+      separate_arguments(_mpif_ico)
+      set_target_properties(MPI::MPI_Fortran PROPERTIES INTERFACE_COMPILE_OPTIONS "${_mpif_ico}")
+    endif()
+  endif()
   list(APPEND GA_EXTRA_LIBS MPI::MPI_Fortran)
 endif()
 
@@ -170,7 +180,7 @@ if(ENABLE_PROFILING)
 endif()
 if(USE_CRAYSHASTA)
   set(__CRAYXE 1)
-  list(APPEND GA_EXTRA_LIBS pmi2)
+  # list(APPEND GA_EXTRA_LIBS pmi2)
 endif()
 
 # hardwire ARMCI configuration options
@@ -216,6 +226,10 @@ if (ENABLE_FORTRAN)
      message(STATUS "Using IBM XL Fortran compiler settings")
      set (FORTRAN_I8_FLAG -qintsize=8)
      set (FORTRAN_I4_FLAG -qintsize=4)
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Fujitsu")
+     message(STATUS "Fujitsu Fortran compiler settings")
+     set (FORTRAN_I8_FLAG "-CcdII8 -CcdLL8")
+     set (FORTRAN_I4_FLAG "")
   endif()
 else()
 # need to set these variable even if only compiling C/C++
@@ -232,8 +246,25 @@ endif()
 # if(_fam_flag_exists)
 #   set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
 # endif()
-if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU" AND CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL "10.1")
-  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  if(CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL "10.1")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
+  endif()
+  if(CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL "11.1")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-tree-slp-vectorize")
+  endif()
+endif()
+
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  if(ENABLE_CXX) 
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      add_compile_options(-fno-aggressive-loop-optimizations)
+    endif()
+  else()
+    add_compile_options(-fno-aggressive-loop-optimizations)
+  endif()  
+elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-aggressive-loop-optimizations")
 endif()
 
 # Hardwire these settings. No way to check for Fortran integer size in CMake
@@ -310,10 +341,6 @@ if(NOT "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Darwin")
   if(NOT MSVC)
     list(APPEND GA_EXTRA_LIBS rt)
   endif()
-endif()
-
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-  add_compile_options(-fno-aggressive-loop-optimizations)
 endif()
 
 if(ENABLE_BLAS)
@@ -461,12 +488,6 @@ if(ENABLE_BLAS)
     ${CMAKE_CURRENT_LIST_DIR}/cmake/linalg-modules/FindStandardFortran.cmake
     DESTINATION ${INSTALL_CONFIGDIR}/linalg-cmake-modules
   )
-  if(ENABLE_DPCPP)
-    install(FILES
-      ${CMAKE_CURRENT_LIST_DIR}/cmake/FindIntelSYCL.cmake
-      DESTINATION ${INSTALL_CONFIGDIR}
-    )
-  endif()
 endif()
 
 list(REMOVE_AT CMAKE_MODULE_PATH 0)
