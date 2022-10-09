@@ -26,13 +26,6 @@
 # distribute to other US Government contractors.
 #
 
-# This is used to specify a time out for global array unit tests. It's 60
-# seconds by default, but may need to be longer on some platforms.
-if (NOT GLOBALARRAYS_TEST_TIMEOUT) 
-  set (GLOBALARRAYS_TEST_TIMEOUT 240 
-    CACHE STRING "Time out for global array unit tests.")
-endif ()
-
 # -------------------------------------------------------------
 # ga_add_parallel_test
 # -------------------------------------------------------------
@@ -46,8 +39,14 @@ function(ga_add_parallel_test test_name test_srcs)
   endif()
 
   set(__ga_mpiexec ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${GA_TEST_NPROCS})
-  if(MPI_LAUNCH_CMD)
-    set(__ga_mpiexec ${MPI_LAUNCH_CMD} ${MPIEXEC_NUMPROC_FLAG} ${GA_TEST_NPROCS})
+  if(GA_JOB_LAUNCH_CMD)
+    set(__ga_mpiexec ${GA_JOB_LAUNCH_CMD})
+    if(GA_JOB_LAUNCH_ARGS)
+      separate_arguments(GA_JOB_LAUNCH_ARGS)
+      set(__ga_mpiexec ${__ga_mpiexec} ${GA_JOB_LAUNCH_ARGS})
+    else()
+      set(__ga_mpiexec ${__ga_mpiexec} ${MPIEXEC_NUMPROC_FLAG} ${GA_TEST_NPROCS})
+    endif()
   endif()
 
   separate_arguments(test_srcs)
@@ -56,10 +55,7 @@ function(ga_add_parallel_test test_name test_srcs)
   target_link_libraries(${__ga_test_exe} ga)
 
   add_test(NAME ${test_name} COMMAND ${__ga_mpiexec} ${CMAKE_CURRENT_BINARY_DIR}/${__ga_test_exe})
-  set_tests_properties(${test_name}
-    PROPERTIES 
-    TIMEOUT ${GLOBALARRAYS_TEST_TIMEOUT}
-  )
+
 endfunction(ga_add_parallel_test)
 
 
