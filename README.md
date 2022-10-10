@@ -439,6 +439,9 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
     * `LINALG_REQUIRED_COMPONENTS`: Options are `lp64` or `ilp64`. [Default:lp64]
     * `LINALG_OPTIONAL_COMPONENTS`: `sycl` [Default:none]
     * `ENABLE_SCALAPACK`: To enable ScaLAPACK discovery.
+* `[OPTIONAL]` CTEST options for handling different types of job launchers and their parameters.
+   * `GA_JOB_LAUNCH_CMD`: `mpirun`
+   * `GA_JOB_LAUNCH_ARGS`: `"-n 5"`
 #### The following options are standard CMake parameters. More information about them can be found in the CMake documentation.
 
 * `CMAKE_INSTALL_PREFIX` Specify the install location for GA.
