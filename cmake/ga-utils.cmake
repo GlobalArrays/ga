@@ -30,6 +30,7 @@
 # ga_add_parallel_test
 # -------------------------------------------------------------
 function(ga_add_parallel_test test_name test_srcs)
+  get_filename_component(_test_name_only "${test_name}" NAME)
   set(GA_TEST_NPROCS 4)
   if(MPI_PR)
     set(GA_TEST_NPROCS 5)
@@ -50,7 +51,7 @@ function(ga_add_parallel_test test_name test_srcs)
   endif()
 
   separate_arguments(test_srcs)
-  set(__ga_test_exe "${test_name}.x")
+  set(__ga_test_exe "${_test_name_only}.x")
   add_executable (${__ga_test_exe} ${test_srcs})
   target_link_libraries(${__ga_test_exe} ga)
 
