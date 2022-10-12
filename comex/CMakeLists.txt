@@ -56,6 +56,7 @@ elseif (MPI_PR)
     message(STATUS "Setting Compiler for dev_utils_hip.cpp to HIP")
     set(COMEX_GPU_DEVICE
       src-mpi-pr/dev_utils_hip.cpp
+      src-mpi-pr/mpi_wrappers.c
     )
   endif()
   set(COMEX_DEVICE
