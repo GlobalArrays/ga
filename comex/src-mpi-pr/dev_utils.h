@@ -94,14 +94,14 @@ static inline void _acc_dev(
   rocblas_handle handle;
   if (op == COMEX_ACC_DBL) {
     const int n = bytes/sizeof(double);
-    rocblasCreate(&handle);
-    rocblasDaxpy(handle,n,scale,src,1,dst,1);
-    rocblasDestroy(handle);
+    rocblas_create_handle(&handle);
+    rocblas_daxpy(handle,n,scale,src,1,dst,1);
+    rocblas_destroy_handle(handle);
   } else if (op == COMEX_ACC_FLT) {
     const int n = bytes/sizeof(float);
-    rocblasCreate(&handle);
-    rocblasSaxpy(handle,n,scale,src,1,dst,1);
-    rocblasDestroy(handle);
+    rocblas_create_handle(&handle);
+    rocblas_saxpy(handle,n,scale,src,1,dst,1);
+    rocblas_destroy_handle(handle);
   } else if (op == COMEX_ACC_INT) {
     const int n = bytes/sizeof(int);
     deviceIaxpy(dst, src, scale, n);
@@ -110,14 +110,14 @@ static inline void _acc_dev(
     deviceLaxpy(dst, src, scale, n);
   } else if (op == COMEX_ACC_DCP) {
     const int n = bytes/sizeof(DoubleComplexDev);
-    rocblasCreate(&handle);
-    rocblasZaxpy(handle,n,scale,src,1,dst,1);
-    rocblasDestroy(handle);
+    rocblas_create_handle(&handle);
+    rocblas_zaxpy(handle,n,scale,src,1,dst,1);
+    rocblas_destroy_handle(handle);
   } else if (op == COMEX_ACC_CPL) {
     const int n = bytes/sizeof(SingleComplexDev);
-    rocblasCreate(&handle);
-    rocblasCaxpy(handle,n,scale,src,1,dst,1);
-    rocblasDestroy(handle);
+    rocblas_create_handle(&handle);
+    rocblas_caxpy(handle,n,scale,src,1,dst,1);
+    rocblas_destroy_handle(handle);
   } else {
   }
 #endif

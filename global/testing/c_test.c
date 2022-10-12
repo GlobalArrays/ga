@@ -8,7 +8,7 @@
 
 #if defined(ENABLE_HIP)
 #include <hip/hip_runtime.h>
-#elif defined(ENABLE_CUDA) 
+#elif defined(ENABLE_CUDA)
 #include <cuda_runtime.h>
 #endif
 
@@ -22,6 +22,51 @@
 #define MAXCOUNT 10000
 #define MAX_FACTOR 256
 #define NLOOP 10
+
+void set_device(int* devid) {
+  #if defined(ENABLE_CUDA)
+  cudaSetDevice(*devid);
+  #elif defined(ENABLE_HIP)
+  hipSetDevice(*devid);
+  #endif    
+}
+
+void device_malloc(void **buf, size_t bsize){
+  #if defined(ENABLE_CUDA)
+  cudaMalloc(buf, bsize);
+  #elif defined(ENABLE_HIP)
+  hipMalloc(buf, bsize);
+  #endif    
+}
+
+void memcpyH2D(void* dbuf, void* sbuf, size_t bsize){
+  #if defined(ENABLE_CUDA)
+  cudaMemcpy(dbuf, sbuf, bsize, cudaMemcpyHostToDevice);
+  cudaDeviceSynchronize();
+  #elif defined(ENABLE_HIP)
+  hipMemcpy(dbuf, sbuf, bsize, hipMemcpyHostToDevice);
+  hipDeviceSynchronize();
+  #endif    
+}
+
+void memcpyD2H(void* dbuf, void* sbuf, size_t bsize){
+  #if defined(ENABLE_CUDA)
+  cudaMemcpy(dbuf, sbuf, bsize, cudaMemcpyDeviceToHost);
+  cudaDeviceSynchronize();
+  #elif defined(ENABLE_HIP)
+  hipMemcpy(dbuf, sbuf, bsize, hipMemcpyDeviceToHost);
+  hipDeviceSynchronize();
+  #endif    
+}
+
+void device_free(void *buf) {
+  #if defined(ENABLE_CUDA)
+  cudaFree(buf);
+  #elif defined(ENABLE_HIP)
+  hipFree(buf);
+  #endif   
+}
+
 
 void factor(int p, int *idx, int *idy) {
   int i, j;                              
@@ -173,8 +218,8 @@ void test_int_array(int on_device, int local_buf_on_device)
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   if (local_buf_on_device) {
     void *tbuf;
-    cudaSetDevice(my_dev);
-    cudaMalloc(&tbuf,(int)(nsize*sizeof(int)));
+    set_device(&my_dev);
+    device_malloc(&tbuf,(int)(nsize*sizeof(int)));
     buf = (int*)tbuf;
   } else {
     buf = (int*)malloc(nsize*sizeof(int));
@@ -197,8 +242,7 @@ void test_int_array(int on_device, int local_buf_on_device)
             tbuf[idx] = ii*DIMSIZE+jj;
           }
         }
-        cudaMemcpy(buf, tbuf, tnelem*sizeof(int), cudaMemcpyHostToDevice);
-        cudaDeviceSynchronize();
+        memcpyH2D(buf, tbuf, tnelem*sizeof(int));
         free(tbuf);
       }
     } else {
@@ -231,8 +275,7 @@ void test_int_array(int on_device, int local_buf_on_device)
         tbuf = (int*)malloc(tnelem*sizeof(int));
         NGA_Access(g_a,tlo,thi,&ptr,&tld);
         for (i=0; i<tnelem; i++) tbuf[i] = 0;
-        cudaMemcpy(tbuf, ptr, tnelem*sizeof(int), cudaMemcpyDeviceToHost);
-        cudaDeviceSynchronize();
+        memcpyD2H(tbuf, ptr, tnelem*sizeof(int));
       } else {
         NGA_Access(g_a,tlo,thi,&tbuf,&tld);
       }
@@ -268,8 +311,7 @@ void test_int_array(int on_device, int local_buf_on_device)
     if (local_buf_on_device) {
       int *tbuf = (int*)malloc(nsize*sizeof(int));
       for (i=0; i<nsize; i++) tbuf[i] = 0;
-      cudaMemcpy(buf, tbuf, nsize*sizeof(int), cudaMemcpyHostToDevice);
-      cudaDeviceSynchronize();
+      memcpyH2D(buf, tbuf, nsize*sizeof(int));
       free(tbuf);
     } else {
       for (i=0; i<nsize; i++) buf[i] = 0;
@@ -292,8 +334,7 @@ void test_int_array(int on_device, int local_buf_on_device)
         int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
         tbuf = (int*)malloc(tnelem*sizeof(int));
         for (i=0; i<tnelem; i++) tbuf[i] = 0;
-        cudaMemcpy(tbuf, buf, tnelem*sizeof(int), cudaMemcpyDeviceToHost);
-        cudaDeviceSynchronize();
+        memcpyD2H(tbuf, buf, tnelem*sizeof(int));
         for (ii = lo[0]; ii<=hi[0]; ii++) {
           i = ii-lo[0];
           for (jj=lo[1]; jj<=hi[1]; jj++) {
@@ -336,8 +377,7 @@ void test_int_array(int on_device, int local_buf_on_device)
             tbuf[idx] = ii*DIMSIZE+jj;
           }
         }
-        cudaMemcpy(buf, tbuf, tnelem*sizeof(int), cudaMemcpyHostToDevice);
-        cudaDeviceSynchronize();
+        memcpyH2D(buf, tbuf, tnelem*sizeof(int));
         free(tbuf);
       }
     } else {
@@ -369,8 +409,7 @@ void test_int_array(int on_device, int local_buf_on_device)
         int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
         tbuf = (int*)malloc(tnelem*sizeof(int));
         for (i=0; i<nelem; i++) tbuf[i] = 0;
-        cudaMemcpy(buf, tbuf, tnelem*sizeof(int), cudaMemcpyHostToDevice);
-        cudaDeviceSynchronize();
+        memcpyH2D(buf, tbuf, tnelem*sizeof(int));
         free(tbuf);
       }
     } else {
@@ -399,8 +438,7 @@ void test_int_array(int on_device, int local_buf_on_device)
         int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
         tbuf = (int*)malloc(tnelem*sizeof(int));
         for (i=0; i<tnelem; i++) tbuf[i] = 0;
-        cudaMemcpy(tbuf, buf, tnelem*sizeof(int), cudaMemcpyDeviceToHost);
-        cudaDeviceSynchronize();
+        memcpyD2H(tbuf, buf, tnelem*sizeof(int));
         for (ii = lo[0]; ii<=hi[0]; ii++) {
           i = ii-lo[0];
           for (jj=lo[1]; jj<=hi[1]; jj++) {
@@ -435,7 +473,7 @@ void test_int_array(int on_device, int local_buf_on_device)
   }
 
   if (local_buf_on_device) {
-    cudaFree(buf);
+    device_free(buf);
   } else {
     free(buf);
   }
@@ -550,8 +588,8 @@ void test_dbl_array(int on_device, int local_buf_on_device)
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   if (local_buf_on_device) {
     void *tbuf;
-    cudaSetDevice(my_dev);
-    cudaMalloc(&tbuf,(int)(nsize*sizeof(double)));
+    set_device(&my_dev);
+    device_malloc(&tbuf,(int)(nsize*sizeof(double)));
     buf = (double*)tbuf;
   } else {
     buf = (double*)malloc(nsize*sizeof(double));
@@ -573,8 +611,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
             tbuf[idx] = (double)(ii*DIMSIZE+jj);
           }
         }
-        cudaMemcpy(buf, tbuf, tnelem*sizeof(double), cudaMemcpyHostToDevice);
-        cudaDeviceSynchronize();
+        memcpyH2D(buf, tbuf, tnelem*sizeof(double));
         free(tbuf);
       }
     } else {
@@ -609,7 +646,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
           tbuf = (double*)malloc(tnelem*sizeof(double));
           NGA_Access(g_a,tlo,thi,&ptr,&tld);
           for (i=0; i<tnelem; i++) tbuf[i] = 0.0;
-          cudaMemcpy(tbuf, ptr, tnelem*sizeof(double), cudaMemcpyDeviceToHost);
+          memcpyD2H(tbuf, ptr, tnelem*sizeof(double));
         } else {
           NGA_Access(g_a,tlo,thi,&tbuf,&tld);
         }
@@ -646,8 +683,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
     if (local_buf_on_device) {
       double *tbuf = (double*)malloc(nsize*sizeof(double));
       for (i=0; i<nsize; i++) tbuf[i] = 0.0;
-      cudaMemcpy(buf, tbuf, nsize*sizeof(double), cudaMemcpyHostToDevice);
-      cudaDeviceSynchronize();
+      memcpyH2D(buf, tbuf, nsize*sizeof(double));
       free(tbuf);
     } else {
       for (i=0; i<nsize; i++) buf[i] = 0.0;
@@ -668,8 +704,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
     g_ok = 1;
     if (local_buf_on_device) {
       double *tbuf = (double*)malloc(nsize*sizeof(double));
-      cudaMemcpy(tbuf, buf, nsize*sizeof(double), cudaMemcpyDeviceToHost);
-      cudaDeviceSynchronize();
+      memcpyD2H(tbuf, buf, nsize*sizeof(double));
       for (ii = lo[0]; ii<=hi[0]; ii++) {
         i = ii-lo[0];
         for (jj = lo[1]; jj<=hi[1]; jj++) {
@@ -711,8 +746,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
             tbuf[idx] = (double)(ii*DIMSIZE+jj);
           }
         }
-        cudaMemcpy(buf, tbuf, tnelem*sizeof(double), cudaMemcpyHostToDevice);
-        cudaDeviceSynchronize();
+        memcpyH2D(buf, tbuf, tnelem*sizeof(double));
         free(tbuf);
       }
     } else {
@@ -744,8 +778,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
         int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
         tbuf = (double*)malloc(tnelem*sizeof(double));
         for (i=0; i<nelem; i++) tbuf[i] = 0.0;
-        cudaMemcpy(buf, tbuf, tnelem*sizeof(double), cudaMemcpyHostToDevice);
-        cudaDeviceSynchronize();
+        memcpyH2D(buf, tbuf, tnelem*sizeof(double));
         free(tbuf);
       }
     } else {
@@ -774,8 +807,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
         int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
         tbuf = (double*)malloc(tnelem*sizeof(double));
         for (i=0; i<tnelem; i++) tbuf[i] = 0;
-        cudaMemcpy(tbuf, buf, tnelem*sizeof(double), cudaMemcpyDeviceToHost);
-        cudaDeviceSynchronize();
+        memcpyD2H(tbuf, buf, tnelem*sizeof(double));
         for (ii = lo[0]; ii<=hi[0]; ii++) {
           i = ii-lo[0];
           for (jj=lo[1]; jj<=hi[1]; jj++) {
@@ -808,7 +840,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
     t_chk += (GA_Wtime()-tbeg);
   }
   if (local_buf_on_device) {
-    cudaFree(buf);
+    device_free(buf);
   } else {
     free(buf);
   }
@@ -958,8 +990,8 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
   nsize = thi[0]-tlo[0]+1;
   if (local_buf_on_device) {
     void *tbuf;
-    cudaSetDevice(my_dev);
-    cudaMalloc(&tbuf,(int)(nsize*sizeof(int)));
+    set_device(&my_dev);
+    device_malloc(&tbuf,(int)(nsize*sizeof(int)));
     buf = (int*)tbuf;
   } else {
     buf = (int*)malloc(nsize*sizeof(int));
@@ -974,8 +1006,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
         i = ii-tlo[0];
         tbuf[i] = ii;
       }
-      cudaMemcpy(buf, tbuf, nsize*sizeof(int), cudaMemcpyHostToDevice);
-      cudaDeviceSynchronize();
+      memcpyH2D(buf, tbuf, nsize*sizeof(int));
       free(tbuf);
     } else {
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
@@ -1000,8 +1031,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
     if (local_buf_on_device) {
       int *tbuf = (int*)malloc(nsize*sizeof(int));
       for (i=0; i<nsize; i++) tbuf[i] = 0;
-      cudaMemcpy(buf, tbuf, nsize*sizeof(int), cudaMemcpyHostToDevice);
-      cudaDeviceSynchronize();
+      memcpyH2D(buf, tbuf, nsize*sizeof(int));
       free(tbuf);
     } else {
       for (i=0; i<nsize; i++) buf[i] = 0;
@@ -1022,8 +1052,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
     g_ok = 1;
     if (local_buf_on_device) {
       int *tbuf = (int*)malloc(nsize*sizeof(int));
-      cudaMemcpy(tbuf, buf, nsize*sizeof(int), cudaMemcpyDeviceToHost);
-      cudaDeviceSynchronize();
+      memcpyD2H(tbuf, buf, nsize*sizeof(int));
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
         i = ii-tlo[0];
         if (tbuf[i] != ii) {
@@ -1049,8 +1078,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
         i = ii-tlo[0];
         tbuf[i] = ii;
       }
-      cudaMemcpy(buf, tbuf, nsize*sizeof(int), cudaMemcpyHostToDevice);
-      cudaDeviceSynchronize();
+      memcpyH2D(buf, tbuf, nsize*sizeof(int));
       free(tbuf);
     } else {
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
@@ -1079,7 +1107,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
       tbuf = (int*)malloc(tnelem*sizeof(int));
       NGA_Access(g_a,lo,hi,&ptr,&tld);
       for (i=0; i<tnelem; i++) tbuf[i] = 0;
-      cudaMemcpy(tbuf, ptr, tnelem*sizeof(int), cudaMemcpyDeviceToHost);
+      memcpyD2H(tbuf, ptr, tnelem*sizeof(int));
       if (tnelem > 0) {
         printf("p[%d] acc buffer:",rank);
         for (i=0; i<tnelem; i++) printf(" %d",tbuf[i]);
@@ -1095,8 +1123,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
         i = ii-tlo[0];
         tbuf[i] = 0;
       }
-      cudaMemcpy(buf, tbuf, nsize*sizeof(int), cudaMemcpyHostToDevice);
-      cudaDeviceSynchronize();
+      memcpyH2D(buf, tbuf, nsize*sizeof(int));
       free(tbuf);
     } else {
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
@@ -1118,8 +1145,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
     a_ok = 1;
     if (local_buf_on_device) {
       int *tbuf = (int*)malloc(nsize*sizeof(int));
-      cudaMemcpy(tbuf, buf, nsize*sizeof(int), cudaMemcpyDeviceToHost);
-      cudaDeviceSynchronize();
+      memcpyD2H(tbuf, buf, nsize*sizeof(int));
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
         i = ii-tlo[0];
         if (tbuf[i] != 2*ii) {
@@ -1141,7 +1167,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
     t_chk += (GA_Wtime()-tbeg);
   }
   if (local_buf_on_device) {
-    cudaFree(buf);
+    device_free(buf);
   } else {
     free(buf);
   }
@@ -1217,8 +1243,8 @@ void test_dbl_1d_array(int on_device, int local_buf_on_device)
   nsize = thi[0]-tlo[0]+1;
   if (local_buf_on_device) {
     void *tbuf;
-    cudaSetDevice(my_dev);
-    cudaMalloc(&tbuf,(int)(nsize*sizeof(double)));
+    set_device(&my_dev);
+    device_malloc(&tbuf,(int)(nsize*sizeof(double)));
     buf = (double*)tbuf;
   } else {
     buf = (double*)malloc(nsize*sizeof(double));
@@ -1233,8 +1259,7 @@ void test_dbl_1d_array(int on_device, int local_buf_on_device)
         i = ii-tlo[0];
         tbuf[i] = (double)ii;
       }
-      cudaMemcpy(buf, tbuf, nsize*sizeof(double), cudaMemcpyHostToDevice);
-      cudaDeviceSynchronize();
+      memcpyH2D(buf, tbuf, nsize*sizeof(double));
       free(tbuf);
     } else {
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
@@ -1258,8 +1283,7 @@ void test_dbl_1d_array(int on_device, int local_buf_on_device)
     if (local_buf_on_device) {
       double *tbuf = (double*)malloc(nsize*sizeof(double));
       for (i=0; i<nsize; i++) tbuf[i] = 0;
-      cudaMemcpy(buf, tbuf, nsize*sizeof(double), cudaMemcpyHostToDevice);
-      cudaDeviceSynchronize();
+      memcpyH2D(buf, tbuf, nsize*sizeof(double));
       free(tbuf);
     } else {
       for (i=0; i<nsize; i++) buf[i] = 0.0;
@@ -1279,8 +1303,7 @@ void test_dbl_1d_array(int on_device, int local_buf_on_device)
     g_ok = 1;
     if (local_buf_on_device) {
       double *tbuf = (double*)malloc(nsize*sizeof(double));
-      cudaMemcpy(tbuf, buf, nsize*sizeof(double), cudaMemcpyDeviceToHost);
-      cudaDeviceSynchronize();
+      memcpyD2H(tbuf, buf, nsize*sizeof(double));
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
         i = ii-tlo[0];
         if (tbuf[i] != (double)ii) {
@@ -1308,8 +1331,7 @@ void test_dbl_1d_array(int on_device, int local_buf_on_device)
         i = ii-tlo[0];
         tbuf[i] = (double)ii;
       }
-      cudaMemcpy(buf, tbuf, nsize*sizeof(double), cudaMemcpyHostToDevice);
-      cudaDeviceSynchronize();
+      memcpyH2D(buf, tbuf, nsize*sizeof(double));
       free(tbuf);
     } else {
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
@@ -1338,7 +1360,7 @@ void test_dbl_1d_array(int on_device, int local_buf_on_device)
       tbuf = (double*)malloc(tnelem*sizeof(double));
       NGA_Access(g_a,lo,hi,&ptr,&tld);
       for (i=0; i<tnelem; i++) tbuf[i] = 0;
-      cudaMemcpy(tbuf, ptr, tnelem*sizeof(double), cudaMemcpyDeviceToHost);
+      memcpyD2H(tbuf, ptr, tnelem*sizeof(double));
       if (tnelem > 0) {
         printf("p[%d] acc buffer:",rank);
         for (i=0; i<tnelem; i++) printf(" %f",tbuf[i]);
@@ -1354,8 +1376,7 @@ void test_dbl_1d_array(int on_device, int local_buf_on_device)
         i = ii-tlo[0];
         tbuf[i] = 0.0;
       }
-      cudaMemcpy(buf, tbuf, nsize*sizeof(double), cudaMemcpyHostToDevice);
-      cudaDeviceSynchronize();
+      memcpyH2D(buf, tbuf, nsize*sizeof(double));
       free(tbuf);
     } else {
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
@@ -1377,8 +1398,7 @@ void test_dbl_1d_array(int on_device, int local_buf_on_device)
     a_ok = 1;
     if (local_buf_on_device) {
       double *tbuf = (double*)malloc(nsize*sizeof(double));
-      cudaMemcpy(tbuf, buf, nsize*sizeof(double), cudaMemcpyDeviceToHost);
-      cudaDeviceSynchronize();
+      memcpyD2H(tbuf, buf, nsize*sizeof(double));
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
         i = ii-tlo[0];
         if (tbuf[i] != (double)(2*ii)) {
@@ -1401,7 +1421,7 @@ void test_dbl_1d_array(int on_device, int local_buf_on_device)
     t_chk += (GA_Wtime()-tbeg);
   }
   if (local_buf_on_device) {
-    cudaFree(buf);
+    device_free(buf);
   } else {
     free(buf);
   }
@@ -1519,8 +1539,8 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
   subsArray = (int**)malloc(nvals*sizeof(int*));
   if (local_buf_on_device) {
     void *vbuf;
-    cudaSetDevice(my_dev);
-    cudaMalloc(&vbuf, nvals*sizeof(double));
+    set_device(&my_dev);
+    device_malloc(&vbuf, nvals*sizeof(double));
     vals = (double*)vbuf;
   } else {
     vals = (double*)malloc(nvals*sizeof(double));
@@ -1538,8 +1558,7 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
     icnt++;
   }
   if (local_buf_on_device) {
-    cudaMemcpy(vals, tbuf, nvals*sizeof(double), cudaMemcpyHostToDevice);
-    cudaDeviceSynchronize();
+    memcpyH2D(vals, tbuf, nvals*sizeof(double));
   } else {
     for (i=0; i<nvals; i++) vals[i] = tbuf[i];
   }
@@ -1578,7 +1597,7 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
           tbuf = (double*)malloc(tnelem*sizeof(double));
           NGA_Access(g_a,tlo,thi,&ptr,&tld);
           for (i=0; i<tnelem; i++) tbuf[i] = 0.0;
-          cudaMemcpy(tbuf, ptr, tnelem*sizeof(double), cudaMemcpyDeviceToHost);
+          memcpyD2H(tbuf, ptr, tnelem*sizeof(double));
         } else {
           NGA_Access(g_a,tlo,thi,&tbuf,&tld);
         }
@@ -1613,8 +1632,7 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
     /* zero out local buffer */
     if (local_buf_on_device) {
       for (i=0; i<nvals; i++) tbuf[i] = 0.0;
-      cudaMemcpy(vals, tbuf, nvals*sizeof(double), cudaMemcpyHostToDevice);
-      cudaDeviceSynchronize();
+      memcpyH2D(vals, tbuf, nvals*sizeof(double));
     } else {
       for (i=0; i<nvals; i++) vals[i] = 0.0;
     }
@@ -1635,8 +1653,7 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
     g_ok = 1;
     icnt = 0;
     if (local_buf_on_device) {
-      cudaMemcpy(tbuf, vals, nvals*sizeof(double), cudaMemcpyDeviceToHost);
-      cudaDeviceSynchronize();
+      memcpyD2H(tbuf, vals, nvals*sizeof(double));
       for (n=rank; n<arraysize; n+=nprocs)
       {
         j = n%dims[1]; 
@@ -1713,7 +1730,7 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
   free(buf);
   free(tbuf);
   if (local_buf_on_device) {
-    cudaFree(vals);
+    device_free(vals);
   } else {
     free(vals);
   }
