@@ -140,6 +140,11 @@ add_library(armci_comex OBJECT
 )
 target_compile_definitions(armci_comex PRIVATE HAVE_CONFIG_H)
 target_include_directories(armci_comex PRIVATE ${MPI_C_INCLUDE_DIRS})
+if(ENABLE_HIP)
+  target_link_libraries(armci_comex PRIVATE roc::rocblas hip::device)
+elseif(ENABLE_CUDA)
+  target_link_libraries(armci_comex PRIVATE CUDA::cublas)
+endif()
 
 add_library(armci
   ${ARMCI_FILES}
