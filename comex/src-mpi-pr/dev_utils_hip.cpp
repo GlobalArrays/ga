@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <mpi.h>
 
-#include <hip/hip_runtime_api.h>
 #include "dev_mem_handle.h"
+#include <hip/hip_runtime_api.h>
 
 #define hipErrCheck(stat)                     \
 {                                             \
@@ -247,24 +247,22 @@ void deviceMemset(void *ptr, int val, size_t bytes)
   }
 }
 
-//TODO
-// __global__ void iaxpy_kernel(int *dst, const int *src, int scale, int n)
-// {
-//   int index = blockIdx.x*blockDim.x+threadIdx.x;
-//   int stride = blockDim.x*gridDim.x;
-//   int i;
-//   for (i=index; i<n; i += stride) {
-//     dst[i] = dst[i] + scale*src[i];
-//   }
-// }
+__global__ void iaxpy_kernel(int *dst, const int *src, int scale, int n)
+{
+  int index = blockIdx.x*blockDim.x+threadIdx.x;
+  int stride = blockDim.x*gridDim.x;
+  int i;
+  for (i=index; i<n; i += stride) {
+    dst[i] = dst[i] + scale*src[i];
+  }
+}
 
 void deviceIaxpy(int *dst, int *src, const int *scale, int n)
 {
   hipError_t ierr;
   dim3 nblocks((n+1023)/1024);
   dim3 ttf(1024);
-  //TODO: Fix kernel launch
-  // hipLaunchKernelGGL(iaxpy_kernel, nblocks, ttf, 0, 0, dst, src, *scale, n);
+  hipLaunchKernelGGL(iaxpy_kernel, nblocks, ttf, 0, 0, dst, src, *scale, n);
   hipDeviceSynchronize();
   ierr = hipGetLastError();
   if (ierr != hipSuccess) {
@@ -294,31 +292,28 @@ void deviceIaxpy(int *dst, int *src, const int *scale, int n)
   }
 }
 
-// TODO
-// __global__ void laxpy_kernel(long *dst, const long *src, long scale, int n)
-// {
-//   int index = blockIdx.x*blockDim.x+threadIdx.x;
-//   int stride = blockDim.x*gridDim.x;
-//   int i;
-//   for (i=index; i<n; i += stride) {
-//     dst[i] = dst[i] + scale*src[i];
-//   }
-// }
+__global__ void laxpy_kernel(long *dst, const long *src, long scale, int n)
+{
+  int index = blockIdx.x*blockDim.x+threadIdx.x;
+  int stride = blockDim.x*gridDim.x;
+  int i;
+  for (i=index; i<n; i += stride) {
+    dst[i] = dst[i] + scale*src[i];
+  }
+}
 
 void deviceLaxpy(long *dst, long *src, const long *scale, int n)
 {
   dim3 nblocks((n+1023)/1024);
   dim3 ttf(1024);
-  //TODO: Fix kernel launch
-  // hipLaunchKernelGGL(laxpy_kernel, nblocks, ttf, 0, 0, dst, src, *scale, n);
+  hipLaunchKernelGGL(laxpy_kernel, nblocks, ttf, 0, 0, dst, src, *scale, n);
 }
 
-//TODO
-// __global__ void inc_int_kernel(int *target, const int *inc)
-// {
-//   int i = threadIdx.x;
-//   target[i] += inc[i];
-// }
+__global__ void inc_int_kernel(int *target, const int *inc)
+{
+  int i = threadIdx.x;
+  target[i] += inc[i];
+}
 
 void deviceAddInt(int *ptr, const int inc)
 {
@@ -328,12 +323,11 @@ void deviceAddInt(int *ptr, const int inc)
   copyToDevice(ptr,&tmp,sizeof(int));
 }
 
-//TODO
-// __global__ void inc_long_kernel(long *target, const long *inc)
-// {
-//   int i = threadIdx.x;
-//   target[i] += inc[i];
-// }
+__global__ void inc_long_kernel(long *target, const long *inc)
+{
+  int i = threadIdx.x;
+  target[i] += inc[i];
+}
 
 void deviceAddLong(long *ptr, const long inc)
 {
