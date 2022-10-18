@@ -49,7 +49,7 @@ case "$os" in
 	sudo rm -rf "$IONEAPI_ROOT"/intelpython "$IONEAPI_ROOT"/dal "$IONEAPI_ROOT"/advisor \
 	     "$IONEAPI_ROOT"/ipp "$IONEAPI_ROOT"/conda_channel 	"$IONEAPI_ROOT"/dnnl \
 	     "$IONEAPI_ROOT"/installer "$IONEAPI_ROOT"/vtune_profiler "$IONEAPI_ROOT"/tbb || true
-	travis/fix_xcodebuild.sh
+	$GITHUB_WORKSPACE/travis/fix_xcodebuild.sh
 	sudo cp xcodebuild "$IONEAPI_ROOT"/compiler/latest/mac/bin/intel64/.
 	source "$IONEAPI_ROOT"/setvars.sh || true
 	ifort -V
