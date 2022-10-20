@@ -101,8 +101,7 @@ int isHostPointer(void *ptr)
     return 1;
   }
 
-  //TODO: no equivalent for cudaMemoryTypeUnregistered
-  if (attr.memoryType == hipMemoryTypeHost /*|| attr.memoryType == cudaMemoryTypeUnregistered*/) {
+  if (attr.memoryType != hipMemoryTypeDevice) {
     return  1;
   }
   return 0;
@@ -272,17 +271,13 @@ void deviceIaxpy(int *dst, int *src, const int *scale, int n)
     hipPointerAttribute_t src_attr;
     hipPointerAttribute_t dst_attr;
     hipError_t  perr = hipPointerGetAttributes(&src_attr, src);
-    //TODO: no equivalent for cudaMemoryTypeUnregistered
-    if (perr != hipSuccess || src_attr.memoryType == hipMemoryTypeHost
-      /*||  src_attr.memoryType == cudaMemoryTypeUnregistered*/) {
+    if (perr != hipSuccess || src_attr.memoryType != hipMemoryTypeDevice {
       printf("p[%d] deviceIaxpy src pointer is on host\n",rank);
     } else if (src_attr.memoryType == hipMemoryTypeDevice)  {
       printf("p[%d] deviceIaxpy src pointer is on device %d\n",rank,src_attr.device);
     }
     perr = hipPointerGetAttributes(&dst_attr, src);
-    //TODO: no equivalent for cudaMemoryTypeUnregistered
-    if (perr != hipSuccess || dst_attr.memoryType == hipMemoryTypeHost 
-      /* || dst_attr.memoryType == cudaMemoryTypeUnregistered */) {
+    if (perr != hipSuccess || dst_attr.memoryType != hipMemoryTypeDevice) {
       printf("p[%d] deviceIaxpy src pointer is on host\n",rank);
     } else if (dst_attr.memoryType == hipMemoryTypeDevice)  {
       printf("p[%d] deviceIaxpy dst pointer is on device %d\n",rank,dst_attr.device);
