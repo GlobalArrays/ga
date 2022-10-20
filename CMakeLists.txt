@@ -206,7 +206,7 @@ if(ENABLE_PROFILING)
 endif()
 if(USE_CRAYSHASTA)
   set(__CRAYXE 1)
-  list(APPEND GA_EXTRA_LIBS pmi2)
+  # list(APPEND GA_EXTRA_LIBS pmi2)
 endif()
 
 # hardwire ARMCI configuration options
