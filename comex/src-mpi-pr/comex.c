@@ -640,7 +640,7 @@ int _comex_init(MPI_Comm comm)
         /* start the server */
         _progress_server();
         if (init_from_comm) {
-          status = 0;
+          status = COMEX_FAILURE;
         }
         return status;
     }
@@ -668,11 +668,7 @@ int _comex_init(MPI_Comm comm)
     fprintf(stderr, "[%d] comex_init() success\n", g_state.rank);
 #endif
 
-    if (init_from_comm) {
-      return 1;
-    } else {
-      return COMEX_SUCCESS;
-    }
+    return COMEX_SUCCESS;
 }
 
 

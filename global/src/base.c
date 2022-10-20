@@ -518,7 +518,9 @@ int pnga_initialize_comm(MPI_Comm comm)
    * should recognize that ARMCI has already been initialized
    */
   int ret = ARMCI_Init_mpi_comm(comm);
-  if (ret) pnga_initialize();
+  if (ret) {
+    pnga_initialize();
+  }
   return ret;
 }
 #endif
