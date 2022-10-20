@@ -99,7 +99,7 @@ int isHostPointer(void *ptr)
     return 1;
   }
 
-  if (attr.type == cudaMemoryTypeHost || attr.type == cudaMemoryTypeUnregistered) {
+  if (attr.type != cudaMemoryTypeDevice) {
     return  1;
   }
   return 0;
@@ -268,15 +268,13 @@ void deviceIaxpy(int *dst, int *src, const int *scale, int n)
     cudaPointerAttributes src_attr;
     cudaPointerAttributes dst_attr;
     cudaError_t  perr = cudaPointerGetAttributes(&src_attr, src);
-    if (perr != cudaSuccess || src_attr.type == cudaMemoryTypeHost ||
-        src_attr.type == cudaMemoryTypeUnregistered) {
+    if (perr != cudaSuccess || src_attr.type != cudaMemoryTypeDevice) {
       printf("p[%d] deviceIaxpy src pointer is on host\n",rank);
     } else if (src_attr.type == cudaMemoryTypeDevice)  {
       printf("p[%d] deviceIaxpy src pointer is on device %d\n",rank,src_attr.device);
     }
     perr = cudaPointerGetAttributes(&dst_attr, src);
-    if (perr != cudaSuccess || dst_attr.type == cudaMemoryTypeHost ||
-        dst_attr.type == cudaMemoryTypeUnregistered) {
+    if (perr != cudaSuccess || dst_attr.type != cudaMemoryTypeDevice) {
       printf("p[%d] deviceIaxpy src pointer is on host\n",rank);
     } else if (dst_attr.type == cudaMemoryTypeDevice)  {
       printf("p[%d] deviceIaxpy dst pointer is on device %d\n",rank,dst_attr.device);
