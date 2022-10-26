@@ -1,12 +1,30 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <inttypes.h>
+
+#define TTHREADS 1024
 
 #define N (1024)
 #define M (512)
-#define X 31
-#define Y 33
+#define X 63 
+#define Y 65
 #define MAXDIM 2
+
+#ifdef TYPE_INT
+typedef uint32_t 	TEST_TYPE; 
+#elif TYPE_DOUBLE
+typedef double 		TEST_TYPE;
+#elif TYPE_FLOAT
+typedef float 		TEST_TYPE;
+#elif TYPE_LONG
+typedef uint64_t 	TEST_TYPE;
+#elif SHORT
+typedef uint16_t	TEST_TYPE;
+#else
+typedef uint8_t 	TEST_TYPE;
+#endif
 
 struct strided_memcpy_kernel_arg {
   char *dst;
@@ -22,6 +40,7 @@ struct strided_memcpy_kernel_arg {
 __global__ void strided_memcpy_kernel(strided_memcpy_kernel_arg arg) {
   //int index = blockIdx.x;
   int index = threadIdx.x;
+  int stride = blockIdx.x;
 
 #if SINGLE
   int bytes = 1, i;
@@ -31,16 +50,23 @@ __global__ void strided_memcpy_kernel(strided_memcpy_kernel_arg arg) {
 #else
 
 
+  #if __CUDA_ARCH__>=200
+  #include <stdio.h>
+  //printf("Current block and thread %d\n", index + stride * blockDim.x);
+  #endif
+
   int i, thread_index = 0;
   int idx[MAXDIM];
   int bytes_per_thread = arg.size;
  // int thread_offset = bytes_per_thread * threadIdx.x;
+  int elements_per_block = arg.bytes_per_block;
   int stride_levels = arg.stride_levels;
   int src_block_offset; // Offset based on chunk_index
   int dst_block_offset; // Offset based on chunk_index
 
   // Determine location of chunk_index in array
   //index /= bytes_per_thread;
+  index = index + stride * blockDim.x;
   for (i=0; i<=stride_levels; i++) {
     idx[i] = index%arg.dims[i];
     index = (index-idx[i])/arg.dims[i];
@@ -52,12 +78,12 @@ __global__ void strided_memcpy_kernel(strided_memcpy_kernel_arg arg) {
     dst_block_offset += arg.dst_strides[i]*idx[i+1];
   }
 
-  while (thread_index < arg.bytes_per_block)
+  //while (thread_index < arg.bytes_per_block)
   {
     //memcpy(arg.dst + dst_block_offset + thread_offset,
     memcpy(arg.dst + dst_block_offset,
     //       arg.src + src_block_offset + thread_offset, bytes_per_thread);
-           arg.src + src_block_offset, bytes_per_thread);
+           arg.src + src_block_offset, bytes_per_thread * elements_per_block);
     //thread_index += bytes_per_thread * blockDim.x;
     thread_index += bytes_per_thread;
     __syncthreads();
@@ -67,13 +93,15 @@ __global__ void strided_memcpy_kernel(strided_memcpy_kernel_arg arg) {
 
 int main() {
   int bytesN = 1, i;
+  long totalChunks = 1;
+ 
    //for(i = 0; i < MAXDIM; ++i)
 	//bytes = N * N;
   
   // ...Allocate memory
 
-  char *block_A = NULL;
-  char *block_B = NULL;
+  TEST_TYPE *block_A = NULL;
+  TEST_TYPE *block_B = NULL;
 
 
   // Test example: 
@@ -93,26 +121,34 @@ int main() {
   int bytes_per_block = 1024;
   strided_memcpy_kernel_arg toarg;
 
+  long blockDims = 1, totalSize = X*Y;
 
-  toarg.bytes_per_block = sizeof(*block_A); // Since we are copying 4 bytes per
-                                // thread, bytes per block should be 
-                                // a multiple of 4
+  if(totalSize < TTHREADS){
+     blockDims = 1;
+  }
+  else{
+     blockDims = int(ceil(totalSize / (float)TTHREADS));
+
+  }
+
+  printf("BLOCKS %d\n", blockDims);
+  toarg.bytes_per_block = 1; /* Number of elements to copy by each thread */
 
   //for(i = 0; i < MAXDIM; ++i) toarg.dst_strides[i] = 1;
   //for(i = 0; i < MAXDIM; ++i) toarg.src_strides[i] = 1;
    /* dimension of array times size of element */
-  toarg.dst_strides[0] = 512 * 1;
-  toarg.dst_strides[1] = 512;
+  toarg.dst_strides[0] = M * 1;
+  toarg.dst_strides[1] = M;
 
-  toarg.src_strides[0] = 1024 * 1;
-  toarg.src_strides[1] = 1024;
+  toarg.src_strides[0] = N * 1;
+  toarg.src_strides[1] = N;
 
   // for(i = 0; i < MAXDIM; ++i) toarg.dims[i] = 256;
   
   toarg.dims[0] = Y;
   toarg.dims[1] = X;
 
-  toarg.size = 1;
+  toarg.size = sizeof(*block_A); /* Size of elements */
   toarg.stride_levels = MAXDIM-1;
 
   // Register the host pointer
@@ -120,26 +156,45 @@ int main() {
   cudaHostGetDevicePointer (&(toarg.dst), block_B, 0);
 
   for(i = 0; i < N*N; ++i){
-     toarg.src[i] = i;
+     toarg.src[i] = i+1;
   }
   for(i = 0; i < M*M; ++i){
      toarg.dst[i] = 0;
   }
 
-  strided_memcpy_kernel<<<1, X * Y>>>(toarg);
+  //strided_memcpy_kernel<<<1, X * Y>>>(toarg);
+  strided_memcpy_kernel<<<blockDims, TTHREADS>>>(toarg);
   cudaDeviceSynchronize();
 
   int err = 0, j;
+  int *err_idx = (int *)calloc(X*Y, sizeof(*err_idx));
+  int *err_jdx = (int *)calloc(X*Y, sizeof(*err_idx));
 
+  for(i = 0 ; i < M * M; ++i){
+     if(block_B[i] != 0) err ++;
+  }
+  printf("Set values vs expected: %d %d\n", err, X*Y);
+  err = 0;
   for(i = 0; i < X; ++i){
   for(j = 0; j < Y; ++j){
-     printf("%d ", block_B[j + M*i]) ;
+//     printf("%d ", block_B[j + M*i]) ;
 //     if(block_A[i] != block_B[i]) err++;
-     if(block_A[j + N*i] != block_B[j + M*i]) err++;
+     if(block_A[j + N*i] != block_B[j + M*i]){ 
+        err_idx[err] = i + 1;
+        err_jdx[err] = j + 1;
+        err++;
+     }
   }
   }
   printf("Error: %d \n", err);
-  fflush(stdout);
+  //for(i = 0; i < X *Y; ++i){
+  //   if(err_idx[i] == 0) break;
+  //   printf("IDX: [%d, %d] --> %d\n", err_idx[i] - 1, err_jdx[i] - 1, block_B[j + M*i]);
+  //}
+  //fflush(stdout);
+
+  free(err_idx);
+  free(err_jdx);
 
   cudaFreeHost(block_A);
   cudaFreeHost(block_B);
