@@ -14,10 +14,13 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "IntelLL
   if(NOT "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Darwin")
       get_filename_component(__GA_GCC_INSTALL_PREFIX "${CMAKE_Fortran_COMPILER}/../.." ABSOLUTE)
       if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-          set(GA_GCC_TOOLCHAIN_FLAG "--gcc-toolchain=${__GA_GCC_INSTALL_PREFIX}")
+          set(GA_GCC_TOOLCHAIN_FLAG "--gcc-toolchain=/usr/")
+        # JBMF: temporary fix for junction  
+	#set(GA_GCC_TOOLCHAIN_FLAG "--gcc-toolchain=${__GA_GCC_INSTALL_PREFIX}")
       else()
           if(GCCROOT)
-              set(GA_GCC_TOOLCHAIN_FLAG "--gcc-toolchain=${GCCROOT}")
+              set(GA_GCC_TOOLCHAIN_FLAG "--gcc-toolchain=/usr/")
+              #set(GA_GCC_TOOLCHAIN_FLAG "--gcc-toolchain=${GCCROOT}")
           else()
               message(FATAL_ERROR "GCCROOT variable not set when using clang compilers. \
                   The GCCROOT path can be found using the command: \"which gcc\" ")
