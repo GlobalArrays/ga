@@ -8,10 +8,10 @@
 
 #define N (1024)
 #define M (512)
-#define X 61
-#define Y 65
+#define X 123
+#define Y 127
 #define MAXDIM 2
-#define REPS 100
+#define REPS 1000
 
 static void HandleError( cudaError_t err,
                          const char *file,
@@ -68,16 +68,25 @@ __global__ void strided_memcpy_kernel(strided_memcpy_kernel_arg arg) {
   int src_block_offset; // Offset based on chunk_index
   int dst_block_offset; // Offset based on chunk_index
 
-  // Determine location of chunk_index in array
+  // Determine location of chunk_index in array based
+  // on the thread id and the block id
   index = index + stride * blockDim.x;
+  // If the thread index is bigger than the total transfer 
+  // entities have this thread do not participate in the 
+  // copy
   if(index >= arg.totalTransferEnts) {
      return;
   }
+  // If you are copying a set of elements move the thread
+  // index to the relative position based on the
+  // number of elements that this thread will move
   index *= elements_per_block;
+  // Calculate the index starting points 
   for (i=0; i<=stride_levels; i++) {
     idx[i] = index%arg.dims[i];
     index = (index-idx[i])/arg.dims[i];
   }
+  // Calculate the block offset for this thread
   src_block_offset = bytes_per_thread*idx[0];
   dst_block_offset = bytes_per_thread*idx[0];
   for (i=0; i<stride_levels; i++) {
@@ -86,6 +95,9 @@ __global__ void strided_memcpy_kernel(strided_memcpy_kernel_arg arg) {
   }
 
   //printf("[%d] BT/EB: %d %d [%d %d]\n", threadIdx.x, bytes_per_thread, elements_per_block, idx[0], idx[1]);
+  // Start copying element by element 
+  // TODO: Make it sure that it is continues and replace the loop
+  // with a single memcpy
   while(currElem < elements_per_block){
      memcpy(arg.dst + dst_block_offset + currElem * bytes_per_thread,
             arg.src + src_block_offset + currElem * bytes_per_thread, 
@@ -93,10 +105,13 @@ __global__ void strided_memcpy_kernel(strided_memcpy_kernel_arg arg) {
      //printf("[%d] Address: [%p] | %d - %d\n", threadIdx.x, (void *)(arg.dst + dst_block_offset + currElem * bytes_per_thread), currElem, elements_per_block);
      currElem += 1;
   }
+  // Synchronize the threads before returning 
   __syncthreads();
 #endif
 }
 
+// Check with errors with verbose printing messages
+// Use for the call cases
 int check_errors(TEST_TYPE *block_A, TEST_TYPE *block_B){
   int err = 0, i, j;
   int *err_idx = (int *)calloc(X*Y, sizeof(*err_idx));
@@ -136,6 +151,8 @@ int check_errors(TEST_TYPE *block_A, TEST_TYPE *block_B){
   return 0;
 }
 
+// Check for errors and quit at the first one
+// Use to run several iterations for testing purposes
 int check_errors_exit(TEST_TYPE *block_A, TEST_TYPE *block_B){
   int err = 0, i, j;
   int *err_idx = (int *)calloc(X*Y, sizeof(*err_idx));
@@ -208,7 +225,7 @@ int main() {
      blockDims = int(ceil(totalSize / (float)TTHREADS));
 
   }
-
+  // Print the number of threads blocks that will be used in the kernel
   printf("BLOCKS %d\n", blockDims);
 
   /* dimension of array times size of element */
@@ -222,12 +239,15 @@ int main() {
   toarg.dims[1] = X;
 
   toarg.stride_levels = MAXDIM-1;
+  // For this case, assume that every thread will have a single 
+  // element to transfer
   toarg.totalTransferEnts = X*Y;
 
   // Register the host pointer
   cudaHostGetDevicePointer (&(toarg.src), block_A, 0);
   cudaHostGetDevicePointer (&(toarg.dst), block_B, 0);
 
+  // Set the testing arrays for copying 
   for(i = 0; i < N*N; ++i){
      block_A[i] = i+1;
   }
@@ -235,7 +255,7 @@ int main() {
      block_B[i] = 0;
   }
 
-  /* Cold call for the copying kernel */
+  /* Cold call for the copying kernel: Single element */
   toarg.bytes_per_block = 1; /* Number of elements to copy by each thread */
   toarg.size = sizeof(*block_A); /* Size of elements */
   
@@ -253,7 +273,7 @@ int main() {
 
   check_errors(block_A, block_B);
 
-/* Cold call for the copying kernel */
+/* Hot call for the copying kernel Multiple runs */
   if(totalSize < TTHREADS){
      blockDims = 1;
   }
@@ -266,7 +286,7 @@ int main() {
   double avgTime = 0.0, minT, maxT;
 
   for(ex = 0; ex < REPS; ++ex){
-
+     // Reset the destination matrix
      for(i = 0; i < M*M; ++i){
         toarg.dst[i] = 0;
      }
@@ -303,12 +323,14 @@ int main() {
      blockDims = int(ceil(X / (float)TTHREADS));
   
   }
-
+  // Reset the ouptut matrix
   for(i = 0; i < M*M; ++i){
      toarg.dst[i] = 0;
   }
 
+  // Make the transfer entities the number of rows of the block
   toarg.totalTransferEnts = X;
+  // Make each thread do a row length of the block
   toarg.bytes_per_block = Y; /* Number of elements to copy by each thread */
   toarg.size = sizeof(*block_A); /* Size of elements */
 
