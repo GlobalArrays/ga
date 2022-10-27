@@ -58,7 +58,7 @@ sicm_device_list nill;
 #define XSTR(x) #x
 #define TR(x) XSTR(x)
 
-#define USE_GPU_AWARE_MPI
+#define ENABLE_GPU_AWARE_MPI
 
 #ifdef ENABLE_NVTX
 #define RANGE_PUSH(x) nvtxRangePushA(x)
@@ -274,7 +274,7 @@ void SigSegvHandler(int sig)
 {                                       \
   var += (MPI_Wtime()-t_beg[t_level]);  \
   t_level--;                            \
-  COMEX_ASSERT(t_level >= -1);           \
+  COMEX_ASSERT(t_level >= -1);          \
 }
 #  define PROFILE_PRINT(proc)           \
 {                                       \
@@ -430,7 +430,12 @@ int comex_device_process();
 void comex_device_host_list(int *hosts, int *devIDs, int *ndev, comex_group_t group);
 void comex_device_memset(void* ptr, int val, size_t bytes);
 #endif
+
+#ifndef ENABLE_GPU_AWARE_MPI
 STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory);
+#else
+STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory, int flag);
+#endif
 STATIC int _is_master(void);
 STATIC int _get_world_rank(comex_igroup_t *igroup, int rank);
 STATIC int* _get_world_ranks(comex_igroup_t *igroup);
@@ -4105,13 +4110,28 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
 #endif
 
     COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_GPU_AWARE_MPI
+    mapped_offset = _get_offset_memory(
+            reg_entry, header->remote_address, 1);
+#else
     mapped_offset = _get_offset_memory(
             reg_entry, header->remote_address);
-#ifdef ENABLE_DEVICE
+#endif
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
     if (!reg_entry->use_dev) {
 #endif
       if (use_eager) {
-        (void)memcpy(mapped_offset, payload, header->length);
+#if (defined(ENABLE_DEVICE) && defined(ENABLE_GPU_AWARE_MPI))
+        if (reg_entry->use_dev) {
+          PROFILE_BEG()
+          copyToDevice(mapped_offset, payload, header->length);
+          PROFILE_END(t_cpy_to_dev)
+        } else {
+#endif
+          (void)memcpy(mapped_offset, payload, header->length);
+#if (defined(ENABLE_DEVICE) && defined(ENABLE_GPU_AWARE_MPI))
+        }
+#endif
       }
       else {
         char *buf = (char*)mapped_offset;
@@ -4123,8 +4143,15 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
           buf += size;
           bytes_remaining -= size;
         } while (bytes_remaining > 0);
+#if (defined(ENABLE_DEVICE) && defined(ENABLE_GPU_AWARE_MPI))
+        if (reg_entry->use_dev) {
+          PROFILE_BEG()
+          deviceCloseMemHandle(reg_entry->mapped);
+          PROFILE_END(t_close_ipc)
+        }
+#endif
       }
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
     } else {
       /*setDevice(_device_map[header->rank]);*/
       if (use_eager) {
@@ -4135,7 +4162,6 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
       else {
         char *buf = (char*)mapped_offset;
         int bytes_remaining = header->length;
-#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
         char *tbuf = (char*)malloc(max_message_size);
         do {
           int size = bytes_remaining>max_message_size ?
@@ -4148,15 +4174,6 @@ STATIC void _put_handler(header_t *header, char *payload, int proc)
           bytes_remaining -= size;
         } while (bytes_remaining > 0);
         free(tbuf);
-#else
-        do {
-          int size = bytes_remaining>max_message_size ?
-            max_message_size : bytes_remaining;
-          server_recv(buf, size, proc);
-          buf += size;
-          bytes_remaining -= size;
-        } while (bytes_remaining > 0);
-#endif
       }
       PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
@@ -4210,8 +4227,13 @@ STATIC void _put_packed_handler(header_t *header, char *payload, int proc)
     }
 #endif
     COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_GPU_AWARE_MPI
+    mapped_offset = _get_offset_memory(
+            reg_entry, header->remote_address,1);
+#else
     mapped_offset = _get_offset_memory(
             reg_entry, header->remote_address);
+#endif
 
     if (use_eager) {
         packed_buffer = payload+sizeof(stride_t);
@@ -4300,8 +4322,13 @@ STATIC void _put_datatype_handler(header_t *header, char *payload, int proc)
     }
 #endif
     COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_GPU_AWARE_MPI
+    mapped_offset = _get_offset_memory(
+            reg_entry, header->remote_address,0);
+#else
     mapped_offset = _get_offset_memory(
             reg_entry, header->remote_address);
+#endif
 
     strided_to_subarray_dtype(stride->stride, stride->count,
             stride->stride_levels, MPI_BYTE, &dst_type);
@@ -4388,7 +4415,11 @@ STATIC void _put_iov_handler(header_t *header, int proc)
     }
 #endif
     COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_GPU_AWARE_MPI
+    mapped_offset = _get_offset_memory(reg_entry, dst[0],1);
+#else
     mapped_offset = _get_offset_memory(reg_entry, dst[0]);
+#endif
 #ifdef ENABLE_DEVICE
     if (!reg_entry->use_dev) {
 #endif
@@ -4450,9 +4481,13 @@ STATIC void _get_handler(header_t *header, int proc)
     }
 #endif
     COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_GPU_AWARE_MPI
+    mapped_offset = _get_offset_memory(reg_entry, header->remote_address,1);
+#else
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
+#endif
 
-#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
     if (!reg_entry->use_dev) {
 #endif
     {
@@ -4466,14 +4501,14 @@ STATIC void _get_handler(header_t *header, int proc)
             bytes_remaining -= size;
         } while (bytes_remaining > 0);
     }
-#if (defined(ENABLE_DEVICE) && defined(USE_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && defined(ENABLE_GPU_AWARE_MPI))
     if (reg_entry->use_dev) {
       PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
       PROFILE_END(t_close_ipc)
     }
 #endif
-#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
     } else {
       char *tbuf = (char*)malloc(max_message_size);
       char *buf = (char*)mapped_offset;
@@ -4533,7 +4568,11 @@ STATIC void _get_packed_handler(header_t *header, char *payload, int proc)
     }
 #endif
     COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_GPU_AWARE_MPI
+    mapped_offset = _get_offset_memory(reg_entry, header->remote_address,0);
+#else
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
+#endif
 
     packed_buffer = pack(mapped_offset,
             stride_src->stride, stride_src->count, stride_src->stride_levels,
@@ -4610,7 +4649,11 @@ STATIC void _get_datatype_handler(header_t *header, char *payload, int proc)
     }
 #endif
     COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_GPU_AWARE_MPI
+    mapped_offset = _get_offset_memory(reg_entry, header->remote_address,0);
+#else
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
+#endif
 
     strided_to_subarray_dtype(stride_src->stride, stride_src->count,
             stride_src->stride_levels, MPI_BYTE, &src_type);
@@ -4696,7 +4739,11 @@ STATIC void _get_iov_handler(header_t *header, int proc)
     }
 #endif
     COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_GPU_AWARE_MPI
+    mapped_offset = _get_offset_memory(reg_entry, src[0], 1);
+#else
     mapped_offset = _get_offset_memory(reg_entry, src[0]);
+#endif
 #ifdef ENABLE_DEVICE
     if (!reg_entry->use_dev) {
 #endif
@@ -4793,7 +4840,11 @@ STATIC void _acc_handler(header_t *header, char *scale, int proc)
     }
 #endif
     COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_GPU_AWARE_MPI
+    mapped_offset = _get_offset_memory(reg_entry, header->remote_address,1);
+#else
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
+#endif
 
 #ifdef ENABLE_DEVICE
     if (!reg_entry->use_dev) {
@@ -4972,7 +5023,11 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
     }
 
     COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_GPU_AWARE_MPI
+    mapped_offset = _get_offset_memory(reg_entry, header->remote_address, 1);
+#else
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
+#endif
 
 #ifdef ENABLE_DEVICE
     if (!reg_entry->use_dev) {
@@ -5247,7 +5302,11 @@ STATIC void _acc_iov_handler(header_t *header, char *scale, int proc)
     }
 #endif
     COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_GPU_AWARE_MPI
+    mapped_offset = _get_offset_memory(reg_entry, dst[0], 1);
+#else
     mapped_offset = _get_offset_memory(reg_entry, dst[0]);
+#endif
 #ifdef ENABLE_DEVICE
     if (!reg_entry->use_dev) {
 #endif
@@ -5346,7 +5405,11 @@ STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc)
     }
 #endif
     COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_GPU_AWARE_MPI
+    mapped_offset = _get_offset_memory(reg_entry, header->remote_address, 1);
+#else
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
+#endif
     
 #ifdef ENABLE_DEVICE
     if (!reg_entry->use_dev) {
@@ -5426,7 +5489,11 @@ STATIC void _swap_handler(header_t *header, char *payload, int proc)
     }
 #endif
     COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_GPU_AWARE_MPI
+    mapped_offset = _get_offset_memory(reg_entry, header->remote_address, 1);
+#else
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
+#endif
     
     if (sizeof(int) == header->length) {
         value_int = malloc(sizeof(int));
@@ -5754,11 +5821,19 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
 }
 
 
+#ifndef ENABLE_GPU_AWARE_MPI
 STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory)
+#else
+STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory, int flag)
+#endif
 {
     ptrdiff_t offset = 0;
 #ifdef ENABLE_DEVICE
+#ifdef ENABLE_GPU_AWARE_MPI
+    if (reg_entry->use_dev && flag) {
+#else
     if (reg_entry->use_dev) {
+#endif
       void *ret;
       PROFILE_BEG()
       setDevice(reg_entry->dev_id);
@@ -6943,7 +7018,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             if (fence_array[g_state.master[proc]]) {
                 _fence_master(g_state.master[proc]);
             }
-#ifdef ENABLE_DEVICE
+#if ENABLE_DEVICE
             {
               reg_entry_t *reg_entry = NULL;
               reg_entry = reg_cache_find(proc, dst, bytes, -1);
@@ -6994,7 +7069,13 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #endif
             COMEX_ASSERT(reg_entry);
 #ifdef ENABLE_DEVICE
+            /* Not using MPI here but still need to account for modification
+             * of _get_offset_memory function */
+#ifdef ENABLE_GPU_AWARE_MPI
+            mapped_offset = _get_offset_memory(reg_entry, dst, 1);
+#else
             mapped_offset = _get_offset_memory(reg_entry, dst);
+#endif
             if (reg_entry->use_dev && on_host) {
               PROFILE_BEG()
               copyToDevice(mapped_offset, src, bytes);
@@ -7068,12 +7149,12 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
         else {
             char *buf;
             int bytes_remaining = bytes;
-#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
             void *tsrc;
             if (on_host) {
 #endif
               buf = (char*)src;
-#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
             } else {
               buf = (char*)malloc(max_message_size*sizeof(char));
               tsrc = src;
@@ -7083,7 +7164,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             do {
                 int size = bytes_remaining>max_message_size ?
                     max_message_size : bytes_remaining;
-#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
                 if (!on_host) {
                   comex_set_local_dev();
                   copyToHost((void*)buf,tsrc,size);
@@ -7091,20 +7172,20 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #endif
                 
                 nb_send_buffer(buf, size, master_rank, nb);
-#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
                 nb_wait_for_all(nb);
                 nb->in_use = 0;
                 if (on_host) {
 #endif
                   buf += size;
-#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
                 } else {
                   tsrc += size;
                 }
 #endif
                 bytes_remaining -= size;
             } while (bytes_remaining > 0);
-#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
             if (!on_host) free(buf);
 #endif
         }
@@ -7188,7 +7269,11 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #endif
             COMEX_ASSERT(reg_entry);
 #ifdef ENABLE_DEVICE
+#ifdef ENABLE_GPU_AWARE_MPI
+            mapped_offset = _get_offset_memory(reg_entry, src, 1);
+#else
             mapped_offset = _get_offset_memory(reg_entry, src);
+#endif
             if (reg_entry->use_dev && on_host) {
               PROFILE_BEG()
               copyToHost(dst, mapped_offset, bytes);
@@ -7232,7 +7317,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         header->local_address = dst;
         header->rank = proc;
         header->length = bytes;
-#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
         if (on_host) {
 #endif
           /* prepost all receives */
@@ -7246,7 +7331,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
             bytes_remaining -= size;
           } while (bytes_remaining > 0);
           nb_send_header(header, sizeof(header_t), master_rank, nb);
-#if (defined(ENABLE_DEVICE) && !defined(USE_GPU_AWARE_MPI))
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
         } else {
           /* create temporary buffer on host */
           char *buf = (char*)malloc(bytes*sizeof(char));
@@ -7370,7 +7455,11 @@ STATIC void nb_acc(int datatype, void *scale,
             }
 #endif
             COMEX_ASSERT(reg_entry);
+#ifdef ENABLE_GPU_AWARE_MPI
+            mapped_offset = _get_offset_memory(reg_entry, dst, 1);
+#else
             mapped_offset = _get_offset_memory(reg_entry, dst);
+#endif
 #ifdef ENABLE_DEVICE
             sem_wait(semaphores[proc]);
             {
@@ -7596,7 +7685,7 @@ STATIC void nb_puts(
     }
 
     /* if not a strided put to self or SMP, use datatype algorithm */
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
     if (COMEX_ENABLE_PUT_DATATYPE
             && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_PUT_SMP
@@ -7605,6 +7694,9 @@ STATIC void nb_puts(
       /* only use this branch if data is on host. Don't bother with arrays
        * hosted on device */
         reg_entry = reg_cache_find(proc, dst, 0, -1);
+        if (!reg_entry) {
+          reg_entry = reg_cache_find(proc, dst, 0, _device_map[proc]);
+        }
         if (reg_entry && !reg_entry->use_dev && !on_host) {
           nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
           PROFILE_END(t_nb_puts)
@@ -7637,7 +7729,7 @@ STATIC void nb_puts(
     }
 
 
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
     /* find out if remote processor is on a GPU */
     reg_entry = reg_cache_find(proc, dst, 0, -1);
     if (!reg_entry) {
@@ -7796,7 +7888,7 @@ STATIC void nb_puts(
         nb_put((char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
     }
 #endif
     PROFILE_END(t_nb_puts)
@@ -8026,7 +8118,7 @@ STATIC void nb_gets(
         return;
     }
 
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
     if (COMEX_ENABLE_GET_DATATYPE
             && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_GET_SMP
@@ -8035,6 +8127,9 @@ STATIC void nb_gets(
       /* only use this branch if data is on host. Don't bother with arrays
        * hosted on device */
         reg_entry = reg_cache_find(proc, src, 0, -1);
+        if (!reg_entry) {
+          reg_entry = reg_cache_find(proc, src, 0, _device_map[proc]);
+        }
         if (reg_entry && !reg_entry->use_dev && !on_host) {
           nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
           PROFILE_END(t_nb_gets)
@@ -8066,7 +8161,7 @@ STATIC void nb_gets(
         return;
     }
 
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
     /* find out if remote processor is on a GPU */
     reg_entry = reg_cache_find(proc, src, 0, -1);
     if (!reg_entry) {
@@ -8249,7 +8344,7 @@ STATIC void nb_gets(
         nb_get((char *)src + src_idx, (char *)dst + dst_idx,
                 count[0], proc, nb);
     }
-#ifdef ENABLE_DEVICE
+#if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
     }
 #endif
     PROFILE_END(t_nb_gets)
@@ -8576,7 +8671,11 @@ STATIC void nb_accs(
       } else {
         void *mapped_offset;
         void *ptr = NULL;
+#ifdef ENABLE_GPU_AWARE_MPI
+        mapped_offset = _get_offset_memory(reg_entry, dst, 1);
+#else
         mapped_offset = _get_offset_memory(reg_entry, dst);
+#endif
         /* create buffer on same device as dst*/
         PROFILE_BEG()
         setDevice(reg_entry->dev_id);
@@ -8970,7 +9069,11 @@ STATIC void nb_putv(
             void *mapped_offset;
             void *ptr;
             void *dst0;
+#ifdef ENABLE_GPU_AWARE_MPI
+            mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0], 1);
+#else
             mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+#endif
             dst0 = iov[0].dst[0];
             for (i=0; i<iov_len; ++i) {
               src = iov[i].src;
@@ -8992,7 +9095,11 @@ STATIC void nb_putv(
             void *mapped_offset;
             void *ptr;
             void *dst0;
+#ifdef ENABLE_GPU_AWARE_MPI
+            mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0], 1);
+#else
             mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+#endif
             dst0 = iov[0].dst[0];
             for (i=0; i<iov_len; ++i) {
               src = iov[i].src;
@@ -9014,7 +9121,11 @@ STATIC void nb_putv(
             void *mapped_offset;
             void *ptr;
             void *dst0;
+#ifdef ENABLE_GPU_AWARE_MPI
+            mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0], 1);
+#else
             mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+#endif
             dst0 = iov[0].dst[0];
             for (i=0; i<iov_len; ++i) {
               src = iov[i].src;
@@ -9037,7 +9148,11 @@ STATIC void nb_putv(
             void *mapped_offset;
             void *ptr;
             void *dst0;
+#ifdef ENABLE_GPU_AWARE_MPI
+            mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0], 1);
+#else
             mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+#endif
             dst0 = iov[0].dst[0];
             for (i=0; i<iov_len; ++i) {
               src = iov[i].src;
@@ -9293,7 +9408,11 @@ STATIC void nb_getv(
             if (reg_entry->use_dev && on_host) {
               /* device to host */
               setDevice(reg_entry->dev_id);
+#ifdef ENABLE_GPU_AWARE_MPI
+              mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0], 1);
+#else
               mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0]);
+#endif
               src0 = iov[0].src[0];
               for (i=0; i<iov_len; ++i) {
                 src = iov[i].src;
@@ -9312,7 +9431,11 @@ STATIC void nb_getv(
               PROFILE_END(t_close_ipc)
             } else if (reg_entry->use_dev && !on_host) {
               /* device to device */
+#ifdef ENABLE_GPU_AWARE_MPI
+              mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0], 1);
+#else
               mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0]);
+#endif
               src0 = iov[0].src[0];
               comex_set_local_dev();
               for (i=0; i<iov_len; ++i) {
@@ -9337,7 +9460,11 @@ STATIC void nb_getv(
               PROFILE_END(t_close_ipc)
             } else if (!reg_entry->use_dev && !on_host) {
               /* host to device */
+#ifdef ENABLE_GPU_AWARE_MPI
+              mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0], 1);
+#else
               mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0]);
+#endif
               src0 = iov[0].src[0];
               comex_set_local_dev();
               for (i=0; i<iov_len; ++i) {
@@ -9357,7 +9484,11 @@ STATIC void nb_getv(
               PROFILE_END(t_close_ipc)
             } else {
 #endif
+#ifdef ENABLE_GPU_AWARE_MPI
+              mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0], 1);
+#else
               mapped_offset = _get_offset_memory(reg_entry, iov[0].src[0]);
+#endif
               src0 = iov[0].src[0];
               for (i=0; i<iov_len; i++) {
                 src = iov[i].src;
@@ -9627,7 +9758,11 @@ STATIC void nb_accv(
                   PROFILE_BEG()
                   mallocDevice(&ptr,bytes);
                   PROFILE_END(t_malloc_buf)
+#ifdef ENABLE_GPU_AWARE_MPI
+                  mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0], 1);
+#else
                   mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+#endif
                   dst0 = iov[0].dst[0];
                   for (j=0; j<limit; j++) {
                     l_ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
@@ -9659,7 +9794,11 @@ STATIC void nb_accv(
                   PROFILE_BEG()
                   mallocDevice(&ptr,bytes);
                   PROFILE_END(t_malloc_buf)
+#ifdef ENABLE_GPU_AWARE_MPI
+                  mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0], 1);
+#else
                   mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+#endif
                   dst0 = iov[0].dst[0];
                   for (j=0; j<limit; j++) {
                     l_ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
@@ -9686,7 +9825,11 @@ STATIC void nb_accv(
                   limit = iov[i].count;
                   /* create buffer on host */
                   ptr = malloc(bytes);
+#ifdef ENABLE_GPU_AWARE_MPI
+                  mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0], 1);
+#else
                   mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+#endif
                   dst0 = iov[0].dst[0];
                   for (j=0; j<limit; j++) {
                     l_ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
@@ -9709,7 +9852,11 @@ STATIC void nb_accv(
                   dst = iov[i].dst;
                   bytes = iov[i].bytes;
                   limit = iov[i].count;
+#ifdef ENABLE_GPU_AWARE_MPI
+                  mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0], 1);
+#else
                   mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
+#endif
                   dst0 = iov[0].dst[0];
                   for (j=0; j<limit; j++) {
                     l_ptr = mapped_offset + (ptrdiff_t)(dst[j]-dst0);
@@ -9765,10 +9912,6 @@ STATIC void nb_accv_packed(
     limit = iov->count;
 #ifdef ENABLE_DEVICE
     on_host = isHostPointer(src[0]);
-#endif
-
-#if DEBUG
-            g_state.rank, limit, bytes, src[0], dst[0]);
 #endif
 
     /* allocate compressed iov */
