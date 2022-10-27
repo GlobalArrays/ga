@@ -268,7 +268,7 @@ void test_int_array(int on_device, int local_buf_on_device)
     tbeg = GA_Wtime();
     NGA_Distribution(g_a,rank,tlo,thi);
 #if 1
-    if (rank == 0 && n == 0) printf("Completed NGA_Distribution\n",rank);
+    if (rank == 0 && n == 0) printf("Completed NGA_Distribution\n");
     if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
       int tnelem = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
       if (on_device) {
