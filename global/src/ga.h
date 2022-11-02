@@ -341,15 +341,6 @@ extern void          NGA_Set_pgroup(int g_a, int p_handle);
 extern void          NGA_Set_property(int g_a, char *property);
 extern void          NGA_Set_restricted(int g_a, int list[], int size);
 extern void          NGA_Set_restricted_range(int g_a, int lo_proc, int hi_proc);
-extern void          NGA_Sprs_array_access_col_block(int s_a, int icol, int **idx, int **jdx, void *val);
-extern void          NGA_Sprs_array_access_col_block64(int s_a, int icol, long **idx, long **jdx, void *val);
-extern void          NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void *val);
-extern int           NGA_Sprs_array_assemble(int s_a);
-extern int           NGA_Sprs_array_create(int idim, int jdim, int type);
-extern void          NGA_Sprs_array_column_distribution(int s_a, int iproc, int *lo, int *hi);
-extern int           NGA_Sprs_array_destroy(Integer s_a);
-extern void          NGA_Sprs_array_matvec_multiply(int s_a, int g_a, int g_v);
-extern void          NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo, int *hi);
 extern void          NGA_Strided_acc(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[], void *alpha); 
 extern void          NGA_Strided_get(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[]); 
 extern void          NGA_Strided_put(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[]); 
@@ -470,10 +461,6 @@ extern void          NGA_Strided_get64(int g_a, int64_t lo[], int64_t hi[], int6
 extern void          NGA_Strided_put64(int g_a, int64_t lo[], int64_t hi[], int64_t skip[], void* buf, int64_t  ld[]); 
 extern DoubleComplex NGA_Zdot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[], int g_b, char t_b, int64_t blo[], int64_t bhi[]);
 extern void          NGA_Zero_patch64(int g_a, int64_t lo[], int64_t hi[]);
-extern int           NGA_Sprs_array_create64(int64_t idim, int64_t jdim, int type);
-extern void          NGA_Sprs_array_add_element64(int s_a, int64_t idx, int64_t jdx, void *val);
-extern void          NGA_Sprs_array_row_distribution64(int s_a, int iproc, int64_t *lo, int64_t *hi);
-extern void          NGA_Sprs_array_column_distribution64(int s_a, int iproc, int64_t *lo, int64_t *hi);
 
 #ifdef __cplusplus
 }
