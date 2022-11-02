@@ -9,6 +9,41 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
+## [5.8.2]
+- Known Bugs
+  - The MPI RMA port still shows spotty behavior and many tests in the test suite
+    are failing for many MPI implementations. Currently, the Open MPI
+    implementation in version 4.1.4 is working well and all tests are passing.
+- Added
+  - Setting ARMCI_VERBOSE=1 at runtime will also dump configuration details for
+    ComEx runtime
+- Changed
+  - Updated compiler settings in CMake build if Fujitsu compilers are detected
+- Fixed
+  - Fixed gcc toolchain checks in CMake for clang build
+  - Fixed tiled arrays so that they work with restricted arrays and fixed some
+    additional bugs in block cyclic distributions
+  - Removed several memory leaks
+  - Modified check on the number of processors that was being performed in the GA
+    create process. Previously this check was failing since it was possible that
+    the check was being performed before a process group had been assigned to
+    global array.
+  - Fixed some issues with hidden string length argument in fortran interface
+
+## [5.8.1]
+- Known Bugs
+- Added
+  - Added support in MA for CUDA managed memory. Provided by Jeff Hammond.
+  - Added a GA_Deallocate function that deallocates memory but leaves GA in
+    place. GA_Allocate can be called later on the handle. This can be used for
+    memory management.
+- Changed
+- Fixed
+  - Slurm conflict for free_buf symbol in DRA library. Fixed by Michael Klemm.
+  - Deallocate GA_MPI_World_comm_dup in GA_Terminate.
+  - Dependency of CMake build on C++ is configurable.
+  - Improved CMake integration of linear algebra libraries
+
 ## [5.8] - 2020-09-30
 - Known Bugs
   - The MPI RMA port remains unreliable for many MPI implementations. Open MPI
