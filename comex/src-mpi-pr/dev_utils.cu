@@ -194,6 +194,18 @@ void copyDevToDev(void *dstptr, void *srcptr, int bytes)
 {
   cudaError_t ierr;
   ierr = cudaMemcpy(dstptr, srcptr, bytes, cudaMemcpyDeviceToDevice); 
+#if 0
+  {
+    cudaPointerAttributes src_attr, dst_attr;
+    int rank = MPI_Wrapper_world_rank();
+    cudaPointerGetAttributes(&src_attr, srcptr);
+    cudaPointerGetAttributes(&dst_attr, dstptr);
+    if (src_attr.device != dst_attr.device) {
+      printf("p[%d] copyDevToDev devices don't match src_dev: %d dst_dev: %d\n",
+          rank,src_attr.device,dst_attr.device);
+    }
+  }
+#endif
   cudaErrCheck(ierr);
   cudaDeviceSynchronize();
   if (ierr != cudaSuccess) {
@@ -259,7 +271,6 @@ void deviceIaxpy(int *dst, int *src, const int *scale, int n)
   cudaError_t ierr;
   int nblocks = (n+1023)/1024;
   iaxpy_kernel<<<nblocks,1024>>>(dst, src, *scale, n);
-  cudaDeviceSynchronize();
   ierr = cudaGetLastError();
   if (ierr != cudaSuccess) {
     int err=0;
@@ -279,9 +290,11 @@ void deviceIaxpy(int *dst, int *src, const int *scale, int n)
     } else if (dst_attr.type == cudaMemoryTypeDevice)  {
       printf("p[%d] deviceIaxpy dst pointer is on device %d\n",rank,dst_attr.device);
     }
-    printf("p[%d] deviceIaxpy dst: %p src: %p scale: %d n: %d msg: %s\n",rank,dst,src,*scale,n,msg);
+    printf("p[%d] deviceIaxpy dst: %p src: %p scale: %d n: %d msg: %s\n",
+        rank,dst,src,*scale,n,msg);
     MPI_Wrapper_abort(err);
   }
+  cudaDeviceSynchronize();
 }
 
 __global__ void laxpy_kernel(long *dst, const long *src, long scale, int n)
@@ -348,6 +361,12 @@ int deviceOpenMemHandle(void **memory, devMemHandle_t handle)
   cudaError_t ierr;
   ierr = cudaIpcOpenMemHandle(memory, handle.handle, cudaIpcMemLazyEnablePeerAccess);
   cudaErrCheck(ierr);
+#if 0
+  {
+    int rank = MPI_Wrapper_world_rank();
+    printf("p[%d] deviceOpenMemHandle pointer: %p\n",rank,*memory);
+  }
+#endif
   if (ierr != cudaSuccess) {
     int err=0;
     int rank = MPI_Wrapper_world_rank();
@@ -360,6 +379,12 @@ int deviceOpenMemHandle(void **memory, devMemHandle_t handle)
 
 int deviceCloseMemHandle(void *memory)
 {
+#if 0
+  {
+    int rank = MPI_Wrapper_world_rank();
+    printf("p[%d] deviceCloseMemHandle pointer: %p\n",rank,memory);
+  }
+#endif
  return cudaIpcCloseMemHandle(memory);
 }
 
