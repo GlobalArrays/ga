@@ -33,6 +33,7 @@
 #cmakedefine01 HAVE_SYS_WEAK_ALIAS_PRAGMA
 
 #cmakedefine NDEBUG
+#cmakedefine __CRAYXE
 
 #define SIZEOF_INT ${CM_SIZEOF_INT}
 #define SIZEOF_LONG ${CM_SIZEOF_LONG}

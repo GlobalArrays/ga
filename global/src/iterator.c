@@ -234,6 +234,13 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     int *proc_grid = GA[handle].nblock;
     /*num_blocks = GA[handle].num_blocks;*/
     block_dims = GA[handle].block_dims;
+    /* blk_dim: length of one repeat unit
+     * blk_num: number of repeat units
+     * blk_inc: number of elements in last incomplete repeat unit
+     * blk_ld: length of complete blocks in repeat unit. Does not
+     *         account for partial block at end
+     * hlf_blk: number of full blocks in partial repeat unit
+     */
     for (j=0; j<ndim; j++)  {
       hdl->blk_size[j] = block_dims[j];
       hdl->blk_dim[j] = block_dims[j]*proc_grid[j];
@@ -318,6 +325,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
   Integer handle = GA_OFFSET + hdl->g_a;
   Integer p_handle = GA[handle].p_handle;
   Integer n_rstrctd = GA[handle].num_rstrctd;
+  Integer *rstrctd_list = GA[handle].rstrctd_list;
   Integer *rank_rstrctd = GA[handle].rank_rstrctd;
   Integer elemsize = GA[handle].elemsize;
   int ndim;
@@ -456,6 +464,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
     Integer blo[MAXDIM], bhi[MAXDIM];
     Integer idx, j, jtot, chk, iproc;
     int check1, check2;
+    if (n_rstrctd > 0) nproc = n_rstrctd;
     if (GA[handle].distr_type == BLOCK_CYCLIC) {
       /* Simple block-cyclic distribution */
       if (hdl->iproc >= nproc) return 0;
@@ -684,6 +693,9 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         }
         /* get pointer to data on remote block */
         pinv = (hdl->iproc)%nproc;
+        if (n_rstrctd > 0) {
+          pinv = rstrctd_list[pinv];
+        }
         if (p_handle > 0) {
           pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
         }

@@ -4,7 +4,7 @@
  # LIBRARY_PATH; skip all such settings.
  ac_[]_AC_LANG_ABBREV[]_v_output=`eval $ac_link AS_MESSAGE_LOG_FD>&1 2>&1 |
    sed '/^Driving:/d; /^Configured with:/d;
-+  s/\/Applications\/Xcode.app\/Contents\/Developer\/Toolchains\/XcodeDefault.xctoolchain\/usr\/lib.*$//p ;
++  s/\/.*\/lib.*\.a//p ;
        '"/^[[_$as_cr_Letters]][[_$as_cr_alnum]]*=/d"`
  AS_ECHO(["$ac_[]_AC_LANG_ABBREV[]_v_output"]) >&AS_MESSAGE_LOG_FD
  _AC_LANG_PREFIX[]FLAGS=$ac_save_[]_AC_LANG_PREFIX[]FLAGS

@@ -88,7 +88,8 @@ esac
     cd build
     echo FORTRAN_COMPILER is $FORTRAN_COMPILER
     mpif90 -show || true
-    FC="$FORTRAN_COMPILER" cmake -DCMAKE_Fortran_COMPILER="$FORTRAN_COMPILER"  -DMPIEXEC_MAX_NUMPROCS=5 -DGA_RUNTIME="$ga_rt" ../
+    echo CC is $CC
+    FC="$FORTRAN_COMPILER" cmake -DMPIEXEC_MAX_NUMPROCS=5 -DGA_RUNTIME="$ga_rt" ../
 else
 case "x$PORT" in
     xofi)
@@ -112,7 +113,12 @@ case "x$PORT" in
         ./configure --with-${PORT} ${CONFIG_OPTS}
         ;;
     x*)
-        ./configure --with-${PORT} ${CONFIG_OPTS}
+	if [[ "$MPI_IMPL" = "intel" ]] ; then
+	    #hack to get scalapack going
+	    ./configure --with-${PORT} ${CONFIG_OPTS} LIBS=" -L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -ldl" CC=icc
+	else
+            ./configure --with-${PORT} ${CONFIG_OPTS}
+	fi
         ;;
 esac
 fi

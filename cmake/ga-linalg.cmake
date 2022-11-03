@@ -117,6 +117,7 @@ if (ENABLE_BLAS)
     endif()
 
     if(_blis_essl_set OR ${LINALG_VENDOR} MATCHES "OpenBLAS")
+      set(use_openmp OFF)
       if(_blis_essl_set)
         set(LAPACK_PREFERENCE_LIST ReferenceLAPACK)
       endif()
@@ -167,11 +168,21 @@ if (ENABLE_BLAS)
     endif()
 
   if(ENABLE_CXX)
+    set(BPP_GIT_TAG 0c63c240f445f6f6b9b5d4f24ed0869271aef4d4)
+    set(LPP_GIT_TAG 13301a133f146f9d9b1a2f466bc19fe092c149e1)
+    set(SPP_GIT_TAG ed0b33f76494c6862389ead47d739fa53f627f24)
+    if(ENABLE_DEV_MODE)
+      set(BPP_GIT_TAG master)
+      set(LPP_GIT_TAG master)
+      set(SPP_GIT_TAG master)
+    endif()
     include(FetchContent)
+    set( gpu_backend "none" CACHE STRING "GPU backend to use" FORCE)
     if(NOT TARGET blaspp)
       FetchContent_Declare(
         blaspp
         GIT_REPOSITORY https://bitbucket.org/icl/blaspp.git
+        GIT_TAG ${BPP_GIT_TAG}
       )
       FetchContent_MakeAvailable( blaspp )
     endif()
@@ -180,6 +191,7 @@ if (ENABLE_BLAS)
       FetchContent_Declare(
         lapackpp
         GIT_REPOSITORY https://bitbucket.org/icl/lapackpp.git
+        GIT_TAG ${LPP_GIT_TAG}
       )
       FetchContent_MakeAvailable( lapackpp )
     endif()
@@ -189,7 +201,7 @@ if (ENABLE_BLAS)
         FetchContent_Declare(
           scalapackpp
           GIT_REPOSITORY https://github.com/wavefunction91/scalapackpp.git
-          GIT_TAG 2c040278bac7bd6f0ee2fbd4e2cccd3a3c658ffd
+          GIT_TAG ${SPP_GIT_TAG}
         )
         FetchContent_MakeAvailable( scalapackpp )
       endif()
@@ -208,8 +220,10 @@ endif()
 
 if(ENABLE_DPCPP)
   set(USE_DPCPP ON)
-  find_package(IntelSYCL REQUIRED)
-  set(Intel_SYCL_TARGET Intel::SYCL)
+  if(NOT ENABLE_HIPSYCL)
+    find_package(IntelSYCL REQUIRED)
+    set(Intel_SYCL_TARGET Intel::SYCL)
+  endif()
 endif()
 
 if (ENABLE_SCALAPACK)
@@ -270,8 +284,10 @@ if (HAVE_BLAS)
   list(APPEND linalg_lib BLAS::BLAS ${_la_cxx_blas})
   message(STATUS "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
   if(ENABLE_DPCPP)
-    list(APPEND linalg_lib ${Intel_SYCL_TARGET})
-    message(STATUS "SYCL_LIBRARIES: ${Intel_SYCL_TARGET}")
+    if(NOT ENABLE_HIPSYCL)
+      list(APPEND linalg_lib ${Intel_SYCL_TARGET})
+      message(STATUS "SYCL_LIBRARIES: ${Intel_SYCL_TARGET}")
+    endif()
   endif()
 endif()
 

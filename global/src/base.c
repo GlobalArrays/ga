@@ -1790,7 +1790,7 @@ void pnga_set_block_cyclic(Integer g_a, Integer *dims)
 
 void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid)
 {
-  Integer i, jsize, tot;
+  Integer i, jsize;
   Integer ga_handle = g_a + GA_OFFSET;
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set block-cyclic data distribution on array that has been allocated",0);
@@ -1799,17 +1799,6 @@ void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_g
   if (GA[ga_handle].distr_type != REGULAR)
     pnga_error("Cannot reset block-cyclic data distribution on array that has been set",0);
   GA[ga_handle].distr_type = SCALAPACK;
-  /* Check to make sure processor grid is compatible with total number of processors */
-  tot = 1;
-  for (i=0; i<GA[ga_handle].ndim; i++) {
-    if (proc_grid[i] < 1)
-      pnga_error("Processor grid dimensions must all be greater than zero",0);
-    GA[ga_handle].nblock[i] = proc_grid[i];
-    tot *= proc_grid[i];
-  }
-  if (tot != GAnproc)
-    pnga_error("Number of processors in processor grid must equal available processors",0);
-  /* evaluate number of blocks in each dimension */
   for (i=0; i<GA[ga_handle].ndim; i++) {
     if (dims[i] < 1)
       pnga_error("Block dimensions must all be greater than zero",0);
@@ -1817,6 +1806,9 @@ void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_g
     jsize = GA[ga_handle].dims[i]/dims[i];
     if (GA[ga_handle].dims[i]%dims[i] != 0) jsize++;
     GA[ga_handle].num_blocks[i] = jsize;
+    if (proc_grid[i] < 1)
+      pnga_error("Processor grid dimensions must all be greater than zero",0);
+    GA[ga_handle].nblock[i] = proc_grid[i];
   }
   jsize = 1;
   for (i=0; i<GA[ga_handle].ndim; i++) {
@@ -1834,7 +1826,7 @@ void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_g
 
 void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid)
 {
-  Integer i, jsize, tot;
+  Integer i, jsize;
   Integer ga_handle = g_a + GA_OFFSET;
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set tiled data distribution on array that has been allocated",0);
@@ -1843,16 +1835,6 @@ void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid)
   if (GA[ga_handle].distr_type != REGULAR)
     pnga_error("Cannot reset tiled data distribution on array that has been set",0);
   GA[ga_handle].distr_type = TILED;
-  /* Check to make sure processor grid is compatible with total number of processors */
-  tot = 1;
-  for (i=0; i<GA[ga_handle].ndim; i++) {
-    if (proc_grid[i] < 1)
-      pnga_error("Processor grid dimensions must all be greater than zero",0);
-    GA[ga_handle].nblock[i] = proc_grid[i];
-    tot *= proc_grid[i];
-  }
-  if (tot != GAnproc)
-    pnga_error("Number of processors in processor grid must equal available processors",0);
   /* evaluate number of blocks in each dimension */
   for (i=0; i<GA[ga_handle].ndim; i++) {
     if (dims[i] < 1)
@@ -1861,6 +1843,9 @@ void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid)
     jsize = GA[ga_handle].dims[i]/dims[i];
     if (GA[ga_handle].dims[i]%dims[i] != 0) jsize++;
     GA[ga_handle].num_blocks[i] = jsize;
+    if (proc_grid[i] < 1)
+      pnga_error("Processor grid dimensions must all be greater than zero",0);
+    GA[ga_handle].nblock[i] = proc_grid[i];
   }
   jsize = 1;
   for (i=0; i<GA[ga_handle].ndim; i++) {
@@ -1876,7 +1861,7 @@ void pnga_set_tiled_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid)
 void pnga_set_tiled_irreg_proc_grid(Integer g_a, Integer *mapc, Integer *nblocks,
     Integer *proc_grid)
 {
-  Integer i, j, ichk, maplen, tot, jsize;
+  Integer i, j, ichk, maplen, jsize;
   Integer ga_handle = g_a + GA_OFFSET;
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set irregular tiled data distribution on array"
@@ -1913,6 +1898,9 @@ void pnga_set_tiled_irreg_proc_grid(Integer g_a, Integer *mapc, Integer *nblocks
   for (i=0; i<GA[ga_handle].ndim; i++) {
     maplen += nblocks[i];
     GA[ga_handle].num_blocks[i] = (C_Integer)nblocks[i];
+    if (proc_grid[i] < 1)
+      pnga_error("Processor grid dimensions must all be greater than zero",0);
+    GA[ga_handle].nblock[i] = proc_grid[i];
   }
   GA[ga_handle].mapc = (C_Integer*)malloc((maplen+1)*sizeof(C_Integer*));
   for (i=0; i<maplen; i++) {
@@ -1921,16 +1909,6 @@ void pnga_set_tiled_irreg_proc_grid(Integer g_a, Integer *mapc, Integer *nblocks
   GA[ga_handle].mapc[maplen] = -1;
   GA[ga_handle].irreg = 1;
 
-  /* Check to make sure processor grid is compatible with total number of processors */
-  tot = 1;
-  for (i=0; i<GA[ga_handle].ndim; i++) {
-    if (proc_grid[i] < 1)
-      pnga_error("Processor grid dimensions must all be greater than zero",0);
-    GA[ga_handle].nblock[i] = proc_grid[i];
-    tot *= proc_grid[i];
-  }
-  if (tot != GAnproc)
-    pnga_error("Number of processors in processor grid must equal available processors",0);
   /* Find total number of blocks */
   jsize = 1;
   for (i=0; i<GA[ga_handle].ndim; i++) {
@@ -2488,7 +2466,7 @@ logical pnga_allocate(Integer g_a)
   Integer hi[MAXDIM];
   Integer ga_handle = g_a + GA_OFFSET;
   Integer d, width[MAXDIM], ndim;
-  Integer mem_size, nelem;
+  Integer mem_size, nelem, pnum;
   Integer i, status, maplen=0, p_handle;
   Integer dims[MAXDIM], chunk[MAXDIM];
   Integer pe[MAXDIM], *pmap[MAXDIM], *map;
@@ -2630,10 +2608,21 @@ logical pnga_allocate(Integer g_a)
   } else if (GA[ga_handle].distr_type == SCALAPACK) {
     /* ScaLAPACK block-cyclic data distribution has been specified. Figure
        out how much memory is needed by each processor to store blocks */
-    Integer j, jtot, skip, imin, imax;
+    Integer j, jtot, skip, imin, imax, tot;
     Integer index[MAXDIM];
     gam_find_proc_indices(ga_handle,GAme,index);
     block_size = 1;
+    tot = 1;
+    for (i=0; i<GA[ga_handle].ndim; i++) {
+      tot *= GA[ga_handle].nblock[i];
+    }
+    if (GA[ga_handle].num_rstrctd == 0) {
+      pnum = pnga_pgroup_nnodes(GA[ga_handle].p_handle);
+    } else {
+      pnum = GA[ga_handle].num_rstrctd;
+    }
+    if (tot != pnum)
+      pnga_error("Number of processors in processor grid must equal available processors",0);
     for (i=0; i<ndim; i++) {
       skip = GA[ga_handle].nblock[i];
       jtot = 0;
@@ -2648,10 +2637,21 @@ logical pnga_allocate(Integer g_a)
   } else if (GA[ga_handle].distr_type == TILED) {
     /* Tiled data distribution has been specified. Figure
        out how much memory is needed by each processor to store blocks */
-    Integer j, jtot, skip, imin, imax;
+    Integer j, jtot, skip, imin, imax, tot;
     Integer index[MAXDIM];
     gam_find_tile_proc_indices(ga_handle,GAme,index);
     block_size = 1;
+    tot = 1;
+    for (i=0; i<GA[ga_handle].ndim; i++) {
+      tot *= GA[ga_handle].nblock[i];
+    }
+    if (GA[ga_handle].num_rstrctd == 0) {
+      pnum = pnga_pgroup_nnodes(GA[ga_handle].p_handle);
+    } else {
+      pnum = GA[ga_handle].num_rstrctd;
+    }
+    if (tot != pnum)
+      pnga_error("Number of processors in processor grid must equal available processors",0);
     for (i=0; i<ndim; i++) {
       skip = GA[ga_handle].nblock[i];
       jtot = 0;
@@ -2666,11 +2666,22 @@ logical pnga_allocate(Integer g_a)
   } else if (GA[ga_handle].distr_type == TILED_IRREG) {
     /* Tiled data distribution has been specified. Figure
        out how much memory is needed by each processor to store blocks */
-    Integer j, jtot, skip, imin, imax;
+    Integer j, jtot, skip, imin, imax, tot;
     Integer index[MAXDIM];
     Integer offset = 0;
     gam_find_tile_proc_indices(ga_handle,GAme,index);
     block_size = 1;
+    tot = 1;
+    for (i=0; i<GA[ga_handle].ndim; i++) {
+      tot *= GA[ga_handle].nblock[i];
+    }
+    if (GA[ga_handle].num_rstrctd == 0) {
+      pnum = pnga_pgroup_nnodes(GA[ga_handle].p_handle);
+    } else {
+      pnum = GA[ga_handle].num_rstrctd;
+    }
+    if (tot != pnum)
+      pnga_error("Number of processors in processor grid must equal available processors",0);
     for (i=0; i<ndim; i++) {
       skip = GA[ga_handle].nblock[i];
       jtot = 0;
@@ -4131,6 +4142,9 @@ Integer i, handle;
 
     pnga_sync();
     ARMCI_Finalize();
+#ifdef MSG_COMMS_MPI
+    MPI_Comm_free(&GA_MPI_World_comm_dup);
+#endif
     ARMCIinitialized = 0;
     GAinitialized = 0;
     //GA_Internal_Threadsafe_Unlock();

@@ -28,10 +28,10 @@ if [ "x${download}" = x ] ; then
 fi
 
 MAKE_JNUM=4
-# we need m4 at least version 1.4.16
-M4_VERSION=1.4.17
+# we need m4 at least version 1.4.19
+M4_VERSION=1.4.19
 LIBTOOL_VERSION=2.4.6
-AUTOCONF_VERSION=2.69
+AUTOCONF_VERSION=2.71
 AUTOMAKE_VERSION=1.11.6
 
 # check whether we can reach ftp.gnu.org
@@ -106,22 +106,6 @@ else
     cd ${TOP}/${TDIR}
     cp ${TOP}/bin/config.guess ./build-aux/config.guess
     cp ${TOP}/bin/config.sub ./build-aux/config.sub
-    if [ -f secure_snprintf.patch ] ; then
-        echo secure_snprintf.patch already exists! Using existing copy.
-    else
-        ${download} secure_snprintf.patch https://raw.githubusercontent.com/macports/macports-ports/master/devel/m4/files/secure_snprintf.patch
-    fi
-    if patch -p0 -N < secure_snprintf.patch ; then
-        echo patch applied
-    fi
-    if [ -f 0001-fflush-adjust-to-glibc-2.28-libio.h-removal.patch ] ; then
-        echo glibc v2.28 patch already exists! Using existing copy.
-    else
-        ${download} 0001-fflush-adjust-to-glibc-2.28-libio.h-removal.patch https://gitlab.com/atilla/buildroot/raw/c48f8a64626c60bd1b46804b7cf1a699ff53cdf3/package/m4/0001-fflush-adjust-to-glibc-2.28-libio.h-removal.patch
-    fi
-    if patch -p1 -N < 0001-fflush-adjust-to-glibc-2.28-libio.h-removal.patch ; then
-        echo patch applied
-    fi
     ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
     if [ "x$?" != "x0" ] ; then
         echo FAILURE 1
@@ -164,10 +148,13 @@ else
     cp ${TOP}/bin/config.guess ./build-aux/config.guess
     cp ${TOP}/bin/config.sub ./build-aux/config.sub
 # patch for ifx -loopopt=0 issue
-    wget https://github.com/autotools-mirror/autoconf/commit/ae26b9b44c183c41b84fc36ff70082713295d621.patch
-    patch -p1 < ae26b9b44c183c41b84fc36ff70082713295d621.patch
     # patch for ifort libclang_rt.osx.a https://github.com/nwchemgit/nwchem/issues/171
-    patch -p1 <  ${TOP}/../travis/ifort_ldflags.patch
+    if [ -f  ${TOP}/../travis/ifort_ldflags.patch ] ; then
+	cp ${TOP}/../travis/ifort_ldflags.patch .
+    else
+	${download} ifort_ldflags.patch https://raw.githubusercontent.com/GlobalArrays/ga/master/travis/ifort_ldflags.patch
+    fi
+    patch -p1 <  ifort_ldflags.patch
     ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
     if [ "x$?" != "x0" ] ; then
         echo FAILURE 3

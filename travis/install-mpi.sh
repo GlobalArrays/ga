@@ -21,6 +21,13 @@ if [[ -z "${F77}" ]]; then
     F77="${FC}"
 fi
 
+if [ "$F77" == "gfortran" ] && [ "$os" == "Darwin" ]; then
+    if [[ ! -x "$(command -v gfortran)" ]]; then
+	echo gfortran undefined
+	echo symbolic link gfortran-12
+	ln -sf /usr/local/bin/gfortran-12 /usr/local/bin/gfortran
+    fi
+fi
 
 # this is where updated Autotools will be for Linux
 export PATH=$TRAVIS_ROOT/bin:$PATH
@@ -30,17 +37,20 @@ case "$MPI_IMPL" in
             brew install mpich || brew upgrade mpich || true
 	else
         if [ ! -d "$TRAVIS_ROOT/mpich" ] || [  ! -x "$TRAVIS_ROOT/mpich/bin/mpicc" ]; then
-            wget --no-check-certificate http://www.mpich.org/static/downloads/3.4.1/mpich-3.4.1.tar.gz
-            tar -xzf mpich-3.4.1.tar.gz
-            cd mpich-3.4.1
+	    MPI_VER=3.4.2
+            wget --no-check-certificate http://www.mpich.org/static/downloads/"$MPI_VER"/mpich-"$MPI_VER".tar.gz
+            tar -xzf mpich-"$MPI_VER".tar.gz
+            cd mpich-"$MPI_VER"
             mkdir -p build && cd build
 	    GNUMAJOR=`$F77 -dM -E - < /dev/null 2> /dev/null | grep __GNUC__ |cut -c18-`	
 	    GFORTRAN_EXTRA=$(echo $F77 | cut -c 1-8)
+	    echo MPICH F77 is `which "$F77"`
+	    echo F77 version is `"$F77" -v`
 	    if [ "$GFORTRAN_EXTRA" = "gfortran" ]; then
 		if [ $GNUMAJOR -ge 10  ]; then
-		    FFLAGS_IN="-w -fallow-argument-mismatch -O0"
+		    FFLAGS_IN="-w -fallow-argument-mismatch -O1"
 		else
-		    FFLAGS_IN="-w -O0"
+		    FFLAGS_IN="-w -O1"
 		fi
 	    elif [ "$F77" = "ifort" ]; then
 		case "$os" in
@@ -56,11 +66,16 @@ case "$MPI_IMPL" in
 		ifort -V
 		icc -V
 	    fi
-	    CFLAGS_in="-O0 -w -fPIC"
+	    CFLAGS_in="-O1 -w -fPIC"
 # --disable-opencl since opencl detection generates -framework opencl on macos that confuses opencl	    
-            ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich --with-device=ch3 --disable-opencl pac_cv_have_float16=no
+            ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich --with-device=ch3 --disable-shared --enable-static --disable-opencl pac_cv_have_float16=no
             make -j ${MAKE_JNUM}
             make -j ${MAKE_JNUM} install
+	    ls -Rlta $TRAVIS_ROOT/mpich/lib
+#	    file $TRAVIS_ROOT/mpich/lib/libmpi.*.dylib || true
+#	    file $TRAVIS_ROOT/mpich/lib/libpmpi.*.dylib || true
+#	    ls -lrt $TRAVIS_ROOT/mpich/lib/libpmpi.*.dylib || true
+#	    nm  $TRAVIS_ROOT/mpich/lib/libpmpi.*.dylib || true
         else
             echo "MPICH already installed"
         fi
@@ -72,6 +87,7 @@ case "$MPI_IMPL" in
 		echo "Mac"
 		# Homebrew is at 1.10.2, which is broken for STRIDED/IOV=DIRECT.
 		brew info open-mpi
+		brew update
 		brew install open-mpi || brew upgrade open-mpi || true
 		;;
 	    Linux)

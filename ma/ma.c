@@ -25,7 +25,9 @@
 #include "scope.h"
 #include "table.h"
 
-#ifdef ENABLE_ARMCI_MEM_OPTION
+#if defined(ENABLE_CUDA_MEM)
+extern int cudaMallocManaged(void** devPtr, size_t size, unsigned int flags);
+#elif defined(ENABLE_ARMCI_MEM_OPTION)
 extern void* ARMCI_Malloc_local(long bytes);
 #endif
 
@@ -2512,14 +2514,30 @@ public Boolean MA_init(
     mallopt(M_TRIM_THRESHOLD, -1);
 #endif
     /* allocate the segment of memory */
-#ifdef ENABLE_ARMCI_MEM_OPTION
+#ifdef ENABLE_CUDA_MEM
+    if(getenv("MA_USE_CUDA_MEM"))
+    {
+        void * temp_ptr = NULL;
+        int cuda_error = 0;                  // cudaSuccess 0
+        unsigned int cuda_mem_flags = 0x01;  // cudaMemAttachGlobal 0x01
+        cuda_error = cudaMallocManaged(&temp_ptr, total_bytes, cuda_mem_flags);
+        if (cuda_error == 0) {
+          ma_segment = temp_ptr;
+        } else {
+          ma_segment = NULL;
+        }
+    }
+    else
+#elif defined(ENABLE_ARMCI_MEM_OPTION)
     if(getenv("MA_USE_ARMCI_MEM"))
     {
         ma_segment = (Pointer)ARMCI_Malloc_local(total_bytes);
     }
     else
 #endif
+    {
         ma_segment = (Pointer)bytealloc(total_bytes);
+    }
     if (ma_segment == (Pointer)NULL)
     {
         (void)sprintf(ma_ebuf,
@@ -2714,7 +2732,8 @@ public Integer MA_inquire_heap(Integer datatype)
 
     /* try space between heap and partition */
     gap_length = (size_t)(ma_partition - ma_hp);
-    if (gap_length > 0)
+    /*    if (gap_length > 0)*/
+    if (ma_partition > ma_hp)
         nelem_gap = ma_nelem(ma_hp, (ulongi)gap_length, datatype);
     else
         nelem_gap = 0;
@@ -2855,6 +2874,7 @@ public Integer MA_inquire_heap_no_partition(Integer datatype)
 
     /* try space between heap and stack */
     gap_length = (size_t)(ma_sp - ma_hp);
+    /*if (ma_sp > ma_hp)*/
     if (gap_length > 0)
         nelem_gap = ma_nelem(ma_hp, (ulongi)gap_length, datatype);
     else
@@ -2922,6 +2942,7 @@ public Integer MA_inquire_stack(Integer datatype)
 
     /* try space between partition and stack */
     gap_length = (size_t)(ma_sp - ma_partition);
+    /*if (ma_sp > ma_partition)*/
     if (gap_length > 0)
         nelem_gap = ma_nelem(ma_partition, (ulongi)gap_length, datatype);
     else
@@ -3058,6 +3079,7 @@ public Integer MA_inquire_stack_no_partition(Integer datatype)
 
     /* try space between heap and stack */
     gap_length = (size_t)(ma_sp - ma_hp);
+    /*if (ma_sp > ma_hp)*/
     if (gap_length > 0)
         nelem_gap = ma_nelem(ma_hp, (ulongi)gap_length, datatype);
     else

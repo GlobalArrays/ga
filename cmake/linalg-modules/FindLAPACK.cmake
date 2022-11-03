@@ -26,6 +26,7 @@ foreach( _comp ${LAPACK_FIND_COMPONENTS} )
   endif()
 endforeach()
 
+emulate_kitware_linalg_modules( LAPACK )
 fill_out_prefix( LAPACK )
 
 if( NOT LAPACK_PREFERENCE_LIST )

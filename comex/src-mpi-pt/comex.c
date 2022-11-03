@@ -456,6 +456,11 @@ int comex_finalize()
 
     free(fence_array);
 
+    free(nb_state);
+#if DEBUG
+    printf(" %d freed nb_state ptr %p \n", g_state.rank, nb_state);
+#endif
+
     MPI_Barrier(g_state.comm);
 
     /* reg_cache */
@@ -2427,7 +2432,7 @@ STATIC void _put_packed_handler(header_t *header, int proc)
 
     unpack(packed_buffer, mapped_offset,
             stride->stride, stride->count, stride->stride_levels);
-
+    free(stride);
     if ((unsigned)header->length > COMEX_STATIC_BUFFER_SIZE) {
         free(packed_buffer);
     }

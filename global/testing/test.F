@@ -31,15 +31,6 @@ c#define USE_MEMDEV
 
 #define MEM_INC 1000
 
-#ifdef BLOCK_CYCLIC
-#  define NEW_API
-#  undef MIRROR
-#else
-#  undef USE_SCALAPACK_DISTR
-#  undef USE_TILED_DISTR
-#  undef USE_TILED_IRREG_DISTR
-#endif
-
 #ifdef USE_SCALAPACK_DISTR
 #  undef USE_TILED_DISTR
 #  undef USE_TILED_IRREG_DISTR
@@ -47,11 +38,20 @@ c#define USE_MEMDEV
 #endif
 
 #ifdef USE_TILED_DISTR
+#  undef USE_SCALAPACK_DISTR
+#  undef USE_TILED_IRREG_DISTR
 #  define BLOCK_CYCLIC
 #endif
 
 #ifdef USE_TILED_IRREG_DISTR
+#  undef USE_SCALAPACK_DISTR
+#  undef USE_TILED_DISTR
 #  define BLOCK_CYCLIC
+#endif
+
+#ifdef BLOCK_CYCLIC
+#  define NEW_API
+#  undef MIRROR
 #endif
 
 #ifdef USE_MEMDEV
@@ -103,6 +103,31 @@ c
          write(6,'(a,i1,a,i1,a,i1)') ' Version ',version,'.',
      +      subversion,'.',patch
          call ffflush(6)
+#ifdef BLOCK_CYCLIC
+         print *,' '
+         print *,' Testing block-cyclic arrays '
+         print *,' '
+#endif
+#ifdef USE_SCALAPACK_DISTR
+         print *,' '
+         print *,' Testing ScaLAPACK distributed arrays '
+         print *,' '
+#endif
+#ifdef USE_TILED_DISTR
+         print *,' '
+         print *,' Testing tiled-distributed arrays '
+         print *,' '
+#endif
+#ifdef USE_TILED_IRREG_DISTR
+         print *,' '
+         print *,' Testing irregular tiled-distributed arrays '
+         print *,' '
+#endif
+#ifdef USE_RESTRICTED
+         print *,' '
+         print *,' Testing restricted arrays '
+         print *,' '
+#endif
       endif
 c
 c***  Initialize the MA package
@@ -3007,7 +3032,7 @@ c---------------------------------------------------------------------
       integer ndim, dims(2), chunk(2), p_mirror
       parameter (maxproc = 4096)
       double precision crap
-      real x, sum1, sum2
+      real alpha, beta, x, sum1, sum2
       logical found
       integer lprocs, inode, iproc, lproc
 #ifdef USE_RESTRICTED
@@ -3391,7 +3416,9 @@ c
 #else
       if (iproc.eq.0) call ga_put(g_b, 1, n, 1, n, b, n)
 #endif
-      call ga_add(0.1, g_a, 0.9, g_b, g_b)
+      alpha = 0.1
+      beta = 0.9
+      call ga_add(alpha, g_a, beta, g_b, g_b)
       call ga_get(g_b, 1, n, 1, n, b, n)
       do j = 1, n
          do i = 1, n

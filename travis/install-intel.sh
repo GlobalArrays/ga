@@ -28,10 +28,10 @@ case "$os" in
     Darwin)
 	mkdir -p ~/mntdmg ~/apps/oneapi || true
 	cd ~/Downloads
-	dir_base="17426"
-	dir_hpc="17398"
-	base="m_BaseKit_p_2021.1.0.2427_offline"
-	hpc="m_HPCKit_p_2021.1.0.2681_offline"
+	dir_base="18342"
+	dir_hpc="18341"
+	base="m_BaseKit_p_2022.1.0.92_offline"
+	hpc="m_HPCKit_p_2022.1.0.86_offline"
 	curl -LJO https://registrationcenter-download.intel.com/akdlm/irc_nas/"$dir_base"/"$base".dmg
 	curl -LJO https://registrationcenter-download.intel.com/akdlm/irc_nas/"$dir_hpc"/"$hpc".dmg
 	echo "installing BaseKit"
@@ -68,4 +68,9 @@ case "$os" in
 	    && sudo apt-get -y install intel-oneapi-ifort intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic  intel-oneapi-mkl \
 	    && sudo apt-get -y install intel-oneapi-mpi-devel
 	source "$IONEAPI_ROOT"/setvars.sh --force || true
+	which mpif90
+	mpif90 -show
 esac
+which ifort
+ifort -V
+echo ""##### end of  install-intel.sh ####"

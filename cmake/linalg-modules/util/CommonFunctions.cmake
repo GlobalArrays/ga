@@ -44,6 +44,28 @@
 
 set( COMMON_UTILITY_CMAKE_FILE_DIR ${CMAKE_CURRENT_LIST_DIR} )
 
+function( emulate_kitware_linalg_modules name )
+
+  if( DEFINED BLA_STATIC AND NOT DEFINED ${name}_PREFERS_STATIC )
+    if( DEFINED CACHE{BLA_STATIC} )
+      set( ${name}_PREFERS_STATIC ${BLA_STATIC} CACHE BOOL 
+        "Use Static ${name} LIBRARIES" )
+    else()
+      set( ${name}_PREFERS_STATIC ${BLA_STATIC} PARENT_SCOPE )
+    endif()
+  endif()
+
+  if( DEFINED BLA_VENDOR AND NOT DEFINED ${name}_PREFERENCE_LIST )
+    if( DEFINED CACHE{BLA_VENDOR} )
+      set( ${name}_PREFERENCE_LIST ${BLA_VENDOR} CACHE BOOL 
+        "Use Static ${name} LIBRARIES" )
+    else()
+      set( ${name}_PREFERENCE_LIST ${BLA_VENDOR} PARENT_SCOPE )
+    endif()
+  endif()
+
+endfunction()
+
 function( fill_out_prefix name )
 
   #if( ${name}_PREFIX AND NOT ${name}_INCLUDE_DIR )
@@ -177,7 +199,7 @@ function( append_possibly_missing_libs _linker_test __compile_output _orig_libs 
     list( APPEND _tmp_libs Threads::Threads )
   endif()
   
-  if( ${__compile_output} MATCHES "logf" )
+  if( ${__compile_output} MATCHES "logf" OR ${__compile_output} MATCHES "sqrt" )
     message( STATUS 
             "  * Missing LIBM            - Adding to ${_linker_test} linker" )
     list( APPEND _tmp_libs "m" )

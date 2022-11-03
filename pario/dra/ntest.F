@@ -133,7 +133,8 @@ c
       if (me.eq.0) print*,' '
 c
       if(me.eq.0) print *, 'Opening Existing Disk Array'
-      if(dra_open(FNAME ,DRA_R, d_a).ne.0)
+      if(dra_open(FNAME ,
+     D     DRA_R, d_a).ne.0)
      &            call ga_error('dra_open failed',0)
 c     
       if(ndra_inquire(d_a, type, ndim, dims, name, filename).ne.0)

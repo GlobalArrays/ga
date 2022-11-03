@@ -200,6 +200,7 @@ void FATR _PBEGINF_()
 
     argv[argc] = 0;
     tcgi_pbegin(argc, argv);
+    for (i=0; i<argc; i++) free(argv[i]);
     free(argv);
 }
 
