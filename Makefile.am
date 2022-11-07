@@ -1360,6 +1360,7 @@ check_PROGRAMS += ga++/testing/mtest
 check_PROGRAMS += ga++/testing/ntestc
 check_PROGRAMS += ga++/testing/testc
 check_PROGRAMS += ga++/testing/testmult
+check_PROGRAMS += ga++/testing/create_irreg_test
 check_PROGRAMS += ga++/testing/threadsafecpp
 
 CXX_SERIAL_TESTS =
@@ -1374,6 +1375,7 @@ CXX_PARALLEL_TESTS += ga++/testing/mtest$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/ntestc$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/testc$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/testmult$(EXEEXT)
+CXX_PARALLEL_TESTS += ga++/testing/create_irreg_test$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/threadsafecpp$(EXEEXT)
 
 ga___testing_elempatch_SOURCES      = ga++/testing/elempatch.cc
@@ -1381,6 +1383,7 @@ ga___testing_mtest_SOURCES          = ga++/testing/mtest.cc
 ga___testing_ntestc_SOURCES         = ga++/testing/ntestc.cc
 ga___testing_testc_SOURCES          = ga++/testing/testc.cc
 ga___testing_testmult_SOURCES       = ga++/testing/testmult.cc
+ga___testing_create_irreg_test_SOURCES       = ga++/testing/create_irreg_test.cc
 ga___testing_threadsafecpp_SOURCES  = ga++/testing/thread-safe.cc
 
 ga___testing_threadsafecpp_CXXFLAGS = $(AM_CXXFLAGS) $(OPENMP_CXXFLAGS)
@@ -1394,6 +1397,7 @@ ga___testing_mtest_LDADD            = libga++.la
 ga___testing_ntestc_LDADD           = libga++.la
 ga___testing_testc_LDADD            = libga++.la
 ga___testing_testmult_LDADD         = libga++.la
+ga___testing_create_irreg_test_LDADD         = libga++.la
 
 endif # CXX_BINDINGS
 
