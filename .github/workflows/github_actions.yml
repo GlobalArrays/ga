@@ -134,12 +134,12 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     steps: 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 40
       - name: Cache install steps
         id: ga-cache-install
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: cache-install-steps
         with:
