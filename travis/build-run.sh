@@ -114,8 +114,8 @@ case "x$PORT" in
         ;;
     x*)
 	if [[ "$MPI_IMPL" = "intel" ]] ; then
-	    I_MPI_F90="$F77"
-	    I_MPI_F77="$F77"
+	    export I_MPI_F90="$F77"
+	    exoirt I_MPI_F77="$F77"
 	    #hack to get scalapack going
 	    ./configure --with-${PORT} ${CONFIG_OPTS} LIBS=" -L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -ldl" CC=icc
 	else
