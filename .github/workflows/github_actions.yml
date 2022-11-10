@@ -187,7 +187,14 @@ jobs:
         run: |
           pwd
           ls
+          echo '***** cat config.log ****'
           find . -name config.log -exec cat {} ";" || true
+          echo '***** cat global.fh *****'
+          find . -name "global.fh"  -exec cat {} ";" || true
+          echo '***** global.fh* location *****'
+          find ../.. -name "global.fh*" || true
+          echo '***** cat global.fh.in *****'
+          find ../.. -name "global.fh.in" -exec cat {} ";" || true
           cat ./test-suite.log || true
           echo '***** CMakeOutput.log *****'
           find . -name CMakeOutput.log -exec cat {} ";" || true
