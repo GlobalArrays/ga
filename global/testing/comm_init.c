@@ -87,12 +87,29 @@ void comm_test(MPI_Comm comm)
 int main(int argc, char **argv)
 {
   int rank, size;
+  int color;
+  MPI_Comm group;
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
     printf("MPI COMM WORLD has %d processors\n",size);
   }
-  comm_test(MPI_COMM_WORLD);
+  color = 1;
+  if (rank < size/2) color = 0;
+  MPI_Comm_split(MPI_COMM_WORLD,color,rank,&group);
+  if (rank == 0) {
+    printf("\nRun test on first group\n");
+  }
+  if (color == 0) {
+    comm_test(group);
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
+  if (rank == 0) {
+    printf("\nRun test on second group\n");
+  }
+  if (color == 1) {
+    comm_test(group);
+  }
   MPI_Finalize();
 }
