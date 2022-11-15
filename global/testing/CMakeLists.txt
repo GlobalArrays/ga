@@ -9,8 +9,7 @@
 # agency of the United States Government.  Neither the United States
 # Government nor the United States Department of Energy, nor Battelle,
 # nor any of their employees, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
-# ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY,
-# COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT,
+# ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, # COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT,
 # SOFTWARE, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT
 # INFRINGE PRIVATELY OWNED RIGHTS.
 #
@@ -103,7 +102,9 @@ ga_add_parallel_test(testmult testmult.x)
 add_executable (testmultrect.x testmultrect.c util.c)
 ga_add_parallel_test(testmultrect testmultrect.x)
 add_executable (unpackc.x unpackc.c util.c)
-ga_add_parallel_test(unpack unpackc.x)
+ga_add_parallel_test(unpackc unpackc.x)
+add_executable (comm_init.x comm_init.c util.c)
+ga_add_parallel_test(comm_init comm_init.x)
 if (ENABLE_FORTRAN)
   add_executable (bin.x bin.F ffflush.F)
   ga_add_parallel_test(bin bin.x ${TEST_NPROCS_4})
@@ -220,6 +221,7 @@ target_link_libraries(testmult.x ga)
 target_link_libraries(testmultrect.x ga)
 target_link_libraries(testmult.x ga)
 target_link_libraries(unpackc.x ga)
+target_link_libraries(comm_init.x ga)
 
 if (ENABLE_FORTRAN)
   target_link_libraries(bin.x ga)
