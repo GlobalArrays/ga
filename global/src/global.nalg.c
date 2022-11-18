@@ -25,6 +25,10 @@
 #include "ga-wapi.h"
 #include "base.h"
 
+// workaround https://github.com/GlobalArrays/ga/issues/163
+// by using ARMCI_Malloc_local instead of ga_malloc -> MA
+#define GA_TRANSPOSE_USE_ARMCI_MEM 1
+
 #ifdef MSG_COMMS_MPI
 extern ARMCI_Group* ga_get_armci_group_(int);
 #endif
@@ -981,7 +985,14 @@ _iterator_hdl hdl;
       int i, size=GAsizeofM(atype);
 
       nelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+#ifdef GA_TRANSPOSE_USE_ARMCI_MEM
+{
+      size_t bytes = nelem * size;
+      ptr_tmp = ARMCI_Malloc_local(bytes);
+}
+#else
       ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
+#endif
 
       nrow   = hi[0] -lo[0]+1;
       ncol   = hi[1] -lo[1]+1; 
@@ -995,7 +1006,11 @@ _iterator_hdl hdl;
         ptr_a += ld[0]*size;
       }
       pnga_put(g_b, lob, hib, ptr_tmp ,&ncol);
+#ifdef GA_TRANSPOSE_USE_ARMCI_MEM
+      ARMCI_Free_local(ptr_tmp);
+#else
       ga_free(ptr_tmp);
+#endif
     }
 #else
     num_blocks_a = pnga_total_blocks(g_a);
