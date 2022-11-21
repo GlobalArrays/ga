@@ -3785,6 +3785,11 @@ void nga_sprs_array_get_diag_(Integer *s_a, Integer *g_d)
   wnga_sprs_array_get_diag(*s_a, g_d);
 }
 
+void nga_sprs_array_diag_right_multiply_(Integer *s_a, Integer *g_d)
+{
+  wnga_sprs_array_diag_right_multiply(*s_a, *g_d);
+}
+
 void nga_sprs_array_diag_left_multiply_(Integer *s_a, Integer *g_d)
 {
   wnga_sprs_array_diag_left_multiply(*s_a, *g_d);

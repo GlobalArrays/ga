@@ -7,8 +7,8 @@
 #include "mp3.h"
 
 #define WRITE_VTK
-#define CG_SOLVE 0
-#define NDIM 512
+#define CG_SOLVE 1
+#define NDIM 128
 
 /**
  *  Solve Laplace's equation on a cubic domain using the sparse matrix
@@ -29,7 +29,7 @@ void grid_factor(int p, int xdim, int ydim, int zdim,
  *   first, find all prime numbers, besides 1, less than or equal to 
  *   the square root of p
  */
-  ip = (int)(sqrt((double)p))+1;
+  ip = p;
   pmax = 0;
   for (i=2; i<=ip; i++) {
     ichk = 1;
@@ -104,6 +104,7 @@ int main(int argc, char **argv) {
   int64_t *ibuf, **iptr;
   double *vptr;
   double *vbuf;
+  double t_beg, dot_time, dot_time_s;
   int ok;
   double one_r = 1.0;
   double m_one_r = -1.0;
@@ -113,10 +114,11 @@ int main(int argc, char **argv) {
   double alpha, beta, rho, rho_m, omega, m_omega, residual;
   double rv,ts,tt;
   int nsave;
-  int heap=10000000, stack=10000000;
+  int heap=20000000, stack=20000000;
   int iterations = 10000;
   double tol, twopi;
   FILE *PHI;
+  char op[2];
   /* Intitialize a message passing library */
   one = 1;
   one_64 = 1;
@@ -380,6 +382,7 @@ int main(int argc, char **argv) {
     printf("\nRight hand side vector completed. Starting\n");
     printf("conjugate gradient iterations.\n\n");
   }
+  dot_time = 0;
 
   /* Solve Laplace's equation using conjugate gradient method */
   one_r = 1.0;
@@ -388,25 +391,57 @@ int main(int argc, char **argv) {
   /* Initial guess is zero, so Ax = 0 and r = b */
   GA_Copy(g_b, g_r);
   GA_Copy(g_r, g_p);
+  t_beg = GA_Wtime();
   residual = GA_Ddot(g_r,g_r);
-  GA_Norm_infinity(g_r, &tol);
+  dot_time += GA_Wtime()-t_beg;
+  /* GA_Norm_infinity(g_r, &tol); */
+  tol = sqrt(residual);
   ncnt = 0;
   /* Start iteration loop */
   while (tol > 1.0e-5 && ncnt < iterations) {
     if (me==0) printf("Iteration: %d Tolerance: %e\n",(int)ncnt+1,tol);
+    GA_Mask_sync(0,0);
     NGA_Sprs_array_matvec_multiply(s_a, g_p, g_t);
+    t_beg = GA_Wtime();
     alpha = GA_Ddot(g_t,g_p);
+    dot_time += GA_Wtime()-t_beg;
     alpha = residual/alpha;
+    GA_Mask_sync(0,0);
     GA_Add(&one_r,g_x,&alpha,g_p,g_x);
     alpha = -alpha;
+    GA_Mask_sync(0,0);
     GA_Add(&one_r,g_r,&alpha,g_t,g_r);
-    GA_Norm_infinity(g_r, &tol);
+    /*GA_Norm_infinity(g_r, &tol);*/
     beta = residual;
+    t_beg = GA_Wtime();
     residual = GA_Ddot(g_r,g_r);
+    dot_time += GA_Wtime()-t_beg;
+    tol = sqrt(residual);
     beta = residual/beta;
+    GA_Mask_sync(0,0);
     GA_Add(&one_r,g_r,&beta,g_p,g_p); 
     ncnt++;
   }
+
+  /* Evaluate time for dot products if no calculation takes place */
+  t_beg = GA_Wtime();
+  for (i=0; i<ncnt; i++) {
+    alpha = GA_Ddot(g_t,g_p);
+    residual = GA_Ddot(g_r,g_r);
+  }
+  dot_time_s = GA_Wtime()-t_beg;
+  /* average time in dot product across processors */
+  op[0] = '+';
+  op[1] = '\0';
+  GA_Dgop(&dot_time,1,op);
+  GA_Dgop(&dot_time_s,1,op);
+  dot_time /= ((double)nproc);
+  dot_time_s /= ((double)nproc);
+  if (me == 0) {
+    printf("Time in dot products in CG algorithm: %f\n",dot_time);
+    printf("Time in dot products in loop: %f\n",dot_time_s);
+  }
+
   /*
   if (me==0) printf("RHS Vector\n");
   GA_Print(g_b);
