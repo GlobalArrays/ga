@@ -5475,6 +5475,13 @@ void NGA_Sprs_array_get_diag(int s_a, int *g_d)
   *g_d = (int)gd;
 }
 
+void NGA_Sprs_array_diag_right_multiply(int s_a, int g_d)
+{
+  Integer sa = (Integer)s_a;
+  Integer gd = (Integer)g_d;
+  wnga_sprs_array_diag_right_multiply(sa, gd);
+}
+
 void NGA_Sprs_array_diag_left_multiply(int s_a, int g_d)
 {
   Integer sa = (Integer)s_a;
