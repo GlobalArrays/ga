@@ -1922,7 +1922,24 @@ void GA_Add(void *alpha, int g_a, void* beta, int g_b, int g_c)
 }
 
 
+void NGA_Add(void *alpha, int g_a, void* beta, int g_b, int g_c)
+{
+    Integer a=(Integer)g_a;
+    Integer b=(Integer)g_b;
+    Integer c=(Integer)g_c;
+    wnga_add(alpha, a, beta, b, c);
+}
+
+
 void GA_Copy(int g_a, int g_b)
+{
+    Integer a=(Integer)g_a;
+    Integer b=(Integer)g_b;
+    wnga_copy(a, b);
+}
+
+
+void NGA_Copy(int g_a, int g_b)
 {
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
