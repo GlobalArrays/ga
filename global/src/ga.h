@@ -200,12 +200,14 @@ extern void          NGA_Access_ghost_element(int g_a,  void *ptr, int subscript
 extern void          NGA_Access_ghosts(int g_a, int dims[], void *ptr, int ld[]);
 extern void          NGA_Access(int g_a, int lo[], int hi[], void *ptr, int ld[]);
 extern void          NGA_Acc(int g_a, int lo[], int hi[],void* buf,int ld[],void* alpha);
+extern void          NGA_Add(void *alpha, int g_a, void* beta, int g_b, int g_c); 
 extern void          NGA_Add_patch(void * alpha, int g_a, int alo[], int ahi[], void * beta,  int g_b, int blo[], int bhi[], int g_c, int clo[], int chi[]);
 extern int           NGA_Allocate(int g_a);
 extern int           NGA_Deallocate(int g_a);
 extern void          NGA_Alloc_gatscat_buf(int nelems);
 extern SingleComplex NGA_Cdot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
 extern int           NGA_Compare_distr(int g_a, int g_b); 
+extern void          NGA_Copy(int g_a, int g_b); 
 extern void          NGA_Copy_patch(char trans, int g_a, int alo[], int ahi[], int g_b, int blo[], int bhi[]);
 extern int           NGA_Create_config(int type,int ndim,int dims[], char *name, int chunk[], int p_handle);
 extern int           NGA_Create_ghosts_config(int type,int ndim,int dims[], int width[], char *name, int chunk[], int p_handle);
