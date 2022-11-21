@@ -3194,6 +3194,7 @@
 #define nga_sprs_array_export_ F77_FUNC_(nga_sprs_array_export,NGA_SPRS_ARRAY_EXPORT)
 #define nga_sprs_array_get_diag_ F77_FUNC_(nga_sprs_array_get_diag,NGA_SPRS_ARRAY_GET_DIAG)
 #define nga_sprs_array_diag_left_multiply_ F77_FUNC_(nga_sprs_array_diag_left_multiply,NGA_SPRS_ARRAY_DIAG_LEFT_MULTIPLY)
+#define nga_sprs_array_diag_right_multiply_ F77_FUNC_(nga_sprs_array_diag_right_multiply,NGA_SPRS_ARRAY_DIAG_RIGHT_MULTIPLY)
 #define nga_sprs_array_shift_diag_ F77_FUNC_(nga_sprs_array_shift_diag,NGA_SPRS_ARRAY_SHIFT_DIAG)
 #define nga_sprs_array_duplicate_ F77_FUNC_(nga_sprs_array_duplicate,NGA_SPRS_ARRAY_DUPLICATE)
 /* the missing functions are either complex type or strangely named */
