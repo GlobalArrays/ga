@@ -6,7 +6,7 @@
 AC_PREREQ([2.67])
 AC_INIT([Global Arrays (GA)],
         [m4_esyscmd([./version.sh])],
-        [hpctools@pnl.gov],
+        [https://github.com/GlobalArrays/ga/issues],
         [ga],
         [http://hpc.pnl.gov/globalarrays/])
 AC_CONFIG_AUX_DIR([build-aux])

@@ -5,8 +5,8 @@
 ###############################################################################
 AC_PREREQ([2.67])
 AC_INIT([Aggregate Remote Memory Copy Interface (ARMCI)], [1.5],
-        [hpctools@pnl.gov], [armci],
-        [http://www.emsl.pnl.gov/docs/parsoft/armci/])
+        [https://github.com/GlobalArrays/ga/issues], [armci],
+        [https://hpc.pnl.gov/armci/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
