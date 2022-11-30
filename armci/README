@@ -42,9 +42,9 @@ types of builds.  Detailed instructions are covered later in this file.
 QUESTIONS/HELP/SUPPORT/BUG-REPORT
 =================================
 
-email: hpctools@pnl.gov
+bug reports: https://github.com/GlobalArrays/ga/issues
 
-website: http://www.emsl.pnl.gov/docs/parsoft/armci
+website: https://hpc.pnl.gov/armci/
 
 ABOUT THIS SOFTWARE
 ===================
