@@ -3620,32 +3620,28 @@ STATIC void check_mpi_retval(int retval, const char *file, int line)
 STATIC const char *str_mpi_retval(int retval)
 {
     const char *msg = NULL;
-
-    switch(retval) {
-        case MPI_SUCCESS       : msg = "MPI_SUCCESS"; break;
-        case MPI_ERR_BUFFER    : msg = "MPI_ERR_BUFFER"; break;
-        case MPI_ERR_COUNT     : msg = "MPI_ERR_COUNT"; break;
-        case MPI_ERR_TYPE      : msg = "MPI_ERR_TYPE"; break;
-        case MPI_ERR_TAG       : msg = "MPI_ERR_TAG"; break;
-        case MPI_ERR_COMM      : msg = "MPI_ERR_COMM"; break;
-        case MPI_ERR_RANK      : msg = "MPI_ERR_RANK"; break;
-        case MPI_ERR_ROOT      : msg = "MPI_ERR_ROOT"; break;
-        case MPI_ERR_GROUP     : msg = "MPI_ERR_GROUP"; break;
-        case MPI_ERR_OP        : msg = "MPI_ERR_OP"; break;
-        case MPI_ERR_TOPOLOGY  : msg = "MPI_ERR_TOPOLOGY"; break;
-        case MPI_ERR_DIMS      : msg = "MPI_ERR_DIMS"; break;
-        case MPI_ERR_ARG       : msg = "MPI_ERR_ARG"; break;
-        case MPI_ERR_UNKNOWN   : msg = "MPI_ERR_UNKNOWN"; break;
-        case MPI_ERR_TRUNCATE  : msg = "MPI_ERR_TRUNCATE"; break;
-        case MPI_ERR_OTHER     : msg = "MPI_ERR_OTHER"; break;
-        case MPI_ERR_INTERN    : msg = "MPI_ERR_INTERN"; break;
-        case MPI_ERR_IN_STATUS : msg = "MPI_ERR_IN_STATUS"; break;
-        case MPI_ERR_PENDING   : msg = "MPI_ERR_PENDING"; break;
-        case MPI_ERR_REQUEST   : msg = "MPI_ERR_REQUEST"; break;
-        case MPI_ERR_LASTCODE  : msg = "MPI_ERR_LASTCODE"; break;
-        default                : msg = "DEFAULT"; break;
-    }
-
+         if (retval == MPI_SUCCESS      ) { msg = "MPI_SUCCESS";        }
+    else if (retval == MPI_ERR_BUFFER   ) { msg = "MPI_ERR_BUFFER";     }
+    else if (retval == MPI_ERR_COUNT    ) { msg = "MPI_ERR_COUNT";      }
+    else if (retval == MPI_ERR_TYPE     ) { msg = "MPI_ERR_TYPE";       }
+    else if (retval == MPI_ERR_TAG      ) { msg = "MPI_ERR_TAG";        }
+    else if (retval == MPI_ERR_COMM     ) { msg = "MPI_ERR_COMM";       }
+    else if (retval == MPI_ERR_RANK     ) { msg = "MPI_ERR_RANK";       }
+    else if (retval == MPI_ERR_ROOT     ) { msg = "MPI_ERR_ROOT";       }
+    else if (retval == MPI_ERR_GROUP    ) { msg = "MPI_ERR_GROUP";      }
+    else if (retval == MPI_ERR_OP       ) { msg = "MPI_ERR_OP";         }
+    else if (retval == MPI_ERR_TOPOLOGY ) { msg = "MPI_ERR_TOPOLOGY";   }
+    else if (retval == MPI_ERR_DIMS     ) { msg = "MPI_ERR_DIMS";       }
+    else if (retval == MPI_ERR_ARG      ) { msg = "MPI_ERR_ARG";        }
+    else if (retval == MPI_ERR_UNKNOWN  ) { msg = "MPI_ERR_UNKNOWN";    }
+    else if (retval == MPI_ERR_TRUNCATE ) { msg = "MPI_ERR_TRUNCATE";   }
+    else if (retval == MPI_ERR_OTHER    ) { msg = "MPI_ERR_OTHER";      }
+    else if (retval == MPI_ERR_INTERN   ) { msg = "MPI_ERR_INTERN";     }
+    else if (retval == MPI_ERR_IN_STATUS) { msg = "MPI_ERR_IN_STATUS";  }
+    else if (retval == MPI_ERR_PENDING  ) { msg = "MPI_ERR_PENDING";    }
+    else if (retval == MPI_ERR_REQUEST  ) { msg = "MPI_ERR_REQUEST";    }
+    else if (retval == MPI_ERR_LASTCODE ) { msg = "MPI_ERR_LASTCODE";   }
+    else                                  { msg = "DEFAULT";            }
     return msg;
 }
 
