@@ -25,6 +25,7 @@ typedef long armci_size_t;
 extern int armci_notify(int proc);
 extern int armci_notify_wait(int proc,int *pval);
 extern int ARMCI_Init(void);    /* initialize ARMCI */
+extern int ARMCI_Init_mpi_comm(MPI_Comm comm);    /* initialize ARMCI */
 extern int ARMCI_Init_args(int *argc, char ***argv);
 extern void ARMCI_Barrier(void);    /* ARMCI Barrier*/
 

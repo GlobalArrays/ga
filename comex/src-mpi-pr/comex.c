@@ -170,6 +170,7 @@ static char *static_server_buffer = NULL;
 static int static_server_buffer_size = 0;
 static int eager_threshold = -1;
 static int max_message_size = -1;
+static int init_from_comm = 0;
 
 static int COMEX_ENABLE_PUT_SELF = ENABLE_PUT_SELF;
 static int COMEX_ENABLE_GET_SELF = ENABLE_GET_SELF;
@@ -359,7 +360,7 @@ static int devshm_initialized = 0;
 static long devshm_fs_left = 0;
 static long devshm_fs_initial = 0;
 
-int comex_init()
+int _comex_init(MPI_Comm comm)
 {
     int status = 0;
     int init_flag = 0;
@@ -379,7 +380,7 @@ int comex_init()
 
 
     /* groups */
-    comex_group_init();
+    comex_group_init(comm);
 
     /* env vars */
     {
@@ -638,6 +639,10 @@ int comex_init()
         COMEX_ASSERT(lq_heads);
         /* start the server */
         _progress_server();
+        if (init_from_comm) {
+          status = COMEX_FAILURE;
+        }
+        return status;
     }
 
     /* Synch - Sanity Check */
@@ -664,6 +669,20 @@ int comex_init()
 #endif
 
     return COMEX_SUCCESS;
+}
+
+
+int comex_init()
+{
+  init_from_comm = 0;
+  return _comex_init(MPI_COMM_WORLD);
+}
+
+
+int comex_init_comm(MPI_Comm comm)
+{
+  init_from_comm = 1;
+  return _comex_init(comm);
 }
 
 
@@ -3327,9 +3346,12 @@ STATIC void _progress_server()
     printf(" %d freed nb_state ptr %p \n", g_state.rank, nb_state);
 #endif
 
-    // assume this is the end of a user's application
-    MPI_Finalize();
-    exit(EXIT_SUCCESS);
+    if (!init_from_comm) {
+      // assume this is the end of a user's application if initialized from
+      // world communicator
+      MPI_Finalize();
+      exit(EXIT_SUCCESS);
+    }
 }
 
 

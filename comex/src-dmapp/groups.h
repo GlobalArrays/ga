@@ -19,7 +19,7 @@ typedef struct group_link {
     MPI_Group group;
 } comex_igroup_t;
 
-extern void comex_group_init();
+extern void comex_group_init(MPI_Comm comm);
 extern void comex_group_finalize();
 extern comex_igroup_t* comex_get_igroup_from_group(comex_group_t group);
 

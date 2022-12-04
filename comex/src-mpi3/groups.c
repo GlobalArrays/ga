@@ -288,7 +288,7 @@ void comex_group_init()
     group_list->next = NULL;
     group_list->win_list = NULL;
 #ifdef USE_MPI_ERRORS_RETURN
-    MPI_Comm_set_errhandler(MPI_COMM_WORLD,MPI_ERRORS_RETURN);
+    MPI_Comm_set_errhandler(l_state.world_comm,MPI_ERRORS_RETURN);
 #endif
 
     /* save MPI world group and communicatior in COMEX_GROUP_WORLD */

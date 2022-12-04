@@ -198,6 +198,15 @@ int ARMCI_Init()
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak ARMCI_Init
+#endif
+int ARMCI_Init_mpi_comm(MPI_Comm comm)
+{
+    return PARMCI_Init_mpi_comm(comm);
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak ARMCI_Init_args
 #endif
 int ARMCI_Init_args(int *argc, char ***argv)

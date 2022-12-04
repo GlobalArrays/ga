@@ -101,7 +101,7 @@ static inline void nb_getv(comex_giov_t *iov, int iov_len, int proc, nb_t *nb);
 static inline void nb_accv(int datatype, void *scale,
         comex_giov_t *iov, int iov_len, int proc, nb_t *nb);
 
-int comex_init()
+int _comex_init(MPI_Comm comm)
 {
     int init_flag = 0;
     int status = 0;
@@ -121,7 +121,7 @@ int comex_init()
     assert(init_flag);
     
     /* Duplicate the World Communicator */
-    status = MPI_Comm_dup(MPI_COMM_WORLD, &(l_state.world_comm));
+    status = MPI_Comm_dup(comm, &(l_state.world_comm));
     CHECK_MPI_RETVAL(status);
     assert(l_state.world_comm); 
 
@@ -332,6 +332,18 @@ int comex_init()
     MPI_Barrier(l_state.world_comm);
 
     return COMEX_SUCCESS;
+}
+
+
+int comex_init()
+{
+  return _comex_init(MPI_COMM_WORLD);
+}
+
+
+int comex_init_comm(MPI_Comm comm)
+{
+  return _comex_init(comm);
 }
 
 
