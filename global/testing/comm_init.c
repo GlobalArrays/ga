@@ -1,9 +1,16 @@
+
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
 #include "mpi.h"
 #include "ga.h"
+
+#include "mp3.h"
 #include "macdecls.h"
 
 #define DIM 256
@@ -89,7 +96,9 @@ int main(int argc, char **argv)
   int rank, size;
   int color;
   MPI_Comm group;
-  MPI_Init(&argc, &argv);
+
+  MP_INIT(argc, argv);
+
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {

@@ -613,12 +613,12 @@ int _armci_init(MPI_Comm comm)
 
 int PARMCI_Init()
 {
-  return _armci_init(MPI_COMM_WORLD);
+  return !_armci_init(MPI_COMM_WORLD);
 }
 
 int PARMCI_Init_mpi_comm(MPI_Comm comm)
 {
-  return _armci_init(comm);
+  return !_armci_init(comm);
 }
 
 /* ARMCI Finalize is called multiple times, if both GA and TCGMSG are used

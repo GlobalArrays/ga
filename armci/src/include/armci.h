@@ -4,7 +4,10 @@
 
 /* for size_t */
 #include <stdlib.h>
+
+#ifdef MSG_COMMS_MPI
 #include <mpi.h>
+#endif
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
@@ -23,7 +26,11 @@ typedef long armci_size_t;
 extern int armci_notify(int proc);
 extern int armci_notify_wait(int proc,int *pval);
 extern int ARMCI_Init(void);    /* initialize ARMCI */
+
+#ifdef MSG_COMMS_MPI
 extern int ARMCI_Init_mpi_comm(MPI_Comm comm);    /* initialize ARMCI */
+#endif
+
 extern int ARMCI_Init_args(int *argc, char ***argv); /* initialize ARMCI */
 extern int ARMCI_Initialized();
 extern void ARMCI_Barrier(void);    /* ARMCI Barrier*/
