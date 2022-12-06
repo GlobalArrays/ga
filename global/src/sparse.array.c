@@ -169,8 +169,8 @@ Integer pnga_sprs_array_create(Integer idim, Integer jdim, Integer type, Integer
   for (i=0; i<MAX_ARRAYS; i++) {
     if (!SPA[i].active) {
       SPA[i].active = 1;
-      SPA[i].idx = (Integer*)malloc(INIT_BUF_SIZE*sizeof(Integer));
-      SPA[i].jdx = (Integer*)malloc(INIT_BUF_SIZE*sizeof(Integer));
+      SPA[i].idx = (Integer*)malloc(INIT_BUF_SIZE*size);
+      SPA[i].jdx = (Integer*)malloc(INIT_BUF_SIZE*size);
       SPA[i].type = pnga_type_f2c((int)(type));
       SPA[i].idx_size = size;
       SPA[i].size = GAsizeofM(SPA[i].type);
@@ -221,8 +221,8 @@ void pnga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *va
     char *oval = (char*)SPA[hdl].val;
     Integer me = pnga_pgroup_nodeid(SPA[hdl].grp);
 
-    tidx = (Integer*)malloc(2*SPA[hdl].maxval*sizeof(Integer));
-    tjdx = (Integer*)malloc(2*SPA[hdl].maxval*sizeof(Integer));
+    tidx = (Integer*)malloc(2*SPA[hdl].maxval*size);
+    tjdx = (Integer*)malloc(2*SPA[hdl].maxval*size);
     tval = (char*)malloc(2*SPA[hdl].maxval*SPA[hdl].size);
     /* copy data in old arrays to new, larger array */
     for (i=0; i<nval; i++) {
@@ -1361,7 +1361,9 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
 
   Integer ilo, ihi, jlo, jhi, klo, khi;
   void  *vsum, *vptr;
-  int64_t *iptr = NULL, *jptr = NULL;
+  int idx_size = SPA[s_hdl].idx_size;
+  int64_t *ilptr = NULL, *jlptr = NULL;
+  int *iptr = NULL, *jptr = NULL;
   Integer i, j, iproc, ncols;
   double one_r = 1.0;
   Integer one = 1;
@@ -1390,6 +1392,60 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
     pnga_error("Data type of sparse matrix and A and V vectors must match",
         SPA[s_hdl].type);
   }
+
+#define SPRS_REAL_MULTIPLY_M(_type,_iptr,_jptr)              \
+  {                                                          \
+    _type *_buf = (_type*)malloc((jhi-jlo+1)*sizeof(_type)); \
+    _type *_sum = (_type*)vsum;                              \
+    _type *_ptr = (_type*)vptr;                              \
+    if (zflag) {                                             \
+      for (i=ilo; i<=ihi; i++) {                             \
+        _sum[i-ilo] = (_type)0;                              \
+      }                                                      \
+      zflag = 0;                                             \
+    }                                                        \
+    klo = jlo+1;                                             \
+    khi = jhi+1;                                             \
+    pnga_get(g_a,&klo,&khi,_buf,&one);                       \
+    for (i=ilo; i<=ihi; i++) {                               \
+      ncols = _iptr[i+1-ilo]-_iptr[i-ilo];                   \
+      for (j=0; j<ncols; j++) {                              \
+        _sum[i-ilo] += _ptr[_iptr[i-ilo]+j]                  \
+                     * _buf[_jptr[_iptr[i-ilo]+j]-jlo];      \
+      }                                                      \
+    }                                                        \
+    free(_buf);                                              \
+  }
+  
+#define SPRS_COMPLEX_MULTIPLY_M(_type,_iptr,_jptr)             \
+  {                                                            \
+    _type *_buf = (_type*)malloc((jhi-jlo+1)*2*sizeof(_type)); \
+    _type *_sum = (_type*)vsum;                                \
+    _type *_ptr = (_type*)vptr;                                \
+    _type rbuf,ibuf,rval,ival;                                 \
+    if (zflag) {                                               \
+      for (i=ilo; i<=ihi; i++) {                               \
+        _sum[2*(i-ilo)] = 0.0;                                 \
+        _sum[2*(i-ilo)+1] = 0.0;                               \
+      }                                                        \
+      zflag = 0;                                               \
+    }                                                          \
+    klo = jlo+1;                                               \
+    khi = jhi+1;                                               \
+    pnga_get(g_a,&klo,&khi,_buf,&one);                         \
+    for (i=ilo; i<=ihi; i++) {                                 \
+      ncols = _iptr[i+1-ilo]-_iptr[i-ilo];                     \
+      for (j=0; j<ncols; j++) {                                \
+            rbuf = _buf[2*(_jptr[_iptr[i-ilo]+j]-jlo)];        \
+            ibuf = _buf[2*(_jptr[_iptr[i-ilo]+j]-jlo)+1];      \
+            rval = _buf[2*(_iptr[i-ilo]+j)];                   \
+            ival = _buf[2*(_iptr[i-ilo]+j)+1];                 \
+            _sum[2*(i-ilo)] = rval*rbuf-ival*ibuf;             \
+            _sum[2*(i-ilo)+1] = rval*ibuf+ival*rbuf;           \
+      }                                                        \
+    }                                                          \
+    free(_buf);                                                \
+  }
   
   /* Make sure product vector is zero */
   pnga_mask_sync(local_sync_begin,local_sync_end);
@@ -1400,165 +1456,49 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
   zflag = 1;
   for (iproc=0; iproc<nproc; iproc++) {
     pnga_sprs_array_column_distribution(s_a,iproc,&jlo,&jhi);
-    pnga_sprs_array_access_col_block(s_a,iproc,&iptr,&jptr,&vptr);
-    if (vptr != NULL) {
-      if (SPA[s_hdl].type == C_INT) {
-        int *ibuf = (int*)malloc((jhi-jlo+1)*sizeof(int));
-        int *isum = (int*)vsum;
-        int *inptr = (int*)vptr;
-        if (zflag) {
-          for (i=ilo; i<=ihi; i++) {
-            isum[i-ilo] = 0;
-          }
-          zflag = 0;
+    if (idx_size == 4) {
+      pnga_sprs_array_access_col_block(s_a,iproc,&iptr,&jptr,&vptr);
+      if (vptr != NULL) {
+        if (SPA[s_hdl].type == C_INT) {
+          SPRS_REAL_MULTIPLY_M(int,iptr,jptr);
+        } else if (SPA[s_hdl].type == C_LONG) {
+          SPRS_REAL_MULTIPLY_M(long,iptr,jptr);
+        } else if (SPA[s_hdl].type == C_LONGLONG) {
+          SPRS_REAL_MULTIPLY_M(long long,iptr,jptr);
+        } else if (SPA[s_hdl].type == C_FLOAT) {
+          SPRS_REAL_MULTIPLY_M(float,iptr,jptr);
+        } else if (SPA[s_hdl].type == C_DBL) {
+          SPRS_REAL_MULTIPLY_M(double,iptr,jptr);
+        } else if (SPA[s_hdl].type == C_SCPL) {
+          SPRS_COMPLEX_MULTIPLY_M(float,iptr,jptr);
+        } else if (SPA[s_hdl].type == C_DCPL) {
+          SPRS_COMPLEX_MULTIPLY_M(double,iptr,jptr);
         }
-        klo = jlo+1;
-        khi = jhi+1;
-        pnga_get(g_a,&klo,&khi,ibuf,&one);
-        for (i=ilo; i<=ihi; i++) {
-          ncols = iptr[i+1-ilo]-iptr[i-ilo];
-          for (j=0; j<ncols; j++) {
-            isum[i-ilo] += inptr[iptr[i-ilo]+j]*ibuf[jptr[iptr[i-ilo]+j]-jlo];
-          }
+      }
+    } else {
+      pnga_sprs_array_access_col_block(s_a,iproc,&ilptr,&jlptr,&vptr);
+      if (vptr != NULL) {
+        if (SPA[s_hdl].type == C_INT) {
+          SPRS_REAL_MULTIPLY_M(int,ilptr,jlptr);
+        } else if (SPA[s_hdl].type == C_LONG) {
+          SPRS_REAL_MULTIPLY_M(long,ilptr,jlptr);
+        } else if (SPA[s_hdl].type == C_LONGLONG) {
+          SPRS_REAL_MULTIPLY_M(long long,ilptr,jlptr);
+        } else if (SPA[s_hdl].type == C_FLOAT) {
+          SPRS_REAL_MULTIPLY_M(float,ilptr,jlptr);
+        } else if (SPA[s_hdl].type == C_DBL) {
+          SPRS_REAL_MULTIPLY_M(double,ilptr,jlptr);
+        } else if (SPA[s_hdl].type == C_SCPL) {
+          SPRS_COMPLEX_MULTIPLY_M(float,ilptr,jlptr);
+        } else if (SPA[s_hdl].type == C_DCPL) {
+          SPRS_COMPLEX_MULTIPLY_M(double,ilptr,jlptr);
         }
-        free(ibuf);
-      } else if (SPA[s_hdl].type == C_LONG) {
-        long *lbuf = (long*)malloc((jhi-jlo+1)*sizeof(long));
-        long *lsum = (long*)vsum;
-        long *lptr = (long*)vptr;
-        if (zflag) {
-          for (i=ilo; i<=ihi; i++) {
-            lsum[i-ilo] = 0;
-          }
-          zflag = 0;
-        }
-        klo = jlo+1;
-        khi = jhi+1;
-        pnga_get(g_a,&klo,&khi,lbuf,&one);
-        for (i=ilo; i<=ihi; i++) {
-          ncols = iptr[i+1-ilo]-iptr[i-ilo];
-          for (j=0; j<ncols; j++) {
-            lsum[i-ilo] += lptr[iptr[i-ilo]+j]*lbuf[jptr[iptr[i-ilo]+j]-jlo];
-          }
-        }
-        free(lbuf);
-      } else if (SPA[s_hdl].type == C_LONGLONG) {
-        long long *llbuf = (long long*)malloc((jhi-jlo+1)*sizeof(long long));
-        long long *llsum = (long long*)vsum;
-        long long *llptr = (long long*)vptr;
-        if (zflag) {
-          for (i=ilo; i<=ihi; i++) {
-            llsum[i-ilo] = 0;
-          }
-          zflag = 0;
-        }
-        klo = jlo+1;
-        khi = jhi+1;
-        pnga_get(g_a,&klo,&khi,llbuf,&one);
-        for (i=ilo; i<=ihi; i++) {
-          ncols = iptr[i+1-ilo]-iptr[i-ilo];
-          for (j=0; j<ncols; j++) {
-            llsum[i-ilo] += llptr[iptr[i-ilo]+j]*llbuf[jptr[iptr[i-ilo]+j]-jlo];
-          }
-        }
-        free(llbuf);
-      } else if (SPA[s_hdl].type == C_FLOAT) {
-        float *fbuf = (float*)malloc((jhi-jlo+1)*sizeof(float));
-        float *fsum = (float*)vsum;
-        float *fptr = (float*)vptr;
-        if (zflag) {
-          for (i=ilo; i<=ihi; i++) {
-            fsum[i-ilo] = 0.0;
-          }
-          zflag = 0;
-        }
-        klo = jlo+1;
-        khi = jhi+1;
-        pnga_get(g_a,&klo,&khi,fbuf,&one);
-        for (i=ilo; i<=ihi; i++) {
-          ncols = iptr[i+1-ilo]-iptr[i-ilo];
-          for (j=0; j<ncols; j++) {
-            fsum[i-ilo] += fptr[iptr[i-ilo]+j]*fbuf[jptr[iptr[i-ilo]+j]-jlo];
-          }
-        }
-        free(fbuf);
-      } else if (SPA[s_hdl].type == C_DBL) {
-        double *dbuf = (double*)malloc((jhi-jlo+1)*sizeof(double));
-        double *dsum = (double*)vsum;
-        double *dptr = (double*)vptr;
-        if (zflag) {
-          for (i=ilo; i<=ihi; i++) {
-            dsum[i-ilo] = 0.0;
-          }
-          zflag = 0;
-        }
-        klo = jlo+1;
-        khi = jhi+1;
-        pnga_get(g_a,&klo,&khi,dbuf,&one);
-        for (i=ilo; i<=ihi; i++) {
-          ncols = iptr[i+1-ilo]-iptr[i-ilo];
-          for (j=0; j<ncols; j++) {
-            dsum[i-ilo] += dptr[iptr[i-ilo]+j]*dbuf[jptr[iptr[i-ilo]+j]-jlo];
-          }
-        }
-        free(dbuf);
-      } else if (SPA[s_hdl].type == C_SCPL) {
-        float *cbuf = (float*)malloc((jhi-jlo+1)*sizeof(SingleComplex));
-        float *csum = (float*)vsum;
-        float *cptr = (float*)vptr;
-        float rbuf,ibuf,rval,ival;
-        if (zflag) {
-          for (i=ilo; i<=ihi; i++) {
-            csum[2*(i-ilo)] = 0.0;
-            csum[2*(i-ilo)+1] = 0.0;
-          }
-          zflag = 0;
-        }
-        klo = jlo+1;
-        khi = jhi+1;
-        pnga_get(g_a,&klo,&khi,cbuf,&one);
-        for (i=ilo; i<=ihi; i++) {
-          ncols = iptr[i+1-ilo]-iptr[i-ilo];
-          for (j=0; j<ncols; j++) {
-            rbuf = cbuf[2*(jptr[iptr[i-ilo]+j]-jlo)];
-            ibuf = cbuf[2*(jptr[iptr[i-ilo]+j]-jlo)+1];
-            rval = cbuf[2*(iptr[i-ilo]+j)];
-            ival = cbuf[2*(iptr[i-ilo]+j)+1];
-            csum[2*(i-ilo)] = rval*rbuf-ival*ibuf;
-            csum[2*(i-ilo)+1] = rval*ibuf+ival*rbuf;
-          }
-        }
-        free(cbuf);
-      } else if (SPA[s_hdl].type == C_DCPL) {
-        float *zbuf = (float*)malloc((jhi-jlo+1)*sizeof(DoubleComplex));
-        float *zsum = (float*)vsum;
-        float *zptr = (float*)vptr;
-        float rbuf,ibuf,rval,ival;
-        if (zflag) {
-          for (i=ilo; i<=ihi; i++) {
-            zsum[2*(i-ilo)] = 0.0;
-            zsum[2*(i-ilo)+1] = 0.0;
-          }
-          zflag = 0;
-        }
-        klo = jlo+1;
-        khi = jhi+1;
-        pnga_get(g_a,&klo,&khi,zbuf,&one);
-        for (i=ilo; i<=ihi; i++) {
-          ncols = iptr[i+1-ilo]-iptr[i-ilo];
-          for (j=0; j<ncols; j++) {
-            rbuf = zbuf[2*(jptr[iptr[i-ilo]+j]-jlo)];
-            ibuf = zbuf[2*(jptr[iptr[i-ilo]+j]-jlo)+1];
-            rval = zbuf[2*(iptr[i-ilo]+j)];
-            ival = zbuf[2*(iptr[i-ilo]+j)+1];
-            zsum[2*(i-ilo)] = rval*rbuf-ival*ibuf;
-            zsum[2*(i-ilo)+1] = rval*ibuf+ival*rbuf;
-          }
-        }
-        free(zbuf);
       }
     }
   }
+#undef SPRS_REAL_MULTIPLY_M
+#undef SPRS_COMPLEX_MULTIPLY_M
+
   if (ihi>=ilo) {
     klo = ilo + 1;
     khi = ihi + 1;
@@ -2228,7 +2168,9 @@ void pnga_sprs_array_diag_right_multiply(Integer s_a, Integer g_d)
   Integer ilo, ihi, jlo, jhi, klo, khi;
   Integer i, j, iproc, ncols;
   Integer type = SPA[hdl].type;
-  int64_t *iptr = NULL, *jptr = NULL;
+  int idx_size = SPA[hdl].idx_size;
+  int *iptr = NULL, *jptr = NULL;
+  int64_t *ilptr = NULL, *jlptr = NULL;
   Integer one = 1;
   void *vbuf;
   void *vptr;
@@ -2244,97 +2186,95 @@ void pnga_sprs_array_diag_right_multiply(Integer s_a, Integer g_d)
     pnga_error("(pnga_sprs_array_diag_right_multiply) vector not of dimension 1",0);
   }
 
+#define SPRS_REAL_RIGHT_MULTIPLY_M(_type,_iptr,_jptr)                  \
+  {                                                                    \
+    _type *_buf = (_type*)vbuf;                                        \
+    _type *_ptr = (_type*)vptr;                                        \
+    for (i=ilo; i<=ihi; i++) {                                         \
+      ncols = _iptr[i+1-ilo]-_iptr[i-ilo];                             \
+      for (j=0; j<ncols; j++) {                                        \
+        _ptr[_iptr[i-ilo]+j] = _ptr[_iptr[i-ilo]+j]                    \
+        * _buf[_jptr[i-ilo]-jlo];                                      \
+      }                                                                \
+    }                                                                  \
+  }
+
+#define SPRS_COMPLEX_RIGHT_MULTIPLY_M(_type,_iptr,_jptr)               \
+  {                                                                    \
+    _type *_buf = (_type*)vbuf;                                        \
+    _type *_ptr = (_type*)vptr;                                        \
+    _type rval, ival, rbuf, ibuf;                                      \
+    for (i=ilo; i<=ihi; i++) {                                         \
+      ncols = _iptr[i+1-ilo]-_iptr[i-ilo];                             \
+      for (j=0; j<ncols; j++) {                                        \
+        rbuf = _buf[2*(_jptr[i-ilo]-jlo)];                             \
+        ibuf = _buf[2*(_jptr[i-ilo]-jlo)+1];                           \
+        rval = _ptr[2*(_iptr[i-ilo]+j)];                               \
+        ival = _ptr[2*(_iptr[i-ilo]+j)+1];                             \
+        _ptr[2*(_iptr[i-ilo]+j)] = rbuf*rval-ibuf*ival;                \
+        _ptr[2*(_iptr[i-ilo]+j)+1] = rbuf*ival+ibuf*rval;              \
+      }                                                                \
+    }                                                                  \
+  }
   /* get block from diagonal array corresponding to this row block (there is
    * only one) */
   pnga_sprs_array_row_distribution(s_a,me,&ilo,&ihi);
   /* loop over blocks in sparse array */
   for (iproc=0; iproc<nproc; iproc++) {
     pnga_sprs_array_column_distribution(s_a,iproc,&jlo,&jhi);
-    pnga_sprs_array_access_col_block(s_a,iproc,&iptr,&jptr,&vptr);
-    vbuf = malloc((jhi-jlo+1)*SPA[hdl].size);
-    klo = jlo+1;
-    khi = jhi+1;
-    pnga_get(g_d,&klo,&khi,vbuf,&one);
-    if (vptr != NULL) {
-      if (type == C_INT) {
-        int *ibuf = (int*)vbuf;
-        int *inptr = (int*)vptr;
-        for (i=ilo; i<=ihi; i++) {
-          ncols = iptr[i+1-ilo]-iptr[i-ilo];
-          for (j=0; j<ncols; j++) {
-            inptr[iptr[i-ilo]+j] = inptr[iptr[i-ilo]+j]*ibuf[jptr[i-ilo]-jlo];
-          }
+    if (idx_size == 4) {
+      pnga_sprs_array_access_col_block(s_a,iproc,&iptr,&jptr,&vptr);
+      vbuf = malloc((jhi-jlo+1)*SPA[hdl].size);
+      klo = jlo+1;
+      khi = jhi+1;
+      pnga_get(g_d,&klo,&khi,vbuf,&one);
+      if (vptr != NULL) {
+        if (type == C_INT) {
+          SPRS_REAL_RIGHT_MULTIPLY_M(int,iptr,jptr);
+        } else if (type == C_LONG) {
+          SPRS_REAL_RIGHT_MULTIPLY_M(long,iptr,jptr);
+        } else if (type == C_LONGLONG) {
+          SPRS_REAL_RIGHT_MULTIPLY_M(long long,iptr,jptr);
+        } else if (type == C_FLOAT) {
+          SPRS_REAL_RIGHT_MULTIPLY_M(float,iptr,jptr);
+        } else if (type == C_DBL) {
+          SPRS_REAL_RIGHT_MULTIPLY_M(double,iptr,jptr);
+        } else if (type == C_SCPL) {
+          SPRS_COMPLEX_RIGHT_MULTIPLY_M(float,iptr,jptr);
+        } else if (type == C_DCPL) {
+          SPRS_COMPLEX_RIGHT_MULTIPLY_M(double,iptr,jptr);
         }
-      } else if (type == C_LONG) {
-        long *lbuf = (long*)vbuf;
-        long *lptr = (long*)vptr;
-        for (i=ilo; i<=ihi; i++) {
-          ncols = iptr[i+1-ilo]-iptr[i-ilo];
-          for (j=0; j<ncols; j++) {
-            lptr[iptr[i-ilo]+j] = lptr[iptr[i-ilo]+j]*lbuf[jptr[i-ilo]-jlo];
-          }
-        }
-      } else if (type == C_LONGLONG) {
-        long long *llbuf = (long long*)vbuf;
-        long long *llptr = (long long*)vptr;
-        for (i=ilo; i<=ihi; i++) {
-          ncols = iptr[i+1-ilo]-iptr[i-ilo];
-          for (j=0; j<ncols; j++) {
-            llptr[iptr[i-ilo]+j] = llptr[iptr[i-ilo]+j]*llbuf[jptr[i-ilo]-jlo];
-          }
-        }
-      } else if (type == C_FLOAT) {
-        float *fbuf = (float*)vbuf;
-        float *fptr = (float*)vptr;
-        for (i=ilo; i<=ihi; i++) {
-          ncols = iptr[i+1-ilo]-iptr[i-ilo];
-          for (j=0; j<ncols; j++) {
-            fptr[iptr[i-ilo]+j] = fptr[iptr[i-ilo]+j]*fbuf[jptr[i-ilo]-jlo];
-          }
-        }
-      } else if (type == C_DBL) {
-        double *dbuf = (double*)vbuf;
-        double *dptr = (double*)vptr;
-        for (i=ilo; i<=ihi; i++) {
-          ncols = iptr[i+1-ilo]-iptr[i-ilo];
-          for (j=0; j<ncols; j++) {
-            dptr[iptr[i-ilo]+j] = dptr[iptr[i-ilo]+j]*dbuf[jptr[i-ilo]-jlo];
-          }
-        }
-      } else if (type == C_SCPL) {
-        float *sbuf = (float*)vbuf;
-        float *sptr = (float*)vptr;
-        float rbuf, ibuf, rval, ival;
-        for (i=ilo; i<=ihi; i++) {
-          ncols = iptr[i+1-ilo]-iptr[i-ilo];
-          for (j=0; j<ncols; j++) {
-            rbuf = sbuf[2*(jptr[i-ilo]-jlo)];
-            ibuf = sbuf[2*(jptr[i-ilo]-jlo)+1];
-            rval = sptr[2*(iptr[i-ilo]+j)];
-            ival = sptr[2*(iptr[i-ilo]+j)+1];
-            sptr[2*(iptr[i-ilo]+j)] = rbuf*rval-ibuf*ival;
-            sptr[2*(iptr[i-ilo]+j)+1] = rbuf*ival+ibuf*rval;
-          }
-        }
-      } else if (type == C_DCPL) {
-        double *zbuf = (double*)vbuf;
-        double *zptr = (double*)vptr;
-        double rbuf, ibuf, rval, ival;
-        for (i=ilo; i<=ihi; i++) {
-          ncols = iptr[i+1-ilo]-iptr[i-ilo];
-          for (j=0; j<ncols; j++) {
-            rbuf = zbuf[2*(jptr[i-ilo]-jlo)];
-            ibuf = zbuf[2*(jptr[i-ilo]-jlo)+1];
-            rval = zptr[2*(iptr[i-ilo]+j)];
-            ival = zptr[2*(iptr[i-ilo]+j)+1];
-            zptr[2*(iptr[i-ilo]+j)] = rbuf*rval-ibuf*ival;
-            zptr[2*(iptr[i-ilo]+j)+1] = rbuf*ival+ibuf*rval;
-          }
+      }
+    } else {
+      pnga_sprs_array_access_col_block(s_a,iproc,&ilptr,&jlptr,&vptr);
+      vbuf = malloc((jhi-jlo+1)*SPA[hdl].size);
+      klo = jlo+1;
+      khi = jhi+1;
+      pnga_get(g_d,&klo,&khi,vbuf,&one);
+      if (vptr != NULL) {
+        if (type == C_INT) {
+          SPRS_REAL_RIGHT_MULTIPLY_M(int,ilptr,jlptr);
+        } else if (type == C_LONG) {
+          SPRS_REAL_RIGHT_MULTIPLY_M(long,ilptr,jlptr);
+        } else if (type == C_LONGLONG) {
+          SPRS_REAL_RIGHT_MULTIPLY_M(long long,ilptr,jlptr);
+        } else if (type == C_FLOAT) {
+          SPRS_REAL_RIGHT_MULTIPLY_M(float,ilptr,jlptr);
+        } else if (type == C_DBL) {
+          SPRS_REAL_RIGHT_MULTIPLY_M(double,ilptr,jlptr);
+        } else if (type == C_SCPL) {
+          SPRS_COMPLEX_RIGHT_MULTIPLY_M(float,ilptr,jlptr);
+        } else if (type == C_DCPL) {
+          SPRS_COMPLEX_RIGHT_MULTIPLY_M(double,ilptr,jlptr);
         }
       }
     }
     free(vbuf);
   }
+
+#undef SPRS_REAL_RIGHT_MULTIPLY_M
+#undef SPRS_COMPLEX_RIGHT_MULTIPLY_M
+
   pnga_pgroup_sync(grp);
 }
 
@@ -2524,20 +2464,6 @@ Integer pnga_sprs_array_duplicate(Integer s_a)
   pnga_copy_patch(p_trans,SPA[hdl].g_j,&lo,&hi,SPA[new_hdl].g_j,&lo,&hi);
   pnga_distribution(SPA[new_hdl].g_data,me,&lo,&hi);
   pnga_copy_patch(p_trans,SPA[hdl].g_data,&lo,&hi,SPA[new_hdl].g_data,&lo,&hi);
-#if 0
-  if (GAme == 0) printf("\nI_INDEX_ORIGINAL:\n");
-  pnga_print(SPA[hdl].g_i);
-  if (GAme == 0) printf("\nJ_INDEX_ORIGINAL:\n");
-  pnga_print(SPA[hdl].g_j);
-  if (GAme == 0) printf("\nG_DATA_ORIGINAL:\n");
-  pnga_print(SPA[hdl].g_data);
-  if (GAme == 0) printf("\nI_INDEX:\n");
-  pnga_print(SPA[new_hdl].g_i);
-  if (GAme == 0) printf("\nJ_INDEX:\n");
-  pnga_print(SPA[new_hdl].g_j);
-  if (GAme == 0) printf("\nG_DATA:\n");
-  pnga_print(SPA[new_hdl].g_data);
-#endif
   /* copy remaining data structures */
   SPA[new_hdl].ilo = SPA[hdl].ilo;
   SPA[new_hdl].ihi = SPA[hdl].ihi;
