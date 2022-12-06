@@ -6,9 +6,9 @@
 AC_PREREQ([2.67])
 AC_INIT([Communication Runtime for Extreme Scale (comex)],
         [1.1],
-        [hpctools@pnl.gov],
+        [https://github.com/GlobalArrays/ga/issues],
         [comex],
-        [http://www.emsl.pnl.gov/docs/global/])
+        [https://hpc.pnl.gov/globalarrays/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])

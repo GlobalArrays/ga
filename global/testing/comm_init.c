@@ -1,3 +1,4 @@
+
 #if HAVE_CONFIG_H
 #   include "config.h"
 #endif
@@ -8,6 +9,7 @@
 
 #include "mpi.h"
 #include "ga.h"
+
 #include "mp3.h"
 #include "macdecls.h"
 
@@ -94,7 +96,9 @@ int main(int argc, char **argv)
   int rank, size;
   int color;
   MPI_Comm group;
+
   MP_INIT(argc, argv);
+
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {

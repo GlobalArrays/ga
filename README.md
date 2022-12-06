@@ -63,7 +63,7 @@ Please refer to the INSTALL file for generic build instructions.  That is a good
 
 [back to top]
 
-Please submit issues to our [GitHub issue tracker](https://github.com/GlobalArrays/ga/issues).  We use Google Groups to host [our discussion forum](https://groups.google.com/forum/#!forum/hpctools), or send an email to hpctools@pnl.gov as an alias for that group.
+Please submit issues to our [GitHub issue tracker](https://github.com/GlobalArrays/ga/issues).  We use Google Groups to host [our discussion forum](https://groups.google.com/forum/#!forum/hpctools).
 
 ## WHERE IS THE DOCUMENTATION?
 
