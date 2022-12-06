@@ -516,7 +516,6 @@ void armci_msg_init_comm(MPI_Comm comm)
 {
     if (!PARMCI_Initialized()) {
         MPI_Comm_dup(comm, &ARMCI_COMM_WORLD);
-        MPI_Comm_dup(MPI_COMM_WORLD, &ARMCI_COMM_WORLD);
     }
 }
 #endif
