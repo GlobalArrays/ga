@@ -270,8 +270,9 @@ c
      +    index3, ld3)
       call ga_sync
       if (maxval.lt.10000)
-     +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
-      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+     +      call aprint(int_mb(index3),dims3(1),dims3(2),
+     +                  ld3(1),has_data)
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3(1),b,
      +           nmax+2*nwidth,has_data)
       call ga_sync
       tmp = t1
