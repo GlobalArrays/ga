@@ -152,6 +152,9 @@ LIBS="$comex_save_LIBS"
 LDFLAGS="$comex_save_LDFLAGS"
 CPPFLAGS="$comex_save_CPPFLAGS"
 
+# SysV shared memory
+COMEX_ENABLE_SYSV
+
 # Checks for C libraries.
 COMEX_BLAS
 

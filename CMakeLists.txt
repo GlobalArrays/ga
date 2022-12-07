@@ -60,6 +60,7 @@ ga_option(CMAKE_BUILD_TYPE Release)
 ga_option(LINALG_VENDOR BLIS)
 ga_option(ENABLE_TESTS ON)
 ga_option(ENABLE_PROFILING OFF)
+ga_option(ENABLE_SYSV OFF)
 #Options for user provided LinAlg libraries
 ga_option(ENABLE_BLAS OFF)
 ga_option(ENABLE_SCALAPACK OFF)
@@ -400,13 +401,18 @@ if(DEFINED GA_GCC_TOOLCHAIN_FLAG)
   target_compile_options(ga PUBLIC $<$<COMPILE_LANGUAGE:C,CXX>:${GA_GCC_TOOLCHAIN_FLAG}>)
 endif()
 
+if(ENABLE_TESTS)
+  # turn testing on
+  enable_testing()
+endif()
+
 # -------------------------------------------------------------
 # Subdirectories
 # -------------------------------------------------------------
 add_subdirectory(global/src)
 add_subdirectory(comex)
 if(ENABLE_CXX)
-add_subdirectory(ga++/src)
+add_subdirectory(ga++)
 endif()
 add_subdirectory(ma)
 add_subdirectory(pario)
@@ -420,12 +426,8 @@ if(ENABLE_PROFILING)
 endif()
 
 if(ENABLE_TESTS)
-  if (NOT GA_TEST_NPROCS)
-    set(GA_TEST_NPROCS ${MPIEXEC_MAX_NUMPROCS})
-  endif()
-  # turn testing on
-  enable_testing()
   add_subdirectory(global/testing)
+  add_subdirectory(global/examples)
 endif()
 
 

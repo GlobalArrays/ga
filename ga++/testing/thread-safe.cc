@@ -391,6 +391,6 @@ int main(int argc, char * argv[])
     return return_code;
 #else
     printf("OPENMP Disabled\n");
-    return 1;
+    return 0;
 #endif
 }
