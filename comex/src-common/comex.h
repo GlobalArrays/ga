@@ -57,6 +57,14 @@ extern int comex_init();
 extern int comex_init_args(int *argc, char ***argv);
 
 /**
+ * Initialize comex with an externally supplied communicator.
+ *
+ * @param[in] comm external communicator.
+ * @return COMEX_SUCCESS on sucess
+ */
+extern int comex_init_comm(MPI_Comm);
+
+/**
  * Test whether comex has been initialized.
  *
  * @return COMEX_SUCCESS if comex has been initialized

@@ -357,6 +357,14 @@ ARMCI_Init ()
 }
 
 int
+ARMCI_Init_mpi_comm (MPI_Comm comm)
+{
+  int rval;
+  rval = PARMCI_Init_mpi_comm (comm);
+  return rval;
+}
+
+int
 ARMCI_WaitAll ()
 {
   int rval;

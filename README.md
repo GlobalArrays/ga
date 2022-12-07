@@ -63,7 +63,7 @@ Please refer to the INSTALL file for generic build instructions.  That is a good
 
 [back to top]
 
-Please submit issues to our [GitHub issue tracker](https://github.com/GlobalArrays/ga/issues).  We use Google Groups to host [our discussion forum](https://groups.google.com/forum/#!forum/hpctools), or send an email to hpctools@pnl.gov as an alias for that group.
+Please submit issues to our [GitHub issue tracker](https://github.com/GlobalArrays/ga/issues).  We use Google Groups to host [our discussion forum](https://groups.google.com/forum/#!forum/hpctools).
 
 ## WHERE IS THE DOCUMENTATION?
 
@@ -233,9 +233,10 @@ Any application code which only makes GA function calls can remain unchanged.
                         the software. If you experience mysterious faults,
                         consider rebuilding without optimization by using this
                         option.
+--enable-sysv           Enable System V Shared Memory.
 --enable-peigs          Enable Parallel Eigensystem Solver interface. This
                         will build the stubs required to call into the peigs
-                        library (external). 
+                        library (external).
 --enable-checkpoint     Enable checkpointing.  Untested.  For use with old
                         X-based visualization tool.
 --enable-profile        Enable profiling. Not sure what this does, sorry.
@@ -423,6 +424,7 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
   * MPI_MULTITHREADED Use thread multiple runtime
   * MPI_PROGRESS_THREAD Use progress thread runtime
   * MPI_RMA Use MPI RMA based runtime.
+* `ENABLE_SYSV` Enable System V Shared Memory
 * `ENABLE_PROFILING` Build GA operation profiler. Does not work when using Clang compilers. [Default:OFF]
 * `GA_EXTRA_LIBS` Specify additional libraries or linker options when building GA.
 * `GCCROOT` Specify root of GCC installation. Only required when building with Clang compilers.
@@ -437,6 +439,9 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
     * `LINALG_REQUIRED_COMPONENTS`: Options are `lp64` or `ilp64`. [Default:lp64]
     * `LINALG_OPTIONAL_COMPONENTS`: `sycl` [Default:none]
     * `ENABLE_SCALAPACK`: To enable ScaLAPACK discovery.
+* `[OPTIONAL]` CTEST options for handling different types of job launchers and their parameters.
+   * `GA_JOB_LAUNCH_CMD`: `mpirun`
+   * `GA_JOB_LAUNCH_ARGS`: `"-n 5"`
 #### The following options are standard CMake parameters. More information about them can be found in the CMake documentation.
 
 * `CMAKE_INSTALL_PREFIX` Specify the install location for GA.

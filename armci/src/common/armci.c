@@ -382,7 +382,7 @@ void _armci_test_connections()
   }
 }
 
-int PARMCI_Init()
+int _armci_init(MPI_Comm comm)
 {
     char *uval;
 #if defined(THREAD_SAFE)
@@ -396,7 +396,8 @@ int PARMCI_Init()
 
     /* let's hope that the message passing environment was initialized outside
      * of ARMCI such that passing NULL for argc/argv here is okay */
-    armci_msg_init(NULL, NULL);
+    /* armci_msg_init(NULL, NULL); */
+    armci_msg_init_comm(comm);
 
 #ifdef MPI_SPAWN
     if(!_armci_initialized_args)
@@ -608,6 +609,16 @@ int PARMCI_Init()
     install_nxtval(NULL, NULL);
 #endif
     return 0;
+}
+
+int PARMCI_Init()
+{
+  return !_armci_init(MPI_COMM_WORLD);
+}
+
+int PARMCI_Init_mpi_comm(MPI_Comm comm)
+{
+  return !_armci_init(comm);
 }
 
 /* ARMCI Finalize is called multiple times, if both GA and TCGMSG are used

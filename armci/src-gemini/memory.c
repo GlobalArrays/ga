@@ -678,7 +678,7 @@ int PARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
       remote_mdh_node_t *ll;
       int node_master = armci_me;
       long total_bytes, lbytes = (long) bytes;
-      NTK_MPI_GetComm(MPI_COMM_WORLD, &info);
+      NTK_MPI_GetComm(ARMCI_COMM_WORLD, &info);
       long *bytes_per_rank = (long *) malloc(info.numa_np*sizeof(long));
 
    // not a wonderfully scalable solution

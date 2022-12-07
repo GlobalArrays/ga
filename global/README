@@ -14,7 +14,7 @@ DEPENDENCIES ON OTHER SOFTWARE
 - MA (memory allocator by Greg Thomas)
 
 - GA eigensolver, ga_diag, is a wrapper for the eigensolver from
-  PEIGS library; (Please contact George Fann <gi_fann@pnl.gov> about
+  PEIGS library; (Please contact George Fann <fanngi@ornl.gov> about
   PEIGS)
 
 - BLAS library is required for the eigensolver and ga_dgemm;
@@ -68,8 +68,8 @@ DOCUMENTATION
 =============
 The documentation is located in doc/ and on the web at:
 
-    http://www.emsl.pnl.gov/docs/global.
+    https://hpc.pnl.gov/globalarrays
 
 CONTACT
 =======
-For suggestions, comments and bug reports: hpctools@pnl.gov
+For suggestions, comments and bug reports: https://github.com/GlobalArrays/ga/issues

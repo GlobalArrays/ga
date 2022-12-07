@@ -24,6 +24,9 @@ extern long   PARMCI_GetValueLong(void *src, int proc);
 extern int    PARMCI_GetV(armci_giov_t * darr, int len, int proc);
 extern int    PARMCI_Get(void *src, void *dst, int bytes, int proc);
 extern int    PARMCI_Init();
+#ifdef MSG_COMMS_MPI
+extern int    PARMCI_Init_mpi_comm(MPI_Comm comm);
+#endif
 extern int    PARMCI_Init_args(int *argc, char ***argv);
 extern int    PARMCI_Initialized();
 extern void   PARMCI_Lock(int mutex, int proc);
