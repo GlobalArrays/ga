@@ -181,6 +181,7 @@ static int eager_threshold = -1;
 static int max_message_size = -1;
 static int use_dev_shm = 1;
 static int token_counter = 0;
+static int init_from_comm = 0;
 
 static int COMEX_ENABLE_PUT_SELF = ENABLE_PUT_SELF;
 static int COMEX_ENABLE_GET_SELF = ENABLE_GET_SELF;
@@ -375,7 +376,7 @@ static int devshm_initialized = 0;
 static long devshm_fs_left = 0;
 static long devshm_fs_initial = 0;
 
-int comex_init()
+int _comex_init(MPI_Comm comm)
 {
     int status = 0;
     int init_flag = 0;
@@ -395,7 +396,7 @@ int comex_init()
 
 
     /* groups */
-    comex_group_init();
+    comex_group_init(comm);
 
     /* env vars */
     {
@@ -670,6 +671,10 @@ int comex_init()
         COMEX_ASSERT(lq_heads);
         /* start the server */
         _progress_server();
+        if (init_from_comm) {
+          status = COMEX_FAILURE;
+        }
+        return status;
     }
 
     /* Synch - Sanity Check */
@@ -696,6 +701,20 @@ int comex_init()
 #endif
 
     return COMEX_SUCCESS;
+}
+
+
+int comex_init()
+{
+  init_from_comm = 0;
+  return _comex_init(MPI_COMM_WORLD);
+}
+
+
+int comex_init_comm(MPI_Comm comm)
+{
+  init_from_comm = 1;
+  return _comex_init(comm);
 }
 
 
@@ -3525,9 +3544,12 @@ STATIC void _progress_server()
     printf(" %d freed nb_state ptr %p \n", g_state.rank, nb_state);
 #endif
 
-    // assume this is the end of a user's application
-    MPI_Finalize();
-    exit(EXIT_SUCCESS);
+    if (!init_from_comm) {
+      // assume this is the end of a user's application if initialized from
+      // world communicator
+      MPI_Finalize();
+      exit(EXIT_SUCCESS);
+    }
 }
 
 
@@ -5240,32 +5262,28 @@ STATIC void check_mpi_retval(int retval, const char *file, int line)
 STATIC const char *str_mpi_retval(int retval)
 {
     const char *msg = NULL;
-
-    switch(retval) {
-        case MPI_SUCCESS       : msg = "MPI_SUCCESS"; break;
-        case MPI_ERR_BUFFER    : msg = "MPI_ERR_BUFFER"; break;
-        case MPI_ERR_COUNT     : msg = "MPI_ERR_COUNT"; break;
-        case MPI_ERR_TYPE      : msg = "MPI_ERR_TYPE"; break;
-        case MPI_ERR_TAG       : msg = "MPI_ERR_TAG"; break;
-        case MPI_ERR_COMM      : msg = "MPI_ERR_COMM"; break;
-        case MPI_ERR_RANK      : msg = "MPI_ERR_RANK"; break;
-        case MPI_ERR_ROOT      : msg = "MPI_ERR_ROOT"; break;
-        case MPI_ERR_GROUP     : msg = "MPI_ERR_GROUP"; break;
-        case MPI_ERR_OP        : msg = "MPI_ERR_OP"; break;
-        case MPI_ERR_TOPOLOGY  : msg = "MPI_ERR_TOPOLOGY"; break;
-        case MPI_ERR_DIMS      : msg = "MPI_ERR_DIMS"; break;
-        case MPI_ERR_ARG       : msg = "MPI_ERR_ARG"; break;
-        case MPI_ERR_UNKNOWN   : msg = "MPI_ERR_UNKNOWN"; break;
-        case MPI_ERR_TRUNCATE  : msg = "MPI_ERR_TRUNCATE"; break;
-        case MPI_ERR_OTHER     : msg = "MPI_ERR_OTHER"; break;
-        case MPI_ERR_INTERN    : msg = "MPI_ERR_INTERN"; break;
-        case MPI_ERR_IN_STATUS : msg = "MPI_ERR_IN_STATUS"; break;
-        case MPI_ERR_PENDING   : msg = "MPI_ERR_PENDING"; break;
-        case MPI_ERR_REQUEST   : msg = "MPI_ERR_REQUEST"; break;
-        case MPI_ERR_LASTCODE  : msg = "MPI_ERR_LASTCODE"; break;
-        default                : msg = "DEFAULT"; break;
-    }
-
+         if (retval == MPI_SUCCESS      ) { msg = "MPI_SUCCESS";        }
+    else if (retval == MPI_ERR_BUFFER   ) { msg = "MPI_ERR_BUFFER";     }
+    else if (retval == MPI_ERR_COUNT    ) { msg = "MPI_ERR_COUNT";      }
+    else if (retval == MPI_ERR_TYPE     ) { msg = "MPI_ERR_TYPE";       }
+    else if (retval == MPI_ERR_TAG      ) { msg = "MPI_ERR_TAG";        }
+    else if (retval == MPI_ERR_COMM     ) { msg = "MPI_ERR_COMM";       }
+    else if (retval == MPI_ERR_RANK     ) { msg = "MPI_ERR_RANK";       }
+    else if (retval == MPI_ERR_ROOT     ) { msg = "MPI_ERR_ROOT";       }
+    else if (retval == MPI_ERR_GROUP    ) { msg = "MPI_ERR_GROUP";      }
+    else if (retval == MPI_ERR_OP       ) { msg = "MPI_ERR_OP";         }
+    else if (retval == MPI_ERR_TOPOLOGY ) { msg = "MPI_ERR_TOPOLOGY";   }
+    else if (retval == MPI_ERR_DIMS     ) { msg = "MPI_ERR_DIMS";       }
+    else if (retval == MPI_ERR_ARG      ) { msg = "MPI_ERR_ARG";        }
+    else if (retval == MPI_ERR_UNKNOWN  ) { msg = "MPI_ERR_UNKNOWN";    }
+    else if (retval == MPI_ERR_TRUNCATE ) { msg = "MPI_ERR_TRUNCATE";   }
+    else if (retval == MPI_ERR_OTHER    ) { msg = "MPI_ERR_OTHER";      }
+    else if (retval == MPI_ERR_INTERN   ) { msg = "MPI_ERR_INTERN";     }
+    else if (retval == MPI_ERR_IN_STATUS) { msg = "MPI_ERR_IN_STATUS";  }
+    else if (retval == MPI_ERR_PENDING  ) { msg = "MPI_ERR_PENDING";    }
+    else if (retval == MPI_ERR_REQUEST  ) { msg = "MPI_ERR_REQUEST";    }
+    else if (retval == MPI_ERR_LASTCODE ) { msg = "MPI_ERR_LASTCODE";   }
+    else                                  { msg = "DEFAULT";            }
     return msg;
 }
 

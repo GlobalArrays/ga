@@ -82,6 +82,7 @@ ga_add_parallel_test (unpackc       "unpackc.c util.c"   )
 ga_add_parallel_test (perf2         "perf2.c"            )
 ga_add_parallel_test (ga-mpi        "ga-mpi.c util.c"    )
 ga_add_parallel_test (lock          "lock.c util.c"      )
+ga_add_parallel_test (comm_init     "comm_init.c util.c" )
 
 ga_add_parallel_test (patch_enumc         "patch_enumc.c util.c"        )
 ga_add_parallel_test (simple_groups_commc "simple_groups_commc.c util.c")

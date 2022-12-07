@@ -63,7 +63,9 @@ cd ${TOP}/bin
 if [ -f config.guess ] ; then
     echo "config.guess already exists! Using existing copy."
 else
-    ${download} config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
+    if ! ${download} config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD' ; then
+	${download} config.guess 'https://raw.githubusercontent.com/GlobalArrays/autotools/master/config.guess'
+    fi
 fi
 
 ##########################################
@@ -73,7 +75,9 @@ cd ${TOP}/bin
 if [ -f config.sub ] ; then
     echo "config.sub already exists! Using existing copy."
 else
-    ${download} config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
+    if ! ${download} config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD' ; then
+	${download} config.guess 'https://raw.githubusercontent.com/GlobalArrays/autotools/master/config.guess'
+    fi
 fi
 
 ##########################################

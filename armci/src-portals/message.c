@@ -474,6 +474,15 @@ void armci_msg_init(int *argc, char ***argv)
 #endif
 }
 
+#ifdef MSG_COMMS_MPI
+void armci_msg_init_comm(MPI_Comm comm)
+{
+    if (!PARMCI_Initialized()) {
+        MPI_Comm_dup(comm, &ARMCI_COMM_WORLD);
+    }
+}
+#endif
+
 
 int armci_msg_me()
 {

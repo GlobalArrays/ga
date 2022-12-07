@@ -308,7 +308,7 @@ extern int _ga_initialize_f;
 /**
  *  Initialize library structures in Global Arrays.
  *  either ga_initialize_ltd or ga_initialize must be the first 
- *         GA routine called (except ga_uses_ma)
+ *         GA routine called (except ga_uses_ma or ga_set_memory_limit)
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_initialize = pnga_initialize
@@ -500,6 +500,30 @@ void pnga_initialize()
     GA_Internal_Threadsafe_Unlock();
 }
 
+/**
+ *  Initialize library structures in Global Arrays over a communicator that is
+ *  supplied by an external program.
+ *  either ga_initialize_ltd or ga_initialize must be the first 
+ *         GA routine called (except ga_uses_ma or ga_set_memory_limit)
+ */
+#ifdef MSG_COMMS_MPI
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_initialize_comm = pnga_initialize_comm
+#endif
+int pnga_initialize_comm(MPI_Comm comm)
+{
+  /**
+   * Initialize ARMCI first using communicator and then initialize GA using
+   * conventional initialization program. The conventional initialization code
+   * should recognize that ARMCI has already been initialized
+   */
+  int ret = ARMCI_Init_mpi_comm(comm);
+  if (ret) {
+    pnga_initialize();
+  }
+  return ret;
+}
+#endif
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_initialized = pnga_initialized

@@ -575,7 +575,7 @@ armci_onesided_remove_from_remote_mdh_list(void *tgt_ptr)
         long total_bytes;
         remote_mdh_node_t *rm_ll, *ll = remote_mdh_base_node;
 
-        NTK_MPI_GetComm(MPI_COMM_WORLD, &info);
+        NTK_MPI_GetComm(ARMCI_COMM_WORLD, &info);
 
      // get the onesided v2.0 api handle for the compute process
         cpGetOnesidedHandle(&cp_hnd);

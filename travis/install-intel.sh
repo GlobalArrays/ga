@@ -49,6 +49,8 @@ case "$os" in
 	sudo rm -rf "$IONEAPI_ROOT"/intelpython "$IONEAPI_ROOT"/dal "$IONEAPI_ROOT"/advisor \
 	     "$IONEAPI_ROOT"/ipp "$IONEAPI_ROOT"/conda_channel 	"$IONEAPI_ROOT"/dnnl \
 	     "$IONEAPI_ROOT"/installer "$IONEAPI_ROOT"/vtune_profiler "$IONEAPI_ROOT"/tbb || true
+	$GITHUB_WORKSPACE/travis/fix_xcodebuild.sh
+	sudo cp xcodebuild "$IONEAPI_ROOT"/compiler/latest/mac/bin/intel64/.
 	source "$IONEAPI_ROOT"/setvars.sh || true
 	ifort -V
 	icc -V
@@ -68,6 +70,8 @@ case "$os" in
 	    && sudo apt-get -y install intel-oneapi-ifort intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic  intel-oneapi-mkl \
 	    && sudo apt-get -y install intel-oneapi-mpi-devel
 	source "$IONEAPI_ROOT"/setvars.sh --force || true
+	    export I_MPI_F90=ifort
+	    export I_MPI_F77=ifort
 	which mpif90
 	mpif90 -show
 esac

@@ -6,6 +6,8 @@
 #include "gacommon.h"
 #include "typesf2c.h"
 
+#include <mpi.h>
+
 typedef intp AccessIndex;
 
 /* Routines from base.c */
@@ -62,6 +64,7 @@ extern void pnga_get_proc_grid(Integer g_a, Integer *dims);
 extern void pnga_get_proc_index(Integer g_a, Integer iproc, Integer *index);
 extern logical pnga_has_ghosts(Integer g_a);
 extern void pnga_initialize();
+extern int pnga_initialize_comm(MPI_Comm comm);
 extern int  pnga_initialized();
 extern void pnga_initialize_ltd(Integer limit);
 extern void pnga_inquire(Integer g_a, Integer *type, Integer *ndim, Integer *dims);
