@@ -29,8 +29,8 @@ void grid_factor(int p, int *idx, int *idy) {
 
   i = 1;
 
- //find all prime numbers, besides 1, less than or equal to the square root of p
-  ip = (int)(sqrt((double)p))+1;
+ //find all prime numbers, besides 1, less than or equal to p
+  ip = p;
 
   pmax = 0;
   for (i=2; i<=ip; i++) {
