@@ -4864,15 +4864,16 @@ logical pnga_locate_region( Integer g_a,
     while (count[ndim-1]<=max[ndim-1]) {
       /* Calculate block index */
       Integer idx = 0;
+      Integer factor = 1;
       Integer iproc;
       Integer p_handle = GA[ga_handle].p_handle;
       Integer size = pnga_pgroup_nnodes(p_handle);
       for (i=ndim-1; i>=0; i--) {
-        idx = GA[ga_handle].num_blocks[i]*idx+count[i];
+        idx = idx*factor+count[i];
+        factor *= GA[ga_handle].num_blocks[i];
       }
       proclist[cnt] = idx;
-      /* store informatin on this block */
-      np[cnt] = idx;
+      /* store information on this block */
       offset = 2*cnt*ndim;
       for (i=0; i<ndim; i++) {
         map[offset+i] = count[i]*GA[ga_handle].block_dims[i]+1;
@@ -4882,16 +4883,17 @@ logical pnga_locate_region( Integer g_a,
       }
       cnt++;
       /* Increment count array */
-      for (i=0; i<ndim; i++) {
-        count[i]++;
-        if (count[i] > max[i]) {
-          count[i] = min[i];
-          if (i<ndim-1) {
-            count[i+1]++;
-          }
+      i = 0;
+      count[0]++;
+      while (count[i] > max[i] && i<ndim) {
+        if (i<ndim-1) count[i] = min[i];
+        if (i<ndim-1) {
+          count[i+1]++;
         }
+        i++;
       }
     }
+    *np = cnt;
   }
   return(TRUE);
 }
