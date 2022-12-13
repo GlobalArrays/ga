@@ -21,7 +21,7 @@ c#define MIRROR
 #define BLOCK_CYCLIC
 c#define USE_SCALAPACK_DISTR
 c#define USE_TILED_DISTR
-#define USE_TILED_IRREG_DISTR
+c#define USE_TILED_IRREG_DISTR
 c#define USE_RESTRICTED
 c#define USE_MEMDEV
 
