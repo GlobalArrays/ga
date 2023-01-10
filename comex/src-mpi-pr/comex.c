@@ -58,7 +58,7 @@ sicm_device_list nill;
 #define XSTR(x) #x
 #define TR(x) XSTR(x)
 
-#define XENABLE_GPU_AWARE_MPI
+#define ENABLE_GPU_AWARE_MPI
 
 #ifdef ENABLE_NVTX
 #define RANGE_PUSH(x) nvtxRangePushA(x)
@@ -7648,7 +7648,7 @@ STATIC void nb_puts(
         if (!reg_entry) {
           reg_entry = reg_cache_find(proc, dst, 0, _device_map[proc]);
         }
-        if (reg_entry && !reg_entry->use_dev && !on_host) {
+        if (reg_entry && !reg_entry->use_dev && on_host) {
           nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
           PROFILE_END(t_nb_puts)
           RANGE_POP();
@@ -7735,8 +7735,7 @@ STATIC void nb_puts(
             copyToDevice((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
             PROFILE_END(t_cpy_to_dev)
           } else {
-            copyPeerToPeer((char*)dst+dst_idx, _device_map[proc],
-                (char*)src+src_idx, _device_map[g_state.rank], count[0]);
+            copyDevToDev((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
           }
         }
       } else {
@@ -8083,7 +8082,7 @@ STATIC void nb_gets(
         if (!reg_entry) {
           reg_entry = reg_cache_find(proc, src, 0, _device_map[proc]);
         }
-        if (reg_entry && !reg_entry->use_dev && !on_host) {
+        if (reg_entry && !reg_entry->use_dev && on_host) {
           nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
           PROFILE_END(t_nb_gets)
           RANGE_POP();
@@ -8994,7 +8993,7 @@ STATIC void nb_putv(
 #ifdef ENABLE_DEVICE
               }
 #endif
-        } else if (COMEX_ENABLE_PUT_SELF &&
+        } else if (COMEX_ENABLE_PUT_SMP &&
           g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
           /* put to process on same SMP node */
           int j;
@@ -9320,7 +9319,7 @@ STATIC void nb_getv(
             }
 #endif
         }
-        else if (COMEX_ENABLE_GET_SELF && 
+        else if (COMEX_ENABLE_GET_SMP && 
                    g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
             int j;
             void **src;
@@ -9370,8 +9369,7 @@ STATIC void nb_getv(
                 if (devBufID == reg_entry->dev_id) {
                   for (j=0; j<limit; j++) {
                     ptr = mapped_offset + (ptrdiff_t)(src[j]-src0);
-                    copyPeerToPeer(dst[j], _device_map[g_state.rank], ptr,
-                        _device_map[proc], bytes);
+                    copyDevToDev(dst[j], ptr, bytes);
                   }
                 } else {
                   for (j=0; j<limit; j++) {
@@ -9637,7 +9635,7 @@ STATIC void nb_accv(
               }
 #endif
         }
-        else if (COMEX_ENABLE_PUT_SELF &&
+        else if (COMEX_ENABLE_PUT_SMP &&
                    g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
             if (fence_array[g_state.master[proc]]) {
                 _fence_master(g_state.master[proc]);
