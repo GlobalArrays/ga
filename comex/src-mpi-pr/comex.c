@@ -79,7 +79,8 @@ sicm_device_list nill;
 #define XSTR(x) #x
 #define TR(x) XSTR(x)
 
-#define ENABLE_GPU_AWARE_MPI
+#define XENABLE_GPU_AWARE_MPI
+#define ENABLE_MEMCPY_KERNEL
 
 #ifdef ENABLE_NVTX
 #define RANGE_PUSH(x) nvtxRangePushA(x)
@@ -1436,6 +1437,18 @@ STATIC char* pack(
     /* allocate packed buffer now that we know the size */
     packed_buffer = malloc(n1dim * count[0]);
     COMEX_ASSERT(packed_buffer);
+#if defined(ENABLE_DEVICE) && defined(ENABLE_MEMCPY_KERNEL)
+  if (is_dev) {
+    int dst_stride[7];
+    dst_stride[0] = count[0];
+    for(i=1; i<stride_levels; i++) {
+      dst_stride[i] = dst_stride[i-1];
+      dst_stride[i] *= count[i];
+    }
+    parallelMemcpy(src, src_stride, packed_buffer, dst_stride, count, stride_levels);
+    packed_index = n1dim*count[0];
+  } else {
+#endif
 
     /* calculate the destination indices */
     src_bvalue[0] = 0; src_bvalue[1] = 0; src_bunit[0] = 1; src_bunit[1] = 1;
@@ -1471,6 +1484,9 @@ STATIC char* pack(
     }
 
     COMEX_ASSERT(packed_index == n1dim*count[0]);
+#if defined(ENABLE_DEVICE) && defined(ENABLE_MEMCPY_KERNEL)
+  }
+#endif
     *size = packed_index;
 
     return packed_buffer;
@@ -1498,6 +1514,18 @@ STATIC void unpack(char *packed_buffer,
 #if DEBUG
   fprintf(stderr, "[%d] unpack(dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d)\n",
       g_state.rank, dst, dst_stride, count[0], stride_levels);
+#endif
+
+#if defined(ENABLE_DEVICE) && defined(ENABLE_MEMCPY_KERNEL)
+  if (dev_flag && isHostPointer(packed_buffer)) {
+    int src_stride[7];
+    src_stride[0] = count[0];
+    for(i=1; i<stride_levels; i++) {
+      src_stride[i] = src_stride[i-1];
+      src_stride[i] *= count[i];
+    }
+    parallelMemcpy(packed_buffer, src_stride, dst, dst_stride, count, stride_levels);
+  } else {
 #endif
 
   /* number of n-element of the first dimension */
@@ -1539,6 +1567,9 @@ STATIC void unpack(char *packed_buffer,
   }
 
   COMEX_ASSERT(packed_index == n1dim*count[0]);
+#if defined(ENABLE_DEVICE) && defined(ENABLE_MEMCPY_KERNEL)
+  }
+#endif
 }
 
 
@@ -8082,6 +8113,11 @@ STATIC void nb_puts(
     if (reg_entry->use_dev &&  g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
       /* destination data must be on same node */
       if (proc == g_state.rank) {
+#ifdef ENABLE_MEMCPY_KERNEL
+        /* GA data is on device, local buffer may or may not be on device. If it
+         * is on a device, it is on the same device */
+        parallelMemcpy(src, src_stride, dst, dst_stride, count, stride_levels);
+#else
         /* number of n-element of the first dimension */
         n1dim = 1;
         for(i=1; i<=stride_levels; i++) {
@@ -8130,7 +8166,18 @@ STATIC void nb_puts(
             copyDevToDev((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
           }
         }
+#endif
       } else {
+#ifdef ENABLE_MEMCPY_KERNEL
+        if (on_host) {
+          /* GA data is on device, local buffer is on host */
+          void *mapped_offset = _get_offset_memory(reg_entry, dst);
+          parallelMemcpy(src, src_stride, mapped_offset, dst_stride, count, stride_levels);
+          PROFILE_BEG()
+          deviceCloseMemHandle(reg_entry->mapped);
+          PROFILE_END(t_close_ipc)
+        } else {
+#endif
         /* get mapped pointer */
         void *mapped_offset = _get_offset_memory(reg_entry, dst);
         /* number of n-element of the first dimension */
@@ -8185,6 +8232,9 @@ STATIC void nb_puts(
         PROFILE_BEG()
         deviceCloseMemHandle(reg_entry->mapped);
         PROFILE_END(t_close_ipc)
+#ifdef ENABLE_MEMCPY_KERNEL
+      }
+#endif
       }
     } else {
 #endif
@@ -8515,6 +8565,11 @@ STATIC void nb_gets(
     if (reg_entry->use_dev &&  g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
       /* destination data must be on same node */
       if (proc == g_state.rank) {
+#ifdef ENABLE_MEMCPY_KERNEL
+        /* GA data is on device, local buffer may or may not be on device. If it
+         * is on a device, it is on the same device */
+        parallelMemcpy(src, src_stride, dst, dst_stride, count, stride_levels);
+#else
         /* number of n-element of the first dimension */
         n1dim = 1;
         for(i=1; i<=stride_levels; i++) {
@@ -8575,7 +8630,18 @@ STATIC void nb_gets(
             memcpy((char*)dst+dst_idx, (char*)src+src_idx, count[0]);
           }
         }
+#endif
       } else {
+#ifdef ENABLE_MEMCPY_KERNEL
+        if (on_host) {
+          /* GA data is on device, local buffer is on host */
+          void *mapped_offset = _get_offset_memory(reg_entry, src);
+          parallelMemcpy(mapped_offset, src_stride, dst, dst_stride, count, stride_levels);
+          PROFILE_BEG()
+          deviceCloseMemHandle(reg_entry->mapped);
+          PROFILE_END(t_close_ipc)
+        } else {
+#endif
         /* get mapped pointer */
         void *mapped_offset = _get_offset_memory(reg_entry, src);
         /* number of n-element of the first dimension */
@@ -8642,6 +8708,9 @@ STATIC void nb_gets(
         PROFILE_BEG()
         deviceCloseMemHandle(reg_entry->mapped);
         PROFILE_END(t_close_ipc);
+#ifdef ENABLE_MEMCPY_KERNEL
+      }
+#endif
       }
     } else {
 #endif

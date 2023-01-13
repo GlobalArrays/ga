@@ -89,10 +89,9 @@ void freeDevice(void *buf)
 int isHostPointer(void *ptr)
 {
   cudaPointerAttributes attr;
-  cudaError_t  tmp;
   cudaError_t  err = cudaPointerGetAttributes(&attr, ptr);
   /* Remove this error so that it doesn't trip up other error code */
-  tmp = cudaGetLastError();
+  cudaGetLastError();
   /* Assume that if Cuda doesn't know anything about the pointer, it is on the
    * host */
   if (err != cudaSuccess) {
@@ -112,10 +111,9 @@ int isHostPointer(void *ptr)
 int getDeviceID(void *ptr)
 {
   cudaPointerAttributes attr;
-  cudaError_t  tmp;
   cudaError_t  err = cudaPointerGetAttributes(&attr, ptr);
   /* Remove this error so that it doesn't trip up other error code */
-  tmp = cudaGetLastError();
+  cudaGetLastError();
   /* Assume that if Cuda doesn't know anything about the pointer, it is on the
    * host */
   if (err != cudaSuccess) {
@@ -388,4 +386,143 @@ int deviceCloseMemHandle(void *memory)
  return cudaIpcCloseMemHandle(memory);
 }
 
+#define MAXDIM 7
+struct strided_memcpy_kernel_arg {
+  void *dst;
+  void *src;
+  int dst_strides[MAXDIM];  /* smallest strides are first */
+  int src_strides[MAXDIM];
+  int dims[MAXDIM];         /* dimensions of block being transferred */
+  int stride_levels;        /* dimension of array minus 1 */
+  int elem_size;            /* size of array elements */
+  int totalCopyElems;       /* total constructs to copy */
+  int elements_per_block;   /* number of elements copied by each thread */
+};
+
+__global__ void strided_memcpy_kernel(strided_memcpy_kernel_arg arg) {
+  int index = threadIdx.x;
+  int stride = blockIdx.x;
+
+  int i;
+  int idx[MAXDIM];
+  int currElem = 0;
+  int elements_per_block = arg.elements_per_block;
+  int bytes_per_thread = arg.elem_size*elements_per_block;
+  int stride_levels = arg.stride_levels;
+  int src_block_offset; /* Offset based on chunk_index */
+  int dst_block_offset; /* Offset based on chunk_index */
+
+  /* Determine location of chunk_index in array based
+    on the thread id and the block id */
+  index = index + stride * blockDim.x;
+  /* If the thread index is bigger than the total transfer 
+    entities then this thread does not participate in the 
+    copy */
+  if(index >= arg.totalCopyElems) {
+     return;
+  }
+  /* Find the indices that mark the location of this element within
+     the block of data that will be moved */
+  index *= elements_per_block;
+  // Calculate the index starting points 
+  for (i=0; i<=stride_levels; i++) {
+    idx[i] = index%arg.dims[i];
+    index = (index-idx[i])/arg.dims[i];
+  }
+  /* Calculate the block offset for this thread */
+  src_block_offset = bytes_per_thread*idx[0];
+  dst_block_offset = bytes_per_thread*idx[0];
+  for (i=0; i<stride_levels; i++) {
+    src_block_offset += arg.src_strides[i]*idx[i+1]*bytes_per_thread;
+    dst_block_offset += arg.dst_strides[i]*idx[i+1]*bytes_per_thread;
+  }
+
+  /* Start copying element by element 
+     TODO: Make it sure that it is continuous and replace the loop
+     with a single memcpy */
+  memcpy((char*)arg.dst + dst_block_offset + currElem * bytes_per_thread,
+      (char*)arg.src + src_block_offset + currElem * bytes_per_thread, 
+      elements_per_block*bytes_per_thread);
+  /* Synchronize the threads before returning  */
+  __syncthreads();
+}
+
+#define TTHREADS 1024
+void parallelMemcpy(void *src,         /* starting pointer of source data */
+                    int *src_stride,   /* strides of source data */
+                    void *dst,         /* starting pointer of destination data */
+                    int *dst_stride,   /* strides of destination data */
+                    int *count,        /* dimensions of data block to be transfered */
+                    int stride_levels) /* number of stride levels */
+{
+  int src_on_host = isHostPointer(src);
+  int dst_on_host = isHostPointer(dst);
+  void *msrc;
+  void *mdst;
+  int total_elems;
+  int nblocks;
+  strided_memcpy_kernel_arg arg;
+  int i;
+
+  /* printf("Calling memcpy kernel\n"); */
+  /* if src or dst is on host, map pointer to device */
+  if (src_on_host) {
+    /* Figure out how large segment of memory is. If this routine is being
+       called, stride_levels must be at least 1 */
+    int total = count[stride_levels]*src_stride[stride_levels-1];
+    cudaHostRegister(src, total, cudaHostRegisterMapped); 
+    /* Register the host pointer */
+    cudaHostGetDevicePointer (&msrc, src, 0);
+  } else {
+    msrc = src;
+  }
+  if (dst_on_host) {
+    /* Figure out how large segment of memory is. If this routine is being
+       called, stride_levels must be at least 1 */
+    int total = count[stride_levels]*dst_stride[stride_levels-1];
+    cudaHostRegister(dst, total, cudaHostRegisterMapped); 
+    /* Register the host pointer */
+    cudaHostGetDevicePointer (&mdst, dst, 0);
+  } else {
+    mdst = dst;
+  }
+  
+  /* total_elems = count[0]/elem_size; */
+  total_elems = 1;
+  for (i=0; i<stride_levels; i++) total_elems *= count[i+1];
+
+  if(total_elems < TTHREADS){
+    nblocks = 1;
+  } else {
+    nblocks = int(ceil(((float)total_elems)/((float)TTHREADS)));
+  }
+
+  arg.dst = mdst;
+  arg.src = msrc;
+  arg.elem_size = count[0];
+  for (i=0; i<stride_levels; i++) {
+    arg.dst_strides[i] = dst_stride[i]/arg.elem_size;
+    arg.src_strides[i] = src_stride[i]/arg.elem_size;
+  }
+  for (i=0; i<=stride_levels; i++) arg.dims[i] = count[i];
+  arg.dims[0] = 1;
+  arg.stride_levels = stride_levels;
+  /* arg.elem_size = elem_size; */
+  arg.totalCopyElems = total_elems;
+  arg.elements_per_block = 1;
+
+  strided_memcpy_kernel<<<nblocks, TTHREADS>>>(arg);
+
+  /*
+  cudaDeviceSynchoronize();
+  */
+  if (src_on_host) {
+    cudaHostUnregister(src);
+  }
+  if (dst_on_host) {
+    cudaHostUnregister(dst);
+  }
+     
+
+}
 };
