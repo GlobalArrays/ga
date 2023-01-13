@@ -27,6 +27,7 @@ extern int deviceCloseMemHandle(void *memory);
 
 extern void deviceIaxpy(int *dst, const int *src, const int *scale, int n);
 extern void deviceLaxpy(long *dst, const long *src, const long *scale, int n);
+extern void parallelMemcpy(void *src, int *src_stride, void *dst, int *dst_stride, int *count, int stride_levels);
 
 extern int _comex_dev_flag;
 extern int _comex_dev_id;
