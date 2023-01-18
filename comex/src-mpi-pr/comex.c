@@ -9016,6 +9016,12 @@ STATIC void nb_accs(
     if (reg_entry->use_dev &&  g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
       /* destination data must be on same node */
       if (proc == g_state.rank) {
+#ifdef ENABLE_MEMCPY_KERNEL
+        /* GA data is on device, local buffer may or may not be on device. If it
+         * is on a device, it is on the same device */
+        parallelAccumulate(datatype, src, src_stride, dst, dst_stride, count,
+            stride_levels, scale);
+#else
         void *ptr;
         /* create buffer on device */
         if (on_host) {
@@ -9082,7 +9088,19 @@ STATIC void nb_accs(
           freeDevice(ptr);
           PROFILE_END(t_free_buf)
         }
+#endif
       } else {
+#ifdef ENABLE_MEMCPY_KERNEL
+        if (on_host) {
+          /* GA data is on device, local buffer is on host */
+          void *mapped_offset = _get_offset_memory(reg_entry, dst);
+          parallelAccumulate(datatype, src, src_stride, dst, dst_stride, count,
+              stride_levels, scale);
+          PROFILE_BEG()
+          deviceCloseMemHandle(reg_entry->mapped);
+          PROFILE_END(t_close_ipc);
+        } else {
+#endif
         void *mapped_offset;
         void *ptr = NULL;
         mapped_offset = _get_offset_memory(reg_entry, dst);
@@ -9155,6 +9173,9 @@ STATIC void nb_accs(
         PROFILE_BEG()
         deviceCloseMemHandle(reg_entry->mapped);
         PROFILE_END(t_close_ipc)
+#ifdef ENABLE_MEMCPY_KERNEL
+      }
+#endif
       }
     } else {
 #endif
