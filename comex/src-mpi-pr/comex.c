@@ -59,7 +59,7 @@ sicm_device_list nill;
 #define TR(x) XSTR(x)
 
 #define XENABLE_GPU_AWARE_MPI
-#define ENABLE_MEMCPY_KERNEL
+#define ENABLE_STRIDED_KERNELS
 
 #ifdef ENABLE_NVTX
 #define RANGE_PUSH(x) nvtxRangePushA(x)
@@ -1357,7 +1357,7 @@ STATIC char* pack(
     /* allocate packed buffer now that we know the size */
     packed_buffer = malloc(n1dim * count[0]);
     COMEX_ASSERT(packed_buffer);
-#if defined(ENABLE_DEVICE) && defined(ENABLE_MEMCPY_KERNEL)
+#if defined(ENABLE_DEVICE) && defined(ENABLE_STRIDED_KERNELS)
   if (is_dev) {
     int dst_stride[7];
     dst_stride[0] = count[0];
@@ -1404,7 +1404,7 @@ STATIC char* pack(
     }
 
     COMEX_ASSERT(packed_index == n1dim*count[0]);
-#if defined(ENABLE_DEVICE) && defined(ENABLE_MEMCPY_KERNEL)
+#if defined(ENABLE_DEVICE) && defined(ENABLE_STRIDED_KERNELS)
   }
 #endif
     *size = packed_index;
@@ -1436,7 +1436,7 @@ STATIC void unpack(char *packed_buffer,
       g_state.rank, dst, dst_stride, count[0], stride_levels);
 #endif
 
-#if defined(ENABLE_DEVICE) && defined(ENABLE_MEMCPY_KERNEL)
+#if defined(ENABLE_DEVICE) && defined(ENABLE_STRIDED_KERNELS)
   if (dev_flag && isHostPointer(packed_buffer)) {
     int src_stride[7];
     src_stride[0] = count[0];
@@ -1487,7 +1487,7 @@ STATIC void unpack(char *packed_buffer,
   }
 
   COMEX_ASSERT(packed_index == n1dim*count[0]);
-#if defined(ENABLE_DEVICE) && defined(ENABLE_MEMCPY_KERNEL)
+#if defined(ENABLE_DEVICE) && defined(ENABLE_STRIDED_KERNELS)
   }
 #endif
 }
@@ -4996,6 +4996,7 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
             header->rank, header->remote_address, header->length, -1);
 #ifdef ENABLE_DEVICE
     if (!reg_entry) {
+#ifndef ENABLE_STRIDED_KERNELS
       /* Need to create temporary device buffer here before opening memory handle */
       PROFILE_BEG()
       setDevice(_device_map[header->rank]);
@@ -5003,6 +5004,7 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
       PROFILE_BEG()
       mallocDevice(&dev_buffer, header->length);
       PROFILE_END(t_malloc_buf)
+#endif
       reg_entry = reg_cache_find(
               header->rank, header->remote_address, header->length, _device_map[header->rank]);
     }
@@ -5115,12 +5117,26 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
       if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
         sem_wait(semaphores[header->rank]);
       }
+#ifdef ENABLE_STRIDED_KERNELS
+      /* source buffer is on host, destination buffer is on device */
       {
-        char *packed_buffer = acc_buffer;
+        int src_stride[7];
         char *dst = mapped_offset;
         int *dst_stride = stride->stride;
         int *count = stride->count;
         int stride_levels = stride->stride_levels;
+        int i;
+        src_stride[0] = count[0];
+        for (i=1; i<stride_levels; i++) {
+          src_stride[i] = src_stride[i-1];
+          src_stride[i] *= count[i];
+        }
+        parallelAccumulate(acc_type,acc_buffer,src_stride,dst,
+            stride->stride,count,stride_levels,scale);
+      }
+#else
+      {
+        char *packed_buffer = acc_buffer;
         int i, j;
         long dst_idx;  /* index offset of current block position to ptr */
         int n1dim;  /* number of 1 dim block */
@@ -5182,12 +5198,15 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
 
         COMEX_ASSERT(packed_index == n1dim*count[0]);
       }
+#endif
       PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
       PROFILE_END(t_close_ipc)
+#ifndef ENABLE_STRIDED_KERNELS
       PROFILE_BEG()
       freeDevice(dev_buffer);
       PROFILE_END(t_free_buf);
+#endif
       if (COMEX_ENABLE_ACC_SELF || COMEX_ENABLE_ACC_SMP) {
         sem_post(semaphores[header->rank]);
       }
@@ -7721,7 +7740,7 @@ STATIC void nb_puts(
     if (reg_entry->use_dev &&  g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
       /* destination data must be on same node */
       if (proc == g_state.rank) {
-#ifdef ENABLE_MEMCPY_KERNEL
+#ifdef ENABLE_STRIDED_KERNELS
         /* GA data is on device, local buffer may or may not be on device. If it
          * is on a device, it is on the same device */
         parallelMemcpy(src, src_stride, dst, dst_stride, count, stride_levels);
@@ -7776,7 +7795,7 @@ STATIC void nb_puts(
         }
 #endif
       } else {
-#ifdef ENABLE_MEMCPY_KERNEL
+#ifdef ENABLE_STRIDED_KERNELS
         if (on_host) {
           /* GA data is on device, local buffer is on host */
           void *mapped_offset = _get_offset_memory(reg_entry, dst);
@@ -7840,7 +7859,7 @@ STATIC void nb_puts(
         PROFILE_BEG()
         deviceCloseMemHandle(reg_entry->mapped);
         PROFILE_END(t_close_ipc)
-#ifdef ENABLE_MEMCPY_KERNEL
+#ifdef ENABLE_STRIDED_KERNELS
       }
 #endif
       }
@@ -8173,7 +8192,7 @@ STATIC void nb_gets(
     if (reg_entry->use_dev &&  g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
       /* destination data must be on same node */
       if (proc == g_state.rank) {
-#ifdef ENABLE_MEMCPY_KERNEL
+#ifdef ENABLE_STRIDED_KERNELS
         /* GA data is on device, local buffer may or may not be on device. If it
          * is on a device, it is on the same device */
         parallelMemcpy(src, src_stride, dst, dst_stride, count, stride_levels);
@@ -8240,7 +8259,7 @@ STATIC void nb_gets(
         }
 #endif
       } else {
-#ifdef ENABLE_MEMCPY_KERNEL
+#ifdef ENABLE_STRIDED_KERNELS
         if (on_host) {
           /* GA data is on device, local buffer is on host */
           void *mapped_offset = _get_offset_memory(reg_entry, src);
@@ -8316,7 +8335,7 @@ STATIC void nb_gets(
         PROFILE_BEG()
         deviceCloseMemHandle(reg_entry->mapped);
         PROFILE_END(t_close_ipc);
-#ifdef ENABLE_MEMCPY_KERNEL
+#ifdef ENABLE_STRIDED_KERNELS
       }
 #endif
       }
@@ -8624,7 +8643,7 @@ STATIC void nb_accs(
     if (reg_entry->use_dev &&  g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
       /* destination data must be on same node */
       if (proc == g_state.rank) {
-#ifdef ENABLE_MEMCPY_KERNEL
+#ifdef ENABLE_STRIDED_KERNELS
         /* GA data is on device, local buffer may or may not be on device. If it
          * is on a device, it is on the same device */
         parallelAccumulate(datatype, src, src_stride, dst, dst_stride, count,
@@ -8698,7 +8717,7 @@ STATIC void nb_accs(
         }
 #endif
       } else {
-#ifdef ENABLE_MEMCPY_KERNEL
+#ifdef ENABLE_STRIDED_KERNELS
         if (on_host) {
           /* GA data is on device, local buffer is on host */
           void *mapped_offset = _get_offset_memory(reg_entry, dst);
@@ -8781,7 +8800,7 @@ STATIC void nb_accs(
         PROFILE_BEG()
         deviceCloseMemHandle(reg_entry->mapped);
         PROFILE_END(t_close_ipc)
-#ifdef ENABLE_MEMCPY_KERNEL
+#ifdef ENABLE_STRIDED_KERNELS
       }
 #endif
       }
