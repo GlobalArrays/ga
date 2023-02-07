@@ -157,7 +157,7 @@ void copyToDevice(void *devptr, void *hostptr, int bytes)
  */
 void copyToHost(void *hostptr, void *devptr, int bytes)
 {
-  hipError_t ierr = hipMemcpy(hostptr, devptr, bytes, hipMemcpyDeviceToHost); 
+  hipError_t ierr = hipMemcpy(hostptr, devptr, bytes, hipMemcpyDeviceToHost);
   hipErrCheck(ierr);
   if (ierr != hipSuccess) {
     hipPointerAttribute_t src_attr, dst_attr;
@@ -197,7 +197,7 @@ void copyToHost(void *hostptr, void *devptr, int bytes)
 void copyDevToDev(void *dstptr, void *srcptr, int bytes)
 {
   hipError_t ierr;
-  ierr = hipMemcpy(dstptr, srcptr, bytes, hipMemcpyDeviceToDevice); 
+  ierr = hipMemcpy(dstptr, srcptr, bytes, hipMemcpyDeviceToDevice);
   hipErrCheck(ierr);
   hipDeviceSynchronize();
   if (ierr != hipSuccess) {
