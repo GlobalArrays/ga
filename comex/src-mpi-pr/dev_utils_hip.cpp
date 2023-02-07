@@ -271,7 +271,7 @@ void deviceIaxpy(int *dst, int *src, const int *scale, int n)
     hipPointerAttribute_t src_attr;
     hipPointerAttribute_t dst_attr;
     hipError_t  perr = hipPointerGetAttributes(&src_attr, src);
-    if (perr != hipSuccess || src_attr.memoryType != hipMemoryTypeDevice {
+    if (perr != hipSuccess || src_attr.memoryType != hipMemoryTypeDevice) {
       printf("p[%d] deviceIaxpy src pointer is on host\n",rank);
     } else if (src_attr.memoryType == hipMemoryTypeDevice)  {
       printf("p[%d] deviceIaxpy src pointer is on device %d\n",rank,src_attr.device);
