@@ -24,6 +24,8 @@
 #include "comex_impl.h"
 #include "groups.h"
 
+#include "dev_utils.h"
+
 
 /* world group state */
 comex_group_world_t g_state = {

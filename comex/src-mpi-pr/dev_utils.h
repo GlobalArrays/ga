@@ -6,8 +6,6 @@
 
 #if defined(ENABLE_DEVICE)
 
-
-#if defined(ENABLE_CUDA)
 extern int numDevices();
 extern void setDevice(int id);
 extern void mallocDevice(void **buf, int size);
@@ -32,10 +30,6 @@ extern void parallelAccumulate(int op, void *src, int *src_stride, void *dst, in
 
 extern int _comex_dev_flag;
 extern int _comex_dev_id;
-
-// #elif defined(ENABLE_HIP)
-// #include "dev_utils_hip.hpp"
-#endif
 
 /**
  * Skip the intense macro usage and just do this the old-fashion way
