@@ -30,10 +30,9 @@ void grid_factor(int p, int xdim, int ydim, int zdim,
   i = 1;
 /**
  *   factor p completely
- *   first, find all prime numbers, besides 1, less than or equal to 
- *   the square root of p
+ *   first, find all prime numbers, besides 1, less than or equal to p
  */
-  ip = (int)(sqrt((double)p))+1;
+  ip = p;
   pmax = 0;
   for (i=2; i<=ip; i++) {
     ichk = 1;
@@ -352,6 +351,7 @@ void k_solve(int s_a, int g_b, int g_ref, int *g_x)
     maxax = 0.0;
     axmb = 0.0;
     maxinc = 0.0;
+    /* loop over rows in my row block */
     for (i=0; i<my_n; i++) {
       int irow = seq[i];
       double axdot = 0.0;
@@ -394,6 +394,7 @@ void k_solve(int s_a, int g_b, int g_ref, int *g_x)
         GA_Error("Row of matrix is all zeros!",irow);
       }
       /* Update vector elements */
+#if 1
       {
         double *xptr = my_vals;
         int64_t *idx = m_idx[my_nb];
@@ -411,6 +412,32 @@ void k_solve(int s_a, int g_b, int g_ref, int *g_x)
           if (fabs(val*axdot) > maxinc) maxinc = fabs(val*axdot);
         }
       }
+#else
+      icnt = 0;
+      for (nb = 0; nb<nblocks; nb++) {
+        double *xptr;
+        int64_t *idx = m_idx[nb];
+        int64_t *jdx = m_jdx[nb];
+        double *vals = m_vals[nb];
+        int64_t jnum = idx[irow+1]-idx[irow];
+        int64_t jstart = idx[irow];
+        if (list[nb] != me) {
+          xptr = blk_ptrs[icnt];
+          icnt++;
+        } else {
+          xptr = my_vals;
+        }
+        for (j=0; j<jnum; j++) {
+          int64_t icol = jdx[jstart+j]-m_jlo[nb];
+          double val = vals[jstart+j];
+          if (icol < 0) {
+            printf("p[%d] icol out of bounds icol: %ld\n",me,icol);
+          }
+          xptr[icol] -= val*axdot;
+          if (fabs(val*axdot) > maxinc) maxinc = fabs(val*axdot);
+        }
+      }
+#endif
     }
     /* Calculate maximum residual on this process */
     residual = 0.0;
@@ -908,6 +935,9 @@ int main(int argc, char **argv) {
   }
   if (NGA_Sprs_array_assemble(s_a) && me == 0) {
     printf("\n    Sparse array assembly completed\n");
+  }
+  if (NDIM <= 32) {
+    NGA_Sprs_array_export(s_a,"matrix.dat");
   }
 
   /* Construct RHS vector. Assume points on boundary are given by
