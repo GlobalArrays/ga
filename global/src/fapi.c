@@ -3739,7 +3739,23 @@ void nga_version_(Integer *major, Integer *minor, Integer *patch)
 
 Integer nga_sprs_array_create_(Integer *idim, Integer *jdim, Integer *type)
 {
-  return wnga_sprs_array_create(*idim,*jdim,*type,sizeof(Integer));
+  int ctype;
+  if (*type == MT_F_INT) {
+    if (sizeof(Integer) == 4) {
+      ctype = C_INT;
+    } else {
+      ctype = C_LONG;
+    }
+  } else if (*type == MT_F_REAL) {
+    ctype = C_FLOAT;
+  } else if (*type == MT_F_DBL) {
+    ctype = C_DBL;
+  } else if (*type == MT_F_SCPL) {
+    ctype = C_SCPL;
+  } else if (*type == MT_F_DCPL) {
+    ctype = C_DCPL;
+  }
+  return wnga_sprs_array_create(*idim,*jdim,ctype,sizeof(Integer));
 }
 
 void nga_sprs_array_add_element_(Integer *s_a, Integer *idx, Integer *jdx, void *val)
@@ -3765,14 +3781,30 @@ void nga_sprs_array_column_distribution_(Integer *s_a, Integer *iproc, Integer *
 }
 
 void nga_sprs_array_access_col_block_(Integer *s_a, Integer *icol,
-        Integer **idx, Integer **jdx, void *val)
+        AccessIndex *idx, AccessIndex *jdx, AccessIndex *vdx)
 {
-  wnga_sprs_array_access_col_block(*s_a, *icol, idx, jdx, val);
+  wnga_sprs_array_access_col_block_idx(*s_a, *icol, idx, jdx, vdx);
 }
 
 void nga_sprs_array_col_block_list_(Integer *s_a, Integer *idx, Integer *n)
 {
-  wnga_sprs_array_col_block_list(*s_a, &idx, n);
+  /* This function assumes that idx has already been allocated by calling
+   * program and that n is the length of idx on input. On output, n is
+   * changed to the actual number of blocks found by the
+   * wnga_sprs_array_col_block_list function
+   */
+  Integer nn;
+  Integer *blocks;
+  wnga_sprs_array_col_block_list(*s_a, &blocks, &nn);
+  if (*n < nn) {
+    wnga_error("nga_sprs_array_col_block_list: allocated array is too small for"
+        " number of blocks found: ",nn);
+  } else {
+    int i;
+    for (i=0; i<nn; i++) *idx[i] = blocks[i];
+    free(blocks);
+    *n = nn;
+  }
 }
 
 void nga_sprs_array_matvec_multiply_(Integer *s_a, Integer *g_a, Integer *g_v)
