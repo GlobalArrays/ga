@@ -10,6 +10,8 @@ typedef struct {
   Integer g_data;   /* global array containing data values of sparse matrix */
   Integer g_j;      /* global array containing j indices of sparse matrix */
   Integer g_i;      /* global array containing first j index for row i */
+  Integer g_blk;    /* global array containing information on storage of
+                     * each block of sparse array */
   Integer idx_size; /* size of integer indices */
   Integer grp;      /* handle for process group on which array is defined */
   Integer ilo, ihi; /* minimum and maximum row indices contained on this process */
@@ -17,13 +19,14 @@ typedef struct {
   Integer nblocks;  /* number of non-zero sparse blocks contained on this process */
   Integer *blkidx;  /* array containing indices of non-zero blocks */
   Integer *blksize; /* array containing sizes of non-zero blocks */
-  Integer *offset;  /* array containing starting index in g_i for each block (int) */
+  Integer *offset;  /* array containing starting index in g_j for each block in
+                     * row block (relative to starting index of row block */
   Integer *idx;     /* local buffer containing i indices */
   Integer *jdx;     /* local buffer containing j indices */
   void    *val;     /* local buffer containing values */
   Integer nval;     /* number of values currently stored in local buffers */
-  Integer maxval;   /* maximum number of values that can currently */
-                    /* be stored in local buffers */
+  Integer maxval;   /* maximum number of values that can currently
+                     * be stored in local buffers */
   Integer type;     /* type of data stored in array */
   Integer size;     /* size of data element */
   Integer active;   /* array is currently in use */

@@ -402,6 +402,7 @@ extern logical pnga_sprs_array_assemble(Integer s_a);
 extern void pnga_sprs_array_row_distribution(Integer s_a, Integer iproc, Integer *lo, Integer *hi);
 extern void pnga_sprs_array_column_distribution(Integer s_a, Integer iproc, Integer *lo, Integer *hi);
 extern void pnga_sprs_array_access_col_block(Integer s_a, Integer icol, void *idx, void *jdx, void *val);
+extern int pnga_sprs_array_access_col_block_idx(Integer s_a, Integer icol, AccessIndex *idx, AccessIndex *jdx, AccessIndex *vdx);
 extern void pnga_sprs_array_col_block_list(Integer s_a, Integer **idx, Integer *n);
 extern Integer pnga_sprs_array_duplicate(Integer s_a);
 extern void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v);

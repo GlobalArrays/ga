@@ -3789,7 +3789,7 @@ void nga_sprs_array_col_block_list_(Integer *s_a, Integer *idx, Integer *n)
         " number of blocks found: ",nn);
   } else {
     int i;
-    for (i=0; i<nn; i++) *idx[i] = blocks[i];
+    for (i=0; i<nn; i++) idx[i] = blocks[i];
     free(blocks);
     *n = nn;
   }
