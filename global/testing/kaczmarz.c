@@ -346,6 +346,7 @@ void k_solve(int s_a, int g_b, int g_ref, int *g_x)
         GA_Error("Row of matrix is all zeros!",irow);
       }
       /* Update vector elements */
+#if 1
       {
         double *xptr = my_vals;
         int64_t *idx = m_idx[my_nb];

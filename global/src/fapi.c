@@ -3748,7 +3748,6 @@ void nga_version_(Integer *major, Integer *minor, Integer *patch)
 }
 
 Integer nga_sprs_array_create_(Integer *idim, Integer *jdim, Integer *type)
-<<<<<<< HEAD
 {
   int ctype;
   if (*type == MT_F_INT) {
@@ -3770,8 +3769,6 @@ Integer nga_sprs_array_create_(Integer *idim, Integer *jdim, Integer *type)
 }
 
 Integer nga_sprs_array_create_from_dense_(Integer *g_a)
-=======
->>>>>>> 4b9a3a6... Added function to create a duplicate of a sparse array.
 {
   return wnga_sprs_array_create_from_dense(*g_a,sizeof(Integer),0);
 }

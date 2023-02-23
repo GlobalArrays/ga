@@ -1171,6 +1171,71 @@ int pnga_sprs_array_access_col_block_idx(Integer s_a, Integer icol,
 }
 
 /**
+ * Function to support fortran interface for access column block functionality.
+ * Return indices to the compressed sparse row formatted data corresponding to
+ * the column block icol. If the column block has no non-zero values, the
+ * function returns zero.
+ * @param s_a sparse array handle
+ * @param icol index indicating column block (corresponds to a processor
+ *             location)
+ * @param idx index for starting location of offsets for column indices
+ * @param jdx index for starting location of column indices of non-zero zero
+ * @param vdx index for starting location of non-zero matrix values
+ * @return 0 if no values for this column block
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_access_col_block_idx =  pnga_sprs_array_access_col_block_idx
+#endif
+int pnga_sprs_array_access_col_block_idx(Integer s_a, Integer icol,
+    AccessIndex *idx, AccessIndex *jdx, AccessIndex *vdx)
+{
+  Integer s_hdl = GA_OFFSET + s_a;
+  void *vptr;
+  Integer *iptr, *jptr;
+  unsigned long lref=0, lptr;
+  pnga_sprs_array_access_col_block(s_a, icol, &iptr, &jptr, &vptr);
+  /* iproc corresponds to a block with no data */
+  if (iptr == NULL && jptr == NULL && vptr == NULL) {
+    *idx = 0;
+    *jdx = 0;
+    *vdx = 0;
+    return 0;
+  }
+  *idx = (AccessIndex) ((Integer*)iptr - INT_MB);
+  *jdx = (AccessIndex) ((Integer*)jptr - INT_MB);
+  lref = (unsigned long)INT_MB;
+  /* if that array data is a fortran integer then it will be set to either the
+   * C int or long data type */
+  if (SPA[s_hdl].type == C_INT || SPA[s_hdl].type == C_LONG) {
+    *vdx = (AccessIndex) ((Integer*)vptr - INT_MB);
+  } else if (SPA[s_hdl].type == C_FLOAT) {
+    *vdx = (AccessIndex) ((float*)vptr - FLT_MB);
+  } else if (SPA[s_hdl].type == C_DBL) {
+    *vdx = (AccessIndex) ((double*)vptr - DBL_MB);
+  } else if (SPA[s_hdl].type == C_SCPL) {
+    *vdx = (AccessIndex) ((SingleComplex*)vptr - SCPL_MB);
+  } else if (SPA[s_hdl].type == C_DCPL) {
+    *vdx = (AccessIndex) ((DoubleComplex*)vptr - DCPL_MB);
+  }
+
+#ifdef BYTE_ADDRESSABLE_MEMORY
+    /* check the allignment */
+    lptr = (unsigned long)vptr;
+    if( lptr%elemsize != lref%elemsize ){
+      printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
+          lref,lref%elemsize);
+      pnga_error("sprs_array_access_col_block: MA addressing problem: base address misallignment",
+          handle);
+    }
+#endif
+
+    /* adjust index for Fortran addressing */
+    (*idx) ++ ;
+    FLUSH_CACHE;
+    return 1;
+}
+
+/**
  * Multiply a sparse matrix by a sparse vector
  * @param s_a handle for sparse matrix
  * @param g_a handle for vector
