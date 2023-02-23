@@ -226,7 +226,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
 {
   Integer hdl = GA_OFFSET + s_a;
   Integer lo, hi, ld;
-  Integer i,j,ilo,ihi;
+  Integer i,j,ilo,ihi,jlo,jhi;
   int64_t *offset;
   Integer *count;
   Integer *top;
@@ -239,6 +239,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   Integer elemsize = SPA[hdl].size;
   Integer iproc;
   Integer g_offset;
+  Integer g_blk;
   Integer ret = 1;
   Integer *size;
   Integer *map;
@@ -252,6 +253,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   int *jsdx;
   int64_t *ildx;
   int64_t *jldx;
+  int64_t *row_info;
 
   /* set variable that distinguishes between long and ints for indices */
   if (SPA[hdl].idx_size == sizeof(int64_t)) {
@@ -278,11 +280,43 @@ logical pnga_sprs_array_assemble(Integer s_a)
     top[iproc] = i;
   }
 
+  /* Create global array to store information on sparse blocks */
+  {
+    Integer dims[3];
+    Integer three = 3;
+    dims[0] = 6;
+    dims[1] = nproc;
+    dims[2] = nproc;
+    /* g_blk contains information about how data for each sparse
+     * block is laid out in g_j and g_data. The last two dimensions
+     * describe location of sparse block in nproc X nproc array
+     * of sparse blocks corresponding to original sparse matrix.
+     *
+     * First dimension contains the following information on each
+     * block
+     *    ilo: lowest row index of block
+     *    ihi: highest row index of block
+     *    jlo: lowest column index of block
+     *    jhi: highest column index of block
+     *    offset: offset in g_j and g_data for column indices and data
+     *            values for block
+     *    blkend: last index  g_j and g_data for block
+     */
+    g_blk = pnga_create_handle();
+    pnga_set_pgroup(g_blk,SPA[hdl].grp);
+    pnga_set_data(g_blk,three,dims,C_LONG);
+    if (!pnga_allocate(g_blk)) ret = 0;
+    SPA[hdl].g_blk = g_blk;
+    row_info = (int64_t*)malloc(6*nproc*sizeof(int64_t));
+  }
+
+
   /* determine how many values of matrix are stored on this process and what the
    * offset on remote processes is for the data. Create a global array to
    * perform this calculation */
   g_offset = pnga_create_handle();
   pnga_set_data(g_offset,one,&nproc,C_LONG);
+  pnga_set_pgroup(g_offset,SPA[hdl].grp);
   if (!pnga_allocate(g_offset)) ret = 0;
   pnga_zero(g_offset);
   offset = (int64_t*)malloc(nproc*sizeof(int64_t));
@@ -613,7 +647,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
         if (top[j] >= 0) (isdx+i*(nrows+1))[nrows] = (int)icnt; 
       }
     }
-    /* TODO: (maybe) sort each row so that individual elements are arrange in
+    /* TODO: (maybe) sort each row so that individual elements are arranged in
      * order of increasing j */
     SPA[hdl].offset[i] = ncnt;
     ncnt += SPA[hdl].blksize[i];
@@ -624,6 +658,83 @@ logical pnga_sprs_array_assemble(Integer s_a)
   SPA[hdl].val = NULL;
   SPA[hdl].idx = NULL;
   SPA[hdl].jdx = NULL;
+  printf("p[%ld] Got to 1\n",me);
+  /* set up g_blk */
+  for (i=0; i<nproc; i++) {
+    Integer jbot, jtop;
+    int64_t jlbot, jltop;
+    int iblk;
+    /* find offset for row block on this processor
+     * in g_j (should be the same for g_data */
+  printf("p[%ld] Got to 2 i: %ld\n",me,i);
+    pnga_distribution(SPA[hdl].g_j,i,&jbot,&jtop);
+    jlbot = (int64_t)jbot;
+    jltop = (int64_t)jtop;
+
+    /* calculate column limits for processor i */
+    jlo = (SPA[hdl].jdim*i)/nproc;
+    while ((jlo*nproc)/jdim < i) {
+      jlo++;
+    }
+    while ((jlo*nproc)/jdim > i) {
+      jlo--;
+    }
+    if (i < nproc-1) {
+      jhi = (SPA[hdl].jdim*(i+1))/nproc;
+      while ((jhi*nproc)/jdim < i+1) {
+        jhi++;
+      }
+      while ((jhi*nproc)/jdim > i+1) {
+        jhi--;
+      }
+    } else {
+      jhi = SPA[hdl].jdim-1;
+    }
+    /* set indices to fortran indexing */
+    jlo++;
+    jhi++;
+    /* find index for block in blksize and offset arrays */
+    iblk = -1;
+    for (j=0; j<SPA[hdl].nblocks; j++) {
+      if (SPA[hdl].blkidx[j] == i) {
+        iblk = j;
+        break;
+      }
+    }
+    if (iblk == -1) {
+      row_info[i*6  ] = SPA[hdl].ilo;
+      row_info[i*6+1] = SPA[hdl].ihi;
+      row_info[i*6+2] = jlo;
+      row_info[i*6+3] = jhi;
+      /* block contains no data */
+      if (i == 0) {
+        row_info[4] = jbot;
+        row_info[5] = jbot-1;
+      } else {
+        row_info[i*6+4] = row_info[(i-1)*6+5]+1;
+        row_info[i*6+5] = row_info[(i-1)*6+5];
+      }
+    } else {
+      row_info[i*6+4] = jbot+SPA[hdl].offset[iblk];
+      row_info[i*6+5] = row_info[i*6+4]+SPA[hdl].blksize[iblk]-1;
+    }
+  }
+  /* copy data in row info to g_blk */
+  {
+    Integer tlo[3], thi[3], tld[2];
+    tlo[0] = 1;
+    tlo[1] = me+1;
+    tlo[2] = 1;
+    thi[0] = 6;
+    thi[1] = me+1;
+    thi[2] = nproc;
+    tld[0] = 6;
+    tld[1] = nproc;
+  printf("p[%ld] Got to 3\n",me);
+    pnga_put(g_blk,tlo,thi,row_info,tld);
+  printf("p[%ld] Got to 4 i: %ld\n",me,i);
+    pnga_pgroup_sync(SPA[hdl].grp);
+  }
 
   /*
   if (GAme == 0) printf("G_DATA Array\n");
@@ -637,6 +748,9 @@ logical pnga_sprs_array_assemble(Integer s_a)
   pnga_release(SPA[hdl].g_i,&lo,&hi);
   pnga_release(SPA[hdl].g_j,&lo,&hi);
 
+  pnga_destroy(g_offset);
+
+  free(row_info);
   free(count);
   free(top);
   free(list);
@@ -1062,6 +1176,7 @@ logical pnga_sprs_array_destroy(Integer s_a)
     if (!pnga_destroy(SPA[hdl].g_data)) ret = 0;
     if (!pnga_destroy(SPA[hdl].g_i)) ret = 0;
     if (!pnga_destroy(SPA[hdl].g_j)) ret = 0;
+    if (!pnga_destroy(SPA[hdl].g_blk)) ret = 0;
     if (SPA[hdl].blkidx != NULL) free(SPA[hdl].blkidx);
     if (SPA[hdl].blksize != NULL) free(SPA[hdl].blksize);
     if (SPA[hdl].offset != NULL) free(SPA[hdl].offset);
