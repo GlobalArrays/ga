@@ -327,8 +327,9 @@ logical pnga_sprs_array_assemble(Integer s_a)
     iproc = (i+me)%nproc+1;
     /* C indices are still zero based so need to subtract 1 from iproc */
     if (count[iproc-1] > 0) {
-      /* offset locations are not deterministic, but do guarantee that a space is
-       * available to hold data going to each processor */
+      /* offset locations are not deterministic (ordering cannot be guaranteed),
+       * but do guarantee that a space is available to hold data going to each
+       * processor */
       offset[iproc-1] = (int64_t)pnga_read_inc(g_offset,&iproc,count[iproc-1]);
     }
   }
@@ -1896,6 +1897,7 @@ void pnga_sprs_array_shift_diag(Integer s_a, void *shift)
 }
 
 /**
+ * Duplicate an existing sparse array
  * @param s_a sparse array that is to be duplicated
  * @return handle of duplicate array
  */
@@ -1958,4 +1960,71 @@ Integer pnga_sprs_array_duplicate(Integer s_a)
     SPA[new_hdl].offset[i] = SPA[hdl].offset[i];
   }
   return s_dup;
+}
+
+/**
+ * Retrieve a sparse block as a CSR data structure
+ * @param s_a sparse array that is to be duplicated
+ * @param irow, icol row and column indices of the sparse block.
+ *                   These indices range in value from 0 to nproc-1,
+ *                   where nproc is the number of processors in
+ *                   the process group hosting the array.
+ * @param idx array holding offsets into jdx and data arrays for each row
+ * @param jdx array holding column indices of non-zero elements
+ * @param data array holding values of non-zero elements
+ * @param ilo, ihi, jlo, jhi bounding indices of block in matrix
+ * @return handle of duplicate array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_get_block =  pnga_sprs_array_get_block
+#endif
+logical pnga_sprs_array_get_block(Integer s_a, Integer irow, Integer icol,
+    void **idx, void **jdx, void **data, Integer *ilo, Integer *ihi,
+    Integer *jlo, Integer *jhi)
+{
+  Integer hdl = GA_OFFSET + s_a;
+  int64_t params[6];
+  Integer lo[3], hi[3];
+  Integer ld[2];
+  int64_t len;
+  int longidx;
+
+  /* retrieve location of block in distributed arrays */
+  lo[0] = 1;
+  lo[1] = irow;
+  lo[2] = icol;
+  hi[0] = 6;
+  hi[1] = irow;
+  hi[2] = icol;
+  ld[0] = 6;
+  ld[1] = 1;
+  pnga_get(SPA[hdl].g_blk,lo,hi,params,ld);
+
+  *ilo = params[0];
+  *ihi = params[1];
+  *jlo = params[2];
+  *jhi = params[3];
+  /* allocate arrays to hold block */
+  if (SPA[hdl].idx_size == 4) {
+    longidx = 0;
+  } else {
+    longidx = 1;
+  }
+  len = params[5]-params[4]+1;
+  if (longidx) {
+    *idx = (int64_t*)malloc((*ihi-*ilo+1)*sizeof(int64_t));
+    *jdx = (int64_t*)malloc(len*sizeof(int64_t));
+  } else {
+    *idx = (int*)malloc((*ihi-*ilo+1)*sizeof(int));
+    *jdx = (int*)malloc(len*sizeof(int));
+  }
+  *data = malloc(len*SPA[hdl].size);
+  lo[0] = params[4];
+  hi[0] = params[5];
+  ld[0] = 1;
+  pnga_get(SPA[hdl].g_j,lo,hi,*jdx,ld);
+  pnga_get(SPA[hdl].g_data,lo,hi,*data,ld);
+  lo[0] = *ilo;
+  hi[0] = *ihi;
+  pnga_get(SPA[hdl].g_i,lo,hi,*idx,ld);
 }
