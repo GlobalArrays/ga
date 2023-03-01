@@ -2028,3 +2028,43 @@ logical pnga_sprs_array_get_block(Integer s_a, Integer irow, Integer icol,
   hi[0] = *ihi;
   pnga_get(SPA[hdl].g_i,lo,hi,*idx,ld);
 }
+/**
+ * Multiply sparse matrices A and B to get sparse matrix C
+ * C = A.B
+ * @param s_a sparse array A
+ * @param s_b sparse array B
+ * @return handle of sparse array C
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_matmat_multiply =  pnga_sprs_array_matmat_multiply
+#endif
+Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
+{
+  Integer *top;
+  Integer *bin;
+  Integer *idx;
+  Integer *jdx;
+  Integer hdl_a = s_a+GA_OFFSET;
+  Integer hdl_b = s_b+GA_OFFSET;
+  Integer bufsize;
+  void *data;
+  /* Do some initial verification to see if matrix multiply is possible */
+  if (SPA[hdl_a].type != SPA[hdl_b].type) {
+    pnga_error("(ga_sprs_array_matmat_multiply) types of sparse matrices"
+    " A and B must match",0);
+  }
+  if (SPA[hdl_a].jdim != SPA[hdl_b].idim) {
+    pnga_error("(ga_sprs_array_matmat_multiply) column dimension of"
+      " A must match row dimension of B",0);
+  }
+  if (SPA[hdl_a].size != SPA[hdl_b].size) {
+    pnga_error("(ga_sprs_array_matmat_multiply) size of integer"
+      " indices of A and B must match",0);
+  }
+  /* Allocate initial buffers to hold elements of product matrix. This algorithm assumes
+     that product matrix remains relatively sparse. Matrix elements in the product matrix
+     are binned by rows. This binning is necessary to support addition of matrix element
+     products in the matrix-matrix multiplication */
+  bufsize = INIT_BUF_SIZE;
+  top = (Integer*)malloc(INIT_BUF_SIZE*sizeof(Integer));
+}
