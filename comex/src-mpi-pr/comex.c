@@ -21,8 +21,13 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#define ENABLE_XPMEM 1
+#if ENABLE_XPMEM
+#include <xpmem.h>
+#endif
+
 /* System V headers */
-// #define ENABLE_SYSV
+//#define ENABLE_SYSV 0
 #if ENABLE_SYSV
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -354,8 +359,14 @@ STATIC void _free_semaphore(void);
 STATIC void* _shm_create(const char *name, key_t *key, size_t size);
 STATIC void* _shm_attach(const char *name, size_t size, key_t key);
 #else
+#if ENABLE_XPMEM
+STATIC xpmem_segid_t _shm_create(void **ptr, size_t size);
+STATIC void* _shm_attach(xpmem_segid_t segid, size_t size);
+STATIC int _shm_unmap(xpmem_segid_t segid, void *ptr, size_t size);
+#else
 STATIC void* _shm_create(const char *name, size_t size);
 STATIC void* _shm_attach(const char *name, size_t size);
+#endif
 #endif
 STATIC void* _shm_map(int fd, size_t size);
 #if USE_SICM
@@ -1459,6 +1470,9 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
     key_t key;
     char file[SHM_NAME_SIZE+10];
 #endif
+#if ENABLE_XPMEM
+    xpmem_segid_t segid;
+#endif
 
 #if DEBUG
     fprintf(stderr, "[%d] _comex_malloc_local(size=%lu)\n",
@@ -1474,7 +1488,11 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
 #if ENABLE_SYSV
     memory = _shm_create(name, &key, size);
 #else
+#if ENABLE_XPMEM
+    segid = _shm_create(&memory, size);
+#else
     memory = _shm_create(name, size);
+#endif
 #endif
 #if DEBUG && DEBUG_VERBOSE
     fprintf(stderr, "[%d] _comex_malloc_local registering "
@@ -1497,8 +1515,13 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
     reg_entry = reg_cache_insert(
             g_state.rank, memory, size, name, key, memory, 0);
 #else
+#if ENABLE_XPMEM
+    reg_entry = reg_cache_insert(
+            g_state.rank, memory, size, segid, memory, 0);
+#else
     reg_entry = reg_cache_insert(
             g_state.rank, memory, size, name, memory, 0);
+#endif
 #endif
 #endif
 
@@ -1692,6 +1715,9 @@ int comex_free_local(void *ptr)
 #endif
 #else
     /* unmap the memory */
+#if ENABLE_XPMEM
+    retval = _shm_unmap(reg_entry->xid, ptr, reg_entry->len);
+#else
     retval = munmap(ptr, reg_entry->len);
     check_devshm(0, -(reg_entry->len));
     if (-1 == retval) {
@@ -1705,6 +1731,7 @@ int comex_free_local(void *ptr)
         perror("comex_free_local: shm_unlink");
         comex_error("comex_free_local: shm_unlink", retval);
     }
+#endif
 #endif
 
     /* delete the reg_cache entry */
@@ -2504,7 +2531,12 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
             void *memory = _shm_attach(reg_entries[i].name, reg_entries[i].len,
                 reg_entries[i].key);
 #else
+#if ENABLE_XPMEM
+            printf("p[%d] calling _shm_attach at 1\n",g_state.rank);
+            void *memory = _shm_attach(reg_entries[i].xid, reg_entries[i].len);
+#else
             void *memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
+#endif
 #endif
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] comex_malloc registering "
@@ -2520,8 +2552,13 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
                     reg_entries[i].rank,
                     reg_entries[i].buf,
                     reg_entries[i].len,
+#if ENABLE_XPMEM
+                    reg_entries[i].xid,
+#else
                     reg_entries[i].name,
+#endif
 #if ENABLE_SYSV
+                    reg_entries[i].name,
                     reg_entries[i].key,
 #endif
                     memory,0
@@ -2714,8 +2751,13 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
                 == g_state.hostid[my_world_rank]) {
             /* same SMP node, need to mmap */
             /* open remote shared memory object */
+#if ENABLE_XPMEM
+            printf("p[%d] calling _shm_attach at 2\n",g_state.rank);
+            void* _shm_attach(reg_entries[i].xid, reg_entries[i].len);
+#else
             void *memory = _shm_attach_memdev(reg_entries[i].name,
                 reg_entries[i].len, idevice);
+#endif
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] comex_malloc registering "
                     "rank=%d buf=%p len=%lu name=%s map=%p\n",
@@ -3095,12 +3137,20 @@ int comex_free(void *ptr, comex_group_t group)
                 reg_entry->key); */
             _shmdt_err(shmdt(reg_entry->mapped));
 #else
+#if ENABLE_XPMEM
+            retval = _shm_unmap(reg_entry->xid, reg_entry->mapped, reg_entry->len);
+            if (-1 == retval) {
+              perror("comex_free: munmap");
+              comex_error("comex_free: munmap", retval);
+            }
+#else
             retval = munmap(reg_entry->mapped, reg_entry->len);
             check_devshm(0, -(reg_entry->len));
             if (-1 == retval) {
               perror("comex_free: munmap");
               comex_error("comex_free: munmap", retval);
             }
+#endif
 #endif
 
 #if DEBUG && DEBUG_VERBOSE
@@ -4652,7 +4702,12 @@ STATIC void _malloc_handler(
             memory = _shm_attach(reg_entries[i].name, reg_entries[i].len,
                 reg_entries[i].key);
 #else
+#if ENABLE_XPMEM
+            printf("p[%d] calling _shm_attach at 3\n",g_state.rank);
+            memory = _shm_attach(reg_entries[i].xid, reg_entries[i].len);
+#else
             memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
+#endif
 #endif
 #if USE_SICM
           }
@@ -4671,9 +4726,14 @@ STATIC void _malloc_handler(
                     reg_entries[i].rank,
                     reg_entries[i].buf,
                     reg_entries[i].len,
-                    reg_entries[i].name,
 #if ENABLE_SYSV
+                    reg_entries[i].name,
                     reg_entries[i].key,
+#endif
+#if ENABLE_XPMEM
+                    reg_entries[i].xid,
+#else
+                    reg_entries[i].name,
 #endif
                     memory
                     ,reg_entries[i].use_dev
@@ -4765,8 +4825,12 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
             _shmdt_err(shmdt(reg_entry->mapped));
             retval = 0;
 #else
+#if ENABLE_XPMEM
+            retval = _shm_unmap(reg_entry->xid, reg_entry->mapped, reg_entry->len);
+#else
             retval = munmap(reg_entry->mapped, reg_entry->len);
             check_devshm(0, -(reg_entry->len));
+#endif
 #endif
 #endif
             if (-1 == retval) {
@@ -4950,6 +5014,24 @@ STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup)
     return largest;
 }
 
+#if ENABLE_XPMEM
+STATIC xpmem_segid_t _shm_create(void **data, size_t size)
+{
+  xpmem_segid_t segid;
+  void *ptr;
+  ptr = mmap(NULL, size, PROT_READ | PROT_WRITE,
+      MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+  if (ptr == MAP_FAILED) {
+    comex_error("_shm_create mmap failed. size: ",(int)size);
+  }
+  segid = xpmem_make(ptr, size, XPMEM_PERMIT_MODE, (void *)06666);
+  if (segid == -1) {
+    comex_error("_shm_create xpmem_make failed. size: ",(int)size);
+  }
+  *data = ptr;
+  return segid;
+}
+#else
 STATIC void* _shm_create(const char *name,
 #if ENABLE_SYSV
     key_t *key,
@@ -5056,6 +5138,7 @@ STATIC void* _shm_create(const char *name,
     return mapped;
 #endif
 }
+#endif
 
 #if USE_SICM
 #if SICM_OLD
@@ -5134,6 +5217,27 @@ STATIC void* _shm_attach(const char *name, size_t size, key_t key)
   return mapped;
 }
 #else
+#if ENABLE_XPMEM
+STATIC void* _shm_attach(xpmem_segid_t segid, size_t size)
+{
+  struct xpmem_addr addr;
+  void *buff;
+  xpmem_apid_t apid;
+
+  apid = xpmem_get(segid, XPMEM_RDWR, XPMEM_PERMIT_MODE, NULL);
+  if (apid == -1) {
+    comex_error("_shm_attach xpmem_get",0);
+  }
+  addr.apid = apid;
+  addr.offset = 0;
+  buff = xpmem_attach(addr, size, NULL);
+  if (buff == (void*)-1) {
+    comex_error("_shm_attach xpmem_attach",0);
+  }
+
+  return buff;
+}
+#else
 STATIC void* _shm_attach(const char *name, size_t size)
 {
     void *mapped = NULL;
@@ -5170,6 +5274,20 @@ STATIC void* _shm_attach(const char *name, size_t size)
     }
 
     return mapped;
+}
+#endif
+#endif
+
+#if ENABLE_XPMEM
+STATIC int _shm_unmap(xpmem_segid_t segid, void *data, size_t size)
+{
+  int ret;
+  ret = xpmem_remove(segid);
+  if (munmap(data, size) == -1) {
+    comex_error("_shm_unmap: remove",0);
+    ret = -1;
+  }
+  return ret;
 }
 #endif
 
@@ -5226,6 +5344,7 @@ STATIC void* _shm_map_arena(int fd, size_t size, sicm_arena arena)
     return memory;
 }
 #endif
+#if !ENABLE_XPMEM
 STATIC void* _shm_map(int fd, size_t size)
 {
     void *memory  = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
@@ -5247,6 +5366,7 @@ STATIC void* _shm_map(int fd, size_t size)
 
     return memory;
 }
+#endif
 
 
 STATIC int _set_affinity(int cpu)

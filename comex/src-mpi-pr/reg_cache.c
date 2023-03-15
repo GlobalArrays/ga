@@ -7,6 +7,8 @@
 #   include "config.h"
 #endif
 
+#define ENABLE_XPMEM 1
+
 /* C headers */
 #include <stddef.h>
 #include <stdio.h>
@@ -491,9 +493,15 @@ reg_cache_find_intersection(int rank, void *buf, size_t len)
  * @return RR_SUCCESS on success
  */
 reg_entry_t*
-reg_cache_insert(int rank, void *buf, size_t len, const char *name,
+reg_cache_insert(int rank, void *buf, size_t len,
 #if ENABLE_SYSV
+    const char *name,
     key_t key,
+#endif
+#if ENABLE_XPMEM
+    xpmem_segid_t xid,
+#else
+    const char *name,
 #endif
     void *mapped,
     int use_dev
@@ -530,9 +538,14 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name,
     node->buf = buf;
     node->len = len;
     node->use_dev = use_dev;
-    (void)memcpy(node->name, name, SHM_NAME_SIZE);
 #if ENABLE_SYSV
+    (void)memcpy(node->name, name, SHM_NAME_SIZE);
     node->key = key;
+#endif
+#if ENABLE_XPMEM
+    node->xid = xid;
+#else
+    (void)memcpy(node->name, name, SHM_NAME_SIZE);
 #endif
     node->mapped = mapped;
     node->next = NULL;
@@ -632,7 +645,9 @@ reg_return_t reg_cache_nullify(reg_entry_t *node)
     node->mapped = NULL;
     node->rank = -1;
     node->use_dev = 0;
+#if ENABLE_SYSV || !ENABLE_XPMEM
     (void)memset(node->name, 0, SHM_NAME_SIZE);
+#endif
 
     return RR_SUCCESS;
 }

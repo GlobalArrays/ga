@@ -6,9 +6,13 @@
 //#include <sicm_impl.h>
 #endif
 #include <stddef.h>
-// #define ENABLE_SYSV
+#define ENABLE_SYSV 0
 #if ENABLE_SYSV
 #include <sys/ipc.h>
+#endif
+#define ENABLE_XPMEM 1
+#if ENABLE_XPMEM
+#include <xpmem.h>
 #endif
 
 /**
@@ -33,7 +37,11 @@ typedef struct _reg_entry_t {
     char name[2*SHM_NAME_SIZE];   /**< name of region */
     key_t key;
 #else
+#if ENABLE_XPMEM
+    xpmem_segid_t xid;          /**< xpmem shared memory segment identifier */
+#else
     char name[SHM_NAME_SIZE];   /**< name of region */
+#endif
 #endif
 #if USE_SICM
 #if SICM_OLD
@@ -52,9 +60,15 @@ typedef struct _reg_entry_t {
 reg_return_t reg_cache_init(int nprocs);
 reg_return_t reg_cache_destroy();
 reg_entry_t *reg_cache_find(int rank, void *buf, size_t len);
-reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len, const char *name,
+reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len,
 #if ENABLE_SYSV
+    const char *name,
     key_t key,
+#endif
+#if ENABLE_XPMEM
+    xpmem_segid_t xid,
+#else
+    const char *name,
 #endif
     void *mapped, int use_dev
 #if USE_SICM
