@@ -887,14 +887,6 @@ logical pnga_sprs_array_assemble(Integer s_a)
     pnga_pgroup_sync(SPA[hdl].grp);
   }
 
-  /*
-  if (GAme == 0) printf("G_DATA Array\n");
-  pnga_print(SPA[hdl].g_data);
-  if (GAme == 0) printf("G_I Array\n");
-  pnga_print(SPA[hdl].g_i);
-  if (GAme == 0) printf("G_J Array\n");
-  pnga_print(SPA[hdl].g_j);
-  */
   pnga_release(SPA[hdl].g_data,&lo,&hi);
   pnga_release(SPA[hdl].g_i,&lo,&hi);
   pnga_release(SPA[hdl].g_j,&lo,&hi);
@@ -2986,19 +2978,6 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
 #else
   bufsize = INIT_BUF_SIZE;
 #endif
-  elemsize = SPA[hdl_a].size;
-  idim = SPA[hdl_a].idim;
-  jdim = SPA[hdl_b].jdim;
-  top = (Integer*)malloc(bufsize*sizeof(Integer));
-  list = (Integer*)malloc(bufsize*sizeof(Integer));
-  idx = (Integer*)malloc(bufsize*sizeof(Integer));
-  jdx = (Integer*)malloc(bufsize*sizeof(Integer));
-  data = malloc(bufsize*elemsize);
-  for (i=0; i<bufsize; i++) top[i] = -1;
-  for (i=0; i<bufsize; i++) list[i] = -1;
-  lcnt = 0;
-  /* loop over processors in row and then loop over processor in column.
-   * Multiply block pairs */
   for (l=0; l<nprocs; l++) {
     for (n=0; n<nprocs; n++) {
       Integer *idx_a, *jdx_a, *idx_b, *jdx_b;
@@ -3094,14 +3073,6 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
     SPA[hdl_c].offset[i] = SPA[hdl_c].offset[i-1]+SPA[hdl_c].blksize[i-1];
   }
 
-  SPA[hdl_c].nblocks = nblocks;
-  SPA[hdl_c].ilo = ilo;
-  SPA[hdl_c].ihi = ihi;
-  SPA[hdl_c].type = type;
-  SPA[hdl_c].nprocs = SPA[hdl_a].nprocs;
-  SPA[hdl_c].idx = NULL;
-  SPA[hdl_c].jdx = NULL;
-  SPA[hdl_c].val = NULL;
   SPA[hdl_c].nval = lcnt;
   SPA[hdl_c].maxval = bufsize;
   SPA[hdl_c].size = SPA[hdl_a].size;
@@ -3418,23 +3389,6 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
       /* find offset for row block on this processor
        * in g_j (should be the same for g_data */
       pnga_distribution(SPA[hdl_c].g_j,me,&jbot,&jtop);
-
-      /* calculate column limits for processor i */
-      jlo = (SPA[hdl_c].jdim*i)/nprocs;
-      while ((jlo*nprocs)/jdim < i) {
-        jlo++;
-      }
-      while ((jlo*nprocs)/jdim > i) {
-        jlo--;
-      }
-      if (i < nprocs-1) {
-        jhi = (SPA[hdl_c].jdim*(i+1))/nprocs;
-        while ((jhi*nprocs)/jdim < i+1) {
-          jhi++;
-        }
-        while ((jhi*nprocs)/jdim > i+1) {
-          jhi--;
-        }
         jhi--;
       } else {
         jhi = SPA[hdl_c].jdim-1;
