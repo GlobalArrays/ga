@@ -482,9 +482,9 @@ logical pnga_sprs_array_assemble(Integer s_a)
   pnga_release(SPA[hdl].g_j,&lo,&hi);
   /* find out how many column blocks have data */
   ncnt = 0;
-  for (i=0; i<nproc; i++) {
+  for (i=0; i<nproc; i++)
     if (count[i] > 0) ncnt++;
-  }
+  
   SPA[hdl].nblocks = ncnt;
   if (ncnt > 0) SPA[hdl].blkidx = (Integer*)malloc(ncnt*sizeof(Integer));
   if (ncnt > 0) SPA[hdl].offset = (Integer*)malloc(ncnt*sizeof(Integer));
@@ -663,14 +663,11 @@ logical pnga_sprs_array_assemble(Integer s_a)
   /* set up g_blk */
   for (i=0; i<nproc; i++) {
     Integer jbot, jtop;
-    int64_t jlbot, jltop;
     int iblk;
     /* find offset for row block on this processor
      * in g_j (should be the same for g_data */
   printf("p[%ld] Got to 2 i: %ld\n",me,i);
     pnga_distribution(SPA[hdl].g_j,i,&jbot,&jtop);
-    jlbot = (int64_t)jbot;
-    jltop = (int64_t)jtop;
 
     /* calculate column limits for processor i */
     jlo = (SPA[hdl].jdim*i)/nproc;
@@ -737,14 +734,6 @@ logical pnga_sprs_array_assemble(Integer s_a)
     pnga_pgroup_sync(SPA[hdl].grp);
   }
 
-  /*
-  if (GAme == 0) printf("G_DATA Array\n");
-  pnga_print(SPA[hdl].g_data);
-  if (GAme == 0) printf("G_I Array\n");
-  pnga_print(SPA[hdl].g_i);
-  if (GAme == 0) printf("G_J Array\n");
-  pnga_print(SPA[hdl].g_j);
-  */
   pnga_release(SPA[hdl].g_data,&lo,&hi);
   pnga_release(SPA[hdl].g_i,&lo,&hi);
   pnga_release(SPA[hdl].g_j,&lo,&hi);
@@ -1973,7 +1962,7 @@ Integer pnga_sprs_array_duplicate(Integer s_a)
  * @param jdx array holding column indices of non-zero elements
  * @param data array holding values of non-zero elements
  * @param ilo, ihi, jlo, jhi bounding indices of block in matrix
- * @return handle of duplicate array
+ * @return false if block has no data
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_sprs_array_get_block =  pnga_sprs_array_get_block
@@ -1988,6 +1977,7 @@ logical pnga_sprs_array_get_block(Integer s_a, Integer irow, Integer icol,
   Integer ld[2];
   int64_t len;
   int longidx;
+  logical ret = 1;
 
   /* retrieve location of block in distributed arrays */
   lo[0] = 1;
@@ -2011,23 +2001,181 @@ logical pnga_sprs_array_get_block(Integer s_a, Integer irow, Integer icol,
     longidx = 1;
   }
   len = params[5]-params[4]+1;
-  if (longidx) {
-    *idx = (int64_t*)malloc((*ihi-*ilo+1)*sizeof(int64_t));
-    *jdx = (int64_t*)malloc(len*sizeof(int64_t));
+  if (len > 0) {
+    if (longidx) {
+      *idx = malloc((*ihi-*ilo+1)*sizeof(int64_t));
+      *jdx = malloc(len*sizeof(int64_t));
+    } else {
+      *idx = malloc((*ihi-*ilo+1)*sizeof(int));
+      *jdx = malloc(len*sizeof(int));
+    }
+    *data = malloc(len*SPA[hdl].size);
+    lo[0] = params[4];
+    hi[0] = params[5];
+    ld[0] = 1;
+    pnga_get(SPA[hdl].g_j,lo,hi,*jdx,ld);
+    pnga_get(SPA[hdl].g_data,lo,hi,*data,ld);
+    lo[0] = *ilo;
+    hi[0] = *ihi;
+    pnga_get(SPA[hdl].g_i,lo,hi,*idx,ld);
   } else {
-    *idx = (int*)malloc((*ihi-*ilo+1)*sizeof(int));
-    *jdx = (int*)malloc(len*sizeof(int));
+    /* block has no data */
+    *idx == NULL;
+    *jdx == NULL;
+    *data == NULL;
+    ret = 0;
   }
-  *data = malloc(len*SPA[hdl].size);
-  lo[0] = params[4];
-  hi[0] = params[5];
-  ld[0] = 1;
-  pnga_get(SPA[hdl].g_j,lo,hi,*jdx,ld);
-  pnga_get(SPA[hdl].g_data,lo,hi,*data,ld);
-  lo[0] = *ilo;
-  hi[0] = *ihi;
-  pnga_get(SPA[hdl].g_i,lo,hi,*idx,ld);
+  return ret;
 }
+/**
+ * Utility function to resize map data structure if number of elements
+ * exceeds available space. If number of elements exceeds available space
+ * double size of buffers and copy old buffers to new buffers
+ * @param top array of starting elements for each bin
+ * @param list linked list of elements
+ * @param idx row index of each element
+ * @param jdx column index of each element
+ * @param data value of each element
+ * @param idim total number of rows in sparse array
+ * @param jdim total number of columns in sparse array
+ * @param elemsize size of individual data elements
+ * @param bufsize current size of map arrays
+ * @param ncnt total number of elements stored in map arrays
+ */
+void update_map(Integer **top, Integer **list, Integer **idx, Integer **jdx,
+    void **data, Integer idim, Integer jdim, Integer elemsize,
+    Integer *bufsize, Integer *ncnt)
+{
+  Integer *ttop;
+  Integer *tlist;
+  Integer *tidx, *tjdx;
+  Integer lcnt;
+  Integer newsize;
+  void *tdata;
+  char *nptr;
+  char *optr;
+  Integer ii,jj;
+  newsize = 2*(*bufsize);
+  ttop = (Integer*)malloc(newsize*sizeof(Integer));
+  tlist = (Integer*)malloc(newsize*sizeof(Integer));
+  tdata = malloc(newsize*elemsize);
+  lcnt = 0;
+  for (ii=0; ii<newsize; ii++) tlist[ii] = -1;
+  tidx = (Integer*)malloc(newsize*sizeof(Integer));
+  tjdx = (Integer*)malloc(newsize*sizeof(Integer));
+  for (ii=0; ii<*bufsize; ii++) {
+    jj = (*top)[ii];
+    while (jj >= 0) {
+      Integer itmp = (*idx)[jj];
+      Integer jtmp = (*jdx)[jj];
+      Integer index = (jdim*itmp + jtmp)%newsize;
+      tlist[lcnt] = ttop[index];
+      ttop[index] = lcnt;
+      tidx[lcnt] = itmp; 
+      tjdx[lcnt] = jtmp; 
+      nptr = (char*)tdata + lcnt*elemsize;
+      optr = (char*)(*data) + jj*elemsize;
+      memcpy(nptr,optr,elemsize);
+      jj = (*list)[jj];
+      lcnt++;
+    }
+  }
+  free(*top);
+  free(*list);
+  free(*idx);
+  free(*jdx);
+  free(*data);
+  *bufsize = newsize;
+  *top = ttop;
+  *list = tlist;
+  *idx = tidx;
+  *jdx = tjdx;
+  *data = tdata;
+  *ncnt = lcnt;
+}
+
+/**
+ * Macros for sparse block matrix-matrix multiply
+ */
+#define SPRS_REAL_MATMAT_MULTIPLY_M(_type,_idxa,_jdxa,_idxb,_jdxb) \
+{                                                                  \
+  for (i=ilo_a; i<=ihi_a; i++) {                                   \
+    Integer kcols = _idxa[i+1-ilo_a]-_idxa[i-ilo_a];               \
+    for (k=0; k<kcols; k++) {                                      \
+      Integer kdx = _jdxa[_idxa[i-ilo_a]+k];                       \
+      Integer jcols = _idxb[kdx+1-ilo_b]-_idxb[kdx-ilo_b];         \
+      _type val_a = ((_type*)data_a)[kdx-jlo_a];                   \
+      for (j=0; j<jcols; j++) {                                    \
+        Integer jj = _jdxb[_idxb[kdx-ilo_b]+j];                    \
+        _type val_b = ((_type*)data_b)[jj-jlo_b];                  \
+        /* Check to see if c_ij already exists */                  \
+        Integer ldx = (i*jdim+jj)%bufsize;                         \
+        ldx = top[ldx];                                            \
+        while(ldx >= 0) {                                          \
+          if (i == idx[ldx] && jj == jdx[ldx]) break;              \
+          ldx = list[ldx];                                         \
+        }                                                          \
+        if (ldx >= 0) {                                            \
+          /* add product to existing value*/                       \
+          ((_type*)data)[ldx] += val_a*val_b;                      \
+        } else {                                                   \
+          /* add new value to list */                              \
+          if (lcnt == bufsize)                                     \
+            update_map(&top, &list, &idx, &jdx, &data, idim,       \
+                jdim, elemsize, &bufsize, &lcnt);                  \
+          ((_type*)data)[lcnt] = val_a*val_b;                      \
+          idx[lcnt] = i;                                           \
+          jdx[lcnt] = jj;                                          \
+          list[lcnt] = top[ldx];                                   \
+          top[ldx] = lcnt;                                         \
+          lcnt++;                                                  \
+        }                                                          \
+      }                                                            \
+    }                                                              \
+  }                                                                \
+}
+
+#define SPRS_COMPLEX_MATMAT_MULTIPLY_M(_type,_idxa,_jdxa,_idxb,_jdxb) \
+{                                                                     \
+  for (i=ilo_a; i<=ihi_a; i++) {                                      \
+    Integer kcols = _idxa[i+1-ilo_a]-_idxa[i-ilo_a];                  \
+    for (k=0; k<kcols; k++) {                                         \
+      Integer kdx = _jdxa[_idxa[i-ilo_a]+k];                          \
+      Integer jcols = _idxb[kdx+1-ilo_b]-_idxb[kdx-ilo_b];            \
+      _type rval_a = ((_type*)data_a)[2*(kdx-jlo_a)];                 \
+      _type ival_a = ((_type*)data_a)[2*(kdx-jlo_a)+1];               \
+      for (j=0; j<jcols; j++) {                                       \
+        Integer jj = _jdxb[_idxb[kdx-ilo_b]+j];                       \
+        _type rval_b = ((_type*)data_b)[2*(jj-jlo_b)];                \
+        _type ival_b = ((_type*)data_b)[2*(jj-jlo_b)+1];              \
+        /* Check to see if c_ij already exists */                     \
+        Integer ldx = (i*jdim+jj)%bufsize;                            \
+        ldx = top[ldx];                                               \
+        while(ldx >= 0) {                                             \
+          if (i == idx[ldx] && jj == jdx[ldx]) break;                 \
+          ldx = list[ldx];                                            \
+        }                                                             \
+        if (ldx >= 0) {                                               \
+          /* add product to existing value*/                          \
+          ((_type*)data)[2*ldx] += rval_a*rval_b-ival_a*ival_b;       \
+          ((_type*)data)[2*ldx+1] += rval_a*ival_b+ival_a*rval_b;     \
+        } else {                                                      \
+          /* add new value to list */                                 \
+          if (lcnt == bufsize) update_map(&top, &list, &idx, &jdx,    \
+              &data, idim, jdim, elemsize, &bufsize, &lcnt);          \
+          ((_type*)data)[2*ldx] = rval_a*rval_b-ival_a*ival_b;        \
+          ((_type*)data)[2*ldx+1] = rval_a*ival_b+ival_a*rval_b;      \
+          idx[lcnt] = i;                                              \
+          jdx[lcnt] = jj;                                             \
+          list[lcnt] = top[ldx];                                      \
+          top[ldx] = lcnt;                                            \
+          lcnt++;                                                     \
+        }                                                             \
+      }                                                               \
+    }                                                                 \
+  }                                                                   \
+}
+
 /**
  * Multiply sparse matrices A and B to get sparse matrix C
  * C = A.B
@@ -2041,30 +2189,442 @@ logical pnga_sprs_array_get_block(Integer s_a, Integer irow, Integer icol,
 Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
 {
   Integer *top;
-  Integer *bin;
+  Integer *list;
   Integer *idx;
   Integer *jdx;
+  Integer lcnt;
   Integer hdl_a = s_a+GA_OFFSET;
   Integer hdl_b = s_b+GA_OFFSET;
+  Integer hdl_c;
   Integer bufsize;
+  Integer elemsize;
+  Integer idim, jdim;
+  Integer i, j, k, m, n;
   void *data;
+  Integer nprocs = pnga_pgroup_nnodes(SPA[hdl_a].grp);
+  Integer me = pnga_pgroup_nodeid(SPA[hdl_a].grp);
+  Integer longidx;
+  Integer type;
+  Integer ihi, ilo;
+  Integer rowdim;
+  Integer *count;
+  Integer nblocks;
+  Integer s_c;
   /* Do some initial verification to see if matrix multiply is possible */
   if (SPA[hdl_a].type != SPA[hdl_b].type) {
     pnga_error("(ga_sprs_array_matmat_multiply) types of sparse matrices"
     " A and B must match",0);
   }
+  type = SPA[hdl_a].type;
+  if (SPA[hdl_a].grp != SPA[hdl_b].grp) {
+    pnga_error("(ga_sprs_array_matmat_multiply) matrices A and B must"
+    " be on the same group",0);
+  }
   if (SPA[hdl_a].jdim != SPA[hdl_b].idim) {
     pnga_error("(ga_sprs_array_matmat_multiply) column dimension of"
       " A must match row dimension of B",0);
   }
-  if (SPA[hdl_a].size != SPA[hdl_b].size) {
+  if (SPA[hdl_a].idx_size != SPA[hdl_b].idx_size) {
     pnga_error("(ga_sprs_array_matmat_multiply) size of integer"
       " indices of A and B must match",0);
   }
-  /* Allocate initial buffers to hold elements of product matrix. This algorithm assumes
-     that product matrix remains relatively sparse. Matrix elements in the product matrix
-     are binned by rows. This binning is necessary to support addition of matrix element
-     products in the matrix-matrix multiplication */
+  if (SPA[hdl_a].idx_size == sizeof(int64_t)) {
+    longidx = 1;
+  } else {
+    longidx = 0;
+  }
+  /* Allocate initial buffers to hold elements of product matrix. This
+   * algorithm assumes that product matrix remains relatively sparse. */
   bufsize = INIT_BUF_SIZE;
-  top = (Integer*)malloc(INIT_BUF_SIZE*sizeof(Integer));
+  elemsize = SPA[hdl_a].size;
+  idim = SPA[hdl_a].idim;
+  jdim = SPA[hdl_b].jdim;
+  top = (Integer*)malloc(bufsize*sizeof(Integer));
+  list = (Integer*)malloc(bufsize*sizeof(Integer));
+  idx = (Integer*)malloc(bufsize*sizeof(Integer));
+  jdx = (Integer*)malloc(bufsize*sizeof(Integer));
+  data = malloc(bufsize*elemsize);
+  for (i=0; i<bufsize; i++) top[i] = -1;
+  for (i=0; i<bufsize; i++) list[i] = -1;
+  lcnt = 0;
+  /* loop over processors in row and then loop over processor in column.
+   * Multiply block pairs */
+  for (m=0; m<nprocs; m++) {
+    int *idx_a, *jdx_a, *idx_b, *jdx_b;
+    int64_t *lidx_a, *ljdx_a, *lidx_b, *ljdx_b;
+    void *data_a, *data_b, *iptr, *jptr;
+    Integer ilo_a, ihi_a, jlo_a, jhi_a;
+    Integer ilo_b, ihi_b, jlo_b, jhi_b;
+    Integer jlen;
+    if (longidx) {
+      if (!pnga_sprs_array_get_block(s_a, me, m, &iptr, &jptr,
+          &data_a, &ilo_a, &ihi_a, &jlo_a, &jhi_a)) continue;
+      lidx_a = (int64_t*)iptr;
+      ljdx_a = (int64_t*)jptr;
+    } else {
+      if (!pnga_sprs_array_get_block(s_a, me, m, &iptr, &jptr,
+          &data_a, &ilo_a, &ihi_a, &jlo_a, &jhi_a)) continue;
+      idx_a = (int*)iptr;
+      jdx_a = (int*)jptr;
+    }
+    for (n=0; n<nprocs; n++) {
+      if (longidx) {
+        if (!pnga_sprs_array_get_block(s_b, m, n, &iptr, &iptr,
+              &data_b, &ilo_b, &ihi_b, &jlo_b, &jhi_b)) continue;
+        lidx_b = (int64_t*)iptr;
+        ljdx_b = (int64_t*)jptr;
+        if (jlo_a != ilo_b || jhi_a != ihi_b) {
+          pnga_error("(ga_sprs_array_matmat_multiply) inner block"
+              " dimensions must match",0);
+        }
+        if (type == C_INT) {
+          SPRS_REAL_MATMAT_MULTIPLY_M(int,lidx_a,ljdx_a,lidx_b,ljdx_b);
+        } else if (type == C_LONG) {
+          SPRS_REAL_MATMAT_MULTIPLY_M(long,lidx_a,ljdx_a,lidx_b,ljdx_b);
+        } else if (type == C_LONGLONG) {
+          SPRS_REAL_MATMAT_MULTIPLY_M(long long,lidx_a,ljdx_a,lidx_b,ljdx_b);
+        } else if (type == C_FLOAT) {
+          SPRS_REAL_MATMAT_MULTIPLY_M(float,lidx_a,ljdx_a,lidx_b,ljdx_b);
+        } else if (type == C_DBL) {
+          SPRS_REAL_MATMAT_MULTIPLY_M(double,lidx_a,ljdx_a,lidx_b,ljdx_b);
+        }
+      } else {
+        if (!pnga_sprs_array_get_block(s_b, m, n, &iptr, &jptr,
+            &data_b, &ilo_b, &ihi_b, &jlo_b, &jhi_b)) continue;
+        idx_b = (int*)iptr;
+        jdx_b = (int*)jptr;
+        if (jlo_a != ilo_b || jhi_a != ihi_b) {
+          pnga_error("(ga_sprs_array_matmat_multiply) inner block"
+              " dimensions must match",0);
+        }
+        if (type == C_INT) {
+          SPRS_REAL_MATMAT_MULTIPLY_M(int,idx_a,jdx_a,idx_b,jdx_b);
+        } else if (type == C_LONG) {
+          SPRS_REAL_MATMAT_MULTIPLY_M(long,idx_a,jdx_a,idx_b,jdx_b);
+        } else if (type == C_LONGLONG) {
+          SPRS_REAL_MATMAT_MULTIPLY_M(long long,idx_a,jdx_a,idx_b,jdx_b);
+        } else if (type == C_FLOAT) {
+          SPRS_REAL_MATMAT_MULTIPLY_M(float,idx_a,jdx_a,idx_b,jdx_b);
+        } else if (type == C_DBL) {
+          SPRS_REAL_MATMAT_MULTIPLY_M(double,lidx_a,ljdx_a,lidx_b,ljdx_b);
+        }
+      }
+    }
+  }
+  /* At this point all blocks have been multiplied and the resulting
+   * are stored in the link list defined by top, list, idx, jdx, data.
+   * No data needs to be moved, but all elements need to be resorted
+   * into blocks. Start by binning data into column and row blocks. */
+  free(top);
+  for (i=0; i<bufsize; i++) list[i] = -1;
+  ilo = SPA[hdl_a].ilo;
+  ihi = SPA[hdl_a].ihi;
+  rowdim = ihi-ilo+1;
+  top = (Integer*)malloc(nprocs*sizeof(Integer));
+  count = (Integer*)malloc(nprocs*sizeof(Integer));
+  for (i=0; i<nprocs; i++) top[i] = -1;
+  for (i=0; i<nprocs; i++) count[i] = 0;
+  /* bin up all data elements into column blocks */
+  for (i=0; i<lcnt; i++) {
+    Integer np = (jdx[i]*nprocs/jdim);
+    if (np >= nprocs) np = nprocs-1;
+    list[i] = top[np];
+    top[i] = i;
+    count[np]++;
+  }
+  /* count up number of column blocks with data */
+  nblocks = 0;
+  for (i=0; i<nprocs; i++) {
+    if (count[i] > 0) nblocks++;
+  }
+
+  /* create a new sparse array to hold product array */
+  s_c = pnga_sprs_array_create(idim,jdim,type,SPA[hdl_a].idx_size);
+  hdl_c = GA_OFFSET + s_c;
+
+  /* set up array of offsets */
+  SPA[hdl_c].blkidx = (Integer*)malloc(nblocks*sizeof(Integer));
+  SPA[hdl_c].blksize = (Integer*)malloc(nblocks*sizeof(Integer));
+  SPA[hdl_c].offset = (Integer*)malloc(nblocks*sizeof(Integer));
+  SPA[hdl_c].offset[0] = 0;
+  nblocks = 0;
+  for (i=0; i<nprocs; i++) {
+    if (count[i] > 0) {
+      SPA[hdl_c].blkidx[nblocks] = i;
+      SPA[hdl_c].blksize[nblocks] = count[i];
+      if (nblocks>0) SPA[hdl_c].offset[nblocks] = SPA[hdl_c].offset[nblocks-1]
+        + SPA[hdl_c].blksize[nblocks-1];
+      nblocks++;
+    }
+  }
+  SPA[hdl_c].nblocks = nblocks;
+  SPA[hdl_c].ilo = ilo;
+  SPA[hdl_c].ihi = ihi;
+  SPA[hdl_c].type = type;
+  SPA[hdl_c].nprocs = SPA[hdl_a].nprocs;
+  SPA[hdl_c].idx = NULL;
+  SPA[hdl_c].jdx = NULL;
+  SPA[hdl_c].val = NULL;
+  SPA[hdl_c].nval = 0;
+  SPA[hdl_c].maxval = 0;
+
+  {
+    int64_t isize = (rowdim+1)*nblocks;
+    int64_t totalsize = 0;
+    Integer ndim = 1;
+    Integer *offset = (Integer*)malloc(nprocs*sizeof(Integer));
+    Integer *tmp = (Integer*)malloc(nprocs*sizeof(Integer));
+    Integer *map = (Integer*)malloc(nprocs*sizeof(Integer));
+    /* set up array to hold row indices */
+    for (i=0; i<nprocs; i++) {
+      offset[i] = 0;
+      tmp[i] = 0;
+    }
+    tmp[me] = isize;
+    if (sizeof(Integer) == 8) {
+      pnga_pgroup_gop(SPA[hdl_a].grp,C_LONG,tmp,nprocs,"+");
+    } else {
+      pnga_pgroup_gop(SPA[hdl_a].grp,C_INT,tmp,nprocs,"+");
+    }
+    offset[0] = 0;
+    for (i=0; i<nprocs; i++) {
+      totalsize += tmp[i];
+      if (i>0) offset[i] = offset[i-1]+tmp[i-1];
+      map[i] = offset[i]+1; /* 1-based indexing for map array */
+    }
+
+    SPA[hdl_c].g_i = pnga_create_handle();
+    if (longidx) {
+      pnga_set_data(SPA[hdl_c].g_i,ndim,&totalsize,C_LONG);
+    } else {
+      pnga_set_data(SPA[hdl_c].g_i,ndim,&totalsize,C_INT);
+    }
+    pnga_set_irreg_distr(SPA[hdl_c].g_i,map,&nprocs);
+    pnga_allocate(SPA[hdl_c].g_i);
+    /* set up arrays to hold column indices and data */
+    for (i=0; i<nprocs; i++) {
+      offset[i] = 0;
+      tmp[i] = 0;
+    }
+    tmp[me] = lcnt;
+    if (sizeof(Integer) == 8) {
+      pnga_pgroup_gop(SPA[hdl_a].grp,C_LONG,tmp,nprocs,"+");
+    } else {
+      pnga_pgroup_gop(SPA[hdl_a].grp,C_INT,tmp,nprocs,"+");
+    }
+    offset[0] = 0;
+    totalsize = 0;
+    for (i=0; i<nprocs; i++) {
+      totalsize += tmp[i];
+      if (i>0) offset[i] = offset[i-1]+tmp[i-1];
+      map[i] = offset[i]+1; /* 1-based indexing for map array */
+    }
+    SPA[hdl_c].g_j = pnga_create_handle();
+    SPA[hdl_c].g_data = pnga_create_handle();
+    if (longidx) {
+      pnga_set_data(SPA[hdl_c].g_j,ndim,&totalsize,C_LONG);
+    } else {
+      pnga_set_data(SPA[hdl_c].g_j,ndim,&totalsize,C_INT);
+    }
+    pnga_set_data(SPA[hdl_c].g_data,ndim,&totalsize,SPA[hdl_c].type);
+    pnga_set_irreg_distr(SPA[hdl_c].g_j,map,&nprocs);
+    pnga_set_irreg_distr(SPA[hdl_c].g_data,map,&nprocs);
+    pnga_allocate(SPA[hdl_c].g_j);
+    pnga_allocate(SPA[hdl_c].g_data);
+    free(map);
+    free(tmp);
+    free(offset);
+  }
+  /* organize row block into column blocks in CSR format */
+  {
+    int *ti, *tj;
+    int64_t *lti, *ltj;
+    void *tdata;
+    Integer tlo, thi, tld;
+    char *cdata, *ctdata;
+    /* Get pointers to global arrays */
+    pnga_distribution(SPA[hdl_c].g_i,me,&tlo,&thi);
+    if (longidx) {
+      pnga_access_ptr(SPA[hdl_c].g_i,&tlo,&thi,&lti,&tld);
+    } else {
+      pnga_access_ptr(SPA[hdl_c].g_i,&tlo,&thi,&ti,&tld);
+    }
+    pnga_distribution(SPA[hdl_c].g_j,me,&tlo,&thi);
+    if (longidx) {
+      pnga_access_ptr(SPA[hdl_c].g_j,&tlo,&thi,&ltj,&tld);
+    } else {
+      pnga_access_ptr(SPA[hdl_c].g_j,&tlo,&thi,&tj,&tld);
+    }
+    pnga_distribution(SPA[hdl_c].g_data,me,&tlo,&thi);
+    pnga_access_ptr(SPA[hdl_c].g_data,&tlo,&thi,&tdata,&tld);
+    cdata = (char*)data;
+    ctdata = (char*)tdata;
+    /* loop over column blocks */
+    for (n=0; n<nblocks; n++) {
+      Integer icnt;
+      Integer *rowtop;
+      Integer *rowlist;
+      Integer ilen, irow;
+      Integer offset_i;
+      Integer offset_j;
+      j = SPA[hdl_c].blkidx[n];
+      /* sort blocks into rows */
+      ilen = ihi - ilo + 1;
+      rowtop = (Integer*)malloc(ilen*sizeof(Integer));
+      rowlist = (Integer*)malloc(count[j]*sizeof(Integer));
+      for (i=0; i<ilen; i++) rowtop[i] = -1;
+      for (i=0; i<count[j]; i++) rowlist[i] = -1;
+      icnt = 0;
+      offset_i = n*(ilen+1);
+      offset_j = SPA[hdl_c].offset[n];
+      while (icnt < count[j]) {
+        Integer id = idx[icnt+offset_j]-ilo;
+        rowlist[icnt] = rowtop[id];
+        rowtop[id] = icnt;
+        icnt++;
+      }
+      /* now organize data in g_i, g_j, g_data */
+      icnt = 0;
+      if (longidx) {
+        for (irow=0; irow<ilen; i++) {
+          lti[offset_i+irow] = icnt;
+          Integer jd = rowtop[irow];
+          while (jd >= 0) {
+            ltj[offset_j+icnt] = (int64_t)jdx[jd];
+            memcpy(&ctdata[elemsize*(offset_j+icnt)],&cdata[jd*elemsize],elemsize);
+            icnt++;
+          }
+        }
+        lti[offset_i+ilen] = icnt;
+      } else {
+        for (irow=0; irow<ilen; i++) {
+          ti[offset_i+irow] = icnt;
+          Integer jd = rowtop[irow];
+          while (jd >= 0) {
+            tj[offset_j+icnt] = (int)jdx[jd];
+            memcpy(&ctdata[elemsize*(offset_j+icnt)],&cdata[jd*elemsize],elemsize);
+            icnt++;
+          }
+        }
+        ti[offset_i+ilen] = icnt;
+      }
+      /* clean up arrays */
+      free(rowtop);
+      free(rowlist);
+    }
+  }
+  free(list);
+  free(idx);
+  free(jdx);
+  free(data);
+  free(count);
+
+  /* Create global array to store information on sparse blocks */
+  {
+    Integer dims[3];
+    Integer three = 3;
+    Integer g_blk;
+    int64_t *row_info;
+    Integer jlo, jhi;
+    dims[0] = 6;
+    dims[1] = nprocs;
+    dims[2] = nprocs;
+    /* g_blk contains information about how data for each sparse
+     * block is laid out in g_j and g_data. The last two dimensions
+     * describe location of sparse block in nproc X nproc array
+     * of sparse blocks corresponding to original sparse matrix.
+     *
+     * First dimension contains the following information on each
+     * block
+     *    ilo: lowest row index of block
+     *    ihi: highest row index of block
+     *    jlo: lowest column index of block
+     *    jhi: highest column index of block
+     *    offset: offset in g_j and g_data for column indices and data
+     *            values for block
+     *    blkend: last index  g_j and g_data for block
+     */
+    g_blk = pnga_create_handle();
+    pnga_set_pgroup(g_blk,SPA[hdl_c].grp);
+    pnga_set_data(g_blk,three,dims,C_LONG);
+    if (!pnga_allocate(g_blk)) {
+      pnga_error("(pnga_sprs_matmat_multiply) Failure allocating g_blk",0);
+    }
+    SPA[hdl_c].g_blk = g_blk;
+    row_info = (int64_t*)malloc(6*nprocs*sizeof(int64_t));
+    /* set up g_blk */
+    for (i=0; i<nprocs; i++) {
+      Integer jlo, jhi;
+      Integer jbot, jtop;
+      int iblk;
+      /* find offset for row block on this processor
+       * in g_j (should be the same for g_data */
+      pnga_distribution(SPA[hdl_c].g_j,i,&jbot,&jtop);
+
+      /* calculate column limits for processor i */
+      jlo = (SPA[hdl_c].jdim*i)/nprocs;
+      while ((jlo*nprocs)/jdim < i) {
+        jlo++;
+      }
+      while ((jlo*nprocs)/jdim > i) {
+        jlo--;
+      }
+      if (i < nprocs-1) {
+        jhi = (SPA[hdl_c].jdim*(i+1))/nprocs;
+        while ((jhi*nprocs)/jdim < i+1) {
+          jhi++;
+        }
+        while ((jhi*nprocs)/jdim > i+1) {
+          jhi--;
+        }
+      } else {
+        jhi = SPA[hdl_c].jdim-1;
+      }
+      /* set indices to fortran indexing */
+      jlo++;
+      jhi++;
+      /* find index for block in blksize and offset arrays */
+      iblk = -1;
+      for (j=0; j<SPA[hdl_c].nblocks; j++) {
+        if (SPA[hdl_c].blkidx[j] == i) {
+          iblk = j;
+          break;
+        }
+      }
+      if (iblk == -1) {
+        row_info[i*6  ] = SPA[hdl_c].ilo;
+        row_info[i*6+1] = SPA[hdl_c].ihi;
+        row_info[i*6+2] = jlo;
+        row_info[i*6+3] = jhi;
+        /* block contains no data */
+        if (i == 0) {
+          row_info[4] = jbot;
+          row_info[5] = jbot-1;
+        } else {
+          row_info[i*6+4] = row_info[(i-1)*6+5]+1;
+          row_info[i*6+5] = row_info[(i-1)*6+5];
+        }
+      } else {
+        row_info[i*6+4] = jbot+SPA[hdl_c].offset[iblk];
+        row_info[i*6+5] = row_info[i*6+4]+SPA[hdl_c].blksize[iblk]-1;
+      }
+    }
+    /* copy data in row info to g_blk */
+    {
+      Integer tlo[3], thi[3], tld[2];
+      tlo[0] = 1;
+      tlo[1] = me+1;
+      tlo[2] = 1;
+      thi[0] = 6;
+      thi[1] = me+1;
+      thi[2] = nprocs;
+      tld[0] = 6;
+      tld[1] = nprocs;
+      pnga_put(g_blk,tlo,thi,row_info,tld);
+      pnga_pgroup_sync(SPA[hdl_c].grp);
+    }
+  }
+  return s_c;
 }
+#undef SPRS_REAL_MATMAT_MULTIPLY_M
+#undef SPRS_COMPLEX_MATMAT_MULTIPLY_M
