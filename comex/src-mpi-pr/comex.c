@@ -2532,7 +2532,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
                 reg_entries[i].key);
 #else
 #if ENABLE_XPMEM
-            printf("p[%d] calling _shm_attach at 1\n",g_state.rank);
+            // printf("p[%d] calling _shm_attach at 1\n",g_state.rank);
             void *memory = _shm_attach(reg_entries[i].xid, reg_entries[i].len);
 #else
             void *memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
@@ -2752,7 +2752,7 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
             /* same SMP node, need to mmap */
             /* open remote shared memory object */
 #if ENABLE_XPMEM
-            printf("p[%d] calling _shm_attach at 2\n",g_state.rank);
+            // printf("p[%d] calling _shm_attach at 2\n",g_state.rank);
             void* _shm_attach(reg_entries[i].xid, reg_entries[i].len);
 #else
             void *memory = _shm_attach_memdev(reg_entries[i].name,
@@ -4703,7 +4703,7 @@ STATIC void _malloc_handler(
                 reg_entries[i].key);
 #else
 #if ENABLE_XPMEM
-            printf("p[%d] calling _shm_attach at 3\n",g_state.rank);
+            // printf("p[%d] calling _shm_attach at 3\n",g_state.rank);
             memory = _shm_attach(reg_entries[i].xid, reg_entries[i].len);
 #else
             memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
