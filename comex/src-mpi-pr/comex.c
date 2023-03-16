@@ -5027,7 +5027,7 @@ STATIC xpmem_segid_t _shm_create(void **data, size_t size)
   segid = xpmem_make(ptr, size, XPMEM_PERMIT_MODE, (void *)06666);
   if (segid == -1) {
     char buf[1024];
-    sprintf("_shm_create xpmem_make failed. ptr: %p size: %ld",
+    sprintf(buf,"_shm_create xpmem_make failed. ptr: %p size: %ld",
         ptr,(int64_t)size);
     comex_error(buf,(int)size);
   }
