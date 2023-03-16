@@ -5022,7 +5022,7 @@ STATIC void* _shm_create(const char *name,
       if (errno == EMFILE) {
         printf("The per process limit on the number of open file"
             " descriptors has been reached (relevant to PR runtime)\n");
-      } else if (errno = ENFILE) {
+      } else if ( errno == ENFILE) {
         printf("The system-wide limit on the total number of open files"
             " has been reached (relevant to PR runtime)\n");
       }
@@ -5151,7 +5151,7 @@ STATIC void* _shm_attach(const char *name, size_t size)
       if (errno == EMFILE) {
         printf("The per process limit on the number of open file"
             " descriptors has been reached (relevant to PR runtime)\n");
-      } else if (errno = ENFILE) {
+      } else if (errno == ENFILE) {
         printf("The system-wide limit on the total number of open files"
             " has been reached (relevant to PR runtime)\n");
       }
