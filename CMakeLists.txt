@@ -61,6 +61,7 @@ ga_option(LINALG_VENDOR BLIS)
 ga_option(ENABLE_TESTS ON)
 ga_option(ENABLE_PROFILING OFF)
 ga_option(ENABLE_SYSV OFF)
+ga_option(ENABLE_XPMEM OFF)
 #Options for user provided LinAlg libraries
 ga_option(ENABLE_BLAS OFF)
 ga_option(ENABLE_SCALAPACK OFF)
@@ -350,6 +351,11 @@ if(ENABLE_BLAS)
   add_compile_definitions(${BLAS_COMPILE_DEFINITIONS})
   #include_directories(${BLAS_INCLUDE_DIRS})
 endif()
+
+if(ENABLE_XPMEM)
+list(APPEND GA_EXTRA_LIBS xpmem)
+endif()
+
 
 if(ENABLE_PROFILING)
   set(ga_profiler $<TARGET_OBJECTS:ga_tools>)

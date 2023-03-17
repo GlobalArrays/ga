@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#define ENABLE_XPMEM 1
+// #define ENABLE_XPMEM 0
 #if ENABLE_XPMEM
 #include <xpmem.h>
 #endif

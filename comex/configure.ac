@@ -155,6 +155,9 @@ CPPFLAGS="$comex_save_CPPFLAGS"
 # SysV shared memory
 COMEX_ENABLE_SYSV
 
+# XPMEM
+COMEX_ENABLE_XPMEM
+
 # Checks for C libraries.
 COMEX_BLAS
 

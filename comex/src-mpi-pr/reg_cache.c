@@ -7,8 +7,6 @@
 #   include "config.h"
 #endif
 
-#define ENABLE_XPMEM 1
-
 /* C headers */
 #include <stddef.h>
 #include <stdio.h>

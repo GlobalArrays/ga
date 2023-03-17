@@ -6,11 +6,11 @@
 //#include <sicm_impl.h>
 #endif
 #include <stddef.h>
-#define ENABLE_SYSV 0
+// #define ENABLE_SYSV 0
 #if ENABLE_SYSV
 #include <sys/ipc.h>
 #endif
-#define ENABLE_XPMEM 1
+// #define ENABLE_XPMEM 0
 #if ENABLE_XPMEM
 #include <xpmem.h>
 #endif
