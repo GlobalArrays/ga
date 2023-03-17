@@ -353,7 +353,16 @@ if(ENABLE_BLAS)
 endif()
 
 if(ENABLE_XPMEM)
-list(APPEND GA_EXTRA_LIBS xpmem)
+  if(NOT EXISTS ${XPMEM_PATH})
+    message(FATAL_ERROR "xpmem installation path provided ${XPMEM_PATH} does not exist.")
+  endif()
+  list(APPEND CMAKE_PREFIX_PATH ${XPMEM_PATH})
+  include_directories(${XPMEM_PATH}/include)
+  find_library(XPMEM_LIBRARY NAMES xpmem
+             PATHS ${XPMEM_PATH}
+             PATH_SUFFIXES lib lib32 lib64
+             NO_DEFAULT_PATH)
+  list(APPEND GA_EXTRA_LIBS ${XPMEM_LIBRARY})
 endif()
 
 
