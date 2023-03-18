@@ -32,6 +32,8 @@ jobs:
         cc:
           - clang
           - gcc
+        use_cmake:
+          - "N"
         include:
           - os: ubuntu-latest
             experimental: true
@@ -39,6 +41,7 @@ jobs:
             armci_network: mpi-ts
             f77: gfortran-11
             cc: gcc-11
+            use_cmake: "N"
           - os: ubuntu-20.04
             experimental: true
             mpi_impl: mpich
@@ -50,9 +53,11 @@ jobs:
             experimental: true
             mpi_impl: intel
             armci_network: sockets
-            config_opts: --enable-i4 --with-blas=-lmkl_rt --with-scalapack=-lmkl_scalapack_lp64
+            config_opts: --enable-i4
             f77: ifort
-            cc: gcc
+            cc: icc
+            oneapi: /opt/intel/oneapi
+            use_cmake: "N"
           - os: ubuntu-latest
             experimental: true
             mpi_impl: openmpi
@@ -60,12 +65,15 @@ jobs:
             config_opts: --enable-i4 --without-blas --enable-cxx --disable-f77
             f77: gfortran
             cc: gcc
+            use_cmake: "N"
           - os: macos-11
             experimental: true
             mpi_impl: mpich
             armci_network: mpi-pr
             f77: ifort
             cc: icc
+            oneapi: /Users/runner/apps/oneapi
+            use_cmake: "N"
           - os: ubuntu-20.04
             experimental: true 
             mpi_impl: mpich
@@ -73,6 +81,7 @@ jobs:
             f77: gfortran
             cc: gcc
             use_sicm: "Y"
+            use_cmake: "N"
           - os: ubuntu-22.04
             experimental: true 
             mpi_impl: mpich
@@ -80,6 +89,7 @@ jobs:
             config_opts: "--disable-f77 --enable-cxx"
             f77: gfortran-10
             cc: gcc-10
+            use_cmake: "N"
           - os: macos-12
             experimental: true 
             mpi_impl: mpich
@@ -87,33 +97,36 @@ jobs:
             config_opts: "--disable-static --enable-shared"
             f77: gfortran
             cc: clang
+            use_cmake: "N"
           - os: macos-12
             experimental: true
-            use_cmake: "Y"
             mpi_impl: mpich
             armci_network: mpi-pr
             f77: gfortran
             cc: clang
+            use_cmake: "Y"
           - os: ubuntu-20.04
             experimental: true
-            use_cmake: "Y"
             mpi_impl: openmpi
             armci_network: mpi-pr
             f77: gfortran
             cc: gcc
+            use_cmake: "Y"
           - os: ubuntu-20.04
             experimental: true
-            use_cmake: "Y"
             mpi_impl: openmpi
             armci_network: mpi-ts
             f77: gfortran
             cc: gcc
+            use_cmake: "Y"
           - os: ubuntu-20.04
             experimental: true
             mpi_impl: intel
             armci_network: mpi-ts
             f77: ifort
             cc: gcc
+            oneapi: /opt/intel/oneapi
+            use_cmake: "N"
         exclude:
           - armci_network: mpi-pr
             mpi_impl: openmpi
@@ -134,12 +147,12 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     steps: 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 40
       - name: Cache install steps
         id: ga-cache-install
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: cache-install-steps
         with:
@@ -161,9 +174,9 @@ jobs:
           brew install gcc coreutils automake || true
           ;;
           esac
-          if [[ "$FC" == "ifort" ]] || [[ "$CC" == "icc" ]] ; then ./travis/install-intel.sh; else true;  fi
-          echo FC is `which "$FC"`
-          echo FC compiler version `"$FC" -v`
+          if [[ "$F77" == "ifort" ]] || [[ "$CC" == "icc" ]] ; then ./travis/install-intel.sh; source ${{ matrix.oneapi }}/setvars.sh --force;  fi
+          echo F77 is `which "$F77"`
+          echo F77 compiler version `"$F77" -v`
       - name: before_install
         if: steps.ga-cache-install.outputs.cache-hit != 'true'
         run: |
