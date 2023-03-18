@@ -197,7 +197,7 @@ jobs:
         if: ${{ success() }}
         run: |
           if [[ "$F77" == "ifort" ]] || [[ "$CC" == "icc" ]] ; then ./travis/install-intel.sh; source ${{ matrix.oneapi }}/setvars.sh --force;  fi
-          FC="$F77" CC="$CC"./travis/build-run.sh $GITHUB_WORKSPACE/apps $PORT $MPI_IMPL $USE_CMAKE $F77
+          FC="$F77" CC="$CC" ./travis/build-run.sh $GITHUB_WORKSPACE/apps $PORT $MPI_IMPL $USE_CMAKE $F77
       - name: after_failure
         if: ${{ failure() }}
         run: |
