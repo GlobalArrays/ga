@@ -132,6 +132,8 @@ extern Integer pnga_total_blocks(Integer g_a);
 extern void pnga_unlock(Integer mutex);
 extern logical pnga_uses_ma();
 extern logical pnga_uses_proc_grid(Integer g_a);
+extern logical pnga_uses_irreg_proc_grid(Integer g_a);
+extern void pnga_get_map_info(Integer g_a, Integer *num_blocks, Integer **map);
 extern logical pnga_valid_handle(Integer g_a);
 extern Integer pnga_verify_handle(Integer g_a);
 extern void pnga_check_handle(Integer g_a, char *string);

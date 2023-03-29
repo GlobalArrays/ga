@@ -5648,7 +5648,7 @@ Integer pnga_total_blocks(Integer g_a)
 }
 
 /**
- *  Return true if GA uses SCALPACK data distribution
+ *  Return true if GA uses SCALPACK or TILED data distribution
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_uses_proc_grid =  pnga_uses_proc_grid
@@ -5660,6 +5660,19 @@ logical pnga_uses_proc_grid(Integer g_a)
   return (logical)(GA[ga_handle].distr_type == SCALAPACK
       || GA[ga_handle].distr_type == TILED ||
       GA[ga_handle].distr_type == TILED_IRREG);
+}
+
+/**
+ *  Return true if GA uses IRREGULAR TILED data distribution
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_uses_irreg_proc_grid =  pnga_uses_irreg_proc_grid
+#endif
+
+logical pnga_uses_irreg_proc_grid(Integer g_a)
+{
+  Integer ga_handle = GA_OFFSET + g_a;
+  return (GA[ga_handle].distr_type == TILED_IRREG);
 }
 
 /**
@@ -5728,6 +5741,25 @@ void pnga_get_block_info(Integer g_a, Integer *num_blocks, Integer *block_dims)
   }
   return;
 }
+
+/**
+ *  Return pointers to map array and block dims for irregular
+ *  tiled distributions
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get_map_info =  pnga_get_map_info
+#endif
+
+void pnga_get_map_info(Integer g_a, Integer *num_blocks, Integer **map)
+{
+  Integer ga_handle = GA_OFFSET + g_a;
+  Integer i;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    num_blocks[i] = GA[ga_handle].num_blocks[i];
+  }
+  *map = GA[ga_handle].mapc;
+}
+
 
 /**
  *  Set the value of internal debug flag
