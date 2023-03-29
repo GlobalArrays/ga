@@ -4251,7 +4251,7 @@ void pnga_randomize(Integer g_a, void* val)
         for(i=0; i<elems;i++)((int*)ptr)[i]=*(int*) val * ((int)rand())/RAND_MAX;
         break;
       case C_FLOAT:
-        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*) val * ((float)rand())/RAND_MAX;
+        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*) val * ((float)rand())/(size_t)RAND_MAX;
         break;     
       case C_LONG:
         for(i=0; i<elems;i++)((long*)ptr)[i]=*(long*) val * ((long)rand())/RAND_MAX;
@@ -4282,7 +4282,7 @@ void pnga_randomize(Integer g_a, void* val)
         for(i=0; i<elems;i++)((int*)ptr)[i]=*(int*)val * ((int)rand())/RAND_MAX;
         break;
       case C_FLOAT:
-        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*)val * ((float)rand())/RAND_MAX;
+        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*)val * ((float)rand())/(size_t)RAND_MAX;
         break;     
       case C_LONG:
         for(i=0; i<elems;i++)((long*)ptr)[i]=*(long*)val * ((long)rand())/RAND_MAX;
