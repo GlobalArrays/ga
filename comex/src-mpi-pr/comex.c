@@ -5018,13 +5018,18 @@ STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup)
 STATIC xpmem_segid_t _shm_create(void **data, size_t size)
 {
   xpmem_segid_t segid;
+  size_t tsize = size;
   void *ptr;
-  ptr = mmap(NULL, size, PROT_READ | PROT_WRITE,
+  if (size < 4096) tsize = 4096;
+  ptr = mmap(NULL, tsize, PROT_READ | PROT_WRITE,
       MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
   if (ptr == MAP_FAILED) {
     comex_error("_shm_create mmap failed. size: ",(int)size);
   }
-  segid = xpmem_make(ptr, size, XPMEM_PERMIT_MODE, (void *)06666);
+  printf("p[%d] ARGUMENTS ptr: %p size: %d XPMEM_PERMIT_MODE: %d\n",
+      g_state.rank,ptr,(int)tsize,XPMEM_PERMIT_MODE);
+  segid = xpmem_make(ptr, tsize, XPMEM_PERMIT_MODE, (void *)0666);
+  perror("_shm_create xpmem_make");
   if ((int64_t)segid == (int64_t)-1) {
     char buf[1024];
     sprintf(buf,"_shm_create xpmem_make failed. ptr: %p size: %ld",
@@ -5226,6 +5231,8 @@ STATIC void* _shm_attach(xpmem_segid_t segid, size_t size)
   struct xpmem_addr addr;
   void *buff;
   xpmem_apid_t apid;
+  size_t tsize = size;
+  if (size < 4096)  tsize = 4096;
 
   apid = xpmem_get(segid, XPMEM_RDWR, XPMEM_PERMIT_MODE, NULL);
   if (apid == -1) {
@@ -5233,7 +5240,7 @@ STATIC void* _shm_attach(xpmem_segid_t segid, size_t size)
   }
   addr.apid = apid;
   addr.offset = 0;
-  buff = xpmem_attach(addr, size, NULL);
+  buff = xpmem_attach(addr, tsize, NULL);
   if (buff == (void*)-1) {
     comex_error("_shm_attach xpmem_attach",0);
   }
@@ -5285,8 +5292,10 @@ STATIC void* _shm_attach(const char *name, size_t size)
 STATIC int _shm_unmap(xpmem_segid_t segid, void *data, size_t size)
 {
   int ret;
+  size_t tsize = size;
+  if (size < 4096) tsize = 4096;
   ret = xpmem_remove(segid);
-  if (munmap(data, size) == -1) {
+  if (munmap(data, tsize) == -1) {
     comex_error("_shm_unmap: remove",0);
     ret = -1;
   }
@@ -5350,7 +5359,10 @@ STATIC void* _shm_map_arena(int fd, size_t size, sicm_arena arena)
 #if !ENABLE_XPMEM
 STATIC void* _shm_map(int fd, size_t size)
 {
-    void *memory  = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    size_t tsize = size;
+    void *memory;
+    if (size < 4096) tsize = 4096;
+    memory = mmap(NULL, tsize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     //    check_devshm(fd, size);
     if (MAP_FAILED == memory) {
       if (errno == EBADF) {
