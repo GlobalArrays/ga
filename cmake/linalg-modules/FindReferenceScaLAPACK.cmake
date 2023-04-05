@@ -1,6 +1,6 @@
 # SANITY CHECK
 if( "ilp64" IN_LIST ReferenceScaLAPACK_FIND_COMPONENTS AND "lp64" IN_LIST ReferenceScaLAPACK_FIND_COMPONENTS )
-  message( FATAL_ERROR "ReferenceScaLAPACK cannot link to both ILP64 and LP64 iterfaces" )
+  message( FATAL_ERROR "ReferenceScaLAPACK cannot link to both ILP64 and LP64 interfaces" )
 endif()
 
 if( "ilp64" IN_LIST ReferenceScaLAPACK_FIND_COMPONENTS )

@@ -77,7 +77,11 @@ int main() {
   else                      return 1;
 }
 #else
+#if __has_include(<blis/blis.h>)
 #include <blis/blis.h>
+#else
+#include <blis.h>
+#endif
 int main() {
   int blis_int_size = BLIS_BLAS_INT_TYPE_SIZE;
   if( blis_int_size == 32 ) return 0;

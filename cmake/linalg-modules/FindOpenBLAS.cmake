@@ -1,6 +1,6 @@
 # SANITY CHECK
 if( "ilp64" IN_LIST OpenBLAS_FIND_COMPONENTS AND "lp64" IN_LIST OpenBLAS_FIND_COMPONENTS )
-  message( FATAL_ERROR "OpenBLAS cannot link to both ILP64 and LP64 iterfaces" )
+  message( FATAL_ERROR "OpenBLAS cannot link to both ILP64 and LP64 interfaces" )
 endif()
 
 if( OpenBLAS_PREFERS_STATIC )
