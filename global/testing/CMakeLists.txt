@@ -56,7 +56,7 @@ endif()
 
 # This test uses random() and srandom() which are not available on Windows
 if(NOT MSVC)
-  ga_add_parallel_test (mulmatpatchc "mulmatpatchc.c util.c")
+  ga_add_parallel_test (mulmatpatchc "mulmatpatchc.c util.c" ${TEST_NPROCS_1})
 endif()
 
 ga_add_parallel_test (elempatch     "elempatch.c util.c" )
