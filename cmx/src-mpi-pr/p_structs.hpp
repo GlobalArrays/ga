@@ -1,7 +1,8 @@
 #ifndef _P_STRUCTS_H
 #define _P_STRUCTS_H
 
-#include "p_group.hpp"
+#include "defines.hpp"
+#include "group.hpp"
 
 /* data structures */
 
@@ -47,29 +48,39 @@ typedef enum {
 
 /* structure to describe strided data transfers */
 typedef struct {
-  void *ptr;
+  char *ptr;
   int stride_levels;
   cmxInt stride[CMX_MAX_STRIDE_LEVEL];
   cmxInt count[CMX_MAX_STRIDE_LEVEL+1];
 } stride_t;
 
-/* Internal struct for vector communication */
-typedef struct {
-  void **src; /* array of source starting addresses */
-  void **dst; /* array of destination starting addresses */
-  int count;  /* size of address arrays (src[count],dst[count]) */
-  int bytes;  /* length in bytes for each src[i]/dst[i] pair */
-} _cmx_giov_t;
+typedef cmx_giov_t _cmx_giov_t;
 
 typedef struct message_link {
   struct message_link *next;
-  void *message;
+  char *message;
   MPI_Request request;
   MPI_Datatype datatype;
   int need_free;
   stride_t *stride;
   _cmx_giov_t *iov;
 } message_t;
+
+/* Data structure to enable linked lists of pointers */
+typedef struct alloc_link {
+  struct alloc_link *next;
+  int rank;
+  char *buf;
+  cmxInt size;
+} cmx_alloc_t;
+
+typedef struct {
+  CMX::Group *group;
+  cmxInt bytes;
+  cmx_alloc_t *list;
+  int rank;
+  char *buf;
+} cmx_handle_t;
 
 typedef struct {
   int in_use;
@@ -79,17 +90,18 @@ typedef struct {
   cmxInt recv_size;
   message_t *recv_head;
   message_t *recv_tail;
-  CMX::p_Group *group;
+  CMX::Group *group;
 } _cmx_request;
 
-typedef _cmx_request cmx_request_t;
+typedef _cmx_request request_t;
 
 typedef struct {
   op_t operation;
-  void *remote_address;
-  void *local_address;
+  char *remote_address;
+  char *local_address;
   int rank; /**< rank of target (rank of sender is iprobe_status.MPI_SOURCE */
   int length; /**< length of message/payload not including header */
+  int elemsize; /**< size of individual elements */
 } header_t;
 
 /* keep track of all mutex requests */
@@ -97,5 +109,10 @@ typedef struct lock_link {
   struct lock_link *next;
   int rank;
 } lock_t;
+
+typedef struct {
+  int rank;
+  char *ptr;
+} rank_ptr_t;
 
 #endif //_P_STRUCTS_H

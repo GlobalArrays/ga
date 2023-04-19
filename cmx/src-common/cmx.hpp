@@ -8,9 +8,10 @@
 #include <vector>
 #include <complex>
 #include "defines.hpp"
-#include "cmx_impl.hpp"
+//#include "cmx_impl.hpp"
 #include "group.hpp"
 #include "environment.hpp"
+//#include "p_alloc.hpp"
 
 namespace CMX {
 
@@ -63,7 +64,7 @@ private:
 
   int p_datatype = CMX_UNKNOWN;
 
-  p_CMX<_type> *p_Impl;
+  //p_Allocation<_type> *p_Impl;
 };
 }
 #endif /* _CMX_COMMON_H */

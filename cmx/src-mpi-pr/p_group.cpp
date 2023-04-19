@@ -8,13 +8,13 @@
 
 namespace CMX {
 
-  p_Group* p_Group::p_world_group = NULL;
+p_Group* p_Group::p_world_group = NULL;
 
 /**
  * Function to avoid duplication in constructors
  * @param[in] n number of processes in the new group
  * @param[in] pid_list list of process ranks in the new group
- * @param[in] mpi_comm MPI commuicator that defines ranks in pid_list
+ * @param[in] mpi_comm MPI communicator that defines ranks in pid_list
  * @param[out] o_comm communicator for new group
  * @param[out] o_rank calling process rank for new group
  */
@@ -22,8 +22,13 @@ void p_Group::setup(int n, int *pid_list, MPI_Comm mpi_comm, MPI_Comm *o_comm, i
 {
   MPI_Group wgrp;
   MPI_Group lgrp;
+  int size;
   /* Get world group from comm_world */
-  MPI_Comm_group(MPI_COMM_WORLD, &wgrp);
+  MPI_Comm_group(mpi_comm, &wgrp);
+  int me;
+  MPI_Comm_rank(mpi_comm,&me);
+  MPI_Comm_size(mpi_comm,&size);
+  MPI_Group_size(wgrp,&size);
   /* Create subgroup from world group */
   int status = MPI_Group_incl(wgrp, n, pid_list, &lgrp);
   {
@@ -93,7 +98,7 @@ void p_Group::setup(int n, int *pid_list, MPI_Comm mpi_comm, MPI_Comm *o_comm, i
 
 /**
  * Constructor for new group. This constructor assumes that all processes ranks
- * refer to processes in MPI_COMM_WORLD.
+ * refer to processes in mpi_comm
  * @param[in] n number of processes in the new group
  * @param[in] pid_list list of process ranks in the new group
  */
@@ -104,7 +109,7 @@ p_Group::p_Group(int n, int *pid_list, MPI_Comm mpi_comm)
    * the world group */
   p_size = n;
   p_world_ranks = new int[n];
-  if (p_world_group == NULL) {
+  if (p_world_group != NULL) {
     int i;
     for (i=0; i<n; i++) p_world_ranks[i] = i;
   } else {
@@ -114,9 +119,10 @@ p_Group::p_Group(int n, int *pid_list, MPI_Comm mpi_comm)
 
 /**
  * Constructor for new group. This constructor assumes that all processes ranks
- * refer to processes in the group 'group'.
+ * refer to processes in the parent group 'group'.
  * @param[in] n number of processes in the new group
  * @param[in] pid_list list of process ranks in the new group
+ * @param[in] group parent group that is spawning off this group
  */
 p_Group::p_Group(int n, int *pid_list, p_Group *group)
 {
@@ -128,8 +134,18 @@ p_Group::p_Group(int n, int *pid_list, p_Group *group)
   int i, w_me;
   MPI_Comm world = p_world_group->MPIComm();
   int ierr = MPI_Comm_rank(world,&w_me);
+  printf("p[%d] world_rank: %d\n",p_rank,w_me);
   ierr = MPI_Allgather(&w_me,1,MPI_INT,p_world_ranks,
             1,MPI_INT,p_comm);
+  printf("p[%d] ranks: %d %d %d %d\n",p_rank,p_world_ranks[0],
+      p_world_ranks[1],p_world_ranks[2],p_world_ranks[3]);
+}
+
+/**
+   * Simple constructor used to create the world group
+    */
+p_Group::p_Group()
+{
 }
 
 /**
@@ -139,6 +155,31 @@ p_Group::~p_Group()
 {
   MPI_Comm_free(&p_comm);
   if (p_world_ranks) delete [] p_world_ranks;
+}
+
+/**
+ * Get world group
+ * @return pointer to world group
+ */
+p_Group* p_Group::getWorldGroup(MPI_Comm comm)
+{
+  if (comm != MPI_COMM_NULL) {
+    if (p_world_group == NULL) {
+      p_world_group = new p_Group;
+      int rank, size;
+      MPI_Comm_rank(comm, &rank);
+      MPI_Comm_size(comm, &size);
+      p_world_group->p_comm = comm;
+      p_world_group->p_rank = rank;
+      p_world_group->p_size = size;
+      p_world_group->p_world_ranks = new int[size];
+      int i;
+      for (i=0; i<size; i++) p_world_group->p_world_ranks[i] = i;
+    } else {
+      CMX_ASSERT(0);
+    }
+  }
+  return p_world_group;
 }
 
 /**
@@ -188,6 +229,7 @@ MPI_Comm p_Group::MPIComm()
  */
 void p_Group::setWorldRanks(const MPI_Comm &world)
 {
+
 }
 
 /**
@@ -201,9 +243,24 @@ int p_Group::getWorldRank(int rank)
   CMX_ASSERT(rank < p_size);
   if (p_world_ranks) {
     return p_world_ranks[rank];
-  } else {
-    return -1;
+  } 
+  return -1;
+}
+
+/**
+ * Get a complete list of world ranks for processes in this group
+ * @return list of world ranks
+ */
+std::vector<int> p_Group::getWorldRanks()
+{
+  std::vector<int> ret;
+  if (p_world_ranks) {
+    int i;
+    for (i=0; i<p_size; i++) {
+       ret.push_back(p_world_ranks[i]);
+    }
   }
+  return ret;
 }
 
 } // CMX namespace

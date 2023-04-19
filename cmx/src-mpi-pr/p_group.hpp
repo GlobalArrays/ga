@@ -2,6 +2,7 @@
 #ifndef _CMX_P_GROUP_H
 #define _CMX_P_GROUP_H
 
+#include <vector>
 #include <mpi.h>
 
 namespace CMX {
@@ -32,6 +33,14 @@ p_Group(int n, int *pid_list, p_Group *group);
  * Destructor
  */
 ~p_Group();
+
+/**
+ * Get world group. This function is used for converting an MPI communicator,
+ * provided by the environmental initialization, into a group
+ * @param[in] comm MPI communicator defining the world group
+ * @return pointer to world group
+ */
+static p_Group* getWorldGroup(MPI_Comm comm = MPI_COMM_NULL);
 
 /**
  * Return the rank of process in group
@@ -71,6 +80,12 @@ void setWorldRanks(const MPI_Comm &world);
  */
 int getWorldRank(int rank);
 
+/**
+ * Get a complete list of world ranks for processes in this group
+ * @return list of world ranks
+ */
+std::vector<int> getWorldRanks();
+
 private:
 
 /**
@@ -82,6 +97,11 @@ private:
  * @param[out] rank calling process rank for new group
  */
 void setup(int n, int *pid_list, MPI_Comm mpi_comm, MPI_Comm *comm, int *rank);
+
+/**
+ * Simple constructor used to create the world group
+ */
+p_Group();
 
 MPI_Comm p_comm;
 int p_rank;

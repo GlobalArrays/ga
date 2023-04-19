@@ -19,262 +19,30 @@
 
 #define CMX_ASSERT(WHAT) ((void)(0))
 
-#define STATIC static inline
-
-/* the static members in this module */
-static reg_entry_t **reg_cache = NULL; /**< list of caches (one per process) */
-static int reg_nprocs = 0; /**< number of caches (one per process) */
-
-
-/* the static functions in this module */
-static reg_return_t seg_cmp(void *reg_addr, size_t reg_len,
-                            void *oth_addr, size_t oth_len, int op);
-static reg_return_t seg_intersects(void *reg_addr, size_t reg_len,
-                                   void *oth_addr, size_t oth_len);
-static reg_return_t seg_contains(void *reg_addr, size_t reg_len,
-                                 void *oth_addr, size_t oth_len);
-static reg_return_t reg_entry_intersects(reg_entry_t *reg_entry,
-                                         void *buf, size_t len);
-static reg_return_t reg_entry_contains(reg_entry_t *reg_entry,
-                                       void *buf, size_t len);
+namespace CMX {
 
 #define TEST_FOR_INTERSECTION 0
 #define TEST_FOR_CONTAINMENT 1
 
-
 /**
- * Detects whether two memory segments intersect or one contains the other.
- *
- * @param[in] reg_addr  starting address of original segment
- * @param[in] reg_len   length of original segment
- * @param[in] oth_addr  starting address of other segment
- * @param[in] oth_len   length of other segment
- * @param[in] op        op to perform, either TEST_FOR_INTERSECTION or
- *                      TEST_FOR_CONTAINMENT
- *
- * @pre NULL != reg_beg
- * @pre NULL != oth_beg
- *
- * @return RR_SUCCESS on success
+ * Simple constructor
  */
-STATIC reg_return_t
-seg_cmp(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len, int op)
+p_Register::p_Register()
 {
-    ptrdiff_t reg_beg = 0;
-    ptrdiff_t reg_end = 0;
-    ptrdiff_t oth_beg = 0;
-    ptrdiff_t oth_end = 0;
-    int result = 0;
-
-    /* preconditions */
-    CMX_ASSERT(NULL != reg_addr);
-    CMX_ASSERT(NULL != oth_addr);
-
-    /* casts to ptrdiff_t since arithmetic on void* is undefined */
-    reg_beg = (ptrdiff_t)(reg_addr);
-    reg_end = reg_beg + (ptrdiff_t)(reg_len);
-    oth_beg = (ptrdiff_t)(oth_addr);
-    oth_end = oth_beg + (ptrdiff_t)(oth_len);
-    
-    /* hack? we had problems with adjacent registered memory regions and
-     * when the length of the query region was 0 */
-    if (oth_beg == oth_end) {
-        oth_end += 1;
-    }
-
-    switch (op) {
-        case TEST_FOR_INTERSECTION:
-            result = (reg_beg >= oth_beg && reg_beg <  oth_end) ||
-                     (reg_end >  oth_beg && reg_end <= oth_end);
-#if DEBUG
-            printf("[%d] TEST_FOR_INTERSECTION "
-                    "(%td >= %td [%d] && %td < %td [%d]) ||"
-                    "(%td > %td [%d] && %td <= %td [%d])\n",
-                    g_state.rank,
-                    reg_beg, oth_beg, (reg_beg >= oth_beg),
-                    reg_beg, oth_end, (reg_beg < oth_end),
-                    reg_end, oth_beg, (reg_end > oth_beg),
-                    reg_end, oth_end, (reg_end <= oth_end));
-#endif
-            break;
-        case TEST_FOR_CONTAINMENT:
-            result = reg_beg <= oth_beg && reg_end >= oth_end;
-#if DEBUG
-            printf("[%d] TEST_FOR_CONTAINMENT "
-                    "%td <= %td [%d] && %td >= %td [%d]\n",
-                    g_state.rank,
-                    reg_beg, oth_beg, (reg_beg <= oth_beg),
-                    reg_end, oth_end, (reg_end >= oth_end));
-#endif
-            break;
-        default:
-            CMX_ASSERT(0);
-    }
-
-    if (result) {
-        return RR_SUCCESS;
-    }
-    else {
-        return RR_FAILURE;
-    }
 }
 
-
 /**
- * Detects whether two memory segments intersect.
- *
- * @param[in] reg_addr starting address of original segment
- * @param[in] reg_len  length of original segment
- * @param[in] oth_addr starting address of other segment
- * @param[in] oth_len  length of other segment
- *
- * @pre NULL != reg_beg
- * @pre NULL != oth_beg
- *
- * @return RR_SUCCESS on success
+ * Simple destructor
  */
-STATIC reg_return_t
-seg_intersects(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len)
+p_Register::~p_Register()
 {
-    /* preconditions */
-    CMX_ASSERT(NULL != reg_addr);
-    CMX_ASSERT(NULL != oth_addr);
-
-    return seg_cmp(
-            reg_addr, reg_len,
-            oth_addr, oth_len,
-            TEST_FOR_INTERSECTION);
 }
-
-
-/**
- * Detects whether the first memory segment contains the other.
- *
- * @param[in] reg_addr starting address of original segment
- * @param[in] reg_len  length of original segment
- * @param[in] oth_addr starting address of other segment
- * @param[in] oth_len  length of other segment
- *
- * @pre NULL != reg_beg
- * @pre NULL != oth_beg
- *
- * @return RR_SUCCESS on success
- */
-STATIC reg_return_t
-seg_contains(void *reg_addr, size_t reg_len, void *oth_addr, size_t oth_len)
-{
-    /* preconditions */
-    CMX_ASSERT(NULL != reg_addr);
-    CMX_ASSERT(NULL != oth_addr);
-
-    return seg_cmp(
-            reg_addr, reg_len,
-            oth_addr, oth_len,
-            TEST_FOR_CONTAINMENT);
-}
-
-
-/**
- * Detects whether two memory segments intersect.
- *
- * @param[in] reg_entry the registration entry
- * @param[in] buf       starting address for the contiguous memory region
- * @param[in] len       length of the contiguous memory region
- *
- * @pre NULL != reg_entry
- * @pre NULL != buf
- * @pre len >= 0
- *
- * @return RR_SUCCESS on success
- */
-STATIC reg_return_t
-reg_entry_intersects(reg_entry_t *reg_entry, void *buf, size_t len)
-{
-#if DEBUG
-    printf("[%d] reg_entry_intersects(reg_entry=%p, buf=%p, len=%d)\n",
-            g_state.rank, reg_entry, buf, len);
-#endif
-    /* preconditions */
-    CMX_ASSERT(NULL != reg_entry);
-    CMX_ASSERT(NULL != buf);
-    CMX_ASSERT(len >= 0);
-
-    return seg_intersects(
-            reg_entry->buf, reg_entry->len,
-            buf, len);
-}
-
-
-/**
- * Detects whether the first memory segment contains the other.
- *
- * @param[in] reg_entry the registration entry
- * @param[in] buf       starting address for the contiguous memory region
- * @param[in] len       length of the contiguous memory region
- *
- * @pre NULL != reg_entry
- * @pre NULL != buf
- * @pre len >= 0
- *
- * @return RR_SUCCESS on success
- */
-STATIC reg_return_t
-reg_entry_contains(reg_entry_t *reg_entry, void *buf, size_t len)
-{
-#if DEBUG
-    printf("[%d] reg_entry_contains(reg_entry=%p, buf=%p, len=%d)\n",
-            g_state.rank, reg_entry, buf, len);
-#endif
-
-    /* preconditions */
-    CMX_ASSERT(NULL != reg_entry);
-    CMX_ASSERT(NULL != buf);
-    CMX_ASSERT(len >= 0);
-
-    return seg_contains(
-            reg_entry->buf, reg_entry->len,
-            buf, len);
-}
-
-
-/**
- * Remove registration cache entry without deregistration.
- *
- * @param[in] rank the rank where the entry came from
- * @param[in] reg_entry the entry
- *
- * @pre NULL != reg_entry
- * @pre 0 <= rank && rank < reg_nprocs
- *
- * @return RR_SUCCESS on success
- */
-STATIC reg_return_t
-reg_entry_destroy(int rank, reg_entry_t *reg_entry)
-{
-#if DEBUG
-    printf("[%d] reg_entry_destroy(rank=%d, reg_entry=%p)\n"
-            "buf=%p len=%zu name=%s mapped=%p\n",
-            g_state.rank, rank, reg_entry,
-            reg_entry->buf, reg_entry->len,
-            reg_entry->name, reg_entry->mapped);
-#endif
-
-    /* preconditions */
-    CMX_ASSERT(NULL != reg_entry);
-    CMX_ASSERT(0 <= rank && rank < reg_nprocs);
-
-    /* free cache entry */
-    free(reg_entry);
-
-    return RR_SUCCESS;
-}
-
 
 /**
  * Create internal data structures for the registration cache.
  *
- * @param[in] nprocs    number of registration caches to create i.e. one per
- *                      process
+ * @param[in] config    pointer to node config object
+ * @param[in] shmem     pointer to shmem object
  *
  * @pre this function is called once to initialize the internal data
  * structures and cannot be called again until reg_cache_destroy() has been
@@ -285,32 +53,15 @@ reg_entry_destroy(int rank, reg_entry_t *reg_entry)
  * @return RR_SUCCESS on success
  */
 reg_return_t
-reg_cache_init(int nprocs)
+p_Register::init(p_NodeConfig *config, p_Shmem *shmem)
 {
-    int i = 0;
+  int i = 0;
+  p_config = config;
+  p_shmem = shmem;
 
-#if DEBUG
-    printf("[%d] reg_cache_init(nprocs=%d)\n",
-            g_state.rank, nprocs);
-#endif
+  p_list.resize(p_config->world_size());
 
-    /* preconditions */
-    CMX_ASSERT(NULL == reg_cache);
-    CMX_ASSERT(0 == reg_nprocs);
-
-    /* keep the number of caches around for later use */
-    reg_nprocs = nprocs;
-
-    /* allocate the registration cache list: */
-    reg_cache = (reg_entry_t **)malloc(sizeof(reg_entry_t*) * reg_nprocs); 
-    CMX_ASSERT(reg_cache); 
-
-    /* initialize the registration cache list: */
-    for (i = 0; i < reg_nprocs; ++i) {
-        reg_cache[i] = NULL;
-    }
-
-    return RR_SUCCESS;
+  return RR_SUCCESS;
 }
 
 
@@ -324,44 +75,67 @@ reg_cache_init(int nprocs)
  *
  * @return RR_SUCCESS on success
  */
-reg_return_t
-reg_cache_destroy()
+reg_return_t p_Register::destroy()
 {
-    int i = 0;
+  int i = 0;
 
-    /* preconditions */
-    CMX_ASSERT(NULL != reg_cache);
-    CMX_ASSERT(0 != reg_nprocs);
+  int nprocs = p_list.size();
 
-    for (i = 0; i < reg_nprocs; ++i) {
-        reg_entry_t *runner = reg_cache[i];
-
-        while (runner) {
-            reg_entry_t *previous = runner; /* pointer to previous runner */
-
-            /* get next runner */
-            runner = runner->next;
-            /* destroy the entry */
-            reg_entry_destroy(i, previous);
-        }
+  for (i = 0; i < nprocs; ++i) {
+    std::map<void*,reg_entry_t*>::iterator it = p_list[i].begin();
+    while (it != p_list[i].end()) {
+      if (it->second->rank == p_config->rank()) {
+        p_shmem->free(it->second->name, it->second->buf, it->second->len);
+      }
+      delete it->second;
+      it++;
     }
+    p_list[i].clear();
+  }
 
-    /* free registration cache list */
-    free(reg_cache);
-    reg_cache = NULL;
+  p_list.clear();
 
-    /* reset the number of caches */
-    reg_nprocs = 0;
-
-    return RR_SUCCESS;
+  return RR_SUCCESS;
 }
 
+/**
+ * Create a memory segment and return a reg_entry_t object that describes
+ * it *
+ * @param[in] bytes size of memory segment in bytes
+ *
+ * @return a reg_entry_t object that describes allocation
+ */
+reg_entry_t* p_Register::malloc(size_t bytes)
+{
+  std::string name;
+  void *memory = NULL;
+  reg_entry_t *reg_entry = NULL;
+
+  if (0 == bytes) {
+    return NULL;
+  }
+
+  /* create my shared memory object */
+  name = p_shmem->generateName(p_config->rank());
+  memory = p_shmem->create(name, bytes);
+
+  /* register the memory locally */
+  reg_entry = insert(
+      p_config->rank(), memory, bytes, name, memory, 0);
+
+  if (NULL == reg_entry) {
+    printf("Create memory segment failes\n");
+    CMX_ASSERT(0);
+  }
+
+  return reg_entry;
+}
 
 /**
  * Locate a registration cache entry which contains the given segment
  * completely.
  *
- * @param[in] rank  rank of the process
+ * @param[in] rank  world rank of the process
  * @param[in] buf   starting address of the buffer
  * @parma[in] len   length of the buffer
  * 
@@ -371,56 +145,30 @@ reg_cache_destroy()
  * @return the reg cache entry, or NULL on failure
  */
 reg_entry_t*
-reg_cache_find(int rank, void *buf, size_t len)
+p_Register::find(int rank, void *buf, size_t len)
 {
-    reg_entry_t *entry = NULL;
-    reg_entry_t *runner = NULL;
+  reg_entry_t *entry = NULL;
 
-#if DEBUG
-    printf("[%d] reg_cache_find(rank=%d, buf=%p, len=%d)\n",
-            g_state.rank, rank, buf, len);
-#endif
+  CMX_ASSERT(0 <= rank && rank < p_list.size());
 
-    /* preconditions */
-    CMX_ASSERT(NULL != reg_cache);
-    CMX_ASSERT(0 <= rank && rank < reg_nprocs);
+  std::map<void*,reg_entry_t*>::iterator it = p_list[rank].begin();
 
-    runner = reg_cache[rank];
-
-    while (runner && NULL == entry) {
-        if (RR_SUCCESS == reg_entry_contains(runner, buf, len)) {
-            entry = runner;
-#if DEBUG
-            printf("[%d] reg_cache_find entry found\n"
-                    "reg_entry=%p buf=%p len=%d\n"
-                    "rank=%d buf=%p len=%zu name=%s mapped=%p\n",
-                    g_state.rank, runner, buf, len,
-                    runner->rank, runner->buf, runner->len,
-                    runner->name, runner->mapped);
-#endif
-        }
-        runner = runner->next;
+  while (it != p_list[rank].end()) {
+    if (RR_SUCCESS == contains(it->second, buf, len)) {
+      entry = it->second;
+      it++;
     }
+  }
 
-#ifndef NDEBUG
-    /* we CMX_ASSERT that the found entry was unique */
-    while (runner) {
-        if (RR_SUCCESS == reg_entry_contains(runner, buf, len)) {
-#if DEBUG
-            printf("[%d] reg_cache_find duplicate found\n"
-                    "reg_entry=%p buf=%p len=%d\n"
-                    "rank=%d buf=%p len=%zu name=%s mapped=%p\n",
-                    g_state.rank, runner, buf, len,
-                    runner->rank, runner->buf, runner->len,
-                    runner->name, runner->mapped);
-#endif
-            CMX_ASSERT(0);
-        }
-        runner = runner->next;
+  /* we CMX_ASSERT that the found entry was unique */
+  while (it != p_list[rank].end()) {
+    if (RR_SUCCESS == contains(it->second, buf, len)) {
+      CMX_ASSERT(0);
     }
-#endif
+    it++;
+  }
 
-    return entry;
+  return entry;
 }
 
 
@@ -437,38 +185,31 @@ reg_cache_find(int rank, void *buf, size_t len)
  * @return the reg cache entry, or NULL on failure
  */
 reg_entry_t*
-reg_cache_find_intersection(int rank, void *buf, size_t len)
+p_Register::find_intersection(int rank, void *buf, size_t len)
 {
-    reg_entry_t *entry = NULL;
-    reg_entry_t *runner = NULL;
+  reg_entry_t *entry = NULL;
 
-#if DEBUG
-    printf("[%d] reg_cache_find_intersection(rank=%d, buf=%p, len=%d)\n",
-            g_state.rank, rank, buf, len);
-#endif
+  /* preconditions */
+  CMX_ASSERT(0 <= rank && rank < list.size());
 
-    /* preconditions */
-    CMX_ASSERT(NULL != reg_cache);
-    CMX_ASSERT(0 <= rank && rank < reg_nprocs);
 
-    runner = reg_cache[rank];
-
-    while (runner && NULL == entry) {
-        if (RR_SUCCESS == reg_entry_intersects(runner, buf, len)) {
-            entry = runner;
-        }
-        runner = runner->next;
+  std::map<void*,reg_entry_t*>::iterator it = p_list[rank].begin();
+  while (it != p_list[rank].end()) {
+    if (RR_SUCCESS == intersects(it->second, buf, len)) {
+      entry = it->second;
     }
+    it++;
+  }
 
-    /* we CMX_ASSERT that the found entry was unique */
-    while (runner) {
-        if (RR_SUCCESS == reg_entry_contains(runner, buf, len)) {
-            CMX_ASSERT(0);
-        }
-        runner = runner->next;
+  /* we CMX_ASSERT that the found entry was unique */
+  while (it != p_list[rank].end()) {
+    if (RR_SUCCESS == intersects(it->second, buf, len)) {
+      CMX_ASSERT(0);
     }
+    it++;
+  }
 
-    return entry;
+  return entry;
 }
 
 
@@ -485,68 +226,40 @@ reg_cache_find_intersection(int rank, void *buf, size_t len)
  * @return RR_SUCCESS on success
  */
 reg_entry_t*
-reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped,
-    int use_dev
-#if USE_SICM
-#if SICM_OLD
-    ,sicm_device *device
-#else
-    ,sicm_device_list device
-#endif
-#endif
-    )
+p_Register::insert(int rank, void *buf, size_t len,
+    std::string name, void *mapped, int use_dev)
 {
-    reg_entry_t *node = NULL;
+  reg_entry_t *node = NULL;
 
-#if DEBUG
-    printf("[%d] reg_cache_insert(rank=%d, buf=%p, len=%ld, name=%s, mapped=%p)\n",
-            g_state.rank, rank, buf, len, name, mapped);
-#endif
+  /* preconditions */
+  CMX_ASSERT(0 <= rank && rank < p_list.size());
+  CMX_ASSERT(NULL != buf);
+  CMX_ASSERT(len >= 0);
+  CMX_ASSERT(NULL == find(rank, buf, len));
+  CMX_ASSERT(NULL == find_intersection(rank, buf, len));
 
-    /* preconditions */
-    CMX_ASSERT(NULL != reg_cache);
-    CMX_ASSERT(0 <= rank && rank < reg_nprocs);
-    CMX_ASSERT(NULL != buf);
-    CMX_ASSERT(len >= 0);
-    CMX_ASSERT(NULL == reg_cache_find(rank, buf, len));
-    CMX_ASSERT(NULL == reg_cache_find_intersection(rank, buf, len));
+  /* allocate the new entry */
+  node = new reg_entry_t;
+  CMX_ASSERT(node);
 
-    /* allocate the new entry */
-    node = (reg_entry_t *)malloc(sizeof(reg_entry_t));
-    CMX_ASSERT(node);
+  /* initialize the new entry */
+  node->rank = rank;
+  node->buf = buf;
+  node->len = len;
+  node->use_dev = use_dev;
+  (void)memcpy(node->name, name.c_str(), name.length());
+  node->mapped = mapped;
 
-    /* initialize the new entry */
-    node->rank = rank;
-    node->buf = buf;
-    node->len = len;
-    node->use_dev = use_dev;
-    (void)memcpy(node->name, name, SHM_NAME_SIZE);
-    node->mapped = mapped;
-    node->next = NULL;
-#if USE_SICM
-    node->device = device;
-#endif
+  /* push new entry to tail of linked list */
+  p_list[rank].insert(std::pair<void*,reg_entry_t*>(buf,node));
 
-    /* push new entry to tail of linked list */
-    if (NULL == reg_cache[rank]) {
-        reg_cache[rank] = node;
-    }
-    else {
-        reg_entry_t *runner = reg_cache[rank];
-        while (runner->next) {
-            runner = runner->next;
-        }
-        runner->next = node;
-    }
-
-    return node;
+  return node;
 }
 
 
 /**
  * Removes the reg cache entry associated with the given rank and buffer.
- *
- * If this process owns the buffer, it will unregister the buffer, as well.
+ * Note that this does not actually remove the buffer.
  *
  * @param[in] rank
  * @param[in] buf
@@ -560,68 +273,234 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
  *         RR_FAILURE otherwise
  */
 reg_return_t
-reg_cache_delete(int rank, void *buf)
+p_Register::remove(int rank, void *buf)
 {
-    reg_return_t status = RR_FAILURE;
-    reg_entry_t *runner = NULL;
-    reg_entry_t *previous_runner = NULL;
+  reg_return_t status = RR_FAILURE;
 
-#if DEBUG
-    printf("[%d] reg_cache_delete(rank=%d, buf=%p)\n",
-            g_state.rank, rank, buf);
-#endif
+  CMX_ASSERT(0 <= rank && rank < p_list.size());
+  CMX_ASSERT(NULL != buf);
+  CMX_ASSERT(NULL != find(rank, buf, 0));
 
-    /* preconditions */
-    CMX_ASSERT(NULL != reg_cache);
-    CMX_ASSERT(0 <= rank && rank < reg_nprocs);
-    CMX_ASSERT(NULL != buf);
-    CMX_ASSERT(NULL != reg_cache_find(rank, buf, 0));
+  std::map<void*,reg_entry_t*>::iterator it = p_list[rank].find(buf);
+  /* this is more restrictive than reg_cache_find() in that we locate
+   * exactlty the same region starting address */
+  /* we should have found an entry */
+  if (it == p_list[rank].end()) {
+    CMX_ASSERT(0);
+    return RR_FAILURE;
+  }
 
-    /* this is more restrictive than reg_cache_find() in that we locate
-     * exactlty the same region starting address */
-    runner = reg_cache[rank];
-    while (runner) {
-        if (runner->buf == buf) {
-            break;
-        }
-        previous_runner = runner;
-        runner = runner->next;
-    }
-    /* we should have found an entry */
-    if (NULL == runner) {
-        CMX_ASSERT(0);
-        return RR_FAILURE;
-    }
+  reg_entry_t *entry = it->second;
+  p_list[rank].erase(it);
+  delete entry;
 
-    /* pop the entry out of the linked list */
-    if (previous_runner) {
-        previous_runner->next = runner->next;
-    }
-    else {
-        reg_cache[rank] = reg_cache[rank]->next;
-    }
-
-    status = reg_entry_destroy(rank, runner);
-
-    return status;
+  return status;
 }
 
 
-reg_return_t reg_cache_nullify(reg_entry_t *node)
+/**
+ * initialize all attributes of reg_entry_t struct
+ * @param node pointer to reg_entry_t struct
+ */
+reg_return_t p_Register::nullify(reg_entry_t *node)
 {
+  node->buf = NULL;
+  node->len = 0;
+  node->mapped = NULL;
+  node->rank = -1;
+  node->use_dev = 0;
+  (void)memset(node->name, 0, SHM_NAME_SIZE);
+
+  return RR_SUCCESS;
+}
+
+/**
+ * Detects whether two memory segments intersect or one contains the other.
+ *
+ * @param[in] reg_addr  starting address of original segment
+ * @param[in] reg_len   length of original segment
+ * @param[in] oth_addr  starting address of other segment
+ * @param[in] oth_len   length of other segment
+ * @param[in] op        op to perform, either TEST_FOR_INTERSECTION or
+ *                      TEST_FOR_CONTAINMENT
+ *
+ * @pre NULL != reg_beg
+ * @pre NULL != oth_beg
+ *
+ * @return RR_SUCCESS on success
+ */
+reg_return_t
+p_Register::seg_cmp(void *reg_addr, size_t reg_len,
+    void *oth_addr, size_t oth_len, int op)
+{
+  ptrdiff_t reg_beg = 0;
+  ptrdiff_t reg_end = 0;
+  ptrdiff_t oth_beg = 0;
+  ptrdiff_t oth_end = 0;
+  int result = 0;
+
+  /* preconditions */
+  CMX_ASSERT(NULL != reg_addr);
+  CMX_ASSERT(NULL != oth_addr);
+
+  /* casts to ptrdiff_t since arithmetic on void* is undefined */
+  reg_beg = (ptrdiff_t)(reg_addr);
+  reg_end = reg_beg + (ptrdiff_t)(reg_len);
+  oth_beg = (ptrdiff_t)(oth_addr);
+  oth_end = oth_beg + (ptrdiff_t)(oth_len);
+
+  /* hack? we had problems with adjacent registered memory regions and
+   * when the length of the query region was 0 */
+  if (oth_beg == oth_end) {
+    oth_end += 1;
+  }
+
+  switch (op) {
+    case TEST_FOR_INTERSECTION:
+      result = (reg_beg >= oth_beg && reg_beg <  oth_end) ||
+        (reg_end >  oth_beg && reg_end <= oth_end);
 #if DEBUG
-    printf("[%d] reg_cache_nullify(node=%p)\n",
-            g_state.rank, node);
+      printf("[%d] TEST_FOR_INTERSECTION "
+          "(%td >= %td [%d] && %td < %td [%d]) ||"
+          "(%td > %td [%d] && %td <= %td [%d])\n",
+          g_state.rank,
+          reg_beg, oth_beg, (reg_beg >= oth_beg),
+          reg_beg, oth_end, (reg_beg < oth_end),
+          reg_end, oth_beg, (reg_end > oth_beg),
+          reg_end, oth_end, (reg_end <= oth_end));
 #endif
+      break;
+    case TEST_FOR_CONTAINMENT:
+      result = reg_beg <= oth_beg && reg_end >= oth_end;
+#if DEBUG
+      printf("[%d] TEST_FOR_CONTAINMENT "
+          "%td <= %td [%d] && %td >= %td [%d]\n",
+          g_state.rank,
+          reg_beg, oth_beg, (reg_beg <= oth_beg),
+          reg_end, oth_end, (reg_end >= oth_end));
+#endif
+      break;
+    default:
+      CMX_ASSERT(0);
+  }
 
-    node->next = NULL;
-    node->buf = NULL;
-    node->len = 0;
-    node->mapped = NULL;
-    node->rank = -1;
-    node->use_dev = 0;
-    (void)memset(node->name, 0, SHM_NAME_SIZE);
-
+  if (result) {
     return RR_SUCCESS;
+  }
+  else {
+    return RR_FAILURE;
+  }
 }
 
+
+/**
+ * Detects whether two memory segments intersect.
+ *
+ * @param[in] reg_addr starting address of original segment
+ * @param[in] reg_len  length of original segment
+ * @param[in] oth_addr starting address of other segment
+ * @param[in] oth_len  length of other segment
+ *
+ * @pre NULL != reg_beg
+ * @pre NULL != oth_beg
+ *
+ * @return RR_SUCCESS on success
+ */
+reg_return_t
+p_Register::seg_intersects(void *reg_addr, size_t reg_len,
+    void *oth_addr, size_t oth_len)
+{
+  /* preconditions */
+  CMX_ASSERT(NULL != reg_addr);
+  CMX_ASSERT(NULL != oth_addr);
+
+  return seg_cmp(
+      reg_addr, reg_len,
+      oth_addr, oth_len,
+      TEST_FOR_INTERSECTION);
+}
+
+
+/**
+ * Detects whether the first memory segment contains the other.
+ *
+ * @param[in] reg_addr starting address of original segment
+ * @param[in] reg_len  length of original segment
+ * @param[in] oth_addr starting address of other segment
+ * @param[in] oth_len  length of other segment
+ *
+ * @pre NULL != reg_beg
+ * @pre NULL != oth_beg
+ *
+ * @return RR_SUCCESS on success
+ */
+reg_return_t
+p_Register::seg_contains(void *reg_addr, size_t reg_len,
+    void *oth_addr, size_t oth_len)
+{
+  /* preconditions */
+  CMX_ASSERT(NULL != reg_addr);
+  CMX_ASSERT(NULL != oth_addr);
+
+  return seg_cmp(
+      reg_addr, reg_len,
+      oth_addr, oth_len,
+      TEST_FOR_CONTAINMENT);
+}
+
+
+/**
+ * Detects whether two memory segments intersect.
+ *
+ * @param[in] reg_entry the registration entry
+ * @param[in] buf       starting address for the contiguous memory region
+ * @param[in] len       length of the contiguous memory region
+ *
+ * @pre NULL != reg_entry
+ * @pre NULL != buf
+ * @pre len >= 0
+ *
+ * @return RR_SUCCESS on success
+ */
+reg_return_t
+p_Register::intersects(reg_entry_t *reg_entry, void *buf, size_t len)
+{
+  /* preconditions */
+  CMX_ASSERT(NULL != reg_entry);
+  CMX_ASSERT(NULL != buf);
+  CMX_ASSERT(len >= 0);
+
+  return seg_intersects(
+      reg_entry->buf, reg_entry->len,
+      buf, len);
+}
+
+
+/**
+ * Detects whether the first memory segment contains the other.
+ *
+ * @param[in] reg_entry the registration entry
+ * @param[in] buf       starting address for the contiguous memory region
+ * @param[in] len       length of the contiguous memory region
+ *
+ * @pre NULL != reg_entry
+ * @pre NULL != buf
+ * @pre len >= 0
+ *
+ * @return RR_SUCCESS on success
+ */
+reg_return_t
+p_Register::contains(reg_entry_t *reg_entry, void *buf, size_t len)
+{
+
+  /* preconditions */
+  CMX_ASSERT(NULL != reg_entry);
+  CMX_ASSERT(NULL != buf);
+  CMX_ASSERT(len >= 0);
+
+  return seg_contains(
+      reg_entry->buf, reg_entry->len,
+      buf, len);
+}
+
+} // CMX

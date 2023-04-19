@@ -27,6 +27,8 @@
 #include "defines.hpp"
 #include "p_structs.hpp"
 #include "p_group.hpp"
+#include "node_config.hpp"
+#include "shmem.hpp"
 #include "reg_cache.hpp"
 
 #define CMX_MAX_NB_OUTSTANDING 256
@@ -95,7 +97,7 @@ void wait(_cmx_request *hdl);
  * wait for completion of non-blocking handles associated with a particular group
  * @param group
  */
-void waitAll(p_Group *group);
+void waitAll(Group *group);
 
 /**
  * test for completion of non-blocking handle. If test is true, operation has
@@ -123,7 +125,13 @@ void p_error(const std::string msg, int code);
  * Get group corresponding to world group
  * @return pointer to world group
  */
-p_Group* getWorldGroup();
+Group* getWorldGroup();
+
+/**
+ * Close down most environment functions. Should be called right before
+ * MPI_Finalize
+ */
+void finalize();
 
 public:
 
@@ -190,8 +198,8 @@ int nb_test_for_recv1(_cmx_request *nb, message_t **save_recv_head,
         message_t **prev);
 
 /* allocate/free functions */
-void* malloc_local(size_t size);
-int free_local(void *ptr);
+int dist_malloc(void **ptrs, int64_t bytes, Group *group);
+int dist_free(void *ptr, Group *group);
 
 private:
 
@@ -236,10 +244,10 @@ void _free_handler(header_t *header, char *payload, int proc);
 void _group_init(void);
 
 /* information on network */
-int _get_world_rank(p_Group *group, int rank);
-int* _get_world_ranks(p_Group *group);
-int _smallest_world_rank_with_same_hostid(p_Group *group);
-int _largest_world_rank_with_same_hostid(p_Group *group);
+int _get_world_rank(Group *group, int rank);
+int* _get_world_ranks(Group *group);
+int _smallest_world_rank_with_same_hostid(Group *group);
+int _largest_world_rank_with_same_hostid(Group *group);
 long xgethostid();
 int get_num_progress_ranks_per_node();
 int get_progress_rank_distribution_on_node();
@@ -262,7 +270,6 @@ void strided_to_subarray_dtype(int *stride_array, int *count, int levels,
 /* other functions */
 char* _generate_shm_name(int rank);
 void* _get_offset_memory(reg_entry_t *reg_entry, void *memory);
-int _is_master(void);
 void _malloc_semaphore(void);
 void _free_semaphore(void);
 void* _shm_create(const char *name, size_t size);
@@ -281,7 +288,7 @@ private:
 
 static p_Environment *p_instance;
 
-p_Group* p_CMX_GROUP_WORLD;
+Group* p_CMX_GROUP_WORLD;
 
 /* useful for debugging */
 int _cmx_me;
@@ -289,7 +296,7 @@ int _cmx_me;
 /* static state */
 int *num_mutexes;     /**< (all) how many mutexes on each process */
 int **mutexes;        /**< (masters) value is rank of lock holder */
-lock_t ***lq_heads;   /**< array of lock queues */
+std::vector<std::vector<lock_t*> > lq_heads;   /**< array of lock queues */
 char *sem_name;       /* local semaphore name */
 sem_t **semaphores;   /* semaphores for locking within SMP node */
 char *fence_array;
@@ -328,6 +335,11 @@ int CMX_ENABLE_ACC_IOV;
 
 /* Non-blocking handle list */
 _cmx_request **nb_list;
+
+/* Some helper classes */
+p_NodeConfig p_config;
+p_Shmem p_shmem;
+p_Register p_register;
 
 };
 }

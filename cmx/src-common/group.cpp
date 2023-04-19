@@ -1,7 +1,8 @@
 #include "group.hpp"
-#include "cmx_impl.hpp"
 
 namespace CMX {
+
+Group* Group::p_world_group = NULL;
 
 /**
  * Constructor for new group derived from an MPI communicator. This
@@ -78,6 +79,43 @@ int Group::barrier()
 MPI_Comm Group::MPIComm()
 {
   return p_group->MPIComm();
+}
+
+/**
+  * Get world group
+  * @return pointer to world group
+  */
+Group* Group::getWorldGroup(MPI_Comm comm = MPI_COMM_NULL)
+{
+  p_world_group = new Group(p_Group::getWorldGroup(comm));
+}
+
+/**
+ * Get world group.
+ * @return pointer to world group
+ */
+Group* Group::getWorldGroup()
+{
+  return p_world_group;
+}
+
+/**
+ * Get the world rank of a processor in the group
+ * @param rank rank of process in group
+ * @return rank of process in world group
+ */
+int Group::getWorldRank(int rank)
+{
+  return p_group->getWorldRank(rank);
+}
+
+/**
+ *  * Get  world ranks of all processors in the group
+ *   * @return list of ranks in the world group
+ *    */
+std::vector<int> Group::getWorldRanks()
+{
+  return p_group->getWorldRanks();
 }
 
 } // CMX namespace

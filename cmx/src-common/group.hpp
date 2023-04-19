@@ -6,7 +6,7 @@
 
 #include <mpi.h>
 
-#include "cmx_impl.hpp"
+#include "p_group.hpp"
 
 namespace CMX {
 
@@ -22,10 +22,28 @@ public:
  */
 Group(int n, int *pid_list, Group *group);
 
+/** Construct Group from p_Group
+ * @param[in] group pointer to p_Group object
+ * @return pointer to Group object
+ */
+
 /**
  * Destructor
  */
 ~Group();
+
+/**
+ * Get world group. Use this to initialize world group from a communicator.
+ * @return pointer to world group
+ */
+static Group* getWorldGroup(MPI_Comm comm);
+
+/**
+ * Get world group.
+ * @return pointer to world group
+ */
+static Group* getWorldGroup();
+
 
 /**
  * Return the rank of process in group
@@ -51,6 +69,19 @@ int barrier();
  */
 MPI_Comm MPIComm();
 
+/**
+ * Get the world rank of a processor in the group
+ * @param rank rank of process in group
+ * @return rank of process in world group
+ */
+int getWorldRank(int rank);
+
+/**
+ * Get  world ranks of all processors in the group
+ * @return list of ranks in the world group
+ */
+std::vector<int> getWorldRanks();
+
 protected:
 
 /**
@@ -72,9 +103,11 @@ Group(p_Group* group);
 
 private:
 
-friend class Environment;
+friend class p_Environment;
 
 p_Group* p_group;
+
+static Group *p_world_group;
 };
 
 } // namespace CMX

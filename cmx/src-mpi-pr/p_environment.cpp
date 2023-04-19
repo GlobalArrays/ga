@@ -35,7 +35,7 @@ typedef struct {
 } rank_ptr_t;
 
 /* the HEAD of the group linked list */
-p_Group *group_list = NULL;
+Group *group_list = NULL;
 
 int _initialized = 0;
 
@@ -72,16 +72,6 @@ const char *str_mpi_retval(int retval)
   return msg;
 }
 
-void check_mpi_retval(int retval, const char *file, int line)
-{
-  if (MPI_SUCCESS != retval) {
-    const char *msg = str_mpi_retval(retval);
-    fprintf(stderr, "{%d} MPI Error: %s: line %d: %s\n",
-        g_state.rank, file, line, msg);
-    MPI_Abort(g_state.comm, retval);
-  }
-}
-
 p_Environment::p_Environment()
 {
   int status = 0;
@@ -92,10 +82,11 @@ p_Environment::p_Environment()
   /* initialize many sytem state variables */
   num_mutexes = NULL;     /* (all) how many mutexes on each process */
   mutexes = NULL;         /* (masters) value is rank of lock holder */
-  lq_heads = NULL;        /* array of lock queues */
+  lq_heads.clear();        /* array of lock queues */
   sem_name = NULL;        /* local semaphore name */
   semaphores = NULL;      /* semaphores for locking within SMP node */
   fence_array = NULL;
+  printf("p[%d] Got to 1\n",_dbg_me);
 
   nb_max_outstanding = CMX_MAX_NB_OUTSTANDING;
   nb_last_request = 0;
@@ -134,20 +125,22 @@ p_Environment::p_Environment()
   }
   _initialized = 1;
 
+  printf("p[%d] Got to 2\n",_dbg_me);
   /* Assert MPI has been initialized */
   status = MPI_Initialized(&init_flag);
   _translate_mpi_error(status,"cmx_init");
   CHECK_MPI_RETVAL(status);
   assert(init_flag);
+  printf("p[%d] Got to 3\n",_dbg_me);
+  p_config.init(MPI_COMM_WORLD);
+  printf("p[%d] Got to 4\n",_dbg_me);
 
   /*MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);*/
 
 
   /* groups */
-#ifdef OLD_CODE
-  cmx_group_init();
-#endif
-  _group_init();
+  //_group_init();
+  printf("p[%d] Got to 5\n",_dbg_me);
 
   /* Set up world group */
 
@@ -277,7 +270,7 @@ p_Environment::p_Environment()
     }
 
 #if DEBUG
-    if (0 == g_state.rank) {
+    if (0 == p_config.rank()) {
       printf("CMX_MAX_NB_OUTSTANDING=%d\n", nb_max_outstanding);
       printf("CMX_STATIC_BUFFER_SIZE=%d\n", static_server_buffer_size);
       printf("CMX_MAX_MESSAGE_SIZE=%d\n", max_message_size);
@@ -303,20 +296,23 @@ p_Environment::p_Environment()
 #endif
   }
 
+  printf("p[%d] Got to 6\n",_dbg_me);
   /* mutexes */
   mutexes = NULL;
   num_mutexes = NULL;
-  lq_heads = NULL;
+  lq_heads.clear();
 
   /* reg_cache */
   /* note: every process needs a reg cache and it's always based on the
    * world rank and size */
-  reg_cache_init(g_state.size);
+  p_register.init(&p_config, &p_shmem);
+  printf("p[%d] Got to 7\n",_dbg_me);
 
   _malloc_semaphore();
+  printf("p[%d] Got to 8\n",_dbg_me);
 
 #if DEBUG
-  fprintf(stderr, "[%d] cmx_init() before progress server\n", g_state.rank);
+  fprintf(stderr, "[%d] cmx_init() before progress server\n", p_config.rank());
 #endif
 
 #if PAUSE_ON_ERROR
@@ -325,38 +321,77 @@ p_Environment::p_Environment()
   }
 #endif
 
-  status = _set_affinity(g_state.node_rank);
+  status = _set_affinity(p_config.node_rank());
   CMX_ASSERT(0 == status);
+  printf("p[%d] Got to 8a is master: %d\n",_dbg_me,p_config.is_master());
 
-  if (_is_master()) {
+  /* create a comm of only the workers */
+  if (p_config.is_master()) {
+  printf("p[%d] (master) Got to 8b rank: %d\n",_dbg_me,p_config.rank());
+    /* I'm a master */
+    MPI_Comm delete_me;
+    status = MPI_Comm_split(p_config.global_comm(), 0, p_config.rank(), &delete_me);
+    CMX_ASSERT(MPI_SUCCESS == status);
+    /* masters don't need their own comm */
+    if (MPI_COMM_NULL != delete_me) {
+      MPI_Comm_free(&delete_me);
+    }
+    p_CMX_GROUP_WORLD = NULL;
+  } else {
+    /* I'm a worker */
+    MPI_Comm comm;
+  printf("p[%d] (worker) Got to 8b rank: %d\n",_dbg_me,p_config.rank());
+    status = MPI_Comm_split(
+        p_config.global_comm(), 1, p_config.rank(), &comm);
+    CMX_ASSERT(MPI_SUCCESS == status);
+    int size;
+  printf("p[%d] Got to 8c\n",_dbg_me);
+    status = MPI_Comm_size(comm, &size);
+    std::vector<int> ranks(size);
+    for (i=0; i<size; i++) ranks[i] = i;
+    printf("p[%d]  Got to 8b size of worker comm: %d\n",
+        p_config.rank(),size);
+    p_CMX_GROUP_WORLD = new Group(size, &ranks[0], comm);
+    printf("p[%d]  Got to 8d\n",p_config.rank());
+  }
+
+  if (p_config.is_master()) {
     /* TODO: wasteful O(p) storage... */
-    mutexes = (int**)malloc(sizeof(int*) * g_state.size);
+   // mutexes = (int**)malloc(sizeof(int*) * g_state.size);
+    mutexes = new int*[p_config.world_size()];
     CMX_ASSERT(mutexes);
+    printf("p[%d]  Got to 8e\n",p_config.rank());
     /* create one lock queue for each proc for each mutex */
-    lq_heads = (lock_t***)malloc(sizeof(lock_t**) * g_state.size);
-    CMX_ASSERT(lq_heads);
+   // lq_heads = (lock_t***)malloc(sizeof(lock_t**) * g_state.size);
+    lq_heads.resize(p_config.world_size());
+  printf("p[%d] Got to 8f\n",_dbg_me);
     /* start the server */
     _progress_server();
+  printf("p[%d] Got to 8g\n",_dbg_me);
   }
-  nb_list = (_cmx_request**)malloc(sizeof(_cmx_request*)*nb_max_outstanding);
+  nb_list = new _cmx_request*[nb_max_outstanding];
   for (i=0; i<nb_max_outstanding; i++) nb_list[i] = NULL;
+  printf("p[%d] Got to 9\n",_dbg_me);
 
   _cmx_me = p_CMX_GROUP_WORLD->rank();
+  printf("p[%d] Got to 10\n",_dbg_me);
 
   /* Synch - Sanity Check */
   /* This barrier is on the world worker group */
   p_CMX_GROUP_WORLD->barrier();
   _translate_mpi_error(status, "cmx_init:MPI_Barrier");
+  printf("p[%d] Got to 11\n",_dbg_me);
 
   /* static state */
-  fence_array = new char[g_state.size];
+  fence_array = new char[p_config.world_size()];
   CMX_ASSERT(fence_array);
-  for (i = 0; i < g_state.size; ++i) {
+  for (i = 0; i < p_config.world_size(); ++i) {
     fence_array[i] = 0;
   }
+  printf("p[%d] Got to 12\n",_dbg_me);
 
 #if DEBUG
-  fprintf(stderr, "[%d] cmx_init() before barrier\n", g_state.rank);
+  fprintf(stderr, "[%d] cmx_init() before barrier\n", p_config.rank());
 #endif
 
   /* Synch - Sanity Check */
@@ -365,14 +400,98 @@ p_Environment::p_Environment()
   _translate_mpi_error(status, "cmx_init:MPI_Barrier");
 
 #if DEBUG
-  fprintf(stderr, "[%d] cmx_init() success\n", g_state.rank);
+  fprintf(stderr, "[%d] cmx_init() success\n", p_config.rank());
 #endif
+  printf("p[%d] Got to 13\n",_dbg_me);
 }
 
 /**
-   * Return an instance of the p_Environment singleton
-    * @return pointer to p_Environment singleton
-     */
+ * Close down most environment functions. Should be called right before
+ * MPI_Finalize
+ */
+void p_Environment::finalize()
+{
+  int i, ierr;
+
+  /* it's okay to call multiple times -- extra calls are no-ops */
+  if (!_initialized) {
+    return;
+  }
+  printf("p[%d] (finalize) Got to 1 p_CMX_GROUP_WORLD: %p\n",p_config.rank(),
+      p_CMX_GROUP_WORLD);
+
+  p_CMX_GROUP_WORLD->barrier();
+
+  _initialized = 0;
+
+  printf("p[%d] (finalize) Got to 2\n",p_config.rank());
+  _free_semaphore();
+  printf("p[%d] (finalize) Got to 3\n",p_config.rank());
+
+  p_CMX_GROUP_WORLD->barrier();
+
+  /* clean up non-blocking calls */
+  for (i=0; i<nb_max_outstanding; i++) {
+    if (nb_list[i]) {
+      nb_wait_for_all(nb_list[i]);
+    }
+  }
+  printf("p[%d] (finalize) Got to 4\n",p_config.rank());
+  delete [] nb_list;
+  printf("p[%d] (finalize) Got to 5\n",p_config.rank());
+
+  /* send quit message to thread */
+  int my_rank_to_free;
+  int is_notifier = 0; 
+
+  my_rank_to_free = p_config.get_my_rank_to_free(p_config.rank(),
+      p_config.node_size(), p_CMX_GROUP_WORLD);
+  // is_notifier = p_config.rank() == smallest_rank_with_same_hostid + g_state.node_size*
+  //   ((p_config.rank() - smallest_rank_with_same_hostid)/g_state.node_size);
+  // if (_smallest_world_rank_with_same_hostid(group_list) == p_config.rank()) 
+  printf("p[%d] (finalize) Got to 6 my_rank_to_free\n",p_config.rank(),my_rank_to_free);
+  if(is_notifier = my_rank_to_free == p_config.rank())
+  {
+    int my_master = -1;
+    header_t *header = NULL;
+    _cmx_request nb;
+  printf("p[%d] (finalize) Got to 8\n",p_config.rank());
+    nb_handle_init(&nb);
+
+    my_master = p_config.master(p_config.rank());
+    header = new header_t;
+    CMX_ASSERT(header);
+    MAYBE_MEMSET(header, 0, sizeof(header_t));
+    header->operation = OP_QUIT;
+    header->remote_address = NULL;
+    header->local_address = NULL;
+    header->rank = 0;
+    header->length = 0;
+  printf("p[%d] (finalize) Got to 8a master: %d\n",p_config.rank(),my_master);
+    nb_send_header(header, sizeof(header_t), my_master, &nb);
+  printf("p[%d] (finalize) Got to 8b\n",p_config.rank());
+    /* this call will free up the header allocation */
+    nb_wait_for_all(&nb);
+  printf("p[%d] (finalize) Got to 9\n",p_config.rank());
+  }
+  printf("p[%d] (finalize) Got to 10\n",p_config.rank());
+
+  delete [] fence_array;
+  printf("p[%d] (finalize) Got to 11\n",p_config.rank());
+
+  ierr = MPI_Barrier(p_config.global_comm());
+  _translate_mpi_error(ierr, "cmx_finalize:MPI_Barrier");
+
+  /* reg_cache */
+  p_register.destroy();
+
+  /* destroy the groups */
+}
+
+/**
+ * Return an instance of the p_Environment singleton
+ * @return pointer to p_Environment singleton
+ */
 p_Environment *p_Environment::instance()
 {
   if (p_instance == NULL) {
@@ -383,9 +502,10 @@ p_Environment *p_Environment::instance()
 
 p_Environment::~p_Environment()
 {
+#if 0
   int i, ierr;
 #if DEBUG
-  fprintf(stderr, "[%d] cmx_finalize()\n", g_state.rank);
+  fprintf(stderr, "[%d] cmx_finalize()\n", p_config.rank());
 #endif
 
   /* it's okay to call multiple times -- extra calls are no-ops */
@@ -393,7 +513,7 @@ p_Environment::~p_Environment()
     return;
   }
   /* just return if this is a progress rank */
-  if (g_state.rank == g_state.master[g_state.rank]) return;
+  if (p_config.rank() == g_state.master[p_config.rank()]) return;
 
   p_CMX_GROUP_WORLD->barrier();
 
@@ -426,20 +546,20 @@ p_Environment::~p_Environment()
   is_node_ranks_packed = get_progress_rank_distribution_on_node();
   smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(p_CMX_GROUP_WORLD);
   largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(p_CMX_GROUP_WORLD);
-  my_rank_to_free = get_my_rank_to_free(g_state.rank,
+  my_rank_to_free = get_my_rank_to_free(p_config.rank(),
       g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
       num_progress_ranks_per_node, is_node_ranks_packed);
-  // is_notifier = g_state.rank == smallest_rank_with_same_hostid + g_state.node_size*
-  //   ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size);
-  // if (_smallest_world_rank_with_same_hostid(group_list) == g_state.rank) 
-  if(is_notifier = my_rank_to_free == g_state.rank)
+  // is_notifier = p_config.rank() == smallest_rank_with_same_hostid + g_state.node_size*
+  //   ((p_config.rank() - smallest_rank_with_same_hostid)/g_state.node_size);
+  // if (_smallest_world_rank_with_same_hostid(group_list) == p_config.rank()) 
+  if(is_notifier = my_rank_to_free == p_config.rank())
   {
     int my_master = -1;
     header_t *header = NULL;
     _cmx_request nb;
     nb_handle_init(&nb);
 
-    my_master = g_state.master[g_state.rank];
+    my_master = g_state.master[p_config.rank()];
     header = (header_t*)malloc(sizeof(header_t));
     CMX_ASSERT(header);
     MAYBE_MEMSET(header, 0, sizeof(header_t));
@@ -459,11 +579,12 @@ p_Environment::~p_Environment()
   _translate_mpi_error(ierr, "cmx_finalize:MPI_Barrier");
 
   /* reg_cache */
-  reg_cache_destroy();
+  p_register.destroy();
 
   /* destroy the groups */
 #ifdef OLD_CODE
   cmx_group_finalize();
+#endif
 #endif
 }
 
@@ -482,13 +603,13 @@ void p_Environment::p_error(const std::string msg, int code)
 {
 #if DEBUG
   fprintf(stderr, "[%d] Received an Error in Communication: (%d) %s\n",
-      g_state.rank, code, msg.c_str());
+      p_config.rank(), code, msg.c_str());
 #if DEBUG_TO_FILE
   fclose(cmx_trace_file);
 #endif
 #endif
   fprintf(stderr,"[%d] Received an Error in Communication: (%d) %s\n",
-      g_state.rank, code, msg.c_str());
+      p_config.rank(), code, msg.c_str());
 
   MPI_Abort(g_state.comm, code);
 }
@@ -502,7 +623,7 @@ int p_Environment::_eager_check(int extra_bytes)
 void p_Environment::_fence_master(int master_rank)
 {
 #if DEBUG
-  printf("[%d] _fence_master(master=%d)\n", g_state.rank, master_rank);
+  printf("[%d] _fence_master(master=%d)\n", p_config.rank(), master_rank);
 #endif
 
   if (fence_array[master_rank]) {
@@ -543,7 +664,7 @@ int p_Environment::_packed_size(int *src_stride, int *count, int stride_levels)
 
 #if DEBUG
   fprintf(stderr, "[%d] _packed_size(src_stride=%p, count[0]=%d, stride_levels=%d)\n",
-      g_state.rank, src_stride, count[0], stride_levels);
+      p_config.rank(), src_stride, count[0], stride_levels);
 #endif
 
   /* number of n-element of the first
@@ -580,7 +701,7 @@ char* p_Environment::pack(
 
 #if DEBUG
   fprintf(stderr, "[%d] pack(src=%p, src_stride=%p, count[0]=%d, stride_levels=%d)\n",
-      g_state.rank, src, src_stride, count[0], stride_levels);
+      p_config.rank(), src, src_stride, count[0], stride_levels);
 #endif
 
   /* number of n-element of the first dimension */
@@ -643,7 +764,7 @@ void p_Environment::unpack(char *packed_buffer,
 
 #if DEBUG
   fprintf(stderr, "[%d] unpack(dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d)\n",
-      g_state.rank, dst, dst_stride, count[0], stride_levels);
+      p_config.rank(), dst, dst_stride, count[0], stride_levels);
 #endif
 
   /* number of n-element of the first dimension */
@@ -715,107 +836,260 @@ char* p_Environment::_generate_shm_name(int rank)
   }
 #if DEBUG
   fprintf(stderr, "[%d] _generate_shm_name(%d)=%s\n",
-      g_state.rank, rank, name);
+      p_config.rank(), rank, name);
 #endif
 
   return name;
 }
 
 
-void* p_Environment::malloc_local(size_t size)
+int p_Environment::dist_malloc(void **ptrs, int64_t bytes, Group *group)
 {
-  reg_entry_t *reg_entry;
-  void *memory = NULL;
+  reg_entry_t *reg_entries = NULL;
+  reg_entry_t *my_reg;
+  int my_master = -1;
+  int my_world_rank = -1;
+  int i = 0;
+  int is_notifier = 0;
+  int reg_entries_local_count = 0;
+  reg_entry_t *reg_entries_local = NULL;
+  int status = 0;
 
-  if (size > 0) {
-    reg_entry = _malloc_local(size);
-    memory = reg_entry->mapped;
+  group->barrier();
+
+  my_world_rank = p_config.get_world_rank(group, group->rank());
+  my_master = p_config.master(my_world_rank);
+
+  std::vector<int> world_ranks = p_config.get_world_ranks(group);
+  is_notifier 
+    = p_config.rank() == p_config.get_my_master_rank_with_same_hostid(
+        group->rank(), group->size(),
+        group->MPIComm(), my_world_rank,
+        world_ranks);
+  if (is_notifier) {
+    reg_entries_local = new reg_entry_t[p_config.node_size()];
+  }
+
+  /* allocate space for registration cache entries */
+  reg_entries = new reg_entry_t[group->size()];
+  MAYBE_MEMSET(reg_entries, 0, sizeof(reg_entry_t)*group->size());
+
+  /* allocate and register segment */
+  MAYBE_MEMSET(my_reg, 0, sizeof(reg_entry_t));
+  if (0 == bytes) {
+    my_reg = new reg_entry_t;
+    p_register.nullify(my_reg);
   }
   else {
-    memory = NULL;
+    my_reg = p_register.malloc(sizeof(char)*bytes);
   }
 
-  return memory;
+  /* exchange buffer address via reg entries */
+  reg_entries[group->rank()] = *my_reg;
+  status = MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
+      reg_entries, sizeof(reg_entry_t), MPI_BYTE, group->MPIComm());
+  _translate_mpi_error(status, "cmx_malloc:MPI_Allgather");
+  CMX_ASSERT(MPI_SUCCESS == status);
+
+  /* insert reg entries into local registration cache */
+  for (i=0; i<group->size(); ++i) {
+    if (NULL == reg_entries[i].buf) {
+      /* a proc did not allocate (bytes==0) */
+    }
+    else if (p_config.rank() == reg_entries[i].rank) {
+      /* we already registered our own memory, but PR hasn't */
+      if (is_notifier) {
+        /* does this need to be a memcpy?? */
+        reg_entries_local[reg_entries_local_count++] = reg_entries[i];
+      }
+    }
+    // else if (g_state.hostid[reg_entries[i].rank]
+    //         == g_state.hostid[my_world_rank]) 
+
+    else if (p_config.master(reg_entries[i].rank) == 
+        p_config.master(p_config.get_my_master_rank_with_same_hostid(
+        group->rank(), group->size(),
+        group->MPIComm(), my_world_rank,
+        world_ranks)))
+
+    {
+      /* same SMP node, need to mmap */
+      /* open remote shared memory object */
+      void *memory = p_shmem.attach(reg_entries[i].name, reg_entries[i].len);
+      p_register.insert(
+          reg_entries[i].rank,
+          reg_entries[i].buf,
+          reg_entries[i].len,
+          reg_entries[i].name,
+          memory,0
+          );
+      if (is_notifier) {
+        /* does this need to be a memcpy?? */
+        reg_entries_local[reg_entries_local_count++] = reg_entries[i];
+      }
+    }
+    else {
+    }
+  }
+
+  /* assign the cmx handle to return to caller */
+  cmx_alloc_t *prev = NULL;
+  for (i=0; i<group->size(); ++i) {
+    ptrs[i] = reg_entries[i].buf;
+  }
+
+  /* send reg entries to my master */
+  /* first non-master rank in an SMP node sends the message to master */
+  if (is_notifier) {
+    _cmx_request nb;
+    int reg_entries_local_size = 0;
+    int message_size = 0;
+    char *message = NULL;
+    header_t *header = NULL;
+
+    nb_handle_init(&nb);
+    reg_entries_local_size = sizeof(reg_entry_t)*reg_entries_local_count;
+    message_size = sizeof(header_t) + reg_entries_local_size;
+    message = new char[message_size];
+    CMX_ASSERT(message);
+    header = reinterpret_cast<header_t*>(message);
+    header->operation = OP_MALLOC;
+    header->remote_address = NULL;
+    header->local_address = NULL;
+    header->rank = 0;
+    header->length = reg_entries_local_count;
+    (void)memcpy(message+sizeof(header_t), reg_entries_local, reg_entries_local_size);
+    nb_recv(NULL, 0, my_master, &nb); /* prepost ack */
+    nb_send_header(message, message_size, my_master, &nb);
+    nb_wait_for_all(&nb);
+    delete [] reg_entries_local;
+  }
+
+  delete [] reg_entries;
+
+  group->barrier();
+
+  return CMX_SUCCESS;
 }
 
-
-reg_entry_t* p_Environment::_malloc_local(size_t size)
+int p_Environment::dist_free(void *ptr, Group *group)
 {
-  char *name = NULL;
-  void *memory = NULL;
-  reg_entry_t *reg_entry = NULL;
+  int my_world_rank = -1;
+  int my_master = -1;
+  rank_ptr_t *ptrs = NULL;
+  int i = 0;
+  int is_notifier = 0;
+  reg_entry_t *reg_entry;
+  int reg_entries_local_count = 0;
+  rank_ptr_t *rank_ptrs = NULL;
+  int status = 0;
 
-#if DEBUG
-  fprintf(stderr, "[%d] _malloc_local(size=%lu)\n",
-      g_state.rank, (long unsigned)size);
-#endif
+  my_world_rank = p_config.rank();
+  my_master = p_config.master(my_world_rank);
 
-  if (0 == size) {
-    return NULL;
+  std::vector<int> world_ranks = p_config.get_world_ranks(group);
+  is_notifier 
+    = p_config.rank() == p_config.get_my_master_rank_with_same_hostid(
+        group->rank(), group->size(),
+        group->MPIComm(), my_world_rank,
+        world_ranks);
+
+  if (is_notifier) {
+    rank_ptrs = new rank_ptr_t[p_config.node_size()];
   }
 
-  /* create my shared memory object */
-  name = _generate_shm_name(g_state.rank);
-  memory = _shm_create(name, size);
-#if DEBUG && DEBUG_VERBOSE
-  fprintf(stderr, "[%d] _malloc_local registering "
-      "rank=%d mem=%p size=%lu name=%s mapped=%p\n",
-      g_state.rank, g_state.rank, memory,
-      (long unsigned)size, name, memory);
-#endif
+  /* allocate receive buffer for exchange of pointers */
+  ptrs = new rank_ptr_t[group->size()];
+  CMX_ASSERT(ptrs);
+  ptrs[group->rank()].rank = my_world_rank;
+  ptrs[group->rank()].ptr = ptr;
 
-  /* register the memory locally */
-  reg_entry = reg_cache_insert(
-      g_state.rank, memory, size, name, memory, 0);
+  /* exchange of pointers */
+  status = MPI_Allgather(MPI_IN_PLACE, sizeof(rank_ptr_t), MPI_BYTE,
+      ptrs, sizeof(rank_ptr_t), MPI_BYTE, group->MPIComm());
+  _translate_mpi_error(status, "p_Environment::free:MPI_Allgather");
+  CMX_ASSERT(MPI_SUCCESS == status);
 
-  if (NULL == reg_entry) {
-    p_error("_malloc_local: reg_cache_insert", -1);
+  for (i=0; i<group->size(); ++i) {
+    if (i == group->rank()) {
+      if (is_notifier) {
+        /* does this need to be a memcpy? */
+        rank_ptrs[reg_entries_local_count].rank = world_ranks[i];
+        rank_ptrs[reg_entries_local_count].ptr = ptrs[i].ptr;
+        reg_entries_local_count++;
+      }
+    }
+    else if (NULL == ptrs[i].ptr) {
+    }
+    else if
+      (p_config.master(world_ranks[i]) ==
+       p_config.master(p_config.get_my_master_rank_with_same_hostid(
+           group->rank(), group->size(), group->MPIComm(),
+           my_world_rank, world_ranks)))
+      {
+        /* same SMP node */
+        reg_entry = NULL;
+        int retval = 0;
+
+        /* find the registered memory */
+        reg_entry = p_register.find(world_ranks[i], ptrs[i].ptr, 0);
+        CMX_ASSERT(reg_entry);
+
+
+        p_register.remove(world_ranks[i], ptrs[i].ptr);
+
+        if (is_notifier) {
+          /* does this need to be a memcpy? */
+          rank_ptrs[reg_entries_local_count].rank = world_ranks[i];
+          rank_ptrs[reg_entries_local_count].ptr = ptrs[i].ptr;
+          reg_entries_local_count++;
+        }
+      } else {
+      }
   }
 
-  free(name);
+  /* send ptrs to my master */
+  /* first non-master rank in an SMP node sends the message to master */
+  if (is_notifier) {
+    _cmx_request nb;
+    int rank_ptrs_local_size = 0;
+    int message_size = 0;
+    char *message = NULL;
+    header_t *header = NULL;
 
-  return reg_entry;
-}
-
-int p_Environment::free_local(void *ptr)
-{
-  int retval = 0;
-  reg_entry_t *reg_entry = NULL;
-
-#if DEBUG
-  fprintf(stderr, "[%d] free_local(ptr=%p)\n", g_state.rank, ptr);
-#endif
-
-  if (NULL == ptr) {
-    return CMX_SUCCESS;
+    nb_handle_init(&nb);
+    rank_ptrs_local_size = sizeof(rank_ptr_t) * reg_entries_local_count;
+    message_size = sizeof(header_t) + rank_ptrs_local_size;
+    message = new char[message_size];
+    CMX_ASSERT(message);
+    header = reinterpret_cast<header_t*>(message);
+    header->operation = OP_FREE;
+    header->remote_address = NULL;
+    header->local_address = NULL;
+    header->rank = 0;
+    header->length = reg_entries_local_count;
+    (void)memcpy(message+sizeof(header_t), rank_ptrs, rank_ptrs_local_size);
+    nb_recv(NULL, 0, my_master, &nb); /* prepost ack */
+    nb_send_header(message, message_size, my_master, &nb);
+    nb_wait_for_all(&nb);
+    delete [] rank_ptrs;
   }
+  /* free ptrs array */
+  delete [] ptrs;
 
-  /* find the registered memory */
-  reg_entry = reg_cache_find(g_state.rank, ptr, 0);
+  /* remove my ptr from reg cache and free ptr */
+  reg_entry = p_register.find(my_world_rank, ptr, 0);
+  p_shmem.free(reg_entry->name, reg_entry->mapped, reg_entry->len);
+  p_register.remove(my_world_rank, ptr);
 
-  /* unmap the memory */
-  retval = munmap(ptr, reg_entry->len);
-  if (-1 == retval) {
-    perror("free_local: munmap");
-    p_error("free_local: munmap", retval);
-  }
-
-  /* remove the shared memory object */
-  retval = shm_unlink(reg_entry->name);
-  if (-1 == retval) {
-    perror("free_local: shm_unlink");
-    p_error("free_local: shm_unlink", retval);
-  }
-
-  /* delete the reg_cache entry */
-  retval = reg_cache_delete(g_state.rank, ptr);
-  CMX_ASSERT(RR_SUCCESS == retval);
+  /* Is this needed? */
+  group->barrier();
 
   return CMX_SUCCESS;
 }
 
 #ifdef OLD_CODE
-int p_Environment::wait_proc(int proc, p_Group *group)
+int p_Environment::wait_proc(int proc, Group *group)
 {
   return cmx_wait_all(igroup);
 }
@@ -838,7 +1112,7 @@ void p_Environment::wait(_cmx_request* hdl)
    * non-blocking operation*/
   if (0 == nb->in_use) {
     fprintf(stderr, "p[%d] cmx_wait Error: invalid handle\n",
-        g_state.rank);
+        p_config.rank());
   }
 #endif
 
@@ -865,7 +1139,7 @@ bool p_Environment::test(_cmx_request* hdl)
    * non-blocking operation*/
   if (0 == nb->in_use) {
     fprintf(stderr, "{%d} cmx_test Error: invalid handle\n",
-        g_state.rank);
+        p_config.rank());
   }
 #endif
 
@@ -884,7 +1158,7 @@ bool p_Environment::test(_cmx_request* hdl)
 }
 
 
-void p_Environment::waitAll(p_Group *group)
+void p_Environment::waitAll(Group *group)
 {
   int i;
   for (i=0; i<nb_max_outstanding; i++) {
@@ -952,7 +1226,7 @@ void p_Environment::_malloc_semaphore()
   int i = 0;
 
 #if DEBUG
-  fprintf(stderr, "[%d] _malloc_semaphore()\n", g_state.rank);
+  fprintf(stderr, "[%d] _malloc_semaphore()\n", p_config.rank());
 #endif
 
   status = MPI_Type_contiguous(SHM_NAME_SIZE, MPI_CHAR, &shm_name_type);
@@ -962,10 +1236,11 @@ void p_Environment::_malloc_semaphore()
   _translate_mpi_error(status, "_malloc_semaphore:MPI_Type_commmit");
   CMX_ASSERT(MPI_SUCCESS == status);
 
-  semaphores = (sem_t**)malloc(sizeof(sem_t*) * g_state.size);
+  //semaphores = (sem_t**)malloc(sizeof(sem_t*) * p_config.world_size());
+  semaphores = new sem_t*[p_config.world_size()];
   CMX_ASSERT(semaphores);
 
-  name = _generate_shm_name(g_state.rank);
+  name = _generate_shm_name(p_config.rank());
   CMX_ASSERT(name);
 
 #if ENABLE_UNNAMED_SEM
@@ -999,24 +1274,25 @@ void p_Environment::_malloc_semaphore()
 #endif
 
   /* store my sem in global cache */
-  semaphores[g_state.rank] = my_sem;
+  semaphores[p_config.rank()] = my_sem;
 
-  names = (char*)malloc(sizeof(char) * SHM_NAME_SIZE * g_state.size);
+  //names = (char*)malloc(sizeof(char) * SHM_NAME_SIZE * g_state.size);
+  names = new char[SHM_NAME_SIZE*p_config.world_size()];
   CMX_ASSERT(names);
 
   /* exchange names */
-  (void)memcpy(&names[SHM_NAME_SIZE*g_state.rank], name, SHM_NAME_SIZE);
+  (void)memcpy(&names[SHM_NAME_SIZE*p_config.rank()], name, SHM_NAME_SIZE);
   status = MPI_Allgather(MPI_IN_PLACE, 1, shm_name_type,
-      names, 1, shm_name_type, g_state.comm);
+      names, 1, shm_name_type, p_config.global_comm());
   _translate_mpi_error(status, "_malloc_semaphore:MPI_Allgather");
   CMX_ASSERT(MPI_SUCCESS == status);
 
   /* create/open remote semaphores and store in cache */
-  for (i=0; i<g_state.size; ++i) {
-    if (g_state.rank == i) {
+  for (i=0; i<p_config.world_size(); ++i) {
+    if (p_config.rank() == i) {
       continue; /* skip my own rank */
     }
-    else if (g_state.hostid[g_state.rank] == g_state.hostid[i]) {
+    else if (p_config.hostid(p_config.rank()) == p_config.hostid(i)) {
       /* same SMP node */
 #if ENABLE_UNNAMED_SEM
       semaphores[i] = _shm_attach(
@@ -1037,7 +1313,8 @@ void p_Environment::_malloc_semaphore()
 
   sem_name = name;
 
-  free(names);
+  //free(names);
+  delete [] names;
 
   status = MPI_Type_free(&shm_name_type);
   _translate_mpi_error(status, "_malloc_semaphore:MPI_Type_free");
@@ -1051,11 +1328,11 @@ void p_Environment::_free_semaphore()
   int retval;
 
 #if DEBUG
-  fprintf(stderr, "[%d] _free_semaphore()\n", g_state.rank);
+  fprintf(stderr, "[%d] _free_semaphore()\n", p_config.rank());
 #endif
 
-  for (i=0; i<g_state.size; ++i) {
-    if (g_state.rank == i) {
+  for (i=0; i<p_config.world_size(); ++i) {
+    if (p_config.rank() == i) {
       /* me */
 #if ENABLE_UNNAMED_SEM
       retval = sem_destroy(semaphores[i]);
@@ -1086,7 +1363,7 @@ void p_Environment::_free_semaphore()
       }
 #endif
     }
-    else if (g_state.hostid[g_state.rank] == g_state.hostid[i]) {
+    else if (p_config.hostid(p_config.rank()) == p_config.hostid(i)) {
       /* same SMP node */
 #if ENABLE_UNNAMED_SEM
       retval = munmap(semaphores[i], sizeof(sem_t));
@@ -1107,7 +1384,7 @@ void p_Environment::_free_semaphore()
   free(sem_name);
   sem_name = NULL;
 
-  free(semaphores);
+  delete [] semaphores;
   semaphores = NULL;
 }
 
@@ -1120,15 +1397,16 @@ void p_Environment::_progress_server()
   int ierr;
 
 #if DEBUG
-  fprintf(stderr, "[%d] _progress_server()\n", g_state.rank);
+  fprintf(stderr, "[%d] _progress_server()\n", p_config.rank());
   fprintf(stderr, "[%d] _progress_server(); node_size[%d]\n", 
-      g_state.rank, g_state.node_size);
+      p_config.rank(), g_state.node_size);
 #endif
+  printf("p[%d] (progress server) Got to 1\n",p_config.rank());
 
   {
-    int status = _set_affinity(g_state.node_size);
+    int status = _set_affinity(p_config.node_size());
     if (0 != status) {
-      status = _set_affinity(g_state.node_size-1);
+      status = _set_affinity(p_config.node_size()-1);
       CMX_ASSERT(0 == status);
     }
   }
@@ -1137,7 +1415,7 @@ void p_Environment::_progress_server()
    * message that might possibly be sent using a header type message. */
   static_header_buffer_size += sizeof(header_t);
   /* extra header info could be reg entries, one per local rank */
-  extra_size = sizeof(reg_entry_t)*g_state.node_size;
+  extra_size = sizeof(reg_entry_t)*p_config.node_size();
   /* or, extra header info could be an acc scale plus stride */
   if ((sizeof(stride_t)+sizeof(DoubleComplex)) > extra_size) {
     extra_size = sizeof(stride_t)+sizeof(DoubleComplex);
@@ -1147,14 +1425,16 @@ void p_Environment::_progress_server()
   if (static_header_buffer_size < eager_threshold) {
     static_header_buffer_size = eager_threshold;
   }
+  printf("p[%d] (progress server) Got to 2\n",p_config.rank());
 
   /* initialize shared buffers */
-  static_header_buffer = (char*)malloc(sizeof(char)*static_header_buffer_size);
+  static_header_buffer = new char[static_header_buffer_size];
   CMX_ASSERT(static_header_buffer);
-  static_server_buffer = (char*)malloc(sizeof(char)*static_server_buffer_size);
+  static_server_buffer = new char[static_server_buffer_size];
   CMX_ASSERT(static_server_buffer);
 
   running = 1;
+  printf("p[%d] (progress server) Got to 3\n",p_config.rank());
   while (running) {
     int source = 0;
     int length = 0;
@@ -1162,15 +1442,18 @@ void p_Environment::_progress_server()
     header_t *header = NULL;
     MPI_Status recv_status;
 
+  printf("p[%d] (progress server) Got to 4 buffer size: %d\n",
+      p_config.rank(),static_header_buffer_size);
     ierr = MPI_Recv(static_header_buffer, static_header_buffer_size, MPI_CHAR,
-        MPI_ANY_SOURCE, CMX_TAG, g_state.comm, &recv_status);
+        MPI_ANY_SOURCE, CMX_TAG, p_config.global_comm(), &recv_status);
     _translate_mpi_error(ierr, "_progress_server:MPI_Recv");
+  printf("p[%d] (progress server) Got to 5\n",p_config.rank());
     MPI_Get_count(&recv_status, MPI_CHAR, &length);
     _translate_mpi_error(ierr, "_progress_server:MPI_Get_count");
     source = recv_status.MPI_SOURCE;
 #   if DEBUG
     fprintf(stderr, "[%d] progress MPI_Recv source=%d length=%d\n",
-        g_state.rank, source, length);
+        p_config.rank(), source, length);
 #   endif
     header = (header_t*)static_header_buffer;
     payload = static_header_buffer + sizeof(header_t);
@@ -1256,41 +1539,43 @@ void p_Environment::_progress_server()
         break;
       default:
         fprintf(stderr, "[%d] header operation not recognized: %d\n",
-            g_state.rank, header->operation);
+            p_config.rank(), header->operation);
         CMX_ASSERT(0);
     }
   }
+  printf("p[%d] (progress server) Got to 6\n",p_config.rank());
 
   _initialized = 0;
 
-  free(static_header_buffer);
-  free(static_server_buffer);
+  delete [] static_header_buffer;
+  delete [] static_server_buffer;
 
   _free_semaphore();
 
-  free(mutexes);
-  free(lq_heads);
+  delete [] mutexes;
+  lq_heads.clear();
 
-  ierr = MPI_Barrier(g_state.comm);
+  ierr = MPI_Barrier(p_config.global_comm());
   _translate_mpi_error(ierr, "_progress_server:MPI_Barrier");
 
   /* reg_cache */
-  reg_cache_destroy();
+  p_register.destroy();
 
   // destroy the communicators
 #if DEBUG
-  fprintf(stderr, "[%d] before cmx_group_finalize()\n", g_state.rank);
+  fprintf(stderr, "[%d] before cmx_group_finalize()\n", p_config.rank());
 #endif
 #ifdef OLD_CODE
   cmx_group_finalize();
 #endif
 #if DEBUG
-  fprintf(stderr, "[%d] after cmx_group_finalize()\n", g_state.rank);
+  fprintf(stderr, "[%d] after cmx_group_finalize()\n", p_config.rank());
 #endif
 
 #if DEBUG_TO_FILE
   fclose(cmx_trace_file);
 #endif
+  printf("p[%d] (progress server) Got to 7\n",p_config.rank());
 
   // assume this is the end of a user's application
   MPI_Finalize();
@@ -1306,14 +1591,14 @@ void p_Environment::_put_handler(header_t *header, char *payload, int proc)
 
 #if DEBUG
   fprintf(stderr, "[%d] _put_handler rem=%p loc=%p rem_rank=%d len=%d\n",
-      g_state.rank,
+      p_config.rank(),
       header->remote_address,
       header->local_address,
       header->rank,
       header->length);
 #endif
 
-  reg_entry = reg_cache_find(
+  reg_entry = p_register.find(
       header->rank, header->remote_address, header->length);
   CMX_ASSERT(reg_entry);
   mapped_offset = _get_offset_memory(
@@ -1348,7 +1633,7 @@ void p_Environment::_put_packed_handler(header_t *header, char *payload, int pro
 
 #if DEBUG
   fprintf(stderr, "[%d] _put_packed_handler rem=%p loc=%p rem_rank=%d len=%d\n",
-      g_state.rank,
+      p_config.rank(),
       header->remote_address,
       header->local_address,
       header->rank,
@@ -1361,14 +1646,14 @@ void p_Environment::_put_packed_handler(header_t *header, char *payload, int pro
 
 #if DEBUG
   fprintf(stderr, "[%d] _put_packed_handler stride_levels=%d, count[0]=%d\n",
-      g_state.rank, stride->stride_levels, stride->count[0]);
+      p_config.rank(), stride->stride_levels, stride->count[0]);
   for (i=0; i<stride->stride_levels; ++i) {
     fprintf(stderr, "[%d] stride[%d]=%d count[%d+1]=%d\n",
-        g_state.rank, i, stride->stride[i], i, stride->count[i+1]);
+        p_config.rank(), i, stride->stride[i], i, stride->count[i+1]);
   }
 #endif
 
-  reg_entry = reg_cache_find(
+  reg_entry = p_register.find(
       header->rank, header->remote_address, stride->count[0]);
   CMX_ASSERT(reg_entry);
   mapped_offset = _get_offset_memory(
@@ -1424,7 +1709,7 @@ void p_Environment::_put_datatype_handler(header_t *header, char *payload, int p
 
 #if DEBUG
   fprintf(stderr, "[%d] _put_datatype_handler rem=%p loc=%p rem_rank=%d len=%d\n",
-      g_state.rank,
+      p_config.rank(),
       header->remote_address,
       header->local_address,
       header->rank,
@@ -1438,14 +1723,14 @@ void p_Environment::_put_datatype_handler(header_t *header, char *payload, int p
 
 #if DEBUG
   fprintf(stderr, "[%d] _put_datatype_handler stride_levels=%d, count[0]=%d\n",
-      g_state.rank, stride->stride_levels, stride->count[0]);
+      p_config.rank(), stride->stride_levels, stride->count[0]);
   for (i=0; i<stride->stride_levels; ++i) {
     fprintf(stderr, "[%d] stride[%d]=%d count[%d+1]=%d\n",
-        g_state.rank, i, stride->stride[i], i, stride->count[i+1]);
+        p_config.rank(), i, stride->stride[i], i, stride->count[i+1]);
   }
 #endif
 
-  reg_entry = reg_cache_find(
+  reg_entry = p_register.find(
       header->rank, header->remote_address, stride->count[0]);
   CMX_ASSERT(reg_entry);
   mapped_offset = _get_offset_memory(
@@ -1478,11 +1763,11 @@ void p_Environment::_put_iov_handler(header_t *header, int proc)
   void **dst = NULL;
 
 #if DEBUG
-  fprintf(stderr, "[%d] _put_iov_handler proc=%d\n", g_state.rank, proc);
+  fprintf(stderr, "[%d] _put_iov_handler proc=%d\n", p_config.rank(), proc);
 #endif
 #if DEBUG
   fprintf(stderr, "[%d] _put_iov_handler header rem=%p loc=%p rem_rank=%d len=%d\n",
-      g_state.rank,
+      p_config.rank(),
       header->remote_address,
       header->local_address,
       header->rank,
@@ -1513,7 +1798,7 @@ void p_Environment::_put_iov_handler(header_t *header, int proc)
 
 #if DEBUG
   fprintf(stderr, "[%d] _put_iov_handler limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
-      g_state.rank, limit, bytes, src[0], dst[0]);
+      p_config.rank(), limit, bytes, src[0], dst[0]);
 #endif
 
   if ((unsigned)(bytes*limit) > static_server_buffer_size) {
@@ -1528,7 +1813,7 @@ void p_Environment::_put_iov_handler(header_t *header, int proc)
 
   packed_index = 0;
   for (i=0; i<limit; ++i) {
-    reg_entry = reg_cache_find(
+    reg_entry = p_register.find(
         header->rank, dst[i], bytes);
     CMX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(
@@ -1553,11 +1838,11 @@ void p_Environment::_get_handler(header_t *header, int proc)
   void *mapped_offset = NULL;
 
 #if DEBUG
-  fprintf(stderr, "[%d] _get_handler proc=%d\n", g_state.rank, proc);
+  fprintf(stderr, "[%d] _get_handler proc=%d\n", p_config.rank(), proc);
 #endif
 #if DEBUG
   fprintf(stderr, "[%d] header rem=%p loc=%p rem_rank=%d len=%d\n",
-      g_state.rank,
+      p_config.rank(),
       header->remote_address,
       header->local_address,
       header->rank,
@@ -1566,7 +1851,7 @@ void p_Environment::_get_handler(header_t *header, int proc)
 
   CMX_ASSERT(OP_GET == header->operation);
 
-  reg_entry = reg_cache_find(
+  reg_entry = p_register.find(
       header->rank, header->remote_address, header->length);
   CMX_ASSERT(reg_entry);
   mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
@@ -1594,11 +1879,11 @@ void p_Environment::_get_packed_handler(header_t *header, char *payload, int pro
   stride_t *stride_src = (stride_t*)payload;
 
 #if DEBUG
-  fprintf(stderr, "[%d] _get_packed_handler proc=%d\n", g_state.rank, proc);
+  fprintf(stderr, "[%d] _get_packed_handler proc=%d\n", p_config.rank(), proc);
 #endif
 #if DEBUG
   fprintf(stderr, "[%d] header rem=%p loc=%p rem_rank=%d len=%d\n",
-      g_state.rank,
+      p_config.rank(),
       header->remote_address,
       header->local_address,
       header->rank,
@@ -1610,7 +1895,7 @@ void p_Environment::_get_packed_handler(header_t *header, char *payload, int pro
   CMX_ASSERT(stride_src->stride_levels >= 0);
   CMX_ASSERT(stride_src->stride_levels < CMX_MAX_STRIDE_LEVEL);
 
-  reg_entry = reg_cache_find(
+  reg_entry = p_register.find(
       header->rank, header->remote_address, header->length);
   CMX_ASSERT(reg_entry);
   mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
@@ -1646,11 +1931,11 @@ void p_Environment::_get_datatype_handler(header_t *header, char *payload, int p
 
 #if DEBUG
   int i;
-  fprintf(stderr, "[%d] _get_datatype_handler proc=%d\n", g_state.rank, proc);
+  fprintf(stderr, "[%d] _get_datatype_handler proc=%d\n", p_config.rank(), proc);
 #endif
 #if DEBUG
   fprintf(stderr, "[%d] header rem=%p loc=%p rem_rank=%d len=%d\n",
-      g_state.rank,
+      p_config.rank(),
       header->remote_address,
       header->local_address,
       header->rank,
@@ -1673,7 +1958,7 @@ void p_Environment::_get_datatype_handler(header_t *header, char *payload, int p
   }
 #endif
 
-  reg_entry = reg_cache_find(
+  reg_entry = p_register.find(
       header->rank, header->remote_address, header->length);
   CMX_ASSERT(reg_entry);
   mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
@@ -1705,11 +1990,11 @@ void p_Environment::_get_iov_handler(header_t *header, int proc)
   void **dst = NULL;
 
 #if DEBUG
-  fprintf(stderr, "[%d] _get_iov_handler proc=%d\n", g_state.rank, proc);
+  fprintf(stderr, "[%d] _get_iov_handler proc=%d\n", p_config.rank(), proc);
 #endif
 #if DEBUG
   fprintf(stderr, "[%d] _get_iov_handler header rem=%p loc=%p rem_rank=%d len=%d\n",
-      g_state.rank,
+      p_config.rank(),
       header->remote_address,
       header->local_address,
       header->rank,
@@ -1740,7 +2025,7 @@ void p_Environment::_get_iov_handler(header_t *header, int proc)
 
 #if DEBUG
   fprintf(stderr, "[%d] _get_iov_handler limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
-      g_state.rank, limit, bytes, src[0], dst[0]);
+      p_config.rank(), limit, bytes, src[0], dst[0]);
 #endif
 
   if ((unsigned)(bytes*limit) > static_server_buffer_size) {
@@ -1753,7 +2038,7 @@ void p_Environment::_get_iov_handler(header_t *header, int proc)
 
   packed_index = 0;
   for (i=0; i<limit; ++i) {
-    reg_entry = reg_cache_find(
+    reg_entry = p_register.find(
         header->rank, src[i], bytes);
     CMX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, src[i]);
@@ -1783,7 +2068,7 @@ void p_Environment::_acc_handler(header_t *header, char *scale, int proc)
   int use_eager = 0;
 
 #if DEBUG
-  fprintf(stderr, "[%d] _acc_handler\n", g_state.rank);
+  fprintf(stderr, "[%d] _acc_handler\n", p_config.rank());
 #endif
 
   switch (header->operation) {
@@ -1815,7 +2100,7 @@ void p_Environment::_acc_handler(header_t *header, char *scale, int proc)
   }
   use_eager = _eager_check(sizeof_scale+header->length);
 
-  reg_entry = reg_cache_find(
+  reg_entry = p_register.find(
       header->rank, header->remote_address, header->length);
   CMX_ASSERT(reg_entry);
   mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
@@ -1876,7 +2161,7 @@ void p_Environment::_acc_packed_handler(header_t *header, char *payload, int pro
   int use_eager = 0;
 
 #if DEBUG
-  fprintf(stderr, "[%d] _acc_packed_handler\n", g_state.rank);
+  fprintf(stderr, "[%d] _acc_packed_handler\n", p_config.rank());
 #endif
 
   switch (header->operation) {
@@ -1936,7 +2221,7 @@ void p_Environment::_acc_packed_handler(header_t *header, char *payload, int pro
     }
   }
 
-  reg_entry = reg_cache_find(
+  reg_entry = p_register.find(
       header->rank, header->remote_address, header->length);
   CMX_ASSERT(reg_entry);
   mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
@@ -1966,7 +2251,7 @@ void p_Environment::_acc_packed_handler(header_t *header, char *payload, int pro
 
 #if DEBUG
     fprintf(stderr, "[%d] unpack(dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d)\n",
-        g_state.rank, dst, dst_stride, count[0], stride_levels);
+        p_config.rank(), dst, dst_stride, count[0], stride_levels);
 #endif
 
     /* number of n-element of the first dimension */
@@ -2032,11 +2317,11 @@ void p_Environment::_acc_iov_handler(header_t *header, char *scale, int proc)
   int acc_type = 0;
 
 #if DEBUG
-  fprintf(stderr, "[%d] _acc_iov_handler proc=%d\n", g_state.rank, proc);
+  fprintf(stderr, "[%d] _acc_iov_handler proc=%d\n", p_config.rank(), proc);
 #endif
 #if DEBUG
   fprintf(stderr, "[%d] _acc_iov_handler header rem=%p loc=%p rem_rank=%d len=%d\n",
-      g_state.rank,
+      p_config.rank(),
       header->remote_address,
       header->local_address,
       header->rank,
@@ -2045,7 +2330,7 @@ void p_Environment::_acc_iov_handler(header_t *header, char *scale, int proc)
 
 #if DEBUG
   fprintf(stderr, "[%d] _acc_iov_handler limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
-      g_state.rank, limit, bytes, src[0], dst[0]);
+      p_config.rank(), limit, bytes, src[0], dst[0]);
 #endif
 
   switch (header->operation) {
@@ -2110,7 +2395,7 @@ void p_Environment::_acc_iov_handler(header_t *header, char *scale, int proc)
   }
   packed_index = 0;
   for (i=0; i<limit; ++i) {
-    reg_entry = reg_cache_find(
+    reg_entry = p_register.find(
         header->rank, dst[i], bytes);
     CMX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, dst[i]);
@@ -2134,7 +2419,7 @@ void p_Environment::_acc_iov_handler(header_t *header, char *scale, int proc)
 void p_Environment::_fence_handler(header_t *header, int proc)
 {
 #if DEBUG
-  fprintf(stderr, "[%d] _fence_handler proc=%d\n", g_state.rank, proc);
+  fprintf(stderr, "[%d] _fence_handler proc=%d\n", p_config.rank(), proc);
 #endif
 
   /* preconditions */
@@ -2143,7 +2428,7 @@ void p_Environment::_fence_handler(header_t *header, int proc)
 #if NEED_ASM_VOLATILE_MEMORY
 #if DEBUG
   fprintf(stderr, "[%d] _fence_handler asm volatile (\"\" : : : \"memory\"); \n",
-      g_state.rank);
+      p_config.rank());
 #endif
   asm volatile ("" : : : "memory"); 
 #endif
@@ -2161,11 +2446,11 @@ void p_Environment::_fetch_and_add_handler(header_t *header, char *payload, int 
   long *value_long = NULL;
 
 #if DEBUG
-  fprintf(stderr, "[%d] _fetch_and_add_handler proc=%d\n", g_state.rank, proc);
+  fprintf(stderr, "[%d] _fetch_and_add_handler proc=%d\n", p_config.rank(), proc);
 #endif
 #if DEBUG
   fprintf(stderr, "[%d] header rem=%p loc=%p rank=%d len=%d\n",
-      g_state.rank,
+      p_config.rank(),
       header->remote_address,
       header->local_address,
       header->rank,
@@ -2174,7 +2459,7 @@ void p_Environment::_fetch_and_add_handler(header_t *header, char *payload, int 
 
   CMX_ASSERT(OP_FETCH_AND_ADD == header->operation);
 
-  reg_entry = reg_cache_find(
+  reg_entry = p_register.find(
       header->rank, header->remote_address, header->length);
   CMX_ASSERT(reg_entry);
   mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
@@ -2208,7 +2493,7 @@ void p_Environment::_swap_handler(header_t *header, char *payload, int proc)
 
 #if DEBUG
   fprintf(stderr, "[%d] _swap_handler rem=%p loc=%p rank=%d len=%d\n",
-      g_state.rank,
+      p_config.rank(),
       header->remote_address,
       header->local_address,
       header->rank,
@@ -2217,7 +2502,7 @@ void p_Environment::_swap_handler(header_t *header, char *payload, int proc)
 
   CMX_ASSERT(OP_SWAP == header->operation);
 
-  reg_entry = reg_cache_find(
+  reg_entry = p_register.find(
       header->rank, header->remote_address, header->length);
   CMX_ASSERT(reg_entry);
   mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
@@ -2249,11 +2534,11 @@ void p_Environment::_mutex_create_handler(header_t *header, int proc)
 
 #if DEBUG
   fprintf(stderr, "[%d] _mutex_create_handler proc=%d num=%d\n",
-      g_state.rank, proc, num);
+      p_config.rank(), proc, num);
 #endif
 
   mutexes[proc] = (int*)malloc(sizeof(int) * num);
-  lq_heads[proc] = (lock_t**)malloc(sizeof(lock_t*) * num);
+  lq_heads[proc].resize(num);
   for (i=0; i<num; ++i) {
     mutexes[proc][i] = UNLOCKED;
     lq_heads[proc][i] = NULL;
@@ -2269,7 +2554,7 @@ void p_Environment::_mutex_destroy_handler(header_t *header, int proc)
   int num = header->length;
 
 #if DEBUG
-  fprintf(stderr, "[%d] _mutex_destroy_handler proc=%d\n", g_state.rank, proc);
+  fprintf(stderr, "[%d] _mutex_destroy_handler proc=%d\n", p_config.rank(), proc);
 #endif
 
   for (i=0; i<num; ++i) {
@@ -2278,7 +2563,7 @@ void p_Environment::_mutex_destroy_handler(header_t *header, int proc)
   }
 
   free(mutexes[proc]);
-  free(lq_heads[proc]);
+  lq_heads[proc].clear();
 
   server_send(NULL, 0, proc);
 }
@@ -2291,7 +2576,7 @@ void p_Environment::_lock_handler(header_t *header, int proc)
 
 #if DEBUG
   fprintf(stderr, "[%d] _lock_handler id=%d in rank=%d req by proc=%d\n",
-      g_state.rank, id, rank, proc);
+      p_config.rank(), id, rank, proc);
 #endif
 
   CMX_ASSERT(0 <= id);
@@ -2304,7 +2589,7 @@ void p_Environment::_lock_handler(header_t *header, int proc)
     lock_t *lock = NULL;
 #if DEBUG
     fprintf(stderr, "[%d] _lq_push rank=%d req_by=%d id=%d\n",
-        g_state.rank, rank, proc, id);
+        p_config.rank(), rank, proc, id);
 #endif
     lock = (lock_t*)malloc(sizeof(lock_t));
     lock->next = NULL;
@@ -2333,7 +2618,7 @@ void p_Environment::_unlock_handler(header_t *header, int proc)
 
 #if DEBUG
   fprintf(stderr, "[%d] _unlock_handler id=%d in rank=%d req by proc=%d\n",
-      g_state.rank, id, rank, proc);
+      p_config.rank(), id, rank, proc);
 #endif
 
   CMX_ASSERT(0 <= id);
@@ -2364,7 +2649,7 @@ void p_Environment::_malloc_handler(
   reg_entry_t *reg_entries = (reg_entry_t*)payload;
 
 #if DEBUG
-  fprintf(stderr, "[%d] _malloc_handler proc=%d\n", g_state.rank, proc);
+  fprintf(stderr, "[%d] _malloc_handler proc=%d\n", p_config.rank(), proc);
 #endif
 
   CMX_ASSERT(header);
@@ -2372,18 +2657,18 @@ void p_Environment::_malloc_handler(
   n = header->length;
 
 #if DEBUG && DEBUG_VERBOSE
-  fprintf(stderr, "[%d] _malloc_handler preconditions complete\n", g_state.rank);
+  fprintf(stderr, "[%d] _malloc_handler preconditions complete\n", p_config.rank());
 #endif
 
   /* insert reg entries into local registration cache */
   for (i=0; i<n; ++i) {
     if (NULL == reg_entries[i].buf) {
 #if DEBUG && DEBUG_VERBOSE
-      fprintf(stderr, "[%d] _malloc_handler found NULL at %d\n", g_state.rank, i);
+      fprintf(stderr, "[%d] _malloc_handler found NULL at %d\n", p_config.rank(), i);
 #endif
     }
     else if (g_state.hostid[reg_entries[i].rank]
-        == g_state.hostid[g_state.rank]) {
+        == g_state.hostid[p_config.rank()]) {
       /* same SMP node, need to mmap */
       /* attach to remote shared memory object */
       void *memory;
@@ -2391,14 +2676,14 @@ void p_Environment::_malloc_handler(
 #if DEBUG && DEBUG_VERBOSE
       fprintf(stderr, "[%d] _malloc_handler registering "
           "rank=%d buf=%p len=%lu name=%s, mapped=%p\n",
-          g_state.rank,
+          p_config.rank(),
           reg_entries[i].rank,
           reg_entries[i].buf,
           (unsigned long)reg_entries[i].len,
           reg_entries[i].name,
           memory);
 #endif
-      (void)reg_cache_insert(
+      (void)p_register.insert(
           reg_entries[i].rank,
           reg_entries[i].buf,
           reg_entries[i].len,
@@ -2411,7 +2696,7 @@ void p_Environment::_malloc_handler(
 #if 0
       /* remote SMP node */
       /* i.e. we know about the mem but don't have local shared access */
-      (void)reg_cache_insert(
+      (void)p_register.insert(
           reg_entries[i].rank,
           reg_entries[i].buf,
           reg_entries[i].len,
@@ -2422,7 +2707,7 @@ void p_Environment::_malloc_handler(
   }
 
 #if DEBUG && DEBUG_VERBOSE
-  fprintf(stderr, "[%d] _malloc_handler finished registrations\n", g_state.rank);
+  fprintf(stderr, "[%d] _malloc_handler finished registrations\n", p_config.rank());
 #endif
 
   server_send(NULL, 0, proc); /* ack */
@@ -2436,37 +2721,37 @@ void p_Environment::_free_handler(header_t *header, char *payload, int proc)
   rank_ptr_t *rank_ptrs = (rank_ptr_t*)payload;
 
 #if DEBUG
-  fprintf(stderr, "[%d] _free_handler proc=%d\n", g_state.rank, proc);
+  fprintf(stderr, "[%d] _free_handler proc=%d\n", p_config.rank(), proc);
 #endif
 
   /* remove all pointers from registration cache */
   for (i=0; i<n; ++i) {
-    if (g_state.rank == rank_ptrs[i].rank) {
+    if (p_config.rank() == rank_ptrs[i].rank) {
 #if DEBUG && DEBUG_VERBOSE
-      fprintf(stderr, "[%d] cmx_free found self at %d\n", g_state.rank, i);
+      fprintf(stderr, "[%d] cmx_free found self at %d\n", p_config.rank(), i);
 #endif
     }
     else if (NULL == rank_ptrs[i].ptr) {
 #if DEBUG && DEBUG_VERBOSE
-      fprintf(stderr, "[%d] _free_handler found NULL at %d\n", g_state.rank, i);
+      fprintf(stderr, "[%d] _free_handler found NULL at %d\n", p_config.rank(), i);
 #endif
     }
     else if (g_state.hostid[rank_ptrs[i].rank]
-        == g_state.hostid[g_state.rank]) {
+        == g_state.hostid[p_config.rank()]) {
       /* same SMP node */
       reg_entry_t *reg_entry = NULL;
       int retval = 0;
 
 #if DEBUG && DEBUG_VERBOSE
-      fprintf(stderr, "[%d] _free_handler same hostid at %d\n", g_state.rank, i);
+      fprintf(stderr, "[%d] _free_handler same hostid at %d\n", p_config.rank(), i);
 #endif
 
       /* find the registered memory */
-      reg_entry = reg_cache_find(rank_ptrs[i].rank, rank_ptrs[i].ptr, 0);
+      reg_entry = p_register.find(rank_ptrs[i].rank, rank_ptrs[i].ptr, 0);
       CMX_ASSERT(reg_entry);
 
 #if DEBUG && DEBUG_VERBOSE
-      fprintf(stderr, "[%d] _free_handler found reg entry\n", g_state.rank);
+      fprintf(stderr, "[%d] _free_handler found reg entry\n", p_config.rank());
 #endif
 
       /* unmap the memory */
@@ -2478,24 +2763,24 @@ void p_Environment::_free_handler(header_t *header, char *payload, int proc)
 
 #if DEBUG && DEBUG_VERBOSE
       fprintf(stderr, "[%d] _free_handler unmapped mapped memory in reg entry\n",
-          g_state.rank);
+          p_config.rank());
 #endif
 
-      reg_cache_delete(rank_ptrs[i].rank, rank_ptrs[i].ptr);
+      p_register.remove(rank_ptrs[i].rank, rank_ptrs[i].ptr);
 
 #if DEBUG && DEBUG_VERBOSE
       fprintf(stderr, "[%d] _free_handler deleted reg cache entry\n",
-          g_state.rank);
+          p_config.rank());
 #endif
 
     }
     else {
 #if 0
-      reg_cache_delete(rank_ptrs[i].rank, rank_ptrs[i].ptr);
+      p_register.remove(rank_ptrs[i].rank, rank_ptrs[i].ptr);
 
 #if DEBUG && DEBUG_VERBOSE
       fprintf(stderr, "[%d] _free_handler deleted reg cache entry\n",
-          g_state.rank);
+          p_config.rank());
 #endif
 #endif
     }
@@ -2512,24 +2797,18 @@ void* p_Environment::_get_offset_memory(reg_entry_t *reg_entry, void *memory)
   CMX_ASSERT(reg_entry);
 #if DEBUG_VERBOSE
   fprintf(stderr, "[%d] _get_offset_memory reg_entry->buf=%p memory=%p\n",
-      g_state.rank, reg_entry->buf, memory);
+      p_config.rank(), reg_entry->buf, memory);
 #endif
   offset = ((char*)memory) - ((char*)reg_entry->buf);
 #if DEBUG_VERBOSE
   fprintf(stderr, "[%d] _get_offset_memory ptrdiff=%lu\n",
-      g_state.rank, (unsigned long)offset);
+      p_config.rank(), (unsigned long)offset);
 #endif
   return (void*)((char*)(reg_entry->mapped)+offset);
 }
 
 
-int p_Environment::_is_master(void)
-{
-  return (g_state.master[g_state.rank] == g_state.rank);
-}
-
-
-int p_Environment::_get_world_rank(p_Group *group, int rank)
+int p_Environment::_get_world_rank(Group *group, int rank)
 {
   int ret = group->getWorldRank(rank);
   if (ret < 0) {
@@ -2544,7 +2823,7 @@ int p_Environment::_get_world_rank(p_Group *group, int rank)
 
 
 /* gets (in group order) corresponding world ranks for entire group */
-int* p_Environment::_get_world_ranks(p_Group *group)
+int* p_Environment::_get_world_ranks(Group *group)
 {
 #if 0
   int i = 0;
@@ -2573,7 +2852,7 @@ int* p_Environment::_get_world_ranks(p_Group *group)
 #if 0
   MPI_Comm comm = igroup->comm;
   int i = 0;
-  int my_world_rank = g_state.rank;
+  int my_world_rank = p_config.rank();
   int *world_ranks = (int*)malloc(sizeof(int)*igroup->size);
   int status;
 
@@ -2616,14 +2895,14 @@ int* p_Environment::_get_world_ranks(p_Group *group)
 
 /* we sometimes need to notify a node master of some event and the rank in
  * charge of doing that is returned by this function */
-int p_Environment::_smallest_world_rank_with_same_hostid(p_Group *group)
+int p_Environment::_smallest_world_rank_with_same_hostid(Group *group)
 {
   int i = 0;
-  int smallest = g_state.rank;
+  int smallest = p_config.rank();
   int *world_ranks = _get_world_ranks(group);
 
   for (i=0; i<group->size(); ++i) {
-    if (g_state.hostid[world_ranks[i]] == g_state.hostid[g_state.rank]) {
+    if (g_state.hostid[world_ranks[i]] == g_state.hostid[p_config.rank()]) {
       /* found same host as me */
       if (world_ranks[i] < smallest) {
         smallest = world_ranks[i];
@@ -2639,14 +2918,14 @@ int p_Environment::_smallest_world_rank_with_same_hostid(p_Group *group)
 
 /* we sometimes need to notify a node master of some event and the rank in
  * charge of doing that is returned by this function */
-int p_Environment::_largest_world_rank_with_same_hostid(p_Group *group)
+int p_Environment::_largest_world_rank_with_same_hostid(Group *group)
 {
   int i = 0;
-  int largest = g_state.rank;
+  int largest = p_config.rank();
   int *world_ranks = _get_world_ranks(group);
 
   for (i=0; i<group->size(); ++i) {
-    if (g_state.hostid[world_ranks[i]] == g_state.hostid[g_state.rank]) {
+    if (g_state.hostid[world_ranks[i]] == g_state.hostid[p_config.rank()]) {
       /* found same host as me */
       if (world_ranks[i] > largest) {
         largest = world_ranks[i];
@@ -2668,7 +2947,7 @@ void* p_Environment::_shm_create(const char *name, size_t size)
 
 #if DEBUG
   fprintf(stderr, "[%d] _shm_create(%s, %lu)\n",
-      g_state.rank, name, (unsigned long)size);
+      p_config.rank(), name, (unsigned long)size);
 #endif
 
   /* create shared memory segment */
@@ -2720,7 +2999,7 @@ void* p_Environment::_shm_attach(const char *name, size_t size)
 
 #if DEBUG
   fprintf(stderr, "[%d] _shm_attach(%s, %lu)\n",
-      g_state.rank, name, (unsigned long)size);
+      p_config.rank(), name, (unsigned long)size);
 #endif
 
   /* attach to shared memory segment */
@@ -2786,7 +3065,7 @@ void p_Environment::check_mpi_retval(int retval, const char *file, int line)
   if (MPI_SUCCESS != retval) {
     const char *msg = str_mpi_retval(retval);
     fprintf(stderr, "{%d} MPI Error: %s: line %d: %s\n",
-        g_state.rank, file, line, msg);
+        p_config.rank(), file, line, msg);
     MPI_Abort(g_state.comm, retval);
   }
 }
@@ -2831,7 +3110,7 @@ void p_Environment::server_send(void *buf, int count, int dest)
 
 #if DEBUG
   fprintf(stderr, "[%d] server_send(buf=%p, count=%d, dest=%d)\n",
-      g_state.rank, buf, count, dest);
+      p_config.rank(), buf, count, dest);
 #endif
 
   retval = MPI_Send(buf, count, MPI_CHAR, dest,
@@ -2848,7 +3127,7 @@ void p_Environment::server_send_datatype(void *buf, MPI_Datatype dt, int dest)
 
 #if DEBUG
   fprintf(stderr, "[%d] server_send_datatype(buf=%p, ..., dest=%d)\n",
-      g_state.rank, buf, dest);
+      p_config.rank(), buf, dest);
 #endif
 
   retval = MPI_Send(buf, 1, dt, dest, CMX_TAG, g_state.comm);
@@ -2905,9 +3184,9 @@ void p_Environment::nb_send_common(void *buf, int count, int dest, _cmx_request 
   nb_count_event += 1;
   nb_count_send += 1;
 
-  message = (message_t*)malloc(sizeof(message_t));
+  message = new message_t;
   message->next = NULL;
-  message->message = buf;
+  message->message = static_cast<char*>(buf);
   message->need_free = need_free;
   message->stride = NULL;
   message->iov = NULL;
@@ -2921,8 +3200,8 @@ void p_Environment::nb_send_common(void *buf, int count, int dest, _cmx_request 
   }
   nb->send_tail = message;
 
-  retval = MPI_Isend(buf, count, MPI_CHAR, dest, CMX_TAG, g_state.comm,
-      &(message->request));
+  retval = MPI_Isend(buf, count, MPI_CHAR, dest, CMX_TAG,
+      p_config.global_comm(), &(message->request));
   _translate_mpi_error(retval,"nb_send_common:MPI_Isend");
   CHECK_MPI_RETVAL(retval);
 }
@@ -2939,9 +3218,9 @@ void p_Environment::nb_send_datatype(void *buf, MPI_Datatype dt, int dest, _cmx_
   nb_count_event += 1;
   nb_count_send += 1;
 
-  message = (message_t*)malloc(sizeof(message_t));
+  message = new message_t;
   message->next = NULL;
-  message->message = buf;
+  message->message = static_cast<char*>(buf);
   message->need_free = 0;
   message->stride = NULL;
   message->iov = NULL;
@@ -2985,16 +3264,16 @@ void p_Environment::nb_recv_packed(void *buf, int count, int source, _cmx_reques
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_recv_packed(buf=%p, count=%d, source=%d, nb=%p)\n",
-      g_state.rank, buf, count, source, nb);
+      p_config.rank(), buf, count, source, nb);
 #endif
 
   nb->recv_size += 1;
   nb_count_event += 1;
   nb_count_recv += 1;
 
-  message = (message_t*)malloc(sizeof(message_t));
+  message = new message_t;
   message->next = NULL;
-  message->message = buf;
+  message->message = static_cast<char*>(buf);
   message->need_free = 1;
   message->stride = stride;
   message->iov = NULL;
@@ -3025,16 +3304,16 @@ void p_Environment::nb_recv_datatype(void *buf, MPI_Datatype dt, int source, _cm
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_recv_datatype(buf=%p, count=%d, source=%d, nb=%p)\n",
-      g_state.rank, buf, count, source, nb);
+      p_config.rank(), buf, count, source, nb);
 #endif
 
   nb->recv_size += 1;
   nb_count_event += 1;
   nb_count_recv += 1;
 
-  message = (message_t*)malloc(sizeof(message_t));
+  message = new message_t;
   message->next = NULL;
-  message->message = buf;
+  message->message = static_cast<char*>(buf);
   message->need_free = 0;
   message->stride = NULL;
   message->iov = NULL;
@@ -3064,16 +3343,16 @@ void p_Environment::nb_recv_iov(void *buf, int count, int source, _cmx_request *
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_recv_iov(buf=%p, count=%d, source=%d, nb=%p)\n",
-      g_state.rank, buf, count, source, nb);
+      p_config.rank(), buf, count, source, nb);
 #endif
 
   nb->recv_size += 1;
   nb_count_event += 1;
   nb_count_recv += 1;
 
-  message = (message_t*)malloc(sizeof(message_t));
+  message = new message_t;
   message->next = NULL;
-  message->message = buf;
+  message->message = static_cast<char*>(buf);
   message->need_free = 1;
   message->stride = NULL;
   message->iov = iov;
@@ -3104,14 +3383,14 @@ void p_Environment::nb_recv(void *buf, int count, int source, _cmx_request *nb)
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_recv(buf=%p, count=%d, source=%d, nb=%p)\n",
-      g_state.rank, buf, count, source, nb);
+      p_config.rank(), buf, count, source, nb);
 #endif
 
   nb->recv_size += 1;
   nb_count_event += 1;
   nb_count_recv += 1;
 
-  message = (message_t*)malloc(sizeof(message_t));
+  message = new message_t;
   message->next = NULL;
   message->message = NULL;
   message->need_free = 0;
@@ -3154,7 +3433,7 @@ int p_Environment::nb_get_handle_index()
 void p_Environment::nb_wait_for_send1(_cmx_request *nb)
 {
 #if DEBUG
-  fprintf(stderr, "[%d] nb_wait_for_send1(nb=%p)\n", g_state.rank, nb);
+  fprintf(stderr, "[%d] nb_wait_for_send1(nb=%p)\n", p_config.rank(), nb);
 #endif
 
   CMX_ASSERT(NULL != nb);
@@ -3170,7 +3449,7 @@ void p_Environment::nb_wait_for_send1(_cmx_request *nb)
     CHECK_MPI_RETVAL(retval);
 
     if (nb->send_head->need_free) {
-      free(nb->send_head->message);
+      delete nb->send_head->message;
     }
 
     if (MPI_DATATYPE_NULL != nb->send_head->datatype) {
@@ -3200,7 +3479,7 @@ int p_Environment::nb_test_for_send1(_cmx_request *nb, message_t **save_send_hea
     message_t **prev)
 {
 #if DEBUG
-  fprintf(stderr, "[%d] nb_test_for_send1(nb=%p)\n", g_state.rank, nb);
+  fprintf(stderr, "[%d] nb_test_for_send1(nb=%p)\n", p_config.rank(), nb);
 #endif
 
   CMX_ASSERT(NULL != nb);
@@ -3218,7 +3497,7 @@ int p_Environment::nb_test_for_send1(_cmx_request *nb, message_t **save_send_hea
 
     if (flag) {
       if (nb->send_head->need_free) {
-        free(nb->send_head->message);
+        delete nb->send_head->message;
       }
 
       if (MPI_DATATYPE_NULL != nb->send_head->datatype) {
@@ -3231,7 +3510,7 @@ int p_Environment::nb_test_for_send1(_cmx_request *nb, message_t **save_send_hea
       if (*prev) (*prev)->next=nb->send_head->next;
       nb->send_head = nb->send_head->next;
       *save_send_head = NULL;
-      free(message_to_free);
+      delete message_to_free;
 
       CMX_ASSERT(nb->send_size > 0);
       nb->send_size -= 1;
@@ -3254,7 +3533,7 @@ int p_Environment::nb_test_for_send1(_cmx_request *nb, message_t **save_send_hea
 void p_Environment::nb_wait_for_recv1(_cmx_request *nb)
 {
 #if DEBUG
-  fprintf(stderr, "[%d] nb_wait_for_recv1(nb=%p)\n", g_state.rank, nb);
+  fprintf(stderr, "[%d] nb_wait_for_recv1(nb=%p)\n", p_config.rank(), nb);
 #endif
 
   CMX_ASSERT(NULL != nb);
@@ -3279,7 +3558,7 @@ void p_Environment::nb_wait_for_recv1(_cmx_request *nb)
       CMX_ASSERT(stride->stride_levels);
       unpack((char*)nb->recv_head->message, (char*)stride->ptr,
           stride->stride, stride->count, stride->stride_levels);
-      free(stride);
+      delete stride;
     }
 
     if (NULL != nb->recv_head->iov) {
@@ -3291,13 +3570,13 @@ void p_Environment::nb_wait_for_recv1(_cmx_request *nb)
         (void)memcpy(iov->dst[i], &message[off], iov->bytes);
         off += iov->bytes;
       }
-      free(iov->src);
-      free(iov->dst);
-      free(iov);
+      delete iov->src;
+      delete iov->dst;
+      delete iov;
     }
 
     if (nb->recv_head->need_free) {
-      free(nb->recv_head->message);
+      delete nb->recv_head->message;
     }
 
     if (MPI_DATATYPE_NULL != nb->recv_head->datatype) {
@@ -3308,7 +3587,7 @@ void p_Environment::nb_wait_for_recv1(_cmx_request *nb)
 
     message_to_free = nb->recv_head;
     nb->recv_head = nb->recv_head->next;
-    free(message_to_free);
+    delete message_to_free;
 
     CMX_ASSERT(nb->recv_size > 0);
     nb->recv_size -= 1;
@@ -3327,7 +3606,7 @@ int p_Environment::nb_test_for_recv1(_cmx_request *nb, message_t **save_recv_hea
     message_t **prev)
 {
 #if DEBUG
-  fprintf(stderr, "[%d] nb_wait_for_recv1(nb=%p)\n", g_state.rank, nb);
+  fprintf(stderr, "[%d] nb_wait_for_recv1(nb=%p)\n", p_config.rank(), nb);
 #endif
 
   CMX_ASSERT(NULL != nb);
@@ -3354,7 +3633,7 @@ int p_Environment::nb_test_for_recv1(_cmx_request *nb, message_t **save_recv_hea
         CMX_ASSERT(stride->stride_levels);
         unpack((char*)nb->recv_head->message, (char*)stride->ptr,
             stride->stride, stride->count, stride->stride_levels);
-        free(stride);
+        delete stride;
       }
 
       if (NULL != nb->recv_head->iov) {
@@ -3366,9 +3645,9 @@ int p_Environment::nb_test_for_recv1(_cmx_request *nb, message_t **save_recv_hea
           (void)memcpy(iov->dst[i], &message[off], iov->bytes);
           off += iov->bytes;
         }
-        free(iov->src);
-        free(iov->dst);
-        free(iov);
+        delete iov->src;
+        delete iov->dst;
+        delete iov;
       }
 
       if (nb->recv_head->need_free) {
@@ -3408,9 +3687,9 @@ int p_Environment::nb_test_for_recv1(_cmx_request *nb, message_t **save_recv_hea
 void p_Environment::nb_wait_for_all(_cmx_request *nb)
 {
 #if DEBUG
-  fprintf(stderr, "[%d] nb_wait_for_all(nb=%p)\n", g_state.rank, nb);
+  fprintf(stderr, "[%d] nb_wait_for_all(nb=%p)\n", p_config.rank(), nb);
 #endif
-  int world_proc = g_state.rank;
+  int world_proc = p_config.rank();
 
   if (nb->in_use == 0) return;
 
@@ -3433,7 +3712,7 @@ void p_Environment::nb_wait_for_all(_cmx_request *nb)
 int p_Environment::nb_test_for_all(_cmx_request *nb)
 {
 #if DEBUG
-  fprintf(stderr, "[%d] nb_test_for_all(nb=%p)\n", g_state.rank, nb);
+  fprintf(stderr, "[%d] nb_test_for_all(nb=%p)\n", p_config.rank(), nb);
 #endif
   int ret = 0;
   message_t *save_send_head = NULL;
@@ -3488,12 +3767,12 @@ void p_Environment::nb_put(void *src, void *dst, int bytes, int proc, _cmx_reque
 
 #if DEBUG
   printf("[%d] nb_put(src=%p, dst=%p, bytes=%d, proc=%d, nb=%p)\n",
-      g_state.rank, src, dst, bytes, proc, nb);
+      p_config.rank(), src, dst, bytes, proc, nb);
 #endif
 
   if (CMX_ENABLE_PUT_SELF) {
     /* put to self */
-    if (g_state.rank == proc) {
+    if (p_config.rank() == proc) {
       if (fence_array[g_state.master[proc]]) {
         _fence_master(g_state.master[proc]);
       }
@@ -3504,8 +3783,8 @@ void p_Environment::nb_put(void *src, void *dst, int bytes, int proc, _cmx_reque
 
   if (CMX_ENABLE_PUT_SMP) {
     /* put to SMP node */
-    // if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) 
-    if (g_state.master[proc] == g_state.master[g_state.rank]) 
+    // if (g_state.hostid[proc] == g_state.hostid[p_config.rank()]) 
+    if (g_state.master[proc] == g_state.master[p_config.rank()]) 
     {
       reg_entry_t *reg_entry = NULL;
       void *mapped_offset = NULL;
@@ -3514,7 +3793,7 @@ void p_Environment::nb_put(void *src, void *dst, int bytes, int proc, _cmx_reque
         _fence_master(g_state.master[proc]);
       }
 
-      reg_entry = reg_cache_find(proc, dst, bytes);
+      reg_entry = p_register.find(proc, dst, bytes);
       CMX_ASSERT(reg_entry);
       mapped_offset = _get_offset_memory(reg_entry, dst);
       (void)memcpy(mapped_offset, src, bytes);
@@ -3538,12 +3817,12 @@ void p_Environment::nb_put(void *src, void *dst, int bytes, int proc, _cmx_reque
     else {
       message_size = sizeof(header_t);
     }
-    message = (char*)malloc(message_size);
-    header = (header_t*)message;
+    message = new char[message_size];
+    header = reinterpret_cast<header_t*>(message);
     header->operation = OP_PUT;
     MAYBE_MEMSET(header, 0, sizeof(header_t));
-    header->remote_address = dst;
-    header->local_address = src;
+    header->remote_address = static_cast<char*>(dst);
+    header->local_address = static_cast<char*>(src);
     header->rank = proc;
     header->length = bytes;
     if (use_eager) {
@@ -3578,7 +3857,7 @@ void p_Environment::nb_get(void *src, void *dst, int bytes, int proc, _cmx_reque
 
   if (CMX_ENABLE_GET_SELF) {
     /* get from self */
-    if (g_state.rank == proc) {
+    if (p_config.rank() == proc) {
       if (fence_array[g_state.master[proc]]) {
         _fence_master(g_state.master[proc]);
       }
@@ -3589,8 +3868,8 @@ void p_Environment::nb_get(void *src, void *dst, int bytes, int proc, _cmx_reque
 
   if (CMX_ENABLE_GET_SMP) {
     /* get from SMP node */
-    // if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) 
-    if (g_state.master[proc] == g_state.master[g_state.rank]) 
+    // if (g_state.hostid[proc] == g_state.hostid[p_config.rank()]) 
+    if (g_state.master[proc] == g_state.master[p_config.rank()]) 
     {
       reg_entry_t *reg_entry = NULL;
       void *mapped_offset = NULL;
@@ -3599,7 +3878,7 @@ void p_Environment::nb_get(void *src, void *dst, int bytes, int proc, _cmx_reque
         _fence_master(g_state.master[proc]);
       }
 
-      reg_entry = reg_cache_find(proc, src, bytes);
+      reg_entry = p_register.find(proc, src, bytes);
       CMX_ASSERT(reg_entry);
       mapped_offset = _get_offset_memory(reg_entry, src);
       (void)memcpy(dst, mapped_offset, bytes);
@@ -3612,12 +3891,12 @@ void p_Environment::nb_get(void *src, void *dst, int bytes, int proc, _cmx_reque
     int master_rank = -1;
 
     master_rank = g_state.master[proc];
-    header = (header_t*)malloc(sizeof(header_t));
+    header = new header_t;
     CMX_ASSERT(header);
     MAYBE_MEMSET(header, 0, sizeof(header_t));
     header->operation = OP_GET;
-    header->remote_address = src;
-    header->local_address = dst;
+    header->remote_address = static_cast<char*>(src);
+    header->local_address = static_cast<char*>(dst);
     header->rank = proc;
     header->length = bytes;
     {
@@ -3650,7 +3929,7 @@ void p_Environment::nb_acc(int datatype, void *scale,
 
   if (CMX_ENABLE_ACC_SELF) {
     /* acc to self */
-    if (g_state.rank == proc) {
+    if (p_config.rank() == proc) {
       if (fence_array[g_state.master[proc]]) {
         _fence_master(g_state.master[proc]);
       }
@@ -3663,8 +3942,8 @@ void p_Environment::nb_acc(int datatype, void *scale,
 
   if (CMX_ENABLE_ACC_SMP) {
     /* acc to same SMP node */
-    // if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) 
-    if (g_state.master[proc] == g_state.master[g_state.rank]) 
+    // if (g_state.hostid[proc] == g_state.hostid[p_config.rank()]) 
+    if (g_state.master[proc] == g_state.master[p_config.rank()]) 
     {
       reg_entry_t *reg_entry = NULL;
       void *mapped_offset = NULL;
@@ -3673,7 +3952,7 @@ void p_Environment::nb_acc(int datatype, void *scale,
         _fence_master(g_state.master[proc]);
       }
 
-      reg_entry = reg_cache_find(proc, dst, bytes);
+      reg_entry = p_register.find(proc, dst, bytes);
       CMX_ASSERT(reg_entry);
       mapped_offset = _get_offset_memory(reg_entry, dst);
       sem_wait(semaphores[proc]);
@@ -3732,12 +4011,12 @@ void p_Environment::nb_acc(int datatype, void *scale,
     else {
       message_size = sizeof(header_t) + scale_size;
     }
-    message = (char*)malloc(message_size);
+    message = new char[message_size];
     CMX_ASSERT(message);
     header = (header_t*)message;
     header->operation = operation;
-    header->remote_address = dst;
-    header->local_address = src;
+    header->remote_address = static_cast<char*>(dst);
+    header->local_address = static_cast<char*>(src);
     header->rank = proc;
     header->length = bytes;
     (void)memcpy(message+sizeof(header_t), scale, scale_size);
@@ -3775,7 +4054,7 @@ void p_Environment::nb_puts(
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_puts(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
-      g_state.rank, src, src_stride, dst, dst_stride,
+      p_config.rank(), src, src_stride, dst, dst_stride,
       count[0], stride_levels, proc, nb);
 #endif
 
@@ -3787,9 +4066,9 @@ void p_Environment::nb_puts(
 
   /* if not a strided put to self or SMP, use datatype algorithm */
   if (CMX_ENABLE_PUT_DATATYPE
-      && (!CMX_ENABLE_PUT_SELF || g_state.rank != proc)
+      && (!CMX_ENABLE_PUT_SELF || p_config.rank() != proc)
       && (!CMX_ENABLE_PUT_SMP
-        || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+        || g_state.hostid[proc] != g_state.hostid[p_config.rank()])
       && (_packed_size(src_stride, count, stride_levels) > CMX_PUT_DATATYPE_THRESHOLD)) {
     nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
     return;
@@ -3797,9 +4076,9 @@ void p_Environment::nb_puts(
 
   /* if not a strided put to self or SMP, use packed algorithm */
   if (CMX_ENABLE_PUT_PACKED
-      && (!CMX_ENABLE_PUT_SELF || g_state.rank != proc)
+      && (!CMX_ENABLE_PUT_SELF || p_config.rank() != proc)
       && (!CMX_ENABLE_PUT_SMP
-        || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+        || g_state.hostid[proc] != g_state.hostid[p_config.rank()])) {
     nb_puts_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
     return;
   }
@@ -3862,7 +4141,7 @@ void p_Environment::nb_puts_packed(
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_puts_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
-      g_state.rank, src, src_stride, dst, dst_stride,
+      p_config.rank(), src, src_stride, dst, dst_stride,
       count[0], stride_levels, proc, nb);
 #endif
 
@@ -3892,10 +4171,10 @@ void p_Environment::nb_puts_packed(
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_puts_packed stride_levels=%d, count[0]=%d\n",
-      g_state.rank, stride_levels, count[0]);
+      p_config.rank(), stride_levels, count[0]);
   for (i=0; i<stride_levels; ++i) {
     printf("[%d] stride[%d]=%d count[%d+1]=%d\n",
-        g_state.rank, i, stride.stride[i], i, stride.count[i+1]);
+        p_config.rank(), i, stride.stride[i], i, stride.count[i+1]);
   }
 #endif
 
@@ -3920,10 +4199,10 @@ void p_Environment::nb_puts_packed(
     else {
       message_size = sizeof(header_t)+sizeof(stride_t);
     }
-    message = (char*)malloc(message_size);
+    message = new char[message_size];
     header = (header_t*)message;
     header->operation = OP_PUT_PACKED;
-    header->remote_address = dst;
+    header->remote_address = static_cast<char*>(dst);
     header->local_address = NULL;
     header->rank = proc;
     header->length = packed_index;
@@ -3932,7 +4211,7 @@ void p_Environment::nb_puts_packed(
       (void)memcpy(message+sizeof(header_t)+sizeof(stride_t),
           packed_buffer, packed_index);
       nb_send_header(message, message_size, master_rank, nb);
-      free(packed_buffer);
+      delete [] packed_buffer;
     }
     else {
       /* we send the buffer backwards */
@@ -3971,7 +4250,7 @@ void p_Environment::nb_puts_datatype(
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_puts_datatype(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
-      g_state.rank, src_ptr, src_stride_ar, dst_ptr, dst_stride_ar,
+      p_config.rank(), src_ptr, src_stride_ar, dst_ptr, dst_stride_ar,
       count[0], stride_levels, proc, nb);
 #endif
 
@@ -4002,10 +4281,10 @@ void p_Environment::nb_puts_datatype(
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_puts_datatype stride_levels=%d, count[0]=%d\n",
-      g_state.rank, stride_levels, count[0]);
+      p_config.rank(), stride_levels, count[0]);
   for (i=0; i<stride_levels; ++i) {
     fprintf(stderr, "[%d] stride[%d]=%d count[%d+1]=%d\n",
-        g_state.rank, i, stride.stride[i], i, stride.count[i+1]);
+        p_config.rank(), i, stride.stride[i], i, stride.count[i+1]);
   }
 #endif
 
@@ -4024,11 +4303,11 @@ void p_Environment::nb_puts_datatype(
     /* only fence on the master */
     fence_array[master_rank] = 1;
     message_size = sizeof(header_t) + sizeof(stride_t);
-    message = (char*)malloc(message_size);
-    header = (header_t*)message;
+    message = new char[message_size];
+    header = reinterpret_cast<header_t*>(message);
     MAYBE_MEMSET(header, 0, sizeof(header_t));
     header->operation = OP_PUT_DATATYPE;
-    header->remote_address = dst_ptr;
+    header->remote_address = static_cast<char*>(dst_ptr);
     header->local_address = NULL;
     header->rank = proc;
     header->length = 0;
@@ -4058,9 +4337,9 @@ void p_Environment::nb_gets(
 
   /* if not a strided get from self or SMP, use datatype algorithm */
   if (CMX_ENABLE_GET_DATATYPE
-      && (!CMX_ENABLE_GET_SELF || g_state.rank != proc)
+      && (!CMX_ENABLE_GET_SELF || p_config.rank() != proc)
       && (!CMX_ENABLE_GET_SMP
-        || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+        || g_state.hostid[proc] != g_state.hostid[p_config.rank()])
       && (_packed_size(src_stride, count, stride_levels) > CMX_GET_DATATYPE_THRESHOLD)) {
     nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
     return;
@@ -4068,9 +4347,9 @@ void p_Environment::nb_gets(
 
   /* if not a strided get from self or SMP, use packed algorithm */
   if (CMX_ENABLE_GET_PACKED
-      && (!CMX_ENABLE_GET_SELF || g_state.rank != proc)
+      && (!CMX_ENABLE_GET_SELF || p_config.rank() != proc)
       && (!CMX_ENABLE_GET_SMP
-        || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+        || g_state.hostid[proc] != g_state.hostid[p_config.rank()])) {
     nb_gets_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
     return;
   }
@@ -4132,7 +4411,7 @@ void p_Environment::nb_gets_packed(
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_gets_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
-      g_state.rank, src, src_stride, dst, dst_stride,
+      p_config.rank(), src, src_stride, dst, dst_stride,
       count[0], stride_levels, proc, nb);
 #endif
 
@@ -4147,7 +4426,7 @@ void p_Environment::nb_gets_packed(
   CMX_ASSERT(stride_levels < CMX_MAX_STRIDE_LEVEL);
 
   /* copy src info into structure */
-  stride_src.ptr = src;
+  stride_src.ptr = static_cast<char*>(src);
   stride_src.stride_levels = stride_levels;
   stride_src.count[0] = count[0];
   for (i=0; i<stride_levels; ++i) {
@@ -4163,9 +4442,9 @@ void p_Environment::nb_gets_packed(
   CMX_ASSERT(stride_src.stride_levels < CMX_MAX_STRIDE_LEVEL);
 
   /* copy dst info into structure */
-  stride_dst = (stride_t*)malloc(sizeof(stride_t));
+  stride_dst = new stride_t;
   CMX_ASSERT(stride_dst);
-  stride_dst->ptr = dst;
+  stride_dst->ptr = static_cast<char*>(dst);
   stride_dst->stride_levels = stride_levels;
   stride_dst->count[0] = count[0];
   for (i=0; i<stride_levels; ++i) {
@@ -4188,16 +4467,16 @@ void p_Environment::nb_gets_packed(
     header_t *header = NULL;
     int master_rank = -1;
 
-    master_rank = g_state.master[proc];
+    master_rank = p_config.master(proc);
 
     message_size = sizeof(header_t) + sizeof(stride_t);
-    message = (char*)malloc(message_size);
-    header = (header_t*)message;
+    message = new char[message_size];
+    header = reinterpret_cast<header_t*>(message);
     CMX_ASSERT(header);
     MAYBE_MEMSET(header, 0, sizeof(header_t));
     header->operation = OP_GET_PACKED;
-    header->remote_address = src;
-    header->local_address = dst;
+    header->remote_address = static_cast<char*>(src);
+    header->local_address = static_cast<char*>(dst);
     header->rank = proc;
     header->length = 0;
 
@@ -4241,7 +4520,7 @@ void p_Environment::nb_gets_datatype(
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_gets_datatype(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
-      g_state.rank, src, src_stride, dst, dst_stride,
+      p_config.rank(), src, src_stride, dst, dst_stride,
       count[0], stride_levels, proc, nb);
 #endif
 #if DEBUG
@@ -4268,7 +4547,7 @@ void p_Environment::nb_gets_datatype(
 
   /* copy src info into structure */
   MAYBE_MEMSET(&stride_src, 0, sizeof(header_t));
-  stride_src.ptr = src;
+  stride_src.ptr = static_cast<char*>(src);
   stride_src.stride_levels = stride_levels;
   stride_src.count[0] = count[0];
   for (i=0; i<stride_levels; ++i) {
@@ -4290,16 +4569,16 @@ void p_Environment::nb_gets_datatype(
     int master_rank = -1;
     int ierr;
 
-    master_rank = g_state.master[proc];
+    master_rank = p_config.master(proc);
 
     message_size = sizeof(header_t) + sizeof(stride_t);
-    message = (char*)malloc(message_size);
-    header = (header_t*)message;
+    message = new char[message_size];
+    header = reinterpret_cast<header_t*>(message);
     CMX_ASSERT(header);
     MAYBE_MEMSET(header, 0, sizeof(header_t));
     header->operation = OP_GET_DATATYPE;
-    header->remote_address = src;
-    header->local_address = dst;
+    header->remote_address = static_cast<char*>(src);
+    header->local_address = static_cast<char*>(dst);
     header->rank = proc;
     header->length = 0;
 
@@ -4336,9 +4615,9 @@ void p_Environment::nb_accs(
 
   /* if not a strided acc to self or SMP, use packed algorithm */
   if (CMX_ENABLE_ACC_PACKED
-      && (!CMX_ENABLE_ACC_SELF || g_state.rank != proc)
+      && (!CMX_ENABLE_ACC_SELF || p_config.rank() != proc)
       && (!CMX_ENABLE_ACC_SMP
-        || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+        || g_state.hostid[proc] != g_state.hostid[p_config.rank()])) {
     nb_accs_packed(datatype, scale, src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
     return;
   }
@@ -4404,7 +4683,7 @@ void p_Environment::nb_accs_packed(
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_accs_packed(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
-      g_state.rank, src, src_stride, dst, dst_stride,
+      p_config.rank(), src, src_stride, dst, dst_stride,
       count[0], stride_levels, proc, nb);
 #endif
 
@@ -4420,7 +4699,7 @@ void p_Environment::nb_accs_packed(
   CMX_ASSERT(stride_levels < CMX_MAX_STRIDE_LEVEL);
 
   /* copy dst info into structure */
-  stride.ptr = dst;
+  stride.ptr = static_cast<char*>(dst);
   stride.stride_levels = stride_levels;
   stride.count[0] = count[0];
   for (i=0; i<stride_levels; ++i) {
@@ -4438,10 +4717,10 @@ void p_Environment::nb_accs_packed(
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_accs_packed stride_levels=%d, count[0]=%d\n",
-      g_state.rank, stride_levels, count[0]);
+      p_config.rank(), stride_levels, count[0]);
   for (i=0; i<stride_levels; ++i) {
     printf("[%d] stride[%d]=%d count[%d+1]=%d\n",
-        g_state.rank, i, stride.stride[i], i, stride.count[i+1]);
+        p_config.rank(), i, stride.stride[i], i, stride.count[i+1]);
   }
 #endif
 
@@ -4503,7 +4782,7 @@ void p_Environment::nb_accs_packed(
     CMX_ASSERT(message);
     header = (header_t*)message;
     header->operation = operation;
-    header->remote_address = dst;
+    header->remote_address = static_cast<char*>(dst);
     header->local_address = NULL;
     header->rank = proc;
     header->length = packed_index;
@@ -4547,9 +4826,9 @@ void p_Environment::nb_putv(
   for (i=0; i<iov_len; ++i) {
     /* if not a vector put to self, use packed algorithm */
     if (CMX_ENABLE_PUT_IOV
-        && (!CMX_ENABLE_PUT_SELF || g_state.rank != proc)
+        && (!CMX_ENABLE_PUT_SELF || p_config.rank() != proc)
         && (!CMX_ENABLE_PUT_SMP
-          || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+          || g_state.hostid[proc] != g_state.hostid[p_config.rank()])) {
       nb_putv_packed(&iov[i], proc, nb);
     }
     else {
@@ -4587,7 +4866,7 @@ void p_Environment::nb_putv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_putv_packed limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
-      g_state.rank, limit, bytes, src[0], dst[0]);
+      p_config.rank(), limit, bytes, src[0], dst[0]);
 #endif
 
   /* allocate compressed iov */
@@ -4651,9 +4930,9 @@ void p_Environment::nb_getv(
   for (i=0; i<iov_len; ++i) {
     /* if not a vector get from self, use packed algorithm */
     if (CMX_ENABLE_GET_IOV
-        && (!CMX_ENABLE_GET_SELF || g_state.rank != proc)
+        && (!CMX_ENABLE_GET_SELF || p_config.rank() != proc)
         && (!CMX_ENABLE_GET_SMP
-          || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+          || g_state.hostid[proc] != g_state.hostid[p_config.rank()])) {
       nb_getv_packed(&iov[i], proc, nb);
     }
     else {
@@ -4690,7 +4969,7 @@ void p_Environment::nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_getv_packed limit=%d bytes=%d src[0]=%p dst[0]=%p\n",
-      g_state.rank, limit, bytes, src[0], dst[0]);
+      p_config.rank(), limit, bytes, src[0], dst[0]);
 #endif
 
   /* allocate compressed iov */
@@ -4725,7 +5004,7 @@ void p_Environment::nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_getv_packed limit=%d bytes=%d src[0]=%p dst[0]=%p copy\n",
-      g_state.rank, iov_copy->count, iov_copy->bytes,
+      p_config.rank(), iov_copy->count, iov_copy->bytes,
       iov_copy->src[0], iov_copy->dst[0]);
 #endif
 
@@ -4762,9 +5041,9 @@ void p_Environment::nb_accv(
   for (i=0; i<iov_len; ++i) {
     /* if not a vector acc to self, use packed algorithm */
     if (CMX_ENABLE_ACC_IOV
-        && (!CMX_ENABLE_ACC_SELF || g_state.rank != proc)
+        && (!CMX_ENABLE_ACC_SELF || p_config.rank() != proc)
         && (!CMX_ENABLE_ACC_SMP
-          || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+          || g_state.hostid[proc] != g_state.hostid[p_config.rank()])) {
       nb_accv_packed(datatype, scale, &iov[i], proc, nb);
     }
     else {
@@ -4804,7 +5083,7 @@ void p_Environment::nb_accv_packed(
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_accv_packed limit=%d bytes=%d loc[0]=%p rem_offset[0]=%d\n",
-      g_state.rank, limit, bytes, loc[0], rem[0]);
+      p_config.rank(), limit, bytes, loc[0], rem[0]);
 #endif
 
   /* allocate compressed iov */
@@ -4905,9 +5184,9 @@ void p_Environment::_translate_mpi_error(int ierr, const char* location)
   if (ierr == MPI_SUCCESS) return;
   char err_string[MPI_MAX_ERROR_STRING];
   int len;
-  fprintf(stderr,"p[%d] Error in %s\n",g_state.rank,location);
+  fprintf(stderr,"p[%d] Error in %s\n",p_config.rank(),location);
   MPI_Error_string(ierr,err_string,&len);
-  fprintf(stderr,"p[%d] MPI_Error: %s\n",g_state.rank,err_string);
+  fprintf(stderr,"p[%d] MPI_Error: %s\n",p_config.rank(),err_string);
 }
 
 /**
@@ -4945,7 +5224,7 @@ void p_Environment::strided_to_subarray_dtype(int *stride_array, int *count,
           "stride_array[%d]: %d\n"
           "array_of_sizes[%d]: %d\n"
           "array_of_subsizes[%d]: %d\n",
-          g_state.rank,
+          p_config.rank(),
           stride,
           i,stride_array[i],
           i,array_of_sizes[i],
@@ -4959,7 +5238,7 @@ void p_Environment::strided_to_subarray_dtype(int *stride_array, int *count,
 #if DEBUG
   for (i=0; i<ndims; i++) {
     fprintf(stderr, "p[%d] ndims: %d sizes[%d]: %d subsizes[%d]: %d starts[%d]: %d\n",
-        g_state.rank,
+        p_config.rank(),
         ndims,
         i,array_of_sizes[i],
         i,array_of_subsizes[i],
@@ -4974,14 +5253,14 @@ void p_Environment::strided_to_subarray_dtype(int *stride_array, int *count,
   if (MPI_SUCCESS != ierr) {
     fprintf(stderr, "p[%d] Error forming MPI_Datatype for one-sided strided operation."
         " Check that stride dimensions are compatible with local block"
-        " dimensions\n",g_state.rank);
+        " dimensions\n",p_config.rank());
     for (i=0; i<levels; i++) {
       fprintf(stderr, "p[%d] count[%d]: %d stride[%d]: %d\n",
-          g_state.rank,
+          p_config.rank(),
           i,count[i],
           i,stride_array[i]);
     }
-    fprintf(stderr, "p[%d] count[%d]: %d\n",g_state.rank,i,count[i]);
+    fprintf(stderr, "p[%d] count[%d]: %d\n",p_config.rank(),i,count[i]);
     _translate_mpi_error(ierr,"strided_to_subarray_dtype:MPI_Type_create_subarray");
   }
 }
@@ -4993,26 +5272,14 @@ void p_Environment::_group_init(void)
   int smallest_rank_with_same_hostid = 0;
   int largest_rank_with_same_hostid = 0;
   int size_node = 0;
-  p_Group *group = NULL;
+  Group *group = NULL;
   long *sorted = NULL;
   int count = 0;
   MPI_Group igroup;
 
-  /* populate g_state */
-
-  /* dup MPI_COMM_WORLD and get group, rank, and size */
-  status = MPI_Comm_dup(MPI_COMM_WORLD, &(g_state.comm));
-  CMX_ASSERT(MPI_SUCCESS == status);
-  status = MPI_Comm_group(g_state.comm, &(g_state.group));
-  CMX_ASSERT(MPI_SUCCESS == status);
-  status = MPI_Comm_rank(g_state.comm, &(g_state.rank));
-  CMX_ASSERT(MPI_SUCCESS == status);
-  status = MPI_Comm_size(g_state.comm, &(g_state.size));
-  CMX_ASSERT(MPI_SUCCESS == status);
-
   /* need to figure out which proc is master on each node */
   g_state.hostid = (long*)malloc(sizeof(long)*g_state.size);
-  g_state.hostid[g_state.rank] = xgethostid();
+  g_state.hostid[p_config.rank()] = xgethostid();
   status = MPI_Allgather(MPI_IN_PLACE, 1, MPI_LONG,
       g_state.hostid, 1, MPI_LONG, g_state.comm);
   CMX_ASSERT(MPI_SUCCESS == status);
@@ -5027,7 +5294,7 @@ void p_Environment::_group_init(void)
   (void)memcpy(sorted, g_state.hostid, sizeof(long)*g_state.size);
   qsort(sorted, g_state.size, sizeof(long), cmplong);
   for (i=0; i<g_state.size-1; ++i) {
-    if (sorted[i] == g_state.hostid[g_state.rank]) 
+    if (sorted[i] == g_state.hostid[p_config.rank()]) 
     {
       break;
     }
@@ -5037,7 +5304,7 @@ void p_Environment::_group_init(void)
   }
   free(sorted);
   status = MPI_Comm_split(MPI_COMM_WORLD, count,
-      g_state.rank, &temp_node_comm);
+      p_config.rank(), &temp_node_comm);
   int node_group_size, node_group_rank;
   MPI_Comm_size(temp_node_comm, &node_group_size);
   MPI_Comm_rank(temp_node_comm, &node_group_rank);
@@ -5045,10 +5312,10 @@ void p_Environment::_group_init(void)
   node_rank0 = (node_group_rank == 0) ? 1 : 0;
   MPI_Allreduce(&node_rank0, &num_nodes, 1, MPI_INT, MPI_SUM,
       g_state.comm);
-  smallest_rank_with_same_hostid = g_state.rank;
-  largest_rank_with_same_hostid = g_state.rank;
+  smallest_rank_with_same_hostid = p_config.rank();
+  largest_rank_with_same_hostid = p_config.rank();
   for (i=0; i<g_state.size; ++i) {
-    if (g_state.hostid[i] == g_state.hostid[g_state.rank]) {
+    if (g_state.hostid[i] == g_state.hostid[p_config.rank()]) {
       ++size_node;
       if (i < smallest_rank_with_same_hostid) {
         smallest_rank_with_same_hostid = i;
@@ -5074,7 +5341,7 @@ void p_Environment::_group_init(void)
   split_group_size = node_group_size / num_progress_ranks_per_node;
   MPI_Comm_free(&temp_node_comm);
   g_state.master = (int*)malloc(sizeof(int)*g_state.size);
-  g_state.master[g_state.rank] = get_my_master_rank_with_same_hostid(g_state.rank, 
+  g_state.master[p_config.rank()] = get_my_master_rank_with_same_hostid(p_config.rank(), 
       split_group_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
       num_progress_ranks_per_node, is_node_ranks_packed);
   status = MPI_Allgather(MPI_IN_PLACE, 1, MPI_INT,
@@ -5102,16 +5369,16 @@ void p_Environment::_group_init(void)
   }
   // label each process
   for (j=0; j<num_split_groups; j++) {
-    if (split_group_list[j] == g_state.master[g_state.rank]) {
+    if (split_group_list[j] == g_state.master[p_config.rank()]) {
       proc_split_group_stamp = j;
     }
   }
   free(split_group_list);
   /* create a comm of only the workers */
-  if (g_state.master[g_state.rank] == g_state.rank) {
+  if (p_config.is_master()) {
     /* I'm a master */
     MPI_Comm delete_me;
-    status = MPI_Comm_split(g_state.comm, 0, g_state.rank, &delete_me);
+    status = MPI_Comm_split(g_state.comm, 0, p_config.rank(), &delete_me);
     CMX_ASSERT(MPI_SUCCESS == status);
     /* masters don't need their own comm */
     if (MPI_COMM_NULL != delete_me) {
@@ -5122,18 +5389,19 @@ void p_Environment::_group_init(void)
     /* I'm a worker */
     MPI_Comm comm;
     status = MPI_Comm_split(
-        g_state.comm, 1, g_state.rank, &comm);
+        p_config.global_comm(), 1, p_config.rank(), &comm);
     CMX_ASSERT(MPI_SUCCESS == status);
     MPI_Group mpigroup;
     int size;
     status = MPI_Comm_size(comm, &size);
     std::vector<int> ranks(size);
     for (i=0; i<size; i++) ranks[i] = i;
-    p_CMX_GROUP_WORLD = new p_Group(size, &ranks[0], comm);
-    p_CMX_GROUP_WORLD->setWorldRanks(comm);
+    printf("p[%d]  (group_init) size of worker comm: %d\n",
+        p_config.rank(),size);
+    p_CMX_GROUP_WORLD = new Group(size, &ranks[0], comm);
   }
   status = MPI_Comm_split(MPI_COMM_WORLD, proc_split_group_stamp,
-      g_state.rank, &(g_state.node_comm));
+      p_config.rank(), &(g_state.node_comm));
   CMX_ASSERT(MPI_SUCCESS == status);
   /* node rank */
   status = MPI_Comm_rank(g_state.node_comm, &(g_state.node_rank));
@@ -5155,7 +5423,7 @@ static void _create_igroup(cmx_igroup_t **igroup)
     cmx_igroup_t *last_group_list_item = NULL;
 
 #if DEBUG
-    printf("[%d] _create_group(...)\n", g_state.rank);
+    printf("[%d] _create_group(...)\n", p_config.rank());
 #endif
 
     /* create, init, and insert the new node for the linked list */
@@ -5190,7 +5458,7 @@ int cmx_group_rank(cmx_igroup_t *igroup, int *rank)
 
 #if DEBUG
     printf("[%d] cmx_group_rank(group=%d, *rank=%d)\n",
-            g_state.rank, group, *rank);
+            p_config.rank(), group, *rank);
 #endif
 
     return CMX_SUCCESS;
@@ -5203,7 +5471,7 @@ int cmx_group_size(cmx_igroup_t *igroup, int *size)
 
 #if DEBUG
     printf("[%d] cmx_group_size(group=%d, *size=%d)\n",
-            g_state.rank, group, *size);
+            p_config.rank(), group, *size);
 #endif
 
     return CMX_SUCCESS;
@@ -5216,7 +5484,7 @@ int cmx_group_comm(cmx_igroup_t *igroup, MPI_Comm *comm)
 
 #if DEBUG
     printf("[%d] cmx_group_comm(group=%d, comm)\n",
-            g_state.rank, group);
+            p_config.rank(), group);
 #endif
 
     return CMX_SUCCESS;
@@ -5247,7 +5515,7 @@ int cmx_group_translate_world(
 #if DEBUG
     printf("[%d] cmx_group_translate_world("
             "group=%d, group_rank=%d, world_rank)\n",
-            g_state.rank, group, group_rank);
+            p_config.rank(), group, group_rank);
 #endif
 
     if (CMX_GROUP_WORLD == igroup) {
@@ -5274,7 +5542,7 @@ static void _igroup_free(cmx_igroup_t *igroup)
 
 #if DEBUG
     printf("[%d] _igroup_free\n",
-            g_state.rank);
+            p_config.rank());
 #endif
 
     CMX_ASSERT(igroup);
@@ -5286,7 +5554,7 @@ static void _igroup_free(cmx_igroup_t *igroup)
         }
     }
 #if DEBUG
-    printf("[%d] free'd group\n", g_state.rank);
+    printf("[%d] free'd group\n", p_config.rank());
 #endif
 
     if (igroup->comm != MPI_COMM_NULL) {
@@ -5296,7 +5564,7 @@ static void _igroup_free(cmx_igroup_t *igroup)
         }
     }
 #if DEBUG
-    printf("[%d] free'd comm\n", g_state.rank);
+    printf("[%d] free'd comm\n", p_config.rank());
 #endif
     if (igroup->world_ranks != NULL) {
       free(igroup->world_ranks);
@@ -5312,7 +5580,7 @@ int cmx_group_free(cmx_igroup_t *igroup)
     cmx_igroup_t *current_group_list_item = group_list;
 
 #if DEBUG
-    printf("[%d] cmx_group_free(id=%d)\n", g_state.rank, id);
+    printf("[%d] cmx_group_free(id=%d)\n", p_config.rank(), id);
 #endif
 
     /* find the group to free */
@@ -5339,7 +5607,7 @@ int cmx_group_free(cmx_igroup_t *igroup)
 void _igroup_set_world_ranks(cmx_igroup_t *igroup)
 {
   int i = 0;
-  int my_world_rank = g_state.rank;
+  int my_world_rank = p_config.rank();
   igroup->world_ranks = (int*)malloc(sizeof(int)*igroup->size);
   int status;
 
@@ -5369,10 +5637,10 @@ int cmx_group_create(
 #if DEBUG
     printf("[%d] cmx_group_create("
             "n=%d, pid_list=%p, id_parent=%d, id_child)\n",
-            g_state.rank, n, pid_list, id_parent);
+            p_config.rank(), n, pid_list, id_parent);
     {
         int p;
-        printf("[%d] pid_list={%d", g_state.rank, pid_list[0]);
+        printf("[%d] pid_list={%d", p_config.rank(), pid_list[0]);
         for (p=1; p<n; ++p) {
             printf(",%d", pid_list[p]);
         }
@@ -5394,7 +5662,7 @@ int cmx_group_create(
     CMX_ASSERT(MPI_SUCCESS == status);
 
 #if DEBUG
-    printf("[%d] cmx_group_create before crazy logic\n", g_state.rank);
+    printf("[%d] cmx_group_create before crazy logic\n", p_config.rank());
 #endif
     {
         MPI_Comm comm, comm1, comm2;
@@ -5404,7 +5672,7 @@ int cmx_group_create(
         if (grp_me == MPI_UNDEFINED) {
             /* FIXME: keeping the group around for now */
 #if DEBUG
-    printf("[%d] cmx_group_create aborting -- not in group\n", g_state.rank);
+    printf("[%d] cmx_group_create aborting -- not in group\n", p_config.rank());
 #endif
             return CMX_SUCCESS;
         }
@@ -5449,7 +5717,7 @@ int cmx_group_create(
         CMX_ASSERT(MPI_SUCCESS == status);
     }
 #if DEBUG
-    printf("[%d] cmx_group_create after crazy logic\n", g_state.rank);
+    printf("[%d] cmx_group_create after crazy logic\n", p_config.rank());
 #endif
     _igroup_set_world_ranks(*igroup_child);
 
@@ -5485,7 +5753,7 @@ void cmx_group_init()
     CMX_ASSERT(MPI_SUCCESS == status);
     status = MPI_Comm_group(g_state.comm, &(g_state.group));
     CMX_ASSERT(MPI_SUCCESS == status);
-    status = MPI_Comm_rank(g_state.comm, &(g_state.rank));
+    status = MPI_Comm_rank(g_state.comm, &(p_config.rank()));
     CMX_ASSERT(MPI_SUCCESS == status);
     status = MPI_Comm_size(g_state.comm, &(g_state.size));
     CMX_ASSERT(MPI_SUCCESS == status);
@@ -5493,17 +5761,17 @@ void cmx_group_init()
 #if DEBUG_TO_FILE
     {
         char pathname[80];
-        sprintf(pathname, "trace.%d.log", g_state.rank);
+        sprintf(pathname, "trace.%d.log", p_config.rank());
         cmx_trace_file = fopen(pathname, "w");
         CMX_ASSERT(NULL != cmx_trace_file);
 
-        printf("[%d] cmx_group_init()\n", g_state.rank);
+        printf("[%d] cmx_group_init()\n", p_config.rank());
     }
 #endif
 
     /* need to figure out which proc is master on each node */
     g_state.hostid = (long*)malloc(sizeof(long)*g_state.size);
-    g_state.hostid[g_state.rank] = xgethostid();
+    g_state.hostid[p_config.rank()] = xgethostid();
     status = MPI_Allgather(MPI_IN_PLACE, 1, MPI_LONG,
             g_state.hostid, 1, MPI_LONG, g_state.comm);
     CMX_ASSERT(MPI_SUCCESS == status);
@@ -5518,7 +5786,7 @@ void cmx_group_init()
     (void)memcpy(sorted, g_state.hostid, sizeof(long)*g_state.size);
     qsort(sorted, g_state.size, sizeof(long), cmplong);
     for (i=0; i<g_state.size-1; ++i) {
-        if (sorted[i] == g_state.hostid[g_state.rank]) 
+        if (sorted[i] == g_state.hostid[p_config.rank()]) 
         {
             break;
         }
@@ -5531,7 +5799,7 @@ void cmx_group_init()
     printf("count: %d\n", count);
 #endif
     status = MPI_Comm_split(MPI_COMM_WORLD, count,
-            g_state.rank, &temp_node_comm);
+            p_config.rank(), &temp_node_comm);
     int node_group_size, node_group_rank;
     MPI_Comm_size(temp_node_comm, &node_group_size);
     MPI_Comm_rank(temp_node_comm, &node_group_rank);
@@ -5539,10 +5807,10 @@ void cmx_group_init()
     node_rank0 = (node_group_rank == 0) ? 1 : 0;
     MPI_Allreduce(&node_rank0, &num_nodes, 1, MPI_INT, MPI_SUM,
         g_state.comm);
-    smallest_rank_with_same_hostid = g_state.rank;
-    largest_rank_with_same_hostid = g_state.rank;
+    smallest_rank_with_same_hostid = p_config.rank();
+    largest_rank_with_same_hostid = p_config.rank();
     for (i=0; i<g_state.size; ++i) {
-        if (g_state.hostid[i] == g_state.hostid[g_state.rank]) {
+        if (g_state.hostid[i] == g_state.hostid[p_config.rank()]) {
             ++size_node;
             if (i < smallest_rank_with_same_hostid) {
                 smallest_rank_with_same_hostid = i;
@@ -5568,13 +5836,13 @@ void cmx_group_init()
     split_group_size = node_group_size / num_progress_ranks_per_node;
      MPI_Comm_free(&temp_node_comm);
     g_state.master = (int*)malloc(sizeof(int)*g_state.size);
-    g_state.master[g_state.rank] = get_my_master_rank_with_same_hostid(g_state.rank, 
+    g_state.master[p_config.rank()] = get_my_master_rank_with_same_hostid(p_config.rank(), 
         split_group_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
         num_progress_ranks_per_node, is_node_ranks_packed);
 #if DEBUG
-    printf("[%d] rank; split_group_size: %d\n", g_state.rank, split_group_size);
+    printf("[%d] rank; split_group_size: %d\n", p_config.rank(), split_group_size);
     printf("[%d] rank; largest_rank_with_same_hostid[%d]; my master is:[%d]\n",
-        g_state.rank, largest_rank_with_same_hostid, g_state.master[g_state.rank]);
+        p_config.rank(), largest_rank_with_same_hostid, g_state.master[p_config.rank()]);
 #endif
     status = MPI_Allgather(MPI_IN_PLACE, 1, MPI_INT,
             g_state.master, 1, MPI_INT, g_state.comm);
@@ -5601,20 +5869,20 @@ void cmx_group_init()
     }
     // label each process
     for (j=0; j<num_split_groups; j++) {
-      if (split_group_list[j] == g_state.master[g_state.rank]) {
+      if (split_group_list[j] == g_state.master[p_config.rank()]) {
         proc_split_group_stamp = j;
       }
     }
 #if DEBUG
     printf("proc_split_group_stamp[%ld]: %ld\n", 
-       g_state.rank, proc_split_group_stamp);
+       p_config.rank(), proc_split_group_stamp);
 #endif
     free(split_group_list);
     /* create a comm of only the workers */
-    if (g_state.master[g_state.rank] == g_state.rank) {
+    if (g_state.master[p_config.rank()] == p_config.rank()) {
         /* I'm a master */
         MPI_Comm delete_me;
-        status = MPI_Comm_split(g_state.comm, 0, g_state.rank, &delete_me);
+        status = MPI_Comm_split(g_state.comm, 0, p_config.rank(), &delete_me);
         CMX_ASSERT(MPI_SUCCESS == status);
         /* masters don't need their own comm */
         if (MPI_COMM_NULL != delete_me) {
@@ -5622,14 +5890,14 @@ void cmx_group_init()
         }
         CMX_GROUP_WORLD = NULL;
 #if DEBUG
-        printf("Creating comm: I AM MASTER[%ld]\n", g_state.rank);
+        printf("Creating comm: I AM MASTER[%ld]\n", p_config.rank());
 #endif
     } else {
         /* I'm a worker */
         /* create the head of the group linked list */
         igroup = (cmx_igroup_t*)malloc(sizeof(cmx_igroup_t));
         status = MPI_Comm_split(
-                g_state.comm, 1, g_state.rank, &(igroup->comm));
+                g_state.comm, 1, p_config.rank(), &(igroup->comm));
         CMX_ASSERT(MPI_SUCCESS == status);
         status = MPI_Comm_group(igroup->comm, &(igroup->group));
         CMX_ASSERT(MPI_SUCCESS == status);
@@ -5641,13 +5909,13 @@ void cmx_group_init()
         _igroup_set_world_ranks(igroup);
         CMX_ASSERT(igroup->world_ranks != NULL);
 #if DEBUG
-        printf("Creating comm: I AM WORKER[%ld]\n", g_state.rank);
+        printf("Creating comm: I AM WORKER[%ld]\n", p_config.rank());
 #endif
         CMX_GROUP_WORLD = igroup;
         group_list = igroup;
     }
     status = MPI_Comm_split(MPI_COMM_WORLD, proc_split_group_stamp,
-            g_state.rank, &(g_state.node_comm));
+            p_config.rank(), &(g_state.node_comm));
     CMX_ASSERT(MPI_SUCCESS == status);
     /* node rank */
     status = MPI_Comm_rank(g_state.node_comm, &(g_state.node_rank));
@@ -5658,13 +5926,13 @@ void cmx_group_init()
 
 #if DEBUG
     printf("node_rank[%d]/ size[%d]\n", g_state.node_rank, g_state.node_size);
-    if (g_state.master[g_state.rank] == g_state.rank) {
+    if (g_state.master[p_config.rank()] == p_config.rank()) {
         printf("[%d] world %d/%d\tI'm a master\n",
-            g_state.rank, g_state.rank, g_state.size);
+            p_config.rank(), p_config.rank(), g_state.size);
     }
     else {
         printf("[%d] world %d/%d\tI'm a worker\n",
-            g_state.rank, g_state.rank, g_state.size);
+            p_config.rank(), p_config.rank(), g_state.size);
     }
 #endif
 }
@@ -5677,7 +5945,7 @@ void cmx_group_finalize()
     cmx_igroup_t *previous_group_list_item = NULL;
 
 #if DEBUG
-    printf("[%d] cmx_group_finalize()\n", g_state.rank);
+    printf("[%d] cmx_group_finalize()\n", p_config.rank());
 #endif
 
     /* This loop will also clean up CMX_GROUP_WORLD */
@@ -5734,9 +6002,9 @@ long p_Environment::xgethostid()
 #warning CRAY
     int nodeid;
 #  if defined(__CRAYXT)
-    PMI_Portals_get_nid(g_state.rank, &nodeid);
+    PMI_Portals_get_nid(p_config.rank(), &nodeid);
 #  elif defined(__CRAYXE)
-    PMI_Get_nid(g_state.rank, &nodeid);
+    PMI_Get_nid(p_config.rank(), &nodeid);
 #  endif
 #else
     long nodeid = gethostid();
@@ -5905,7 +6173,7 @@ int p_Environment::get_my_rank_to_free(int rank, int split_group_size,
  * Get group corresponding to world group
  * @return pointer to world group
  */
-p_Group* p_Environment::getWorldGroup()
+Group* p_Environment::getWorldGroup()
 {
   return p_CMX_GROUP_WORLD;
 }
