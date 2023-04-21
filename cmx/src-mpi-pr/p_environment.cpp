@@ -86,7 +86,6 @@ p_Environment::p_Environment()
   sem_name = NULL;        /* local semaphore name */
   semaphores = NULL;      /* semaphores for locking within SMP node */
   fence_array = NULL;
-  printf("p[%d] Got to 1\n",_dbg_me);
 
   nb_max_outstanding = CMX_MAX_NB_OUTSTANDING;
   nb_last_request = 0;
@@ -125,22 +124,18 @@ p_Environment::p_Environment()
   }
   _initialized = 1;
 
-  printf("p[%d] Got to 2\n",_dbg_me);
   /* Assert MPI has been initialized */
   status = MPI_Initialized(&init_flag);
   _translate_mpi_error(status,"cmx_init");
   CHECK_MPI_RETVAL(status);
   assert(init_flag);
-  printf("p[%d] Got to 3\n",_dbg_me);
   p_config.init(MPI_COMM_WORLD);
-  printf("p[%d] Got to 4\n",_dbg_me);
 
   /*MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);*/
 
 
   /* groups */
   //_group_init();
-  printf("p[%d] Got to 5\n",_dbg_me);
 
   /* Set up world group */
 
@@ -296,7 +291,6 @@ p_Environment::p_Environment()
 #endif
   }
 
-  printf("p[%d] Got to 6\n",_dbg_me);
   /* mutexes */
   mutexes = NULL;
   num_mutexes = NULL;
@@ -306,10 +300,8 @@ p_Environment::p_Environment()
   /* note: every process needs a reg cache and it's always based on the
    * world rank and size */
   p_register.init(&p_config, &p_shmem);
-  printf("p[%d] Got to 7\n",_dbg_me);
 
   _malloc_semaphore();
-  printf("p[%d] Got to 8\n",_dbg_me);
 
 #if DEBUG
   fprintf(stderr, "[%d] cmx_init() before progress server\n", p_config.rank());
@@ -323,11 +315,9 @@ p_Environment::p_Environment()
 
   status = _set_affinity(p_config.node_rank());
   CMX_ASSERT(0 == status);
-  printf("p[%d] Got to 8a is master: %d\n",_dbg_me,p_config.is_master());
 
   /* create a comm of only the workers */
   if (p_config.is_master()) {
-  printf("p[%d] (master) Got to 8b rank: %d\n",_dbg_me,p_config.rank());
     /* I'm a master */
     MPI_Comm delete_me;
     status = MPI_Comm_split(p_config.global_comm(), 0, p_config.rank(), &delete_me);
@@ -340,19 +330,14 @@ p_Environment::p_Environment()
   } else {
     /* I'm a worker */
     MPI_Comm comm;
-  printf("p[%d] (worker) Got to 8b rank: %d\n",_dbg_me,p_config.rank());
     status = MPI_Comm_split(
         p_config.global_comm(), 1, p_config.rank(), &comm);
     CMX_ASSERT(MPI_SUCCESS == status);
     int size;
-  printf("p[%d] Got to 8c\n",_dbg_me);
     status = MPI_Comm_size(comm, &size);
     std::vector<int> ranks(size);
     for (i=0; i<size; i++) ranks[i] = i;
-    printf("p[%d]  Got to 8b size of worker comm: %d\n",
-        p_config.rank(),size);
     p_CMX_GROUP_WORLD = new Group(size, &ranks[0], comm);
-    printf("p[%d]  Got to 8d\n",p_config.rank());
   }
 
   if (p_config.is_master()) {
@@ -360,27 +345,21 @@ p_Environment::p_Environment()
    // mutexes = (int**)malloc(sizeof(int*) * g_state.size);
     mutexes = new int*[p_config.world_size()];
     CMX_ASSERT(mutexes);
-    printf("p[%d]  Got to 8e\n",p_config.rank());
     /* create one lock queue for each proc for each mutex */
    // lq_heads = (lock_t***)malloc(sizeof(lock_t**) * g_state.size);
     lq_heads.resize(p_config.world_size());
-  printf("p[%d] Got to 8f\n",_dbg_me);
     /* start the server */
     _progress_server();
-  printf("p[%d] Got to 8g\n",_dbg_me);
   }
   nb_list = new _cmx_request*[nb_max_outstanding];
   for (i=0; i<nb_max_outstanding; i++) nb_list[i] = NULL;
-  printf("p[%d] Got to 9\n",_dbg_me);
 
   _cmx_me = p_CMX_GROUP_WORLD->rank();
-  printf("p[%d] Got to 10\n",_dbg_me);
 
   /* Synch - Sanity Check */
   /* This barrier is on the world worker group */
   p_CMX_GROUP_WORLD->barrier();
   _translate_mpi_error(status, "cmx_init:MPI_Barrier");
-  printf("p[%d] Got to 11\n",_dbg_me);
 
   /* static state */
   fence_array = new char[p_config.world_size()];
@@ -388,7 +367,6 @@ p_Environment::p_Environment()
   for (i = 0; i < p_config.world_size(); ++i) {
     fence_array[i] = 0;
   }
-  printf("p[%d] Got to 12\n",_dbg_me);
 
 #if DEBUG
   fprintf(stderr, "[%d] cmx_init() before barrier\n", p_config.rank());
@@ -402,7 +380,6 @@ p_Environment::p_Environment()
 #if DEBUG
   fprintf(stderr, "[%d] cmx_init() success\n", p_config.rank());
 #endif
-  printf("p[%d] Got to 13\n",_dbg_me);
 }
 
 /**
@@ -417,16 +394,12 @@ void p_Environment::finalize()
   if (!_initialized) {
     return;
   }
-  printf("p[%d] (finalize) Got to 1 p_CMX_GROUP_WORLD: %p\n",p_config.rank(),
-      p_CMX_GROUP_WORLD);
 
   p_CMX_GROUP_WORLD->barrier();
 
   _initialized = 0;
 
-  printf("p[%d] (finalize) Got to 2\n",p_config.rank());
   _free_semaphore();
-  printf("p[%d] (finalize) Got to 3\n",p_config.rank());
 
   p_CMX_GROUP_WORLD->barrier();
 
@@ -436,9 +409,7 @@ void p_Environment::finalize()
       nb_wait_for_all(nb_list[i]);
     }
   }
-  printf("p[%d] (finalize) Got to 4\n",p_config.rank());
   delete [] nb_list;
-  printf("p[%d] (finalize) Got to 5\n",p_config.rank());
 
   /* send quit message to thread */
   int my_rank_to_free;
@@ -449,13 +420,11 @@ void p_Environment::finalize()
   // is_notifier = p_config.rank() == smallest_rank_with_same_hostid + g_state.node_size*
   //   ((p_config.rank() - smallest_rank_with_same_hostid)/g_state.node_size);
   // if (_smallest_world_rank_with_same_hostid(group_list) == p_config.rank()) 
-  printf("p[%d] (finalize) Got to 6 my_rank_to_free\n",p_config.rank(),my_rank_to_free);
   if(is_notifier = my_rank_to_free == p_config.rank())
   {
     int my_master = -1;
     header_t *header = NULL;
     _cmx_request nb;
-  printf("p[%d] (finalize) Got to 8\n",p_config.rank());
     nb_handle_init(&nb);
 
     my_master = p_config.master(p_config.rank());
@@ -467,17 +436,12 @@ void p_Environment::finalize()
     header->local_address = NULL;
     header->rank = 0;
     header->length = 0;
-  printf("p[%d] (finalize) Got to 8a master: %d\n",p_config.rank(),my_master);
     nb_send_header(header, sizeof(header_t), my_master, &nb);
-  printf("p[%d] (finalize) Got to 8b\n",p_config.rank());
     /* this call will free up the header allocation */
     nb_wait_for_all(&nb);
-  printf("p[%d] (finalize) Got to 9\n",p_config.rank());
   }
-  printf("p[%d] (finalize) Got to 10\n",p_config.rank());
 
   delete [] fence_array;
-  printf("p[%d] (finalize) Got to 11\n",p_config.rank());
 
   ierr = MPI_Barrier(p_config.global_comm());
   _translate_mpi_error(ierr, "cmx_finalize:MPI_Barrier");
@@ -1401,7 +1365,6 @@ void p_Environment::_progress_server()
   fprintf(stderr, "[%d] _progress_server(); node_size[%d]\n", 
       p_config.rank(), g_state.node_size);
 #endif
-  printf("p[%d] (progress server) Got to 1\n",p_config.rank());
 
   {
     int status = _set_affinity(p_config.node_size());
@@ -1425,7 +1388,6 @@ void p_Environment::_progress_server()
   if (static_header_buffer_size < eager_threshold) {
     static_header_buffer_size = eager_threshold;
   }
-  printf("p[%d] (progress server) Got to 2\n",p_config.rank());
 
   /* initialize shared buffers */
   static_header_buffer = new char[static_header_buffer_size];
@@ -1434,7 +1396,6 @@ void p_Environment::_progress_server()
   CMX_ASSERT(static_server_buffer);
 
   running = 1;
-  printf("p[%d] (progress server) Got to 3\n",p_config.rank());
   while (running) {
     int source = 0;
     int length = 0;
@@ -1442,12 +1403,9 @@ void p_Environment::_progress_server()
     header_t *header = NULL;
     MPI_Status recv_status;
 
-  printf("p[%d] (progress server) Got to 4 buffer size: %d\n",
-      p_config.rank(),static_header_buffer_size);
     ierr = MPI_Recv(static_header_buffer, static_header_buffer_size, MPI_CHAR,
         MPI_ANY_SOURCE, CMX_TAG, p_config.global_comm(), &recv_status);
     _translate_mpi_error(ierr, "_progress_server:MPI_Recv");
-  printf("p[%d] (progress server) Got to 5\n",p_config.rank());
     MPI_Get_count(&recv_status, MPI_CHAR, &length);
     _translate_mpi_error(ierr, "_progress_server:MPI_Get_count");
     source = recv_status.MPI_SOURCE;
@@ -1543,7 +1501,6 @@ void p_Environment::_progress_server()
         CMX_ASSERT(0);
     }
   }
-  printf("p[%d] (progress server) Got to 6\n",p_config.rank());
 
   _initialized = 0;
 
@@ -1575,7 +1532,6 @@ void p_Environment::_progress_server()
 #if DEBUG_TO_FILE
   fclose(cmx_trace_file);
 #endif
-  printf("p[%d] (progress server) Got to 7\n",p_config.rank());
 
   // assume this is the end of a user's application
   MPI_Finalize();
