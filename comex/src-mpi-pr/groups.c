@@ -479,7 +479,7 @@ void comex_group_init(MPI_Comm comm)
             }
         }
     }
-    /* Get nuber of Progress-Ranks per node from environment variable
+    /* Get number of Progress-Ranks per node from environment variable
      * equal to 1 by default */
     int num_progress_ranks_per_node = get_num_progress_ranks_per_node();
     /* Perform check on the number of Progress-Ranks */
