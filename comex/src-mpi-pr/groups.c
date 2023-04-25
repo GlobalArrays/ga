@@ -479,7 +479,7 @@ void comex_group_init(MPI_Comm comm)
             }
         }
     }
-    /* Get nuber of Progress-Ranks per node from environment variable
+    /* Get number of Progress-Ranks per node from environment variable
      * equal to 1 by default */
     int num_progress_ranks_per_node = get_num_progress_ranks_per_node();
     /* Perform check on the number of Progress-Ranks */
@@ -572,6 +572,7 @@ void comex_group_init(MPI_Comm comm)
     }
     status = MPI_Comm_split(comm, proc_split_group_stamp,
             g_state.rank, &(g_state.node_comm));
+    printf("Creating comm: I AM WORKER[%ld %ld]\n", g_state.rank, proc_split_group_stamp);
     COMEX_ASSERT(MPI_SUCCESS == status);
     /* node rank */
     status = MPI_Comm_rank(g_state.node_comm, &(g_state.node_rank));
