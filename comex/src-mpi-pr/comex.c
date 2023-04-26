@@ -4430,6 +4430,8 @@ STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc)
 
     reg_entry = reg_cache_find(
             header->rank, header->remote_address, header->length);
+    printf("g_state.rank[%d] _fetch_and_add_handler(rank=%d, runner=%p)\n",
+            g_state.rank, rank, reg_entry);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
     
