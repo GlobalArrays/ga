@@ -498,11 +498,9 @@ void comex_group_init(MPI_Comm comm)
     g_state.master[g_state.rank] = get_my_master_rank_with_same_hostid(g_state.rank, 
         split_group_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
         num_progress_ranks_per_node, is_node_ranks_packed);
-#if DEBUG
     printf("[%d] rank; split_group_size: %d\n", g_state.rank, split_group_size);
     printf("[%d] rank; largest_rank_with_same_hostid[%d]; my master is:[%d]\n",
         g_state.rank, largest_rank_with_same_hostid, g_state.master[g_state.rank]);
-#endif
     status = MPI_Allgather(MPI_IN_PLACE, 1, MPI_INT,
             g_state.master, 1, MPI_INT, g_state.comm);
     COMEX_ASSERT(MPI_SUCCESS == status);
@@ -532,10 +530,8 @@ void comex_group_init(MPI_Comm comm)
         proc_split_group_stamp = j;
       }
     }
-#if DEBUG
     printf("proc_split_group_stamp[%ld]: %ld\n", 
        g_state.rank, proc_split_group_stamp);
-#endif
     free(split_group_list);
     /* create a comm of only the workers */
     if (g_state.master[g_state.rank] == g_state.rank) {
