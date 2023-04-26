@@ -387,6 +387,12 @@ reg_cache_find(int rank, void *buf, size_t len)
             g_state.rank, rank, buf, len);
 #endif
 
+    printf("g_state.rank[%d] reg_nprocs[%d] reg_cache_find(rank=%d, buf=%p, len=%d)\n",
+            g_state.rank, reg_nprocs, rank, buf, len);
+
+    printf("g_state.rank[%d] reg_cache_find(rank=%d, runner=%p)\n",
+            g_state.rank, rank, reg_cache[rank]);
+
     /* preconditions */
     COMEX_ASSERT(NULL != reg_cache);
     COMEX_ASSERT(0 <= rank && rank < reg_nprocs);
