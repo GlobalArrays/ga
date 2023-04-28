@@ -2462,6 +2462,17 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     /* insert reg entries into local registration cache */
     for (i=0; i<igroup->size; ++i) {
         if (NULL == reg_entries[i].buf) {
+        } else if (g_state.rank == reg_entries[i].rank) {
+        } else {
+          printf("p[%d] entry.rank: %d entry.master: %d my.master: %d\n",
+              g_state.rank,reg_entries[i].rank,g_state.master[reg_entries[i].rank],
+              g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
+              g_state.node_size, smallest_rank_with_same_hostid,
+              largest_rank_with_same_hostid, num_progress_ranks_per_node,
+              is_node_ranks_packed)] );
+
+        }
+        if (NULL == reg_entries[i].buf) {
             /* a proc did not allocate (size==0) */
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] comex_malloc found NULL buf at %d\n",
@@ -4431,7 +4442,7 @@ STATIC void _fetch_and_add_handler(header_t *header, char *payload, int proc)
     reg_entry = reg_cache_find(
             header->rank, header->remote_address, header->length);
     printf("g_state.rank[%d] _fetch_and_add_handler(rank=%d, runner=%p)\n",
-            g_state.rank, rank, reg_entry);
+            g_state.rank, reg_entry);
     COMEX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
     
