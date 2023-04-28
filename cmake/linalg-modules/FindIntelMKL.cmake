@@ -364,6 +364,7 @@ if( IntelMKL_LIBRARY AND IntelMKL_THREAD_LIBRARY AND IntelMKL_CORE_LIBRARY )
 
   if( IntelMKL_PREFERS_STATIC )
 
+  if(NOT "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Darwin")
     list( PREPEND IntelMKL_BLAS_LAPACK_LIBRARIES "-Wl,--start-group" )
     list( APPEND  IntelMKL_BLAS_LAPACK_LIBRARIES "-Wl,--end-group"   )
 
@@ -371,6 +372,7 @@ if( IntelMKL_LIBRARY AND IntelMKL_THREAD_LIBRARY AND IntelMKL_CORE_LIBRARY )
       list( PREPEND IntelMKL_BLACS_LIBRARIES "-Wl,--start-group" )
       list( APPEND  IntelMKL_BLACS_LIBRARIES "-Wl,--end-group"   )
     endif()
+  endif()
 
     if( "scalapack" IN_LIST IntelMKL_FIND_COMPONENTS )
       set( IntelMKL_ScaLAPACK_LIBRARIES 
