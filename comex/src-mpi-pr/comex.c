@@ -44,7 +44,7 @@ sicm_device_list nill;
 #include "reg_cache.h"
 #include "acc.h"
 
-#define ENABLE_FTOK 0
+#define ENABLE_FTOK 1
 
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
@@ -351,7 +351,7 @@ STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup);
 STATIC void _malloc_semaphore(void);
 STATIC void _free_semaphore(void);
 #if ENABLE_SYSV
-STATIC void* _shm_create(const char *name, key_t *key, size_t size);
+STATIC void* _shm_create(char *name, key_t *key, size_t size);
 STATIC void* _shm_attach(const char *name, size_t size, key_t key);
 #else
 STATIC void* _shm_create(const char *name, size_t size);
@@ -4950,7 +4950,7 @@ STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup)
     return largest;
 }
 
-STATIC void* _shm_create(const char *name,
+STATIC void* _shm_create(char *name,
 #if ENABLE_SYSV
     key_t *key,
 #endif
@@ -4963,6 +4963,8 @@ STATIC void* _shm_create(const char *name,
   char ebuf[128];
   void *mapped = NULL;
   char token = (char)(token_counter%256);
+  int try_next = 1;
+  int try_cnt = 0;
   token_counter ++;
   if (use_dev_shm) {
     sprintf(file,"/dev/shm/%s",name);
@@ -4970,15 +4972,35 @@ STATIC void* _shm_create(const char *name,
     sprintf(file,"/tmp/%s",name);
   }
 #if ENABLE_FTOK
-  fp = fopen(file,"w");
-  fprintf(fp,"0\n");
-  fclose(fp);
-  *key = ftok(file,token);
-  /* printf("p[%d] CREATE SHM name: %s key: %d id: %d\n",g_state.rank,name,*key,(int)token); */
+  while (try_next && try_cnt < 100) {
+    fp = fopen(file,"w");
+    fprintf(fp,"0\n");
+    fclose(fp);
+    *key = ftok(file,token);
+    sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|0600, key: %d, name: %s id: %d\n",
+        g_state.rank,*key,name,(int)token);
+    shm_id = shmget(*key,size,IPC_CREAT| IPC_EXCL |0600);
+    if (shm_id != -1) {
+      try_next = 0;
+    } else {
+      free(name);
+      name = _generate_shm_name(g_state.rank);
+      if (use_dev_shm) {
+        sprintf(file,"/dev/shm/%s",name);
+      } else {
+        sprintf(file,"/tmp/%s",name);
+      }
+      /* printf("p[%d] shm_create failed on try %d\n",g_state.rank,try_cnt); */
+      try_cnt++;
+    }
+  }
+  _shmget_err(shm_id, ebuf);
+  if (shm_id == -1) {
+    comex_error("_shm_create: shmget failed", shm_id);
+  }
 #else
   *key = (key_t)token_counter;
   token_counter += g_state.size;
-#endif
   sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|0600, key: %d, name: %s id: %d\n",
       g_state.rank,*key,name,(int)token);
   shm_id = shmget(*key,size,IPC_CREAT| IPC_EXCL |0600);
@@ -4986,6 +5008,7 @@ STATIC void* _shm_create(const char *name,
   if (shm_id == -1) {
     comex_error("_shm_create: shmget failed", shm_id);
   }
+#endif
   mapped = shmat(shm_id, NULL, 0);
   /* printf("p[%d] ATTACH SHM name: %s key: %d\n",g_state.rank,name,*key); */
   _shmat_err(mapped);
