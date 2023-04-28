@@ -72,6 +72,10 @@ if (ENABLE_BLAS)
   endif()
 endif()
 
+if ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "arm64" AND "${LINALG_VENDOR}" STREQUAL "IntelMKL")
+  message( FATAL_ERROR "IntelMKL is not supported for ARM architectures" )
+endif()
+
 # check for numerical libraries. These should set variables BLAS_FOUND and
 # LAPACK_FOUND
 set(GA_BLAS_ILP64 OFF)

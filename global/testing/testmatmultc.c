@@ -33,7 +33,7 @@ extern void xb_dgemm(char *, char *, int *, int *, int *, double *, const double
 #define nummax 1024
 #define howmany 2
 #define ntrans 4
-
+//#define BLOCK_CYCLIC 1
 
 /*
  * test ga_dgemm
@@ -64,8 +64,8 @@ int main(int argc, char **argv)
     int nums_m[/*howmany*/] = {512,1024};
     int nums_n[/*howmany*/] = {512,1024};
     int nums_k[/*howmany*/] = {512,1024};
-    char transa[/*ntrans*/] = "ntnt";
-    char transb[/*ntrans*/] = "nntt";
+    char transa[/*ntrans*/] = "nnnn";
+    char transb[/*ntrans*/] = "nnnn";
     char ta;
     char tb;
     double *tmpa;
@@ -152,7 +152,7 @@ int main(int argc, char **argv)
         GA_Set_data(g_b,ndim,dims,MT_DBL);
         GA_Set_array_name(g_b,"g_b");
         GA_Set_block_cyclic(g_b,block_size);
-        if (!ga_allocate(g_b)) {
+        if (!GA_Allocate(g_b)) {
             GA_Error("failed: create g_b",40);
         }
 
@@ -162,8 +162,8 @@ int main(int argc, char **argv)
         GA_Set_data(g_a,ndim,dims,MT_DBL);
         GA_Set_array_name(g_a,"g_a");
         GA_Set_block_cyclic(g_a,block_size);
-        if (!ga_allocate(g_a)) {
-            GA_Error('failed: create g_a',40);
+        if (!GA_Allocate(g_a)) {
+            GA_Error("failed: create g_a",40);
         }
 #endif         
 

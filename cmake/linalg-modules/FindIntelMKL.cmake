@@ -26,6 +26,10 @@ if( "scalapack" IN_LIST IntelMKL_FIND_COMPONENTS AND NOT ("blacs" IN_LIST IntelM
   list(APPEND IntelMKL_FIND_COMPONENTS "blacs" )
 endif()
 
+if ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "arm64")
+  message( WARNING "IntelMKL is not supported for ARM architectures" )
+endif()
+
 # MKL lib names
 if( IntelMKL_PREFERS_STATIC )
   set( IntelMKL_LP64_LIBRARY_NAME       "libmkl_intel_lp64.a"   )
@@ -364,6 +368,7 @@ if( IntelMKL_LIBRARY AND IntelMKL_THREAD_LIBRARY AND IntelMKL_CORE_LIBRARY )
 
   if( IntelMKL_PREFERS_STATIC )
 
+  if(NOT "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Darwin")
     list( PREPEND IntelMKL_BLAS_LAPACK_LIBRARIES "-Wl,--start-group" )
     list( APPEND  IntelMKL_BLAS_LAPACK_LIBRARIES "-Wl,--end-group"   )
 
@@ -371,6 +376,7 @@ if( IntelMKL_LIBRARY AND IntelMKL_THREAD_LIBRARY AND IntelMKL_CORE_LIBRARY )
       list( PREPEND IntelMKL_BLACS_LIBRARIES "-Wl,--start-group" )
       list( APPEND  IntelMKL_BLACS_LIBRARIES "-Wl,--end-group"   )
     endif()
+  endif()
 
     if( "scalapack" IN_LIST IntelMKL_FIND_COMPONENTS )
       set( IntelMKL_ScaLAPACK_LIBRARIES 

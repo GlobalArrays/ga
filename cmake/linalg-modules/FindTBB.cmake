@@ -74,6 +74,7 @@
 #
 
 # Use TBBConfig.cmake if possible.
+enable_language(CXX)
 
 set(_tbb_find_quiet)
 if (TBB_FIND_QUIETLY)
@@ -138,7 +139,7 @@ endfunction()
 # Do the final processing for the package find.
 #===============================================
 macro(findpkg_finish PREFIX TARGET_NAME)
-  if (${PREFIX}_INCLUDE_DIR AND ${PREFIX}_LIBRARY)
+  if ((${PREFIX}_INCLUDE_DIR OR ${PREFIX}_IGNORE_HEADERS) AND ${PREFIX}_LIBRARY)
     set(${PREFIX}_FOUND TRUE)
     set (${PREFIX}_INCLUDE_DIRS ${${PREFIX}_INCLUDE_DIR})
     set (${PREFIX}_LIBRARIES ${${PREFIX}_LIBRARY})
@@ -156,8 +157,10 @@ macro(findpkg_finish PREFIX TARGET_NAME)
       tbb_extract_real_library(${${PREFIX}_LIBRARY_DEBUG} real_debug)
     endif ()
     add_library(TBB::${TARGET_NAME} UNKNOWN IMPORTED)
-    set_target_properties(TBB::${TARGET_NAME} PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${${PREFIX}_INCLUDE_DIR}")
+    if(NOT ${PREFIX}_IGNORE_HEADERS)
+      set_target_properties(TBB::${TARGET_NAME} PROPERTIES
+              INTERFACE_INCLUDE_DIRECTORIES "${${PREFIX}_INCLUDE_DIR}")
+    endif()
     if (${PREFIX}_LIBRARY_DEBUG AND ${PREFIX}_LIBRARY_RELEASE)
       set_target_properties(TBB::${TARGET_NAME} PROPERTIES
               IMPORTED_LOCATION "${real_release}"
@@ -232,6 +235,10 @@ endmacro()
 
 # Get path, convert backslashes as ${ENV_${var}}
 getenv_path(TBBROOT)
+getenv_path(TBB_IGNORE_HEADERS)
+if(ENV_TBB_IGNORE_HEADERS AND NOT TBB_IGNORE_HEADERS)
+  set( TBB_IGNORE_HEADERS ${ENV_TBB_IGNORE_HEADERS} )
+endif()
 
 # initialize search paths
 set(TBB_PREFIX_PATH ${TBBROOT} ${ENV_TBBROOT})
@@ -441,7 +448,7 @@ findpkg_finish(TBB_MALLOC_PROXY tbbmalloc_proxy)
 
 #=============================================================================
 #parse all the version numbers from tbb
-if(NOT TBB_VERSION)
+if(NOT TBB_IGNORE_HEADERS AND NOT TBB_VERSION)
   if (EXISTS "${TBB_INCLUDE_DIR}/oneapi/tbb/version.h")
     file(STRINGS
             "${TBB_INCLUDE_DIR}/oneapi/tbb/version.h"
