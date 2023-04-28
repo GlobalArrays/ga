@@ -258,6 +258,9 @@ function( check_fortran_functions_exist _funcs _namespace _libs _link_ok _uses_l
         unset( _${_func}_name_template )
         unset( _${_func}_name_uplo     )
 
+        file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
+          "FUNCTION CHECK: ${_item}\n ${_compile_output}") 
+
         if( _compile_result )
           set( ${_link_ok} TRUE )
           string( COMPARE EQUAL "${_uplo}"  "LOWER"      ${_uses_lower}      )

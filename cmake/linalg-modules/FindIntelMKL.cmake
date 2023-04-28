@@ -26,6 +26,10 @@ if( "scalapack" IN_LIST IntelMKL_FIND_COMPONENTS AND NOT ("blacs" IN_LIST IntelM
   list(APPEND IntelMKL_FIND_COMPONENTS "blacs" )
 endif()
 
+if ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "arm64")
+  message( WARNING "IntelMKL is not supported for ARM architectures" )
+endif()
+
 # MKL lib names
 if( IntelMKL_PREFERS_STATIC )
   set( IntelMKL_LP64_LIBRARY_NAME       "libmkl_intel_lp64.a"   )
