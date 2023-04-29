@@ -4950,11 +4950,11 @@ STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup)
     return largest;
 }
 
-STATIC void* _shm_create(char *name,
 #if ENABLE_SYSV
-    key_t *key,
+STATIC void* _shm_create(char *name, key_t *key, size_t size)
+#else
+STATIC void* _shm_create(const char *name, size_t size)
 #endif
-    size_t size)
 {
 #if ENABLE_SYSV
   FILE *fp;
