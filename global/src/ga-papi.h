@@ -408,6 +408,7 @@ extern void pnga_sprs_array_access_col_block(Integer s_a, Integer icol, void *id
 extern int pnga_sprs_array_access_col_block_idx(Integer s_a, Integer icol, AccessIndex *idx, AccessIndex *jdx, AccessIndex *vdx);
 extern void pnga_sprs_array_col_block_list(Integer s_a, Integer **idx, Integer *n);
 extern Integer pnga_sprs_array_duplicate(Integer s_a);
+extern Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b);
 extern void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v);
 extern logical pnga_sprs_array_destroy(Integer s_a);
 extern void pnga_sprs_array_export(Integer s_a, const char* file);
@@ -415,4 +416,7 @@ extern void pnga_sprs_array_get_diag(Integer s_a, Integer *g_d);
 extern void pnga_sprs_array_diag_right_multiply(Integer s_a, Integer g_d);
 extern void pnga_sprs_array_diag_left_multiply(Integer s_a, Integer g_d);
 extern void pnga_sprs_array_shift_diag(Integer s_a, void *shift);
+extern logical pnga_sprs_array_get_block(Integer s_a, Integer irow, Integer icol,
+    void **idx, void **jdx, void **data, Integer *ilo, Integer *ihi,
+    Integer *jlo, Integer *jhi);
 #endif /* PAPI_H_ */

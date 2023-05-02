@@ -3197,6 +3197,7 @@
 #define nga_sprs_array_diag_right_multiply_ F77_FUNC_(nga_sprs_array_diag_right_multiply,NGA_SPRS_ARRAY_DIAG_RIGHT_MULTIPLY)
 #define nga_sprs_array_shift_diag_ F77_FUNC_(nga_sprs_array_shift_diag,NGA_SPRS_ARRAY_SHIFT_DIAG)
 #define nga_sprs_array_duplicate_ F77_FUNC_(nga_sprs_array_duplicate,NGA_SPRS_ARRAY_DUPLICATE)
+#define nga_sprs_array_matmat_multiply_ F77_FUNC_(nga_sprs_array_matmat_multiply,NGA_SPRS_ARRAY_MATMAT_MULTIPLY)
 /* the missing functions are either complex type or strangely named */
 
 #define gai_cdot_patch_     F77_FUNC_(gai_cdot_patch,GAI_CDOT_PATCH)

@@ -5417,6 +5417,45 @@ void NGA_Sprs_array_column_distribution64(int s_a, int iproc, int64_t *lo, int64
   *hi = (int64_t)ihi;
 }
 
+int NGA_Sprs_array_get_block(int s_a, int irow, int icol, int **idx,
+    int **jdx, void **data, int *ilo, int *ihi, int *jlo, int *jhi)
+{
+  Integer sa = (Integer)s_a;
+  Integer ir = (Integer)irow;
+  Integer ic = (Integer)icol;
+  Integer il, ih, jl, jh;
+  void *id, *jd;
+  int ret = wnga_sprs_array_get_block(sa, ir, ic, &id, &jd, data,
+      &il, &ih, &jl, &jh);
+  *ilo = (Integer)il-1;
+  *ihi = (Integer)ih-1;
+  *jlo = (Integer)jl-1;
+  *jhi = (Integer)jh-1;
+  *idx = (int*)id;
+  *jdx = (int*)jd;
+  return ret;
+}
+
+int NGA_Sprs_array_get_block64(int s_a, int64_t irow, int64_t icol,
+    int64_t **idx, int64_t **jdx, void **data, int64_t *ilo,
+    int64_t *ihi, int64_t *jlo, int64_t *jhi)
+{
+  Integer sa = (Integer)s_a;
+  Integer ir = (Integer)irow;
+  Integer ic = (Integer)icol;
+  Integer il, ih, jl, jh;
+  void *id, *jd;
+  int ret = wnga_sprs_array_get_block(sa, ir, ic, &id, &jd, data,
+      &il, &ih, &jl, &jh);
+  *ilo = (Integer)il-1;
+  *ihi = (Integer)ih-1;
+  *jlo = (Integer)jl-1;
+  *jhi = (Integer)jh-1;
+  *idx = (int64_t*)id;
+  *jdx = (int64_t*)jd;
+  return ret;
+}
+
 void NGA_Sprs_array_access_col_block(int s_a, int icol, int **idx, int **jdx,
     void **val)
 {
@@ -5425,8 +5464,8 @@ void NGA_Sprs_array_access_col_block(int s_a, int icol, int **idx, int **jdx,
   wnga_sprs_array_access_col_block(sa,ic,idx,jdx,val);
 }
 
-void NGA_Sprs_array_access_col_block64(int s_a, int icol, long **idx, long **jdx,
-    void **val)
+void NGA_Sprs_array_access_col_block64(int s_a, int icol, int64_t **idx,
+    int64_t **jdx, void **val)
 {
   Integer sa = (Integer)s_a;
   Integer ic = (Integer)icol;
@@ -5499,4 +5538,12 @@ int NGA_Sprs_array_duplicate(int s_a)
 {
   Integer sa = (Integer)s_a;
   return (int)wnga_sprs_array_duplicate(sa);
+}
+
+int NGA_Sprs_array_matmat_multiply(int s_a, int s_b)
+{
+  int s_c;
+  Integer sa = (Integer)s_a;
+  Integer sb = (Integer)s_b;
+  return (int)wnga_sprs_array_matmat_multiply(sa, sb);
 }

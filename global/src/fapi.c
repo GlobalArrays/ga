@@ -3848,3 +3848,8 @@ Integer nga_sprs_array_duplicate_(Integer *s_a)
 {
   return wnga_sprs_array_duplicate(*s_a);
 }
+
+Integer nga_sprs_array_matmat_multiply(Integer *s_a, Integer *s_b)
+{
+  return wnga_sprs_array_matmat_multiply(*s_a, *s_b);
+}
