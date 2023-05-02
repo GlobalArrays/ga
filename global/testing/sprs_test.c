@@ -999,15 +999,17 @@ void matrix_test(int type)
   time /= (double)(nprocs*nprocs*nprocs);
   if (me == 0) {
     if (ok) {
-      printf("\n    **Sparse matrix get block operation PASSES**\n");
-      printf("    Time for matrix get block operation: %16.8f\n",time);
     } else {
       printf("\n    **Sparse matrix get block operation FAILS**\n");
     }
   }
-
-  NGA_Sprs_array_destroy(s_a);
   free(a);
+  free(b);
+  free(c);
+  free(nz_map);
+#endif
+  NGA_Sprs_array_destroy(s_a);
+  NGA_Sprs_array_destroy(s_b);
 
   /* create sparse matrix A */
   setup_matrix(&s_a, &a, dim, type);
@@ -1881,6 +1883,7 @@ int main(int argc, char **argv) {
     printf("\nTesting matrices of type int\n");
   }
   matrix_test(C_INT);
+#if 1
 
   if (me == 0) {
     printf("\nTesting matrices of type long\n");
