@@ -351,6 +351,10 @@ extern void          NGA_Sprs_array_diag_left_multiply(int s_a, int g_d);
 extern int           NGA_Sprs_array_duplicate(int s_a);
 extern void          NGA_Sprs_array_export(int s_a, const char* file);
 extern void          NGA_Sprs_array_get_diag(int s_a, int *g_d);
+extern int           NGA_Sprs_array_get_block(int s_a, int irow, int icol,
+                        int **idx, int **jdx, void **data, int *ilo, int *ihi,
+                        int *jlo, int *jhi);
+extern int           NGA_Sprs_array_matmat_multiply(int s_a, int s_b);
 extern void          NGA_Sprs_array_matvec_multiply(int s_a, int g_a, int g_v);
 extern void          NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo, int *hi);
 extern void          NGA_Sprs_array_shift_diag(int s_a, void *shift);
@@ -480,6 +484,9 @@ extern int           NGA_Sprs_array_create64(int64_t idim, int64_t jdim, int typ
 extern void          NGA_Sprs_array_add_element64(int s_a, int64_t idx, int64_t jdx, void *val);
 extern void          NGA_Sprs_array_row_distribution64(int s_a, int iproc, int64_t *lo, int64_t *hi);
 extern void          NGA_Sprs_array_column_distribution64(int s_a, int iproc, int64_t *lo, int64_t *hi);
+extern int           NGA_Sprs_array_get_block64(int s_a, int64_t irow, int64_t icol,
+                        int64_t **idx, int64_t **jdx, void **data, int64_t *ilo,
+                        int64_t *ihi, int64_t *jlo, int64_t *jhi);
 
 #ifdef __cplusplus
 }
