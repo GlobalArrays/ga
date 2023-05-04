@@ -5427,10 +5427,10 @@ int NGA_Sprs_array_get_block(int s_a, int irow, int icol, int **idx,
   void *id, *jd;
   int ret = wnga_sprs_array_get_block(sa, ir, ic, &id, &jd, data,
       &il, &ih, &jl, &jh);
-  *ilo = (Integer)il-1;
-  *ihi = (Integer)ih-1;
-  *jlo = (Integer)jl-1;
-  *jhi = (Integer)jh-1;
+  *ilo = (int)il-1;
+  *ihi = (int)ih-1;
+  *jlo = (int)jl-1;
+  *jhi = (int)jh-1;
   *idx = (int*)id;
   *jdx = (int*)jd;
   return ret;
@@ -5447,10 +5447,10 @@ int NGA_Sprs_array_get_block64(int s_a, int64_t irow, int64_t icol,
   void *id, *jd;
   int ret = wnga_sprs_array_get_block(sa, ir, ic, &id, &jd, data,
       &il, &ih, &jl, &jh);
-  *ilo = (Integer)il-1;
-  *ihi = (Integer)ih-1;
-  *jlo = (Integer)jl-1;
-  *jhi = (Integer)jh-1;
+  *ilo = (int64_t)il-1;
+  *ihi = (int64_t)ih-1;
+  *jlo = (int64_t)jl-1;
+  *jhi = (int64_t)jh-1;
   *idx = (int64_t*)id;
   *jdx = (int64_t*)jd;
   return ret;

@@ -64,6 +64,8 @@
 #include "ga-wapi.h"
 #include "thread-safe.h"
 
+#define ENABLE_PREALLOC 1
+
 _sparse_array *SPA;
 /**
  * Initial number of values that can be stored on a processor before needing to
@@ -89,6 +91,7 @@ void sai_init_sparse_arrays()
     SPA[i].idx = NULL;
     SPA[i].jdx = NULL;
     SPA[i].val = NULL;
+    SPA[i].max_nnz = 0;
     SPA[i].g_data = GA_OFFSET-1;
     SPA[i].g_i = GA_OFFSET-1;
     SPA[i].g_j = GA_OFFSET-1;
@@ -286,6 +289,8 @@ logical pnga_sprs_array_assemble(Integer s_a)
   int64_t *ildx;
   int64_t *jldx;
   int64_t *row_info;
+  int64_t max_nnz;
+  Integer *row_nnz;
 
   /* set variable that distinguishes between long and ints for indices */
   if (SPA[hdl].idx_size == sizeof(int64_t)) {
@@ -646,6 +651,8 @@ logical pnga_sprs_array_assemble(Integer s_a)
   ncnt = 0;
   icnt = 0;
   jcnt = 0;
+  row_nnz = (Integer*)malloc(nrows*sizeof(Integer));
+  for (i=0; i<nrows; i++) row_nnz[i] = 0;
   for (i=0; i<SPA[hdl].nblocks; i++) {
     char *vptr = vals+ncnt*SPA[hdl].size;
     Integer *ibuf = SPA[hdl].idx + ncnt;
@@ -680,6 +687,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
           irow = list[irow];
           icnt++;
           jcnt++;
+          row_nnz[j]++;
         }
         /*
         if ((ildx+i*(nrows+1))[j] == (int64_t)icnt) {
@@ -715,6 +723,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
           irow = list[irow];
           icnt++;
           jcnt++;
+          row_nnz[j]++;
         }
       }
       if (icnt > 0) (isdx+i*(nrows+1))[nrows] = (int)icnt; 
@@ -724,6 +733,14 @@ logical pnga_sprs_array_assemble(Integer s_a)
     SPA[hdl].offset[i] = ncnt;
     ncnt += SPA[hdl].blksize[i];
   }
+  /* Find maximum number of non-zeros per row on this processors */
+  max_nnz = 0;
+  for (i=0; i<nrows; i++) {
+    if (max_nnz < (int64_t)row_nnz[i]) max_nnz = (int64_t)row_nnz[i];
+  }
+  free(row_nnz);
+  pnga_pgroup_gop(SPA[hdl].grp,C_LONG,&max_nnz,1,"max");
+  SPA[hdl].max_nnz = (Integer)max_nnz;
   free(SPA[hdl].val);
   free(SPA[hdl].idx);
   free(SPA[hdl].jdx);
@@ -2056,6 +2073,7 @@ Integer pnga_sprs_array_duplicate(Integer s_a)
  * @param jdx array holding column indices of non-zero elements
  * @param data array holding values of non-zero elements
  * @param ilo, ihi, jlo, jhi bounding indices of block in matrix
+ * @param max_nnz maximum number of non-zero per row in the block
  * @return false if block has no data
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -2213,6 +2231,7 @@ void update_map(Integer **top, Integer **list, Integer **idx, Integer **jdx,
   *ncnt = lcnt;
 }
 
+#if ENABLE_PREALLOC
 /**
  * Macros for sparse block matrix-matrix multiply. Note that bounds
  * ilo_a, ihi_a, jlo_b, jhi_b are unit based, so any index that has
@@ -2220,16 +2239,14 @@ void update_map(Integer **top, Integer **list, Integer **idx, Integer **jdx,
  */
 #define SPRS_REAL_MATMAT_MULTIPLY_M(_type,_idxa,_jdxa,_idxb,_jdxb) \
 {                                                                  \
-  for (i=ilo_a; i<=ihi_a; i++) {                                    \
+  for (i=ilo_a; i<=ihi_a; i++) {                                   \
     Integer kcols = _idxa[i+1-ilo_a]-_idxa[i-ilo_a];               \
     for (k=0; k<kcols; k++) {                                      \
       Integer kdx = _jdxa[_idxa[i-ilo_a]+k]+1;                     \
       Integer jcols = _idxb[kdx+1-ilo_b]-_idxb[kdx-ilo_b];         \
-      /*_type val_a = ((_type*)data_a)[kdx-jlo_a]; */              \
       _type val_a = ((_type*)data_a)[_idxa[i-ilo_a]+k];            \
       for (j=0; j<jcols; j++) {                                    \
         Integer jj = _jdxb[_idxb[kdx-ilo_b]+j]+1;                  \
-        /* _type val_b = ((_type*)data_b)[jj-jlo_b]; */            \
         _type val_b = ((_type*)data_b)[_idxb[kdx-ilo_b]+j];        \
         /* Check to see if c_ij already exists */                  \
         Integer ldx = ((i-1)*jdim+jj-1)%bufsize;                   \
@@ -2261,7 +2278,7 @@ void update_map(Integer **top, Integer **list, Integer **idx, Integer **jdx,
 
 #define SPRS_COMPLEX_MATMAT_MULTIPLY_M(_type,_idxa,_jdxa,_idxb,_jdxb) \
 {                                                                     \
-  for (i=ilo_a; i<=ihi_a; i++) {                                       \
+  for (i=ilo_a; i<=ihi_a; i++) {                                      \
     Integer kcols = _idxa[i+1-ilo_a]-_idxa[i-ilo_a];                  \
     for (k=0; k<kcols; k++) {                                         \
       Integer kdx = _jdxa[_idxa[i-ilo_a]+k]+1;                        \
@@ -2304,6 +2321,99 @@ void update_map(Integer **top, Integer **list, Integer **idx, Integer **jdx,
     }                                                                 \
   }                                                                   \
 }
+#else
+/**
+ * Macros for sparse block matrix-matrix multiply. Note that bounds
+ * ilo_a, ihi_a, jlo_b, jhi_b are unit based, so any index that has
+ * these values subtracted from it must also be unit based.
+ */
+#define SPRS_REAL_MATMAT_MULTIPLY_M(_type,_idxa,_jdxa,_idxb,_jdxb) \
+{                                                                  \
+  for (i=ilo_a; i<=ihi_a; i++) {                                   \
+    Integer kcols = _idxa[i+1-ilo_a]-_idxa[i-ilo_a];               \
+    for (k=0; k<kcols; k++) {                                      \
+      Integer kdx = _jdxa[_idxa[i-ilo_a]+k]+1;                     \
+      Integer jcols = _idxb[kdx+1-ilo_b]-_idxb[kdx-ilo_b];         \
+      /*_type val_a = ((_type*)data_a)[kdx-jlo_a]; */              \
+      _type val_a = ((_type*)data_a)[_idxa[i-ilo_a]+k];            \
+      for (j=0; j<jcols; j++) {                                    \
+        Integer jj = _jdxb[_idxb[kdx-ilo_b]+j]+1;                  \
+        /* _type val_b = ((_type*)data_b)[jj-jlo_b]; */            \
+        _type val_b = ((_type*)data_b)[_idxb[kdx-ilo_b]+j];        \
+        /* Check to see if c_ij already exists */                  \
+        Integer ldx = ((i-1)*jdim+jj-1)%bufsize;                   \
+        ldx = top[ldx];                                            \
+        while(ldx >= 0) {                                          \
+          if (i == idx[ldx] && jj == jdx[ldx]) break;              \
+          ldx = list[ldx];                                         \
+        }                                                          \
+        if (ldx >= 0) {                                            \
+          /* add product to existing value*/                       \
+          ((_type*)data)[ldx] += val_a*val_b;                      \
+        } else {                                                   \
+          /* add new value to list */                              \
+          if (lcnt == bufsize)                                     \
+            update_map(&top, &list, &idx, &jdx, &data, idim,       \
+                jdim, elemsize, &bufsize, &lcnt);                  \
+          ((_type*)data)[lcnt] = val_a*val_b;                      \
+          idx[lcnt] = i;                                           \
+          jdx[lcnt] = jj;                                          \
+          ldx = ((i-1)*jdim+jj-1)%bufsize;                         \
+          list[lcnt] = top[ldx];                                   \
+          top[ldx] = lcnt;                                         \
+          lcnt++;                                                  \
+        }                                                          \
+      }                                                            \
+    }                                                              \
+  }                                                                \
+}
+
+#define SPRS_COMPLEX_MATMAT_MULTIPLY_M(_type,_idxa,_jdxa,_idxb,_jdxb) \
+{                                                                     \
+  for (i=ilo_a; i<=ihi_a; i++) {                                      \
+    Integer kcols = _idxa[i+1-ilo_a]-_idxa[i-ilo_a];                  \
+    for (k=0; k<kcols; k++) {                                         \
+      Integer kdx = _jdxa[_idxa[i-ilo_a]+k]+1;                        \
+      Integer jcols = _idxb[kdx+1-ilo_b]-_idxb[kdx-ilo_b];            \
+      /*_type rval_a = ((_type*)data_a)[2*(kdx-jlo_a)];    */         \
+      /*_type ival_a = ((_type*)data_a)[2*(kdx-jlo_a)+1];  */         \
+      _type rval_a = ((_type*)data_a)[2*(idx_a[i-ilo_a]+k)];          \
+      _type ival_a = ((_type*)data_a)[2*(idx_a[i-ilo_a]+k)+1];        \
+      for (j=0; j<jcols; j++) {                                       \
+        Integer jj = _jdxb[_idxb[kdx-ilo_b]+j]+1;                     \
+        /*_type rval_b = ((_type*)data_b)[2*(jj-jlo_b)];    */        \
+        /*_type ival_b = ((_type*)data_b)[2*(jj-jlo_b)+1];  */        \
+        _type rval_b = ((_type*)data_b)[2*(idx_b[kdx-ilo_b]+j)];      \
+        _type ival_b = ((_type*)data_b)[2*(idx_b[kdx-ilo_b]+j)+1];    \
+        /* Check to see if c_ij already exists */                     \
+        Integer ldx = ((i-1)*jdim+jj-1)%bufsize;                      \
+        ldx = top[ldx];                                               \
+        while(ldx >= 0) {                                             \
+          if (i == idx[ldx] && jj == jdx[ldx]) break;                 \
+          ldx = list[ldx];                                            \
+        }                                                             \
+        if (ldx >= 0) {                                               \
+          /* add product to existing value*/                          \
+          ((_type*)data)[2*ldx] += rval_a*rval_b-ival_a*ival_b;       \
+          ((_type*)data)[2*ldx+1] += rval_a*ival_b+ival_a*rval_b;     \
+        } else {                                                      \
+          /* add new value to list */                                 \
+          if (lcnt == bufsize) update_map(&top, &list, &idx, &jdx,    \
+              &data, idim, jdim, elemsize, &bufsize, &lcnt);          \
+          ((_type*)data)[2*lcnt] = rval_a*rval_b-ival_a*ival_b;       \
+          ((_type*)data)[2*lcnt+1] = rval_a*ival_b+ival_a*rval_b;     \
+          idx[lcnt] = i;                                              \
+          jdx[lcnt] = jj;                                             \
+          ldx = ((i-1)*jdim+jj-1)%bufsize;                            \
+          list[lcnt] = top[ldx];                                      \
+          top[ldx] = lcnt;                                            \
+          lcnt++;                                                     \
+        }                                                             \
+      }                                                               \
+    }                                                                 \
+  }                                                                   \
+}
+#endif
 
 /**
  * Multiply sparse matrices A and B to get sparse matrix C
@@ -2339,6 +2449,7 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
   Integer *count;
   Integer nblocks;
   Integer s_c;
+  Integer max_nnz_a, max_nnz_b;
   /* Do some initial verification to see if matrix multiply is possible */
   if (SPA[hdl_a].type != SPA[hdl_b].type) {
     pnga_error("(ga_sprs_array_matmat_multiply) types of sparse matrices"
@@ -2364,7 +2475,18 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
   }
   /* Allocate initial buffers to hold elements of product matrix. This
    * algorithm assumes that product matrix remains relatively sparse. */
+#if ENABLE_PREALLOC
+  {
+  Integer nrows = SPA[hdl_a].ihi-SPA[hdl_a].ilo + 1;
+  if (SPA[hdl_a].max_nnz*SPA[hdl_b].max_nnz > SPA[hdl_b].jdim) {
+    bufsize = nrows*SPA[hdl_b].jdim;
+  } else {
+    bufsize = nrows*SPA[hdl_a].max_nnz*SPA[hdl_b].max_nnz;
+  }
+  }
+#else
   bufsize = INIT_BUF_SIZE;
+#endif
   elemsize = SPA[hdl_a].size;
   idim = SPA[hdl_a].idim;
   jdim = SPA[hdl_b].jdim;
