@@ -2813,7 +2813,97 @@ void update_map(Integer **top, Integer **list, Integer **idx, Integer **jdx,
  */
 #define SPRS_REAL_MATMAT_MULTIPLY_M(_type,_idxa,_jdxa,_idxb,_jdxb) \
 {                                                                  \
-  for (i=ilo_a; i<=ihi_a; i++) {                                    \
+  for (i=ilo_a; i<=ihi_a; i++) {                                   \
+    Integer kcols = _idxa[i+1-ilo_a]-_idxa[i-ilo_a];               \
+    for (k=0; k<kcols; k++) {                                      \
+      Integer kdx = _jdxa[_idxa[i-ilo_a]+k]+1;                     \
+      Integer jcols = _idxb[kdx+1-ilo_b]-_idxb[kdx-ilo_b];         \
+      _type val_a = ((_type*)data_a)[_idxa[i-ilo_a]+k];            \
+      for (j=0; j<jcols; j++) {                                    \
+        Integer jj = _jdxb[_idxb[kdx-ilo_b]+j]+1;                  \
+        _type val_b = ((_type*)data_b)[_idxb[kdx-ilo_b]+j];        \
+        /* Check to see if c_ij already exists */                  \
+        Integer ldx = ((i-1)*jdim+jj-1)%bufsize;                   \
+        ldx = top[ldx];                                            \
+        while(ldx >= 0) {                                          \
+          if (i == idx[ldx] && jj == jdx[ldx]) break;              \
+          ldx = list[ldx];                                         \
+        }                                                          \
+        if (ldx >= 0) {                                            \
+          /* add product to existing value*/                       \
+          ((_type*)data)[ldx] += val_a*val_b;                      \
+        } else {                                                   \
+          /* add new value to list */                              \
+          if (lcnt == bufsize)                                     \
+            update_map(&top, &list, &idx, &jdx, &data, idim,       \
+                jdim, elemsize, &bufsize, &lcnt);                  \
+          ((_type*)data)[lcnt] = val_a*val_b;                      \
+          idx[lcnt] = i;                                           \
+          jdx[lcnt] = jj;                                          \
+          ldx = ((i-1)*jdim+jj-1)%bufsize;                         \
+          list[lcnt] = top[ldx];                                   \
+          top[ldx] = lcnt;                                         \
+          lcnt++;                                                  \
+        }                                                          \
+      }                                                            \
+    }                                                              \
+  }                                                                \
+}
+
+#define SPRS_COMPLEX_MATMAT_MULTIPLY_M(_type,_idxa,_jdxa,_idxb,_jdxb) \
+{                                                                     \
+  for (i=ilo_a; i<=ihi_a; i++) {                                      \
+    Integer kcols = _idxa[i+1-ilo_a]-_idxa[i-ilo_a];                  \
+    for (k=0; k<kcols; k++) {                                         \
+      Integer kdx = _jdxa[_idxa[i-ilo_a]+k]+1;                        \
+      Integer jcols = _idxb[kdx+1-ilo_b]-_idxb[kdx-ilo_b];            \
+      /*_type rval_a = ((_type*)data_a)[2*(kdx-jlo_a)];    */         \
+      /*_type ival_a = ((_type*)data_a)[2*(kdx-jlo_a)+1];  */         \
+      _type rval_a = ((_type*)data_a)[2*(idx_a[i-ilo_a]+k)];          \
+      _type ival_a = ((_type*)data_a)[2*(idx_a[i-ilo_a]+k)+1];        \
+      for (j=0; j<jcols; j++) {                                       \
+        Integer jj = _jdxb[_idxb[kdx-ilo_b]+j]+1;                     \
+        /*_type rval_b = ((_type*)data_b)[2*(jj-jlo_b)];    */        \
+        /*_type ival_b = ((_type*)data_b)[2*(jj-jlo_b)+1];  */        \
+        _type rval_b = ((_type*)data_b)[2*(idx_b[kdx-ilo_b]+j)];      \
+        _type ival_b = ((_type*)data_b)[2*(idx_b[kdx-ilo_b]+j)+1];    \
+        /* Check to see if c_ij already exists */                     \
+        Integer ldx = ((i-1)*jdim+jj-1)%bufsize;                      \
+        ldx = top[ldx];                                               \
+        while(ldx >= 0) {                                             \
+          if (i == idx[ldx] && jj == jdx[ldx]) break;                 \
+          ldx = list[ldx];                                            \
+        }                                                             \
+        if (ldx >= 0) {                                               \
+          /* add product to existing value*/                          \
+          ((_type*)data)[2*ldx] += rval_a*rval_b-ival_a*ival_b;       \
+          ((_type*)data)[2*ldx+1] += rval_a*ival_b+ival_a*rval_b;     \
+        } else {                                                      \
+          /* add new value to list */                                 \
+          if (lcnt == bufsize) update_map(&top, &list, &idx, &jdx,    \
+              &data, idim, jdim, elemsize, &bufsize, &lcnt);          \
+          ((_type*)data)[2*lcnt] = rval_a*rval_b-ival_a*ival_b;       \
+          ((_type*)data)[2*lcnt+1] = rval_a*ival_b+ival_a*rval_b;     \
+          idx[lcnt] = i;                                              \
+          jdx[lcnt] = jj;                                             \
+          ldx = ((i-1)*jdim+jj-1)%bufsize;                            \
+          list[lcnt] = top[ldx];                                      \
+          top[ldx] = lcnt;                                            \
+          lcnt++;                                                     \
+        }                                                             \
+      }                                                               \
+    }                                                                 \
+  }                                                                   \
+}
+#else
+/**
+ * Macros for sparse block matrix-matrix multiply. Note that bounds
+ * ilo_a, ihi_a, jlo_b, jhi_b are unit based, so any index that has
+ * these values subtracted from it must also be unit based.
+ */
+#define SPRS_REAL_MATMAT_MULTIPLY_M(_type,_idxa,_jdxa,_idxb,_jdxb) \
+{                                                                  \
+  for (i=ilo_a; i<=ihi_a; i++) {                                   \
     Integer kcols = _idxa[i+1-ilo_a]-_idxa[i-ilo_a];               \
     for (k=0; k<kcols; k++) {                                      \
       Integer kdx = _jdxa[_idxa[i-ilo_a]+k]+1;                     \
@@ -2854,7 +2944,7 @@ void update_map(Integer **top, Integer **list, Integer **idx, Integer **jdx,
 
 #define SPRS_COMPLEX_MATMAT_MULTIPLY_M(_type,_idxa,_jdxa,_idxb,_jdxb) \
 {                                                                     \
-  for (i=ilo_a; i<=ihi_a; i++) {                                       \
+  for (i=ilo_a; i<=ihi_a; i++) {                                      \
     Integer kcols = _idxa[i+1-ilo_a]-_idxa[i-ilo_a];                  \
     for (k=0; k<kcols; k++) {                                         \
       Integer kdx = _jdxa[_idxa[i-ilo_a]+k]+1;                        \
