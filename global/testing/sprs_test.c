@@ -1184,6 +1184,9 @@ int main(int argc, char **argv) {
   }
   matrix_test(C_DCPL);
 #endif
+  if (me == 0) {
+    printf("\nSparse matrix tests complete\n\n");
+  }
 
   NGA_Terminate();
   /**

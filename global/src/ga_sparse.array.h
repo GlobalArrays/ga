@@ -21,6 +21,7 @@ typedef struct {
   Integer *blksize; /* array containing sizes of non-zero blocks */
   Integer *offset;  /* array containing starting index in g_j for each block in
                      * row block (relative to starting index of row block */
+  Integer max_nnz;  /* maximum number of non-zeros per row */
   Integer *idx;     /* local buffer containing i indices */
   Integer *jdx;     /* local buffer containing j indices */
   void    *val;     /* local buffer containing values */
