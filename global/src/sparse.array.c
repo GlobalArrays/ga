@@ -140,8 +140,8 @@ Integer pnga_sprs_array_create(Integer idim, Integer jdim, Integer type, Integer
   for (i=0; i<MAX_ARRAYS; i++) {
     if (!SPA[i].active) {
       SPA[i].active = 1;
-      SPA[i].idx = (Integer*)malloc(INIT_BUF_SIZE*size);
-      SPA[i].jdx = (Integer*)malloc(INIT_BUF_SIZE*size);
+      SPA[i].idx = (Integer*)malloc(INIT_BUF_SIZE*sizeof(Integer));
+      SPA[i].jdx = (Integer*)malloc(INIT_BUF_SIZE*sizeof(Integer));
       SPA[i].type = pnga_type_f2c((int)(type));
       SPA[i].idx_size = size;
       SPA[i].size = GAsizeofM(SPA[i].type);
@@ -191,8 +191,8 @@ void pnga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *va
     char *oval = (char*)SPA[hdl].val;
     Integer me = pnga_pgroup_nodeid(SPA[hdl].grp);
 
-    tidx = (Integer*)malloc(2*SPA[hdl].maxval*idx_size);
-    tjdx = (Integer*)malloc(2*SPA[hdl].maxval*idx_size);
+    tidx = (Integer*)malloc(2*SPA[hdl].maxval*sizeof(Integer));
+    tjdx = (Integer*)malloc(2*SPA[hdl].maxval*sizeof(Integer));
     tval = (char*)malloc(2*SPA[hdl].maxval*SPA[hdl].size);
     /* copy data in old arrays to new, larger array */
     for (i=0; i<nval; i++) {
