@@ -9,7 +9,7 @@
 
 #define WRITE_VTK
 #define CG_SOLVE 1
-#define NDIM 128
+#define NDIM 1024
 
 /**
  *  Solve Laplace's equation on a cubic domain using the sparse matrix
@@ -300,12 +300,15 @@ void matrix_test(int type)
   char op[2],plus[2];
   void *shift_val;
   void *a, *b, *c, *d;
+  double tbeg, time;
   
   /* create sparse matrix */
   setup_matrix(&s_a, &a, dim, type);
 
   /* extract diagonal of s_a to g_d */
+  tbeg = GA_Wtime();
   NGA_Sprs_array_get_diag(s_a, &g_d);
+  time = GA_Wtime()-tbeg;
 
   /* check values of g_d to see if they are all 2 */
   NGA_Distribution64(g_d,me,&ilo,&ihi);
@@ -349,10 +352,15 @@ void matrix_test(int type)
   NGA_Release64(g_d,&ilo,&ihi);
   op[0] = '*';
   op[1] = '\0';
+  plus[0] = '+';
+  plus[1] = '\0';
   GA_Igop(&ok,1,op);
+  GA_Dgop(&time,1,plus);
+  time /= (double)nprocs;
   if (me == 0) {
     if (ok) {
       printf("    **Sparse matrix get diagonal operation PASSES**\n");
+      printf("    Time for matrix get diagonal operation: %16.8f\n",time);
     } else {
       printf("    **Sparse matrix get diagonal operation FAILS**\n");
     }
@@ -386,7 +394,9 @@ void matrix_test(int type)
     ((double*)shift_val)[0] = 1.0;
     ((double*)shift_val)[1] = 0.0;
   }
+  tbeg = GA_Wtime();
   NGA_Sprs_array_shift_diag(s_a, shift_val);
+  time = GA_Wtime()-tbeg;
 
   /* extract diagonal of s_a to g_d */
   NGA_Sprs_array_get_diag(s_a, &g_d);
@@ -433,9 +443,12 @@ void matrix_test(int type)
   op[0] = '*';
   op[1] = '\0';
   GA_Igop(&ok,1,op);
+  GA_Dgop(&time,1,plus);
+  time /= (double)nprocs;
   if (me == 0) {
     if (ok) {
       printf("\n    **Sparse matrix shift diagonal operation PASSES**\n");
+      printf("    Time for matrix get diagonal operation: %16.8f\n",time);
     } else {
       printf("\n    **Sparse matrix shift diagonal operation FAILS**\n");
     }
@@ -453,7 +466,9 @@ void matrix_test(int type)
   setup_diag_matrix(&g_d, &d, dim, type);
 
   /* Do a right hand multiply */
+  tbeg = GA_Wtime();
   NGA_Sprs_array_diag_right_multiply(s_a, g_d);
+  time = GA_Wtime()-tbeg;
   /* Do a right hand multiply in regular arrays */
 #define MULTIPLY_REAL_AIJ_DJ_M(_a, _d, _i, _j, _type)  \
   {                                                    \
@@ -559,9 +574,12 @@ void matrix_test(int type)
     }
   }
   GA_Igop(&ok,1,op);
+  GA_Dgop(&time,1,plus);
+  time /= (double)nprocs;
   if (me == 0) {
     if (ok) {
       printf("    **Sparse matrix right diagonal multiply operation PASSES**\n");
+      printf("    Time for matrix right diagonal multiply operation: %16.8f\n",time);
     } else {
       printf("    **Sparse matrix right diagonal multiply operation FAILS**\n");
     }
@@ -578,7 +596,9 @@ void matrix_test(int type)
   setup_diag_matrix(&g_d, &d, dim, type);
 
   /* Do a left hand multiply */
+  tbeg = GA_Wtime();
   NGA_Sprs_array_diag_left_multiply(s_a, g_d);
+  time = GA_Wtime()-tbeg;
   /* Do a right hand multiply in regular arrays */
 #define MULTIPLY_REAL_DI_AIJ_M(_a, _d, _i, _j, _type)  \
   {                                                    \
@@ -684,9 +704,12 @@ void matrix_test(int type)
     }
   }
   GA_Igop(&ok,1,op);
+  GA_Dgop(&time,1,plus);
+  time /= (double)nprocs;
   if (me == 0) {
     if (ok) {
       printf("    **Sparse matrix left diagonal multiply operation PASSES**\n");
+      printf("    Time for matrix left diagonal multiply operation: %16.8f\n",time);
     } else {
       printf("    **Sparse matrix left diagonal multiply operation FAILS**\n");
     }
@@ -699,14 +722,15 @@ void matrix_test(int type)
   /* create sparse matrix A */
   setup_matrix(&s_a, &a, dim, type);
 
-  plus[0] = '+';
-  plus[1] = '\0';
   nz_map = (int*)malloc(dim*dim*sizeof(int));
   for (i=0; i<dim*dim; i++) nz_map[i] = 0;
+  time = 0.0;
   for (k=0; k<nprocs; k++) {
     for (l=0; l<nprocs; l++) {
+      tbeg = GA_Wtime();
       NGA_Sprs_array_get_block64(s_a, k, l, &idx, &jdx, &ptr,
           &ilo, &ihi, &jlo, &jhi);
+      time += GA_Wtime()-tbeg;
       /*
       printf("p[%d] block [%d,%d] ilo: %d ihi: %d jlo: %d jhi: %d\n",
       me,k,l,ilo,ihi,jlo,jhi);
@@ -807,17 +831,6 @@ void matrix_test(int type)
       if (idx != NULL) free(ptr);
     }
   }
-#if 0
-  if (me == 0 && type == C_INT) {
-    printf("\nMatrix NZ_MAP\n");
-    for (i=0; i<dim; i++) {
-      for(j=0; j<dim; j++) {
-        printf(" %3d",((int*)nz_map)[j+dim*i]);
-      }
-      printf("\n");
-    }
-  }
-#endif
   for (i=0; i<dim*dim; i++) {
     if (type == C_INT) {
       if (((int*)a)[i] != 0 && nz_map[i] == 0) {
@@ -854,9 +867,12 @@ void matrix_test(int type)
   free(nz_map);
 
   GA_Igop(&ok,1,op);
+  GA_Dgop(&time,1,plus);
+  time /= (double)(nprocs*nprocs*nprocs);
   if (me == 0) {
     if (ok) {
       printf("    **Sparse matrix get block operation PASSES**\n");
+      printf("    Time for matrix get block operation: %16.8f\n",time);
     } else {
       printf("    **Sparse matrix get block operation FAILS**\n");
     }
@@ -890,7 +906,9 @@ void matrix_test(int type)
 
 
   /* multiply sparse matrix A times sparse matrix B */
+  tbeg = GA_Wtime();
   s_c = NGA_Sprs_array_matmat_multiply(s_a, s_b);
+  time = GA_Wtime()-tbeg;
 
 #if 1
   /* Do regular matrix-matrix multiply of A and B */
@@ -1010,6 +1028,7 @@ void matrix_test(int type)
             iproc,i+ilo,jdx[idx[i]+j],nvals);
             */
           ld++;
+          nz_map[(i+ilo)*dim+jdx[idx[i]+j]] = 1;
           if (type == C_INT) {
             /*
             printf("p[%d]        proc: %ld i: %ld j: %ld c: %d\n",me,
@@ -1095,6 +1114,25 @@ void matrix_test(int type)
     }
   }
 #if 0
+  if (me == 0 && type == C_INT) {
+    printf("\nMatrix NZ_MAP\n");
+    for (i=0; i<dim; i++) {
+      for(j=0; j<dim; j++) {
+        printf(" %3d",((int*)nz_map)[j+dim*i]);
+      }
+      printf("\n");
+    }
+  }
+#endif
+  /* Only do non-zero check for integers */
+  if (type == C_INT) {
+    for (i=0; i<dim*dim; i++) {
+      if (((int*)ab)[i] != 0 && nz_map[i] == 0) {
+        ok = 0;
+      }
+    }
+  }
+#if 0
   if (type == C_INT) {
     GA_Igop(ab,(int)(dim*dim),"+");
   }
@@ -1110,9 +1148,12 @@ void matrix_test(int type)
 #endif
   free(ab);
   GA_Igop(&ok,1,op);
+  GA_Dgop(&time,1,plus);
+  time /= (double)nprocs;
   if (me == 0) {
     if (ok) {
       printf("    **Sparse matrix-matrix multiply operation PASSES**\n");
+      printf("    Time for matrix-matrix multiply operation: %16.8f\n",time);
     } else {
       printf("    **Sparse matrix-matrix multiply operation FAILS**\n");
     }
