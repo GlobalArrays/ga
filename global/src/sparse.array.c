@@ -174,6 +174,7 @@ void pnga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *va
   Integer hdl = GA_OFFSET + s_a;
   Integer nval = SPA[hdl].nval;
   Integer size = SPA[hdl].size;
+  Integer idx_size = sizeof(Integer);
   /* Check to see if array is active and not ready */
   if (!SPA[hdl].active) 
     pnga_error("(ga_sprs_array_add_element) Array not active",hdl);
@@ -190,8 +191,8 @@ void pnga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *va
     char *oval = (char*)SPA[hdl].val;
     Integer me = pnga_pgroup_nodeid(SPA[hdl].grp);
 
-    tidx = (Integer*)malloc(2*SPA[hdl].maxval*size);
-    tjdx = (Integer*)malloc(2*SPA[hdl].maxval*size);
+    tidx = (Integer*)malloc(2*SPA[hdl].maxval*idx_size);
+    tjdx = (Integer*)malloc(2*SPA[hdl].maxval*idx_size);
     tval = (char*)malloc(2*SPA[hdl].maxval*SPA[hdl].size);
     /* copy data in old arrays to new, larger array */
     for (i=0; i<nval; i++) {
@@ -2629,6 +2630,7 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
   SPA[hdl_c].nval = 0;
   SPA[hdl_c].maxval = 0;
 
+  /* Set up global arrays to hold distributed indices and non-zero values */
   {
     int64_t isize = (rowdim+1)*nblocks;
     int64_t totalsize = 0;
@@ -2636,7 +2638,7 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
     Integer *offset = (Integer*)malloc(nprocs*sizeof(Integer));
     Integer *tmp = (Integer*)malloc(nprocs*sizeof(Integer));
     Integer *map = (Integer*)malloc(nprocs*sizeof(Integer));
-    /* set up array to hold row indices */
+    /* set up array to hold row indices. Evaluate offsets for rows */
     for (i=0; i<nprocs; i++) {
       offset[i] = 0;
       tmp[i] = 0;
@@ -2662,7 +2664,8 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
     }
     pnga_set_irreg_distr(SPA[hdl_c].g_i,map,&nprocs);
     pnga_allocate(SPA[hdl_c].g_i);
-    /* set up arrays to hold column indices and data */
+    /* set up arrays to hold column indices and data. Evaluate offsets
+     * for row blocks*/
     for (i=0; i<nprocs; i++) {
       offset[i] = 0;
       tmp[i] = 0;
