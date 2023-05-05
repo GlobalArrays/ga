@@ -221,8 +221,8 @@ void pnga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *va
     char *oval = (char*)SPA[hdl].val;
     Integer me = pnga_pgroup_nodeid(SPA[hdl].grp);
 
-    tidx = (Integer*)malloc(2*SPA[hdl].maxval*size);
-    tjdx = (Integer*)malloc(2*SPA[hdl].maxval*size);
+    tidx = (Integer*)malloc(2*SPA[hdl].maxval*idx_size);
+    tjdx = (Integer*)malloc(2*SPA[hdl].maxval*idx_size);
     tval = (char*)malloc(2*SPA[hdl].maxval*SPA[hdl].size);
     /* copy data in old arrays to new, larger array */
     for (i=0; i<nval; i++) {
