@@ -180,30 +180,51 @@ if (ENABLE_BLAS)
     include(FetchContent)
     set( gpu_backend "none" CACHE STRING "GPU backend to use" FORCE)
     if(NOT TARGET blaspp)
+      if(ENABLE_LOCAL_BUILD)
+      FetchContent_Declare(
+        blaspp
+        URL ${LOCAL_BUILD_PATH}/blaspp
+      )
+      else()
       FetchContent_Declare(
         blaspp
         GIT_REPOSITORY https://bitbucket.org/icl/blaspp.git
         GIT_TAG ${BPP_GIT_TAG}
       )
+      endif()
       FetchContent_MakeAvailable( blaspp )
     endif()
 
     if(NOT TARGET lapackpp)
+    if(ENABLE_LOCAL_BUILD)
+      FetchContent_Declare(
+        lapackpp
+        URL ${LOCAL_BUILD_PATH}/lapackpp
+      )
+      else()
       FetchContent_Declare(
         lapackpp
         GIT_REPOSITORY https://bitbucket.org/icl/lapackpp.git
         GIT_TAG ${LPP_GIT_TAG}
-      )
+      )      
+      endif()
       FetchContent_MakeAvailable( lapackpp )
     endif()
 
     if(ENABLE_SCALAPACK)
       if(NOT TARGET scalapackpp::scalapackpp)
+        if(ENABLE_LOCAL_BUILD)
+        FetchContent_Declare(
+          lapackpp
+          URL ${LOCAL_BUILD_PATH}/scalapackpp
+        )
+        else()
         FetchContent_Declare(
           scalapackpp
           GIT_REPOSITORY https://github.com/wavefunction91/scalapackpp.git
           GIT_TAG ${SPP_GIT_TAG}
         )
+        endif()
         FetchContent_MakeAvailable( scalapackpp )
       endif()
     endif()
