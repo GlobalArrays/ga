@@ -215,7 +215,7 @@ if (ENABLE_BLAS)
       if(NOT TARGET scalapackpp::scalapackpp)
         if(ENABLE_OFFLINE_BUILD)
         FetchContent_Declare(
-          lapackpp
+          scalapackpp
           URL ${DEPS_LOCAL_PATH}/scalapackpp
         )
         else()
