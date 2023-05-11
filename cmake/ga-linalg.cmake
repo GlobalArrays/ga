@@ -180,10 +180,10 @@ if (ENABLE_BLAS)
     include(FetchContent)
     set( gpu_backend "none" CACHE STRING "GPU backend to use" FORCE)
     if(NOT TARGET blaspp)
-      if(ENABLE_LOCAL_BUILD)
+      if(ENABLE_OFFLINE_BUILD)
       FetchContent_Declare(
         blaspp
-        URL ${LOCAL_BUILD_PATH}/blaspp
+        URL ${DEPS_LOCAL_PATH}/blaspp
       )
       else()
       FetchContent_Declare(
@@ -196,10 +196,10 @@ if (ENABLE_BLAS)
     endif()
 
     if(NOT TARGET lapackpp)
-    if(ENABLE_LOCAL_BUILD)
+    if(ENABLE_OFFLINE_BUILD)
       FetchContent_Declare(
         lapackpp
-        URL ${LOCAL_BUILD_PATH}/lapackpp
+        URL ${DEPS_LOCAL_PATH}/lapackpp
       )
       else()
       FetchContent_Declare(
@@ -213,10 +213,10 @@ if (ENABLE_BLAS)
 
     if(ENABLE_SCALAPACK)
       if(NOT TARGET scalapackpp::scalapackpp)
-        if(ENABLE_LOCAL_BUILD)
+        if(ENABLE_OFFLINE_BUILD)
         FetchContent_Declare(
           lapackpp
-          URL ${LOCAL_BUILD_PATH}/scalapackpp
+          URL ${DEPS_LOCAL_PATH}/scalapackpp
         )
         else()
         FetchContent_Declare(
