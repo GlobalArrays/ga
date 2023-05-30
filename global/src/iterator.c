@@ -277,6 +277,12 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     /* Initialize proc_index and index arrays */
     gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
     gam_find_tile_proc_indices(handle, hdl->iproc, hdl->index);
+    /* handle corner case when there are a large number of procs
+     * and some procs have no data
+     */
+    for (j=0; j<ndim; j++) {
+      if (hdl->index[j] >= GA[handle].num_blocks[j]) hdl->no_data = 1;
+    }
   } else if (GA[handle].distr_type == TILED_IRREG)  {
     int j;
     hdl->iproc = 0;
@@ -285,6 +291,12 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     /* Initialize proc_index and index arrays */
     gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
     gam_find_tile_proc_indices(handle, hdl->iproc, hdl->index);
+    /* handle corner case when there are a large number of procs
+     * and some procs have no data
+     */
+    for (j=0; j<ndim; j++) {
+      if (hdl->index[j] >= GA[handle].num_blocks[j]) hdl->no_data = 1;
+    }
   }
 }
 
@@ -647,6 +659,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
              * to next processor */
             hdl->iproc++;
             if (hdl->iproc >= nproc) return 0;
+            hdl->offset = 0;
             if (GA[handle].distr_type == TILED ||
                 GA[handle].distr_type == TILED_IRREG) {
               gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
@@ -716,6 +729,10 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         *proc = pinv;
 
         /* increment to next block */
+        itmp = 1;
+        for (j=0; j<ndim; j++) {
+          itmp *= bhi[j]-blo[j]+1;
+        }
         hdl->index[0] += GA[handle].nblock[0];
         for (j=0; j<ndim; j++) {
           if (hdl->index[j] >= GA[handle].num_blocks[j] && j < ndim-1) {
@@ -725,6 +742,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         }
         if (hdl->index[ndim-1] >= GA[handle].num_blocks[ndim-1]) {
           hdl->iproc++;
+          hdl->offset = 0;
           if (GA[handle].distr_type == TILED ||
               GA[handle].distr_type == TILED_IRREG) {
             gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
