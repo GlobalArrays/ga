@@ -728,11 +728,13 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         *prem =  GA[handle].ptr[pinv]+l_offset*GA[handle].elemsize;
         *proc = pinv;
 
-        /* increment to next block */
+        /* evaluate new offset for block */
         itmp = 1;
         for (j=0; j<ndim; j++) {
           itmp *= bhi[j]-blo[j]+1;
         }
+        hdl->offset += itmp;
+        /* increment to next block */
         hdl->index[0] += GA[handle].nblock[0];
         for (j=0; j<ndim; j++) {
           if (hdl->index[j] >= GA[handle].num_blocks[j] && j < ndim-1) {
