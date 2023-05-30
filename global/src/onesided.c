@@ -1586,8 +1586,9 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   dims = GA[handle].dims;
   ndim = GA[handle].ndim;
   for (i=0; i<ndim; i++) {
-    if (index[i] < 0 || index[i] >= num_blocks[i])
-      pnga_error("block index outside allowed values",index[i]);
+    if (index[i] < 0 || index[i] >= num_blocks[i]) {
+      pnga_error("(grid_ptr) block index outside allowed values",index[i]);
+    }
   }
 
   /* Find strides of requested block */
@@ -1806,8 +1807,9 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
   nblocks = GA[handle].block_total;
   ndim = GA[handle].ndim;
   index = idx;
-  if (index < 0 || index >= nblocks)
-    pnga_error("block index outside allowed values",index);
+  if (index < 0 || index >= nblocks) {
+    pnga_error("(block_ptr) block index outside allowed values",index);
+  }
 
   if (GA[handle].distr_type == BLOCK_CYCLIC) {
     offset = 0;
@@ -1988,8 +1990,9 @@ unsigned long    lref=0, lptr;
    
    /*p_handle = GA[handle].p_handle;*/
    iblock = idx;
-   if (iblock < 0 || iblock >= GA[handle].block_total)
-     pnga_error("block index outside allowed values",iblock);
+   if (iblock < 0 || iblock >= GA[handle].block_total) {
+     pnga_error("(block_idx) block index outside allowed values",iblock);
+   }
 
    pnga_access_block_ptr(g_a,iblock,&ptr,ld);
    /*

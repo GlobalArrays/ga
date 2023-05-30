@@ -205,6 +205,7 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     hdl->lo[i] = lo[i];
     hdl->hi[i] = hi[i];
   }
+  hdl->no_data = 0;
   /* Standard GA distribution */
   if (GA[handle].distr_type == REGULAR) {
     /* Locate the processors containing some portion of the patch
@@ -233,9 +234,13 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     /* Calculate some properties associated with data distribution */
     int *proc_grid = GA[handle].nblock;
     /*num_blocks = GA[handle].num_blocks;*/
+    /* block_dims contains dimensions of individual block*/
     block_dims = GA[handle].block_dims;
-    /* blk_dim: length of one repeat unit
-     * blk_num: number of repeat units
+    /* blk_dim: length of one repeat unit in each dimension (how far
+     *          you need to go in original array to hit another
+     *          block on the same processor)
+     * blk_num: number of repeat units (same as number of blocks
+     *          on same processor in each dimension)
      * blk_inc: number of elements in last incomplete repeat unit
      * blk_ld: length of complete blocks in repeat unit. Does not
      *         account for partial block at end
@@ -254,6 +259,12 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     /* Initialize proc_index and index arrays */
     gam_find_proc_indices(handle, hdl->iproc, hdl->proc_index);
     gam_find_proc_indices(handle, hdl->iproc, hdl->index);
+    /* handle corner case when there are a large number of procs
+     * and some procs have no data
+     */
+    for (j=0; j<ndim; j++) {
+      if (hdl->index[j] >= GA[handle].num_blocks[j]) hdl->no_data = 1;
+    }
   } else if (GA[handle].distr_type == TILED)  {
     int j;
     C_Integer *block_dims;
@@ -596,6 +607,9 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
          * defined by lo and hi */
         chk = 1;
         for (j=0; j<ndim; j++) {
+          if (blo[j] > bhi[j]) {
+            chk = 0;
+          }
           /* check to see if at least one end point of the interval
            * represented by blo and bhi falls in the interval
            * represented by lo and hi */
@@ -633,7 +647,6 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
              * to next processor */
             hdl->iproc++;
             if (hdl->iproc >= nproc) return 0;
-            hdl->offset = 0;
             if (GA[handle].distr_type == TILED ||
                 GA[handle].distr_type == TILED_IRREG) {
               gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
@@ -702,12 +715,6 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         *prem =  GA[handle].ptr[pinv]+l_offset*GA[handle].elemsize;
         *proc = pinv;
 
-        /* evaluate new offset for block */
-        itmp = 1;
-        for (j=0; j<ndim; j++) {
-          itmp *= bhi[j]-blo[j]+1;
-        }
-        hdl->offset += itmp;
         /* increment to next block */
         hdl->index[0] += GA[handle].nblock[0];
         for (j=0; j<ndim; j++) {
@@ -718,7 +725,6 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         }
         if (hdl->index[ndim-1] >= GA[handle].num_blocks[ndim-1]) {
           hdl->iproc++;
-          hdl->offset = 0;
           if (GA[handle].distr_type == TILED ||
               GA[handle].distr_type == TILED_IRREG) {
             gam_find_tile_proc_indices(handle, hdl->iproc, hdl->proc_index);
@@ -795,6 +801,7 @@ void pnga_local_iterator_init(Integer g_a, _iterator_hdl *hdl)
   hdl->g_a = g_a;
   hdl->count = 0;
   hdl->oversize = 0;
+  hdl->no_data = 0;
   /* If standard GA distribution then no additional action needs to be taken */
   if (GA[handle].distr_type == BLOCK_CYCLIC) {
     /* GA uses simple block cyclic data distribution */
@@ -813,6 +820,12 @@ void pnga_local_iterator_init(Integer g_a, _iterator_hdl *hdl)
     /* Initialize proc_index and index arrays */
     gam_find_proc_indices(handle, me, hdl->proc_index);
     gam_find_proc_indices(handle, me, hdl->index);
+    /* handle corner case when there are a large number of procs
+     * and some procs have no data
+     */
+    for (j=0; j<ndim; j++) {
+      if (hdl->index[j] >= GA[handle].num_blocks[j]) hdl->no_data = 1;
+    }
   } else if (GA[handle].distr_type == TILED) {
     /* GA uses tiled distribution */
     int j;
@@ -827,6 +840,12 @@ void pnga_local_iterator_init(Integer g_a, _iterator_hdl *hdl)
     /* Initialize proc_index and index arrays */
     gam_find_tile_proc_indices(handle, me, hdl->proc_index);
     gam_find_tile_proc_indices(handle, me, hdl->index);
+    /* handle corner case when there are a large number of procs
+     * and some procs have no data
+     */
+    for (j=0; j<ndim; j++) {
+      if (hdl->index[j] >= GA[handle].num_blocks[j]) hdl->no_data = 1;
+    }
   } else if (GA[handle].distr_type == TILED_IRREG) {
     /* GA uses irregular tiled distribution */
     int j;
@@ -841,6 +860,12 @@ void pnga_local_iterator_init(Integer g_a, _iterator_hdl *hdl)
     /* Initialize proc_index and index arrays */
     gam_find_tile_proc_indices(handle, me, hdl->proc_index);
     gam_find_tile_proc_indices(handle, me, hdl->index);
+    /* handle corner case when there are a large number of procs
+     * and some procs have no data
+     */
+    for (j=0; j<ndim; j++) {
+      if (hdl->index[j] >= GA[handle].num_blocks[j]) hdl->no_data = 1;
+    }
   }
 }
 
@@ -888,6 +913,7 @@ int pnga_local_iterator_next(_iterator_hdl *hdl, Integer plo[],
     hdl->count += pnga_pgroup_nnodes(grp);
   } else if (GA[handle].distr_type == SCALAPACK ||
       GA[handle].distr_type == TILED) {
+    if (hdl->no_data) return 0;
     /* Scalapack-type data distribution */
     if (hdl->index[ndim-1] >= hdl->blk_num[ndim-1]) return 0;
     /* Find coordinates of bounding block */
@@ -905,6 +931,7 @@ int pnga_local_iterator_next(_iterator_hdl *hdl, Integer plo[],
       }
     }
   } else if (GA[handle].distr_type == TILED_IRREG) {
+    if (hdl->no_data) return 0;
     /* Irregular tiled data distribution */
     Integer offset = 0;
     if (hdl->index[ndim-1] >= hdl->blk_num[ndim-1]) return 0;
