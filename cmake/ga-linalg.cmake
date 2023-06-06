@@ -188,7 +188,7 @@ if (ENABLE_BLAS)
       else()
       FetchContent_Declare(
         blaspp
-        GIT_REPOSITORY https://bitbucket.org/icl/blaspp.git
+        GIT_REPOSITORY https://github.com/icl-utk-edu/blaspp.git
         GIT_TAG ${BPP_GIT_TAG}
       )
       endif()
@@ -204,7 +204,7 @@ if (ENABLE_BLAS)
       else()
       FetchContent_Declare(
         lapackpp
-        GIT_REPOSITORY https://bitbucket.org/icl/lapackpp.git
+        GIT_REPOSITORY https://github.com/icl-utk-edu/lapackpp.git
         GIT_TAG ${LPP_GIT_TAG}
       )      
       endif()
