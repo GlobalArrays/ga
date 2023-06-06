@@ -88,6 +88,7 @@ MPI_Comm Group::MPIComm()
 Group* Group::getWorldGroup(MPI_Comm comm = MPI_COMM_NULL)
 {
   p_world_group = new Group(p_Group::getWorldGroup(comm));
+  return p_world_group;
 }
 
 /**

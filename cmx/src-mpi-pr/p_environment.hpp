@@ -133,69 +133,29 @@ Group* getWorldGroup();
  */
 void finalize();
 
-public:
+protected:
 
 /* worker functions. Invoked by global arrays to send messages to progress rank */
-void nb_send_common(void *buf, int count, int dest, _cmx_request *nb, int need_free);
-void nb_send_datatype(void *buf, MPI_Datatype dt, int dest, _cmx_request *nb);
-void nb_send_header(void *buf, int count, int dest, _cmx_request *nb);
-void nb_send_buffer(void *buf, int count, int dest, _cmx_request *nb);
-void nb_recv_packed(void *buf, int count, int source, _cmx_request *nb, stride_t *stride);
-void nb_recv_datatype(void *buf, MPI_Datatype dt, int source, _cmx_request *nb);
-void nb_recv_iov(void *buf, int count, int source, _cmx_request *nb, _cmx_giov_t *iov);
-void nb_recv(void *buf, int count, int source, _cmx_request *nb);
-void nb_wait_for_send1(_cmx_request *nb);
-void nb_wait_for_recv1(_cmx_request *nb);
 void nb_wait_for_all(_cmx_request *nb);
 int nb_test_for_all(_cmx_request *nb);
-void nb_register_request(_cmx_request *nb);
-void nb_unregister_request(_cmx_request *nb);
-void nb_handle_init(_cmx_request *nb);
 void nb_put(void *src, void *dst, int bytes, int proc, _cmx_request *nb);
 void nb_get(void *src, void *dst, int bytes, int proc, _cmx_request *nb);
 void nb_acc(int datatype, void *scale, void *src, void *dst, int bytes, int proc, _cmx_request *nb);
 void nb_puts(
     void *src, int *src_stride, void *dst, int *dst_stride,
     int *count, int stride_levels, int proc, _cmx_request *nb);
-void nb_puts_packed(
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb);
-void nb_puts_datatype(
-    void *src_ptr, int *src_stride_ar,
-    void *dst_ptr, int *dst_stride_ar,
-    int *count, int stride_levels,
-    int proc, _cmx_request *nb);
 void nb_gets(
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb);
-void nb_gets_packed(
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb);
-void nb_gets_datatype(
     void *src, int *src_stride, void *dst, int *dst_stride,
     int *count, int stride_levels, int proc, _cmx_request *nb);
 void nb_accs(
     int datatype, void *scale,
     void *src, int *src_stride, void *dst, int *dst_stride,
     int *count, int stride_levels, int proc, _cmx_request *nb);
-void nb_accs_packed(
-    int datatype, void *scale,
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb);
 void nb_putv(_cmx_giov_t *iov, int iov_len, int proc, _cmx_request *nb);
-void nb_putv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb);
 void nb_getv(_cmx_giov_t *iov, int iov_len, int proc, _cmx_request *nb);
-void nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb);
 void nb_accv(int datatype, void *scale,
     _cmx_giov_t *iov, int iov_len, int proc, _cmx_request *nb);
-void nb_accv_packed(int datatype, void *scale,
-    _cmx_giov_t *iov, int proc, _cmx_request *nb);
 void _fence_master(int master_rank);
-int _eager_check(int extra_bytes);
-int nb_test_for_send1(_cmx_request *nb, message_t **save_send_head,
-        message_t **prev);
-int nb_test_for_recv1(_cmx_request *nb, message_t **save_recv_head,
-        message_t **prev);
 
 /* allocate/free functions */
 int dist_malloc(void **ptrs, int64_t bytes, Group *group);
@@ -212,6 +172,51 @@ p_Environment();
  * Terminate CMX environment and clean up resources.
  */
 ~p_Environment();
+
+/* non-blocking implementation functions */
+void nb_send_common(void *buf, int count, int dest, _cmx_request *nb, int need_free);
+void nb_send_datatype(void *buf, MPI_Datatype dt, int dest, _cmx_request *nb);
+void nb_send_header(void *buf, int count, int dest, _cmx_request *nb);
+void nb_send_buffer(void *buf, int count, int dest, _cmx_request *nb);
+void nb_recv_packed(void *buf, int count, int source, _cmx_request *nb,
+    stride_t *stride);
+void nb_recv_datatype(void *buf, MPI_Datatype dt, int source, _cmx_request *nb);
+void nb_recv_iov(void *buf, int count, int source, _cmx_request *nb, _cmx_giov_t *iov);
+void nb_recv(void *buf, int count, int source, _cmx_request *nb);
+void nb_wait_for_send1(_cmx_request *nb);
+void nb_wait_for_recv1(_cmx_request *nb);
+void nb_puts_packed(
+    void *src, int *src_stride, void *dst, int *dst_stride,
+    int *count, int stride_levels, int proc, _cmx_request *nb);
+void nb_puts_datatype(
+    void *src_ptr, int *src_stride_ar,
+    void *dst_ptr, int *dst_stride_ar,
+    int *count, int stride_levels,
+    int proc, _cmx_request *nb);
+void nb_gets_packed(
+    void *src, int *src_stride, void *dst, int *dst_stride,
+    int *count, int stride_levels, int proc, _cmx_request *nb);
+void nb_gets_datatype(
+    void *src, int *src_stride, void *dst, int *dst_stride,
+    int *count, int stride_levels, int proc, _cmx_request *nb);
+void nb_accs_packed(
+    int datatype, void *scale,
+    void *src, int *src_stride, void *dst, int *dst_stride,
+    int *count, int stride_levels, int proc, _cmx_request *nb);
+void nb_putv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb);
+void nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb);
+void nb_accv_packed(int datatype, void *scale,
+    _cmx_giov_t *iov, int proc, _cmx_request *nb);
+int _eager_check(int extra_bytes);
+
+/* non-blocking handle implementations */
+void nb_register_request(_cmx_request *nb);
+void nb_unregister_request(_cmx_request *nb);
+void nb_handle_init(_cmx_request *nb);
+int nb_test_for_send1(_cmx_request *nb, message_t **save_send_head,
+        message_t **prev);
+int nb_test_for_recv1(_cmx_request *nb, message_t **save_recv_head,
+        message_t **prev);
 
 /* server functions */
 void _progress_server();
@@ -286,6 +291,8 @@ const char *str_mpi_retval(int retval);
 
 private:
 
+friend class p_Allocation; // protected functions are accessible from
+
 static p_Environment *p_instance;
 
 Group* p_CMX_GROUP_WORLD;
@@ -297,7 +304,7 @@ int _cmx_me;
 int *num_mutexes;     /**< (all) how many mutexes on each process */
 int **mutexes;        /**< (masters) value is rank of lock holder */
 std::vector<std::vector<lock_t*> > lq_heads;   /**< array of lock queues */
-char *sem_name;       /* local semaphore name */
+std::string sem_name;       /* local semaphore name */
 sem_t **semaphores;   /* semaphores for locking within SMP node */
 char *fence_array;
 

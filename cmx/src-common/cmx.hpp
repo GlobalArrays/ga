@@ -10,6 +10,7 @@
 #include "defines.hpp"
 //#include "cmx_impl.hpp"
 #include "group.hpp"
+#include "alloc.hpp"
 #include "environment.hpp"
 //#include "p_alloc.hpp"
 

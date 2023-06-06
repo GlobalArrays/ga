@@ -59,7 +59,7 @@ void Environment::finalize()
  * wait for completion of non-blocking handle
  * @param hdl non-blocking request handle
  */
-void Environment::wait(request_t *hdl)
+void Environment::wait(cmx_request *hdl)
 {
   p_Impl->wait(hdl);
 }
@@ -79,7 +79,7 @@ void Environment::waitAll(Group *group)
  * @param hdl non-blocking request handle
  * @return true if operation is completed locally
  */
-bool Environment::test(request_t *hdl)
+bool Environment::test(cmx_request *hdl)
 {
   return p_Impl->test(hdl);
 }
@@ -101,6 +101,8 @@ Group* Environment::getWorldGroup()
 void Environment::error(char *msg, int code)
 {
 }
+
+#if 0
 /**
  * This function does most of the setup and memory allocation of distributed
  * memory segments.
@@ -262,6 +264,7 @@ void Environment::nb_accv(int datatype, void* scale, cmx_giov_t *iov, int iov_le
 {
   p_Impl->nb_accv(datatype,scale,iov,iov_len,proc,nb);
 }
+#endif
 
 /**
  * Initialize CMX environment.

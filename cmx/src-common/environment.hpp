@@ -49,7 +49,7 @@ static Environment *instance(int *argc, char ***argv);
  * wait for completion of non-blocking handle
  * @param hdl non-blocking request handle
  */
-void wait(request_t *hdl);
+void wait(cmx_request *hdl);
 
 /**
  * wait for completion of non-blocking handles associated with a particular group
@@ -68,7 +68,7 @@ void finalize();
  * @param hdl non-blocking request handle
  * @return true if operation is completed locally
  */
-bool test(request_t *hdl);
+bool test(cmx_request *hdl);
 
 /**
  * Translates the ranks of processes in one group to those in another group. The
@@ -107,6 +107,7 @@ Group* getWorldGroup();
  */
 void error(char *msg, int code);
 
+#if 0
 /*n
  e* This function does most of the setup and memory allocation of distributed
  * memory segments.
@@ -235,6 +236,7 @@ void nb_getv(cmx_giov_t *iov, int iov_len, int proc, request_t *nb);
  */
 void nb_accv(int datatype, void* scale, cmx_giov_t *iov, int iov_len, int proc,
     request_t *nb);
+#endif
 
 protected:
 

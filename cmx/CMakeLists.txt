@@ -50,6 +50,7 @@ if (MPI_PR)
     src-mpi-pr/node_config.cpp
     src-mpi-pr/reg_cache.cpp
     src-mpi-pr/p_environment.cpp
+    src-mpi-pr/p_alloc.cpp
   )
   set (CMX_NETWORK_MPI_PR ON)
   include_directories(AFTER src-mpi-pr)
@@ -67,6 +68,7 @@ endif()
 set(CMX_INTERFACE
     src-common/group.cpp
     src-common/environment.cpp
+    src-common/alloc.cpp
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -121,5 +123,5 @@ add_executable(unit_env.x testing/unit_env.cpp)
 target_link_libraries(unit_env.x cmx)
 add_executable(unit_group.x testing/unit_group.cpp)
 target_link_libraries(unit_group.x cmx)
-#add_executable(unit_cmx.x testing/unit_cmx.cpp)
-#target_link_libraries(unit_cmx.x cmx)
+add_executable(unit_alloc.x testing/unit_alloc.cpp)
+target_link_libraries(unit_alloc.x cmx)

@@ -86,6 +86,8 @@ reg_return_t p_Register::destroy()
     while (it != p_list[i].end()) {
       if (it->second->rank == p_config->rank()) {
         p_shmem->free(it->second->name, it->second->buf, it->second->len);
+      } else {
+        p_shmem->unmap(it->second->buf, it->second->len);
       }
       delete it->second;
       it++;
@@ -107,7 +109,7 @@ reg_return_t p_Register::destroy()
  */
 reg_entry_t* p_Register::malloc(size_t bytes)
 {
-  std::string name;
+  char *name;
   void *memory = NULL;
   reg_entry_t *reg_entry = NULL;
 
@@ -127,6 +129,7 @@ reg_entry_t* p_Register::malloc(size_t bytes)
     printf("Create memory segment failes\n");
     CMX_ASSERT(0);
   }
+  delete [] name;
 
   return reg_entry;
 }
@@ -157,7 +160,9 @@ p_Register::find(int rank, void *buf, size_t len)
     if (RR_SUCCESS == contains(it->second, buf, len)) {
       entry = it->second;
       it++;
+      break;
     }
+    it++;
   }
 
   /* we CMX_ASSERT that the found entry was unique */
@@ -227,7 +232,7 @@ p_Register::find_intersection(int rank, void *buf, size_t len)
  */
 reg_entry_t*
 p_Register::insert(int rank, void *buf, size_t len,
-    std::string name, void *mapped, int use_dev)
+    const char *name, void *mapped, int use_dev)
 {
   reg_entry_t *node = NULL;
 
@@ -247,7 +252,7 @@ p_Register::insert(int rank, void *buf, size_t len,
   node->buf = buf;
   node->len = len;
   node->use_dev = use_dev;
-  (void)memcpy(node->name, name.c_str(), name.length());
+  (void)memcpy(node->name, name, SHM_NAME_SIZE);
   node->mapped = mapped;
 
   /* push new entry to tail of linked list */

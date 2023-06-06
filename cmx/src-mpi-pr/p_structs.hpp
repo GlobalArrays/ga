@@ -93,7 +93,7 @@ typedef struct {
   CMX::Group *group;
 } _cmx_request;
 
-typedef _cmx_request request_t;
+typedef _cmx_request cmx_request;
 
 typedef struct {
   op_t operation;

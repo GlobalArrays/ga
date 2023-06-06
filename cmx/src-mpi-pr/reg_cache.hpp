@@ -115,7 +115,7 @@ class p_Register {
    * @return RR_SUCCESS on success
    */
   reg_entry_t* insert(int rank, void *buf, size_t len,
-      std::string name, void *mapped, int use_dev);
+      const char *name, void *mapped, int use_dev);
 
 
   /**

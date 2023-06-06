@@ -83,7 +83,6 @@ p_Environment::p_Environment()
   num_mutexes = NULL;     /* (all) how many mutexes on each process */
   mutexes = NULL;         /* (masters) value is rank of lock holder */
   lq_heads.clear();        /* array of lock queues */
-  sem_name = NULL;        /* local semaphore name */
   semaphores = NULL;      /* semaphores for locking within SMP node */
   fence_array = NULL;
 
@@ -129,15 +128,11 @@ p_Environment::p_Environment()
   _translate_mpi_error(status,"cmx_init");
   CHECK_MPI_RETVAL(status);
   assert(init_flag);
+
+  /* initialize world group here */
   p_config.init(MPI_COMM_WORLD);
 
   /*MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);*/
-
-
-  /* groups */
-  //_group_init();
-
-  /* Set up world group */
 
   /* env vars */
   {
@@ -982,15 +977,11 @@ int p_Environment::dist_free(void *ptr, Group *group)
         rank_ptrs[reg_entries_local_count].ptr = ptrs[i].ptr;
         reg_entries_local_count++;
       }
-    }
-    else if (NULL == ptrs[i].ptr) {
-    }
-    else if
-      (p_config.master(world_ranks[i]) ==
+    } else if (NULL == ptrs[i].ptr) {
+    } else if (p_config.master(world_ranks[i]) ==
        p_config.master(p_config.get_my_master_rank_with_same_hostid(
            group->rank(), group->size(), group->MPIComm(),
-           my_world_rank, world_ranks)))
-      {
+           my_world_rank, world_ranks))) {
         /* same SMP node */
         reg_entry = NULL;
         int retval = 0;
@@ -1000,6 +991,7 @@ int p_Environment::dist_free(void *ptr, Group *group)
         CMX_ASSERT(reg_entry);
 
 
+        p_shmem.unmap(reg_entry->mapped, reg_entry->len);
         p_register.remove(world_ranks[i], ptrs[i].ptr);
 
         if (is_notifier) {
@@ -1182,7 +1174,7 @@ void p_Environment::nb_handle_init(_cmx_request *nb)
 /* one unnamed semaphore per world process */
 void p_Environment::_malloc_semaphore()
 {
-  char *name = NULL;
+  char *name;
   char *names = NULL;
   sem_t *my_sem = NULL;
   int status = 0;
@@ -1204,12 +1196,12 @@ void p_Environment::_malloc_semaphore()
   semaphores = new sem_t*[p_config.world_size()];
   CMX_ASSERT(semaphores);
 
-  name = _generate_shm_name(p_config.rank());
+  name = p_shmem.generateName(p_config.rank());
   CMX_ASSERT(name);
 
 #if ENABLE_UNNAMED_SEM
   {
-    my_sem = _shm_create(name, sizeof(sem_t));
+    my_sem = p_shmem.create(name, sizeof(sem_t));
     /* initialize the memory as an inter-process semaphore */
     if (0 != sem_init(my_sem, 1, 1)) {
       perror("_malloc_semaphore: sem_init");
@@ -1259,8 +1251,7 @@ void p_Environment::_malloc_semaphore()
     else if (p_config.hostid(p_config.rank()) == p_config.hostid(i)) {
       /* same SMP node */
 #if ENABLE_UNNAMED_SEM
-      semaphores[i] = _shm_attach(
-          &names[SHM_NAME_SIZE*i], sizeof(sem_t));
+      semaphores[i] = p_shmem.attach(&names[SHM_NAME_SIZE*i], sizeof(sem_t));
       CMX_ASSERT(semaphores[i]);
 #else
       semaphores[i] = sem_open(&names[SHM_NAME_SIZE*i], 0);
@@ -1277,7 +1268,7 @@ void p_Environment::_malloc_semaphore()
 
   sem_name = name;
 
-  //free(names);
+  delete [] name;
   delete [] names;
 
   status = MPI_Type_free(&shm_name_type);
@@ -1309,7 +1300,7 @@ void p_Environment::_free_semaphore()
         perror("_free_semaphore: munmap");
         p_error("_free_semaphore: munmap", retval);
       }
-      retval = shm_unlink(sem_name);
+      retval = shm_unlink(sem_name.c_str());
       if (-1 == retval) {
         perror("_free_semaphore: shm_unlink");
         p_error("_free_semaphore: shm_unlink", retval);
@@ -1320,7 +1311,7 @@ void p_Environment::_free_semaphore()
         perror("_free_semaphore: sem_close");
         p_error("_free_semaphore: sem_close", retval);
       }
-      retval = sem_unlink(sem_name);
+      retval = sem_unlink(sem_name.c_str());
       if (-1 == retval) {
         perror("_free_semaphore: sem_unlink");
         p_error("_free_semaphore: sem_unlink", retval);
@@ -1344,9 +1335,6 @@ void p_Environment::_free_semaphore()
 #endif
     }
   }
-
-  free(sem_name);
-  sem_name = NULL;
 
   delete [] semaphores;
   semaphores = NULL;
@@ -1413,7 +1401,7 @@ void p_Environment::_progress_server()
     fprintf(stderr, "[%d] progress MPI_Recv source=%d length=%d\n",
         p_config.rank(), source, length);
 #   endif
-    header = (header_t*)static_header_buffer;
+    header = reinterpret_cast<header_t*>(static_header_buffer);
     payload = static_header_buffer + sizeof(header_t);
     /* dispatch message handler */
     switch (header->operation) {
@@ -2602,7 +2590,7 @@ void p_Environment::_malloc_handler(
 {
   int i;
   int n;
-  reg_entry_t *reg_entries = (reg_entry_t*)payload;
+  reg_entry_t *reg_entries = reinterpret_cast<reg_entry_t*>(payload);
 
 #if DEBUG
   fprintf(stderr, "[%d] _malloc_handler proc=%d\n", p_config.rank(), proc);
@@ -2623,8 +2611,8 @@ void p_Environment::_malloc_handler(
       fprintf(stderr, "[%d] _malloc_handler found NULL at %d\n", p_config.rank(), i);
 #endif
     }
-    else if (g_state.hostid[reg_entries[i].rank]
-        == g_state.hostid[p_config.rank()]) {
+    else if (p_config.hostid(reg_entries[i].rank)
+        == p_config.hostid(p_config.rank())) {
       /* same SMP node, need to mmap */
       /* attach to remote shared memory object */
       void *memory;
@@ -2692,8 +2680,8 @@ void p_Environment::_free_handler(header_t *header, char *payload, int proc)
       fprintf(stderr, "[%d] _free_handler found NULL at %d\n", p_config.rank(), i);
 #endif
     }
-    else if (g_state.hostid[rank_ptrs[i].rank]
-        == g_state.hostid[p_config.rank()]) {
+    else if (p_config.hostid(rank_ptrs[i].rank)
+        == p_config.hostid(p_config.rank())) {
       /* same SMP node */
       reg_entry_t *reg_entry = NULL;
       int retval = 0;
@@ -2710,12 +2698,16 @@ void p_Environment::_free_handler(header_t *header, char *payload, int proc)
       fprintf(stderr, "[%d] _free_handler found reg entry\n", p_config.rank());
 #endif
 
+#if 1
+      p_shmem.unmap(reg_entry->mapped,reg_entry->len);
+#else
       /* unmap the memory */
       retval = munmap(reg_entry->mapped, reg_entry->len);
       if (-1 == retval) {
         perror("_free_handler: munmap");
         p_error("_free_handler: munmap", retval);
       }
+#endif
 
 #if DEBUG && DEBUG_VERBOSE
       fprintf(stderr, "[%d] _free_handler unmapped mapped memory in reg entry\n",
@@ -2895,58 +2887,6 @@ int p_Environment::_largest_world_rank_with_same_hostid(Group *group)
 }
 
 
-void* p_Environment::_shm_create(const char *name, size_t size)
-{
-  void *mapped = NULL;
-  int fd = 0;
-  int retval = 0;
-
-#if DEBUG
-  fprintf(stderr, "[%d] _shm_create(%s, %lu)\n",
-      p_config.rank(), name, (unsigned long)size);
-#endif
-
-  /* create shared memory segment */
-  fd = shm_open(name, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
-  if (-1 == fd && EEXIST == errno) {
-    retval = shm_unlink(name);
-    if (-1 == retval) {
-      perror("_shm_create: shm_unlink");
-      p_error("_shm_create: shm_unlink", retval);
-    }
-  }
-
-  /* try a second time */
-  if (-1 == fd) {
-    fd = shm_open(name, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
-  }
-
-  /* finally report error if needed */
-  if (-1 == fd) {
-    perror("_shm_create: shm_open");
-    p_error("_shm_create: shm_open", fd);
-  }
-
-  /* set the size of my shared memory object */
-  retval = ftruncate(fd, size);
-  if (-1 == retval) {
-    perror("_shm_create: ftruncate");
-    p_error("_shm_create: ftruncate", retval);
-  }
-
-  /* map into local address space */
-  mapped = _shm_map(fd, size);
-
-  /* close file descriptor */
-  retval = close(fd);
-  if (-1 == retval) {
-    perror("_shm_create: close");
-    p_error("_shm_create: close", -1);
-  }
-
-  return mapped;
-}
-
 void* p_Environment::_shm_attach(const char *name, size_t size)
 {
   void *mapped = NULL;
@@ -3070,7 +3010,7 @@ void p_Environment::server_send(void *buf, int count, int dest)
 #endif
 
   retval = MPI_Send(buf, count, MPI_CHAR, dest,
-      CMX_TAG, g_state.comm);
+      CMX_TAG, p_config.global_comm());
   _translate_mpi_error(retval,"server_send:MPI_Send");
 
   CHECK_MPI_RETVAL(retval);
@@ -3355,6 +3295,7 @@ void p_Environment::nb_recv(void *buf, int count, int source, _cmx_request *nb)
   message->datatype = MPI_DATATYPE_NULL;
 
   if (NULL == nb->recv_head) {
+
     nb->recv_head = message;
   }
   if (NULL != nb->recv_tail) {
@@ -3362,7 +3303,7 @@ void p_Environment::nb_recv(void *buf, int count, int source, _cmx_request *nb)
   }
   nb->recv_tail = message;
 
-  retval = MPI_Irecv(buf, count, MPI_CHAR, source, CMX_TAG, g_state.comm,
+  retval = MPI_Irecv(buf, count, MPI_CHAR, source, CMX_TAG, p_config.global_comm(),
       &(message->request));
   _translate_mpi_error(retval,"nb_recv:MPI_Irecv");
   CHECK_MPI_RETVAL(retval);
@@ -5221,6 +5162,7 @@ void p_Environment::strided_to_subarray_dtype(int *stride_array, int *count,
   }
 }
 
+#if 0
 void p_Environment::_group_init(void)
 {
   int status = 0;
@@ -5372,7 +5314,6 @@ void p_Environment::_group_init(void)
  *
  * This does *not* initialize the members of the cmx igroup.
  */
-#if 0
 static void _create_igroup(cmx_igroup_t **igroup)
 {
     cmx_igroup_t *new_group_list_item = NULL;
@@ -6135,3 +6076,4 @@ Group* p_Environment::getWorldGroup()
 }
 
 } // namespace CMX
+
