@@ -79,7 +79,7 @@ sicm_device_list nill;
 #define XSTR(x) #x
 #define TR(x) XSTR(x)
 
-#define XENABLE_GPU_AWARE_MPI
+#define ENABLE_GPU_AWARE_MPI
 #define ENABLE_STRIDED_KERNELS
 
 #ifdef ENABLE_NVTX
