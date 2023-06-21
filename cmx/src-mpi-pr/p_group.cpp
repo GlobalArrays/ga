@@ -1,6 +1,7 @@
 #include <vector>
 
 #include "p_group.hpp"
+#include <cstdio>
 
 #include "defines.hpp"
 

@@ -444,6 +444,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/global/testing
 
 check_PROGRAMS += global/testing/big
 check_PROGRAMS += global/testing/elempatch
+check_PROGRAMS += global/testing/simple
 check_PROGRAMS += global/testing/gatscat
 check_PROGRAMS += global/testing/getmem
 check_PROGRAMS += global/testing/mtest
@@ -635,6 +636,7 @@ endif
 
 #GLOBAL_PARALLEL_TESTS += global/testing/big$(EXEEXT) # needs lots of memory
 GLOBAL_PARALLEL_TESTS += global/testing/elempatch$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/simple$(EXEEXT)
 #GLOBAL_PARALLEL_TESTS += global/testing/gatscat$(EXEEXT) # broken
 GLOBAL_PARALLEL_TESTS += global/testing/getmem$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/mtest$(EXEEXT)
@@ -881,6 +883,7 @@ global_testing_bin_SOURCES                 = global/testing/bin.F $(gtsrcf)
 global_testing_blktest_SOURCES             = global/testing/blktest.F $(gtsrcf)
 global_testing_d2test_SOURCES              = global/testing/d2test.F $(gtsrcf)
 global_testing_elempatch_SOURCES           = global/testing/elempatch.c
+global_testing_simple_SOURCES              = global/testing/simple.c
 global_testing_field_test_SOURCES          = global/testing/field-test.F $(gtsrcf)
 global_testing_g2test_SOURCES              = global/testing/g2test.F $(gtsrcf)
 global_testing_g3test_SOURCES              = global/testing/g3test.F $(gtsrcf)

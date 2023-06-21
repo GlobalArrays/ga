@@ -77,14 +77,13 @@ int barrier();
  * Contiguous Put.
  *
  * @param[in] src pointer to 1st segment at source
- * @param[in] dst_offset offset from start of data allocation on remote
- *            process
+ * @param[in] dst pointer to destination buffer
  * @param[in] bytes number of bytes to transfer
  * @param[in] proc remote process(or) id. This processor must be in the same
  *            group as the allocation.
  * @return CMX_SUCCESS on success
  */
-int put(void *src, int64_t dst_offset, int64_t bytes, int proc);
+int put(void *src, void *dst, int64_t bytes, int proc);
 
 /**
  * Strided Put.
@@ -417,6 +416,7 @@ int waitAll();
 int waitProc(int proc);
 
 private:
+
   Group *p_group; // Group associated with allocation
 
   p_Environment *p_impl_environment;

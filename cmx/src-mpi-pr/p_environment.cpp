@@ -820,9 +820,14 @@ int p_Environment::dist_malloc(void **ptrs, int64_t bytes, Group *group)
   my_master = p_config.master(my_world_rank);
 
   std::vector<int> world_ranks = p_config.get_world_ranks(group);
+  printf("p[%d] grp_rank: %d grp_size: %d world_rank: %d master: %d\n",
+      p_config.rank(),group->rank(),group->size(),my_world_rank,
+      p_config.get_my_master_rank_with_same_hostid(
+        group->rank(), group->size(), group->MPIComm(), my_world_rank,
+        world_ranks));
   is_notifier 
     = p_config.rank() == p_config.get_my_master_rank_with_same_hostid(
-        group->rank(), group->size(),
+        group->rank(), p_config.node_size(),
         group->MPIComm(), my_world_rank,
         world_ranks);
   if (is_notifier) {
@@ -867,7 +872,7 @@ int p_Environment::dist_malloc(void **ptrs, int64_t bytes, Group *group)
 
     else if (p_config.master(reg_entries[i].rank) == 
         p_config.master(p_config.get_my_master_rank_with_same_hostid(
-        group->rank(), group->size(),
+        group->rank(), p_config.node_size(),
         group->MPIComm(), my_world_rank,
         world_ranks)))
 
@@ -897,6 +902,7 @@ int p_Environment::dist_malloc(void **ptrs, int64_t bytes, Group *group)
     ptrs[i] = reg_entries[i].buf;
   }
 
+  printf("p[%d] (dist_malloc) is_notifier: %d\n",p_config.rank(),is_notifier);
   /* send reg entries to my master */
   /* first non-master rank in an SMP node sends the message to master */
   if (is_notifier) {
@@ -945,11 +951,12 @@ int p_Environment::dist_free(void *ptr, Group *group)
 
   my_world_rank = p_config.rank();
   my_master = p_config.master(my_world_rank);
+  printf("p[%d] (dist_free) Got to 1\n",my_world_rank);
 
   std::vector<int> world_ranks = p_config.get_world_ranks(group);
   is_notifier 
     = p_config.rank() == p_config.get_my_master_rank_with_same_hostid(
-        group->rank(), group->size(),
+        group->rank(), p_config.node_size(),
         group->MPIComm(), my_world_rank,
         world_ranks);
 
@@ -968,10 +975,13 @@ int p_Environment::dist_free(void *ptr, Group *group)
       ptrs, sizeof(rank_ptr_t), MPI_BYTE, group->MPIComm());
   _translate_mpi_error(status, "p_Environment::free:MPI_Allgather");
   CMX_ASSERT(MPI_SUCCESS == status);
+  printf("p[%d] (dist_free) Got to 2\n",my_world_rank);
 
   for (i=0; i<group->size(); ++i) {
     if (i == group->rank()) {
+  printf("p[%d] (dist_free) Got to 3\n",my_world_rank);
       if (is_notifier) {
+  printf("p[%d] (dist_free) Got to 4\n",my_world_rank);
         /* does this need to be a memcpy? */
         rank_ptrs[reg_entries_local_count].rank = world_ranks[i];
         rank_ptrs[reg_entries_local_count].ptr = ptrs[i].ptr;
@@ -980,8 +990,9 @@ int p_Environment::dist_free(void *ptr, Group *group)
     } else if (NULL == ptrs[i].ptr) {
     } else if (p_config.master(world_ranks[i]) ==
        p_config.master(p_config.get_my_master_rank_with_same_hostid(
-           group->rank(), group->size(), group->MPIComm(),
+           group->rank(), p_config.node_size(), group->MPIComm(),
            my_world_rank, world_ranks))) {
+  printf("p[%d] (dist_free) Got to 5\n",my_world_rank);
         /* same SMP node */
         reg_entry = NULL;
         int retval = 0;
@@ -989,10 +1000,13 @@ int p_Environment::dist_free(void *ptr, Group *group)
         /* find the registered memory */
         reg_entry = p_register.find(world_ranks[i], ptrs[i].ptr, 0);
         CMX_ASSERT(reg_entry);
+  printf("p[%d] (dist_free) Got to 5a rank: %d\n",my_world_rank,reg_entry->rank);
 
 
         p_shmem.unmap(reg_entry->mapped, reg_entry->len);
+  printf("p[%d] (dist_free) Got to 5b\n",my_world_rank);
         p_register.remove(world_ranks[i], ptrs[i].ptr);
+  printf("p[%d] (dist_free) Got to 5c\n",my_world_rank);
 
         if (is_notifier) {
           /* does this need to be a memcpy? */
@@ -1000,9 +1014,11 @@ int p_Environment::dist_free(void *ptr, Group *group)
           rank_ptrs[reg_entries_local_count].ptr = ptrs[i].ptr;
           reg_entries_local_count++;
         }
+  printf("p[%d] (dist_free) Got to 6\n",my_world_rank);
       } else {
       }
   }
+  printf("p[%d] (dist_free) Got to 7\n",my_world_rank);
 
   /* send ptrs to my master */
   /* first non-master rank in an SMP node sends the message to master */
@@ -1012,6 +1028,7 @@ int p_Environment::dist_free(void *ptr, Group *group)
     int message_size = 0;
     char *message = NULL;
     header_t *header = NULL;
+  printf("p[%d] (dist_free) Got to 8\n",my_world_rank);
 
     nb_handle_init(&nb);
     rank_ptrs_local_size = sizeof(rank_ptr_t) * reg_entries_local_count;
@@ -1025,21 +1042,27 @@ int p_Environment::dist_free(void *ptr, Group *group)
     header->rank = 0;
     header->length = reg_entries_local_count;
     (void)memcpy(message+sizeof(header_t), rank_ptrs, rank_ptrs_local_size);
+  printf("p[%d] (dist_free) Got to 9\n",my_world_rank);
     nb_recv(NULL, 0, my_master, &nb); /* prepost ack */
     nb_send_header(message, message_size, my_master, &nb);
+  printf("p[%d] (dist_free) Got to 10\n",my_world_rank);
     nb_wait_for_all(&nb);
+  printf("p[%d] (dist_free) Got to 11\n",my_world_rank);
     delete [] rank_ptrs;
   }
   /* free ptrs array */
   delete [] ptrs;
+  printf("p[%d] (dist_free) Got to 12\n",my_world_rank);
 
   /* remove my ptr from reg cache and free ptr */
   reg_entry = p_register.find(my_world_rank, ptr, 0);
   p_shmem.free(reg_entry->name, reg_entry->mapped, reg_entry->len);
   p_register.remove(my_world_rank, ptr);
+  printf("p[%d] (dist_free) Got to 13\n",my_world_rank);
 
   /* Is this needed? */
   group->barrier();
+  printf("p[%d] (dist_free) Got to 14\n",my_world_rank);
 
   return CMX_SUCCESS;
 }
@@ -1542,17 +1565,22 @@ void p_Environment::_put_handler(header_t *header, char *payload, int proc)
       header->length);
 #endif
 
+  printf("p[%d] (put_handler) Got to 1\n",p_config.rank());
   reg_entry = p_register.find(
       header->rank, header->remote_address, header->length);
   CMX_ASSERT(reg_entry);
+  printf("p[%d] (put_handler) Got to 2\n",p_config.rank());
   mapped_offset = _get_offset_memory(
       reg_entry, header->remote_address);
+  printf("p[%d] (put_handler) Got to 3\n",p_config.rank());
   if (use_eager) {
+  printf("p[%d] (put_handler) Got to 4\n",p_config.rank());
     (void)memcpy(mapped_offset, payload, header->length);
   }
   else {
     char *buf = (char*)mapped_offset;
     int bytes_remaining = header->length;
+  printf("p[%d] (put_handler) Got to 5\n",p_config.rank());
     do {
       int size = bytes_remaining>max_message_size ?
         max_message_size : bytes_remaining;
@@ -1560,7 +1588,9 @@ void p_Environment::_put_handler(header_t *header, char *payload, int proc)
       buf += size;
       bytes_remaining -= size;
     } while (bytes_remaining > 0);
+  printf("p[%d] (put_handler) Got to 6\n",p_config.rank());
   }
+  printf("p[%d] (put_handler) Got to 7\n",p_config.rank());
 }
 
 
@@ -3040,7 +3070,7 @@ void p_Environment::server_recv(void *buf, int count, int source)
   int recv_count = 0;
 
   retval = MPI_Recv(buf, count, MPI_CHAR, source,
-      CMX_TAG, g_state.comm, &status);
+      CMX_TAG, p_config.global_comm(), &status);
   _translate_mpi_error(retval,"server_recv:MPI_Recv");
 
   CHECK_MPI_RETVAL(retval);
@@ -3075,6 +3105,7 @@ void p_Environment::nb_send_common(void *buf, int count, int dest, _cmx_request 
   message_t *message = NULL;
 
   CMX_ASSERT(NULL != nb);
+  printf("p[%d] (nb_send_common) Got to 1\n",p_config.rank());
 
   nb->send_size += 1;
   nb_count_event += 1;
@@ -3087,18 +3118,28 @@ void p_Environment::nb_send_common(void *buf, int count, int dest, _cmx_request 
   message->stride = NULL;
   message->iov = NULL;
   message->datatype = MPI_DATATYPE_NULL;
+  printf("p[%d] (nb_send_common) Got to 2 send_head: %p\n",
+      p_config.rank(),nb->send_head);
 
   if (NULL == nb->send_head) {
     nb->send_head = message;
   }
+  printf("p[%d] (nb_send_common) Got to 2a send_tail: %p\n",
+      p_config.rank(),nb->send_tail);
   if (NULL != nb->send_tail) {
+  printf("p[%d] (nb_send_common) Got to 2b\n",p_config.rank());
     nb->send_tail->next = message;
+  printf("p[%d] (nb_send_common) Got to 2c\n",p_config.rank());
   }
+  printf("p[%d] (nb_send_common) Got to 2d\n",p_config.rank());
   nb->send_tail = message;
+  printf("p[%d] (nb_send_common) Got to 3\n",p_config.rank());
 
+  printf("p[%d] (nb_send_common) request: %p\n",p_config.rank(),&(message->request));
   retval = MPI_Isend(buf, count, MPI_CHAR, dest, CMX_TAG,
       p_config.global_comm(), &(message->request));
   _translate_mpi_error(retval,"nb_send_common:MPI_Isend");
+  printf("p[%d] (nb_send_common) Got to 4\n",p_config.rank());
   CHECK_MPI_RETVAL(retval);
 }
 
@@ -3130,7 +3171,8 @@ void p_Environment::nb_send_datatype(void *buf, MPI_Datatype dt, int dest, _cmx_
   }
   nb->send_tail = message;
 
-  retval = MPI_Isend(buf, 1, dt, dest, CMX_TAG, g_state.comm,
+  printf("p[%d] (nb_send_datatype) request: %p\n",p_config.rank(),&(message->request));
+  retval = MPI_Isend(buf, 1, dt, dest, CMX_TAG, p_config.global_comm(),
       &(message->request));
   _translate_mpi_error(retval,"nb_send_datatype:MPI_Isend");
   CHECK_MPI_RETVAL(retval);
@@ -3342,7 +3384,7 @@ void p_Environment::nb_wait_for_send1(_cmx_request *nb)
     message_t *message_to_free = NULL;
 
     retval = MPI_Wait(&(nb->send_head->request), &status);
-    _translate_mpi_error(retval,"nb_wait_for_send1:MPI_Irecv");
+    _translate_mpi_error(retval,"nb_wait_for_send1:MPI_Wait");
     CHECK_MPI_RETVAL(retval);
 
     if (nb->send_head->need_free) {
@@ -3357,7 +3399,7 @@ void p_Environment::nb_wait_for_send1(_cmx_request *nb)
 
     message_to_free = nb->send_head;
     nb->send_head = nb->send_head->next;
-    free(message_to_free);
+    delete message_to_free;
 
     CMX_ASSERT(nb->send_size > 0);
     nb->send_size -= 1;
@@ -3440,12 +3482,17 @@ void p_Environment::nb_wait_for_recv1(_cmx_request *nb)
     MPI_Status status;
     int retval = 0;
     message_t *message_to_free = NULL;
+    printf("p[%d] (nb_wait_for_recv1) Got to 1 nb->recv_head->request: %p\n",
+        p_config.rank(),&(nb->recv_head->request));
 
     retval = MPI_Wait(&(nb->recv_head->request), &status);
+    printf("p[%d] (nb_wait_for_recv1) Got to 2\n",p_config.rank());
     _translate_mpi_error(retval,"nb_wait_for_recv1:MPI_Wait");
     CHECK_MPI_RETVAL(retval);
 
+    printf("p[%d] (nb_wait_for_recv1) Got to 3\n",p_config.rank());
     if (NULL != nb->recv_head->stride) {
+    printf("p[%d] (nb_wait_for_recv1) Got to 4\n",p_config.rank());
       stride_t *stride = nb->recv_head->stride;
       CMX_ASSERT(nb->recv_head->message);
       CMX_ASSERT(stride);
@@ -3453,12 +3500,15 @@ void p_Environment::nb_wait_for_recv1(_cmx_request *nb)
       CMX_ASSERT(stride->stride);
       CMX_ASSERT(stride->count);
       CMX_ASSERT(stride->stride_levels);
+    printf("p[%d] (nb_wait_for_recv1) Got to 5\n",p_config.rank());
       unpack((char*)nb->recv_head->message, (char*)stride->ptr,
           stride->stride, stride->count, stride->stride_levels);
       delete stride;
     }
+    printf("p[%d] (nb_wait_for_recv1) Got to 6\n",p_config.rank());
 
     if (NULL != nb->recv_head->iov) {
+    printf("p[%d] (nb_wait_for_recv1) Got to 7\n",p_config.rank());
       int i = 0;
       char *message = (char*)nb->recv_head->message;
       int off = 0;
@@ -3472,15 +3522,18 @@ void p_Environment::nb_wait_for_recv1(_cmx_request *nb)
       delete iov;
     }
 
+    printf("p[%d] (nb_wait_for_recv1) Got to 8\n",p_config.rank());
     if (nb->recv_head->need_free) {
       delete nb->recv_head->message;
     }
+    printf("p[%d] (nb_wait_for_recv1) Got to 9\n",p_config.rank());
 
     if (MPI_DATATYPE_NULL != nb->recv_head->datatype) {
       retval = MPI_Type_free(&nb->recv_head->datatype);
       _translate_mpi_error(retval,"nb_wait_for_recv1:MPI_Type_free");
       CHECK_MPI_RETVAL(retval);
     }
+    printf("p[%d] (nb_wait_for_recv1) Got to 10\n",p_config.rank());
 
     message_to_free = nb->recv_head;
     nb->recv_head = nb->recv_head->next;
@@ -3491,9 +3544,11 @@ void p_Environment::nb_wait_for_recv1(_cmx_request *nb)
     nb_count_recv_processed += 1;
     nb_count_event_processed += 1;
 
+    printf("p[%d] (nb_wait_for_recv1) Got to 11\n",p_config.rank());
     if (NULL == nb->recv_head) {
       nb->recv_tail = NULL;
     }
+    printf("p[%d] (nb_wait_for_recv1) Got to 12\n",p_config.rank());
   }
 }
 
@@ -3580,6 +3635,35 @@ int p_Environment::nb_test_for_recv1(_cmx_request *nb, message_t **save_recv_hea
   }
 }
 
+/**
+ * Initialize message struct before using
+ * @param message struct to be initialized
+ */
+void p_Environment::init_message(message_t *message)
+{
+  message->next = NULL;
+  message->message = NULL;
+  message->need_free = 0;
+  message->stride = NULL;
+  message->iov = NULL;
+}
+
+/**
+ * Initialize request struct before using
+ * @param message struct to be initialized
+ */
+void p_Environment::init_request(_cmx_request *nb)
+{
+  nb->in_use = 0;
+  nb->send_size = 0;
+  nb->send_head = NULL;
+  nb->send_tail = NULL;
+  nb->recv_size = 0;
+  nb->recv_head = NULL;
+  nb->recv_tail = NULL;
+  nb->group = NULL;
+}
+
 
 void p_Environment::nb_wait_for_all(_cmx_request *nb)
 {
@@ -3588,19 +3672,27 @@ void p_Environment::nb_wait_for_all(_cmx_request *nb)
 #endif
   int world_proc = p_config.rank();
 
+  printf("p[%d] (nb_wait_for_all) Got to 1\n",world_proc);
   if (nb->in_use == 0) return;
 
   CMX_ASSERT(NULL != nb);
 
   /* fair processing of requests */
+  printf("p[%d] (nb_wait_for_all) Got to 2\n",world_proc);
   while (NULL != nb->send_head || NULL != nb->recv_head) {
+  printf("p[%d] (nb_wait_for_all) Got to 3\n",world_proc);
     if (NULL != nb->send_head) {
+  printf("p[%d] (nb_wait_for_all) Got to 4\n",world_proc);
       nb_wait_for_send1(nb);
     }
+  printf("p[%d] (nb_wait_for_all) Got to 5\n",world_proc);
     if (NULL != nb->recv_head) {
+  printf("p[%d] (nb_wait_for_all) Got to 6\n",world_proc);
       nb_wait_for_recv1(nb);
     }
+  printf("p[%d] (nb_wait_for_all) Got to 7\n",world_proc);
   }
+  printf("p[%d] (nb_wait_for_all) Got to 8\n",world_proc);
   nb->in_use = 0;
 }
 
@@ -3659,8 +3751,11 @@ void p_Environment::nb_put(void *src, void *dst, int bytes, int proc, _cmx_reque
   CMX_ASSERT(NULL != dst);
   CMX_ASSERT(bytes > 0);
   CMX_ASSERT(proc >= 0);
-  CMX_ASSERT(proc < g_state.size);
+  CMX_ASSERT(proc < p_config.size());
   CMX_ASSERT(NULL != nb);
+  int rproc = p_config.get_world_rank(p_CMX_GROUP_WORLD, proc);
+  printf("p[%d] (nb_put) Got to 1 rproc: %d\n",p_config.rank(),rproc);
+  init_request(nb);
 
 #if DEBUG
   printf("[%d] nb_put(src=%p, dst=%p, bytes=%d, proc=%d, nb=%p)\n",
@@ -3669,34 +3764,46 @@ void p_Environment::nb_put(void *src, void *dst, int bytes, int proc, _cmx_reque
 
   if (CMX_ENABLE_PUT_SELF) {
     /* put to self */
-    if (p_config.rank() == proc) {
-      if (fence_array[g_state.master[proc]]) {
-        _fence_master(g_state.master[proc]);
+  printf("p[%d] (nb_put) Got to 1a\n",p_config.rank());
+    if (p_config.rank() == rproc) {
+  printf("p[%d] (nb_put) Got to 1b\n",p_config.rank());
+      if (fence_array[p_config.master(rproc)]) {
+        _fence_master(p_config.master(rproc));
       }
+  printf("p[%d] (nb_put) Got to 1c\n",p_config.rank());
       (void)memcpy(dst, src, bytes);
       return;
     }
   }
+  printf("p[%d] (nb_put) Got to 2\n",p_config.rank());
 
   if (CMX_ENABLE_PUT_SMP) {
     /* put to SMP node */
-    // if (g_state.hostid[proc] == g_state.hostid[p_config.rank()]) 
-    if (g_state.master[proc] == g_state.master[p_config.rank()]) 
+    if (p_config.master(rproc) == p_config.master(p_config.rank())) 
     {
+  printf("p[%d] (nb_put) Got to 2a\n",p_config.rank());
       reg_entry_t *reg_entry = NULL;
       void *mapped_offset = NULL;
 
-      if (fence_array[g_state.master[proc]]) {
-        _fence_master(g_state.master[proc]);
+      if (fence_array[p_config.master(rproc)]) {
+  printf("p[%d] (nb_put) Got to 2b\n",p_config.rank());
+        _fence_master(p_config.master(rproc));
+  printf("p[%d] (nb_put) Got to 2c\n",p_config.rank());
       }
 
-      reg_entry = p_register.find(proc, dst, bytes);
+  printf("p[%d] (nb_put) Got to 2d\n",p_config.rank());
+      reg_entry = p_register.find(rproc, dst, bytes);
+  printf("p[%d] (nb_put) Got to 2e\n",p_config.rank());
       CMX_ASSERT(reg_entry);
       mapped_offset = _get_offset_memory(reg_entry, dst);
+  printf("p[%d] (nb_put) Got to 2f mapped_offset: %p\n",
+      p_config.rank(),mapped_offset);
       (void)memcpy(mapped_offset, src, bytes);
+  printf("p[%d] (nb_put) Got to 2g\n",p_config.rank());
       return;
     }
   }
+  printf("p[%d] (nb_put) Got to 3\n",p_config.rank());
 
   {
     char *message = NULL;
@@ -3704,8 +3811,9 @@ void p_Environment::nb_put(void *src, void *dst, int bytes, int proc, _cmx_reque
     header_t *header = NULL;
     int master_rank = -1;
     int use_eager = _eager_check(bytes);
+  printf("p[%d] (nb_put) Got to 4\n",p_config.rank());
 
-    master_rank = g_state.master[proc];
+    master_rank = p_config.master(rproc);
     /* only fence on the master */
     fence_array[master_rank] = 1;
     if (use_eager) {
@@ -3720,25 +3828,32 @@ void p_Environment::nb_put(void *src, void *dst, int bytes, int proc, _cmx_reque
     MAYBE_MEMSET(header, 0, sizeof(header_t));
     header->remote_address = static_cast<char*>(dst);
     header->local_address = static_cast<char*>(src);
-    header->rank = proc;
+    header->rank = rproc;
     header->length = bytes;
+  printf("p[%d] (nb_put) Got to 5\n",p_config.rank());
     if (use_eager) {
+  printf("p[%d] (nb_put) Got to 6\n",p_config.rank());
       (void)memcpy(message+sizeof(header_t), src, bytes);
       nb_send_header(message, message_size, master_rank, nb);
     }
     else {
       char *buf = (char*)src;
       int bytes_remaining = bytes;
+  printf("p[%d] (nb_put) Got to 7\n",p_config.rank());
       nb_send_header(header, sizeof(header_t), master_rank, nb);
+  printf("p[%d] (nb_put) Got to 8\n",p_config.rank());
       do {
         int size = bytes_remaining>max_message_size ?
           max_message_size : bytes_remaining;
+  printf("p[%d] (nb_put) Got to 9\n",p_config.rank());
         nb_send_buffer(buf, size, master_rank, nb);
+  printf("p[%d] (nb_put) Got to 10\n",p_config.rank());
         buf += size;
         bytes_remaining -= size;
       } while (bytes_remaining > 0);
     }
   }
+  printf("p[%d] (nb_put) Got to 11\n",p_config.rank());
   nb->in_use = 1;
 }
 

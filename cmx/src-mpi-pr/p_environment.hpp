@@ -217,6 +217,8 @@ int nb_test_for_send1(_cmx_request *nb, message_t **save_send_head,
         message_t **prev);
 int nb_test_for_recv1(_cmx_request *nb, message_t **save_recv_head,
         message_t **prev);
+void init_message(message_t *message);
+void init_request(_cmx_request *message);
 
 /* server functions */
 void _progress_server();
