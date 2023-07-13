@@ -179,7 +179,9 @@ static char *static_server_buffer = NULL;
 static int static_server_buffer_size = 0;
 static int eager_threshold = -1;
 static int max_message_size = -1;
+#if ENABLE_SYSV
 static int use_dev_shm = 1;
+#endif
 static int token_counter = 0;
 static int init_from_comm = 0;
 
@@ -7600,7 +7602,6 @@ STATIC void count_open_fds(void) {
 #ifdef DEBUGSHM
   if(nfiles % 1000 == 0) fprintf(stderr," %d: no. open files = %ld maxfiles = %ld\n", g_state.rank, nfiles, maxfiles);
 #endif
-  long mylimit = (maxfiles/100)*60;
     if(nfiles > (maxfiles/100)*60) {
       printf(" %d: running out of files; files = %ld  maxfiles = %ld\n", g_state.rank, nfiles, maxfiles);
 #if PAUSE_ON_ERROR
