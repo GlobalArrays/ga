@@ -375,6 +375,7 @@ STATIC void check_devshm(int fd, size_t size);
 static int devshm_initialized = 0;
 static long devshm_fs_left = 0;
 static long devshm_fs_initial = 0;
+STATIC void count_open_fds(void);
 
 int _comex_init(MPI_Comm comm)
 {
@@ -7561,13 +7562,9 @@ STATIC void check_devshm(int fd, size_t size){
 	    g_state.rank, g_state.node_size, devshm_fs_initial/CONVERT_TO_M, (long) ufs_statfs.f_bsize, (long)  g_state.node_size);
 #endif
   }
-  //  if (size > 0) {
+  count_open_fds();
     newspace = (long) ( size*(g_state.node_size -1));
-    //  }else{
-    //    newspace = (long) ( size);
-    //  }
     if(newspace>0){
-      // noo fd for space<0
     fstatfs(fd, &ufs_statfs);
 #ifdef DEBUGSHM
     fprintf(stderr, "[%d] /dev/shm filesize %ld filesize*np %ld initial devshm space %ld current /dev/shm space %ld \n",
@@ -7593,4 +7590,24 @@ STATIC void check_devshm(int fd, size_t size){
 	  g_state.rank, newspace/CONVERT_TO_M, devshm_fs_left/CONVERT_TO_M);
 #endif
 #endif
+}
+
+STATIC void count_open_fds(void) {
+  FILE *f = fopen("/proc/sys/fs/file-nr", "r");
+
+  int nfiles, unused, maxfiles;
+  fscanf(f, "%d %d %d", &nfiles, &unused, &maxfiles);
+#ifdef DEBUGSHM
+  if(nfiles % 1000 == 0) fprintf(stderr," %d: no. open files = %d maxfiles = %d\n", g_state.rank, nfiles, maxfiles);
+#endif
+  if(nfiles > (maxfiles*60/100)) {
+    printf(" %d: running out of files; files = %d maxfiles = %d\n", g_state.rank, nfiles, maxfiles);
+#if PAUSE_ON_ERROR
+    fprintf(stderr,"%d(%d): too many open files\n",
+            g_state.rank,  getpid());
+    pause();
+#endif
+    comex_error("count_open_fds: too many open files", -1);
+  }
+  fclose(f);
 }
