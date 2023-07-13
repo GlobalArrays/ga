@@ -7595,13 +7595,14 @@ STATIC void check_devshm(int fd, size_t size){
 STATIC void count_open_fds(void) {
   FILE *f = fopen("/proc/sys/fs/file-nr", "r");
 
-  int nfiles, unused, maxfiles;
-  fscanf(f, "%d %d %d", &nfiles, &unused, &maxfiles);
+  long nfiles, unused, maxfiles;
+  fscanf(f, "%ld %ld %ld", &nfiles, &unused, &maxfiles);
 #ifdef DEBUGSHM
-  if(nfiles % 1000 == 0) fprintf(stderr," %d: no. open files = %d maxfiles = %d\n", g_state.rank, nfiles, maxfiles);
+  if(nfiles % 1000 == 0) fprintf(stderr," %d: no. open files = %ld maxfiles = %ld\n", g_state.rank, nfiles, maxfiles);
 #endif
-  if(nfiles > (maxfiles*60/100)) {
-    printf(" %d: running out of files; files = %d maxfiles = %d\n", g_state.rank, nfiles, maxfiles);
+  long mylimit = (maxfiles/100)*60;
+    if(nfiles > (maxfiles/100)*60) {
+      printf(" %d: running out of files; files = %ld  maxfiles = %ld\n", g_state.rank, nfiles, maxfiles);
 #if PAUSE_ON_ERROR
     fprintf(stderr,"%d(%d): too many open files\n",
             g_state.rank,  getpid());
