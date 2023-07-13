@@ -67,6 +67,7 @@ jobs:
             armci_network: mpi-pr
             f77: ifort
             cc: icc
+            config_opts: LIBS=-lifcore
             oneapi: /Users/runner/apps/oneapi
           - os: ubuntu-20.04
             experimental: true 
@@ -116,6 +117,7 @@ jobs:
             armci_network: mpi-ts
             f77: ifort
             cc: gcc
+            oneapi: /opt/intel/oneapi
         exclude:
           - armci_network: mpi-pr
             mpi_impl: openmpi
