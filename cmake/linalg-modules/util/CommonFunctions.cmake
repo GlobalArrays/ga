@@ -244,6 +244,7 @@ function( check_fortran_functions_exist _funcs _namespace _libs _link_ok _uses_l
 
         if( NOT _compile_result )
 
+          message(STATUS "------compile-output check missing libs------ ${_compile_output}")
           append_possibly_missing_libs( ${_namespace} _compile_output ${_libs} _new_libs )
           list( APPEND ${_libs} ${_new_libs} )
           set( ${_libs} ${${_libs}} PARENT_SCOPE )
