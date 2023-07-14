@@ -314,7 +314,7 @@ reg_win_init(int nprocs)
 
 #ifdef TEST_DEBUG
     reg_win_nprocs = nprocs;
-    MPI_Comm_rank(MPI_COMM_WORLD,&reg_win_rank);
+    MPI_Comm_rank(l_state.world_comm,&reg_win_rank);
 #endif
 #if DEBUG
     printf("[%d] reg_win_init(nprocs=%d)\n",

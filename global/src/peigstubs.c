@@ -11,9 +11,9 @@
 #       define gai_diag_       F77_FUNC_(gai_diag,GAI_DIAG)
 #       define gai_diag_std_   F77_FUNC_(gai_diag_std,GAI_DIAG_STD)
 #       define gai_diag_reuse_ F77_FUNC_(gai_diag_reuse,GAI_DIAG_REUSE)
-extern gai_diag_(Integer*,Integer*,Integer*,DoublePrecision*);
-extern gai_diag_std_(Integer*,Integer*,DoublePrecision*);
-extern gai_diag_reuse_(Integer*,Integer*,Integer*,Integer*,DoublePrecision*);
+extern void gai_diag_(Integer*,Integer*,Integer*,DoublePrecision*);
+extern void gai_diag_std_(Integer*,Integer*,DoublePrecision*);
+extern void gai_diag_reuse_(Integer*,Integer*,Integer*,Integer*,DoublePrecision*);
 #   else
 #   endif
 #else

@@ -308,7 +308,7 @@ extern int _ga_initialize_f;
 /**
  *  Initialize library structures in Global Arrays.
  *  either ga_initialize_ltd or ga_initialize must be the first 
- *         GA routine called (except ga_uses_ma)
+ *         GA routine called (except ga_uses_ma or ga_set_memory_limit)
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_initialize = pnga_initialize
@@ -500,6 +500,30 @@ void pnga_initialize()
     GA_Internal_Threadsafe_Unlock();
 }
 
+/**
+ *  Initialize library structures in Global Arrays over a communicator that is
+ *  supplied by an external program.
+ *  either ga_initialize_ltd or ga_initialize must be the first 
+ *         GA routine called (except ga_uses_ma or ga_set_memory_limit)
+ */
+#ifdef MSG_COMMS_MPI
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_initialize_comm = pnga_initialize_comm
+#endif
+int pnga_initialize_comm(MPI_Comm comm)
+{
+  /**
+   * Initialize ARMCI first using communicator and then initialize GA using
+   * conventional initialization program. The conventional initialization code
+   * should recognize that ARMCI has already been initialized
+   */
+  int ret = ARMCI_Init_mpi_comm(comm);
+  if (ret) {
+    pnga_initialize();
+  }
+  return ret;
+}
+#endif
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_initialized = pnga_initialized
@@ -2744,6 +2768,10 @@ logical pnga_allocate(Integer g_a)
     mem_size = nelem * GA[ga_handle].elemsize;
   } else {
     mem_size = block_size * GA[ga_handle].elemsize;
+    for( i = 0; i< ndim; i++){
+       GA[ga_handle].scale[i] = (double)GA[ga_handle].num_blocks[i]
+         / (double)GA[ga_handle].dims[i];
+    }
   }
   GA[ga_handle].id = INVALID_MA_HANDLE;
   GA[ga_handle].size = (C_Long)mem_size;
@@ -3059,6 +3087,10 @@ logical pnga_overlay(Integer g_a, Integer g_parent)
     mem_size = nelem * GA[ga_handle].elemsize;
   } else {
     mem_size = block_size * GA[ga_handle].elemsize;
+    for( i = 0; i< ndim; i++){
+       GA[ga_handle].scale[i] = (double)GA[ga_handle].num_blocks[i]
+         / (double)GA[ga_handle].dims[i];
+    }
   }
   GA[ga_handle].id = INVALID_MA_HANDLE;
   GA[ga_handle].size = (C_Long)mem_size;
@@ -4219,7 +4251,7 @@ void pnga_randomize(Integer g_a, void* val)
         for(i=0; i<elems;i++)((int*)ptr)[i]=*(int*) val * ((int)rand())/RAND_MAX;
         break;
       case C_FLOAT:
-        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*) val * ((float)rand())/RAND_MAX;
+        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*) val * ((float)rand())/(size_t)RAND_MAX;
         break;     
       case C_LONG:
         for(i=0; i<elems;i++)((long*)ptr)[i]=*(long*) val * ((long)rand())/RAND_MAX;
@@ -4250,7 +4282,7 @@ void pnga_randomize(Integer g_a, void* val)
         for(i=0; i<elems;i++)((int*)ptr)[i]=*(int*)val * ((int)rand())/RAND_MAX;
         break;
       case C_FLOAT:
-        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*)val * ((float)rand())/RAND_MAX;
+        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*)val * ((float)rand())/(size_t)RAND_MAX;
         break;     
       case C_LONG:
         for(i=0; i<elems;i++)((long*)ptr)[i]=*(long*)val * ((long)rand())/RAND_MAX;
@@ -4718,7 +4750,66 @@ logical pnga_locate_region( Integer g_a,
       ga_UpdateSubscriptM(ndim,proc_subscript,procT,procB,GA[ga_handle].nblock);
       (*np)++;
     }
-  } else {
+  } else if (GA[ga_handle].distr_type == TILED_IRREG) {
+    Integer nproc = pnga_pgroup_nnodes(GA[ga_handle].p_handle);
+    /* find "processor coordinates" for the top left corner and store them
+     * in ProcT */
+    for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
+      findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].num_blocks[d], 
+          GA[ga_handle].scale[d], lo[d], &procT[d]);
+      dpos += GA[ga_handle].num_blocks[d];
+    }
+
+    /* find "processor coordinates" for the right bottom corner and store
+     * them in procB */
+#ifdef __crayx1
+#pragma _CRI novector
+#endif
+    for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
+      findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].num_blocks[d], 
+          GA[ga_handle].scale[d], hi[d], &procB[d]);
+      dpos += GA[ga_handle].num_blocks[d];
+    }
+
+    *np = 0;
+
+    /* Find total number of processors containing data and return the
+     * result in elems. Also find the lowest "processor coordinates" of the
+     * processor block containing data and return these in proc_subscript.
+     */
+    ga_InitLoopM(&elems, ndim, proc_subscript, procT,procB,GA[ga_handle].num_blocks);
+
+    /* p_handle = (Integer)GA[ga_handle].p_handle; */
+    for(i= 0; i< elems; i++){ 
+      Integer _lo[MAXDIM], _hi[MAXDIM];
+      Integer  offset;
+
+      /* convert i to owner processor id using the current values in
+         proc_subscript */
+      ga_ComputeIndexM(&proc, ndim, proc_subscript, GA[ga_handle].num_blocks); 
+      proclist[i] = proc;
+      /* get range of global array indices that are owned by owner */
+      ga_ownsM(ga_handle, proc, _lo, _hi);
+
+      offset = *np *(ndim*2); /* location in map to put patch range */
+
+#ifdef __crayx1
+#pragma _CRI novector
+#endif
+      for(d = 0; d< ndim; d++)
+        map[d + offset ] = lo[d] < _lo[d] ? _lo[d] : lo[d];
+#ifdef __crayx1
+#pragma _CRI novector
+#endif
+      for(d = 0; d< ndim; d++)
+        map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
+
+      /* Update to proc_subscript so that it corresponds to the next
+       * processor in the block of processors containing the patch */
+      ga_UpdateSubscriptM(ndim,proc_subscript,procT,procB,GA[ga_handle].num_blocks);
+      (*np)++;
+    }
+  } else if (GA[ga_handle].distr_type == BLOCK_CYCLIC) {
     Integer nblocks = GA[ga_handle].block_total;
     Integer chk, j, tlo[MAXDIM], thi[MAXDIM], cnt;
     Integer offset;
@@ -4756,6 +4847,53 @@ logical pnga_locate_region( Integer g_a,
         map[offset + ndim + j] = hi[j] > thi[j] ? thi[j] : hi[j];
       }
     }
+  } else if (GA[ga_handle].distr_type == SCALAPACK ||
+             GA[ga_handle].distr_type == TILED) {
+    /* find min and max block coordinates of region */
+    Integer min[MAXDIM], max[MAXDIM];
+    Integer count[MAXDIM];
+    Integer total_blocks = 1;
+    Integer cnt = 0;
+    Integer offset;
+    for (i=0; i<ndim; i++) {
+      min[i] = (lo[i]-1)/GA[ga_handle].block_dims[i];
+      max[i] = (hi[i]-1)/GA[ga_handle].block_dims[i];
+      total_blocks *= (max[i]-min[i]+1);
+      count[i] = min[i];
+    }
+    while (count[ndim-1]<=max[ndim-1]) {
+      /* Calculate block index */
+      Integer idx = 0;
+      Integer factor = 1;
+      Integer iproc;
+      Integer p_handle = GA[ga_handle].p_handle;
+      Integer size = pnga_pgroup_nnodes(p_handle);
+      for (i=ndim-1; i>=0; i--) {
+        idx = idx*factor+count[i];
+        factor *= GA[ga_handle].num_blocks[i];
+      }
+      proclist[cnt] = idx;
+      /* store information on this block */
+      offset = 2*cnt*ndim;
+      for (i=0; i<ndim; i++) {
+        map[offset+i] = count[i]*GA[ga_handle].block_dims[i]+1;
+        map[offset+ndim+i] = (count[i]+1)*GA[ga_handle].block_dims[i];
+        if (map[offset+ndim+i] > GA[ga_handle].dims[i])
+          map[offset+ndim+i] = GA[ga_handle].dims[i];
+      }
+      cnt++;
+      /* Increment count array */
+      i = 0;
+      count[0]++;
+      while (count[i] > max[i] && i<ndim) {
+        if (i<ndim-1) count[i] = min[i];
+        if (i<ndim-1) {
+          count[i+1]++;
+        }
+        i++;
+      }
+    }
+    *np = cnt;
   }
   return(TRUE);
 }
@@ -5510,7 +5648,7 @@ Integer pnga_total_blocks(Integer g_a)
 }
 
 /**
- *  Return true if GA uses SCALPACK data distribution
+ *  Return true if GA uses SCALPACK or TILED data distribution
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_uses_proc_grid =  pnga_uses_proc_grid
@@ -5522,6 +5660,19 @@ logical pnga_uses_proc_grid(Integer g_a)
   return (logical)(GA[ga_handle].distr_type == SCALAPACK
       || GA[ga_handle].distr_type == TILED ||
       GA[ga_handle].distr_type == TILED_IRREG);
+}
+
+/**
+ *  Return true if GA uses IRREGULAR TILED data distribution
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_uses_irreg_proc_grid =  pnga_uses_irreg_proc_grid
+#endif
+
+logical pnga_uses_irreg_proc_grid(Integer g_a)
+{
+  Integer ga_handle = GA_OFFSET + g_a;
+  return (GA[ga_handle].distr_type == TILED_IRREG);
 }
 
 /**
@@ -5590,6 +5741,25 @@ void pnga_get_block_info(Integer g_a, Integer *num_blocks, Integer *block_dims)
   }
   return;
 }
+
+/**
+ *  Return pointers to map array and block dims for irregular
+ *  tiled distributions
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get_map_info =  pnga_get_map_info
+#endif
+
+void pnga_get_map_info(Integer g_a, Integer *num_blocks, Integer **map)
+{
+  Integer ga_handle = GA_OFFSET + g_a;
+  Integer i;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    num_blocks[i] = GA[ga_handle].num_blocks[i];
+  }
+  *map = GA[ga_handle].mapc;
+}
+
 
 /**
  *  Set the value of internal debug flag

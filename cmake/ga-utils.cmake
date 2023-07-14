@@ -26,49 +26,38 @@
 # distribute to other US Government contractors.
 #
 
-# This is used to specify a time out for global array unit tests. It's 60
-# seconds by default, but may need to be longer on some platforms.
-if (NOT GLOBALARRAYS_TEST_TIMEOUT) 
-  set (GLOBALARRAYS_TEST_TIMEOUT 120 
-    CACHE STRING "Time out for global array unit tests.")
-endif ()
-
 # -------------------------------------------------------------
 # ga_add_parallel_test
 # -------------------------------------------------------------
-function(ga_add_parallel_test test_name test_program)
+function(ga_add_parallel_test test_name test_srcs)
+  get_filename_component(_test_name_only "${test_name}" NAME)
+  set(GA_TEST_NPROCS 4)
+  if(MPI_PR)
+    set(GA_TEST_NPROCS 5)
+  endif()
   if(DEFINED ARGV2)
     set(GA_TEST_NPROCS ${ARGV2})
   endif()
-  set(the_test_name "${test_name}_parallel")
-  set(fp_test_program ${CMAKE_CURRENT_BINARY_DIR}/${test_program})
-  add_test("${the_test_name}"
-    ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${GA_TEST_NPROCS} ${MPIEXEC_PREFLAGS} ${fp_test_program} ${MPIEXEC_POSTFLAGS})
-  set_tests_properties("${the_test_name}"
-    PROPERTIES 
-    # PASS_REGULAR_EXPRESSION "No errors detected"
-    # FAIL_REGULAR_EXPRESSION "failure detected"
-    TIMEOUT ${GLOBALARRAYS_TEST_TIMEOUT}
-  )
-endfunction(ga_add_parallel_test)
 
-# -------------------------------------------------------------
-# ga_add_parallel_run_test
-#
-# This provides a way to consistly add a test that just runs a program
-# on multiple processors using ${MPI_EXEC}. Success or failure is
-# based on the exit code.
-# -------------------------------------------------------------
-function(ga_add_parallel_run_test test_name test_program test_input)
-  set(the_test_name "${test_name}_parallel")
-  set(fp_test_program ${CMAKE_CURRENT_BINARY_DIR}/${test_program})
-  add_test("${the_test_name}"
-    ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} ${fp_test_program} ${MPIEXEC_POSTFLAGS} ${test_input})
-  set_tests_properties("${the_test_name}"
-    PROPERTIES 
-    TIMEOUT ${GLOBALARRAYS_TEST_TIMEOUT}
-  )
-endfunction(ga_add_parallel_run_test)
+  set(__ga_mpiexec ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${GA_TEST_NPROCS})
+  if(GA_JOB_LAUNCH_CMD)
+    set(__ga_mpiexec ${GA_JOB_LAUNCH_CMD})
+    if(GA_JOB_LAUNCH_ARGS)
+      separate_arguments(GA_JOB_LAUNCH_ARGS)
+      set(__ga_mpiexec ${__ga_mpiexec} ${GA_JOB_LAUNCH_ARGS})
+    else()
+      set(__ga_mpiexec ${__ga_mpiexec} ${MPIEXEC_NUMPROC_FLAG} ${GA_TEST_NPROCS})
+    endif()
+  endif()
+
+  separate_arguments(test_srcs)
+  set(__ga_test_exe "${_test_name_only}.x")
+  add_executable (${__ga_test_exe} ${test_srcs})
+  target_link_libraries(${__ga_test_exe} ga)
+
+  add_test(NAME ${test_name} COMMAND ${__ga_mpiexec} ${CMAKE_CURRENT_BINARY_DIR}/${__ga_test_exe})
+
+endfunction(ga_add_parallel_test)
 
 
 function(ga_is_valid __variable __out)

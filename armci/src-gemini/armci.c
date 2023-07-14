@@ -358,7 +358,7 @@ int PARMCI_Init_args(int *argc, char ***argv)
 extern void *sbrk(intptr_t);
 extern void code_summary();
 
-int PARMCI_Init()
+int _armci_init(MPI_Comm comm)
 {
     caddr_t atbeginbrval = (caddr_t)sbrk(0);
     if(_armci_initialized>0) return 0;
@@ -402,6 +402,18 @@ int PARMCI_Init()
     armci_msg_gop_init();
     _armci_initialized++;
     return 0;
+}
+
+
+int PARMCI_Init()
+{
+  return _armci_init(MPI_COMM_WORLD);
+}
+
+
+int PARMCI_Init_mpi_comm(MPI_Comm comm)
+{
+  return _armci_init(comm);
 }
 
 

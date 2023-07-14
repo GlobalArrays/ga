@@ -27,6 +27,7 @@
       integer          ga_get_pgroup_size
       logical          ga_has_ghosts
       integer          ga_idot
+      logical          ga_initialize_comm
       logical          ga_initialized
       integer          ga_inquire_memory
       integer          ga_is_mirrored
@@ -42,6 +43,8 @@
       logical          ga_overlay
       integer          ga_pgroup_absolute_id
       integer          ga_pgroup_create
+      integer          ga_pgroup_duplicate
+      integer          ga_pgroup_self
       logical          ga_pgroup_destroy
       integer          ga_pgroup_get_default
       integer          ga_pgroup_get_mirror
@@ -104,6 +107,7 @@
       logical          nga_has_ghosts
       integer          nga_idot
       integer          nga_idot_patch
+      logical          nga_initialize_comm
       logical          nga_initialized
       integer          nga_inquire_memory
       integer          nga_is_mirrored
@@ -120,6 +124,8 @@
       logical          nga_overlay
       integer          nga_pgroup_absolute_id
       integer          nga_pgroup_create
+      integer          nga_pgroup_duplicate
+      integer          nga_pgroup_self
       logical          nga_pgroup_destroy
       integer          nga_pgroup_get_default
       integer          nga_pgroup_get_mirror
@@ -136,9 +142,6 @@
       logical          nga_set_update5_info
       integer          nga_solve
       integer          nga_spd_invert
-      logical          nga_sprs_array_assemble
-      logical          nga_sprs_array_create
-      logical          nga_sprs_array_destroy
       integer          nga_total_blocks
       logical          nga_update2_ghosts
       logical          nga_update3_ghosts
@@ -195,6 +198,8 @@
       external ga_overlay
       external ga_pgroup_absolute_id
       external ga_pgroup_create
+      external ga_pgroup_duplicate
+      external ga_pgroup_self
       external ga_pgroup_destroy
       external ga_pgroup_get_default
       external ga_pgroup_get_mirror
@@ -276,6 +281,8 @@
       external nga_overlay
       external nga_pgroup_absolute_id
       external nga_pgroup_create
+      external nga_pgroup_duplicate
+      external nga_pgroup_self
       external nga_pgroup_destroy
       external nga_pgroup_get_default
       external nga_pgroup_get_mirror
@@ -293,9 +300,6 @@
       external nga_set_update5_info
       external nga_solve
       external nga_spd_invert
-      external nga_sprs_array_assemble
-      external nga_sprs_array_create
-      external nga_sprs_array_destroy
       external nga_total_blocks
       external nga_update2_ghosts
       external nga_update3_ghosts

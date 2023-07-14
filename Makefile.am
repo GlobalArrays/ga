@@ -446,7 +446,9 @@ AM_CPPFLAGS += -I$(top_srcdir)/global/testing
 
 check_PROGRAMS += global/testing/big
 check_PROGRAMS += global/testing/elempatch
+check_PROGRAMS += global/testing/tiled_irreg_test
 check_PROGRAMS += global/testing/gatscat
+check_PROGRAMS += global/testing/comm_init
 check_PROGRAMS += global/testing/getmem
 check_PROGRAMS += global/testing/mtest
 check_PROGRAMS += global/testing/mulmatpatchc
@@ -637,7 +639,9 @@ endif
 
 #GLOBAL_PARALLEL_TESTS += global/testing/big$(EXEEXT) # needs lots of memory
 GLOBAL_PARALLEL_TESTS += global/testing/elempatch$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/tiled_irreg_test$(EXEEXT)
 #GLOBAL_PARALLEL_TESTS += global/testing/gatscat$(EXEEXT) # broken
+GLOBAL_PARALLEL_TESTS += global/testing/comm_init$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/getmem$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/mtest$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/mulmatpatchc$(EXEEXT)
@@ -883,6 +887,7 @@ global_testing_bin_SOURCES                 = global/testing/bin.F $(gtsrcf)
 global_testing_blktest_SOURCES             = global/testing/blktest.F $(gtsrcf)
 global_testing_d2test_SOURCES              = global/testing/d2test.F $(gtsrcf)
 global_testing_elempatch_SOURCES           = global/testing/elempatch.c
+global_testing_tiled_irreg_test_SOURCES    = global/testing/tiled_irreg_test.c
 global_testing_field_test_SOURCES          = global/testing/field-test.F $(gtsrcf)
 global_testing_g2test_SOURCES              = global/testing/g2test.F $(gtsrcf)
 global_testing_g3test_SOURCES              = global/testing/g3test.F $(gtsrcf)
@@ -890,6 +895,7 @@ global_testing_ga_lu_SOURCES               = global/testing/ga_lu.c
 global_testing_ga_mpi_SOURCES              = global/testing/ga-mpi.c
 global_testing_ga_shift_SOURCES            = global/testing/ga_shift.F $(gtsrcf)
 global_testing_gatscat_SOURCES             = global/testing/gatscat.c
+global_testing_comm_init_SOURCES           = global/testing/comm_init.c
 global_testing_getmem_SOURCES              = global/testing/getmem.c
 global_testing_ghosts_SOURCES              = global/testing/ghosts.F $(gtsrcf)
 global_testing_ipc_clean_SOURCES           = global/testing/ipc.clean.c
@@ -1360,6 +1366,7 @@ check_PROGRAMS += ga++/testing/mtest
 check_PROGRAMS += ga++/testing/ntestc
 check_PROGRAMS += ga++/testing/testc
 check_PROGRAMS += ga++/testing/testmult
+check_PROGRAMS += ga++/testing/create_irreg_test
 check_PROGRAMS += ga++/testing/threadsafecpp
 
 CXX_SERIAL_TESTS =
@@ -1374,6 +1381,7 @@ CXX_PARALLEL_TESTS += ga++/testing/mtest$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/ntestc$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/testc$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/testmult$(EXEEXT)
+CXX_PARALLEL_TESTS += ga++/testing/create_irreg_test$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/threadsafecpp$(EXEEXT)
 
 ga___testing_elempatch_SOURCES      = ga++/testing/elempatch.cc
@@ -1381,6 +1389,7 @@ ga___testing_mtest_SOURCES          = ga++/testing/mtest.cc
 ga___testing_ntestc_SOURCES         = ga++/testing/ntestc.cc
 ga___testing_testc_SOURCES          = ga++/testing/testc.cc
 ga___testing_testmult_SOURCES       = ga++/testing/testmult.cc
+ga___testing_create_irreg_test_SOURCES       = ga++/testing/create_irreg_test.cc
 ga___testing_threadsafecpp_SOURCES  = ga++/testing/thread-safe.cc
 
 ga___testing_threadsafecpp_CXXFLAGS = $(AM_CXXFLAGS) $(OPENMP_CXXFLAGS)
@@ -1394,6 +1403,7 @@ ga___testing_mtest_LDADD            = libga++.la
 ga___testing_ntestc_LDADD           = libga++.la
 ga___testing_testc_LDADD            = libga++.la
 ga___testing_testmult_LDADD         = libga++.la
+ga___testing_create_irreg_test_LDADD         = libga++.la
 
 endif # CXX_BINDINGS
 

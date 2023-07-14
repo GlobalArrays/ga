@@ -390,7 +390,7 @@ static int cmplong(const void *p1, const void *p2)
 /**
  * Initialize group linked list. Prepopulate with world group.
  */
-void comex_group_init() 
+void comex_group_init(MPI_Comm comm) 
 {
     int status = 0;
     int i = 0;
@@ -405,7 +405,7 @@ void comex_group_init()
     /* populate g_state */
 
     /* dup MPI_COMM_WORLD and get group, rank, and size */
-    status = MPI_Comm_dup(MPI_COMM_WORLD, &(g_state.comm));
+    status = MPI_Comm_dup(comm, &(g_state.comm));
     COMEX_ASSERT(MPI_SUCCESS == status);
     status = MPI_Comm_group(g_state.comm, &(g_state.group));
     COMEX_ASSERT(MPI_SUCCESS == status);
@@ -432,7 +432,7 @@ void comex_group_init()
             g_state.hostid, 1, MPI_LONG, g_state.comm);
     COMEX_ASSERT(MPI_SUCCESS == status);
      /* First create a temporary node communicator and then
-      * split further into number of gruoups within the node */
+      * split further into number of groups within the node */
      MPI_Comm temp_node_comm;
      int temp_node_size;
     /* create node comm */
@@ -441,6 +441,8 @@ void comex_group_init()
     sorted = (long*)malloc(sizeof(long) * g_state.size);
     (void)memcpy(sorted, g_state.hostid, sizeof(long)*g_state.size);
     qsort(sorted, g_state.size, sizeof(long), cmplong);
+    /* count is number of distinct host IDs that are lower than
+     * the host ID of this rank */
     for (i=0; i<g_state.size-1; ++i) {
         if (sorted[i] == g_state.hostid[g_state.rank]) 
         {
@@ -454,7 +456,8 @@ void comex_group_init()
 #if DEBUG
     printf("count: %d\n", count);
 #endif
-    status = MPI_Comm_split(MPI_COMM_WORLD, count,
+    /* split based on the value of count */
+    status = MPI_Comm_split(comm, count,
             g_state.rank, &temp_node_comm);
     int node_group_size, node_group_rank;
     MPI_Comm_size(temp_node_comm, &node_group_size);
@@ -476,7 +479,7 @@ void comex_group_init()
             }
         }
     }
-    /* Get nuber of Progress-Ranks per node from environment variable
+    /* Get number of Progress-Ranks per node from environment variable
      * equal to 1 by default */
     int num_progress_ranks_per_node = get_num_progress_ranks_per_node();
     /* Perform check on the number of Progress-Ranks */
@@ -567,7 +570,7 @@ void comex_group_init()
         printf("Creating comm: I AM WORKER[%ld]\n", g_state.rank);
 #endif
     }
-    status = MPI_Comm_split(MPI_COMM_WORLD, proc_split_group_stamp,
+    status = MPI_Comm_split(comm, proc_split_group_stamp,
             g_state.rank, &(g_state.node_comm));
     COMEX_ASSERT(MPI_SUCCESS == status);
     /* node rank */

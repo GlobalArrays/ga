@@ -1,6 +1,6 @@
 # SANITY CHECK
 if( "ilp64" IN_LIST ReferenceLAPACK_FIND_COMPONENTS AND "lp64" IN_LIST ReferenceLAPACK_FIND_COMPONENTS )
-  message( FATAL_ERROR "ReferenceLAPACK cannot link to both ILP64 and LP64 iterfaces" )
+  message( FATAL_ERROR "ReferenceLAPACK cannot link to both ILP64 and LP64 interfaces" )
 endif()
 
 if( ReferenceLAPACK_PREFERS_STATIC )

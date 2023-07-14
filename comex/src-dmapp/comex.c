@@ -1008,7 +1008,7 @@ static void dmapp_free_buf(void)
 }
 
 
-int comex_init()
+int _comex_init(MPI_Comm comm)
 {
     int status;
     
@@ -1024,7 +1024,7 @@ int comex_init()
     assert(init_flag);
     
     /* Duplicate the World Communicator */
-    status = MPI_Comm_dup(MPI_COMM_WORLD, &(l_state.world_comm));
+    status = MPI_Comm_dup(comm, &(l_state.world_comm));
     assert(MPI_SUCCESS == status);
     assert(l_state.world_comm); 
 
@@ -1061,6 +1061,18 @@ int comex_init()
     MPI_Barrier(l_state.world_comm);
 
     return COMEX_SUCCESS;
+}
+
+
+int comex_init()
+{
+  return _comex_init(MPI_COMM_WORLD);
+}
+
+
+int comex_init_comm(MPI_Comm comm)
+{
+  return _comex_init(comm);
 }
 
 

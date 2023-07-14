@@ -37,12 +37,12 @@
 # -------------------------------------------------------------
 
 set(GAXX_HEADERS
-  ga++.h
-  GAServices.h
-  GlobalArray.h
-  init_term.h
-  PGroup.h
-  services.h
+  src/ga++.h
+  src/GAServices.h
+  src/GlobalArray.h
+  src/init_term.h
+  src/PGroup.h
+  src/services.h
 )
 
 install (FILES
@@ -55,22 +55,24 @@ install (FILES
 # -------------------------------------------------------------
 
 add_library(ga++
-  GAServices.cc
-  GlobalArray.cc
-  init_term.cc
-  overload.cc
-  PGroup.cc
-  services.cc
+  src/GAServices.cc
+  src/GlobalArray.cc
+  src/init_term.cc
+  src/overload.cc
+  src/PGroup.cc
+  src/services.cc
 )
 
-target_include_directories(ga++ BEFORE PRIVATE 
-                    ${CMAKE_CURRENT_BINARY_DIR}
-                    ${PROJECT_SOURCE_DIR}/global/src
-                    ${PROJECT_SOURCE_DIR}/global/testing
-                    ${PROJECT_SOURCE_DIR}/ma
-                    ${PROJECT_BINARY_DIR}/ma
-                    ${PROJECT_BINARY_DIR}/gaf2c
-                    ${PROJECT_BINARY_DIR})
+set (_gapp_inc_dirs ${CMAKE_CURRENT_BINARY_DIR}
+                   ${PROJECT_SOURCE_DIR}/ga++/src
+                   ${PROJECT_SOURCE_DIR}/global/src
+                   ${PROJECT_SOURCE_DIR}/global/testing
+                   ${PROJECT_SOURCE_DIR}/ma
+                   ${PROJECT_BINARY_DIR}/ma
+                   ${PROJECT_BINARY_DIR}/gaf2c
+                   ${PROJECT_BINARY_DIR})
+
+target_include_directories(ga++ BEFORE PRIVATE ${_gapp_inc_dirs})
 
 target_link_libraries(ga++)
 
@@ -78,3 +80,19 @@ install (TARGETS
   ga++
   DESTINATION lib
 )
+
+function(gapp_add_parallel_test test_name test_srcs)
+  get_filename_component(_test_name_only "${test_name}" NAME)
+  ga_add_parallel_test(${test_name} ${test_srcs})
+  target_include_directories(${_test_name_only}.x PRIVATE ${_gapp_inc_dirs})
+  target_link_libraries(${_test_name_only}.x ga++)  
+endfunction()
+
+if(ENABLE_TESTS)
+  gapp_add_parallel_test(ga++/elempatch_cpp ${PROJECT_SOURCE_DIR}/ga++/testing/elempatch.cc)
+  gapp_add_parallel_test(ga++/mtest_cpp  ${PROJECT_SOURCE_DIR}/ga++/testing/mtest.cc)
+  gapp_add_parallel_test(ga++/ntestc_cpp ${PROJECT_SOURCE_DIR}/ga++/testing/ntestc.cc)
+  gapp_add_parallel_test(ga++/testc_cpp ${PROJECT_SOURCE_DIR}/ga++/testing/testc.cc)
+  gapp_add_parallel_test(ga++/testmult_cpp ${PROJECT_SOURCE_DIR}/ga++/testing/testmult.cc)
+  gapp_add_parallel_test(ga++/thread-safe_cpp ${PROJECT_SOURCE_DIR}/ga++/testing/thread-safe.cc)
+endif()

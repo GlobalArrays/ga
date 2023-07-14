@@ -352,7 +352,7 @@ int PARMCI_Init_args(int *argc, char ***argv)
 
 extern void *sbrk(intptr_t);
 
-int PARMCI_Init()
+int _armci_init(MPI_Comm comm)
 {
     caddr_t atbeginbrval = (caddr_t)sbrk(0);
     if(_armci_initialized>0) return 0;
@@ -361,7 +361,7 @@ int PARMCI_Init()
     mallopt(M_TRIM_THRESHOLD, -1);
 #endif
 
-    armci_msg_init(NULL, NULL);
+    armci_msg_init_comm(comm);
 
     armci_nproc = armci_msg_nproc();
     armci_me = armci_msg_me();
@@ -394,6 +394,18 @@ int PARMCI_Init()
     armci_msg_gop_init();
     _armci_initialized++;
     return 0;
+}
+
+
+int PARMCI_Init()
+{
+  return _armci_init(MPI_COMM_WORLD);
+}
+
+
+int PARMCI_Init_mpi_comm(MPI_Comm comm)
+{
+  return _armci_init(comm);
 }
 
 

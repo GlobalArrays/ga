@@ -60,6 +60,7 @@ ga_option(CMAKE_BUILD_TYPE Release)
 ga_option(LINALG_VENDOR BLIS)
 ga_option(ENABLE_TESTS ON)
 ga_option(ENABLE_PROFILING OFF)
+ga_option(ENABLE_SYSV OFF)
 #Options for user provided LinAlg libraries
 ga_option(ENABLE_BLAS OFF)
 ga_option(ENABLE_SCALAPACK OFF)
@@ -230,7 +231,11 @@ if (ENABLE_FORTRAN)
      message(STATUS "Fujitsu Fortran compiler settings")
      set (FORTRAN_I8_FLAG "-CcdII8 -CcdLL8")
      set (FORTRAN_I4_FLAG "")
-  endif()
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Cray")
+     message(STATUS "Cray Fortran compiler settings")
+     set (FORTRAN_I8_FLAG "-default64")
+     set (FORTRAN_I4_FLAG "")     
+  endif() 
 else()
 # need to set these variable even if only compiling C/C++
    set (F77_GETARG GETARG)
@@ -287,9 +292,9 @@ if (CMAKE_SIZEOF_VOID_P EQUAL 8)
   if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(NOUSE_MMAP 1)
   endif()
-  set(GA_FORTRAN_ACCESS_INDEX integer*8)
+  set(GA_ACCESS_INDEX_TYPE integer*8)
 else()
-  set(GA_FORTRAN_ACCESS_INDEX integer*4)
+  set(GA_ACCESS_INDEX_TYPE integer*4)
 endif()
 # set (CM_BLAS_SIZE ${CM_SIZEOF_F77_INTEGER})
 
@@ -306,7 +311,7 @@ CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/matypes.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/ma/matypes.h )
 CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/mafdecls.fh.in
                 ${CMAKE_CURRENT_BINARY_DIR}/ma/mafdecls.fh )
-CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/global.fh.in
+CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/global/src/global.fh.in
                 ${CMAKE_CURRENT_BINARY_DIR}/global/src/global.fh )
 
 if (ENABLE_FORTRAN)
@@ -400,13 +405,18 @@ if(DEFINED GA_GCC_TOOLCHAIN_FLAG)
   target_compile_options(ga PUBLIC $<$<COMPILE_LANGUAGE:C,CXX>:${GA_GCC_TOOLCHAIN_FLAG}>)
 endif()
 
+if(ENABLE_TESTS)
+  # turn testing on
+  enable_testing()
+endif()
+
 # -------------------------------------------------------------
 # Subdirectories
 # -------------------------------------------------------------
 add_subdirectory(global/src)
 add_subdirectory(comex)
 if(ENABLE_CXX)
-add_subdirectory(ga++/src)
+add_subdirectory(ga++)
 endif()
 add_subdirectory(ma)
 add_subdirectory(pario)
@@ -420,12 +430,8 @@ if(ENABLE_PROFILING)
 endif()
 
 if(ENABLE_TESTS)
-  if (NOT GA_TEST_NPROCS)
-    set(GA_TEST_NPROCS ${MPIEXEC_MAX_NUMPROCS})
-  endif()
-  # turn testing on
-  enable_testing()
   add_subdirectory(global/testing)
+  add_subdirectory(global/examples)
 endif()
 
 
@@ -488,12 +494,6 @@ if(ENABLE_BLAS)
     ${CMAKE_CURRENT_LIST_DIR}/cmake/linalg-modules/FindStandardFortran.cmake
     DESTINATION ${INSTALL_CONFIGDIR}/linalg-cmake-modules
   )
-  if(ENABLE_DPCPP)
-    install(FILES
-      ${CMAKE_CURRENT_LIST_DIR}/cmake/FindIntelSYCL.cmake
-      DESTINATION ${INSTALL_CONFIGDIR}
-    )
-  endif()
 endif()
 
 list(REMOVE_AT CMAKE_MODULE_PATH 0)

@@ -10,6 +10,7 @@
 #endif
 #include "globalp.h"
 #include "message.h"
+#include "ga_iterator.h"
 #include "ga-papi.h"
 #include "ga-wapi.h"
   
@@ -27,6 +28,117 @@ typedef struct {
         DoubleComplex extra;
         SingleComplex extra2;      
 } elem_info_t;
+
+/* if new info exceeds old info, copy new info to old info, otherwise leave old
+ * info alone */
+static void snga_compare_elem(Integer type, char* op, elem_info_t *new_info,
+    elem_info_t *old_info, Integer *update)
+{
+  *update = 0;
+  switch (type) {
+    case C_INT:
+    if (strncmp(op,"min",3) == 0) {
+      if  (new_info->v.ival < old_info->v.ival) {
+        old_info->v.ival = new_info->v.ival;
+        *update = 1;
+      }
+    } else {
+      if  (new_info->v.ival > old_info->v.ival) {
+        old_info->v.ival = new_info->v.ival;
+        *update = 1;
+      }
+    }
+    break;  
+
+    case C_LONG:
+    if (strncmp(op,"min",3) == 0) {
+      if  (new_info->v.lval < old_info->v.lval) {
+        old_info->v.lval = new_info->v.lval;
+        *update = 1;
+      }
+    } else {
+      if  (new_info->v.lval > old_info->v.lval) {
+        old_info->v.lval = new_info->v.lval;
+        *update = 1;
+      }
+    }
+    break;  
+
+    case C_LONGLONG:
+    if (strncmp(op,"min",3) == 0) {
+      if  (new_info->v.llval < old_info->v.llval) {
+        old_info->v.llval = new_info->v.llval;
+        *update = 1;
+      }
+    } else {
+      if  (new_info->v.llval > old_info->v.llval) {
+        old_info->v.llval = new_info->v.llval;
+        *update = 1;
+      }
+    }
+    break;  
+
+    case C_DBL:
+    if (strncmp(op,"min",3) == 0) {
+      if  (new_info->v.dval < old_info->v.dval) {
+        old_info->v.dval = new_info->v.dval;
+        *update = 1;
+      }
+    } else {
+      if  (new_info->v.dval > old_info->v.dval) {
+        old_info->v.dval = new_info->v.dval;
+        *update = 1;
+      }
+    }
+    break;  
+
+    case C_FLOAT:
+    if (strncmp(op,"min",3) == 0) {
+      if  (new_info->v.fval < old_info->v.fval) {
+        old_info->v.fval = new_info->v.fval;
+        *update = 1;
+      }
+    } else {
+      if  (new_info->v.fval > old_info->v.fval) {
+        old_info->v.fval = new_info->v.fval;
+        *update = 1;
+      }
+    }
+    break;  
+
+    case C_SCPL:
+    if (strncmp(op,"min",3) == 0) {
+      if  (new_info->v.fval < old_info->v.fval) {
+        old_info->v.fval = new_info->v.fval;
+        old_info->extra2 = new_info->extra2;
+        *update = 1;
+      }
+    } else {
+      if  (new_info->v.fval > old_info->v.fval) {
+        old_info->v.fval = new_info->v.fval;
+        old_info->extra2 = new_info->extra2;
+        *update = 1;
+      }
+    }
+    break;  
+
+    case C_DCPL:
+    if (strncmp(op,"min",3) == 0) {
+      if  (new_info->v.dval < old_info->v.dval) {
+        old_info->v.dval = new_info->v.dval;
+        old_info->extra = new_info->extra;
+        *update = 1;
+      }
+    } else {
+      if  (new_info->v.dval > old_info->v.dval) {
+        old_info->v.dval = new_info->v.dval;
+        old_info->extra = new_info->extra;
+        *update = 1;
+      }
+    }
+    break;  
+  }
+}
 
 static void snga_select_elem(Integer type, char* op, void *ptr, Integer elems, elem_info_t *info,
                       Integer *ind)
@@ -144,10 +256,14 @@ void pnga_select_elem(Integer g_a, char* op, void* val, Integer *subscript)
 {
   Integer ndim, type, me, elems, ind=0, i;
   Integer lo[MAXDIM],hi[MAXDIM],dims[MAXDIM],ld[MAXDIM-1];
-  elem_info_t info;
+  elem_info_t info, new_info;
   Integer num_blocks;
   int     participate=0;
   int local_sync_begin;
+  void *ptr;
+  char *cptr;
+  _iterator_hdl hdl_a;
+  Integer first_pass;
 
   local_sync_begin = _ga_sync_begin; 
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -164,6 +280,43 @@ void pnga_select_elem(Integer g_a, char* op, void* val, Integer *subscript)
   pnga_inquire(g_a, &type, &ndim, dims);
   num_blocks = pnga_total_blocks(g_a);
 
+
+  first_pass = 1;
+  pnga_local_iterator_init(g_a, &hdl_a);
+  while (pnga_local_iterator_next(&hdl_a, lo, hi, &cptr, ld)) {
+    Integer update;
+    GET_ELEMS(ndim,lo,hi,ld,&elems);
+    participate =1;
+    ptr = (void*)cptr;
+
+    if (first_pass) {
+      /* select local element */
+      snga_select_elem(type, op, ptr, elems, &info, &ind);
+
+      /* determine element subscript in the ndim-array */
+      for(i = 0; i < ndim; i++){
+        int elems = (int)( hi[i]-lo[i]+1);
+        info.subscr[i] = ind%elems + lo[i] ;
+        ind /= elems;
+      }
+    } else {
+      /* select local element */
+      snga_select_elem(type, op, ptr, elems, &new_info, &ind);
+
+      /* compare with old block */
+      snga_compare_elem(type,op, &new_info, &info, &update);
+      /* determine element subscript in the ndim-array */
+      if (update) {
+        for(i = 0; i < ndim; i++){
+          int elems = (int)( hi[i]-lo[i]+1);
+          info.subscr[i] = ind%elems + lo[i] ;
+          ind /= elems;
+        }
+      }
+    }
+    first_pass = 0;
+  }
+#if 0
   if (num_blocks < 0) {
     pnga_distribution(g_a, me, lo, hi);
 
@@ -232,36 +385,40 @@ void pnga_select_elem(Integer g_a, char* op, void* val, Integer *subscript)
         Integer l_index[MAXDIM];
         Integer min, max;
         pnga_get_proc_index(g_a, me, proc_index);
-        pnga_get_block_info(g_a, blocks, block_dims);
         pnga_get_proc_grid(g_a, topology);
-        /* figure out strides for locally held block of data */
-        for (i=0; i<ndim; i++) {
-          stride[i] = 0;
-          for (j=proc_index[i]; j<blocks[i]; j += topology[i]) {
-            min = j*block_dims[i] + 1;
-            max = (j+1)*block_dims[i];
-            if (max > dims[i])
-              max = dims[i];
-            stride[i] += (max - min + 1);
+        if (!pnga_uses_irreg_proc_grid(g_a)) {
+          pnga_get_block_info(g_a, blocks, block_dims);
+          /* figure out strides for locally held block of data */
+          for (i=0; i<ndim; i++) {
+            stride[i] = 0;
+            for (j=proc_index[i]; j<blocks[i]; j += topology[i]) {
+              min = j*block_dims[i] + 1;
+              max = (j+1)*block_dims[i];
+              if (max > dims[i])
+                max = dims[i];
+              stride[i] += (max - min + 1);
+            }
           }
-        }
-        /* use strides to figure out local index */
-        l_index[0] = ind%stride[0];
-        for (i=1; i<ndim; i++) {
-          ind = (ind-l_index[i-1])/stride[i-1];
-          l_index[i] = ind%stride[i];
-        }
-        /* figure out block index for block holding data element */
-        for (i=0; i<ndim; i++) {
-          index[i] = l_index[i]/block_dims[i];
-        }
-        for (i=0; i<ndim; i++) {
-          lo[i] = (topology[i]*index[i] + proc_index[i])*block_dims[i];
-          info.subscr[i] = l_index[i]%block_dims[i] + lo[i];
+          /* use strides to figure out local index */
+          l_index[0] = ind%stride[0];
+          for (i=1; i<ndim; i++) {
+            ind = (ind-l_index[i-1])/stride[i-1];
+            l_index[i] = ind%stride[i];
+          }
+          /* figure out block index for block holding data element */
+          for (i=0; i<ndim; i++) {
+            index[i] = l_index[i]/block_dims[i];
+          }
+          for (i=0; i<ndim; i++) {
+            lo[i] = (topology[i]*index[i] + proc_index[i])*block_dims[i];
+            info.subscr[i] = l_index[i]%block_dims[i] + lo[i];
+          }
+        } else {
         }
       }
     }
   }
+#endif
   /* calculate global result */
   if(type==C_INT){
     int size = sizeof(double) + sizeof(Integer)*(int)ndim;

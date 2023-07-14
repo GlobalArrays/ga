@@ -19,11 +19,15 @@ include( CMakeFindDependencyMacro )
 
 # SANITY CHECK
 if( "ilp64" IN_LIST IntelMKL_FIND_COMPONENTS AND "lp64" IN_LIST IntelMKL_FIND_COMPONENTS )
-  message( FATAL_ERROR "IntelMKL cannot link to both ILP64 and LP64 iterfaces" )
+  message( FATAL_ERROR "IntelMKL cannot link to both ILP64 and LP64 interfaces" )
 endif()
 
 if( "scalapack" IN_LIST IntelMKL_FIND_COMPONENTS AND NOT ("blacs" IN_LIST IntelMKL_FIND_COMPONENTS) )
   list(APPEND IntelMKL_FIND_COMPONENTS "blacs" )
+endif()
+
+if ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "arm64")
+  message( WARNING "IntelMKL is not supported for ARM architectures" )
 endif()
 
 # MKL lib names
@@ -364,6 +368,7 @@ if( IntelMKL_LIBRARY AND IntelMKL_THREAD_LIBRARY AND IntelMKL_CORE_LIBRARY )
 
   if( IntelMKL_PREFERS_STATIC )
 
+  if(NOT "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Darwin")
     list( PREPEND IntelMKL_BLAS_LAPACK_LIBRARIES "-Wl,--start-group" )
     list( APPEND  IntelMKL_BLAS_LAPACK_LIBRARIES "-Wl,--end-group"   )
 
@@ -371,6 +376,7 @@ if( IntelMKL_LIBRARY AND IntelMKL_THREAD_LIBRARY AND IntelMKL_CORE_LIBRARY )
       list( PREPEND IntelMKL_BLACS_LIBRARIES "-Wl,--start-group" )
       list( APPEND  IntelMKL_BLACS_LIBRARIES "-Wl,--end-group"   )
     endif()
+  endif()
 
     if( "scalapack" IN_LIST IntelMKL_FIND_COMPONENTS )
       set( IntelMKL_ScaLAPACK_LIBRARIES 
@@ -413,32 +419,29 @@ if( IntelMKL_LIBRARY AND IntelMKL_THREAD_LIBRARY AND IntelMKL_CORE_LIBRARY )
 
   elseif( IntelMKL_THREAD_LAYER MATCHES "tbb" )
 
-    if( NOT TARGET tbb )
-	    #message( FATAL_ERROR "TBB Bindings Not Currently Accessible Through FindIntelMKL" )
-      find_dependency( TBB )
+    if( NOT TARGET TBB::tbb )
+      find_dependency( TBB REQUIRED )
+      # TBB::tbb by default is not GLOBAL, so to allow users of LINALG_LIBRARIES to safely use it we need to make it global
+      # more discussion here: https://gitlab.kitware.com/cmake/cmake/-/issues/17256
+      set_target_properties(TBB::tbb PROPERTIES IMPORTED_GLOBAL TRUE)
     endif()
 
-    set( _mkl_tbb_extra_libs tbb )
-    if( IntelMKL_PREFERS_STATIC )
-      list( APPEND _mkl_tbb_extra_libs "stdc++" ) 
-    endif()
-    list( APPEND IntelMKL_BLAS_LAPACK_LIBRARIES ${_mkl_tbb_extra_libs} )
-
+    list( APPEND IntelMKL_BLAS_LAPACK_LIBRARIES TBB::tbb )
     if( IntelMKL_BLACS_LIBRARIES )
-      list( APPEND IntelMKL_BLACS_LIBRARIES ${_mkl_tbb_extra_libs} )
+      list( APPEND IntelMKL_BLACS_LIBRARIES TBB::tbb )
     endif()
-
     if( IntelMKL_ScaLAPACK_LIBRARIES )
-      list( APPEND IntelMKL_ScaLAPACK_LIBRARIES ${_mkl_tbb_extra_libs} )
+      list( APPEND IntelMKL_ScaLAPACK_LIBRARIES TBB::tbb )
     endif()
-
-    unset( _mkl_tbb_extra_libs )
 
   endif()
 
 
   if( NOT TARGET Threads::Threads )
     find_dependency( Threads )
+    # Threads::Threads by default is not GLOBAL, so to allow users of LINALG_LIBRARIES to safely use it we need to make it global
+    # more discussion here: https://gitlab.kitware.com/cmake/cmake/-/issues/17256
+    set_target_properties(Threads::Threads PROPERTIES IMPORTED_GLOBAL TRUE)
   endif()
 
   list( APPEND IntelMKL_BLAS_LAPACK_LIBRARIES "m" "dl" Threads::Threads )
