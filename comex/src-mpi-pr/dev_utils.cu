@@ -254,6 +254,7 @@ void deviceMemset(void *ptr, int val, size_t bytes)
     printf("p[%d] cudaMemset ptr: %p bytes: %d msg: %s\n",rank,ptr,bytes,msg);
     MPI_Wrapper_abort(err);
   }
+  cudaDeviceSynchronize();
 }
 
 __global__ void iaxpy_kernel(int *dst, const int *src, int scale, int n)

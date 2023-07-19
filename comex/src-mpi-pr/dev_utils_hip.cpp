@@ -244,6 +244,7 @@ void deviceMemset(void *ptr, int val, size_t bytes)
     printf("p[%d] hipMemset ptr: %p bytes: %zu msg: %s\n",rank,ptr,bytes,msg);
     MPI_Wrapper_abort(err);
   }
+  hipDeviceSynchronize();
 }
 
 __global__ void iaxpy_kernel(int *dst, const int *src, int scale, int n)
