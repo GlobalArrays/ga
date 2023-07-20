@@ -67,7 +67,7 @@ case "$os" in
 	    && echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list \
             && sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"  \
 	    && sudo apt-get update \
-	    && sudo apt-get -y install intel-oneapi-ifort intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic  intel-oneapi-mkl \
+	    && sudo apt-get -y install intel-oneapi-compiler-fortran intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic  intel-oneapi-mkl \
 	    && sudo apt-get -y install intel-oneapi-mpi-devel
 	source "$IONEAPI_ROOT"/setvars.sh --force || true
 	    export I_MPI_F90=ifort

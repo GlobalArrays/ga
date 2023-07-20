@@ -7602,7 +7602,7 @@ STATIC void count_open_fds(void) {
 #ifdef DEBUGSHM
   if(nfiles % 1000 == 0) fprintf(stderr," %d: no. open files = %ld maxfiles = %ld\n", g_state.rank, nfiles, maxfiles);
 #endif
-    if(nfiles > (maxfiles/100)*60) {
+    if(nfiles > (maxfiles/100)*90) {
       printf(" %d: running out of files; files = %ld  maxfiles = %ld\n", g_state.rank, nfiles, maxfiles);
 #if PAUSE_ON_ERROR
     fprintf(stderr,"%d(%d): too many open files\n",
