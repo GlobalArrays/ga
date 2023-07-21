@@ -90,6 +90,10 @@ sicm_device_list nill;
 #define RANGE_POP() ((void)0)
 #endif
 
+#define DEBUG_PRINT \
+  printf("p[%d] Got to line %d\n",g_state.rank,__LINE__)
+
+
 /* data structures */
 
 typedef enum {
@@ -4228,8 +4232,10 @@ STATIC void _progress_server()
         header_t *header = NULL;
         MPI_Status recv_status;
 
+          DEBUG_PRINT;
         MPI_Recv(static_header_buffer, static_header_buffer_size, MPI_CHAR,
                 MPI_ANY_SOURCE, COMEX_TAG, g_state.comm, &recv_status);
+          DEBUG_PRINT;
         MPI_Get_count(&recv_status, MPI_CHAR, &length);
         source = recv_status.MPI_SOURCE;
 #   if DEBUG
@@ -4253,7 +4259,9 @@ STATIC void _progress_server()
                 _put_iov_handler(header, source);
                 break;
             case OP_GET:
+          DEBUG_PRINT;
                 _get_handler(header, source);
+          DEBUG_PRINT;
                 break;
             case OP_GET_PACKED:
                 _get_packed_handler(header, payload, source);
@@ -4604,12 +4612,14 @@ STATIC void _put_datatype_handler(header_t *header, char *payload, int proc)
     translate_mpi_error(ierr,"_put_datatype_handler:MPI_Type_commit");
 
     server_recv_datatype(mapped_offset, dst_type, proc);
+#ifdef ENABLE_DEVICE
 #ifdef ENABLE_GPU_AWARE_MPI
     if (reg_entry->use_dev) {
       PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
       PROFILE_END(t_close_ipc)
     }
+#endif
 #endif
 
     ierr = MPI_Type_free(&dst_type);
@@ -4760,13 +4770,17 @@ STATIC void _get_handler(header_t *header, int proc)
     {
         char *buf = (char*)mapped_offset;
         int bytes_remaining = header->length;
+          DEBUG_PRINT;
         do {
             int size = bytes_remaining>max_message_size ?
                 max_message_size : bytes_remaining;
+          DEBUG_PRINT;
             server_send(buf, size, proc);
+          DEBUG_PRINT;
             buf += size;
             bytes_remaining -= size;
         } while (bytes_remaining > 0);
+          DEBUG_PRINT;
 #if (defined(ENABLE_DEVICE) && defined(ENABLE_GPU_AWARE_MPI))
         if (reg_entry->use_dev) {
           PROFILE_BEG()
@@ -4796,6 +4810,7 @@ STATIC void _get_handler(header_t *header, int proc)
       PROFILE_END(t_close_ipc)
     }
 #endif
+          DEBUG_PRINT;
     RANGE_POP();
 }
 
@@ -4921,12 +4936,14 @@ STATIC void _get_datatype_handler(header_t *header, char *payload, int proc)
 
     server_send_datatype(mapped_offset, src_type, proc);
 
+#ifdef ENABLE_DEVICE
 #ifdef ENABLE_GPU_AWARE_MPI
     if (reg_entry->use_dev) {
       PROFILE_BEG()
       deviceCloseMemHandle(reg_entry->mapped);
       PROFILE_END(t_close_ipc)
     }
+#endif
 #endif
     ierr = MPI_Type_free(&src_type);
     translate_mpi_error(ierr,"_get_datatype_handler:MPI_Type_free");
@@ -7253,7 +7270,11 @@ STATIC int nb_test_for_recv1(nb_t *nb, message_t **save_recv_head,
         if (flag) {
           if (NULL != nb->recv_head->stride) {
             stride_t *stride = nb->recv_head->stride;
+#if ENABLE_DEVICE
             int on_dev= !isHostPointer(stride->ptr);
+#else
+            int on_dev = 0;
+#endif
             COMEX_ASSERT(nb->recv_head->message);
             COMEX_ASSERT(stride);
             COMEX_ASSERT(stride->ptr);
@@ -7720,14 +7741,19 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
           /* prepost all receives */
           char *buf = (char*)dst;
           int bytes_remaining = bytes;
+          DEBUG_PRINT;
           do {
             int size = bytes_remaining>max_message_size ?
               max_message_size : bytes_remaining;
+          DEBUG_PRINT;
             nb_recv(buf, size, master_rank, nb);
+          DEBUG_PRINT;
             buf += size;
             bytes_remaining -= size;
           } while (bytes_remaining > 0);
+          DEBUG_PRINT;
           nb_send_header(header, sizeof(header_t), master_rank, nb);
+          DEBUG_PRINT;
 #if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
         } else {
           /* create temporary buffer on host */
@@ -7750,6 +7776,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
         }
 #endif
     }
+          DEBUG_PRINT;
     PROFILE_END(t_nb_get);
     RANGE_POP();
 }
@@ -10594,6 +10621,7 @@ void comex_device_memset(void *ptr, int val, size_t bytes)
 
 void comex_copy_to_device(void *host_ptr, void *dev_ptr, size_t bytes)
 {
+  setDevice(_comex_dev_id);
   copyToDevice(dev_ptr, host_ptr, bytes);
 }  
 
