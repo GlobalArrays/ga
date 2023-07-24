@@ -1895,10 +1895,10 @@ int main(int argc, char **argv) {
   // test_dbl_1d_array(1,local_buf_on_device);
   // print_bw();
 
-  // if (rank == 0) printf("  Testing contiguous one-sided operations"
-  //     " for doubles array\n  on host, local buffer on host\n");
-  // test_dbl_1d_array(0,0);
-  // print_bw();
+  if (rank == 0) printf("  Testing contiguous one-sided operations"
+      " for doubles array\n  on host, local buffer on host\n");
+  test_dbl_1d_array(0,0);
+  print_bw();
 
   if (rank == 0) printf("  Testing contiguous one-sided operations"
       " for doubles array\n  on host, local buffer on device\n");
