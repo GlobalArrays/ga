@@ -154,6 +154,7 @@ add_library(armci
 target_compile_definitions(armci PRIVATE HAVE_CONFIG_H)
 
 add_library(GlobalArrays::armci ALIAS armci)
+target_include_directories(armci PRIVATE ${MPI_C_INCLUDE_DIRS})
 
 target_include_directories(armci PRIVATE ${MPI_C_INCLUDE_DIRS})
 if(ENABLE_CUDA)
@@ -179,6 +180,7 @@ add_library(comex
 )
 
 add_library(GlobalArrays::comex ALIAS comex)
+target_include_directories(comex PRIVATE ${MPI_C_INCLUDE_DIRS})
 
 target_include_directories(comex PRIVATE ${MPI_C_INCLUDE_DIRS})
 if(ENABLE_CUDA)

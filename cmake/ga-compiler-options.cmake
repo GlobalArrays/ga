@@ -7,6 +7,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID MATCHES "IntelLLVM
   else()
     string( TOUPPER ${CMAKE_BUILD_TYPE} __cmbt_upper )
   endif()
+  set(CMAKE_C_FLAGS_${__cmbt_upper} "-O3 -g")
 endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "IntelLLVM")

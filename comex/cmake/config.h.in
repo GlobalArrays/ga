@@ -36,6 +36,8 @@
 
 #cmakedefine01 ENABLE_SYSV
 
+#cmakedefine01 ENABLE_SYSV
+
 #define SIZEOF_INT ${CM_SIZEOF_INT}
 #define SIZEOF_LONG ${CM_SIZEOF_LONG}
 #define SIZEOF_LONG_LONG ${CM_SIZEOF_LONG_LONG}

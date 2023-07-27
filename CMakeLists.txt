@@ -55,7 +55,7 @@ if(ENABLE_CXX)
 endif()
 
 if (ENABLE_CUDA OR ENABLE_HIP)
-  if(${CMAKE_MINOR_VERSION} LESS "19") 
+  if(${CMAKE_MINOR_VERSION} LESS "22") 
     message(FATAL_ERROR "GPU build requires CMake versions >= 3.22.0")
   endif()
 endif()
