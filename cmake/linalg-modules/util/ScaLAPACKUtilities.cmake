@@ -41,7 +41,7 @@ foreach( _uplo LOWER UPPER )
       list( APPEND ${_libs} ${_new_libs} )
       set( ${_libs} ${${_libs}} PARENT_SCOPE )
 
-      # Recheck Compiliation
+      # Recheck Compilation
       check_function_exists_w_results( 
         "${${_libs}}" ${_pdpotrf_name} _compile_output _compile_result 
       )

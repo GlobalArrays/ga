@@ -136,6 +136,8 @@ add_library(armci_comex OBJECT
   ${COMEX_GPU_DEVICE}
 )
 target_compile_definitions(armci_comex PRIVATE HAVE_CONFIG_H)
+target_include_directories(armci_comex PRIVATE ${MPI_C_INCLUDE_DIRS})
+
 if(ENABLE_HIP)
   target_link_libraries(armci_comex PRIVATE roc::rocblas hip::device)
 elseif(ENABLE_CUDA)
@@ -150,6 +152,7 @@ add_library(armci
 target_compile_definitions(armci PRIVATE HAVE_CONFIG_H)
 
 add_library(GlobalArrays::armci ALIAS armci)
+target_include_directories(armci PRIVATE ${MPI_C_INCLUDE_DIRS})
 
 if(ENABLE_HIP)
   target_link_libraries(armci PUBLIC roc::rocblas hip::device)
@@ -169,6 +172,7 @@ add_library(comex
 )
 
 add_library(GlobalArrays::comex ALIAS comex)
+target_include_directories(comex PRIVATE ${MPI_C_INCLUDE_DIRS})
 
 if(ENABLE_HIP)
   target_link_libraries(comex PUBLIC roc::rocblas hip::device)
