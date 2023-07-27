@@ -90,8 +90,9 @@ sicm_device_list nill;
 #define RANGE_POP() ((void)0)
 #endif
 
-#define DEBUG_PRINT \
-  printf("p[%d] Got to line %d\n",g_state.rank,__LINE__)
+#define DEBUG_PRINT						\
+  ;
+//  printf("p[%d] Got to line %d\n",g_state.rank,__LINE__)
 
 
 /* data structures */
