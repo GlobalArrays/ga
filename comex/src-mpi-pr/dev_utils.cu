@@ -236,6 +236,7 @@ void copyPeerToPeer(void *dstptr, int dstID, void *srcptr, int srcID, int bytes)
     printf("p[%d] cudaMemcpyPeer dev to dev msg: %s\n",rank,msg);
     MPI_Wrapper_abort(err);
   }
+  cudaDeviceSynchronize();
 }
 
 /**
