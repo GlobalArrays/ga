@@ -54,7 +54,7 @@ if(ENABLE_CXX)
 endif()
 
 if (ENABLE_CUDA OR ENABLE_HIP)
-  if(${CMAKE_MINOR_VERSION} LESS "19") 
+  if(${CMAKE_MINOR_VERSION} LESS "22") 
     message(FATAL_ERROR "GPU build requires CMake versions >= 3.22.0")
   endif()
 endif()
@@ -96,6 +96,7 @@ ga_option(CMAKE_BUILD_TYPE Release)
 ga_option(LINALG_VENDOR BLIS)
 ga_option(ENABLE_TESTS ON)
 ga_option(ENABLE_PROFILING OFF)
+ga_option(ENABLE_SYSV OFF)
 #Options for user provided LinAlg libraries
 ga_option(ENABLE_BLAS OFF)
 ga_option(ENABLE_SCALAPACK OFF)
@@ -152,6 +153,16 @@ message(STATUS "Checking MPI ...")
 find_package (MPI REQUIRED)
 set(GA_EXTRA_LIBS ${GA_EXTRA_LIBS} MPI::MPI_C)
 if(ENABLE_FORTRAN)
+  #macos fix for clang+gfortran build
+  #linking MPI::MPI_Fortran adds the flag to clang compile line
+  if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+    get_target_property(_mpif_ico MPI::MPI_Fortran INTERFACE_COMPILE_OPTIONS)
+    if(_mpif_ico)
+      string(REPLACE "-fallow-argument-mismatch" "" _mpif_ico ${_mpif_ico})
+      separate_arguments(_mpif_ico)
+      set_target_properties(MPI::MPI_Fortran PROPERTIES INTERFACE_COMPILE_OPTIONS "${_mpif_ico}")
+    endif()
+  endif()
   list(APPEND GA_EXTRA_LIBS MPI::MPI_Fortran)
 endif()
 
@@ -252,7 +263,15 @@ if (ENABLE_FORTRAN)
      message(STATUS "Using IBM XL Fortran compiler settings")
      set (FORTRAN_I8_FLAG -qintsize=8)
      set (FORTRAN_I4_FLAG -qintsize=4)
-  endif()
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Fujitsu")
+     message(STATUS "Fujitsu Fortran compiler settings")
+     set (FORTRAN_I8_FLAG "-CcdII8 -CcdLL8")
+     set (FORTRAN_I4_FLAG "")
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Cray")
+     message(STATUS "Cray Fortran compiler settings")
+     set (FORTRAN_I8_FLAG "-default64")
+     set (FORTRAN_I4_FLAG "")     
+  endif() 
 else()
 # need to set these variable even if only compiling C/C++
    set (F77_GETARG GETARG)
@@ -268,8 +287,25 @@ endif()
 # if(_fam_flag_exists)
 #   set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
 # endif()
-if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU" AND CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL "10.1")
-  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  if(CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL "10.1")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
+  endif()
+  if(CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL "11.1")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-tree-slp-vectorize")
+  endif()
+endif()
+
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  if(ENABLE_CXX) 
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      add_compile_options(-fno-aggressive-loop-optimizations)
+    endif()
+  else()
+    add_compile_options(-fno-aggressive-loop-optimizations)
+  endif()  
+elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-aggressive-loop-optimizations")
 endif()
 
 # Hardwire these settings. No way to check for Fortran integer size in CMake
@@ -292,9 +328,9 @@ if (CMAKE_SIZEOF_VOID_P EQUAL 8)
   if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(NOUSE_MMAP 1)
   endif()
-  set(GA_FORTRAN_ACCESS_INDEX integer*8)
+  set(GA_ACCESS_INDEX_TYPE integer*8)
 else()
-  set(GA_FORTRAN_ACCESS_INDEX integer*4)
+  set(GA_ACCESS_INDEX_TYPE integer*4)
 endif()
 # set (CM_BLAS_SIZE ${CM_SIZEOF_F77_INTEGER})
 
@@ -311,7 +347,7 @@ CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/matypes.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/ma/matypes.h )
 CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/mafdecls.fh.in
                 ${CMAKE_CURRENT_BINARY_DIR}/ma/mafdecls.fh )
-CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/global.fh.in
+CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/global/src/global.fh.in
                 ${CMAKE_CURRENT_BINARY_DIR}/global/src/global.fh )
 
 if (ENABLE_FORTRAN)
@@ -424,13 +460,18 @@ if(DEFINED GA_GCC_TOOLCHAIN_FLAG)
   target_compile_options(ga PUBLIC $<$<COMPILE_LANGUAGE:C,CXX>:${GA_GCC_TOOLCHAIN_FLAG}>)
 endif()
 
+if(ENABLE_TESTS)
+  # turn testing on
+  enable_testing()
+endif()
+
 # -------------------------------------------------------------
 # Subdirectories
 # -------------------------------------------------------------
 add_subdirectory(global/src)
 add_subdirectory(comex)
 if(ENABLE_CXX)
-add_subdirectory(ga++/src)
+add_subdirectory(ga++)
 endif()
 add_subdirectory(ma)
 add_subdirectory(pario)
@@ -444,12 +485,8 @@ if(ENABLE_PROFILING)
 endif()
 
 if(ENABLE_TESTS)
-  if (NOT GA_TEST_NPROCS)
-    set(GA_TEST_NPROCS ${MPIEXEC_MAX_NUMPROCS})
-  endif()
-  # turn testing on
-  enable_testing()
   add_subdirectory(global/testing)
+  add_subdirectory(global/examples)
 endif()
 
 
@@ -512,12 +549,6 @@ if(ENABLE_BLAS)
     ${CMAKE_CURRENT_LIST_DIR}/cmake/linalg-modules/FindStandardFortran.cmake
     DESTINATION ${INSTALL_CONFIGDIR}/linalg-cmake-modules
   )
-  if(ENABLE_DPCPP)
-    install(FILES
-      ${CMAKE_CURRENT_LIST_DIR}/cmake/FindIntelSYCL.cmake
-      DESTINATION ${INSTALL_CONFIGDIR}
-    )
-  endif()
 endif()
 
 list(REMOVE_AT CMAKE_MODULE_PATH 0)

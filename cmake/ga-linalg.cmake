@@ -70,9 +70,10 @@ if (ENABLE_BLAS)
   if(NOT __la_exists)
     message(FATAL_ERROR "Could not find the following ${LINALG_VENDOR} installation path at: ${LINALG_PREFIX}")
   endif()
-  if (ENABLE_DPCPP)
-    ga_set_blasroot("IntelMKL" DPCPP_ROOT)
-  endif()
+endif()
+
+if ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "arm64" AND "${LINALG_VENDOR}" STREQUAL "IntelMKL")
+  message( FATAL_ERROR "IntelMKL is not supported for ARM architectures" )
 endif()
 
 # check for numerical libraries. These should set variables BLAS_FOUND and
@@ -168,40 +169,62 @@ if (ENABLE_BLAS)
     endif()
 
   if(ENABLE_CXX)
-    set(BPP_GIT_TAG 0c63c240f445f6f6b9b5d4f24ed0869271aef4d4)
-    set(LPP_GIT_TAG 13301a133f146f9d9b1a2f466bc19fe092c149e1)
-    set(SPP_GIT_TAG ed0b33f76494c6862389ead47d739fa53f627f24)
+    set(BPP_GIT_TAG 34a24d103c039abdc634837af45433c44b3e90a7)
+    set(LPP_GIT_TAG 229e5007e605ee77769d086530401937fca85c8b)
+    set(SPP_GIT_TAG 6397f52cf11c0dfd82a79698ee198a2fce515d81)
     if(ENABLE_DEV_MODE)
       set(BPP_GIT_TAG master)
       set(LPP_GIT_TAG master)
       set(SPP_GIT_TAG master)
     endif()
     include(FetchContent)
+    set( gpu_backend "none" CACHE STRING "GPU backend to use" FORCE)
     if(NOT TARGET blaspp)
+      if(ENABLE_OFFLINE_BUILD)
       FetchContent_Declare(
         blaspp
-        GIT_REPOSITORY https://bitbucket.org/icl/blaspp.git
+        URL ${DEPS_LOCAL_PATH}/blaspp
+      )
+      else()
+      FetchContent_Declare(
+        blaspp
+        GIT_REPOSITORY https://github.com/icl-utk-edu/blaspp.git
         GIT_TAG ${BPP_GIT_TAG}
       )
+      endif()
       FetchContent_MakeAvailable( blaspp )
     endif()
 
     if(NOT TARGET lapackpp)
+    if(ENABLE_OFFLINE_BUILD)
       FetchContent_Declare(
         lapackpp
-        GIT_REPOSITORY https://bitbucket.org/icl/lapackpp.git
-        GIT_TAG ${LPP_GIT_TAG}
+        URL ${DEPS_LOCAL_PATH}/lapackpp
       )
+      else()
+      FetchContent_Declare(
+        lapackpp
+        GIT_REPOSITORY https://github.com/icl-utk-edu/lapackpp.git
+        GIT_TAG ${LPP_GIT_TAG}
+      )      
+      endif()
       FetchContent_MakeAvailable( lapackpp )
     endif()
 
     if(ENABLE_SCALAPACK)
       if(NOT TARGET scalapackpp::scalapackpp)
+        if(ENABLE_OFFLINE_BUILD)
+        FetchContent_Declare(
+          scalapackpp
+          URL ${DEPS_LOCAL_PATH}/scalapackpp
+        )
+        else()
         FetchContent_Declare(
           scalapackpp
           GIT_REPOSITORY https://github.com/wavefunction91/scalapackpp.git
           GIT_TAG ${SPP_GIT_TAG}
         )
+        endif()
         FetchContent_MakeAvailable( scalapackpp )
       endif()
     endif()
@@ -219,8 +242,6 @@ endif()
 
 if(ENABLE_DPCPP)
   set(USE_DPCPP ON)
-  find_package(IntelSYCL REQUIRED)
-  set(Intel_SYCL_TARGET Intel::SYCL)
 endif()
 
 if (ENABLE_SCALAPACK)
@@ -280,10 +301,6 @@ if (HAVE_BLAS)
 
   list(APPEND linalg_lib BLAS::BLAS ${_la_cxx_blas})
   message(STATUS "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
-  if(ENABLE_DPCPP)
-    list(APPEND linalg_lib ${Intel_SYCL_TARGET})
-    message(STATUS "SYCL_LIBRARIES: ${Intel_SYCL_TARGET}")
-  endif()
 endif()
 
 if (HAVE_LAPACK)
