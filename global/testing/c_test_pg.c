@@ -1910,10 +1910,10 @@ int main(int argc, char **argv) {
   // test_dbl_scatter(1,0);
   // print_bw();
 
-  // if (rank == 0) printf("  Testing scatter/gather operations for double"
-  //     " array\n  on device, local buffer on device\n");
-  // test_dbl_scatter(1,local_buf_on_device);
-  // print_bw();
+  if (rank == 0) printf("  Testing scatter/gather operations for double"
+      " array\n  on device, local buffer on device\n");
+  test_dbl_scatter(1,local_buf_on_device);
+  print_bw();
 
   // if (rank == 0) printf("  Testing scatter/gather operations for double"
   //     " array\n  on host, local buffer on host\n");
