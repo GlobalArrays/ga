@@ -60,6 +60,7 @@ sicm_device_list nill;
 
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
+#define MIN(a, b) (((b) < (a)) ? (b) : (a))
 
 /* data structures */
 
@@ -377,6 +378,7 @@ STATIC void check_devshm(int fd, size_t size);
 static int devshm_initialized = 0;
 static long devshm_fs_left = 0;
 static long devshm_fs_initial = 0;
+static long counter_open_fds = 0;
 STATIC void count_open_fds(void);
 
 int _comex_init(MPI_Comm comm)
@@ -5058,6 +5060,7 @@ STATIC void* _shm_create(const char *name, size_t size)
 
     /* set the size of my shared memory object */
     check_devshm(fd, size);
+    count_open_fds();
     retval = ftruncate(fd, size);
     if (-1 == retval) {
       if (errno == EFAULT) {
@@ -7564,7 +7567,6 @@ STATIC void check_devshm(int fd, size_t size){
 	    g_state.rank, g_state.node_size, devshm_fs_initial/CONVERT_TO_M, (long) ufs_statfs.f_bsize, (long)  g_state.node_size);
 #endif
   }
-  count_open_fds();
     newspace = (long) ( size*(g_state.node_size -1));
     if(newspace>0){
     fstatfs(fd, &ufs_statfs);
@@ -7595,21 +7597,25 @@ STATIC void check_devshm(int fd, size_t size){
 }
 
 STATIC void count_open_fds(void) {
-  FILE *f = fopen("/proc/sys/fs/file-nr", "r");
+  /* check only every 100 ops && rank == 1 */
+  counter_open_fds += 1;
+  if (counter_open_fds % 100 == 0 && g_state.rank == MIN(1,g_state.node_size)) {
+    FILE *f = fopen("/proc/sys/fs/file-nr", "r");
 
-  long nfiles, unused, maxfiles;
-  fscanf(f, "%ld %ld %ld", &nfiles, &unused, &maxfiles);
+    long nfiles, unused, maxfiles;
+    fscanf(f, "%ld %ld %ld", &nfiles, &unused, &maxfiles);
 #ifdef DEBUGSHM
-  if(nfiles % 1000 == 0) fprintf(stderr," %d: no. open files = %ld maxfiles = %ld\n", g_state.rank, nfiles, maxfiles);
+    if(nfiles % 1000 == 0) fprintf(stderr," %d: no. open files = %ld maxfiles = %ld\n", g_state.rank, nfiles, maxfiles);
 #endif
-    if(nfiles > (maxfiles/100)*90) {
-      printf(" %d: running out of files; files = %ld  maxfiles = %ld\n", g_state.rank, nfiles, maxfiles);
+    if(nfiles > (maxfiles/100)*80) {
+      printf(" %d: running out of files; files = %ld  maxfiles = %ld \n", g_state.rank, nfiles, maxfiles);
 #if PAUSE_ON_ERROR
-    fprintf(stderr,"%d(%d): too many open files\n",
-            g_state.rank,  getpid());
-    pause();
+      fprintf(stderr,"%d(%d): too many open files\n",
+	      g_state.rank,  getpid());
+      pause();
 #endif
-    comex_error("count_open_fds: too many open files", -1);
+      comex_error("count_open_fds: too many open files", -1);
   }
-  fclose(f);
+    fclose(f);
+  }
 }
