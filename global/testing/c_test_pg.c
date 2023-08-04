@@ -14,16 +14,16 @@
 
 /*
 #define BLOCK1 1024*1024
-#define BLOCK1 65536
-*/
 #define BLOCK1 65530
+*/
+#define BLOCK1 65536
 #define DIMSIZE 2048
 #define SMLDIM 256
 #define MAXCOUNT 10000
 #define MAX_FACTOR 256
 #define NLOOP 10
 
-void set_device(int* devid) {
+void set_device(long* devid) {
   #if defined(ENABLE_CUDA)
   cudaSetDevice(*devid);
   #elif defined(ENABLE_HIP)
@@ -68,18 +68,18 @@ void device_free(void *buf) {
 }
 
 
-void factor(int p, int *idx, int *idy) {
-  int i, j;                              
-  int ip, ifac, pmax;                    
-  int prime[MAX_FACTOR];                 
-  int fac[MAX_FACTOR];                   
-  int ix, iy;                            
-  int ichk;                              
+void factor(long p, long *idx, long *idy) {
+  long i, j;                              
+  long ip, ifac, pmax;                    
+  long prime[MAX_FACTOR];                 
+  long fac[MAX_FACTOR];                   
+  long ix, iy;                            
+  long ichk;                              
 
   i = 1;
 
  //find all prime numbers, besides 1, less than or equal to the square root of p
-  ip = (int)(sqrt((double)p))+1;
+  ip = (long)(sqrt((double)p))+1;
 
   pmax = 0;
   for (i=2; i<=ip; i++) {
@@ -129,43 +129,43 @@ void factor(int p, int *idx, int *idy) {
   }
 }
 
-//int nprocs, rank, wrank;
-int nprocs, rank;
-int pdx, pdy;
-int wrank;
+//long nprocs, rank, wrank;
+long nprocs, rank;
+long pdx, pdy;
+long wrank;
 
-int *list;
-int *devIDs;
-int ndev;
-int my_dev;
+long *list;
+long *devIDs;
+long ndev;
+long my_dev;
 
 double tput, tget, tacc, tinc;
-int get_cnt,put_cnt,acc_cnt;
+long get_cnt,put_cnt,acc_cnt;
 double put_bw, get_bw, acc_bw;
 double t_put, t_get, t_acc, t_sync, t_chk, t_tot;
 double t_vput, t_rdinc;
 double t_create, t_free;
 
-void test_int_array(int on_device, int local_buf_on_device)
+void test_long_array(long on_device, long local_buf_on_device)
 {
-  int g_a;
-  int i, j, ii, jj, n, idx;
-  int ipx, ipy;
-  int isx, isy;
-  int xinc, yinc;
-  int ndim, nsize;
-  int dims[2], lo[2], hi[2];
-  int tld, tlo[2], thi[2];
-  int *buf;
-  int *tbuf;
-  int nelem;
-  int ld;
-  int g_ok, p_ok, a_ok;
-  int *ptr;
-  int one;
+  long g_a;
+  long i, j, ii, jj, n, idx;
+  long ipx, ipy;
+  long isx, isy;
+  long xinc, yinc;
+  long ndim, nsize;
+  long dims[2], lo[2], hi[2];
+  long tld, tlo[2], thi[2];
+  long *buf;
+  long *tbuf;
+  long nelem;
+  long ld;
+  long g_ok, p_ok, a_ok;
+  long *ptr;
+  long one;
   double tbeg;
   double zero = 0.0;
-  int ok;
+  long ok;
 
   tput = 0.0;
   tget = 0.0;
@@ -219,10 +219,10 @@ void test_int_array(int on_device, int local_buf_on_device)
   if (local_buf_on_device) {
     void *tbuf;
     set_device(&my_dev);
-    device_malloc(&tbuf,(int)(nsize*sizeof(int)));
-    buf = (int*)tbuf;
+    device_malloc(&tbuf,(long)(nsize*sizeof(long)));
+    buf = (long*)tbuf;
   } else {
-    buf = (int*)malloc(nsize*sizeof(int));
+    buf = (long*)malloc(nsize*sizeof(long));
   }
 
   for (n=0; n<NLOOP; n++) {
@@ -232,8 +232,8 @@ void test_int_array(int on_device, int local_buf_on_device)
     ld = (hi[1]-lo[1]+1);
     if (local_buf_on_device) {
       if (lo[0]<=hi[0] && lo[1]<=hi[1]) {
-        int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
-        tbuf = (int*)malloc(tnelem*sizeof(int));
+        long tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+        tbuf = (long*)malloc(tnelem*sizeof(long));
         for (ii = lo[0]; ii<=hi[0]; ii++) {
           i = ii-lo[0];
           for (jj = lo[1]; jj<=hi[1]; jj++) {
@@ -242,7 +242,7 @@ void test_int_array(int on_device, int local_buf_on_device)
             tbuf[idx] = ii*DIMSIZE+jj;
           }
         }
-        memcpyH2D(buf, tbuf, tnelem*sizeof(int));
+        memcpyH2D(buf, tbuf, tnelem*sizeof(long));
         free(tbuf);
       }
     } else {
@@ -270,12 +270,12 @@ void test_int_array(int on_device, int local_buf_on_device)
 #if 1
     if (rank == 0 && n == 0) printf("Completed NGA_Distribution\n");
     if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
-      int tnelem = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
+      long tnelem = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
       if (on_device) {
-        tbuf = (int*)malloc(tnelem*sizeof(int));
+        tbuf = (long*)malloc(tnelem*sizeof(long));
         NGA_Access(g_a,tlo,thi,&ptr,&tld);
         for (i=0; i<tnelem; i++) tbuf[i] = 0;
-        memcpyD2H(tbuf, ptr, tnelem*sizeof(int));
+        memcpyD2H(tbuf, ptr, tnelem*sizeof(long));
       } else {
         NGA_Access(g_a,tlo,thi,&tbuf,&tld);
       }
@@ -309,9 +309,9 @@ void test_int_array(int on_device, int local_buf_on_device)
 
     /* zero out local buffer */
     if (local_buf_on_device) {
-      int *tbuf = (int*)malloc(nsize*sizeof(int));
+      long *tbuf = (long*)malloc(nsize*sizeof(long));
       for (i=0; i<nsize; i++) tbuf[i] = 0;
-      memcpyH2D(buf, tbuf, nsize*sizeof(int));
+      memcpyH2D(buf, tbuf, nsize*sizeof(long));
       free(tbuf);
     } else {
       for (i=0; i<nsize; i++) buf[i] = 0;
@@ -331,10 +331,10 @@ void test_int_array(int on_device, int local_buf_on_device)
     tbeg = GA_Wtime();
     if (local_buf_on_device) {
       if (lo[0]<=hi[0] && lo[1]<=hi[1]) {
-        int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
-        tbuf = (int*)malloc(tnelem*sizeof(int));
+        long tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+        tbuf = (long*)malloc(tnelem*sizeof(long));
         for (i=0; i<tnelem; i++) tbuf[i] = 0;
-        memcpyD2H(tbuf, buf, tnelem*sizeof(int));
+        memcpyD2H(tbuf, buf, tnelem*sizeof(long));
         for (ii = lo[0]; ii<=hi[0]; ii++) {
           i = ii-lo[0];
           for (jj=lo[1]; jj<=hi[1]; jj++) {
@@ -367,8 +367,8 @@ void test_int_array(int on_device, int local_buf_on_device)
     /* reset values in buf */
     if (local_buf_on_device) {
       if (lo[0]<=hi[0] && lo[1]<=hi[1]) {
-        int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
-        tbuf = (int*)malloc(tnelem*sizeof(int));
+        long tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+        tbuf = (long*)malloc(tnelem*sizeof(long));
         for (ii = lo[0]; ii<=hi[0]; ii++) {
           i = ii-lo[0];
           for (jj = lo[1]; jj<=hi[1]; jj++) {
@@ -377,7 +377,7 @@ void test_int_array(int on_device, int local_buf_on_device)
             tbuf[idx] = ii*DIMSIZE+jj;
           }
         }
-        memcpyH2D(buf, tbuf, tnelem*sizeof(int));
+        memcpyH2D(buf, tbuf, tnelem*sizeof(long));
         free(tbuf);
       }
     } else {
@@ -406,10 +406,10 @@ void test_int_array(int on_device, int local_buf_on_device)
     /* reset values in buf */
     if (local_buf_on_device) {
       if (lo[0]<=hi[0] && lo[1]<=hi[1]) {
-        int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
-        tbuf = (int*)malloc(tnelem*sizeof(int));
+        long tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+        tbuf = (long*)malloc(tnelem*sizeof(long));
         for (i=0; i<nelem; i++) tbuf[i] = 0;
-        memcpyH2D(buf, tbuf, tnelem*sizeof(int));
+        memcpyH2D(buf, tbuf, tnelem*sizeof(long));
         free(tbuf);
       }
     } else {
@@ -435,10 +435,10 @@ void test_int_array(int on_device, int local_buf_on_device)
     tbeg = GA_Wtime();
     if (local_buf_on_device) {
       if (lo[0]<=hi[0] && lo[1]<=hi[1]) {
-        int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
-        tbuf = (int*)malloc(tnelem*sizeof(int));
+        long tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+        tbuf = (long*)malloc(tnelem*sizeof(long));
         for (i=0; i<tnelem; i++) tbuf[i] = 0;
-        memcpyD2H(tbuf, buf, tnelem*sizeof(int));
+        memcpyD2H(tbuf, buf, tnelem*sizeof(long));
         for (ii = lo[0]; ii<=hi[0]; ii++) {
           i = ii-lo[0];
           for (jj=lo[1]; jj<=hi[1]; jj++) {
@@ -498,14 +498,14 @@ void test_int_array(int on_device, int local_buf_on_device)
   GA_Dgop(&tput, 1, "+");
   GA_Dgop(&tget, 1, "+");
   GA_Dgop(&tacc, 1, "+");
-  put_bw = (double)(put_cnt*sizeof(int))/tput;
-  get_bw = (double)(get_cnt*sizeof(int))/tget;
-  acc_bw = (double)(acc_cnt*sizeof(int))/tacc;
+  put_bw = (double)(put_cnt*sizeof(long))/tput;
+  get_bw = (double)(get_cnt*sizeof(long))/tget;
+  acc_bw = (double)(acc_cnt*sizeof(long))/tacc;
 }
 
 void print_bw()
 {
-  int iB = 1<<20;
+  long iB = 1<<20;
   double rB = 1.0/((double)iB);
   /*      12345678901234567890123456789012345678901234567890123456789012345 */
   if (rank != 0) return;
@@ -517,25 +517,25 @@ void print_bw()
   printf("\n\n");
 }
 
-void test_dbl_array(int on_device, int local_buf_on_device)
+void test_dbl_array(long on_device, long local_buf_on_device)
 {
-  int g_a;
-  int i, j, ii, jj, idx, n;
-  int ipx, ipy;
-  int isx, isy;
-  int xinc, yinc;
-  int ndim, nsize;
-  int dims[2], lo[2], hi[2];
-  int tld, tlo[2], thi[2];
+  long g_a;
+  long i, j, ii, jj, idx, n;
+  long ipx, ipy;
+  long isx, isy;
+  long xinc, yinc;
+  long ndim, nsize;
+  long dims[2], lo[2], hi[2];
+  long tld, tlo[2], thi[2];
   double *buf;
   double *tbuf;
-  int nelem;
-  int ld;
-  int p_ok, g_ok, a_ok;
+  long nelem;
+  long ld;
+  long p_ok, g_ok, a_ok;
   double *ptr;
   double one;
   double tbeg;
-  int ok;
+  long ok;
 
   tput = 0.0;
   tget = 0.0;
@@ -589,7 +589,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
   if (local_buf_on_device) {
     void *tbuf;
     set_device(&my_dev);
-    device_malloc(&tbuf,(int)(nsize*sizeof(double)));
+    device_malloc(&tbuf,(long)(nsize*sizeof(double)));
     buf = (double*)tbuf;
   } else {
     buf = (double*)malloc(nsize*sizeof(double));
@@ -601,7 +601,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
     ld = (hi[1]-lo[1]+1);
     if (local_buf_on_device) {
       if (lo[0]<=hi[0] && lo[1]<=hi[1]) {
-        int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+        long tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
         tbuf = (double*)malloc(tnelem*sizeof(double));
         for (ii = lo[0]; ii<=hi[0]; ii++) {
           i = ii-lo[0];
@@ -640,7 +640,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
     if (n == 0) {
       if (rank == 0) printf("Completed NGA_Distribution\n",rank);
       if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
-        int tnelem = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
+        long tnelem = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
         double *tbuf;
         if (on_device) {
           tbuf = (double*)malloc(tnelem*sizeof(double));
@@ -736,7 +736,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
     /* reset values in buf */
     if (local_buf_on_device) {
       if (lo[0]<=hi[0] && lo[1]<=hi[1]) {
-        int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+        long tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
         tbuf = (double*)malloc(tnelem*sizeof(double));
         for (ii = lo[0]; ii<=hi[0]; ii++) {
           i = ii-lo[0];
@@ -775,7 +775,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
     /* reset values in buf */
     if (local_buf_on_device) {
       if (lo[0]<=hi[0] && lo[1]<=hi[1]) {
-        int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+        long tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
         tbuf = (double*)malloc(tnelem*sizeof(double));
         for (i=0; i<nelem; i++) tbuf[i] = 0.0;
         memcpyH2D(buf, tbuf, tnelem*sizeof(double));
@@ -804,7 +804,7 @@ void test_dbl_array(int on_device, int local_buf_on_device)
     tbeg = GA_Wtime();
     if (local_buf_on_device) {
       if (lo[0]<=hi[0] && lo[1]<=hi[1]) {
-        int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+        long tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
         tbuf = (double*)malloc(tnelem*sizeof(double));
         for (i=0; i<tnelem; i++) tbuf[i] = 0;
         memcpyD2H(tbuf, buf, tnelem*sizeof(double));
@@ -870,20 +870,20 @@ void test_dbl_array(int on_device, int local_buf_on_device)
   acc_bw = (double)(acc_cnt*sizeof(double))/tacc;
 }
 
-void test_read_inc(int on_device)
+void test_read_inc(long on_device)
 {
-  int g_a;
-  int one;
-  int icnt, zero, i, nvals;
-  int ri_cnt = 0;
+  long g_a;
+  long one;
+  long icnt, zero, i, nvals;
+  long ri_cnt = 0;
   double tbeg;
   double t_ri = 0.0;
-  int *bins;
+  long *bins;
   /* create a global array and initialize it to zero */
   zero = 0;
   one = 1;
   nvals = MAXCOUNT/1000;
-  bins = (int*)malloc((nvals+1)*sizeof(int));
+  bins = (long*)malloc((nvals+1)*sizeof(long));
   for (i=0; i<nvals+1; i++) bins[i] = 0;
   tbeg = GA_Wtime();
   g_a = NGA_Create_handle();
@@ -944,16 +944,16 @@ void test_read_inc(int on_device)
   free(bins);
 }
 
-void test_int_1d_array(int on_device, int local_buf_on_device)
+void test_int_1d_array(long on_device, long local_buf_on_device)
 {
-  int g_a;
-  int i, ii, ld, n;
-  int tlo[1], thi[1];
-  int nelem;
-  int nsize;
-  int *buf;
-  int one;
-  int p_ok, g_ok, a_ok;
+  long g_a;
+  long i, ii, ld, n;
+  long tlo[1], thi[1];
+  long nelem;
+  long nsize;
+  long *buf;
+  long one;
+  long p_ok, g_ok, a_ok;
   double tbeg;
 
   tput = 0.0;
@@ -991,22 +991,22 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
   if (local_buf_on_device) {
     void *tbuf;
     set_device(&my_dev);
-    device_malloc(&tbuf,(int)(nsize*sizeof(int)));
-    buf = (int*)tbuf;
+    device_malloc(&tbuf,(long)(nsize*sizeof(long)));
+    buf = (long*)tbuf;
   } else {
-    buf = (int*)malloc(nsize*sizeof(int));
+    buf = (long*)malloc(nsize*sizeof(long));
   }
   ld = 1;
   for (n=0; n<NLOOP; n++) {
     tbeg = GA_Wtime();
     GA_Zero(g_a);
     if (local_buf_on_device) {
-      int *tbuf = (int*)malloc(nsize*sizeof(int));
+      long *tbuf = (long*)malloc(nsize*sizeof(long));
       for (ii= tlo[0]; ii<=thi[0]; ii++) {
         i = ii-tlo[0];
         tbuf[i] = ii;
       }
-      memcpyH2D(buf, tbuf, nsize*sizeof(int));
+      memcpyH2D(buf, tbuf, nsize*sizeof(long));
       free(tbuf);
     } else {
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
@@ -1029,9 +1029,9 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
     tbeg = GA_Wtime();
     /* zero out local buffer */
     if (local_buf_on_device) {
-      int *tbuf = (int*)malloc(nsize*sizeof(int));
+      long *tbuf = (long*)malloc(nsize*sizeof(long));
       for (i=0; i<nsize; i++) tbuf[i] = 0;
-      memcpyH2D(buf, tbuf, nsize*sizeof(int));
+      memcpyH2D(buf, tbuf, nsize*sizeof(long));
       free(tbuf);
     } else {
       for (i=0; i<nsize; i++) buf[i] = 0;
@@ -1051,8 +1051,8 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
     tbeg = GA_Wtime();
     g_ok = 1;
     if (local_buf_on_device) {
-      int *tbuf = (int*)malloc(nsize*sizeof(int));
-      memcpyD2H(tbuf, buf, nsize*sizeof(int));
+      long *tbuf = (long*)malloc(nsize*sizeof(long));
+      memcpyD2H(tbuf, buf, nsize*sizeof(long));
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
         i = ii-tlo[0];
         if (tbuf[i] != ii) {
@@ -1073,12 +1073,12 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
 
     /* reset values in buf */
     if (local_buf_on_device) {
-      int *tbuf = (int*)malloc(nsize*sizeof(int));
+      long *tbuf = (long*)malloc(nsize*sizeof(long));
       for (ii= tlo[0]; ii<=thi[0]; ii++) {
         i = ii-tlo[0];
         tbuf[i] = ii;
       }
-      memcpyH2D(buf, tbuf, nsize*sizeof(int));
+      memcpyH2D(buf, tbuf, nsize*sizeof(long));
       free(tbuf);
     } else {
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
@@ -1101,13 +1101,13 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
 #if 0
     NGA_Distribution(g_a,rank,lo,hi);
     if (lo[0]<=hi[0]) {
-      int *tbuf;
-      int *ptr;
-      int tnelem = hi[0]-lo[0]+1;
-      tbuf = (int*)malloc(tnelem*sizeof(int));
+      long *tbuf;
+      long *ptr;
+      long tnelem = hi[0]-lo[0]+1;
+      tbuf = (long*)malloc(tnelem*sizeof(long));
       NGA_Access(g_a,lo,hi,&ptr,&tld);
       for (i=0; i<tnelem; i++) tbuf[i] = 0;
-      memcpyD2H(tbuf, ptr, tnelem*sizeof(int));
+      memcpyD2H(tbuf, ptr, tnelem*sizeof(long));
       if (tnelem > 0) {
         printf("p[%d] acc buffer:",rank);
         for (i=0; i<tnelem; i++) printf(" %d",tbuf[i]);
@@ -1118,12 +1118,12 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
 #endif
     /* reset values in buf */
     if (local_buf_on_device) {
-      int *tbuf = (int*)malloc(nsize*sizeof(int));
+      long *tbuf = (long*)malloc(nsize*sizeof(long));
       for (ii= tlo[0]; ii<=thi[0]; ii++) {
         i = ii-tlo[0];
         tbuf[i] = 0;
       }
-      memcpyH2D(buf, tbuf, nsize*sizeof(int));
+      memcpyH2D(buf, tbuf, nsize*sizeof(long));
       free(tbuf);
     } else {
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
@@ -1144,8 +1144,8 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
     tbeg = GA_Wtime();
     a_ok = 1;
     if (local_buf_on_device) {
-      int *tbuf = (int*)malloc(nsize*sizeof(int));
-      memcpyD2H(tbuf, buf, nsize*sizeof(int));
+      long *tbuf = (long*)malloc(nsize*sizeof(long));
+      memcpyD2H(tbuf, buf, nsize*sizeof(long));
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
         i = ii-tlo[0];
         if (tbuf[i] != 2*ii) {
@@ -1192,21 +1192,21 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
   GA_Dgop(&tput, 1, "+");
   GA_Dgop(&tget, 1, "+");
   GA_Dgop(&tacc, 1, "+");
-  put_bw = (double)(put_cnt*sizeof(int))/tput;
-  get_bw = (double)(get_cnt*sizeof(int))/tget;
-  acc_bw = (double)(acc_cnt*sizeof(int))/tacc;
+  put_bw = (double)(put_cnt*sizeof(long))/tput;
+  get_bw = (double)(get_cnt*sizeof(long))/tget;
+  acc_bw = (double)(acc_cnt*sizeof(long))/tacc;
 }
 
-void test_dbl_1d_array(int on_device, int local_buf_on_device)
+void test_dbl_1d_array(long on_device, long local_buf_on_device)
 {
-  int g_a;
-  int i, ii, ld, n;
-  int tlo[1], thi[1];
-  int nelem;
-  int nsize;
+  long g_a;
+  long i, ii, ld, n;
+  long tlo[1], thi[1];
+  long nelem;
+  long nsize;
   double *buf;
   double one;
-  int p_ok, g_ok, a_ok;
+  long p_ok, g_ok, a_ok;
   double tbeg;
 
   tput = 0.0;
@@ -1244,7 +1244,7 @@ void test_dbl_1d_array(int on_device, int local_buf_on_device)
   if (local_buf_on_device) {
     void *tbuf;
     set_device(&my_dev);
-    device_malloc(&tbuf,(int)(nsize*sizeof(double)));
+    device_malloc(&tbuf,(long)(nsize*sizeof(double)));
     buf = (double*)tbuf;
   } else {
     buf = (double*)malloc(nsize*sizeof(double));
@@ -1450,30 +1450,30 @@ void test_dbl_1d_array(int on_device, int local_buf_on_device)
   acc_bw = (double)(acc_cnt*sizeof(double))/tacc;
 }
 
-void test_dbl_scatter(int on_device, int local_buf_on_device)
+void test_dbl_scatter(long on_device, long local_buf_on_device)
 {
-  int g_a;
-  int i, j, ii, jj, idx, n;
-  int ipx, ipy;
-  int isx, isy;
-  int xinc, yinc;
-  int ndim, nsize;
-  int dims[2], lo[2], hi[2];
-  int tld, tlo[2], thi[2];
+  long g_a;
+  long i, j, ii, jj, idx, n;
+  long ipx, ipy;
+  long isx, isy;
+  long xinc, yinc;
+  long ndim, nsize;
+  long dims[2], lo[2], hi[2];
+  long tld, tlo[2], thi[2];
   double *buf;
   double *tbuf;
-  int nelem;
-  int ld;
-  int p_ok, g_ok, a_ok;
+  long nelem;
+  long ld;
+  long p_ok, g_ok, a_ok;
   double *ptr;
   double one;
   double tbeg;
   double *vals;
-  int *subsBuf;
-  int **subsArray;
-  int nvals;
-  int arraysize;
-  int icnt;
+  long *subsBuf;
+  long **subsArray;
+  long nvals;
+  long arraysize;
+  long icnt;
 
   tput = 0.0;
   tget = 0.0;
@@ -1513,7 +1513,7 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
   arraysize = dims[0]*dims[1];
   nvals = arraysize/nprocs;
   if (nvals*nprocs != arraysize) {
-    int delta = arraysize-nvals*nprocs;
+    long delta = arraysize-nvals*nprocs;
     if (rank<delta) nvals++;
   }
 
@@ -1535,8 +1535,8 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
 
   /* allocate buffers for scatter operation */
   tbuf = (double*)malloc(nvals*sizeof(double));
-  subsBuf = (int*)malloc(2*nvals*sizeof(int));
-  subsArray = (int**)malloc(nvals*sizeof(int*));
+  subsBuf = (long*)malloc(2*nvals*sizeof(long));
+  subsArray = (long**)malloc(nvals*sizeof(long*));
   if (local_buf_on_device) {
     void *vbuf;
     set_device(&my_dev);
@@ -1591,7 +1591,7 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
     if (n == 0) {
       if (rank == 0) printf("Completed NGA_Distribution\n",rank);
       if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
-        int tnelem = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
+        long tnelem = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
         double *tbuf;
         if (on_device) {
           tbuf = (double*)malloc(tnelem*sizeof(double));
@@ -1764,15 +1764,15 @@ void test_dbl_scatter(int on_device, int local_buf_on_device)
 
 int main(int argc, char **argv) {
 
-  int g_a;
+  long g_a;
   double *rbuf;
   double one_r;
   double t_sum;
-  int zero = 0;
-  int icnt;
+  long zero = 0;
+  long icnt;
   double tbeg;
-  int local_buf_on_device;
-  int i;
+  long local_buf_on_device;
+  long i;
   
   t_put = 0.0;
   t_get = 0.0;
@@ -1802,8 +1802,8 @@ int main(int argc, char **argv) {
     printf("\n  Number of nodes %d\n",GA_Cluster_nnodes());
   }
   /* create list of GPU hosts */
-  list = (int*)malloc(nprocs*sizeof(int));
-  devIDs = (int*)malloc(nprocs*sizeof(int));
+  list = (long*)malloc(nprocs*sizeof(long));
+  devIDs = (long*)malloc(nprocs*sizeof(long));
   NGA_Device_host_list(list, devIDs, &ndev, NGA_Pgroup_get_default());
   /* Determine if the process host a device */
   local_buf_on_device = 0;
@@ -1820,7 +1820,7 @@ int main(int argc, char **argv) {
   if (rank == 0) {
     printf("\n  Test run on %d procs configured on %d X %d grid\n",nprocs,pdx,pdy);
     printf("\n  2D arrays are of size %d X %d\n",DIMSIZE,DIMSIZE);
-    printf("\n  1D arrays are of size %d\n",BLOCK1*nprocs);
+    printf("\n  1D arrays are of size %ld\n",BLOCK1*nprocs);
     printf("\n  Number of loops in each test %d\n\n",NLOOP);
   }
   // if (rank == 0) printf("  Testing integer array on device, local buffer on host\n");
@@ -1910,10 +1910,10 @@ int main(int argc, char **argv) {
   // test_dbl_scatter(1,0);
   // print_bw();
 
-  if (rank == 0) printf("  Testing scatter/gather operations for double"
-      " array\n  on device, local buffer on device\n");
-  test_dbl_scatter(1,local_buf_on_device);
-  print_bw();
+  // if (rank == 0) printf("  Testing scatter/gather operations for double"
+  //     " array\n  on device, local buffer on device\n");
+  // test_dbl_scatter(1,local_buf_on_device);
+  // print_bw();
 
   // if (rank == 0) printf("  Testing scatter/gather operations for double"
   //     " array\n  on host, local buffer on host\n");
