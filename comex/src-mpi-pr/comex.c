@@ -7597,6 +7597,7 @@ STATIC void check_devshm(int fd, size_t size){
 }
 
 STATIC void count_open_fds(void) {
+#ifdef __linux__
   /* check only every 100 ops && rank == 1 */
   counter_open_fds += 1;
   if (counter_open_fds % 100 == 0 && g_state.rank == MIN(1,g_state.node_size)) {
@@ -7618,4 +7619,5 @@ STATIC void count_open_fds(void) {
   }
     fclose(f);
   }
+#endif
 }
