@@ -43,6 +43,7 @@ int numDevices()
 void setDevice(int id)
 {
   cudaError_t ierr = cudaSetDevice(id);
+  cudaDeviceSynchronize();
   if (ierr != cudaSuccess) {
     int err=0;
     int rank = MPI_Wrapper_world_rank();
@@ -363,6 +364,7 @@ int deviceOpenMemHandle(void **memory, devMemHandle_t handle)
 {
   cudaError_t ierr;
   ierr = cudaIpcOpenMemHandle(memory, handle.handle, cudaIpcMemLazyEnablePeerAccess);
+  cudaDeviceSynchronize();
   cudaErrCheck(ierr);
 #if 0
   {
@@ -382,13 +384,16 @@ int deviceOpenMemHandle(void **memory, devMemHandle_t handle)
 
 int deviceCloseMemHandle(void *memory)
 {
+  int ret;
 #if 0
   {
     int rank = MPI_Wrapper_world_rank();
     printf("p[%d] deviceCloseMemHandle pointer: %p\n",rank,memory);
   }
 #endif
- return cudaIpcCloseMemHandle(memory);
+ ret = cudaIpcCloseMemHandle(memory);
+ cudaDeviceSynchronize();
+ return ret;
 }
 
 #define MAXDIM 7
