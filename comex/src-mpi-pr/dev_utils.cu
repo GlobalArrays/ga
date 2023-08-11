@@ -86,6 +86,20 @@ void freeDevice(void *buf)
   cudaDeviceSynchronize();
 }
 
+/* syncrhonize the device
+ */
+void deviceSynchronize()
+{
+  cudaError_t ierr = cudaDeviceSynchronize();
+  if (ierr != cudaSuccess) {
+    int err=0;
+    int rank = MPI_Wrapper_world_rank();
+    const char *msg = cudaGetErrorString(ierr);
+    printf("p[%d] cudaDeviceSynchronize msg: %s\n",rank,msg);
+    MPI_Wrapper_abort(err);
+  }
+}
+
 /* is pointer located on host?
  * return 1 data is located on host, 0 otherwise
  * ptr: pointer to data
