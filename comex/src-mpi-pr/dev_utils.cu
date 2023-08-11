@@ -82,6 +82,7 @@ void freeDevice(void *buf)
     printf("p[%d] cudaFree buf: %p msg: %s\n",rank,buf,msg);
     MPI_Wrapper_abort(err);
   }
+  cudaDeviceSynchronize();
 }
 
 /* is pointer located on host?
