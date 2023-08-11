@@ -243,7 +243,7 @@ void SigSegvHandler(int sig)
 }
 #endif
 
-#define ENABLE_PROFILE
+// #define ENABLE_PROFILE
 #ifdef ENABLE_PROFILE
   static int t_level = -1;
   static double t_beg[10];
