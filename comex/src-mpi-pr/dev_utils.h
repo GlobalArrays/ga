@@ -22,6 +22,7 @@ extern void deviceAddLong(long *ptr, const long inc);
 extern int deviceGetMemHandle(devMemHandle_t *handle, void *memory);
 extern int deviceOpenMemHandle(void **memory, devMemHandle_t handle);
 extern int deviceCloseMemHandle(void *memory);
+extern void deviceSynchronize();
 
 extern void deviceIaxpy(int *dst, const int *src, const int *scale, int n);
 extern void deviceLaxpy(long *dst, const long *src, const long *scale, int n);

@@ -6311,6 +6311,9 @@ STATIC void server_send(void *buf, int count, int dest)
 
     retval = MPI_Send(buf, count, MPI_CHAR, dest,
             COMEX_TAG, g_state.comm);
+#if ENABLE_DEVICE
+    deviceSynchronize();
+#endif
 
     CHECK_MPI_RETVAL(retval);
 }
@@ -6326,6 +6329,9 @@ STATIC void server_send_datatype(void *buf, MPI_Datatype dt, int dest)
 #endif
 
     retval = MPI_Send(buf, 1, dt, dest, COMEX_TAG, g_state.comm);
+#if ENABLE_DEVICE
+    deviceSynchronize();
+#endif
 
     CHECK_MPI_RETVAL(retval);
 }
@@ -6339,6 +6345,9 @@ STATIC void server_recv(void *buf, int count, int source)
 
     retval = MPI_Recv(buf, count, MPI_CHAR, source,
             COMEX_TAG, g_state.comm, &status);
+#if ENABLE_DEVICE
+    deviceSynchronize();
+#endif
 
     CHECK_MPI_RETVAL(retval);
     COMEX_ASSERT(status.MPI_SOURCE == source);
@@ -6357,6 +6366,9 @@ STATIC void server_recv_datatype(void *buf, MPI_Datatype dt, int source)
 
     retval = MPI_Recv(buf, 1, dt, source,
             COMEX_TAG, g_state.comm, &status);
+#if ENABLE_DEVICE
+    deviceSynchronize();
+#endif
 
     CHECK_MPI_RETVAL(retval);
     COMEX_ASSERT(status.MPI_SOURCE == source);
