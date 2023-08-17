@@ -59,7 +59,7 @@ sicm_device_list nill;
 #define TR(x) XSTR(x)
 
 #define ENABLE_GPU_AWARE_MPI
-#define ENABLE_STRIDED_KERNELS
+/* #define ENABLE_STRIDED_KERNELS */
 
 #ifdef ENABLE_NVTX
 #define RANGE_PUSH(x) nvtxRangePushA(x)
@@ -6490,6 +6490,9 @@ STATIC void nb_recv_packed(void *buf, int count, int source, nb_t *nb, stride_t 
 
     retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG, g_state.comm,
             &(message->request));
+#if ENABLE_DEVICE
+    deviceSynchronize();
+#endif
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -6529,6 +6532,9 @@ STATIC void nb_recv_datatype(void *buf, MPI_Datatype dt, int source, nb_t *nb)
 
     retval = MPI_Irecv(buf, 1, dt, source, COMEX_TAG, g_state.comm,
             &(message->request));
+#if ENABLE_DEVICE
+    deviceSynchronize();
+#endif
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -6568,6 +6574,9 @@ STATIC void nb_recv_iov(void *buf, int count, int source, nb_t *nb, comex_giov_t
 
     retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG, g_state.comm,
             &(message->request));
+#if ENABLE_DEVICE
+    deviceSynchronize();
+#endif
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -6606,6 +6615,9 @@ STATIC void nb_recv(void *buf, int count, int source, nb_t *nb)
 
     retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG, g_state.comm,
             &(message->request));
+#if ENABLE_DEVICE
+    deviceSynchronize();
+#endif
     CHECK_MPI_RETVAL(retval);
 }
 

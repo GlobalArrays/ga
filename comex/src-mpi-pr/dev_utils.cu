@@ -363,6 +363,7 @@ int deviceGetMemHandle(devMemHandle_t *handle, void *memory)
 {
   cudaError_t ierr;
   ierr = cudaIpcGetMemHandle(&handle->handle, memory);
+  cudaDeviceSynchronize();
   cudaErrCheck(ierr);
   if (ierr != cudaSuccess) {
     int err=0;
