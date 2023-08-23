@@ -88,7 +88,7 @@ endif()
 
 if(ENABLE_TESTS)
   if (ENABLE_FORTRAN)
-    ga_add_parallel_test(ma/testf testf.F)
+    ga_add_parallel_test(ma/testf testf.F Fortran)
     set_tests_properties(ma/testf PROPERTIES WILL_FAIL TRUE)
   endif()
   ga_add_parallel_test(ma/test-coalesce test-coalesce.c)
