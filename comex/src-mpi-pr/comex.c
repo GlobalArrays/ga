@@ -5415,7 +5415,7 @@ STATIC void _acc_packed_handler(header_t *header, char *payload, int proc)
         int n1dim;  /* number of 1 dim block */
         int *dst_stride = stride->stride;
         int *count = stride->count;
-        int stride_levels = stride->stride_levels;
+        int stride_levels = stride->stride_levels;        
         int dst_bvalue[7], dst_bunit[7];
         int packed_index = 0;
         int *tbuf = (int*)acc_buffer;
@@ -6705,14 +6705,8 @@ STATIC void server_send(void *buf, int count, int dest)
             g_state.rank, buf, count, dest);
 #endif
 
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     retval = MPI_Send(buf, count, MPI_CHAR, dest,
             COMEX_TAG, g_state.comm);
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
 
     CHECK_MPI_RETVAL(retval);
 }
@@ -6727,13 +6721,7 @@ STATIC void server_send_datatype(void *buf, MPI_Datatype dt, int dest)
             g_state.rank, buf, dest);
 #endif
 
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     retval = MPI_Send(buf, 1, dt, dest, COMEX_TAG, g_state.comm);
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
 
     CHECK_MPI_RETVAL(retval);
 }
@@ -6745,14 +6733,8 @@ STATIC void server_recv(void *buf, int count, int source)
     MPI_Status status;
     int recv_count = 0;
 
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     retval = MPI_Recv(buf, count, MPI_CHAR, source,
             COMEX_TAG, g_state.comm, &status);
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
 
     CHECK_MPI_RETVAL(retval);
     COMEX_ASSERT(status.MPI_SOURCE == source);
@@ -6769,14 +6751,8 @@ STATIC void server_recv_datatype(void *buf, MPI_Datatype dt, int source)
     int retval = 0;
     MPI_Status status;
 
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     retval = MPI_Recv(buf, 1, dt, source,
             COMEX_TAG, g_state.comm, &status);
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
 
     CHECK_MPI_RETVAL(retval);
     COMEX_ASSERT(status.MPI_SOURCE == source);
@@ -6811,14 +6787,8 @@ STATIC void nb_send_common(void *buf, int count, int dest, nb_t *nb, int need_fr
     }
     nb->send_tail = message;
 
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     retval = MPI_Isend(buf, count, MPI_CHAR, dest, COMEX_TAG, g_state.comm,
             &(message->request));
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -6850,14 +6820,8 @@ STATIC void nb_send_datatype(void *buf, MPI_Datatype dt, int dest, nb_t *nb)
     }
     nb->send_tail = message;
 
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     retval = MPI_Isend(buf, 1, dt, dest, COMEX_TAG, g_state.comm,
             &(message->request));
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -6908,14 +6872,8 @@ STATIC void nb_recv_packed(void *buf, int count, int source, nb_t *nb, stride_t 
     }
     nb->recv_tail = message;
 
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG, g_state.comm,
             &(message->request));
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -6953,14 +6911,8 @@ STATIC void nb_recv_datatype(void *buf, MPI_Datatype dt, int source, nb_t *nb)
     }
     nb->recv_tail = message;
 
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     retval = MPI_Irecv(buf, 1, dt, source, COMEX_TAG, g_state.comm,
             &(message->request));
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -6998,14 +6950,8 @@ STATIC void nb_recv_iov(void *buf, int count, int source, nb_t *nb, comex_giov_t
     }
     nb->recv_tail = message;
 
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG, g_state.comm,
             &(message->request));
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -7042,14 +6988,8 @@ STATIC void nb_recv(void *buf, int count, int source, nb_t *nb)
     }
     nb->recv_tail = message;
 
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG, g_state.comm,
             &(message->request));
-#if ENABLE_DEVICE
-    deviceSynchronize();
-#endif
     CHECK_MPI_RETVAL(retval);
 }
 

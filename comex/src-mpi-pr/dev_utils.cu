@@ -43,8 +43,6 @@ int numDevices()
 void setDevice(int id)
 {
   cudaError_t ierr = cudaSetDevice(id);
-  cudaDeviceSynchronize();
-  cudaDeviceSynchronize();
   if (ierr != cudaSuccess) {
     int err=0;
     int rank = MPI_Wrapper_world_rank();
@@ -60,9 +58,7 @@ void setDevice(int id)
  */
 void mallocDevice(void **buf, size_t size)
 {
-  cudaError_t ierr =cudaMalloc(buf, (int)size);
-  cudaDeviceSynchronize();
-  cudaDeviceSynchronize();
+  cudaError_t ierr = cudaMalloc(buf, (int)size);
   if (ierr != cudaSuccess) {
     int err=0;
     int rank = MPI_Wrapper_world_rank();
@@ -85,8 +81,6 @@ void freeDevice(void *buf)
     printf("p[%d] cudaFree buf: %p msg: %s\n",rank,buf,msg);
     MPI_Wrapper_abort(err);
   }
-  cudaDeviceSynchronize();
-  cudaDeviceSynchronize();
 }
 
 /* syncrhonize the device
@@ -101,7 +95,6 @@ void deviceSynchronize()
     printf("p[%d] cudaDeviceSynchronize msg: %s\n",rank,msg);
     MPI_Wrapper_abort(err);
   }
-  cudaDeviceSynchronize();
 }
 
 /* is pointer located on host?
@@ -156,8 +149,6 @@ int getDeviceID(void *ptr)
 void copyToDevice(void *devptr, void *hostptr, int bytes)
 {
   cudaError_t ierr = cudaMemcpy(devptr, hostptr, bytes, cudaMemcpyHostToDevice);
-  cudaDeviceSynchronize();
-  cudaDeviceSynchronize();
   if (ierr != cudaSuccess) {
     int err=0;
     int rank = MPI_Wrapper_world_rank();
@@ -203,8 +194,6 @@ void copyToHost(void *hostptr, void *devptr, int bytes)
     printf("p[%d] cudaMemcpy to host dev: %d on %s host: %d on %s msg: %s\n",rank,hostid,hosttype,devid,devtype,msg);
     MPI_Wrapper_abort(err);
   }
-  cudaDeviceSynchronize();
-  cudaDeviceSynchronize();
 }
 
 /* copy data between buffers on same device
@@ -229,8 +218,6 @@ void copyDevToDev(void *dstptr, void *srcptr, int bytes)
   }
 #endif
   cudaErrCheck(ierr);
-  cudaDeviceSynchronize();
-  cudaDeviceSynchronize();
   if (ierr != cudaSuccess) {
     int err=0;
     int rank = MPI_Wrapper_world_rank();
@@ -259,8 +246,7 @@ void copyPeerToPeer(void *dstptr, int dstID, void *srcptr, int srcID, int bytes)
     printf("p[%d] cudaMemcpyPeer dev to dev msg: %s\n",rank,msg);
     MPI_Wrapper_abort(err);
   }
-  cudaDeviceSynchronize();
-  cudaDeviceSynchronize();
+  deviceSynchronize();
 }
 
 /**
@@ -279,8 +265,6 @@ void deviceMemset(void *ptr, int val, size_t bytes)
     printf("p[%d] cudaMemset ptr: %p bytes: %d msg: %s\n",rank,ptr,bytes,msg);
     MPI_Wrapper_abort(err);
   }
-  cudaDeviceSynchronize();
-  cudaDeviceSynchronize();
 }
 
 __global__ void iaxpy_kernel(int *dst, const int *src, int scale, int n)
@@ -321,8 +305,7 @@ void deviceIaxpy(int *dst, int *src, const int *scale, int n)
         rank,dst,src,*scale,n,msg);
     MPI_Wrapper_abort(err);
   }
-  cudaDeviceSynchronize();
-  cudaDeviceSynchronize();
+  deviceSynchronize();
 }
 
 __global__ void laxpy_kernel(long *dst, const long *src, long scale, int n)
@@ -373,8 +356,7 @@ int deviceGetMemHandle(devMemHandle_t *handle, void *memory)
 {
   cudaError_t ierr;
   ierr = cudaIpcGetMemHandle(&handle->handle, memory);
-  cudaDeviceSynchronize();
-  cudaDeviceSynchronize();
+  deviceSynchronize();
   cudaErrCheck(ierr);
   if (ierr != cudaSuccess) {
     int err=0;
@@ -390,8 +372,7 @@ int deviceOpenMemHandle(void **memory, devMemHandle_t handle)
 {
   cudaError_t ierr;
   ierr = cudaIpcOpenMemHandle(memory, handle.handle, cudaIpcMemLazyEnablePeerAccess);
-  cudaDeviceSynchronize();
-  cudaDeviceSynchronize();
+  deviceSynchronize();
   cudaErrCheck(ierr);
 #if 0
   {
@@ -419,8 +400,7 @@ int deviceCloseMemHandle(void *memory)
   }
 #endif
  ret = cudaIpcCloseMemHandle(memory);
- cudaDeviceSynchronize();
-  cudaDeviceSynchronize();
+ deviceSynchronize();
  return ret;
 }
 
