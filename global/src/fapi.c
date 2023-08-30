@@ -1683,6 +1683,18 @@ DoublePrecision FATR nga_wtime_()
     return wnga_wtime();
 }
 
+DoublePrecision FATR ga_ran_(Integer idum)
+{
+    long ldum = (long)idum;
+    return wnga_ran(ldum);
+}
+
+DoublePrecision FATR nga_ran_(Integer idum)
+{
+    long ldum = (long)idum;
+    return wnga_ran(ldum);
+}
+
 /* Routines from collect.c */
 
 void FATR ga_brdcst_(

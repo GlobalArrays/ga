@@ -2680,7 +2680,6 @@ void update_map(Integer **top, Integer **list, Integer **idx, Integer **jdx,
   char *nptr;
   char *optr;
   Integer ii,jj;
-  printf("p[%d] calling update_map\n",pnga_nodeid());
   newsize = 2*(*bufsize);
   ttop = (Integer*)malloc(newsize*sizeof(Integer));
   tlist = (Integer*)malloc(newsize*sizeof(Integer));
@@ -2880,8 +2879,6 @@ void update_map(Integer **top, Integer **list, Integer **idx, Integer **jdx,
           ((_type*)data)[2*ldx+1] += rval_a*ival_b+ival_a*rval_b;     \
         } else {                                                      \
           /* add new value to list */                                 \
-          if (lcnt == bufsize) update_map(&top, &list, &idx, &jdx,    \
-              &data, idim, jdim, elemsize, &bufsize, &lcnt);          \
           ((_type*)data)[2*lcnt] = rval_a*rval_b-ival_a*ival_b;       \
           ((_type*)data)[2*lcnt+1] = rval_a*ival_b+ival_a*rval_b;     \
           idx[lcnt] = i;                                              \
@@ -3140,9 +3137,6 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
   nblocks = 0;
   for (i=0; i<nprocs; i++) {
     if (count[i] > 0) nblocks++;
-    /*
-    printf("p[%ld] [%ld,%ld] count: %ld\n",me,me,i,count[i]);
-    */
   }
 
   /* create a new sparse array to hold product array */
@@ -3332,9 +3326,6 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
 
       /* now organize data in g_i, g_j, g_data */
       icnt = 0;
-      /*
-      printf("p[%ld] block: %ld iptr: %p jptr: %p vptr: %p\n",me,n,lti,ltj,ctdata);
-      */
       if (longidx) {
         for (irow=0; irow<ilen; irow++) {
           Integer jd = rowtop[irow];
@@ -3349,10 +3340,6 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
           }
         }
         lti[offset_i+ilen] = icnt;
-        /*
-          printf("p[%d] offset_i: %ld irow: %ld IDX[%ld]: %ld\n",
-              me,offset_i,ilen,offset_i+ilen,lti[offset_i+ilen]);
-              */
       } else {
         for (irow=0; irow<ilen; irow++) {
           Integer jd = rowtop[irow];
