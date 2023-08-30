@@ -5084,6 +5084,18 @@ double NGA_Wtime()
     return (double)wnga_wtime();
 }
 
+double GA_Ran(int idum)
+{
+    long ldum = (long)idum;
+    return (double)wnga_ran(ldum);
+}
+
+double NGA_Ran(int idum)
+{
+    long ldum = (long)idum;
+    return (double)wnga_ran(ldum);
+}
+
 void GA_Set_debug(int flag)
 {
     Integer aa;
@@ -5546,4 +5558,11 @@ int NGA_Sprs_array_matmat_multiply(int s_a, int s_b)
   Integer sa = (Integer)s_a;
   Integer sb = (Integer)s_b;
   return (int)wnga_sprs_array_matmat_multiply(sa, sb);
+}
+
+int NGA_Sprs_array_count_sketch(int s_a, int size_k)
+{
+  Integer sa = (Integer)s_a;
+  Integer size = (Integer)size_k;
+  return (int)wnga_sprs_array_count_sketch(sa, size);
 }
