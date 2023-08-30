@@ -111,7 +111,7 @@ double ran3(long idum)
     for (i=1;i<=54;i++) {
       ii=(21*i) % 55;
       ma[ii]=mk;
-      mk=mj-mk;	
+      mk=mj-mk;
         if (mk < MZ) mk += MBIG;
       mj=ma[ii];
     }

@@ -1598,6 +1598,12 @@
 #define nga_iwtime_ F77_FUNC_(nga_iwtime,NGA_IWTIME)
 #define nga_swtime_ F77_FUNC_(nga_swtime,NGA_SWTIME)
 #define nga_zwtime_ F77_FUNC_(nga_zwtime,NGA_ZWTIME)
+#define nga_ran_  F77_FUNC_(nga_ran, NGA_RAN)
+#define nga_cran_ F77_FUNC_(nga_cran,NGA_CRAN)
+#define nga_dran_ F77_FUNC_(nga_dran,NGA_DRAN)
+#define nga_iran_ F77_FUNC_(nga_iran,NGA_IRAN)
+#define nga_sran_ F77_FUNC_(nga_sran,NGA_SRAN)
+#define nga_zran_ F77_FUNC_(nga_zran,NGA_ZRAN)
 #define ga_type_f2c_  F77_FUNC_(ga_type_f2c, GA_TYPE_F2C)
 #define ga_ctype_f2c_ F77_FUNC_(ga_ctype_f2c,GA_CTYPE_F2C)
 #define ga_dtype_f2c_ F77_FUNC_(ga_dtype_f2c,GA_DTYPE_F2C)
@@ -3198,6 +3204,7 @@
 #define nga_sprs_array_shift_diag_ F77_FUNC_(nga_sprs_array_shift_diag,NGA_SPRS_ARRAY_SHIFT_DIAG)
 #define nga_sprs_array_duplicate_ F77_FUNC_(nga_sprs_array_duplicate,NGA_SPRS_ARRAY_DUPLICATE)
 #define nga_sprs_array_matmat_multiply_ F77_FUNC_(nga_sprs_array_matmat_multiply,NGA_SPRS_ARRAY_MATMAT_MULTIPLY)
+#define nga_sprs_array_count_sketch_ F77_FUNC_(nga_sprs_array_count_sketch,NGA_SPRS_ARRAY_COUNT_SKETCH)
 /* the missing functions are either complex type or strangely named */
 
 #define gai_cdot_patch_     F77_FUNC_(gai_cdot_patch,GAI_CDOT_PATCH)
