@@ -41,6 +41,7 @@ include(ga-utils)
 
 ga_option(ENABLE_CXX ON)
 ga_option(ENABLE_FORTRAN ON)
+ga_option(ENABLE_COVERAGE OFF)
 ga_option(CMAKE_CXX_EXTENSIONS OFF)
 
 set(NOFORT 1)
@@ -116,6 +117,12 @@ option (F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS "Fortran/C interface property" ON)
 message(STATUS "Checking MPI ...")
 find_package (MPI REQUIRED)
 set(GA_EXTRA_LIBS ${GA_EXTRA_LIBS} MPI::MPI_C)
+
+if(ENABLE_COVERAGE)
+  add_compile_options(--coverage)
+  list(APPEND GA_EXTRA_LIBS --coverage)
+endif()
+
 if(ENABLE_FORTRAN)
   #macos fix for clang+gfortran build
   #linking MPI::MPI_Fortran adds the flag to clang compile line
