@@ -179,8 +179,8 @@ if (ENABLE_BLAS)
     endif()
     include(FetchContent)
     set( gpu_backend "none" CACHE STRING "GPU backend to use" FORCE)
-    set(BUILD_SHARED_LIBS ON CACHE INTERNAL "Build SHARED libraries")
     if(NOT TARGET blaspp)
+      set(BUILD_SHARED_LIBS ON CACHE INTERNAL "Build SHARED libraries")
       if(ENABLE_OFFLINE_BUILD)
       FetchContent_Declare(
         blaspp
@@ -194,9 +194,11 @@ if (ENABLE_BLAS)
       )
       endif()
       FetchContent_MakeAvailable( blaspp )
+      set(BUILD_SHARED_LIBS OFF CACHE BOOL "Type of libraries to build" FORCE)    
     endif()
 
     if(NOT TARGET lapackpp)
+    set(BUILD_SHARED_LIBS ON CACHE INTERNAL "Build SHARED libraries")
     if(ENABLE_OFFLINE_BUILD)
       FetchContent_Declare(
         lapackpp
@@ -210,6 +212,7 @@ if (ENABLE_BLAS)
       )      
       endif()
       FetchContent_MakeAvailable( lapackpp )
+      set(BUILD_SHARED_LIBS OFF CACHE BOOL "Type of libraries to build" FORCE)    
     endif()
 
     if(ENABLE_SCALAPACK)
@@ -233,7 +236,6 @@ if (ENABLE_BLAS)
     set(_la_cxx_blas blaspp)
     set(_la_cxx_lapack lapackpp)
     set(_la_cxx_scalapack scalapackpp::scalapackpp)
-    set(BUILD_SHARED_LIBS OFF CACHE BOOL "Type of libraries to build" FORCE)    
   endif()
 
 else()
