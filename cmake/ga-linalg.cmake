@@ -180,13 +180,14 @@ if (ENABLE_BLAS)
     include(FetchContent)
     set( gpu_backend "none" CACHE STRING "GPU backend to use" FORCE)
     if(NOT TARGET blaspp)
-      set(BUILD_SHARED_LIBS ON CACHE INTERNAL "Build SHARED libraries")
+      
       if(ENABLE_OFFLINE_BUILD)
       FetchContent_Declare(
         blaspp
         URL ${DEPS_LOCAL_PATH}/blaspp
       )
       else()
+      set(BUILD_SHARED_LIBS ON CACHE BOOL "Build SHARED libraries" FORCE)
       FetchContent_Declare(
         blaspp
         GIT_REPOSITORY https://github.com/icl-utk-edu/blaspp.git
@@ -197,13 +198,13 @@ if (ENABLE_BLAS)
     endif()
 
     if(NOT TARGET lapackpp)
-    set(BUILD_SHARED_LIBS ON CACHE INTERNAL "Build SHARED libraries")
     if(ENABLE_OFFLINE_BUILD)
       FetchContent_Declare(
         lapackpp
         URL ${DEPS_LOCAL_PATH}/lapackpp
       )
       else()
+      set(BUILD_SHARED_LIBS ON CACHE BOOL "Build SHARED libraries" FORCE)
       FetchContent_Declare(
         lapackpp
         GIT_REPOSITORY https://github.com/icl-utk-edu/lapackpp.git
