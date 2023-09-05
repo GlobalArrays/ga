@@ -194,7 +194,6 @@ if (ENABLE_BLAS)
       )
       endif()
       FetchContent_MakeAvailable( blaspp )
-      set(BUILD_SHARED_LIBS OFF CACHE BOOL "Type of libraries to build" FORCE)    
     endif()
 
     if(NOT TARGET lapackpp)
