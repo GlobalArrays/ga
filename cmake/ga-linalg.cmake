@@ -212,6 +212,7 @@ if (ENABLE_BLAS)
       )      
       endif()
       FetchContent_MakeAvailable( lapackpp )
+      set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build SHARED libraries" FORCE)
     endif()
 
     if(ENABLE_SCALAPACK)
