@@ -179,6 +179,7 @@ if (ENABLE_BLAS)
     endif()
     include(FetchContent)
     set( gpu_backend "none" CACHE STRING "GPU backend to use" FORCE)
+    set(BUILD_SHARED_LIBS ON)
     if(NOT TARGET blaspp)
       if(ENABLE_OFFLINE_BUILD)
       FetchContent_Declare(
