@@ -365,10 +365,12 @@ extern void          NGA_Sprs_array_diag_right_multiply(int s_a, int g_d);
 extern void          NGA_Sprs_array_diag_left_multiply(int s_a, int g_d);
 extern int           NGA_Sprs_array_duplicate(int s_a);
 extern void          NGA_Sprs_array_export(int s_a, const char* file);
-extern void          NGA_Sprs_array_get_diag(int s_a, int *g_d);
 extern int           NGA_Sprs_array_get_block(int s_a, int irow, int icol,
                         int **idx, int **jdx, void **data, int *ilo, int *ihi,
                         int *jlo, int *jhi);
+extern int           NGA_Sprs_array_get_column(int s_a, int irow);
+extern int           NGA_Sprs_array_get_column64(int s_a, int64_t irow);
+extern void          NGA_Sprs_array_get_diag(int s_a, int *g_d);
 extern int           NGA_Sprs_array_matmat_multiply(int s_a, int s_b);
 extern void          NGA_Sprs_array_matvec_multiply(int s_a, int g_a, int g_v);
 extern void          NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo, int *hi);
