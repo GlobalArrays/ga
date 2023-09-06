@@ -425,4 +425,5 @@ extern void pnga_sprs_array_shift_diag(Integer s_a, void *shift);
 extern logical pnga_sprs_array_get_block(Integer s_a, Integer irow, Integer icol,
     void **idx, void **jdx, void **data, Integer *ilo, Integer *ihi,
     Integer *jlo, Integer *jhi);
+extern Integer pnga_sprs_array_get_column(Integer g_v, Integer irow);
 #endif /* PAPI_H_ */

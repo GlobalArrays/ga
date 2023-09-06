@@ -1013,10 +1013,6 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
     } else {
       pnga_access_ptr(SPA[hdl].g_j,&lo,&hi,&tjdx,&ld);
     }
-    pnga_release(SPA[hdl].g_data,&lo,&hi);
-    pnga_release(SPA[hdl].g_i,&lo,&hi);
-    pnga_release(SPA[hdl].g_j,&lo,&hi);
-
     /* shift pointers to correct location */
     ld = SPA[hdl].ihi - SPA[hdl].ilo + 2;
     lptr = lptr + offset*SPA[hdl].size;
@@ -1032,6 +1028,9 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
       *(int**)jdx = tjdx;
     }
     *(char**)val = lptr;
+    pnga_release(SPA[hdl].g_data,&lo,&hi);
+    pnga_release(SPA[hdl].g_i,&lo,&hi);
+    pnga_release(SPA[hdl].g_j,&lo,&hi);
   }
 }
 
@@ -1647,6 +1646,7 @@ void pnga_sprs_array_get_diag(Integer s_a, Integer *g_d)
       }
     }
   }
+  free(map);
   pnga_release_update(*g_d, &lo, &hi);
   pnga_pgroup_sync(grp);
 }
@@ -3009,7 +3009,8 @@ Integer pnga_sprs_array_get_column(Integer s_a, Integer icol)
   Integer nprocs = pnga_pgroup_nnodes(SPA[handle].grp);
   Integer me = pnga_pgroup_nodeid(SPA[handle].grp);
   Integer *size, *map;
-  Integer i, hi, lo, ld;
+  Integer i, j, n, hi, lo, ld;
+  Integer iblock;
   void *ptr;
   char cplus[2];
   cplus[0] = '+';
@@ -3022,12 +3023,12 @@ Integer pnga_sprs_array_get_column(Integer s_a, Integer icol)
   map = (Integer*)malloc(nprocs*sizeof(Integer));
   for (i=0; i<nprocs; i++) size[i] = 0;
   size[me] = hi - lo + 1;
-  if (SPA[handle].idx_size = sizeof(int)) {
+  if (sizeof(Integer) == sizeof(int)) {
     pnga_pgroup_gop(SPA[handle].grp,C_INT,size,nprocs,cplus);
   } else {
     pnga_pgroup_gop(SPA[handle].grp,C_LONG,size,nprocs,cplus);
   }
-  map[0] = 0;
+  map[0] = 1;
   for (i=1; i<nprocs; i++) map[i] = map[i-1]+size[i-1];
 
   /* create column vector array and set it to zero */
@@ -3038,13 +3039,63 @@ Integer pnga_sprs_array_get_column(Integer s_a, Integer icol)
   pnga_allocate(g_v);
   pnga_zero(g_v);
   if (hi >= lo) {
-    pnga_access_ptr(g_v,&lo,&hi,&ptr,&ld);
+    Integer ilo = lo+1;
+    Integer ihi = hi+1;
+    pnga_access_ptr(g_v,&ilo,&ihi,&ptr,&ld);
   } else {
     ptr = NULL;
   }
-
   /* Find column block that contains value icol. Scan through all non-zero
    * in this block and if j-index corresponds to icol, then set corresponding
    * value in g_v
    */
+  iblock = (icol*nprocs)/SPA[handle].jdim;
+  for (n=0; n<SPA[handle].nblocks; n++) {
+    if (SPA[handle].blkidx[n] == iblock) {
+      if (SPA[handle].idx_size == sizeof(int)) {
+        int *iptr, *jptr;
+        void *vptr;
+        pnga_sprs_array_access_col_block(s_a, iblock, &iptr, &jptr, &vptr);
+        for (i=lo; i<=hi; i++) {
+          Integer ilo, ihi;
+          Integer idx = i-lo;
+          ilo = iptr[idx];
+          ihi = iptr[idx+1];
+          for (j=ilo; j<ihi; j++) {
+            if (jptr[j] == icol) {
+              char *vt = (char*)vptr+j*SPA[handle].size;
+              char *pt = (char*)ptr+idx*SPA[handle].size;
+              memcpy(pt, vt, SPA[handle].size);
+            }
+          }
+        }
+      } else {
+        int64_t *iptr, *jptr;
+        void *vptr;
+        pnga_sprs_array_access_col_block(s_a, iblock, &iptr, &jptr, &vptr);
+        for (i=lo; i<=hi; i++) {
+          Integer ilo, ihi;
+          Integer idx = i-lo;
+          ilo = iptr[idx];
+          ihi = iptr[idx+1];
+          for (j=ilo; j<ihi; j++) {
+            if (jptr[j] == icol) {
+              char *vt = (char*)vptr+j*SPA[handle].size;
+              char *pt = (char*)ptr+idx*SPA[handle].size;
+              memcpy(pt, vt, SPA[handle].size);
+            }
+          }
+        }
+      }
+    }
+  }
+  {
+    Integer ilo = lo+1;
+    Integer ihi = hi+1;
+    pnga_release(g_v,&ilo,&ihi);
+  }
+  free(map);
+  free(size);
+  pnga_pgroup_sync(SPA[handle].grp);
+  return g_v;
 }

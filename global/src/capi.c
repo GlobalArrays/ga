@@ -5566,3 +5566,17 @@ int NGA_Sprs_array_count_sketch(int s_a, int size_k)
   Integer size = (Integer)size_k;
   return (int)wnga_sprs_array_count_sketch(sa, size);
 }
+
+int NGA_Sprs_array_get_column(int g_v, int irow)
+{
+  Integer gv = (Integer)g_v;
+  Integer ir = (Integer)irow;
+  return (int)wnga_sprs_array_get_column(gv, ir);
+}
+
+int NGA_Sprs_array_get_column64(int g_v, int64_t irow)
+{
+  Integer gv = (Integer)g_v;
+  Integer ir = (Integer)irow;
+  return (int)wnga_sprs_array_get_column(gv, ir);
+}
