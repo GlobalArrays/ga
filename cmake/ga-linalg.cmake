@@ -169,8 +169,8 @@ if (ENABLE_BLAS)
     endif()
 
   if(ENABLE_CXX)
-    set(BPP_GIT_TAG 34a24d103c039abdc634837af45433c44b3e90a7)
-    set(LPP_GIT_TAG 229e5007e605ee77769d086530401937fca85c8b)
+    set(BPP_GIT_TAG f8f983d5b45a8f366aae41fbe9888b14cbae20f8)
+    set(LPP_GIT_TAG 62680a16a9aba2a426e3d089dd13e18bfd140c74)
     set(SPP_GIT_TAG 6397f52cf11c0dfd82a79698ee198a2fce515d81)
     if(ENABLE_DEV_MODE)
       set(BPP_GIT_TAG master)
@@ -186,6 +186,7 @@ if (ENABLE_BLAS)
         URL ${DEPS_LOCAL_PATH}/blaspp
       )
       else()
+      #set(BUILD_SHARED_LIBS ON CACHE BOOL "Build SHARED libraries" FORCE)
       FetchContent_Declare(
         blaspp
         GIT_REPOSITORY https://github.com/icl-utk-edu/blaspp.git
