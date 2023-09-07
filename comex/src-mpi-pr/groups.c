@@ -631,7 +631,11 @@ void comex_group_init()
       }
     }
 #endif
-#if DEBUG
+/// #if DEBUG
+#if 1
+#ifdef ENABLE_DEVICE
+    printf("[%d] rank; comex_dev_id: %d\n", g_state.rank, _comex_dev_id);
+#endif
     printf("[%d] rank; split_group_size: %d\n", g_state.rank, split_group_size);
     printf("[%d] rank; largest_rank_with_same_hostid[%d]; my master is:[%d]\n",
         g_state.rank, largest_rank_with_same_hostid, g_state.master[g_state.rank]);
