@@ -622,12 +622,18 @@ void comex_group_init()
       if (inc < numDevices() && inc >= 0) {
         _comex_dev_flag = 1;
         _comex_dev_id = inc;
+      } else if (inc > numDevices()) {
+        _comex_dev_flag = 1;
+        _comex_dev_id = inc%numDevices();
       }
     } else {
       int inc = g_state.rank - smallest_rank_with_same_hostid;
       if (inc < numDevices() && inc >= 0) {
         _comex_dev_flag = 1;
         _comex_dev_id = inc;
+      } else if (inc > numDevices()) {
+        _comex_dev_flag = 1;
+        _comex_dev_id = inc%numDevices();
       }
     }
 #endif
