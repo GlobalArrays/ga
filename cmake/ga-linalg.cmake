@@ -178,16 +178,21 @@ if (ENABLE_BLAS)
       set(SPP_GIT_TAG master)
     endif()
     include(FetchContent)
-    set( gpu_backend "none" CACHE STRING "GPU backend to use" FORCE)
+    if(ENABLE_CUDA)
+      set(gpu_backend "cuda" CACHE STRING "Use CUDA backend" FORCE)
+    elseif(ENABLE_HIP)
+      set(gpu_backend "hip"  CACHE STRING "Use ROCM backend" FORCE)
+    elseif(ENABLE_SYCL)
+      set(gpu_backend "sycl" CACHE STRING "Use SYCL backend" FORCE)
+    endif()
     if(NOT TARGET blaspp)
-      
       if(ENABLE_OFFLINE_BUILD)
       FetchContent_Declare(
         blaspp
         URL ${DEPS_LOCAL_PATH}/blaspp
       )
       else()
-      set(BUILD_SHARED_LIBS ON CACHE BOOL "Build SHARED libraries" FORCE)
+      #set(BUILD_SHARED_LIBS ON CACHE BOOL "Build SHARED libraries" FORCE)
       FetchContent_Declare(
         blaspp
         GIT_REPOSITORY https://github.com/icl-utk-edu/blaspp.git
@@ -204,7 +209,6 @@ if (ENABLE_BLAS)
         URL ${DEPS_LOCAL_PATH}/lapackpp
       )
       else()
-      set(BUILD_SHARED_LIBS ON CACHE BOOL "Build SHARED libraries" FORCE)
       FetchContent_Declare(
         lapackpp
         GIT_REPOSITORY https://github.com/icl-utk-edu/lapackpp.git
@@ -212,7 +216,6 @@ if (ENABLE_BLAS)
       )      
       endif()
       FetchContent_MakeAvailable( lapackpp )
-      set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build SHARED libraries" FORCE)
     endif()
 
     if(ENABLE_SCALAPACK)
