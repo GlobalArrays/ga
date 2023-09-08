@@ -619,19 +619,19 @@ void comex_group_init()
     /* find out if this process is bound to a device */
     if (g_state.master[g_state.rank] == smallest_rank_with_same_hostid) {
       int inc = g_state.rank - smallest_rank_with_same_hostid - 1;
-      if (inc < numDevices() && inc >= 0) {
+      if (inc < numDevices() && inc >= 0 && g_state.rank != g_state.master[g_state.rank]) {
         _comex_dev_flag = 1;
         _comex_dev_id = inc;
-      } else if (inc > numDevices()) {
+      } else if (inc >= numDevices() && g_state.rank != g_state.master[g_state.rank]) {
         _comex_dev_flag = 1;
         _comex_dev_id = inc%numDevices();
       }
     } else {
       int inc = g_state.rank - smallest_rank_with_same_hostid;
-      if (inc < numDevices() && inc >= 0) {
+      if (inc < numDevices() && inc >= 0 && g_state.rank != g_state.master[g_state.rank]) {
         _comex_dev_flag = 1;
         _comex_dev_id = inc;
-      } else if (inc > numDevices()) {
+      } else if (inc >= numDevices() && g_state.rank != g_state.master[g_state.rank]) {
         _comex_dev_flag = 1;
         _comex_dev_id = inc%numDevices();
       }
