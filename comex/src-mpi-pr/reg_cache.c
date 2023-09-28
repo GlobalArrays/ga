@@ -103,6 +103,13 @@ seg_cmp(void *reg_addr, size_t reg_len, int reg_id, void *oth_addr, size_t oth_l
 #endif
             break;
         case TEST_FOR_CONTAINMENT:
+            //if (reg_beg <= oth_beg && reg_end >= oth_end) {
+#if 0
+            if (oth_len == 0) {
+              printf("p[%d] reg_beg: %p reg_end: %p oth_beg: %p oth_end: %p reg_id: %d oth_id: %d\n",
+                  g_state.rank,reg_beg,reg_end,oth_beg,oth_end,reg_id,oth_id);
+            }
+#endif
             result = reg_beg <= oth_beg && reg_end >= oth_end
               && reg_id == oth_id;
 #if DEBUG
@@ -179,6 +186,7 @@ seg_contains(void *reg_addr, size_t reg_len, int reg_id,
     COMEX_ASSERT(NULL != reg_addr);
     COMEX_ASSERT(NULL != oth_addr);
 
+//    printf("p[%d] beg_addr: %p end_addr: %p id: %d beg_qaddr: %p end_qaddr: %p qid: %d\n",g_state.rank,reg_addr,((char*)reg_addr+reg_len),reg_id,oth_addr,((char*)oth_addr+oth_len),oth_id);
     return seg_cmp(
             reg_addr, reg_len, reg_id,
             oth_addr, oth_len, oth_id,
@@ -395,6 +403,7 @@ reg_cache_find(int rank, void *buf, size_t len, int dev_id)
     reg_entry_t *entry = NULL;
     reg_entry_t *runner = NULL;
 
+//    printf("p[%d] buf: %p\n",g_state.rank,buf);
     if (buf == NULL) return entry;
 #if DEBUG
     printf("[%d] reg_cache_find(rank=%d, buf=%p, len=%d)\n",
@@ -407,6 +416,7 @@ reg_cache_find(int rank, void *buf, size_t len, int dev_id)
 
     runner = reg_cache[rank];
 
+//    printf("p[%d] runner: %p rank: %d\n",g_state.rank,runner,rank);
     while (runner && NULL == entry) {
         if (RR_SUCCESS == reg_entry_contains(runner, buf, len, dev_id)) {
             entry = runner;
@@ -528,6 +538,7 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
             g_state.rank, rank, buf, len, name, mapped);
 #endif
 
+//    printf("p[%d] insert reg_cache rank: %d buf: %p len: %d name: (%s) mapped: %p dev_id: %d\n",g_state.rank,rank,buf,(int)len,name,mapped,dev_id);
     if (buf == 0) {
       return (reg_entry_t*)NULL;
     }

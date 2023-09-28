@@ -442,6 +442,7 @@ STATIC int _is_master(void);
 STATIC int _get_world_rank(comex_igroup_t *igroup, int rank);
 STATIC int* _get_world_ranks(comex_igroup_t *igroup);
 STATIC int _smallest_world_rank_with_same_hostid(comex_igroup_t *group);
+STATIC int _smallest_world_rank_with_same_master(comex_igroup_t *group);
 STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup);
 STATIC void _malloc_semaphore(void);
 STATIC void _free_semaphore(void);
@@ -1595,6 +1596,7 @@ STATIC reg_entry_t* _comex_malloc_local(size_t size)
             g_state.rank, memory, size, name, memory, 0, nill);
 #endif
 #else
+    printf("p[%d] malloc memory %p\n",g_state.rank,memory);
     reg_entry = reg_cache_insert(
             g_state.rank, memory, size, name, memory, 0, -1
 #ifdef ENABLE_DEVICE
@@ -1680,6 +1682,8 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, int device_id)
     deviceGetMemHandle(&handle, memory);
 
     /* register the memory locally */
+    printf("p[%d] malloc device memory %p id: %d size: %d end: %p\n",
+        g_state.rank,memory,device_id,(int)size,((char*)memory+size));
     reg_entry = reg_cache_insert(
             g_state.rank, memory, size, name, memory, 1, device_id, handle);
 
@@ -2335,6 +2339,8 @@ int comex_destroy_mutexes()
     /* let masters know they need to participate */
     /* first non-master rank in an SMP node sends the message to master */
     if (_smallest_world_rank_with_same_hostid(group_list) == g_state.rank) {
+      printf("p[%d] smallest world rank with same hostid: %d\n",g_state.rank,
+          _smallest_world_rank_with_same_hostid(group_list));
         nb_t *nb = NULL;
         header_t *header = NULL;
 
@@ -2968,9 +2974,15 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
                 reg_entries_local[reg_entries_local_count++] = reg_entries[i];
             }
         }
+#if 1
         else if (g_state.master[reg_entries[i].rank] == 
            g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
            g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+#else
+        else if (g_state.hostid[reg_entries[i].rank] == 
+           g_state.hostid[get_my_master_rank_with_same_hostid(g_state.rank,
+           g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+#endif
            num_progress_ranks_per_node, is_node_ranks_packed)] )
             {
             /* same SMP node, need to mmap */
@@ -6003,6 +6015,28 @@ STATIC int _smallest_world_rank_with_same_hostid(comex_igroup_t *igroup)
     return smallest;
 }
 
+/* we sometimes need to notify a node master of some event and the rank in
+ * charge of doing that is returned by this function */
+STATIC int _smallest_world_rank_with_same_master(comex_igroup_t *igroup)
+{
+    int i = 0;
+    int smallest = g_state.rank;
+    int *world_ranks = _get_world_ranks(igroup);
+
+    for (i=0; i<igroup->size; ++i) {
+        if (g_state.master[world_ranks[i]] == g_state.master[g_state.rank]) {
+            /* found same host as me */
+            if (world_ranks[i] < smallest) {
+                smallest = world_ranks[i];
+            }
+        }
+    }
+
+    free(world_ranks);
+
+    return smallest;
+}
+
 
 /* we sometimes need to notify a node master of some event and the rank in
  * charge of doing that is returned by this function */
@@ -7782,7 +7816,11 @@ STATIC void nb_puts(
     if (COMEX_ENABLE_PUT_DATATYPE
             && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_PUT_SMP
+#if 0
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+#else
+                || g_state.master[proc] != g_state.master[g_state.rank])
+#endif
             && (_packed_size(src_stride, count, stride_levels) > COMEX_PUT_DATATYPE_THRESHOLD)) {
       /* only use this branch if data is on host. Don't bother with arrays
        * hosted on device */
@@ -7801,7 +7839,11 @@ STATIC void nb_puts(
     if (COMEX_ENABLE_PUT_DATATYPE
             && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_PUT_SMP
+#if 0
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+#else
+                || g_state.master[proc] != g_state.master[g_state.rank])
+#endif
             && (_packed_size(src_stride, count, stride_levels) > COMEX_PUT_DATATYPE_THRESHOLD)) {
         nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         PROFILE_END(t_nb_puts)
@@ -8235,7 +8277,11 @@ STATIC void nb_gets(
     if (COMEX_ENABLE_GET_DATATYPE
             && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_GET_SMP
+#if 0
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+#else
+                || g_state.master[proc] != g_state.master[g_state.rank])
+#endif
             && (_packed_size(src_stride, count, stride_levels) > COMEX_GET_DATATYPE_THRESHOLD)) {
       /* only use this branch if data is on host. Don't bother with arrays
        * hosted on device */
@@ -8254,7 +8300,11 @@ STATIC void nb_gets(
     if (COMEX_ENABLE_GET_DATATYPE
             && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_GET_SMP
+#if 0
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+#else
+                || g_state.master[proc] != g_state.master[g_state.rank])
+#endif
             && (_packed_size(src_stride, count, stride_levels) > COMEX_GET_DATATYPE_THRESHOLD)) {
         nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         PROFILE_END(t_nb_gets)
@@ -8267,7 +8317,11 @@ STATIC void nb_gets(
     if (COMEX_ENABLE_GET_PACKED
             && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_GET_SMP
+#if 0
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+#else
+                || g_state.master[proc] != g_state.master[g_state.rank])) {
+#endif
         nb_gets_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         PROFILE_END(t_nb_gets)
         RANGE_POP();
@@ -8718,7 +8772,11 @@ STATIC void nb_accs(
     if (COMEX_ENABLE_ACC_PACKED
             && (!COMEX_ENABLE_ACC_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_ACC_SMP
+#if 0
                 || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+#else
+                || g_state.master[proc] != g_state.master[g_state.rank])) {
+#endif
         nb_accs_packed(datatype, scale, src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         PROFILE_END(t_nb_accs)
         RANGE_POP();
@@ -8729,10 +8787,20 @@ STATIC void nb_accs(
     /* find out if remote processor is on a GPU */
     reg_entry = reg_cache_find(proc, dst, 0, -1);
     if (!reg_entry) {
+      printf("p[%d] proc: %d dst: %p _device_map[%d]: %d master[%d]: %d master[%d]: %d\n",g_state.rank,proc,dst,proc,_device_map[proc],proc,g_state.master[proc],
+          g_state.rank,g_state.master[g_state.rank]);
       reg_entry = reg_cache_find(proc, dst, 0, _device_map[proc]);
+      printf("p[%d] reg_entry: %p hostid[%d]: %d hostid[%d]: %d\n",
+          g_state.rank,reg_entry,proc,g_state.hostid[proc],
+          g_state.rank,g_state.hostid[g_state.rank]);
     }
     COMEX_ASSERT(reg_entry);
-    if (reg_entry->use_dev &&  g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+    if (reg_entry->use_dev &&
+#if 0
+        g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+#else
+        g_state.master[proc] == g_state.master[g_state.rank]) {
+#endif
       /* destination data must be on same node */
       if (proc == g_state.rank) {
 #ifdef ENABLE_STRIDED_KERNELS
@@ -9120,7 +9188,11 @@ STATIC void nb_putv(
     if (COMEX_ENABLE_PUT_IOV
         && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
         && (!COMEX_ENABLE_PUT_SMP
+#if 0
           || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+#else
+          || g_state.master[proc] != g_state.master[g_state.rank])) {
+#endif
           for (i=0; i<iov_len; ++i) {
             nb_putv_packed(&iov[i], proc, nb);
           }
@@ -9195,7 +9267,11 @@ STATIC void nb_putv(
               }
 #endif
         } else if (COMEX_ENABLE_PUT_SMP &&
+#if 0
           g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+#else
+          g_state.master[proc] == g_state.master[g_state.rank]) {
+#endif
           /* put to process on same SMP node */
           int j;
           void **src;
@@ -9444,7 +9520,11 @@ STATIC void nb_getv(
         if (COMEX_ENABLE_GET_IOV
                 && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
                 && (!COMEX_ENABLE_GET_SMP
+#if 0
                     || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+#else
+                    || g_state.master[proc] != g_state.master[g_state.rank])) {
+#endif
             nb_getv_packed(&iov[i], proc, nb);
         }
         else if (COMEX_ENABLE_GET_SELF && g_state.rank == proc) {
@@ -9521,7 +9601,11 @@ STATIC void nb_getv(
 #endif
         }
         else if (COMEX_ENABLE_GET_SMP && 
+#if 0
                    g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+#else
+                   g_state.master[proc] == g_state.master[g_state.rank]) {
+#endif
             int j;
             void **src;
             void **dst;
@@ -9733,7 +9817,11 @@ STATIC void nb_accv(
         if (COMEX_ENABLE_ACC_IOV
                 && (!COMEX_ENABLE_ACC_SELF || g_state.rank != proc)
                 && (!COMEX_ENABLE_ACC_SMP
+#if 0
                     || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+#else
+                    || g_state.master[proc] != g_state.master[g_state.rank])) {
+#endif
             nb_accv_packed(datatype, scale, &iov[i], proc, nb);
         }
         else if (COMEX_ENABLE_PUT_SELF && g_state.rank == proc) {
@@ -9837,7 +9925,11 @@ STATIC void nb_accv(
 #endif
         }
         else if (COMEX_ENABLE_PUT_SMP &&
+#if 0
                    g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+#else
+                   g_state.master[proc] == g_state.master[g_state.rank]) {
+#endif
             if (fence_array[g_state.master[proc]]) {
                 _fence_master(g_state.master[proc]);
             }

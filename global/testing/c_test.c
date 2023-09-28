@@ -228,7 +228,7 @@ void test_int_array(int on_device, int local_buf_on_device)
   for (n=0; n<NLOOP; n++) {
     tbeg = GA_Wtime();
     GA_Zero(g_a);
-    GA_Fill(g_a,&zero);
+//    GA_Fill(g_a,&zero);
     ld = (hi[1]-lo[1]+1);
     if (local_buf_on_device) {
       if (lo[0]<=hi[0] && lo[1]<=hi[1]) {
@@ -269,6 +269,7 @@ void test_int_array(int on_device, int local_buf_on_device)
     NGA_Distribution(g_a,rank,tlo,thi);
 #if 1
     if (rank == 0 && n == 0) printf("Completed NGA_Distribution\n");
+    printf("p[%d] Got to 1 loop: %d\n",wrank,n);
     if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
       int tnelem = (thi[0]-tlo[0]+1)*(thi[1]-tlo[1]+1);
       if (on_device) {
@@ -279,6 +280,7 @@ void test_int_array(int on_device, int local_buf_on_device)
       } else {
         NGA_Access(g_a,tlo,thi,&tbuf,&tld);
       }
+    printf("p[%d] Got to 2 loop: %d\n",wrank,n);
       ok = 1;
       for (ii = tlo[0]; ii<=thi[0]; ii++) {
         i = ii-tlo[0];
@@ -302,6 +304,7 @@ void test_int_array(int on_device, int local_buf_on_device)
         free(tbuf);
       }
     }
+    printf("p[%d] Got to 3 loop: %d\n",wrank,n);
     tbeg = GA_Wtime();
     GA_Sync();
     t_sync += (GA_Wtime()-tbeg);
@@ -317,6 +320,7 @@ void test_int_array(int on_device, int local_buf_on_device)
       for (i=0; i<nsize; i++) buf[i] = 0;
     }
     t_chk += (GA_Wtime()-tbeg);
+    printf("p[%d] Got to 4 loop: %d\n",wrank,n);
 
     /* copy data from global array to local buffer */
     tbeg = GA_Wtime();
@@ -327,6 +331,7 @@ void test_int_array(int on_device, int local_buf_on_device)
     tbeg = GA_Wtime();
     GA_Sync();
     t_sync += (GA_Wtime()-tbeg);
+    printf("p[%d] Got to 5 loop: %d\n",wrank,n);
 
     tbeg = GA_Wtime();
     if (local_buf_on_device) {
@@ -363,6 +368,7 @@ void test_int_array(int on_device, int local_buf_on_device)
         }
       }
     }
+    printf("p[%d] Got to 6 loop: %d\n",wrank,n);
 
     /* reset values in buf */
     if (local_buf_on_device) {
@@ -391,6 +397,7 @@ void test_int_array(int on_device, int local_buf_on_device)
       }
     }
     t_chk += (GA_Wtime()-tbeg);
+    printf("p[%d] Got to 7 loop: %d\n",wrank,n);
 
     /* accumulate data to global array */
     one = 1;
@@ -423,6 +430,7 @@ void test_int_array(int on_device, int local_buf_on_device)
       }
     }
     t_chk += (GA_Wtime()-tbeg);
+    printf("p[%d] Got to 8 loop: %d\n",wrank,n);
 
     tbeg = GA_Wtime();
     NGA_Get(g_a, lo, hi, buf, &ld);
@@ -470,6 +478,7 @@ void test_int_array(int on_device, int local_buf_on_device)
       }
     }
     t_chk += (GA_Wtime()-tbeg);
+    printf("p[%d] Got to 9 loop: %d\n",wrank,n);
   }
 
   if (local_buf_on_device) {
@@ -480,6 +489,7 @@ void test_int_array(int on_device, int local_buf_on_device)
   tbeg = GA_Wtime();
   GA_Destroy(g_a);
   t_free += (GA_Wtime()-tbeg);
+    printf("p[%d] Got to 10 loop: %d\n",wrank,n);
 
   if (!g_ok) {
     printf("Mismatch found for get on process %d after Get\n",rank);
@@ -501,6 +511,7 @@ void test_int_array(int on_device, int local_buf_on_device)
   put_bw = (double)(put_cnt*sizeof(int))/tput;
   get_bw = (double)(get_cnt*sizeof(int))/tget;
   acc_bw = (double)(acc_cnt*sizeof(int))/tacc;
+    printf("p[%d] Got to 11 loop: %d\n",wrank,n);
 }
 
 void print_bw()

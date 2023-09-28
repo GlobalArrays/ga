@@ -46,7 +46,7 @@ struct strided_memcpy_kernel_arg {
   int dims[MAXDIM]; // Dimension of block being transferred
   int stride_levels; // Dimension of array minus 1
   int size; // Size of array elements
-  int totalTransferEnts; // Total constructs to copy
+  int totalTransferEntities; // Total constructs to copy
   int bytes_per_block;
 };
 
@@ -72,9 +72,9 @@ __global__ void strided_memcpy_kernel(strided_memcpy_kernel_arg arg) {
   // on the thread id and the block id
   index = index + stride * blockDim.x;
   // If the thread index is bigger than the total transfer 
-  // entities have this thread do not participate in the 
+  // entities then this thread does not participate in the 
   // copy
-  if(index >= arg.totalTransferEnts) {
+  if(index >= arg.totalTransferEntities) {
      return;
   }
   // If you are copying a set of elements move the thread
@@ -312,7 +312,8 @@ int main() {
         else if(time > maxT) maxT = time;
      } 
   }
-  printf("Hot Runs: Element Time for kernel: %3.4lf ms. Min: %3.4lf | Max: %3.4lf \n", avgTime/(double)REPS, minT, maxT);
+  printf("Hot Runs: Element Time for kernel: %3.4lf ms."
+      " Min: %3.4lf | Max: %3.4lf \n", avgTime/(double)REPS, minT, maxT);
 
 
 /* Cold call for the copying kernel: complete rows */
@@ -376,7 +377,8 @@ int main() {
         else if(time > maxT) maxT = time;
      }
   }
-  printf("Hot Runs: Last Dimension Time for kernel: %3.4lf ms. Min: %3.4lf | Max: %3.4lf \n", avgTime/(double)REPS, minT, maxT);
+  printf("Hot Runs: Last Dimension Time for kernel: %3.4lf ms."
+      " Min: %3.4lf | Max: %3.4lf \n", avgTime/(double)REPS, minT, maxT);
 
 
   cudaFreeHost(block_A);

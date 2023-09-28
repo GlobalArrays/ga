@@ -722,6 +722,7 @@ void comex_group_init()
       igroup->dev_id = _comex_dev_id;
       igroup->is_dev_group = _comex_dev_flag;
     }
+    printf("p[%d] _comex_flag: %d _comex_dev_id: %d master: %d\n",g_state.rank,_comex_dev_flag,_comex_dev_id,g_state.master[g_state.rank]);
 #endif
 #if DEBUG
     printf("node_rank[%d]/ size[%d]\n", g_state.node_rank, g_state.node_size);

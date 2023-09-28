@@ -87,6 +87,7 @@ static inline void _acc_dev(
     cublasDestroy(handle);
   } else {
   }
+  cudaDeviceSynchronize();
 #elif defined(ENABLE_HIP)
   rocblas_handle handle;
   if (op == COMEX_ACC_DBL) {
@@ -117,6 +118,7 @@ static inline void _acc_dev(
     rocblas_destroy_handle(handle);
   } else {
   }
+  hipDeviceSynchronize();
 #endif
 }
 

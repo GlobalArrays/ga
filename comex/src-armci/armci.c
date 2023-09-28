@@ -959,6 +959,7 @@ void ARMCI_Device_memset(void *ptr, int val, armci_size_t bytes)
  */
 void ARMCI_Copy_to_dev(void *host_ptr, void *dev_ptr, armci_size_t bytes)
 {
+  //comex_copy_to_device(host_ptr, dev_ptr, (size_t)bytes);
 }
 
 /**

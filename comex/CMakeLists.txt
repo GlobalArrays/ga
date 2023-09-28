@@ -199,7 +199,7 @@ install(TARGETS comex
 #add_executable (perf_strided.x testing/perf_strided.c)
 #add_executable (shift.x testing/shift.c)
 #add_executable (cmx_test.x testing/test.c)
-#if (ENABLE_CUDA)
+#if (ENABLE_CUDA OR ENABLE_HIP)
 #endif()
 
 #set(COMEX_TEST_NPROCS_1 1)
