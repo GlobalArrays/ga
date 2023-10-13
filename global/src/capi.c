@@ -5560,11 +5560,16 @@ int NGA_Sprs_array_matmat_multiply(int s_a, int s_b)
   return (int)wnga_sprs_array_matmat_multiply(sa, sb);
 }
 
-int NGA_Sprs_array_count_sketch(int s_a, int size_k)
+int NGA_Sprs_array_count_sketch(int s_a, int size_k, int *g_k, int *g_w)
 {
   Integer sa = (Integer)s_a;
   Integer size = (Integer)size_k;
-  return (int)wnga_sprs_array_count_sketch(sa, size);
+  Integer gk;
+  Integer gw;
+  int ret = (int)wnga_sprs_array_count_sketch(sa, size, &gk, &gw, 1);
+  *g_k = (int)gk;
+  *g_w = (int)gw;
+  return ret;
 }
 
 int NGA_Sprs_array_get_column(int g_v, int irow)
