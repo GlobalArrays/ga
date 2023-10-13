@@ -206,11 +206,7 @@ extern void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *ski
                              void *buf, Integer *ld);
 extern void pnga_sync();
 extern DoublePrecision pnga_wtime();
-<<<<<<< HEAD
 extern DoublePrecision pnga_rand(Integer idum);
-=======
-extern DoublePrecision pnga_ran(Integer idum);
->>>>>>> 4ca5237... Added fixes to sparse matrix-matrix multiply operation.
 
 /* Routines from datatypes.c */
 extern Integer pnga_type_f2c(Integer type);

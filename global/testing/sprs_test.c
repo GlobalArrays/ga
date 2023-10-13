@@ -1412,6 +1412,182 @@ void matrix_test(int type)
     free(k_buf);
     free(w_buf);
   }
+}
+
+int main(int argc, char **argv) {
+  int me,nproc;
+
+  /**
+   * Initialize GA
+   */
+  MP_INIT(argc,argv);
+>>>>>>> af171de... Fixed up count_sketch function and added test for it to sprs_test.c
+
+    tbeg = GA_Wtime();
+    g_sk = NGA_Sprs_array_count_sketch(s_a, size_k, &g_k, &g_w);
+    time = GA_Wtime()-tbeg;
+    /* Get local copies of k-map and weights */
+    k_buf = (int*)malloc(dim*sizeof(int));
+    if (type == C_INT) {
+      w_buf = malloc(dim*sizeof(int));
+    } else if (type == C_LONG) {
+      w_buf = malloc(dim*sizeof(long));
+    } else if (type == C_LONGLONG) {
+      w_buf = malloc(dim*sizeof(long long));
+    } else if (type == C_FLOAT) {
+      w_buf = malloc(dim*sizeof(float));
+    } else if (type == C_DBL) {
+      w_buf = malloc(dim*sizeof(double));
+    } else if (type == C_SCPL) {
+      w_buf = malloc(2*dim*sizeof(float));
+    } else if (type == C_DCPL) {
+      w_buf = malloc(2*dim*sizeof(double));
+    }
+    ilo = 0;
+    ihi = dim-1;
+    ld = dim;
+    NGA_Get64(g_k,&ilo,&ihi,k_buf,&ld);
+    NGA_Get64(g_w,&ilo,&ihi,w_buf,&ld);
+    /* Construct sketch matrix serially */
+#define REAL_COUNT_SKETCH_M(_type,_a,_c,_k_ptr,_w_ptr,_dim,_size_k)   \
+    {                                                                     \
+      int _i, _j, _k;                                                     \
+      _c = malloc(_dim*_size_k*sizeof(_type));                            \
+      memset(_c,0,_dim*_size_k*sizeof(_type));                            \
+      for (_i=0; _i<_dim; _i++) {                                         \
+        _k = _k_ptr[_i];                                                  \
+        for (_j=0; _j<_dim; _j++) {                                       \
+          ((_type*)_c)[_j+_k*_dim] += ((_type*)_w_ptr)[_i]                \
+          * ((_type*)_a)[_j+_i*_dim];            \
+        }                                                                 \
+      }                                                                   \
+    }
+
+#define COMPLEX_COUNT_SKETCH_M(_type,_a,_c,_k_ptr,_w_ptr,_dim,_size_k)\
+    {                                                                     \
+      int _i, _j, _k;                                                     \
+      _c = malloc(2*_dim*_size_k*sizeof(_type));                          \
+      memset(_c,0,2*_dim*_size_k*sizeof(_type));                          \
+      for (_i=0; _i<_dim; _i++) {                                         \
+        _k = _k_ptr[_i];                                                  \
+        for (_j=0; _j<_dim; _j++) {                                       \
+          _type _ra, _ia, _rw, _iw;                                       \
+          _ra = ((_type*)_a)[2*(_j+_i*_dim)];                             \
+          _ia = ((_type*)_a)[2*(_j+_i*_dim)+1];                           \
+          _rw = ((_type*)_w_ptr)[2*_i];                                   \
+          _iw = ((_type*)_w_ptr)[2*_i+1];                                 \
+          ((_type*)_c)[2*(_j+_k*_dim)] += _rw*_ra-_iw*_ia;                \
+          ((_type*)_c)[2*(_j+_k*_dim)+1] += _rw*_ia+_iw*_ra;              \
+        }                                                                 \
+      }                                                                   \
+    }
+
+    if (type == C_INT) {
+      REAL_COUNT_SKETCH_M(int,a,c,k_buf,w_buf,dim,size_k);
+    } else if (type == C_LONG) {
+      REAL_COUNT_SKETCH_M(long,a,c,k_buf,w_buf,dim,size_k);
+    } else if (type == C_LONGLONG) {
+      REAL_COUNT_SKETCH_M(long long,a,c,k_buf,w_buf,dim,size_k);
+    } else if (type == C_FLOAT) {
+      REAL_COUNT_SKETCH_M(float,a,c,k_buf,w_buf,dim,size_k);
+    } else if (type == C_DBL) {
+      REAL_COUNT_SKETCH_M(double,a,c,k_buf,w_buf,dim,size_k);
+    } else if (type == C_SCPL) {
+      COMPLEX_COUNT_SKETCH_M(float,a,c,k_buf,w_buf,dim,size_k);
+    } else if (type == C_DCPL) {
+      COMPLEX_COUNT_SKETCH_M(double,a,c,k_buf,w_buf,dim,size_k);
+    }
+#undef REAL_COUNT_SKETCH_M
+#undef COMPLEX_COUNT_SKETCH_M
+    /* compare results */
+    if (type == C_INT) {
+      b = malloc(dim*size_k*sizeof(int));
+    } else if (type == C_LONG) {
+      b = malloc(dim*size_k*sizeof(long));
+    } else if (type == C_LONGLONG) {
+      b = malloc(dim*size_k*sizeof(long long));
+    } else if (type == C_FLOAT) {
+      b = malloc(dim*size_k*sizeof(float));
+    } else if (type == C_DBL) {
+      b = malloc(dim*size_k*sizeof(double));
+    } else if (type == C_SCPL) {
+      b = malloc(2*dim*size_k*sizeof(float));
+    } else if (type == C_DCPL) {
+      b = malloc(2*dim*size_k*sizeof(double));
+    }
+
+    {
+      int lo[2],hi[2],ld;
+      lo[0] = 0;
+      hi[0] = size_k-1;
+      lo[1] = 0;
+      hi[1] = dim-1;
+      ld = dim;
+      NGA_Get(g_sk,lo,hi,b,&ld);
+    }
+    ok = 1;
+    if (type == C_INT) {
+      for (i=0; i<size_k; i++) {
+        for (j=0; j<dim; j++) {
+          if (((int*)c)[j+dim*i] != ((int*)b)[j+dim*i]) ok = 0;
+        }
+      }
+    } else if (type == C_LONG) {
+      for (i=0; i<size_k; i++) {
+        for (j=0; j<dim; j++) {
+          if (((long*)c)[j+dim*i] != ((long*)b)[j+dim*i]) ok = 0;
+        }
+      }
+    } else if (type == C_LONGLONG) {
+      for (i=0; i<size_k; i++) {
+        for (j=0; j<dim; j++) {
+          if (((long long*)c)[j+dim*i] != ((long long*)b)[j+dim*i]) ok = 0;
+        }
+      }
+    } else if (type == C_FLOAT) {
+      for (i=0; i<size_k; i++) {
+        for (j=0; j<dim; j++) {
+          if (((float*)c)[j+dim*i] != ((float*)b)[j+dim*i]) ok = 0;
+        }
+      }
+    } else if (type == C_DBL) {
+      for (i=0; i<size_k; i++) {
+        for (j=0; j<dim; j++) {
+          if (((double*)c)[j+dim*i] != ((double*)b)[j+dim*i]) ok = 0;
+        }
+      }
+    } else if (type == C_SCPL) {
+      for (i=0; i<size_k; i++) {
+        for (j=0; j<dim; j++) {
+          if (((float*)c)[2*(j+dim*i)] != ((float*)b)[2*(j+dim*i)]
+              || ((float*)c)[2*(j+dim*i)+1] != ((float*)b)[2*(j+dim*i)+1]) ok = 0;
+        }
+      }
+    } else if (type == C_DCPL) {
+      for (i=0; i<size_k; i++) {
+        for (j=0; j<dim; j++) {
+          if (((double*)c)[2*(j+dim*i)] != ((double*)b)[2*(j+dim*i)]
+              || ((double*)c)[2*(j+dim*i)+1] != ((double*)b)[2*(j+dim*i)+1]) ok = 0;
+        }
+      }
+    }
+    GA_Igop(&ok,1,op);
+    GA_Dgop(&time,1,plus);
+    time /= (double)nprocs;
+    if (me == 0) {
+      if (ok) {
+        printf("\n    **Count sketch operation PASSES**\n");
+        printf("    Time for count sketch operation: %16.8f\n",time);
+      } else {
+        printf("\n    **Count sketch operation FAILS**\n");
+      }
+    }
+    free(a);
+    free(b);
+    free(c);
+    free(k_buf);
+    free(w_buf);
+  }
 
   /* create sparse matrix A */
   setup_matrix(&s_a, &a, dim, type);
