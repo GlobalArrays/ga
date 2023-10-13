@@ -3861,12 +3861,13 @@ Integer nga_sprs_array_duplicate_(Integer *s_a)
   return wnga_sprs_array_duplicate(*s_a);
 }
 
-Integer nga_sprs_array_matmat_multiply(Integer *s_a, Integer *s_b)
+Integer nga_sprs_array_matmat_multiply_(Integer *s_a, Integer *s_b)
 {
   return wnga_sprs_array_matmat_multiply(*s_a, *s_b);
 }
 
-Integer nga_sprs_array_count_sketch(Integer *s_a, Integer *size_k)
+Integer nga_sprs_array_count_sketch_(Integer *s_a, Integer *size_k, Integer *g_k,
+    Integer *g_w)
 {
-  return wnga_sprs_array_count_sketch(*s_a, *size_k);
+  return wnga_sprs_array_count_sketch(*s_a, *size_k, g_k, g_w, 0);
 }
