@@ -199,7 +199,7 @@ extern void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *ski
                              void *buf, Integer *ld);
 extern void pnga_sync();
 extern DoublePrecision pnga_wtime();
-extern DoublePrecision pnga_ran(Integer idum);
+extern DoublePrecision pnga_ran(long idum);
 
 /* Routines from datatypes.c */
 extern Integer pnga_type_f2c(Integer type);
@@ -407,7 +407,8 @@ extern int pnga_sprs_array_access_col_block_idx(Integer s_a, Integer icol, Acces
 extern void pnga_sprs_array_col_block_list(Integer s_a, Integer **idx, Integer *n);
 extern Integer pnga_sprs_array_duplicate(Integer s_a);
 extern Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b);
-extern Integer pnga_sprs_array_count_sketch(Integer s_a, Integer size_k);
+extern Integer pnga_sprs_array_count_sketch(Integer s_a, Integer size_k,
+    Integer *g_k, Integer *g_w, Integer trans);
 extern void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v);
 extern logical pnga_sprs_array_destroy(Integer s_a);
 extern void pnga_sprs_array_export(Integer s_a, const char* file);

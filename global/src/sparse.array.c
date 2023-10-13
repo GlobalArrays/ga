@@ -396,6 +396,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   }
   free(size);
   SPA[hdl].g_data = pnga_create_handle();
+  pnga_set_pgroup(SPA[hdl].g_data,SPA[hdl].grp);
   pnga_set_data(SPA[hdl].g_data,one,&totalvals,SPA[hdl].type);
   pnga_set_irreg_distr(SPA[hdl].g_data,map,&nproc);
   if (!pnga_allocate(SPA[hdl].g_data)) ret = 0;
@@ -405,6 +406,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   } else {
     pnga_set_data(SPA[hdl].g_j,one,&totalvals,C_INT);
   }
+  pnga_set_pgroup(SPA[hdl].g_j,SPA[hdl].grp);
   pnga_set_irreg_distr(SPA[hdl].g_j,map,&nproc);
   if (!pnga_allocate(SPA[hdl].g_j)) ret = 0;
   /* create temporary array using g_i to hold *all* i indices. We will fix it up
@@ -416,6 +418,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   } else {
     pnga_set_data(SPA[hdl].g_i,one,&totalvals,C_INT);
   }
+  pnga_set_pgroup(SPA[hdl].g_i,SPA[hdl].grp);
   pnga_set_irreg_distr(SPA[hdl].g_i,map,&nproc);
   if (!pnga_allocate(SPA[hdl].g_i)) ret = 0;
 
@@ -634,6 +637,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   } else {
     pnga_set_data(SPA[hdl].g_i,one,&nvals,C_INT);
   }
+  pnga_set_pgroup(SPA[hdl].g_i,SPA[hdl].grp);
   pnga_set_irreg_distr(SPA[hdl].g_i,map,&nproc);
   if (!pnga_allocate(SPA[hdl].g_i)) ret = 0;
   pnga_distribution(SPA[hdl].g_i,me,&lo,&hi);
@@ -1149,6 +1153,13 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
     pnga_error("Data type of sparse matrix and A and V vectors must match",
         SPA[s_hdl].type);
   }
+  /* accumulate operation does not support type C_LONGLONG so fail if this
+   * data type encountered */
+  if (SPA[s_hdl].type == C_LONGLONG) {
+        pnga_error("Data type of sparse matrix and A and V vectors"
+                   " cannot be of type long long",SPA[s_hdl].type);
+  }
+
 
 #define SPRS_REAL_MULTIPLY_M(_type,_iptr,_jptr)              \
   {                                                          \
@@ -1587,6 +1598,7 @@ void pnga_sprs_array_get_diag(Integer s_a, Integer *g_d)
   /* Create array to hold diagonal */
   *g_d = pnga_create_handle();
   pnga_set_data(*g_d,one,&SPA[hdl].idim,SPA[hdl].type);
+  pnga_set_pgroup(*g_d,SPA[hdl].grp);
   pnga_set_irreg_distr(*g_d,map,&nproc);
   pnga_allocate(*g_d);
   /* zero all elements. If diagonal element is not found for a row, then it
@@ -2614,6 +2626,7 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
   SPA[hdl_c].nval = lcnt;
   SPA[hdl_c].maxval = bufsize;
   SPA[hdl_c].size = SPA[hdl_a].size;
+  SPA[hdl_c].grp = SPA[hdl_a].grp;
   /* sort data into column blocks */
   SPA[hdl_c].idx = (Integer*)malloc(lcnt*sizeof(Integer));
   SPA[hdl_c].jdx = (Integer*)malloc(lcnt*sizeof(Integer));
@@ -2667,6 +2680,7 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
     } else {
       pnga_set_data(SPA[hdl_c].g_i,ndim,&totalsize,C_INT);
     }
+    pnga_set_pgroup(SPA[hdl_c].g_i,SPA[hdl_c].grp);
     pnga_set_irreg_distr(SPA[hdl_c].g_i,map,&nprocs);
     pnga_allocate(SPA[hdl_c].g_i);
     /* set up arrays to hold column indices and data. Evaluate offsets
@@ -2696,7 +2710,9 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
       pnga_set_data(SPA[hdl_c].g_j,ndim,&totalsize,C_INT);
     }
     pnga_set_data(SPA[hdl_c].g_data,ndim,&totalsize,SPA[hdl_c].type);
+    pnga_set_pgroup(SPA[hdl_c].g_j,SPA[hdl_c].grp);
     pnga_set_irreg_distr(SPA[hdl_c].g_j,map,&nprocs);
+    pnga_set_pgroup(SPA[hdl_c].g_data,SPA[hdl_c].grp);
     pnga_set_irreg_distr(SPA[hdl_c].g_data,map,&nprocs);
     pnga_allocate(SPA[hdl_c].g_j);
     pnga_allocate(SPA[hdl_c].g_data);
