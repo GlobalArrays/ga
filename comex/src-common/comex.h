@@ -65,6 +65,17 @@ extern int comex_init_args(int *argc, char ***argv);
 extern int comex_init_comm(MPI_Comm);
 
 /**
+ * Returns status of rank with respect to user visibility.
+ * This function is true if this rank is visible to the
+ * application, false otherwise. Used in conjunction with
+ * comex_init_comm.
+ *
+ * @return 1 if rank is visible to application
+ *         0 otherwise
+ */
+extern int comex_active_rank();
+
+/**
  * Test whether comex has been initialized.
  *
  * @return COMEX_SUCCESS if comex has been initialized

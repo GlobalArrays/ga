@@ -525,6 +525,18 @@ int pnga_initialize_comm(MPI_Comm comm)
 }
 #endif
 
+/**
+ * Return status of processor with respect to visibility to user application.
+ * This function returns 1 if application can see this processor, 0 otherwise.
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_active_rank = pnga_active_rank
+#endif
+logical pnga_active_rank()
+{
+  return ARMCI_Active_rank();
+}
+
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_initialized = pnga_initialized
 #endif

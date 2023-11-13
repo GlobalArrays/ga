@@ -346,6 +346,10 @@ int comex_init_comm(MPI_Comm comm)
   return _comex_init(comm);
 }
 
+int return comex_active_rank()
+{
+  return 1;
+}
 
 int comex_init_args(int *argc, char ***argv)
 {

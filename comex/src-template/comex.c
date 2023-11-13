@@ -98,6 +98,48 @@ int comex_init_args(int *argc, char ***argv)
     return comex_init();
 }
 
+int comex_init_comm(MPI_Comm comm)
+{
+    int status;
+
+    if (initialized) {
+        return 0;
+    }
+    initialized = 1;
+
+    /* Assert MPI has been initialized */
+    int init_flag;
+    status = MPI_Initialized(&init_flag);
+    assert(MPI_SUCCESS == status);
+    assert(init_flag);
+
+    /* Duplicate the World Communicator */
+    status = MPI_Comm_dup(comm, &(l_state.world_comm));
+    assert(MPI_SUCCESS == status);
+    assert(l_state.world_comm);
+
+    /* My Rank */
+    status = MPI_Comm_rank(l_state.world_comm, &(l_state.rank));
+    assert(MPI_SUCCESS == status);
+
+    /* World Size */
+    status = MPI_Comm_size(l_state.world_comm, &(l_state.size));
+    assert(MPI_SUCCESS == status);
+
+    /* groups */
+    comex_group_init();
+
+    /* Synch - Sanity Check */
+    MPI_Barrier(l_state.world_comm);
+
+    return COMEX_SUCCESS;
+}
+
+int comex_active_rank()
+{
+  return 1;
+}
+
 
 int comex_initialized()
 {

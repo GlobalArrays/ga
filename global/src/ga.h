@@ -19,6 +19,7 @@ typedef Integer ga_nbhdl_t;
 
 extern void          GA_Abs_value(int g_a); 
 extern void          GA_Abs_value_patch(int g_a, int *lo, int *hi);
+extern int           GA_Active_rank();
 extern void          GA_Add_constant(int g_a, void* alpha);
 extern void          GA_Add_constant_patch(int g,int *lo,int *hi,void *alpha);
 extern void          GA_Add_diagonal(int g_a, int g_v);
@@ -199,6 +200,7 @@ extern void          NGA_Access_ghost_element(int g_a,  void *ptr, int subscript
 extern void          NGA_Access_ghosts(int g_a, int dims[], void *ptr, int ld[]);
 extern void          NGA_Access(int g_a, int lo[], int hi[], void *ptr, int ld[]);
 extern void          NGA_Acc(int g_a, int lo[], int hi[],void* buf,int ld[],void* alpha);
+extern int           NGA_Active_rank();
 extern void          NGA_Add_patch(void * alpha, int g_a, int alo[], int ahi[], void * beta,  int g_b, int blo[], int bhi[], int g_c, int clo[], int chi[]);
 extern int           NGA_Allocate(int g_a);
 extern void          NGA_Alloc_gatscat_buf(int nelems);

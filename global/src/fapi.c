@@ -480,6 +480,16 @@ logical FATR nga_initialize_comm_(MPI_Comm comm)
   return wnga_initialize_comm(comm);
 }
 
+logical FATR ga_active_rank()
+{
+  return wnga_active_rank();
+}
+
+logical FATR nga_active_rank()
+{
+  return wnga_active_rank();
+}
+
 void FATR ga_initialize_ltd_(Integer *limit)
 {
   _ga_initialize_f=1;

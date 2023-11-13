@@ -208,6 +208,14 @@ void ARMCI_Error(char *msg, int code)
     armci_die(msg,code);
 }
 
+/* This is used in some of the MPI-based runtimes to support initialization
+ * using a communicator. Include it here so all codes compile.
+ */
+int ARMCI_Active_rank()
+{
+  return 1;
+}
+
 
 
 void armci_allocate_locks()

@@ -30,6 +30,7 @@ extern int ARMCI_Init(void);    /* initialize ARMCI */
 #ifdef MSG_COMMS_MPI
 extern int ARMCI_Init_mpi_comm(MPI_Comm comm);    /* initialize ARMCI */
 #endif
+extern int ARMCI_Active_rank();
 
 extern int ARMCI_Init_args(int *argc, char ***argv); /* initialize ARMCI */
 extern int ARMCI_Initialized();

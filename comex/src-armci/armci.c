@@ -445,6 +445,10 @@ int PARMCI_Initialized()
     return comex_initialized();
 }
 
+int ARMCI_Active_rank()
+{
+    return comex_active_rank();
+}
 
 void PARMCI_Lock(int mutex, int proc)
 {

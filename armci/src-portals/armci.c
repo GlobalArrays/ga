@@ -234,6 +234,12 @@ void ARMCI_Error(char *msg, int code)
     armci_die(msg,code);
 }
 
+/* Define this function so that all codes compile */
+int ARMCI_Active_rank()
+{ 
+    return 1;
+}
+
 
 void armci_allocate_locks()
 {

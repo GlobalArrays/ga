@@ -131,6 +131,16 @@ int NGA_Initialize_comm(MPI_Comm comm)
   return wnga_initialize_comm(comm);
 }
 
+int GA_Active_rank()
+{
+  return wnga_active_rank();
+}
+
+int NGA_Active_rank()
+{
+  return wnga_active_rank();
+}
+
 int GA_Initialized()
 {
     return wnga_initialized();

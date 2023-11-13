@@ -26,6 +26,7 @@ extern int armci_notify_wait(int proc,int *pval);
 extern int ARMCI_Init();    /* initialize ARMCI */
 extern int ARMCI_Init_args(int *argc, char ***argv); /* initialize ARMCI */
 extern int ARMCI_Init_mpi_comm(MPI_Comm comm); /* initialize ARMCI with external communicator */
+extern int ARMCI_Active_rank();
 extern int ARMCI_Initialized();
 extern void ARMCI_Barrier();    /* ARMCI Barrier*/
 
