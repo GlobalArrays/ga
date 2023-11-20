@@ -62,6 +62,10 @@ sicm_device_list nill;
 #define STR(x) XSTR(x)
 #define MIN(a, b) (((b) < (a)) ? (b) : (a))
 
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 256
+#endif
+
 /* data structures */
 
 typedef enum {
@@ -7576,9 +7580,11 @@ STATIC void check_devshm(int fd, size_t size){
 #endif
     }
   if ( newspace > devshm_fs_left )  {
-    fprintf(stderr, "[%d] /dev/shm fs has size %ld new shm area has size %ld need to increase /dev/shm by %ld Mbytes\n",
-	    g_state.rank, devshm_fs_left/CONVERT_TO_M, newspace/CONVERT_TO_M, (newspace - devshm_fs_left)/CONVERT_TO_M);
-        perror("check_devshm: /dev/shm out of space");
+    char hostname[HOST_NAME_MAX+1];
+    gethostname(hostname, HOST_NAME_MAX+1);
+    fprintf(stderr, "hostname: %s, [%d] /dev/shm fs has size %ld bytes left, new shm area has size %ld need to increase /dev/shm by %ld Mbytes\n", hostname, g_state.rank, devshm_fs_left/CONVERT_TO_M, newspace/CONVERT_TO_M, (newspace - devshm_fs_left)/CONVERT_TO_M);
+
+    perror("check_devshm: /dev/shm out of space");
     //    _free_semaphore();
     comex_error("check_devshm: /dev/shm out of space", -1);
     
