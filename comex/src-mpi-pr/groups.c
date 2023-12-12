@@ -509,7 +509,7 @@ void comex_group_init(MPI_Comm comm)
 #ifdef ENABLE_DEVICE
     int num_dev = 0; 
     _comex_dev_flag = 0;
-    _comex_dev_id = -1;
+    _comex_dev_id = -2;
 #endif
     
     /* populate g_state */
@@ -715,6 +715,8 @@ void comex_group_init(MPI_Comm comm)
       igroup->dev_id = _comex_dev_id;
       igroup->is_dev_group = _comex_dev_flag;
     }
+    printf("p[%d] master: %d dev_id: %d dev_flag: %d\n",g_state.rank,
+        g_state.master[g_state.rank],_comex_dev_id,_comex_dev_flag);
 #endif
 #if DEBUG
     printf("node_rank[%d]/ size[%d]\n", g_state.node_rank, g_state.node_size);

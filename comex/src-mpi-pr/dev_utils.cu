@@ -59,6 +59,8 @@ void setDevice(int id)
 void mallocDevice(void **buf, size_t size)
 {
   cudaError_t ierr = cudaMalloc(buf, (int)size);
+  printf("p[%d] mallocDevice: %p end: %p size: %d\n",
+      MPI_Wrapper_world_rank(),*buf,((char*)(*buf)+size),size);
   if (ierr != cudaSuccess) {
     int err=0;
     int rank = MPI_Wrapper_world_rank();
@@ -109,6 +111,10 @@ int isHostPointer(void *ptr)
   cudaGetLastError();
   /* Assume that if Cuda doesn't know anything about the pointer, it is on the
    * host */
+  {
+    int rank = MPI_Wrapper_world_rank();
+    // printf("p[%d] Attribute.device: %d type: %d ptr: %p\n",rank,attr.device,attr.type,ptr);
+  }
   if (err != cudaSuccess) {
     return 1;
   }
@@ -355,7 +361,7 @@ void deviceAddLong(long *ptr, const long inc)
 int deviceGetMemHandle(devMemHandle_t *handle, void *memory)
 {
   cudaError_t ierr;
-  ierr = cudaIpcGetMemHandle(&handle->handle, memory);
+  ierr = cudaIpcGetMemHandle(&(handle->handle), memory);
   deviceSynchronize();
   cudaErrCheck(ierr);
   if (ierr != cudaSuccess) {

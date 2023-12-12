@@ -1522,6 +1522,7 @@ STATIC void unpack(char *packed_buffer,
 #endif
 
 #if defined(ENABLE_DEVICE) && defined(ENABLE_STRIDED_KERNELS)
+  comex_set_local_dev();
   if (dev_flag && isHostPointer(packed_buffer)) {
     int src_stride[7];
     src_stride[0] = count[0];
@@ -3194,6 +3195,8 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
         /* allocate memory on device mapped to this process */
         my_reg = *_comex_malloc_local_memdev(sizeof(char)*size, _comex_dev_id);
     }
+    printf("p[%d] my_reg.buf: %p my_reg.len: %d my_reg.dev_id: %d is_notifier: %d\n",
+        g_state.rank, my_reg.buf, my_reg.len, my_reg.dev_id, is_notifier);
 
     /* exchange buffer address via reg entries */
     reg_entries[igroup->rank] = my_reg;
@@ -3212,12 +3215,23 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
                 /* does this need to be a memcpy?? */
                 reg_entries_local[reg_entries_local_count++] = reg_entries[i];
             }
+          printf("p[%d] at 1 reg_entries[i].rank: %d master1: %d master2: %d\n",g_state.rank,
+              reg_entries[i].rank,g_state.master[reg_entries[i].rank],
+              g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
+                g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+                num_progress_ranks_per_node, is_node_ranks_packed)]);
         }
+        /* my master is the same as the master of the notifier */
         else if (g_state.master[reg_entries[i].rank] == 
            g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
            g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
            num_progress_ranks_per_node, is_node_ranks_packed)] )
             {
+          printf("p[%d] reg_entries[i].rank: %d master1: %d master2: %d\n",g_state.rank,
+              reg_entries[i].rank,g_state.master[reg_entries[i].rank],
+              g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
+                g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+                num_progress_ranks_per_node, is_node_ranks_packed)]);
             /* same SMP node, need to mmap */
             /* open remote shared memory object */
             void *memory;
@@ -3238,6 +3252,9 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
 #else
             memory = reg_entries[i].buf;
 #endif
+            printf("p[%d] insert rank: %d buf: %p len: %d dev: %d\n",
+                g_state.rank,reg_entries[i].rank,reg_entries[i].buf,
+                reg_entries[i].len,reg_entries[i].dev_id);
             (void)reg_cache_insert(
                     reg_entries[i].rank,
                     reg_entries[i].buf,
@@ -7186,6 +7203,7 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
         if (NULL != nb->recv_head->stride) {
             stride_t *stride = nb->recv_head->stride;
 #ifdef ENABLE_DEVICE
+            comex_set_local_dev();
             int on_dev = !isHostPointer(stride->ptr);
 #else
             int on_dev = 0;
@@ -7207,6 +7225,7 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
             int off = 0;
             comex_giov_t *iov = nb->recv_head->iov;
 #ifdef ENABLE_DEVICE
+            comex_set_local_dev();
             if (isHostPointer(iov->dst[0])) {
 #endif
             for (i=0; i<iov->count; ++i) {
@@ -7276,7 +7295,9 @@ STATIC int nb_test_for_recv1(nb_t *nb, message_t **save_recv_head,
           if (NULL != nb->recv_head->stride) {
             stride_t *stride = nb->recv_head->stride;
 #if ENABLE_DEVICE
-            int on_dev= !isHostPointer(stride->ptr);
+            int on_dev;
+            comex_set_local_dev();
+            on_dev = !isHostPointer(stride->ptr);
 #else
             int on_dev = 0;
 #endif
@@ -7442,6 +7463,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             g_state.rank, src, dst, bytes, proc, nb);
 #endif
 #ifdef ENABLE_DEVICE
+    comex_set_local_dev();
     on_host = isHostPointer(src);
 #endif
 
@@ -7460,6 +7482,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
               }
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
+                comex_set_local_dev();
                 PROFILE_BEG()
                 copyToDevice(dst, src, bytes);
                 PROFILE_END(t_cpy_to_dev)
@@ -7564,6 +7587,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             if (on_host) {
               (void)memcpy(message+sizeof(header_t), src, bytes);
             } else {
+              comex_set_local_dev();
               PROFILE_BEG()
               copyToHost(message+sizeof(header_t), src, bytes);
               PROFILE_END(t_cpy_to_host)
@@ -7633,6 +7657,7 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != nb);
 #ifdef ENABLE_DEVICE
+    comex_set_local_dev();
     on_host = isHostPointer(dst);
 #endif
     PROFILE_BEG();
@@ -7653,17 +7678,22 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
                 /* copy from device to host */
+                comex_set_local_dev();
                 PROFILE_BEG()
+                  printf("p[%d] self get::copyToHost\n",g_state.rank);
                 copyToHost(dst, src, bytes);
                 PROFILE_END(t_cpy_to_host)
               } else if (reg_entry->use_dev && !on_host) {
                 /* copy from device to device */
+                  printf("p[%d] self get::copyDevToDev\n",g_state.rank);
                 copyDevToDev(dst, src, bytes);
               } else if (!reg_entry->use_dev && !on_host) {
                 /* copy from host to device */
                 comex_set_local_dev();
+                  printf("p[%d] self get::copyToDevice\n",g_state.rank);
                 copyToDevice(dst, src, bytes);
               } else {
+                  printf("p[%d] same get::copyHostToHost\n",g_state.rank);
                 (void)memcpy(dst, src, bytes);
               }
             }
@@ -7699,22 +7729,27 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
             if (reg_entry->use_dev && on_host) {
               PROFILE_BEG()
+                  printf("p[%d] same node get::copyToHost\n",g_state.rank);
               copyToHost(dst, mapped_offset, bytes);
               PROFILE_END(t_cpy_to_host)
               PROFILE_BEG()
               deviceCloseMemHandle(reg_entry->mapped);
               PROFILE_END(t_close_ipc)
             } else if (reg_entry->use_dev && !on_host) {
+                  printf("p[%d] same node get::PeerToPeer\n",g_state.rank);
               copyPeerToPeer(dst, _device_map[g_state.rank],
                   mapped_offset, _device_map[proc], bytes);
               PROFILE_BEG()
               deviceCloseMemHandle(reg_entry->mapped);
               PROFILE_END(t_close_ipc)
             } else if (!reg_entry->use_dev && !on_host) {
+              comex_set_local_dev();
               PROFILE_BEG()
+                  printf("p[%d] same node get::copyToDevice\n",g_state.rank);
               copyToDevice(dst, mapped_offset, bytes);
               PROFILE_END(t_cpy_to_dev)
             } else {
+                  printf("p[%d] same node get::HostToHost\n",g_state.rank);
               (void)memcpy(dst, mapped_offset, bytes);
             }
 #else
@@ -7799,6 +7834,7 @@ STATIC void nb_acc(int datatype, void *scale,
     COMEX_ASSERT(proc < g_state.size);
     COMEX_ASSERT(NULL != nb);
 #ifdef ENABLE_DEVICE
+    comex_set_local_dev();
     on_host = isHostPointer(src);
 #endif
     PROFILE_BEG()
@@ -8020,6 +8056,7 @@ STATIC void nb_acc(int datatype, void *scale,
             (void)memcpy(message+sizeof(header_t), src, bytes);
           } else {
             PROFILE_BEG()
+              comex_set_local_dev();
               copyToHost(message+sizeof(header_t), src, bytes);
             PROFILE_END(t_cpy_to_host)
           }
@@ -8090,7 +8127,9 @@ STATIC void nb_puts(
     int dst_bvalue[7], dst_bunit[7];
 #ifdef ENABLE_DEVICE
     reg_entry_t *reg_entry;
-    int on_host = isHostPointer(src);
+    int on_host;
+    comex_set_local_dev();
+    on_host = isHostPointer(src);
 #endif
     RANGE_PUSH("nb_puts");
     PROFILE_BEG()
@@ -8169,6 +8208,7 @@ STATIC void nb_puts(
          * is on a device, it is on the same device */
         parallelMemcpy(src, src_stride, dst, dst_stride, count, stride_levels);
 #else
+        comex_set_local_dev();
         /* number of n-element of the first dimension */
         n1dim = 1;
         for(i=1; i<=stride_levels; i++) {
@@ -8246,6 +8286,9 @@ STATIC void nb_puts(
           dst_bvalue[i] = 0;
           src_bunit[i] = src_bunit[i-1] * count[i-1];
           dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+        }
+        if (on_host) {
+          comex_set_local_dev();
         }
 
         /* index mangling */
@@ -8350,7 +8393,9 @@ STATIC void nb_puts_packed(
     char *packed_buffer = NULL;
     stride_t stride;
 #ifdef ENABLE_DEVICE
-    int is_dev = !isHostPointer(src);
+    int is_dev;
+    comex_set_local_dev();
+    is_dev = !isHostPointer(src);
 #else
     int is_dev = 0;
 #endif
@@ -8550,7 +8595,9 @@ STATIC void nb_gets(
     int dst_bvalue[7], dst_bunit[7];
 #ifdef ENABLE_DEVICE
     reg_entry_t *reg_entry;
-    int on_host = isHostPointer(dst);
+    int on_host;
+    comex_set_local_dev();
+    on_host = isHostPointer(dst);
 #endif
 
     RANGE_PUSH("nb_gets");
@@ -8748,7 +8795,6 @@ STATIC void nb_gets(
             PROFILE_END(t_cpy_to_dev)
           } else if (reg_entry->use_dev && !on_host) {
             /* device to device */
-            comex_set_local_dev();
             copyPeerToPeer((char*)dst+dst_idx, _device_map[g_state.rank],
                 (char*)mapped_offset+src_idx, _device_map[proc], count[0]);
           } else {
@@ -8825,7 +8871,9 @@ STATIC void nb_gets_packed(
     stride_t stride_src;
     stride_t *stride_dst = NULL;
 #ifdef ENABLE_DEVICE
-    int on_host = isHostPointer(dst);
+    int on_host;
+    comex_set_local_dev();
+    on_host = isHostPointer(dst);
 #endif
 
 #if DEBUG
@@ -9033,7 +9081,9 @@ STATIC void nb_accs(
     int dst_bvalue[7], dst_bunit[7];
 #ifdef ENABLE_DEVICE
     reg_entry_t *reg_entry;
-    int on_host = isHostPointer(src);
+    int on_host;
+    comex_set_local_dev();
+    on_host = isHostPointer(src);
 #endif
 
     RANGE_PUSH("nb_accs");
@@ -9294,7 +9344,9 @@ STATIC void nb_accs_packed(
     char *packed_buffer = NULL;
     stride_t stride;
 #ifdef ENABLE_DEVICE
-    int is_dev = !isHostPointer(src);
+    int is_dev;
+    comex_set_local_dev();
+    is_dev = !isHostPointer(src);
 #else
     int is_dev = -1;
 #endif
@@ -9445,7 +9497,9 @@ STATIC void nb_putv(
     PROFILE_BEG()
     int i = 0;
 #ifdef ENABLE_DEVICE
-    int on_host = isHostPointer(iov[0].src[0]);
+    int on_host;
+    comex_set_local_dev();
+    on_host = isHostPointer(iov[0].src[0]);
 #endif
 
     /* if not a vector put to self, use packed algorithm */
@@ -9476,6 +9530,7 @@ STATIC void nb_putv(
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
                 /* host to device */
+                comex_set_local_dev();
                 for (i=0; i<iov_len; ++i) {
                   src = iov[i].src;
                   dst = iov[i].dst;
@@ -9500,6 +9555,7 @@ STATIC void nb_putv(
                 }
               } else if (!reg_entry->use_dev && !on_host) {
                 /* device to host */
+                comex_set_local_dev();
                 for (i=0; i<iov_len; ++i) {
                   src = iov[i].src;
                   dst = iov[i].dst;
@@ -9598,6 +9654,7 @@ STATIC void nb_putv(
             void *dst0;
             mapped_offset = _get_offset_memory(reg_entry, iov[0].dst[0]);
             dst0 = iov[0].dst[0];
+            comex_set_local_dev();
             for (i=0; i<iov_len; ++i) {
               src = iov[i].src;
               dst = iov[i].dst;
@@ -9672,6 +9729,7 @@ STATIC void nb_putv_packed(comex_giov_t *iov, int proc, nb_t *nb)
     bytes = iov->bytes;
     limit = iov->count;
 #ifdef ENABLE_DEVICE
+    comex_set_local_dev();
     on_host = isHostPointer(src[0]);
 #endif
 
@@ -9765,8 +9823,10 @@ STATIC void nb_getv(
 {
     int i = 0;
 #ifdef ENABLE_DEVICE
-    int on_host = isHostPointer(iov[0].dst[0]);
+    int on_host;
     int devBufID = -1;
+    comex_set_local_dev();
+    on_host = isHostPointer(iov[0].dst[0]);
     if (!on_host) devBufID = getDeviceID(iov[0].dst[0]);
 #endif
 
@@ -9808,7 +9868,9 @@ STATIC void nb_getv(
               }
             } else if (reg_entry->use_dev && !on_host) {
               /* device to device */
-              comex_set_local_dev();
+              if (devBufID == reg_entry->dev_id) {
+                comex_set_local_dev();
+              }
               for (i=0; i<iov_len; ++i) {
                 src = iov[i].src;
                 dst = iov[i].dst;
@@ -10056,7 +10118,9 @@ STATIC void nb_accv(
 {
     int i = 0;
 #ifdef ENABLE_DEVICE
-    int on_host = isHostPointer(iov[0].src[0]);
+    int on_host;
+    comex_set_local_dev();
+    on_host = isHostPointer(iov[0].src[0]);
 #endif
 
     PROFILE_BEG()
@@ -10338,6 +10402,7 @@ STATIC void nb_accv_packed(
     bytes = iov->bytes;
     limit = iov->count;
 #ifdef ENABLE_DEVICE
+    comex_set_local_dev();
     on_host = isHostPointer(src[0]);
 #endif
 

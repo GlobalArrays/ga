@@ -17,7 +17,7 @@
 #define BLOCK1 65536
 */
 #define BLOCK1 65530
-#define DIMSIZE 2048
+#define DIMSIZE 512
 #define SMLDIM 256
 #define MAXCOUNT 10000
 #define MAX_FACTOR 256
@@ -306,6 +306,7 @@ void test_int_array(int on_device, int local_buf_on_device)
     GA_Sync();
     t_sync += (GA_Wtime()-tbeg);
 #endif
+    printf("p[%d] Completed sync for n: %d\n",wrank,n);
 
     /* zero out local buffer */
     if (local_buf_on_device) {
@@ -320,7 +321,9 @@ void test_int_array(int on_device, int local_buf_on_device)
 
     /* copy data from global array to local buffer */
     tbeg = GA_Wtime();
+    printf("p[%d] Calling Get\n",wrank);
     NGA_Get(g_a, lo, hi, buf, &ld);
+    printf("p[%d] Completed Get\n",wrank);
     tget += (GA_Wtime()-tbeg);
     t_get += (GA_Wtime()-tbeg);
     get_cnt += nsize;
@@ -334,7 +337,9 @@ void test_int_array(int on_device, int local_buf_on_device)
         int tnelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
         tbuf = (int*)malloc(tnelem*sizeof(int));
         for (i=0; i<tnelem; i++) tbuf[i] = 0;
+    printf("p[%d] Calling memcpyD2H\n",wrank);
         memcpyD2H(tbuf, buf, tnelem*sizeof(int));
+    printf("p[%d] Completed memcpyD2H\n",wrank);
         for (ii = lo[0]; ii<=hi[0]; ii++) {
           i = ii-lo[0];
           for (jj=lo[1]; jj<=hi[1]; jj++) {
@@ -363,7 +368,9 @@ void test_int_array(int on_device, int local_buf_on_device)
         }
       }
     }
+    printf("p[%d] Completed Get check\n",wrank);
 
+#if 0
     /* reset values in buf */
     if (local_buf_on_device) {
       if (lo[0]<=hi[0] && lo[1]<=hi[1]) {
@@ -395,7 +402,9 @@ void test_int_array(int on_device, int local_buf_on_device)
     /* accumulate data to global array */
     one = 1;
     tbeg = GA_Wtime();
+    printf("p[%d] Calling Acc\n",wrank);
     NGA_Acc(g_a, lo, hi, buf, &ld, &one);
+    printf("p[%d] Completed Acc\n",wrank);
     tacc += (GA_Wtime()-tbeg);
     t_acc += (GA_Wtime()-tbeg);
     tbeg = GA_Wtime();
@@ -470,6 +479,7 @@ void test_int_array(int on_device, int local_buf_on_device)
       }
     }
     t_chk += (GA_Wtime()-tbeg);
+#endif
   }
 
   if (local_buf_on_device) {
@@ -997,6 +1007,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
     buf = (int*)malloc(nsize*sizeof(int));
   }
   ld = 1;
+  printf("p[%d] (test_int_1d_array) Got to 1\n",wrank);
   for (n=0; n<NLOOP; n++) {
     tbeg = GA_Wtime();
     GA_Zero(g_a);
@@ -1015,16 +1026,19 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
       }
     }
     t_chk += (GA_Wtime()-tbeg);
+  printf("p[%d] (test_int_1d_array) Got to 2\n",wrank);
 
     /* copy data to global array */
     tbeg = GA_Wtime();
     NGA_Put(g_a, tlo, thi, buf, &ld);
     tput += (GA_Wtime()-tbeg);
+  printf("p[%d] (test_int_1d_array) Got to 3\n",wrank);
     t_put += (GA_Wtime()-tbeg);
     put_cnt += nsize;
     tbeg = GA_Wtime();
     GA_Sync();
     t_sync += (GA_Wtime()-tbeg);
+  printf("p[%d] (test_int_1d_array) Got to 4\n",wrank);
 
     tbeg = GA_Wtime();
     /* zero out local buffer */
@@ -1042,6 +1056,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
     tbeg = GA_Wtime();
     NGA_Get(g_a, tlo, thi, buf, &ld);
     tget += (GA_Wtime()-tbeg);
+  printf("p[%d] (test_int_1d_array) Got to 5\n",wrank);
     t_get += (GA_Wtime()-tbeg);
     get_cnt += nsize;
     tbeg = GA_Wtime();
@@ -1070,6 +1085,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
         }
       }
     }
+  printf("p[%d] (test_int_1d_array) Got to 6\n",wrank);
 
     /* reset values in buf */
     if (local_buf_on_device) {
@@ -1087,11 +1103,13 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
       }
     }
     t_chk += (GA_Wtime()-tbeg);
+  printf("p[%d] (test_int_1d_array) Got to 7\n",wrank);
 
     /* accumulate data to global array */
     tbeg = GA_Wtime();
     NGA_Acc(g_a, tlo, thi, buf, &ld, &one);
     tacc += (GA_Wtime()-tbeg);
+  printf("p[%d] (test_int_1d_array) Got to 8\n",wrank);
     t_acc += (GA_Wtime()-tbeg);
     acc_cnt += nsize;
     tbeg = GA_Wtime();
@@ -1132,6 +1150,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
       }
     }
     t_chk += (GA_Wtime()-tbeg);
+  printf("p[%d] (test_int_1d_array) Got to 9\n",wrank);
 
     tbeg = GA_Wtime();
     NGA_Get(g_a, tlo, thi, buf, &ld);
@@ -1165,6 +1184,7 @@ void test_int_1d_array(int on_device, int local_buf_on_device)
       }
     } 
     t_chk += (GA_Wtime()-tbeg);
+  printf("p[%d] (test_int_1d_array) Got to 10\n",wrank);
   }
   if (local_buf_on_device) {
     device_free(buf);
@@ -1823,6 +1843,7 @@ int main(int argc, char **argv) {
     printf("\n  1D arrays are of size %d\n",BLOCK1*nprocs);
     printf("\n  Number of loops in each test %d\n\n",NLOOP);
   }
+#if 0
   if (rank == 0) printf("  Testing integer array on device, local buffer on host\n");
   test_int_array(1,0);
   print_bw();
@@ -1853,6 +1874,7 @@ int main(int argc, char **argv) {
       " local buffer on host\n");
   test_dbl_array(0,0);
   print_bw();
+#endif
 
   if (rank == 0) printf("  Testing double precision array on host,"
       " local buffer on device\n");
