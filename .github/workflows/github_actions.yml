@@ -16,7 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-11]
+        os: [ubuntu-20.04, macos-latest]
         experimental: [false]
         mpi_impl:
           - openmpi
@@ -61,7 +61,7 @@ jobs:
             config_opts: --enable-i4 --without-blas --enable-cxx --disable-f77
             f77: gfortran
             cc: gcc
-          - os: macos-11
+          - os: macos-latest
             experimental: true
             mpi_impl: mpich
             armci_network: mpi-pr
@@ -83,14 +83,14 @@ jobs:
             config_opts: "--disable-f77 --enable-cxx"
             f77: gfortran-10
             cc: gcc-10
-          - os: macos-12
+          - os: macos-13
             experimental: true 
             mpi_impl: mpich
             armci_network: mpi-ts
             config_opts: "--disable-static --enable-shared"
             f77: gfortran
             cc: clang
-          - os: macos-12
+          - os: macos-13
             experimental: true
             use_cmake: "Y"
             mpi_impl: mpich
