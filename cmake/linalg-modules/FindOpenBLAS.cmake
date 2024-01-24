@@ -4,13 +4,15 @@ if( "ilp64" IN_LIST OpenBLAS_FIND_COMPONENTS AND "lp64" IN_LIST OpenBLAS_FIND_CO
 endif()
 
 if( OpenBLAS_PREFERS_STATIC )
-  set( OpenBLAS_LIBRARY_NAME "libopenblas.a" )
+  set( OpenBLAS_LP64_LIBRARY_NAME  "libopenblas.a"    )
+  set( OpenBLAS_ILP64_LIBRARY_NAME "libopenblas_64.a" )
 else()
-  set( OpenBLAS_LIBRARY_NAME "openblas" )
+  set( OpenBLAS_LP64_LIBRARY_NAME  "openblas"    )
+  set( OpenBLAS_ILP64_LIBRARY_NAME "openblas_64" )
 endif()
 
 find_library( OpenBLAS_LIBRARIES
-  NAMES ${OpenBLAS_LIBRARY_NAME}
+  NAMES ${OpenBLAS_LP64_LIBRARY_NAME} ${OpenBLAS_ILP64_LIBRARY_NAME}
   HINTS ${OpenBLAS_PREFIX}
   PATHS ${OpenBLAS_LIBRARY_DIR} ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} 
   PATH_SUFFIXES lib lib64 lib32
@@ -21,10 +23,10 @@ find_path( OpenBLAS_INCLUDE_DIR
   NAMES openblas_config.h
   HINTS ${OpenBLAS_PREFIX}
   PATHS ${OpenBLAS_INCLUDE_DIR}
-  PATH_SUFFIXES include
+  PATH_SUFFIXES include include/openblas include/openblas64
   DOC "OpenBLAS header"
 )
-  
+
 #if( OpenBLAS_LIBRARY AND OpenBLAS_PREFERS_STATIC )
 #  include( CMakeFindDependency )
 #  find_package( Threads QUIET )

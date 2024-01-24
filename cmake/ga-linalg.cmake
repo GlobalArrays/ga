@@ -119,9 +119,9 @@ if (ENABLE_BLAS)
 
     if(_blis_essl_set OR ${LINALG_VENDOR} MATCHES "OpenBLAS")
       set(use_openmp OFF)
-      if(_blis_essl_set)
+      # if(_blis_essl_set) #Assume openblas does not have lapack
         set(LAPACK_PREFERENCE_LIST ReferenceLAPACK)
-      endif()
+      # endif()
       if(ENABLE_SCALAPACK)
         set(ScaLAPACK_PREFERENCE_LIST ReferenceScaLAPACK)
       endif()
