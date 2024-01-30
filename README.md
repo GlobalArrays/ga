@@ -428,11 +428,11 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
 * `ENABLE_PROFILING` Build GA operation profiler. Does not work when using Clang compilers. [Default:OFF]
 * `GA_EXTRA_LIBS` Specify additional libraries or linker options when building GA.
 * `GCCROOT` Specify root of GCC installation. Only required when building with Clang compilers.
-* `ENABLE_BLAS` Use an external BLAS library. [Default:ON]
-  * `Note`: Setting `ENABLE_BLAS` to `OFF` builds internal (netlib) `BLAS`.
-  * Only `IntelMKL`, `IBMESSL`, `BLIS`, `OpenBLAS`, `ReferenceBLAS`(Netlib) are supported.
-  * Need to provide the following cmake options if ENABLE_BLAS=ON
-    * `LINALG_VENDOR`: Should be one of `IntelMKL`, `IBMESSL`, `BLIS`, `OpenBLAS`, `ReferenceBLAS`(Netlib) [Default: `BLIS`]
+* `ENABLE_BLAS` Use an external BLAS library. [Default:OFF]
+  * `Note`: `ENABLE_BLAS=OFF` builds internal (netlib) `BLAS`.
+  * Only `IntelMKL`, `IBMESSL`, `BLIS`, `OpenBLAS`, `ReferenceBLAS` (Netlib) are supported.
+  * Need to provide the following cmake options if `ENABLE_BLAS=ON`
+    * `LINALG_VENDOR`: Should be one of `IntelMKL`, `IBMESSL`, `BLIS`, `OpenBLAS`, `ReferenceBLAS` (Netlib)
     * `LINALG_PREFIX`: Specify root of the LinAlg libraries installation. If the various libraries are in different locations, one needs to set
      `BLAS_PREFIX`, `LAPACK_PREFIX`, `ScaLAPACK_PREFIX` individually. These three options are set to the `LINALG_PREFIX` provided by default unless explicitly set otherwise.
     * `LINALG_THREAD_LAYER`: Options are `openmp` (default), `sequential` for `IntelMKL` and `smp` (default) for `IBMESSL`. Does not apply to other BLAS libraries.
