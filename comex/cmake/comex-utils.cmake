@@ -37,11 +37,11 @@ check_function_exists("bzero" HAVE_BZERO)
 # -------------------------------------------------------------
 # figure out what BLAS library looks like
 # -------------------------------------------------------------
-if (NOT ENABLE_BLAS)
-    option (ENABLE_BLAS "Include external BLAS" ON)
+if (NOT GA_ENABLE_BLAS)
+    option (GA_ENABLE_BLAS "Include external BLAS" ON)
 endif()
 INCLUDE( CheckCSourceCompiles )
-if (ENABLE_BLAS)
+if (GA_ENABLE_BLAS)
 set (CMAKE_REQUIRED_LIBRARIES ${BLAS_LIBRARIES})
 
 CHECK_C_SOURCE_COMPILES(

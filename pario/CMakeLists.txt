@@ -34,7 +34,7 @@
 # PARIO header installation
 # -------------------------------------------------------------
 
-if (ENABLE_FORTRAN)
+if (GA_ENABLE_FORTRAN)
   set(DRA_FORTRAN_HEADERS
       dra/dra.fh
       dra/draf2c.h)
@@ -146,7 +146,7 @@ target_include_directories(dra  BEFORE PRIVATE ${PARIO_INC_DIRS})
 target_include_directories(eaf  BEFORE PRIVATE ${PARIO_INC_DIRS})
 target_include_directories(elio BEFORE PRIVATE ${PARIO_INC_DIRS})
 
-if (ENABLE_FORTRAN)
+if (GA_ENABLE_FORTRAN)
   add_dependencies(sf GenerateConfigFH)
   add_dependencies(dra GenerateConfigFH)
   add_dependencies(eaf GenerateConfigFH)

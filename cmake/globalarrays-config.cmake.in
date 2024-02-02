@@ -2,14 +2,14 @@ cmake_minimum_required( VERSION 3.17 FATAL_ERROR)
 
 @PACKAGE_INIT@
 
-set(ENABLE_BLAS       @ENABLE_BLAS@)
-set(ENABLE_CXX        @ENABLE_CXX@)
-set(ENABLE_FORTRAN    @ENABLE_FORTRAN@)
-set(ENABLE_SCALAPACK  @ENABLE_SCALAPACK@)
+set(GA_ENABLE_BLAS       @GA_ENABLE_BLAS@)
+set(GA_ENABLE_CXX        @GA_ENABLE_CXX@)
+set(GA_ENABLE_FORTRAN    @GA_ENABLE_FORTRAN@)
+set(GA_ENABLE_SCALAPACK  @GA_ENABLE_SCALAPACK@)
 set(BUILD_SHARED_LIBS @BUILD_SHARED_LIBS@)
 
 set(GA_MPI_LIBS MPI::MPI_C)
-if(ENABLE_FORTRAN)
+if(GA_ENABLE_FORTRAN)
   enable_language(Fortran)
   set(GA_MPI_LIBS MPI::MPI_Fortran)
 endif()
@@ -19,7 +19,7 @@ if (NOT TARGET Threads::Threads)
   find_package(Threads REQUIRED)
 endif()
 
-if(ENABLE_BLAS)
+if(GA_ENABLE_BLAS)
   list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_LIST_DIR}")
   list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_LIST_DIR}/linalg-cmake-modules")
 
@@ -46,7 +46,7 @@ if(ENABLE_BLAS)
 
   set(ENABLE_DPCPP @ENABLE_DPCPP@)
 
-  if(ENABLE_SCALAPACK)
+  if(GA_ENABLE_SCALAPACK)
     set(ScaLAPACK_PREFIX @ScaLAPACK_PREFIX@)
 
     if(NOT TARGET ScaLAPACK::ScaLAPACK)
@@ -62,7 +62,7 @@ if(ENABLE_BLAS)
     find_package(BLAS REQUIRED)
   endif()
 
-  if(ENABLE_CXX)
+  if(GA_ENABLE_CXX)
     get_filename_component(_ga_la_pp "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
     list(INSERT CMAKE_PREFIX_PATH 0 "${_ga_la_pp}")
 
@@ -76,7 +76,7 @@ if(ENABLE_BLAS)
       find_package(lapackpp REQUIRED)
     endif()
 
-    if(ENABLE_SCALAPACK)
+    if(GA_ENABLE_SCALAPACK)
       if(NOT TARGET scalapackpp::scalapackpp)
         find_package(scalapackpp REQUIRED)
       endif()

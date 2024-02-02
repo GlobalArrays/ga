@@ -1,7 +1,7 @@
 #pragma once
 
-#cmakedefine ENABLE_CXX
-#cmakedefine ENABLE_BLAS
+#cmakedefine GA_ENABLE_CXX
+#cmakedefine GA_ENABLE_BLAS
 
 #cmakedefine BLA_VENDOR_MKL
 #cmakedefine BLA_VENDOR_ESSL
@@ -9,10 +9,10 @@
 #cmakedefine USE_BLIS
 #cmakedefine USE_DPCPP
 
-#if defined(ENABLE_CXX) && defined(ENABLE_BLAS)
+#if defined(GA_ENABLE_CXX) && defined(GA_ENABLE_BLAS)
   #include "lapack.hh"
 #else
-#if defined(ENABLE_BLAS)
+#if defined(GA_ENABLE_BLAS)
 
 #define BLA_LAPACK_INT ${BLA_LAPACK_INT}
 #define BLA_LAPACK_COMPLEX8 ${BLA_LAPACK_COMPLEX8}
@@ -26,6 +26,6 @@
   #include "blis/cblas.h"  
 #endif
 
-#endif //ENABLE_BLAS
+#endif //GA_ENABLE_BLAS
 
-#endif //ENABLE_CXX/BLAS
+#endif //GA_ENABLE_CXX/BLAS

@@ -30,7 +30,7 @@ set(boltz_srcs boltzmann/boltzmann.F
 # add_library(boltz OBJECT ${boltz_srcs})
 # target_include_directories(boltz PRIVATE ${__global_example_incs})
 
-# if (ENABLE_FORTRAN)
+# if (GA_ENABLE_FORTRAN)
 #   ga_add_parallel_test (boltz boltzmann/main.F)
 #   target_include_directories(boltz.x PRIVATE ${__global_example_incs})
 #   target_link_libraries(boltz.x boltz)

@@ -137,11 +137,11 @@ endif()
 # -------------------------------------------------------------
 # figure out what BLAS library looks like
 # -------------------------------------------------------------
-if (NOT DEFINED ENABLE_BLAS)
-option (ENABLE_BLAS "Include external BLAS" ON)
+if (NOT DEFINED GA_ENABLE_BLAS)
+option (GA_ENABLE_BLAS "Include external BLAS" ON)
 endif()
 INCLUDE( CheckCSourceCompiles )
-if (ENABLE_BLAS)
+if (GA_ENABLE_BLAS)
 set (CMAKE_REQUIRED_LIBRARIES "blas ${CMAKE_REQUIRED_LIBRARIES}")
 CHECK_C_SOURCE_COMPILES(
 "

@@ -48,7 +48,7 @@ install (FILES
 # GAF2C library installation
 # -------------------------------------------------------------
 
-if (ENABLE_FORTRAN)
+if (GA_ENABLE_FORTRAN)
   set(FORTRAN_FILES gaf2c.c farg.F)
 endif()
 
@@ -66,6 +66,6 @@ target_include_directories(gaf2c BEFORE PRIVATE
                            ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-if (ENABLE_FORTRAN)
+if (GA_ENABLE_FORTRAN)
   add_dependencies(gaf2c GenerateConfigFH)
 endif()

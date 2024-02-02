@@ -94,7 +94,7 @@ if(LAPACK_FOUND)
   ga_add_parallel_test (ga_lu "ga_lu.c util.c")
 endif()
 
-if (ENABLE_FORTRAN)
+if (GA_ENABLE_FORTRAN)
   ga_add_parallel_test (bin            "bin.F ffflush.F"                    Fortran)
   ga_add_parallel_test (blktest        "blktest.F ffflush.F"                Fortran)
   ga_add_parallel_test (g2test         "g2test.F ffflush.F util.c"          Fortran)

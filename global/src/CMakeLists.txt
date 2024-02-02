@@ -30,7 +30,7 @@
 # file: CMakeLists.txt
 # -------------------------------------------------------------
 
-if (ENABLE_FORTRAN)
+if (GA_ENABLE_FORTRAN)
   set(GA_FORTRAN_INTERFACE_C_FILES
     fapi.c
   )
@@ -43,7 +43,7 @@ if (ENABLE_FORTRAN)
   )
 endif()
 
-if (ENABLE_SCALAPACK)
+if (GA_ENABLE_SCALAPACK)
   set (GA_FORTRAN_INTERFACE_H_FILES
        ${GA_FORTRAN_INTERFACE_H_FILES} scalapack.fh)
   set (GA_FORTRAN_INTERFACE_F_FILES
@@ -51,7 +51,7 @@ if (ENABLE_SCALAPACK)
   set (GA_C_SCALAPACK_WRAPPER ga_diag_seqc.c)
 endif()
 
-if (ENABLE_FORTRAN)
+if (GA_ENABLE_FORTRAN)
   #if (HAVE_LAPACK OR ENABLE_EISPACK)
   set (GA_FORTRAN_INTERFACE_F_FILES
         ${GA_FORTRAN_INTERFACE_F_FILES} ga_diag_seq.F)
@@ -135,7 +135,7 @@ target_include_directories(ga_src BEFORE PRIVATE
                     ${MPI_C_INCLUDE_DIRS}
 )
 
-if(ENABLE_FORTRAN)
+if(GA_ENABLE_FORTRAN)
   add_dependencies(ga_src gaf2c)
 endif()
 

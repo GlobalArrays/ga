@@ -44,7 +44,7 @@ set(LINALG_HEADERS
 # LINALG library installation
 # -------------------------------------------------------------
 
-if (ENABLE_FORTRAN)
+if (GA_ENABLE_FORTRAN)
     set(FORTRAN_FILES
         gal_cgemm.f
         gal_daxpy.f

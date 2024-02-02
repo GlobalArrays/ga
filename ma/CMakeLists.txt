@@ -40,7 +40,7 @@ include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}
 # MA header installation
 # -------------------------------------------------------------
 
-if (ENABLE_FORTRAN)
+if (GA_ENABLE_FORTRAN)
   set(FORTRAN_HEADERS maf2c.fh ${CMAKE_CURRENT_BINARY_DIR}/mafdecls.fh)
 endif()
 
@@ -66,7 +66,7 @@ install (FILES
 # MA library installation
 # -------------------------------------------------------------
 
-if (ENABLE_FORTRAN)
+if (GA_ENABLE_FORTRAN)
   set(FORTRAN_FILES f2c.c maf.F)
 endif()
 
@@ -78,7 +78,7 @@ add_library(ma OBJECT
   ${FORTRAN_FILES}
 )
 
-if(ENABLE_FORTRAN)
+if(GA_ENABLE_FORTRAN)
   add_dependencies(ma gaf2c)
 endif()
 
@@ -87,7 +87,7 @@ endif()
 # -------------------------------------------------------------
 
 if(ENABLE_TESTS)
-  if (ENABLE_FORTRAN)
+  if (GA_ENABLE_FORTRAN)
     ga_add_parallel_test(ma/testf testf.F Fortran)
     set_tests_properties(ma/testf PROPERTIES WILL_FAIL TRUE)
   endif()

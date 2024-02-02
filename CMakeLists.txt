@@ -39,19 +39,19 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/linalg-module
 message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
 include(ga-utils)
 
-ga_option(ENABLE_CXX ON)
-ga_option(ENABLE_FORTRAN ON)
-ga_option(ENABLE_COVERAGE OFF)
+ga_option(GA_ENABLE_CXX ON)
+ga_option(GA_ENABLE_FORTRAN ON)
+ga_option(GA_ENABLE_COVERAGE OFF)
 ga_option(CMAKE_CXX_EXTENSIONS OFF)
 
 set(NOFORT 1)
 set(ENABLE_F77 0)
 
-if(ENABLE_CXX)
+if(GA_ENABLE_CXX)
   enable_language(CXX)
 endif()
 
-if (ENABLE_FORTRAN)
+if (GA_ENABLE_FORTRAN)
   enable_language(Fortran)
   set(NOFORT 0)
   set(ENABLE_F77 1)
@@ -63,8 +63,8 @@ ga_option(ENABLE_TESTS ON)
 ga_option(ENABLE_PROFILING OFF)
 ga_option(ENABLE_SYSV OFF)
 #Options for user provided LinAlg libraries
-ga_option(ENABLE_BLAS OFF)
-ga_option(ENABLE_SCALAPACK OFF)
+ga_option(GA_ENABLE_BLAS OFF)
+ga_option(GA_ENABLE_SCALAPACK OFF)
 ga_option(ENABLE_EISPACK OFF)
 ga_option(ENABLE_DPCPP OFF)
 ga_option(ENABLE_DEV_MODE OFF)
@@ -76,14 +76,14 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include(${PROJECT_SOURCE_DIR}/cmake/ga-compiler-options.cmake)
 
-if(ENABLE_BLAS)
-  if(NOT ENABLE_FORTRAN)
-    message(FATAL_ERROR "ENABLE_BLAS=ON needs ENABLE_FORTRAN=ON")
+if(GA_ENABLE_BLAS)
+  if(NOT GA_ENABLE_FORTRAN)
+    message(FATAL_ERROR "GA_ENABLE_BLAS=ON needs GA_ENABLE_FORTRAN=ON")
   endif()  
 endif()
 
-if(MSVC AND ENABLE_FORTRAN)
-  message(FATAL_ERROR "MSVC build needs ENABLE_FORTRAN=OFF")
+if(MSVC AND GA_ENABLE_FORTRAN)
+  message(FATAL_ERROR "MSVC build needs GA_ENABLE_FORTRAN=OFF")
 endif()
 
 if(ENABLE_PROFILING)
@@ -118,12 +118,12 @@ message(STATUS "Checking MPI ...")
 find_package (MPI REQUIRED)
 set(GA_EXTRA_LIBS ${GA_EXTRA_LIBS} MPI::MPI_C)
 
-if(ENABLE_COVERAGE)
+if(GA_ENABLE_COVERAGE)
   add_compile_options(--coverage)
   list(APPEND GA_EXTRA_LIBS --coverage)
 endif()
 
-if(ENABLE_FORTRAN)
+if(GA_ENABLE_FORTRAN)
   #macos fix for clang+gfortran build
   #linking MPI::MPI_Fortran adds the flag to clang compile line
   if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
@@ -139,7 +139,7 @@ endif()
 
 include(${PROJECT_SOURCE_DIR}/cmake/ga-checks.cmake)
 
-if (ENABLE_FORTRAN)
+if (GA_ENABLE_FORTRAN)
   include( FortranCInterface )
   FortranCInterface_HEADER(${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h MACRO_NAMESPACE F77_FUNC_)
 else()
@@ -162,14 +162,14 @@ if (CMAKE_SYSTEM_NAME STREQUAL Linux)
   set(LINUX64 1)
 endif()
 
-set(USE_I8 OFF)
+set(GA_USE_I8 OFF)
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-  set(USE_I8 ON)
+  set(GA_USE_I8 ON)
   set(BLAS_SIZE 8)
 endif()
 
-option (ENABLE_I8 "Use 8 byte Fortran integers" ${USE_I8})
-message(STATUS "void size: ${CMAKE_SIZEOF_VOID_P}, USE_I8: ${USE_I8}, ENABLE_I8: ${ENABLE_I8}")
+option (GA_ENABLE_I8 "Use 8 byte Fortran integers" ${GA_USE_I8})
+message(STATUS "void size: ${CMAKE_SIZEOF_VOID_P}, GA_USE_I8: ${GA_USE_I8}, GA_ENABLE_I8: ${GA_ENABLE_I8}")
 
 include(${PROJECT_SOURCE_DIR}/cmake/ga-linalg.cmake)
 
@@ -200,7 +200,7 @@ set (HAVE_ARMCI_INITIALIZED 1)
 # use for cross-compilation situations
 option (CHECK_COMPILATION_ONLY "Check compilation only" OFF)
 
-if (ENABLE_FORTRAN)
+if (GA_ENABLE_FORTRAN)
   message(STATUS "CMAKE_Fortran_COMPILER: ${CMAKE_Fortran_COMPILER}")
   message(STATUS "CMAKE_Fortran_COMPILER_ID: ${CMAKE_Fortran_COMPILER_ID}")
   set (F90_MODULE )
@@ -268,7 +268,7 @@ if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
 endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-  if(ENABLE_CXX) 
+  if(GA_ENABLE_CXX)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       add_compile_options(-fno-aggressive-loop-optimizations)
     endif()
@@ -287,7 +287,7 @@ set (CM_SIZEOF_F77_INTEGER 4)
 set (F2C_INTEGER_C_TYPE int)
 set (F2C_REAL_C_TYPE float)
 set (F2C_DOUBLE_PRECISION_C_TYPE double)
-if (ENABLE_I8)
+if (GA_ENABLE_I8)
   set (CM_SIZEOF_F77_INTEGER 8)
   set (F2C_INTEGER_C_TYPE long)
   set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${FORTRAN_I8_FLAG}")
@@ -321,7 +321,7 @@ CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/mafdecls.fh.in
 CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/global/src/global.fh.in
                 ${CMAKE_CURRENT_BINARY_DIR}/global/src/global.fh )
 
-if (ENABLE_FORTRAN)
+if (GA_ENABLE_FORTRAN)
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/config.fh
     COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_BINARY_DIR}/config.h" -D OUTPUT:PATH="${CMAKE_CURRENT_BINARY_DIR}/config.fh" -P ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.cmake DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/config.h
@@ -344,7 +344,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 list(APPEND GA_EXTRA_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
-if(NOT ENABLE_FORTRAN OR BUILD_SHARED_LIBS)
+if(NOT GA_ENABLE_FORTRAN OR BUILD_SHARED_LIBS)
   if(NOT MSVC)
     list(APPEND GA_EXTRA_LIBS m)
   endif()
@@ -355,7 +355,7 @@ if(NOT "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Darwin")
   endif()
 endif()
 
-if(ENABLE_BLAS)
+if(GA_ENABLE_BLAS)
   list(APPEND GA_EXTRA_LIBS ${linalg_lib})
   add_compile_options(${BLAS_COMPILE_OPTIONS})
   add_compile_definitions(${BLAS_COMPILE_DEFINITIONS})
@@ -366,7 +366,7 @@ if(ENABLE_PROFILING)
   set(ga_profiler $<TARGET_OBJECTS:ga_tools>)
 endif()
 
-if(ENABLE_BLAS)
+if(GA_ENABLE_BLAS)
   include_directories(LinAlg/lapack+blas)
 else()
   set(ga_ref_blas $<TARGET_OBJECTS:linalg>)
@@ -393,7 +393,7 @@ target_include_directories(ga
     $<INSTALL_INTERFACE:include>
     $<INSTALL_INTERFACE:include/ga>
 )
-if(ENABLE_BLAS)
+if(GA_ENABLE_BLAS)
   target_include_directories(ga
     INTERFACE
       $<INSTALL_INTERFACE:${BLAS_INCLUDE_DIRS}>
@@ -422,13 +422,13 @@ endif()
 # -------------------------------------------------------------
 add_subdirectory(global/src)
 add_subdirectory(comex)
-if(ENABLE_CXX)
+if(GA_ENABLE_CXX)
 add_subdirectory(ga++)
 endif()
 add_subdirectory(ma)
 add_subdirectory(pario)
 add_subdirectory(gaf2c)
-if(NOT ENABLE_BLAS)
+if(NOT GA_ENABLE_BLAS)
   add_subdirectory(LinAlg/lapack+blas)
 endif()
 
@@ -493,7 +493,7 @@ install(FILES
     DESTINATION ${INSTALL_CONFIGDIR}
 )
 
-if(ENABLE_BLAS)
+if(GA_ENABLE_BLAS)
   install_linalg_modules (INSTALL_CONFIGDIR)
   #FIXME: Not sure why this file is not installed via ExternalProject build of GA.
   install(FILES

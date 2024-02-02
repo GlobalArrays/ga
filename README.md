@@ -415,8 +415,8 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
 
 ### The following options are supported:
 
-* `ENABLE_CXX` [Default:ON]
-* `ENABLE_FORTRAN` [Default:ON]
+* `GA_ENABLE_CXX` [Default:ON]
+* `GA_ENABLE_FORTRAN` [Default:ON]
 * `ENABLE_TESTS` Build GA testsuite. [Default:ON]
 * `GA_RUNTIME` [Default: MPI_2SIDED] Options are
   * MPI_2SIDED (Default) use simple MPI-2 sided runtime
@@ -428,17 +428,17 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
 * `ENABLE_PROFILING` Build GA operation profiler. Does not work when using Clang compilers. [Default:OFF]
 * `GA_EXTRA_LIBS` Specify additional libraries or linker options when building GA.
 * `GCCROOT` Specify root of GCC installation. Only required when building with Clang compilers.
-* `ENABLE_BLAS` Use an external BLAS library. [Default:OFF]
-  * `Note`: `ENABLE_BLAS=OFF` builds internal (netlib) `BLAS`.
+* `GA_ENABLE_BLAS` Use an external BLAS library. [Default:OFF]
+  * `Note`: `GA_ENABLE_BLAS=OFF` builds internal (netlib) `BLAS`.
   * Only `IntelMKL`, `IBMESSL`, `BLIS`, `OpenBLAS`, `ReferenceBLAS` (Netlib) are supported.
-  * Need to provide the following cmake options if `ENABLE_BLAS=ON`
+  * Need to provide the following cmake options if `GA_ENABLE_BLAS=ON`
     * `LINALG_VENDOR`: Should be one of `IntelMKL`, `IBMESSL`, `BLIS`, `OpenBLAS`, `ReferenceBLAS` (Netlib)
     * `LINALG_PREFIX`: Specify root of the LinAlg libraries installation. If the various libraries are in different locations, one needs to set
      `BLAS_PREFIX`, `LAPACK_PREFIX`, `ScaLAPACK_PREFIX` individually. These three options are set to the `LINALG_PREFIX` provided by default unless explicitly set otherwise.
     * `LINALG_THREAD_LAYER`: Options are `openmp` (default), `sequential` for `IntelMKL` and `smp` (default) for `IBMESSL`. Does not apply to other BLAS libraries.
     * `LINALG_REQUIRED_COMPONENTS`: Options are `lp64` or `ilp64`. [Default:lp64]
     * `LINALG_OPTIONAL_COMPONENTS`: `sycl` [Default:none]
-    * `ENABLE_SCALAPACK`: To enable ScaLAPACK discovery.
+    * `GA_ENABLE_SCALAPACK`: To enable ScaLAPACK discovery.
 * `[OPTIONAL]` CTEST options for handling different types of job launchers and their parameters.
    * `GA_JOB_LAUNCH_CMD`: `mpirun`
    * `GA_JOB_LAUNCH_ARGS`: `"-n 5"`
@@ -464,18 +464,18 @@ The CMake build only supports the MPI-based runtimes so GA can only be built usi
     ```
     CC=gcc CXX=g++ FC=gfortran cmake -DCMAKE_INSTALL_PREFIX=$HOME/ga_install \ 
     -DGA_RUNTIME=MPI_PROGRESS_RANK \
-    -DENABLE_BLAS=ON -DLINALG_VENDOR=IntelMKL -DLINALG_PREFIX=/opt/intel/mkl \
-    -DENABLE_TESTS=ON -DENABLE_CXX=ON -DENABLE_FORTRAN=ON -DENABLE_PROFILING=OFF  
+    -DGA_ENABLE_BLAS=ON -DLINALG_VENDOR=IntelMKL -DLINALG_PREFIX=/opt/intel/mkl \
+    -DENABLE_TESTS=ON -DGA_ENABLE_CXX=ON -DGA_ENABLE_FORTRAN=ON -DENABLE_PROFILING=OFF
     ```
 
 
 - Sample CMake invocation for Windows users. 
-  * `ENABLE_FORTRAN=OFF` option is needed for Windows build.
+  * `GA_ENABLE_FORTRAN=OFF` option is needed for Windows build.
   * We do not recommend using the `BLAS` and `PROFILING` options as they are not tested for Windows builds.
 
    ```
     cmake ^
-       -D ENABLE_FORTRAN=OFF ^
+       -D GA_ENABLE_FORTRAN=OFF ^
        -D GA_RUNTIME=MPI_2SIDED ^
        -D CMAKE_INSTALL_PREFIX:PATH="\my\GA\install\path" ^
        ..
