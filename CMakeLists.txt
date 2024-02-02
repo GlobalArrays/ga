@@ -393,6 +393,7 @@ target_include_directories(ga
     $<INSTALL_INTERFACE:include>
     $<INSTALL_INTERFACE:include/ga>
 )
+
 if(ENABLE_BLAS)
   target_include_directories(ga
     INTERFACE
@@ -441,6 +442,12 @@ if(ENABLE_TESTS)
   add_subdirectory(global/examples)
 endif()
 
+foreach (bip ${GA_HEADER_PATHS})
+  target_include_directories(ga
+    INTERFACE
+      $<BUILD_INTERFACE:${bip}>
+  )
+endforeach()
 
 # --------------------------------------
 # Global Arrays installation
@@ -506,7 +513,7 @@ endif()
 list(REMOVE_AT CMAKE_MODULE_PATH 0)
 list(REMOVE_AT CMAKE_MODULE_PATH 0)
 
-# export(EXPORT globalarrays-targets
-#     FILE ${CMAKE_CURRENT_BINARY_DIR}/globalarrays-targets.cmake
-#     NAMESPACE GlobalArrays::)
-
+# Export build tree
+export(EXPORT globalarrays-targets
+      NAMESPACE GlobalArrays::
+      FILE "${PROJECT_BINARY_DIR}/globalarrays-targets.cmake")
