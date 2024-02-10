@@ -26,6 +26,7 @@
 
 
 /* world group state */
+#ifdef MPI_COMM_NULL
 comex_group_world_t g_state = {
     MPI_COMM_NULL,
     MPI_GROUP_NULL,
@@ -37,6 +38,9 @@ comex_group_world_t g_state = {
     -1,
     -1
 };
+#else
+comex_group_world_t g_state = {0};
+#endif
 /* the HEAD of the group linked list */
 comex_igroup_t *group_list = NULL;
 

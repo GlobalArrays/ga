@@ -11,7 +11,11 @@ extern void exit(int status);
 #include "armci.h"
 
 char     tcgmsg_err_string[ERR_STR_LEN];
+#ifdef MPI_COMM_WORLD
 MPI_Comm TCGMSG_Comm=MPI_COMM_WORLD;
+#else
+MPI_Comm TCGMSG_Comm;
+#endif
 int      _tcg_initialized=0;
 long  DEBUG_;
 int      SR_parallel; 
@@ -141,6 +145,9 @@ void tcgi_alt_pbegin(int *argc, char **argv[])
         MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &provided);
 #else
         MPI_Init(argc, argv);
+#endif
+#ifndef MPI_COMM_WORLD
+        TCGMSG_Comm=MPI_COMM_WORLD;
 #endif
 #if defined(MPI_VERSION) && (MPI_VERSION >= 2)
         MPI_Comm_set_errhandler(TCGMSG_Comm, MPI_ERRORS_RETURN);
