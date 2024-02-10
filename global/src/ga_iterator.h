@@ -31,6 +31,7 @@ typedef struct {
   Integer blk_size[MAXDIM];
   Integer proc_index[MAXDIM];
   Integer index[MAXDIM];
+  Integer no_data;
 } _iterator_hdl;
 
 #if 0
