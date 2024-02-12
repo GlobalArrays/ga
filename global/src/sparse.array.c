@@ -1275,8 +1275,8 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
   if (adim != SPA[s_hdl].jdim) {
     pnga_error("length of A must equal second dimension of sparse matrix",adim);
   }
-  if (vdim != SPA[s_hdl].jdim) {
-    pnga_error("length of V must equal second dimension of sparse matrix",vdim);
+  if (vdim != SPA[s_hdl].idim) {
+    pnga_error("length of V must equal first dimension of sparse matrix",vdim);
   }
   if (atype != SPA[s_hdl].type || vtype != SPA[s_hdl].type) {
     pnga_error("Data type of sparse matrix and A and V vectors must match",
@@ -1830,7 +1830,6 @@ void pnga_sprs_array_export(Integer s_a, const char* file)
     }
     fclose(SPRS);
   }
-  free(istart);
   free(ilo);
   free(ihi);
   free(nblock);
