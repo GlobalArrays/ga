@@ -206,7 +206,7 @@ extern void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *ski
                              void *buf, Integer *ld);
 extern void pnga_sync();
 extern DoublePrecision pnga_wtime();
-extern DoublePrecision pnga_ran(long idum);
+extern DoublePrecision pnga_rand(Integer idum);
 
 /* Routines from datatypes.c */
 extern Integer pnga_type_f2c(Integer type);

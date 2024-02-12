@@ -1817,6 +1817,17 @@ float GA_Fdot(int g_a, int g_b)
     return sum;
 }    
 
+double GA_Rand(int iseed)
+{
+    Integer seed = (Integer)seed;
+    return wnga_rand(seed);
+}
+
+double NGA_Rand(int iseed)
+{
+    Integer seed = (Integer)seed;
+    return wnga_rand(seed);
+}
 
 void GA_Randomize(int g_a, void *value)
 {
@@ -5082,18 +5093,6 @@ double GA_Wtime()
 double NGA_Wtime()
 {
     return (double)wnga_wtime();
-}
-
-double GA_Ran(int idum)
-{
-    long ldum = (long)idum;
-    return (double)wnga_ran(ldum);
-}
-
-double NGA_Ran(int idum)
-{
-    long ldum = (long)idum;
-    return (double)wnga_ran(ldum);
 }
 
 void GA_Set_debug(int flag)

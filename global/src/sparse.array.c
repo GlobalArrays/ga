@@ -1146,8 +1146,8 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
   if (adim != SPA[s_hdl].jdim) {
     pnga_error("length of A must equal second dimension of sparse matrix",adim);
   }
-  if (vdim != SPA[s_hdl].jdim) {
-    pnga_error("length of V must equal second dimension of sparse matrix",vdim);
+  if (vdim != SPA[s_hdl].idim) {
+    pnga_error("length of V must equal first dimension of sparse matrix",vdim);
   }
   if (atype != SPA[s_hdl].type || vtype != SPA[s_hdl].type) {
     pnga_error("Data type of sparse matrix and A and V vectors must match",
@@ -1338,9 +1338,7 @@ void pnga_sprs_array_export(Integer s_a, const char* file)
   Integer nlen_data;
   Integer nlen_j;
   Integer nlen_i;
-  Integer dim;
-  Integer type_t;
-  Integer tcnt;
+  Integer irow;
   int idx_size = SPA[hdl].idx_size;
   void *vptr;
   void *iptr;
@@ -1348,7 +1346,7 @@ void pnga_sprs_array_export(Integer s_a, const char* file)
   Integer lo, hi, ld;
   char op[2];
   FILE *SPRS;
-  int *ilo, *ihi;
+  int *ilo, *ihi, *nblock;
   Integer me = pnga_pgroup_nodeid(SPA[hdl].grp);
   Integer nprocs = pnga_pgroup_nnodes(SPA[hdl].grp);
   Integer iproc, iblock;
@@ -1357,51 +1355,48 @@ void pnga_sprs_array_export(Integer s_a, const char* file)
   int icnt;
   Integer g_blks;
   Integer one = 1;
+  Integer total;
+  int *blkmap;
+  int *blkoffset;
+  int *blksize;
 
   /* find low and hi row indices on each processor */
   ilo = (int*)malloc(nprocs*sizeof(int));
   ihi = (int*)malloc(nprocs*sizeof(int));
+  nblock = (int*)malloc(nprocs*sizeof(int));
   for (iproc=0; iproc<nprocs; iproc++) {
     ilo[iproc] = 0;
     ihi[iproc] = 0;
+    nblock[iproc] = 0;
   }
   ilo[me] = (int)SPA[hdl].ilo;
   ihi[me] = (int)SPA[hdl].ihi;
+  nblock[me] = (int)SPA[hdl].nblocks;
   op[0] = '+';
   op[1] = '\0';
   pnga_pgroup_gop(SPA[hdl].grp,C_INT,ilo,nprocs,op);
   pnga_pgroup_gop(SPA[hdl].grp,C_INT,ihi,nprocs,op);
-
-  /* find proc indices of non-zero column blocks on each processor */
-  istart = (int*)malloc((nprocs+1)*sizeof(int));
-  for (iproc=0; iproc<nprocs+1; iproc++) {
-    istart[iproc] = 0;
+  pnga_pgroup_gop(SPA[hdl].grp,C_INT,nblock,nprocs,op);
+  /* construct a map of all blocks */
+  nblocks = 0;
+  blkoffset = (int*)malloc(nprocs*sizeof(int));
+  for (iproc=0; iproc<nprocs; iproc++) nblocks += nblock[iproc];
+  blkmap = (int*)malloc(nblocks*sizeof(int));
+  blksize = (int*)malloc(nblocks*sizeof(int));
+  blkoffset[0] = 0;
+  for (iproc=1; iproc<nprocs; iproc++) {
+    blkoffset[iproc] = blkoffset[iproc-1]+nblock[iproc-1];
   }
-  istart[me] = (int)SPA[hdl].nblocks;
-  pnga_pgroup_gop(SPA[hdl].grp,C_INT,istart,nprocs,op);
-  {
-    int ilast = 0;
-    icnt = 0;
-    for (iproc=0; iproc<nprocs; iproc++) {
-      icnt += ilast;
-      ilast = istart[iproc];
-      istart[iproc] = (int)icnt;
-    }
-    icnt += ilast;
-    istart[nprocs] = icnt;
+  for (iproc=0; iproc<nblocks; iproc++) {
+    blkmap[iproc] = 0;
+    blksize[iproc] = 0;
   }
-    
-  g_blks = pnga_create_handle();
-  lo = (Integer)icnt;
-  pnga_set_data(g_blks,one,&lo,MT_F_INT);
-  pnga_set_pgroup(g_blks,SPA[hdl].grp);
-  pnga_allocate(g_blks);
-  /* assign non-zero blocks to g_blks */
-  lo = (Integer)(istart[me]+1);
-  hi = (Integer)istart[me+1];
-  pnga_put(g_blks,&lo,&hi,SPA[hdl].blkidx,&one);
-  pnga_pgroup_sync(SPA[hdl].grp);
-
+  for (iproc=0; iproc<nblock[me]; iproc++) {
+    blkmap[iproc+blkoffset[me]] = SPA[hdl].blkidx[iproc];
+    blksize[iproc+blkoffset[me]] = SPA[hdl].blksize[iproc];
+  }
+  pnga_pgroup_gop(SPA[hdl].grp,C_INT,blkmap,nblocks,op);
+  pnga_pgroup_gop(SPA[hdl].grp,C_INT,blksize,nblocks,op);
   /* format print statement */
   if (idx_size == 4) {
     strncpy(frmt,"\%d \%d",5);
@@ -1428,20 +1423,17 @@ void pnga_sprs_array_export(Integer s_a, const char* file)
   cptr[0] = '\n';
   cptr++;
   cptr[0] = '\0';
-  tcnt = 0;
 
   if (me == 0) {
     /* open file */
     SPRS = fopen(file,"w");
-    /* Loop over all processors */
+    /* Loop over all row blocks */
     for (iproc = 0; iproc<nprocs; iproc++) {
       /* find out how much data is on each process, allocate
        * local buffers to hold it and copy data to local buffer */
       /* Copy data from global arrays to local buffers */
-      Integer iilo, iihi;
+      Integer iilo, iihi, istride, ioffset, itop;
       int ibl;
-      Integer *blkptr;
-      Integer count;
       ld = 1;
       pnga_distribution(SPA[hdl].g_data, iproc, &lo, &hi);
       nlen_data = hi-lo+1;
@@ -1458,92 +1450,79 @@ void pnga_sprs_array_export(Integer s_a, const char* file)
       jptr = malloc(nlen_j*idx_size);
       pnga_get(SPA[hdl].g_j,&lo,&hi,jptr,&ld);
 
-      nblocks = SPA[hdl].nblocks;
-      /* loop over column blocks in row block */
-      blkptr = (Integer*)malloc(nblocks*sizeof(Integer));
-      lo = (Integer)(istart[iproc]+1);
-      hi = (Integer)istart[iproc+1];
-      pnga_get(g_blks,&lo,&hi,blkptr,&one);
-      offset = 0;
-      count = 0;
-      for (ibl = 0; ibl<nblocks; ibl++) {
-        Integer joffset = count;
-        iblock = blkptr[ibl];
-        /* write out data to file */
-        /* loop over rows on processor iproc */
-        iilo = ilo[iproc];
-        iihi = ihi[iproc];
-        nlen_i = iihi-iilo+1;
-        /* iilo = ilo[iblock]; */
-        if (idx_size == 4) {
-          int i, j;
-          Integer *idx = (Integer*)iptr;
-          Integer *jdx = (Integer*)jptr;
-          for (i=0; i<nlen_i; i++) {
-            int tlo = idx[i+offset];
-            int thi = idx[i+offset+1];
-            count += (Integer)(thi-tlo);
-            for (j=tlo; j<thi; j++) {
+      nblocks = nblock[iproc];
+      /* loop over rows. Not the most efficient way of printing out information
+       * but makes output slightly neater */
+      istride = ihi[iproc]-ilo[iproc]+2;
+      for (irow = 0; irow<(ihi[iproc]-ilo[iproc]+1); irow++) {
+        int loffset = 0;
+        iilo = irow+ilo[iproc];
+        for (ibl = 0; ibl<nblocks; ibl++) {
+          Integer j, k;
+          Integer jlo, jhi, nblk;
+          nblk = (Integer)blkmap[blkoffset[iproc]+ibl];
+          pnga_sprs_array_column_distribution(s_a,nblk,&jlo,&jhi);
+          ioffset = ibl*istride+irow;
+          if (idx_size == 4) {
+            int *idx = (int*)iptr;
+            int *jdx = (int*)jptr+loffset;
+            int tlo = idx[ioffset];
+            int thi = idx[ioffset+1];
+            for (k=tlo; k<thi; k++) {
               if (type == C_FLOAT) {
-                float val = ((float*)vptr)[j+joffset];
-                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
+                float val = ((float*)vptr)[k+loffset];
+                fprintf(SPRS,frmt,iilo,jdx[k],val);
               } else if (type == C_DBL) {
-                double val = ((double*)vptr)[j+joffset];
-                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
+                double val = ((double*)vptr)[k+loffset];
+                fprintf(SPRS,frmt,iilo,jdx[k],val);
               } else if (type == C_INT) {
-                int val = ((int*)vptr)[j];
-                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
+                int val = ((int*)vptr)[k+loffset];
+                fprintf(SPRS,frmt,iilo,jdx[k],val);
               } else if (type == C_LONG) {
-                int64_t val = ((int64_t*)vptr)[j+joffset];
-                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
+                int64_t val = ((int64_t*)vptr)[k+loffset];
+                fprintf(SPRS,frmt,iilo,jdx[k],val);
               } else if (type == C_SCPL) {
-                float rval = ((float*)vptr)[2*(j+joffset)];
-                float ival = ((float*)vptr)[2*(j+joffset)+1];
-                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],rval,ival);
+                float rval = ((float*)vptr)[2*k+loffset];
+                float ival = ((float*)vptr)[2*k+1+loffset];
+                fprintf(SPRS,frmt,iilo,jdx[k],rval,ival);
               } else if (type == C_DCPL) {
-                double rval = ((double*)vptr)[2*(j+joffset)];
-                double ival = ((double*)vptr)[2*(j+joffset)+1];
-                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],rval,ival);
+                double rval = ((double*)vptr)[2*k+loffset];
+                double ival = ((double*)vptr)[2*k+1+loffset];
+                fprintf(SPRS,frmt,iilo,jdx[k],rval,ival);
+              }
+            }
+          } else {
+            int64_t *idx = (int64_t*)iptr;
+            int64_t *jdx = (int64_t*)jptr+loffset;
+            int64_t tlo = idx[ioffset];
+            int64_t thi = idx[ioffset+1];
+            for (k=tlo; k<thi; k++) {
+              if (type == C_FLOAT) {
+                float val = ((float*)vptr)[k+loffset];
+                fprintf(SPRS,frmt,iilo,jdx[k],val);
+              } else if (type == C_DBL) {
+                double val = ((double*)vptr)[k+loffset];
+                fprintf(SPRS,frmt,iilo,jdx[k],val);
+              } else if (type == C_INT) {
+                int val = ((int*)vptr)[k+loffset];
+                fprintf(SPRS,frmt,iilo,jdx[k],val);
+              } else if (type == C_LONG) {
+                int64_t val = ((int64_t*)vptr)[k+loffset];
+                fprintf(SPRS,frmt,iilo,jdx[k],val);
+              } else if (type == C_SCPL) {
+                float rval = ((float*)vptr)[2*k+loffset];
+                float ival = ((float*)vptr)[2*k+1+loffset];
+                fprintf(SPRS,frmt,iilo,jdx[k],rval,ival);
+              } else if (type == C_DCPL) {
+                double rval = ((double*)vptr)[2*k+loffset];
+                double ival = ((double*)vptr)[2*k+1+loffset];
+                fprintf(SPRS,frmt,iilo,jdx[k],rval,ival);
               }
             }
           }
-        } else {
-          int64_t i, j;
-          int64_t *idx = (int64_t*)iptr;
-          int64_t *jdx = (int64_t*)jptr;
-          for (i=0; i<nlen_i; i++) {
-            int64_t tlo = idx[i+offset];
-            int64_t thi = idx[i+offset+1];
-            count += (Integer)(thi-tlo);
-            for (j=tlo; j<thi; j++) {
-              if (type == C_FLOAT) {
-                float val = ((float*)vptr)[j+joffset];
-                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
-              } else if (type == C_DBL) {
-                double val = ((double*)vptr)[j+joffset];
-                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
-              } else if (type == C_INT) {
-                int val = ((int*)vptr)[j];
-                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
-              } else if (type == C_LONG) {
-                int64_t val = ((int64_t*)vptr)[j+joffset];
-                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],val);
-              } else if (type == C_SCPL) {
-                float rval = ((float*)vptr)[2*(j+joffset)];
-                float ival = ((float*)vptr)[2*(j+joffset)+1];
-                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],rval,ival);
-              } else if (type == C_DCPL) {
-                double rval = ((double*)vptr)[2*(j+joffset)];
-                double ival = ((double*)vptr)[2*(j+joffset)+1];
-                fprintf(SPRS,frmt,i+iilo,jdx[j+joffset],rval,ival);
-              }
-            }
-          }
+          loffset += blksize[blkoffset[iproc]+ibl];
         }
-        offset += (nlen_i+1);
       }
-      free(blkptr);
-
       /* free local buffers */
       free(vptr);
       free(jptr);
@@ -1551,9 +1530,11 @@ void pnga_sprs_array_export(Integer s_a, const char* file)
     }
     fclose(SPRS);
   }
-  free(istart);
   free(ilo);
   free(ihi);
+  free(nblock);
+  free(blkmap);
+  free(blksize);
   pnga_pgroup_sync(SPA[hdl].grp);
 }
 
