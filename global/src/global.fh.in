@@ -51,7 +51,7 @@
       integer          ga_pgroup_nodeid
       integer          ga_pgroup_split
       integer          ga_pgroup_split_irreg
-      double precision ga_ran
+      double precision ga_rand
       integer          ga_read_inc
       real             ga_sdot
       real             ga_sdot_patch
@@ -131,7 +131,7 @@
       integer          nga_pgroup_nodeid
       integer          nga_pgroup_split
       integer          nga_pgroup_split_irreg
-      double precision nga_ran
+      double precision nga_rand
       integer          nga_read_inc
       integer          nga_register_type
       real             nga_sdot
@@ -208,7 +208,7 @@
       external ga_pgroup_nodeid
       external ga_pgroup_split
       external ga_pgroup_split_irreg
-      external ga_ran
+      external ga_rand
       external ga_read_inc
       external ga_sdot
       external ga_sdot_patch
@@ -291,7 +291,7 @@
       external nga_pgroup_split
       external nga_pgroup_split_irreg
       external nga_put_field
-      external nga_ran
+      external nga_rand
       external nga_read_inc
       external nga_register_type
       external nga_sdot

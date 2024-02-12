@@ -58,6 +58,7 @@
 #include "ga-papi.h"
 #include "ga-wapi.h"
 #include "thread-safe.h"
+#include "mtwister.h"
 
 static int calc_maplen(int handle);
 
@@ -111,6 +112,8 @@ int GA_Default_Proc_Group = -1;
 int ga_armci_world_group=0;
 int GA_Init_Proc_Group = -2;
 Integer GA_Debug_flag = 0;
+static Integer GA_Rand_seed = -1;
+static MTRand GA_Rand;
 
 /* MA addressing */
 DoubleComplex   *DCPL_MB;           /* double precision complex base address */
@@ -5884,4 +5887,24 @@ void pnga_version(Integer *major_version, Integer *minor_version, Integer *patch
   *major_version = GA_VERSION_MAJOR;
   *minor_version = GA_VERSION_MINOR;
   *patch         = GA_VERSION_PATCH;
+}
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_rand = pnga_rand
+#endif
+double pnga_rand(Integer iseed)
+{
+  double ret;
+  if (GA_Rand_seed == -1) {
+    unsigned long lseed;
+    /* Choose a value for iseed if it has not already been set */
+    if (iseed == 0) {
+      iseed = 121238;
+    }
+    lseed = (unsigned long)(abs(iseed));
+    GA_Rand = seedRand(lseed);
+    GA_Rand_seed = 0;
+  }
+  ret = genRand(&GA_Rand); 
+  return ret;
 }
