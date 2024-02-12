@@ -873,6 +873,16 @@ void FATR nga_proc_topology_(Integer* g_a, Integer* proc, Integer* subscript)
   wnga_proc_topology(*g_a, *proc, subscript);
 }
 
+DoublePrecision FATR ga_rand(Integer *iseed)
+{
+  return wnga_rand(*iseed);
+}
+
+DoublePrecision FATR nga_rand(Integer *iseed)
+{
+  return wnga_rand(*iseed);
+}
+
 void FATR ga_randomize_(Integer *g_a, void* val)
 {
   wnga_randomize(*g_a, val);
@@ -1659,18 +1669,6 @@ DoublePrecision FATR ga_wtime_()
 DoublePrecision FATR nga_wtime_()
 {
     return wnga_wtime();
-}
-
-DoublePrecision FATR ga_ran_(Integer idum)
-{
-    long ldum = (long)idum;
-    return wnga_ran(ldum);
-}
-
-DoublePrecision FATR nga_ran_(Integer idum)
-{
-    long ldum = (long)idum;
-    return wnga_ran(ldum);
 }
 
 /* Routines from collect.c */
