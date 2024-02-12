@@ -89,54 +89,6 @@ void grid_factor(int p, int xdim, int ydim, int zdim,
   }
 }
 
-#define MBIG 1000000000
-#define MSEED 161803398
-#define MZ 0
-#define FAC (1.0/MBIG)
-
-double ran3(long idum)
-{
-  static int inext,inextp;
-  static long ma[56];
-  static int iff=0;
-  long mj,mk;
-  int i,ii,k;
-
-  if (idum < 0 || iff == 0) {
-    iff=1;
-    mj=MSEED-(idum < 0 ? -idum : idum);
-    mj %= MBIG;
-    ma[55]=mj;
-    mk=1;
-    for (i=1;i<=54;i++) {
-      ii=(21*i) % 55;
-      ma[ii]=mk;
-      mk=mj-mk;
-        if (mk < MZ) mk += MBIG;
-      mj=ma[ii];
-    }
-    for (k=1;k<=4;k++)
-      for (i=1;i<=55;i++) {
-        ma[i] -= ma[1+(i+30) % 55];
-        if (ma[i] < MZ) ma[i] += MBIG;
-      }
-    inext=0;
-    inextp=31;
-    idum=1;
-  }
-  if (++inext == 56) inext=1;
-  if (++inextp == 56) inextp=1;
-  mj=ma[inext]-ma[inextp];
-  if (mj < MZ) mj += MBIG;
-  ma[inext]=mj;
-  return mj*FAC;
-}
-            
-#undef MBIG
-#undef MSEED
-#undef MZ
-#undef FAC
-
 /* Randomly reorder the sequence of integers [0,1,2,...,N-1] by
  * apply N random pair permutations */
 void reorder(int *seq, int N)
@@ -148,7 +100,7 @@ void reorder(int *seq, int N)
   for (i=0; i<N; i++) {
     /* randomly pick location at higher index value */
     rn = (double)(N-1 - i);  
-    j = (int)(rn*ran3(0)+0.5);
+    j = (int)(rn*NGA_Rand(0)+0.5);
     if (j+i >= N) j--;
     idx = seq[i];
     jdx = seq[j+i];
@@ -755,7 +707,7 @@ int main(int argc, char **argv) {
   me = GA_Nodeid();
   nproc = GA_Nnodes();
   twopi = 8.0*atan(1.0);
-  x = ran3(-32823+me);
+  x = NGA_Rand(32823+me);
 
   t_cgsolve = 0.0;
   t_ksolve = 0.0;
