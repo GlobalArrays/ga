@@ -10,7 +10,7 @@
 #define WRITE_VTK
 #define CG_SOLVE 1
 #define NDIM 16 // 2048
-#define ISEED -228103
+#define ISEED 228103
 
 /**
  *  Solve Laplace's equation on a cubic domain using the sparse matrix
@@ -1201,7 +1201,7 @@ void matrix_test(int type)
     setup_matrix(&s_a, &a, dim, type);
     /* Initialize random number generator */
     {
-      double x = NGA_Ran(ISEED+me);
+      double x = NGA_Rand(ISEED+me);
     }
 
     tbeg = GA_Wtime();

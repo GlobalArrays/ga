@@ -91,54 +91,6 @@ void grid_factor(int p, int xdim, int ydim, int zdim,
   }
 }
 
-#define MBIG 1000000000
-#define MSEED 161803398
-#define MZ 0
-#define FAC (1.0/MBIG)
-
-double ran3(long idum)
-{
-  static int inext,inextp;
-  static long ma[56];
-  static int iff=0;
-  long mj,mk;
-  int i,ii,k;
-
-  if (idum < 0 || iff == 0) {
-    iff=1;
-    mj=MSEED-(idum < 0 ? -idum : idum);
-    mj %= MBIG;
-    ma[55]=mj;
-    mk=1;
-    for (i=1;i<=54;i++) {
-      ii=(21*i) % 55;
-      ma[ii]=mk;
-      mk=mj-mk;	
-        if (mk < MZ) mk += MBIG;
-      mj=ma[ii];
-    }
-    for (k=1;k<=4;k++)
-      for (i=1;i<=55;i++) {
-        ma[i] -= ma[1+(i+30) % 55];
-        if (ma[i] < MZ) ma[i] += MBIG;
-      }
-    inext=0;
-    inextp=31;
-    idum=1;
-  }
-  if (++inext == 56) inext=1;
-  if (++inextp == 56) inextp=1;
-  mj=ma[inext]-ma[inextp];
-  if (mj < MZ) mj += MBIG;
-  ma[inext]=mj;
-  return mj*FAC;
-}
-            
-#undef MBIG
-#undef MSEED
-#undef MZ
-#undef FAC
-
 /**
  * Subroutine for doing a serial sparse matrix (CSR format) matrix-vector
  * multiply
@@ -198,6 +150,7 @@ double ldot(int g_dot, double *dot_ptr, int nproc, int64_t nvals, double *x, dou
 }
 
 /**
+ * Iterative asynchronous Jacobi solver
  * @param s_a handle for sparse matrix
  * @param g_b handle for right hand side vector
  * @param g_ref handle for reference solution calculated using CG
@@ -516,6 +469,12 @@ void j_solve(int s_a, int g_b, int g_ref, int *g_x)
   free(tbuf);
 }
 
+/**
+ * Conjugate gradient solver for A.x = b
+ * s_a: handle for sparse matrix A
+ * g_b: handle for right hand side vector b
+ * g_x: handle for solution vector x
+ */
 void cg_solve(int s_a, int g_b, int *g_x)
 {
   double alpha, beta, tol;
@@ -669,7 +628,6 @@ int main(int argc, char **argv) {
   me = GA_Nodeid();
   nproc = GA_Nnodes();
   twopi = 8.0*atan(1.0);
-  x = ran3(-32823+me);
 
   t_cgsolve = 0.0;
   t_acgsolve = 0.0;
