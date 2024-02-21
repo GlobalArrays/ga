@@ -182,6 +182,7 @@ int main(int argc, char **argv) {
   if (!NGA_Allocate(g_ran))
     GA_Error("Could not allocate random GA",0);
 
+  printf("p[%d] Got to 1\n",me);
   /* Fill GA with random values */
   NGA_Distribution(g_ran,me,lo,hi);
   NGA_Access(g_ran,lo,hi,&ptr,ld);
@@ -206,6 +207,7 @@ int main(int argc, char **argv) {
   /* Add elements to sparse projection */
   ilo = me*idim/nproc;
   ihi = (me+1)*idim/nproc-1;
+  printf("p[%d] Got to 2 ilo: %d ihi: %d\n",me,ilo,ihi);
   if (me == nproc-1) ihi = idim-1;
 #if 0
   for (i=ilo; i<=ihi; i++) {
@@ -514,6 +516,7 @@ int main(int argc, char **argv) {
 //  GA_Print(g_q);
 #endif
   }
+  printf("p[%d] Got to 6\n",me);
   if (me == 0) {
     printf("Completed Gram-Schmidt orthogonalization\n");
   }
