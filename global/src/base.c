@@ -730,6 +730,7 @@ int candidate, found, b; \
 C_Integer *map= (map_ij);\
 \
     candidate = (int)(scale*(elem));\
+    if (candidate == (n)) candidate = (n)-1; \
     found = 0;\
     if(map[candidate] <= (elem)){ /* search upward */\
          b= candidate;\
@@ -1743,7 +1744,7 @@ void pnga_set_irreg_distr(Integer g_a, Integer *mapc, Integer *nblock)
   maplen = 0;
   for (i=0; i<GA[ga_handle].ndim; i++) {
     ichk = mapc[maplen];
-    if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+    if (ichk < 1 || ichk > GA[ga_handle].dims[i]+1)
       pnga_error("Mapc entry outside array dimension limits",ichk);
     maplen++;
     for (j=1; j<nblock[i]; j++) {
@@ -1751,7 +1752,7 @@ void pnga_set_irreg_distr(Integer g_a, Integer *mapc, Integer *nblock)
         pnga_error("Mapc entries are not properly monotonic",ichk);
       }
       ichk = mapc[maplen];
-      if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+      if (ichk < 1 || ichk > GA[ga_handle].dims[i]+1)
         pnga_error("Mapc entry outside array dimension limits",ichk);
       maplen++;
     }
@@ -1929,7 +1930,7 @@ void pnga_set_tiled_irreg_proc_grid(Integer g_a, Integer *mapc, Integer *nblocks
   maplen = 0;
   for (i=0; i<GA[ga_handle].ndim; i++) {
     ichk = mapc[maplen];
-    if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+    if (ichk < 1 || ichk > GA[ga_handle].dims[i]+1)
       pnga_error("Mapc entry outside array dimension limits",ichk);
     maplen++;
     for (j=1; j<nblocks[i]; j++) {
@@ -1937,7 +1938,7 @@ void pnga_set_tiled_irreg_proc_grid(Integer g_a, Integer *mapc, Integer *nblocks
         pnga_error("Mapc entries are not properly monotonic",ichk);
       }
       ichk = mapc[maplen];
-      if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+      if (ichk < 1 || ichk > GA[ga_handle].dims[i]+1)
         pnga_error("Mapc entry outside array dimension limits",ichk);
       maplen++;
     }
@@ -5917,6 +5918,7 @@ double pnga_rand(Integer iseed)
 {
   double ret;
   if (GA_Rand_seed == -1) {
+    printf("p[%d] Initializing GA_Rand seed: %d\n",GAme,iseed);
     unsigned long lseed;
     /* Choose a value for iseed if it has not already been set */
     if (iseed == 0) {

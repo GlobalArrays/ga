@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "macdecls.h"
 #include "ga.h"
@@ -135,12 +136,15 @@ int main(int argc, char **argv) {
   int dims[2], chunk[2], one, two;
   int lo[2], hi[2], ld[2];
   int i, j, idx, idim, jdim, kdim, ihi, ilo, klo, khi;
+  int it, jt;
   int iter;
   int me, nproc;
   int heap=10000000, stack=10000000;
   double x, snorm, rone;
   double *dptr;
+  double dmin, dmax, omin, omax;
   void *ptr;
+  char cmax[4],cmin[4];
 
   /*Initialize MPI*/
   MP_INIT(argc,argv);
@@ -154,7 +158,8 @@ int main(int argc, char **argv) {
 
   me = GA_Nodeid();
   nproc = GA_Nnodes();
-  NGA_Rand(332182);
+  printf("p[%d] Got to 0\n",me);
+  NGA_Rand(332182+me);
 
   idim = NDIM;
   jdim = NDIM;
@@ -175,6 +180,7 @@ int main(int argc, char **argv) {
   if (!NGA_Allocate(g_ran))
     GA_Error("Could not allocate random GA",0);
 
+  printf("p[%d] Got to 1\n",me);
   /* Fill GA with random values */
   NGA_Distribution(g_ran,me,lo,hi);
   NGA_Access(g_ran,lo,hi,&ptr,ld);
@@ -194,15 +200,20 @@ int main(int argc, char **argv) {
   /* Add elements to sparse projection */
   ilo = me*idim/nproc;
   ihi = (me+1)*idim/nproc-1;
+  printf("p[%d] Got to 2 ilo: %d ihi: %d\n",me,ilo,ihi);
   if (me == nproc-1) ihi = idim-1;
   for (i=ilo; i<=ihi; i++) {
     int k;
     k = (int)(((double)kdim)*NGA_Rand(0));
     x = 1.0;
-    if (NGA_Rand(0) > 0.5) x = -1.0;
+    double rx = NGA_Rand(0);
+    if (rx > 0.5) x = -1.0;
+//    printf("p[%d] add element %d %d %f %f\n",me,k,i,x,rx);
     NGA_Sprs_array_add_element(s_sk, k, i, &x);
   }
+  printf("p[%d] Got to 3\n",me);
   NGA_Sprs_array_assemble(s_sk);
+  printf("p[%d] Got to 3a\n",me);
 
   /* Create Q and R matrices that form the set of orthogonal vectors (Q) and
    * upper triangular matrix (R) from the Gram-Schmidt orthogonalization */
@@ -297,6 +308,7 @@ int main(int argc, char **argv) {
   if (!NGA_Allocate(g_am))
     GA_Error("Could not allocate am vector",0);
   NGA_Zero(g_am);
+  printf("p[%d] Got to 4\n",me);
   /* Initialize system and calculate first vector */
   lo[0] = 0;
   hi[0] = idim-1;
@@ -321,6 +333,11 @@ int main(int argc, char **argv) {
   lo[0] = 0;
   lo[1] = 0;
   copy_to_matrix(g_ss,g_s,lo,hi);
+  GA_Scale(g_a,&snorm);
+  lo[0] = 0;
+  hi[0] = idim-1;
+  copy_to_matrix(g_q,g_a,lo,hi);
+  printf("p[%d] Got to 5\n",me);
   /* Iterate over remaining columns of g_ran */
   for (iter = 1; iter<jdim; iter++) {
     /* Multiply column of original matrix by sketch projector */
@@ -355,31 +372,131 @@ int main(int argc, char **argv) {
     snorm = GA_Ddot(g_s,g_s);
     snorm = 1.0/sqrt(snorm);
     GA_Scale(g_s,&snorm);
+    lo[0] = 0;
+    hi[0] = kdim-1;
+    lo[1] = iter;
+    hi[1] = iter;
+    copy_to_matrix(g_ss,g_s,lo,hi);
     GA_Scale(g_a,&snorm);
     lo[0] = 0;
     hi[0] = idim-1;
     lo[1] = iter;
     hi[1] = iter;
-    copy_to_matrix(g_a,g_q,lo,hi);
+//  GA_Print(g_a);
+    copy_to_matrix(g_q,g_a,lo,hi);
+//  GA_Print(g_q);
   }
+  printf("p[%d] Got to 6\n",me);
   if (me == 0) {
     printf("Completed Gram-Schmidt orthogonalization\n");
   }
-  /* Clean up all global arrays */
+  /* Clean up all global arrays, except those used for verification */
   NGA_Sprs_array_destroy(s_sk);
   GA_Destroy(g_ran);
-  GA_Destroy(g_a);
+  GA_Destroy(g_s);
   GA_Destroy(g_ss);
   GA_Destroy(g_st);
   GA_Destroy(g_pm);
-  GA_Destroy(g_q);
-  GA_Destroy(g_r);
   GA_Destroy(g_c1);
   GA_Destroy(g_c2);
   GA_Destroy(g_tmp);
   GA_Destroy(g_am);
   GA_Destroy(g_p);
   GA_Destroy(g_qm);
+
+  g_s = NGA_Create_handle();
+  NGA_Set_data(g_s, one, &idim, C_DBL);
+  if (!NGA_Allocate(g_s))
+    GA_Error("Could not allocate second S vector",0);
+  NGA_Zero(g_s);
+  g_qm = NGA_Create_handle();
+  dims[0] = idim;
+  dims[1] = idim;
+  NGA_Set_data(g_qm, two, dims, C_DBL);
+  if (!NGA_Allocate(g_qm))
+    GA_Error("Could not matrix of dot products",0);
+  NGA_Zero(g_qm);
+#if 0
+  for (i=0; i<idim; i++) {
+    lo[0] = 0;
+    hi[0] = idim;
+    lo[1] = i;
+    hi[1] = i;
+    copy_to_vector(g_q,g_a,lo,hi);
+    for (j=0; j<idim; j++) {
+      lo[0] = 0;
+      hi[0] = idim;
+      lo[1] = j;
+      hi[1] = j;
+      copy_to_vector(g_q,g_s,lo,hi);
+      snorm = GA_Ddot(g_a,g_s);
+      lo[0] = i;
+      hi[0] = i;
+      lo[1] = j;
+      hi[1] = j;
+      if ((i*idim+j)%nproc == me) {
+        NGA_Put(g_qm,lo,hi,&snorm,&one);
+      }
+    }
+  }
+  GA_Sync();
+#else
+  GA_Dgemm('t','n',idim,idim,idim,1.0,g_q,g_q,0.0,g_qm);
+#endif
+//  GA_Print(g_qm);
+  /* Check min and max values of dot product matrix elements for diagonal
+   * and off diagonal elements. Start by everyone initializing to element
+   * 0,0 and 0,1 */
+  lo[0] = 0;
+  hi[0] = 0;
+  lo[1] = 0;
+  hi[1] = 0;
+  NGA_Get(g_qm,lo,hi,&snorm,&one);
+  dmin = snorm;
+  dmax = snorm;
+  lo[1] = 1;
+  hi[1] = 1;
+  NGA_Get(g_qm,lo,hi,&snorm,&one);
+  omin = snorm;
+  omax = snorm;
+  /* Get pointers to local data */
+  NGA_Distribution(g_qm,me,lo,hi);
+  NGA_Access(g_qm,lo,hi,&dptr,ld);
+
+  it = hi[0]-lo[0]+1;
+  jt = hi[1]-lo[1]+1;
+  for (i=0; i<it; i++) {
+    for (j=0; j<jt; j++) {
+      idx = j+i*ld[0];
+      if (i+lo[0] == j+lo[1]) {
+        if (dptr[idx] > dmax) dmax = dptr[idx];
+        if (dptr[idx] < dmin) dmin = dptr[idx];
+      } else {
+        if (dptr[idx] > omax) omax = dptr[idx];
+        if (dptr[idx] < omin) omin = dptr[idx];
+      }
+    }
+  }
+  NGA_Release(g_qm,lo,hi);
+  strcpy(cmax,"max");
+  strcpy(cmin,"min");
+  GA_Dgop(&omin,1,cmin);
+  GA_Dgop(&omax,1,cmax);
+  GA_Dgop(&dmin,1,cmin);
+  GA_Dgop(&dmax,1,cmax);
+  if (me == 0) {
+    printf("Minimum and maximum values of off-diagonal elements %16.8e %16.8e\n",
+        omin,omax);
+    printf("Minimum and maximum values of diagonal elements     %16.8e %16.8e\n",
+        dmin,dmax);
+  }
+
+  /* Clean up remaining global arrays */
+  GA_Destroy(g_a);
+  GA_Destroy(g_q);
+  GA_Destroy(g_r);
+  GA_Destroy(g_s);
+  GA_Destroy(g_p);
   NGA_Terminate();
   /**
    *  Tidy up after message-passing library

@@ -1819,13 +1819,13 @@ float GA_Fdot(int g_a, int g_b)
 
 double GA_Rand(int iseed)
 {
-    Integer seed = (Integer)seed;
+    Integer seed = (Integer)iseed;
     return wnga_rand(seed);
 }
 
 double NGA_Rand(int iseed)
 {
-    Integer seed = (Integer)seed;
+    Integer seed = (Integer)iseed;
     return wnga_rand(seed);
 }
 
