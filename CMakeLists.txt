@@ -141,7 +141,20 @@ include(${PROJECT_SOURCE_DIR}/cmake/ga-checks.cmake)
 
 if (ENABLE_FORTRAN)
   include( FortranCInterface )
-  FortranCInterface_HEADER(${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h MACRO_NAMESPACE F77_FUNC_)
+  FortranCInterface_HEADER(${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.ignore MACRO_NAMESPACE F77_FUNC_)
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h
+    COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.ignore" -D OUTPUT:PATH="${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h" -P ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.cmake 
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.ignore
+  )
+  add_custom_target(
+    GenerateF2C_CH ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h
+  )
+  set_source_files_properties(
+    ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h
+    PROPERTIES GENERATED TRUE
+  )
 else()
   CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/f2c_dummy.h.in
                   ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h )
