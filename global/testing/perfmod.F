@@ -8,11 +8,6 @@ c It has to be executed on four processors.                              |
 c remote operations access data on processes 1,2,3 in the round-robin way|
 c------------------------------------------------------------------------
 c
-#if defined(__xlc__) || defined(__xlC__) || defined(__IBMC__)
-#define SLEEP sleep_
-#else
-#define SLEEP sleep
-#endif
       program perfmod
       implicit none
 #include "mafdecls.fh"
@@ -136,8 +131,7 @@ c       everybody touches own data
         if (me .eq. 0) then
         tg=time_get(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count,
      $               local)
-        else
-          call SLEEP(2)
+        call ga_sync()
         endif
 c
 c       everybody touches own data
@@ -145,8 +139,7 @@ c       everybody touches own data
         if (me .eq. 0) then
         tp=time_put(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count, 
      $               local)
-        else
-          call SLEEP(2)
+        call ga_sync()
         endif
 c
 c       everybody touches own data
@@ -154,8 +147,7 @@ c       everybody touches own data
         if (me .eq. 0) then
         ta=time_acc(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count,
      $               local)
-        else
-          call SLEEP(2)
+        call ga_sync()
         endif
 c
         if (me .eq. 0) then
