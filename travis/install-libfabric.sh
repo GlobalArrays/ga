@@ -12,7 +12,7 @@ fi
 if [ ! -d "$TRAVIS_ROOT/libfabric" ]; then
 	cd $TRAVIS_ROOT
 	#git clone --depth 10 https://github.com/ofiwg/libfabric.git libfabric-source
-	git clone -b 'v1.5.1' --depth 10 https://github.com/ofiwg/libfabric.git libfabric-source
+	git clone -b 'v1.18.3' --depth 10 https://github.com/ofiwg/libfabric.git libfabric-source
 	cd libfabric-source
 	./autogen.sh
 	./configure --prefix=$TRAVIS_ROOT/libfabric
