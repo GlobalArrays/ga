@@ -7,8 +7,8 @@ TRAVIS_ROOT="$1"
 os=`uname`
 if [ "x$os" = "xDarwin" ] ; then
     brew install libtool
+    which libtool
 fi
-which libtool
 if [ ! -d "$TRAVIS_ROOT/libfabric" ]; then
 	cd $TRAVIS_ROOT
 	#git clone --depth 10 https://github.com/ofiwg/libfabric.git libfabric-source
