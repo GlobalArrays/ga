@@ -28,7 +28,7 @@ jobs:
           - armci
           - mpi-pr
         f77:
-          - gfortran
+          - gfortran-12
         cc:
           - clang
           - gcc
@@ -88,14 +88,14 @@ jobs:
             mpi_impl: mpich
             armci_network: mpi-ts
             config_opts: "--disable-static --enable-shared"
-            f77: gfortran
+            f77: gfortran-13
             cc: clang
           - os: macos-13
             experimental: true
             use_cmake: "Y"
             mpi_impl: mpich
             armci_network: mpi-pr
-            f77: gfortran
+            f77: gfortran-13
             cc: clang
           - os: ubuntu-20.04
             experimental: true
