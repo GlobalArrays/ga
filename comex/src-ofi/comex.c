@@ -98,7 +98,7 @@ static uint32_t reply_tag = 0;
 static fastlock_t mutex_lock;
 static fastlock_t acc_lock;
 static fastlock_t poll_lock;
-static int poll(int* items_processed);
+static int myofi_poll(int* items_processed);
 static pthread_t tid = 0;
 
 static  int comex_acc_native(
@@ -1137,7 +1137,7 @@ do                                                                           \
       }                                                             \
   } while (0)
 
-static int poll(int* items_processed)
+static int myofi_poll(int* items_processed)
 {
     ssize_t ret = 0;
     int locked = 0;
