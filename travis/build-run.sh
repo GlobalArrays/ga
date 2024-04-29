@@ -56,7 +56,7 @@ fi
 case "$os" in
     Darwin)
 	export LDFLAGS=" -ld_classic "
-	export CFLAGS="${CFLAGS} -ld_classic "
+#	export CFLAGS="${CFLAGS} -ld_classic "
         echo "Mac CFLAGS" $CFLAGS
         ;;
     Linux)
