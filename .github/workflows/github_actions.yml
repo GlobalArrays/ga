@@ -119,6 +119,8 @@ jobs:
             cc: gcc
             oneapi: /opt/intel/oneapi
         exclude:
+          - armci_network: ofi
+            os: macos-latest 
           - armci_network: mpi-pr
             mpi_impl: openmpi
           - armci_network: mpi3
@@ -182,6 +184,7 @@ jobs:
         run: |
           pwd
           ls -lart
+          export CI_ROOT=$GITHUB_WORKSPACE/apps
           mkdir -p $CI_ROOT
           AUTO_CC="$CC"
           if [[ "$F77" == "ifort" ]] || [[ "$CC" == "icc" ]] || [[ "$CC" == "icx" ]]; then source ${{ matrix.oneapi }}/setvars.sh --force; AUTO_CC=cc;  fi
