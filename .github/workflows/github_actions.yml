@@ -182,7 +182,7 @@ jobs:
         run: |
           pwd
           ls -lart
-          mkdir -p $GITHUB_WORKSPACE/apps
+          mkdir -p $CI_ROOT
           AUTO_CC="$CC"
           if [[ "$F77" == "ifort" ]] || [[ "$CC" == "icc" ]] || [[ "$CC" == "icx" ]]; then source ${{ matrix.oneapi }}/setvars.sh --force; AUTO_CC=cc;  fi
           CC="$AUTO_CC" sh ./travis/install-autotools.sh $GITHUB_WORKSPACE/apps
@@ -197,8 +197,9 @@ jobs:
       - name: compile and test global arrays
         if: ${{ success() }}
         run: |
+          if [ -z $USE_CMAKE ]; then export USE_CMAKE="N"; fi
           if [[ "$F77" == "ifort" ]] || [[ "$CC" == "icc" ]] || [[ "$CC" == "icx" ]] ; then  source ${{ matrix.oneapi }}/setvars.sh --force;  fi
-          ./travis/build-run.sh $GITHUB_WORKSPACE/apps $PORT $MPI_IMPL $USE_CMAKE $F77
+          ./travis/build-run.sh $CI_ROOT $PORT $MPI_IMPL $USE_CMAKE $F77
       - name: after_failure
         if: ${{ failure() }}
         run: |
