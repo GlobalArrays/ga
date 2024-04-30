@@ -55,6 +55,10 @@ else
 fi
 case "$os" in
     Darwin)
+	xcode_v=$(clang --version 2>&1 |head -1 |cut -d ' ' -f 4 |cut -d . -f 1)
+	if [[ $( [ $xcode_v -ge 15 ] && echo 1) ]] ; then
+	    export LDFLAGS=" -ld_classic "
+	fi
         echo "Mac CFLAGS" $CFLAGS
         ;;
     Linux)
