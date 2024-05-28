@@ -18,7 +18,7 @@ c#define NEW_API
 c#define MIRROR
 #define GA3
 #define NGA_GATSCAT
-#define BLOCK_CYCLIC
+C#define BLOCK_CYCLIC
 c#define USE_SCALAPACK_DISTR
 c#define USE_TILED_DISTR
 c#define USE_TILED_IRREG_DISTR
