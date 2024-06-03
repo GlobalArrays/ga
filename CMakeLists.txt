@@ -375,6 +375,11 @@ if(ENABLE_BLAS)
   #include_directories(${BLAS_INCLUDE_DIRS})
 endif()
 
+if(ENABLE_FORTRAN)
+  find_package( StandardFortran )
+  list(APPEND GA_EXTRA_LIBS ${STANDARDFORTRAN_LIBRARIES})
+endif()
+
 if(ENABLE_PROFILING)
   set(ga_profiler $<TARGET_OBJECTS:ga_tools>)
 endif()
