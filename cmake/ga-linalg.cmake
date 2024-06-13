@@ -44,10 +44,12 @@ function(ga_set_blasroot __blasvendor __blasvar)
   endif()
 endfunction()
 
+set(linalg_lib )
+
 if( "sycl" IN_LIST LINALG_OPTIONAL_COMPONENTS )
   set(ENABLE_DPCPP ON)
-elseif(ENABLE_DPCPP)
-  list(APPEND LINALG_OPTIONAL_COMPONENTS "sycl")
+# elseif(ENABLE_DPCPP)
+#   list(APPEND LINALG_OPTIONAL_COMPONENTS "sycl")
 endif()
 
 function(check_ga_blas_options)
@@ -165,6 +167,11 @@ if (ENABLE_BLAS)
       message(FATAL_ERROR "ENABLE_BLAS=ON, but a BLAS library was not found")
     endif()
 
+    if(ENABLE_DPCPP)
+      find_package(MKL CONFIG REQUIRED PATHS ${LINALG_PREFIX} NO_DEFAULT_PATH)
+      list(APPEND linalg_lib MKL::MKL_SYCL)
+    endif()
+
   if(ENABLE_CXX)
     set(BPP_GIT_TAG b6c90653cb941fccc7b6905e3919d7cf0cb917a1)
     set(LPP_GIT_TAG 95cc9a5f72e54b76ee32f76bf67fc3c2e7399b06)
@@ -263,8 +270,6 @@ endif()
 message(STATUS "HAVE_BLAS: ${HAVE_BLAS}")
 message(STATUS "HAVE_LAPACK: ${HAVE_LAPACK}")
 message(STATUS "HAVE_SCALAPACK: ${HAVE_SCALAPACK}")
-
-set(linalg_lib )
 
 if (HAVE_BLAS)
   if("${LINALG_VENDOR}" STREQUAL "IntelMKL")
