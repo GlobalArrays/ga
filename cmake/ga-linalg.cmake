@@ -168,8 +168,12 @@ if (ENABLE_BLAS)
     endif()
 
     if(ENABLE_DPCPP)
+      set(MKL_INTERFACE lp64)
+      if(GA_BLAS_ILP64)
+        set(MKL_INTERFACE ilp64)
+      endif()
       find_package(MKL CONFIG REQUIRED PATHS ${LINALG_PREFIX} NO_DEFAULT_PATH)
-      list(APPEND linalg_lib MKL::MKL_SYCL)
+      list(APPEND linalg_lib MKL::MKL_SYCL::BLAS)
     endif()
 
   if(ENABLE_CXX)
