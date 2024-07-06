@@ -231,11 +231,11 @@ parse its `<wchar.h>' header file.  The option `-nodtk' can be used as
 a workaround.  If GNU CC is not installed, it is therefore recommended
 to try
 
-     ./configure CC="cc"
+   ./configure CC="cc"
 
 and if that doesn't work, try
 
-     ./configure CC="cc -nodtk"
+   ./configure CC="cc -nodtk"
 
    On Solaris, don't put `/usr/ucb' early in your `PATH'.  This
 directory contains several dysfunctional programs; working variants of
@@ -245,7 +245,7 @@ in your `PATH', put it _after_ `/usr/bin'.
    On Haiku, software installed for all users goes in `/boot/common',
 not `/usr/local'.  It is recommended to use the following options:
 
-     ./configure --prefix=/boot/common
+   ./configure --prefix=/boot/common
 
 Specifying the System Type
 ==========================
@@ -258,22 +258,22 @@ a message saying it cannot guess the machine type, give it the
 `--build=TYPE' option.  TYPE can either be a short name for the system
 type, such as `sun4', or a canonical name which has the form:
 
-     CPU-COMPANY-SYSTEM
+   CPU-COMPANY-SYSTEM
 
 where SYSTEM can have one of these forms:
 
-     OS
-     KERNEL-OS
+   OS
+   KERNEL-OS
 
-   See the file `config.sub' for the possible values of each field.  If
+See the file `config.sub' for the possible values of each field.  If
 `config.sub' isn't included in this package, then this package doesn't
 need to know the machine type.
 
-   If you are _building_ compiler tools for cross-compiling, you should
+If you are _building_ compiler tools for cross-compiling, you should
 use the option `--target=TYPE' to select the type of system they will
 produce code for.
 
-   If you want to _use_ a cross compiler, that generates code for a
+If you want to _use_ a cross compiler, that generates code for a
 platform different from the build platform, you should specify the
 "host" platform (i.e., that on which the generated programs will
 eventually be run) with `--host=TYPE'.
@@ -281,7 +281,7 @@ eventually be run) with `--host=TYPE'.
 Sharing Defaults
 ================
 
-   If you want to set default values for `configure' scripts to share,
+If you want to set default values for `configure' scripts to share,
 you can create a site shell script called `config.site' that gives
 default values for variables like `CC', `cache_file', and `prefix'.
 `configure' looks for `PREFIX/share/config.site' if it exists, then
@@ -298,7 +298,7 @@ configure again during the build, and the customized values of these
 variables may be lost.  In order to avoid this problem, you should set
 them in the `configure' command line, using `VAR=value'.  For example:
 
-     ./configure CC=/usr/local2/bin/gcc
+   ./configure CC=/usr/local2/bin/gcc
 
 causes the specified `gcc' to be used as the C compiler (unless it is
 overridden in the site shell script).
@@ -306,7 +306,7 @@ overridden in the site shell script).
 Unfortunately, this technique does not work for `CONFIG_SHELL' due to
 an Autoconf bug.  Until the bug is fixed you can use this workaround:
 
-     CONFIG_SHELL=/bin/bash /bin/bash ./configure CONFIG_SHELL=/bin/bash
+   CONFIG_SHELL=/bin/bash /bin/bash ./configure CONFIG_SHELL=/bin/bash
 
 `configure' Invocation
 ======================
