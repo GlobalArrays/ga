@@ -99,7 +99,7 @@ AS_IF([test "x$enable_f77" = xno],
 # many flavors of BLAS that we test for explicitly, although the list could
 # probably be reduced based on currently available systems.
 #
-# Apparently certain compilers on BGP define sgemm and dgemm, so we must
+# Apparently certain compilers define sgemm and dgemm, so we must
 # test for a different BLAS routine. cgemm seems okay.
 AC_DEFUN([GA_BLAS],
 [AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])

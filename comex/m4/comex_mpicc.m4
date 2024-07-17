@@ -38,7 +38,7 @@
 AC_DEFUN([COMEX_PROG_MPICC],
 [AC_ARG_VAR([MPICC], [MPI C compiler])
 AS_CASE([$comex_cv_target_base],
-[BGP],  [comex_mpicc_pref=mpixlc_r; comex_cc_pref=bgxlc_r],
+[BGQ],  [comex_mpicc_pref=mpixlc_r; comex_cc_pref=bgxlc_r],
 [])
 # In the case of using MPI wrappers, set CC=MPICC since CC will override
 # absolutely everything in our list of compilers.

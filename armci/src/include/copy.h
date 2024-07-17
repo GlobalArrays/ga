@@ -12,7 +12,7 @@
 #include <c_asm.h>
 #endif
 
-#if 1 || defined(HITACHI) || defined(CRAY_T3E) || defined(CRAY_XT) || defined(BGML)
+#if 1 || defined(HITACHI) || defined(CRAY_T3E) || defined(CRAY_XT)
 #  define MEMCPY
 #endif
 #if defined(LINUX64) && defined(SGIALTIX) && defined(MSG_COMMS_MPI)
@@ -46,11 +46,7 @@
 #endif
 
 #if  defined(MEMCPY)  && !defined(armci_copy)
-#if defined(BGML)
-#define armci_copy(src, dst, n) BGLML_memcpy((dst), (src), (n))
-#else
-#    define armci_copy(src,dst,n)  memcpy((dst), (src), (n)) 
-#endif
+#  define armci_copy(src,dst,n)  memcpy((dst), (src), (n)) 
 #endif
 
 #ifdef NEC
@@ -258,11 +254,6 @@
 #   if defined(GM) && defined(ACK_FENCE) 
      extern void armci_gm_fence(int p);
 #    define FENCE_NODE(p) armci_gm_fence(p)
-#   elif defined(BGML)
-#   include "bgmldefs.h"
-#   define FENCE_NODE(p) BGML_WaitProc(p)    
-#   elif defined(ARMCIX)
-#     define FENCE_NODE(p) ARMCIX_Fence(p) 
 #   else
 #     define FENCE_NODE(p)
 #   endif   
@@ -329,7 +320,7 @@ void c_dcopy13_(const int*    const restrict rows,
                 const double* const restrict buf,
                       int*    const restrict cur);
 
-#if defined(AIX) || defined(BGML)
+#if defined(AIX)
 #    define DCOPY2D c_dcopy2d_u_
 #    define DCOPY1D c_dcopy1d_u_
 #elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(DECOSF) || defined(CRAY) || defined(WIN32) || defined(HITACHI)
@@ -482,14 +473,6 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
             (dst),(n),cmplt,nb_handle->tag)
 #endif                                                              
 
-#elif defined(BGML)
-#define armci_get(src, dst, n, p)   PARMCI_Get(src, dst, n, p)
-#define armci_put(src, dst, n, p)   PARMCI_Put(src, dst, n, p)
-
-#elif defined(ARMCIX)
-#define armci_get(src, dst, n, p)   PARMCI_Get(src, dst, n, p)
-#define armci_put(src, dst, n, p)   PARMCI_Put(src, dst, n, p)
-#define ARMCI_NB_WAIT(cmplt)        ARMCIX_Wait(&(cmplt))
 #else
 
 #      define armci_get(src,dst,n,p)    armci_copy((src),(dst),(n))

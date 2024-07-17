@@ -9,8 +9,6 @@
 # preferred above all.
 #
 # Known Fortran 95 compilers:
-#  bgxlf95      IBM BlueGene/P F95 cross-compiler
-#  blrts_xlf95  IBM BlueGene/L F95 cross-compiler
 #  efc          Intel Fortran 95 compiler for IA64
 #  f95          generic compiler name
 #  fort         Compaq/HP Fortran 90/95 compiler for Tru64 and Linux/Alpha
@@ -31,13 +29,10 @@
 #  cmpifc       ?? not sure if this is even F95
 #  ftn          native Fortran 95 compiler on Cray XT4,XT5
 #  mpif95       generic compiler name
-#  mpixlf95     IBM BlueGene/P Fortran 95
-#  mpixlf95_r   IBM BlueGene/P Fortran 95, reentrant code
-#  mpxlf95      IBM BlueGene/L Fortran 95
-#  mpxlf95_r    IBM BlueGene/L Fortran 95, reentrant code
+#  mpixlf95     IBM Blue Gene Fortran 95
+#  mpixlf95_r   IBM Blue Gene Fortran 95, reentrant code
 #
 # Known Fortran 90 compilers:
-#  blrts_xlf90  IBM BlueGene/L F90 cross-compiler
 #  epcf90       "Edinburgh Portable Compiler" F90
 #  f90          generic compiler name
 #  fort         Compaq/HP Fortran 90/95 compiler for Tru64 and Linux/Alpha
@@ -52,13 +47,10 @@
 #  cmpif90c     ??
 #  mpf90        ??
 #  mpif90       generic compiler name
-#  mpxlf90      IBM BlueGene/L Fortran 90
-#  mpxlf90_r    IBM BlueGene/L Fortran 90, reentrant code
 #  sxmpif90     NEC SX Fortran 90
 #
 # Known Fortran 77 compilers:
 #  af77         Apogee F77 compiler for Intergraph hardware running CLIX
-#  blrts_xlf    IBM BlueGene/L F77 cross-compiler
 #  cf77         native F77 compiler under older Crays (prefer over fort77)
 #  f77          generic compiler names
 #  fl32         Microsoft Fortran 77 "PowerStation" compiler
@@ -73,15 +65,12 @@
 #  hf77         ??
 #  mpf77        ??
 #  mpif77       generic compiler name
-#  mpxlf        IBM BlueGene/L Fortran 77
-#  mpxlf_r      IBM BlueGene/L Fortran 77, reentrant code
 #  mpifrt       Fujitsu
 #
 AC_DEFUN([GA_PROG_MPIF77],
 [AC_ARG_VAR([MPIF77], [MPI Fortran 77 compiler])
 AS_CASE([$ga_cv_target_base],
-[BGP],  [ga_mpif77_pref=mpixlf77_r;ga_f77_pref=bgxlf_r],
-[BGL],  [ga_mpif77_pref=mpxlf95;   ga_f77_pref=blrts_xlf95],
+[BGQ],  [ga_mpif77_pref=mpixlf77_r;ga_f77_pref=bgxlf_r],
 [])
 # If FC is set, override F77.  Similarly for MPIFC/MPIF77 and FCFLAGS/FFLAGS.
 AS_IF([test "x$FC" != x],       [F77="$FC"])
@@ -109,9 +98,9 @@ AS_IF([test x$with_mpi_wrappers = xyes],
  ga_cv_mpif77_naked="$F77"
  F77="$MPIF77"],
 [AC_MSG_ERROR([F77/MPIF77 case failure])])])
-ga_mpif95="mpif95 mpxlf95_r mpxlf95 ftn"
-ga_mpif90="mpif90 mpxlf90_r mpxlf90 mpf90 cmpif90c sxmpif90"
-ga_mpif77="mpif77 hf77 mpxlf_r mpxlf mpifrt mpf77 cmpifc"
+ga_mpif95="mpif95 mpixlf95_r mpixlf95 ftn"
+ga_mpif90="mpif90 mpixlf90_r mpixlf90 mpf90 cmpif90c sxmpif90"
+ga_mpif77="mpif77 hf77 mpixlf_r mpixlf mpifrt mpf77 cmpifc"
 ga_f95="xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc openf95 sunf95 crayftn gfortran lf95 ftn"
 ga_f90="xlf90 f90 pgf90 pghpf pathf90 epcf90 sxf90 openf90 sunf90"
 ga_f77="xlf f77 frt pgf77 pathf77 g77 cf77 fort77 fl32 af77"

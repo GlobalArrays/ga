@@ -24,20 +24,11 @@
 #   define MP_PROCS(pproc)      *(pproc) = (int)tcg_nnodes()
 #   define MP_TIMER             tcg_time
 #   define MP_ASSERT(code)      code
-#elif defined(BGML)
-    extern double armci_timer();
-#   define MP_BARRIER()         armci_msg_barrier()
-#   define MP_FINALIZE()     
-#   define MP_INIT(argc,argv) 
-#   define MP_MYID(pid)         *(pid)=armci_msg_me()
-#   define MP_PROCS(pproc)      *(pproc)=armci_msg_nproc()
-#   define MP_TIMER             armci_timer
-#   define MP_ASSERT(code)      code
 #else
 #   include <mpi.h>
 #   define MP_BARRIER()         MPI_Barrier(MPI_COMM_WORLD)
 #   define MP_FINALIZE()        MPI_Finalize()
-#   if defined(DCMF) || defined(MPI_MT) || defined(MPI_PT)
+#   if defined(MPI_MT) || defined(MPI_PT)
     static inline int MPI_INIT_THREAD(int *argc, char ***argv) {
         int status;
         int provided;

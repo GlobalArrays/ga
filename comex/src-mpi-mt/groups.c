@@ -9,14 +9,10 @@
 
 #include <mpi.h>
 
-#if defined(__bgp__)
-#include <spi/kernel_interface.h>
-#include <common/bgp_personality.h>
-#include <common/bgp_personality_inlines.h>
-#elif defined(__bgq__)
+#if defined(__bgq__)
 #  include <mpix.h>
 #elif defined(__CRAYXT) || defined(__CRAYXE)
-#  include <pmi.h> 
+#  include <pmi.h>
 #endif
 
 #include "comex.h"
@@ -472,25 +468,7 @@ void comex_group_finalize()
 
 static long xgethostid()
 {
-#if defined(__bgp__)
-#warning BGP
-    long nodeid;
-    int matched,midplane,nodecard,computecard;
-    char rack_row,rack_col;
-    char location[128];
-    char location_clean[128];
-    (void) memset(location, '\0', 128);
-    (void) memset(location_clean, '\0', 128);
-    _BGP_Personality_t personality;
-    Kernel_GetPersonality(&personality, sizeof(personality));
-    BGP_Personality_getLocationString(&personality, location);
-    matched = sscanf(location, "R%c%c-M%1d-N%2d-J%2d",
-            &rack_row, &rack_col, &midplane, &nodecard, &computecard);
-    COMEX_ASSERT(matched == 5);
-    sprintf(location_clean, "%2d%02d%1d%02d%02d",
-            (int)rack_row, (int)rack_col, midplane, nodecard, computecard);
-    nodeid = atol(location_clean);
-#elif defined(__bgq__)
+#if defined(__bgq__)
 #warning BGQ
     int nodeid;
     MPIX_Hardware_t hw;

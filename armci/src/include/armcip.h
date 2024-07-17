@@ -110,13 +110,8 @@ extern thread_id_t armci_serv_tid;
 #  define SERVER_CONTEXT (armci_me<0)
 #endif
 
-#if defined(LAPI) || defined(CLUSTER) || defined(CRAY) || defined(CRAY_XT)\
-        || defined(CRAY_SHMEM) || defined(BGML) || defined(DCMF)
+#if defined(LAPI) || defined(CLUSTER) || defined(CRAY) || defined(CRAY_XT) || defined(CRAY_SHMEM)
 #  include "request.h"
-#endif
-
-#ifdef ARMCIX
-#include "armcix.h"
 #endif
 
 /* ------------------------ ARMCI threads support ------------------------- */
@@ -312,8 +307,6 @@ extern void armci_finalize_fence();
      ( ((p) <= armci_clus_last) && ((p) >= armci_clus_first) )
 #elif defined(__crayx1)
 #  define SAMECLUSNODE(p) 1
-#elif defined(ARMCIX)
-#  define SAMECLUSNODE(p) 0
 #else
 #  define SAMECLUSNODE(p) ((p)==armci_me) 
 #endif
@@ -443,9 +436,6 @@ extern void armci_global_region_exchange(void *, long);
 
 /* -------------------- ARMCI Groups ---------------------- */
 /* data structure that caches a group's attribute */
-#ifdef BGML
-#define   PCLASS 3
-#endif
 #ifdef MSG_COMMS_MPI
 
 typedef int ARMCI_Datatype;
@@ -504,13 +494,5 @@ extern void armci_icheckpoint_finalize(int rid);
 
 #endif /* ifdef ENABLE_CHECKPOINT */
 /* -------------------------------------------------------- */
-
-#ifdef BGML     
-#define ARMCI_CRITICAL_SECTION_ENTER() BGML_CriticalSection_enter();
-#define ARMCI_CRITICAL_SECTION_EXIT()  BGML_CriticalSection_exit();
-#else
-#define ARMCI_CRITICAL_SECTION_ENTER()
-#define ARMCI_CRITICAL_SECTION_EXIT()     
-#endif    
 
 #endif
