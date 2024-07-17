@@ -13,16 +13,10 @@ void  L_ACCUMULATE_2D(long* restrict alpha, int* restrict rows,
                       int* restrict cols, long* restrict a, 
                       int* restrict lda, long* restrict b, int* restrict ldb)
 {
-int i,j;
-
-#ifdef __crayx1
-#pragma _CRI concurrent
-#endif
-
-   for(j=0;j< *cols; j++){
+   for(int j=0;j< *cols; j++){
      long * restrict aa = a + j* *lda;
      long * restrict bb = b + j* *ldb;
-     for(i=0;i< *rows; i++)
+     for(int i=0;i< *rows; i++)
        aa[i] += *alpha * bb[i];
    }
 }
