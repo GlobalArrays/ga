@@ -138,7 +138,6 @@ specified.
 --with-lapi=ARG         select armci network as IBM LAPI
 --with-mpi-spawn=ARG    select armci network as MPI-2 dynamic process mgmt
 --with-openib=ARG       select armci network as InfiniBand OpenIB
---with-portals=ARG      select armci network as Cray XT portals
 --with-sockets=ARG      select armci network as Ethernet TCP/IP (default)
 --enable-autodetect     attempt to locate ARMCI network besides sockets
 
