@@ -860,7 +860,8 @@ int comex_barrier(comex_group_t group)
     MPI_Comm comm;
 
     comex_fence_all(group);
-    assert(COMEX_SUCCESS == comex_group_comm(group, &comm));
+    const int ierr = comex_group_comm(group, &comm);
+    assert(COMEX_SUCCESS == ierr);
     MPI_Barrier(comm);
 
     return COMEX_SUCCESS;
