@@ -17,9 +17,7 @@ void  L_ACCUMULATE_2D(long* MAYBE_RESTRICT alpha,
 {
 int i,j;
 
-#ifdef __crayx1
-#pragma _CRI concurrent
-#endif
+
 
    for(j=0;j< *cols; j++){
      long * MAYBE_RESTRICT aa = a + j* *lda;
