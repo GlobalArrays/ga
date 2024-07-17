@@ -35,7 +35,7 @@ AC_DEFUN([GA_F77_ELPA_2015_TEST], [AC_LANG_CONFTEST([AC_LANG_PROGRAM([],
       implicit none
       logical status
       integer i4,mpierr
-      double precision dscal8,darray8(2)
+      double precision darray8(2)
       mpierr=get_elpa_communicators (i4, 
      c i4,i4,i4,i4)
       status = SOLVE_EVP_REAL_2STAGE(i4,i4,darray8,i4,
@@ -66,7 +66,7 @@ AC_DEFUN([GA_F77_ELPA_2016_TEST], [AC_LANG_CONFTEST([AC_LANG_PROGRAM([],
       implicit none
       logical status
       integer i4,mpierr
-      double precision dscal8,darray8(2)
+      double precision darray8(2)
       mpierr=get_elpa_communicators (i4, 
      c i4,i4,i4,i4)
       status = SOLVE_EVP_REAL_2STAGE_DOUBLE(i4,i4,darray8,i4,
@@ -87,6 +87,37 @@ char solve_evp_real_2stage_double ();
 #endif
 ],
 [[char result = solve_evp_real_2stage_double ();
+]])])
+])
+
+## Generate Fortran 77 conftest for elpa_solve_evp_real_double  for ELPA 2017
+AC_DEFUN([GA_F77_ELPA_2017_TEST], [AC_LANG_CONFTEST([AC_LANG_PROGRAM([],
+[[      use ELPA
+      implicit none
+      logical status
+      integer i4,success
+      double precision dvec8(2),dmat8(2,2)
+      class(elpa_t), pointer :: e   
+      if (elpa_init(20170403) /= ELPA_OK) then       ! put here the version number of the API
+        error stop "ELPA API version not supported"  ! which you are using
+      endif
+      call e%set("na", i4,success)                
+
+      call e%eigenvectors(dmat8, dvec8, dmat8, success)]])])
+])
+
+
+# GA_C_ELPA_TEST
+# --------------
+# Generate C conftest for ELPA 2017
+AC_DEFUN([GA_C_ELPA_2017_TEST], [AC_LANG_CONFTEST([AC_LANG_PROGRAM(
+[#include <elpa/elpa.h>
+elpa_t handle;
+int error;
+double d8[2];
+handle = elpa_allocate(&error);
+],
+[[elpa_eigenvectors(handle, d8, d8, d8, &error);
 ]])])
 ])
 
@@ -137,6 +168,21 @@ AS_IF([test "x$enable_f77" = xno],
     AC_LINK_IFELSE([], [ga_elpa_2016_ok=yes])
     AC_LANG_POP([Fortran 77])])
 ])dnl
+# GA_RUN_ELPA_2017_TEST
+# ----------------
+# Test the linker.
+#  Sets ga_elpa_ok=yes on success.
+AC_DEFUN([GA_RUN_ELPA_2017_TEST], [
+AS_IF([test "x$enable_f77" = xno],
+   [AC_LANG_PUSH([C])
+    GA_C_ELPA_2017_TEST()
+    AC_LINK_IFELSE([], [ga_elpa_2017_ok=yes])
+    AC_LANG_POP([C])],
+   [AC_LANG_PUSH([Fortran 77])
+    GA_F77_ELPA_2017_TEST()
+    AC_LINK_IFELSE([], [ga_elpa_2017_ok=yes])
+    AC_LANG_POP([Fortran 77])])
+])dnl
 
 # GA_ELPA([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
 # -------------------------------------------------
@@ -158,10 +204,12 @@ AC_ARG_WITH([elpa8],
 ga_elpa_ok=no
 ga_elpa_2015_ok=no
 ga_elpa_2016_ok=no
+ga_elpa_2017_ok=no
 
 AS_IF([test "x$with_elpa" = xno], [ga_elpa_ok=skip])
 AS_IF([test "x$with_elpa" = xno], [ga_elpa_2015_ok=skip])
 AS_IF([test "x$with_elpa" = xno], [ga_elpa_2016_ok=skip])
+AS_IF([test "x$with_elpa" = xno], [ga_elpa_2017_ok=skip])
 
 # Parse --with-elpa argument. Clear previous values first.
 ELPA_LIBS=
@@ -187,16 +235,24 @@ AC_MSG_NOTICE([Attempting to locate ELPA library])
 # First, check environment/command-line variables.
 # If failed, erase ELPA_LIBS but maintain ELPA_LDFLAGS and
 # ELPA_CPPFLAGS.
-# check elpa2016 first
-AS_IF([test $ga_elpa_2016_ok = no],
+# check elpa2017 first
+AS_IF([test $ga_elpa_2017_ok = no],
+    [AC_MSG_CHECKING([for ELPA 2017 with user-supplied flags])
+     LIBS="$ELPA_LIBS $SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
+     GA_RUN_ELPA_2017_TEST()
+     LIBS="$ga_save_LIBS"
+     AC_MSG_RESULT([$ga_elpa_2017_ok])])
+
+# check elpa2016 second
+AS_IF([test $ga_elpa_2017_ok = no && test $ga_elpa_2016_ok = no],
     [AC_MSG_CHECKING([for ELPA 2016 with user-supplied flags])
      LIBS="$ELPA_LIBS $SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
      GA_RUN_ELPA_2016_TEST()
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_elpa_2016_ok])])
 
-# check elpa2015 second
-AS_IF([test $ga_elpa_2015_ok = no],
+# check elpa2015 third
+AS_IF([test $ga_elpa_2017_ok = no && test $ga_elpa_2016_ok = no && test $ga_elpa_2015_ok = no],
     [AC_MSG_CHECKING([for ELPA 2015 with user-supplied flags])
      LIBS="$ELPA_LIBS $SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
      GA_RUN_ELPA_2015_TEST()
@@ -207,6 +263,8 @@ AS_IF([test $ga_elpa_2015_ok = no],
 AS_IF([test $ga_elpa_2015_ok = yes],  [ga_elpa_ok=yes])
 # ga_elpa_2016_ok = yes implies ga_elpa_ok = yes
 AS_IF([test $ga_elpa_2016_ok = yes],  [ga_elpa_ok=yes])
+# ga_elpa_2017_ok = yes implies ga_elpa_ok = yes
+AS_IF([test $ga_elpa_2017_ok = yes],  [ga_elpa_ok=yes])
 
 AS_IF([test $ga_elpa_ok = no],
     [AC_MSG_CHECKING([for ELPA with user-supplied flags])
@@ -240,7 +298,7 @@ AS_IF([test "x$elpa_size" = x8],
 AS_IF([test $ga_elpa_ok = yes],
     [have_elpa=1
      $1],
-    [AC_MSG_WARN([ELPA library not found, interfaces won't be defined])
+    [AC_MSG_NOTICE([ELPA library not found, interfaces won't be defined])
      have_elpa=0
      $2])
 AC_SUBST([have_elpa])
@@ -251,7 +309,7 @@ AM_CONDITIONAL([HAVE_ELPA], [test $ga_elpa_ok = yes])
 AS_IF([test $ga_elpa_2015_ok = yes],
     [have_elpa_2015=1
      $1],
-    [AC_MSG_WARN([ELPA 2015 library not found, interfaces won't be defined])
+    [AC_MSG_NOTICE([ELPA 2015 library not found, interfaces won't be defined])
      have_elpa_2015=0
      $2])
 AC_SUBST([have_elpa_2015])
@@ -262,11 +320,22 @@ AM_CONDITIONAL([HAVE_ELPA_2015], [test $ga_elpa_2015_ok = yes])
 AS_IF([test $ga_elpa_2016_ok = yes],
     [have_elpa_2016=1
      $1],
-    [AC_MSG_WARN([ELPA 2016 library not found, interfaces won't be defined])
+    [AC_MSG_NOTICE([ELPA 2016 library not found, interfaces won't be defined])
      have_elpa_2016=0
      $2])
 AC_SUBST([have_elpa_2016])
 AC_DEFINE_UNQUOTED([HAVE_ELPA_2016], [$have_elpa_2016],
     [Define to 1 if you have ELPA library with 2STAGE alg. in 2016 ELPA lib])
 AM_CONDITIONAL([HAVE_ELPA_2016], [test $ga_elpa_2015_ok = yes])
+# Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
+AS_IF([test $ga_elpa_2017_ok = yes],
+    [have_elpa_2017=1
+     $1],
+    [AC_MSG_NOTICE([ELPA 2017 library not found, interfaces won't be defined])
+     have_elpa_2017=0
+     $2])
+AC_SUBST([have_elpa_2017])
+AC_DEFINE_UNQUOTED([HAVE_ELPA_2017], [$have_elpa_2017],
+    [Define to 1 if you have ELPA library with the 2017 ELPA API])
+AM_CONDITIONAL([HAVE_ELPA_2017], [test $ga_elpa_2017_ok = yes])
 ])dnl GA_ELPA

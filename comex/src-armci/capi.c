@@ -109,6 +109,15 @@ int ARMCI_Free(void *ptr)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak ARMCI_Free_memdev
+#endif
+int ARMCI_Free_memdev(void *ptr)
+{
+    return PARMCI_Free_memdev(ptr);
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak ARMCI_Free_local
 #endif
 int ARMCI_Free_local(void *ptr)
@@ -199,6 +208,15 @@ int ARMCI_Init_args(int *argc, char ***argv)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak ARMCI_Init_mpi_comm
+#endif
+int ARMCI_Init_mpi_comm(MPI_Comm comm)
+{
+    return PARMCI_Init_mpi_comm(comm);
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak ARMCI_Initialized
 #endif
 int ARMCI_Initialized()
@@ -222,6 +240,15 @@ void ARMCI_Lock(int mutex, int proc)
 int ARMCI_Malloc(void **ptr_arr, armci_size_t bytes)
 {
     return PARMCI_Malloc(ptr_arr, bytes);
+}
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak ARMCI_Malloc_memdev
+#endif
+int ARMCI_Malloc_memdev(void **ptr_arr, armci_size_t bytes,
+    const char *device)
+{
+    return PARMCI_Malloc_memdev(ptr_arr, bytes, device);
 }
 
 

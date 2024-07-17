@@ -2784,6 +2784,7 @@ static void ngai_has_negative_element(Integer atype, Integer andim, Integer *loA
     baseldA[i] = baseldA[i-1] * ldA[i];
   }
 
+  *iretval = 0;
   for(i=0; i<n1dim; i++) {
     idx = 0;
     for(j=1; j<andim; j++) {
@@ -2840,7 +2841,7 @@ Integer g_a, *alo, *ahi;    /* patch of g_a */
   Integer andim, adims[MAXDIM];
   Integer loA[MAXDIM], hiA[MAXDIM], ldA[MAXDIM];
   char *A_ptr; 
-  Integer iretval;
+  Integer iretval = 0;
   Integer num_blocks;
   Integer me= pnga_nodeid();
   _iterator_hdl hdl;

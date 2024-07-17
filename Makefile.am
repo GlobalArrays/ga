@@ -26,6 +26,7 @@ ACLOCAL_AMFLAGS = -I m4
 # automake variables used.
 include_HEADERS =
 nodist_include_HEADERS =
+noinst_HEADERS =
 bin_PROGRAMS =
 bin_SCRIPTS =
 check_PROGRAMS =
@@ -57,9 +58,11 @@ AM_FFLAGS += $(GA_FOPT)
 AM_FFLAGS += $(GA_F_WARN)
 AM_FFLAGS += $(FFLAG_INT)
 AM_FFLAGS += $(FFLAG_NO_LOOP_OPT)
+AM_FFLAGS += $(FFLAG_NO_LOOP_VECT)
 AM_CFLAGS += $(GA_COPT)
 AM_CFLAGS += $(GA_C_WARN)
 AM_CFLAGS += $(CFLAG_NO_LOOP_OPT)
+AM_CFLAGS += $(CFLAG_NO_LOOP_VECT)
 AM_CXXFLAGS += $(GA_CXXOPT)
 AM_CXXFLAGS += $(GA_CXX_WARN)
 
@@ -76,6 +79,11 @@ AM_LDFLAGS += $(LAPACK_LDFLAGS)
 AM_LDFLAGS += $(BLAS_LDFLAGS)
 AM_LDFLAGS += $(GA_MP_LDFLAGS)
 AM_LDFLAGS += $(ARMCI_NETWORK_LDFLAGS)
+
+if WITH_SICM
+AM_CPPFLAGS += $(SICM_CPPFLAGS)
+AM_LDFLAGS += $(SICM_LDFLAGS)
+endif
 
 LDADD += libga.la
 
@@ -164,15 +172,15 @@ if ENABLE_F77
 libga_la_SOURCES += ma/maf.F
 endif
 
-include_HEADERS += ma/error.h
 include_HEADERS += ma/macdecls.h
 include_HEADERS += ma/macommon.h
 include_HEADERS += ma/maf2c.fh
 include_HEADERS += ma/mafdecls.fh
 include_HEADERS += ma/matypes.h
-include_HEADERS += ma/scope.h
-include_HEADERS += ma/string-util.h
-include_HEADERS += ma/table.h
+noinst_HEADERS += ma/scope.h
+noinst_HEADERS += ma/string-util.h
+noinst_HEADERS += ma/table.h
+noinst_HEADERS += ma/error.h
 
 AM_CPPFLAGS += -I$(top_build_prefix)ma
 AM_CPPFLAGS += -I$(top_srcdir)/ma
@@ -438,13 +446,16 @@ AM_CPPFLAGS += -I$(top_srcdir)/global/testing
 
 check_PROGRAMS += global/testing/big
 check_PROGRAMS += global/testing/elempatch
+check_PROGRAMS += global/testing/tiled_irreg_test
 check_PROGRAMS += global/testing/gatscat
+check_PROGRAMS += global/testing/comm_init
 check_PROGRAMS += global/testing/getmem
 check_PROGRAMS += global/testing/mtest
 check_PROGRAMS += global/testing/mulmatpatchc
 check_PROGRAMS += global/testing/normc
 check_PROGRAMS += global/testing/matrixc
 check_PROGRAMS += global/testing/ntestc
+check_PROGRAMS += global/testing/nbtestc
 check_PROGRAMS += global/testing/ntestfc
 check_PROGRAMS += global/testing/packc
 check_PROGRAMS += global/testing/patch_enumc
@@ -463,6 +474,7 @@ check_PROGRAMS += global/testing/thread_perf_contig
 check_PROGRAMS += global/testing/thread_perf_strided
 check_PROGRAMS += global/testing/threadsafec
 check_PROGRAMS += global/testing/read_only
+check_PROGRAMS += global/testing/cache_test
 check_PROGRAMS += global/testing/unpackc
 if ENABLE_F77
 check_PROGRAMS += global/testing/bin
@@ -500,6 +512,7 @@ check_PROGRAMS += global/testing/testeig
 check_PROGRAMS += global/testing/testmatmult
 check_PROGRAMS += global/testing/testsolve
 check_PROGRAMS += global/testing/test
+check_PROGRAMS += global/testing/overlay
 check_PROGRAMS += global/testing/test_mirrored
 check_PROGRAMS += global/testing/types_test
 check_PROGRAMS += global/testing/field_test
@@ -626,13 +639,16 @@ endif
 
 #GLOBAL_PARALLEL_TESTS += global/testing/big$(EXEEXT) # needs lots of memory
 GLOBAL_PARALLEL_TESTS += global/testing/elempatch$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/tiled_irreg_test$(EXEEXT)
 #GLOBAL_PARALLEL_TESTS += global/testing/gatscat$(EXEEXT) # broken
+GLOBAL_PARALLEL_TESTS += global/testing/comm_init$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/getmem$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/mtest$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/mulmatpatchc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/normc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/matrixc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/ntestc$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/nbtestc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/ntestfc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/packc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/patch_enumc$(EXEEXT)
@@ -648,6 +664,7 @@ GLOBAL_THREADED_TESTS += global/testing/thread_perf_contig$(EXEEXT)
 GLOBAL_THREADED_TESTS += global/testing/thread_perf_strided$(EXEEXT)
 GLOBAL_THREADED_TESTS += global/testing/threadsafec$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/read_only$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/cache_test$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/unpackc$(EXEEXT)
 if ENABLE_F77
 GLOBAL_PARALLEL_TESTS += global/testing/bin$(EXEEXT)
@@ -686,6 +703,7 @@ GLOBAL_PARALLEL_TESTS += global/testing/testeig$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmatmult$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testsolve$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/test$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/overlay$(EXEEXT)
 if HAVE_SCALAPACK
 GLOBAL_PARALLEL_TESTS += global/testing/testspd$(EXEEXT)
 endif
@@ -869,6 +887,7 @@ global_testing_bin_SOURCES                 = global/testing/bin.F $(gtsrcf)
 global_testing_blktest_SOURCES             = global/testing/blktest.F $(gtsrcf)
 global_testing_d2test_SOURCES              = global/testing/d2test.F $(gtsrcf)
 global_testing_elempatch_SOURCES           = global/testing/elempatch.c
+global_testing_tiled_irreg_test_SOURCES    = global/testing/tiled_irreg_test.c
 global_testing_field_test_SOURCES          = global/testing/field-test.F $(gtsrcf)
 global_testing_g2test_SOURCES              = global/testing/g2test.F $(gtsrcf)
 global_testing_g3test_SOURCES              = global/testing/g3test.F $(gtsrcf)
@@ -876,6 +895,7 @@ global_testing_ga_lu_SOURCES               = global/testing/ga_lu.c
 global_testing_ga_mpi_SOURCES              = global/testing/ga-mpi.c
 global_testing_ga_shift_SOURCES            = global/testing/ga_shift.F $(gtsrcf)
 global_testing_gatscat_SOURCES             = global/testing/gatscat.c
+global_testing_comm_init_SOURCES           = global/testing/comm_init.c
 global_testing_getmem_SOURCES              = global/testing/getmem.c
 global_testing_ghosts_SOURCES              = global/testing/ghosts.F $(gtsrcf)
 global_testing_ipc_clean_SOURCES           = global/testing/ipc.clean.c
@@ -892,6 +912,7 @@ global_testing_ndim_SOURCES                = global/testing/ndim.F $(gtsrcf)
 global_testing_normc_SOURCES               = global/testing/normc.c
 global_testing_matrixc_SOURCES             = global/testing/matrixc.c
 global_testing_ntestc_SOURCES              = global/testing/ntestc.c
+global_testing_nbtestc_SOURCES             = global/testing/nbtestc.c
 global_testing_ntestfc_SOURCES             = global/testing/ntestfc.c
 global_testing_packc_SOURCES               = global/testing/packc.c
 global_testing_patch_SOURCES               = global/testing/patch.F $(gtsrcf) $(testblassrc)
@@ -921,6 +942,7 @@ global_testing_stride_SOURCES              = global/testing/stride.F $(gtsrcf)
 global_testing_testabstract_ops_SOURCES    = global/testing/testabstract_ops.c
 global_testing_test_SOURCES                = global/testing/test.F $(gtsrcf)
 global_testing_test_mirrored_SOURCES       = global/testing/test.F $(gtsrcf)
+global_testing_overlay_SOURCES             = global/testing/overlay.F $(gtsrcf)
 global_testing_testc_SOURCES               = global/testing/testc.c
 global_testing_testeig_SOURCES             = global/testing/testeig.F $(gtsrcf)
 global_testing_testmatmult_SOURCES         = global/testing/testmatmult.F $(gtsrcf)
@@ -935,6 +957,7 @@ global_testing_thread_perf_strided_SOURCES = global/testing/thread_perf_strided.
 global_testing_threadsafec_SOURCES         = global/testing/threadsafec.c
 global_testing_types_test_SOURCES          = global/testing/types-test.F $(gtsrcf)
 global_testing_unpackc_SOURCES             = global/testing/unpackc.c
+global_testing_cache_test_SOURCES          = global/testing/cache_test.c
 nodist_global_testing_nga_onesided_SOURCES = global/testing/nga-onesided.F $(gtsrcf)
 nodist_global_testing_nga_patch_SOURCES    = global/testing/nga-patch.F $(gtsrcf)
 nodist_global_testing_nga_periodic_SOURCES = global/testing/nga-periodic.F $(gtsrcf)
@@ -1343,6 +1366,7 @@ check_PROGRAMS += ga++/testing/mtest
 check_PROGRAMS += ga++/testing/ntestc
 check_PROGRAMS += ga++/testing/testc
 check_PROGRAMS += ga++/testing/testmult
+check_PROGRAMS += ga++/testing/create_irreg_test
 check_PROGRAMS += ga++/testing/threadsafecpp
 
 CXX_SERIAL_TESTS =
@@ -1357,6 +1381,7 @@ CXX_PARALLEL_TESTS += ga++/testing/mtest$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/ntestc$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/testc$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/testmult$(EXEEXT)
+CXX_PARALLEL_TESTS += ga++/testing/create_irreg_test$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/threadsafecpp$(EXEEXT)
 
 ga___testing_elempatch_SOURCES      = ga++/testing/elempatch.cc
@@ -1364,6 +1389,7 @@ ga___testing_mtest_SOURCES          = ga++/testing/mtest.cc
 ga___testing_ntestc_SOURCES         = ga++/testing/ntestc.cc
 ga___testing_testc_SOURCES          = ga++/testing/testc.cc
 ga___testing_testmult_SOURCES       = ga++/testing/testmult.cc
+ga___testing_create_irreg_test_SOURCES       = ga++/testing/create_irreg_test.cc
 ga___testing_threadsafecpp_SOURCES  = ga++/testing/thread-safe.cc
 
 ga___testing_threadsafecpp_CXXFLAGS = $(AM_CXXFLAGS) $(OPENMP_CXXFLAGS)
@@ -1377,6 +1403,7 @@ ga___testing_mtest_LDADD            = libga++.la
 ga___testing_ntestc_LDADD           = libga++.la
 ga___testing_testc_LDADD            = libga++.la
 ga___testing_testmult_LDADD         = libga++.la
+ga___testing_create_irreg_test_LDADD         = libga++.la
 
 endif # CXX_BINDINGS
 
@@ -1618,22 +1645,13 @@ endif
 endif
 
 if ARMCI_SRC_DIR_COMEX
+AM_CPPFLAGS += -I$(top_srcdir)/comex/src-armci
 else
-endif
 
 if ARMCI_NETWORK_ARMCI
 else
-if ARMCI_NETWORK_PORTALS
-AM_CPPFLAGS += -I$(top_srcdir)/armci/src-portals
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-else
-if ARMCI_NETWORK_GEMINI
-AM_CPPFLAGS += -I$(top_srcdir)/armci/src-gemini
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-else
 AM_CPPFLAGS += -I$(top_srcdir)/armci/src/include
 AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-endif
 endif
 endif
 
@@ -1642,6 +1660,11 @@ libga_la_LIBADD += $(ELPA_LIBS)
 libga_la_LIBADD += $(SCALAPACK_LIBS)
 libga_la_LIBADD += $(LAPACK_LIBS)
 libga_la_LIBADD += $(BLAS_LIBS)
+
+if WITH_SICM
+libga_la_LIBADD += $(SICM_LIBS)
+endif
+
 if ARMCI_NETWORK_ARMCI
 libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 libga_la_LIBADD += $(GA_MP_LIBS)

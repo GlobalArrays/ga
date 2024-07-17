@@ -13,6 +13,7 @@ typedef struct {
   Integer *map;
   Integer *proclist;
   int     *proclistperm;
+  Integer *mapc;
   Integer nproc;
   Integer offset;
   Integer iproc;
@@ -130,6 +131,7 @@ extern void gai_iterator_init(Integer, Integer [], Integer [], _iterator_hdl *);
 extern void gai_iterator_reset(_iterator_hdl *);
 extern int gai_iterator_next(_iterator_hdl *, int *, Integer *[],
         Integer *[], char **, Integer []);
+extern int gai_iterator_last(_iterator_hdl *);
 extern void gai_iterator_destroy(_iterator_hdl *);
 
 extern void pnga_local_iterator_init(Integer, _iterator_hdl*);

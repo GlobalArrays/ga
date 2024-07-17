@@ -1,0 +1,47 @@
+# SANITY CHECK
+if( "ilp64" IN_LIST FLAME_FIND_COMPONENTS AND "lp64" IN_LIST FLAME_FIND_COMPONENTS )
+  message( FATAL_ERROR "FLAME cannot link to both ILP64 and LP64 interfaces" )
+endif()
+
+if( FLAME_PREFERS_STATIC )
+  set( FLAME_LIBRARY_NAME "libflame.a" )
+else()
+  set( FLAME_LIBRARY_NAME "flame" )
+endif()
+
+find_library( FLAME_LIBRARIES
+  NAMES ${FLAME_LIBRARY_NAME}
+  HINTS ${FLAME_PREFIX}
+  PATHS ${FLAME_LIBRARY_DIR} ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} 
+  PATH_SUFFIXES lib lib64 lib32
+  DOC "FLAME Library"
+)
+
+find_path( FLAME_INCLUDE_DIR
+  NAMES FLAME.h
+  HINTS ${FLAME_PREFIX}
+  PATHS ${FLAME_INCLUDE_DIR}
+  PATH_SUFFIXES include
+  DOC "FLAME header"
+)
+  
+#XXX Seems that FLAME is only LP64
+set( FLAME_lp64_FOUND  TRUE  )
+set( FLAME_ilp64_FOUND FALSE )
+
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args( FLAME
+  REQUIRED_VARS FLAME_LIBRARIES FLAME_INCLUDE_DIR
+  HANDLE_COMPONENTS
+)
+
+#if( FLAME_FOUND AND NOT TARGET FLAME::FLAME )
+#
+#  add_library( FLAME::FLAME INTERFACE IMPORTED )
+#  set_target_properties( FLAME::FLAME PROPERTIES
+#    INTERFACE_INCLUDE_DIRECTORIES "${FLAME_INCLUDE_DIR}"
+#    INTERFACE_LINK_LIBRARIES      "${FLAME_LIBRARIES}"
+#  )
+#
+#endif()

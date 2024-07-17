@@ -14,7 +14,7 @@
 
 #define DIM 2
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs, i, j;
   int g_A, g_B, local_A[5][5], local_B[5][5];  

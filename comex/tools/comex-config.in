@@ -256,11 +256,13 @@ as_unset=as_fn_unset
 ## -------------------- ##
 
 
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
 cc="@CC@"
-cppflags="@MPI_CPPFLAGS@ @COMEX_NETWORK_CPPFLAGS@ @BLAS_CPPFLAGS@ -I@prefix@/include"
+cppflags="@MPI_CPPFLAGS@ @COMEX_NETWORK_CPPFLAGS@ @BLAS_CPPFLAGS@ -I@includedir@"
 network_cppflags="@COMEX_NETWORK_CPPFLAGS@"
 cflags=""
-ldflags="@MPI_LDFLAGS@ @COMEX_NETWORK_LDFLAGS@ @BLAS_LDFLAGS@ -L@prefix@/lib"
+ldflags="@MPI_LDFLAGS@ @COMEX_NETWORK_LDFLAGS@ @BLAS_LDFLAGS@ -L@libdir@"
 network_ldflags="@COMEX_NETWORK_LDFLAGS@"
 libs="-lcomex @MPI_LIBS@ @COMEX_NETWORK_LIBS@ @BLAS_LIBS@ @LIBS@"
 network_libs="@COMEX_NETWORK_LIBS@"

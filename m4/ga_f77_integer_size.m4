@@ -2,13 +2,13 @@
 # -----------------------------
 # These are the known flags for promoting INTEGERs to 8 bytes.
 AC_DEFUN([_GA_F77_INTEGER_4_KNOWN_FLAGS],
-[-fdefault-integer-4 -qintsize=4 "-integer-size 32" -CcdII4 "-s integer32" -xtypemap=integer:32 -i4 +i4])dnl
+[-fdefault-integer-4 -qintsize=4 "-integer-size 32" "-CcdII4 -CcdLL8" "-s integer32" -xtypemap=integer:32 -i4 +i4])dnl
 
 # _GA_F77_INTEGER_8_KNOWN_FLAGS
 # -----------------------------
 # These are the known flags for promoting INTEGERs to 8 bytes.
 AC_DEFUN([_GA_F77_INTEGER_8_KNOWN_FLAGS],
-[-fdefault-integer-8 -qintsize=8 "-integer-size 64" -CcdII8 "-s integer64" -xtypemap=integer:64 -i8 +i8])dnl
+[-fdefault-integer-8 -qintsize=8 "-integer-size 64" "-CcdII8 -CcdLL8" "-s integer64" -xtypemap=integer:64 -i8 +i8])dnl
 
 # _GA_F77_INTEGER_4_FLAG(VARIABLE)
 # --------------------------------
@@ -69,6 +69,8 @@ AS_IF([test "x$FFLAG_INT" != x],
      AC_LINK_IFELSE(
 [[      program main
       integer i
+      i=0
+      write(6,*) i
       end program]],
         [ga_result=$flag])])
 AS_IF([test "x$ga_result" = x],
@@ -80,6 +82,8 @@ AS_IF([test "x$ga_result" = x],
         AC_LINK_IFELSE(
 [[      program main
       integer i
+      i=0
+      write(6,*) i
       end program]],
             [ac_ext=F
              rm -f a.out
@@ -87,6 +91,8 @@ AS_IF([test "x$ga_result" = x],
              AC_LINK_IFELSE(
 [[      program main
       integer i
+      i=0
+      write(6,*) i
       end program]],
              	[ga_result=$flag; break])
              ac_ext=f])
@@ -123,6 +129,8 @@ AS_IF([test "x$FFLAG_INT" != x],
      AC_LINK_IFELSE(
 [[      program main
       integer i
+      i=0
+      write(6,*) i
       end program]],
         [ga_result=$flag])])
 AS_IF([test "x$ga_result" = x],
@@ -134,6 +142,8 @@ AS_IF([test "x$ga_result" = x],
         AC_LINK_IFELSE(
 [[      program main
       integer i
+      i=0
+      write(6,*) i
       end program]],
             [ac_ext=F
              rm -f a.out
@@ -141,6 +151,8 @@ AS_IF([test "x$ga_result" = x],
              AC_LINK_IFELSE(
 [[      program main
       integer i
+      i=0
+      write(6,*) i
       end program]],
                 [ga_result=$flag; break])
              ac_ext=f])

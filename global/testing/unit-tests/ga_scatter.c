@@ -14,7 +14,7 @@
 #define N 5
 #define D 2
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs;
   int g_A, dims[D]={5,10}, local_A[N], sub_array[N][D], **s_array=NULL;

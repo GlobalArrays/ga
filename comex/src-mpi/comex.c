@@ -1357,7 +1357,7 @@ int comex_free_local(void *ptr)
 }
 
 
-int comex_init()
+int _comex_init(MPI_Comm comm)
 {
     int status;
     int init_flag;
@@ -1373,7 +1373,7 @@ int comex_init()
     assert(init_flag);
     
     /* Duplicate the World Communicator */
-    status = MPI_Comm_dup(MPI_COMM_WORLD, &(l_state.world_comm));
+    status = MPI_Comm_dup(comm, &(l_state.world_comm));
     assert(MPI_SUCCESS == status);
     assert(l_state.world_comm); 
 
@@ -1413,6 +1413,18 @@ int comex_init()
     comex_barrier(COMEX_GROUP_WORLD);
 
     return COMEX_SUCCESS;
+}
+
+
+int comex_init()
+{
+  return _comex_init(MPI_COMM_WORLD);
+}
+
+
+int comex_init_comm(MPI_Comm comm)
+{
+  return _comex_init(comm);
 }
 
 
@@ -2168,6 +2180,12 @@ int comex_malloc(void **ptrs, size_t size, comex_group_t group)
     return COMEX_SUCCESS;
 }
 
+int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
+        const char* device)
+{
+    return comex_malloc(ptrs,size,group);
+}
+
 
 int comex_free(void *ptr, comex_group_t group)
 {
@@ -2190,3 +2208,7 @@ int comex_free(void *ptr, comex_group_t group)
     return COMEX_SUCCESS;
 }
 
+int comex_free_dev(void *ptr, comex_group_t group)
+{
+    return comex_free(ptr, group);
+}

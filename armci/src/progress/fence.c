@@ -75,6 +75,11 @@ void PARMCI_Fence(int proc)
 #endif
 }
 
+void PARMCI_GroupFence(ARMCI_Group *group)
+{
+  /* Stub to prevent compilation problems with Comex build */
+}
+
 
 void PARMCI_AllFence()
 {

@@ -5,6 +5,10 @@
 /* for size_t */
 #include <stdlib.h>
 
+#ifdef MSG_COMMS_MPI
+#include <mpi.h>
+#endif
+
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif
@@ -22,6 +26,11 @@ typedef long armci_size_t;
 extern int armci_notify(int proc);
 extern int armci_notify_wait(int proc,int *pval);
 extern int ARMCI_Init(void);    /* initialize ARMCI */
+
+#ifdef MSG_COMMS_MPI
+extern int ARMCI_Init_mpi_comm(MPI_Comm comm);    /* initialize ARMCI */
+#endif
+
 extern int ARMCI_Init_args(int *argc, char ***argv); /* initialize ARMCI */
 extern int ARMCI_Initialized();
 extern void ARMCI_Barrier(void);    /* ARMCI Barrier*/
@@ -141,7 +150,9 @@ extern double ARMCI_GetValueDouble(void *src, int proc);
 
 
 extern int ARMCI_Malloc(void* ptr_arr[], armci_size_t bytes);
+extern int ARMCI_Malloc_memdev(void* ptr_arr[], armci_size_t bytes, const char* device);
 extern int ARMCI_Free(void *ptr);
+extern int ARMCI_Free_memdev(void *ptr);
 extern void* ARMCI_Malloc_local(armci_size_t bytes);
 extern int ARMCI_Free_local(void *ptr);
 extern int ARMCI_Same_node(int proc);
@@ -268,11 +279,14 @@ extern void ARMCI_Group_size(ARMCI_Group *group, int *size);
 extern void ARMCI_Group_set_default(ARMCI_Group *group);
 extern void ARMCI_Group_get_default(ARMCI_Group *group_out);
 extern void ARMCI_Group_get_world(ARMCI_Group *group_out);
+extern void ARMCI_GroupFence(ARMCI_Group *group);
    
 extern int ARMCI_Absolute_id(ARMCI_Group *group, int group_rank);
 extern int ARMCI_Uses_shm_grp(ARMCI_Group *group);
 
 extern int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,ARMCI_Group *group);
+extern int ARMCI_Malloc_group_memdev(void *ptr_arr[], armci_size_t bytes,
+    ARMCI_Group *group, const char *device);
 extern int ARMCI_Free_group(void *ptr, ARMCI_Group *group);
 
 extern int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* nb_handle);

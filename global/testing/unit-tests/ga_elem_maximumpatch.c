@@ -14,7 +14,7 @@
 
 #define DIM 2
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs, i, j;
   int g_A, g_B, g_C, local_C[DIM][DIM], dims[DIM]={5,5};

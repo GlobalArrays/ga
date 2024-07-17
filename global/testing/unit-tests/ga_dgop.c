@@ -166,8 +166,7 @@ absmin_operator(int rank, int nprocs, int n)
     }
 }
 
-
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 
   int rank, nprocs, n=10;

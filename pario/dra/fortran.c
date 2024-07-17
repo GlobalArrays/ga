@@ -25,16 +25,16 @@ Integer FATR dra_create_(
         Integer *reqdim1,
         Integer *reqdim2,
         Integer *d_a,
-        int  nlen,
-        int  flen
+        size_t  nlen,
+        size_t  flen
 #else
         Integer *type,
         Integer *dim1,
         Integer *dim2,
         char    *name,
-        int  nlen,
+        size_t  nlen,
         char    *filename,
-        int  flen,
+        size_t  flen,
         Integer *mode,
         Integer *reqdim1,
         Integer *reqdim2,
@@ -59,16 +59,16 @@ Integer FATR ndra_create_(
         Integer *mode,
         Integer  reqdims[],
         Integer *d_a,
-        int  nlen,
-        int  flen
+        size_t  nlen,
+        size_t  flen
 #else
         Integer *type,
         Integer *ndim,
         Integer  dims[],
         char    *name,
-        int  nlen,
+        size_t  nlen,
         char    *filename,
-        int  flen,
+        size_t  flen,
         Integer *mode,
         Integer  reqdims[],
         Integer *d_a
@@ -86,10 +86,10 @@ Integer FATR dra_open_(
         char    *filename,
         Integer *mode,
         Integer *d_a,
-        int      flen
+        size_t      flen
 #else
         char    *filename,
-        int      flen,
+        size_t      flen,
         Integer *mode,
         Integer *d_a
 #endif
@@ -108,17 +108,17 @@ Integer FATR dra_inquire_(
         Integer *dim2,
         char    *name,
         char    *filename,
-        int      nlen,
-        int      flen
+        size_t      nlen,
+        size_t      flen
 #else
         Integer *d_a,
         Integer *type,
         Integer *dim1,
         Integer *dim2,
         char    *name,
-        int      nlen,
+        size_t      nlen,
         char    *filename,
-        int      flen
+        size_t      flen
 #endif
         )
 {
@@ -138,17 +138,17 @@ Integer FATR ndra_inquire_(
         Integer  dims[],
         char    *name,
         char    *filename,
-        int      nlen,
-        int      flen
+        size_t      nlen,
+        size_t      flen
 #else
         Integer *d_a,
         Integer *type,
         Integer *ndim,
         Integer  dims[],
         char    *name,
-        int      nlen,
+        size_t      nlen,
         char    *filename,
-        int      flen
+        size_t      flen
 #endif
         )
 {
@@ -172,16 +172,16 @@ Integer ndra_create_config_(
         Integer *numfiles, 
         Integer *numioprocs,
         Integer *d_a,
-        int      nlen,
-        int      flen
+        size_t      nlen,
+        size_t      flen
 #else
         Integer *type,
         Integer *ndim,
         Integer  dims[],
         char    *name,
-        int      nlen,
+        size_t      nlen,
         char    *filename,
-        int      flen,
+        size_t      flen,
         Integer *mode, 
         Integer  reqdims[],
         Integer *numfiles, 

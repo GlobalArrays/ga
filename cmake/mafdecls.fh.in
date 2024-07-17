@@ -182,5 +182,5 @@
       common /mbc_dcpl/ dcpl_mb(2)
       double complex    dcpl_mb
 
-#define MA_ACCESS_INDEX_TYPE ${GA_FORTRAN_ACCESS_INDEX}
-#define MAPOINTER ${GA_FORTRAN_ACCESS_INDEX}
+#define MA_ACCESS_INDEX_TYPE ${GA_ACCESS_INDEX_TYPE}
+#define MAPOINTER ${GA_ACCESS_INDEX_TYPE}

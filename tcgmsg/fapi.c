@@ -165,6 +165,7 @@ Integer  FATR _NODEID_()
 }
 
 
+long NXTVAL_(long *mproc);
 Integer  FATR _NXTVAL_(Integer *mproc)
 {
     long amproc = *mproc;
@@ -199,6 +200,7 @@ void FATR _PBEGINF_()
 
     argv[argc] = 0;
     tcgi_pbegin(argc, argv);
+    for (i=0; i<argc; i++) free(argv[i]);
     free(argv);
 }
 

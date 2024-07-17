@@ -57,6 +57,14 @@ extern int comex_init();
 extern int comex_init_args(int *argc, char ***argv);
 
 /**
+ * Initialize comex with an externally supplied communicator.
+ *
+ * @param[in] comm external communicator.
+ * @return COMEX_SUCCESS on sucess
+ */
+extern int comex_init_comm(MPI_Comm);
+
+/**
  * Test whether comex has been initialized.
  *
  * @return COMEX_SUCCESS if comex has been initialized
@@ -521,6 +529,20 @@ extern int comex_malloc(
         void **ptr_arr, size_t bytes, comex_group_t group);
 
 /**
+ * Collective allocation of registered memory and exchange of addresses on
+ * a specified memory device.
+ *
+ * @param[out] ptr_arr array of memory addresses
+ *             w.r.t. each process's address space
+ * @param[in] bytes how many bytes to allocate locally
+ * @param[in] group the group to which the calling process belongs
+ * @param[in] device character string describing memory device
+ * @return COMEX_SUCCESS on success
+ */
+extern int comex_malloc_mem_dev(
+        void **ptr_arr, size_t bytes, comex_group_t group, const char *device);
+
+/**
  * Collective free of memory given the original local pointer.
  *
  * @param[in] ptr the original local memory allocated using comex_malloc
@@ -528,6 +550,15 @@ extern int comex_malloc(
  * @return COMEX_SUCCESS on success
  */
 extern int comex_free(void *ptr, comex_group_t group);
+
+/**
+ * Collective free of memory on a specified device given the original local pointer.
+ *
+ * @param[in] ptr the original local memory allocated using comex_malloc
+ * @param[in] group the group to which the calling process belongs
+ * @return COMEX_SUCCESS on success
+ */
+extern int comex_free_dev(void *ptr, comex_group_t group);
 
 /**
  * Local (noncollective) allocation of registered memory.

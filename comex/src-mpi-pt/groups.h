@@ -38,15 +38,16 @@ typedef struct group_link {
 /** list of worker groups */
 extern comex_igroup_t *group_list;
 
-extern void comex_group_init();
+extern void comex_group_init(MPI_Comm comm);
 extern void comex_group_finalize();
 extern comex_igroup_t* comex_get_igroup_from_group(comex_group_t group);
 
 /* verify that proc is part of group */
 #define CHECK_GROUP(GROUP,PROC) do {                                \
     int size;                                                       \
+    int ierr = comex_group_size(GROUP,&size);                       \
     COMEX_ASSERT(GROUP >= 0);                                       \
-    COMEX_ASSERT(COMEX_SUCCESS == comex_group_size(GROUP,&size));   \
+    COMEX_ASSERT(COMEX_SUCCESS == ierr);                            \
     COMEX_ASSERT(PROC >= 0);                                        \
     COMEX_ASSERT(PROC < size);                                      \
 } while(0)

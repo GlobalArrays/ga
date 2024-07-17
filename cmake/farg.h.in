@@ -3,7 +3,7 @@
 
 #include "typesf2c.h"
 
-#if ENABLE_FORTRAN
+#if ENABLE_F77
 #define F2C_GETARG F77_FUNC_(f2c_getarg,F2C_GETARG)
 #define F2C_IARGC F77_FUNC_(f2c_iargc,F2C_IARGC)
 #endif

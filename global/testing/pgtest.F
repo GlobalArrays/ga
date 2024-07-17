@@ -21,7 +21,7 @@ c vector boxes lack arithmetic precision
 c#define MIRROR
 c#define GA3
 c#define NGA_GATSCAT
-#define USE_RESTRICTED
+c#define USE_RESTRICTED
 
 #ifdef USE_RESTRICTED
 #  define NEW_API
@@ -607,6 +607,9 @@ c     overlapping accumulate
 #  ifdef MIRROR
       call ga_set_pgroup(g_b,p_mirror)
 #  endif
+#ifdef USE_RESTRICTED
+      call ga_set_restricted(g_b, rstrctd_list, num_rstrctd)
+#endif
       if (.not.ga_allocate(g_b)) then
 #else
 #  ifndef MIRROR

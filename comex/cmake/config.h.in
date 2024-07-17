@@ -33,12 +33,16 @@
 #cmakedefine01 HAVE_SYS_WEAK_ALIAS_PRAGMA
 
 #cmakedefine NDEBUG
+#cmakedefine __CRAYXE
+
+#cmakedefine01 ENABLE_SYSV
 
 #define SIZEOF_INT ${CM_SIZEOF_INT}
 #define SIZEOF_LONG ${CM_SIZEOF_LONG}
 #define SIZEOF_LONG_LONG ${CM_SIZEOF_LONG_LONG}
 #define SIZEOF_VOIDP ${CMAKE_SIZEOF_VOID_P}
-#define BLAS_SIZE ${CM_BLAS_SIZE}
+#define BLAS_SIZE ${BLAS_SIZE}
+/* #define BLAS_SIZE ${CM_BLAS_SIZE} */
 
 #ifndef __cplusplus
 #cmakedefine inline ${inline}

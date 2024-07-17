@@ -18,10 +18,12 @@ c#define NEW_API
 c#define MIRROR
 #define GA3
 #define NGA_GATSCAT
-c#define BLOCK_CYCLIC
+#define BLOCK_CYCLIC
 c#define USE_SCALAPACK_DISTR
 c#define USE_TILED_DISTR
+c#define USE_TILED_IRREG_DISTR
 c#define USE_RESTRICTED
+c#define USE_MEMDEV
 
 #ifdef USE_RESTRICTED
 #  define NEW_API
@@ -29,16 +31,32 @@ c#define USE_RESTRICTED
 
 #define MEM_INC 1000
 
+#ifdef USE_SCALAPACK_DISTR
+#  undef USE_TILED_DISTR
+#  undef USE_TILED_IRREG_DISTR
+#  define BLOCK_CYCLIC
+#endif
+
+#ifdef USE_TILED_DISTR
+#  undef USE_SCALAPACK_DISTR
+#  undef USE_TILED_IRREG_DISTR
+#  define BLOCK_CYCLIC
+#endif
+
+#ifdef USE_TILED_IRREG_DISTR
+#  undef USE_SCALAPACK_DISTR
+#  undef USE_TILED_DISTR
+#  define BLOCK_CYCLIC
+#endif
+
 #ifdef BLOCK_CYCLIC
 #  define NEW_API
 #  undef MIRROR
-#else
-#  undef USE_SCALAPACK_DISTR
-#  undef USE_TILED_DISTR
 #endif
 
-#ifdef USE_SCALAPACK_DISTR
-#  undef USE_TILED_DISTR
+#ifdef USE_MEMDEV
+#  define NEW_API
+#  define MEMDEVICE "dram"
 #endif
 
       program main
@@ -85,7 +103,56 @@ c
          write(6,'(a,i1,a,i1,a,i1)') ' Version ',version,'.',
      +      subversion,'.',patch
          call ffflush(6)
+#ifdef BLOCK_CYCLIC
+#if !defined(USE_SCALAPACK_DISTR) && !defined(USE_TILE_DISTR) && !defined(USE_TILED_IRREG_DISTR)
+         print *,' '
+         print *,' Testing block-cyclic arrays '
+         print *,' '
+#endif
+#endif
+#ifdef USE_SCALAPACK_DISTR
+         print *,' '
+         print *,' Testing ScaLAPACK distributed arrays '
+         print *,' '
+#endif
+#ifdef USE_TILED_DISTR
+         print *,' '
+         print *,' Testing tiled-distributed arrays '
+         print *,' '
+#endif
+#ifdef USE_TILED_IRREG_DISTR
+         print *,' '
+         print *,' Testing irregularly tiled-distributed arrays '
+         print *,' '
+#endif
+#ifdef USE_RESTRICTED
+         print *,' '
+         print *,' Testing restricted arrays '
+         print *,' '
+#endif
       endif
+#ifdef BLOCK_CYCLIC
+#if !defined(USE_SCALAPACK_DISTR) && !defined(USE_TILE_DISTR) && !defined(USE_TILED_IRREG_DISTR)
+      if (me.eq.0) print *,' '
+      if (me.eq.0) print *,' Testing block-cyclic layout'
+      if (me.eq.0) print *,' '
+#endif
+#endif
+#ifdef USE_SCALAPACK_DISTR
+      if (me.eq.0) print *,' '
+      if (me.eq.0) print *,' Testing ScaLAPACK block-cyclic layout'
+      if (me.eq.0) print *,' '
+#endif
+#ifdef USE_TILED_DISTR
+      if (me.eq.0) print *,' '
+      if (me.eq.0) print *,' Testing tiled layout'
+      if (me.eq.0) print *,' '
+#endif
+#ifdef USE_TILED_IRREG_DISTR
+      if (me.eq.0) print *,' '
+      if (me.eq.0) print *,' Testing irregular tiled layout'
+      if (me.eq.0) print *,' '
+#endif
 c
 c***  Initialize the MA package
 c     MA must be initialized before any global array is allocated
@@ -140,7 +207,6 @@ c
       endif
 
       call check_dbl()
-#if 1
 c
 c***  Check support for single precision complex arrays
 c
@@ -200,7 +266,6 @@ c***  Check if memory limits are enforced
 c
       call check_mem(util_mdtob(ma_heap*ga_nnodes()))
 c
-#endif
       if(me.eq.0) call ga_print_stats()
       if(me.eq.0) print *,' ' 
       if(me.eq.0) print *,'All tests successful ' 
@@ -250,7 +315,7 @@ c
       parameter (maxproc = 4096)
       double precision crap, sum1, sum2, x
       double precision nwords
-      logical found
+      logical found, nfound
       integer lprocs,inode,iproc,nnodes,lproc
 #ifdef USE_RESTRICTED
       integer num_rstrctd
@@ -258,6 +323,9 @@ c
 #endif
 #ifdef BLOCK_CYCLIC
       integer block_size(2), proc_grid(2)
+#endif
+#ifdef USE_TILED_IRREG_DISTR
+      integer mapc(4096), nblocks(2)
 #endif
       intrinsic int
       iran(i) = int(drand(0)*real(i)) + 1
@@ -318,20 +386,30 @@ c     call setdbg(1)
 #ifdef USE_RESTRICTED
       call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
 #endif
+
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#else
+      call util_create_map(mapc,block_size(1),dims,nblocks,proc_grid)
+      call ga_set_tiled_irreg_proc_grid(g_a,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
 #endif
 #endif
+
 #  ifdef MIRROR
       p_mirror = ga_pgroup_get_mirror()
       call ga_set_pgroup(g_a,p_mirror)
+#  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_a,MEMDEVICE)
 #  endif
       status = ga_allocate(g_a)
 #else
@@ -374,12 +452,9 @@ c
          call ffflush(6)
       endif
       call ga_zero(g_a)
-
 c
 c     Check that it is indeed zero
 c
-      
-      
       call ga_get(g_a, 1, n, 1, n, b, n)
       call ga_sync()
       do i = 1, n
@@ -593,19 +668,28 @@ c     overlapping accumulate
       g_b = ga_create_handle()
       call ga_set_data(g_b,ndim,dims,MT_DBL)
       call ga_set_array_name(g_b,'b')
+
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_b,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_b,block_size,proc_grid)
+#else
+      call ga_set_tiled_irreg_proc_grid(g_b,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_b,block_size)
 #endif
 #endif
+
 #  ifdef MIRROR
       call ga_set_pgroup(g_b,p_mirror)
+#  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_b,MEMDEVICE)
 #  endif
       if (.not.ga_allocate(g_b)) then
 #else
@@ -932,11 +1016,12 @@ c         generate unique i,j pairs
 10        continue
           i = iran(n)
           j=iran(n)
-c         if (found(i,j, iv, jv, loop-1) ) goto 10
 #ifndef NGA_GATSCAT
+          if (found(i,j, iv, jv, loop-1) ) goto 10
           iv(loop) = i
           jv(loop) = j
 #else
+          if (nfound(i,j, ijv, loop-1) ) goto 10
           ijv(1,loop) = i
           ijv(2,loop) = j
 #endif
@@ -1045,17 +1130,26 @@ c
       g_c = ga_create_handle()
       call ga_set_data(g_c,ndim,dims,MT_DBL)
       call ga_set_array_name(g_c,'c')
+
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_c,block_size,proc_grid)
 #else
+#ifdef USE_TILE_DISTR
       call ga_set_tiled_proc_grid(g_c,block_size,proc_grid)
+#else
+      call ga_set_tiled_irreg_proc_grid(g_c,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_c,block_size)
 #endif
 #endif
+
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_c,MEMDEVICE)
+#  endif
       if (.not.ga_allocate(g_c)) then
 #else
       if (.not. nga_create(MT_DBL, ndim, dims, 'c', chunk, g_c)) then
@@ -1254,6 +1348,9 @@ c     call setdbg(1)
       p_mirror = ga_pgroup_get_mirror()
       call ga_set_pgroup(g_a,p_mirror)
 #  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_a,MEMDEVICE)
+#  endif
       status = ga_allocate(g_a)
 #else
 #  ifndef MIRROR
@@ -1279,6 +1376,9 @@ c     call setdbg(1)
       call ga_set_array_name(g_b,'b')
 #  ifdef MIRROR
       call ga_set_pgroup(g_b,p_mirror)
+#  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_b,MEMDEVICE)
 #  endif
       if (.not.ga_allocate(g_b)) then
 #else
@@ -1788,6 +1888,9 @@ c
 #ifdef BLOCK_CYCLIC
       integer block_size(2), proc_grid(2)
 #endif
+#ifdef USE_TILED_IRREG_DISTR
+      integer mapc(4096), nblocks(2)
+#endif
       intrinsic int
       iran(i) = int(drand(0)*real(i)) + 1
 c
@@ -1846,11 +1949,16 @@ c     call setdbg(1)
       call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
 #endif
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#else
+      call util_create_map(mapc,block_size(1),dims,nblocks,proc_grid)
+      call ga_set_tiled_irreg_proc_grid(g_a,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
@@ -1859,6 +1967,9 @@ c     call setdbg(1)
 #  ifdef MIRROR
       p_mirror = ga_pgroup_get_mirror()
       call ga_set_pgroup(g_a,p_mirror)
+#  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_a,MEMDEVICE)
 #  endif
       status = ga_allocate(g_a)
 #else
@@ -1884,11 +1995,15 @@ c     call setdbg(1)
       call ga_set_data(g_b,ndim,dims,MT_DCPL)
       call ga_set_array_name(g_b,'b')
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_b,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_b,block_size,proc_grid)
+#else
+      call ga_set_tiled_irreg_proc_grid(g_b,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_b,block_size)
@@ -1896,6 +2011,9 @@ c     call setdbg(1)
 #endif
 #  ifdef MIRROR
       call ga_set_pgroup(g_b,p_mirror)
+#  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_b,MEMDEVICE)
 #  endif
       if (.not.ga_allocate(g_b)) then
 #else
@@ -2404,6 +2522,9 @@ c
 #else
       integer map(5,maxproc), found, np,k
 #endif
+#ifdef USE_TILED_IRREG_DISTR
+      integer mapc(4096), nblocks(2)
+#endif
       intrinsic int
       iran(i) = int(drand(0)*real(i)) + 1
 c     
@@ -2458,11 +2579,16 @@ c
       call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
 #endif
 #ifdef BLOCK_CYCLIC
-#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR) || defined(USE_TILED_IRREG_DISTR)
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
 #else
+#ifdef USE_TILED_DISTR
       call ga_set_tiled_proc_grid(g_a,block_size,proc_grid)
+#else
+      call util_create_map(mapc,block_size(1),dims,nblocks,proc_grid)
+      call ga_set_tiled_irreg_proc_grid(g_a,mapc,nblocks,proc_grid)
+#endif
 #endif
 #else
       call ga_set_block_cyclic(g_a,block_size)
@@ -2471,6 +2597,9 @@ c
 #  ifdef MIRROR
       p_mirror = ga_pgroup_get_mirror()
       call ga_set_pgroup(g_a,p_mirror)
+#  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_a,MEMDEVICE)
 #  endif
       if (.not.ga_allocate(g_a)) then
 #else
@@ -2784,13 +2913,6 @@ c
 
 #ifndef BLOCK_CYCLIC
       status =  ga_locate_region(g_a, 1, n, 1, n, map, np)
-#else
-      blo(1) = 1
-      bhi(1) = n
-      blo(2) = 1
-      bhi(2) = n
-      status = nga_locate_region(g_a, blo, bhi, map, block_list, np)
-#endif
       found = 0
       do j=1,n
          do i=1,n
@@ -2805,25 +2927,16 @@ c
       call ga_sync()
       do k = 1, np
 #ifndef MIRROR
-#ifndef BLOCK_CYCLIC
          if(map(5,k).eq.me)then
-#else
-         if(mod(block_list(k),nproc).eq.me)then
-#endif
 #else
          if(map(5,k).eq.iproc)then
 #endif
-#ifndef BLOCK_CYCLIC
                 if(found.eq.1) then
                     write(6,*)'double entry in map for proc ',me
                     call ffflush(6)
                 endif
                 do j= map(3,k), map(4,k)
                         do i= map(1,k), map(2,k)
-#else
-                do j= map(2,k), map(4,k)
-                        do i= map(1,k), map(3,k)
-#endif
 #ifndef MIRROR
                         b(i,j)=1*me
 #else
@@ -2831,13 +2944,8 @@ c
 #endif
                         enddo
                 enddo
-#ifndef BLOCK_CYCLIC
                 call ga_put(g_a, map(1,k),map(2,k),map(3,k),map(4,k),
      &                 b(map(1,k),map(3,k)),n)
-#else
-                call ga_put(g_a, map(1,k),map(3,k),map(2,k),map(4,k),
-     &                 b(map(1,k),map(2,k)),n)
-#endif
                 found = 1
          endif
       enddo
@@ -2845,25 +2953,14 @@ c
 c
       do k = 1, np
 #ifndef MIRROR
-#ifndef BLOCK_CYCLIC
          if(map(5,k).eq.me)then
-#else
-         if(mod(block_list(k),nproc).eq.me)then
-#endif
 #else
          if(map(5,k).eq.iproc)then
 #endif
-#ifndef BLOCK_CYCLIC
                 call ga_get(g_a, map(1,k),map(2,k),map(3,k),map(4,k),
      &                 a(map(1,k),map(3,k)),n)
                 do j= map(3,k), map(4,k)
                       do i= map(1,k), map(2,k)
-#else
-                call ga_get(g_a, map(1,k),map(3,k),map(2,k),map(4,k),
-     &                 a(map(1,k),map(2,k)),n)
-                do j= map(2,k), map(4,k)
-                      do i= map(1,k), map(3,k)
-#endif
                         if(b(i,j).ne.a(i,j)) then
                            write(6,*)
      &                     'proc ',me, 'overlap with ',a(i,j)
@@ -2880,7 +2977,112 @@ c
 #else
       if(iproc.eq.0)then
 #endif
+        call ga_get(g_a,1,n,1,n,a,n)
+        do j=1,n
+         do i=1,n
+            if(a(i,j).eq.-1)then
+               write(6,*)'i=',i,' j=',j, ' not assigned '
+               call ga_error('... exiting ',-1)
+            endif
+         enddo
+        enddo
+      endif
+#else
+c
+c   block cyclic distributions
+c
+      blo(1) = 1
+      bhi(1) = n
+      blo(2) = 1
+      bhi(2) = n
+      status = nga_locate_region(g_a, blo, bhi, map, block_list, np)
+      found = 0
+      do j=1,n
+         do i=1,n
+            b(i,j)=-1
+         enddo
+      enddo
+      if(me.eq.0)call ga_put(g_a,1,n,1,n,b,n)
+      call ga_sync()
+#if !defined(USE_SCALAPACK_DISTR) && !defined(USE_TILED_DISTR) && !defined(USE_TILED_IRREG_DISTR)
+      do k = 1, np
+        if(mod(block_list(k),nproc).eq.me)then
+          do j= map(2,k), map(4,k)
+            do i= map(1,k), map(3,k)
+              b(i,j)=1*me
+            enddo
+          enddo
+          call ga_put(g_a, map(1,k),map(3,k),map(2,k),map(4,k),
+     &                b(map(1,k),map(2,k)),n)
+          found = 1
+        endif
+      enddo
+      call ga_sync()
+c
+      do k = 1, np
+         if(mod(block_list(k),nproc).eq.me)then
+                call ga_get(g_a, map(1,k),map(3,k),map(2,k),map(4,k),
+     &                 a(map(1,k),map(2,k)),n)
+                do j= map(2,k), map(4,k)
+                      do i= map(1,k), map(3,k)
+                        if(b(i,j).ne.a(i,j)) then
+                           write(6,*)
+     &                     'proc ',me, 'overlap with ',a(i,j)
+                           call ffflush(6)
+                        endif
+                      enddo
+                enddo
+         endif
+      enddo
+      call ga_sync()
+#else
+c#if defined(USE_SCALAPACK_DISTR) || defined(USE_TILED_DISTR)
+      do k = 1, np
+        i = (dims(1)-1)/block_size(1);
+        j = (dims(2)-1)/block_size(2);
+        ii = mod(block_list(k),i)
+        jj = (block_list(k)-ii)/i
+        if(mod((ii+i*jj),nproc).eq.me)then
+          do j= map(2,k), map(4,k)
+            do i= map(1,k), map(3,k)
+              b(i,j)=1*me
+            enddo
+          enddo
+          call ga_put(g_a, map(1,k),map(3,k),map(2,k),map(4,k),
+     &                b(map(1,k),map(2,k)),n)
+          found = 1
+        endif
+      enddo
+      call ga_sync()
+c
+      do k = 1, np
+        i = (dims(1)-1)/block_size(1);
+        j = (dims(2)-1)/block_size(2);
+        ii = mod(block_list(k),i)
+        jj = (block_list(k)-ii)/i
+        if(mod((ii+i*jj),nproc).eq.me)then
+          call ga_get(g_a, map(1,k),map(3,k),map(2,k),map(4,k),
+     &                a(map(1,k),map(2,k)),n)
+          do j= map(2,k), map(4,k)
+            do i= map(1,k), map(3,k)
+              if(b(i,j).ne.a(i,j)) then
+                write(6,*)
+     &               'proc ',me, 'overlap with ',a(i,j)
+                call ffflush(6)
+              endif
+            enddo
+          enddo
+        endif
+      enddo
+      call ga_sync()
+c#endif
+c#ifdef USE_TILED_IRREG_DISTR
+c#endif
+#endif
+#endif
 
+c
+      if(me.eq.0)then
         call ga_get(g_a,1,n,1,n,a,n)
         do j=1,n
          do i=1,n
@@ -2927,7 +3129,7 @@ c---------------------------------------------------------------------
       integer ndim, dims(2), chunk(2), p_mirror
       parameter (maxproc = 4096)
       double precision crap
-      real x, sum1, sum2
+      real alpha, beta, x, sum1, sum2
       logical found
       integer lprocs, inode, iproc, lproc
 #ifdef USE_RESTRICTED
@@ -3009,6 +3211,9 @@ c
       p_mirror = ga_pgroup_get_mirror()
       write(6,*) 'Setting proc config'
       call ga_set_pgroup(g_a,p_mirror)
+#  endif
+#  ifdef USE_MEMDEV
+      call ga_set_memory_dev(g_a,MEMDEVICE)
 #  endif
       if (.not.ga_allocate(g_a)) then
 #else
@@ -3308,7 +3513,9 @@ c
 #else
       if (iproc.eq.0) call ga_put(g_b, 1, n, 1, n, b, n)
 #endif
-      call ga_add(0.1, g_a, 0.9, g_b, g_b)
+      alpha = 0.1
+      beta = 0.9
+      call ga_add(alpha, g_a, beta, g_b, g_b)
       call ga_get(g_b, 1, n, 1, n, b, n)
       do j = 1, n
          do i = 1, n
@@ -3852,6 +4059,22 @@ c
 99    continue
       return
       end 
+
+      logical function nfound(i,j, ijv, n)
+      integer n
+      integer i,j, ijv(2,n)
+      integer loop
+
+      nfound = .false.
+      do loop = 1, n
+               if(i .eq. ijv(1,loop) .and. j .eq.ijv(2,loop))then
+                 nfound = .true.
+                 goto 99
+               endif
+            enddo
+99    continue
+      return
+      end 
       
             
       subroutine proc_remap()
@@ -3944,3 +4167,103 @@ c
 c
       end
 
+      subroutine util_create_map(mapc, base, dims, nblocks, proc_grid)
+      implicit none
+#include "global.fh"
+      integer mapc(4096)
+      integer dims(2), nblocks(2), proc_grid(2)
+      integer primes(256), nprime
+      integer factors(256), nfactors
+      integer base
+      integer i, j, nproc, pmax, px, py, lo, hi
+      logical ok
+!
+!  Factor nproc into 2D processor grid. Start by finding prime
+!  factors
+!
+      nproc = ga_nnodes()
+      pmax = nproc
+      nprime = 1 
+      primes(1) = 2
+      do i = 3, pmax
+        ok = .true.
+        do j = 1, nprime
+!
+! check to see if any of the existing primes divides i
+!
+          if (mod(i,primes(j)).eq.0) then
+             ok = .false.
+          endif
+        end do
+!
+!  none of the existing primes divides i, so add it to the list of
+!  primes
+!
+        if (ok) then
+          nprime = nprime + 1
+          primes(nprime) = i
+        endif
+      end do
+!
+!  find prime factors of nproc
+!
+      nfactors = 0
+      j = nproc
+      i = 1
+      do while (i.le.nprime.and.j.gt.1)
+        do while (mod(j,primes(i)).eq.0.and.j.gt.1)
+          nfactors = nfactors + 1
+          factors(nfactors) = primes(i)
+          j = j/primes(i)
+        end do
+        i = i + 1
+      end do
+      if (nfactors.eq.0) then
+        nfactors = 1
+        primes(1) = nproc
+      endif
+!
+!  prime factors are available. Create px and py
+!
+      px = 1
+      py = 1
+      do i = nfactors, 1, -1
+        if (px.lt.py) then
+          px = px*factors(i) 
+        else
+          py = py*factors(i)
+        endif
+      end do
+      proc_grid(1) = px
+      proc_grid(2) = py
+!
+!  proc grid is complete, now create map. Start with x-axis
+!
+      lo = 1
+      hi = 0
+      i = 0
+      j = 0
+      do while (hi.lt.dims(1))
+        i = i + 1
+        hi = lo + base + mod(i+1,2) - 1
+!        hi = lo + base - 1
+        if (hi.gt.dims(1)) hi = dims(1)
+        j = j + 1
+        mapc(j) = lo
+        lo = hi + 1
+      end do
+      nblocks(1) = i
+      lo = 1
+      hi = 0
+      i = 0
+      do while (hi.lt.dims(2))
+        i = i + 1
+        hi = lo + base + mod(i,2) - 1
+!        hi = lo + base - 1
+        if (hi.gt.dims(1)) hi = dims(1)
+        j = j + 1
+        mapc(j) = lo
+        lo = hi + 1
+      end do
+      nblocks(2) = i
+      end

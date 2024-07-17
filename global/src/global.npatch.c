@@ -654,7 +654,7 @@ void pnga_copy_patch(char *trans,
               if (his[i] > adims[i]) his[i] = adims[i];
               /*if (his[i] < los[i]) chk = 0;*/
             }
-            /* make temporory copies of los, his since ngai_patch_intersection
+            /* make temperary copies of los, his since ngai_patch_intersection
                destroys original versions */
             for (j=0; j < andim; j++) {
               lod[j] = los[j];
@@ -713,7 +713,7 @@ void pnga_copy_patch(char *trans,
         }
 #endif
       } else {
-        /* Array b is block-cyclic distributed */
+        /* Only array b is block-cyclic distributed */
         pnga_distribution(g_a, me_a, los, his); 
         if (pnga_patch_intersect(alo,ahi,los,his,andim)) {
           pnga_access_ptr(g_a, los, his, &src_data_ptr, ld); 
@@ -2850,10 +2850,10 @@ void *alpha, *beta;
     pnga_local_iterator_init(g_B, &hdl_b);
     pnga_local_iterator_init(g_c, &hdl_c);
     while (pnga_local_iterator_next(&hdl_c,loC,hiC,&C_ptr,ldC)) {
-      pnga_local_iterator_next(&hdl_a,loA,hiA,&A_ptr,ldA);
-      pnga_local_iterator_next(&hdl_b,loB,hiB,&B_ptr,ldB);
       Integer idx, lod[MAXDIM]/*, hid[MAXDIM]*/;
       Integer offset, jtot, last;
+      pnga_local_iterator_next(&hdl_a,loA,hiA,&A_ptr,ldA);
+      pnga_local_iterator_next(&hdl_b,loB,hiB,&B_ptr,ldB);
       /* make temporary copies of loC and hiC since pnga_patch_intersect
          destroys original versions */
       for (j=0; j<cndim; j++) {

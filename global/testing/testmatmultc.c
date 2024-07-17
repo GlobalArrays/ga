@@ -22,13 +22,18 @@ void load_ga(int handle, double *f, int dim1, int dim2);
 void verify_ga_dgemm(char xt1, char xt2, int num_m, int num_n, int num_k,
         double alpha, int g_a, int g_b, double beta, int g_c,
         double *tmpa, double *tmpb, double *tmpc);
+#if HAVE_BLAS
+extern void dgemm_(char *, char *, int *, int *, int *, double *, const double *, int *, const double *, int *, double *, double *, int *);
+#else
+extern void xb_dgemm(char *, char *, int *, int *, int *, double *, const double *, int *, const double *, int *, double *, double *, int *);
+#endif
 
 
 #define dgemm_verify 1
 #define nummax 1024
 #define howmany 2
 #define ntrans 4
-
+//#define BLOCK_CYCLIC 1
 
 /*
  * test ga_dgemm
@@ -59,8 +64,8 @@ int main(int argc, char **argv)
     int nums_m[/*howmany*/] = {512,1024};
     int nums_n[/*howmany*/] = {512,1024};
     int nums_k[/*howmany*/] = {512,1024};
-    char transa[/*ntrans*/] = "ntnt";
-    char transb[/*ntrans*/] = "nntt";
+    char transa[/*ntrans*/] = "nnnn";
+    char transb[/*ntrans*/] = "nnnn";
     char ta;
     char tb;
     double *tmpa;
@@ -147,7 +152,7 @@ int main(int argc, char **argv)
         GA_Set_data(g_b,ndim,dims,MT_DBL);
         GA_Set_array_name(g_b,"g_b");
         GA_Set_block_cyclic(g_b,block_size);
-        if (!ga_allocate(g_b)) {
+        if (!GA_Allocate(g_b)) {
             GA_Error("failed: create g_b",40);
         }
 
@@ -157,8 +162,8 @@ int main(int argc, char **argv)
         GA_Set_data(g_a,ndim,dims,MT_DBL);
         GA_Set_array_name(g_a,"g_a");
         GA_Set_block_cyclic(g_a,block_size);
-        if (!ga_allocate(g_a)) {
-            GA_Error('failed: create g_a',40);
+        if (!GA_Allocate(g_a)) {
+            GA_Error("failed: create g_a",40);
         }
 #endif         
 
@@ -283,10 +288,17 @@ void verify_ga_dgemm(char xt1, char xt2, int num_m, int num_n, int num_k,
     NGA_Get(g_b, lo, hi, tmpb, &dims[1]);
 
     /* compute dgemm sequentially */
+    #if HAVE_BLAS
+    dgemm_(&xt1, &xt2, &num_m, &num_n, &num_k,
+          &alpha, tmpa, &num_m,
+          tmpb, &num_k, &beta,
+          tmpc, &num_m);
+    #else
     xb_dgemm(&xt1, &xt2, &num_m, &num_n, &num_k,
             &alpha, tmpa, &num_m,
             tmpb, &num_k, &beta,
             tmpc, &num_m);
+    #endif
 
     /* after computing c locally, verify it with the values in g_c */
     NGA_Inquire(g_a, &type, &ndim, dims);

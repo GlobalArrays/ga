@@ -33,22 +33,166 @@ typedef struct group_link {
     MPI_Group group;        /**< whole group; all ranks */
     int size;               /**< comm size */
     int rank;               /**< comm rank */
+    int *world_ranks;       /**< list of ranks in MPI_COMM_WORLD */
 } comex_igroup_t;
 
 /** list of worker groups */
 extern comex_igroup_t *group_list;
 
-extern void comex_group_init();
+extern void comex_group_init(MPI_Comm comm);
 extern void comex_group_finalize();
 extern comex_igroup_t* comex_get_igroup_from_group(comex_group_t group);
 
 /* verify that proc is part of group */
 #define CHECK_GROUP(GROUP,PROC) do {                                \
     int size;                                                       \
+    int ierr = comex_group_size(GROUP,&size);                       \
     COMEX_ASSERT(GROUP >= 0);                                       \
-    COMEX_ASSERT(COMEX_SUCCESS == comex_group_size(GROUP,&size));   \
+    COMEX_ASSERT(COMEX_SUCCESS == ierr);                            \
     COMEX_ASSERT(PROC >= 0);                                        \
     COMEX_ASSERT(PROC < size);                                      \
 } while(0)
+
+static int get_num_progress_ranks_per_node()
+{
+    int num_progress_ranks_per_node;
+    const char* num_progress_ranks_env_var = getenv("GA_NUM_PROGRESS_RANKS_PER_NODE");
+    if (num_progress_ranks_env_var != NULL && num_progress_ranks_env_var[0] != '\0') {
+       int env_number = atoi(getenv("GA_NUM_PROGRESS_RANKS_PER_NODE"));
+       if ( env_number > 0 && env_number < 16)
+           num_progress_ranks_per_node = env_number;
+#if DEBUG
+       printf("num_progress_ranks_per_node: %d\n", num_progress_ranks_per_node);
+#endif
+    }
+    else {
+        num_progress_ranks_per_node = 1;
+    }
+    return num_progress_ranks_per_node;
+}
+
+static int get_progress_rank_distribution_on_node() {
+   const char* progress_ranks_packed_env_var = getenv("GA_PROGRESS_RANKS_DISTRIBUTION_PACKED");
+   const char* progress_ranks_cyclic_env_var = getenv("GA_PROGRESS_RANKS_DISTRIBUTION_CYCLIC");
+   int is_node_ranks_packed;
+   int rank_packed =0;
+   int rank_cyclic =0;
+
+   if (progress_ranks_packed_env_var != NULL && progress_ranks_packed_env_var[0] != '\0') {
+     if (strchr(progress_ranks_packed_env_var, 'y') != NULL ||
+            strchr(progress_ranks_packed_env_var, 'Y') != NULL ||
+            strchr(progress_ranks_packed_env_var, '1') != NULL ) {
+       rank_packed = 1;
+     }
+   }
+   if (progress_ranks_cyclic_env_var != NULL && progress_ranks_cyclic_env_var[0] != '\0') {
+     if (strchr(progress_ranks_cyclic_env_var, 'y') != NULL ||
+            strchr(progress_ranks_cyclic_env_var, 'Y') != NULL ||
+            strchr(progress_ranks_cyclic_env_var, '1') != NULL ) {
+       rank_cyclic = 1;
+     }
+   }
+   if (rank_packed == 1 || rank_cyclic == 0) is_node_ranks_packed = 1;
+   if (rank_packed == 0 && rank_cyclic == 1) is_node_ranks_packed = 0;
+   return is_node_ranks_packed;
+}
+
+static int get_my_master_rank_with_same_hostid(int rank, int split_group_size,
+        int smallest_rank_with_same_hostid, int largest_rank_with_same_hostid,
+        int num_progress_ranks_per_node, int is_node_ranks_packed)
+{
+    int my_master;
+
+#if MASTER_IS_SMALLEST_SMP_RANK
+    if(is_node_ranks_packed) {
+        /* Contiguous packing of ranks on a node */
+        my_master = smallest_rank_with_same_hostid
+             + split_group_size *
+           ((rank - smallest_rank_with_same_hostid)/split_group_size);
+    }
+    else {
+      if(num_progress_ranks_per_node == 1) { 
+          my_master = smallest_rank_with_same_hostid
+               + split_group_size *
+             ((rank - smallest_rank_with_same_hostid)/split_group_size);
+      } else {
+          /* Cyclic packing of ranks on a node between different split groups,
+           * progress ranks are smallest ranks obtained via modulo operator  */
+          my_master = smallest_rank_with_same_hostid + 
+             (rank - smallest_rank_with_same_hostid) % num_progress_ranks_per_node; 
+      }
+    }
+#else
+    /* By default creates largest SMP rank as Master */
+    if(is_node_ranks_packed) {
+        /* Contiguous packing of ranks on a node */
+        my_master = largest_rank_with_same_hostid
+             - split_group_size *
+           ((largest_rank_with_same_hostid - rank)/split_group_size);
+    }
+    else {
+      if(num_progress_ranks_per_node == 1) { 
+          my_master = largest_rank_with_same_hostid
+               - split_group_size *
+             ((largest_rank_with_same_hostid - rank)/split_group_size);
+          // my_master = largest_rank_with_same_hostid - 2 * (split_group_size *
+          //    ( ((largest_rank_with_same_hostid - rank)/2) / split_group_size));
+      } else {
+          /* Cyclic packing of ranks on a node between different split groups,
+           * progress ranks are highest ranks obtained via modulo operator  */
+          my_master = largest_rank_with_same_hostid - num_progress_ranks_per_node + 1 
+             + (rank - smallest_rank_with_same_hostid) % num_progress_ranks_per_node;
+      }
+    }
+#endif
+   return my_master;
+}
+
+static int get_my_rank_to_free(int rank, int split_group_size,
+        int smallest_rank_with_same_hostid, int largest_rank_with_same_hostid,
+        int num_progress_ranks_per_node, int is_node_ranks_packed)
+{
+   int my_rank_to_free;
+
+#if MASTER_IS_SMALLEST_SMP_RANK
+    /* By default creates largest SMP rank as Master */
+    if(is_node_ranks_packed) {
+        /* Contiguous packing of ranks on a node */
+        my_rank_to_free = largest_rank_with_same_hostid
+             - split_group_size *
+           ((largest_rank_with_same_hostid - rank)/split_group_size);
+    }
+    else {
+      if(num_progress_ranks_per_node == 1) { 
+          my_rank_to_free = largest_rank_with_same_hostid - 2 * (split_group_size *
+             ( ((largest_rank_with_same_hostid - rank)/2) / split_group_size));
+      } else {
+          /* Cyclic packing of ranks on a node between different split groups,
+           * progress ranks are smallest ranks obtained via modulo operator  */
+          my_rank_to_free = smallest_rank_with_same_hostid + 
+             (rank - smallest_rank_with_same_hostid) % num_progress_ranks_per_node; 
+      }
+    }
+#else
+    if(is_node_ranks_packed) {
+        /* Contiguous packing of ranks on a node */
+        my_rank_to_free = smallest_rank_with_same_hostid
+             + split_group_size *
+           ((rank - smallest_rank_with_same_hostid)/split_group_size);
+    }
+    else {
+      if(num_progress_ranks_per_node == 1) { 
+          my_rank_to_free = 2 * (split_group_size *
+             ( ((rank - smallest_rank_with_same_hostid)/2) / split_group_size));
+      } else {
+          /* Cyclic packing of ranks on a node between different split groups,
+           * progress ranks are highest ranks obtained via modulo operator  */
+          my_rank_to_free = largest_rank_with_same_hostid - num_progress_ranks_per_node + 1 
+             + (rank - smallest_rank_with_same_hostid) % num_progress_ranks_per_node;
+      }
+    }
+#endif
+   return my_rank_to_free;
+}
 
 #endif /* _COMEX_GROUPS_H_ */

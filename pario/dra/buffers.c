@@ -65,7 +65,7 @@ void buffer_init(
             printf("Could not allocate memory for buffers!\n");
             return;
         }
-        bzero(ctxt->buf[i].buffer, sizeof(ctxt->buf[i].buffer));
+        bzero(ctxt->buf[i].buffer, sizeof(double)*(buf_size + ALIGN-1));
 
         /* align buffer address */
         diff = ((long)(ctxt->buf[i].buffer)) % (sizeof(double)*ALIGN);
@@ -132,7 +132,7 @@ char* get_buf(buf_context_t *ctxt, int call_id)
 
 
 /** function to free a buffer */
-void free_buf(buf_context_t *ctxt, char *buf)
+void ga_dra_free_buf(buf_context_t *ctxt, char *buf)
 {
     int i;
     for (i = 0; i < ctxt->nbuf; i++) {

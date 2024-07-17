@@ -1,9 +1,7 @@
 #
 # module: CMakeLists.txt
 # author: Bruce Palmer
-# description: implements a primative CMake build that can be used to build
-#              GA on Windows-based systems. Only MPI-based runtimes are
-#              supported.
+# description: CMake build for GA. Only MPI-based runtimes are supported.
 # 
 # DISCLAIMER
 #
@@ -31,15 +29,6 @@
 # -------------------------------------------------------------
 # file: CMakeLists.txt
 # -------------------------------------------------------------
-
-include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}
-                           ${CMAKE_CURRENT_SOURCE_DIR}/dra
-                           ${CMAKE_CURRENT_SOURCE_DIR}/eaf
-                           ${CMAKE_CURRENT_SOURCE_DIR}/elio
-                           ${CMAKE_CURRENT_SOURCE_DIR}/sf
-                           ${PROJECT_SOURCE_DIR}/gaf2c
-                           ${PROJECT_SOURCE_DIR}/ma
-                           ${PROJECT_SOURCE_DIR}/global/src)
 
 # -------------------------------------------------------------
 # PARIO header installation
@@ -93,27 +82,38 @@ install (FILES
   ${EAF_HEADERS}
   ${ELIO_HEADERS}
   ${SF_HEADERS}
-  DESTINATION include
+  DESTINATION include/ga
 )
+
+list (APPEND GA_HEADER_PATHS 
+      ${CMAKE_CURRENT_LIST_DIR}
+      ${CMAKE_CURRENT_LIST_DIR}/dra
+      ${CMAKE_CURRENT_LIST_DIR}/sf
+      ${CMAKE_CURRENT_LIST_DIR}/eaf
+      ${CMAKE_CURRENT_LIST_DIR}/elio)
+
+set (GA_HEADER_PATHS ${GA_HEADER_PATHS} PARENT_SCOPE)
 
 # -------------------------------------------------------------
 #  PARIO executable files
 # -------------------------------------------------------------
 
 set(DRA_FILES
-    dra/disk.arrays.c
-    dra/buffers.c
     dra/capi.c
+    dra/disk.arrays.c
     dra/disk.param.c
     dra/env.c
-    dra/global.unsup.c
+    dra/buffers.c
+    dra/fortran.c
+    # dra/global.unsup.c
     dra/patch.util.c
-    dra/util.c
+    # dra/util.c
     ${DRA_FORTRAN_FILES}
 )
 
 set(EAF_FILES
     eaf/eaf.c
+    eaf/eaf_f2c.c
     ${EAF_FORTRAN_FILES}
 )
 
@@ -125,6 +125,7 @@ set(ELIO_FILES
 set(SF_FILES
      sf/shared.files.c
      sf/sf_capi.c
+     sf/sf_fortran.c
      ${SF_FORTRAN_FILES}
 )
 
@@ -132,7 +133,31 @@ set(SF_FILES
 # PARIO library installation
 # -------------------------------------------------------------
 
+set(PARIO_INC_DIRS  ${CMAKE_CURRENT_SOURCE_DIR}
+                    ${CMAKE_CURRENT_BINARY_DIR}
+                    ${PROJECT_BINARY_DIR}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/dra
+                    ${CMAKE_CURRENT_SOURCE_DIR}/eaf
+                    ${CMAKE_CURRENT_SOURCE_DIR}/elio
+                    ${CMAKE_CURRENT_SOURCE_DIR}/sf
+                    ${PROJECT_BINARY_DIR}/gaf2c
+                    ${PROJECT_SOURCE_DIR}/ma
+                    ${PROJECT_BINARY_DIR}/ma
+                    ${PROJECT_SOURCE_DIR}/global/src)
+
+add_library(sf OBJECT ${SF_FILES})
 add_library(dra OBJECT ${DRA_FILES})
 add_library(eaf OBJECT ${EAF_FILES})
 add_library(elio OBJECT ${ELIO_FILES})
-add_library(sf OBJECT ${SF_FILES})
+
+target_include_directories(sf   BEFORE PRIVATE ${PARIO_INC_DIRS})
+target_include_directories(dra  BEFORE PRIVATE ${PARIO_INC_DIRS})
+target_include_directories(eaf  BEFORE PRIVATE ${PARIO_INC_DIRS})
+target_include_directories(elio BEFORE PRIVATE ${PARIO_INC_DIRS})
+
+if (ENABLE_FORTRAN)
+  add_dependencies(sf GenerateConfigFH)
+  add_dependencies(dra GenerateConfigFH)
+  add_dependencies(eaf GenerateConfigFH)
+  add_dependencies(elio GenerateConfigFH)
+endif()

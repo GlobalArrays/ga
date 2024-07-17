@@ -359,7 +359,7 @@ static int cmplong(const void *p1, const void *p2)
 /**
  * Initialize group linked list. Prepopulate with world group.
  */
-void comex_group_init() 
+void comex_group_init(MPI_Comm comm) 
 {
     int status = 0;
     int i = 0;
@@ -373,7 +373,7 @@ void comex_group_init()
     /* populate g_state */
 
     /* dup MPI_COMM_WORLD and get group, rank, and size */
-    status = MPI_Comm_dup(MPI_COMM_WORLD, &(g_state.comm));
+    status = MPI_Comm_dup(comm, &(g_state.comm));
     COMEX_ASSERT(MPI_SUCCESS == status);
     status = MPI_Comm_group(g_state.comm, &(g_state.group));
     COMEX_ASSERT(MPI_SUCCESS == status);
@@ -428,7 +428,7 @@ void comex_group_init()
     /* create the head of the group linked list */
     _create_group_and_igroup(&group, &igroup);
     /* create a comm of only the workers (every rank is a worker) */
-    status = MPI_Comm_dup(MPI_COMM_WORLD, &(igroup->comm));
+    status = MPI_Comm_dup(comm, &(igroup->comm));
     COMEX_ASSERT(MPI_SUCCESS == status);
     status = MPI_Comm_group(igroup->comm, &(igroup->group));
     COMEX_ASSERT(MPI_SUCCESS == status);
@@ -452,7 +452,7 @@ void comex_group_init()
         }
     }
     free(sorted);
-    status = MPI_Comm_split(MPI_COMM_WORLD, count,
+    status = MPI_Comm_split(comm, count,
             g_state.rank, &(g_state.node_comm));
     COMEX_ASSERT(MPI_SUCCESS == status);
     /* node rank */

@@ -135,6 +135,7 @@ long tcg_nodeid()
 }
 
 
+long NXTVAL_(long *mproc);
 long tcg_nxtval(long mproc)
 {
     long amproc = mproc;

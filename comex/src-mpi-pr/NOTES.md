@@ -1,6 +1,62 @@
 # MPI Progress Ranks (MPI-PR)
+NOTES on generalization of number of Progress-Ranks per computing node
+------
+Number of Progress-Ranks per node can be suitably 
+User has the flexibility to choose the number of Progress-Ranks per
+node during the execution of a program. 
+An environment variable GA_NUM_PROGRESS_RANKS_PER_NODE will capture the
+number to be set for number of Progress-Ranks per node. If not set
+in the environment, then this number will set to 1 by default. 
+e.g. of defining this variable in the environment during execution:
+```
+$ export GA_NUM_PROGRESS_RANKS_PER_NODE=1
+$ export GA_NUM_PROGRESS_RANKS_PER_NODE=2
+$ export GA_NUM_PROGRESS_RANKS_PER_NODE=4
+$ setenv GA_NUM_PROGRESS_RANKS_PER_NODE 2
+```
 
-These are notes describing the MPI progress ranks runtime. These notes are intended to help developers navigate the contents of these files and to locate specific functionality.
+CAUTION: For optimum performance, number of MPI ranks per node used
+to execute a program should be in multiples of value set for
+GA_NUM_PROGRESS_RANKS_PER_NODE. 
+
+With the use of two optional environmental variables, it is possible to set
+the GA-Ranks in one group managed by Progress-Rank in either PACKED or CYCLIC
+distribution pattern. 
+Following example shows an application run with 8 MPI processes/node with 2-PRs.
+Total 8 MPI ranks will be divided into two groups and by default, the highest rank 
+will be the Progress-Rank of each group. 
+
+PACKED distribution
+```
+$ export GA_NUM_PROGRESS_RANKS_PER_NODE=2
+$ export GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=1
+```
+or
+```
+$ export GA_NUM_PROGRESS_RANKS_PER_NODE=2
+$ export GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=Y
+```
+
+Above environmental settings sets 2 Progress-Ranks/node and PACKED distribution
+The two groups are (0,1,2,3) and (4,5,6,7)
+Here, MPI ranks 3 and 7 are Progress-Ranks on the node
+
+Next, CYCLIC distribution
+```
+$ export GA_NUM_PROGRESS_RANKS_PER_NODE=2
+$ export GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=0 
+$ export GA_PROGRESS_RANKS_DISTRIBUTION_CYCLIC=1
+```
+
+Please make sure to set GA_PROGRESS_RANKS_DISTRIBUTION_PACKED=0 if previously used.
+
+Above environmental settings sets 2 Progress-Ranks/node and CYCLIC distribution
+The two groups are (0,2,4,6) and (1,3,5,7)
+Here, MPI ranks 6 and 7 are Progress-Ranks on the node
+
+Other notes on MPI Progress-Rank
+------
+These are notes describing the MPI Progress ranks runtime. These notes are intended to help developers navigate the contents of these files and to locate specific functionality.
 
 The MPI-PR is intended to be the highest-performing MPI-1 compatible ARMCI/ComEx runtime.  It uses only features from the MPI-1 standard and provides asynchronous progress.  Posix shared memory is used extensively.
 
