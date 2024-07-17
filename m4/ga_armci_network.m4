@@ -521,7 +521,6 @@ AC_DEFINE([LAPI], [1], [tcgmsg 5 requires this when using LAPI])
 ])
 
 ga_cray_xt_networks=no
-AS_IF([test x$ga_armci_network = xPORTALS], [ga_cray_xt_networks=yes])
 AS_IF([test x$ga_armci_network = xCRAY_SHMEM], [ga_cray_xt_networks=yes])
 AM_CONDITIONAL([CRAY_XT_NETWORKS], [test x$ga_cray_xt_networks = xyes])
 
@@ -555,10 +554,10 @@ AM_CONDITIONAL([HAVE_ARMCI_MSG_INIT],    [test "x$ga_armci_network" != xARMCI])
 AM_CONDITIONAL([HAVE_ARMCI_MSG_FINALIZE],[test "x$ga_armci_network" != xARMCI])
 # the armci iterators only available in the conglomerate sources
 AS_CASE([$ga_armci_network],
-    [ARMCI|GEMINI|PORTALS], [],
+    [ARMCI], [],
     [AC_DEFINE([HAVE_ARMCI_STRIDE_INFO_INIT], [1], [])])
 AM_CONDITIONAL([HAVE_ARMCI_STRIDE_INFO_INIT],
-    [test "x$ga_armci_network" != xARMCI && test "x$ga_armci_network" != xGEMINI && test "x$ga_armci_network" != xPORTALS])
+    [test "x$ga_armci_network" != xARMCI])
 
 # ugly hack for working around NWChem memory requirements
 # and MPI_PR startup verus the 'classic' ARMCI startup
@@ -577,9 +576,7 @@ AS_CASE([$ga_armci_network],
 [OFA],          [delay_tcgmsg_mpi_startup=0],
 [OFI],          [delay_tcgmsg_mpi_startup=0],
 [OPENIB],       [delay_tcgmsg_mpi_startup=1],
-[GEMINI],       [delay_tcgmsg_mpi_startup=1],
 [PORTALS4],     [delay_tcgmsg_mpi_startup=0],
-[PORTALS],      [delay_tcgmsg_mpi_startup=1],
 [SOCKETS],      [delay_tcgmsg_mpi_startup=1])
 AC_DEFINE_UNQUOTED([NEED_DELAY_TCGMSG_MPI_STARTUP],
     [$delay_tcgmsg_mpi_startup],

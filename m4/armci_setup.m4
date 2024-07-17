@@ -30,11 +30,6 @@ AS_CASE([$ga_armci_network],
     AC_DEFINE([QUADRICS], [1], [TODO])
     AC_DEFINE([DOELAN4], [1], [TODO])
     ],
-[GEMINI], [
-    AC_DEFINE([LIBONESIDED], [1], [for Gemini])
-    AC_DEFINE([CRAY_UGNI], [1], [for Gemini])
-    AC_DEFINE([GEMINI], [1], [for Gemini])
-    ],
 [GM], [
     AC_DEFINE([PTHREADS], [1], [TODO])
     AC_DEFINE([DATA_SERVER], [1], [TODO])
@@ -103,13 +98,6 @@ AS_CASE([$ga_armci_network],
     AC_DEFINE([ALLOW_PIN], [1], [TODO])
     AC_DEFINE([PEND_BUFS], [1], [TODO])
     AC_DEFINE([OPENIB], [1], [TODO])
-    ],
-[PORTALS], [
-    AC_DEFINE([DATA_SERVER], [1], [TODO])
-    AC_DEFINE([_REENTRANT], [1], [TODO])
-    AC_DEFINE([SERVER_THREAD], [1], [TODO])
-    AC_DEFINE([CRAY_XT], [1], [TODO])
-    AC_DEFINE([PORTALS], [1], [TODO])
     ],
 [SOCKETS], [
     AC_DEFINE([DATA_SERVER], [1], [TODO])
