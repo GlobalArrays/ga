@@ -301,22 +301,6 @@ AS_IF([test "x$happy" = xyes],
     [$2])
 ])dnl
 
-# _GA_ARMCI_NETWORK_PORTALS([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
-# -------------------------------------------------------------------
-AC_DEFUN([_GA_ARMCI_NETWORK_PORTALS], [
-AC_MSG_NOTICE([searching for PORTALS...])
-happy=yes
-AS_IF([test "x$happy" = xyes],
-    [AC_CHECK_HEADER([portals/portals3.h], [], [happy=no])])
-AS_IF([test "x$happy" = xyes],
-    [AC_CHECK_HEADER([portals/nal.h], [], [happy=no])])
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([PtlInit], [portals], [], [happy=no])])
-AS_IF([test "x$happy" = xyes],
-    [ga_armci_network=PORTALS; with_portals=yes; $1],
-    [$2])
-])dnl
-
 # _GA_ARMCI_NETWORK_DMAPP([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 # -----------------------------------------------------------------
 AC_DEFUN([_GA_ARMCI_NETWORK_DMAPP], [
@@ -346,54 +330,6 @@ AS_IF([test "x$happy" = xyes],
     [$2])
 ])dnl
 
-# _GA_ARMCI_NETWORK_GEMINI([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
-# ------------------------------------------------------------------
-# TODO when gemini headers and libraries become available, fix this
-AC_DEFUN([_GA_ARMCI_NETWORK_GEMINI], [
-AC_MSG_NOTICE([searching for GEMINI...])
-happy=yes
-AS_IF([test "x$happy" = xyes],
-    [AC_CHECK_HEADER([numatoolkit.h], [], [happy=no], [
-AC_INCLUDES_DEFAULT
-#include <mpi.h>])])
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([NTK_Init], [numatoolkit], [], [happy=no])])
-# CPPFLAGS must have CRAY_UGNI before looking for the next headers.
-gemini_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS -DCRAY_UGNI"
-AS_IF([test "x$happy" = xyes],
-    [AC_CHECK_HEADER([onesided.h], [], [happy=no])])
-AS_IF([test "x$happy" = xyes],
-    [AC_CHECK_HEADER([gni.h], [], [happy=no])])
-CPPFLAGS="$gemini_save_CPPFLAGS"
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([gniInit], [onesided], [], [happy=no])])
-AS_IF([test "x$happy" = xyes],
-    [ga_armci_network=GEMINI; with_gemini=yes; $1],
-    [$2])
-# check for a function introduced in libonesided/1.5
-# we purposefully abuse the ac_cv_search_onesided_mem_htflush value
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([onesided_mem_htflush], [onesided])
-     AS_IF([test "x$ac_cv_search_onesided_mem_htflush" != xno],
-        [ac_cv_search_onesided_mem_htflush=1],
-        [ac_cv_search_onesided_mem_htflush=0])
-     AC_DEFINE_UNQUOTED([HAVE_ONESIDED_MEM_HTFLUSH],
-        [$ac_cv_search_onesided_mem_htflush],
-        [set to 1 if libonesided has onesided_mem_htflush (added in v1.5)])
-    ])
-# check for a function introduced in libonesided/1.6
-# we purposefully abuse the ac_cv_search_onesided_fadd value
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([onesided_fadd], [onesided])
-     AS_IF([test "x$ac_cv_search_onesided_fadd" != xno],
-        [ac_cv_search_onesided_fadd=1],
-        [ac_cv_search_onesided_fadd=0])
-     AC_DEFINE_UNQUOTED([HAVE_ONESIDED_FADD],
-        [$ac_cv_search_onesided_fadd],
-        [set to 1 if libonesided has onesided_fadd (added in v1.6)])
-    ])
-])dnl
-
 # GA_ARMCI_NETWORK
 # ----------------
 # This macro allows user to choose the armci network but also allows the
@@ -413,7 +349,6 @@ armci_network_count=0
 _GA_ARMCI_NETWORK_WITH([armci],     [external; path to external ARMCI library])
 _GA_ARMCI_NETWORK_WITH([cray-shmem],[Cray XT shmem])
 _GA_ARMCI_NETWORK_WITH([dmapp],     [(Comex) Cray DMAPP])
-_GA_ARMCI_NETWORK_WITH([gemini],    [Cray XE Gemini using libonesided])
 _GA_ARMCI_NETWORK_WITH([lapi],      [IBM LAPI])
 _GA_ARMCI_NETWORK_WITH([mpi-mt],    [(Comex) MPI-2 multi-threading])
 _GA_ARMCI_NETWORK_WITH([mpi-pt],    [(Comex) MPI-2 multi-threading with progress thread])
@@ -425,7 +360,6 @@ _GA_ARMCI_NETWORK_WITH([ofa],       [(Comex) Infiniband OpenIB])
 _GA_ARMCI_NETWORK_WITH([ofi],       [(Comex) OFI])
 _GA_ARMCI_NETWORK_WITH([openib],    [Infiniband OpenIB])
 _GA_ARMCI_NETWORK_WITH([portals4],  [(Comex) Portals4])
-_GA_ARMCI_NETWORK_WITH([portals],   [Cray XT portals])
 _GA_ARMCI_NETWORK_WITH([sockets],   [Ethernet TCP/IP])
 # Temporarily add ARMCI_NETWORK_CPPFLAGS to CPPFLAGS.
 ga_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $ARMCI_NETWORK_CPPFLAGS"
@@ -457,12 +391,8 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
         [_GA_ARMCI_NETWORK_OPENIB()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_portals4" != xno],
         [_GA_ARMCI_NETWORK_PORTALS4()])
-     AS_IF([test "x$ga_armci_network" = x && test "x$with_portals" != xno],
-        [_GA_ARMCI_NETWORK_PORTALS()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_dmapp" != xno],
         [_GA_ARMCI_NETWORK_DMAPP()])
-     AS_IF([test "x$ga_armci_network" = x && test "x$with_gemini" != xno],
-        [_GA_ARMCI_NETWORK_GEMINI()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_armci" != xno],
         [_GA_ARMCI_NETWORK_ARMCI()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_ofi" != xno],
@@ -516,12 +446,6 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
               AS_IF([test "x$ga_armci_network" = xPORTALS4],
                  [_GA_ARMCI_NETWORK_PORTALS4([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=PORTALS4 failed])])])
-              AS_IF([test "x$ga_armci_network" = xPORTALS],
-                 [_GA_ARMCI_NETWORK_PORTALS([],
-                    [AC_MSG_ERROR([test for ARMCI_NETWORK=PORTALS failed])])])
-              AS_IF([test "x$ga_armci_network" = xGEMINI],
-                 [_GA_ARMCI_NETWORK_GEMINI([],
-                    [AC_MSG_ERROR([test for ARMCI_NETWORK=GEMINI failed])])])
               AS_IF([test "x$ga_armci_network" = xOFI],
                  [_GA_ARMCI_NETWORK_OFI([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=OFI failed])])])
@@ -541,8 +465,6 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
          _GA_ARMCI_NETWORK_WARN([ofa])
          _GA_ARMCI_NETWORK_WARN([openib])
          _GA_ARMCI_NETWORK_WARN([portals4])
-         _GA_ARMCI_NETWORK_WARN([portals])
-         _GA_ARMCI_NETWORK_WARN([gemini])
          _GA_ARMCI_NETWORK_WARN([ofi])
          _GA_ARMCI_NETWORK_WARN([sockets])
          AC_MSG_ERROR([please select only one armci network])])])
@@ -564,9 +486,7 @@ _GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-spawn])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi3])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([ofa])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([openib])
-_GA_ARMCI_NETWORK_AM_CONDITIONAL([gemini])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([portals4])
-_GA_ARMCI_NETWORK_AM_CONDITIONAL([portals])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([ofi])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([sockets])
 AC_SUBST([ARMCI_NETWORK_LDFLAGS])
@@ -576,7 +496,6 @@ AC_SUBST([ARMCI_NETWORK_CPPFLAGS])
 # permanent hack
 AS_CASE([$ga_armci_network],
 [DMAPP],    [ARMCI_SRC_DIR=comex],
-[GEMINI],   [ARMCI_SRC_DIR=src-gemini],
 [MPI_MT],   [ARMCI_SRC_DIR=comex],
 [MPI_PT],   [ARMCI_SRC_DIR=comex],
 [MPI_PR],   [ARMCI_SRC_DIR=comex],
@@ -586,11 +505,8 @@ AS_CASE([$ga_armci_network],
 [OFI],      [ARMCI_SRC_DIR=comex],
 [OPENIB],   [ARMCI_SRC_DIR=src],
 [PORTALS4], [ARMCI_SRC_DIR=comex],
-[PORTALS],  [ARMCI_SRC_DIR=src-portals],
             [ARMCI_SRC_DIR=src])
 AC_SUBST([ARMCI_SRC_DIR])
-AM_CONDITIONAL([ARMCI_SRC_DIR_PORTALS], [test "x$ARMCI_SRC_DIR" = "xsrc-portals"])
-AM_CONDITIONAL([ARMCI_SRC_DIR_GEMINI],  [test "x$ARMCI_SRC_DIR" = "xsrc-gemini"])
 AM_CONDITIONAL([ARMCI_SRC_DIR_COMEX],   [test "x$ARMCI_SRC_DIR" = "xcomex"])
 AM_CONDITIONAL([ARMCI_SRC_DIR_SRC],     [test "x$ARMCI_SRC_DIR" = "xsrc"])
 AS_IF([test "x$ARMCI_SRC_DIR" = "xcomex"], [armci_network_external=1])
