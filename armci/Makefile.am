@@ -287,111 +287,6 @@ endif
 include_HEADERS += src/include/parmci.h
 
 ##############################################################################
-# tcgmsg
-#
-EXTRA_DIST += tcgmsg/README
-
-##############################################################################
-# tcgmsg/ipcv4.0
-#
-if MSG_COMMS_TCGMSG4
-AM_CPPFLAGS += -I$(top_srcdir)/tcgmsg/ipcv4.0
-
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/brdcst.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/checkbyte.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/cluster.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/cluster.h
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/defglobals.h
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/drand48.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/error.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/evlog.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/evlog.h
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/evon.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/globalop.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/llog.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/mdtob.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/mdtoi.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/mitob.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/mitod.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/mtime.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/niceftn.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/nnodes.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/nodeid.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/nxtval.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/pbegin.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/pbeginf.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/pfilecopy.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/sema.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/sema.h
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/setdbg.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/shmem.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/signals.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/signals.h
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/snd.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/sndrcv.h
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/sndrcvP.h
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/sockets.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/srftoc.h
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/srmover.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/stats.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/synch.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/usleep.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/waitall.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/waitcom.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/xdrstuff.c
-libarmci_la_SOURCES += tcgmsg/ipcv4.0/xdrstuff.h
-
-bin_PROGRAMS += parallel
-
-parallel_SOURCES = tcgmsg/ipcv4.0/parallel.c
-
-endif # MSG_COMMS_TCGMSG4
-
-##############################################################################
-# tcgmsg/ipcv5.0
-#
-if MSG_COMMS_TCGMSG5
-AM_CPPFLAGS += -I$(top_srcdir)/tcgmsg/ipcv5.0
-
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/drand48.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/evlog.h
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/globalop.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/llog.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/mdtob.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/mdtoi.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/misc.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/mitob.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/mitod.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/mtime.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/niceftn.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/nnodes.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/nodeid.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/pbegin.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/pfilecopy.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/queues.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/signals.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/sndrcv.h
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/snd_rcv_probe.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/srftoc.h
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/tcgmsgP.h
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/usleep.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/waitall.c
-if ARMCI_NETWORK_LAPI
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/async_send_lapi.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/lapi_putget.c
-else
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/async_send.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/busy.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/error.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/nxtval.shm.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/pbeginf.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/shmem.c
-libarmci_la_SOURCES += tcgmsg/ipcv5.0/synch.c
-endif # ARMCI_NETWORK_LAPI
-
-endif # MSG_COMMS_TCGMSG5
-
-##############################################################################
 # testing
 #
 check_PROGRAMS += testing/msgcheck
@@ -722,16 +617,6 @@ ARMCI_X86COPY_AS__v_ = $(ARMCI_X86COPY_AS__v_$(AM_DEFAULT_VERBOSITY))
 ARMCI_X86COPY_AS__v_0 = @echo "  GCC   " $@;
 
 .PHONY: pfiles clean-pfiles
-if MSG_COMMS_TCGMSG4
-pfiles: $(check_PROGRAMS)
-	for p in $(check_PROGRAMS); do \
-	    echo "`whoami` `hostname` $(NPROCS) `pwd`/$$p /tmp" > $$p.p; \
-	done
-check: pfiles
-clean-pfiles:
-	find . -name '*.p' -exec rm {} \; ;
-clean-local: clean-pfiles
-endif # MSG_COMMS_TCGMSG4
 
 ##############################################################################
 # test suite
@@ -767,21 +652,12 @@ XFAIL_TESTS =
 XFAIL_TESTS += $(SERIAL_TESTS_XFAIL)
 XFAIL_TESTS += $(PARALLEL_TESTS_XFAIL)
 
-if MSG_COMMS_TCGMSG4
-LOG_COMPILER = \
-maybe_parexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(TCGEXEC)"; fi`; eval $$maybe_parexec
-else
-if MSG_COMMS_TCGMSG5
-LOG_COMPILER = tst="$$dir$$f -np $(NPROCS)"; eval
-else
 if CROSS_COMPILING
 maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; eval $$maybe_mpiexec
 else
 LOG_COMPILER = \
 maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; eval $$maybe_mpiexec
 endif # CROSS_COMPILING
-endif # MSG_COMMS_TCGMSG5
-endif # MSG_COMMS_TCGMSG4
 
 .PHONY: check-gaf2c
 check-gaf2c: $(all-am) $(check_LTLIBRARIES) $(GAF2C_TESTS) $(MAYBE_PFILES)

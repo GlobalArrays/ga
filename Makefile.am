@@ -1609,19 +1609,6 @@ EXTRA_DIST += tcgmsg/tcgmsg-mpi/README
 
 ##############################################################################
 # armci
-# if TCGMSG is coming from ARMCI
-if ARMCI_NETWORK_ARMCI
-else
-if MSG_COMMS_TCGMSG4
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-endif
-if MSG_COMMS_TCGMSG5
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-endif
-endif
-
-##############################################################################
-# armci
 if ARMCI_NETWORK_ARMCI
 else
 if ARMCI_SRC_DIR_COMEX
@@ -1740,17 +1727,6 @@ CP__v_ = $(CP__v_$(AM_DEFAULT_VERBOSITY))
 CP__v_0 = @echo "  CP    " $@;
 
 .PHONY: pfiles clean-pfiles
-if MSG_COMMS_TCGMSG4
-pfiles: $(check_PROGRAMS)
-	for p in $(check_PROGRAMS); do \
-		echo "`whoami` `hostname` $(NPROCS) `pwd`/$$p /tmp" > $$p.p; \
-	done
-check: pfiles
-clean-pfiles:
-	find . -name '*.p' -exec rm {} \; ;
-clean-local: clean-pfiles
-MAYBE_PFILES = pfiles
-endif # MSG_COMMS_TCGMSG4
 
 ##############################################################################
 # test suite
@@ -1795,13 +1771,6 @@ XFAIL_TESTS =
 XFAIL_TESTS += $(SERIAL_TESTS_XFAIL)
 XFAIL_TESTS += $(PARALLEL_TESTS_XFAIL)
 
-if MSG_COMMS_TCGMSG4
-LOG_COMPILER = \
-maybe_tcgexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(TCGEXEC)"; fi`; eval $$maybe_tcgexec
-else
-if MSG_COMMS_TCGMSG5
-LOG_COMPILER = tst="$$dir$$f -np $(NPROCS)"; eval
-else
 if CROSS_COMPILING
 LOG_COMPILER = \
 maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; eval $$maybe_mpiexec
@@ -1815,8 +1784,6 @@ LOG_COMPILER = \
 maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; eval $$maybe_mpiexec
 endif # COMEX_NETWORK_MPI_PR
 endif # CROSS_COMPILING
-endif # MSG_COMMS_TCGMSG5
-endif # MSG_COMMS_TCGMSG4
 
 .PHONY: check-travis
 check-travis: $(all-am) $(check_LTLIBRARIES) $(TRAVIS_TESTS) $(MAYBE_PFILES)

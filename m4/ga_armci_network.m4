@@ -513,13 +513,6 @@ AS_IF([test "x$ARMCI_SRC_DIR" = "xcomex"], [armci_network_external=1])
 AM_CONDITIONAL([ARMCI_NETWORK_EXTERNAL], [test "x$armci_network_external" = x1])
 AM_CONDITIONAL([ARMCI_NETWORK_COMEX], [test "x$ARMCI_SRC_DIR" = "xcomex"])
 
-# tcgmsg5 requires this
-AS_IF([test x$ga_armci_network = xLAPI],
-[AC_DEFINE([NOTIFY_SENDER], [1],
-    [this was defined unconditionally when using LAPI for tcgmsg 5])
-AC_DEFINE([LAPI], [1], [tcgmsg 5 requires this when using LAPI])
-])
-
 ga_cray_xt_networks=no
 AS_IF([test x$ga_armci_network = xCRAY_SHMEM], [ga_cray_xt_networks=yes])
 AM_CONDITIONAL([CRAY_XT_NETWORKS], [test x$ga_cray_xt_networks = xyes])
