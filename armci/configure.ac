@@ -310,8 +310,6 @@ AC_SUBST([NPROCS])
 AC_ARG_VAR([MPIEXEC],
            [how to run parallel tests if built with MPI e.g. "mpiexec -np %NP%"])
 AS_CASE([$ga_msg_comms],
-    [TCGMSG],   [TCGEXEC="`pwd`/parallel.x"],
-    [TCGMSG5],  [TCGEXEC=],
     [MPI],      [AS_IF([test "x$MPIEXEC" = x],
                     [AC_PATH_PROGS([MPIEXEC], [mpirun mpiexec])
                      MPIEXEC="$MPIEXEC -n %NP%"])])
