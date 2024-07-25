@@ -240,15 +240,6 @@ extern int armci_domain_my_id(armci_domain_t domain);
 extern int armci_domain_count(armci_domain_t domain);
 extern int armci_domain_same_id(armci_domain_t domain, int proc);
 
-
-/* PVM group
- * On CrayT3E: the default group is the global group which is (char *)NULL
- *             It is the only working group.
- * On Workstations: the default group is "mp_working_group". User can set
- *                  the group name by calling the ARMCI_PVM_init (defined
- *                  in message.c) and passing the group name to the library.
- */
-
 extern char *mp_group_name;
 
 /*********************stuff for non-blocking API******************************/

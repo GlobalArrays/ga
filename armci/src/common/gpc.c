@@ -263,12 +263,6 @@ int example_func(int to, int from, void *hdr,   int hlen,
 		 int rtype);
 
 
-#ifdef LAPI
-void armci_gpc_set_serverpid(){
-}
-#endif
-     
-     
 /*\
  *  Translate pointer to memory on processor "proc"
  *  to be used in a callback function send by processor "from"

@@ -24,12 +24,7 @@ extern INLINE int  _armci_buf_cmpld(int bufid);
 extern INLINE void _armci_buf_set_cmpld(void *buf, int state);
 extern INLINE void _armci_buf_set_cmpld_idx(int idx, int state);
 
-#ifdef LAPI
-#  include "lapidefs.h"
-#elif PORTALS
-#  include "armci_portals.h"
-   typedef long msg_tag_t;
-#elif defined(GM)
+#if defined(GM)
 #  include "myrinet.h"
 #elif defined(DOELAN4)
 #  include "elandefs.h"
@@ -80,9 +75,6 @@ typedef struct{
    short int agg_flag;
    int op;
    int proc;
-#ifdef PORTALS
-   int flag;
-#endif
 #ifdef NB_CMPL_T
    NB_CMPL_T cmpl_info;
 #endif
@@ -107,7 +99,7 @@ unsigned int   operation:8;   /* operation code */
 unsigned int   format:2;      /* data format used */
 unsigned int   dowait:1;      /* indicates if should wait for data  */
 unsigned int   inbuf:1;       /* data is in one of the buffers */
-#elif defined(CLIENT_BUF_BYPASS) || defined(LAPI2)
+#elif defined(CLIENT_BUF_BYPASS) 
 unsigned int   format:2;      /* data format used */
 unsigned int   pinned:1;      /* indicates if sender memory was pinned */
 unsigned int   bypass:1;      /* indicate if bypass protocol used */
@@ -210,19 +202,11 @@ typedef struct {
 extern  char* MessageRcvBuffer;
 extern  char* MessageSndBuffer;
 
-#ifdef LAPI
-#  define GET_SEND_BUFFER_(_size)(MessageSndBuffer+sizeof(lapi_cmpl_t));\
-          CLEAR_COUNTER(*((lapi_cmpl_t*)MessageSndBuffer));\
-          SET_COUNTER(*((lapi_cmpl_t*)MessageSndBuffer),1);
-#  define GET_SEND_BUFFER _armci_buf_get
-#  define GA_SEND_REPLY armci_lapi_send
-#else
 #  ifdef SOCKETS
 #    define GA_SEND_REPLY(tag, buf, len, p) armci_sock_send(p,buf,len)
 #  else
 #    define GA_SEND_REPLY(tag, buf, len, p)  
 #  endif
-#endif
 
 #ifdef QUADRICS_
 #  define GET_SEND_BUFFER(_size,_op,_to) MessageSndBuffer;\
@@ -306,7 +290,6 @@ extern void armci_send_data(request_header_t* msginfo, void *data);
 extern int armci_server_unlock_mutex(int mutex, int p, int tkt, msg_tag_t* tag);
 extern void armci_rcv_vector_data(int p, request_header_t* msginfo, armci_giov_t dr[], int len);
 
-#if !defined(LAPI) 
 extern void armci_wait_for_server();
 extern void armci_start_server();
 extern void armci_transport_cleanup();
@@ -321,7 +304,7 @@ extern void armci_client_connect_to_servers();
 extern void armci_data_server(void *mesg);
 extern void armci_server_initial_connection();
 extern void armci_call_data_server();
-#endif
+
 #ifdef SOCKETS
 extern void armci_ReadStridedFromDirect(int proc, request_header_t* msginfo,
                   void *ptr, int strides, int stride_arr[], int count[]);
