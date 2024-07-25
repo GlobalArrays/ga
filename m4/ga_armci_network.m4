@@ -491,14 +491,9 @@ AM_CONDITIONAL([CRAY_XT_NETWORKS], [test x$ga_cray_xt_networks = xyes])
 ga_cv_sysv_hack=no
 # Only perform this hack for ARMCI build.
 AS_IF([test "x$ARMCI_TOP_BUILDDIR" != x], [
-    AS_IF([test x$ga_cv_sysv = xno],
-        [AS_CASE([$ga_armci_network],
-            [PORTALS|GEMINI], [ga_cv_sysv_hack=no],
-                [ga_cv_sysv_hack=yes])],
-        [ga_cv_sysv_hack=yes])
-AS_IF([test x$ga_cv_sysv_hack = xyes],
-    [AC_DEFINE([SYSV], [1],
-        [Defined if we want this system to use SYSV shared memory])])
+    ga_cv_sysv_hack=yes
+    AC_DEFINE([SYSV], [1],
+        [Defined if we want this system to use SYSV shared memory])
 ])
 AM_CONDITIONAL([SYSV], [test x$ga_cv_sysv_hack = xyes])
 

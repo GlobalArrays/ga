@@ -477,18 +477,6 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
 
   /*    if(proc!=armci_me) INTR_OFF;*/
 
-#  if defined(PORTALS) 
-  /*even 1D armci_nbput has to use different origin counters for 1D */
-#   if defined(DOELAN4) && !defined(NB_NONCONT)
-    /*if(!ARMCI_ACC(op) && !SAMECLUSNODE(proc) && nb_handle && stride_levels<2)*/
-    if(!ARMCI_ACC(op) && !SAMECLUSNODE(proc) && stride_levels<2)
-#   else
-      if(!SAMECLUSNODE(proc))
-#   endif
-	armci_network_strided(op,scale,proc,src_ptr,src_stride_arr,dst_ptr,
-			      dst_stride_arr,count,stride_levels,nb_handle);
-      else
-#  endif
 	switch (stride_levels) {
 	case 0: /* 1D copy */ 
 
@@ -620,7 +608,7 @@ static int _armci_puts(void *src_ptr,
   PREPROCESS_STRIDED(tmp_count);
 #  if (!defined(QUADRICS) || defined(PACKPUT))
   direct=SAMECLUSNODE(proc);
-#  endif /*(!QUADRICS||!PACKPUT)&&!PORTALS*/
+#  endif /*(!QUADRICS||!PACKPUT)*/
 
   if(put_flag) dassert(1,nbh==NULL);
 

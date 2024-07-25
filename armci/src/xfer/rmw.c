@@ -39,7 +39,7 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
     switch (op) {
       case ARMCI_FETCH_AND_ADD:
 #if (defined(__i386__) || defined(__x86_64__)) && !defined(NO_I386ASM)
-#if (defined(__GNUC__) || defined(__INTEL_COMPILER__) ||defined(__PGIC__)) && !defined(PORTALS) && !defined(NO_I386ASM)
+#if (defined(__GNUC__) || defined(__INTEL_COMPILER__) ||defined(__PGIC__)) && !defined(NO_I386ASM)
         if(SERVER_CONTEXT || armci_nclus == 1){
 /* 	  *(int*)ploc = __sync_fetch_and_add((int*)prem, extra); */
 	  atomic_fetch_and_add(prem, ploc, extra, sizeof(int));
@@ -59,7 +59,7 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
                 armci_put(&_a_ltemp,prem,sizeof(long),proc);
            break;
       case ARMCI_SWAP:
-#if (defined(__i386__) || defined(__x86_64__)) && !defined(PORTALS) && !defined(NO_I386ASM)
+#if (defined(__i386__) || defined(__x86_64__)) && !defined(NO_I386ASM)
         if(SERVER_CONTEXT || armci_nclus==1){
 	  atomic_exchange(ploc, prem, sizeof(int));
         }
