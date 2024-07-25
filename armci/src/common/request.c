@@ -1226,7 +1226,7 @@ extern void armci_wait_for_blocking_scatter();
 #endif
 
 
-#if (defined(ALLOW_PIN) && !defined(HAS_RDMA_GET)
+#if defined(ALLOW_PIN) && !defined(HAS_RDMA_GET)
 /*\ client version of remote strided get
 \*/
 int armci_rem_get(int proc,
