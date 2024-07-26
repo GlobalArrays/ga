@@ -1171,8 +1171,3 @@ int code=0;
   }
 }
 
-
-
-#else
- what are doing here ?
-#endif
