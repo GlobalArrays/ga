@@ -89,7 +89,7 @@ void *ptr;
 } armci_flag_t;
 
 
-#if defined(LAPI) || defined(PTHREADS) || defined(POSIX_THREADS)
+#if defined(PTHREADS) || defined(POSIX_THREADS)
 # include <pthread.h>
   typedef pthread_t thread_id_t;
 # define  THREAD_ID_SELF pthread_self
@@ -110,7 +110,7 @@ extern thread_id_t armci_serv_tid;
 #  define SERVER_CONTEXT (armci_me<0)
 #endif
 
-#if defined(LAPI) || defined(CLUSTER) || defined(CRAY) || defined(CRAY_XT) || defined(CRAY_SHMEM)
+#if defined(CLUSTER) || defined(CRAY) || defined(CRAY_XT) || defined(CRAY_SHMEM)
 #  include "request.h"
 #endif
 
@@ -312,13 +312,13 @@ extern void armci_finalize_fence();
 #endif
 
 
-#if defined(LAPI) || defined(ELAN_ACC)
+#if defined(ELAN_ACC)
 #  define ORDER(op,proc)\
         if( proc == armci_me || ( ARMCI_ACC(op) && ARMCI_ACC(PENDING_OPER(proc))) );\
         else  FENCE_NODE(proc)
 #  define UPDATE_FENCE_INFO(proc_)
 #elif defined(CLUSTER) && !defined(QUADRICS) && !defined(HITACHI)\
-        && !defined(CRAY_SHMEM) && !defined(PORTALS)
+        && !defined(CRAY_SHMEM)
 #  define ORDER(op_,proc_)\
           if(!SAMECLUSNODE(proc_) && op_ != GET )FENCE_ARR(proc_)=1
 #  define UPDATE_FENCE_INFO(proc_) if(!SAMECLUSNODE(proc_))FENCE_ARR(proc_)=1
@@ -342,7 +342,7 @@ typedef struct {
  *  to establish socket communication like on the networks of workstations
  *  SP node names must be distinct within first HOSTNAME_LEN characters
 \*/
-#if defined(LAPI) && defined(AIX)
+#if defined(AIX)
 #  define HOSTNAME_TRUNCATE 
 #  define HOSTNAME_LEN 12
 #else

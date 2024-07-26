@@ -72,12 +72,7 @@ void armci_lockmem_(void *pstart, void *pend, int proc)
     }
 
     NATIVE_LOCK(lock,proc);
-#   ifdef LAPI
-    {
-       extern int kevin_ok;
-       kevin_ok=0;
-    }
-#   endif
+
     if(DEBUG_){
       printf("%d: armci_lockmem_ done\n",armci_me);
       fflush(stdout);
@@ -92,12 +87,6 @@ void armci_unlockmem_(int proc)
     int lock = 0;
 #endif
     NATIVE_UNLOCK(lock,proc);
-#   ifdef LAPI
-    {
-       extern int kevin_ok;
-       kevin_ok=1;
-    }
-#   endif
 }
 
 

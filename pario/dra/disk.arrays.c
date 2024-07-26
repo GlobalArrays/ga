@@ -86,7 +86,7 @@
 
 /* #define DRA_DBLE_BUFFER */
 
-#if defined(SP1)|| defined(SP) || defined(LAPI)
+#if defined(SP1)|| defined(SP)
 #   define DRA_NUM_IOPROCS 8 
 #else
 #   define DRA_NUM_IOPROCS 1

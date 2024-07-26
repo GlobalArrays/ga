@@ -33,8 +33,6 @@ AH_TEMPLATE([HPUX64],       [Define to 1 on 64bit HP-UX systems])
 AH_TEMPLATE([IBM],          [Define to 1 on IBM SP systems])
 AH_TEMPLATE([IBM64],        [Define to 1 on 64bit IBM SP systems])
 AH_TEMPLATE([INTERIX],      [Define to 1 on ??? systems])
-AH_TEMPLATE([LAPI],         [Define to 1 on IBM systems with LAPI])
-AH_TEMPLATE([LAPI64],       [Define to 1 on 64bit IBM systems with LAPI])
 AH_TEMPLATE([LINUX],        [Define to 1 on generic Linux systems])
 AH_TEMPLATE([LINUX64],      [Define to 1 on generic 64bit Linux systems])
 AH_TEMPLATE([MACX],         [Define to 1 on OSX systems])
@@ -59,7 +57,6 @@ AS_IF([test "x$ga_cv_target_base" = xUNKNOWN],
         [*fujitsu*],        [ga_cv_target_base=FUJITSU_VPP],
         [*hpux*],           [ga_cv_target_base=HPUX],
         [*ibm*],            [ga_cv_target_base=IBM],
-        #[TODO],            [ga_cv_target_base=LAPI],
         [*linux*],          [ga_cv_target_base=LINUX],
         [*darwin*],         [ga_cv_target_base=MACX],
         [*apple*],          [ga_cv_target_base=MACX],
@@ -75,7 +72,7 @@ dnl AS_IF([test "x$ARMCI_TOP_BUILDDIR" != x], [
     AC_CACHE_CHECK([whether we think this system is what we call SYSV],
     [ga_cv_sysv],
     [AS_CASE([$ga_cv_target_base],
-        [SUN|SOLARIS|SGI|SGI_N32|SGITFP|HPUX|IBM|DECOSF|LINUX|INTERIX|NEC|LAPI],
+        [SUN|SOLARIS|SGI|SGI_N32|SGITFP|HPUX|IBM|DECOSF|LINUX|INTERIX|NEC],
             [ga_cv_sysv=yes],
         [ga_cv_sysv=no])
     ])
@@ -98,7 +95,6 @@ AM_CONDITIONAL([HITACHI],      [test "$ga_cv_target_base" = HITACHI])
 AM_CONDITIONAL([HPUX],         [test "$ga_cv_target_base" = HPUX])
 AM_CONDITIONAL([IBM],          [test "$ga_cv_target_base" = IBM])
 AM_CONDITIONAL([INTERIX],      [test "$ga_cv_target_base" = INTERIX])
-AM_CONDITIONAL([LAPI],         [test "$ga_cv_target_base" = LAPI])
 AM_CONDITIONAL([LINUX],        [test "$ga_cv_target_base" = LINUX])
 AM_CONDITIONAL([MACX],         [test "$ga_cv_target_base" = MACX])
 AM_CONDITIONAL([MINGW],        [test "$ga_cv_target_base" = MINGW])

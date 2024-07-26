@@ -92,7 +92,7 @@ static int altix_gethostname(char *name, int len) {
     sprintf(name,"altix");
     return 0;
 }
-#elif defined(CRAY_XT) /* && !defined(PORTALS) */
+#elif defined(CRAY_XT)
 #define GETHOSTNAME cnos_gethostname
 static int cnos_gethostname(char *name, int len)
 {
@@ -304,7 +304,7 @@ static void print_clus_info()
     int i;
 
     if(PRINT_CLUSTER_INFO && armci_nclus > 1 && armci_me ==0){
-#if defined(DATA_SERVER) || defined(SERVER_THREAD) || defined(PORTALS)
+#if defined(DATA_SERVER) || defined(SERVER_THREAD)
         printf("ARMCI configured for %d cluster nodes. Network protocol is '%s'.\n",
                 armci_nclus, network_protocol);
 #else

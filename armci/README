@@ -58,7 +58,6 @@ Index
 -----
 1.  Supported Platforms
 2.  General Settings
-3.  Building ARMCI on SGI.
 4.  Building ARMCI on IBM.
 5.  Building ARMCI on CRAY.
 6.  Building ARMCI on other platforms
@@ -66,11 +65,8 @@ Index
 
 Supported Platforms
 -------------------
-- leadership class machines: Cray XE6, Cray XTs, IBM Blue Gene/L, IBM Blue
-  Gene /P
-- shared-memory systems: SUN Solaris, SGI, SGI Altix, IBM, Linux, DEC, HP,
-  Cray SV1, Cray X1, and Windows NT/95/2000
-- distributed-memory systems: Cray T3E, IBM SP(TARGET=LAPI), FUJITSU VX/VPP.
+- leadership class machines: Cray XT/XE/XK/XC, IBM Blue Gene/Q.
+- shared-memory systems: SUN Solaris, SGI Altix, IBM, Linux
 - clusters of workstations (InfiniBand, sockets)
 
 configure options
@@ -135,7 +131,6 @@ specified.
 --with-cray-shmem=ARG   select armci network as Cray XT shmem
 --with-dcmf=ARG         select armci network as IBM BG/P Deep Computing
                         Message Framework
---with-lapi=ARG         select armci network as IBM LAPI
 --with-mpi-spawn=ARG    select armci network as MPI-2 dynamic process mgmt
 --with-openib=ARG       select armci network as InfiniBand OpenIB
 --with-sockets=ARG      select armci network as Ethernet TCP/IP (default)
@@ -235,66 +230,6 @@ command to launch the test suite when compiled with OpenMPI::
 All tests have a per-test log file containing the output of the test.  So if
 the test is testing/test.x, the log file would be testing/test.log.  The output
 of failed tests is collected in the top-level log summary test-suite.log.
-
-ANCIENT WISDOM
-==============
-
-Building on SGI
----------------
-
-For running on SGI machines running the irix os, three target settings are
-available:
-
-- TARGET=SGI generates a MIPS-4 64-bit code with 32-bit address space when
-  compiling on any R8000 based machines and a 32 bit MPIS-2 code on any
-  non-R8000 machines.
-- Use TARGET=SGI64 For generating a 64 bit code with 64-bit address space.
-- TARGET=SGI_N32 generates a 32bit code with a 32bit address space.
-
-By default, SGI_N32 generates a MIPS3 code and SGI64 generates a MIPS4 code.
-
-There is a possibility of conflict between the SGI's implementation of MPI
-(but not others, MPICH for example) and ARMCI in their use of the SGI specific
-inter-processor communication facility called arena.
-
-Building on IBM
----------------
-
-Running on IBM without LAPI
-+++++++++++++++++++++++++++
-
-On IBM's running AIX, target can be set to IBM or IBM64 to run 32/64 bit
-versions of the code.
-
-Running on the IBM-SP
-+++++++++++++++++++++
-
-TARGET on IBM-SP can be set to LAPI (LAPI64 for 64 bit object).  POE
-environment variable settings for the parallel environment PSSP 3.1:
-
-- ARMCI applications like any other LAPI-based codes must define
-  MP_MSG_API=lapi  or MP_MSG_API=mpi,lapi (when using ARMCI and MPI)
-- The LAPI-based implementation of ARMCI cannot be used on the very old SP-2
-  systems because LAPI did not support the TB2 switch used in those models.
-  If in doubt which switch you got use odmget command: odmget -q name=css0
-  CuDv
-- For AIX versions 4.3.1 and later, environment variable AIXTHREAD_SCOPE=S
-  must be set to assure correct operation of LAPI (IBM should  do it in PSSP
-  by default).
-- Under AIX 4.3.3 and later  an additional environment variable is
-  required(RT_GRQ=ON) to restore the original thread scheduling that LAPI
-  relies on.
-
-Building on CRAY
-----------------
-
-- TARGET environment variable is also used by cc on CRAY. It has to be set to
-  CRAY-SV1 on SV1, CRAY-YMP on YMP, CRAY-T3E on T3E. ARMCI on CRAY'S hence
-  uses the same values to this environment variable as cc requires.
-
-- On CRAY-T3E, ARMCI can be run with either of the CRAY Message Passing
-  Libraries(PVM and MPI). For more information on running with PVM look at
-  docs/README.PVM. If running with PVM, MSG_COMMS has to be set to PVM.
 
 Building on other platforms
 ---------------------------

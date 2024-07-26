@@ -89,52 +89,6 @@ int me, nproc;
 void *work[MAXPROC]; /* work array for propagating addresses */
 double *ddst[MAXPROC];
 
-#ifdef PVM
-void pvm_init(int argc, char *argv[])
-{
-  int mytid, mygid, ctid[MAXPROC];
-  int np, i;
-
-  mytid = pvm_mytid();
-  if ((argc != 2) && (argc != 1)) {
-    goto usage;
-  }
-  if (argc == 1) {
-    np = 1;
-  }
-  if (argc == 2)
-    if ((np = atoi(argv[1])) < 1) {
-      goto usage;
-    }
-  if (np > MAXPROC) {
-    goto usage;
-  }
-
-  mygid = pvm_joingroup(MPGROUP);
-
-  if (np > 1)
-    if (mygid == 0) {
-      i = pvm_spawn(argv[0], argv + 1, 0, "", np - 1, ctid);
-    }
-
-  while (pvm_gsize(MPGROUP) < np) {
-    sleep(1);
-  }
-
-  /* sync */
-  pvm_barrier(MPGROUP, np);
-
-  printf("PVM initialization done!\n");
-
-  return;
-
-usage:
-  fprintf(stderr, "usage: %s <nproc>\n", argv[0]);
-  pvm_exit();
-  exit(-1);
-}
-#endif
-
 /*void create_array(void *a[], int elem_size, int ndim, int dims[])*/
 void create_array(double *a[], int ndim, int dims[])
 {
@@ -391,39 +345,6 @@ void test_perf_nb(int dry_run)
       }
       ARMCI_Barrier();
     }
-
-#if PORTALS
-    /* See the note below why this part is disabled */
-    /* ---------------------- nb-Accumulate ------------------------ */
-    for (i = 0; i < elems[1]; i++) {
-      dsrc[me][i] = 1.0;
-    }
-    ARMCI_Barrier();
-    stride = elems[1] * sizeof(double);
-    scale  = 1.0;
-    for (j = 0; j < ntimes; j++) {
-      stime = armci_timer();
-      if ((rc = ARMCI_NbAccS(ARMCI_ACC_DBL, &scale, &dsrc[me][0], &stride,
-                             &ddst[0][0], &stride, &bytes, 0, 0, &hdl_acc))) {
-        ARMCI_Error("armci_nbacc failed\n", rc);
-      }
-      t8 += armci_timer() - stime;
-      stime = armci_timer();
-      ARMCI_Wait(&hdl_acc);
-      t9 += armci_timer() - stime;
-
-      ARMCI_Barrier();
-      ARMCI_AllFence();
-      ARMCI_Barrier();
-      if (VERIFY) {
-        verify_results(ACC, elems);
-      }
-      for (i = 0; i < elems[0]*elems[1]; i++) {
-        ddst[me][i] = 0.0;
-      }
-      ARMCI_Barrier();
-    }
-#endif
 
     /* print timings */
     if (!dry_run) if (me == 0) printf("%d\t %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e\n",

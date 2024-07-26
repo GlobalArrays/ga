@@ -37,8 +37,8 @@
 #   define PTR_ALIGN
 #endif
 
-#if defined(NB_NONCONT) && !defined(CRAY_SHMEM) && !defined(QUADRICS) && !defined(PORTALS)
-#error NB_NONCONT is only available on CRAY_SHMEM,QUADRICS and PORTALS
+#if defined(NB_NONCONT) && !defined(CRAY_SHMEM) && !defined(QUADRICS) 
+#error NB_NONCONT is only available on CRAY_SHMEM, and QUADRICS
 #endif
 
 #if defined(SHMEM_HANDLE_SUPPORTED) && !defined(CRAY_SHMEM)
@@ -219,12 +219,8 @@
 #endif
    
 /* macros to ensure ordering of consecutive puts or gets following puts */
-#if defined(LAPI)
-
-#   include "lapidefs.h"
-
-#elif defined(_CRAYMPP) || defined(QUADRICS) || defined(__crayx1)\
-   || defined(CRAY_SHMEM) || defined(PORTALS)
+#if defined(_CRAYMPP) || defined(QUADRICS) || defined(__crayx1)\
+   || defined(CRAY_SHMEM) 
 #if defined(CRAY) || defined(CRAY_XT)
 #   include <mpp/shmem.h>
 #else
@@ -410,68 +406,7 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
 #         define armci_copy(src,dst,n)  _MmCopy((char*)(dst), (char*)(src), (n))
 #      endif
 #      define armci_put  CopyTo
-#      define armci_get  CopyFrom
-
-#elif  defined(LAPI)
-
-#      include <lapi.h>
-       extern lapi_handle_t lapi_handle;
-
-#      define armci_put(src,dst,n,proc)\
-              if(proc==armci_me){\
-                 armci_copy(src,dst,n);\
-              } else {\
-              if(LAPI_Put(lapi_handle, (uint)proc, (uint)n, (dst), (src),\
-                NULL,&(ack_cntr[ARMCI_THREAD_IDX].cntr),&cmpl_arr[proc].cntr))\
-                  ARMCI_Error("LAPI_put failed",0); else;}
-
-       /**** this copy is nonblocking and requires fence to complete!!! ****/
-#      define armci_get(src,dst,n,proc) \
-              if(proc==armci_me){\
-                 armci_copy(src,dst,n);\
-              } else {\
-              if(LAPI_Get(lapi_handle, (uint)proc, (uint)n, (src), (dst), \
-                 NULL, &(get_cntr[ARMCI_THREAD_IDX].cntr)))\
-                 ARMCI_Error("LAPI_Get failed",0);else;}
-
-#      define ARMCI_NB_PUT(src,dst,n,proc,cmplt)\
-              {if(LAPI_Setcntr(lapi_handle, &((cmplt)->cntr), 0))\
-                  ARMCI_Error("LAPI_Setcntr in NB_PUT failed",0);\
-              (cmplt)->val=1;\
-              if(LAPI_Put(lapi_handle, (uint)proc, (uint)n, (dst), (src),\
-                 NULL, &((cmplt)->cntr), &cmpl_arr[proc].cntr))\
-                  ARMCI_Error("LAPI_put failed",0); else;}
-
-#      define ARMCI_NB_GET(src,dst,n,proc,cmplt)\
-              {if(LAPI_Setcntr(lapi_handle, &((cmplt)->cntr), 0))\
-                  ARMCI_Error("LAPI_Setcntr in NB_GET failed",0);\
-              (cmplt)->val=1;\
-              if(LAPI_Get(lapi_handle, (uint)proc, (uint)n, (src), (dst), \
-                 NULL, &((cmplt)->cntr)))\
-                 ARMCI_Error("LAPI_Get NB_GET failed",0);else;}
-
-#      define ARMCI_NB_WAIT(cmplt) CLEAR_COUNTER((cmplt))
-#      define ARMCI_NB_TEST(cmplt,_succ) TEST_COUNTER((cmplt),(_succ))
-       
-#elif defined(PORTALS)
-#      define armci_put(src,dst,n,proc) \
-            if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
-               armci_copy(src,dst,n);\
-            } else { PARMCI_Put((src), (dst),(n),(proc));}
-
-#      define armci_get(src,dst,n,proc)\
-            if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
-               armci_copy(src,dst,n);\
-            } else { PARMCI_Get((src), (dst),(n),(proc));}
-
-#if 0
-#      define ARMCI_NB_PUT(src,dst,n,proc,cmplt)\
-            nb_handle->tag=GET_NEXT_NBTAG();armci_portals_put((proc),(src),\
-                            (dst),(n),cmplt,nb_handle->tag)
-#      define ARMCI_NB_GET(src,dst,n,proc,cmplt)\
-            nb_handle->tag=GET_NEXT_NBTAG();armci_portals_get((proc),(src),\
-            (dst),(n),cmplt,nb_handle->tag)
-#endif                                                              
+#      define armci_get  CopyFrom                                                
 
 #else
 

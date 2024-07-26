@@ -239,9 +239,6 @@ int armci_copy_vector(int op,            /* operation code */
               )
 {
     int i,s,shmem= SAMECLUSNODE(proc);
-#ifdef LAPI
-    int armci_th_idx = ARMCI_THREAD_IDX;
-#endif
     
     if(shmem ){ 
       /* local/shared memory copy */
@@ -267,9 +264,6 @@ int armci_copy_vector(int op,            /* operation code */
           armcill_putv(proc, darr[i].bytes, darr[i].ptr_array_len,
                        darr[i].src_ptr_array, darr[i].dst_ptr_array); 
 #else
-#         ifdef LAPI
-                SET_COUNTER(ack_cntr[armci_th_idx],darr[i].ptr_array_len);
-#         endif
           UPDATE_FENCE_STATE(proc, PUT, darr[i].ptr_array_len);
  
           for( s=0; s< darr[i].ptr_array_len; s++){   
@@ -288,10 +282,6 @@ int armci_copy_vector(int op,            /* operation code */
           armcill_getv(proc, darr[i].bytes, darr[i].ptr_array_len,
                        darr[i].src_ptr_array, darr[i].dst_ptr_array); 
 #else
-#         ifdef LAPI
-                SET_COUNTER(get_cntr[armci_th_idx],darr[i].ptr_array_len);
-#         endif
-
           for( s=0; s< darr[i].ptr_array_len; s++){   
               armci_get(darr[i].src_ptr_array[s],darr[i].dst_ptr_array[s],
                         darr[i].bytes,proc);
@@ -304,14 +294,6 @@ int armci_copy_vector(int op,            /* operation code */
           armci_die("armci_copy_vector: wrong optype",op);
       }
    }
-
-#ifdef LAPI
-    if(!shmem){
-
-       if(op == GET) CLEAR_COUNTER(get_cntr[armci_th_idx]); /* wait for data arrival */
-       if(op == PUT) CLEAR_COUNTER(ack_cntr[armci_th_idx]); /* data must be copied out*/
-    }
-#endif
 
    return 0;
 }
@@ -371,15 +353,6 @@ int PARMCI_PutV( armci_giov_t darr[], /* descriptor array */
     direct=SAMECLUSNODE(proc);
 #endif
     /* use direct protocol for remote access when performance is better */
-#   if defined(LAPI) || defined(PORTALS)
-#     if defined(PORTALS)
-      direct=1;
-#     else
-      if(!direct)
-          if(len <5 || darr[0].ptr_array_len <5) direct=1;
-#     endif
-#   endif
-
     if (direct) {
          rc = armci_copy_vector(PUT, darr, len, proc);
     } else {
@@ -430,15 +403,6 @@ int PARMCI_GetV( armci_giov_t darr[], /* descriptor array */
     direct=SAMECLUSNODE(proc);
 #endif
     /* use direct protocol for remote access when performance is better */
-#   if defined(LAPI) || defined(PORTALS)
-#     if defined(PORTALS)
-      direct=1;
-#     else
-      if(!direct)
-          if(len <5 || darr[0].ptr_array_len <8) direct=1;
-#     endif
-#   endif
-
     if (direct) {
        rc = armci_copy_vector(GET, darr, len, proc);
     } else {
@@ -555,10 +519,6 @@ int PARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
 	nb_handle = (armci_ihdl_t)armci_set_implicit_handle(PUT, proc);
     }
 
-#   if defined(PORTALS)
-    direct=1;
-#   endif
-
     if (direct) {
          rc = armci_copy_vector(PUT, darr, len, proc);
     } else{
@@ -604,10 +564,6 @@ int PARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
 
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
-#endif
-
-#if defined(PORTALS)
-    direct=1;
 #endif
 
     /* aggregate get */

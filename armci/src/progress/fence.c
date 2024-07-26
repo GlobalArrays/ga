@@ -8,9 +8,7 @@
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
-#if defined(PVM)
-#   include <pvm3.h>
-#elif defined(TCGMSG)
+#if defined(TCGMSG)
 #   include <sndrcv.h>
 static void tcg_synch(long type)
 {
@@ -26,7 +24,7 @@ char *_armci_fence_arr;
 
 void armci_init_fence()
 {
-#if defined (DATA_SERVER) || defined(PORTALS)
+#if defined (DATA_SERVER)
 #if defined(THREAD_SAFE)
      _armci_fence_arr = calloc(armci_nproc*armci_user_threads.max,1);
 #else
@@ -39,22 +37,11 @@ void armci_init_fence()
 
 void armci_finalize_fence()
 {
-#if defined (DATA_SERVER) || defined(PORTALS)
+#if defined (DATA_SERVER)
      free(_armci_fence_arr);
      _armci_fence_arr = NULL;
 #endif
 }
-
-#ifdef PORTALS
-void armci_update_fence_array(int proc, int inc)
-{
-    if (inc)
-        FENCE_ARR(proc)++;
-    else
-        FENCE_ARR(proc)--;
-}
-#endif
-
 
 void PARMCI_Fence(int proc)
 {
@@ -83,7 +70,7 @@ void PARMCI_GroupFence(ARMCI_Group *group)
 
 void PARMCI_AllFence()
 {
-#if defined(LAPI) || defined(CLUSTER)
+#if defined(CLUSTER)
     int p;
 
     for(p = 0;p < armci_nproc; p++) {

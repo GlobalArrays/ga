@@ -42,15 +42,6 @@ AS_IF([test "$ARMCI_TOP_BUILDDIR" != "$ARMCI_TOP_SRCDIR"],
 # MPI compiler wrappers instead of the standard compilers.
 GA_MSG_COMMS
 
-# Hack to enable NEW_MALLOC feature
-AC_ARG_ENABLE([portals-new-malloc],
-    [AS_HELP_STRING([--enable-portals-new-malloc],
-        [add -DNEW_MALLOC to CPPFLAGS])])
-AS_IF([test "x$enable_portals_new_malloc" = xyes],
-    [AC_DEFINE([NEW_MALLOC], [1], [for portals, enable new malloc])])
-AM_CONDITIONAL([PORTALS_ENABLE_NEW_MALLOC],
-    [test "x$enable_portals_new_malloc" = xyes])
-
 ARMCI_ENABLE_GPC
 ARMCI_ENABLE_GROUP
 ARMCI_ENABLE_NB_NONCONT

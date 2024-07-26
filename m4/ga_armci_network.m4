@@ -166,27 +166,6 @@ AS_IF([test "x$happy" = xyes],
     [$2])
 ])dnl
 
-# _GA_ARMCI_NETWORK_LAPI([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
-# ----------------------------------------------------------------
-AC_DEFUN([_GA_ARMCI_NETWORK_LAPI], [
-AC_MSG_NOTICE([searching for LAPI...])
-happy=yes
-AS_IF([test "x$happy" = xyes],
-    [AC_CHECK_HEADER([lapi.h], [], [happy=no])])
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([LAPI_Init], [lapi_r lapi], [], [happy=no])
-     AS_CASE([$ac_cv_search_LAPI_Init],
-            ["none required"], [],
-            [no], [],
-            [# add missing lib to ARMCI_NETWORK_LIBS if not there
-             AS_CASE([$ARMCI_NETWORK_LIBS],
-                     [*$ac_cv_search_LAPI_Init*], [],
-                     [ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $ac_cv_search_LAPI_Init"])])])
-AS_IF([test "x$happy" = xyes],
-    [ga_armci_network=LAPI; with_lapi=yes; $1],
-    [$2])
-])dnl
-
 # _GA_ARMCI_NETWORK_MPI_TS([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 # ---------------------------------------------------------------------
 AC_DEFUN([_GA_ARMCI_NETWORK_MPI_TS], [
@@ -349,7 +328,6 @@ armci_network_count=0
 _GA_ARMCI_NETWORK_WITH([armci],     [external; path to external ARMCI library])
 _GA_ARMCI_NETWORK_WITH([cray-shmem],[Cray XT shmem])
 _GA_ARMCI_NETWORK_WITH([dmapp],     [(Comex) Cray DMAPP])
-_GA_ARMCI_NETWORK_WITH([lapi],      [IBM LAPI])
 _GA_ARMCI_NETWORK_WITH([mpi-mt],    [(Comex) MPI-2 multi-threading])
 _GA_ARMCI_NETWORK_WITH([mpi-pt],    [(Comex) MPI-2 multi-threading with progress thread])
 _GA_ARMCI_NETWORK_WITH([mpi-pr],    [(Comex) MPI-1 two-sided with progress rank])
@@ -371,8 +349,6 @@ AS_IF([test "x$enable_autodetect" = xyes],
     [AC_MSG_NOTICE([searching for ARMCI_NETWORK...])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_cray_shmem" != xno],
         [_GA_ARMCI_NETWORK_CRAY_SHMEM()])
-     AS_IF([test "x$ga_armci_network" = x && test "x$with_lapi" != xno],
-        [_GA_ARMCI_NETWORK_LAPI()])
 dnl     AS_IF([test "x$ga_armci_network" = x && test "x$with_mpi_ts" != xno],
 dnl         [_GA_ARMCI_NETWORK_MPI_TS()])
 dnl     AS_IF([test "x$ga_armci_network" = x && test "x$with_mpi_mt" != xno],
@@ -416,9 +392,6 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
               AS_IF([test "x$ga_armci_network" = xDMAPP],
                  [_GA_ARMCI_NETWORK_DMAPP([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=DMAPP failed])])])
-              AS_IF([test "x$ga_armci_network" = xLAPI],
-                 [_GA_ARMCI_NETWORK_LAPI([],
-                    [AC_MSG_ERROR([test for ARMCI_NETWORK=LAPI failed])])])
               AS_IF([test "x$ga_armci_network" = xMPI_TS],
                  [_GA_ARMCI_NETWORK_MPI_TS([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=MPI_TS failed])])])
@@ -455,7 +428,6 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
          _GA_ARMCI_NETWORK_WARN([armci])
          _GA_ARMCI_NETWORK_WARN([cray-shmem])
          _GA_ARMCI_NETWORK_WARN([dmapp])
-         _GA_ARMCI_NETWORK_WARN([lapi])
          _GA_ARMCI_NETWORK_WARN([mpi-ts])
          _GA_ARMCI_NETWORK_WARN([mpi-mt])
          _GA_ARMCI_NETWORK_WARN([mpi-pt])
@@ -477,7 +449,6 @@ LIBS="$ga_save_LIBS"
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([armci])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([cray-shmem])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([dmapp])
-_GA_ARMCI_NETWORK_AM_CONDITIONAL([lapi])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-ts])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-mt])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-pt])
@@ -520,14 +491,9 @@ AM_CONDITIONAL([CRAY_XT_NETWORKS], [test x$ga_cray_xt_networks = xyes])
 ga_cv_sysv_hack=no
 # Only perform this hack for ARMCI build.
 AS_IF([test "x$ARMCI_TOP_BUILDDIR" != x], [
-    AS_IF([test x$ga_cv_sysv = xno],
-        [AS_CASE([$ga_armci_network],
-            [PORTALS|GEMINI], [ga_cv_sysv_hack=no],
-                [ga_cv_sysv_hack=yes])],
-        [ga_cv_sysv_hack=yes])
-AS_IF([test x$ga_cv_sysv_hack = xyes],
-    [AC_DEFINE([SYSV], [1],
-        [Defined if we want this system to use SYSV shared memory])])
+    ga_cv_sysv_hack=yes
+    AC_DEFINE([SYSV], [1],
+        [Defined if we want this system to use SYSV shared memory])
 ])
 AM_CONDITIONAL([SYSV], [test x$ga_cv_sysv_hack = xyes])
 
@@ -559,7 +525,6 @@ AS_CASE([$ga_armci_network],
 [ARMCI],        [delay_tcgmsg_mpi_startup=0],
 [CRAY_SHMEM],   [delay_tcgmsg_mpi_startup=1],
 [DMAPP],        [delay_tcgmsg_mpi_startup=0],
-[LAPI],         [delay_tcgmsg_mpi_startup=1],
 [MPI_TS],       [delay_tcgmsg_mpi_startup=0],
 [MPI_MT],       [delay_tcgmsg_mpi_startup=0],
 [MPI_PT],       [delay_tcgmsg_mpi_startup=0],

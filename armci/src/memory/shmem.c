@@ -106,7 +106,7 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #if defined(GM) || defined(VAPI)
 #   define SHMMAX_SEARCH_NO_FORK 
 #endif
-#if defined(LAPI) || defined(AIX) || defined(SHMMAX_SEARCH_NO_FORK)
+#if defined(AIX) || defined(SHMMAX_SEARCH_NO_FORK)
 #   define NO_SHMMAX_SEARCH
 #endif
 
