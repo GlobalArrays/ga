@@ -45,7 +45,7 @@ extern void armci_sock_send(int to, void *data, int len);
 #endif
 
 
-#if !defined(GM) && !defined(VIA) &&!defined(VAPI)
+#if !defined(GM) && !defined(VAPI)
   double _armci_rcv_buf[MSG_BUFLEN_DBL];
   double _armci_snd_buf[MSG_BUFLEN_DBL]; 
   char* MessageSndBuffer = (char*)_armci_snd_buf;
@@ -1301,7 +1301,7 @@ int armci_rem_get(int proc,
     msginfo->bytes = msginfo->dscrlen;
 
 
-#if defined(GM) || defined(VAPI) || defined(QUADRICS)
+#if defined(GM) || defined(VAPI)
     /* prepare for  set the stamp at the end of the user buffer */
     if(count[0]<sizeof(int))armci_die("armci_rem_get: wrong protocol",count[0]);
 #  ifdef GM
@@ -1461,7 +1461,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
          armci_process_extheader(msginfo, dscr_save, buf, buflen);
 }
 
-#if ARMCI_ENABLE_GPC_CALLS && (defined(GM) || defined(VAPI) || defined(DOELAN4) || defined(SOCKETS))
+#if ARMCI_ENABLE_GPC_CALLS && (defined(GM) || defined(VAPI) || defined(SOCKETS))
 static int gpc_call_process( request_header_t *msginfo, int len,
                           char *dscr, char* buf, int buflen, char *sbuf);
 #endif
@@ -1497,7 +1497,7 @@ void armci_server_vector( request_header_t *msginfo,
     case GET:
 /*        fprintf(stderr, "%d:: Got a vector message!!\n", armci_me); */
       if(msginfo->ehlen) {
-#if ARMCI_ENABLE_GPC_CALLS && (defined(GM) || defined(VAPI) || defined(DOELAN4))
+#if ARMCI_ENABLE_GPC_CALLS && (defined(GM) || defined(VAPI))
 	gpc_call_process(msginfo, len, dscr, buf, buflen, sbuf);
 #else
 	armci_die("Unexpected vector message with non-zero ehlen. GPC call?",
@@ -1576,13 +1576,9 @@ void armci_server_vector( request_header_t *msginfo,
 /**Server side routine to handle a GPC call request**/
 /*===============Register this memory=====================*/
 #if ARMCI_ENABLE_GPC_CALLS
-#if defined(GM) || defined(VAPI) || defined(QUADRICS)
+#if defined(GM) || defined(VAPI)
 gpc_buf_t *gpc_req;
-/*VT: I made the change below because DATA_SERVER is not defined for elan4
- *VT: This will only be invoked in case of GPC call and should not intefere
- *VT: with any other call
- */
-#if (defined(DOELAN4) || defined(DATA_SERVER)) && defined(SERVER_THREAD) 
+#if defined(DATA_SERVER) && defined(SERVER_THREAD) 
 #  ifdef PTHREADS
 pthread_t data_server;
 #  else

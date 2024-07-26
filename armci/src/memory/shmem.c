@@ -183,19 +183,6 @@ static  int id_search_no_fork=0;
 
 
 #ifdef   ALLOC_MUNMAP
-#ifdef QUADRICS
-#  include <elan/elan.h>
-#  include <elan3/elan3.h>
-   static  char *armci_elan_starting_address = (char*)0;
-
-#  ifdef __ia64__
-#    define ALLOC_MUNMAP_ALIGN 1024*1024
-#  else
-#    define ALLOC_MUNMAP_ALIGN 64*1024
-#  endif
-
-#  define ALGN_MALLOC(s,a) elan_allocMain(elan_base->state, (a), (s))
-#else 
 #  define ALGN_MALLOC(s,a) malloc((s))
 #endif
 
@@ -310,11 +297,7 @@ static int armci_shmalloc_try(long size)
  */
 #define PAGE (16*65536L)
 #define LBOUND  1048576L
-#if defined(MULTI_CTX) && defined(QUADRICS)
-#define UBOUND 256*LBOUND
-#else
 #define UBOUND 512*LBOUND
-#endif
 
 #define ARMCI_STRINGIFY(str) #str
 #define ARMCI_CONCAT(str) strL
@@ -420,24 +403,6 @@ long lower_bound=_SHMMAX*SHM_UNIT;
      return (int)( lower_bound>>20); /* return shmmax in mb */
 }
 #endif
-
-
-#ifdef MULTI_CTX
-void armci_nattach_preallocate_info(int* segments, int *segsize)
-{
-     int x;
-     char *uval;
-     uval = getenv("LIBELAN_NATTACH");
-     if(uval != NULL){
-        sscanf(uval,"%d",&x);
-        if(x<2 || x>8) armci_die("Error in LIBELAN_NATTACH <8, >1 ",(int)x);
-     }else
-        armci_die("Inconsistent configuration: ARMCI needs LIBELAN_NATTACH",0);
-     *segments =x;
-     *segsize = (int) (SHM_UNIT * MinShmem);
-
-}
-#endif
         
 /* Create shared region to store kr_malloc context in shared memory */
 void armci_krmalloc_init_ctxshmem() {
@@ -490,59 +455,6 @@ void armci_krmalloc_init_ctxshmem() {
 
 void armci_shmem_init()
 {
-
-#ifdef ALLOC_MUNMAP
-
-#if defined(QUADRICS) 
-#   if (defined(__ia64__) || defined(__alpha)) && !defined(DECOSF) 
-
-      /* this is to determine size of Elan Main memory allocator for munmap */
-      long x;
-      char *uval;
-      uval = getenv("LIBELAN_ALLOC_SIZE");
-      if(uval != NULL){
-        sscanf(uval,"%ld",&x);
-        if((x>80000000) && (x< 4*1024*1024*1024L)){ 
-          max_alloc_munmap = (x>>20) - 72;
-          if(DEBUG_){
-            printf("%d: max_alloc_munmap is %ld\n",armci_me,max_alloc_munmap);
-            fflush(stdout);
-          }
-        }
-      }
-
-      /* an alternative approach is to use MMAP area where we get
-         the address from the Elan environment variable in qsnetlibs 1.4+  */
-      uval = getenv("LIBELAN3_MMAPBASE");
-      if(uval != NULL){
-         sscanf(uval,"%p",&armci_elan_starting_address);
-      }
-
-#   endif
-#   if defined(__ia64__)
-       /* need aligment on 1MB boundary rather than the actual pagesize */
-       pagesize = 1024*1024;
-       logpagesize = 20;
-#   else
-       /* determine log2(pagesize) needed for address alignment */
-       int tp=512;
-       logpagesize = 9;
-       pagesize = getpagesize();
-       if(tp>pagesize)armci_die("armci_shmem_init:pagesize",pagesize);
-
-       while(tp<pagesize){
-         tp <<= 1;
-         logpagesize++;
-       }
-       if(tp!=pagesize)armci_die("armci_shmem_init:pagesize pow 2",pagesize);
-#   endif
-
-   if(DEBUG_) {
-     printf("page size =%d log=%d\n",pagesize,logpagesize); fflush(stdout); }
-
-#endif
-#endif
-
    if(armci_me == armci_master){
 #if !defined(NO_SHMMAX_SEARCH) || defined(SHMMAX_SEARCH_NO_FORK)
 #       ifdef SHMMAX_SEARCH_NO_FORK

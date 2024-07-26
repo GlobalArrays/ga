@@ -26,17 +26,6 @@ extern INLINE void _armci_buf_set_cmpld_idx(int idx, int state);
 
 #if defined(GM)
 #  include "myrinet.h"
-#elif defined(DOELAN4)
-#  include "elandefs.h"
-#elif defined(QUADRICS)
-#  include <elan/elan.h>
-   typedef void* msg_tag_t; 
-#  ifdef _ELAN_PUTGET_H
-#    define NB_CMPL_T ELAN_EVENT*
-#  endif
-#elif defined(VIA)
-#  include "via.h"
-   typedef void* msg_tag_t;
 #elif defined(VAPI)
 #  include "armci-vapi.h"
 #elif defined(SOCKETS)
@@ -87,19 +76,10 @@ extern void set_nbhandle(armci_ihdl_t *nbh, armci_hdl_t *nb_handle,
                                 int op, int proc);
 
 typedef struct {
-#if 0 
-   int   to:16;               /* message recipient */
-   int from:16;               /* message sender */
-#else
-   short int   to;            /* message recipient */
-   short int from;            /* message sender */
-#endif
+short int   to;            /* message recipient */
+short int from;            /* message sender */
 unsigned int   operation:8;   /* operation code */
-#if defined(DOELAN4) 
-unsigned int   format:2;      /* data format used */
-unsigned int   dowait:1;      /* indicates if should wait for data  */
-unsigned int   inbuf:1;       /* data is in one of the buffers */
-#elif defined(CLIENT_BUF_BYPASS) 
+#if defined(CLIENT_BUF_BYPASS) 
 unsigned int   format:2;      /* data format used */
 unsigned int   pinned:1;      /* indicates if sender memory was pinned */
 unsigned int   bypass:1;      /* indicate if bypass protocol used */
@@ -208,13 +188,6 @@ extern  char* MessageSndBuffer;
 #    define GA_SEND_REPLY(tag, buf, len, p)  
 #  endif
 
-#ifdef QUADRICS_
-#  define GET_SEND_BUFFER(_size,_op,_to) MessageSndBuffer;\
-                    while(((request_header_t*)MessageSndBuffer)->tag)\
-                    armci_util_spin(100, MessageSndBuffer)
-#  define FREE_SEND_BUFFER(_ptr) ((request_header_t*)MessageSndBuffer)->tag = (void*)0 
-#endif
-
 #ifndef GET_SEND_BUFFER
 #  define GET_SEND_BUFFER(_size,_op,_to) MessageSndBuffer
 #endif
@@ -232,7 +205,7 @@ typedef struct {
 } buf_arg_t;
 
 /*includes for SERVER_LOCK*/
-#if defined(SERVER_THREAD) && !defined(VIA)
+#if defined(SERVER_THREAD)
    extern void armci_rem_lock(int mutex, int proc, int *ticket);
    extern void armci_rem_unlock(int mutex, int proc, int ticket);
    extern void armci_unlock_waiting_process(msg_tag_t tag,int proc, int ticket);
