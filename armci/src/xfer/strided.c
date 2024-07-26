@@ -27,11 +27,7 @@
 #if defined(CLIENT_BUF_BYPASS)
 #define CAN_REQUEST_DIRECTLY _armci_bypass
 #else
-#  if defined(HITACHI)
-#    define CAN_REQUEST_DIRECTLY 0
-#  else
 #    define CAN_REQUEST_DIRECTLY 1
-#  endif
 #endif
 
 #define BIGINT 2147483647

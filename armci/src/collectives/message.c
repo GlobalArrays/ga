@@ -57,9 +57,7 @@ static void tcg_rcv(long type, void *buf, long lenbuf, long *lenmes,
 #   include <assert.h>
 #endif
 #ifdef _POSIX_PRIORITY_SCHEDULING
-#ifndef HITACHI
 #  include <sched.h>
-#endif
 #endif
 #include "armci.h"
 #include "acc.h"

@@ -9,7 +9,7 @@
 #   include <string.h>
 #endif
 
-#if 1 || defined(HITACHI) || defined(CRAY_T3E) || defined(CRAY_XT)
+#if 1 || defined(CRAY_T3E) || defined(CRAY_XT)
 #  define MEMCPY
 #endif
 #if defined(LINUX64) && defined(SGIALTIX) && defined(MSG_COMMS_MPI)
@@ -125,15 +125,6 @@
 
 #   define armci_get2D(p, bytes, count, src_ptr,src_stride,dst_ptr,dst_stride)\
            CopyPatchFrom(src_ptr, src_stride, dst_ptr, dst_stride,count,bytes,p)
-
-#elif defined(HITACHI)
-
-    extern void armcill_put2D(int proc, int bytes, int count,
-                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
-    extern void armcill_get2D(int proc, int bytes, int count,
-                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
-#   define armci_put2D armcill_put2D
-#   define armci_get2D armcill_get2D
 
 #elif defined(NB_NONCONT)
 
@@ -279,7 +270,7 @@ void c_dcopy13_(const int*    const restrict rows,
 #if defined(AIX)
 #    define DCOPY2D c_dcopy2d_u_
 #    define DCOPY1D c_dcopy1d_u_
-#elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(CRAY) || defined(WIN32) || defined(HITACHI)
+#elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(CRAY) || defined(WIN32)
 #    define DCOPY2D c_dcopy2d_n_
 #    define DCOPY1D c_dcopy1d_n_
 #else
@@ -307,21 +298,6 @@ void c_dcopy13_(const int*    const restrict rows,
 #      define armci_get(src,dst,n,proc) \
               shmem_get32((void *)(dst),(void *)(src),(int)(n)/4,(proc));\
               shmem_quiet()
-
-#elif  defined(HITACHI)
-
-        extern void armcill_put(void *src, void *dst, int bytes, int proc);
-        extern void armcill_get(void *src, void *dst, int bytes, int proc);
-
-#      define armci_put(src,dst,n,proc) \
-            if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
-               armci_copy(src,dst,n);\
-            } else { armcill_put((src), (dst),(n),(proc));}
-
-#      define armci_get(src,dst,n,proc)\
-            if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
-               armci_copy(src,dst,n);\
-            } else { armcill_get((src), (dst),(n),(proc));}
 
 #elif  defined(FUJITSU)
 

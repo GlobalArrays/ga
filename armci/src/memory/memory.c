@@ -34,12 +34,8 @@ static context_t ctx_localmem;
 static context_t ctx_mlocalmem;
 #endif
 
-#if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP)
 #include "armci_shmem.h"
-
-#if !defined(USE_SHMEM) && defined(HITACHI)
-#    define USE_SHMEM
-#endif
 
 #if !defined(SERVER_THREAD) ||\
     defined(USE_SHMEM)
@@ -266,9 +262,7 @@ void armci_shmem_malloc(void *ptr_arr[], armci_size_t bytes)
                  armci_me,myptr, *(void**)myptr,size); fflush(stdout);
        }
     }
-#   ifdef HITACHI
-        armci_register_shmem(myptr,size,idlist+1,idlist[0],ptr_ref_arr[armci_clus_me]);
-#   endif
+
 #   if defined(DATA_SERVER)
 
        /* get server reference address for every cluster node to perform
@@ -562,9 +556,6 @@ void armci_shmem_malloc_group(void *ptr_arr[], armci_size_t bytes,
                  armci_me,myptr, *(void**)myptr,size); fflush(stdout);
        }
     }
-#   ifdef HITACHI
-    armci_register_shmem_grp(myptr,size,idlist+1,idlist[0],ptr_ref_arr[armci_clus_me],group);
-#   endif
     
 #   if defined(DATA_SERVER)
  
@@ -955,7 +946,7 @@ int ARMCI_Uses_shm()
 {
     int uses=0;
 
-#if (defined(SYSV) || defined(WIN32) || defined(MMAP) ||defined(HITACHI)) && !defined(NO_SHM)
+#if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(NO_SHM)
 #   ifdef RMA_NEEDS_SHMEM
       if(armci_nproc >1) uses= 1; /* always unless serial mode */
 #   else
@@ -977,7 +968,7 @@ int ARMCI_Uses_shm_grp(ARMCI_Group *group)
     ARMCI_Group_size(group, &grp_nproc);
     ARMCI_Group_rank(group, &grp_me);
     
-#if (defined(SYSV) || defined(WIN32) || defined(MMAP) ||defined(HITACHI)) && !defined(NO_SHM)
+#if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(NO_SHM)
 #   ifdef RMA_NEEDS_SHMEM
       if(grp_nproc >1) uses= 1; /* always unless serial mode */
 #   else

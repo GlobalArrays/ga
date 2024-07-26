@@ -16,7 +16,7 @@
 #   error cannot run
 #endif
 
-#if (defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN) || defined(HITACHI))
+#if (defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN))
 #   include "armci_shmem.h"
 typedef struct {
     long off;
@@ -53,15 +53,6 @@ extern PAD_LOCK_T *_armci_int_mutexes;
 #elif defined(SPINLOCK)
 #   define NAT_LOCK(x,p) armci_acquire_spinlock((LOCK_T*)(_armci_int_mutexes+(x)))
 #   define NAT_UNLOCK(x,p) armci_release_spinlock((LOCK_T*)(_armci_int_mutexes+(x)))
-extern PAD_LOCK_T *_armci_int_mutexes;
-
-#elif defined(HITACHI)
-extern void armcill_lock(int mutex, int proc);
-extern void armcill_unlock(int mutex, int proc);
-#   define LOCK_T int
-#   define PAD_LOCK_T LOCK_T
-#   define NAT_LOCK(x,p) armcill_lock((x),(p))
-#   define NAT_UNLOCK(x,p) armcill_unlock((x),(p))
 extern PAD_LOCK_T *_armci_int_mutexes;
 
 #elif defined(SGI)

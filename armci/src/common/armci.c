@@ -72,10 +72,10 @@ int *_armci_argc=NULL;
 char ***_armci_argv=NULL;
 thread_id_t armci_usr_tid;
 
-#if !defined(HITACHI) && !defined(THREAD_SAFE)
+#if !defined(THREAD_SAFE)
 double armci_internal_buffer[BUFSIZE_DBL];
 #endif
-#if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI) || defined(CATAMOUNT)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(CATAMOUNT)
 #   include "locks.h"
     lockset_t lockid;
 #endif
@@ -100,7 +100,7 @@ int _armci_malloc_local_region;
 
 void ARMCI_Cleanup()
 {
-#if (defined(SYSV) || defined(WIN32) || defined(MMAP))&& !defined(HITACHI) 
+#if (defined(SYSV) || defined(WIN32) || defined(MMAP)) 
     Delete_All_Regions();
     if(armci_nproc>1)
       DeleteLocks(lockid);
@@ -178,9 +178,9 @@ void ARMCI_Error(char *msg, int code)
 void armci_allocate_locks()
 {
 #if !defined(CRAY_SHMEM) && \
-    ( defined(HITACHI) || defined(CATAMOUNT) )
+    defined(CATAMOUNT) 
        armcill_allocate_locks(NUM_LOCKS);
-#elif (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(HITACHI)
+#elif (defined(SYSV) || defined(WIN32) || defined(MMAP)) 
        if(armci_nproc == 1)return;
 #  if defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN)
        CreateInitLocks(NUM_LOCKS, &lockid);
@@ -195,7 +195,7 @@ void armci_allocate_locks()
 
 void ARMCI_Set_shm_limit(unsigned long shmemlimit)
 {
-#if (defined(SYSV) || defined(WIN32)  || defined(MMAP)) && !defined(HITACHI)
+#if (defined(SYSV) || defined(WIN32)  || defined(MMAP)) 
 #define EXTRASHM  1024   /* extra shmem used internally in ARMCI */
 unsigned long limit;
     limit = shmemlimit+EXTRASHM;

@@ -7,7 +7,6 @@
 # CRAY-T3E
 # CRAY-YMP
 # CYGNUS
-# HITACHI
 # INTERIX
 # SGI
 # SGI64
@@ -25,7 +24,6 @@ AH_TEMPLATE([CYGNUS],       [Define to 1 on Cygnus systems])
 AH_TEMPLATE([CYGWIN],       [Define to 1 on Cygwin systems])
 AH_TEMPLATE([FUJITSU_VPP],  [Define to 1 on fujitsu systems])
 AH_TEMPLATE([FUJITSU_VPP64],[Define to 1 on fujitsu systems])
-AH_TEMPLATE([HITACHI],      [Define to 1 on hitachi systems])
 AH_TEMPLATE([HPUX],         [Define to 1 on HP-UX systems])
 AH_TEMPLATE([HPUX64],       [Define to 1 on 64bit HP-UX systems])
 AH_TEMPLATE([IBM],          [Define to 1 on IBM SP systems])
@@ -88,7 +86,6 @@ AM_CONDITIONAL([CRAY_YMP],     [test "$ga_cv_target_base" = CRAY_YMP])
 AM_CONDITIONAL([CYGNUS],       [test "$ga_cv_target_base" = CYGNUS])
 AM_CONDITIONAL([CYGWIN],       [test "$ga_cv_target_base" = CYGWIN])
 AM_CONDITIONAL([FUJITSU_VPP],  [test "$ga_cv_target_base" = FUJITSU_VPP])
-AM_CONDITIONAL([HITACHI],      [test "$ga_cv_target_base" = HITACHI])
 AM_CONDITIONAL([HPUX],         [test "$ga_cv_target_base" = HPUX])
 AM_CONDITIONAL([IBM],          [test "$ga_cv_target_base" = IBM])
 AM_CONDITIONAL([INTERIX],      [test "$ga_cv_target_base" = INTERIX])

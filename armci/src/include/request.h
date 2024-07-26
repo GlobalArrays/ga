@@ -34,8 +34,6 @@ extern INLINE void _armci_buf_set_cmpld_idx(int idx, int state);
    typedef unsigned short msg_id_t;
 #   define DTAG_ ((1<<(sizeof(msg_id_t)*8))-1)
 #   define NB_SOCKETS_ /* define NB_SOCKETS to allow non-blocking path */
-#elif defined(HITACHI)
-#  include "sr8k.h"
 #elif defined(MPI_SPAWN) || defined(MPI_MT)
 #  include "mpi2.h"
    typedef long msg_tag_t;
@@ -171,11 +169,7 @@ typedef struct {
 
 
 #ifndef MSG_BUFLEN_DBL
-# if defined(HITACHI)
-#  define MSG_BUFLEN_DBL 0x50000
-# else
 #  define MSG_BUFLEN_DBL 50000
-# endif
 #endif
 
 #define MSG_BUFLEN  sizeof(double)*MSG_BUFLEN_DBL
@@ -292,10 +286,7 @@ extern void armci_server_goodbye(request_header_t* msginfo);
 extern void armci_serv_quit();
 extern void armci_server_goodbye(request_header_t* msginfo);
 #endif
-#ifdef HITACHI
-extern void armci_server_goodbye(request_header_t* msginfo);
-extern void armci_serv_quit();
-#endif
+
 extern void armci_server_ipc(request_header_t* msginfo, void* descr,
                              void* buffer, int buflen);
 
