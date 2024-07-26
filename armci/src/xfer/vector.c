@@ -433,7 +433,7 @@ int PARMCI_AccV( int op,              /* oeration code */
     ORDER(op,proc); /* ensure ordering */
     direct=SAMECLUSNODE(proc);
 
-#   if defined(ACC_COPY) && !defined(ACC_SMP)
+#   if defined(ACC_COPY)
        if(armci_me != proc) direct=0;
 #   endif
 
@@ -620,7 +620,7 @@ int PARMCI_NbAccV( int op,              /* oeration code */
     else
       nb_handle = (armci_ihdl_t)armci_set_implicit_handle(op, proc);
 
-#   if defined(ACC_COPY) && !defined(ACC_SMP)
+#   if defined(ACC_COPY)
        if(armci_me != proc) direct=0;
 #   endif
 

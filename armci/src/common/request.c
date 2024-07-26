@@ -862,9 +862,6 @@ int armci_rem_strided(int op, void* scale, int proc,
 #endif
 
     if(nb_handle)
-#ifdef ACC_SMP
-	 if(!ARMCI_ACC(op))
-#endif
     {
 /*    INIT_SENDBUF_INFO(nb_handle,buf,op,proc); same as _armci_buf_set_tag, why here? */
      _armci_buf_set_tag(buf,nb_handle->tag,0);
@@ -1005,9 +1002,7 @@ int armci_rem_strided(int op, void* scale, int proc,
           armci_send_req(proc, msginfo, bufsize);
        }
 #if !defined(MPI_SPAWN) && !defined(MPI_MT)
-#ifdef ACC_SMP
-       if(!ARMCI_ACC(op))
-#endif
+
        armci_save_strided_dscr(&buf0,dst_ptr,dst_stride_arr,count,
                                  stride_levels,1);
 #endif

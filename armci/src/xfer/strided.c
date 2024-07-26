@@ -454,13 +454,8 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
   int total_of_2D;
   int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
 
-#   if defined(ACC_COPY)
-      
-#      ifdef ACC_SMP
-  if(ARMCI_ACC(op) && !(SAMECLUSNODE(proc)) )
-#      else
+#   if defined(ACC_COPY)      
     if ( ARMCI_ACC(op) && proc!=armci_me)
-#      endif
       /* copy remote data, accumulate, copy back*/
       return (armci_acc_copy_strided(op,scale, proc, src_ptr, src_stride_arr,
 				     dst_ptr, dst_stride_arr, count, stride_levels));
@@ -871,9 +866,9 @@ static int _armci_accs( int  optype,    void *scale,
 
   direct=SAMECLUSNODE(proc);
 
-#if defined(ACC_COPY) && !defined(ACC_SMP)
+#if defined(ACC_COPY)
   if(armci_me != proc) direct=0;
-#endif /*ACC_COPY && !ACC_SMP*/
+#endif /*ACC_COPY*/
 
   if(direct) {
     rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,

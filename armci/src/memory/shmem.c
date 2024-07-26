@@ -73,21 +73,6 @@
 #include "message.h"
 #include "armcip.h"
 
-#ifdef   ALLOC_MUNMAP
-#if HAVE_SYS_MMAN_H
-#   include <sys/mman.h>
-#endif
-#if HAVE_UNISTD_H
-#   include <unistd.h>
-#endif
-static  size_t pagesize=0;
-static  int logpagesize=0;
-/* allow only that big shared memory segment (in MB)- incresed from 128 11/02 */
-#define MAX_ALLOC_MUNMAP 128
-#define MAX_ALLOC_MUNMAP_ 368
-static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
-#endif
-
 #if defined(SUN)
   extern char *shmat();
 #endif
@@ -181,39 +166,6 @@ static  int id_search_no_fork=0;
 #define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm -m %d",id);
 #endif
 
-
-#ifdef   ALLOC_MUNMAP
-#  define ALGN_MALLOC(s,a) malloc((s))
-#endif
-
-static char* alloc_munmap(size_t size)
-{
-char *tmp;
-unsigned long iptr;
-size_t bytes = size+pagesize-1;
- 
-    if(armci_elan_starting_address){
-       tmp = armci_elan_starting_address;
-       armci_elan_starting_address += size; 
-#      ifdef ALLOC_MUNMAP_ALIGN
-         armci_elan_starting_address += ALLOC_MUNMAP_ALIGN;
-#      endif
-       if(DEBUG_) {printf("%d: address for shm attachment is %p size=%ld\n",
-                         armci_me,tmp,(long)size); fflush(stdout); }
-    } else {
-      tmp = ALGN_MALLOC(bytes, getpagesize());
-      if(tmp){
-        iptr = (unsigned long)tmp + pagesize-1;
-        iptr >>= logpagesize; iptr <<= logpagesize;
-        if(DEBUG_) printf("%d:unmap ptr=%p->%p size=%d pagesize=%d\n",armci_me, 
-                          tmp,(char*)iptr,(int)size,pagesize);
-        tmp = (char*)iptr;
-        if(munmap(tmp, size) == -1) armci_die("munmap failed",0);
-        if(DEBUG_){printf("%d: unmap OK\n",armci_me); fflush(stdout);}
-      }else armci_die("alloc_munmap: malloc failed",(int)size);
-    }
-    return tmp;
-}
 #endif
 
 /*\ A wrapper to shmget. Just to be sure that ID is not 0.
@@ -467,17 +419,6 @@ void armci_shmem_init()
           armci_die("no usable amount of shared memory available: only got \n",
           (int)LBOUND);
 
-#       if defined(ALLOC_MUNMAP)
-          /* cap down for special memory allocator unless ARMCI_DEFAULT_SHMMAX
-             not set - the user knows what is doing*/
-#         if !defined(REGION_ALLOC)
-          if(!getenv("ARMCI_DEFAULT_SHMMAX"))
-            if(x>max_alloc_munmap && !armci_elan_starting_address) x=max_alloc_munmap;
-#         else
-	    x = 10; /* mb */
-#         endif
-#       endif
-
         if(DEBUG_){
            printf("%d:shmem_init: %d mbytes max segment size\n",armci_me,x);fflush(stdout);}
 
@@ -686,10 +627,6 @@ char *temp = (char*)0, *pref_addr=(char*)0;
         /* make sure the next shmem region will be adjacent to previous one */
 
          if(temp) pref_addr= temp SHM_OP (MinShmem*SHM_UNIT);
-#ifdef   ALLOC_MUNMAP
-         else
-              pref_addr = alloc_munmap((size_t) (MinShmem*SHM_UNIT));
-#        endif
 
          if(DEBUG_)
             fprintf(stderr,"%d:trying id=%d pref=%ld tmp=%ld u=%d\n",armci_me,
@@ -763,11 +700,7 @@ size_t sz;
 
     if(DEBUG_)fprintf(stderr, "in allocate size=%ld\n",size);
 
-#ifdef  ALLOC_MUNMAP
-    pref_addr = alloc_munmap((size_t) size);
-#else
     pref_addr = (char*)0;   /* first time let the OS choose address */
-#endif
 
     /* allocate shmem in as many segments as neccesary */
     for(i =0; i< newreg; i++){ 
@@ -959,11 +892,7 @@ static char *temp;
   /* attach if not attached yet */
   if(!region_list[reg].attached){
 
-#   ifdef ALLOC_MUNMAP
-       char *pref_addr = alloc_munmap((size_t) (size));
-#   else
-       char *pref_addr = (char*)0;
-#   endif
+    char *pref_addr = (char*)0;
     if ( (long) (temp = shmat((int) *id, pref_addr, shmflag)) == -1L){
        fprintf(stderr,"%d:attach error:id=%ld off=%ld seg=%ld\n",armci_me,*id,offset,MinShmem);
        shmem_errmsg((size_t)MinShmem*1024);
@@ -1004,11 +933,8 @@ void *armci_allocate(long size)
 char * temp;
 int id,shmflag=0;
 size_t sz = (size_t)size;
-#ifdef ALLOC_MUNMAP
-       char *pref_addr = alloc_munmap((size_t) (MinShmem*SHM_UNIT));
-#else
-       char *pref_addr = (char*)0;
-#endif
+char *pref_addr = (char*)0;
+
 #if defined(SGI_N32) && defined(SHM_SGI_ANYADDR)
   shmflag= SHM_SGI_ANYADDR;
 #endif
