@@ -168,7 +168,6 @@ endif()
 # hardwire various GA configuration parameters. Use convention that parameters
 # are defined and set to 0 if not used
 set (CYGWIN 0)
-set (DECOSF 0)
 
 if (CMAKE_SYSTEM_NAME STREQUAL Linux)
   set(LINUX 1)

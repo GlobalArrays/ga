@@ -7,7 +7,6 @@
 # CRAY-T3E
 # CRAY-YMP
 # CYGNUS
-# DECOSF
 # HITACHI
 # INTERIX
 # SGI
@@ -24,7 +23,6 @@ AH_TEMPLATE([CRAY_XT],      [Define to 1 on Cray XT systems])
 AH_TEMPLATE([CRAY_YMP],     [Define to 1 on Cray YMP systems])
 AH_TEMPLATE([CYGNUS],       [Define to 1 on Cygnus systems])
 AH_TEMPLATE([CYGWIN],       [Define to 1 on Cygwin systems])
-AH_TEMPLATE([DECOSF],       [Define to 1 on DEC OSF])
 AH_TEMPLATE([FUJITSU_VPP],  [Define to 1 on fujitsu systems])
 AH_TEMPLATE([FUJITSU_VPP64],[Define to 1 on fujitsu systems])
 AH_TEMPLATE([HITACHI],      [Define to 1 on hitachi systems])
@@ -72,7 +70,7 @@ dnl AS_IF([test "x$ARMCI_TOP_BUILDDIR" != x], [
     AC_CACHE_CHECK([whether we think this system is what we call SYSV],
     [ga_cv_sysv],
     [AS_CASE([$ga_cv_target_base],
-        [SUN|SOLARIS|SGI|SGI_N32|SGITFP|HPUX|IBM|DECOSF|LINUX|INTERIX|NEC],
+        [SUN|SOLARIS|SGI|SGI_N32|SGITFP|HPUX|IBM|LINUX|INTERIX|NEC],
             [ga_cv_sysv=yes],
         [ga_cv_sysv=no])
     ])
@@ -89,7 +87,6 @@ AM_CONDITIONAL([CRAY_XT],      [test "$ga_cv_target_base" = CRAY_XT])
 AM_CONDITIONAL([CRAY_YMP],     [test "$ga_cv_target_base" = CRAY_YMP])
 AM_CONDITIONAL([CYGNUS],       [test "$ga_cv_target_base" = CYGNUS])
 AM_CONDITIONAL([CYGWIN],       [test "$ga_cv_target_base" = CYGWIN])
-AM_CONDITIONAL([DECOSF],       [test "$ga_cv_target_base" = DECOSF])
 AM_CONDITIONAL([FUJITSU_VPP],  [test "$ga_cv_target_base" = FUJITSU_VPP])
 AM_CONDITIONAL([HITACHI],      [test "$ga_cv_target_base" = HITACHI])
 AM_CONDITIONAL([HPUX],         [test "$ga_cv_target_base" = HPUX])

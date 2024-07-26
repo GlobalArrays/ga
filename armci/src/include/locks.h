@@ -108,7 +108,7 @@ extern  lock_t cri_l[NUM_LOCKS];
 #   if defined(CRAY) || defined(CRAY_XT)
 #       include <mpp/shmem.h>
 #   endif
-#   if defined(DECOSF) || defined(LINUX64) || defined(__crayx1) || defined(CATAMOUNT)
+#   if defined(LINUX64) || defined(__crayx1) || defined(CATAMOUNT)
 #       define _INT_MIN_64 (LONG_MAX-1)
 #   endif
 #   undef NUM_LOCKS

@@ -8,9 +8,6 @@
 #if HAVE_STRING_H
 #   include <string.h>
 #endif
-#ifdef DECOSF
-#include <c_asm.h>
-#endif
 
 #if 1 || defined(HITACHI) || defined(CRAY_T3E) || defined(CRAY_XT)
 #  define MEMCPY
@@ -33,7 +30,7 @@
    EXTERN long long _armci_vec_sync_flag;
 #endif
 
-#if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined (DECOSF) || defined(__ia64__) || defined(__crayx1)
+#if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined(__ia64__) || defined(__crayx1)
 #   define PTR_ALIGN
 #endif
 
@@ -51,10 +48,6 @@
 
 #ifdef NEC
 #    define MEM_FENCE {mpisx_clear_cache(); _armci_vec_sync_flag=1;mpisx_syncset0_long(&_armci_vec_sync_flag);}
-#endif
-
-#ifdef DECOSF
-#    define MEM_FENCE asm ("mb")
 #endif
 
 #if defined(NEED_MEM_SYNC)
@@ -286,7 +279,7 @@ void c_dcopy13_(const int*    const restrict rows,
 #if defined(AIX)
 #    define DCOPY2D c_dcopy2d_u_
 #    define DCOPY1D c_dcopy1d_u_
-#elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(DECOSF) || defined(CRAY) || defined(WIN32) || defined(HITACHI)
+#elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(CRAY) || defined(WIN32) || defined(HITACHI)
 #    define DCOPY2D c_dcopy2d_n_
 #    define DCOPY1D c_dcopy1d_n_
 #else

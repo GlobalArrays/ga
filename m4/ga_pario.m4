@@ -60,9 +60,6 @@ if test x$LARGE_FILES != x ; then
   fi
   PARIO_CPPFLAGS="$PARIO_CPPFLAGS -DLARGE_FILES"
 fi
-if test x$TARGET = xDECOSF ; then
-  PARIO_LDFLAGS="-laio -lpthreads"
-fi
 if test x$USE_LINUXAIO != x ; then
   PARIO_CPPFLAGS="$PARIO_CPPFLAGS -DLINUXAIO"
   PARIO_LDFLAGS="$PARIO_LDFLAGS -lrt"

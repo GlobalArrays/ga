@@ -510,7 +510,7 @@ static long occup_blocks=0;
 /* SHM_OP is an operator to calculate shmem address to attach 
  * might be + or - depending on the system 
  */
-#if defined(DECOSF) || defined(LINUX)
+#if defined(LINUX)
 #define SHM_OP +
 #else
 #define SHM_OP -

@@ -46,7 +46,7 @@
 #undef CRAY
 #endif
 
-#if  defined(AIX) || defined(DECOSF) || defined(SGI64) || defined(CRAY) || defined(LINUXAIO)
+#if  defined(AIX) || defined(SGI64) || defined(CRAY) || defined(LINUXAIO)
      /* systems with Asynchronous I/O */
 #else
 #    ifndef NOAIO
@@ -675,11 +675,6 @@ int elio_wait(io_request_t *req_id)
       if((int)aio_suspend((const struct aiocb *const*)(cb_fout_arr+(int)*req_id), 1, NULL) != 0) rc =-1;
 #  endif
       if(rc ==-1) ELIO_ERROR(SUSPFAIL,0);
-
-#  if defined(DECOSF)
-      /* on DEC aio_return is required to clean internal data structures */
-      if(aio_return(cb_fout+(int)*req_id) == -1) ELIO_ERROR(RETUFAIL,0);
-#  endif
 #endif
 
       while(aio_req[aio_i] != *req_id && aio_i < MAX_AIO_REQ) aio_i++;

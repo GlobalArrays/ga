@@ -84,22 +84,6 @@ IF SUN
     CFLAGS = -O -dalign -DSUN -DPLOT -I$(LIBDIR)
    SCFBLAS = scfblas.o
 ENDIF SUN
-IF DEC
-        FC = f77
-        CC = cc
-      LIBS = 
-    FFLAGS = -O2
-    CFLAGS = -O -DULTRIX -DPLOT -I$(LIBDIR)
-   SCFBLAS = scfblas.o
-ENDIF DEC
-IF DECOSF
-        FC = f77
-        CC = cc
-      LIBS =
-    FFLAGS = -O -integer_size 64 -align dcommons -align records
-    CFLAGS = -O -DDECOSF -I$(LIBDIR)
-   SCFBLAS = scfblas.o
-ENDIF DEC
 IF LINUX
         FC = f77
         CC = cc
