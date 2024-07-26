@@ -57,7 +57,7 @@ int n;
     n = len%PIPE_SHORT_ROUNDUP;
    if(n)len += (PIPE_SHORT_ROUNDUP-n);
  } 
-#if defined(VIA) || defined(VAPI)
+#if defined(VAPI)
  else if(len <25*PIPE_BUFSIZE){
    len /=4;
    n = len%PIPE_SHORT_ROUNDUP;
@@ -76,7 +76,7 @@ else if(len <41*PIPE_BUFSIZE){
  }
 #endif
 else
-#if defined(VIA) || defined(VAPI)
+#if defined(VAPI)
    len = 8*4096;
 #elif defined(HITACHI)
    len = 128*1024-128;
@@ -124,7 +124,7 @@ int  packsize = PACK_SIZE(msginfo->datalen);
 #if defined(GM)
      arg.buf_posted   = msginfo->tag.data_ptr;
 #endif
-#if (defined(VIA) && defined(VIA_USES_RDMA)) || defined(VAPI)
+#if defined(VAPI)
      arg.buf_posted   = msginfo->tag;
 #endif
 
@@ -146,7 +146,7 @@ int  packsize = PACK_SIZE(msginfo->datalen);
 #if defined(GM) || defined(HITACHI)
      arg.buf_posted   = msginfo->tag.data_ptr;
 #endif
-#if (defined(VIA) && defined(VIA_USES_RDMA)) || defined(VAPI)
+#if defined(VAPI)
      arg.buf_posted   = msginfo->tag;
 #endif
 
@@ -773,7 +773,7 @@ void armci_send_data(request_header_t* msginfo, void *data)
 {
     int to = msginfo->from;
 
-#if defined(VIA) || defined(GM) || defined(VAPI)
+#if defined(GM) || defined(VAPI)
     /* if the data is in the pinned buffer: MessageRcvBuffer */
 #if defined(PEND_BUFS)
     extern int armci_data_in_serv_buf(void *);
@@ -804,15 +804,7 @@ void armci_send_data(request_header_t* msginfo, void *data)
         armci_WriteToDirect(to, msginfo, buf);
     }
 #else
-#ifdef DOELAN4
-        /*this is because WriteToDirect is a no-op in elan4.c so we have
-         * to do a put. This will not cause problems anywhere else in the
-         * code and this part on elan4 will only be invoked in a GPC
-         */
-        PARMCI_Put(data,msginfo->tag.data_ptr,msginfo->datalen,to);
-#else
-        armci_WriteToDirect(to, msginfo, data);
-#endif
+    armci_WriteToDirect(to, msginfo, data);
 #endif
 }
 
@@ -1083,7 +1075,7 @@ void armci_start_server()
 void *armci_server_code(void *data)
 {
 #ifdef SERVER_THREAD
-#if (defined(GM) || defined(VAPI) || defined(QUADRICS)) && ARMCI_ENABLE_GPC_CALLS
+#if (defined(GM) || defined(VAPI)) && ARMCI_ENABLE_GPC_CALLS
 #  ifdef PTHREADS
   extern pthread_t data_server;
   data_server = pthread_self();

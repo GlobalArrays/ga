@@ -88,12 +88,12 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
 
 int PARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
 {
-#if defined(_CRAYMPP) || defined(QUADRICS) || defined(CRAY_SHMEM)
+#if defined(_CRAYMPP) || defined(CRAY_SHMEM)
     int  ival;
     long lval;
 #endif
 
-#if defined(CLUSTER) && !defined(QUADRICS) &&!defined(CYGWIN)\
+#if defined(CLUSTER) && !defined(CYGWIN)\
     && !defined(HITACHI) && !defined(CRAY_SHMEM) 
      if(!SAMECLUSNODE(proc)){
        armci_rem_rmw(op, ploc, prem,  extra, proc);
@@ -105,7 +105,7 @@ int PARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
      if(SAMECLUSNODE(proc)) (void)armci_region_fixup(proc,&prem);
 #endif
     switch (op) {
-#   if defined(QUADRICS) || defined(_CRAYMPP) || defined(CRAY_SHMEM)
+#   if defined(_CRAYMPP) || defined(CRAY_SHMEM)
       case ARMCI_FETCH_AND_ADD:
 #ifdef SHMEM_FADD
          /* printf(" calling intfdd arg %x %ld \n", prem, *prem); */

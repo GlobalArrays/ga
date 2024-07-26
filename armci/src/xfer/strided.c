@@ -454,13 +454,8 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
   int total_of_2D;
   int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
 
-#   if defined(ACC_COPY)
-      
-#      ifdef ACC_SMP
-  if(ARMCI_ACC(op) && !(SAMECLUSNODE(proc)) )
-#      else
+#   if defined(ACC_COPY)      
     if ( ARMCI_ACC(op) && proc!=armci_me)
-#      endif
       /* copy remote data, accumulate, copy back*/
       return (armci_acc_copy_strided(op,scale, proc, src_ptr, src_stride_arr,
 				     dst_ptr, dst_stride_arr, count, stride_levels));
@@ -541,7 +536,7 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
 	}
     
   /* deal with non-blocking loads and stores */
-#if defined(_ELAN_PUTGET_H) || defined(NB_NONCONT)
+#if defined(NB_NONCONT)
     {
       if(!(SAMECLUSNODE(proc))){
 	if(op == GET){
@@ -606,9 +601,9 @@ static int _armci_puts(void *src_ptr,
 #endif
 
   PREPROCESS_STRIDED(tmp_count);
-#  if (!defined(QUADRICS) || defined(PACKPUT))
+#  if defined(PACKPUT)
   direct=SAMECLUSNODE(proc);
-#  endif /*(!QUADRICS||!PACKPUT)*/
+#  endif /*PACKPUT*/
 
   if(put_flag) dassert(1,nbh==NULL);
 
@@ -636,19 +631,6 @@ static int _armci_puts(void *src_ptr,
       nbh->bufid=NB_NONE;
     }
   }
-   
-  /* use direct protocol for remote access when performance is better */
-#  if defined(DOELAN4)
-  if(!direct) {
-    switch(stride_levels) {
-    case 0:
-       direct =1;
-       break;
-    case 1:  if((count[1]<PACKPUT)||count[0]>LONG_PUT_THRESHOLD) direct =1; break;
-    default: if(count[0]> LONG_PUT_THRESHOLD )direct=1; break;
-    }
-  }
-#  endif /*DOELAN4*/
   
   if(!direct){
 #    ifdef ALLOW_PIN /*if we can pin, we do*/
@@ -763,9 +745,6 @@ static int _armci_puts(void *src_ptr,
       if(!nbh && stride_levels == 0) {
 	armci_copy_2D(PUT, proc, src_ptr, dst_ptr, count[0], 1, count[0],
 		      count[0]);
-#  if defined(_ELAN_PUTGET_H)
-	if(proc != armci_me) { WAIT_FOR_PUTS; }
-#  endif /*_ELAN_PUTGET_H*/
       }
       else {
 	rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
@@ -887,9 +866,9 @@ static int _armci_accs( int  optype,    void *scale,
 
   direct=SAMECLUSNODE(proc);
 
-#if defined(ACC_COPY) && !defined(ACC_SMP)
+#if defined(ACC_COPY)
   if(armci_me != proc) direct=0;
-#endif /*ACC_COPY && !ACC_SMP*/
+#endif /*ACC_COPY*/
 
   if(direct) {
     rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,
@@ -1189,9 +1168,7 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
   if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
   if(proc<0)return FAIL5;
 
-#if !defined(QUADRICS)
   direct=SAMECLUSNODE(proc);
-#endif
   PREPROCESS_STRIDED(tmp_count);
 
   /* aggregate get */
@@ -1330,7 +1307,7 @@ static void _armci_op_value(int op, void *src, void *dst, int proc,
       nbh->bufid=NB_NONE;
     }
   }
-#if defined(REMOTE_OP) && !defined(QUADRICS)
+#if defined(REMOTE_OP)
   rc = armci_rem_strided(op, NULL, proc, src, NULL, dst, NULL,
 			 &bytes, 0, NULL, 0, nbh);
   if(rc) armci_die("ARMCI_Value: armci_rem_strided incomplete", FAIL6);
@@ -1342,19 +1319,6 @@ static void _armci_op_value(int op, void *src, void *dst, int proc,
   else {
     armci_get(src, dst, bytes, proc);
   }
-    
-  /* deal with non-blocking loads and stores */
-#  if defined(_ELAN_PUTGET_H)
-    {
-      if(proc != armci_me){
-	if(op == GET){
-	  WAIT_FOR_GETS; /* wait for data arrival */
-	}else {
-	  WAIT_FOR_PUTS; /* data must be copied out*/
-	}
-      }
-    }
-#  endif
 #endif
 }
 

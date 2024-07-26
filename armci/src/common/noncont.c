@@ -23,34 +23,17 @@
 #   include <stdio.h>
 #endif
 
-
-#if 0
-#   define PRN_DBG_MSG3(m,a1,a2,a3) \
-           fprintf(stderr,"DBG %d: " m,armci_me,a1,a2,a3);fflush(stderr)
-#   define PRN_DBG_MSG(m) PRN_DBG_MSG3(m,0,0,0)
-#   define PRN_DBG_MSG1(m,a1) PRN_DBG_MSG3(m,a1,0,0)
-#   define PRN_DBG_MSG2(m,a1,a2) PRN_DBG_MSG3(m,a1,a2,0)
-#else
 #   define PRN_DBG_MSG(m)
 #   define PRN_DBG_MSG1(m,a1)
 #   define PRN_DBG_MSG2(m,a1,a2)
 #   define PRN_DBG_MSG3(m,a1,a2,a3)
-#endif
 
-#if 0
-#   define CALL_IN(_func)  { if (armci_me == 0) printf("ENTERED %s\n", _func); fflush(stdout); }
-#   define CALL_OUT(_func) { if (armci_me == 0) printf("EXITING %s\n", _func); fflush(stdout); }
-#else
 #   define CALL_IN(_func)
 #   define CALL_OUT(_func)
-#endif
 
-#ifdef  NB_NONCONT
+#if defined(NB_NONCONT)
 
-#if   defined(QUADRICS)
-typedef ELAN_EVENT *HTYPE;
-#define SHMEM_HANDLE_SUPPORTED
-#elif defined(CRAY_SHMEM)
+#if defined(CRAY_SHMEM)
 typedef void *HTYPE;
 #else
 typedef armci_ireq_t HTYPE;

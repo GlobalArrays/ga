@@ -177,10 +177,8 @@ void ARMCI_Error(char *msg, int code)
 
 void armci_allocate_locks()
 {
-    /* note that if ELAN_ACC is defined the scope of locks is limited to SMP */
 #if !defined(CRAY_SHMEM) && \
-    ( defined(HITACHI) || defined(CATAMOUNT) || \
-      (defined(QUADRICS) && defined(_ELAN_LOCK_H) && !defined(ELAN_ACC)) )
+    ( defined(HITACHI) || defined(CATAMOUNT) )
        armcill_allocate_locks(NUM_LOCKS);
 #elif (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(HITACHI)
        if(armci_nproc == 1)return;
@@ -247,25 +245,6 @@ void armci_init_memlock()
 
     armci_msg_barrier();
 }
-
-
-#if defined(SYSV) || defined(WIN32) || defined(MMAP)
-#   if defined(QUADRICS) && !defined(NO_SHM)
-static void armci_check_shmmax()
-{
-  long mylimit, limit;
-  mylimit = limit = (long) armci_max_region();
-  armci_msg_bcast_scope(SCOPE_MASTERS, &limit, sizeof(long), 0);
-  if(mylimit != limit){
-     printf("%d:Shared mem limit in ARMCI is %ld bytes on node %s vs %ld on %s\n",
-            armci_me,mylimit<<10,armci_clus_info[armci_clus_me].hostname,
-            limit<<10, armci_clus_info[0].hostname);
-     fflush(stdout); sleep(1);
-     armci_die("All nodes must have the same SHMMAX limit if NO_SHM is not defined",0);
-  }
-}
-#   endif
-#endif
 
 extern void armci_region_shm_malloc(void *ptr_arr[], size_t bytes);
 
@@ -432,9 +411,6 @@ int _armci_init(MPI_Comm comm)
 #      endif
     }
 
-#   if defined(QUADRICS) && !defined(NO_SHM)
-       if(armci_me == armci_master)armci_check_shmmax();
-#   endif
 #endif
 
 #ifdef REGION_ALLOC
@@ -445,42 +421,6 @@ int _armci_init(MPI_Comm comm)
        PARMCI_Free(test_ptr_arr[armci_me]);
        free(test_ptr_arr);
        }
-#endif
-
-#ifdef MULTI_CTX
-    /* this is a hack for the Elan-3 multi-tiled memory (qsnetlibs v 1.4.10) 
-     * we need to allocate and then free memory to satisfy libelan requirements
-     * for symmetric memory addresses
-     */ 
-    if(armci_nclus >1){ 
-       int segments, segsize, seg;
-       void **addr;
-       armci_nattach_preallocate_info(&segments, &segsize);
-
-       segsize -= 1024*1024; /* leave some for the K&RM headers */
-       if(armci_me!=armci_master)segsize=0; /* only one allocates mem on node*/
-
-       addr = (void*) malloc(segments*armci_nproc*sizeof(void*));
-       if(!addr)armci_die("armci_init:addr malloc failed",segments*armci_nproc);
-
-       for(seg=0; seg< segments; seg++) /* allocate segments */
-          if(PARMCI_Malloc(addr+armci_nproc*seg,segsize))
-             armci_die("problem in Elan-3 mem preallocation",seg);
-       
-       for(seg=0; seg< segments; seg++) /* return to free pool */
-         if(armci_me==armci_master)
-           if(PARMCI_Free(*(addr+armci_nproc*seg+armci_me)))
-              armci_die("problem in Elan-3 mem preallocation - free stage",seg);
-       free(addr);
-
-#if 0
-       if(armci_me==armci_master){
-          printf("%d:preallocated %d segments %d bytes each\n",armci_me,
-                 segments, segsize); fflush(stdout);
-       }
-#endif
-
-    }
 #endif
 
     /* allocate locks: we need to do it before server is started */
@@ -770,7 +710,7 @@ char *ptr;
       nb_handle = NULL;
     }  
 
-#if defined(GM) || defined(VAPI) || defined(QUADRICS)
+#if defined(GM) || defined(VAPI)
     if(armci_rem_gpc(GET, darr, 2, &send, proc, 1, nb_handle))
 #endif
       return FAIL2;

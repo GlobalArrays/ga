@@ -32,14 +32,7 @@
  * Must define NO_SHMMAX_SEARCH in shmem.c to prevent depleting shared memory
  * due to a gready shmem request by the master process on cluster node 0.
  */ 
-#if defined(DECOSF) && defined(QUADRICS)
-#  if !defined(REGION_ALLOC)
-#    define NO_SHMEM
-     extern int armci_enable_alpha_hack();
-#  endif
-#else
 #  define armci_enable_alpha_hack() 1
-#endif
 
 #define DEBUG  0
 #define MAX_HOSTNAME 80

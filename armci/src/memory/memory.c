@@ -37,11 +37,11 @@ static context_t ctx_mlocalmem;
 #if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI)
 #include "armci_shmem.h"
 
-#if !defined(USE_SHMEM) && (defined(HITACHI) || defined(MULTI_CTX))
+#if !defined(USE_SHMEM) && defined(HITACHI)
 #    define USE_SHMEM
 #endif
 
-#if !(defined(QUADRICS) || defined(SERVER_THREAD)) ||\
+#if !defined(SERVER_THREAD) ||\
     defined(USE_SHMEM)
 #define RMA_NEEDS_SHMEM
 #endif
