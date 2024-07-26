@@ -551,7 +551,7 @@ char *_armci_buf_get(int size, int operation, int to)
             THREAD_UNLOCK(armci_user_threads.buf_lock);
 
             /* try network complete */
-#if defined(SOCKETS) || defined(MELLANOX)
+#if defined(SOCKETS)
             tbl_idx = armci_test_network_complete();
 #else /* all network should eventually use armci_test_network_complete */
 	    tbl_idx = small ? _armci_buf_state->smavail : _armci_buf_state->avail;
