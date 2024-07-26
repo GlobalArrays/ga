@@ -24,9 +24,7 @@ extern INLINE int  _armci_buf_cmpld(int bufid);
 extern INLINE void _armci_buf_set_cmpld(void *buf, int state);
 extern INLINE void _armci_buf_set_cmpld_idx(int idx, int state);
 
-#if defined(GM)
-#  include "myrinet.h"
-#elif defined(VAPI)
+#if defined(VAPI)
 #  include "armci-vapi.h"
 #elif defined(SOCKETS)
 #  include "sockets.h"

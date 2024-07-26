@@ -138,8 +138,7 @@ specified.
 
 SOCKETS is the assumed default for clusters connected with Ethernet.  This
 protocol might also work on other networks however, the performance might be
-sub-optimal and on Myrinet it could even hang (GM does not work with fork and
-the standard version of ARMCI uses fork).
+sub-optimal.
 
 Cross-Compilation Issues
 ------------------------

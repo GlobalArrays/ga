@@ -87,8 +87,7 @@
  *    case b) search w/o forking until success (less accurate)
  */
 
-/* under Myrinet GM, we cannot fork */
-#if defined(GM) || defined(VAPI)
+#if defined(VAPI)
 #   define SHMMAX_SEARCH_NO_FORK 
 #endif
 #if defined(AIX) || defined(SHMMAX_SEARCH_NO_FORK)

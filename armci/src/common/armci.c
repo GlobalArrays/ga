@@ -443,16 +443,14 @@ int _armci_init(MPI_Comm comm)
        if(armci_nclus >1) 
            armci_start_server();
 #   endif
-#if defined(GM) || defined(VAPI) 
+#if defined(VAPI) 
     /* initialize registration of memory */
     armci_region_init();
 #endif
 
     armci_msg_barrier();
     armci_init_memlock(); /* allocate data struct for locking memory areas */
-#if !defined(GM) 
     armci_notify_init();
-#endif
     armci_msg_barrier();
     armci_msg_gop_init();
 
@@ -710,7 +708,7 @@ char *ptr;
       nb_handle = NULL;
     }  
 
-#if defined(GM) || defined(VAPI)
+#if defined(VAPI)
     if(armci_rem_gpc(GET, darr, 2, &send, proc, 1, nb_handle))
 #endif
       return FAIL2;

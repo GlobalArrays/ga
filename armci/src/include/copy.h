@@ -198,12 +198,7 @@
         if(((p)<armci_clus_first)||((p)>armci_clus_last))shmem_quiet(); }
 #   define UPDATE_FENCE_STATE(p, op, nissued) if((op)==PUT) cmpl_proc=(p);
 #else
-#   if defined(GM) && defined(ACK_FENCE) 
-     extern void armci_gm_fence(int p);
-#    define FENCE_NODE(p) armci_gm_fence(p)
-#   else
-#     define FENCE_NODE(p)
-#   endif   
+#   define FENCE_NODE(p)
 #   define UPDATE_FENCE_STATE(p, op, nissued)
 
 #endif
