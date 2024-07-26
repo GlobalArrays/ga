@@ -133,7 +133,7 @@
 #   define armci_get2D(p, bytes, count, src_ptr,src_stride,dst_ptr,dst_stride)\
            CopyPatchFrom(src_ptr, src_stride, dst_ptr, dst_stride,count,bytes,p)
 
-#elif defined(HITACHI) || !defined(NB_NONCONT)
+#elif defined(HITACHI)
 
     extern void armcill_put2D(int proc, int bytes, int count,
                 void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
