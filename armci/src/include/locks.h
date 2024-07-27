@@ -66,19 +66,6 @@ extern lockset_t lockset;
 #   define NAT_LOCK(x,p)   (void) uswsetlock(lockset.lock_array[(x)],SGI_SPINS)
 #   define NAT_UNLOCK(x,p) (void) usunsetlock(lockset.lock_array[(x)])
 
-#elif defined(CONVEX)
-#   include <sys/cnx_ail.h>
-typedef struct{
-    unsigned state;
-    unsigned pad[15];
-} lock_t;
-typedef int lockset_t;
-extern lock_t *lock_array;
-extern void setlock(unsigned * volatile lp);
-extern void unsetlock(unsigned  * volatile lp);
-#   define NAT_LOCK(x,p)    (void) setlock(&lock_array[x].state)
-#   define NAT_UNLOCK(x,p)  (void) unsetlock(&lock_array[(x)].state)
-
 #elif defined(WIN32)
 typedef int lockset_t;
 extern void setlock(int);

@@ -52,14 +52,6 @@ IF APOLLO
       LIBS =
    SCFBLAS = scfblas.o
 ENDIF
-IF CONVEX
-        FC = fc
-    FFLAGS =  -O2
-        CC = cc
-    CFLAGS = -O -DCONVEX -I$(LIBDIR)
-      LIBS =
-   SCFBLAS = 
-ENDIF CONVEX
 IF HPUX
         FC = f77
         CC = cc

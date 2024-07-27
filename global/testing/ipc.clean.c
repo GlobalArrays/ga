@@ -232,7 +232,7 @@ char *AttachSharedRegion(id, size)
 }
 
 #endif
-#if defined(CONVEX) || defined(APOLLO)
+#if defined(APOLLO)
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -333,7 +333,7 @@ long DeleteSharedRegion(id)
 char *AttachSharedRegion(id, size)
      long id, size;
 {
-  Error("AttachSharedRegion: need mods for this to work on CONVEX", (long) -1);
+  Error("AttachSharedRegion: need mods for this to work", (long) -1);
 }
 
 long DeleteSharedAll()
