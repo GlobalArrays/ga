@@ -127,10 +127,7 @@ likely need to specify the optional ARG pointing to the necessary directories
 and/or libraries. sockets is the default ARMCI network if nothing else is
 specified.
 
---with-bgml=ARG         select armci network as IBM BG/L
 --with-cray-shmem=ARG   select armci network as Cray XT shmem
---with-dcmf=ARG         select armci network as IBM BG/P Deep Computing
-                        Message Framework
 --with-mpi-spawn=ARG    select armci network as MPI-2 dynamic process mgmt
 --with-openib=ARG       select armci network as InfiniBand OpenIB
 --with-sockets=ARG      select armci network as Ethernet TCP/IP (default)

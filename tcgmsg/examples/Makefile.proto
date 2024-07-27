@@ -157,18 +157,6 @@ IF ARDENT
     CFLAGS = -O2 -43 -DARDENT -DPLOT -I$(LIBDIR)
    SCFBLAS = scfblas.o
 ENDIF ARDENT
-IF ALLIANT ALLIANTMPP
-       FC = fortran
-       CC = fxc
-IF ALLIANT
-     LIBS = -lalgebra -lsignal -lcommon
-ELSE
-     LIBS = -lalgebra -lsignal -lcommon -lsw
-ENDIF
-   FFLAGS = -g -Ogv -AS -uniproc -OM
-   CFLAGS = -Ogv -uniproc -DALLIANT -I$(LIBDIR)
-   SCFBLAS = 
-ENDIF ALLIANT
 
 ######################################
 # Should not need to modify below here
@@ -270,7 +258,7 @@ mc.o:	msgtypesf.h
 
 IF CRAY
   JOBJ = fexit.o timer.o getmem.o
-ELSEIF IBMNOEXT ALLIANT
+ELSEIF IBMNOEXT
   JOBJ = fexit.o timer.o getmem.o mxv_dgemv.o
 ELSEIF IPSC DELTA
   JOBJ = fexit.o timer.o getmem.o mxv_daxpy1.o daxpy1.o

@@ -142,7 +142,7 @@ SigType SigChldHandler(sig)
      int sig;
 {
   int status;
-#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
+#if defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
   union wait ustatus;
 #endif
   
@@ -153,7 +153,7 @@ SigType SigChldHandler(sig)
     Error("SigChldHandler: error from signal setting SIGCHLD",0);
 #endif
 
-#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
+#if defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
 
 # if defined(LINUX)
   ret = wait(&ustatus);

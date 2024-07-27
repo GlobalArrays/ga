@@ -457,11 +457,7 @@ double Operate(grid, ncols, nrows, ngrid, do_sums)
   for (i=1; i<ncols; i++) {
     jlo = 1+((i-1+col_low+row_low)%2);
     gg = grid[i]; ggm = grid[i-1]; ggp = grid[i+1];
-#ifdef ALLIANT
-#pragma safe gg
-#pragma safe ggp
-#pragma safe ggm
-#endif
+
 #ifdef ARDENT
 #pragma IVDEP
 #endif
@@ -481,11 +477,7 @@ double Operate(grid, ncols, nrows, ngrid, do_sums)
   for (i=1; i<ncols; i++) {
     jlo = 1+((i+col_low+row_low)%2);
     gg = grid[i]; ggm = grid[i-1]; ggp = grid[i+1];
-#ifdef ALLIANT
-#pragma safe gg
-#pragma safe ggp
-#pragma safe ggm
-#endif
+
 #ifdef ARDENT
 #pragma IVDEP
 #endif
