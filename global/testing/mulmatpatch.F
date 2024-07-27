@@ -2,14 +2,14 @@
 #   include "config.fh"
 #endif
 c $Id: mulmatpatch.F,v 1.6 2005-11-23 10:25:18 manoj Exp $
-#if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
+#if defined(CRAY) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
 #else
 #   define xgemm TEST_DGEMM
 #   define ygemm TEST_ZGEMM
 #endif
-#if defined(FUJITSU) || defined(CRAY_YMP)
+#if defined(FUJITSU)
 # define THRESH  1.0d-10
 #else
 # define THRESH  1.0d-20

@@ -3,10 +3,7 @@
 #endif
 c $Id: pgtest.F,v 1.9 2005-11-23 10:25:18 manoj Exp $
 c vector boxes lack arithmetic precision 
-#ifdef CRAY_YMP
-# define THRESH 1d-10
-# define THRESHF 1e-5
-#elif defined(FUJITSU)
+#if defined(FUJITSU)
 # define THRESH 1d-12
 # define THRESHF 1e-5
 #else

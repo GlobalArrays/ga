@@ -51,19 +51,6 @@ ifdef LARGE_FILES
       LIB_DEFINES += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
   endif
 
-#
-# HP targets tested on HPUX 11.0
-#
-  ifeq ($(TARGET), HPUX)
-    LIB_DEFINES += -D_LARGEFILE64_SOURCE 
-    LIB_DEFINES += $(shell getconf XBS5_ILP32_OFFBIG_CFLAGS)
-  endif  
-
-  ifeq ($(TARGET), HPUX64)
-    LIB_DEFINES +=  -D_LARGEFILE64_SOURCE 
-    LIB_DEFINES += $(shell getconf XBS5_LP64_OFF64_CFLAGS)
-  endif  
-
   LIB_DEFINES += -DLARGE_FILES
 endif
 

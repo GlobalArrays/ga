@@ -28,7 +28,7 @@
 #   define sleep(x) Sleep(100*(x))
 #endif
 
-#if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM) && !defined(CATAMOUNT)
+#if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM)
 #define CLUSTER
 
 #ifdef SERVER_THREAD
@@ -148,7 +148,7 @@ extern INLINE int armci_register_thread(thread_id_t id);
 #   endif
 #endif
 
-#if defined(CRAY_XT) || defined(CRAY_T3E) || defined(FUJITSU)       
+#if defined(CRAY_XT) || defined(FUJITSU)       
 #define ACC_COPY
 #endif
 
@@ -280,8 +280,6 @@ extern void armci_finalize_fence();
 
 #  define SAMECLUSNODE(p)\
      ( ((p) <= armci_clus_last) && ((p) >= armci_clus_first) )
-#elif defined(__crayx1)
-#  define SAMECLUSNODE(p) 1
 #else
 #  define SAMECLUSNODE(p) ((p)==armci_me) 
 #endif

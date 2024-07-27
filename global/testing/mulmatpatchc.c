@@ -12,7 +12,7 @@
 #include "mp3.h"
 #include "xgemm.h"
 
-#if defined(FUJITSU) || defined(CRAY_YMP)
+#if defined(FUJITSU)
 #   define THRESH 1.0e-10
 #else
 #   define THRESH 1.0e-20

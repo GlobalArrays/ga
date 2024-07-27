@@ -109,18 +109,12 @@
 #if defined(SUN)||defined(SOLARIS)
 #  undef _SHMMAX
 #  define _SHMMAX (1024)  /* memory in KB */
-#elif defined(SGI64) || defined(AIX) || defined(CONVEX)
+#elif defined(AIX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)512*1024)
-#elif defined(SGI) && !defined(SGI64)
-#  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)128*1024)
 #elif defined(KSR)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)512*1024)
-#elif defined(HPUX)
-#  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)64*1024)
 #elif defined(__FreeBSD__)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)3*1024)
@@ -159,8 +153,6 @@ static  int id_search_no_fork=0;
 #define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm shm %d",id);
 #elif  defined(SOLARIS) 
 #define CLEANUP_CMD(command) sprintf(command,"/bin/ipcrm -m %d",id);
-#elif  defined(SGI) 
-#define CLEANUP_CMD(command) sprintf(command,"/usr/sbin/ipcrm -m %d",id);
 #else
 #define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm -m %d",id);
 #endif
@@ -973,7 +965,7 @@ char *pref_addr = (char*)0;
          printf("%d:allocate:attach:id=%d paddr=%p size=%ld\n",armci_me,id,temp,size);
          fflush(stdout);
        }
-#if !defined(AIX) && !defined(HPUX64)
+#if !defined(AIX)
        /* delete segment id so that OS cleans it when all attached processes are gone */
        if(shmctl( id, IPC_RMID, (struct shmid_ds *)NULL))
           fprintf(stderr,"failed to remove shm id=%d\n",id);

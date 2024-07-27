@@ -2,9 +2,7 @@
 #   include "config.fh"
 #endif
 c vector boxes lack arithmetic precision 
-#ifdef CRAY_YMP
-# define THRESH 1d-10
-#elif defined(FUJITSU)
+#if defined(FUJITSU)
 # define THRESH 1d-12
 # define THRESHF 1e-5
 #else

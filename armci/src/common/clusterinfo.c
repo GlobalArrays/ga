@@ -61,13 +61,7 @@
 /*** stores cluster configuration. Initialized before user threads are created and then read-only ***/
 armci_clus_t *armci_clus_info;
 
-#if defined(SGIALTIX)
-# define GETHOSTNAME altix_gethostname
-static int altix_gethostname(char *name, int len) {
-    sprintf(name,"altix");
-    return 0;
-}
-#elif defined(CRAY_XT)
+#if defined(CRAY_XT)
 #define GETHOSTNAME cnos_gethostname
 static int cnos_gethostname(char *name, int len)
 {

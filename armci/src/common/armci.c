@@ -37,7 +37,7 @@
 #if HAVE_STDARG_H
 #   include <stdarg.h>
 #endif
-#if defined(CRAY) && !defined(__crayx1)
+#if defined(CRAY)
 #  include <sys/category.h>
 #  include <sys/resource.h>
 #  if HAVE_UNISTD_H
@@ -75,7 +75,7 @@ thread_id_t armci_usr_tid;
 #if !defined(THREAD_SAFE)
 double armci_internal_buffer[BUFSIZE_DBL];
 #endif
-#if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(CATAMOUNT)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP)
 #   include "locks.h"
     lockset_t lockid;
 #endif
@@ -177,10 +177,7 @@ void ARMCI_Error(char *msg, int code)
 
 void armci_allocate_locks()
 {
-#if !defined(CRAY_SHMEM) && \
-    defined(CATAMOUNT) 
-       armcill_allocate_locks(NUM_LOCKS);
-#elif (defined(SYSV) || defined(WIN32) || defined(MMAP)) 
+#if (defined(SYSV) || defined(WIN32) || defined(MMAP)) 
        if(armci_nproc == 1)return;
 #  if defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN)
        CreateInitLocks(NUM_LOCKS, &lockid);
@@ -404,11 +401,7 @@ int _armci_init(MPI_Comm comm)
 #if defined(SYSV) || defined(WIN32) || defined(MMAP)
     /* init shared/K&R memory */
     if(ARMCI_Uses_shm() ) {
-#      ifdef SGIALTIX
-          armci_altix_shm_init();
-#      else
-          armci_shmem_init();
-#      endif
+      armci_shmem_init();
     }
 
 #endif

@@ -1,7 +1,7 @@
 #if HAVE_CONFIG_H
 #   include "config.fh"
 #endif
-#if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
+#if defined(CRAY) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
 #else

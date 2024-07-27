@@ -32,7 +32,7 @@ extern void GA_Error(char*, int);
 #endif
 
 
-#if (defined(CRAY) && !defined(__crayx1))
+#if defined(CRAY)
 #        include <sys/statfs.h>
 #        define  STATVFS statfs
 #elif defined(__FreeBSD__) && !defined(GLIBC)

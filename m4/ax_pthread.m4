@@ -160,14 +160,6 @@ case $host_os in
         ax_pthread_flags="-kthread lthread $ax_pthread_flags"
         ;;
 
-        hpux*)
-
-        # From the cc(1) man page: "[-mt] Sets various -D flags to enable
-        # multi-threading and also sets -lpthread."
-
-        ax_pthread_flags="-mt -pthread pthread $ax_pthread_flags"
-        ;;
-
         openedition*)
 
         # IBM z/OS requires a feature-test macro to be defined in order to
@@ -208,7 +200,7 @@ AS_IF([test "x$GCC" = "xyes"],
 # correctly enabled
 
 case $host_os in
-        darwin* | hpux* | linux* | osf* | solaris*)
+        darwin* | linux* | osf* | solaris*)
         ax_pthread_check_macro="_REENTRANT"
         ;;
 

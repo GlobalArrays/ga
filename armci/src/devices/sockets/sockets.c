@@ -801,7 +801,7 @@ againacc:
   return msgsock;
 }
 
-#if !defined(SGI) && !defined(WIN32)
+#if !defined(WIN32)
 struct hostent *gethostbyname();
 #endif
 

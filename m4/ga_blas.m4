@@ -268,26 +268,6 @@ AS_IF([test $ga_blas_ok = no],
          LIBS="$ga_save_LIBS"])
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# SCSL library (SCSL stands for SGI/Cray Scientific Library)
-AS_IF([test $ga_blas_ok = no],
-    [AC_MSG_CHECKING([for BLAS in SGI/Cray Scientific Library])
-     # add -lscs to BLAS_LIBS if missing from LIBS
-     AS_CASE([$LIBS], [*scs*], [], [BLAS_LIBS="-lscs"])
-     LIBS="$BLAS_LIBS $LIBS"
-     GA_RUN_BLAS_TEST()
-     LIBS="$ga_save_LIBS"
-     AC_MSG_RESULT([$ga_blas_ok])])
-
-# SGIMATH library
-AS_IF([test $ga_blas_ok = no],
-    [AC_MSG_CHECKING([for BLAS in SGIMATH library])
-     # add -lcomplib.sgimath to BLAS_LIBS if missing from LIBS
-     AS_CASE([$LIBS], [*complib.sgimath*], [], [BLAS_LIBS="-lcomplib.sgimath"])
-     LIBS="$BLAS_LIBS $LIBS"
-     GA_RUN_BLAS_TEST()
-     LIBS="$ga_save_LIBS"
-     AC_MSG_RESULT([$ga_blas_ok])])
-
 # IBM ESSL library (might require generic BLAS lib, too)
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in IBM ESSL library])

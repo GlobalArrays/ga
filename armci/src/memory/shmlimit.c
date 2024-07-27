@@ -37,7 +37,7 @@
 
 #define DEBUG_ 0
 
-#if defined(SOLARIS64) || defined(HPUX)
+#if defined(SOLARIS64)
 #define PIPE_AFTER_FORK_BUG
 #endif
 

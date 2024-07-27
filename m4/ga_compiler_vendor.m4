@@ -12,7 +12,7 @@ AC_LANG_CASE([Fortran],    [ac_ext=F])
 AC_LANG_CASE([Fortran 77], [ac_ext=F])
 ga_cv_compiler_vendor=unknown
 ga_cpp_vendor_symbols=
-for vendor in intel ibm pathscale amd cray gnu sun hp borland comeau kai lcc metrowerks sgi microsoft watcom portland fujitsu
+for vendor in intel ibm pathscale amd cray gnu sun hp borland comeau kai lcc metrowerks microsoft watcom portland fujitsu
 do
 AS_CASE([$vendor],
 [amd],       [ga_cpp_vendor_symbols="defined(__OPEN64__)"],
@@ -30,7 +30,6 @@ AS_CASE([$vendor],
 [microsoft], [ga_cpp_vendor_symbols="defined(_MSC_VER)"],
 [pathscale], [ga_cpp_vendor_symbols="defined(__PATHCC__) || defined(__PATHSCALE__)"],
 [portland],  [ga_cpp_vendor_symbols="defined(__PGI)"],
-[sgi],       [ga_cpp_vendor_symbols="defined(__sgi) || defined(sgi)"],
 [sun],       [ga_cpp_vendor_symbols="defined(__SUNPRO_C) || defined(__SUNPRO_CC)"],
 [watcom],    [ga_cpp_vendor_symbols="defined(__WATCOMC__)"])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[

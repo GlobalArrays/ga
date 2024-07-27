@@ -2,14 +2,14 @@
 #   include "config.fh"
 #endif
 C $iD: PATch.F,v 1.21 2002/10/15 23:35:52 vinod Exp $
-#if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
+#if defined(CRAY)|| defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
 #else
 #   define xgemm TEST_DGEMM
 #   define ygemm TEST_ZGEMM
 #endif
-#if defined(FUJITSU) || defined(CRAY_YMP)
+#if defined(FUJITSU)
 # define THRESH  1.0d-10
 #else
 # define THRESH  1.0d-20
