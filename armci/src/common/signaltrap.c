@@ -42,7 +42,7 @@
 extern void Error();
 #endif
 
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
+#if (defined(ENCORE) || defined(SEQUENT))
 #   define SigType  int
 #else
 #   define SigType  void

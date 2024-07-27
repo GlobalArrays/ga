@@ -20,10 +20,6 @@ static long plot_type = 0;      /* 0 means no plot */
 
 #include "sndrcv.h"
 
-#if defined(DELTA) || defined(IPSC)
-#define htonl(a) (a)
-#endif
-
 #if !defined(AIX)
 extern char *malloc();
 #endif
@@ -458,9 +454,6 @@ double Operate(grid, ncols, nrows, ngrid, do_sums)
     jlo = 1+((i-1+col_low+row_low)%2);
     gg = grid[i]; ggm = grid[i-1]; ggp = grid[i+1];
 
-#ifdef ARDENT
-#pragma IVDEP
-#endif
     for (j=jlo; j<nrows; j+=2) {
       double new, diff;
       new = 0.25 * (ggp[j] + ggm[j] + gg[j-1] + gg[j+1]);
@@ -478,9 +471,6 @@ double Operate(grid, ncols, nrows, ngrid, do_sums)
     jlo = 1+((i+col_low+row_low)%2);
     gg = grid[i]; ggm = grid[i-1]; ggp = grid[i+1];
 
-#ifdef ARDENT
-#pragma IVDEP
-#endif
     for (j=jlo; j<nrows; j+=2) {
       double new, diff;
       new = 0.25 * (ggp[j] + ggm[j] + gg[j-1] + gg[j+1]);

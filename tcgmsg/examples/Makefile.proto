@@ -24,16 +24,6 @@ IF KSR
       LIBS = -lrpc
    SCFBLAS = scfblas.o
 ENDIF KSR
-IF APOLLO
-#APOLLO GN10000 ... Apollo PRISM Domain/OS
-        FC = f77
-    FFLAGS =  -O
-        CC = cc
-    CFLAGS = -O -DAPOLLO -DCONVEX -I$(LIBDIR) \
-             -A nansi -A sys,bsd4.3 -A run,bsd4.3
-      LIBS =
-   SCFBLAS = scfblas.o
-ENDIF
 IF SUN
         FC = f77
         CC = cc
@@ -50,29 +40,17 @@ IF LINUX
     CFLAGS = -O -I$(LIBDIR)
    SCFBLAS = scfblas.o
 ENDIF LINUX
-IF IPSC DELTA PARAGON
+IF PARAGON
         AS = as860
         FC = if77
         CC = icc
       LIBS = -node -lkmath
-IF DELTA
-   DEFINES = -DIPSC -DDELTA -DPLOT
-   INSTALL = rcp "$@" delta1: &
-    CFLAGS = -i860 -O $(DEFINES) -I$(LIBDIR) -Knoieee
-    FFLAGS = -O2 -i860 -Knoieee
-ELSEIF PARAGON
    DEFINES = -DIPSC -DPARAGON -DPLOT
    INSTALL = echo "$@" is built
    CFLAGS = -nx -g -Knoieee $(DEFINES)
    FFLAGS = -nx -O2 -Knoieee
-ELSE
-   DEFINES = -DIPSC -DPLOT
-   INSTALL = rcp "$@" micron: &
-    CFLAGS = -i860 -O $(DEFINES) -I$(LIBDIR) -Knoieee
-    FFLAGS = -O2 -i860 -Knoieee
-ENDIF
    SCFBLAS = 
-ENDIF IPSC DELTA PARAGON
+ENDIF PARAGON
 IF NEXT
         FC = f77
         CC = cc
@@ -107,14 +85,6 @@ IF IBMNOEXT
     CFLAGS = -O -DPLOT -DAIX -I$(LIBDIR)
    SCFBLAS = 
 ENDIF IBMNOEXT
-IF ARDENT
-        FC = fc
-        CC = cc
-      LIBS =
-    FFLAGS = -43 -O2
-    CFLAGS = -O2 -43 -DARDENT -DPLOT -I$(LIBDIR)
-   SCFBLAS = scfblas.o
-ENDIF ARDENT
 
 ######################################
 # Should not need to modify below here
@@ -218,8 +188,6 @@ IF CRAY
   JOBJ = fexit.o timer.o getmem.o
 ELSEIF IBMNOEXT
   JOBJ = fexit.o timer.o getmem.o mxv_dgemv.o
-ELSEIF IPSC DELTA
-  JOBJ = fexit.o timer.o getmem.o mxv_daxpy1.o daxpy1.o
 ELSE
   JOBJ = fexit.o timer.o getmem.o mxv_fortran.o
 ENDIF
@@ -253,8 +221,6 @@ IF CRAY NEXT NEXTNOEXT
 	echo "$$LOGNAME `hostname` 1 `pwd`/PROGRAM /tmp"   >> template.p
 	echo "$$LOGNAME `hostname` 1 `pwd`/PROGRAM /tmp"   >> template.p
 	echo "$$LOGNAME `hostname` 1 `pwd`/PROGRAM /tmp"   >> template.p
-ELSEIF IPSC
-	echo '0 $$ ' PROGRAM . >> template.p
 ELSE
 	echo "`whoami` `hostname` 4 `pwd`/PROGRAM /tmp"   >> template.p
 ENDIF

@@ -9,7 +9,7 @@ extern char * memalign();
 #define getmem_ getmem
 #endif
 
-#if defined(CRAY) || defined(ARDENT)
+#if defined(CRAY)
 #define getmem_ GETMEM
 #endif
 
