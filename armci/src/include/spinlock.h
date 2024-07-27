@@ -54,16 +54,6 @@ static int testandset(void *spinlock) {
 }
 #   define TESTANDSET testandset
 
-#elif defined(HPUX) && defined(__ia64) /* HPUX on IA64, non gcc */
-#   if DEBUG_SPINLOCK
-#       warning SPINLOCK: HPUX ia64
-#   endif
-#   define SPINLOCK
-typedef unsigned int slock_t;
-#   include <ia64/sys/inline.h>
-#   define TESTANDSET(lock) _Asm_xchg(_SZ_W, lock, 1, _LDHINT_NONE)
-#   define RELEASE_SPINLOCK(lock) (*((volatile LOCK_T *) (lock)) = 0)
-
 #elif defined(__ia64)
 #   if DEBUG_SPINLOCK
 #       warning SPINLOCK: ia64
@@ -99,16 +89,6 @@ static int testandset(void *spinlock) {
 #   define RELEASE_SPINLOCK _lock_clear 
 
 #elif defined(MACX)
-
-#elif defined(HPUX__)
-#   if DEBUG_SPINLOCK
-#       warning SPINLOCK: HPUX__
-#   endif
-extern int _acquire_lock();
-extern void _release_lock();
-#   define SPINLOCK  
-#   define TESTANDSET(x) (!_acquire_lock((x))) 
-#   define RELEASE_SPINLOCK _release_lock 
 
 #elif defined(NEC)
 #   if DEBUG_SPINLOCK

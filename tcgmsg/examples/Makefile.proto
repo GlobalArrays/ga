@@ -34,22 +34,6 @@ IF APOLLO
       LIBS =
    SCFBLAS = scfblas.o
 ENDIF
-IF HPUX
-        FC = f77
-        CC = cc
-      LIBS =
-    FFLAGS = -O +ppu
-    CFLAGS = -O -DHPUX -DEXTNAME -DPLOT -I$(LIBDIR)
-   SCFBLAS = scfblas.o
-ENDIF HPUX
-IF HPUXNOEXT
-        FC = f77
-        CC = cc
-      LIBS =
-    FFLAGS = -O
-    CFLAGS = -O -DHPUX -DPLOT -I$(LIBDIR)
-   SCFBLAS = scfblas.o
-ENDIF HPUXNOEXT
 IF SUN
         FC = f77
         CC = cc

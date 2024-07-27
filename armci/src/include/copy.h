@@ -23,7 +23,7 @@
    EXTERN long long _armci_vec_sync_flag;
 #endif
 
-#if defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined(__ia64__) || defined(__crayx1)
+#if defined(FUJITSU) || defined(SOLARIS) || defined(__ia64__) || defined(__crayx1)
 #   define PTR_ALIGN
 #endif
 
@@ -258,7 +258,7 @@ void c_dcopy13_(const int*    const restrict rows,
 #if defined(AIX)
 #    define DCOPY2D c_dcopy2d_u_
 #    define DCOPY1D c_dcopy1d_u_
-#elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(CRAY) || defined(WIN32)
+#elif defined(LINUX) || defined(__crayx1) || defined(CRAY) || defined(WIN32)
 #    define DCOPY2D c_dcopy2d_n_
 #    define DCOPY1D c_dcopy1d_n_
 #else
