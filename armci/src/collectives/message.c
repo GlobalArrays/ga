@@ -83,7 +83,7 @@ static int _armci_gop_init=0;   /* tells us if we have a buffers allocated  */
 static int _armci_gop_shmem =0; /* tells us to use shared memory for gops */
 extern void armci_util_wait_int(volatile int *, int , int );
 static int empty=EMPTY,full=FULL;
-#if !defined(SGIALTIX) && defined(SYSV) || defined(MMAP) || defined(WIN32)
+#if defined(SYSV) || defined(MMAP) || defined(WIN32)
 static void **ptr_arr=NULL;
 #endif
 
@@ -218,7 +218,7 @@ void armci_msg_gop_init()
   memory from malloc because of a problem with cc on SV1
 */
     if(work==NULL)_allocate_mem_for_work();
-#if !defined(SGIALTIX) && defined(SYSV) || defined(MMAP) || defined(WIN32)
+#if defined(SYSV) || defined(MMAP) || defined(WIN32)
     if(ARMCI_Uses_shm()){
        char *tmp;
        int size = sizeof(bufstruct);
@@ -257,7 +257,7 @@ void armci_msg_gop_init()
 
 void armci_msg_gop_finalize() 
 { 
-#if !defined(SGIALTIX) && defined(SYSV) || defined(MMAP) || defined(WIN32) 
+#if defined(SYSV) || defined(MMAP) || defined(WIN32) 
     if(ARMCI_Uses_shm()){
         PARMCI_Free(ptr_arr[armci_me]); 
         free(ptr_arr); 

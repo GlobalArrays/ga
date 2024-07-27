@@ -590,15 +590,6 @@ void ARMCI_ChildrenTrapSignals()
      TrapSigAbort();
      TrapSigTerm();
      TrapSigInt();
-
-#if defined(SGI)
-     TrapSigIot();
-#endif
-
-#ifdef SGI
-     TrapSigXcpu();
-#endif
-
 }
 
 

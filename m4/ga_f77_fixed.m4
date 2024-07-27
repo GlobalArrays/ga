@@ -8,7 +8,6 @@
 #             -fixed: Intel compiler (ifort), Sun compiler (f95)
 #            -qfixed: IBM compiler (xlf*)
 #            -Mfixed: Portland Group compiler
-#         -fixedform: SGI compiler
 #           -f fixed: Absoft Fortran
 #      +source=fixed: HP Fortran
 #              -fix: Lahey/Fujitsu Fortran

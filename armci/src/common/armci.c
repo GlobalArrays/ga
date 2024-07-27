@@ -404,11 +404,7 @@ int _armci_init(MPI_Comm comm)
 #if defined(SYSV) || defined(WIN32) || defined(MMAP)
     /* init shared/K&R memory */
     if(ARMCI_Uses_shm() ) {
-#      ifdef SGIALTIX
-          armci_altix_shm_init();
-#      else
-          armci_shmem_init();
-#      endif
+      armci_shmem_init();
     }
 
 #endif

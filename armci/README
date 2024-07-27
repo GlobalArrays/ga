@@ -66,7 +66,7 @@ Index
 Supported Platforms
 -------------------
 - leadership class machines: Cray XT/XE/XK/XC, IBM Blue Gene/Q.
-- shared-memory systems: SUN Solaris, SGI Altix, IBM, Linux
+- shared-memory systems: SUN Solaris, IBM, Linux
 - clusters of workstations (InfiniBand, sockets)
 
 configure options

@@ -28,7 +28,7 @@ long _a_ltemp;
 
 void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
 {
-#if defined(CLUSTER) && !defined(SGIALTIX)
+#if defined(CLUSTER)
     int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
     int lock = 0;

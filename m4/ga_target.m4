@@ -8,10 +8,7 @@
 # CRAY-YMP
 # CYGNUS
 # INTERIX
-# SGI
-# SGI64
-# SGI_N32
-# SGITFP
+
 AC_DEFUN([GA_TARGET],
 [# AH_TEMPLATE for all known TARGETs
 AH_TEMPLATE([CATAMOUNT],    [Define to 1 on Cray XT systems using Catamount])
@@ -35,9 +32,6 @@ AH_TEMPLATE([MACX],         [Define to 1 on OSX systems])
 AH_TEMPLATE([MACX64],       [Define to 1 on 64bit OSX systems])
 AH_TEMPLATE([NEC],          [Define to 1 on NEC systems])
 AH_TEMPLATE([NEC64],        [Define to 1 on 64bit NEC systems])
-AH_TEMPLATE([SGI],          [Define to 1 on ??? systems])
-AH_TEMPLATE([SGI_N32],      [Define to 1 on ??? systems])
-AH_TEMPLATE([SGITFP],       [Define to 1 on ??? systems])
 AH_TEMPLATE([SOLARIS],      [Define to 1 on Solaris systems])
 AH_TEMPLATE([SOLARIS64],    [Define to 1 on 64bit Solaris systems])
 AC_REQUIRE([AC_CANONICAL_BUILD])
@@ -68,7 +62,7 @@ dnl AS_IF([test "x$ARMCI_TOP_BUILDDIR" != x], [
     AC_CACHE_CHECK([whether we think this system is what we call SYSV],
     [ga_cv_sysv],
     [AS_CASE([$ga_cv_target_base],
-        [SUN|SOLARIS|SGI|SGI_N32|SGITFP|HPUX|IBM|LINUX|INTERIX|NEC],
+        [SUN|SOLARIS|HPUX|IBM|LINUX|INTERIX|NEC],
             [ga_cv_sysv=yes],
         [ga_cv_sysv=no])
     ])
@@ -93,9 +87,6 @@ AM_CONDITIONAL([LINUX],        [test "$ga_cv_target_base" = LINUX])
 AM_CONDITIONAL([MACX],         [test "$ga_cv_target_base" = MACX])
 AM_CONDITIONAL([MINGW],        [test "$ga_cv_target_base" = MINGW])
 AM_CONDITIONAL([NEC],          [test "$ga_cv_target_base" = NEC])
-AM_CONDITIONAL([SGI],          [test "$ga_cv_target_base" = SGI])
-AM_CONDITIONAL([SGI_N32],      [test "$ga_cv_target_base" = SGI_N32])
-AM_CONDITIONAL([SGITFP],       [test "$ga_cv_target_base" = SGITFP])
 AM_CONDITIONAL([SOLARIS],      [test "$ga_cv_target_base" = SOLARIS])
 ])dnl
 

@@ -12,13 +12,6 @@
 #if 1 || defined(CRAY_T3E) || defined(CRAY_XT)
 #  define MEMCPY
 #endif
-#if defined(LINUX64) && defined(SGIALTIX) && defined(MSG_COMMS_MPI)
-/* fastbcopy from Wayne Vieira and Gerardo Cisneros */
-#define MEMCPY
-#define armci_copy(src, dst, len) _fastbcopy(src, dst, len)
-#define memcpy(dst, src, len)  _fastbcopy(src, dst, len)
-#define bcopy(src, dst, len) _fastbcopy(src, dst, len)
-#endif
 
 #ifndef EXTERN
 #   define EXTERN extern
@@ -30,7 +23,7 @@
    EXTERN long long _armci_vec_sync_flag;
 #endif
 
-#if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined(__ia64__) || defined(__crayx1)
+#if defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined(__ia64__) || defined(__crayx1)
 #   define PTR_ALIGN
 #endif
 

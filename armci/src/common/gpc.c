@@ -277,7 +277,7 @@ return ptr;
 \*/
 void ARMCI_Gpc_lock(int proc)
 {
-#if defined(CLUSTER) && !defined(SGIALTIX)
+#if defined(CLUSTER)
     int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
     int lock = 0;
@@ -300,7 +300,7 @@ return 0;
 \*/
 void ARMCI_Gpc_unlock(int proc)
 {
-#if defined(CLUSTER) && !defined(SGIALTIX)
+#if defined(CLUSTER)
     int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
     int lock = 0;

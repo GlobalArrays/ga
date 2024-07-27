@@ -78,15 +78,6 @@ static int testandset(void *spinlock) {
 }
 #   define TESTANDSET testandset
 
-#elif defined(SGI)
-#   if DEBUG_SPINLOCK
-#       warning SPINLOCK: SGI
-#   endif
-#   include <mutex.h>
-#   define SPINLOCK 
-#   define TESTANDSET(x) __lock_test_and_set((x), 1)
-#   define RELEASE_SPINLOCK __lock_release
-
 /*#elif defined(AIX)*/
 #elif HAVE_SYS_ATOMIC_OP_H
 #   if DEBUG_SPINLOCK

@@ -109,12 +109,9 @@
 #if defined(SUN)||defined(SOLARIS)
 #  undef _SHMMAX
 #  define _SHMMAX (1024)  /* memory in KB */
-#elif defined(SGI64) || defined(AIX)
+#elif defined(AIX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)512*1024)
-#elif defined(SGI) && !defined(SGI64)
-#  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)128*1024)
 #elif defined(KSR)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)512*1024)
@@ -159,8 +156,6 @@ static  int id_search_no_fork=0;
 #define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm shm %d",id);
 #elif  defined(SOLARIS) 
 #define CLEANUP_CMD(command) sprintf(command,"/bin/ipcrm -m %d",id);
-#elif  defined(SGI) 
-#define CLEANUP_CMD(command) sprintf(command,"/usr/sbin/ipcrm -m %d",id);
 #else
 #define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm -m %d",id);
 #endif

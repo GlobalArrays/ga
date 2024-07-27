@@ -25,7 +25,6 @@ AS_CASE([$vendor],
 [microsoft], [result=],
 [pathscale], [result="-Wall -fullwarn -Wno-unused-parameter -pedantic -Wno-long-long -Wnested-externs"],
 [portland],  [result="-Xc"],
-[sgi],       [result=],
 [sun],       [result=],
 [watcom],    [result=])
 ],
