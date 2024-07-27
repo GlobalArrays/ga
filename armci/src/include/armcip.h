@@ -28,7 +28,7 @@
 #   define sleep(x) Sleep(100*(x))
 #endif
 
-#if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM) && !defined(HITACHI) && !defined(CATAMOUNT)
+#if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM) && !defined(CATAMOUNT)
 #define CLUSTER
 
 #ifdef SERVER_THREAD
@@ -148,8 +148,7 @@ extern INLINE int armci_register_thread(thread_id_t id);
 #   endif
 #endif
 
-#if defined(CRAY_XT) || defined(CRAY_T3E) || defined(FUJITSU)\
-       || defined(HITACHI)
+#if defined(CRAY_XT) || defined(CRAY_T3E) || defined(FUJITSU)       
 #define ACC_COPY
 #endif
 
@@ -173,18 +172,14 @@ extern INLINE int armci_register_thread(thread_id_t id);
 #   define RESERVED_BUFLEN ((sizeof(request_header_t)>>3)+3*MAX_STRIDE_LEVEL +\
                            EXTRA_MSG_BUFLEN_DBL)
 #endif
-
-#if defined(HITACHI)
-#  define BUFSIZE  ((0x50000) * sizeof(double))
-#else   
-   /* packing algorithm for double complex numbers requires even number */
+  
+/* packing algorithm for double complex numbers requires even number */
 #  ifdef MSG_BUFLEN_DBL
 #    define BUFSIZE_DBL (MSG_BUFLEN_DBL - RESERVED_BUFLEN)
 #  else
 #    define BUFSIZE_DBL 32768
 #  endif
 #  define BUFSIZE  (BUFSIZE_DBL * sizeof(double))
-#endif
 
 /* note opcodes must be lower than ARMCI_ACC_OFF !!! */
 #define PUT 1
@@ -200,13 +195,9 @@ extern INLINE int armci_register_thread(thread_id_t id);
 
 extern  int armci_me, armci_nproc;
 extern int _armci_initialized;
-#ifdef HITACHI
-   extern int sr8k_server_ready;
-   extern  double *armci_internal_buffer;
-#else
+
 #if !defined(THREAD_SAFE)
    extern  double armci_internal_buffer[BUFSIZE_DBL];
-#endif
 #endif
 
 extern void armci_shmem_init();
@@ -296,17 +287,12 @@ extern void armci_finalize_fence();
 #endif
 
 
-#if defined(CLUSTER) && !defined(HITACHI)\
-        && !defined(CRAY_SHMEM)
+#if defined(CLUSTER) && !defined(CRAY_SHMEM)
 #  define ORDER(op_,proc_)\
           if(!SAMECLUSNODE(proc_) && op_ != GET )FENCE_ARR(proc_)=1
 #  define UPDATE_FENCE_INFO(proc_) if(!SAMECLUSNODE(proc_))FENCE_ARR(proc_)=1
 #else
-#  if defined(GM) && defined(ACK_FENCE) 
-#   define ORDER(op,proc)
-#  else
-#   define ORDER(op,proc) if(proc != armci_me) FENCE_NODE(proc)
-#  endif 
+#  define ORDER(op,proc) if(proc != armci_me) FENCE_NODE(proc)
 #  define UPDATE_FENCE_INFO(proc_)
 #endif
         

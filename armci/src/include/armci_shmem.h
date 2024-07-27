@@ -8,10 +8,6 @@ extern void Free_Shmem_Ptr(long id, long size, char* addr);
 extern long armci_shmem_reg_size(int i, long id);
 extern char* armci_shmem_reg_ptr(int i);
 
-#ifdef HITACHI
-#define FIELD_NUM 0x1
-#endif
-
 #define POST_ALLOC_CHECK(temp,size) ;
 
 #define MAX_REGIONS 64 

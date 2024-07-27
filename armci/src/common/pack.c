@@ -97,10 +97,6 @@ int armci_pack_strided(int op, void* scale, int proc,
 
 #ifdef STRIDED_GET_BUFLEN
     if(op==GET)bufsize=STRIDED_GET_BUFLEN;
-#  ifdef HITACHI
-    else 
-	if(stride_levels || ARMCI_ACC(op))bufsize=MSG_BUFLEN_SMALL-PAGE_SIZE;
-#  endif
 #endif
 
 #if (defined(GM_) || defined(VAPI_))

@@ -61,25 +61,7 @@
 /*** stores cluster configuration. Initialized before user threads are created and then read-only ***/
 armci_clus_t *armci_clus_info;
 
-#ifdef HITACHI
-#include <hmpp/nalloc.h>
-# define GETHOSTNAME sr_gethostname
-ndes_t _armci_group;
-
-static int sr_gethostname(char *name, int len)
-{
-int no;
-pid_t ppid;
-
-   if(hmpp_nself (&_armci_group,&no,&ppid,0,NULL) <0)
-     return -1;
-
-   if(len<6)armci_die("len too small",len);
-   if(no>1024)armci_die("expected node id <1024",no);
-   sprintf(name,"n%d",no);
-   return 0;
-}
-#elif defined(SGIALTIX)
+#if defined(SGIALTIX)
 # define GETHOSTNAME altix_gethostname
 static int altix_gethostname(char *name, int len) {
     sprintf(name,"altix");
@@ -383,7 +365,7 @@ void armci_init_clusinfo()
   process_hostlist(name);        /* compute cluster info */
 #endif
 
-#if (defined(SYSV) || defined(WIN32)  || defined(MMAP)) && !defined(HITACHI)
+#if (defined(SYSV) || defined(WIN32)  || defined(MMAP))
   armci_set_shmem_limit_per_node(armci_clus_info[0].nslave);
 #endif
   armci_master = armci_clus_info[armci_clus_me].master;

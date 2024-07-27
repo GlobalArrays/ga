@@ -24,7 +24,7 @@ static long plot_type = 0;      /* 0 means no plot */
 #define htonl(a) (a)
 #endif
 
-#if !defined(AIX) && !defined(DECOSF)
+#if !defined(AIX)
 extern char *malloc();
 #endif
 extern void exit();

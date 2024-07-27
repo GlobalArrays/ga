@@ -12,23 +12,6 @@ AS_CASE([$ga_armci_network],
     AC_DEFINE([CRAY_XT], [1], [TODO])
     AC_DEFINE([CRAY_SHMEM], [1], [TODO])
     ],
-[GM], [
-    AC_DEFINE([PTHREADS], [1], [TODO])
-    AC_DEFINE([DATA_SERVER], [1], [TODO])
-    AC_DEFINE([ALLOW_PIN], [1], [TODO])
-    AC_DEFINE([SERVER_THREAD], [1], [TODO])
-    AC_DEFINE([_REENTRANT], [1], [TODO])
-    AC_DEFINE([GM], [1], [TODO])
-    ],
-[MELLANOX], [
-    AC_DEFINE([PTHREADS], [1], [TODO])
-    AC_DEFINE([DATA_SERVER], [1], [TODO])
-    AC_DEFINE([SERVER_THREAD], [1], [TODO])
-    AC_DEFINE([_REENTRANT], [1], [TODO])
-    AC_DEFINE([VAPI], [1], [TODO])
-    AC_DEFINE([ALLOW_PIN], [1], [TODO])
-    AC_DEFINE([MELLANOX], [1], [TODO])
-    ],
 [MPI_TS], [
     AC_DEFINE([PTHREADS], [1], [TODO])
     AC_DEFINE([DATA_SERVER], [1], [TODO])

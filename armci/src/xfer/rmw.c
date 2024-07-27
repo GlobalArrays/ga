@@ -94,7 +94,7 @@ int PARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
 #endif
 
 #if defined(CLUSTER) && !defined(CYGWIN)\
-    && !defined(HITACHI) && !defined(CRAY_SHMEM) 
+    && !defined(CRAY_SHMEM) 
      if(!SAMECLUSNODE(proc)){
        armci_rem_rmw(op, ploc, prem,  extra, proc);
        return 0;

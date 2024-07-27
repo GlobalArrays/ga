@@ -120,7 +120,7 @@ fi
 
 # We must check for the threads library under a number of different
 # names; the ordering is very important because some systems
-# (e.g. DEC) have both -lpthread and -lpthreads, where one of the
+# have both -lpthread and -lpthreads, where one of the
 # libraries is broken (non-POSIX).
 
 # Create a list of thread flags to try.  Items starting with a "-" are

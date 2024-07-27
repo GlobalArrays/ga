@@ -8,11 +8,8 @@
 #if HAVE_STRING_H
 #   include <string.h>
 #endif
-#ifdef DECOSF
-#include <c_asm.h>
-#endif
 
-#if 1 || defined(HITACHI) || defined(CRAY_T3E) || defined(CRAY_XT)
+#if 1 || defined(CRAY_T3E) || defined(CRAY_XT)
 #  define MEMCPY
 #endif
 #if defined(LINUX64) && defined(SGIALTIX) && defined(MSG_COMMS_MPI)
@@ -33,7 +30,7 @@
    EXTERN long long _armci_vec_sync_flag;
 #endif
 
-#if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined (DECOSF) || defined(__ia64__) || defined(__crayx1)
+#if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined(__ia64__) || defined(__crayx1)
 #   define PTR_ALIGN
 #endif
 
@@ -51,10 +48,6 @@
 
 #ifdef NEC
 #    define MEM_FENCE {mpisx_clear_cache(); _armci_vec_sync_flag=1;mpisx_syncset0_long(&_armci_vec_sync_flag);}
-#endif
-
-#ifdef DECOSF
-#    define MEM_FENCE asm ("mb")
 #endif
 
 #if defined(NEED_MEM_SYNC)
@@ -133,15 +126,6 @@
 #   define armci_get2D(p, bytes, count, src_ptr,src_stride,dst_ptr,dst_stride)\
            CopyPatchFrom(src_ptr, src_stride, dst_ptr, dst_stride,count,bytes,p)
 
-#elif defined(HITACHI)
-
-    extern void armcill_put2D(int proc, int bytes, int count,
-                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
-    extern void armcill_get2D(int proc, int bytes, int count,
-                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
-#   define armci_put2D armcill_put2D
-#   define armci_get2D armcill_get2D
-
 #elif defined(NB_NONCONT)
 
     extern void armcill_wait_put();
@@ -214,12 +198,7 @@
         if(((p)<armci_clus_first)||((p)>armci_clus_last))shmem_quiet(); }
 #   define UPDATE_FENCE_STATE(p, op, nissued) if((op)==PUT) cmpl_proc=(p);
 #else
-#   if defined(GM) && defined(ACK_FENCE) 
-     extern void armci_gm_fence(int p);
-#    define FENCE_NODE(p) armci_gm_fence(p)
-#   else
-#     define FENCE_NODE(p)
-#   endif   
+#   define FENCE_NODE(p)
 #   define UPDATE_FENCE_STATE(p, op, nissued)
 
 #endif
@@ -286,7 +265,7 @@ void c_dcopy13_(const int*    const restrict rows,
 #if defined(AIX)
 #    define DCOPY2D c_dcopy2d_u_
 #    define DCOPY1D c_dcopy1d_u_
-#elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(DECOSF) || defined(CRAY) || defined(WIN32) || defined(HITACHI)
+#elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(CRAY) || defined(WIN32)
 #    define DCOPY2D c_dcopy2d_n_
 #    define DCOPY1D c_dcopy1d_n_
 #else
@@ -314,21 +293,6 @@ void c_dcopy13_(const int*    const restrict rows,
 #      define armci_get(src,dst,n,proc) \
               shmem_get32((void *)(dst),(void *)(src),(int)(n)/4,(proc));\
               shmem_quiet()
-
-#elif  defined(HITACHI)
-
-        extern void armcill_put(void *src, void *dst, int bytes, int proc);
-        extern void armcill_get(void *src, void *dst, int bytes, int proc);
-
-#      define armci_put(src,dst,n,proc) \
-            if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
-               armci_copy(src,dst,n);\
-            } else { armcill_put((src), (dst),(n),(proc));}
-
-#      define armci_get(src,dst,n,proc)\
-            if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
-               armci_copy(src,dst,n);\
-            } else { armcill_get((src), (dst),(n),(proc));}
 
 #elif  defined(FUJITSU)
 

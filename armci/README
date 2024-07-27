@@ -138,8 +138,7 @@ specified.
 
 SOCKETS is the assumed default for clusters connected with Ethernet.  This
 protocol might also work on other networks however, the performance might be
-sub-optimal and on Myrinet it could even hang (GM does not work with fork and
-the standard version of ARMCI uses fork).
+sub-optimal.
 
 Cross-Compilation Issues
 ------------------------
@@ -265,30 +264,6 @@ For example to make SHMMAX= 2GB, add either of the lines to /etc/system::
     
 After rebooting, you should be able to take advantage of the increased shared
 memory limits.
-
-Compaq/DEC
-++++++++++
-
-Tru64 is another example of an OS with a pitifully small size of the shared
-memory region limit. Here are instruction on how to modify shared memory max
-segment size to 256MB on  the Tru64 UNIX Version 4.0F:
-
-1. create a file called /etc/sysconfig.shmmax::
-
-    cat > /etc/sysconfig.shmmax << EOF ipc: shm-max = 268435456 EOF
-    
-   You can check if the file created is OK by typing::
-
-    /sbin/sysconfigdb -l -t /etc/sysconfig.shmmax
-
-2. Modify kernel values::
-
-    sysconfigdb -a -f /etc/sysconfig.shmmax ipc
-    
-3. Reboot
-4. To check new values::
-
-    /sbin/sysconfig -q ipc|egrep shm-max 
 
 HP-UX
 +++++
