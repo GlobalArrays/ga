@@ -9,7 +9,7 @@
 #   include <string.h>
 #endif
 
-#if 1 || defined(CRAY_T3E) || defined(CRAY_XT)
+#if 1 || defined(CRAY_XT)
 #  define MEMCPY
 #endif
 

@@ -424,10 +424,6 @@ int armci_msg_nproc()
 #endif
 }
 
-#ifdef CRAY_YMP
-#define BROKEN_MPI_ABORT
-#endif
-
 double armci_timer()
 {
 #if defined(MSG_COMMS_MPI)

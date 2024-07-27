@@ -12,7 +12,6 @@ AS_IF([test "x$armci_cv_f77_opt" = x && test "x$enable_opt" = xyes], [
 AS_CASE([$ga_cv_target:$ga_cv_f77_compiler_vendor:$host_cpu:$ga_armci_network],
 [BGQ:ibm:*:*],                  [armci_cv_f77_opt="-O3 -qstrict -qarch=qp -qtune=qp"],
 [BGQ:gnu:*:*],                  [armci_cv_f77_opt="-O2"],
-[CATAMOUNT:*:*:*],              [armci_cv_f77_opt="-O3"],
 [CRAY_XT:*:*:*],                [armci_cv_f77_opt=],
 [CYGWIN:*:*:*],                 [armci_cv_f77_opt=],
 [FUJITSU_VPP64:*:*:*],          [armci_cv_f77_opt="-Sw"],

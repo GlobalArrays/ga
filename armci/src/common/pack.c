@@ -8,7 +8,7 @@
 #   include <stdio.h>
 #endif
 
-#if !defined(ACC_COPY) &&!defined(CRAY_YMP) &&!defined(CYGNUS)&&!defined(CYGWIN)
+#if !defined(ACC_COPY) &&!defined(CYGNUS)&&!defined(CYGWIN)
 #   define REMOTE_OP 
 #endif
 

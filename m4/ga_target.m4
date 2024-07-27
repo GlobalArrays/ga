@@ -11,12 +11,7 @@
 
 AC_DEFUN([GA_TARGET],
 [# AH_TEMPLATE for all known TARGETs
-AH_TEMPLATE([CATAMOUNT],    [Define to 1 on Cray XT systems using Catamount])
-AH_TEMPLATE([CRAY_SV1],     [Define to 1 on Cray SV1 systems])
-AH_TEMPLATE([CRAY_SV2],     [Define to 1 on Cray SV2 systems])
-AH_TEMPLATE([CRAY_T3E],     [Define to 1 on Cray T3E systems])
 AH_TEMPLATE([CRAY_XT],      [Define to 1 on Cray XT systems])
-AH_TEMPLATE([CRAY_YMP],     [Define to 1 on Cray YMP systems])
 AH_TEMPLATE([CYGNUS],       [Define to 1 on Cygnus systems])
 AH_TEMPLATE([CYGWIN],       [Define to 1 on Cygwin systems])
 AH_TEMPLATE([FUJITSU_VPP],  [Define to 1 on fujitsu systems])
@@ -39,7 +34,6 @@ AC_CACHE_CHECK([for TARGET base (64bit-ness checked later)],
 [ga_cv_target_base=UNKNOWN
 AS_IF([test "x$ga_cv_target_base" = xUNKNOWN],
     [AS_CASE([$host],
-        #[TODO],            [ga_cv_target_base=CATAMOUNT],
         #[TODO],            [ga_cv_target_base=CRAY_XT],
         [*cygwin*],         [ga_cv_target_base=CYGWIN],
         [*fujitsu*],        [ga_cv_target_base=FUJITSU_VPP],
@@ -68,12 +62,7 @@ dnl AS_IF([test "x$ARMCI_TOP_BUILDDIR" != x], [
             [Define if we want this system to use SYSV shared memory])])
 dnl ])
 # Hopefully these will never be used and we can remove them soon.
-AM_CONDITIONAL([CATAMOUNT],    [test "$ga_cv_target_base" = CATAMOUNT])
-AM_CONDITIONAL([CRAY_SV1],     [test "$ga_cv_target_base" = CRAY_SV1])
-AM_CONDITIONAL([CRAY_SV2],     [test "$ga_cv_target_base" = CRAY_SV2])
-AM_CONDITIONAL([CRAY_T3E],     [test "$ga_cv_target_base" = CRAY_T3E])
 AM_CONDITIONAL([CRAY_XT],      [test "$ga_cv_target_base" = CRAY_XT])
-AM_CONDITIONAL([CRAY_YMP],     [test "$ga_cv_target_base" = CRAY_YMP])
 AM_CONDITIONAL([CYGNUS],       [test "$ga_cv_target_base" = CYGNUS])
 AM_CONDITIONAL([CYGWIN],       [test "$ga_cv_target_base" = CYGWIN])
 AM_CONDITIONAL([FUJITSU_VPP],  [test "$ga_cv_target_base" = FUJITSU_VPP])

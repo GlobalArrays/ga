@@ -28,7 +28,7 @@
 #   define sleep(x) Sleep(100*(x))
 #endif
 
-#if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM) && !defined(CATAMOUNT)
+#if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM)
 #define CLUSTER
 
 #ifdef SERVER_THREAD
@@ -148,7 +148,7 @@ extern INLINE int armci_register_thread(thread_id_t id);
 #   endif
 #endif
 
-#if defined(CRAY_XT) || defined(CRAY_T3E) || defined(FUJITSU)       
+#if defined(CRAY_XT) || defined(FUJITSU)       
 #define ACC_COPY
 #endif
 

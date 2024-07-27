@@ -57,20 +57,12 @@ extern void unsetlock(int);
 #   define NAT_LOCK(x,p)   setlock(x)
 #   define NAT_UNLOCK(x,p)  unsetlock(x)
 
-#elif defined(CRAY_YMP) && !defined(__crayx1)
-#   include <tfork.h>
-typedef int lockset_t;
-extern  lock_t cri_l[NUM_LOCKS];
-#   pragma  _CRI common cri_l
-#   define NAT_LOCK(x,p)   t_lock(cri_l+(x))
-#   define NAT_UNLOCK(x,p) t_unlock(cri_l+(x))
-
-#elif defined(CRAY_T3E) || defined(__crayx1) || defined(CATAMOUNT) || defined(CRAY_SHMEM) 
+#elif defined(__crayx1) || defined(CRAY_SHMEM) 
 #   include <limits.h>
 #   if defined(CRAY) || defined(CRAY_XT)
 #       include <mpp/shmem.h>
 #   endif
-#   if defined(LINUX64) || defined(__crayx1) || defined(CATAMOUNT)
+#   if defined(LINUX64) || defined(__crayx1)
 #       define _INT_MIN_64 (LONG_MAX-1)
 #   endif
 #   undef NUM_LOCKS

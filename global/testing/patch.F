@@ -9,7 +9,7 @@ C $iD: PATch.F,v 1.21 2002/10/15 23:35:52 vinod Exp $
 #   define xgemm TEST_DGEMM
 #   define ygemm TEST_ZGEMM
 #endif
-#if defined(FUJITSU) || defined(CRAY_YMP)
+#if defined(FUJITSU)
 # define THRESH  1.0d-10
 #else
 # define THRESH  1.0d-20
