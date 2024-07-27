@@ -2,7 +2,7 @@
 #   include "config.fh"
 #endif
 c $Id: mulmatpatch.F,v 1.6 2005-11-23 10:25:18 manoj Exp $
-#if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
+#if defined(CRAY) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
 #else

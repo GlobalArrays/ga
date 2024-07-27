@@ -17,10 +17,6 @@
 #include "typesf2c.h"
 #include "farg.h"
 
-#if defined(CRAY) && defined(__crayx1)
-#undef CRAY
-#endif
-
 #define eaf_aread_       F77_FUNC_(eaf_aread,EAF_AREAD)
 #define eaf_awrite_      F77_FUNC_(eaf_awrite,EAF_AWRITE)
 #define eaf_close_       F77_FUNC_(eaf_close,EAF_CLOSE)

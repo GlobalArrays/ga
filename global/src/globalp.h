@@ -5,10 +5,6 @@
 
 #include "gaconfig.h"
 
-#ifdef __crayx1
-#undef CRAY
-#endif
-
 #if HAVE_WINDOWS_H
 #   include <windows.h>
 #   define sleep(x) Sleep(1000*(x))

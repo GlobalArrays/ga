@@ -37,7 +37,7 @@
 #if HAVE_STDARG_H
 #   include <stdarg.h>
 #endif
-#if defined(CRAY) && !defined(__crayx1)
+#if defined(CRAY)
 #  include <sys/category.h>
 #  include <sys/resource.h>
 #  if HAVE_UNISTD_H

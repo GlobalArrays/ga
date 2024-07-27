@@ -4616,10 +4616,6 @@ logical pnga_locate_nnodes( Integer g_a,
   }
   return(TRUE);
 }
-#ifdef __crayx1
-#pragma _CRI inline nga_locate_nnodes_
-#endif
-
 
 /**
  *  Locate individual patches and their owner of specified patch of a
@@ -4870,9 +4866,6 @@ logical pnga_locate_region( Integer g_a,
   }
   return(TRUE);
 }
-#ifdef __crayx1
-#pragma _CRI inline pnga_locate_region
-#endif
 
 /**
  *  Returns the processor grid for the global array

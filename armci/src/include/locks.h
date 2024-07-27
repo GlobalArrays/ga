@@ -57,12 +57,12 @@ extern void unsetlock(int);
 #   define NAT_LOCK(x,p)   setlock(x)
 #   define NAT_UNLOCK(x,p)  unsetlock(x)
 
-#elif defined(__crayx1) || defined(CRAY_SHMEM) 
+#elif defined(CRAY_SHMEM) 
 #   include <limits.h>
 #   if defined(CRAY) || defined(CRAY_XT)
 #       include <mpp/shmem.h>
 #   endif
-#   if defined(LINUX64) || defined(__crayx1)
+#   if defined(LINUX64)
 #       define _INT_MIN_64 (LONG_MAX-1)
 #   endif
 #   undef NUM_LOCKS
