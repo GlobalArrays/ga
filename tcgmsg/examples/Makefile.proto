@@ -16,14 +16,6 @@ IF CRAY
     CFLAGS = -I$(LIBDIR) -DCRAY
    SCFBLAS = scfblas.o
 ENDIF CRAY
-IF KSR
-        FC = f77
-    FFLAGS = -para -g -r8
-        CC = cc
-    CFLAGS = -para -g -I$(LIBDIR)
-      LIBS = -lrpc
-   SCFBLAS = scfblas.o
-ENDIF KSR
 IF SUN
         FC = f77
         CC = cc
@@ -40,17 +32,6 @@ IF LINUX
     CFLAGS = -O -I$(LIBDIR)
    SCFBLAS = scfblas.o
 ENDIF LINUX
-IF PARAGON
-        AS = as860
-        FC = if77
-        CC = icc
-      LIBS = -node -lkmath
-   DEFINES = -DIPSC -DPARAGON -DPLOT
-   INSTALL = echo "$@" is built
-   CFLAGS = -nx -g -Knoieee $(DEFINES)
-   FFLAGS = -nx -O2 -Knoieee
-   SCFBLAS = 
-ENDIF PARAGON
 IF NEXT
         FC = f77
         CC = cc

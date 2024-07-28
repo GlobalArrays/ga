@@ -18,7 +18,7 @@ extern int    tcgi_argc;
 extern char **tcgi_argv;
 
 /**
- * Hewlett Packard Risc box, SparcWorks F77 2.* and Paragon compilers.
+ * Hewlett Packard Risc box, SparcWorks F77 2.* compilers.
  * Have to construct the argument list by calling FORTRAN.
  */
 void PBEGINF_()

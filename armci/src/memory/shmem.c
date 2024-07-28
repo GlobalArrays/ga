@@ -101,8 +101,6 @@
 
 /* Limits for the largest shmem segment are in Kilobytes to avoid passing
  * Gigavalues to kr_malloc
- * the limit for the KSR is lower than SHMMAX in sys/param.h because
- * shmat would fail -- SHMMAX cannot be trusted (a bug)
  */
 #define _SHMMAX 4*1024
 
@@ -110,9 +108,6 @@
 #  undef _SHMMAX
 #  define _SHMMAX (1024)  /* memory in KB */
 #elif defined(AIX)
-#  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)512*1024)
-#elif defined(KSR)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)512*1024)
 #elif defined(__FreeBSD__)
