@@ -18,7 +18,6 @@ AH_TEMPLATE([FUJITSU_VPP],  [Define to 1 on fujitsu systems])
 AH_TEMPLATE([FUJITSU_VPP64],[Define to 1 on fujitsu systems])
 AH_TEMPLATE([IBM],          [Define to 1 on IBM SP systems])
 AH_TEMPLATE([IBM64],        [Define to 1 on 64bit IBM SP systems])
-AH_TEMPLATE([INTERIX],      [Define to 1 on ??? systems])
 AH_TEMPLATE([LINUX],        [Define to 1 on generic Linux systems])
 AH_TEMPLATE([LINUX64],      [Define to 1 on generic 64bit Linux systems])
 AH_TEMPLATE([MACX],         [Define to 1 on OSX systems])
@@ -53,7 +52,7 @@ dnl AS_IF([test "x$ARMCI_TOP_BUILDDIR" != x], [
     AC_CACHE_CHECK([whether we think this system is what we call SYSV],
     [ga_cv_sysv],
     [AS_CASE([$ga_cv_target_base],
-        [SUN|SOLARIS|IBM|LINUX|INTERIX|NEC],
+        [SUN|SOLARIS|IBM|LINUX|NEC],
             [ga_cv_sysv=yes],
         [ga_cv_sysv=no])
     ])
@@ -67,7 +66,6 @@ AM_CONDITIONAL([CYGNUS],       [test "$ga_cv_target_base" = CYGNUS])
 AM_CONDITIONAL([CYGWIN],       [test "$ga_cv_target_base" = CYGWIN])
 AM_CONDITIONAL([FUJITSU_VPP],  [test "$ga_cv_target_base" = FUJITSU_VPP])
 AM_CONDITIONAL([IBM],          [test "$ga_cv_target_base" = IBM])
-AM_CONDITIONAL([INTERIX],      [test "$ga_cv_target_base" = INTERIX])
 AM_CONDITIONAL([LINUX],        [test "$ga_cv_target_base" = LINUX])
 AM_CONDITIONAL([MACX],         [test "$ga_cv_target_base" = MACX])
 AM_CONDITIONAL([MINGW],        [test "$ga_cv_target_base" = MINGW])

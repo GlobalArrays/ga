@@ -828,10 +828,6 @@ char *Attach_Shared_Region(id, size, offset)
 {
 int reg, found, shmflag=0;
 static char *temp;
-
-#if defined(SGI_N32) && defined(SHM_SGI_ANYADDR)
-  shmflag= SHM_SGI_ANYADDR;
-#endif
   
   if(alloc_regions>=MAX_REGIONS)
        armci_die("Attach_Shared_Region: to many regions ",0);
@@ -920,10 +916,6 @@ char * temp;
 int id,shmflag=0;
 size_t sz = (size_t)size;
 char *pref_addr = (char*)0;
-
-#if defined(SGI_N32) && defined(SHM_SGI_ANYADDR)
-  shmflag= SHM_SGI_ANYADDR;
-#endif
 
     if(DEBUG1){
        printf("%d:allocate: Shmem allocate size %ld bytes\n",armci_me,size); 
