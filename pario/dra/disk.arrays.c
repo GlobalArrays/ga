@@ -86,11 +86,7 @@
 
 /* #define DRA_DBLE_BUFFER */
 
-#if defined(SP1)|| defined(SP)
-#   define DRA_NUM_IOPROCS 8 
-#else
 #   define DRA_NUM_IOPROCS 1
-#endif
 
 #ifndef DRA_NUM_FILE_MGR
 #  define DRA_NUM_FILE_MGR DRA_NUM_IOPROCS

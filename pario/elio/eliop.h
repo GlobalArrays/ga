@@ -27,11 +27,6 @@
 extern void GA_Error(char*, int);
 #endif
 
-#if (defined(SP) || defined(SP1))
-#define PIOFS 1
-#endif
-
-
 #if defined(CRAY)
 #        include <sys/statfs.h>
 #        define  STATVFS statfs
