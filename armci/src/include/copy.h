@@ -23,7 +23,7 @@
    EXTERN long long _armci_vec_sync_flag;
 #endif
 
-#if defined(FUJITSU) || defined(SOLARIS) || defined(__ia64__)
+#if defined(FUJITSU) || defined(SOLARIS)
 #   define PTR_ALIGN
 #endif
 
@@ -46,13 +46,6 @@
 #if defined(NEED_MEM_SYNC)
 #  ifdef AIX
 #    define MEM_FENCE {int _dummy=1; _clear_lock((int *)&_dummy,0); }
-#  elif defined(__ia64)
-#    if defined(__GNUC__) && !defined (__INTEL_COMPILER)
-#       define MEM_FENCE __asm__ __volatile__ ("mf" ::: "memory");
-#    else /* Intel Compiler */ 
-        extern void _armci_ia64_mb();
-#       define MEM_FENCE _armci_ia64_mb();
-#    endif
 #  elif defined(LINUX) && defined(__GNUC__) && defined(__ppc__)
 #    define MEM_FENCE \
              __asm__ __volatile__ ("isync" : : : "memory");
