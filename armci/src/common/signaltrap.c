@@ -40,8 +40,8 @@
 #define  Error armci_die 
 #if !defined(armci_die)
 extern void Error();
-#   define SigType  void
 #endif
+#   define SigType  void
 
 #ifndef SIG_ERR
 #   define SIG_ERR         (SigType (*)())-1
