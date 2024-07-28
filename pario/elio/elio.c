@@ -42,7 +42,7 @@
 
 #include "../sf/coms.h"
 
-#if  defined(AIX) || defined(SGI64) || defined(CRAY) || defined(LINUXAIO)
+#if  defined(AIX) || defined(CRAY) || defined(LINUXAIO)
      /* systems with Asynchronous I/O */
 #else
 #    ifndef NOAIO

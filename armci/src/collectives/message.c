@@ -111,15 +111,6 @@ static bufstruct *_gop_buffer;
 #    define SET_SHM_FLAG(_flg,_val) _clear_lock((int *)(_flg),_val);
 #  elif defined(NEC)
 #    define SET_SHM_FLAG(_flg,_val) MEM_FENCE; *(_flg)=(_val)
-#  elif defined(__ia64)
-#    if defined(__GNUC__) && !defined (__INTEL_COMPILER)
-#       define SET_SHM_FLAG(_flg,_val)\
-            __asm__ __volatile__ ("mf" ::: "memory"); *(_flg)=(_val)
-#    else /* Intel Compiler */
-        extern void _armci_ia64_mb();
-#       define SET_SHM_FLAG(_flg,_val)\
-            _armci_ia64_mb(); *(_flg)=(_val);
-#    endif
 #  elif defined(MACX)
 #    if defined(__GNUC__)
 #    define SET_SHM_FLAG(_flg,_val)\

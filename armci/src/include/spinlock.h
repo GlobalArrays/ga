@@ -54,20 +54,6 @@ static int testandset(void *spinlock) {
 }
 #   define TESTANDSET testandset
 
-#elif defined(__ia64)
-#   if DEBUG_SPINLOCK
-#       warning SPINLOCK: ia64
-#   endif
-#   define SPINLOCK
-#   include "atomic_ops_ia64.h"
-static int testandset(void *spinlock) { 
-    int val=1;
-    int res;
-    atomic_swap_int(spinlock, val, &res);
-    return res;
-}
-#   define TESTANDSET testandset
-
 /*#elif defined(AIX)*/
 #elif HAVE_SYS_ATOMIC_OP_H
 #   if DEBUG_SPINLOCK

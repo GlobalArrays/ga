@@ -101,8 +101,6 @@
 
 /* Limits for the largest shmem segment are in Kilobytes to avoid passing
  * Gigavalues to kr_malloc
- * the limit for the KSR is lower than SHMMAX in sys/param.h because
- * shmat would fail -- SHMMAX cannot be trusted (a bug)
  */
 #define _SHMMAX 4*1024
 
@@ -110,9 +108,6 @@
 #  undef _SHMMAX
 #  define _SHMMAX (1024)  /* memory in KB */
 #elif defined(AIX)
-#  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)512*1024)
-#elif defined(KSR)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)512*1024)
 #elif defined(__FreeBSD__)
@@ -833,10 +828,6 @@ char *Attach_Shared_Region(id, size, offset)
 {
 int reg, found, shmflag=0;
 static char *temp;
-
-#if defined(SGI_N32) && defined(SHM_SGI_ANYADDR)
-  shmflag= SHM_SGI_ANYADDR;
-#endif
   
   if(alloc_regions>=MAX_REGIONS)
        armci_die("Attach_Shared_Region: to many regions ",0);
@@ -925,10 +916,6 @@ char * temp;
 int id,shmflag=0;
 size_t sz = (size_t)size;
 char *pref_addr = (char*)0;
-
-#if defined(SGI_N32) && defined(SHM_SGI_ANYADDR)
-  shmflag= SHM_SGI_ANYADDR;
-#endif
 
     if(DEBUG1){
        printf("%d:allocate: Shmem allocate size %ld bytes\n",armci_me,size); 

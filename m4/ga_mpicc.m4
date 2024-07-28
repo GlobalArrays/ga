@@ -4,9 +4,7 @@
 #
 # Known C compilers
 #  cc       generic compiler name
-#  ccc      Fujitsu ?? old Cray ??
 #  cl
-#  ecc      Intel on IA64 ??
 #  gcc      GNU
 #  icc      Intel
 #  xlc      Intel

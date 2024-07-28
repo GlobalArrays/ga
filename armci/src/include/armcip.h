@@ -14,13 +14,6 @@
         printf("\n%d:%s:%d:%s:%s:%d",armci_me,__FILE__,__LINE__,FUNCTION_NAME,__ARMCI_ST,__ARMCI_NU)*/
 #define ARMCI_PR_DBG(__ARMCI_ST,__ARMCI_NU) 
 
-/* we got problems on IA64/Linux64 with Elan if inlining is used */
-#if defined(__GNUC__)
-#   define INLINE inline
-#else
-#   define INLINE
-#endif
-
 #if HAVE_UNISTD_H
 #   include <unistd.h>
 #elif HAVE_WINDOWS_H
@@ -117,7 +110,7 @@ extern armci_user_threads_t armci_user_threads;
 extern void armci_init_threads();
 extern void armci_finalize_threads();
 extern int armci_thread_idx();
-extern INLINE int armci_register_thread(thread_id_t id);
+extern int armci_register_thread(thread_id_t id);
 
 #define ARMCI_THREAD_IDX armci_thread_idx() /* needs to be optimized */
 

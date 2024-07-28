@@ -4,13 +4,9 @@
 #
 # Known C compilers
 #  cc       generic compiler name
-#  ccc      Fujitsu ?? old Cray ??
 #  cl
-#  ecc      Intel on IA64 ??
 #  gcc      GNU
 #  icc      Intel
-#  bgxlc    Intel on BG/P
-#  bgxlc_r  Intel on BG/P, thread safe
 #  xlc      Intel
 #  xlc_r    Intel, thread safe
 #  pgcc     Portland Group

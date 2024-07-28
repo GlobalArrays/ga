@@ -3,8 +3,6 @@
 
 #ifdef CRAY
 #define LOG_ALIGN 6
-#elif defined(KSR)
-#define LOG_ALIGN 7
 #else
 #define LOG_ALIGN 6
 #endif

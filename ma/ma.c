@@ -86,7 +86,7 @@ extern void* ARMCI_Malloc_local(long bytes);
 
 /* block lengths are integral multiples of this */
 /*
- * Note that for machines such as the KSR on which sizeof(pointer)
+ * Note that for machines on which sizeof(pointer)
  * and sizeof(long) are different than sizeof(int), alignment issues
  * can be tricky.  For example, the fields of a struct (e.g.,
  * client_space of AD) can be improperly aligned if the struct is

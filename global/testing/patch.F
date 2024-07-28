@@ -2,7 +2,7 @@
 #   include "config.fh"
 #endif
 C $iD: PATch.F,v 1.21 2002/10/15 23:35:52 vinod Exp $
-#if defined(CRAY)|| defined(KSR)
+#if defined(CRAY)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
 #else
