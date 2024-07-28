@@ -32,22 +32,6 @@ IF LINUX
     CFLAGS = -O -I$(LIBDIR)
    SCFBLAS = scfblas.o
 ENDIF LINUX
-IF NEXT
-        FC = f77
-        CC = cc
-    FFLAGS = -g -f -N9
-    CFLAGS = -g -DNEXT -DEXTNAME -DPLOT -I$(LIBDIR)
-      LIBS = 
-   SCFBLAS = scfblas.o
-ENDIF NEXT
-IF NEXTNOEXT
-        FC = f77
-        CC = cc
-    FFLAGS = -g -f
-    CFLAGS = -g -DNEXT -DPLOT -I$(LIBDIR)
-      LIBS = 
-   SCFBLAS = scfblas.o
-ENDIF NEXT
 IF IBM
 #IBM RISC 6000 ... AIX 3.1 ... -qEXTNAME
 #              ... see the comments in the Makefile for the toolkit.
@@ -197,7 +181,7 @@ template.p:
 	echo "# This template is piped thru sed to replace" >  template.p
 	echo "# PROGRAM with the name of the program."      >> template.p
 	echo "# Add other hosts and processes as desired."  >> template.p
-IF CRAY NEXT NEXTNOEXT
+IF CRAY NEXTNOEXT
 	echo "$$LOGNAME `hostname` 1 `pwd`/PROGRAM /tmp"   >> template.p
 	echo "$$LOGNAME `hostname` 1 `pwd`/PROGRAM /tmp"   >> template.p
 	echo "$$LOGNAME `hostname` 1 `pwd`/PROGRAM /tmp"   >> template.p
