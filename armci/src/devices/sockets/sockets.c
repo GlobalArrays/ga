@@ -55,39 +55,6 @@
 #include "armcip.h"
 #include "sockets.h"
 
-/* JAD 2010-05-06 Code these days is safe to use socklen_t so long as it uses
- * it throughout. */
-#if 0
-#   ifdef AIX
-#       include <standards.h>
-#       if HAVE_SYS_SELECT_H
-#           include <sys/select.h>
-#       endif
-#       ifdef _AIXVERSION_430
-typedef socklen_t soclen_t;
-#       else
-typedef size_t soclen_t;
-#       endif
-#   elif defined(XLCLINUX)
-typedef socklen_t soclen_t;
-#   else
-typedef int soclen_t;
-#   endif
-#else
-#   ifdef NEC
-typedef int soclen_t;
-#   else
-typedef socklen_t soclen_t;
-#   endif
-#endif
-
-
-#ifdef CRAY
-#   if HAVE_MEMORY_H
-#       include <memory.h>
-#   endif
-#endif
-
 /* portability of socklen_t definition is iffy - we need to avoid it !!
 #if defined(LINUX) && ( defined(_SOCKETBITS_H) || defined(__BITS_SOCKET_H))
 #elif defined(AIX)

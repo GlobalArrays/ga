@@ -9,10 +9,6 @@ extern char * memalign();
 #define getmem_ getmem
 #endif
 
-#if defined(CRAY)
-#define getmem_ GETMEM
-#endif
-
 /* getmem gets n real*8 storage locations and returns its
    address (iaddr) and offset (ioff) within the real*8 array work
    so that the usable memory is (work(i+ioff),i=1,n).

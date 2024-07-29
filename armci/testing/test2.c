@@ -74,11 +74,7 @@
 #define MAXPROC 1024
 #define TIMES 100
 
-#ifdef CRAY
-# define ELEMS 800
-#else
 # define ELEMS 200
-#endif
 
 typedef struct {
   float real;

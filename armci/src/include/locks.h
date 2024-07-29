@@ -57,23 +57,7 @@ extern void unsetlock(int);
 #   define NAT_LOCK(x,p)   setlock(x)
 #   define NAT_UNLOCK(x,p)  unsetlock(x)
 
-#elif defined(CRAY_SHMEM) 
-#   include <limits.h>
-#   if defined(CRAY) || defined(CRAY_XT)
-#       include <mpp/shmem.h>
-#   endif
-#   if defined(LINUX64)
-#       define _INT_MIN_64 (LONG_MAX-1)
-#   endif
-#   undef NUM_LOCKS
-#   define NUM_LOCKS 4
-static long armci_lock_var[4]={0,0,0,0};
-typedef int lockset_t;
-#   define INVALID (long)(_INT_MIN_64 +1)
-#   define NAT_LOCK(x,p) while( shmem_swap(armci_lock_var+(x),INVALID,(p)) )
-#   define NAT_UNLOCK(x,p) shmem_swap(armci_lock_var+(x), 0, (p))
-
-#elif defined(CYGNUS)
+#if defined(CYGNUS)
 typedef int lockset_t;
 #   define NAT_LOCK(x,p) armci_die("does not run in parallel",0) 
 #   define NAT_UNLOCK(x,p) armci_die("does not run in parallel",0)  

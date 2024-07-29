@@ -42,7 +42,7 @@
 
 #include "../sf/coms.h"
 
-#if  defined(AIX) || defined(CRAY) || defined(LINUXAIO)
+#if  defined(AIX) || defined(LINUXAIO)
      /* systems with Asynchronous I/O */
 #else
 #    ifndef NOAIO
@@ -92,17 +92,7 @@
 #endif
 
 /* structure to emulate control block in Posix AIO */
-#if defined (CRAY)
-#   if defined(FFIO)
-       typedef struct { struct ffsw stat; int filedes; }io_status_t;
-#   else 
-#      include <sys/iosw.h>
-       typedef struct { struct iosw stat; int filedes; }io_status_t;
-#   endif
-    io_status_t cb_fout[MAX_AIO_REQ];
-    io_status_t *cb_fout_arr[MAX_AIO_REQ];
-
-#elif defined(AIO)
+#if defined(AIO)
 #   include <aio.h>
 #   if defined(AIX)
 #      define INPROGRESS EINPROG
@@ -287,13 +277,8 @@ int elio_set_cb(Fd_t fd, Off_t doffset, int reqn, void *buf, Size_t bytes)
 {
 #if defined(AIO)
     off_t offset = (off_t) doffset;
-#   if defined(CRAY)
-       if(offset != SEEK(fd->fd, offset, SEEK_SET))return (SEEKFAIL);
-       cb_fout_arr[reqn] = cb_fout+reqn;
-       cb_fout[reqn].filedes    = fd->fd;
-#   else
-       cb_fout[reqn].aio_offset = offset;
-       cb_fout_arr[reqn] = cb_fout+reqn;
+         cb_fout[reqn].aio_offset = offset;
+         cb_fout_arr[reqn] = cb_fout+reqn;
          cb_fout[reqn].aio_buf    = buf;
          cb_fout[reqn].aio_nbytes = bytes;
 #        if defined(AIX)
@@ -302,7 +287,6 @@ int elio_set_cb(Fd_t fd, Off_t doffset, int reqn, void *buf, Size_t bytes)
            cb_fout[reqn].aio_sigevent.sigev_notify = SIGEV_NONE;
            cb_fout[reqn].aio_fildes    = fd->fd;
 #        endif
-#   endif
 #endif
     return ELIO_OK;
 }
@@ -366,10 +350,7 @@ int elio_awrite(Fd_t fd, Off_t doffset, const void* buf, Size_t bytes, io_reques
       if((rc=elio_set_cb(fd, offset, aio_i, (void*) buf, bytes)))
                                                  ELIO_ERROR(rc,0);
 
-#    if defined(CRAY)
-       rc = WRITEA(fd->fd, (char*)buf, bytes, &cb_fout[aio_i].stat, DEFARG);
-       stat = (rc < 0)? -1 : 0; 
-#    elif defined(AIX) 
+#     if defined(AIX) 
 #       if !defined(AIX52) && !defined(_AIO_AIX_SOURCE)
        stat = aio_write(fd->fd, cb_fout + aio_i);
 #       endif
@@ -547,9 +528,6 @@ int elio_aread(Fd_t fd, Off_t doffset, void* buf, Size_t bytes, io_request_t * r
 #ifdef AIO
   int    aio_i;
 #endif
-#ifdef CRAY
-  int rc;
-#endif
 
   if (doffset >= ABSURDLY_LARGE) 
     ELIO_ERROR(SEEKFAIL,0);
@@ -599,10 +577,7 @@ int elio_aread(Fd_t fd, Off_t doffset, void* buf, Size_t bytes, io_request_t * r
        *req_id = (io_request_t) aio_i;
         if((stat=elio_set_cb(fd, offset, aio_i, (void*) buf, bytes)))
                                                  ELIO_ERROR((int)stat,0);
-#       if defined(CRAY)
-          rc = READA(fd->fd, buf, bytes, &cb_fout[aio_i].stat, DEFARG);
-          stat = (rc < 0)? -1 : 0;
-#       elif defined(AIX)
+#       if defined(AIX)
 #if    !defined(AIX52) && !defined(_AIO_AIX_SOURCE)
           stat = aio_read(fd->fd, cb_fout+aio_i);
 #endif
@@ -644,23 +619,7 @@ int elio_wait(io_request_t *req_id)
   if(*req_id != ELIO_DONE ) { 
 
 #    ifdef AIO
-#      if defined(CRAY)
-
-#        if defined(FFIO)
-         {
-            struct ffsw dumstat, *prdstat=&(cb_fout[*req_id].stat);
-            fffcntl(cb_fout[*req_id].filedes, FC_RECALL, prdstat, &dumstat);
-            if (FFSTAT(*prdstat) == FFERR) ELIO_ERROR(SUSPFAIL,0);
-         }
-#        else
-         {
-            struct iosw *statlist[1];
-            statlist[0] = &(cb_fout[*req_id].stat);
-            recall(cb_fout[*req_id].filedes, 1, statlist); 
-         }
-#        endif
-
-#      elif defined(AIX) 
+#      if defined(AIX) 
 #         if    !defined(AIX52) && !defined(_AIO_AIX_SOURCE)
               do {    /* I/O can be interrupted on SP through rcvncall ! */
                    rc =(int)aio_suspend(1, cb_fout_arr+(int)*req_id);
@@ -706,21 +665,7 @@ int elio_probe(io_request_t *req_id, int* status)
   } else {
       
 #ifdef AIO
-#    if defined(CRAY)
-
-#     if defined(FFIO)
-      {
-         struct ffsw dumstat, *prdstat=&(cb_fout[*req_id].stat);
-         fffcntl(cb_fout[*req_id].filedes, FC_ASPOLL, prdstat, &dumstat);
-         errval = (FFSTAT(*prdstat) == 0) ? INPROGRESS: 0;
-      }
-#     else
-
-         errval = ( IO_DONE(cb_fout[*req_id].stat) == 0)? INPROGRESS: 0;
-
-#     endif
-
-#   elif defined(AIX)
+#   if defined(AIX)
       errval = aio_error(cb_fout[(int)*req_id].aio_handle);
 #   else
       errval = aio_error(cb_fout+(int)*req_id);
@@ -749,38 +694,6 @@ int elio_probe(io_request_t *req_id, int* status)
 
   return ELIO_OK;
 }
-
-
-#if defined(CRAY) && defined(FFIO)
-static int cray_part_info(char *dirname,long *pparts,long *sparts)
-{
-  struct statfs stats;
-  long temp,count=0;
-
-  if(statfs(dirname, &stats, sizeof(struct statfs), 0) == -1) return -1;
-
-  temp = stats.f_priparts;
-  while(temp != 0){
-      count++;
-      temp <<= 1;
-  }
- *pparts = count;
-
- if(stats.f_secparts != 0){
-
-    temp = (stats.f_secparts << count);
-    count = 0;
-    while(temp != 0){
-           count++;
-           temp <<= 1;
-    }
-    *sparts = count;
- }
- return ELIO_OK;
-
-}
-
-#endif
 
 
 /*\ Noncollective File Open
@@ -856,48 +769,7 @@ Fd_t  elio_open(const char* fname, int type, int mode)
   }
 #endif
 
-#if defined(CRAY) && defined(FFIO)
-  {
-    struct ffsw ffstat;
-    long pparts, sparts, cbits, cblocks;
-    extern long _MPP_MY_PE;
-    char *ffio_str="cache:256"; /*  intern I/O buffer/cache 256*4096 bytes */ 
-                                /*  JN: we do not want read-ahead write-behind*/
-
-    if(cray_part_info(dirname,&pparts,&sparts) != ELIO_OK){
-                   free(fd);
-                   ELIO_ERROR_NULL(STATFAIL, 0);
-    }
-
-    ptype |= ( O_BIG | O_PLACE | O_RAW );
-    cbits = (sparts != 0) ? 1 : 0;
-
-    if( sparts != 0) {
-
-      /* stripe is set so we only select secondary partitions with cbits */
-      if(mode == ELIO_SHARED){
-         cbits = ~((~0L)<<PARIO_MIN(32,sparts)); /* use all secondary partitions */
-         cblocks = 100;
-      }else{
-         cbits = 1 << (_MPP_MY_PE%sparts);  /* round robin over s part */
-      }
-
-      cbits <<= pparts;        /* move us out of the primary partitions */
-
-     }
-
-     
-/*     printf ("parts=%d cbits = %X\n",sparts,cbits);*/
-
-     if(mode == ELIO_SHARED)
-      fd->fd = OPEN(fname, ptype, FOPEN_MODE, cbits, cblocks, &ffstat, NULL);
-     else
-      fd->fd = OPEN(fname, ptype, FOPEN_MODE, 0L   , 0      , &ffstat, ffio_str);
-
-  }
-#else
   fd->fd = OPEN(fname, ptype, FOPEN_MODE );
-#endif
 
   if( (int)fd->fd == -1) {
                    free(fd);

@@ -202,13 +202,8 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
 }
 
 
-#if defined(CRAY) || defined(FUJITSU)
-#ifdef CRAY
-#  define DAXPY  SAXPY
-#else
+#if defined(FUJITSU)
 #  define DAXPY  daxpy_
-#endif
-
 static int ONE=1;
 #define THRESH_ACC 32
 
@@ -509,19 +504,6 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
           
 	  }
 	}
-    
-  /* deal with non-blocking loads and stores */
-#if defined(NB_NONCONT)
-    {
-      if(!(SAMECLUSNODE(proc))){
-	if(op == GET){
-	  WAIT_FOR_GETS; /* wait for data arrival */
-	}else { 
-	  WAIT_FOR_PUTS; /* data must be copied out*/ 
-	}
-      }
-    }
-#endif
 
   /*    if(proc!=armci_me) INTR_ON;*/
 
