@@ -87,7 +87,7 @@ extern thread_id_t armci_serv_tid;
 #  define SERVER_CONTEXT (armci_me<0)
 #endif
 
-#if defined(CLUSTER) || defined(CRAY) || defined(CRAY_XT) || defined(CRAY_SHMEM)
+#if defined(CLUSTER)
 #  include "request.h"
 #endif
 
@@ -141,7 +141,7 @@ extern int armci_register_thread(thread_id_t id);
 #   endif
 #endif
 
-#if defined(CRAY_XT) || defined(FUJITSU)       
+#if defined(FUJITSU)       
 #define ACC_COPY
 #endif
 
@@ -278,7 +278,7 @@ extern void armci_finalize_fence();
 #endif
 
 
-#if defined(CLUSTER) && !defined(CRAY_SHMEM)
+#if defined(CLUSTER)
 #  define ORDER(op_,proc_)\
           if(!SAMECLUSNODE(proc_) && op_ != GET )FENCE_ARR(proc_)=1
 #  define UPDATE_FENCE_INFO(proc_) if(!SAMECLUSNODE(proc_))FENCE_ARR(proc_)=1

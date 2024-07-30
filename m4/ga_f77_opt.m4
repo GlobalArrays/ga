@@ -11,7 +11,6 @@ AS_IF([test "x$ga_cv_f77_opt" = x && test "x$enable_opt" = xyes], [
 AS_CASE([$ga_cv_target:$ga_cv_f77_compiler_vendor:$host_cpu],
 [BGQ:ibm:*],                [ga_cv_f77_opt="-O3 -qstrict -qarch=qp -qtune=qp"],
 [BGQ:gnu:*],                [ga_cv_f77_opt="-O2"],
-[CRAY_XT:*:*],              [ga_cv_f77_opt=],
 [CYGWIN:*:*],               [ga_cv_f77_opt=],
 [FUJITSU_VPP64:*:*],        [ga_cv_f77_opt="-Sw"],
 [FUJITSU_VPP:*:*],          [ga_cv_f77_opt="-Sw -KA32"],

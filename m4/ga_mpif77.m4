@@ -26,7 +26,7 @@
 #
 # Known MPI Fortran 95 compilers:
 #  cmpifc       ?? not sure if this is even F95
-#  ftn          native Fortran 95 compiler on Cray XT4,XT5
+#  ftn          native Fortran 95 compiler on Cray 
 #  mpif95       generic compiler name
 #  mpixlf95     IBM Blue Gene Fortran 95
 #  mpixlf95_r   IBM Blue Gene Fortran 95, reentrant code
@@ -50,10 +50,9 @@
 #
 # Known Fortran 77 compilers:
 #  af77         Apogee F77 compiler for Intergraph hardware running CLIX
-#  cf77         native F77 compiler under older Crays (prefer over fort77)
 #  f77          generic compiler names
 #  fl32         Microsoft Fortran 77 "PowerStation" compiler
-#  fort77       native F77 compiler under HP-UX (and some older Crays)
+#  fort77       native F77 compiler on older UNIX systems
 #  frt          Fujitsu F77 compiler
 #  g77          GNU Fortran 77 compiler
 #  pgf77        Portland Group F77 compiler

@@ -37,13 +37,6 @@
 #if HAVE_STDARG_H
 #   include <stdarg.h>
 #endif
-#if defined(CRAY)
-#  include <sys/category.h>
-#  include <sys/resource.h>
-#  if HAVE_UNISTD_H
-#   include <unistd.h>
-#  endif
-#endif
 #if HAVE_ERRNO_H
 #   include <errno.h>
 #endif
@@ -52,14 +45,6 @@
 #include "memlock.h"
 #include "armci_shmem.h"
 #include "signaltrap.h"
-
-#ifdef CRAY_SHMEM
-#  ifdef CRAY_XT
-#    include <mpp/shmem.h>
-#  else
-#    include <shmem.h>
-#  endif
-#endif
 
 /* global variables -- Initialized in PARMCI_Init() and never modified*/
 int armci_me, armci_nproc;
@@ -93,10 +78,6 @@ typedef struct{
 }armci_notify_t;
 
 armci_notify_t **_armci_notify_arr;
-
-#ifdef CRAY_XT
-int _armci_malloc_local_region;
-#endif
 
 void ARMCI_Cleanup()
 {
@@ -373,14 +354,6 @@ int _armci_init(MPI_Comm comm)
     th_idx = ARMCI_THREAD_IDX;
     if (th_idx)
         printf("WARNING: PARMCI_Init is called from thread %d, should be 0\n",th_idx);
-#endif
-
-#ifdef _CRAYMPP
-    cmpl_proc=-1;
-#endif
-
-#ifdef CRAY_SHMEM
-    shmem_init();
 #endif
 
     armci_init_clusinfo();

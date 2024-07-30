@@ -1,17 +1,9 @@
 # GA_TARGET()
 # -----------
 # Attempt to determine the old TARGET variable automatically.
-# Deprecated TARGETs:
-# CRAY-SV1
-# cray-sv2
-# CRAY-T3E
-# CRAY-YMP
-# CYGNUS
-# INTERIX
 
 AC_DEFUN([GA_TARGET],
 [# AH_TEMPLATE for all known TARGETs
-AH_TEMPLATE([CRAY_XT],      [Define to 1 on Cray XT systems])
 AH_TEMPLATE([CYGNUS],       [Define to 1 on Cygnus systems])
 AH_TEMPLATE([CYGWIN],       [Define to 1 on Cygwin systems])
 AH_TEMPLATE([FUJITSU_VPP],  [Define to 1 on fujitsu systems])
@@ -33,7 +25,6 @@ AC_CACHE_CHECK([for TARGET base (64bit-ness checked later)],
 [ga_cv_target_base=UNKNOWN
 AS_IF([test "x$ga_cv_target_base" = xUNKNOWN],
     [AS_CASE([$host],
-        #[TODO],            [ga_cv_target_base=CRAY_XT],
         [*cygwin*],         [ga_cv_target_base=CYGWIN],
         [*fujitsu*],        [ga_cv_target_base=FUJITSU_VPP],
         [*ibm*],            [ga_cv_target_base=IBM],
@@ -61,7 +52,6 @@ dnl AS_IF([test "x$ARMCI_TOP_BUILDDIR" != x], [
             [Define if we want this system to use SYSV shared memory])])
 dnl ])
 # Hopefully these will never be used and we can remove them soon.
-AM_CONDITIONAL([CRAY_XT],      [test "$ga_cv_target_base" = CRAY_XT])
 AM_CONDITIONAL([CYGNUS],       [test "$ga_cv_target_base" = CYGNUS])
 AM_CONDITIONAL([CYGWIN],       [test "$ga_cv_target_base" = CYGWIN])
 AM_CONDITIONAL([FUJITSU_VPP],  [test "$ga_cv_target_base" = FUJITSU_VPP])

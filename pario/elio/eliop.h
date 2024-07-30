@@ -27,10 +27,7 @@
 extern void GA_Error(char*, int);
 #endif
 
-#if defined(CRAY)
-#        include <sys/statfs.h>
-#        define  STATVFS statfs
-#elif defined(__FreeBSD__) && !defined(GLIBC)
+#if defined(__FreeBSD__) && !defined(GLIBC)
 #        include <sys/param.h>
 #        include <sys/mount.h>
 #        define  STATVFS statfs
@@ -56,7 +53,7 @@ extern void GA_Error(char*, int);
 
 #include <fcntl.h>
 
-#if (defined(CRAY) && defined(FFIO))
+#if defined(FFIO)
 #        include <ffio.h>
 #        include <sys/fstyp.h>
 #        include <sys/fsid.h>

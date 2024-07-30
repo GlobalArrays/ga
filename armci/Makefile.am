@@ -155,10 +155,6 @@ libarmci_la_SOURCES += src/xfer/vector.c
 if MSG_COMMS_MPI
 libarmci_la_SOURCES += src/common/groups.c
 endif
-if ARMCI_NETWORK_CRAY_SHMEM
-AM_CPPFLAGS += -I$(top_srcdir)/src/devices/cray-shmem
-libarmci_la_SOURCES += src/memory/shmalloc.c
-endif
 if ARMCI_NETWORK_MPI_MT
 AM_CPPFLAGS += -I$(top_srcdir)/src/devices/mpi-mt
 libarmci_la_SOURCES += src/common/ds-shared.c
@@ -231,9 +227,7 @@ libarmci_la_SOURCES += src/memory/shmlimit.c
 endif
 endif
 endif
-if NB_NONCONT
-libarmci_la_SOURCES += src/common/noncont.c
-endif
+
 if THREAD_SAFE
 libarmci_la_SOURCES += src/common/utils.c
 libarmci_la_SOURCES += src/util/threads.c
