@@ -9,9 +9,7 @@
 #   include <string.h>
 #endif
 
-#if 1 || defined(CRAY_XT)
 #  define MEMCPY
-#endif
 
 #ifndef EXTERN
 #   define EXTERN extern
@@ -25,10 +23,6 @@
 
 #if defined(FUJITSU) || defined(SOLARIS)
 #   define PTR_ALIGN
-#endif
-
-#if defined(SHMEM_HANDLE_SUPPORTED) && !defined(CRAY_SHMEM)
-#error SHMEM_HANDLE_SUPPORTED should not be defined on a non CRAY_SHMEM network
 #endif
 
 #if  defined(MEMCPY)  && !defined(armci_copy)
@@ -130,6 +124,9 @@
       }\
     }
 #endif
+
+#define FENCE_NODE(p)
+#define UPDATE_FENCE_STATE(p, op, nissued)
 
 #ifdef NEC
 #  define THRESH 1

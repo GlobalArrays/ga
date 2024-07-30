@@ -278,7 +278,7 @@ extern void armci_finalize_fence();
 #endif
 
 
-#if defined(CLUSTER) && !defined(CRAY_SHMEM)
+#if defined(CLUSTER)
 #  define ORDER(op_,proc_)\
           if(!SAMECLUSNODE(proc_) && op_ != GET )FENCE_ARR(proc_)=1
 #  define UPDATE_FENCE_INFO(proc_) if(!SAMECLUSNODE(proc_))FENCE_ARR(proc_)=1

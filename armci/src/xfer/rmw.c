@@ -78,13 +78,7 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
 
 int PARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
 {
-#if defined(_CRAYMPP) || defined(CRAY_SHMEM)
-    int  ival;
-    long lval;
-#endif
-
-#if defined(CLUSTER) && !defined(CYGWIN)\
-    && !defined(CRAY_SHMEM) 
+#if defined(CLUSTER) && !defined(CYGWIN)
      if(!SAMECLUSNODE(proc)){
        armci_rem_rmw(op, ploc, prem,  extra, proc);
        return 0;

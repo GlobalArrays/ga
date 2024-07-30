@@ -412,9 +412,6 @@ libga_la_SOURCES += global/src/ga_diag_seq.F
 if ENABLE_EISPACK
 libga_la_SOURCES += global/src/rsg.F
 endif
-if CRAY_XT_NETWORKS
-libga_la_SOURCES += global/src/ga_dgemmf.F
-endif # CRAY_XT_NETWORKS
 if ENABLE_PEIGS
 libga_la_SOURCES += global/src/ga_diag.F
 endif # ENABLE_PEIGS

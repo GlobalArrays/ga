@@ -47,13 +47,6 @@ void **memlock_table_array;
 
 static memlock_t table[MAX_SLOTS];
 
-#if (defined(CRAY_SHMEM) && defined(CRAY_XT))
-#define MAX_SEGS 512
-armci_memoffset_t armci_memoffset_table[MAX_SEGS];
-static short int seg_count=0;
-static short int new_seg=0;
-#endif
-
 /*\ simple locking scheme that ignores addresses
 \*/
 void armci_lockmem_(void *pstart, void *pend, int proc)
@@ -149,15 +142,6 @@ void armci_lockmem(void *start, void *end, int proc)
 #else
      pstart=start;
      pend =end;
-#endif
-
-#ifdef CRAY_SHMEM
-     { /* adjust according the remote process raw address */
-        long bytes = (long) ((char*)pend-(char*)pstart);
-        extern void* armci_shmalloc_remote_addr(void *ptr, int proc);
-        pstart = armci_shmalloc_remote_addr(pstart, proc);
-        pend   = (char*)pstart + bytes;
-     }
 #endif
 
      while(1){

@@ -8,7 +8,7 @@
 #define MAX_LOCKS 1024
 #define NUM_LOCKS MAX_LOCKS 
 
-#if !(defined(PMUTEX) || defined(PSPIN) || defined(CYGNUS) || defined(CRAY_XT))
+#if !(defined(PMUTEX) || defined(PSPIN) || defined(CYGNUS) )
 #   include "spinlock.h"
 #endif
 
@@ -57,7 +57,7 @@ extern void unsetlock(int);
 #   define NAT_LOCK(x,p)   setlock(x)
 #   define NAT_UNLOCK(x,p)  unsetlock(x)
 
-#if defined(CYGNUS)
+#elif defined(CYGNUS)
 typedef int lockset_t;
 #   define NAT_LOCK(x,p) armci_die("does not run in parallel",0) 
 #   define NAT_UNLOCK(x,p) armci_die("does not run in parallel",0)  
