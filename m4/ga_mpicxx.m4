@@ -22,7 +22,7 @@
 #  sxc++    NEC SX
 #  openCC   AMD's x86 open64
 #  sunCC    Sun's Studio
-#  crayc++  Cray
+#  craycxx  Cray
 #
 # Known MPI C++ compilers
 #  mpic++
@@ -67,7 +67,7 @@ AS_IF([test x$with_mpi_wrappers = xyes],
  ga_cv_mpicxx_naked="$CXX"
  CXX="$MPICXX"],
 [AC_MSG_ERROR([CXX/MPICXX case failure])])])
-ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC openCC sunCC crayc++ g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
+ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC openCC sunCC g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
 ga_mpicxx="mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ mpiFCC CC"
 AS_IF([test x$with_mpi_wrappers = xyes],
     [CXX_TO_TEST="$ga_mpicxx_pref $ga_mpicxx"],

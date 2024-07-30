@@ -258,25 +258,6 @@ AS_IF([test "x$happy" = xyes],
     [$2])
 ])dnl
 
-# _GA_ARMCI_NETWORK_DMAPP([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
-# -----------------------------------------------------------------
-AC_DEFUN([_GA_ARMCI_NETWORK_DMAPP], [
-AC_MSG_NOTICE([searching for DMAPP...])
-happy=yes
-AS_IF([test "x$happy" = xyes],
-    [ga_armci_network=DMAPP; with_dmapp=yes; $1],
-    [$2])
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([gethugepagesize], [hugetlbfs])
-     AS_CASE([$ac_cv_search_gethugepagesize],
-            ["none required"], [],
-            [no], [],
-            [# add missing lib to ARMCI_NETWORK_LIBS if not there
-             AS_CASE([$ARMCI_NETWORK_LIBS],
-                     [*$ac_cv_search_gethugepagesize*], [],
-                     [ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $ac_cv_search_gethugepagesize"])])])
-])dnl
-
 # _GA_ARMCI_NETWORK_OFI([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 # -------------------------------------------------------------------
 AC_DEFUN([_GA_ARMCI_NETWORK_OFI], [
@@ -304,7 +285,6 @@ AC_ARG_ENABLE([autodetect],
 armci_network_external=0
 armci_network_count=0
 _GA_ARMCI_NETWORK_WITH([armci],     [external; path to external ARMCI library])
-_GA_ARMCI_NETWORK_WITH([dmapp],     [(Comex) Cray DMAPP])
 _GA_ARMCI_NETWORK_WITH([mpi-mt],    [(Comex) MPI-2 multi-threading])
 _GA_ARMCI_NETWORK_WITH([mpi-pt],    [(Comex) MPI-2 multi-threading with progress thread])
 _GA_ARMCI_NETWORK_WITH([mpi-pr],    [(Comex) MPI-1 two-sided with progress rank])
@@ -342,8 +322,6 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
         [_GA_ARMCI_NETWORK_OPENIB()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_portals4" != xno],
         [_GA_ARMCI_NETWORK_PORTALS4()])
-     AS_IF([test "x$ga_armci_network" = x && test "x$with_dmapp" != xno],
-        [_GA_ARMCI_NETWORK_DMAPP()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_armci" != xno],
         [_GA_ARMCI_NETWORK_ARMCI()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_ofi" != xno],
@@ -361,9 +339,6 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
         [1], [AS_IF([test "x$ga_armci_network" = xARMCI],
                  [_GA_ARMCI_NETWORK_ARMCI([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=ARMCI failed])])])
-              AS_IF([test "x$ga_armci_network" = xDMAPP],
-                 [_GA_ARMCI_NETWORK_DMAPP([],
-                    [AC_MSG_ERROR([test for ARMCI_NETWORK=DMAPP failed])])])
               AS_IF([test "x$ga_armci_network" = xMPI_TS],
                  [_GA_ARMCI_NETWORK_MPI_TS([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=MPI_TS failed])])])
@@ -398,7 +373,6 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
         [AC_MSG_WARN([too many armci networks specified: $armci_network_count])
          AC_MSG_WARN([the following were specified:])
          _GA_ARMCI_NETWORK_WARN([armci])
-         _GA_ARMCI_NETWORK_WARN([dmapp])
          _GA_ARMCI_NETWORK_WARN([mpi-ts])
          _GA_ARMCI_NETWORK_WARN([mpi-mt])
          _GA_ARMCI_NETWORK_WARN([mpi-pt])
@@ -418,7 +392,6 @@ LDFLAGS="$ga_save_LDFLAGS"
 # Remove ARMCI_NETWORK_LIBS from LIBS.
 LIBS="$ga_save_LIBS"
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([armci])
-_GA_ARMCI_NETWORK_AM_CONDITIONAL([dmapp])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-ts])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-mt])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-pt])
@@ -436,7 +409,6 @@ AC_SUBST([ARMCI_NETWORK_CPPFLAGS])
 
 # permanent hack
 AS_CASE([$ga_armci_network],
-[DMAPP],    [ARMCI_SRC_DIR=comex],
 [MPI_MT],   [ARMCI_SRC_DIR=comex],
 [MPI_PT],   [ARMCI_SRC_DIR=comex],
 [MPI_PR],   [ARMCI_SRC_DIR=comex],
@@ -489,7 +461,6 @@ AM_CONDITIONAL([HAVE_ARMCI_STRIDE_INFO_INIT],
 delay_tcgmsg_mpi_startup=1
 AS_CASE([$ga_armci_network],
 [ARMCI],        [delay_tcgmsg_mpi_startup=0],
-[DMAPP],        [delay_tcgmsg_mpi_startup=0],
 [MPI_TS],       [delay_tcgmsg_mpi_startup=0],
 [MPI_MT],       [delay_tcgmsg_mpi_startup=0],
 [MPI_PT],       [delay_tcgmsg_mpi_startup=0],

@@ -1,13 +1,6 @@
 # GA_TARGET()
 # -----------
 # Attempt to determine the old TARGET variable automatically.
-# Deprecated TARGETs:
-# CRAY-SV1
-# cray-sv2
-# CRAY-T3E
-# CRAY-YMP
-# CYGNUS
-# INTERIX
 
 AC_DEFUN([GA_TARGET],
 [# AH_TEMPLATE for all known TARGETs
