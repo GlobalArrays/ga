@@ -52,6 +52,7 @@
 #  af77         Apogee F77 compiler for Intergraph hardware running CLIX
 #  f77          generic compiler names
 #  fl32         Microsoft Fortran 77 "PowerStation" compiler
+#  fort77       native F77 compiler on older UNIX systems
 #  frt          Fujitsu F77 compiler
 #  g77          GNU Fortran 77 compiler
 #  pgf77        Portland Group F77 compiler
