@@ -16,7 +16,6 @@
 #  gfortran     GNU Fortran 95+ compiler (released in gcc 4.0)
 #  ifc          Intel Fortran 95 compiler for Linux/x86 (now ifort)
 #  ifort        Intel Fortran 95 compiler for Linux/x86 (was ifc)
-#  lf95         Lahey-Fujitsu F95 compiler
 #  pghpf/pgf95  Portland Group F95 compiler
 #  xlf95        IBM (AIX) F95 compiler
 #  pathf95      PathScale
@@ -60,8 +59,6 @@
 #  pathf77      PathScale
 #
 # Known MPI Fortran 77 compilers:
-#  hf77         ??
-#  mpf77        ??
 #  mpif77       generic compiler name
 #  mpifrt       Fujitsu
 #

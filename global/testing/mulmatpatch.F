@@ -4,11 +4,7 @@
 c $Id: mulmatpatch.F,v 1.6 2005-11-23 10:25:18 manoj Exp $
 #define xgemm TEST_DGEMM
 #define ygemm TEST_ZGEMM
-#if defined(FUJITSU)
-# define THRESH  1.0d-10
-#else
 # define THRESH  1.0d-20
-#endif
 #define MISMATCH(x,y) abs(x-y)/max(1,abs(x)).gt.THRESH
 #define NMAX 10
 c
