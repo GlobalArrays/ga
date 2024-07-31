@@ -25,6 +25,9 @@
 #include "scope.h"
 #include "table.h"
 
+// this was only ever disabled for Blue Gene, which has been removed.
+#define ENABLE_ARMCI_MEM_OPTION 1
+
 #if defined(ENABLE_CUDA_MEM)
 extern int cudaMallocManaged(void** devPtr, size_t size, unsigned int flags);
 #elif defined(ENABLE_ARMCI_MEM_OPTION)
