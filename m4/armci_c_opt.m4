@@ -10,8 +10,6 @@ AC_CACHE_CHECK([for specific C optimizations], [armci_cv_c_opt], [
 AS_IF([test "x$ARMCI_COPT" != x], [armci_cv_c_opt="$ARMCI_COPT"], [armci_cv_c_opt=])
 AS_IF([test "x$armci_cv_c_opt" = x && test "x$enable_opt" = xyes], [
 AS_CASE([$ga_cv_target:$ga_cv_c_compiler_vendor:$host_cpu:$ga_armci_network],
-[BGQ:ibm:*:*],              [armci_cv_c_opt="-O3 -qstrict -qarch=qp -qtune=qp"],
-[BGQ:gnu:*:*],              [armci_cv_c_opt="-O2"],
 [CYGWIN:*:*:*],             [armci_cv_c_opt="-malign-double"],
 [FUJITSU_VPP64:*:*:*],      [armci_cv_c_opt="-x100"],
 [FUJITSU_VPP:*:*:*],        [armci_cv_c_opt="-x100 -KA32"],
