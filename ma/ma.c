@@ -97,11 +97,7 @@ extern void* ARMCI_Malloc_local(long bytes);
  * problem is solved, but the sum of sizes of preceding fields can
  * still potentially cause difficulty.
  */
-#if defined(BGQ)
-#define ALIGNMENT	32
-#else
 #define ALIGNMENT	sizeof(size_t)
-#endif
 
 /* min size of block split and placed on free list */
 #define MINBLOCKSIZE mai_round((size_t)(ALIGNMENT + BLOCK_OVERHEAD_FIXED), \
