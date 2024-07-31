@@ -67,9 +67,6 @@
 #
 AC_DEFUN([GA_PROG_MPIF77],
 [AC_ARG_VAR([MPIF77], [MPI Fortran 77 compiler])
-AS_CASE([$ga_cv_target_base],
-[BGQ],  [ga_mpif77_pref=mpixlf77_r;ga_f77_pref=bgxlf_r],
-[])
 # If FC is set, override F77.  Similarly for MPIFC/MPIF77 and FCFLAGS/FFLAGS.
 AS_IF([test "x$FC" != x],       [F77="$FC"])
 AS_IF([test "x$MPIFC" != x],    [MPIF77="$MPIFC"])

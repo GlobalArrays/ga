@@ -33,9 +33,6 @@
 #
 AC_DEFUN([GA_PROG_MPICC],
 [AC_ARG_VAR([MPICC], [MPI C compiler])
-AS_CASE([$ga_cv_target_base],
-[BGQ],  [ga_mpicc_pref=mpixlc_r; ga_cc_pref=bgxlc_r],
-[])
 # In the case of using MPI wrappers, set CC=MPICC since CC will override
 # absolutely everything in our list of compilers.
 # Save CC, just in case.
