@@ -11,8 +11,6 @@ AS_IF([test "x$ARMCI_FOPT" != x], [armci_cv_f77_opt="$ARMCI_FOPT"], [armci_cv_f7
 AS_IF([test "x$armci_cv_f77_opt" = x && test "x$enable_opt" = xyes], [
 AS_CASE([$ga_cv_target:$ga_cv_f77_compiler_vendor:$host_cpu:$ga_armci_network],
 [CYGWIN:*:*:*],                 [armci_cv_f77_opt=],
-[FUJITSU_VPP64:*:*:*],          [armci_cv_f77_opt="-Sw"],
-[FUJITSU_VPP:*:*:*],            [armci_cv_f77_opt="-Sw -KA32"],
 [IBM64:*:*:*],                  [armci_cv_f77_opt=],
 [IBM:*:*:*],                    [armci_cv_f77_opt="-O4 -qarch=auto -qstrict"],
 [LINUX64:fujitsu:x86_64:OPENIB],[armci_cv_f77_opt="-Kfast -X9 -Am -fw -Kthreadsafe"],

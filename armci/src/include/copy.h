@@ -21,7 +21,7 @@
    EXTERN long long _armci_vec_sync_flag;
 #endif
 
-#if defined(FUJITSU) || defined(SOLARIS)
+#if defined(SOLARIS)
 #   define PTR_ALIGN
 #endif
 
@@ -94,15 +94,6 @@
       }\
     }
 
-#if defined(FUJITSU)
-
-#   define armci_put2D(p, bytes,count,src_ptr,src_stride,dst_ptr,dst_stride)\
-           CopyPatchTo(src_ptr, src_stride, dst_ptr, dst_stride, count,bytes, p)
-
-#   define armci_get2D(p, bytes, count, src_ptr,src_stride,dst_ptr,dst_stride)\
-           CopyPatchFrom(src_ptr, src_stride, dst_ptr, dst_stride,count,bytes,p)
-
-#else
 #   define armci_put2D(proc,bytes,count,src_ptr,src_stride,dst_ptr,dst_stride){\
     int _j;\
     char *ps=src_ptr, *pd=dst_ptr;\
@@ -123,7 +114,6 @@
           pd += dst_stride;\
       }\
     }
-#endif
 
 #define FENCE_NODE(p)
 #define UPDATE_FENCE_STATE(p, op, nissued)
@@ -203,20 +193,8 @@ void c_dcopy13_(const int*    const restrict rows,
 
 
 /***************************** 1-Dimensional copy ************************/
-#if  defined(FUJITSU)
-#      include "fujitsu-vpp.h"
-#      ifndef __sparc
-#         define armci_copy(src,dst,n)  _MmCopy((char*)(dst), (char*)(src), (n))
-#      endif
-#      define armci_put  CopyTo
-#      define armci_get  CopyFrom                                                
-
-#else
-
-#      define armci_get(src,dst,n,p)    armci_copy((src),(dst),(n))
-#      define armci_put(src,dst,n,p)    armci_copy((src),(dst),(n))
-
-#endif
+#define armci_get(src,dst,n,p)    armci_copy((src),(dst),(n))
+#define armci_put(src,dst,n,p)    armci_copy((src),(dst),(n))
 
 #ifndef MEM_FENCE
 #   define MEM_FENCE {}

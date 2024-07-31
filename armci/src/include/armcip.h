@@ -141,10 +141,6 @@ extern int armci_register_thread(thread_id_t id);
 #   endif
 #endif
 
-#if defined(FUJITSU)       
-#define ACC_COPY
-#endif
-
 #ifndef FATR
 # if defined(WIN32) && !defined(__MINGW32__)
 #   define FATR __stdcall

@@ -202,29 +202,6 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
 }
 
 
-#if defined(FUJITSU)
-#  define DAXPY  daxpy_
-static int ONE=1;
-#define THRESH_ACC 32
-
-static void daxpy_2d_(void* alpha, int *rows, int *cols, void *a, int *ald,
-		      void* b, int *bld)
-{
-  int c,r;   
-  double *A = (double*)a;
-  double *B = (double*)b;
-  double Alpha = *(double*)alpha;
-
-  if(*rows < THRESH_ACC)
-    for(c=0;c<*cols;c++)
-      for(r=0;r<*rows;r++)
-	A[c* *ald+ r] += Alpha * B[c* *bld+r];
-  else for(c=0;c<*cols;c++)
-    DAXPY(rows, alpha, B + c* *bld, &ONE, A + c* *ald, &ONE);
-}
-#endif
-
-
 void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes, int lockit)
 {
   int rows;

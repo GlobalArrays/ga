@@ -11,8 +11,6 @@ AS_IF([test "x$ARMCI_COPT" != x], [armci_cv_c_opt="$ARMCI_COPT"], [armci_cv_c_op
 AS_IF([test "x$armci_cv_c_opt" = x && test "x$enable_opt" = xyes], [
 AS_CASE([$ga_cv_target:$ga_cv_c_compiler_vendor:$host_cpu:$ga_armci_network],
 [CYGWIN:*:*:*],             [armci_cv_c_opt="-malign-double"],
-[FUJITSU_VPP64:*:*:*],      [armci_cv_c_opt="-x100"],
-[FUJITSU_VPP:*:*:*],        [armci_cv_c_opt="-x100 -KA32"],
 [IBM64:*:*:*],              [armci_cv_c_opt="-O3 -qinline=100 -qstrict -qarch=auto -qtune=auto"],
 [IBM:*:*:*],                [armci_cv_c_opt="-O3 -qinline=100 -qstrict -qarch=auto -qtune=auto"],
 [LINUX64:fujitsu:x86_64:*], [armci_cv_c_opt="-Kfast"],

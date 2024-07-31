@@ -10,8 +10,6 @@ AS_IF([test "x$GA_COPT" != x], [ga_cv_c_opt="$GA_COPT"], [ga_cv_c_opt=])
 AS_IF([test "x$ga_cv_c_opt" = x && test "x$enable_opt" = xyes], [
 AS_CASE([$ga_cv_target:$ga_cv_c_compiler_vendor:$host_cpu],
 [CYGWIN:*:*],               [ga_cv_c_opt=],
-[FUJITSU_VPP64:*:*],        [ga_cv_c_opt=],
-[FUJITSU_VPP:*:*],          [ga_cv_c_opt="-KA32"],
 [IBM64:*:*],                [ga_cv_c_opt=],
 [IBM:*:*],                  [ga_cv_c_opt=],
 [LINUX64:fujitsu:x86_64],   [ga_cv_c_opt="-Kfast"],

@@ -10,8 +10,6 @@ AS_IF([test "x$GA_FOPT" != x], [ga_cv_f77_opt="$GA_FOPT"], [ga_cv_f77_opt=])
 AS_IF([test "x$ga_cv_f77_opt" = x && test "x$enable_opt" = xyes], [
 AS_CASE([$ga_cv_target:$ga_cv_f77_compiler_vendor:$host_cpu],
 [CYGWIN:*:*],               [ga_cv_f77_opt=],
-[FUJITSU_VPP64:*:*],        [ga_cv_f77_opt="-Sw"],
-[FUJITSU_VPP:*:*],          [ga_cv_f77_opt="-Sw -KA32"],
 [IBM64:*:*],                [ga_cv_f77_opt="-qarch=auto"],
 [IBM:*:*],                  [ga_cv_f77_opt="-qarch=auto"],
 [LINUX64:*:alpha],          [ga_cv_f77_opt="-align_dcommons -fpe3 -check nooverflow -assume accuracy_sensitive -check nopower -check nounderflow"],
