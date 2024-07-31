@@ -10,8 +10,6 @@ AC_CACHE_CHECK([for specific Fortran optimizations], [armci_cv_f77_opt], [
 AS_IF([test "x$ARMCI_FOPT" != x], [armci_cv_f77_opt="$ARMCI_FOPT"], [armci_cv_f77_opt=])
 AS_IF([test "x$armci_cv_f77_opt" = x && test "x$enable_opt" = xyes], [
 AS_CASE([$ga_cv_target:$ga_cv_f77_compiler_vendor:$host_cpu:$ga_armci_network],
-[BGQ:ibm:*:*],                  [armci_cv_f77_opt="-O3 -qstrict -qarch=qp -qtune=qp"],
-[BGQ:gnu:*:*],                  [armci_cv_f77_opt="-O2"],
 [CYGWIN:*:*:*],                 [armci_cv_f77_opt=],
 [IBM64:*:*:*],                  [armci_cv_f77_opt=],
 [IBM:*:*:*],                    [armci_cv_f77_opt="-O4 -qarch=auto -qstrict"],

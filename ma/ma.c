@@ -25,6 +25,9 @@
 #include "scope.h"
 #include "table.h"
 
+// this was only ever disabled for Blue Gene, which has been removed.
+#define ENABLE_ARMCI_MEM_OPTION 1
+
 #if defined(ENABLE_CUDA_MEM)
 extern int cudaMallocManaged(void** devPtr, size_t size, unsigned int flags);
 #elif defined(ENABLE_ARMCI_MEM_OPTION)
@@ -97,11 +100,7 @@ extern void* ARMCI_Malloc_local(long bytes);
  * problem is solved, but the sum of sizes of preceding fields can
  * still potentially cause difficulty.
  */
-#if defined(BGQ)
-#define ALIGNMENT	32
-#else
 #define ALIGNMENT	sizeof(size_t)
-#endif
 
 /* min size of block split and placed on free list */
 #define MINBLOCKSIZE mai_round((size_t)(ALIGNMENT + BLOCK_OVERHEAD_FIXED), \
