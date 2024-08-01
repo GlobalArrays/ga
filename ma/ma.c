@@ -2508,9 +2508,11 @@ public Boolean MA_init(
     /* segment consists of heap and stack */
     total_bytes = heap_bytes + stack_bytes;
 #ifdef NOUSE_MMAP
+#if HAVE_MALLOPT
     /* disable memory mapped malloc */
     mallopt(M_MMAP_MAX, 0);
     mallopt(M_TRIM_THRESHOLD, -1);
+#endif
 #endif
     /* allocate the segment of memory */
 #ifdef ENABLE_CUDA_MEM
