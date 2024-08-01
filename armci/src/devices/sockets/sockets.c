@@ -55,11 +55,7 @@
 #include "armcip.h"
 #include "sockets.h"
 
-#   ifdef NEC
-typedef int soclen_t;
-#   else
 typedef socklen_t soclen_t;
-#   endif
 
 /* portability of socklen_t definition is iffy - we need to avoid it !!
 #if defined(LINUX) && ( defined(_SOCKETBITS_H) || defined(__BITS_SOCKET_H))

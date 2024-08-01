@@ -231,20 +231,6 @@ if THREAD_SAFE
 libarmci_la_SOURCES += src/common/utils.c
 libarmci_la_SOURCES += src/util/threads.c
 endif
-if NEC
-libarmci_la_SOURCES += src/locks/tas-sx.s
-
-src/locks/tas-sx.o: src/locks/tas-sx.s
-	$(AM_V_CCAS) \
-	$(CCAS) $(AM_CCASFLAGS) $(CCASFLAGS) \
-	-c -o src/locks/tas-sx.o $(top_srcdir)/src/locks/tas-sx.s
-
-src/locks/tas-sx.lo: src/locks/tas-sx.s
-	$(AM_V_CCAS) \
-	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(CCAS) $(AM_CCASFLAGS) \
-	$(CCASFLAGS) -c -o src/locks/tas-sx.lo $(top_srcdir)/src/locks/tas-sx.s
-endif
 
 include_HEADERS += src/include/armci.h
 include_HEADERS += src/include/gpc.h

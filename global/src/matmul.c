@@ -1405,9 +1405,6 @@ void pnga_matmul(transa, transb, alpha, beta,
 	  CONTIG_CHUNKS_OPT_FLAG = UNSET;
 	  DIRECT_ACCESS_OPT_FLAG = UNSET;
        }
-#    if defined(NEC)
-       use_NB_matmul = UNSET;
-#    endif
     }
 
     /* if block cyclic, then use regular algorithm. This is turned on for now
