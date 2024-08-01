@@ -301,9 +301,31 @@ void pnga_copy_patch(char *trans,
         /*** due to generality of this transformation scatter is required ***/
       } else{
         if (use_put) {
+#ifdef USE_GA_MALLOC
           tmp_ptr = ga_malloc(nelem, atype, "v");
           src_idx_ptr = (Integer*) ga_malloc((andim*nelem), MT_F_INT, "si");
           dst_idx_ptr = (Integer*) ga_malloc((bndim*nelem), MT_F_INT, "di");
+#else
+          src_idx_ptr = (Integer*)malloc((andim*nelem)*sizeof(Integer));
+          dst_idx_ptr = (Integer*)malloc((bndim*nelem)*sizeof(Integer));
+          if (atype == C_INT) {
+            tmp_ptr = malloc(nelem*sizeof(int));
+          } else if (atype == C_LONG) {
+            tmp_ptr = malloc(nelem*sizeof(long));
+          } else if (atype == C_LONGLONG) {
+            tmp_ptr = malloc(nelem*sizeof(long long));
+          } else if (atype == C_FLOAT) {
+            tmp_ptr = malloc(nelem*sizeof(float));
+          } else if (atype == C_DBL) {
+            tmp_ptr = malloc(nelem*sizeof(double));
+          } else if (atype == C_SCPL) {
+            tmp_ptr = malloc(nelem*sizeof(SingleComplex));
+          } else if (atype == C_DCPL) {
+            tmp_ptr = malloc(nelem*sizeof(DoubleComplex));
+          } else {
+            pnga_error("(pnga_copy_patch) Unknown data type",atype);
+          }
+#endif
 
           /* calculate the destination indices */
 
@@ -407,13 +429,41 @@ void pnga_copy_patch(char *trans,
           }
           pnga_release(g_a, los, his);
           pnga_scatter(g_b, tmp_ptr, dst_idx_ptr, 0, nelem);
+#ifdef USE_GA_MALLOC
           ga_free(dst_idx_ptr);
           ga_free(src_idx_ptr);
           ga_free(tmp_ptr);
+#else
+          free(dst_idx_ptr);
+          free(src_idx_ptr);
+          free(tmp_ptr);
+#endif
         } else {
+#ifdef USE_GA_MALLOC
           tmp_ptr = ga_malloc(nelem, atype, "v");
-          src_idx_ptr = (Integer*) ga_malloc((bndim*nelem), MT_F_INT, "si");
-          dst_idx_ptr = (Integer*) ga_malloc((andim*nelem), MT_F_INT, "di");
+          src_idx_ptr = (Integer*) ga_malloc((andim*nelem), MT_F_INT, "si");
+          dst_idx_ptr = (Integer*) ga_malloc((bndim*nelem), MT_F_INT, "di");
+#else
+          src_idx_ptr = (Integer*)malloc((andim*nelem)*sizeof(Integer));
+          dst_idx_ptr = (Integer*)malloc((bndim*nelem)*sizeof(Integer));
+          if (atype == C_INT) {
+            tmp_ptr = malloc(nelem*sizeof(int));
+          } else if (atype == C_LONG) {
+            tmp_ptr = malloc(nelem*sizeof(long));
+          } else if (atype == C_LONGLONG) {
+            tmp_ptr = malloc(nelem*sizeof(long long));
+          } else if (atype == C_FLOAT) {
+            tmp_ptr = malloc(nelem*sizeof(float));
+          } else if (atype == C_DBL) {
+            tmp_ptr = malloc(nelem*sizeof(double));
+          } else if (atype == C_SCPL) {
+            tmp_ptr = malloc(nelem*sizeof(SingleComplex));
+          } else if (atype == C_DCPL) {
+            tmp_ptr = malloc(nelem*sizeof(DoubleComplex));
+          } else {
+            pnga_error("(pnga_copy_patch) Unknown data type",atype);
+          }
+#endif
 
           /* calculate the destination indices */
 
@@ -517,9 +567,15 @@ void pnga_copy_patch(char *trans,
           }
           pnga_release(g_b, los, his);
           pnga_gather(g_a, tmp_ptr, dst_idx_ptr, 0, nelem);
+#ifdef USE_GA_MALLOC
           ga_free(dst_idx_ptr);
           ga_free(src_idx_ptr);
           ga_free(tmp_ptr);
+#else
+          free(dst_idx_ptr);
+          free(src_idx_ptr);
+          free(tmp_ptr);
+#endif
         }
       }
     }

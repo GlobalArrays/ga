@@ -2,6 +2,8 @@
 #   include "config.h"
 #endif
 
+#include <stdlib.h>
+
 /* $Id: DP.c,v 1.14 2003-02-18 00:24:32 manoj Exp $ */
 #include "global.h"
 #include "globalp.h"
@@ -121,7 +123,11 @@ Integer ndim, dims[2];
 	  jhid  = jhis + corr;
       } else {
 	/* If this is a transpose copy, we need local scratch space */
+#ifdef USE_GA_MALLOC
 	dbl_ptrB = (DoublePrecision*) ga_malloc(nelem,MT_F_DBL,"copypatch_dp");
+#else
+	dbl_ptrB = (DoublePrecision*)malloc(nelem*sizeof(DoublePrecision));
+#endif
 
 	  /* Copy from the source into this local array, transposed */
 	  ldT = jhis-jlos+1;
@@ -152,7 +158,11 @@ Integer ndim, dims[2];
       pnga_put(g_b, lo, hi, dbl_ptrA, &ld);
 
       /* Get rid of local memory if we used it */
+#ifdef USE_GA_MALLOC
       if( transp == 't') ga_free(dbl_ptrB);
+#else
+      if( transp == 't') free(dbl_ptrB);
+#endif
   }
 }
 
@@ -237,7 +247,11 @@ Integer ndim, dims[2];
       }else{
          /* data is remote -- get it to temp storage*/
          temp_created =1;
-	 dbl_ptrB = (DoublePrecision*)ga_malloc(nelem, MT_F_DBL, "ddot_dp_b");
+#ifdef USE_GA_MALLOC
+	      dbl_ptrB = (DoublePrecision*)ga_malloc(nelem, MT_F_DBL, "ddot_dp_b");
+#else
+	      dbl_ptrB = (DoublePrecision*)malloc(nelem*sizeof(DoublePrecision));
+#endif
 
          ldB   = ihiB-iloB+1; 
          pnga_get(g_b, blo, bhi, dbl_ptrB, &ldB);
@@ -250,7 +264,11 @@ Integer ndim, dims[2];
                     *(dbl_ptrB + j*ldB + i);
       pnga_release(g_A, alo, ahi);
 
+#ifdef USE_GA_MALLOC
       if(temp_created) ga_free(dbl_ptrB);
+#else
+      if(temp_created) free(dbl_ptrB);
+#endif
       else pnga_release(g_b, blo, bhi);
    }
    return sum;
