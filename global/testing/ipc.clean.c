@@ -121,10 +121,6 @@ exit(0);
 #include <stdio.h>
 
 
-#ifdef SUN
-extern char *shmat();
-#endif
-
 char *CreateSharedRegion(id, size)
      long *size, *id;
 {

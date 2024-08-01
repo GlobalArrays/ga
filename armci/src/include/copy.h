@@ -15,10 +15,6 @@
 #   define EXTERN extern
 #endif
 
-#if defined(SOLARIS)
-#   define PTR_ALIGN
-#endif
-
 #if  defined(MEMCPY)  && !defined(armci_copy)
 #  define armci_copy(src,dst,n)  memcpy((dst), (src), (n)) 
 #endif
