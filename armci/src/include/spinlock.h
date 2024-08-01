@@ -76,19 +76,6 @@ static int testandset(void *spinlock) {
 
 #elif defined(MACX)
 
-#elif defined(NEC)
-#   if DEBUG_SPINLOCK
-#       warning SPINLOCK: NEC
-#   endif
-extern ullong ts1am_2me();
-#   define LOCK_T ullong
-#   define _LKWD (1ULL << 63)
-#   define SPINLOCK  
-#   define TESTANDSET(x) ((_LKWD & ts1am_2me(_LKWD, 0xffULL, (ullong)(x))))
-#   define MEMORY_BARRIER mpisx_clear_cache 
-extern void mpisx_clear_cache();
-#   define RELEASE_SPINLOCK(x) ts1am_2me(0ULL, 0xffULL, (ullong)x); 
-
 #endif
 
 #ifdef SPINLOCK
