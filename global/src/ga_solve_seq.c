@@ -521,9 +521,15 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
     Integer one=1; 
 
     /** allocate a,b, and work and ipiv arrays */
+#ifdef USE_GA_MALLOC
     adra = (DoublePrecision*) ga_malloc(dimA1*dimA2, F_DBL, "a");
     adrb = (DoublePrecision*) ga_malloc(dimB1*dimB2, F_DBL, "b");
     adri = (Integer*) ga_malloc(GA_MIN(dimA1,dimA2), F_INT, "ipiv");
+#else
+    adra = (DoublePrecision*) malloc(dimA1*dimA2*sizeof(DoublePrecision));
+    adrb = (DoublePrecision*) malloc(dimB1*dimB2*sizeof(DoublePrecision));
+    adri = (Integer*) malloc(GA_MIN(dimA1,dimA2)*sizeof(Integer));
+#endif
 
     /** Fill local arrays from global arrays */   
     lo[0] = one;
@@ -581,9 +587,15 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
       pnga_error(" ga_lu_solve: LP_dgefa failed ", -info);
 
     /** deallocate work arrays */
+#ifdef USE_GA_MALLOC
     ga_free(adri);
     ga_free(adrb);
     ga_free(adra);
+#else
+    free(adri);
+    free(adrb);
+    free(adra);
+#endif
   }
 
   pnga_sync();

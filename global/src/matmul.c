@@ -1494,8 +1494,28 @@ void pnga_matmul(transa, transb, alpha, beta,
 	  }
 
 	  if(tmp == NULL) { /*if armci malloc fails again, then get from MA */
+#ifdef USE_GA_MALLOC
 	     tmp = a_ar[0] = a =(DoubleComplex*) ga_malloc(elems,atype,
 							   "GA mulmat bufs");
+#else
+        if (atype == C_INT) {
+          tmp = a_ar[0] = a = (DoubleComplex*)malloc(elems*sizeof(int));
+        } else if (atype == C_LONG) {
+          tmp = a_ar[0] = a = (DoubleComplex*)malloc(elems*sizeof(long));
+        } else if (atype == C_LONGLONG) {
+          tmp = a_ar[0] = a = (DoubleComplex*)malloc(elems*sizeof(long long));
+        } else if (atype == C_FLOAT) {
+          tmp = a_ar[0] = a = (DoubleComplex*)malloc(elems*sizeof(float));
+        } else if (atype == C_DBL) {
+          tmp = a_ar[0] = a = (DoubleComplex*)malloc(elems*sizeof(double));
+        } else if (atype == C_SCPL) {
+          tmp = a_ar[0] = a = (DoubleComplex*)malloc(elems*sizeof(SingleComplex));
+        } else if (atype == C_DCPL) {
+          tmp = a_ar[0] = a = (DoubleComplex*)malloc(elems*sizeof(DoubleComplex));
+        } else {
+          pnga_error("(pnga_matmul) Unknown data type",atype);
+        }
+#endif
 	  }
 
 	  if(use_NB_matmul) tmp = a_ar[1] = a_ar[0] + (Ichunk*Kchunk)/factor+1;
@@ -1558,7 +1578,13 @@ void pnga_matmul(transa, transb, alpha, beta,
 	     
        a = a_ar[0];
        if(use_armci_memory == SET) ARMCI_Free_local(a);
-       else ga_free(a);
+       else {
+#ifdef USE_GA_MALLOC
+         ga_free(a);
+#else
+         free(a);
+#endif
+       }
        
 #if DEBUG_
        Integer grp_me;
@@ -1725,7 +1751,27 @@ Integer clo[2], chi[2];
      else /* "EXTRA" elems for safety - just in case */
        elems = 3*Ichunk*Jchunk + EXTRA*factor;
      
+#ifdef USE_GA_MALLOC
      a = (DoubleComplex*) ga_malloc(elems, atype, "GA mulmat bufs");
+#else
+     if (atype == C_INT) {
+       a = (DoubleComplex*)malloc(elems*sizeof(int));
+     } else if (atype == C_LONG) {
+       a = (DoubleComplex*)malloc(elems*sizeof(long));
+     } else if (atype == C_LONGLONG) {
+       a = (DoubleComplex*)malloc(elems*sizeof(long long));
+     } else if (atype == C_FLOAT) {
+       a = (DoubleComplex*)malloc(elems*sizeof(float));
+     } else if (atype == C_DBL) {
+       a = (DoubleComplex*)malloc(elems*sizeof(double));
+     } else if (atype == C_SCPL) {
+       a = (DoubleComplex*)malloc(elems*sizeof(SingleComplex));
+     } else if (atype == C_DCPL) {
+       a = (DoubleComplex*)malloc(elems*sizeof(DoubleComplex));
+     } else {
+       pnga_error("(pnga_matmul) Unknown data type",atype);
+     }
+#endif
      b = a + (Ichunk*Kchunk)/factor + 1; 
      c = b + (Kchunk*Jchunk)/factor + 1;
    }
@@ -1874,7 +1920,11 @@ Integer clo[2], chi[2];
    }
    
 #ifndef STATBUF
+#ifdef USE_GA_MALLOC
    ga_free(a);
+#else
+   free(a);
+#endif
 #endif
 
    if(local_sync_end)pnga_sync();
@@ -2221,7 +2271,27 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
      else /* "EXTRA" elems for safety - just in case */
        elems = 3*Ichunk*Jchunk + EXTRA*factor;
 
+#ifdef USE_GA_MALLOC
      a = (DoubleComplex*) ga_malloc(elems, atype, "GA mulmat bufs");     
+#else
+     if (atype == C_INT) {
+       a = (DoubleComplex*)malloc(elems*sizeof(int));
+     } else if (atype == C_LONG) {
+       a = (DoubleComplex*)malloc(elems*sizeof(long));
+     } else if (atype == C_LONGLONG) {
+       a = (DoubleComplex*)malloc(elems*sizeof(long long));
+     } else if (atype == C_FLOAT) {
+       a = (DoubleComplex*)malloc(elems*sizeof(float));
+     } else if (atype == C_DBL) {
+       a = (DoubleComplex*)malloc(elems*sizeof(double));
+     } else if (atype == C_SCPL) {
+       a = (DoubleComplex*)malloc(elems*sizeof(SingleComplex));
+     } else if (atype == C_DCPL) {
+       a = (DoubleComplex*)malloc(elems*sizeof(DoubleComplex));
+     } else {
+       pnga_error("(pnga_matmul) Unknown data type",atype);
+     }
+#endif
      b = a + (Ichunk*Kchunk)/factor + 1; 
      c = b + (Kchunk*Jchunk)/factor + 1;
    }
@@ -2360,7 +2430,11 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    }
 
 #ifndef STATBUF
+#ifdef USE_GA_MALLOC
    ga_free(a);
+#else
+   free(a);
+#endif
 #endif
    
    if(local_sync_end)pnga_sync(); 
