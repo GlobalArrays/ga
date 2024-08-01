@@ -37,22 +37,11 @@
 
 #define DEBUG_ 0
 
-#if defined(SOLARIS64)
-#define PIPE_AFTER_FORK_BUG
-#endif
-
 void (*armci_sig_chld_orig)();
 static int status=0;
 int armci_shmlimit_caught_sigchld=0;
 
-#if defined(SUN) && !defined(SOLARIS)
-static void SigChldHandler(sig, code, scp, addr)
-     int code;
-     struct sigcontext *scp;
-     char *addr;
-#else
 static void SigChldHandler(sig)
-#endif
      int sig;
 {
 #ifdef DISABLED
@@ -74,15 +63,6 @@ static void RestoreSigChld()
   if ( signal(SIGCHLD, armci_sig_chld_orig) == SIG_ERR)
     armci_die("Restore_SigChld: error from restoring signal SIGChld",0);
 }
-
-
-#ifdef SOLARIS
-static int child_finished()
-{
-  return armci_shmlimit_caught_sigchld;
-}
-#endif
-
 
 int armci_child_shmem_init()
 {
@@ -128,10 +108,6 @@ int armci_child_shmem_init()
           val=read(fd[0],&y,sizeof(int));
           if(val < 0 || (size_t)val < sizeof(int))
                          armci_die("armci shmem_test: read failed",val);
-
-#ifdef SOLARIS
-       while(!child_finished());
-#endif
 
 again:   rc = wait (&status);
          if(rc == -1 && errno == EINTR) goto again;

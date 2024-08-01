@@ -35,13 +35,8 @@ volatile double armci_dummy_work=0.;
 void **memlock_table_array;
 
 /* constants for cache line alignment */
-#ifdef SOLARIS
-#  define CALGN 32
-#  define LOG_CALGN 5
-#else
 #  define CALGN 64
 #  define LOG_CALGN 6
-#endif
 
 #define ALIGN_ADDRESS(x) (char*)((((unsigned long)x) >> LOG_CALGN) << LOG_CALGN) 
 

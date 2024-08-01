@@ -30,12 +30,6 @@ AS_CASE([$ga_cv_target:$ga_cv_c_compiler_vendor:$host_cpu:$ga_armci_network],
 [LINUX:intel:*:*],          [armci_cv_c_opt="-O3 -prefetch"],
 [MACX64:*:*:*],             [armci_cv_c_opt=],
 [MACX:*:*:*],               [armci_cv_c_opt=],
-[SOLARIS64:fujitsu:*:*],    [armci_cv_c_opt="-Kfast -KV9FMADD -x0"],
-[SOLARIS64:gnu:*:*],        [armci_cv_c_opt="-dalign"],
-[SOLARIS64:gnu:i386:*],     [armci_cv_c_opt="-dalign -xarch=amd64"],
-[SOLARIS:fujitsu:*:*],      [armci_cv_c_opt="-Kfast -KV8PFMADD -x0"],
-[SOLARIS:gnu:*:*],          [armci_cv_c_opt="-dalign"],
-[SOLARIS:gnu:i386:*],       [armci_cv_c_opt="-dalign -xarch=sse2"],
                             [armci_cv_c_opt=])
 ])])
 AC_SUBST([ARMCI_COPT],  [$armci_cv_c_opt])

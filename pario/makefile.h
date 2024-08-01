@@ -34,10 +34,6 @@ ifdef LARGE_FILES
     AIO_LARGE_FILES = $(shell /usr/bin/oslevel | awk -F. \
                '{ if ($$1 == 4 && $$2 == 2 && $$3 <= 0 ) \
                print  "NO"}')
-  endif
-  ifeq ($(TARGET), SOLARIS)
-    LIB_DEFINES += -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-    CC += $(shell getconf LFS_CFLAGS)
   endif  
 #
 # LINUX: kernel 2.4 is needed

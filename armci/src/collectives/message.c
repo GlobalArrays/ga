@@ -254,9 +254,7 @@ void armci_msg_gop_finalize()
 void cpu_yield()
 {
 #if defined(SYSV) || defined(MMAP) || defined(WIN32)
-#ifdef SOLARIS
-               yield();
-#elif defined(WIN32)
+#if defined(WIN32)
                Sleep(1);
 #elif defined(_POSIX_PRIORITY_SCHEDULING)
                sched_yield();

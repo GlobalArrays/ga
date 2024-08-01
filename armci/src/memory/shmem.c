@@ -73,10 +73,6 @@
 #include "message.h"
 #include "armcip.h"
 
-#if defined(SUN)
-  extern char *shmat();
-#endif
-
 #define SHM_UNIT (1024)
 
 
@@ -94,20 +90,12 @@
 #   define NO_SHMMAX_SEARCH
 #endif
 
-/* on some platforms with tiny shmmax can try to glue multiple regions */
-#if (defined(SUN) || defined(SOLARIS)) && !defined(SHMMAX_SEARCH_NO_FORK)
-#    define MULTIPLE_REGIONS
-#endif
-
 /* Limits for the largest shmem segment are in Kilobytes to avoid passing
  * Gigavalues to kr_malloc
  */
 #define _SHMMAX 4*1024
 
-#if defined(SUN)||defined(SOLARIS)
-#  undef _SHMMAX
-#  define _SHMMAX (1024)  /* memory in KB */
-#elif defined(AIX)
+#if defined(AIX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)512*1024)
 #elif defined(__FreeBSD__)
@@ -146,8 +134,6 @@ static  int id_search_no_fork=0;
 
 #ifdef LINUX
 #define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm shm %d",id);
-#elif  defined(SOLARIS) 
-#define CLEANUP_CMD(command) sprintf(command,"/bin/ipcrm -m %d",id);
 #else
 #define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm -m %d",id);
 #endif

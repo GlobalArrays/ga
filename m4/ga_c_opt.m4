@@ -27,12 +27,6 @@ AS_CASE([$ga_cv_target:$ga_cv_c_compiler_vendor:$host_cpu],
 [LINUX:intel:*],            [ga_cv_c_opt="-O3 -prefetch"],
 [MACX64:*:*],               [ga_cv_c_opt=],
 [MACX:*:*],                 [ga_cv_c_opt=],
-[SOLARIS64:fujitsu:*],      [ga_cv_c_opt="-Kfast -KV9FMADD"],
-[SOLARIS64:gnu:*],          [ga_cv_c_opt="-dalign -xarch=v9"],
-[SOLARIS64:gnu:i386],       [ga_cv_c_opt="-dalign -xarch=amd64"],
-[SOLARIS:fujitsu:*],        [ga_cv_c_opt="-Kfast -KV8PFMADD"],
-[SOLARIS:gnu:*],            [ga_cv_c_opt="-dalign"],
-[SOLARIS:gnu:i386],         [ga_cv_c_opt="-dalign -xarch=sse2"],
                             [ga_cv_c_opt=])
 ])])
 AC_SUBST([GA_COPT], [$ga_cv_c_opt])
