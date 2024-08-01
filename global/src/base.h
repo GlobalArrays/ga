@@ -19,6 +19,7 @@ extern Integer GA_Debug_flag;
 #define FNAM        31              /* length of array names   */
 #define CACHE_SIZE  512             /* size of the cache inside GA DS*/
 
+/* #define USE_GA_MALLOC */
 enum data_distribution {REGULAR, BLOCK_CYCLIC, SCALAPACK, TILED, TILED_IRREG};
 
 typedef int ARMCI_Datatype;

@@ -125,7 +125,11 @@ void pnga_scan_copy(Integer g_src, Integer g_dst, Integer g_msk,
     pnga_distribution(g_msk, me, &lop, &hip);
 
     /* create arrays to hold last bit set on a given process */
+#ifdef USE_GA_MALLOC
     lim = (long *) ga_malloc(nproc, MT_C_LONGINT, "ga scan buf");
+#else
+    lim = (long*)malloc(nproc*sizeof(long));
+#endif
     bzero(lim,sizeof(long)*nproc);
     lim[me] = -1;
 
@@ -217,7 +221,11 @@ void pnga_scan_copy(Integer g_src, Integer g_dst, Integer g_msk,
     }
 
     pnga_sync();
+#ifdef USE_GA_MALLOC
     ga_free(lim);
+#else
+    free(lim);
+#endif
 }
 
 
@@ -262,7 +270,11 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
     pnga_distribution(g_msk, me, &lop, &hip);
 
     /* create arrays to hold last bit set on a given process */
+#ifdef USE_GA_MALLOC
     lim = (long *) ga_malloc(nproc, MT_C_LONGINT, "ga scan buf");
+#else
+    lim = (long*)malloc(nproc*sizeof(long));
+#endif
     bzero(lim,sizeof(long)*nproc);
     lim[me] = -1;
 
@@ -337,6 +349,37 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
         } else {
             stop = hip-lop+1;
         }
+#ifdef USE_GA_MALLOC
+#define MALLOC_CASE(_np, _type)                                   \
+        map = ga_malloc(4*_np, MT_F_INT, "ga scan add locate");   \
+        v = ga_malloc(_np, _type, "ga scan add gather values");
+#define FREE_CASE()                                               \
+        ga_free(map);                                             \
+        ga_free(v);
+#else
+#define MALLOC_CASE(_np, _type)                                   \
+        map = malloc(4*_np*sizeof(Integer));                      \
+        if (_type == C_INT) {                                     \
+          v = malloc(_np*sizeof(int));                            \
+        } else if (_type == C_LONG) {                             \
+          v = malloc(_np*sizeof(long));                           \
+        } else if (_type == C_LONGLONG) {                         \
+          v = malloc(_np*sizeof(long long));                      \
+        } else if (_type == C_FLOAT) {                            \
+          v = malloc(_np*sizeof(float));                          \
+        } else if (_type == C_DBL) {                              \
+          v = malloc(_np*sizeof(double));                         \
+        } else if (_type == C_SCPL) {                             \
+          v = malloc(_np*sizeof(SingleComplex));                  \
+        } else if (_type == C_DCPL) {                             \
+          v = malloc(_np*sizeof(DoubleComplex));                  \
+        } else {                                                  \
+          pnga_error("(pnga_scan_add) Unknown data type",_type);  \
+        }
+#define FREE_CASE()                                               \
+        free(map);                                                \
+        free(v)
+#endif
 
         /* first, perform local scan add */
         pnga_access_ptr(g_src, &lop, &hip, &ptr_src, &ld);
@@ -405,8 +448,7 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
                         T *v, sum;                                          \
                         rmt_hi = lop-1;                                     \
                         pnga_locate_nnodes(g_dst, &rmt_idx, &rmt_hi, &np);  \
-                        map = ga_malloc(4*np, MT_F_INT, "ga scan add locate");\
-                        v = ga_malloc(np, MT, "ga scan add gather values"); \
+                        MALLOC_CASE(np,MT);                                 \
                         proclist = map+(2*np);                              \
                         subs = map+(3*np);                                  \
                         pnga_locate_region(g_dst, &rmt_idx, &rmt_hi, map, proclist, &np);\
@@ -426,8 +468,7 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
                                 break;                                      \
                             }                                               \
                         }                                                   \
-                        ga_free(v);                                         \
-                        ga_free(map);                                       \
+                        FREE_CASE();                                        \
                     } else {                                                \
                         pnga_sync();                                        \
                     }                                                       \
@@ -435,6 +476,8 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
                 }
 #include "types2.xh"
 #undef TYPE_CASE
+#undef MALLOC_CASE
+#undef FREE_CASE
             default: pnga_error("ga_scan_add:wrong data type",combined_type);
         }
         /* release local access to arrays */
@@ -444,7 +487,11 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
     }
 
     pnga_sync();
+#ifdef USE_GA_MALLOC
     ga_free(lim);
+#else
+    free(lim);
+#endif
 }
 
 
@@ -596,7 +643,11 @@ static void sga_pack_unpack(Integer g_src, Integer g_dst, Integer g_msk,
 
     pnga_sync();
 
+#ifdef USE_GA_MALLOC
     lim = (long*) ga_malloc(nproc, MT_C_LONGINT, "ga_pack lim buf");
+#else
+    lim = (long*)malloc(nproc*sizeof(long));
+#endif
     bzero(lim,sizeof(long)*nproc);
     pnga_distribution(g_msk, me, &lop, &hip);
 
@@ -642,7 +693,27 @@ static void sga_pack_unpack(Integer g_src, Integer g_dst, Integer g_msk,
     else{
         Integer ignore;
         void *buf=NULL, *msk=NULL;
+#ifdef USE_GA_MALLOC
         buf = ga_malloc(lim[np], type_dst, "ga pack buf");
+#else
+        if (type_dst == C_INT) {
+          buf = malloc(lim[np]*sizeof(int));
+        } else if (type_dst == C_LONG) {
+          buf = malloc(lim[np]*sizeof(long));
+        } else if (type_dst == C_LONGLONG) {
+          buf = malloc(lim[np]*sizeof(long long));
+        } else if (type_dst == C_FLOAT) {
+          buf = malloc(lim[np]*sizeof(float));
+        } else if (type_dst == C_DBL) {
+          buf = malloc(lim[np]*sizeof(double));
+        } else if (type_dst == C_SCPL) {
+          buf = malloc(lim[np]*sizeof(SingleComplex));
+        } else if (type_dst == C_DCPL) {
+          buf = malloc(lim[np]*sizeof(DoubleComplex));
+        } else {
+          pnga_error("(sga_pack_unpack) Unknown data type",type_dst);
+        }
+#endif
         pnga_access_ptr(g_msk, &lop, &hip, &msk, &ignore);
         if (1 == pack) {
             void *src=NULL;
@@ -661,9 +732,17 @@ static void sga_pack_unpack(Integer g_src, Integer g_dst, Integer g_msk,
                        type_src, type_msk, buf, dst, msk);
             pnga_release_update(g_dst, &lop, &hip);
         }
+#ifdef USE_GA_MALLOC
         ga_free(buf);
+#else
+        free(buf);
+#endif
     }
+#ifdef USE_GA_MALLOC
     ga_free(lim);
+#else
+    free(lim);
+#endif
     pnga_sync();
 }
 

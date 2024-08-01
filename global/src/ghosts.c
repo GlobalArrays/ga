@@ -1754,8 +1754,32 @@ logical pnga_update4_ghosts(Integer g_a)
 
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
+#ifdef USE_GA_MALLOC
   snd_ptr_orig = snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
   rcv_ptr_orig = rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
+#else
+#define MALLOC_CASE(_type)                                  \
+  snd_ptr_orig = snd_ptr = malloc(buflen*sizeof(_type));    \
+  rcv_ptr_orig = rcv_ptr = malloc(buflen*sizeof(_type));
+  if (GA[handle].type == C_INT) {
+    MALLOC_CASE(int);
+  } else if (GA[handle].type == C_LONG) {
+    MALLOC_CASE(long);
+  } else if (GA[handle].type == C_LONGLONG) {
+    MALLOC_CASE(long long);
+  } else if (GA[handle].type == C_FLOAT) {
+    MALLOC_CASE(float);
+  } else if (GA[handle].type == C_DBL) {
+    MALLOC_CASE(double);
+  } else if (GA[handle].type == C_SCPL) {
+    MALLOC_CASE(SingleComplex);
+  } else if (GA[handle].type == C_DCPL) {
+    MALLOC_CASE(DoubleComplex);
+  } else {
+    pnga_error("(pnga_update4_ghosts) Unknown data type",GA[handle].type);
+  }
+#undef MALLOC_CASE
+#endif
 
   /* loop over dimensions for sequential update using shift algorithm */
   for (idx=0; idx < ndim; idx++) {
@@ -1931,8 +1955,13 @@ logical pnga_update4_ghosts(Integer g_a)
     }
   }
 
+#ifdef USE_GA_MALLOC
   ga_free(rcv_ptr_orig);
   ga_free(snd_ptr_orig);
+#else
+  free(rcv_ptr_orig);
+  free(snd_ptr_orig);
+#endif
   return TRUE;
 }
 
@@ -2066,8 +2095,32 @@ logical pnga_update44_ghosts(Integer g_a)
   bufsize = size*buflen;
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
+#ifdef USE_GA_MALLOC
   snd_ptr_orig = snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
   rcv_ptr_orig = rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
+#else
+#define MALLOC_CASE(_type)                                  \
+  snd_ptr_orig = snd_ptr = malloc(buflen*sizeof(_type));    \
+  rcv_ptr_orig = rcv_ptr = malloc(buflen*sizeof(_type));
+  if (GA[handle].type == C_INT) {
+    MALLOC_CASE(int);
+  } else if (GA[handle].type == C_LONG) {
+    MALLOC_CASE(long);
+  } else if (GA[handle].type == C_LONGLONG) {
+    MALLOC_CASE(long long);
+  } else if (GA[handle].type == C_FLOAT) {
+    MALLOC_CASE(float);
+  } else if (GA[handle].type == C_DBL) {
+    MALLOC_CASE(double);
+  } else if (GA[handle].type == C_SCPL) {
+    MALLOC_CASE(SingleComplex);
+  } else if (GA[handle].type == C_DCPL) {
+    MALLOC_CASE(DoubleComplex);
+  } else {
+    pnga_error("(pnga_update44_ghosts) Unknown data type",GA[handle].type);
+  }
+#undef MALLOC_CASE
+#endif
 
   /* loop over dimensions for sequential update using shift algorithm */
   for (idx=0; idx < ndim; idx++) {
@@ -2421,8 +2474,13 @@ logical pnga_update44_ghosts(Integer g_a)
       increment[idx] = 2*width[idx];
   }
 
+#ifdef USE_GA_MALLOC
   ga_free(rcv_ptr_orig);
   ga_free(snd_ptr_orig);
+#else
+  free(rcv_ptr_orig);
+  free(snd_ptr_orig);
+#endif
   free(_ga_map);
   free(_ga_proclist);
   return TRUE;
@@ -3171,8 +3229,32 @@ logical pnga_update5_ghosts(Integer g_a)
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
 
+#ifdef USE_GA_MALLOC
   snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
   rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
+#else
+#define MALLOC_CASE(_type)                              \
+  snd_ptr = malloc(buflen*sizeof(_type));               \
+  rcv_ptr = malloc(buflen*sizeof(_type));
+  if (GA[handle].type == C_INT) {
+    MALLOC_CASE(int);
+  } else if (GA[handle].type == C_LONG) {
+    MALLOC_CASE(long);
+  } else if (GA[handle].type == C_LONGLONG) {
+    MALLOC_CASE(long long);
+  } else if (GA[handle].type == C_FLOAT) {
+    MALLOC_CASE(float);
+  } else if (GA[handle].type == C_DBL) {
+    MALLOC_CASE(double);
+  } else if (GA[handle].type == C_SCPL) {
+    MALLOC_CASE(SingleComplex);
+  } else if (GA[handle].type == C_DCPL) {
+    MALLOC_CASE(DoubleComplex);
+  } else {
+    pnga_error("(pnga_update5_ghosts) Unknown data type",GA[handle].type);
+  }
+#undef MALLOC_CASE
+#endif
 #endif
  
   cache = (char *)GA[handle].cache;
@@ -3707,8 +3789,32 @@ logical pnga_update6_ghosts(Integer g_a)
   bufsize = size*buflen;
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
+#ifdef USE_GA_MALLOC
   snd_ptr_orig = snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
   rcv_ptr_orig = rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
+#else
+#define MALLOC_CASE(_type)                                  \
+  snd_ptr_orig = snd_ptr = malloc(buflen*sizeof(_type));    \
+  rcv_ptr_orig = rcv_ptr = malloc(buflen*sizeof(_type));
+  if (GA[handle].type == C_INT) {
+    MALLOC_CASE(int);
+  } else if (GA[handle].type == C_LONG) {
+    MALLOC_CASE(long);
+  } else if (GA[handle].type == C_LONGLONG) {
+    MALLOC_CASE(long long);
+  } else if (GA[handle].type == C_FLOAT) {
+    MALLOC_CASE(float);
+  } else if (GA[handle].type == C_DBL) {
+    MALLOC_CASE(double);
+  } else if (GA[handle].type == C_SCPL) {
+    MALLOC_CASE(SingleComplex);
+  } else if (GA[handle].type == C_DCPL) {
+    MALLOC_CASE(DoubleComplex);
+  } else {
+    pnga_error("(pnga_update6_ghosts) Unknown data type",GA[handle].type);
+  }
+#undef MALLOC_CASE
+#endif
 
   _ga_map = malloc((GAnproc*2*MAXDIM+1)*sizeof(Integer));
   if(!_ga_map) pnga_error("pnga_update6_ghosts:malloc failed (_ga_map)",0);
@@ -4109,8 +4215,13 @@ logical pnga_update6_ghosts(Integer g_a)
     increment[idx] = 2*width[idx];
   }
 
+#ifdef USE_GA_MALLOC
   ga_free(rcv_ptr_orig);
   ga_free(snd_ptr_orig);
+#else
+  free(rcv_ptr_orig);
+  free(snd_ptr_orig);
+#endif
   /* set update flags to zero for next operation */
   for (idx=0; idx < 2*ndim; idx++) {
     GA_Update_Flags[GAme][idx] = 0;
