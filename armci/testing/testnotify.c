@@ -65,7 +65,8 @@
 #define MAXPROC 128
 #define TIMES 100
 
-#define ELEMS 200
+# define ELEMS 200
+
 
 /***************************** macros ************************/
 #define COPY(src, dst, bytes) memcpy((dst),(src),(bytes))

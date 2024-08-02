@@ -74,7 +74,7 @@
 #define MAXPROC 1024
 #define TIMES 100
 
-#define ELEMS 200
+# define ELEMS 200
 
 typedef struct {
   float real;
