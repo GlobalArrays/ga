@@ -32,7 +32,7 @@
 #       define THREAD_UNLOCK(x)       pthread_mutex_unlock(&x)
 #else
 
-#include "spinlock.h"
+#       include "spinlock.h"
 
         typedef LOCK_T thread_lock_t;
 #       define THREAD_LOCK_INIT(x)    armci_init_spinlock(&x)

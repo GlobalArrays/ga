@@ -72,15 +72,10 @@ extern void set_nbhandle(armci_ihdl_t *nbh, armci_hdl_t *nb_handle,
                                 int op, int proc);
 
 typedef struct {
-#if 0 
-   int   to:16;               /* message recipient */
-   int from:16;               /* message sender */
-#else
-   short int   to;            /* message recipient */
-   short int from;            /* message sender */
-#endif
+short int   to;            /* message recipient */
+short int from;            /* message sender */
 unsigned int   operation:8;   /* operation code */
-#if defined(CLIENT_BUF_BYPASS)
+#if defined(CLIENT_BUF_BYPASS) 
 unsigned int   format:2;      /* data format used */
 unsigned int   pinned:1;      /* indicates if sender memory was pinned */
 unsigned int   bypass:1;      /* indicate if bypass protocol used */
@@ -88,9 +83,9 @@ unsigned int   bypass:1;      /* indicate if bypass protocol used */
 unsigned int   format:4;      /* data format used */
 #endif
 unsigned int   bytes:20;      /* number of bytes requested */
-         int   datalen;       /* >0 in LAPI means that data is included */
+         int   datalen;       /* >0 in lapi means that data is included */
 unsigned int   ehlen:8;       /* size of extra header and the end of descr */
-  signed int   dscrlen:24;    /* >0 in LAPI means that descriptor is included */
+  signed int   dscrlen:24;    /* >0 in lapi means that descriptor is included */
          msg_tag_t tag;       /* message tag for response to this request, MUST BE LAST */
 }request_header_t;
 
@@ -179,11 +174,11 @@ typedef struct {
 extern  char* MessageRcvBuffer;
 extern  char* MessageSndBuffer;
 
-#ifdef SOCKETS
-#  define GA_SEND_REPLY(tag, buf, len, p) armci_sock_send(p,buf,len)
-#else
-#  define GA_SEND_REPLY(tag, buf, len, p)  
-#endif
+#  ifdef SOCKETS
+#    define GA_SEND_REPLY(tag, buf, len, p) armci_sock_send(p,buf,len)
+#  else
+#    define GA_SEND_REPLY(tag, buf, len, p)  
+#  endif
 
 #ifndef GET_SEND_BUFFER
 #  define GET_SEND_BUFFER(_size,_op,_to) MessageSndBuffer
@@ -289,6 +284,7 @@ extern void armci_server_goodbye(request_header_t* msginfo);
 extern void armci_serv_quit();
 extern void armci_server_goodbye(request_header_t* msginfo);
 #endif
+
 extern void armci_server_ipc(request_header_t* msginfo, void* descr,
                              void* buffer, int buflen);
 

@@ -8,7 +8,7 @@
 #define MAX_LOCKS 1024
 #define NUM_LOCKS MAX_LOCKS 
 
-#if !(defined(PMUTEX) || defined(PSPIN) || defined(CYGNUS))
+#if !(defined(PMUTEX) || defined(PSPIN) || defined(CYGNUS) )
 #   include "spinlock.h"
 #endif
 
@@ -16,7 +16,7 @@
 #   error cannot run
 #endif
 
-#if defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN)
+#if (defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN))
 #   include "armci_shmem.h"
 typedef struct {
     long off;
@@ -45,26 +45,10 @@ extern PAD_LOCK_T *_armci_int_mutexes;
 #   define PAD_LOCK_T LOCK_T
 extern PAD_LOCK_T *_armci_int_mutexes;
 
-#elif defined(SPINLOCK) && defined(SGIALTIX)
-#   define NAT_LOCK(x,p) armci_acquire_spinlock((LOCK_T*)( ((PAD_LOCK_T*)(((void**)_armci_int_mutexes)[p]))+x ))
-#   define NAT_UNLOCK(x,p) armci_release_spinlock((LOCK_T*)( ((PAD_LOCK_T*)(((void**)_armci_int_mutexes)[p]))+x ))
-extern PAD_LOCK_T *_armci_int_mutexes;
-
 #elif defined(SPINLOCK)
 #   define NAT_LOCK(x,p) armci_acquire_spinlock((LOCK_T*)(_armci_int_mutexes+(x)))
 #   define NAT_UNLOCK(x,p) armci_release_spinlock((LOCK_T*)(_armci_int_mutexes+(x)))
 extern PAD_LOCK_T *_armci_int_mutexes;
-
-#elif defined(SGI)
-#   define SGI_SPINS 100
-#   include <ulocks.h>
-typedef struct {
-    int id;
-    ulock_t * lock_array[NUM_LOCKS];
-}lockset_t;
-extern lockset_t lockset;
-#   define NAT_LOCK(x,p)   (void) uswsetlock(lockset.lock_array[(x)],SGI_SPINS)
-#   define NAT_UNLOCK(x,p) (void) usunsetlock(lockset.lock_array[(x)])
 
 #elif defined(WIN32)
 typedef int lockset_t;
