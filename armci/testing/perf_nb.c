@@ -63,7 +63,7 @@
 #define MAXPROC 8
 #define TIMES 100
 
-#define ELEMS 200
+# define ELEMS 200
 
 #define MAXELEMS      131072 /* 262144 */
 #define MAX_REQUESTS  MAXELEMS
