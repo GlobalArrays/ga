@@ -6,23 +6,6 @@ echo  "                 Example Message Passing Programs"
 echo  "                 --------------------------------"
 echo  ""
 
-IF IPSC
-if (! -e template.p)  make template.p
-
-# Get cube size etc.
-
-echo -n 'Input options for parallel (default = -w -t 4 -C tcgmsg) '
-set cube="$<"
-if ("$cube" == "") set cube = '-w -t 4 -C tcgmsg'
-echo " "
-ELSEIF DELTA
-# Get mesh size for the Delta
-
-echo -n 'Input desired submesh with no spaces (default = 4,4) '
-set mesh="$<"
-if ("$mesh" == "") set mesh = "4,4"
-echo " "
-ELSE
 # Find/generate template PROCGRP file
 
 if (! -e template.p) then
@@ -31,7 +14,6 @@ if (! -e template.p) then
 
   make template.p
 endif
-ENDIF
 
 # Check no. of arguments
 
@@ -93,29 +75,10 @@ goto RUNIT
 
 RUNIT:
 
-IF DELTA
-echo " "
-echo "Run $PROGRAM on the mesh ($mesh)"
-echo " "
-
-# Actually run the sucker ... assumes can use rcp and rsh to delta1
-
-echo rcp $PROGRAM delta1:
-rcp $PROGRAM delta1:
-echo rsh delta1 mexec "-t\(${mesh}\)  -f '$PROGRAM $ARGS'"
-rsh delta1 mexec "-t\(${mesh}\)  -f '$PROGRAM $ARGS'"
-
-ELSE
-
 # Generate the actual PROCGRP file from the template and print out
 # summary of it
 
 sed "s/PROGRAM/$PROGRAM/" < template.p > {$PROGRAM}.p
-
-IF IPSC
-echo "time parallel $cube $PROGRAM"
-time parallel $cube $PROGRAM
-ELSE
 
 echo ""
 echo 'The following hosts/processes will be used:'
@@ -126,5 +89,3 @@ echo ""
 echo time parallel $PROGRAM $ARGS
 echo ""
 time parallel $PROGRAM $ARGS
-ENDIF
-ENDIF

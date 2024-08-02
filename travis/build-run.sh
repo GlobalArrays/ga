@@ -55,6 +55,10 @@ else
 fi
 case "$os" in
     Darwin)
+	xcode_v=$(clang --version 2>&1 |head -1 |cut -d ' ' -f 4 |cut -d . -f 1)
+	if [[ $( [ $xcode_v -ge 15 ] && echo 1) ]] ; then
+	    export LDFLAGS=" -ld_classic "
+	fi
         echo "Mac CFLAGS" $CFLAGS
         ;;
     Linux)
@@ -88,7 +92,8 @@ esac
     cd build
     echo FORTRAN_COMPILER is $FORTRAN_COMPILER
     mpif90 -show || true
-    FC="$FORTRAN_COMPILER" cmake -DCMAKE_Fortran_COMPILER="$FORTRAN_COMPILER"  -DMPIEXEC_MAX_NUMPROCS=5 -DGA_RUNTIME="$ga_rt" ../
+    echo CC is $CC
+    FC="$FORTRAN_COMPILER" cmake -DMPIEXEC_MAX_NUMPROCS=5 -DGA_RUNTIME="$ga_rt" ../
 else
 case "x$PORT" in
     xofi)
@@ -112,7 +117,17 @@ case "x$PORT" in
         ./configure --with-${PORT} ${CONFIG_OPTS}
         ;;
     x*)
-        ./configure --with-${PORT} ${CONFIG_OPTS}
+	if [[ "$MPI_IMPL" = "intel" ]] ; then
+	    export I_MPI_F90="$F77"
+	    export I_MPI_F77="$F77"
+	    export I_MPI_CC="$CC"
+	    #hack to get scalapack going
+	    export CONFIG_OPTS2=--with-blas="-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl"
+	    export CONFIG_OPTS3=--with-scalapack="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -ldl"
+	    ./configure --with-${PORT} ${CONFIG_OPTS} "$CONFIG_OPTS2" "$CONFIG_OPTS3" FFLAGS=-fPIC
+	else
+            ./configure --with-${PORT} ${CONFIG_OPTS}
+	fi
         ;;
 esac
 fi
@@ -156,4 +171,29 @@ then
     mpirun -n 5 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
 else
     mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
+fi
+if [ "$USE_CMAKE" = "Y" ] ; then
+    echo "skipping dra test when using cmake"
+else
+TEST_NAME=./pario/dra/ntest.x
+if test -x $TEST_NAME
+then
+    echo "Running fortran-based test"
+else
+    TEST_NAME=./pario/dra/ntestc.x
+    if test -x $TEST_NAME
+    then
+        echo "Running C-based test"
+    else
+        echo "No suitable test was found"
+        exit 1
+    fi
+fi
+
+if test "x$PORT" = "xmpi-pr"
+then
+    mpirun -n 5 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
+else
+    mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
+fi
 fi

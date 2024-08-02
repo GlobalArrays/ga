@@ -14,13 +14,13 @@ set -x
 # install dependencies
 sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 sudo apt-get update -qq
-sudo apt-get install -qq libhwloc-dev libomp5 libiomp-dev libnuma-dev libpfm4-dev llvm-3.9-dev numactl xsltproc
+sudo apt-get install -qq libhwloc-dev libomp5 libomp-dev libnuma-dev libpfm4-dev llvm-dev numactl xsltproc
 
 # set install directory to current location to not cache jemalloc/SICM
 TRAVIS_ROOT="$1"
 export PATH=$TRAVIS_ROOT/bin:$PATH
 #install jemalloc
-git clone https://github.com/jemalloc/jemalloc
+git clone -b 5.3.0 https://github.com/jemalloc/jemalloc
 cd jemalloc
 export JEPATH="${TRAVIS_ROOT}/jemalloc"
 sh autogen.sh

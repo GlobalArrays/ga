@@ -7,9 +7,6 @@
 # Known flags:
 #  -m64     GNU
 #  -q64     IBM
-#  +DD64    HPUX
-#  +DA2.0W  HPUX (obsolete form of +DD64)
-#  -64      SGI TFP, not sure, others might be -mips64, -align64?
 #
 AC_DEFUN([GA_64BIT_FLAG],
 [AC_CACHE_CHECK([for flag to indicate 64-bits], [ga_cv_64bit_flag],

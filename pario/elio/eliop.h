@@ -27,15 +27,7 @@
 extern void GA_Error(char*, int);
 #endif
 
-#if (defined(SP) || defined(SP1))
-#define PIOFS 1
-#endif
-
-
-#if (defined(CRAY) && !defined(__crayx1))
-#        include <sys/statfs.h>
-#        define  STATVFS statfs
-#elif defined(__FreeBSD__) && !defined(GLIBC)
+#if defined(__FreeBSD__) && !defined(GLIBC)
 #        include <sys/param.h>
 #        include <sys/mount.h>
 #        define  STATVFS statfs
@@ -44,7 +36,7 @@ extern void GA_Error(char*, int);
 #        define  STATVFS _stat 
 #        define  S_ISDIR(mode) ((mode&S_IFMT) == S_IFDIR)
 #        define  S_ISREG(mode) ((mode&S_IFMT) == S_IFREG)
-#elif defined(LINUX)  ||  defined(CYGWIN) || defined(BGQ) || defined(__GLIBC__)
+#elif defined(LINUX)  ||  defined(CYGWIN) || defined(__GLIBC__)
 #        include <sys/vfs.h>
 #        define  STATVFS statfs
 #        define NO_F_FRSIZE 
@@ -61,7 +53,7 @@ extern void GA_Error(char*, int);
 
 #include <fcntl.h>
 
-#if (defined(CRAY) && defined(FFIO))
+#if defined(FFIO)
 #        include <ffio.h>
 #        include <sys/fstyp.h>
 #        include <sys/fsid.h>

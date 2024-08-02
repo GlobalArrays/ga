@@ -171,7 +171,6 @@ c
 c
 c sample maxwell distribution at temperature tref
 c
-c alliant 3
       iseed = 4711
       ujunk = drand48(iseed)
       iseed = 0
@@ -181,10 +180,6 @@ c alliant 3
       tscale = 16.0d0 / (1.0d0 * npart - 1.0d0)
       do 10 i = 1,n3,2
 c
-c cray 2
-c1         u1 = ranf()
-c          u2 = ranf()
-c alliant 2
 1         u1 = drand48(iseed)
           u2 = drand48(iseed)
           v1 = 2.0d0 * u1 - 1.0d0

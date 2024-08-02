@@ -5,7 +5,7 @@
 # This was taken from older GNUmakefiles... the original doc follows
 # Procedures are thread safe; should also specify the max number of threads
 # via ARMCI_MAX_THREADS and thread library via THREAD_LIBRARY.  Only supported
-# for SOCKETS ELAN4 OPENIB LAPI64.
+# for SOCKETS OPENIB.
 AC_DEFUN([GA_THREAD_SAFE],
 [AC_ARG_ENABLE([thread-safety],
     [AS_HELP_STRING([--enable-thread-safety], [**unsupported** turn on thread safety])],

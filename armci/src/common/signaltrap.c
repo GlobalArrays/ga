@@ -41,12 +41,7 @@
 #if !defined(armci_die)
 extern void Error();
 #endif
-
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-#   define SigType  int
-#else
 #   define SigType  void
-#endif
 
 #ifndef SIG_ERR
 #   define SIG_ERR         (SigType (*)())-1
@@ -142,28 +137,13 @@ SigType SigChldHandler(sig)
      int sig;
 {
   int status;
-#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
-  union wait ustatus;
-#endif
-  
+
 #if defined(LINUX)
   pid_t ret;
   /* Trap signal as soon as possible to avoid race */
   if ( (SigChldOrig = signal(SIGCHLD, SigChldHandler)) == SIG_ERR)
     Error("SigChldHandler: error from signal setting SIGCHLD",0);
 #endif
-
-#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
-
-# if defined(LINUX)
-  ret = wait(&ustatus);
-  if((ret == 0) || ((ret == -1) && (errno == ECHILD))) { return; }
-# else
-  (void) wait(&ustatus); 
-# endif  
-  status = ustatus.w_status;
-
-#else
 
 # if defined(LINUX)
   ret = waitpid(0, &status, WNOHANG);
@@ -172,7 +152,6 @@ SigType SigChldHandler(sig)
   (void)wait(&status);
 # endif
 
-#endif
       AR_caught_sigchld=1;
       AR_caught_sig= sig;
       Error("Child process terminated prematurely, status=",(int) status);
@@ -577,9 +556,7 @@ void TrapSigXcpu()
 
 void ARMCI_ChildrenTrapSignals()
 {
-#ifndef LAPI
      TrapSigBus();
-#endif
      TrapSigFpe();
      TrapSigIll();
 #ifdef ENABLE_CHECKPOINT
@@ -592,23 +569,12 @@ void ARMCI_ChildrenTrapSignals()
      TrapSigAbort();
      TrapSigTerm();
      TrapSigInt();
-
-#if defined(LAPI) || defined(SGI)
-     TrapSigIot();
-#endif
-
-#ifdef SGI
-     TrapSigXcpu();
-#endif
-
 }
 
 
 void ARMCI_ParentTrapSignals()
 {
-#ifndef LAPI
      TrapSigChld();
-#endif
      TrapSigHup();
 }
 
@@ -623,9 +589,7 @@ void ARMCI_RestoreSignals()
 
 void ARMCI_ParentRestoreSignals()
 {
-#ifndef LAPI
      RestoreSigChld();
-#endif
      ARMCI_RestoreSignals();
      RestoreSigHup();
 }

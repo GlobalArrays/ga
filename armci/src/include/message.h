@@ -50,6 +50,9 @@ extern int  armci_msg_me();
 extern int  armci_msg_nproc();
 extern void armci_msg_abort(int code);
 extern void armci_msg_init(int *argc, char ***argv);
+#ifdef MSG_COMMS_MPI
+extern void armci_msg_init_comm(MPI_Comm comm);
+#endif
 extern void armci_msg_finalize();
 extern double armci_timer();
 

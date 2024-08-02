@@ -19,11 +19,15 @@ include( CMakeFindDependencyMacro )
 
 # SANITY CHECK
 if( "ilp64" IN_LIST IntelMKL_FIND_COMPONENTS AND "lp64" IN_LIST IntelMKL_FIND_COMPONENTS )
-  message( FATAL_ERROR "IntelMKL cannot link to both ILP64 and LP64 iterfaces" )
+  message( FATAL_ERROR "IntelMKL cannot link to both ILP64 and LP64 interfaces" )
 endif()
 
 if( "scalapack" IN_LIST IntelMKL_FIND_COMPONENTS AND NOT ("blacs" IN_LIST IntelMKL_FIND_COMPONENTS) )
   list(APPEND IntelMKL_FIND_COMPONENTS "blacs" )
+endif()
+
+if ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "arm64")
+  message( WARNING "IntelMKL is not supported for ARM architectures" )
 endif()
 
 # MKL lib names
@@ -364,6 +368,7 @@ if( IntelMKL_LIBRARY AND IntelMKL_THREAD_LIBRARY AND IntelMKL_CORE_LIBRARY )
 
   if( IntelMKL_PREFERS_STATIC )
 
+  if(NOT "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Darwin")
     list( PREPEND IntelMKL_BLAS_LAPACK_LIBRARIES "-Wl,--start-group" )
     list( APPEND  IntelMKL_BLAS_LAPACK_LIBRARIES "-Wl,--end-group"   )
 
@@ -371,6 +376,7 @@ if( IntelMKL_LIBRARY AND IntelMKL_THREAD_LIBRARY AND IntelMKL_CORE_LIBRARY )
       list( PREPEND IntelMKL_BLACS_LIBRARIES "-Wl,--start-group" )
       list( APPEND  IntelMKL_BLACS_LIBRARIES "-Wl,--end-group"   )
     endif()
+  endif()
 
     if( "scalapack" IN_LIST IntelMKL_FIND_COMPONENTS )
       set( IntelMKL_ScaLAPACK_LIBRARIES 
@@ -413,32 +419,29 @@ if( IntelMKL_LIBRARY AND IntelMKL_THREAD_LIBRARY AND IntelMKL_CORE_LIBRARY )
 
   elseif( IntelMKL_THREAD_LAYER MATCHES "tbb" )
 
-    if( NOT TARGET tbb )
-	    #message( FATAL_ERROR "TBB Bindings Not Currently Accessible Through FindIntelMKL" )
-      find_dependency( TBB )
+    if( NOT TARGET TBB::tbb )
+      find_dependency( TBB REQUIRED )
+      # TBB::tbb by default is not GLOBAL, so to allow users of LINALG_LIBRARIES to safely use it we need to make it global
+      # more discussion here: https://gitlab.kitware.com/cmake/cmake/-/issues/17256
+      set_target_properties(TBB::tbb PROPERTIES IMPORTED_GLOBAL TRUE)
     endif()
 
-    set( _mkl_tbb_extra_libs tbb )
-    if( IntelMKL_PREFERS_STATIC )
-      list( APPEND _mkl_tbb_extra_libs "stdc++" ) 
-    endif()
-    list( APPEND IntelMKL_BLAS_LAPACK_LIBRARIES ${_mkl_tbb_extra_libs} )
-
+    list( APPEND IntelMKL_BLAS_LAPACK_LIBRARIES TBB::tbb )
     if( IntelMKL_BLACS_LIBRARIES )
-      list( APPEND IntelMKL_BLACS_LIBRARIES ${_mkl_tbb_extra_libs} )
+      list( APPEND IntelMKL_BLACS_LIBRARIES TBB::tbb )
     endif()
-
     if( IntelMKL_ScaLAPACK_LIBRARIES )
-      list( APPEND IntelMKL_ScaLAPACK_LIBRARIES ${_mkl_tbb_extra_libs} )
+      list( APPEND IntelMKL_ScaLAPACK_LIBRARIES TBB::tbb )
     endif()
-
-    unset( _mkl_tbb_extra_libs )
 
   endif()
 
 
   if( NOT TARGET Threads::Threads )
     find_dependency( Threads )
+    # Threads::Threads by default is not GLOBAL, so to allow users of LINALG_LIBRARIES to safely use it we need to make it global
+    # more discussion here: https://gitlab.kitware.com/cmake/cmake/-/issues/17256
+    set_target_properties(Threads::Threads PROPERTIES IMPORTED_GLOBAL TRUE)
   endif()
 
   list( APPEND IntelMKL_BLAS_LAPACK_LIBRARIES "m" "dl" Threads::Threads )
@@ -471,22 +474,30 @@ find_package_handle_standard_args( IntelMKL
   HANDLE_COMPONENTS
 )
 
-#if( IntelMKL_FOUND AND NOT TARGET IntelMKL::mkl )
-#
-#  add_library( IntelMKL::mkl INTERFACE IMPORTED )
-#  set_target_properties( IntelMKL::mkl PROPERTIES
-#    INTERFACE_INCLUDE_DIRECTORIES "${IntelMKL_INCLUDE_DIR}"
-#    INTERFACE_LINK_LIBRARIES      "${IntelMKL_LIBRARIES}"
-#    INTERFACE_COMPILE_OPTIONS     "${IntelMKL_C_COMPILE_FLAGS}"
-#    INTERFACE_COMPILE_DEFINITIONS "${IntelMKL_COMPILE_DEFINITIONS}"
-#  )
-#
-#  if( "scalapack" IN_LIST IntelMKL_FIND_COMPONENTS AND NOT scalapack_LIBRARIES )
-#    set( scalapack_LIBRARIES IntelMKL::mkl )
-#  endif()
-#
-#  if( "blacs" IN_LIST IntelMKL_FIND_COMPONENTS AND NOT blacs_LIBRARIES )
-#    set( blacs_LIBRARIES IntelMKL::mkl )
-#  endif()
-#
-#endif()
+if( IntelMKL_FOUND )
+
+  if( IntelMKL_BLAS_LAPACK_LIBRARIES AND NOT TARGET IntelMKL::IntelMKL )
+    add_library( IntelMKL::IntelMKL INTERFACE IMPORTED )
+    set_target_properties( IntelMKL::IntelMKL PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${IntelMKL_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES      "${IntelMKL_BLAS_LAPACK_LIBRARIES}"
+    )
+  endif()
+
+  if( IntelMKL_BLACS_LIBRARIES AND NOT TARGET IntelMKL::BLACS )
+    add_library( IntelMKL::BLACS INTERFACE IMPORTED )
+    set_target_properties( IntelMKL::BLACS PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${IntelMKL_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES      "${IntelMKL_BLACS_LIBRARIES}"
+    )
+  endif()
+
+  if( IntelMKL_ScaLAPACK_LIBRARIES AND NOT TARGET IntelMKL::ScaLAPACK )
+    add_library( IntelMKL::ScaLAPACK INTERFACE IMPORTED )
+    set_target_properties( IntelMKL::ScaLAPACK PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${IntelMKL_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES      "${IntelMKL_ScaLAPACK_LIBRARIES}"
+    )
+  endif()
+
+endif()

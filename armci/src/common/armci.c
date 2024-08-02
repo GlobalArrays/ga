@@ -37,16 +37,6 @@
 #if HAVE_STDARG_H
 #   include <stdarg.h>
 #endif
-#if defined(CRAY) && !defined(__crayx1)
-#  include <sys/category.h>
-#  include <sys/resource.h>
-#  if HAVE_UNISTD_H
-#   include <unistd.h>
-#  endif
-#endif
-#ifdef LAPI
-#  include "lapidefs.h"
-#endif
 #if HAVE_ERRNO_H
 #   include <errno.h>
 #endif
@@ -55,26 +45,6 @@
 #include "memlock.h"
 #include "armci_shmem.h"
 #include "signaltrap.h"
-
-#ifdef ARMCIX
-#include "armcix.h"
-#endif
-#ifdef BGML
-#include "bgml.h"
-#if HAVE_ASSERT_H
-#   include <assert.h>
-#endif
-#include "bgmldefs.h"
-extern void armci_msg_barrier(void);
-#endif
-
-#ifdef CRAY_SHMEM
-#  ifdef CRAY_XT
-#    include <mpp/shmem.h>
-#  else
-#    include <shmem.h>
-#  endif
-#endif
 
 /* global variables -- Initialized in PARMCI_Init() and never modified*/
 int armci_me, armci_nproc;
@@ -87,10 +57,10 @@ int *_armci_argc=NULL;
 char ***_armci_argv=NULL;
 thread_id_t armci_usr_tid;
 
-#if !defined(HITACHI) && !defined(THREAD_SAFE)
+#if !defined(THREAD_SAFE)
 double armci_internal_buffer[BUFSIZE_DBL];
 #endif
-#if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI) || defined(CATAMOUNT) || defined(BGML)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP)
 #   include "locks.h"
     lockset_t lockid;
 #endif
@@ -101,12 +71,6 @@ int armci_prot_switch_preproc = -1;
 int armci_prot_switch_preop = -1;
 #endif
 
-#ifdef BGML
-/*   void armci_allocate_locks(); */
-   void armci_init_memlock();
-#endif
-
-
 typedef struct{
   int sent;
   int received;
@@ -115,18 +79,12 @@ typedef struct{
 
 armci_notify_t **_armci_notify_arr;
 
-#ifdef CRAY_XT
-int _armci_malloc_local_region;
-#endif
-
 void ARMCI_Cleanup()
 {
-#if (defined(SYSV) || defined(WIN32) || defined(MMAP))&& !defined(HITACHI) 
+#if (defined(SYSV) || defined(WIN32) || defined(MMAP)) 
     Delete_All_Regions();
     if(armci_nproc>1)
-#if !defined(LAPI) 
-       DeleteLocks(lockid);
-#endif
+      DeleteLocks(lockid);
 
     /* in case of an error notify server that it is time to quit */
 #if defined(DATA_SERVER)
@@ -168,29 +126,17 @@ static void armci_perror_msg()
 }
 
 
-#if defined(IBM) || defined(IBM64)
-int AR_caught_sigint;
-int AR_caught_sigterm;
-#else
 extern int AR_caught_sigint;
 extern int AR_caught_sigterm;
-#endif
 
 void armci_abort(int code)
 {
-#if !defined(BGML)
     armci_perror_msg();
-#endif
     ARMCI_Cleanup();
 
     /* data server process cannot use message-passing library to abort
      * it simply exits, parent will get SIGCHLD and abort the program
      */
-#if defined(IBM) || defined(IBM64)
-     /* hack for a problem in POE signal handlers in non-LAPI MPI  */
-     if(AR_caught_sigint || AR_caught_sigterm) 
-         _exit(1);
-#endif
 
 #if defined(DATA_SERVER)
     if(armci_me<0)
@@ -212,12 +158,7 @@ void ARMCI_Error(char *msg, int code)
 
 void armci_allocate_locks()
 {
-    /* note that if ELAN_ACC is defined the scope of locks is limited to SMP */
-#if !defined(CRAY_SHMEM) && \
-    ( defined(HITACHI) || defined(CATAMOUNT) || \
-      (defined(QUADRICS) && defined(_ELAN_LOCK_H) && !defined(ELAN_ACC)) )
-       armcill_allocate_locks(NUM_LOCKS);
-#elif (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(HITACHI)
+#if (defined(SYSV) || defined(WIN32) || defined(MMAP)) 
        if(armci_nproc == 1)return;
 #  if defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN)
        CreateInitLocks(NUM_LOCKS, &lockid);
@@ -232,7 +173,7 @@ void armci_allocate_locks()
 
 void ARMCI_Set_shm_limit(unsigned long shmemlimit)
 {
-#if (defined(SYSV) || defined(WIN32)  || defined(MMAP)) && !defined(HITACHI)
+#if (defined(SYSV) || defined(WIN32)  || defined(MMAP)) 
 #define EXTRASHM  1024   /* extra shmem used internally in ARMCI */
 unsigned long limit;
     limit = shmemlimit+EXTRASHM;
@@ -264,13 +205,6 @@ void armci_init_memlock()
 
     bzero(memlock_table_array[armci_me],bytes);
 
-#ifdef BGML
-    bgml_init_locks ((void *) memlock_table_array[armci_me]);
-#elif ARMCIX
-    ARMCIX_init_memlock ((memlock_t *) memlock_table_array[armci_me]);
-#endif
-
-
 #ifdef MEMLOCK_SHMEM_FLAG    
     /* armci_use_memlock_table is a pointer to local memory variable=1
      * we overwrite the pointer with address of shared memory variable 
@@ -289,25 +223,6 @@ void armci_init_memlock()
 
     armci_msg_barrier();
 }
-
-
-#if defined(SYSV) || defined(WIN32) || defined(MMAP)
-#   if defined(QUADRICS) && !defined(NO_SHM)
-static void armci_check_shmmax()
-{
-  long mylimit, limit;
-  mylimit = limit = (long) armci_max_region();
-  armci_msg_bcast_scope(SCOPE_MASTERS, &limit, sizeof(long), 0);
-  if(mylimit != limit){
-     printf("%d:Shared mem limit in ARMCI is %ld bytes on node %s vs %ld on %s\n",
-            armci_me,mylimit<<10,armci_clus_info[armci_clus_me].hostname,
-            limit<<10, armci_clus_info[0].hostname);
-     fflush(stdout); sleep(1);
-     armci_die("All nodes must have the same SHMMAX limit if NO_SHM is not defined",0);
-  }
-}
-#   endif
-#endif
 
 extern void armci_region_shm_malloc(void *ptr_arr[], size_t bytes);
 
@@ -382,7 +297,7 @@ void _armci_test_connections()
   }
 }
 
-int PARMCI_Init()
+int _armci_init(MPI_Comm comm)
 {
     char *uval;
 #if defined(THREAD_SAFE)
@@ -396,7 +311,8 @@ int PARMCI_Init()
 
     /* let's hope that the message passing environment was initialized outside
      * of ARMCI such that passing NULL for argc/argv here is okay */
-    armci_msg_init(NULL, NULL);
+    /* armci_msg_init(NULL, NULL); */
+    armci_msg_init_comm(comm);
 
 #ifdef MPI_SPAWN
     if(!_armci_initialized_args)
@@ -405,7 +321,7 @@ int PARMCI_Init()
                  "instead of PARMCI_Init(). Please replace PARMCI_Init() "
                  " with PARMCI_Init_args(&argc, &argv) as in the API docs", 0L);
 #endif
-#if defined(MPI_MT) || defined(DCMF)
+#if defined(MPI_MT)
     {
         int provided;
         MPI_Query_thread(&provided);
@@ -428,23 +344,7 @@ int PARMCI_Init()
         }
     }
 #endif
-    
-#ifdef BGML
-    BGML_Messager_Init();
-    BG1S_Configuration_t config;
-    config=BG1S_Configure(NULL);
-    config.consistency= BG1S_ConsistencyModel_Weak;
-    BG1S_Configure(&config);
 
-    unsigned long long available = BGML_Messager_available();
-    if (available & BGML_MESSAGER_GI)
-      bgml_barrier = (BGML_Barrier) BGGI_Barrier;
-    else
-      bgml_barrier = (BGML_Barrier) BGTr_Barrier;
-#endif
-#ifdef ARMCIX
-    ARMCIX_Init ();
-#endif
     armci_nproc = armci_msg_nproc();
     armci_me = armci_msg_me();
     armci_usr_tid = THREAD_ID_SELF(); /*remember the main user thread id */
@@ -454,31 +354,6 @@ int PARMCI_Init()
     th_idx = ARMCI_THREAD_IDX;
     if (th_idx)
         printf("WARNING: PARMCI_Init is called from thread %d, should be 0\n",th_idx);
-#endif
-
-#ifdef _CRAYMPP
-    cmpl_proc=-1;
-#endif
-#ifdef LAPI
-#   ifdef AIX
-    {
-       char *tmp1 = getenv("RT_GRQ"), *tmp2 = getenv("AIXTHREAD_SCOPE");
-       if(tmp1 == NULL || strcmp((const char *)tmp1,"ON")) 
-	  armci_die("Armci_Init: environment variable RT_GRQ not set. It should be set as RT_GRQ=ON, to restore original thread scheduling LAPI relies upon",0);
-       if(tmp2 == NULL || strcmp((const char *)tmp2,"S")) 
-	  armci_die("Armci_Init: environment variable AIXTHREAD_SCOPE=S should be set to assure correct operation of LAPI", 0);
-    }
-#   endif
-    armci_init_lapi();
-#endif
-
-#ifdef PORTALS
-    armci_init_portals();
-    shmem_init();
-#endif
-
-#ifdef CRAY_SHMEM
-    shmem_init();
 #endif
 
     armci_init_clusinfo();
@@ -499,16 +374,9 @@ int PARMCI_Init()
 #if defined(SYSV) || defined(WIN32) || defined(MMAP)
     /* init shared/K&R memory */
     if(ARMCI_Uses_shm() ) {
-#      ifdef SGIALTIX
-          armci_altix_shm_init();
-#      else
-          armci_shmem_init();
-#      endif
+      armci_shmem_init();
     }
 
-#   if defined(QUADRICS) && !defined(NO_SHM)
-       if(armci_me == armci_master)armci_check_shmmax();
-#   endif
 #endif
 
 #ifdef REGION_ALLOC
@@ -519,42 +387,6 @@ int PARMCI_Init()
        PARMCI_Free(test_ptr_arr[armci_me]);
        free(test_ptr_arr);
        }
-#endif
-
-#ifdef MULTI_CTX
-    /* this is a hack for the Elan-3 multi-tiled memory (qsnetlibs v 1.4.10) 
-     * we need to allocate and then free memory to satisfy libelan requirements
-     * for symmetric memory addresses
-     */ 
-    if(armci_nclus >1){ 
-       int segments, segsize, seg;
-       void **addr;
-       armci_nattach_preallocate_info(&segments, &segsize);
-
-       segsize -= 1024*1024; /* leave some for the K&RM headers */
-       if(armci_me!=armci_master)segsize=0; /* only one allocates mem on node*/
-
-       addr = (void*) malloc(segments*armci_nproc*sizeof(void*));
-       if(!addr)armci_die("armci_init:addr malloc failed",segments*armci_nproc);
-
-       for(seg=0; seg< segments; seg++) /* allocate segments */
-          if(PARMCI_Malloc(addr+armci_nproc*seg,segsize))
-             armci_die("problem in Elan-3 mem preallocation",seg);
-       
-       for(seg=0; seg< segments; seg++) /* return to free pool */
-         if(armci_me==armci_master)
-           if(PARMCI_Free(*(addr+armci_nproc*seg+armci_me)))
-              armci_die("problem in Elan-3 mem preallocation - free stage",seg);
-       free(addr);
-
-#if 0
-       if(armci_me==armci_master){
-          printf("%d:preallocated %d segments %d bytes each\n",armci_me,
-                 segments, segsize); fflush(stdout);
-       }
-#endif
-
-    }
 #endif
 
     /* allocate locks: we need to do it before server is started */
@@ -577,16 +409,14 @@ int PARMCI_Init()
        if(armci_nclus >1) 
            armci_start_server();
 #   endif
-#if defined(GM) || defined(VAPI) || defined(PORTALS) || (defined(LAPI) && defined(LAPI_RDMA))
+#if defined(VAPI) 
     /* initialize registration of memory */
     armci_region_init();
 #endif
 
     armci_msg_barrier();
     armci_init_memlock(); /* allocate data struct for locking memory areas */
-#if !defined(GM) 
     armci_notify_init();
-#endif
     armci_msg_barrier();
     armci_msg_gop_init();
 
@@ -608,6 +438,16 @@ int PARMCI_Init()
     install_nxtval(NULL, NULL);
 #endif
     return 0;
+}
+
+int PARMCI_Init()
+{
+  return !_armci_init(MPI_COMM_WORLD);
+}
+
+int PARMCI_Init_mpi_comm(MPI_Comm comm)
+{
+  return !_armci_init(comm);
 }
 
 /* ARMCI Finalize is called multiple times, if both GA and TCGMSG are used
@@ -635,12 +475,6 @@ void PARMCI_Finalize()
     }
 #endif
 
-#ifdef PORTALS
-    armci_fini_portals();
-#endif
-#ifdef LAPI
-    armci_term_lapi();
-#endif
 #ifdef ALLOW_PIN
     free(armci_prot_switch_fence);
 #endif
@@ -649,9 +483,6 @@ void PARMCI_Finalize()
     armci_msg_barrier();
 #ifdef MSG_COMMS_MPI
     armci_group_finalize();
-#endif
-#ifdef ARMCIX
-    ARMCIX_Finalize ();
 #endif
 #ifdef MSG_COMMS_MPI
     MPI_Comm_free(&ARMCI_COMM_WORLD); /*SK: free at last*/
@@ -843,7 +674,7 @@ char *ptr;
       nb_handle = NULL;
     }  
 
-#if defined(LAPI) || defined(GM) || defined(VAPI) || defined(QUADRICS)
+#if defined(VAPI)
     if(armci_rem_gpc(GET, darr, 2, &send, proc, 1, nb_handle))
 #endif
       return FAIL2;

@@ -91,6 +91,7 @@ void armci_init_domains(MPI_Comm comm)
       nodelist[i] = _my_node_id*_number_of_procs_per_node+i;
     comex_group_create(_number_of_procs_per_node, nodelist,
         COMEX_GROUP_WORLD, &ARMCI_Node_group);
+    free(nodelist);
   }
 }
 
@@ -420,6 +421,22 @@ int PARMCI_Init_args(int *argc, char ***argv)
     armci_init_domains(ARMCI_COMM_WORLD);
     ARMCI_Default_Proc_Group = 0;
     return rc;
+}
+
+
+int PARMCI_Init_mpi_comm(MPI_Comm comm)
+{
+    int ret = comex_init_comm(comm);
+    if (ret == COMEX_SUCCESS) {
+      int rc = comex_group_comm(COMEX_GROUP_WORLD, &ARMCI_COMM_WORLD);
+      assert(COMEX_SUCCESS == rc);
+      ARMCI_Default_Proc_Group = 0;
+      armci_init_domains(ARMCI_COMM_WORLD);
+      ret = 1;
+    } else {
+      ret = 0;
+    }
+    return ret;
 }
 
 

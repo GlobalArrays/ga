@@ -208,6 +208,15 @@ int ARMCI_Init_args(int *argc, char ***argv)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak ARMCI_Init_mpi_comm
+#endif
+int ARMCI_Init_mpi_comm(MPI_Comm comm)
+{
+    return PARMCI_Init_mpi_comm(comm);
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak ARMCI_Initialized
 #endif
 int ARMCI_Initialized()

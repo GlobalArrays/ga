@@ -6,9 +6,9 @@
 AC_PREREQ([2.67])
 AC_INIT([Communication Runtime for Extreme Scale (comex)],
         [1.1],
-        [hpctools@pnl.gov],
+        [https://github.com/GlobalArrays/ga/issues],
         [comex],
-        [http://www.emsl.pnl.gov/docs/global/])
+        [https://hpc.pnl.gov/globalarrays/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -62,7 +62,7 @@ AS_CASE([$enable_mpi_tests],
 
 AM_CONDITIONAL([CROSS_COMPILING], [test "x$cross_compiling" = xyes])
 
-# Establish the underlying network infrastructure (MPI, OFA, DMAPP, etc)
+# Establish the underlying network infrastructure (MPI, OFA, etc)
 COMEX_NETWORK_SETUP
 
 # Checks for C header files.
@@ -151,6 +151,9 @@ COMEX_CHECK_FUNCS([MPIX_Ibarrier])
 LIBS="$comex_save_LIBS"
 LDFLAGS="$comex_save_LDFLAGS"
 CPPFLAGS="$comex_save_CPPFLAGS"
+
+# SysV shared memory
+COMEX_ENABLE_SYSV
 
 # Checks for C libraries.
 COMEX_BLAS

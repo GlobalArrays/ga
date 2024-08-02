@@ -103,6 +103,9 @@ install (FILES
   DESTINATION include/ga
 )
 
+list (APPEND GA_HEADER_PATHS ${CMAKE_CURRENT_LIST_DIR}/src-armci ${CMAKE_CURRENT_LIST_DIR}/src-common)
+set (GA_HEADER_PATHS ${GA_HEADER_PATHS} PARENT_SCOPE)
+
 # -------------------------------------------------------------
 # ARMCI and COMEX library installation
 # -------------------------------------------------------------
@@ -120,6 +123,7 @@ add_library(armci_comex OBJECT
   ${COMEX_DEVICE}
 )
 target_compile_definitions(armci_comex PRIVATE HAVE_CONFIG_H)
+target_include_directories(armci_comex PRIVATE ${MPI_C_INCLUDE_DIRS})
 
 add_library(armci
   ${ARMCI_FILES}
@@ -129,7 +133,7 @@ target_compile_definitions(armci PRIVATE HAVE_CONFIG_H)
 
 add_library(GlobalArrays::armci ALIAS armci)
 
-target_link_libraries(armci)
+target_include_directories(armci PRIVATE ${MPI_C_INCLUDE_DIRS})
 
 install(TARGETS armci
     EXPORT globalarrays-targets
@@ -143,7 +147,7 @@ add_library(comex
 
 add_library(GlobalArrays::comex ALIAS comex)
 
-target_link_libraries(comex)
+target_include_directories(comex PRIVATE ${MPI_C_INCLUDE_DIRS})
 
 install(TARGETS comex
     EXPORT globalarrays-targets

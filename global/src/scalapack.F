@@ -1076,13 +1076,12 @@ c***********************************************************************
 c****
       character*1 uplo         ! (input) 'U' or 'L'
       integer     g_A          ! (input/output)
-      logical status
       integer dimA1, dimA2, typeA
       integer me, nproc
       integer n
       integer i, j, hBUF
+      integer j0,j1,i0,i1
       MA_ACCESS_INDEX_TYPE adrBUF
-
 c**** Check Environment
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -1101,27 +1100,38 @@ c****
       n = dimA1
       
 c**** Allocate BUF
-      status = ma_push_get(MT_DBL, n, 'BUF', hBUF, adrBUF)
-      if (.not.status)
+      if(.not.ma_push_get(MT_DBL, n, 'BUF', hBUF, adrBUF))
      &     call ga_error(' ga_zeroUL: mem alloc failed BUF ', -1)
+      do i=0,n-1
+         dbl_mb(adrBUF+i)=0d0
+      enddo
       
       call ga_sync()
 
-      do i = me+1, n, nproc
-         call ga_get(g_A, 1, n, i, i, dbl_mb(adrBUF), n)
+      i0=me+1
+      i1=n
+      if (uplo.eq.'L') then
+         i0=me+2
+      elseif (uplo.eq.'U') then
+         i1=n-1
+      else
+         call ga_error('ga_symUL: uplo must be L or U ', 1)
+      endif
+      do i = i0, i1, nproc
          if (uplo.eq.'L') then
 c****       case L: make zero the upper triangle            
-            call dcopy(i-1,0.0d0,0, dbl_mb(adrBUF),1)
+            j0=1
+            j1=i-1
          elseif (uplo.eq.'U') then
 c****       case U: make zero the lower triangle            
-            call dcopy(n-i,0.0d0,0, dbl_mb(adrBUF+i),1)
-         else
-            call ga_error('ga_symUL: uplo must be L or U ', 1)
+            j0=i+1
+            j1=n
          endif
-         call ga_put(g_A, 1, n, i, i, dbl_mb(adrBUF), n)
+         call ga_put(g_a, j0, j1, i, i, dbl_mb(adrBUF), n)
       end do    !i
 c
-      status = ma_pop_stack(hBUF)
+      if(.not.ma_pop_stack(hBUF)) call
+     c     ga_error(' ga_zeroUL: pop_stack failed  ',-1)
       call ga_sync()
       end
 
@@ -2556,7 +2566,7 @@ c
        end if ! oactive
 
          if(.not.ga_allocate(g_b)) 
-     E        call ga_error(' solve_evp_real: ga_allocate failed',0)
+     E        call ga_error(' ga_pdsyevx: ga_allocate failed',0)
          call ga_zero(g_b)
 
        if (oactive) then
@@ -3412,9 +3422,13 @@ c
 c     
       mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
       nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
+      mpa=max(one4,mpa)
+      nqa=max(one4,nqa)
 c     
       mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
       nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
+      mpb=max(one4,mpb)
+      nqb=max(one4,nqb)
 c     
 c     
       lda = max(one4,mpA)
@@ -3439,7 +3453,10 @@ c
          
          call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
      $        dbl_mb(adrA), lda, mpA, nqA)
-         endif
+      else
+         mpb=1
+         nqb=1
+      endif                     ! oactive
          if(g_a.eq.g_b) then
             if(.not.ga_deallocate(g_b))
      E           call ga_error(' ga_pdsyevr: ga_deallocate failed',0)
@@ -3448,7 +3465,8 @@ c
          if(oactive) then
 c     
          elemB= mpB*nqB
-c     
+c
+         status=.true.
          if(elemB.ne.0)status =
      $        ma_push_get(MT_DBL,elemB,'b',hb,adrb)
          if(.not.status) 
@@ -3523,10 +3541,16 @@ c
      2        vu, il, iu, m, nz, eval,  dbl_mb(adrB), one4, 
      3        one4, descB, dbl_mb(adrcwork), lcwork4,
      3        int_mb(adriwork), liwork4, info)
-c     
+c
+      if(mout.ne.m) then
+         if(iam.eq.0)
+     W        write(6,*) ' eval  search failed: got',m,
+     W        ' instead of ',mout
+         info=-999
+      endif
          mout=m
          if(iam.eq.0.and.mout.ne.n) 
-     W        write(0,*) ' computed eval ',mout,' out of ',
+     W        write(6,*) ' computed eval ',mout,' out of ',
      A        dima1
 
 
@@ -3547,7 +3571,6 @@ c***  copy solution matrix back to g_b
 c     
          mout4=mout
        endif ! oactive
-
          if(.not.ga_allocate(g_b)) 
      E        call ga_error(' ga_pdsyevr: ga_allocate failed',0)
          call ga_zero(g_b)
@@ -3592,7 +3615,7 @@ c     broadcast evals
 #endif
 #endif
       implicit none
-#include "mpif.h"
+c#include "mpif.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "scalapack.fh"
@@ -3704,6 +3727,8 @@ c***  initialize SL interface
 c     
       call SLinit2(n)
       oactive=iam.lt.maxproc
+      mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
+      nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
       if(g_a.ne.g_b) then
          if(.not.ga_deallocate(g_b))
      E        call ga_error(' ga_evp_real: ga_deallocate failed',0)
@@ -3729,9 +3754,13 @@ c
 c     
       mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
       nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
+      mpa=max(one4,mpa)
+      nqa=max(one4,nqa)
 c     
       mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
       nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
+      mpb=max(one4,mpb)
+      nqb=max(one4,nqb)
 c     
 c     
       lda = max(one4,mpA)
@@ -3764,19 +3793,22 @@ c
      &        call ga_error('ga_evp_real: mem alloc failed A ', 
      S        stat_alloc)
 c     
-         elemB= mpB*nqB
-c         elemb=max(mpb,nqb)**2
+         elemb= mpb*nqb
 c     
-         if(elemB.ne.0)
+         if(elemB.ne.0) then
 #ifdef USE_ALLOCATE
-     $        allocate(b(mpb,nqb),STAT = stat_alloc)
-         status=stat_alloc.eq.0
+            allocate(b(mpb,nqb),STAT = stat_alloc)
+            status=stat_alloc.eq.0
 #else
      $        status =
      $        ma_push_get(MT_DBL,elemB,'b',hb,adrb)
 #endif
-         if(.not.status) 
-     &        call ga_error('ga_evp_real: mem alloc failed B ', -1)
+         endif
+         if(.not.status) then
+            write(6,*) ' B alloc failed for mpb,nqb ',mpb,nqb,elemb
+            call ga_error('ga_evp_real: mem alloc failed B ',
+     S           stat_alloc)
+         endif
 c     
 c     
          n4=n8
@@ -3792,7 +3824,7 @@ c
      $        dbl_mb(adrA), 
 #endif
      A        lda, mpA, nqA)
-         endif
+         endif !end of oactive
          if(g_a.eq.g_b) then
             if(.not.ga_deallocate(g_b))
      E           call ga_error(' ga_evp_real: ga_deallocate failed',0)
@@ -3931,13 +3963,17 @@ c
 c     
 c***  deallocate work/SL arrays
 c     
-         if ( elemB .ne. 0 ) 
+         if ( elemB .ne. 0 )  then
 #ifdef USE_ALLOCATE
-     $        deallocate(b,STAT = stat_alloc)
-         status=stat_alloc.eq.0
+            deallocate(b,STAT = stat_alloc)
+            status=stat_alloc.eq.0
 #else
-     $      status = ma_pop_stack(hb)
+         status = ma_pop_stack(hb)
 #endif
+         endif
+         if(.not.status)
+     D        call ga_error('ga_evp_real: dealloc failed B ',
+     D          stat_alloc)
 
          if ( elemA .ne. 0 ) then
 #ifdef USE_ALLOCATE
@@ -3949,6 +3985,9 @@ c
              status = ma_pop_stack(ha)
 #endif
           endif
+          if(.not.status)
+     D         call ga_error('ga_evp_real: dealloc failed A ',
+     D         stat_alloc)
 #if HAVE_ELPA_2017
        call elpa_deallocate(e,elpa_err)
        if(elpa_err.ne.0) call ga_error(

@@ -58,9 +58,11 @@ AM_FFLAGS += $(GA_FOPT)
 AM_FFLAGS += $(GA_F_WARN)
 AM_FFLAGS += $(FFLAG_INT)
 AM_FFLAGS += $(FFLAG_NO_LOOP_OPT)
+AM_FFLAGS += $(FFLAG_NO_LOOP_VECT)
 AM_CFLAGS += $(GA_COPT)
 AM_CFLAGS += $(GA_C_WARN)
 AM_CFLAGS += $(CFLAG_NO_LOOP_OPT)
+AM_CFLAGS += $(CFLAG_NO_LOOP_VECT)
 AM_CXXFLAGS += $(GA_CXXOPT)
 AM_CXXFLAGS += $(GA_CXX_WARN)
 
@@ -410,9 +412,6 @@ libga_la_SOURCES += global/src/ga_diag_seq.F
 if ENABLE_EISPACK
 libga_la_SOURCES += global/src/rsg.F
 endif
-if CRAY_XT_NETWORKS
-libga_la_SOURCES += global/src/ga_dgemmf.F
-endif # CRAY_XT_NETWORKS
 if ENABLE_PEIGS
 libga_la_SOURCES += global/src/ga_diag.F
 endif # ENABLE_PEIGS
@@ -444,7 +443,9 @@ AM_CPPFLAGS += -I$(top_srcdir)/global/testing
 
 check_PROGRAMS += global/testing/big
 check_PROGRAMS += global/testing/elempatch
+check_PROGRAMS += global/testing/tiled_irreg_test
 check_PROGRAMS += global/testing/gatscat
+check_PROGRAMS += global/testing/comm_init
 check_PROGRAMS += global/testing/getmem
 check_PROGRAMS += global/testing/mtest
 check_PROGRAMS += global/testing/mulmatpatchc
@@ -635,7 +636,9 @@ endif
 
 #GLOBAL_PARALLEL_TESTS += global/testing/big$(EXEEXT) # needs lots of memory
 GLOBAL_PARALLEL_TESTS += global/testing/elempatch$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/tiled_irreg_test$(EXEEXT)
 #GLOBAL_PARALLEL_TESTS += global/testing/gatscat$(EXEEXT) # broken
+GLOBAL_PARALLEL_TESTS += global/testing/comm_init$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/getmem$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/mtest$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/mulmatpatchc$(EXEEXT)
@@ -881,6 +884,7 @@ global_testing_bin_SOURCES                 = global/testing/bin.F $(gtsrcf)
 global_testing_blktest_SOURCES             = global/testing/blktest.F $(gtsrcf)
 global_testing_d2test_SOURCES              = global/testing/d2test.F $(gtsrcf)
 global_testing_elempatch_SOURCES           = global/testing/elempatch.c
+global_testing_tiled_irreg_test_SOURCES    = global/testing/tiled_irreg_test.c
 global_testing_field_test_SOURCES          = global/testing/field-test.F $(gtsrcf)
 global_testing_g2test_SOURCES              = global/testing/g2test.F $(gtsrcf)
 global_testing_g3test_SOURCES              = global/testing/g3test.F $(gtsrcf)
@@ -888,6 +892,7 @@ global_testing_ga_lu_SOURCES               = global/testing/ga_lu.c
 global_testing_ga_mpi_SOURCES              = global/testing/ga-mpi.c
 global_testing_ga_shift_SOURCES            = global/testing/ga_shift.F $(gtsrcf)
 global_testing_gatscat_SOURCES             = global/testing/gatscat.c
+global_testing_comm_init_SOURCES           = global/testing/comm_init.c
 global_testing_getmem_SOURCES              = global/testing/getmem.c
 global_testing_ghosts_SOURCES              = global/testing/ghosts.F $(gtsrcf)
 global_testing_ipc_clean_SOURCES           = global/testing/ipc.clean.c
@@ -1358,6 +1363,7 @@ check_PROGRAMS += ga++/testing/mtest
 check_PROGRAMS += ga++/testing/ntestc
 check_PROGRAMS += ga++/testing/testc
 check_PROGRAMS += ga++/testing/testmult
+check_PROGRAMS += ga++/testing/create_irreg_test
 check_PROGRAMS += ga++/testing/threadsafecpp
 
 CXX_SERIAL_TESTS =
@@ -1372,6 +1378,7 @@ CXX_PARALLEL_TESTS += ga++/testing/mtest$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/ntestc$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/testc$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/testmult$(EXEEXT)
+CXX_PARALLEL_TESTS += ga++/testing/create_irreg_test$(EXEEXT)
 CXX_PARALLEL_TESTS += ga++/testing/threadsafecpp$(EXEEXT)
 
 ga___testing_elempatch_SOURCES      = ga++/testing/elempatch.cc
@@ -1379,6 +1386,7 @@ ga___testing_mtest_SOURCES          = ga++/testing/mtest.cc
 ga___testing_ntestc_SOURCES         = ga++/testing/ntestc.cc
 ga___testing_testc_SOURCES          = ga++/testing/testc.cc
 ga___testing_testmult_SOURCES       = ga++/testing/testmult.cc
+ga___testing_create_irreg_test_SOURCES       = ga++/testing/create_irreg_test.cc
 ga___testing_threadsafecpp_SOURCES  = ga++/testing/thread-safe.cc
 
 ga___testing_threadsafecpp_CXXFLAGS = $(AM_CXXFLAGS) $(OPENMP_CXXFLAGS)
@@ -1392,6 +1400,7 @@ ga___testing_mtest_LDADD            = libga++.la
 ga___testing_ntestc_LDADD           = libga++.la
 ga___testing_testc_LDADD            = libga++.la
 ga___testing_testmult_LDADD         = libga++.la
+ga___testing_create_irreg_test_LDADD         = libga++.la
 
 endif # CXX_BINDINGS
 
@@ -1597,19 +1606,6 @@ EXTRA_DIST += tcgmsg/tcgmsg-mpi/README
 
 ##############################################################################
 # armci
-# if TCGMSG is coming from ARMCI
-if ARMCI_NETWORK_ARMCI
-else
-if MSG_COMMS_TCGMSG4
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-endif
-if MSG_COMMS_TCGMSG5
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-endif
-endif
-
-##############################################################################
-# armci
 if ARMCI_NETWORK_ARMCI
 else
 if ARMCI_SRC_DIR_COMEX
@@ -1638,18 +1634,8 @@ else
 
 if ARMCI_NETWORK_ARMCI
 else
-if ARMCI_NETWORK_PORTALS
-AM_CPPFLAGS += -I$(top_srcdir)/armci/src-portals
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-else
-if ARMCI_NETWORK_GEMINI
-AM_CPPFLAGS += -I$(top_srcdir)/armci/src-gemini
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-else
 AM_CPPFLAGS += -I$(top_srcdir)/armci/src/include
 AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-endif
-endif
 endif
 endif
 
@@ -1738,17 +1724,6 @@ CP__v_ = $(CP__v_$(AM_DEFAULT_VERBOSITY))
 CP__v_0 = @echo "  CP    " $@;
 
 .PHONY: pfiles clean-pfiles
-if MSG_COMMS_TCGMSG4
-pfiles: $(check_PROGRAMS)
-	for p in $(check_PROGRAMS); do \
-		echo "`whoami` `hostname` $(NPROCS) `pwd`/$$p /tmp" > $$p.p; \
-	done
-check: pfiles
-clean-pfiles:
-	find . -name '*.p' -exec rm {} \; ;
-clean-local: clean-pfiles
-MAYBE_PFILES = pfiles
-endif # MSG_COMMS_TCGMSG4
 
 ##############################################################################
 # test suite
@@ -1793,13 +1768,6 @@ XFAIL_TESTS =
 XFAIL_TESTS += $(SERIAL_TESTS_XFAIL)
 XFAIL_TESTS += $(PARALLEL_TESTS_XFAIL)
 
-if MSG_COMMS_TCGMSG4
-LOG_COMPILER = \
-maybe_tcgexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(TCGEXEC)"; fi`; eval $$maybe_tcgexec
-else
-if MSG_COMMS_TCGMSG5
-LOG_COMPILER = tst="$$dir$$f -np $(NPROCS)"; eval
-else
 if CROSS_COMPILING
 LOG_COMPILER = \
 maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; eval $$maybe_mpiexec
@@ -1813,8 +1781,6 @@ LOG_COMPILER = \
 maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; eval $$maybe_mpiexec
 endif # COMEX_NETWORK_MPI_PR
 endif # CROSS_COMPILING
-endif # MSG_COMMS_TCGMSG5
-endif # MSG_COMMS_TCGMSG4
 
 .PHONY: check-travis
 check-travis: $(all-am) $(check_LTLIBRARIES) $(TRAVIS_TESTS) $(MAYBE_PFILES)

@@ -5,10 +5,6 @@
 
 #include "gaconfig.h"
 
-#ifdef __crayx1
-#undef CRAY
-#endif
-
 #if HAVE_WINDOWS_H
 #   include <windows.h>
 #   define sleep(x) Sleep(1000*(x))
@@ -128,11 +124,7 @@ extern char ***_ga_argv;
 #define PERIODIC_ACC 3
 
 #define FLUSH_CACHE
-#ifdef  CRAY_T3D
-#       define ALLIGN_SIZE      32
-#else
-#       define ALLIGN_SIZE      128
-#endif
+#define ALLIGN_SIZE      128
 
 #define allign__(n, SIZE) (((n)%SIZE) ? (n)+SIZE - (n)%SIZE: (n))
 #define allign_size(n) allign__((long)(n), ALLIGN_SIZE)

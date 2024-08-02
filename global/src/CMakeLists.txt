@@ -132,6 +132,7 @@ target_include_directories(ga_src BEFORE PRIVATE
                     ${PROJECT_SOURCE_DIR}/LinAlg/lapack+blas
                     ${CMAKE_CURRENT_BINARY_DIR}
                     ${PROJECT_BINARY_DIR}
+                    ${MPI_C_INCLUDE_DIRS}
 )
 
 if(ENABLE_FORTRAN)
@@ -160,3 +161,7 @@ install(FILES
   ${GA_FORTRAN_INTERFACE_H_FILES}
   DESTINATION include/ga
 )
+
+list (APPEND GA_HEADER_PATHS ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+set (GA_HEADER_PATHS ${GA_HEADER_PATHS} PARENT_SCOPE)
+

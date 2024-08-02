@@ -50,21 +50,7 @@ if test x$LARGE_FILES != x ; then
     PARIO_CPPFLAGS="$PARIO_CPPFLAGS -D_LARGEFILE64_SOURCE"
     PARIO_CFLAGS=`getconf LFS_CFLAGS`
   fi
-  if test x$TARGET = xBGL -o x$TARGET = xBGP ; then
-    PARIO_CPPFLAGS="$PARIO_CPPFLAGS -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE"
-  fi
-  if test x$TARGET = xHPUX ; then
-    PARIO_CPPFLAGS="$PARIO_CPPFLAGS -D_LARGEFILE64_SOURCE"
-    PARIO_CFLAGS=`getconf XBS5_ILP32_OFFBIG_CFLAGS`
-  fi
-  if test x$TARGET = xHPUX64 ; then
-    PARIO_CPPFLAGS="$PARIO_CPPFLAGS -D_LARGEFILE64_SOURCE"
-    PARIO_CFLAGS=`getconf XBS5_LP64_OFF64_CFLAGS`
-  fi
   PARIO_CPPFLAGS="$PARIO_CPPFLAGS -DLARGE_FILES"
-fi
-if test x$TARGET = xDECOSF ; then
-  PARIO_LDFLAGS="-laio -lpthreads"
 fi
 if test x$USE_LINUXAIO != x ; then
   PARIO_CPPFLAGS="$PARIO_CPPFLAGS -DLINUXAIO"
@@ -88,9 +74,6 @@ dnl ##########################################################################
 dnl FROM pario/eaf/GNUmakefile
 dnl ##########################################################################
 PARIO_CPPFLAGS="$PARIO_CPPFLAGS -DEAF_STATS"
-if test x$ga_armci_network = xPORTALS ; then
-  PARIO_CPPFLAGS="$PARIO_CPPFLAGS -DCRAY_XT"
-fi
 
 dnl ##########################################################################
 dnl FROM pario/dra/GNUmakefile

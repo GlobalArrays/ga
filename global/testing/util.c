@@ -453,12 +453,10 @@ double FATR util_timer_()
 void FATR set_ma_use_armci_mem_() 
 {
     int retval;
-#if defined(SPARC64_GP) || defined(HPUX64)
-    if((retval=putenv("MA_USE_ARMCI_MEM=YES")) != 0)
-#elif defined(_WIN32)
+#if defined(_WIN32)
     if((retval=_putenv("MA_USE_ARMCI_MEM=YES")) != 0)
 #else
     if((retval=setenv("MA_USE_ARMCI_MEM", "YES", 1)) != 0)
 #endif          
-       GA_Error("setenv failed: insufficient space in the environment",1);
+    GA_Error("setenv failed: insufficient space in the environment",1);
 }

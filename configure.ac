@@ -6,7 +6,7 @@
 AC_PREREQ([2.67])
 AC_INIT([Global Arrays (GA)],
         [m4_esyscmd([./version.sh])],
-        [hpctools@pnl.gov],
+        [https://github.com/GlobalArrays/ga/issues],
         [ga],
         [http://hpc.pnl.gov/globalarrays/])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -178,6 +178,7 @@ GA_DISABLE_SYS_WEAK_ALIAS
 GA_SYS_WEAK_ALIAS
 GA_UNION_SEMUN
 GA_GNU_LOOP_OPT
+GA_GNU_LOOP_VECT
 
 # Checks for C type sizes.
 AC_CHECK_SIZEOF([void*])
@@ -299,7 +300,6 @@ AC_MSG_NOTICE
 AC_MSG_NOTICE([Assembler])
 AC_MSG_NOTICE
 
-GA_AS
 AM_PROG_AS
 
 #########################################
@@ -354,6 +354,7 @@ GA_F77_FIXED
 GA_F77_MISMATCH_TYPE
 GA_F77_INTEGER_SIZE
 GA_GNU_LOOP_OPT
+GA_GNU_LOOP_VECT
 
 # Checks for Fortran typedefs, structures, and compiler characteristics.
 AC_OPENMP
@@ -527,7 +528,6 @@ ARMCI_SETUP
 
 # Set up MA.
 MA_ENABLE_CUDA_MEM
-MA_ENABLE_ARMCI_MEM_OPTION
 MA_LONG_DOUBLE_TYPEDEF
 MA_STATS
 MA_VERIFY
@@ -575,8 +575,6 @@ AC_SUBST([NPROCS])
 AC_ARG_VAR([MPIEXEC],
            [how to run parallel tests if built with MPI e.g. "mpiexec -np %NP%"])
 AS_CASE([$ga_msg_comms],
-    [TCGMSG],  [TCGEXEC="`pwd`/armci/parallel.x"],
-    [TCGMSG5], [TCGEXEC=],
     [MPI|TCGMSGMPI],
         [AS_IF([test "x$MPIEXEC" = x],
             [AC_PATH_PROGS([MPIEXEC], [mpirun mpiexec])
@@ -622,6 +620,7 @@ AC_MSG_NOTICE([         unwrapped F77=$ga_cv_mpif77_naked])
 AC_MSG_NOTICE([                FFLAGS=$FFLAGS])
 AC_MSG_NOTICE([             FFLAG_INT=$FFLAG_INT])
 AC_MSG_NOTICE([     FFLAG_NO_LOOP_OPT=$FFLAG_NO_LOOP_OPT])
+AC_MSG_NOTICE([     FFLAG_NO_LOOP_VECT=$FFLAG_NO_LOOP_VECT])
 AC_MSG_NOTICE([               GA_FOPT=$GA_FOPT])
 ])
 AC_MSG_NOTICE([                    CC=$CC])
@@ -630,6 +629,7 @@ AC_MSG_NOTICE([          unwrapped CC=$ga_cv_mpic_naked])
 ])
 AC_MSG_NOTICE([                CFLAGS=$CFLAGS])
 AC_MSG_NOTICE([     CFLAG_NO_LOOP_OPT=$CFLAG_NO_LOOP_OPT])
+AC_MSG_NOTICE([     CFLAG_NO_LOOP_VECT=$CFLAG_NO_LOOP_VECT])
 AC_MSG_NOTICE([               GA_COPT=$GA_COPT])
 AS_IF([test "x$enable_cxx" = xyes], [
 AC_MSG_NOTICE([                   CXX=$CXX])

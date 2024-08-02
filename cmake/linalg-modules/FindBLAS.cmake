@@ -13,7 +13,7 @@ include( ${CMAKE_CURRENT_LIST_DIR}/LinAlgModulesMacros.cmake  )
 
 # SANITY CHECK: Make sure only one integer interface is requested
 if( "ilp64" IN_LIST BLAS_FIND_COMPONENTS AND "lp64" IN_LIST BLAS_FIND_COMPONENTS )
-  message( FATAL_ERROR "BLAS cannot link to both ILP64 and LP64 iterfaces" )
+  message( FATAL_ERROR "BLAS cannot link to both ILP64 and LP64 interfaces" )
 endif()
 
 
@@ -26,6 +26,7 @@ foreach( _comp ${BLAS_FIND_COMPONENTS} )
   endif()
 endforeach()
 
+emulate_kitware_linalg_modules( BLAS )
 fill_out_prefix( BLAS )
 
 if( NOT BLAS_PREFERENCE_LIST )
@@ -81,18 +82,18 @@ endif()
 
 
 # Check if DGEMM exists in proposed BLAS_LIBRARIES
-check_dgemm_exists( BLAS_LIBRARIES 
-                    BLAS_LINK_OK BLAS_FORTRAN_LOWER BLAS_FORTRAN_UNDERSCORE )
+check_fortran_functions_exist( dgemm BLAS BLAS_LIBRARIES
+                               BLAS_LINK_OK BLAS_Fortran_LOWER BLAS_Fortran_UNDERSCORE )
 
 
-# If BLAS linkage sucessful, check if it is ILP64/LP64
+# If BLAS linkage successful, check if it is ILP64/LP64
 if( BLAS_LINK_OK )
 
   set( _dgemm_name "dgemm" )
-  if( NOT BLAS_FORTRAN_LOWER )
+  if( NOT BLAS_Fortran_LOWER )
     string( TOUPPER "${_dgemm_name}" _dgemm_name )
   endif()
-  if( BLAS_FORTRAN_UNDERSCORE )
+  if( BLAS_Fortran_UNDERSCORE )
     set( _dgemm_name "${_dgemm_name}_" )
   endif()
 
@@ -105,6 +106,11 @@ if( BLAS_LINK_OK )
     set( BLAS_ilp64_FOUND TRUE  )
     find_dependency( ILP64 )
     list( APPEND BLAS_COMPILE_OPTIONS "${ILP64_COMPILE_OPTIONS}" )
+    foreach ( lang C CXX Fortran )
+        if ( DEFINED ILP64_${lang}_COMPILE_OPTIONS )
+            list( APPEND BLAS_${lang}_COMPILE_OPTIONS "${ILP64_${lang}_COMPILE_OPTIONS}" )
+        endif()
+    endforeach()
   endif()
 
 endif()
@@ -123,6 +129,11 @@ if( BLAS_FOUND )
   set( BLAS_COMPILE_DEFINITIONS "${BLAS_COMPILE_DEFINITIONS}" CACHE STRING "BLAS Compile Definitions" FORCE )
   set( BLAS_INCLUDE_DIRS        "${BLAS_INCLUDE_DIRS}"        CACHE STRING "BLAS Include Directories" FORCE )
   set( BLAS_COMPILE_OPTIONS     "${BLAS_COMPILE_OPTIONS}"     CACHE STRING "BLAS Compile Options"     FORCE )
+  foreach ( lang C CXX Fortran )
+      if ( DEFINED BLAS_${lang}_COMPILE_OPTIONS )
+          set( BLAS_${lang}_COMPILE_OPTIONS     "${BLAS_${lang}_COMPILE_OPTIONS}"     CACHE STRING "BLAS Compile Options for Language ${lang}"     FORCE )
+      endif()
+  endforeach()
 endif()
 
 if( BLAS_FOUND AND NOT TARGET BLAS::BLAS )

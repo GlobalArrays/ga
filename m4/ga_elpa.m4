@@ -243,8 +243,8 @@ AS_IF([test $ga_elpa_2017_ok = no],
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_elpa_2017_ok])])
 
-# check elpa2016 fisecond
-AS_IF([test $ga_elpa_2016_ok = no],
+# check elpa2016 second
+AS_IF([test $ga_elpa_2017_ok = no && test $ga_elpa_2016_ok = no],
     [AC_MSG_CHECKING([for ELPA 2016 with user-supplied flags])
      LIBS="$ELPA_LIBS $SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
      GA_RUN_ELPA_2016_TEST()
@@ -252,7 +252,7 @@ AS_IF([test $ga_elpa_2016_ok = no],
      AC_MSG_RESULT([$ga_elpa_2016_ok])])
 
 # check elpa2015 third
-AS_IF([test $ga_elpa_2015_ok = no],
+AS_IF([test $ga_elpa_2017_ok = no && test $ga_elpa_2016_ok = no && test $ga_elpa_2015_ok = no],
     [AC_MSG_CHECKING([for ELPA 2015 with user-supplied flags])
      LIBS="$ELPA_LIBS $SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
      GA_RUN_ELPA_2015_TEST()
@@ -298,7 +298,7 @@ AS_IF([test "x$elpa_size" = x8],
 AS_IF([test $ga_elpa_ok = yes],
     [have_elpa=1
      $1],
-    [AC_MSG_WARN([ELPA library not found, interfaces won't be defined])
+    [AC_MSG_NOTICE([ELPA library not found, interfaces won't be defined])
      have_elpa=0
      $2])
 AC_SUBST([have_elpa])
@@ -309,7 +309,7 @@ AM_CONDITIONAL([HAVE_ELPA], [test $ga_elpa_ok = yes])
 AS_IF([test $ga_elpa_2015_ok = yes],
     [have_elpa_2015=1
      $1],
-    [AC_MSG_WARN([ELPA 2015 library not found, interfaces won't be defined])
+    [AC_MSG_NOTICE([ELPA 2015 library not found, interfaces won't be defined])
      have_elpa_2015=0
      $2])
 AC_SUBST([have_elpa_2015])
@@ -320,7 +320,7 @@ AM_CONDITIONAL([HAVE_ELPA_2015], [test $ga_elpa_2015_ok = yes])
 AS_IF([test $ga_elpa_2016_ok = yes],
     [have_elpa_2016=1
      $1],
-    [AC_MSG_WARN([ELPA 2016 library not found, interfaces won't be defined])
+    [AC_MSG_NOTICE([ELPA 2016 library not found, interfaces won't be defined])
      have_elpa_2016=0
      $2])
 AC_SUBST([have_elpa_2016])
@@ -331,7 +331,7 @@ AM_CONDITIONAL([HAVE_ELPA_2016], [test $ga_elpa_2015_ok = yes])
 AS_IF([test $ga_elpa_2017_ok = yes],
     [have_elpa_2017=1
      $1],
-    [AC_MSG_WARN([ELPA 2017 library not found, interfaces won't be defined])
+    [AC_MSG_NOTICE([ELPA 2017 library not found, interfaces won't be defined])
      have_elpa_2017=0
      $2])
 AC_SUBST([have_elpa_2017])

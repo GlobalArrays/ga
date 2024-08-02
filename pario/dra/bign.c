@@ -295,11 +295,7 @@ int main(int argc, char **argv)
     int status, me;
     int max_arrays = 10;
     double max_sz = 1e8, max_disk = 1e10, max_mem = 1e6;
-#if defined(IBM)
-    int stack = 9000000, heap = 4000000;
-#else
     int stack = 1200000, heap = 800000;
-#endif
 
     MP_INIT(argc,argv);
     GA_Initialize();

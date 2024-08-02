@@ -115,7 +115,6 @@
   ga_ownsM(g_handle, proc, _lo, _hi);                                      \
   gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               \
   if(_last==0) ld[0]=_hi[0]- _lo[0]+1+2*(Integer)GA[g_handle].width[0];    \
-  __CRAYX1_PRAGMA("_CRI shortloop");                                       \
   for(_d=0; _d < _last; _d++)            {                                 \
     _w = (Integer)GA[g_handle].width[_d];                                  \
     _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                       \
@@ -147,7 +146,6 @@ void gam_LocationF(int proc, Integer g_handle,  Integer subscript[],
   ga_ownsM(g_handle, proc, _lo, _hi);                                      
   gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               
   if(_last==0) ld[0]=_hi[0]- _lo[0]+1+2*(Integer)GA[g_handle].width[0];   
-  __CRAYX1_PRAGMA("_CRI shortloop");                                      
   for(_d=0; _d < _last; _d++)            {                                 
     _w = (Integer)GA[g_handle].width[_d];                                  
     _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                       
@@ -234,6 +232,13 @@ void gai_iterator_init(Integer g_a, Integer lo[], Integer hi[],
     int *proc_grid = GA[handle].nblock;
     /*num_blocks = GA[handle].num_blocks;*/
     block_dims = GA[handle].block_dims;
+    /* blk_dim: length of one repeat unit
+     * blk_num: number of repeat units
+     * blk_inc: number of elements in last incomplete repeat unit
+     * blk_ld: length of complete blocks in repeat unit. Does not
+     *         account for partial block at end
+     * hlf_blk: number of full blocks in partial repeat unit
+     */
     for (j=0; j<ndim; j++)  {
       hdl->blk_size[j] = block_dims[j];
       hdl->blk_dim[j] = block_dims[j]*proc_grid[j];
@@ -318,6 +323,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
   Integer handle = GA_OFFSET + hdl->g_a;
   Integer p_handle = GA[handle].p_handle;
   Integer n_rstrctd = GA[handle].num_rstrctd;
+  Integer *rstrctd_list = GA[handle].rstrctd_list;
   Integer *rank_rstrctd = GA[handle].rank_rstrctd;
   Integer elemsize = GA[handle].elemsize;
   int ndim;
@@ -456,6 +462,7 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
     Integer blo[MAXDIM], bhi[MAXDIM];
     Integer idx, j, jtot, chk, iproc;
     int check1, check2;
+    if (n_rstrctd > 0) nproc = n_rstrctd;
     if (GA[handle].distr_type == BLOCK_CYCLIC) {
       /* Simple block-cyclic distribution */
       if (hdl->iproc >= nproc) return 0;
@@ -684,6 +691,9 @@ int gai_iterator_next(_iterator_hdl *hdl, int *proc, Integer *plo[],
         }
         /* get pointer to data on remote block */
         pinv = (hdl->iproc)%nproc;
+        if (n_rstrctd > 0) {
+          pinv = rstrctd_list[pinv];
+        }
         if (p_handle > 0) {
           pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
         }

@@ -10,14 +10,8 @@
 
 #include <mpi.h>
 
-#if defined(__bgp__)
-#include <spi/kernel_interface.h>
-#include <common/bgp_personality.h>
-#include <common/bgp_personality_inlines.h>
-#elif defined(__bgq__)
-#  include <mpix.h>
-#elif defined(__CRAYXT) || defined(__CRAYXE)
-#  include <pmi.h> 
+#if defined(__CRAYXT) || defined(__CRAYXE)
+#  include <pmi.h>
 #endif
 
 #include "comex.h"
@@ -390,7 +384,7 @@ static int cmplong(const void *p1, const void *p2)
 /**
  * Initialize group linked list. Prepopulate with world group.
  */
-void comex_group_init() 
+void comex_group_init(MPI_Comm comm) 
 {
     int status = 0;
     int i = 0;
@@ -405,7 +399,7 @@ void comex_group_init()
     /* populate g_state */
 
     /* dup MPI_COMM_WORLD and get group, rank, and size */
-    status = MPI_Comm_dup(MPI_COMM_WORLD, &(g_state.comm));
+    status = MPI_Comm_dup(comm, &(g_state.comm));
     COMEX_ASSERT(MPI_SUCCESS == status);
     status = MPI_Comm_group(g_state.comm, &(g_state.group));
     COMEX_ASSERT(MPI_SUCCESS == status);
@@ -432,7 +426,7 @@ void comex_group_init()
             g_state.hostid, 1, MPI_LONG, g_state.comm);
     COMEX_ASSERT(MPI_SUCCESS == status);
      /* First create a temporary node communicator and then
-      * split further into number of gruoups within the node */
+      * split further into number of groups within the node */
      MPI_Comm temp_node_comm;
      int temp_node_size;
     /* create node comm */
@@ -441,6 +435,8 @@ void comex_group_init()
     sorted = (long*)malloc(sizeof(long) * g_state.size);
     (void)memcpy(sorted, g_state.hostid, sizeof(long)*g_state.size);
     qsort(sorted, g_state.size, sizeof(long), cmplong);
+    /* count is number of distinct host IDs that are lower than
+     * the host ID of this rank */
     for (i=0; i<g_state.size-1; ++i) {
         if (sorted[i] == g_state.hostid[g_state.rank]) 
         {
@@ -454,7 +450,8 @@ void comex_group_init()
 #if DEBUG
     printf("count: %d\n", count);
 #endif
-    status = MPI_Comm_split(MPI_COMM_WORLD, count,
+    /* split based on the value of count */
+    status = MPI_Comm_split(comm, count,
             g_state.rank, &temp_node_comm);
     int node_group_size, node_group_rank;
     MPI_Comm_size(temp_node_comm, &node_group_size);
@@ -476,7 +473,7 @@ void comex_group_init()
             }
         }
     }
-    /* Get nuber of Progress-Ranks per node from environment variable
+    /* Get number of Progress-Ranks per node from environment variable
      * equal to 1 by default */
     int num_progress_ranks_per_node = get_num_progress_ranks_per_node();
     /* Perform check on the number of Progress-Ranks */
@@ -567,7 +564,7 @@ void comex_group_init()
         printf("Creating comm: I AM WORKER[%ld]\n", g_state.rank);
 #endif
     }
-    status = MPI_Comm_split(MPI_COMM_WORLD, proc_split_group_stamp,
+    status = MPI_Comm_split(comm, proc_split_group_stamp,
             g_state.rank, &(g_state.node_comm));
     COMEX_ASSERT(MPI_SUCCESS == status);
     /* node rank */
@@ -620,36 +617,7 @@ void comex_group_finalize()
 
 static long xgethostid()
 {
-#if defined(__bgp__)
-#warning BGP
-    long nodeid;
-    int matched,midplane,nodecard,computecard;
-    char rack_row,rack_col;
-    char location[128];
-    char location_clean[128];
-    (void) memset(location, '\0', 128);
-    (void) memset(location_clean, '\0', 128);
-    _BGP_Personality_t personality;
-    Kernel_GetPersonality(&personality, sizeof(personality));
-    BGP_Personality_getLocationString(&personality, location);
-    matched = sscanf(location, "R%c%c-M%1d-N%2d-J%2d",
-            &rack_row, &rack_col, &midplane, &nodecard, &computecard);
-    assert(matched == 5);
-    sprintf(location_clean, "%2d%02d%1d%02d%02d",
-            (int)rack_row, (int)rack_col, midplane, nodecard, computecard);
-    nodeid = atol(location_clean);
-#elif defined(__bgq__)
-#warning BGQ
-    int nodeid;
-    MPIX_Hardware_t hw;
-    MPIX_Hardware(&hw);
-
-    nodeid = hw.Coords[0] * hw.Size[1] * hw.Size[2] * hw.Size[3] * hw.Size[4]
-        + hw.Coords[1] * hw.Size[2] * hw.Size[3] * hw.Size[4]
-        + hw.Coords[2] * hw.Size[3] * hw.Size[4]
-        + hw.Coords[3] * hw.Size[4]
-        + hw.Coords[4];
-#elif defined(__CRAYXT) || defined(__CRAYXE)
+#if defined(__CRAYXT) || defined(__CRAYXE)
 #warning CRAY
     int nodeid;
 #  if defined(__CRAYXT)

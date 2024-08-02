@@ -5,6 +5,10 @@
 /* for size_t */
 #include <stdlib.h>
 
+#ifdef MSG_COMMS_MPI
+#include <mpi.h>
+#endif
+
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif
@@ -22,6 +26,11 @@ typedef long armci_size_t;
 extern int armci_notify(int proc);
 extern int armci_notify_wait(int proc,int *pval);
 extern int ARMCI_Init(void);    /* initialize ARMCI */
+
+#ifdef MSG_COMMS_MPI
+extern int ARMCI_Init_mpi_comm(MPI_Comm comm);    /* initialize ARMCI */
+#endif
+
 extern int ARMCI_Init_args(int *argc, char ***argv); /* initialize ARMCI */
 extern int ARMCI_Initialized();
 extern void ARMCI_Barrier(void);    /* ARMCI Barrier*/
@@ -236,15 +245,6 @@ extern int armci_domain_glob_proc_id(armci_domain_t domain, int id, int loc_proc
 extern int armci_domain_my_id(armci_domain_t domain);
 extern int armci_domain_count(armci_domain_t domain);
 extern int armci_domain_same_id(armci_domain_t domain, int proc);
-
-
-/* PVM group
- * On CrayT3E: the default group is the global group which is (char *)NULL
- *             It is the only working group.
- * On Workstations: the default group is "mp_working_group". User can set
- *                  the group name by calling the ARMCI_PVM_init (defined
- *                  in message.c) and passing the group name to the library.
- */
 
 extern char *mp_group_name;
 

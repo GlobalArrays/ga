@@ -42,9 +42,9 @@ types of builds.  Detailed instructions are covered later in this file.
 QUESTIONS/HELP/SUPPORT/BUG-REPORT
 =================================
 
-email: hpctools@pnl.gov
+bug reports: https://github.com/GlobalArrays/ga/issues
 
-website: http://www.emsl.pnl.gov/docs/parsoft/armci
+website: https://hpc.pnl.gov/armci/
 
 ABOUT THIS SOFTWARE
 ===================
@@ -58,7 +58,6 @@ Index
 -----
 1.  Supported Platforms
 2.  General Settings
-3.  Building ARMCI on SGI.
 4.  Building ARMCI on IBM.
 5.  Building ARMCI on CRAY.
 6.  Building ARMCI on other platforms
@@ -66,11 +65,8 @@ Index
 
 Supported Platforms
 -------------------
-- leadership class machines: Cray XE6, Cray XTs, IBM Blue Gene/L, IBM Blue
-  Gene /P
-- shared-memory systems: SUN Solaris, SGI, SGI Altix, IBM, Linux, DEC, HP,
-  Cray SV1, Cray X1, and Windows NT/95/2000
-- distributed-memory systems: Cray T3E, IBM SP(TARGET=LAPI), FUJITSU VX/VPP.
+- leadership class machines: Cray XT/XE/XK/XC, IBM Blue Gene/Q.
+- shared-memory systems: SUN Solaris, IBM, Linux
 - clusters of workstations (InfiniBand, sockets)
 
 configure options
@@ -131,21 +127,14 @@ likely need to specify the optional ARG pointing to the necessary directories
 and/or libraries. sockets is the default ARMCI network if nothing else is
 specified.
 
---with-bgml=ARG         select armci network as IBM BG/L
---with-cray-shmem=ARG   select armci network as Cray XT shmem
---with-dcmf=ARG         select armci network as IBM BG/P Deep Computing
-                        Message Framework
---with-lapi=ARG         select armci network as IBM LAPI
 --with-mpi-spawn=ARG    select armci network as MPI-2 dynamic process mgmt
 --with-openib=ARG       select armci network as InfiniBand OpenIB
---with-portals=ARG      select armci network as Cray XT portals
 --with-sockets=ARG      select armci network as Ethernet TCP/IP (default)
 --enable-autodetect     attempt to locate ARMCI network besides sockets
 
 SOCKETS is the assumed default for clusters connected with Ethernet.  This
 protocol might also work on other networks however, the performance might be
-sub-optimal and on Myrinet it could even hang (GM does not work with fork and
-the standard version of ARMCI uses fork).
+sub-optimal.
 
 Cross-Compilation Issues
 ------------------------
@@ -171,16 +160,6 @@ And if that doesn't work (cross-compilation is not detected) you must then
 *force* cross-compilation using both --host and --build together::
 
     configure --host=x86_64-unknown-linux-gnu --build=x86_64-unknown-linux-gnu
-
-BlueGene/P
-++++++++++
-
-Currently the only way to detect the BGP platform and compile correctly is to
-use::
-
-    configure --host=powerpc-bgp-linux
-
-The rest of the configure options apply as usual e.g. --with-dcmf in this case.
 
 Compiler Selection
 ------------------
@@ -247,66 +226,6 @@ All tests have a per-test log file containing the output of the test.  So if
 the test is testing/test.x, the log file would be testing/test.log.  The output
 of failed tests is collected in the top-level log summary test-suite.log.
 
-ANCIENT WISDOM
-==============
-
-Building on SGI
----------------
-
-For running on SGI machines running the irix os, three target settings are
-available:
-
-- TARGET=SGI generates a MIPS-4 64-bit code with 32-bit address space when
-  compiling on any R8000 based machines and a 32 bit MPIS-2 code on any
-  non-R8000 machines.
-- Use TARGET=SGI64 For generating a 64 bit code with 64-bit address space.
-- TARGET=SGI_N32 generates a 32bit code with a 32bit address space.
-
-By default, SGI_N32 generates a MIPS3 code and SGI64 generates a MIPS4 code.
-
-There is a possibility of conflict between the SGI's implementation of MPI
-(but not others, MPICH for example) and ARMCI in their use of the SGI specific
-inter-processor communication facility called arena.
-
-Building on IBM
----------------
-
-Running on IBM without LAPI
-+++++++++++++++++++++++++++
-
-On IBM's running AIX, target can be set to IBM or IBM64 to run 32/64 bit
-versions of the code.
-
-Running on the IBM-SP
-+++++++++++++++++++++
-
-TARGET on IBM-SP can be set to LAPI (LAPI64 for 64 bit object).  POE
-environment variable settings for the parallel environment PSSP 3.1:
-
-- ARMCI applications like any other LAPI-based codes must define
-  MP_MSG_API=lapi  or MP_MSG_API=mpi,lapi (when using ARMCI and MPI)
-- The LAPI-based implementation of ARMCI cannot be used on the very old SP-2
-  systems because LAPI did not support the TB2 switch used in those models.
-  If in doubt which switch you got use odmget command: odmget -q name=css0
-  CuDv
-- For AIX versions 4.3.1 and later, environment variable AIXTHREAD_SCOPE=S
-  must be set to assure correct operation of LAPI (IBM should  do it in PSSP
-  by default).
-- Under AIX 4.3.3 and later  an additional environment variable is
-  required(RT_GRQ=ON) to restore the original thread scheduling that LAPI
-  relies on.
-
-Building on CRAY
-----------------
-
-- TARGET environment variable is also used by cc on CRAY. It has to be set to
-  CRAY-SV1 on SV1, CRAY-YMP on YMP, CRAY-T3E on T3E. ARMCI on CRAY'S hence
-  uses the same values to this environment variable as cc requires.
-
-- On CRAY-T3E, ARMCI can be run with either of the CRAY Message Passing
-  Libraries(PVM and MPI). For more information on running with PVM look at
-  docs/README.PVM. If running with PVM, MSG_COMMS has to be set to PVM.
-
 Building on other platforms
 ---------------------------
 
@@ -341,30 +260,6 @@ For example to make SHMMAX= 2GB, add either of the lines to /etc/system::
     
 After rebooting, you should be able to take advantage of the increased shared
 memory limits.
-
-Compaq/DEC
-++++++++++
-
-Tru64 is another example of an OS with a pitifully small size of the shared
-memory region limit. Here are instruction on how to modify shared memory max
-segment size to 256MB on  the Tru64 UNIX Version 4.0F:
-
-1. create a file called /etc/sysconfig.shmmax::
-
-    cat > /etc/sysconfig.shmmax << EOF ipc: shm-max = 268435456 EOF
-    
-   You can check if the file created is OK by typing::
-
-    /sbin/sysconfigdb -l -t /etc/sysconfig.shmmax
-
-2. Modify kernel values::
-
-    sysconfigdb -a -f /etc/sysconfig.shmmax ipc
-    
-3. Reboot
-4. To check new values::
-
-    /sbin/sysconfig -q ipc|egrep shm-max 
 
 HP-UX
 +++++

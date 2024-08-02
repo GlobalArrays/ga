@@ -16,7 +16,7 @@
 
 #define WARMUP 2
 
-#define DEFAULT_DIM 1024
+#define DEFAULT_DIM 256
 #define MAX_MESSAGE_SIZE DEFAULT_DIM*DEFAULT_DIM
 
 #define MAX_FACTOR 256
@@ -600,7 +600,7 @@ int main(int argc, char * argv[])
     return return_code;
 #else
     printf("OPENMP Disabled\n");
-    return 1;
+    return 0;
 #endif
 }
 

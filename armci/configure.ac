@@ -5,8 +5,8 @@
 ###############################################################################
 AC_PREREQ([2.67])
 AC_INIT([Aggregate Remote Memory Copy Interface (ARMCI)], [1.5],
-        [hpctools@pnl.gov], [armci],
-        [http://www.emsl.pnl.gov/docs/parsoft/armci/])
+        [https://github.com/GlobalArrays/ga/issues], [armci],
+        [https://hpc.pnl.gov/armci/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -42,18 +42,8 @@ AS_IF([test "$ARMCI_TOP_BUILDDIR" != "$ARMCI_TOP_SRCDIR"],
 # MPI compiler wrappers instead of the standard compilers.
 GA_MSG_COMMS
 
-# Hack to enable NEW_MALLOC feature
-AC_ARG_ENABLE([portals-new-malloc],
-    [AS_HELP_STRING([--enable-portals-new-malloc],
-        [add -DNEW_MALLOC to CPPFLAGS])])
-AS_IF([test "x$enable_portals_new_malloc" = xyes],
-    [AC_DEFINE([NEW_MALLOC], [1], [for portals, enable new malloc])])
-AM_CONDITIONAL([PORTALS_ENABLE_NEW_MALLOC],
-    [test "x$enable_portals_new_malloc" = xyes])
-
 ARMCI_ENABLE_GPC
 ARMCI_ENABLE_GROUP
-ARMCI_ENABLE_NB_NONCONT
 ARMCI_ENABLE_PROFILING
 ARMCI_SHMMAX
 GA_DISABLE_MPI_TESTS
@@ -100,7 +90,7 @@ AC_HEADER_DIRENT
 AC_HEADER_STDBOOL
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-GA_CHECK_HEADERS([assert.h c_asm.h errno.h fcntl.h float.h ia64/sys/inline.h malloc.h math.h memory.h mpp/shmem.h netdb.h netinet/in.h netinet/tcp.h process.h setjmp.h signal.h stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/types.h sys/atomic_op.h sys/errno.h sys/file.h sys/ipc.h sys/mman.h sys/param.h sys/sem.h sys/shm.h sys/socket.h sys/stat.h sys/syscall.h sys/systemcfg.h sys/time.h sys/uio.h sys/wait.h time.h unistd.h windows.h winsock.h rpc/rpc.h rpc/types.h rpc/xdr.h],
+GA_CHECK_HEADERS([assert.h c_asm.h errno.h fcntl.h float.h malloc.h math.h memory.h mpp/shmem.h netdb.h netinet/in.h netinet/tcp.h process.h setjmp.h signal.h stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/types.h sys/atomic_op.h sys/errno.h sys/file.h sys/ipc.h sys/mman.h sys/param.h sys/sem.h sys/shm.h sys/socket.h sys/stat.h sys/syscall.h sys/systemcfg.h sys/time.h sys/uio.h sys/wait.h time.h unistd.h windows.h winsock.h rpc/rpc.h rpc/types.h rpc/xdr.h],
 [], [],
 [@%:@ifdef HAVE_RPC_TYPES_H
 @%:@include <rpc/types.h>
@@ -219,7 +209,6 @@ AC_MSG_NOTICE
 AC_MSG_NOTICE([Assembler])
 AC_MSG_NOTICE
 
-GA_AS
 AM_PROG_AS
 
 ARMCI_AS_NO_I386ASM
@@ -296,7 +285,7 @@ AM_CONDITIONAL([ENABLE_SHARED], [test x$enable_shared = xyes])
 
 AS_IF([test "x$ga_cv_target" = xLINUX64],
     [AS_CASE([$host_cpu],
-        [x86_64|ppc64|ia64],
+        [x86_64|ppc64],
             [AC_DEFINE([NEED_MEM_SYNC], [1], [Creates memfenc macro])])])
 AS_IF([test "x$host_cpu" = xPWR4],
     [AC_DEFINE([NEED_MEM_SYNC], [1], [Creates memfenc macro])])
@@ -310,8 +299,6 @@ AC_SUBST([NPROCS])
 AC_ARG_VAR([MPIEXEC],
            [how to run parallel tests if built with MPI e.g. "mpiexec -np %NP%"])
 AS_CASE([$ga_msg_comms],
-    [TCGMSG],   [TCGEXEC="`pwd`/parallel.x"],
-    [TCGMSG5],  [TCGEXEC=],
     [MPI],      [AS_IF([test "x$MPIEXEC" = x],
                     [AC_PATH_PROGS([MPIEXEC], [mpirun mpiexec])
                      MPIEXEC="$MPIEXEC -n %NP%"])])

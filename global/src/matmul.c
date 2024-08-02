@@ -1161,7 +1161,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 
        m_t=m; n_t=n; k_t=k;
        adim_t=adim; bdim_t=bdim; cdim_t=cdim;
-#if (defined(CRAY) || defined(WIN32)) && !NOFORT
+#if defined(WIN32) && !NOFORT
        pnga_error("check_result: Serial dgemms not defined", 0L);
 #else
        switch(atype) {
@@ -1405,9 +1405,6 @@ void pnga_matmul(transa, transb, alpha, beta,
 	  CONTIG_CHUNKS_OPT_FLAG = UNSET;
 	  DIRECT_ACCESS_OPT_FLAG = UNSET;
        }
-#    if defined(__crayx1) || defined(NEC)
-       use_NB_matmul = UNSET;
-#    endif
     }
 
     /* if block cyclic, then use regular algorithm. This is turned on for now

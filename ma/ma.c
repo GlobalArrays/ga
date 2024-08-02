@@ -25,6 +25,9 @@
 #include "scope.h"
 #include "table.h"
 
+// this was only ever disabled for Blue Gene, which has been removed.
+#define ENABLE_ARMCI_MEM_OPTION 1
+
 #if defined(ENABLE_CUDA_MEM)
 extern int cudaMallocManaged(void** devPtr, size_t size, unsigned int flags);
 #elif defined(ENABLE_ARMCI_MEM_OPTION)
@@ -86,7 +89,7 @@ extern void* ARMCI_Malloc_local(long bytes);
 
 /* block lengths are integral multiples of this */
 /*
- * Note that for machines such as the KSR on which sizeof(pointer)
+ * Note that for machines on which sizeof(pointer)
  * and sizeof(long) are different than sizeof(int), alignment issues
  * can be tricky.  For example, the fields of a struct (e.g.,
  * client_space of AD) can be improperly aligned if the struct is
@@ -97,11 +100,7 @@ extern void* ARMCI_Malloc_local(long bytes);
  * problem is solved, but the sum of sizes of preceding fields can
  * still potentially cause difficulty.
  */
-#if defined(BGQ)
-#define ALIGNMENT	32
-#else
 #define ALIGNMENT	sizeof(size_t)
-#endif
 
 /* min size of block split and placed on free list */
 #define MINBLOCKSIZE mai_round((size_t)(ALIGNMENT + BLOCK_OVERHEAD_FIXED), \
@@ -2511,9 +2510,11 @@ public Boolean MA_init(
     /* segment consists of heap and stack */
     total_bytes = heap_bytes + stack_bytes;
 #ifdef NOUSE_MMAP
+#if HAVE_MALLOPT
     /* disable memory mapped malloc */
     mallopt(M_MMAP_MAX, 0);
     mallopt(M_TRIM_THRESHOLD, -1);
+#endif
 #endif
     /* allocate the segment of memory */
 #ifdef ENABLE_CUDA_MEM
@@ -2734,7 +2735,8 @@ public Integer MA_inquire_heap(Integer datatype)
 
     /* try space between heap and partition */
     gap_length = (size_t)(ma_partition - ma_hp);
-    if (gap_length > 0)
+    /*    if (gap_length > 0)*/
+    if (ma_partition > ma_hp)
         nelem_gap = ma_nelem(ma_hp, (ulongi)gap_length, datatype);
     else
         nelem_gap = 0;
@@ -2875,6 +2877,7 @@ public Integer MA_inquire_heap_no_partition(Integer datatype)
 
     /* try space between heap and stack */
     gap_length = (size_t)(ma_sp - ma_hp);
+    /*if (ma_sp > ma_hp)*/
     if (gap_length > 0)
         nelem_gap = ma_nelem(ma_hp, (ulongi)gap_length, datatype);
     else
@@ -2942,6 +2945,7 @@ public Integer MA_inquire_stack(Integer datatype)
 
     /* try space between partition and stack */
     gap_length = (size_t)(ma_sp - ma_partition);
+    /*if (ma_sp > ma_partition)*/
     if (gap_length > 0)
         nelem_gap = ma_nelem(ma_partition, (ulongi)gap_length, datatype);
     else
@@ -3078,6 +3082,7 @@ public Integer MA_inquire_stack_no_partition(Integer datatype)
 
     /* try space between heap and stack */
     gap_length = (size_t)(ma_sp - ma_hp);
+    /*if (ma_sp > ma_hp)*/
     if (gap_length > 0)
         nelem_gap = ma_nelem(ma_hp, (ulongi)gap_length, datatype);
     else

@@ -56,7 +56,7 @@ static inline void _scale(
             MUL_##WHICH(iterator[m], value[m], calc_scale);                 \
         }                                                                   \
     } else
-#if HAVE_BLAS
+#if 0 //HAVE_BLAS
     SCALE_BLAS(CMX_ACC_DBL, double, D)
     SCALE_BLAS(CMX_ACC_FLT, float, S)
     SCALE(REG, CMX_ACC_INT, int)

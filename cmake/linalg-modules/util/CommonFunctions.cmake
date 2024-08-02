@@ -44,6 +44,28 @@
 
 set( COMMON_UTILITY_CMAKE_FILE_DIR ${CMAKE_CURRENT_LIST_DIR} )
 
+function( emulate_kitware_linalg_modules name )
+
+  if( DEFINED BLA_STATIC AND NOT DEFINED ${name}_PREFERS_STATIC )
+    if( DEFINED CACHE{BLA_STATIC} )
+      set( ${name}_PREFERS_STATIC ${BLA_STATIC} CACHE BOOL 
+        "Use Static ${name} LIBRARIES" )
+    else()
+      set( ${name}_PREFERS_STATIC ${BLA_STATIC} PARENT_SCOPE )
+    endif()
+  endif()
+
+  if( DEFINED BLA_VENDOR AND NOT DEFINED ${name}_PREFERENCE_LIST )
+    if( DEFINED CACHE{BLA_VENDOR} )
+      set( ${name}_PREFERENCE_LIST ${BLA_VENDOR} CACHE BOOL 
+        "Use Static ${name} LIBRARIES" )
+    else()
+      set( ${name}_PREFERENCE_LIST ${BLA_VENDOR} PARENT_SCOPE )
+    endif()
+  endif()
+
+endfunction()
+
 function( fill_out_prefix name )
 
   #if( ${name}_PREFIX AND NOT ${name}_INCLUDE_DIR )
@@ -147,7 +169,7 @@ function( append_possibly_missing_libs _linker_test __compile_output _orig_libs 
 
   set( _tmp_libs )
   # Check for missing Fortran symbols
-  if( ${__compile_output} MATCHES "fortran" OR ${__compile_output} MATCHES "f90_" )
+  if( ${__compile_output} MATCHES "fortran" OR ${__compile_output} MATCHES "Fortran" OR ${__compile_output} MATCHES "f90_" )
     message( STATUS 
       "  * Missing Standard Fortran Libs - Adding to ${_linker_test} linker" )
     # Check for Standard Fortran Libraries
@@ -173,16 +195,100 @@ function( append_possibly_missing_libs _linker_test __compile_output _orig_libs 
       "  * Missing PThreads              - Adding to ${_linker_test} linker" )
     if( NOT TARGET Threads::Threads )
       find_dependency( Threads )
+      # Threads::Threads by default is not GLOBAL, so to allow users of LINALG_LIBRARIES to safely use it we need to make it global
+      # more discussion here: https://gitlab.kitware.com/cmake/cmake/-/issues/17256
+      set_target_properties(Threads::Threads PROPERTIES IMPORTED_GLOBAL TRUE)
     endif()
     list( APPEND _tmp_libs Threads::Threads )
   endif()
   
-  if( ${__compile_output} MATCHES "logf" )
+  if( ${__compile_output} MATCHES "logf" OR ${__compile_output} MATCHES "sqrt" )
     message( STATUS 
             "  * Missing LIBM            - Adding to ${_linker_test} linker" )
     list( APPEND _tmp_libs "m" )
   endif()
   
   set( ${__new_libs} "${_tmp_libs}" PARENT_SCOPE )
+
+endfunction()
+
+# _funcs = LIST of lowercase symbol name
+# _namespace = namespace (BLAS, LAPACK, etc.)
+function( check_fortran_functions_exist _funcs _namespace _libs _link_ok _uses_lower _uses_underscore )
+
+  set( ${_link_ok} FALSE )
+  set( ${_uses_lower} )
+  set( ${_uses_underscore} )
+
+  foreach( _uplo LOWER UPPER )
+
+    foreach( _under UNDERSCORE NO_UNDERSCORE )
+
+      set( _item ${_namespace}_${_uplo}_${_under} )
+      message( STATUS "Performing Test ${_item}" )
+
+      # ask linker for each symbol in _funcs, exit early if any fail
+      foreach( _func IN LISTS _funcs)
+
+        set( _${_func}_name_template "${_func}" )
+        string( TO${_uplo} ${_${_func}_name_template} _${_func}_name_uplo )
+        if( _under EQUAL "UNDERSCORE" )
+          set( _${_func}_name "${_${_func}_name_uplo}_" )
+        else()
+          set( _${_func}_name "${_${_func}_name_uplo}_" )
+        endif()
+
+        check_function_exists_w_results(
+              "${${_libs}}" ${_${_func}_name} _compile_output _compile_result
+        )
+
+        if( NOT _compile_result )
+
+          append_possibly_missing_libs( ${_namespace} _compile_output ${_libs} _new_libs )
+          list( APPEND ${_libs} ${_new_libs} )
+          set( ${_libs} ${${_libs}} PARENT_SCOPE )
+
+          # try linking again
+          check_function_exists_w_results(
+                "${${_libs}}" ${_${_func}_name} _compile_output _compile_result
+          )
+
+        endif()
+
+        unset( _${_func}_name_template )
+        unset( _${_func}_name_uplo     )
+
+        file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
+          "FUNCTION CHECK: ${_item}\n ${_compile_output}") 
+
+        if( _compile_result )
+          set( ${_link_ok} TRUE )
+          string( COMPARE EQUAL "${_uplo}"  "LOWER"      ${_uses_lower}      )
+          string( COMPARE EQUAL "${_under}" "UNDERSCORE" ${_uses_underscore} )
+        else()
+          break()  # early exit foreach if linking failed for any symbol even with extra libs
+        endif()
+
+      endforeach()  # _funcs
+
+      if( ${${_link_ok}} )
+        message( STATUS "Performing Test ${_item} -- found" )
+        break()
+      else ()
+        message( STATUS "Performing Test ${_item} -- not found" )
+      endif()
+
+    endforeach()  # underscore
+
+    if( ${${_link_ok}} )
+      break()
+    endif()
+
+  endforeach()  # lowerupper
+
+
+  set( ${_link_ok}         ${${_link_ok}}         PARENT_SCOPE )
+  set( ${_uses_lower}      ${${_uses_lower}}      PARENT_SCOPE )
+  set( ${_uses_underscore} ${${_uses_underscore}} PARENT_SCOPE )
 
 endfunction()

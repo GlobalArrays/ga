@@ -85,6 +85,15 @@ install (FILES
   DESTINATION include/ga
 )
 
+list (APPEND GA_HEADER_PATHS 
+      ${CMAKE_CURRENT_LIST_DIR}
+      ${CMAKE_CURRENT_LIST_DIR}/dra
+      ${CMAKE_CURRENT_LIST_DIR}/sf
+      ${CMAKE_CURRENT_LIST_DIR}/eaf
+      ${CMAKE_CURRENT_LIST_DIR}/elio)
+
+set (GA_HEADER_PATHS ${GA_HEADER_PATHS} PARENT_SCOPE)
+
 # -------------------------------------------------------------
 #  PARIO executable files
 # -------------------------------------------------------------
