@@ -7,6 +7,10 @@
 #   include "config.h"
 #endif
 
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+
 #if HAVE_MATH_H
 #   include <math.h>
 #endif
