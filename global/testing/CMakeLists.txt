@@ -134,7 +134,7 @@ if (ENABLE_FORTRAN)
   function(generate_ngatests testname)
     add_custom_command(
       OUTPUT ${CMAKE_BINARY_DIR}/${testname}.F
-      COMMAND m4 ${PROJECT_SOURCE_DIR}/global/testing/${testname}.m4 > ${CMAKE_BINARY_DIR}/${testname}.F
+      COMMAND ${ga_m4_cmd} ${PROJECT_SOURCE_DIR}/global/testing/${testname}.m4 > ${CMAKE_BINARY_DIR}/${testname}.F
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/global/testing
       COMMENT "Generating ${testname} test"
     )
