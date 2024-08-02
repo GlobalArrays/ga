@@ -41,9 +41,10 @@
 #if !defined(armci_die)
 extern void Error();
 #endif
+#   define SigType  void
 
 #ifndef SIG_ERR
-#   define SIG_ERR         (void (*)())-1
+#   define SIG_ERR         (SigType (*)())-1
 #endif
 
 extern int armci_me;
@@ -54,18 +55,18 @@ int AR_caught_sigchld=0;
 int AR_caught_sigsegv=0;
 int AR_caught_sig=0;
 
-void (*SigChldOrig)(), (*SigIntOrig)(), (*SigHupOrig)(), (*SigTermOrig)();
-void (*SigSegvOrig)();
+SigType (*SigChldOrig)(), (*SigIntOrig)(), (*SigHupOrig)(), (*SigTermOrig)();
+SigType (*SigSegvOrig)();
 
 
 /*********************** SIGINT *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-void SigIntHandler(sig, code, scp, addr)
+SigType SigIntHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-void SigIntHandler(sig)
+SigType SigIntHandler(sig)
 #endif
      int sig;
 {
@@ -98,12 +99,12 @@ void RestoreSigInt()
 
 /*********************** SIGABORT *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-void SigAbortHandler(sig, code, scp, addr)
+SigType SigAbortHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-void SigAbortHandler(sig)
+SigType SigAbortHandler(sig)
 #endif
      int sig;
 {
@@ -126,17 +127,17 @@ void TrapSigAbort()
 
 /*********************** SIGCHLD *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-void SigChldHandler(sig, code, scp, addr)
+SigType SigChldHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-void SigChldHandler(sig)
+SigType SigChldHandler(sig)
 #endif
      int sig;
 {
   int status;
-  
+
 #if defined(LINUX)
   pid_t ret;
   /* Trap signal as soon as possible to avoid race */
@@ -144,12 +145,12 @@ void SigChldHandler(sig)
     Error("SigChldHandler: error from signal setting SIGCHLD",0);
 #endif
 
-#if defined(LINUX)
- ret = waitpid(0, &status, WNOHANG);
- if((ret == 0) || ((ret == -1) && (errno == ECHILD))) { return; }
-#else
- (void)wait(&status);
-#endif
+# if defined(LINUX)
+  ret = waitpid(0, &status, WNOHANG);
+  if((ret == 0) || ((ret == -1) && (errno == ECHILD))) { return; }
+# else
+  (void)wait(&status);
+# endif
 
       AR_caught_sigchld=1;
       AR_caught_sig= sig;
@@ -183,12 +184,12 @@ void RestoreSigChldDfl()
 
 /*********************** SIGBUS *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-void SigBusHandler(sig, code, scp, addr)
+SigType SigBusHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-void SigBusHandler(sig)
+SigType SigBusHandler(sig)
 #endif
      int sig;
 {
@@ -214,12 +215,12 @@ void TrapSigBus()
 
 /*********************** SIGFPE *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-void SigFpeHandler(sig, code, scp, addr)
+SigType SigFpeHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-void SigFpeHandler(sig)
+SigType SigFpeHandler(sig)
 #endif
      int sig;
 {
@@ -246,12 +247,12 @@ void TrapSigFpe()
 
 /*********************** SIGILL *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-void SigIllHandler(sig, code, scp, addr)
+SigType SigIllHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-void SigIllHandler(sig)
+SigType SigIllHandler(sig)
 #endif
      int sig;
 {
@@ -273,12 +274,12 @@ void TrapSigIll()
 
 /*********************** SIGSEGV *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-void SigSegvHandler(sig, code, scp, addr)
+SigType SigSegvHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-void SigSegvHandler(sig)
+SigType SigSegvHandler(sig)
 #endif
      int sig;
 {
@@ -294,7 +295,7 @@ void SigSegvHandler(sig)
 }
 #ifdef ENABLE_CHECKPOINT
 static void * signal_arr[100];
-void SigSegvActionSa(int sig,siginfo_t *sinfo, void *ptr)
+SigType SigSegvActionSa(int sig,siginfo_t *sinfo, void *ptr)
 {
   int (*func)();      
   AR_caught_sig= sig;
@@ -350,12 +351,12 @@ void RestoreSigSegv()
 
 /*********************** SIGSYS *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-void SigSysHandler(sig, code, scp, addr)
+SigType SigSysHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-void SigSysHandler(sig)
+SigType SigSysHandler(sig)
 #endif
      int sig;
 {
@@ -378,12 +379,12 @@ void TrapSigSys()
 
 /*********************** SIGTRAP *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-void SigTrapHandler(sig, code, scp, addr)
+SigType SigTrapHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-void SigTrapHandler(sig)
+SigType SigTrapHandler(sig)
 #endif
      int sig;
 {
@@ -404,12 +405,12 @@ void TrapSigTrap()
 
 /*********************** SIGHUP *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-void SigHupHandler(sig, code, scp, addr)
+SigType SigHupHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-void SigHupHandler(sig)
+SigType SigHupHandler(sig)
 #endif
      int sig;
 {
@@ -441,12 +442,12 @@ void RestoreSigHup()
 
 /*********************** SIGTERM *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-void SigTermHandler(sig, code, scp, addr)
+SigType SigTermHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-void SigTermHandler(sig)
+SigType SigTermHandler(sig)
 #endif
      int sig;
 {
@@ -478,12 +479,12 @@ void RestoreSigTerm()
 /*********************** SIGIOT *************************************/
 #ifdef SIGIOT
 #if defined(SUN) && !defined(SOLARIS)
-void SigIotHandler(sig, code, scp, addr)
+SigType SigIotHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-void SigIotHandler(sig)
+SigType SigIotHandler(sig)
 #endif
      int sig;
 {
@@ -505,12 +506,12 @@ void TrapSigIot()
 
 /*********************** SIGCONT *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-void SigContHandler(sig, code, scp, addr)
+SigType SigContHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-void SigContHandler(sig)
+SigType SigContHandler(sig)
 #endif
      int sig;
 {
@@ -529,12 +530,12 @@ void TrapSigCont()
 
 /*********************** SIGXCPU *************************************/
 #if defined(SUN) && !defined(SOLARIS)
-void SigXcpuHandler(sig, code, scp, addr)
+SigType SigXcpuHandler(sig, code, scp, addr)
      int code;
      struct sigcontext *scp;
      char *addr;
 #else
-void SigXcpuHandler(sig)
+SigType SigXcpuHandler(sig)
 #endif
      int sig;
 {
@@ -568,15 +569,6 @@ void ARMCI_ChildrenTrapSignals()
      TrapSigAbort();
      TrapSigTerm();
      TrapSigInt();
-
-#if defined(SGI)
-     TrapSigIot();
-#endif
-
-#ifdef SGI
-     TrapSigXcpu();
-#endif
-
 }
 
 
