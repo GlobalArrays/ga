@@ -161,14 +161,14 @@ extern int armci_register_thread(thread_id_t id);
 #   define RESERVED_BUFLEN ((sizeof(request_header_t)>>3)+3*MAX_STRIDE_LEVEL +\
                            EXTRA_MSG_BUFLEN_DBL)
 #endif
-
+  
 /* packing algorithm for double complex numbers requires even number */
-#ifdef MSG_BUFLEN_DBL
-#  define BUFSIZE_DBL (MSG_BUFLEN_DBL - RESERVED_BUFLEN)
-#else
-#  define BUFSIZE_DBL 32768
-#endif
-#define BUFSIZE  (BUFSIZE_DBL * sizeof(double))
+#  ifdef MSG_BUFLEN_DBL
+#    define BUFSIZE_DBL (MSG_BUFLEN_DBL - RESERVED_BUFLEN)
+#  else
+#    define BUFSIZE_DBL 32768
+#  endif
+#  define BUFSIZE  (BUFSIZE_DBL * sizeof(double))
 
 /* note opcodes must be lower than ARMCI_ACC_OFF !!! */
 #define PUT 1
@@ -184,6 +184,7 @@ extern int armci_register_thread(thread_id_t id);
 
 extern  int armci_me, armci_nproc;
 extern int _armci_initialized;
+
 #if !defined(THREAD_SAFE)
    extern  double armci_internal_buffer[BUFSIZE_DBL];
 #endif
@@ -281,7 +282,7 @@ extern void armci_finalize_fence();
 #  define ORDER(op,proc) if(proc != armci_me) FENCE_NODE(proc)
 #  define UPDATE_FENCE_INFO(proc_)
 #endif
-
+        
 typedef struct {
     int  ptr_array_len;
     int bytes;

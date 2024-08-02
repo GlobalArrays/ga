@@ -9,20 +9,13 @@
 #   include <string.h>
 #endif
 
-#define MEMCPY
-#if defined(LINUX64) && defined(SGIALTIX) && defined(MSG_COMMS_MPI)
-/* fastbcopy from Wayne Vieira and Gerardo Cisneros */
-#define MEMCPY
-#define armci_copy(src, dst, len) _fastbcopy(src, dst, len)
-#define memcpy(dst, src, len)  _fastbcopy(src, dst, len)
-#define bcopy(src, dst, len) _fastbcopy(src, dst, len)
-#endif
+#  define MEMCPY
 
 #ifndef EXTERN
 #   define EXTERN extern
 #endif
- 
-#if defined(SGI) || defined(SOLARIS)
+
+#if defined(SOLARIS)
 #   define PTR_ALIGN
 #endif
 
@@ -111,14 +104,12 @@
           pd += dst_stride;\
       }\
     }
-   
-/* macros to ensure ordering of consecutive puts or gets following puts */
-#   define FENCE_NODE(p)
-#   define UPDATE_FENCE_STATE(p, op, nissued)
 
+#define FENCE_NODE(p)
+#define UPDATE_FENCE_STATE(p, op, nissued)
 
-#define THRESH 32
-#define THRESH1D 512
+#  define THRESH 32
+#  define THRESH1D 512
 #define ALIGN_SIZE sizeof(double)
 
 /********* interface to C 1D and 2D memory copy functions ***********/
@@ -187,8 +178,8 @@ void c_dcopy13_(const int*    const restrict rows,
 
 
 /***************************** 1-Dimensional copy ************************/
-#      define armci_get(src,dst,n,p)    armci_copy((src),(dst),(n))
-#      define armci_put(src,dst,n,p)    armci_copy((src),(dst),(n))
+#define armci_get(src,dst,n,p)    armci_copy((src),(dst),(n))
+#define armci_put(src,dst,n,p)    armci_copy((src),(dst),(n))
 
 #ifndef MEM_FENCE
 #   define MEM_FENCE {}
