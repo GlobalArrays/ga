@@ -16,14 +16,11 @@
 
 
 /*7/7/06
- * REGIONS REQUIRE MEMHDL was for all networks like InfiniBand, etc.
- * that had a handle associated with remote/local memory required for
+ * REGIONS REQUIRE MEMHDL was for all networks like via, infiniband, etc.. 
+ * which had a handle associated with remote/local memory required for
  * rdma. Coincidentally all these networks also used a server thread.
  * so server_regions were allocated and enabled when REGIONS_REQUIRE_MEMHDL
  * was defined.
- * With Catamount, we require portals memory descriptors to be stored
- * there is no server but we still need the server_regions to post match all
- * md to accept all incomming requests
  */
 
 #include "armcip.h"
@@ -36,7 +33,7 @@
 #include "copy.h"
 
 /*this should match similar def in vapi.c and openib.c */
-#define MAX_REGIONS 8
+#  define MAX_REGIONS 8
 
 typedef struct {
   void *start;
@@ -71,10 +68,6 @@ static char exch_loc[MAX_REGIONS];
 static char exch_rem[MAX_REGIONS];
 void armci_serv_register_req(void *start,long bytes, ARMCI_MEMHDL_T *reg_mem);
 
-#ifdef VAPI
-void armci_network_client_deregister_memory(ARMCI_MEMHDL_T *mh);
-void armci_network_server_deregister_memory(ARMCI_MEMHDL_T *mh);
-#endif
 
 static int armci_region_record(void *start, void *end, armci_reglist_t *reg)
 {
@@ -98,7 +91,7 @@ static void armci_region_register(void *start, long size, armci_reglist_t *reg)
     if(reg->n >= MAX_REGIONS) return;
     if(armci_nclus<=1)return;
 
-#ifdef REGIONS_REQUIRE_MEMHDL
+#ifdef REGIONS_REQUIRE_MEMHDL    
      if(!armci_pin_contig_hndl(start, size, &((reg->list+reg->n)->memhdl))){
         printf("%d pin failed %p bytes=%ld\n",armci_me,start,size);
         fflush(stdout); return; 
@@ -122,13 +115,6 @@ void armci_region_register_shm(void *start, long size)
       needs_pin_shmptr = start;
       needs_pin_shmsize= size;
     }
-
-#if 0
-     if(allow_pin){
-        printf("\n%d:%d registering shm %p bytes=%ld\n",armci_me,allow_pin,start,size);
-        fflush(stdout);
-     }
-#endif
 }
 
 
@@ -139,7 +125,7 @@ void armci_region_register_loc(void *start, long size)
          needs_pin_ptr = start;
          needs_pin_size= size;
      }
-
+     
 #ifdef DEBUG_
      if(allow_pin){
         printf("\n%d:%d registered local %p bytes=%ld\n",armci_me,allow_pin,start,size);
