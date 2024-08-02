@@ -300,7 +300,6 @@ AC_MSG_NOTICE
 AC_MSG_NOTICE([Assembler])
 AC_MSG_NOTICE
 
-GA_AS
 AM_PROG_AS
 
 #########################################

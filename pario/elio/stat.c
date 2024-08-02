@@ -102,12 +102,7 @@ int  elio_stat(char *fname, stat_t *statinfo)
       
 #   else
       /* get number of available blocks */
-#     if defined(NEC)
-        /* f_bfree == f_bavail -- naming changes */
-        statinfo->avail = (avail_t) ufs_statfs.f_bfree;
-#     else
-        statinfo->avail = (avail_t) ufs_statfs.f_bavail;
-#     endif
+      statinfo->avail = (avail_t) ufs_statfs.f_bavail;
 
 #     ifdef NO_F_FRSIZE
          /*       on some older systems it was f_bsize */

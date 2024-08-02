@@ -82,8 +82,15 @@ if(ENABLE_BLAS)
   endif()  
 endif()
 
-if(MSVC AND ENABLE_FORTRAN)
-  message(FATAL_ERROR "MSVC build needs ENABLE_FORTRAN=OFF")
+if(ENABLE_FORTRAN)
+  if(MSVC)
+    message(FATAL_ERROR "MSVC build needs ENABLE_FORTRAN=OFF")
+  endif()
+
+  find_program(m4_cmd NAMES m4)
+  if(NOT m4_cmd)
+    message(FATAL_ERROR "m4 command not found. GNU M4 is required.")
+  endif()
 endif()
 
 if(ENABLE_PROFILING)

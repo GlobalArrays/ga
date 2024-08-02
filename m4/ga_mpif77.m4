@@ -37,15 +37,12 @@
 #  pgf90        Portland Group F90 compiler
 #  xlf90        IBM (AIX) F90 compiler
 #  pathf90      PathScale
-#  sxf90        NEC SX Fortran 90
 #  openf90      AMD's x86 open64
 #  sunf90       Sun's Studio
 #
 # Known MPI Fortran 90 compilers:
-#  cmpif90c     ??
-#  mpf90        ??
+#  mpifrt       Fujitsu
 #  mpif90       generic compiler name
-#  sxmpif90     NEC SX Fortran 90
 #
 # Known Fortran 77 compilers:
 #  af77         Apogee F77 compiler for Intergraph hardware running CLIX

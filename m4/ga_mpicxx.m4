@@ -19,7 +19,6 @@
 #  xlC_r    AIX C Set++, thread safe
 #  pgCC     Portland Group
 #  pathCC   PathScale
-#  sxc++    NEC SX
 #  openCC   AMD's x86 open64
 #  sunCC    Sun's Studio
 #  craycxx  Cray
@@ -28,7 +27,6 @@
 #  mpic++
 #  mpicxx
 #  mpiCC
-#  sxmpic++     NEC SX
 #  hcp
 #  mpxlC_r
 #  mpxlC
