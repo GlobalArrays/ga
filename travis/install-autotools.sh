@@ -28,10 +28,10 @@ if [ "x${download}" = x ] ; then
 fi
 
 MAKE_JNUM=4
-# we need m4 at least version 1.4.16
-M4_VERSION=1.4.17
+# we need m4 at least version 1.4.19
+M4_VERSION=1.4.19
 LIBTOOL_VERSION=2.4.6
-AUTOCONF_VERSION=2.69
+AUTOCONF_VERSION=2.71
 AUTOMAKE_VERSION=1.11.6
 
 # check whether we can reach ftp.gnu.org
@@ -63,7 +63,9 @@ cd ${TOP}/bin
 if [ -f config.guess ] ; then
     echo "config.guess already exists! Using existing copy."
 else
-    ${download} config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
+    if ! ${download} config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD' ; then
+	${download} config.guess 'https://raw.githubusercontent.com/GlobalArrays/autotools/master/config.guess'
+    fi
 fi
 
 ##########################################
@@ -73,7 +75,9 @@ cd ${TOP}/bin
 if [ -f config.sub ] ; then
     echo "config.sub already exists! Using existing copy."
 else
-    ${download} config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
+    if ! ${download} config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD' ; then
+	${download} config.guess 'https://raw.githubusercontent.com/GlobalArrays/autotools/master/config.guess'
+    fi
 fi
 
 ##########################################
@@ -106,14 +110,6 @@ else
     cd ${TOP}/${TDIR}
     cp ${TOP}/bin/config.guess ./build-aux/config.guess
     cp ${TOP}/bin/config.sub ./build-aux/config.sub
-    if [ -f secure_snprintf.patch ] ; then
-        echo secure_snprintf.patch already exists! Using existing copy.
-    else
-        ${download} secure_snprintf.patch https://raw.githubusercontent.com/macports/macports-ports/master/devel/m4/files/secure_snprintf.patch
-    fi
-    if patch -p0 -N < secure_snprintf.patch ; then
-        echo patch applied
-    fi
     ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
     if [ "x$?" != "x0" ] ; then
         echo FAILURE 1
@@ -155,6 +151,14 @@ else
     cd ${TOP}/${TDIR}
     cp ${TOP}/bin/config.guess ./build-aux/config.guess
     cp ${TOP}/bin/config.sub ./build-aux/config.sub
+# patch for ifx -loopopt=0 issue
+    # patch for ifort libclang_rt.osx.a https://github.com/nwchemgit/nwchem/issues/171
+    if [ -f  ${TOP}/../travis/ifort_ldflags.patch ] ; then
+	cp ${TOP}/../travis/ifort_ldflags.patch .
+    else
+	${download} ifort_ldflags.patch https://raw.githubusercontent.com/GlobalArrays/ga/master/travis/ifort_ldflags.patch
+    fi
+    patch -p1 <  ifort_ldflags.patch
     ./configure --prefix=${TOP} && make -j ${MAKE_JNUM} && make install
     if [ "x$?" != "x0" ] ; then
         echo FAILURE 3
