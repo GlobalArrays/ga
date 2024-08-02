@@ -21,9 +21,6 @@ using std::endl;
 #define ARMCI_ENABLE_GPC_CALLS
 #include "gpc.h"
 
-/***************************** macros ************************/
-extern "C" {
-
 #include "Hash_common.h"
 #include "GPCHashmap.h"
 #include "Util.h"

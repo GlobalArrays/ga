@@ -61,8 +61,7 @@
 #define MAXPROC 128
 #define TIMES 100
 
-#define ELEMS 200
-
+# define ELEMS 200
 
 /***************************** macros ************************/
 #define COPY(src, dst, bytes) memcpy((dst),(src),(bytes))
@@ -73,9 +72,7 @@
 /***************************** global data *******************/
 int me, nproc;
 void* work[MAXPROC]; /* work array for propagating addresses */
-
-
-
+          
 void create_array(void *a[], int elem_size, int ndim, int dims[])
 {
      int bytes=elem_size, i, rc;
