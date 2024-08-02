@@ -208,7 +208,7 @@ static void armci_protect_pages(unsigned long startpagenum,unsigned long numpage
  * called inside main(int argc, char **argv), I guess ...  */
 void armci_init_checkpoint2()
 {
-    printf("%d:in armci init checkpoint2\n",armci_me);fflush(stdout);
+   printf("%d:in armci init checkpoint2\n",armci_me);fflush(stdout);
 }
 
 /*\ ----------CORE FUNCTIONS -----------
@@ -498,8 +498,7 @@ static void armci_ckpt_write_stack(int rid)
     printf("%d: Save stack: %p to %p (bytes=%ld : off=%ld)\n\n",armci_me, top, top+armci_storage_record[rid].stack_mon.bytes, armci_storage_record[rid].stack_mon.bytes, ofs);fflush(stdout);
     armci_storage_write_ptr(armci_storage_record[rid].fileinfo.fd,top,
                             armci_storage_record[rid].stack_mon.bytes,
-                            armci_storage_record[rid].stack_mon.fileoffset);
-
+                            armci_storage_record[rid].stack_mon.fileoffset);    
 }
 
 static void armci_ckpt_write_heap(int rid)
@@ -662,55 +661,13 @@ int armci_icheckpoint(int rid)
     return(rc);
 }
 
-/**
- * Recover stack: restore a saved stack by overwriting the current stack
- * of this process . The idea of restoring the stack is, we are going to
- * replace the contents of current stack, so that longjmp is legitimate.
- */
-#if 0
-static void armci_recover_stack(int rid) 
-{   
-    off_t offset = sizeof(jmp_buf)+4*sizeof(int);
-    size_t size  = armci_storage_record[rid].stack_mon.bytes;
-    char *stacktop = (char*)((unsigned long)(armci_storage_record[rid].stack_mon.ptr) - size);
-    int dummy;
-    printf("check=%p %p; rid=%d\n", &dummy, &offset, rid);
-
-    /* CHECK: check whether current stack frame is above the old (saved)
-       stack. If so, the recover the stack, else call thus recursively
-       until the current stack is above the old stack */
-    if( (unsigned long)&dummy >= (unsigned long)(stacktop-EST_OFFSET) ) {
-       armci_recover_stack(rid);
-    }
-    else {
-       printf("%d: armci_recover_stack(): size=%ld offset=%ld stack: %p to %p\n", armci_me, size, offset, stacktop, armci_storage_record[rid].stack_mon.ptr);
-       armci_storage_read_ptr(armci_storage_record[rid].fileinfo.fd, stacktop, size, offset);
-       
-       { /* verify stack recovery */
-          int dummy = *((int*)(stacktop+EST_OFFSET));
-          if(dummy != ARMCI_STACK_VERIFY) {
-             printf("WARNING: armci_recover_stack FAILED: %d", dummy);
-             armci_die("armci_recover_stack FAILED", dummy);
-          }
-          else if(DEBUG_)
-             printf("%d: armci_recover_stack SUCCESS (%d)\n", armci_me, dummy);
-       }
-       
-
-    }
-    /**
-     * CHECK: Do nothing here...recursive function in action here..
-     */
-}
-#endif
-
 static void armci_recover_memory(int rid) 
 {   
     int dummy;
     off_t ofs;
     size_t stacksize  = armci_storage_record[rid].stack_mon.bytes;
     char *stacktop = (char*)((unsigned long)(armci_storage_record[rid].stack_mon.ptr) - stacksize);
-
+    
     printf("armci_recover_stack(): check=%p ; rid=%d\n", &dummy, rid);
     /* call recursively until current stack is above saved stack */
     if( (unsigned long)&dummy >= (unsigned long)(stacktop-EST_OFFSET) )
@@ -728,7 +685,6 @@ static void armci_recover_memory(int rid)
        else if(DEBUG_)
           printf("%d: armci_recover_stack SUCCESS (%d)\n", armci_me, dummy);
     }
-    
 
     ofs=0; /* jmp_buf is the first one to be stored in ckpt file, so ofs=0 */
     printf("%d: armci_recover jmp_buf(): size=%ld off=%ld (%p to %p)\n", armci_me, sizeof(jmp_buf), ofs, &armci_storage_record[rid].jmp, (char*)(&armci_storage_record[rid].jmp)+sizeof(jmp_buf));
@@ -800,64 +756,6 @@ int armci_irecover(int rid,int iamreplacement)
     return 1;
 }
 
-#if 0
-static int tmpStack[TMP_STACK_SIZE];
-int armci_irecover_OLD(int rid,int iamreplacement)
-{
-    int rc;
-    jmp_buf jmp;
-    
-    /* Save "rid" and "iamreplacement" in a global variable as we are going
-       to replace the contents of the current stack. */
-    RID = rid; /* CHECK: save rid in a file or somewhere instead of
-                * global variable*/
-    tmp_iamreplacement = iamreplacement;
-    
-#if 0
-    /* create a temporary stack */
-    rc = _setjmp(jmp);
-    
-    if (rc == 0) {
-       /* Goto a temporary stack as we still running on the original stack. To
-          do this, update Stack Pointer (SP) to be in a temp stack area. */
-       jmp->__jmpbuf[JB_SP] = ((long)((char *)(tmpStack + TMP_STACK_SIZE) - EXTRA_STACK_SPACE) & ~0xf);
-       printf("%d: temporary stack starts @ %p\n", armci_me, jmp->__jmpbuf[JB_SP]);
-       
-       /* CHECK: make this TMP_STACK_SIZE dynamic, by measuring the size of
-          the stack from file */
-       
-       /*
-        * Jump back ...
-        * But with new 'jmp'
-        */
-       _longjmp(jmp, 1);
-    }
-    else
-#endif
-    {
-
-       /**
-        * Now we are on temporary stack. So it is safe to recover stack.
-        */
-       armci_recover_stack(RID);
-       
-       /**
-       * go to the restored stack by calling longjmp(). Read jmpbuf from file 
-       */
-       if(tmp_iamreplacement){ /* CHECK: what is iamreplacement */
-          rc=armci_storage_read_ptr(armci_storage_record[RID].fileinfo.fd,&armci_storage_record[RID].jmp,sizeof(jmp_buf),4*sizeof(int));
-       }
-       armci_msg_group_barrier(&armci_storage_record[RID].group);
-       printf("%d: restoring original stack starts @ %p\n", armci_me, armci_storage_record[RID].jmp->__jmpbuf[JB_SP]);
-       longjmp(armci_storage_record[RID].jmp,1);/*goto the restored stack*/
-    }
-
-    /*we should never come here things are hosed */
-    armci_die2("recovery hosed",RID,iamreplacement);
-    return(1);   
-}
-#endif
-
 void armci_icheckpoint_finalize(int rid)
 {
     int i;
@@ -873,8 +771,8 @@ void armci_icheckpoint_finalize(int rid)
 }
 
 /*
-  TODO:
-  - checkpoint shared memory and mmap regions
-  - I/O file open/close, signals and other system specific stuff ???
-  - memory leaks due to malloc()....free'em
+  TODO
+  1. checkpoint shared memory and mmap regions
+  2. I/O file open/close, signals and other system specific stuff ?
+  3. memory leaks due to malloc() - free them
 */

@@ -35,6 +35,7 @@ typedef struct{
     int tmp;                         /*for jmp_buf alignment*/
     jmp_buf jmp;                     /*the jmp buffer for setjmp and longjmp*/
     int ckpt_heap,ckpt_stack;
+
     armci_monitor_address_t stack_mon,heap_mon;
     armci_monitor_address_t *user_addr;
     int user_addr_count;
