@@ -1635,7 +1635,6 @@ else
 if ARMCI_NETWORK_ARMCI
 else
 AM_CPPFLAGS += -I$(top_srcdir)/armci/src/include
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
 endif
 endif
 
