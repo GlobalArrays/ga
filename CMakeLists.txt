@@ -205,10 +205,6 @@ set (USE_MALLOC 0)
 if(ENABLE_PROFILING)
   set (GA_PROFILING 1)
 endif()
-if(USE_CRAYSHASTA)
-  set(__CRAYXE 1)
-  # list(APPEND GA_EXTRA_LIBS pmi2)
-endif()
 
 # hardwire ARMCI configuration options
 set (HAVE_ARMCI_GROUP_COMM 1)

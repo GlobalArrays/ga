@@ -9,10 +9,6 @@
 
 #include <mpi.h>
 
-#if defined(__CRAYXT) || defined(__CRAYXE)
-#  include <pmi.h>
-#endif
-
 #include "comex.h"
 #include "comex_impl.h"
 #include "groups.h"
@@ -502,17 +498,6 @@ void comex_group_finalize()
 
 static long xgethostid()
 {
-#if defined(__CRAYXT) || defined(__CRAYXE)
-#warning CRAY
-    int nodeid;
-#  if defined(__CRAYXT)
-    PMI_Portals_get_nid(g_state.rank, &nodeid);
-#  elif defined(__CRAYXE)
-    PMI_Get_nid(g_state.rank, &nodeid);
-#  endif
-#else
     long nodeid = gethostid();
-#endif
-
     return nodeid;
 }
