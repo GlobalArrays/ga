@@ -91,7 +91,7 @@ typedef struct {
 typedef struct lock_link {
     struct lock_link *next;
     int rank;
-} lock_t;
+} comex_lock_t;
 
 
 typedef struct {
@@ -132,7 +132,7 @@ typedef struct {
 /* static state */
 static int *num_mutexes = NULL;     /**< (all) how many mutexes on each process */
 static int **mutexes = NULL;        /**< (masters) value is rank of lock holder */
-static lock_t ***lq_heads = NULL;   /**< array of lock queues */
+static comex_lock_t ***lq_heads = NULL;   /**< array of lock queues */
 static char *sem_name = NULL;       /* local semaphore name */
 static sem_t **semaphores = NULL;   /* semaphores for locking within SMP node */
 static int initialized = 0;         /* for comex_initialized(), 0=false */
@@ -382,7 +382,7 @@ int _comex_init(MPI_Comm comm)
         mutexes = (int**)malloc(sizeof(int*) * g_state.size);
         COMEX_ASSERT(mutexes);
         /* create one lock queue for each proc for each mutex */
-        lq_heads = (lock_t***)malloc(sizeof(lock_t**) * g_state.size);
+        lq_heads = (comex_lock_t***)malloc(sizeof(comex_lock_t**) * g_state.size);
         COMEX_ASSERT(lq_heads);
         /* start the server */
         pthread_create(&progress_thread, NULL, _progress_server, NULL);
@@ -3306,7 +3306,7 @@ STATIC void _mutex_create_handler(header_t *header, int proc)
 #endif
 
     mutexes[proc] = (int*)malloc(sizeof(int) * num);
-    lq_heads[proc] = (lock_t**)malloc(sizeof(lock_t*) * num);
+    lq_heads[proc] = (comex_lock_t**)malloc(sizeof(comex_lock_t*) * num);
     for (i=0; i<num; ++i) {
         mutexes[proc][i] = UNLOCKED;
         lq_heads[proc][i] = NULL;
@@ -3354,18 +3354,18 @@ STATIC void _lock_handler(header_t *header, int proc)
         server_send(&id, sizeof(int), proc);
     }
     else {
-        lock_t *lock = NULL;
+        comex_lock_t *lock = NULL;
 #if DEBUG
         printf("[%d] _lq_push rank=%d req_by=%d id=%d\n",
                 g_state.rank, rank, proc, id);
 #endif
-        lock = malloc(sizeof(lock_t));
+        lock = malloc(sizeof(comex_lock_t));
         lock->next = NULL;
         lock->rank = proc;
 
         if (lq_heads[rank][id]) {
             /* insert at tail */
-            lock_t *lq = lq_heads[rank][id];
+            comex_lock_t *lq = lq_heads[rank][id];
             while (lq->next) {
                 lq = lq->next;
             }
@@ -3394,7 +3394,7 @@ STATIC void _unlock_handler(header_t *header, int proc)
     if (lq_heads[rank][id]) {
         /* a lock requester was queued */
         /* find the next lock request and update queue */
-        lock_t *lock = lq_heads[rank][id];
+        comex_lock_t *lock = lq_heads[rank][id];
         lq_heads[rank][id] = lq_heads[rank][id]->next;
         /* update lock */
         mutexes[rank][id] = lock->rank;
