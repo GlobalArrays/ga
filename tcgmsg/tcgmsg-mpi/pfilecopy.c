@@ -8,6 +8,9 @@
 #if HAVE_STRING_H
 #   include <string.h>
 #endif
+#if HAVE_STRINGS_H
+#   include <strings.h>
+#endif
 #if HAVE_MEMORY_H
 #   include <memory.h>
 #endif
