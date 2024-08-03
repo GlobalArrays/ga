@@ -31,12 +31,6 @@ AS_CASE([$ga_cv_target:$ga_cv_f77_compiler_vendor:$host_cpu],
 [MACX64:intel:*],           [ga_cv_f77_opt="-O3 -prefetch -w -cm"],
 [MACX:gnu:*],               [ga_cv_f77_opt="-O3 -funroll-loops"],
 [MACX:intel:*],             [ga_cv_f77_opt="-O3 -prefetch -w -cm"],
-[SOLARIS64:fujitsu:*],      [ga_cv_f77_opt="-fw -Kfast -KV9FMADD"],
-[SOLARIS64:gnu:*],          [ga_cv_f77_opt="-xs -dalign -xarch=v9"],
-[SOLARIS64:gnu:i386],       [ga_cv_f77_opt="-xs -dalign -xarch=amd64"],
-[SOLARIS:fujitsu:*],        [ga_cv_f77_opt="-fw -Kfast -KV8PFMADD"],
-[SOLARIS:gnu:*],            [ga_cv_f77_opt="-xs -dalign"],
-[SOLARIS:gnu:i386],         [ga_cv_f77_opt="-xs -dalign -xarch=sse2"],
                             [ga_cv_f77_opt=])
 ])])
 AC_SUBST([GA_FOPT], [$ga_cv_f77_opt])

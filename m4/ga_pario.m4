@@ -43,7 +43,7 @@ if test x$LARGE_FILES != x ; then
     fi
   fi
   if test x$TARGET = xSOLARIS ; then
-    PARIO_CPPFLAGS="$PARIO_CPPFLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+    PARIO_CPPFLAGS=`getconf LFS_CFLAGS`
     PARIO_CFLAGS=`getconf LFS_CFLAGS`
   fi
   if test x$TARGET = xLINUX ; then

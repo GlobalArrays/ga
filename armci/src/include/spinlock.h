@@ -64,16 +64,6 @@ static int testandset(void *spinlock) {
 #   define TESTANDSET(x) (_check_lock((x), 0, 1)==TRUE) 
 #   define RELEASE_SPINLOCK(x) _clear_lock((x),0) 
 
-#elif defined(SOLARIS)
-#   if DEBUG_SPINLOCK
-#       warning SPINLOCK: SOLARIS
-#   endif
-#   include <sys/atomic.h>
-#   include <sys/machlock.h>
-#   define SPINLOCK  
-#   define TESTANDSET(x) (!_lock_try((x))) 
-#   define RELEASE_SPINLOCK _lock_clear 
-
 #elif defined(MACX)
 
 #endif

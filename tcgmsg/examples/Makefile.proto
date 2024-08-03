@@ -5,14 +5,6 @@
 
    INSTALL = echo "$@" is built
 
-IF SUN
-        FC = f77
-        CC = cc
-      LIBS = 
-    FFLAGS = -O3 -dalign -Nl99
-    CFLAGS = -O -dalign -DSUN -DPLOT -I$(LIBDIR)
-   SCFBLAS = scfblas.o
-ENDIF SUN
 IF LINUX
         FC = f77
         CC = cc
