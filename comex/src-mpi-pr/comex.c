@@ -11,6 +11,9 @@
 #include <semaphore.h>
 #include <signal.h>
 #include <stdio.h>
+#if HAVE_ERRNO_H
+#   include <errno.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
