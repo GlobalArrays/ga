@@ -173,7 +173,7 @@ jobs:
           ;;
           macos*)
           brew update
-          brew install gcc coreutils automake || true
+          brew install coreutils automake || true
           ;;
           esac
           if [[ "$F77" == "ifort" ]] || [[ "$CC" == "icc" ]] || [[ "$CC" == "icx" ]]; then ./travis/install-intel.sh; source ${{ matrix.oneapi }}/setvars.sh --force;  fi
