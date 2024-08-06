@@ -1909,13 +1909,13 @@ static void _unlock_request_handler(header_t *header, int proc)
 
 static void _lq_push(int rank, int id, char *notify)
 {
-    lock_t *lock = NULL;
+    comex_lock_t *lock = NULL;
 
 #if DEBUG
     printf("[%d] _lq_push rank=%d id=%d\n", l_state.rank, rank, id);
 #endif
 
-    lock = _my_malloc(sizeof(lock_t));
+    lock = _my_malloc(sizeof(comex_lock_t));
     lock->next = NULL;
     lock->rank = rank;
     lock->id = id;
@@ -1943,9 +1943,9 @@ static void _lq_push(int rank, int id, char *notify)
 static int _lq_progress(void)
 {
     int needs_progress = 0;
-    lock_t *lock = NULL;
-    lock_t *new_lock_head = NULL;
-    lock_t *new_lock_tail = NULL;
+    comex_lock_t *lock = NULL;
+    comex_lock_t *new_lock_head = NULL;
+    comex_lock_t *new_lock_tail = NULL;
 
 #if DEBUG
     if (l_state.num_mutexes > 0) {
@@ -1960,7 +1960,7 @@ static int _lq_progress(void)
     lock = l_state.lq_head;
     while (lock) {
         if (l_state.mutexes[lock->id] < 0) {
-            lock_t *last = NULL;
+            comex_lock_t *last = NULL;
             header_t *header = NULL;
 
             l_state.mutexes[lock->id] = lock->rank;
