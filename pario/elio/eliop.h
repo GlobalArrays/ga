@@ -27,10 +27,7 @@
 extern void GA_Error(char*, int);
 #endif
 
-#if defined(CRAY)
-#        include <sys/statfs.h>
-#        define  STATVFS statfs
-#elif defined(__FreeBSD__) && !defined(GLIBC)
+#if defined(__FreeBSD__) && !defined(GLIBC)
 #        include <sys/param.h>
 #        include <sys/mount.h>
 #        define  STATVFS statfs
@@ -39,7 +36,7 @@ extern void GA_Error(char*, int);
 #        define  STATVFS _stat 
 #        define  S_ISDIR(mode) ((mode&S_IFMT) == S_IFDIR)
 #        define  S_ISREG(mode) ((mode&S_IFMT) == S_IFREG)
-#elif defined(LINUX)  ||  defined(CYGWIN) || defined(BGQ) || defined(__GLIBC__)
+#elif defined(LINUX)  ||  defined(CYGWIN) || defined(__GLIBC__)
 #        include <sys/vfs.h>
 #        define  STATVFS statfs
 #        define NO_F_FRSIZE 
@@ -56,7 +53,7 @@ extern void GA_Error(char*, int);
 
 #include <fcntl.h>
 
-#if (defined(CRAY) && defined(FFIO))
+#if defined(FFIO)
 #        include <ffio.h>
 #        include <sys/fstyp.h>
 #        include <sys/fsid.h>
@@ -72,10 +69,6 @@ extern int                   elio_pending_error;
 
 
 #if !defined(PRINT_AND_ABORT)
-#   if defined(SUN)
-      extern int fprintf();
-      extern void fflush();
-#   endif
 #   define PRINT_AND_ABORT(msg, val){\
      fprintf(stderr, "ELIO fatal error: %s %ld\n", msg,  val);\
      fprintf(stdout, "ELIO fatal error: %s %ld\n", msg,  val);\

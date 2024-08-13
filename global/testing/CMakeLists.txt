@@ -130,12 +130,54 @@ if (ENABLE_FORTRAN)
   ga_add_parallel_test (simple_groups      "simple_groups.F ffflush.F"      Fortran)
   ga_add_parallel_test (simple_groups_comm "simple_groups_comm.F ffflush.F" Fortran)
 
-  ga_add_parallel_test (nga-onesided   "ngatest_src/generated/nga-onesided.F ffflush.F util.c" ${TEST_NPROCS_2} Fortran)
-  ga_add_parallel_test (nga-patch      "ngatest_src/generated/nga-patch.F    ffflush.F util.c" ${TEST_NPROCS_1} Fortran)
-  ga_add_parallel_test (nga-periodic   "ngatest_src/generated/nga-periodic.F ffflush.F util.c" Fortran                )
-  ga_add_parallel_test (nga-scatter    "ngatest_src/generated/nga-scatter.F  ffflush.F util.c"  Fortran                )
-  ga_add_parallel_test (ngatest        "ngatest_src/generated/ngatest.F      ffflush.F util.c" ${TEST_NPROCS_1} Fortran)
-  ga_add_parallel_test (nga-util       "ngatest_src/generated/nga-util.F     ffflush.F util.c"   Fortran                )
+  # Generated Tests
+  function(generate_ngatests testname)
+    add_custom_command(
+      OUTPUT ${CMAKE_BINARY_DIR}/${testname}.F
+      COMMAND ${ga_m4_cmd} ${PROJECT_SOURCE_DIR}/global/testing/${testname}.m4 > ${CMAKE_BINARY_DIR}/${testname}.F
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/global/testing
+      COMMENT "Generating ${testname} test"
+    )
+  endfunction()
+
+  generate_ngatests(nga-onesided)
+  generate_ngatests(nga-patch)
+  generate_ngatests(nga-periodic)
+  generate_ngatests(nga-scatter)
+  generate_ngatests(ngatest)
+  generate_ngatests(nga-util)
+
+  set (NGATEST_GEN_SRCS
+      ${CMAKE_BINARY_DIR}/nga-onesided.F
+      ${CMAKE_BINARY_DIR}/nga-patch.F
+      ${CMAKE_BINARY_DIR}/nga-periodic.F
+      ${CMAKE_BINARY_DIR}/nga-scatter.F
+      ${CMAKE_BINARY_DIR}/ngatest.F
+      ${CMAKE_BINARY_DIR}/nga-util.F
+  )
+  add_custom_target(
+    GenerateNGATests ALL
+    DEPENDS ${NGATEST_GEN_SRCS}
+  )
+  set_source_files_properties(
+    ${NGATEST_GEN_SRCS}
+    PROPERTIES GENERATED TRUE
+  )
+
+  ga_add_parallel_test (nga-onesided   "${CMAKE_BINARY_DIR}/nga-onesided.F ffflush.F util.c" ${TEST_NPROCS_2} Fortran)
+  ga_add_parallel_test (nga-patch      "${CMAKE_BINARY_DIR}/nga-patch.F    ffflush.F util.c" ${TEST_NPROCS_1} Fortran)
+  ga_add_parallel_test (nga-periodic   "${CMAKE_BINARY_DIR}/nga-periodic.F ffflush.F util.c"  Fortran                )
+  ga_add_parallel_test (nga-scatter    "${CMAKE_BINARY_DIR}/nga-scatter.F  ffflush.F util.c"  Fortran                )
+  ga_add_parallel_test (ngatest        "${CMAKE_BINARY_DIR}/ngatest.F      ffflush.F util.c" ${TEST_NPROCS_1} Fortran)
+  ga_add_parallel_test (nga-util       "${CMAKE_BINARY_DIR}/nga-util.F     ffflush.F util.c"  Fortran                )
+
+  add_dependencies(nga-onesided.x GenerateNGATests)
+  add_dependencies(nga-patch.x    GenerateNGATests)
+  add_dependencies(nga-periodic.x GenerateNGATests)
+  add_dependencies(nga-scatter.x  GenerateNGATests)
+  add_dependencies(ngatest.x      GenerateNGATests)
+  add_dependencies(nga-util.x     GenerateNGATests)
+  
 
 endif()
 

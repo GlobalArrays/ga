@@ -16,7 +16,6 @@
 #  gfortran     GNU Fortran 95+ compiler (released in gcc 4.0)
 #  ifc          Intel Fortran 95 compiler for Linux/x86 (now ifort)
 #  ifort        Intel Fortran 95 compiler for Linux/x86 (was ifc)
-#  lf95         Lahey-Fujitsu F95 compiler
 #  pghpf/pgf95  Portland Group F95 compiler
 #  xlf95        IBM (AIX) F95 compiler
 #  pathf95      PathScale
@@ -26,7 +25,7 @@
 #
 # Known MPI Fortran 95 compilers:
 #  cmpifc       ?? not sure if this is even F95
-#  ftn          native Fortran 95 compiler on Cray XT4,XT5
+#  ftn          native Fortran 95 compiler on Cray 
 #  mpif95       generic compiler name
 #  mpixlf95     IBM Blue Gene Fortran 95
 #  mpixlf95_r   IBM Blue Gene Fortran 95, reentrant code
@@ -38,22 +37,18 @@
 #  pgf90        Portland Group F90 compiler
 #  xlf90        IBM (AIX) F90 compiler
 #  pathf90      PathScale
-#  sxf90        NEC SX Fortran 90
 #  openf90      AMD's x86 open64
 #  sunf90       Sun's Studio
 #
 # Known MPI Fortran 90 compilers:
-#  cmpif90c     ??
-#  mpf90        ??
+#  mpifrt       Fujitsu
 #  mpif90       generic compiler name
-#  sxmpif90     NEC SX Fortran 90
 #
 # Known Fortran 77 compilers:
 #  af77         Apogee F77 compiler for Intergraph hardware running CLIX
-#  cf77         native F77 compiler under older Crays (prefer over fort77)
 #  f77          generic compiler names
 #  fl32         Microsoft Fortran 77 "PowerStation" compiler
-#  fort77       native F77 compiler under HP-UX (and some older Crays)
+#  fort77       native F77 compiler on older UNIX systems
 #  frt          Fujitsu F77 compiler
 #  g77          GNU Fortran 77 compiler
 #  pgf77        Portland Group F77 compiler
@@ -61,16 +56,11 @@
 #  pathf77      PathScale
 #
 # Known MPI Fortran 77 compilers:
-#  hf77         ??
-#  mpf77        ??
 #  mpif77       generic compiler name
 #  mpifrt       Fujitsu
 #
 AC_DEFUN([GA_PROG_MPIF77],
 [AC_ARG_VAR([MPIF77], [MPI Fortran 77 compiler])
-AS_CASE([$ga_cv_target_base],
-[BGQ],  [ga_mpif77_pref=mpixlf77_r;ga_f77_pref=bgxlf_r],
-[])
 # If FC is set, override F77.  Similarly for MPIFC/MPIF77 and FCFLAGS/FFLAGS.
 AS_IF([test "x$FC" != x],       [F77="$FC"])
 AS_IF([test "x$MPIFC" != x],    [MPIF77="$MPIFC"])

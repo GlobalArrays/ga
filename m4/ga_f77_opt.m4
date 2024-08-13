@@ -9,12 +9,7 @@ AC_CACHE_CHECK([for specific Fortran optimizations], [ga_cv_f77_opt], [
 AS_IF([test "x$GA_FOPT" != x], [ga_cv_f77_opt="$GA_FOPT"], [ga_cv_f77_opt=])
 AS_IF([test "x$ga_cv_f77_opt" = x && test "x$enable_opt" = xyes], [
 AS_CASE([$ga_cv_target:$ga_cv_f77_compiler_vendor:$host_cpu],
-[BGQ:ibm:*],                [ga_cv_f77_opt="-O3 -qstrict -qarch=qp -qtune=qp"],
-[BGQ:gnu:*],                [ga_cv_f77_opt="-O2"],
-[CRAY_XT:*:*],              [ga_cv_f77_opt=],
 [CYGWIN:*:*],               [ga_cv_f77_opt=],
-[FUJITSU_VPP64:*:*],        [ga_cv_f77_opt="-Sw"],
-[FUJITSU_VPP:*:*],          [ga_cv_f77_opt="-Sw -KA32"],
 [IBM64:*:*],                [ga_cv_f77_opt="-qarch=auto"],
 [IBM:*:*],                  [ga_cv_f77_opt="-qarch=auto"],
 [LINUX64:*:alpha],          [ga_cv_f77_opt="-align_dcommons -fpe3 -check nooverflow -assume accuracy_sensitive -check nopower -check nounderflow"],
@@ -36,14 +31,6 @@ AS_CASE([$ga_cv_target:$ga_cv_f77_compiler_vendor:$host_cpu],
 [MACX64:intel:*],           [ga_cv_f77_opt="-O3 -prefetch -w -cm"],
 [MACX:gnu:*],               [ga_cv_f77_opt="-O3 -funroll-loops"],
 [MACX:intel:*],             [ga_cv_f77_opt="-O3 -prefetch -w -cm"],
-[NEC64:*:*],                [ga_cv_f77_opt="-Cvsafe -size_t64"],
-[NEC:*:*],                  [ga_cv_f77_opt="-Cvsafe"],
-[SOLARIS64:fujitsu:*],      [ga_cv_f77_opt="-fw -Kfast -KV9FMADD"],
-[SOLARIS64:gnu:*],          [ga_cv_f77_opt="-xs -dalign -xarch=v9"],
-[SOLARIS64:gnu:i386],       [ga_cv_f77_opt="-xs -dalign -xarch=amd64"],
-[SOLARIS:fujitsu:*],        [ga_cv_f77_opt="-fw -Kfast -KV8PFMADD"],
-[SOLARIS:gnu:*],            [ga_cv_f77_opt="-xs -dalign"],
-[SOLARIS:gnu:i386],         [ga_cv_f77_opt="-xs -dalign -xarch=sse2"],
                             [ga_cv_f77_opt=])
 ])])
 AC_SUBST([GA_FOPT], [$ga_cv_f77_opt])

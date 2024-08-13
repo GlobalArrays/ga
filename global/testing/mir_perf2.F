@@ -137,24 +137,24 @@ c       everybody touches own data
         if (me .eq. 0) then
         tg=time_get1(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count,
      $               local)
-        call ga_sync()
         endif
+        call ga_sync()
 c
 c       everybody touches own data
         call ga_fill_patch(g_a, 1, n, 1, 1 , 1d0*me*loop)
         if (me .eq. 0) then
         tp=time_put1(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count, 
      $               local)
-        call ga_sync()
         endif
+        call ga_sync()
 c
 c       everybody touches own data
         call ga_fill_patch(g_a, 1, n, 1, 1 , 1d0*me*loop)
         if (me .eq. 0) then
         ta=time_acc1(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count,
      $               local)
-        call ga_sync()
         endif
+        call ga_sync()
 c
         if (me .eq. 0) then
           write(6,77)bytes, chunk(loop), tg, 
@@ -387,24 +387,24 @@ c       everybody touches own data
         if (me .eq. 0) then
         tg=time_get(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count,
      $               local)
-        call ga_sync()
         endif
+        call ga_sync()
 c
 c       everybody touches own data
         call ga_fill_patch(g_a, 1, n, 1, n , 1d0*me*loop)
         if (me .eq. 0) then
         tp=time_put(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count, 
      $               local)
-        call ga_sync()
         endif
+        call ga_sync()
 c
 c       everybody touches own data
         call ga_fill_patch(g_a, 1, n, 1, n , 1d0*me*loop)
         if (me .eq. 0) then
         ta=time_acc(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count,
      $               local)
-        call ga_sync()
         endif
+        call ga_sync()
 c
         if (me .eq. 0) then
           write(6,77)bytes, chunk(loop), tg, 

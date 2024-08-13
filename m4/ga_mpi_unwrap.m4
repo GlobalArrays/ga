@@ -76,7 +76,7 @@ AC_LANG_CASE(
 ],
 [C++], [AS_CASE([$wrapped],
     [*_r],  [compilers="bgxlC_r xlC_r"],
-    [*],    [compilers="icpc pgCC pathCC sxc++ xlC bgxlC openCC sunCC crayc++ g++ c++ gpp aCC cxx cc++ cl.exe FCC KCC RCC CC"])
+    [*],    [compilers="icpc pgCC pathCC sxc++ xlC bgxlC openCC sunCC craycxx g++ c++ gpp aCC cxx cc++ cl.exe FCC KCC RCC CC"])
 ],
 [Fortran 77], [AS_CASE([$wrapped],
     [*_r],  [compilers="bgxlf95_r xlf95_r bgxlf90_r xlf90_r bgxlf_r xlf_r"],

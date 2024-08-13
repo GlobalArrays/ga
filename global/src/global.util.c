@@ -51,10 +51,6 @@
 
 #define ARMCI 1
 
-#if defined(SUN)
-  void fflush();
-#endif
-
 /*\ PRINT g_a[ilo:ihi, jlo:jhi]
 \*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA

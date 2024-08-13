@@ -10,12 +10,7 @@ AC_CACHE_CHECK([for specific C optimizations], [armci_cv_c_opt], [
 AS_IF([test "x$ARMCI_COPT" != x], [armci_cv_c_opt="$ARMCI_COPT"], [armci_cv_c_opt=])
 AS_IF([test "x$armci_cv_c_opt" = x && test "x$enable_opt" = xyes], [
 AS_CASE([$ga_cv_target:$ga_cv_c_compiler_vendor:$host_cpu:$ga_armci_network],
-[BGQ:ibm:*:*],              [armci_cv_c_opt="-O3 -qstrict -qarch=qp -qtune=qp"],
-[BGQ:gnu:*:*],              [armci_cv_c_opt="-O2"],
-[CRAY_XT:*:*:*],            [armci_cv_c_opt=],
 [CYGWIN:*:*:*],             [armci_cv_c_opt="-malign-double"],
-[FUJITSU_VPP64:*:*:*],      [armci_cv_c_opt="-x100"],
-[FUJITSU_VPP:*:*:*],        [armci_cv_c_opt="-x100 -KA32"],
 [IBM64:*:*:*],              [armci_cv_c_opt="-O3 -qinline=100 -qstrict -qarch=auto -qtune=auto"],
 [IBM:*:*:*],                [armci_cv_c_opt="-O3 -qinline=100 -qstrict -qarch=auto -qtune=auto"],
 [LINUX64:fujitsu:x86_64:*], [armci_cv_c_opt="-Kfast"],
@@ -35,14 +30,6 @@ AS_CASE([$ga_cv_target:$ga_cv_c_compiler_vendor:$host_cpu:$ga_armci_network],
 [LINUX:intel:*:*],          [armci_cv_c_opt="-O3 -prefetch"],
 [MACX64:*:*:*],             [armci_cv_c_opt=],
 [MACX:*:*:*],               [armci_cv_c_opt=],
-[NEC64:*:*:*],              [armci_cv_c_opt="-Cvsafe -size_t64"],
-[NEC:*:*:*],                [armci_cv_c_opt="-Cvsafe"],
-[SOLARIS64:fujitsu:*:*],    [armci_cv_c_opt="-Kfast -KV9FMADD -x0"],
-[SOLARIS64:gnu:*:*],        [armci_cv_c_opt="-dalign"],
-[SOLARIS64:gnu:i386:*],     [armci_cv_c_opt="-dalign -xarch=amd64"],
-[SOLARIS:fujitsu:*:*],      [armci_cv_c_opt="-Kfast -KV8PFMADD -x0"],
-[SOLARIS:gnu:*:*],          [armci_cv_c_opt="-dalign"],
-[SOLARIS:gnu:i386:*],       [armci_cv_c_opt="-dalign -xarch=sse2"],
                             [armci_cv_c_opt=])
 ])])
 AC_SUBST([ARMCI_COPT],  [$armci_cv_c_opt])

@@ -82,8 +82,15 @@ if(ENABLE_BLAS)
   endif()  
 endif()
 
-if(MSVC AND ENABLE_FORTRAN)
-  message(FATAL_ERROR "MSVC build needs ENABLE_FORTRAN=OFF")
+if(ENABLE_FORTRAN)
+  if(MSVC)
+    message(FATAL_ERROR "MSVC build needs ENABLE_FORTRAN=OFF")
+  endif()
+
+  find_program(ga_m4_cmd NAMES gm4 m4)
+  if(NOT ga_m4_cmd)
+    message(FATAL_ERROR "m4 command not found. GNU M4 is required.")
+  endif()
 endif()
 
 if(ENABLE_PROFILING)
@@ -197,10 +204,6 @@ set (STATS 1)
 set (USE_MALLOC 0)
 if(ENABLE_PROFILING)
   set (GA_PROFILING 1)
-endif()
-if(USE_CRAYSHASTA)
-  set(__CRAYXE 1)
-  # list(APPEND GA_EXTRA_LIBS pmi2)
 endif()
 
 # hardwire ARMCI configuration options

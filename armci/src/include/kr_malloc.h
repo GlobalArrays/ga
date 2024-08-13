@@ -1,11 +1,7 @@
 #ifndef KR_MALLOC_H /* K&R malloc */
 #define KR_MALLOC_H
 
-#ifdef CRAY
 #define LOG_ALIGN 6
-#else
-#define LOG_ALIGN 6
-#endif
  
 #define ALIGNMENT (1 << LOG_ALIGN)
 

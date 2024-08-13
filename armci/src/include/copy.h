@@ -9,38 +9,14 @@
 #   include <string.h>
 #endif
 
-#if 1 || defined(CRAY_XT)
 #  define MEMCPY
-#endif
 
 #ifndef EXTERN
 #   define EXTERN extern
 #endif
- 
-#ifdef NEC
-#  define memcpy1 _VEC_memcpy
-#  define armci_copy1(src,dst,n) _VEC_memcpy((dst),(src),(n))
-   EXTERN long long _armci_vec_sync_flag;
-#endif
-
-#if defined(FUJITSU) || defined(SOLARIS)
-#   define PTR_ALIGN
-#endif
-
-#if defined(NB_NONCONT) && !defined(CRAY_SHMEM)
-#error NB_NONCONT is only available on CRAY_SHMEM
-#endif
-
-#if defined(SHMEM_HANDLE_SUPPORTED) && !defined(CRAY_SHMEM)
-#error SHMEM_HANDLE_SUPPORTED should not be defined on a non CRAY_SHMEM network
-#endif
 
 #if  defined(MEMCPY)  && !defined(armci_copy)
 #  define armci_copy(src,dst,n)  memcpy((dst), (src), (n)) 
-#endif
-
-#ifdef NEC
-#    define MEM_FENCE {mpisx_clear_cache(); _armci_vec_sync_flag=1;mpisx_syncset0_long(&_armci_vec_sync_flag);}
 #endif
 
 #if defined(NEED_MEM_SYNC)
@@ -104,47 +80,6 @@
       }\
     }
 
-#if defined(FUJITSU)
-
-#   define armci_put2D(p, bytes,count,src_ptr,src_stride,dst_ptr,dst_stride)\
-           CopyPatchTo(src_ptr, src_stride, dst_ptr, dst_stride, count,bytes, p)
-
-#   define armci_get2D(p, bytes, count, src_ptr,src_stride,dst_ptr,dst_stride)\
-           CopyPatchFrom(src_ptr, src_stride, dst_ptr, dst_stride,count,bytes,p)
-
-#elif defined(NB_NONCONT)
-
-    extern void armcill_wait_put();
-    extern void armcill_wait_get();
-#   define WAIT_FOR_PUTS armcill_wait_put()
-#   define WAIT_FOR_GETS armcill_wait_get()
- 
-    extern void armcill_put2D(int proc, int bytes, int count,
-                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
-    extern void armcill_get2D(int proc, int bytes, int count,
-                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
-#   define armci_put2D armcill_put2D
-#   define armci_get2D armcill_get2D
-
-#  if defined(CRAY_SHMEM)
-
-#       define armcill_nb_wait(_hdl)\
-               shmem_wait_nb(_hdl)
-/*VT:this should be ifdef'ed based on if shmem_handle is defined or not*/
-#       if defined (CRAY_XT)
-#           define armcill_nb_put(_dst, _src, _sz, _proc, _hdl)\
-                   shmem_putmem(_dst, _src, (size_t)_sz, _proc)
-#           define armcill_nb_get(_dst, _src, _sz, _proc, _hdl)\
-                   shmem_getmem(_dst, _src, (size_t)_sz, _proc)
-#       else
-#           define armcill_nb_put(_dst, _src, _sz, _proc, _hdl)\
-                   _hdl = shmem_putmem_nb(_dst, _src, (size_t)_sz, _proc, &(_hdl))
-#           define armcill_nb_get(_dst, _src, _sz, _proc, _hdl)\
-                   _hdl = shmem_getmem_nb(_dst, _src, (size_t)_sz, _proc, &(_hdl))
-#       endif
-#   endif
-
-#else
 #   define armci_put2D(proc,bytes,count,src_ptr,src_stride,dst_ptr,dst_stride){\
     int _j;\
     char *ps=src_ptr, *pd=dst_ptr;\
@@ -165,37 +100,12 @@
           pd += dst_stride;\
       }\
     }
-#endif
-   
-/* macros to ensure ordering of consecutive puts or gets following puts */
-#if defined(_CRAYMPP) || defined(CRAY_SHMEM) 
-#if defined(CRAY) || defined(CRAY_XT)
-#   include <mpp/shmem.h>
-#else
-#   include <unistd.h>
-#ifndef ptrdiff_t
-#   include <malloc.h>
-#endif
-#   include <shmem.h>
-#endif
-    int cmpl_proc;
-#   define FENCE_NODE(p) if(cmpl_proc == (p)){\
-        if(((p)<armci_clus_first)||((p)>armci_clus_last))shmem_quiet(); }
-#   define UPDATE_FENCE_STATE(p, op, nissued) if((op)==PUT) cmpl_proc=(p);
-#else
-#   define FENCE_NODE(p)
-#   define UPDATE_FENCE_STATE(p, op, nissued)
 
-#endif
+#define FENCE_NODE(p)
+#define UPDATE_FENCE_STATE(p, op, nissued)
 
-
-#ifdef NEC
-#  define THRESH 1
-#  define THRESH1D 1
-#else
 #  define THRESH 32
 #  define THRESH1D 512
-#endif
 #define ALIGN_SIZE sizeof(double)
 
 /********* interface to C 1D and 2D memory copy functions ***********/
@@ -250,7 +160,7 @@ void c_dcopy13_(const int*    const restrict rows,
 #if defined(AIX)
 #    define DCOPY2D c_dcopy2d_u_
 #    define DCOPY1D c_dcopy1d_u_
-#elif defined(LINUX) || defined(CRAY) || defined(WIN32)
+#elif defined(LINUX) || defined(WIN32)
 #    define DCOPY2D c_dcopy2d_n_
 #    define DCOPY1D c_dcopy1d_n_
 #else
@@ -264,36 +174,8 @@ void c_dcopy13_(const int*    const restrict rows,
 
 
 /***************************** 1-Dimensional copy ************************/
-#if defined(CRAY_SHMEM)
-#      define armci_copy_disabled(src,dst,n)\
-        if((n)<256 || n%sizeof(long) ) memcpy((dst),(src),(n));\
-        else {\
-          shmem_put((long*)(dst),(long*)(src),(int)(n)/sizeof(long),armci_me);\
-          shmem_quiet(); }
-
-#      define armci_put(src,dst,n,proc) \
-              shmem_put32((void *)(dst),(void *)(src),(int)(n)/4,(proc));\
-              shmem_quiet()
-
-#      define armci_get(src,dst,n,proc) \
-              shmem_get32((void *)(dst),(void *)(src),(int)(n)/4,(proc));\
-              shmem_quiet()
-
-#elif  defined(FUJITSU)
-
-#      include "fujitsu-vpp.h"
-#      ifndef __sparc
-#         define armci_copy(src,dst,n)  _MmCopy((char*)(dst), (char*)(src), (n))
-#      endif
-#      define armci_put  CopyTo
-#      define armci_get  CopyFrom                                                
-
-#else
-
-#      define armci_get(src,dst,n,p)    armci_copy((src),(dst),(n))
-#      define armci_put(src,dst,n,p)    armci_copy((src),(dst),(n))
-
-#endif
+#define armci_get(src,dst,n,p)    armci_copy((src),(dst),(n))
+#define armci_put(src,dst,n,p)    armci_copy((src),(dst),(n))
 
 #ifndef MEM_FENCE
 #   define MEM_FENCE {}

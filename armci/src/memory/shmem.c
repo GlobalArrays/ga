@@ -73,10 +73,6 @@
 #include "message.h"
 #include "armcip.h"
 
-#if defined(SUN)
-  extern char *shmat();
-#endif
-
 #define SHM_UNIT (1024)
 
 
@@ -87,16 +83,11 @@
  *    case b) search w/o forking until success (less accurate)
  */
 
-#if defined(VAPI)
+#if defined(VAPI) || defined(SOLARIS)
 #   define SHMMAX_SEARCH_NO_FORK 
 #endif
 #if defined(AIX) || defined(SHMMAX_SEARCH_NO_FORK)
 #   define NO_SHMMAX_SEARCH
-#endif
-
-/* on some platforms with tiny shmmax can try to glue multiple regions */
-#if (defined(SUN) || defined(SOLARIS)) && !defined(SHMMAX_SEARCH_NO_FORK)
-#    define MULTIPLE_REGIONS
 #endif
 
 /* Limits for the largest shmem segment are in Kilobytes to avoid passing
@@ -146,8 +137,6 @@ static  int id_search_no_fork=0;
 
 #ifdef LINUX
 #define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm shm %d",id);
-#elif  defined(SOLARIS) 
-#define CLEANUP_CMD(command) sprintf(command,"/bin/ipcrm -m %d",id);
 #else
 #define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm -m %d",id);
 #endif
@@ -486,256 +475,8 @@ static long occup_blocks=0;
  */
 
 
-#if defined(MULTIPLE_REGIONS)
-/********************************* MULTIPLE_REGIONS *******************/
-/* allocate contiguous shmem -- glue pieces together -- works on SUN 
- * SUN max shmem segment is only 1MB so we might need several to satisfy request
- */
 
-
-/* SHM_OP is an operator to calculate shmem address to attach 
- * might be + or - depending on the system 
- */
-#if defined(LINUX)
-#define SHM_OP +
-#else
-#define SHM_OP -
-#endif
-
-static int prev_alloc_regions=0;
-
-
-unsigned long armci_max_region()
-{
-  /* we assume that at least two regions can be glued */
-  return MinShmem*2;
-}
-
-/*\
- *   assembles the list of shmem id for the block 
-\*/
-int find_regions(char *addrp,  long* idlist, int *first)
-{
-int reg, nreg, freg=-1, min_reg, max_reg;
-
-       /* find the region where addrp belongs */
-       for(reg = 0; reg < alloc_regions-1; reg++){
-          if(region_list[reg].addr < region_list[reg+1].addr){
-             min_reg = reg; max_reg = reg+1;
-          }else{
-             min_reg = reg+1; max_reg = reg;
-          }
-          if(region_list[min_reg].addr <= addrp  && 
-             region_list[max_reg].addr > addrp){
-             freg = min_reg;
-             break;
-          }
-       }
-       /* if not found yet, it must be the last region */
-       if(freg < 0) freg=alloc_regions-1;
-
-       if( alloc_regions == prev_alloc_regions){
-           /* no new regions were allocated this time - just get the id */
-           idlist[0] = 1;
-           idlist[1] = region_list[freg].id;
-       }else{
-           /* get ids of the allocated regions */
-           idlist[0] = alloc_regions - prev_alloc_regions;
-           if(idlist[0] < 0)armci_die("armci find_regions error ",0);
-           for(reg =prev_alloc_regions,nreg=1; reg <alloc_regions;reg++,nreg++){
-               idlist[nreg] = region_list[reg].id;
-           }
-           prev_alloc_regions = alloc_regions;
-       }
-       *first = freg;
-       return idlist[0];
-}
-
-int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
-                         size_t *shmsize)
-{
-    armci_die("armci_get_shmem_info: Fix Me",0L);
-    return 0;
-}
-
-Header *armci_get_shmem_ptr(int shmid, long shmoffset, size_t shmsize) 
-{
-    armci_die("armci_get_shmem_ptr: Fix Me",0L);
-    return NULL;
-}
-
-char *Attach_Shared_Region(idlist, size, offset)
-     long *idlist, offset, size;
-{
-int ir, reg,  found, first;
-char *temp = (char*)0, *pref_addr=(char*)0;
-
-  if(DEBUG_){
-      printf("%d:AttachSharedRegion %d:size=%ld\n",armci_me,create_call++,size);
-      fflush(stdout);
-  }
-
-  if(alloc_regions>=MAX_REGIONS)
-       armci_die("Attach_Shared_Region: too many regions ",0L);
-
-  /* first time needs to initialize region_list structure */
-  if(!alloc_regions){
-      for(reg=0;reg<MAX_REGIONS;reg++){
-        region_list[reg].addr=(char*)0;
-        region_list[reg].attached=0;
-        region_list[reg].id=0;
-      }
-      MinShmem= idlist[SHMIDLEN-2];
-  }
-
- /* 
-  * Now, process the idlist list:
-  *    . for every shemem ID make sure that it is attached
-  *    . calulate shmem address by adding offset to the address for 1st region
-  *    . idlist[0] has the number of shmem regions to process
-  *    . idlist is assumed to be ordered -- first region comes first etc.
-  */
-  pref_addr = (char*)0;   /* first time let the OS choose address */
-  for (ir = 0; ir< idlist[0]; ir++){
-      /* search region_list for the current shmem id */
-      for(found =0, reg=0; reg < MAX_REGIONS;reg++)
-         if(found=(region_list[reg].id == idlist[1+ir])) break;
-
-      if(!found){
-         /* shmem id is not on the list */ 
-         reg = alloc_regions;
-         region_list[reg].id =idlist[1+ir];
-
-      }
-
-      /* attach if not attached yet */
-      if(!region_list[reg].attached){
-        /* make sure the next shmem region will be adjacent to previous one */
-
-         if(temp) pref_addr= temp SHM_OP (MinShmem*SHM_UNIT);
-
-         if(DEBUG_)
-            fprintf(stderr,"%d:trying id=%d pref=%ld tmp=%ld u=%d\n",armci_me,
-                 idlist[1+ir],pref_addr,temp,MinShmem);
-
-         if ((long)(temp = (char*)shmat((int)idlist[1+ir], pref_addr, 0))==-1L){
-           fprintf(stderr,"%d:shmat err:id=%d pref=%ld off=%d\n",
-                   armci_me, idlist[1+ir],pref_addr,offset);
-           shmem_errmsg(size);
-           armci_die("AttachSharedRegion:failed to attach",(long)idlist[1+ir]);
-         }
-	 POST_ALLOC_CHECK(temp,MinShmem*SHM_UNIT);
-
-         region_list[reg].addr = temp; 
-         region_list[reg].attached = 1;
-         alloc_regions++;
-
-         if(DEBUG_){
-           printf("%d: Attach_Shared_Region: id=%d pref=%ld got addr=%ld\n",
-                           armci_me, idlist[1+ir], pref_addr, temp);
-           fflush(stdout);
-         }
-      }
-
-      /* now we have this region attached and ready to go */
-
-      if(!ir)first = reg;  /* store the first region */
-  }
-
-  reg = first; /* first region on the list */ 
-
-  if(DEBUG_) 
-    fprintf(stderr,
-            "AttachSharedRegion: reg=%d id= %d off=%d addr=%p addr+off=%p\n",
-            reg,region_list[reg].id, offset, region_list[reg].addr, 
-            region_list[reg].addr+ offset);
-
-  /* check stamp to make sure that we are attached in the right place */
-  if(STAMP) if(*((int*)(region_list[reg].addr+ offset))!= alloc_regions-1){
-      fprintf(stderr, "attach: region=%d  ",alloc_regions);
-      armci_die("Attach_Shared_Region: wrong stamp value !", 
-                *((int*)(region_list[reg].addr+ offset)));
-  }
-  occup_blocks++;
-
-  return (region_list[0].addr + offset);
-}
-
-
-/*\ allocates shmem, to be called by kr_malloc that is called by process that
- *  creates shmem region
-\*/
-void *armci_allocate(long size)
-{
-#define min(a,b) ((a)>(b)? (b): (a))
-char *temp = (char*)0, *pref_addr=(char*)0, *ftemp;
-int id, newreg, i;
-size_t sz;
-
-    if(DEBUG1){
-       printf("%d:Shmem allocate: size %ld bytes\n",armci_me,size); 
-       fflush(stdout);
-    }
-
-    newreg = (size+(SHM_UNIT*MinShmem)-1)/(SHM_UNIT*MinShmem);
-
-    if( (alloc_regions + newreg)> MAX_REGIONS)
-       armci_die("allocate: to many regions already allocated ",(long)newreg);
-
-    prev_alloc_regions = alloc_regions; 
-
-    if(DEBUG_)fprintf(stderr, "in allocate size=%ld\n",size);
-
-    pref_addr = (char*)0;   /* first time let the OS choose address */
-
-    /* allocate shmem in as many segments as neccesary */
-    for(i =0; i< newreg; i++){ 
-       long szl;
-       szl =(i==newreg-1)?size-i*MinShmem*SHM_UNIT: min(size,SHM_UNIT*MinShmem);
-       sz = (size_t) szl;
-
-       if ( (int)(id = armci_shmget(sz,"MULTIPLE_REGIONarmci_allocate")) < 0){
-          fprintf(stderr,"%d:id=%d size=%d MAX=%ld\n",armci_me,id,szl,MinShmem);
-          alloc_regions++;
-          shmem_errmsg(size);
-          armci_die("allocate: failed to create shared region ",id);
-       }
-
-       /* make sure the next shmem region will be adjacent to previous one */
-       if(temp) pref_addr= temp SHM_OP (MinShmem*SHM_UNIT);
-
-       if(DEBUG_)printf("calling shmat:id=%d adr=%p sz=%ld\n",id,pref_addr,szl);
-
-       if ( (long)(temp = (char*)shmat(id, pref_addr, 0)) == -1L){
-          char command[64];
-          CLEANUP_CMD(command);
-          if(system(command) == -1) 
-            printf("Please clean shared memory (id=%d): see man ipcrm\n",id);
-          if(pref_addr){
-             printf("ARMCI shared memory allocator was unable to obtain from ");
-             printf("the operating system multiple segments adjacent to ");
-             printf("each other in order to combine them into a one large ");
-             printf("segment together\n");
-             shmem_errmsg(size);
-             armci_die("allocate: failed to attach to shared region",  0L);
-         }
-       }
-       POST_ALLOC_CHECK(temp,MinShmem*SHM_UNIT);
-
-       region_list[alloc_regions].addr = temp;
-       region_list[alloc_regions].id = id;
-       region_list[alloc_regions].attached=1;
-
-       if(DEBUG_) fprintf(stderr," allocate:attach: id=%d addr=%p \n",id, temp);
-       alloc_regions++;
-       if(i==0)ftemp = temp;
-    }
-    return (void*)(min(ftemp,temp));
-}
-    
-/************************** END of MULTIPLE_REGIONS *******************/
-
-#else /* Now, the machines where shm segments are not glued together */ 
+/* Now, the machines where shm segments are not glued together */ 
 
 static int last_allocated=-1;
 
@@ -979,7 +720,6 @@ char *pref_addr = (char*)0;
     return (void*) (temp);
 }
     
-#endif
 
 /******************** common code for the two versions *********************/
 

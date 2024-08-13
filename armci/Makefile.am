@@ -128,7 +128,6 @@ libarmci_la_SOURCES += src/include/armcip.h
 libarmci_la_SOURCES += src/include/asm-ppc.h
 libarmci_la_SOURCES += src/include/atomics-i386.h
 libarmci_la_SOURCES += src/include/copy.h
-libarmci_la_SOURCES += src/include/fujitsu-vpp.h
 libarmci_la_SOURCES += src/include/kr_malloc.h
 libarmci_la_SOURCES += src/include/locks.h
 libarmci_la_SOURCES += src/include/memlock.h
@@ -154,10 +153,6 @@ libarmci_la_SOURCES += src/xfer/strided.c
 libarmci_la_SOURCES += src/xfer/vector.c
 if MSG_COMMS_MPI
 libarmci_la_SOURCES += src/common/groups.c
-endif
-if ARMCI_NETWORK_CRAY_SHMEM
-AM_CPPFLAGS += -I$(top_srcdir)/src/devices/cray-shmem
-libarmci_la_SOURCES += src/memory/shmalloc.c
 endif
 if ARMCI_NETWORK_MPI_MT
 AM_CPPFLAGS += -I$(top_srcdir)/src/devices/mpi-mt
@@ -231,26 +226,10 @@ libarmci_la_SOURCES += src/memory/shmlimit.c
 endif
 endif
 endif
-if NB_NONCONT
-libarmci_la_SOURCES += src/common/noncont.c
-endif
+
 if THREAD_SAFE
 libarmci_la_SOURCES += src/common/utils.c
 libarmci_la_SOURCES += src/util/threads.c
-endif
-if NEC
-libarmci_la_SOURCES += src/locks/tas-sx.s
-
-src/locks/tas-sx.o: src/locks/tas-sx.s
-	$(AM_V_CCAS) \
-	$(CCAS) $(AM_CCASFLAGS) $(CCASFLAGS) \
-	-c -o src/locks/tas-sx.o $(top_srcdir)/src/locks/tas-sx.s
-
-src/locks/tas-sx.lo: src/locks/tas-sx.s
-	$(AM_V_CCAS) \
-	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(CCAS) $(AM_CCASFLAGS) \
-	$(CCASFLAGS) -c -o src/locks/tas-sx.lo $(top_srcdir)/src/locks/tas-sx.s
 endif
 
 include_HEADERS += src/include/armci.h

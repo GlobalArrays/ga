@@ -8,7 +8,7 @@
 #define MAX_LOCKS 1024
 #define NUM_LOCKS MAX_LOCKS 
 
-#if !(defined(PMUTEX) || defined(PSPIN) || defined(CYGNUS) || defined(CRAY_XT))
+#if !(defined(PMUTEX) || defined(PSPIN) || defined(CYGNUS) )
 #   include "spinlock.h"
 #endif
 
@@ -57,30 +57,10 @@ extern void unsetlock(int);
 #   define NAT_LOCK(x,p)   setlock(x)
 #   define NAT_UNLOCK(x,p)  unsetlock(x)
 
-#elif defined(CRAY_SHMEM) 
-#   include <limits.h>
-#   if defined(CRAY) || defined(CRAY_XT)
-#       include <mpp/shmem.h>
-#   endif
-#   if defined(LINUX64)
-#       define _INT_MIN_64 (LONG_MAX-1)
-#   endif
-#   undef NUM_LOCKS
-#   define NUM_LOCKS 4
-static long armci_lock_var[4]={0,0,0,0};
-typedef int lockset_t;
-#   define INVALID (long)(_INT_MIN_64 +1)
-#   define NAT_LOCK(x,p) while( shmem_swap(armci_lock_var+(x),INVALID,(p)) )
-#   define NAT_UNLOCK(x,p) shmem_swap(armci_lock_var+(x), 0, (p))
-
 #elif defined(CYGNUS)
 typedef int lockset_t;
 #   define NAT_LOCK(x,p) armci_die("does not run in parallel",0) 
 #   define NAT_UNLOCK(x,p) armci_die("does not run in parallel",0)  
-
-#elif defined(FUJITSU)
-typedef int lockset_t;
-#   include "fujitsu-vpp.h"
 
 #elif defined(SYSV) || defined(MACX)
 #   include "semaphores.h"
@@ -102,12 +82,7 @@ extern void CreateInitLocks(int num, lockset_t *id);
 extern void InitLocks(int num , lockset_t id);
 extern void DeleteLocks(lockset_t id);
 
-#ifdef FUJITSU
-#   define NATIVE_LOCK(x,p) if(armci_nproc>1) { NAT_LOCK(p); }
-#   define NATIVE_UNLOCK(x,p) if(armci_nproc>1) { NAT_UNLOCK(p); }
-#else
-#   define NATIVE_LOCK(x,p) if(armci_nproc>1) { NAT_LOCK(x,p); }
-#   define NATIVE_UNLOCK(x,p) if(armci_nproc>1) { NAT_UNLOCK(x,p); }
-#endif
+#define NATIVE_LOCK(x,p) if(armci_nproc>1) { NAT_LOCK(x,p); }
+#define NATIVE_UNLOCK(x,p) if(armci_nproc>1) { NAT_UNLOCK(x,p); }
 
 #endif /* _ARMCI_LOCKS_H_ */

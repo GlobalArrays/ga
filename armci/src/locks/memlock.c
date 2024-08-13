@@ -35,24 +35,12 @@ volatile double armci_dummy_work=0.;
 void **memlock_table_array;
 
 /* constants for cache line alignment */
-#ifdef SOLARIS
-#  define CALGN 32
-#  define LOG_CALGN 5
-#else
 #  define CALGN 64
 #  define LOG_CALGN 6
-#endif
 
 #define ALIGN_ADDRESS(x) (char*)((((unsigned long)x) >> LOG_CALGN) << LOG_CALGN) 
 
 static memlock_t table[MAX_SLOTS];
-
-#if (defined(CRAY_SHMEM) && defined(CRAY_XT))
-#define MAX_SEGS 512
-armci_memoffset_t armci_memoffset_table[MAX_SEGS];
-static short int seg_count=0;
-static short int new_seg=0;
-#endif
 
 /*\ simple locking scheme that ignores addresses
 \*/
@@ -149,15 +137,6 @@ void armci_lockmem(void *start, void *end, int proc)
 #else
      pstart=start;
      pend =end;
-#endif
-
-#ifdef CRAY_SHMEM
-     { /* adjust according the remote process raw address */
-        long bytes = (long) ((char*)pend-(char*)pstart);
-        extern void* armci_shmalloc_remote_addr(void *ptr, int proc);
-        pstart = armci_shmalloc_remote_addr(pstart, proc);
-        pend   = (char*)pstart + bytes;
-     }
 #endif
 
      while(1){
@@ -271,53 +250,3 @@ void armci_set_mem_offset(void *ptr)
       }
    }
 }
-
-#if defined(CRAY_SHMEM) && defined(CRAY_XT)
-/* CRAY-CRAY_XT stuff */ 
-static void armci_cray_gettilesize(void *ptr, void **ptr_arr,
-                                    size_t *tile_size) {
-    int i;
-    size_t diff=0;
-    for(i=0; i<armci_nproc; i++) {
-      ptr_arr[i]=ptr;
-      if(i>0) diff = (size_t)((char*)ptr_arr[i]-(char*)ptr_arr[i-1]);
-      if(i>1 && diff!=*tile_size)
-          armci_die("armci_memoffset_table_newentry:Inconsistent tile size",
-                    armci_me);
-      *tile_size = diff;
-    }
-}
-
-void armci_memoffset_table_newentry(void *ptr, size_t seg_size) {
- 
-    void **ptr_arr;
-    void *master_addr = NULL;
-    size_t tile_size=0, offset=0;
-
-    if(!ptr) armci_die("armci_memoffset_table_newentry : null ptr",0);
- 
-    if(seg_count >= MAX_SEGS) /* CHECK: make it dynamic */
-       armci_die("armci_cary_allocate: Increase MAX_SEGS > 512", armci_me);
- 
-    if(armci_me == armci_master) master_addr = ptr;
-    armci_msg_brdcst(&master_addr, sizeof(void*), armci_master);
- 
-    ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
-    armci_cray_gettilesize(ptr, ptr_arr, &tile_size);
-    offset = (size_t)((char*)master_addr -  (char*)ptr_arr[armci_master]);
- 
-    /* enter in memoffset table */
-    armci_memoffset_table[seg_count].seg_addr   = ptr_arr[armci_master];
-    armci_memoffset_table[seg_count].seg_size   = seg_size;
-    armci_memoffset_table[seg_count].tile_size  = tile_size;
-    armci_memoffset_table[seg_count].mem_offset = offset;
-
-#if DEBUG_
-    printf("%d: addr=%p seg_size=%ld tile_size=%ld offset=%ld\n", armci_me,
-       ptr_arr[armci_master], seg_size, tile_size, offset);
-#endif
- 
-    ++seg_count;
-    free(ptr_arr);
-}
-#endif

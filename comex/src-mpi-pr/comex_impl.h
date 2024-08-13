@@ -15,7 +15,7 @@
 #define UNLOCKED -1
 
 /* performance or correctness related settings */
-#if defined(__bgq__)
+#if 0
 #define ENABLE_UNNAMED_SEM 1
 #else
 #define ENABLE_UNNAMED_SEM 0

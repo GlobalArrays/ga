@@ -10,12 +10,7 @@ AC_CACHE_CHECK([for specific Fortran optimizations], [armci_cv_f77_opt], [
 AS_IF([test "x$ARMCI_FOPT" != x], [armci_cv_f77_opt="$ARMCI_FOPT"], [armci_cv_f77_opt=])
 AS_IF([test "x$armci_cv_f77_opt" = x && test "x$enable_opt" = xyes], [
 AS_CASE([$ga_cv_target:$ga_cv_f77_compiler_vendor:$host_cpu:$ga_armci_network],
-[BGQ:ibm:*:*],                  [armci_cv_f77_opt="-O3 -qstrict -qarch=qp -qtune=qp"],
-[BGQ:gnu:*:*],                  [armci_cv_f77_opt="-O2"],
-[CRAY_XT:*:*:*],                [armci_cv_f77_opt=],
 [CYGWIN:*:*:*],                 [armci_cv_f77_opt=],
-[FUJITSU_VPP64:*:*:*],          [armci_cv_f77_opt="-Sw"],
-[FUJITSU_VPP:*:*:*],            [armci_cv_f77_opt="-Sw -KA32"],
 [IBM64:*:*:*],                  [armci_cv_f77_opt=],
 [IBM:*:*:*],                    [armci_cv_f77_opt="-O4 -qarch=auto -qstrict"],
 [LINUX64:fujitsu:x86_64:OPENIB],[armci_cv_f77_opt="-Kfast -X9 -Am -fw -Kthreadsafe"],
@@ -42,14 +37,6 @@ AS_CASE([$ga_cv_target:$ga_cv_f77_compiler_vendor:$host_cpu:$ga_armci_network],
 [LINUX:portland:*:*],           [armci_cv_f77_opt="-Mvect -Munroll -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical"],
 [MACX64:intel:*:*],             [armci_cv_f77_opt="-O3 -prefetch -w -cm"],
 [MACX:*:*:*],                   [armci_cv_f77_opt=],
-[NEC64:*:*:*],                  [armci_cv_f77_opt="-Cvsafe -size_t64"],
-[NEC:*:*:*],                    [armci_cv_f77_opt="-Cvsafe"],
-[SOLARIS64:fujitsu:*:*],        [armci_cv_f77_opt="-fw -Kfast -KV8PFMADD"],
-[SOLARIS64:gnu:*:*],            [armci_cv_f77_opt="-dalign"],
-[SOLARIS64:gnu:i386:*],         [armci_cv_f77_opt="-dalign -xarch=sse2"],
-[SOLARIS:fujitsu:*:*],          [armci_cv_f77_opt="-fw -Kfast -KV8PFMADD"],
-[SOLARIS:gnu:*:*],              [armci_cv_f77_opt="-dalign"],
-[SOLARIS:gnu:i386:*],           [armci_cv_f77_opt="-dalign -xarch=sse2"],
                                 [armci_cv_f77_opt=])
 ])])
 AC_SUBST([ARMCI_FOPT],  [$armci_cv_f77_opt])

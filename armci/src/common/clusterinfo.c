@@ -32,7 +32,6 @@
  * Must define NO_SHMMAX_SEARCH in shmem.c to prevent depleting shared memory
  * due to a gready shmem request by the master process on cluster node 0.
  */ 
-#  define armci_enable_alpha_hack() 1
 
 #define DEBUG  0
 #define MAX_HOSTNAME 80
@@ -61,17 +60,7 @@
 /*** stores cluster configuration. Initialized before user threads are created and then read-only ***/
 armci_clus_t *armci_clus_info;
 
-#if defined(CRAY_XT)
-#define GETHOSTNAME cnos_gethostname
-static int cnos_gethostname(char *name, int len)
-{
-    int size,rank;
-    size=PMI_Get_rank(&rank);
-    sprintf(name,"%d",rank);
-}
-#else
 # define GETHOSTNAME gethostname
-#endif
 
 static char* merge_names(char *name)
 {
@@ -341,11 +330,9 @@ void armci_init_clusinfo()
 #endif
 
 #ifdef NO_SHMEM
-  if(armci_enable_alpha_hack()) {
     name[len]='0'+armci_me;
     name[len+1]='\0';
     len++;
-  }
 #endif
   
   if(DEBUG)
@@ -365,14 +352,12 @@ void armci_init_clusinfo()
   armci_master = armci_clus_info[armci_clus_me].master;
 
 #ifdef NO_SHMEM
-  if(armci_enable_alpha_hack()) {
      int i;
      for(i=0;i<armci_nclus;i++){
         int len=strlen(armci_clus_info[i].hostname);
         /*     fprintf(stderr,"----hostlen=%d\n",len);*/
         armci_clus_info[i].hostname[len-1]='\0';
      }
-  }
 #endif
 
   print_clus_info();

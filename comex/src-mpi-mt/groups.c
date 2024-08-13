@@ -9,12 +9,6 @@
 
 #include <mpi.h>
 
-#if defined(__bgq__)
-#  include <mpix.h>
-#elif defined(__CRAYXT) || defined(__CRAYXE)
-#  include <pmi.h>
-#endif
-
 #include "comex.h"
 #include "comex_impl.h"
 #include "groups.h"
@@ -468,28 +462,6 @@ void comex_group_finalize()
 
 static long xgethostid()
 {
-#if defined(__bgq__)
-#warning BGQ
-    int nodeid;
-    MPIX_Hardware_t hw;
-    MPIX_Hardware(&hw);
-
-    nodeid = hw.Coords[0] * hw.Size[1] * hw.Size[2] * hw.Size[3] * hw.Size[4]
-        + hw.Coords[1] * hw.Size[2] * hw.Size[3] * hw.Size[4]
-        + hw.Coords[2] * hw.Size[3] * hw.Size[4]
-        + hw.Coords[3] * hw.Size[4]
-        + hw.Coords[4];
-#elif defined(__CRAYXT) || defined(__CRAYXE)
-#warning CRAY
-    int nodeid;
-#  if defined(__CRAYXT)
-    PMI_Portals_get_nid(g_state.rank, &nodeid);
-#  elif defined(__CRAYXE)
-    PMI_Get_nid(g_state.rank, &nodeid);
-#  endif
-#else
     long nodeid = gethostid();
-#endif
-
     return nodeid;
 }

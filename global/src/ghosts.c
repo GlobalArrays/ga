@@ -64,8 +64,6 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 #define INVALID_MA_HANDLE -1 
 #define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
 
-#define BYTE_ADDRESSABLE_MEMORY
-
 /*uncomment line below to verify consistency of MA in every sync */
 /*#define CHECK_MA yes */
 
@@ -175,7 +173,6 @@ Integer me = pnga_nodeid();
         break;        
    }
 
-#ifdef BYTE_ADDRESSABLE_MEMORY
    /* check the allignment */
    lptr = (unsigned long)ptr;
    if( lptr%elemsize != lref%elemsize ){ 
@@ -184,7 +181,6 @@ Integer me = pnga_nodeid();
        pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
-#endif
 
    /* adjust index for Fortran addressing */
    (*index) ++ ;
@@ -268,7 +264,6 @@ unsigned long    lref=0, lptr=0;
 
    }
 
-#ifdef BYTE_ADDRESSABLE_MEMORY
    /* check the allignment */
    lptr = (unsigned long)ptr;
    if( lptr%elemsize != lref%elemsize ){ 
@@ -277,7 +272,6 @@ unsigned long    lref=0, lptr=0;
        pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
-#endif
 
    /* adjust index for Fortran addressing */
    (*index) ++ ;
