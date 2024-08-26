@@ -99,7 +99,7 @@ AS_IF([test "x$enable_f77" = xno],
 # many flavors of BLAS that we test for explicitly, although the list could
 # probably be reduced based on currently available systems.
 #
-# Apparently certain compilers on BGP define sgemm and dgemm, so we must
+# Apparently certain compilers define sgemm and dgemm, so we must
 # test for a different BLAS routine. cgemm seems okay.
 AC_DEFUN([GA_BLAS],
 [AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
@@ -266,26 +266,6 @@ AS_IF([test $ga_blas_ok = no],
          LIBS="$BLAS_LIBS $LIBS"
          GA_RUN_BLAS_TEST()
          LIBS="$ga_save_LIBS"])
-     AC_MSG_RESULT([$ga_blas_ok])])
-
-# SCSL library (SCSL stands for SGI/Cray Scientific Library)
-AS_IF([test $ga_blas_ok = no],
-    [AC_MSG_CHECKING([for BLAS in SGI/Cray Scientific Library])
-     # add -lscs to BLAS_LIBS if missing from LIBS
-     AS_CASE([$LIBS], [*scs*], [], [BLAS_LIBS="-lscs"])
-     LIBS="$BLAS_LIBS $LIBS"
-     GA_RUN_BLAS_TEST()
-     LIBS="$ga_save_LIBS"
-     AC_MSG_RESULT([$ga_blas_ok])])
-
-# SGIMATH library
-AS_IF([test $ga_blas_ok = no],
-    [AC_MSG_CHECKING([for BLAS in SGIMATH library])
-     # add -lcomplib.sgimath to BLAS_LIBS if missing from LIBS
-     AS_CASE([$LIBS], [*complib.sgimath*], [], [BLAS_LIBS="-lcomplib.sgimath"])
-     LIBS="$BLAS_LIBS $LIBS"
-     GA_RUN_BLAS_TEST()
-     LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
 # IBM ESSL library (might require generic BLAS lib, too)

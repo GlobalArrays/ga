@@ -64,8 +64,6 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 #define INVALID_MA_HANDLE -1 
 #define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
 
-#define BYTE_ADDRESSABLE_MEMORY
-
 /*uncomment line below to verify consistency of MA in every sync */
 /*#define CHECK_MA yes */
 
@@ -175,7 +173,6 @@ Integer me = pnga_nodeid();
         break;        
    }
 
-#ifdef BYTE_ADDRESSABLE_MEMORY
    /* check the allignment */
    lptr = (unsigned long)ptr;
    if( lptr%elemsize != lref%elemsize ){ 
@@ -184,7 +181,6 @@ Integer me = pnga_nodeid();
        pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
-#endif
 
    /* adjust index for Fortran addressing */
    (*index) ++ ;
@@ -268,7 +264,6 @@ unsigned long    lref=0, lptr=0;
 
    }
 
-#ifdef BYTE_ADDRESSABLE_MEMORY
    /* check the allignment */
    lptr = (unsigned long)ptr;
    if( lptr%elemsize != lref%elemsize ){ 
@@ -277,7 +272,6 @@ unsigned long    lref=0, lptr=0;
        pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
-#endif
 
    /* adjust index for Fortran addressing */
    (*index) ++ ;
@@ -3545,11 +3539,7 @@ void pnga_update_ghosts(Integer g_a)
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if(local_sync_begin)pnga_pgroup_sync(GA[handle].p_handle);
 
-#ifdef CRAY_T3D
-   if (!pnga_update5_ghosts(g_a))
-#else
    if (!pnga_update4_ghosts(g_a))
-#endif
    {
      pnga_update1_ghosts(g_a);
    }
@@ -4381,11 +4371,7 @@ logical pnga_set_ghost_info(Integer g_a)
     free(GA[handle].cache);
   GA[handle].cache = NULL;
   if (GA[handle].actv == 1) {
-#ifdef CRAY_T3D
-    return pnga_set_update5_info(g_a);
-#else
     return pnga_set_update4_info(g_a);
-#endif
   }
   return TRUE;
 }

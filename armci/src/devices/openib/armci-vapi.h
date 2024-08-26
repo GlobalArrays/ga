@@ -2,15 +2,6 @@
 #ifndef _VAPI_H
 #define _VAPI_H
 
-/*vapi includes*/
-#ifdef MELLANOX
-#include <vapi.h>
-#include <evapi.h>
-#include <mtl_common.h>
-#include <ib_defs.h>
-#include <vapi_common.h>
-#endif
-
 #ifdef OPENIB
 #include <infiniband/verbs.h>
 #endif
@@ -51,12 +42,6 @@ typedef struct {
 } msg_tag_t;
 
 typedef struct {
-#ifdef MELLANOX
-        VAPI_sr_desc_t sdscr;
-        VAPI_sg_lst_entry_t    ssg_entry;
-        VAPI_rr_desc_t rdscr;
-        VAPI_sg_lst_entry_t    rsg_entry;
-#endif
 #ifdef OPENIB
         struct ibv_send_wr sdscr;
         struct ibv_sge ssg_entry;
@@ -66,11 +51,6 @@ typedef struct {
 } armci_vapi_field_t;
 
 typedef struct {
-#ifdef MELLANOX
-        VAPI_lkey_t lkey;
-        VAPI_rkey_t rkey;
-        VAPI_mr_hndl_t memhndl;
-#endif
 #ifdef OPENIB
         uint32_t rkey;
         uint32_t lkey;
@@ -83,11 +63,6 @@ extern char * armci_vapi_client_mem_alloc(int);
 typedef struct {
         int tag;
 	int issg;
-#ifdef MELLANOX
-        VAPI_sr_desc_t sdescr;
-        VAPI_rr_desc_t rdescr;
-        VAPI_sg_lst_entry_t sg_entry[56]; /*ff:this has to be malloced*/
-#endif
 #ifdef OPENIB
         struct ibv_send_wr sdescr;
         struct ibv_recv_wr rdescr;
@@ -101,10 +76,6 @@ typedef struct {
 typedef struct {
         int tag;
 	int issg;
-#ifdef MELLANOX
-        VAPI_rr_desc_t descr;
-        VAPI_sg_lst_entry_t sg_entry[56]; /*ff:this has to be malloced*/
-#endif
 #ifdef OPENIB
         struct ibv_recv_wr descr;
         struct ibv_send_wr sg_entry[56]; /*ff:this has to be malloced*/
@@ -189,9 +160,7 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #define BUF_EXTRA_FIELD_T armci_vapi_field_t 
 #define GET_SEND_BUFFER _armci_buf_get
 #define FREE_SEND_BUFFER _armci_buf_release
-#ifdef MELLANOX
-#define INIT_SEND_BUF(_field,_snd,_rcv) _snd=1;_rcv=1;memset(&((_field).sdscr),0,sizeof(VAPI_sr_desc_t));(_field).sdscr.id=avail+1;armci_vapi_set_mark_buf_send_complete(avail+1)
-#endif
+
 #ifdef OPENIB
 #define INIT_SEND_BUF(_field,_snd,_rcv) _snd=1;_rcv=1;memset(&((_field).sdscr),0,sizeof(struct ibv_send_wr));(_field).sdscr.wr_id=avail+1;armci_vapi_set_mark_buf_send_complete(avail+1)
 #endif
@@ -227,10 +196,7 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #endif
 #define ARMCI_POST_SCATTER 1000000001
 #define ARMCI_VAPI_CLEAR 0
-#ifdef MELLANOX
-#define VAPI_SGGET_MIN_COLUMN 720
-#define VAPI_SGPUT_MIN_COLUMN 720
-#endif
+
 #ifdef OPENIB
 /* #define VAPI_SGGET_MIN_COLUMN 2147483648 */
 #define VAPI_SGPUT_MIN_COLUMN 2147483648

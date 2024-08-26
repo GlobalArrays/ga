@@ -62,6 +62,9 @@ install (FILES
   DESTINATION include/ga
 )
 
+list (APPEND GA_HEADER_PATHS ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+set (GA_HEADER_PATHS ${GA_HEADER_PATHS} PARENT_SCOPE)
+
 # -------------------------------------------------------------
 # MA library installation
 # -------------------------------------------------------------

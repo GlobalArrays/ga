@@ -61,7 +61,7 @@ typedef struct lock_link {
     int rank;
     int id;
     void *notify_address;
-} lock_t;
+} comex_lock_t;
 
 typedef struct {
     MPI_Comm world_comm;
@@ -86,8 +86,8 @@ typedef struct {
     barrier_t *bq_tail;
 
     /* a queue for lock requests */
-    lock_t *lq_head;
-    lock_t *lq_tail;
+    comex_lock_t *lq_head;
+    comex_lock_t *lq_tail;
 
 } local_state;
 

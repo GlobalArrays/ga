@@ -12,8 +12,6 @@ c   It is designed to minimize the effort required to
 c   convert the timing statistics in going from one
 c   machine to another.
 c
-c      SGI
-c
       wraptime = dble(etime(tarray))
 #else
 c

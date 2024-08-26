@@ -592,28 +592,9 @@ void EAF_Errmsg(int code, char *msg)
  */
 int EAF_Truncate(int fd, eaf_off_t length)
 {
-#ifdef CRAY 
-    int rc;
-#endif
-
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
-#ifdef CRAY 
-    /* ftruncate does not work with Cray FFIO, we need to implement it
-     * as a sequence of generic close, truncate, open calls 
-     */
-
-    rc = elio_close(file[fd].elio_fd);
-    if(rc) return rc;
-    if(truncate(file[fd].fname, (off_t) length)) return EAF_ERR_TRUNCATE;  
-    if (!(file[fd].elio_fd = elio_open(file[fd].fname, file[fd].type, ELIO_PRIVATE))) {
-        free(file[fd].fname);
-        file[fd].fname = 0;
-        return ELIO_PENDING_ERR;
-    }
-#else
     if(elio_truncate(file[fd].elio_fd, (Off_t)length)) return EAF_ERR_TRUNCATE;
-#endif
 
     return EAF_OK;
     /*  return elio_truncate(file[fd].elio_fd, (Off_t) length);*/

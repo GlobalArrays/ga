@@ -4,18 +4,13 @@
 #
 # Known C compilers
 #  cc       generic compiler name
-#  ccc      Fujitsu ?? old Cray ??
 #  cl
-#  ecc      Intel on IA64 ??
 #  gcc      GNU
 #  icc      Intel
-#  bgxlc    Intel on BG/P
-#  bgxlc_r  Intel on BG/P, thread safe
 #  xlc      Intel
 #  xlc_r    Intel, thread safe
 #  pgcc     Portland Group
 #  pathcc   PathScale
-#  sxcc     NEC SX
 #  fcc      Fujitsu
 #  opencc   AMD's x86 open64
 #  suncc    Sun's Studio
@@ -28,7 +23,6 @@
 #  hcc
 #  mpxlc_r
 #  mpxlc
-#  sxmpicc  NEC SX
 #  mpifcc   Fujitsu
 #  mpgcc
 #  mpcc
@@ -37,9 +31,6 @@
 #
 AC_DEFUN([COMEX_PROG_MPICC],
 [AC_ARG_VAR([MPICC], [MPI C compiler])
-AS_CASE([$comex_cv_target_base],
-[BGP],  [comex_mpicc_pref=mpixlc_r; comex_cc_pref=bgxlc_r],
-[])
 # In the case of using MPI wrappers, set CC=MPICC since CC will override
 # absolutely everything in our list of compilers.
 # Save CC, just in case.

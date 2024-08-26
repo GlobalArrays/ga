@@ -82,8 +82,15 @@ if(ENABLE_BLAS)
   endif()  
 endif()
 
-if(MSVC AND ENABLE_FORTRAN)
-  message(FATAL_ERROR "MSVC build needs ENABLE_FORTRAN=OFF")
+if(ENABLE_FORTRAN)
+  if(MSVC)
+    message(FATAL_ERROR "MSVC build needs ENABLE_FORTRAN=OFF")
+  endif()
+
+  find_program(ga_m4_cmd NAMES gm4 m4)
+  if(NOT ga_m4_cmd)
+    message(FATAL_ERROR "m4 command not found. GNU M4 is required.")
+  endif()
 endif()
 
 if(ENABLE_PROFILING)
@@ -141,7 +148,20 @@ include(${PROJECT_SOURCE_DIR}/cmake/ga-checks.cmake)
 
 if (ENABLE_FORTRAN)
   include( FortranCInterface )
-  FortranCInterface_HEADER(${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h MACRO_NAMESPACE F77_FUNC_)
+  FortranCInterface_HEADER(${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.ignore MACRO_NAMESPACE F77_FUNC_)
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h
+    COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.ignore" -D OUTPUT:PATH="${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h" -P ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.cmake 
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.ignore
+  )
+  add_custom_target(
+    GenerateF2C_CH ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h
+  )
+  set_source_files_properties(
+    ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h
+    PROPERTIES GENERATED TRUE
+  )
 else()
   CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/f2c_dummy.h.in
                   ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h )
@@ -155,7 +175,6 @@ endif()
 # hardwire various GA configuration parameters. Use convention that parameters
 # are defined and set to 0 if not used
 set (CYGWIN 0)
-set (DECOSF 0)
 
 if (CMAKE_SYSTEM_NAME STREQUAL Linux)
   set(LINUX 1)
@@ -186,10 +205,6 @@ set (USE_MALLOC 0)
 if(ENABLE_PROFILING)
   set (GA_PROFILING 1)
 endif()
-if(USE_CRAYSHASTA)
-  set(__CRAYXE 1)
-  # list(APPEND GA_EXTRA_LIBS pmi2)
-endif()
 
 # hardwire ARMCI configuration options
 set (HAVE_ARMCI_GROUP_COMM 1)
@@ -217,7 +232,7 @@ if (ENABLE_FORTRAN)
      set (FORTRAN_I8_FLAG -fdefault-integer-8)
      set (FORTRAN_I4_FLAG "")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Flang")
-     message(STATUS "Using Flang compiler settings")
+     message(STATUS "Using Flang compiler settings for flang, flang-new, armflang")
      set (F77_GETARG_DECLS "external GETARG")
      set (FORTRAN_I8_FLAG -fdefault-integer-8)
      set (FORTRAN_I4_FLAG "")
@@ -362,6 +377,15 @@ if(ENABLE_BLAS)
   #include_directories(${BLAS_INCLUDE_DIRS})
 endif()
 
+if(ENABLE_FORTRAN)
+  set(_CHK_FORTRAN_COMPILERS "GNU" "Intel" "LLVMFlang" "Flang")
+  list(FIND _CHK_FORTRAN_COMPILERS ${CMAKE_Fortran_COMPILER_ID} index)
+  if(index GREATER -1)
+    find_package( StandardFortran )
+    list(APPEND GA_EXTRA_LIBS ${STANDARDFORTRAN_LIBRARIES})
+  endif()
+endif()
+
 if(ENABLE_PROFILING)
   set(ga_profiler $<TARGET_OBJECTS:ga_tools>)
 endif()
@@ -393,6 +417,7 @@ target_include_directories(ga
     $<INSTALL_INTERFACE:include>
     $<INSTALL_INTERFACE:include/ga>
 )
+
 if(ENABLE_BLAS)
   target_include_directories(ga
     INTERFACE
@@ -441,6 +466,12 @@ if(ENABLE_TESTS)
   add_subdirectory(global/examples)
 endif()
 
+foreach (bip ${GA_HEADER_PATHS})
+  target_include_directories(ga
+    INTERFACE
+      $<BUILD_INTERFACE:${bip}>
+  )
+endforeach()
 
 # --------------------------------------
 # Global Arrays installation
@@ -506,7 +537,7 @@ endif()
 list(REMOVE_AT CMAKE_MODULE_PATH 0)
 list(REMOVE_AT CMAKE_MODULE_PATH 0)
 
-# export(EXPORT globalarrays-targets
-#     FILE ${CMAKE_CURRENT_BINARY_DIR}/globalarrays-targets.cmake
-#     NAMESPACE GlobalArrays::)
-
+# Export build tree
+export(EXPORT globalarrays-targets
+      NAMESPACE GlobalArrays::
+      FILE "${PROJECT_BINARY_DIR}/globalarrays-targets.cmake")
