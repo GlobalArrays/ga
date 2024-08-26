@@ -348,7 +348,11 @@ void armci_msg_brdcst(void* buffer, int len, int root)
 
 
 /* there was a case in ghost update where a proc sent a message to itself */
+#ifdef MPI_REQUEST_NULL
 static MPI_Request self_request = MPI_REQUEST_NULL;
+#else
+static MPI_Request self_request;
+#endif
 static int self_request_flag = 0;
 
 void armci_msg_snd(int tag, void* buffer, int len, int to)
