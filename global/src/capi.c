@@ -5615,14 +5615,14 @@ int NGA_Sprs_array_get_column64(int s_a, int64_t icol)
 
 int NGA_Sprs_array_get_column(int g_v, int irow)
 {
-  Integer gv = (Integer)g_v;
-  Integer ir = (Integer)irow;
-  return (int)wnga_sprs_array_get_column(gv, ir);
+  Integer sa = (Integer)s_a;
+  Integer ic = (Integer)icol;
+  return (int)wnga_sprs_array_get_column(sa, ic);
 }
 
-int NGA_Sprs_array_get_column64(int g_v, int64_t irow)
+int NGA_Sprs_array_get_column64(int s_a, int64_t icol)
 {
-  Integer gv = (Integer)g_v;
-  Integer ir = (Integer)irow;
-  return (int)wnga_sprs_array_get_column(gv, ir);
+  Integer sa = (Integer)s_a;
+  Integer ic = (Integer)icol;
+  return (int)wnga_sprs_array_get_column(sa, ic);
 }

@@ -889,7 +889,6 @@ logical pnga_sprs_array_assemble(Integer s_a)
     tld[1] = 1;
     pnga_put(g_blk,tlo,thi,row_info,tld);
     pnga_pgroup_sync(SPA[hdl].grp);
-    /* pnga_print(g_blk); */
   }
 
   pnga_release(SPA[hdl].g_data,&lo,&hi);
@@ -1275,8 +1274,8 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
   if (adim != SPA[s_hdl].jdim) {
     pnga_error("length of A must equal second dimension of sparse matrix",adim);
   }
-  if (vdim != SPA[s_hdl].idim) {
-    pnga_error("length of V must equal first dimension of sparse matrix",vdim);
+  if (vdim != SPA[s_hdl].jdim) {
+    pnga_error("length of V must equal second dimension of sparse matrix",vdim);
   }
   if (atype != SPA[s_hdl].type || vtype != SPA[s_hdl].type) {
     pnga_error("Data type of sparse matrix and A and V vectors must match",
@@ -1285,8 +1284,8 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
   /* accumulate operation does not support type C_LONGLONG so fail if this
    * data type encountered */
   if (SPA[s_hdl].type == C_LONGLONG) {
-        pnga_error("Data type of sparse matrix and A and V vectors"
-                   " cannot be of type long long",SPA[s_hdl].type);
+    pnga_error("Data type of sparse matrix and A and V vectors"
+        " cannot be of type long long",SPA[s_hdl].type);
   }
 
 
@@ -2517,6 +2516,7 @@ Integer pnga_sprs_array_duplicate(Integer s_a)
     pnga_mask_sync(local_sync_begin,local_sync_end);
     pnga_copy_patch(p_trans,SPA[hdl].g_blk,tlo,thi,SPA[new_hdl].g_blk,tlo,thi);
   }
+
   /* Copy data from old array to new array */
   p_trans[0]='N';
   p_trans[1]='\0';
@@ -2526,6 +2526,11 @@ Integer pnga_sprs_array_duplicate(Integer s_a)
   pnga_copy_patch(p_trans,SPA[hdl].g_j,&lo,&hi,SPA[new_hdl].g_j,&lo,&hi);
   pnga_distribution(SPA[new_hdl].g_data,me,&lo,&hi);
   pnga_copy_patch(p_trans,SPA[hdl].g_data,&lo,&hi,SPA[new_hdl].g_data,&lo,&hi);
+  {
+    Integer tlo[3],thi[3];
+    pnga_distribution(SPA[new_hdl].g_blk,me,tlo,thi);
+    pnga_copy_patch(p_trans,SPA[hdl].g_blk,tlo,thi,SPA[new_hdl].g_blk,tlo,thi);
+  }
   /* copy remaining data structures */
   SPA[new_hdl].ilo = SPA[hdl].ilo;
   SPA[new_hdl].ihi = SPA[hdl].ihi;

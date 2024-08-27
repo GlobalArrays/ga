@@ -1412,6 +1412,449 @@ void matrix_test(int type)
     free(k_buf);
     free(w_buf);
   }
+
+  /* create sparse matrix A */
+  setup_matrix(&s_a, &a, dim, type);
+  /* create dense matrix B */
+  setup_dense_matrix(&g_b, &b, dim, type);
+
+  /* multiply sparse matrix A times dense matrix B */
+  tbeg = GA_Wtime();
+  g_c = NGA_Sprs_array_sprsdns_multiply(s_a, g_b);
+  time = GA_Wtime()-tbeg;
+
+  /* Do regular matrix-matrix multiply of A and B */
+  if (type == C_INT) {
+    c = malloc(dim*dim*sizeof(int));
+    memset(c,0,dim*dim*sizeof(int));
+  } else if (type == C_LONG) {
+    c = malloc(dim*dim*sizeof(long));
+    memset(c,0,dim*dim*sizeof(long));
+  } else if (type == C_LONGLONG) {
+    c = malloc(dim*dim*sizeof(long long));
+    memset(c,0,dim*dim*sizeof(long long));
+  } else if (type == C_FLOAT) {
+    c = malloc(dim*dim*sizeof(float));
+    memset(c,0,dim*dim*sizeof(float));
+  } else if (type == C_DBL) {
+    c = malloc(dim*dim*sizeof(double));
+    memset(c,0,dim*dim*sizeof(double));
+  } else if (type == C_SCPL) {
+    c = malloc(dim*dim*2*sizeof(float));
+    memset(c,0,dim*dim*2*sizeof(float));
+  } else if (type == C_DCPL) {
+    c = malloc(dim*dim*2*sizeof(double));
+    memset(c,0,dim*dim*2*sizeof(double));
+  }
+
+#define REAL_MATMAT_MULTIPLY_M(_type, _a, _b, _c, _dim)     \
+{                                                           \
+  int _i, _j, _k;                                           \
+  _type *_aa = (_type*)_a;                                  \
+  _type *_bb = (_type*)_b;                                  \
+  _type *_cc = (_type*)_c;                                  \
+  for (_i=0; _i<_dim; _i++) {                               \
+    for (_j=0; _j<_dim; _j++) {                             \
+      _cc[_j+_i*_dim] = (_type)0;                           \
+      for(_k=0; _k<_dim; _k++) {                            \
+        _cc[_j+_i*_dim] += _aa[_k+_i*_dim]*_bb[_j+_k*_dim]; \
+      }                                                     \
+    }                                                       \
+  }                                                         \
+}
+
+#define COMPLEX_MATMAT_MULTIPLY_M(_type, _a, _b, _c, _dim)  \
+{                                                           \
+  int _i, _j, _k;                                           \
+  _type *_aa = (_type*)_a;                                  \
+  _type *_bb = (_type*)_b;                                  \
+  _type *_cc = (_type*)_c;                                  \
+  _type _ar, _ai, _br, _bi;                                 \
+  for (_i=0; _i<_dim; _i++) {                               \
+    for (_j=0; _j<_dim; _j++) {                             \
+      _cc[2*(_j+_i*_dim)] = (_type)0;                       \
+      _cc[2*(_j+_i*_dim)+1] = (_type)0;                     \
+      for(_k=0; _k<_dim; _k++) {                            \
+        _ar = _aa[2*(_k+_i*_dim)];                          \
+        _ai = _aa[2*(_k+_i*_dim)+1];                        \
+        _br = _bb[2*(_j+_k*_dim)];                          \
+        _bi = _bb[2*(_j+_k*_dim)+1];                        \
+        _cc[2*(_j+_i*_dim)] += _ar*_br-_ai*_bi;             \
+        _cc[2*(_j+_i*_dim)+1] += _ar*_bi+_ai*_br;           \
+      }                                                     \
+    }                                                       \
+  }                                                         \
+}
+
+  if (type == C_INT) {
+    REAL_MATMAT_MULTIPLY_M(int, a, b, c, dim);
+  } else if (type == C_LONG) {
+    REAL_MATMAT_MULTIPLY_M(long, a, b, c, dim);
+  } else if (type == C_LONGLONG) {
+    REAL_MATMAT_MULTIPLY_M(long long, a, b, c, dim);
+  } else if (type == C_FLOAT) {
+    REAL_MATMAT_MULTIPLY_M(float, a, b, c, dim);
+  } else if (type == C_DBL) {
+    REAL_MATMAT_MULTIPLY_M(double, a, b, c, dim);
+  } else if (type == C_SCPL) {
+    COMPLEX_MATMAT_MULTIPLY_M(float, a, b, c, dim);
+  } else if (type == C_DCPL) {
+    COMPLEX_MATMAT_MULTIPLY_M(double, a, b, c, dim);
+  }
+
+  NGA_Sprs_array_destroy(s_a);
+  NGA_Destroy(g_b);
+
+  if (type == C_INT) {
+    cp = malloc(dim*dim*sizeof(int));
+    for (i=0; i<dim*dim; i++) ((int*)cp)[i] = 0;
+  } else if (type == C_LONG) {
+    cp = malloc(dim*dim*sizeof(long));
+    for (i=0; i<dim*dim; i++) ((long*)cp)[i] = 0;
+  } else if (type == C_LONGLONG) {
+    cp = malloc(dim*dim*sizeof(long long));
+    for (i=0; i<dim*dim; i++) ((long long*)cp)[i] = 0;
+  } else if (type == C_FLOAT) {
+    cp = malloc(dim*dim*sizeof(float));
+    for (i=0; i<dim*dim; i++) ((float*)cp)[i] = 0.0;
+  } else if (type == C_DBL) {
+    cp = malloc(dim*dim*sizeof(double));
+    for (i=0; i<dim*dim; i++) ((double*)cp)[i] = 0.0;
+  } else if (type == C_SCPL) {
+    cp = malloc(dim*dim*2*sizeof(float));
+    for (i=0; i<2*dim*dim; i++) ((float*)cp)[i] = 0.0;
+  } else if (type == C_DCPL) {
+    cp = malloc(dim*dim*2*sizeof(double));
+    for (i=0; i<2*dim*dim; i++) ((double*)cp)[i] = 0.0;
+  }
+  /* Compare results from regular matrix-matrix multiply with
+   * sparse-dense matrix-matrix multiply */
+  ok = 1;
+  lo[0] = 0;
+  hi[0] = dim-1;
+  lo[1] = 0;
+  hi[1] = dim-1;
+  tld[0] = dim;
+  tld[1] = dim;
+  NGA_Get64(g_c,lo,hi,cp,tld);
+  GA_Sync();
+
+  /* Compare contents of c and cp (sprsdns multiply vs serial multiply) */
+  ok = 1;
+  if (type == C_INT) {
+    for (i=0; i<dim*dim; i++) {
+      if (((int*)c)[i] != ((int*)cp)[i]) ok = 0;
+    }
+  } else if (type == C_LONG) {
+    for (i=0; i<dim*dim; i++) {
+      if (((long*)c)[i] != ((long*)cp)[i]) ok = 0;
+    }
+  } else if (type == C_LONGLONG) {
+    for (i=0; i<dim*dim; i++) {
+      if (((long long*)c)[i] != ((long long*)cp)[i]) ok = 0;
+    }
+  } else if (type == C_FLOAT) {
+    for (i=0; i<dim*dim; i++) {
+      if (((float*)c)[i] != ((float*)cp)[i]) ok = 0;
+    }
+  } else if (type == C_DBL) {
+    for (i=0; i<dim*dim; i++) {
+      if (((double*)c)[i] != ((double*)cp)[i]) ok = 0;
+    }
+  } else if (type == C_SCPL) {
+    for (i=0; i<2*dim*dim; i++) {
+      if (((float*)c)[i] != ((float*)cp)[i]) ok = 0;
+    }
+  } else if (type == C_DCPL) {
+    for (i=0; i<2*dim*dim; i++) {
+      if (((double*)c)[i] != ((double*)cp)[i]) ok = 0;
+    }
+  }
+
+  free(a);
+  free(b);
+  free(c);
+  free(cp);
+  GA_Igop(&ok,1,op);
+  GA_Dgop(&time,1,plus);
+  time /= (double)nprocs;
+  if (me == 0) {
+    if (ok) {
+      printf("    **Sparse-dense matrix-matrix multiply operation PASSES**\n");
+      printf("    Time for sparse-dense matrix-matrix"
+          " multiply operation: %16.8f\n",time);
+    } else {
+      printf("    **Sparse-dense matrix-matrix multiply operation FAILS**\n");
+    }
+  }
+
+  /* create dense matrix A */
+  setup_dense_matrix(&g_a, &a, dim, type);
+  /* create sparse matrix B */
+  setup_matrix(&s_b, &b, dim, type);
+
+  /* multiply dense matrix A times sparse matrix B */
+  tbeg = GA_Wtime();
+  g_c = NGA_Sprs_array_dnssprs_multiply(g_a, s_b);
+  time = GA_Wtime()-tbeg;
+
+  /* Do regular matrix-matrix multiply of A and B */
+  if (type == C_INT) {
+    c = malloc(dim*dim*sizeof(int));
+    memset(c,0,dim*dim*sizeof(int));
+  } else if (type == C_LONG) {
+    c = malloc(dim*dim*sizeof(long));
+    memset(c,0,dim*dim*sizeof(long));
+  } else if (type == C_LONGLONG) {
+    c = malloc(dim*dim*sizeof(long long));
+    memset(c,0,dim*dim*sizeof(long long));
+  } else if (type == C_FLOAT) {
+    c = malloc(dim*dim*sizeof(float));
+    memset(c,0,dim*dim*sizeof(float));
+  } else if (type == C_DBL) {
+    c = malloc(dim*dim*sizeof(double));
+    memset(c,0,dim*dim*sizeof(double));
+  } else if (type == C_SCPL) {
+    c = malloc(dim*dim*2*sizeof(float));
+    memset(c,0,dim*dim*2*sizeof(float));
+  } else if (type == C_DCPL) {
+    c = malloc(dim*dim*2*sizeof(double));
+    memset(c,0,dim*dim*2*sizeof(double));
+  }
+
+  if (type == C_INT) {
+    REAL_MATMAT_MULTIPLY_M(int, a, b, c, dim);
+  } else if (type == C_LONG) {
+    REAL_MATMAT_MULTIPLY_M(long, a, b, c, dim);
+  } else if (type == C_LONGLONG) {
+    REAL_MATMAT_MULTIPLY_M(long long, a, b, c, dim);
+  } else if (type == C_FLOAT) {
+    REAL_MATMAT_MULTIPLY_M(float, a, b, c, dim);
+  } else if (type == C_DBL) {
+    REAL_MATMAT_MULTIPLY_M(double, a, b, c, dim);
+  } else if (type == C_SCPL) {
+    COMPLEX_MATMAT_MULTIPLY_M(float, a, b, c, dim);
+  } else if (type == C_DCPL) {
+    COMPLEX_MATMAT_MULTIPLY_M(double, a, b, c, dim);
+  }
+
+#undef REAL_MATMAT_MULTIPLY_M
+#undef COMPLEX_MATMAT_MULTIPLY_M
+
+  NGA_Destroy(g_a);
+  NGA_Sprs_array_destroy(s_b);
+
+  if (type == C_INT) {
+    cp = malloc(dim*dim*sizeof(int));
+    for (i=0; i<dim*dim; i++) ((int*)cp)[i] = 0;
+  } else if (type == C_LONG) {
+    cp = malloc(dim*dim*sizeof(long));
+    for (i=0; i<dim*dim; i++) ((long*)cp)[i] = 0;
+  } else if (type == C_LONGLONG) {
+    cp = malloc(dim*dim*sizeof(long long));
+    for (i=0; i<dim*dim; i++) ((long long*)cp)[i] = 0;
+  } else if (type == C_FLOAT) {
+    cp = malloc(dim*dim*sizeof(float));
+    for (i=0; i<dim*dim; i++) ((float*)cp)[i] = 0.0;
+  } else if (type == C_DBL) {
+    cp = malloc(dim*dim*sizeof(double));
+    for (i=0; i<dim*dim; i++) ((double*)cp)[i] = 0.0;
+  } else if (type == C_SCPL) {
+    cp = malloc(dim*dim*2*sizeof(float));
+    for (i=0; i<2*dim*dim; i++) ((float*)cp)[i] = 0.0;
+  } else if (type == C_DCPL) {
+    cp = malloc(dim*dim*2*sizeof(double));
+    for (i=0; i<2*dim*dim; i++) ((double*)cp)[i] = 0.0;
+  }
+  /* Compare results from regular matrix-matrix multiply with
+   * sparse-dense matrix-matrix multiply */
+  ok = 1;
+  lo[0] = 0;
+  hi[0] = dim-1;
+  lo[1] = 0;
+  hi[1] = dim-1;
+  tld[0] = dim;
+  tld[1] = dim;
+  NGA_Get64(g_c,lo,hi,cp,tld);
+  GA_Sync();
+
+  /* Compare contents of c and cp (sprsdns multiply vs serial multiply) */
+  ok = 1;
+  if (type == C_INT) {
+    for (i=0; i<dim*dim; i++) {
+      if (((int*)c)[i] != ((int*)cp)[i]) ok = 0;
+    }
+  } else if (type == C_LONG) {
+    for (i=0; i<dim*dim; i++) {
+      if (((long*)c)[i] != ((long*)cp)[i]) ok = 0;
+    }
+  } else if (type == C_LONGLONG) {
+    for (i=0; i<dim*dim; i++) {
+      if (((long long*)c)[i] != ((long long*)cp)[i]) ok = 0;
+    }
+  } else if (type == C_FLOAT) {
+    for (i=0; i<dim*dim; i++) {
+      if (((float*)c)[i] != ((float*)cp)[i]) ok = 0;
+    }
+  } else if (type == C_DBL) {
+    for (i=0; i<dim*dim; i++) {
+      if (((double*)c)[i] != ((double*)cp)[i]) ok = 0;
+    }
+  } else if (type == C_SCPL) {
+    for (i=0; i<2*dim*dim; i++) {
+      if (((float*)c)[i] != ((float*)cp)[i]) ok = 0;
+    }
+  } else if (type == C_DCPL) {
+    for (i=0; i<2*dim*dim; i++) {
+      if (((double*)c)[i] != ((double*)cp)[i]) ok = 0;
+    }
+  }
+
+  free(a);
+  free(b);
+  free(c);
+  free(cp);
+  GA_Igop(&ok,1,op);
+  GA_Dgop(&time,1,plus);
+  time /= (double)nprocs;
+  if (me == 0) {
+    if (ok) {
+      printf("    **Dense-sparse matrix-matrix multiply operation PASSES**\n");
+      printf("    Time for dense-sparse matrix-matrix"
+          " multiply operation: %16.8f\n",time);
+    } else {
+      printf("    **Dense-sparse matrix-matrix multiply operation FAILS**\n");
+    }
+  }
+
+  /* create an ordinary global array with sparse non-zeros */
+  setup_dense_matrix(&g_a, &a, dim, type);
+  /* copy dense matrix g_a to sparse matrix s_a */
+  tbeg = GA_Wtime();
+  s_a = NGA_Sprs_array_create_from_dense64(g_a);
+  time = GA_Wtime()-tbeg;
+  /* check values in sparse array */
+  nz_map = (int*)malloc(dim*dim*sizeof(int));
+  for (i=0; i<dim*dim; i++) nz_map[i] = 0;
+  ab = (int*)malloc(dim*dim*sizeof(int));
+  for (i=0; i<dim*dim; i++) ab[i] = 0;
+  ok = 1;
+  NGA_Sprs_array_row_distribution64(s_a, me, &ilo, &ihi);
+  /* loop over column blocks */
+  ld = 0;
+  for (iproc = 0; iproc<nprocs; iproc++) {
+    int64_t nrows = ihi-ilo+1;
+    /* column block corresponding to iproc has data. Get pointers
+     * to index and data arrays */
+    NGA_Sprs_array_access_col_block64(s_a, iproc, &idx, &jdx, &ptr);
+    if (idx != NULL) {
+      for (i=0; i<nrows; i++) {
+        int64_t nvals = idx[i+1]-idx[i];
+        for (j=0; j<nvals; j++) {
+          void *tptr = a;
+          ld++;
+          nz_map[(i+ilo)*dim+jdx[idx[i]+j]] = 1;
+          if (type == C_INT) {
+            ab[(i+ilo)*dim+jdx[idx[i]+j]] = ((int*)ptr)[idx[i]+j];
+            if (((int*)ptr)[idx[i]+j] != ((int*)tptr)[(i+ilo)*dim+jdx[idx[i]+j]]) {
+              if (ok) {
+                printf("p[%d] [%ld,%ld] expected: %d actual: %d\n",me,
+                    i+ilo,jdx[idx[i]+j],((int*)tptr)[(i+ilo)*dim+jdx[idx[i]+j]],
+                    ((int*)ptr)[idx[i]+j]);
+              }
+              ok = 0;
+            }
+          } else if (type == C_LONG) {
+            if (((long*)ptr)[idx[i]+j] != ((long*)tptr)[(i+ilo)*dim
+                + jdx[idx[i]+j]]) {
+              if (ok) {
+                printf("p[%d] [%ld,%ld] expected: %ld actual: %ld\n",me,
+                    i+ilo,jdx[idx[i]+j],((long*)tptr)[(i+ilo)*dim+jdx[idx[i]+j]],
+                    ((long*)ptr)[idx[i]+j]);
+              }
+              ok = 0;
+            }
+          } else if (type == C_LONGLONG) {
+            if (((long long*)ptr)[idx[i]+j] 
+                != ((long long*)tptr)[(i+ilo)*dim + jdx[idx[i]+j]]) {
+              if (ok) {
+                printf("p[%d] [%ld,%ld] expected: %ld actual: %ld\n",me,
+                    i+ilo,jdx[idx[i]+j],(long)((long long*)tptr)[(i+ilo)*dim
+                    +jdx[idx[i]+j]],
+                    (long)((long long*)ptr)[idx[i]+j]);
+              }
+              ok = 0;
+            }
+          } else if (type == C_FLOAT) {
+            if (((float*)ptr)[idx[i]+j] != ((float*)tptr)[(i+ilo)*dim
+                + jdx[idx[i]+j]]) {
+              if (ok) {
+                printf("p[%d] [%ld,%ld] expected: %f actual: %f\n",me,
+                    i+ilo,jdx[idx[i]+j],((float*)tptr)[(i+ilo)*dim+jdx[idx[i]+j]],
+                    ((float*)ptr)[idx[i]+j]);
+              }
+              ok = 0;
+            }
+          } else if (type == C_DBL) {
+            if (((double*)ptr)[idx[i]+j] != ((double*)tptr)[(i+ilo)*dim
+                + jdx[idx[i]+j]]) {
+              if (ok) {
+                printf("p[%d] [%ld,%ld] expected: %f actual: %f\n",me,
+                    i+ilo,jdx[idx[i]+j],((double*)tptr)[(i+ilo)*dim+jdx[idx[i]+j]],
+                    ((double*)ptr)[idx[i]+j]);
+              }
+              ok = 0;
+            }
+          } else if (type == C_SCPL) {
+            float rval = ((float*)ptr)[2*(idx[i]+j)];
+            float ival = ((float*)ptr)[2*(idx[i]+j)+1];
+            float ra = ((float*)tptr)[2*((i+ilo)*dim + jdx[idx[i]+j])];
+            float ia = ((float*)tptr)[2*((i+ilo)*dim + jdx[idx[i]+j])+1];
+            if (rval != ra || ival != ia) {
+              if (ok) {
+                printf("p[%d] [%ld,%ld] expected: (%f,%f) actual: (%f,%f)\n",me,
+                    i+ilo,jdx[idx[i]+j],ra,ia,rval,ival);
+              }
+              ok = 0;
+            }
+          } else if (type == C_DCPL) {
+            double rval = ((double*)ptr)[2*(idx[i]+j)];
+            double ival = ((double*)ptr)[2*(idx[i]+j)+1];
+            double ra = ((double*)tptr)[2*((i+ilo)*dim + jdx[idx[i]+j])];
+            double ia = ((double*)tptr)[2*((i+ilo)*dim + jdx[idx[i]+j])+1];
+            if (rval != ra || ival != ia) {
+              if (ok) {
+                printf("p[%d] [%ld,%ld] expected: (%f,%f) actual: (%f,%f)\n",me,
+                    i+ilo,jdx[idx[i]+j],ra,ia,rval,ival);
+              }
+              ok = 0;
+            }
+          }
+        }
+      }
+    }
+  }
+  /* Only do non-zero check for integers */
+  if (type == C_INT) {
+    for (i=0; i<dim*dim; i++) {
+      if (((int*)ab)[i] != 0 && nz_map[i] == 0) {
+        ok = 0;
+      }
+    }
+  }
+  free(ab);
+  free(nz_map);
+  GA_Igop(&ok,1,op);
+  GA_Dgop(&time,1,plus);
+  time /= (double)nprocs;
+  if (me == 0) {
+    if (ok) {
+      printf("    **Create from dense array operation PASSES**\n");
+      printf("    Time for create from dense array operation: %16.8f\n",time);
+    } else {
+      printf("    **Sparse create from dense array operation FAILS**\n");
+    }
+  }
 }
 
 int main(int argc, char **argv) {
