@@ -5918,7 +5918,6 @@ double pnga_rand(Integer iseed)
 {
   double ret;
   if (GA_Rand_seed == -1) {
-    printf("p[%d] Initializing GA_Rand seed: %d\n",GAme,iseed);
     unsigned long lseed;
     /* Choose a value for iseed if it has not already been set */
     if (iseed == 0) {

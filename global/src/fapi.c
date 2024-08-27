@@ -3768,6 +3768,11 @@ Integer nga_sprs_array_create_(Integer *idim, Integer *jdim, Integer *type)
   return wnga_sprs_array_create(*idim,*jdim,ctype,sizeof(Integer));
 }
 
+Integer nga_sprs_array_create_from_dense_(Integer *g_a)
+{
+  return wnga_sprs_array_create_from_dense(*g_a,sizeof(Integer),0);
+}
+
 void nga_sprs_array_add_element_(Integer *s_a, Integer *idx, Integer *jdx, void *val)
 {
   wnga_sprs_array_add_element(*s_a,*idx,*jdx,val);
@@ -3799,7 +3804,7 @@ void nga_sprs_array_access_col_block_(Integer *s_a, Integer *icol,
 void nga_sprs_array_col_block_list_(Integer *s_a, Integer *idx, Integer *n)
 {
   /* This function assumes that idx has already been allocated by calling
-   * program and that n is the length of idx on input. On output, n is
+   * program and that nn is the length of idx on input. On output, nn is
    * changed to the actual number of blocks found by the
    * wnga_sprs_array_col_block_list function
    */
@@ -3862,6 +3867,16 @@ Integer nga_sprs_array_duplicate_(Integer *s_a)
 Integer nga_sprs_array_matmat_multiply_(Integer *s_a, Integer *s_b)
 {
   return wnga_sprs_array_matmat_multiply(*s_a, *s_b);
+}
+
+Integer nga_sprs_array_sprsdns_multiply_(Integer *s_a, Integer *g_b)
+{
+  return wnga_sprs_array_sprsdns_multiply(*s_a, *g_b, 0);
+}
+
+Integer nga_sprs_array_dnssprs_multiply_(Integer *g_a, Integer *s_b)
+{
+  return wnga_sprs_array_dnssprs_multiply(*g_a, *s_b, 0);
 }
 
 Integer nga_sprs_array_count_sketch_(Integer *s_a, Integer *size_k, Integer *g_k,
