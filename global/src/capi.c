@@ -5366,6 +5366,18 @@ int NGA_Sprs_array_create64(int64_t idim, int64_t jdim, int type)
   return (int)wnga_sprs_array_create(i,j,type,sizeof(int64_t));
 }
 
+int NGA_Sprs_array_create_from_dense(int g_a)
+{
+  Integer ga = (Integer)g_a;
+  return (int)wnga_sprs_array_create_from_dense(ga,sizeof(int),1);
+}
+
+int NGA_Sprs_array_create_from_dense64(int g_a)
+{
+  Integer ga = (Integer)g_a;
+  return (int)wnga_sprs_array_create_from_dense(ga,sizeof(int64_t),1);
+}
+
 void NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void *val)
 {
   Integer sa = (Integer)s_a;
@@ -5385,7 +5397,7 @@ void NGA_Sprs_array_add_element64(int s_a, int64_t idx, int64_t jdx, void *val)
 int NGA_Sprs_array_assemble(int s_a)
 {
   Integer sa = (Integer)s_a;
-  wnga_sprs_array_assemble(sa);
+  return wnga_sprs_array_assemble(sa);
 }
 
 void NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo, int *hi)
@@ -5559,6 +5571,22 @@ int NGA_Sprs_array_matmat_multiply(int s_a, int s_b)
   return (int)wnga_sprs_array_matmat_multiply(sa, sb);
 }
 
+int NGA_Sprs_array_sprsdns_multiply(int s_a, int g_b)
+{
+  int g_c;
+  Integer sa = (Integer)s_a;
+  Integer gb = (Integer)g_b;
+  return (int)wnga_sprs_array_sprsdns_multiply(sa, gb, 1);
+}
+
+int NGA_Sprs_array_dnssprs_multiply(int g_a, int s_b)
+{
+  int g_c;
+  Integer ga = (Integer)g_a;
+  Integer sb = (Integer)s_b;
+  return (int)wnga_sprs_array_dnssprs_multiply(ga, sb, 1);
+}
+
 int NGA_Sprs_array_count_sketch(int s_a, int size_k, int *g_k, int *g_w)
 {
   Integer sa = (Integer)s_a;
@@ -5571,16 +5599,16 @@ int NGA_Sprs_array_count_sketch(int s_a, int size_k, int *g_k, int *g_w)
   return ret;
 }
 
-int NGA_Sprs_array_get_column(int g_v, int irow)
+int NGA_Sprs_array_get_column(int s_a, int icol)
 {
-  Integer gv = (Integer)g_v;
-  Integer ir = (Integer)irow;
-  return (int)wnga_sprs_array_get_column(gv, ir);
+  Integer sa = (Integer)s_a;
+  Integer ic = (Integer)icol;
+  return (int)wnga_sprs_array_get_column(sa, ic);
 }
 
-int NGA_Sprs_array_get_column64(int g_v, int64_t irow)
+int NGA_Sprs_array_get_column64(int s_a, int64_t icol)
 {
-  Integer gv = (Integer)g_v;
-  Integer ir = (Integer)irow;
-  return (int)wnga_sprs_array_get_column(gv, ir);
+  Integer sa = (Integer)s_a;
+  Integer ic = (Integer)icol;
+  return (int)wnga_sprs_array_get_column(sa, ic);
 }

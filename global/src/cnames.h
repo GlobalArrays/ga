@@ -3196,6 +3196,7 @@
 #define nga_sput_field_ F77_FUNC_(nga_sput_field,NGA_SPUT_FIELD)
 #define nga_zput_field_ F77_FUNC_(nga_zput_field,NGA_ZPUT_FIELD)
 #define nga_sprs_array_create_ F77_FUNC_(nga_sprs_array_create,NGA_SPRS_ARRAY_CREATE)
+#define nga_sprs_array_create_from_dense_ F77_FUNC_(nga_sprs_array_create_from_dense,NGA_SPRS_ARRAY_CREATE_FROM_DENSE)
 #define nga_sprs_array_add_element_ F77_FUNC_(nga_sprs_array_add_element,NGA_SPRS_ARRAY_ADD_ELEMENT)
 #define nga_sprs_array_assemble_ F77_FUNC_(nga_sprs_array_assemble,NGA_SPRS_ARRAY_ASSEMBLE)
 #define nga_sprs_array_row_distribution_ F77_FUNC_(nga_sprs_array_row_distribution,NGA_SPRS_ARRAY_ROW_DISTRIBUTION)
@@ -3210,6 +3211,8 @@
 #define nga_sprs_array_shift_diag_ F77_FUNC_(nga_sprs_array_shift_diag,NGA_SPRS_ARRAY_SHIFT_DIAG)
 #define nga_sprs_array_duplicate_ F77_FUNC_(nga_sprs_array_duplicate,NGA_SPRS_ARRAY_DUPLICATE)
 #define nga_sprs_array_matmat_multiply_ F77_FUNC_(nga_sprs_array_matmat_multiply,NGA_SPRS_ARRAY_MATMAT_MULTIPLY)
+#define nga_sprs_array_sprsdns_multiply_ F77_FUNC_(nga_sprs_array_sprsdns_multiply,NGA_SPRS_ARRAY_SPRSDNS_MULTIPLY)
+#define nga_sprs_array_dnssprs_multiply_ F77_FUNC_(nga_sprs_array_dnssprs_multiply,NGA_SPRS_ARRAY_DNSSPRS_MULTIPLY)
 #define nga_sprs_array_count_sketch_ F77_FUNC_(nga_sprs_array_count_sketch,NGA_SPRS_ARRAY_COUNT_SKETCH)
 /* the missing functions are either complex type or strangely named */
 

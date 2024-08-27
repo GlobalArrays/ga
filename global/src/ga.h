@@ -357,12 +357,14 @@ extern void          NGA_Sprs_array_access_col_block64(int s_a, int icol, long *
 extern void          NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void *val);
 extern int           NGA_Sprs_array_assemble(int s_a);
 extern int           NGA_Sprs_array_create(int idim, int jdim, int type);
+extern int           NGA_Sprs_array_create_from_dense(int g_a);
 extern void          NGA_Sprs_array_column_distribution(int s_a, int iproc, int *lo, int *hi);
 extern void          NGA_Sprs_array_col_block_list(int s_a, int **idx, int *n);
 extern int           NGA_Sprs_array_count_sketch(int s_a, int size_k, int *g_k, int* g_w);
 extern int           NGA_Sprs_array_destroy(int s_a);
 extern void          NGA_Sprs_array_diag_right_multiply(int s_a, int g_d);
 extern void          NGA_Sprs_array_diag_left_multiply(int s_a, int g_d);
+extern int           NGA_Sprs_array_dnssprs_multiply(int g_a, int s_b);
 extern int           NGA_Sprs_array_duplicate(int s_a);
 extern void          NGA_Sprs_array_export(int s_a, const char* file);
 extern int           NGA_Sprs_array_get_block(int s_a, int irow, int icol,
@@ -375,6 +377,7 @@ extern int           NGA_Sprs_array_matmat_multiply(int s_a, int s_b);
 extern void          NGA_Sprs_array_matvec_multiply(int s_a, int g_a, int g_v);
 extern void          NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo, int *hi);
 extern void          NGA_Sprs_array_shift_diag(int s_a, void *shift);
+extern int           NGA_Sprs_array_sprsdns_multiply(int s_a, int g_b);
 extern void          NGA_Strided_acc(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[], void *alpha); 
 extern void          NGA_Strided_get(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[]); 
 extern void          NGA_Strided_put(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[]); 
@@ -497,6 +500,7 @@ extern void          NGA_Strided_put64(int g_a, int64_t lo[], int64_t hi[], int6
 extern DoubleComplex NGA_Zdot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[], int g_b, char t_b, int64_t blo[], int64_t bhi[]);
 extern void          NGA_Zero_patch64(int g_a, int64_t lo[], int64_t hi[]);
 extern int           NGA_Sprs_array_create64(int64_t idim, int64_t jdim, int type);
+extern int           NGA_Sprs_array_create_from_dense64(int g_a);
 extern void          NGA_Sprs_array_add_element64(int s_a, int64_t idx, int64_t jdx, void *val);
 extern void          NGA_Sprs_array_row_distribution64(int s_a, int iproc, int64_t *lo, int64_t *hi);
 extern void          NGA_Sprs_array_column_distribution64(int s_a, int iproc, int64_t *lo, int64_t *hi);

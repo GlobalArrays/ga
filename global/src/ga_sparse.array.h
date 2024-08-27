@@ -15,6 +15,7 @@ typedef struct {
   Integer idx_size; /* size of integer indices */
   Integer grp;      /* handle for process group on which array is defined */
   Integer ilo, ihi; /* minimum and maximum row indices contained on this process */
+                    /* ilo and ihi are zero-based */
   Integer nprocs;   /* number of processors containing this array */
   Integer nblocks;  /* number of non-zero sparse blocks contained on this process */
   Integer *blkidx;  /* array containing indices of non-zero blocks */
