@@ -397,7 +397,8 @@ extern void pnga_put_field(Integer g_a, Integer *lo, Integer *hi, Integer foff, 
 
 /* Routines for sparse matrices */
 
-extern Integer pnga_sprs_array_create(Integer idim, Integer jdim, Integer type, Integer size);
+extern Integer pnga_sprs_array_create(Integer idim, Integer jdim, Integer type, Integer trans);
+extern Integer pnga_sprs_array_create_from_dense(Integer g_a, Integer idxsize, Integer flag);
 extern void pnga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *val);
 extern logical pnga_sprs_array_assemble(Integer s_a);
 extern void pnga_sprs_array_row_distribution(Integer s_a, Integer iproc, Integer *lo, Integer *hi);
@@ -407,6 +408,8 @@ extern int pnga_sprs_array_access_col_block_idx(Integer s_a, Integer icol, Acces
 extern void pnga_sprs_array_col_block_list(Integer s_a, Integer **idx, Integer *n);
 extern Integer pnga_sprs_array_duplicate(Integer s_a);
 extern Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b);
+extern Integer pnga_sprs_array_sprsdns_multiply(Integer s_a, Integer g_b, Integer trans);
+extern Integer pnga_sprs_array_dnssprs_multiply(Integer g_a, Integer s_b, Integer trans);
 extern Integer pnga_sprs_array_count_sketch(Integer s_a, Integer size_k,
     Integer *g_k, Integer *g_w, Integer trans);
 extern void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v);

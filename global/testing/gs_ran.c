@@ -8,7 +8,9 @@
 #include "mp3.h"
 
 
-#define NDIM 2048
+#define NDIM 8
+
+#define GA_PRINT
 
 /**
  *  Solve Laplace's equation on a cubic domain using the sparse matrix
@@ -132,7 +134,7 @@ void copy_to_matrix(int g_m, int g_v, int *lo, int *hi)
 
 int main(int argc, char **argv) {
   int g_ran, s_sk, g_a, g_s, g_ss, g_st, g_pm, g_q, g_r, g_c1, g_c2;
-  int g_tmp, g_am, g_p, g_qm;
+  int g_tmp, g_am, g_p, g_qm, g_km;
   int dims[2], chunk[2], one, two;
   int lo[2], hi[2], ld[2];
   int i, j, idx, idim, jdim, kdim, ihi, ilo, klo, khi;
@@ -140,7 +142,7 @@ int main(int argc, char **argv) {
   int iter;
   int me, nproc;
   int heap=10000000, stack=10000000;
-  double x, snorm, rone;
+  double x, snorm, rone,rmone;
   double *dptr;
   double dmin, dmax, omin, omax;
   void *ptr;
@@ -150,16 +152,16 @@ int main(int argc, char **argv) {
   MP_INIT(argc,argv);
   /* Initialize GA */
   NGA_Initialize();
+  me = GA_Nodeid();
+  nproc = GA_Nnodes();
   heap /= nproc;
   stack /= nproc;
   if(! MA_init(MT_F_DBL, stack, heap))
     GA_Error("MA_init failed",stack+heap);  /* initialize memory allocator*/
   /* initialize random number generator */
 
-  me = GA_Nodeid();
-  nproc = GA_Nnodes();
-  printf("p[%d] Got to 0\n",me);
   NGA_Rand(332182+me);
+  //NGA_Rand(432182+me);
 
   idim = NDIM;
   jdim = NDIM;
@@ -180,7 +182,6 @@ int main(int argc, char **argv) {
   if (!NGA_Allocate(g_ran))
     GA_Error("Could not allocate random GA",0);
 
-  printf("p[%d] Got to 1\n",me);
   /* Fill GA with random values */
   NGA_Distribution(g_ran,me,lo,hi);
   NGA_Access(g_ran,lo,hi,&ptr,ld);
@@ -190,30 +191,74 @@ int main(int argc, char **argv) {
   for (i=0; i<ld[0]; i++) {
     for (j=0; j<ld[1]; j++) {
       idx = i*ld[1]+j;
-      dptr[idx] = NGA_Rand(0);
+      dptr[idx] = 2.0*NGA_Rand(0)-1.0;
     }
   }
+  NGA_Release(g_ran,lo,hi);
+#ifdef GA_PRINT
+  if (me == 0) printf("Original random matrix\n");
+  GA_Print(g_ran);
+#endif
 
   /* Create sparse matrix representing projection of g_ran onto a sketch matrix */
-  kdim = NDIM/10;
+  kdim = NDIM/2;
   s_sk = NGA_Sprs_array_create(kdim,idim,C_DBL);
   /* Add elements to sparse projection */
   ilo = me*idim/nproc;
   ihi = (me+1)*idim/nproc-1;
-  printf("p[%d] Got to 2 ilo: %d ihi: %d\n",me,ilo,ihi);
   if (me == nproc-1) ihi = idim-1;
+#if 0
   for (i=ilo; i<=ihi; i++) {
     int k;
     k = (int)(((double)kdim)*NGA_Rand(0));
     x = 1.0;
     double rx = NGA_Rand(0);
     if (rx > 0.5) x = -1.0;
-//    printf("p[%d] add element %d %d %f %f\n",me,k,i,x,rx);
+    /* printf("p[%d] add element %d %d %f %f\n",me,k,i,x,rx); */
     NGA_Sprs_array_add_element(s_sk, k, i, &x);
   }
-  printf("p[%d] Got to 3\n",me);
+#else
+  {
+    int *kbuf = (int*)malloc(idim*sizeof(int));
+    int kcnt;
+    for (i=0; i<idim; i++) kbuf[i] = -1;
+    if (me == 0) {
+      kcnt = 0;
+      while (kcnt < kdim) {
+        i = (int)(((double)idim)*NGA_Rand(0));
+        if (kbuf[i] == -1) {
+          kbuf[i] = kcnt;
+          kcnt++;
+        }
+      }
+    }
+    strcpy(cmax,"max");
+    GA_Igop(kbuf,idim,cmax);
+    if (me == 0) {
+      for (i=0; i<idim; i++) {
+        printf("p[%d] kbuf[%d]: %d\n",me,i,kbuf[i]);
+      }
+    }
+    for (i=ilo; i<=ihi; i++) {
+      int k;
+      if (kbuf[i] > -1) {
+        k = kbuf[i];
+      } else {
+        k = (int)(((double)kdim)*NGA_Rand(0));
+      }
+      x = 1.0;
+      double rx = NGA_Rand(0);
+      if (rx > 0.5) x = -1.0;
+      printf("p[%d] add element %d %d %f %f\n",me,k,i,x,rx);
+      NGA_Sprs_array_add_element(s_sk, k, i, &x);
+    }
+    free(kbuf);
+  }
+#endif
   NGA_Sprs_array_assemble(s_sk);
-  printf("p[%d] Got to 3a\n",me);
+#ifdef GA_PRINT
+  NGA_Sprs_array_export(s_sk,"sketch.m");
+#endif
 
   /* Create Q and R matrices that form the set of orthogonal vectors (Q) and
    * upper triangular matrix (R) from the Gram-Schmidt orthogonalization */
@@ -259,7 +304,7 @@ int main(int argc, char **argv) {
   g_qm = NGA_Create_handle();
   NGA_Set_data(g_qm,two,dims,C_DBL);
   if (!NGA_Allocate(g_qm))
-    GA_Error("Could not allocate P matrix",0);
+    GA_Error("Could not allocate Q matrix",0);
   NGA_Zero(g_qm);
 
   /* Create distributed vectors for Gram-Schmidt orthogonalization */
@@ -308,7 +353,13 @@ int main(int argc, char **argv) {
   if (!NGA_Allocate(g_am))
     GA_Error("Could not allocate am vector",0);
   NGA_Zero(g_am);
-  printf("p[%d] Got to 4\n",me);
+  dims[0] = kdim;
+  dims[1] = 1;
+  g_km = NGA_Create_handle();
+  NGA_Set_data(g_km, two, dims, C_DBL);
+  if (!NGA_Allocate(g_km))
+    GA_Error("Could not allocate km vector",0);
+  NGA_Zero(g_am);
   /* Initialize system and calculate first vector */
   lo[0] = 0;
   hi[0] = idim-1;
@@ -316,6 +367,10 @@ int main(int argc, char **argv) {
   hi[1] = 0;
   copy_to_vector(g_ran,g_a,lo,hi);
   GA_Sync();
+#ifdef GA_PRINT
+  if (me == 0) printf("Initial vector a_1\n");
+  GA_Print(g_a);
+#endif
   NGA_Sprs_array_matvec_multiply(s_sk,g_a,g_st);
   GA_Copy(g_st,g_s);
   snorm = GA_Ddot(g_s,g_s);
@@ -331,14 +386,29 @@ int main(int argc, char **argv) {
   snorm = 1.0/snorm;
   GA_Scale(g_s,&snorm);
   lo[0] = 0;
+  hi[0] = kdim-1;
   lo[1] = 0;
+  hi[1] = 0;
   copy_to_matrix(g_ss,g_s,lo,hi);
+#ifdef GA_PRINT
+  if (me == 0) printf("Value of S_1\n");
+  GA_Print(g_ss);
+#endif
   GA_Scale(g_a,&snorm);
+#ifdef GA_PRINT
+  if (me == 0) printf("Value of q_1\n");
+  GA_Print(g_a);
+#endif
   lo[0] = 0;
   hi[0] = idim-1;
   copy_to_matrix(g_q,g_a,lo,hi);
-  printf("p[%d] Got to 5\n",me);
+#ifdef GA_PRINT
+  if (me == 0) printf("Initial Q\n");
+  GA_Print(g_q);
+#endif
   /* Iterate over remaining columns of g_ran */
+  rone = 1.0; 
+  rmone = -1.0; 
   for (iter = 1; iter<jdim; iter++) {
     /* Multiply column of original matrix by sketch projector */
     lo[0] = 0;
@@ -349,17 +419,45 @@ int main(int argc, char **argv) {
     NGA_Sprs_array_matvec_multiply(s_sk,g_a,g_p);
     /* Multiply projected vector by matrix S_i-1 */
     lo[0] = 0;
-    hi[0] = jdim-2;
+    hi[0] = jdim-1;
     lo[1] = 0;
     hi[1] = 0;
     copy_to_matrix(g_pm,g_p,lo,hi);
+#ifdef GA_PRINT
+    if (me == 0) printf("Value of p_%d\n",iter+1);
+    GA_Print(g_pm);
+    if (me == 0) printf("Value of Sm_%d\n",iter+1);
+    GA_Print(g_ss);
+#endif
+
     GA_Dgemm('t','n',jdim,1,kdim,1.0,g_ss,g_pm,0.0,g_c1);
+#ifdef GA_PRINT
+    if (me == 0) printf("Value of c1 (%d)\n",iter+1);
+    GA_Print(g_c1);
+#endif
     /* Update projected vector */
     GA_Dgemm('n','n',kdim,1,jdim,-1.0,g_ss,g_c1,1.0,g_pm);
+#ifdef GA_PRINT
+    if (me == 0) printf("Value of pm_%d\n handle: %d",iter+1,g_pm);
+    GA_Print(g_pm);
+#endif
     /* Calculate column in R */
     GA_Dgemm('t','n',jdim,1,kdim,1.0,g_ss,g_pm,0.0,g_c2);
-    rone = 1.0; 
+    GA_Sync();
+#ifdef GA_PRINT
+    if (me == 0) printf("Value of c2 (%d) handle: %d\n",iter+1,g_c2);
+    GA_Print(g_c2);
+#endif
     GA_Add(&rone,g_c1,&rone,g_c2,g_tmp);
+#ifdef GA_PRINT
+    if (me == 0) printf("Value of c1+c2 (%d)\n",iter+1);
+    GA_Print(g_tmp);
+#endif
+    lo[0] = 0;
+    hi[0] = idim-1;
+    lo[1] = iter;
+    hi[1] = iter;
+    copy_to_matrix(g_r,g_tmp,lo,hi);
     /* calculate new orthogonal vector q_i */
     lo[0] = 0;
     hi[0] = idim-1;
@@ -367,11 +465,37 @@ int main(int argc, char **argv) {
     hi[1] = 0;
     copy_to_matrix(g_am,g_a,lo,hi);
     GA_Dgemm('n','n',idim,1,jdim,-1.0,g_q,g_tmp,1.0,g_am);
+#ifdef GA_PRINT
+    if (me == 0) printf("Value of am_%d\n",iter+1);
+    GA_Print(g_am);
+#endif
     copy_to_vector(g_am,g_a,lo,hi);
     NGA_Sprs_array_matvec_multiply(s_sk,g_a,g_s);
+#ifdef GA_PRINT
+    if (me == 0) printf("Value of (1) S_%d\n",iter+1);
+    GA_Print(g_s);
+#endif
     snorm = GA_Ddot(g_s,g_s);
-    snorm = 1.0/sqrt(snorm);
+    snorm  = sqrt(snorm);
+    NGA_Distribution(g_r,me,lo,hi);
+    if (iter >= lo[0] && iter <= hi[0] && iter >= lo[1] && iter <= hi[1]) {
+      lo[0] = iter;
+      hi[0] = iter;
+      lo[1] = iter;
+      hi[1] = iter;
+      NGA_Put(g_r,lo,hi,&snorm,&one);
+    }
+#ifdef GA_PRINT
+    if (me == 0) printf("Value of R_%d\n",iter+1);
+    GA_Print(g_r);
+#endif
+    snorm = 1.0/snorm;
+    if (me == 0) printf("sqrt(S.S)[%d]: %e\n",iter+1,snorm);
     GA_Scale(g_s,&snorm);
+#ifdef GA_PRINT
+    if (me == 0) printf("Value of (2) S_%d\n",iter+1);
+    GA_Print(g_s);
+#endif
     lo[0] = 0;
     hi[0] = kdim-1;
     lo[1] = iter;
@@ -382,11 +506,14 @@ int main(int argc, char **argv) {
     hi[0] = idim-1;
     lo[1] = iter;
     hi[1] = iter;
+#ifdef GA_PRINT
 //  GA_Print(g_a);
+#endif
     copy_to_matrix(g_q,g_a,lo,hi);
+#ifdef GA_PRINT
 //  GA_Print(g_q);
+#endif
   }
-  printf("p[%d] Got to 6\n",me);
   if (me == 0) {
     printf("Completed Gram-Schmidt orthogonalization\n");
   }
@@ -414,7 +541,7 @@ int main(int argc, char **argv) {
   dims[1] = idim;
   NGA_Set_data(g_qm, two, dims, C_DBL);
   if (!NGA_Allocate(g_qm))
-    GA_Error("Could not matrix of dot products",0);
+    GA_Error("Could not allocate matrix of dot products",0);
   NGA_Zero(g_qm);
 #if 0
   for (i=0; i<idim; i++) {
@@ -496,7 +623,7 @@ int main(int argc, char **argv) {
   GA_Destroy(g_q);
   GA_Destroy(g_r);
   GA_Destroy(g_s);
-  GA_Destroy(g_p);
+  GA_Destroy(g_km);
   NGA_Terminate();
   /**
    *  Tidy up after message-passing library
