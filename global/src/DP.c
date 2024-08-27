@@ -2,7 +2,9 @@
 #   include "config.h"
 #endif
 
+#if HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
 
 /* $Id: DP.c,v 1.14 2003-02-18 00:24:32 manoj Exp $ */
 #include "global.h"
