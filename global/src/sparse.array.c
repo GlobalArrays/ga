@@ -134,6 +134,11 @@ void sai_terminate_sparse_arrays()
 Integer pnga_sprs_array_create(Integer idim, Integer jdim, Integer type, Integer size)
 {
   Integer i, hdl, s_a;
+  int local_sync_begin,local_sync_end;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(pnga_pgroup_get_default());
   GAvalidtypeM(pnga_type_f2c((int)type));
   if (idim <= 0 || jdim <= 0)
     pnga_error("(ga_sprs_array_create) Invalid array dimenensions",0);
@@ -157,6 +162,7 @@ Integer pnga_sprs_array_create(Integer idim, Integer jdim, Integer type, Integer
       break;
     }
   }
+  if (local_sync_end) pnga_pgroup_sync(pnga_pgroup_get_default());
   return s_a;
 }
 
@@ -261,6 +267,7 @@ void find_lims(Integer dim, Integer proc, Integer nproc, Integer *lo, Integer *h
 logical pnga_sprs_array_assemble(Integer s_a)
 {
   Integer hdl = GA_OFFSET + s_a;
+  int local_sync_begin,local_sync_end;
   Integer lo, hi, ld;
   Integer i,j,ilo,ihi,jlo,jhi;
   int64_t *offset;
@@ -293,6 +300,10 @@ logical pnga_sprs_array_assemble(Integer s_a)
   int64_t max_nnz;
   Integer *row_nnz;
   Integer nnz;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(SPA[hdl].grp);
 
   /* set variable that distinguishes between long and ints for indices */
   if (SPA[hdl].idx_size == sizeof(int64_t)) {
@@ -861,6 +872,7 @@ logical pnga_sprs_array_assemble(Integer s_a)
   free(map);
 
   SPA[hdl].ready = 1;
+  if (local_sync_end) pnga_pgroup_sync(SPA[hdl].grp);
   return ret;
 }
 
@@ -1150,9 +1162,9 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(s_grp);
   /* Check that g_hdl and v_hdl are both vectors and that sizes
    * match */
-  if (local_sync_begin) pnga_sync();
   pnga_inquire(g_a, &atype, &arank, dims);
   adim = dims[0];
   pnga_inquire(g_v, &vtype, &vrank, dims);
@@ -1288,7 +1300,7 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
     khi = ihi + 1;
     pnga_acc(g_v,&klo,&khi,vsum,&one,&one_r);
   }
-  if (local_sync_end)  pnga_sync();
+  if (local_sync_end)  pnga_pgroup_sync(s_grp);
   free(vsum);
 }
 
@@ -1303,6 +1315,10 @@ logical pnga_sprs_array_destroy(Integer s_a)
 {
   Integer hdl = GA_OFFSET + s_a;
   Integer ret = 1;
+  int local_sync_begin,local_sync_end;
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(SPA[hdl].grp);
   if (SPA[hdl].ready) {
     if (!pnga_destroy(SPA[hdl].g_data)) ret = 0;
     if (!pnga_destroy(SPA[hdl].g_i)) ret = 0;
@@ -1330,6 +1346,7 @@ logical pnga_sprs_array_destroy(Integer s_a)
   }
   SPA[hdl].active = 0;
   SPA[hdl].ready = 0;
+  if (local_sync_end) pnga_pgroup_sync(SPA[hdl].grp);
   return ret;
 }
 
@@ -1348,6 +1365,7 @@ void pnga_sprs_array_export(Integer s_a, const char* file)
   Integer hdl = GA_OFFSET + s_a;
   int size  = SPA[hdl].size;
   int type = SPA[hdl].type;
+  int local_sync_begin,local_sync_end;
   char frmt[32];
   char *cptr;
   int offset;
@@ -1376,6 +1394,10 @@ void pnga_sprs_array_export(Integer s_a, const char* file)
   int *blkoffset;
   int *blksize;
   int64_t nnz;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(SPA[hdl].grp);
 
   /* find the total number of nonzero elements on each process */
   nnz = 0;
@@ -1576,6 +1598,7 @@ void pnga_sprs_array_export(Integer s_a, const char* file)
 void pnga_sprs_array_get_diag(Integer s_a, Integer *g_d)
 {
   Integer hdl = GA_OFFSET + s_a;
+  int local_sync_begin,local_sync_end;
   Integer *map;
   Integer grp = SPA[hdl].grp;
   Integer me = pnga_pgroup_nodeid(grp);
@@ -1590,6 +1613,11 @@ void pnga_sprs_array_get_diag(Integer s_a, Integer *g_d)
   Integer i, j;
   void *diag, *vptr;
   char op[2];
+
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(grp);
   /* Get row distribution of matrix */
   map = (Integer*)malloc((nproc+1)*sizeof(Integer));
   for (iproc=0; iproc<nproc+1; iproc++) map[iproc] = 0;
@@ -1667,7 +1695,7 @@ void pnga_sprs_array_get_diag(Integer s_a, Integer *g_d)
   }
   free(map);
   pnga_release_update(*g_d, &lo, &hi);
-  pnga_pgroup_sync(grp);
+  if (local_sync_end) pnga_pgroup_sync(grp);
 }
 
 /**
@@ -1682,6 +1710,7 @@ void pnga_sprs_array_diag_left_multiply(Integer s_a, Integer g_d)
 {
   Integer hdl = GA_OFFSET + s_a;
   Integer d_hdl = GA_OFFSET + g_d;
+  int local_sync_begin,local_sync_end;
   Integer grp = SPA[hdl].grp;
   Integer me = pnga_pgroup_nodeid(grp);
   Integer nproc = pnga_pgroup_nnodes(grp);
@@ -1694,6 +1723,10 @@ void pnga_sprs_array_diag_left_multiply(Integer s_a, Integer g_d)
   Integer one = 1;
   void *vbuf;
   void *vptr;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(grp);
 
   /* check for basic compatibility */
   if (SPA[hdl].idim != GA[d_hdl].dims[0]) {
@@ -1791,7 +1824,7 @@ void pnga_sprs_array_diag_left_multiply(Integer s_a, Integer g_d)
 #undef SPRS_REAL_LEFT_MULTIPLY
 #undef SPRS_COMPLEX_LEFT_MULTIPLY
 
-  pnga_pgroup_sync(grp);
+  if (local_sync_end) pnga_pgroup_sync(grp);
 }
 
 /**
@@ -1806,6 +1839,7 @@ void pnga_sprs_array_diag_right_multiply(Integer s_a, Integer g_d)
 {
   Integer hdl = GA_OFFSET + s_a;
   Integer d_hdl = GA_OFFSET + g_d;
+  int local_sync_begin,local_sync_end;
   Integer grp = SPA[hdl].grp;
   Integer me = pnga_pgroup_nodeid(grp);
   Integer nproc = pnga_pgroup_nnodes(grp);
@@ -1818,6 +1852,10 @@ void pnga_sprs_array_diag_right_multiply(Integer s_a, Integer g_d)
   Integer one = 1;
   void *vbuf;
   void *vptr;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(grp);
 
   /* check for basic compatibility */
   if (SPA[hdl].idim != GA[d_hdl].dims[0]) {
@@ -1919,7 +1957,7 @@ void pnga_sprs_array_diag_right_multiply(Integer s_a, Integer g_d)
 #undef SPRS_REAL_RIGHT_MULTIPLY_M
 #undef SPRS_COMPLEX_RIGHT_MULTIPLY_M
 
-  pnga_pgroup_sync(grp);
+  if (local_sync_end) pnga_pgroup_sync(grp);
 }
 
 /**
@@ -1934,6 +1972,7 @@ void pnga_sprs_array_diag_right_multiply(Integer s_a, Integer g_d)
 void pnga_sprs_array_shift_diag(Integer s_a, void *shift)
 {
   Integer hdl = GA_OFFSET + s_a;
+  int local_sync_begin,local_sync_end;
   Integer grp = SPA[hdl].grp;
   Integer me = pnga_pgroup_nodeid(grp);
   Integer nproc = pnga_pgroup_nnodes(grp);
@@ -1944,6 +1983,10 @@ void pnga_sprs_array_shift_diag(Integer s_a, void *shift)
   int *iptr, *jptr;
   int64_t *ilptr, *jlptr;
   void *vptr;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(grp);
 
   /* get block from diagonal array corresponding to this row block (there is
    * only one) */
@@ -2025,7 +2068,7 @@ void pnga_sprs_array_shift_diag(Integer s_a, void *shift)
 #undef SPRS_REAL_SHIFT_DIAG_M
 #undef SPRS_COMPLEX_SHIFT_DIAG_M
 
-  pnga_pgroup_sync(grp);
+  if (local_sync_end) pnga_pgroup_sync(grp);
 }
 
 /**
@@ -2039,6 +2082,7 @@ void pnga_sprs_array_shift_diag(Integer s_a, void *shift)
 Integer pnga_sprs_array_duplicate(Integer s_a)
 {
   Integer hdl = GA_OFFSET + s_a;
+  int local_sync_begin,local_sync_end;
   Integer new_hdl;
   Integer grp = SPA[hdl].grp;
   Integer me = pnga_pgroup_nodeid(grp);
@@ -2048,20 +2092,29 @@ Integer pnga_sprs_array_duplicate(Integer s_a)
   Integer i;
   char p_trans[2];
 
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(grp);
+
   /* create new array with same properties as old array */
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   s_dup = pnga_sprs_array_create(SPA[hdl].idim,SPA[hdl].jdim,SPA[hdl].type,
       SPA[hdl].idx_size);
   /* find handle for new array and duplicate internal GAs */
   new_hdl = GA_OFFSET + s_dup;
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   if (!pnga_duplicate(SPA[hdl].g_data,&SPA[new_hdl].g_data,"sparse_data_copy")) {
     pnga_error("(pnga_sprs_array_duplicate) Could not duplicate g_data",0);
   }
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   if (!pnga_duplicate(SPA[hdl].g_i,&SPA[new_hdl].g_i,"sparse_i_index_copy")) {
     pnga_error("(pnga_sprs_array_duplicate) Could not duplicate g_i",0);
   }
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   if (!pnga_duplicate(SPA[hdl].g_j,&SPA[new_hdl].g_j,"sparse_j_index_copy")) {
     pnga_error("(pnga_sprs_array_duplicate) Could not duplicate g_j",0);
   }
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   if (!pnga_duplicate(SPA[hdl].g_blk,&SPA[new_hdl].g_blk,"sparse_g_block_copy")) {
     pnga_error("(pnga_sprs_array_duplicate) Could not duplicate g_blk",0);
   }
@@ -2070,14 +2123,18 @@ Integer pnga_sprs_array_duplicate(Integer s_a)
   p_trans[0]='N';
   p_trans[1]='\0';
   pnga_distribution(SPA[new_hdl].g_i,me,&lo,&hi);
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   pnga_copy_patch(p_trans,SPA[hdl].g_i,&lo,&hi,SPA[new_hdl].g_i,&lo,&hi);
   pnga_distribution(SPA[new_hdl].g_j,me,&lo,&hi);
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   pnga_copy_patch(p_trans,SPA[hdl].g_j,&lo,&hi,SPA[new_hdl].g_j,&lo,&hi);
   pnga_distribution(SPA[new_hdl].g_data,me,&lo,&hi);
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   pnga_copy_patch(p_trans,SPA[hdl].g_data,&lo,&hi,SPA[new_hdl].g_data,&lo,&hi);
   {
     Integer tlo[3],thi[3];
     pnga_distribution(SPA[new_hdl].g_blk,me,tlo,thi);
+    pnga_mask_sync(local_sync_begin,local_sync_end);
     pnga_copy_patch(p_trans,SPA[hdl].g_blk,tlo,thi,SPA[new_hdl].g_blk,tlo,thi);
   }
   /* copy remaining data structures */
@@ -2105,6 +2162,7 @@ Integer pnga_sprs_array_duplicate(Integer s_a)
     SPA[new_hdl].blksize[i] = SPA[hdl].blksize[i];
     SPA[new_hdl].offset[i] = SPA[hdl].offset[i];
   }
+  if (local_sync_end) pnga_pgroup_sync(grp);
   return s_dup;
 }
 
@@ -2472,6 +2530,7 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
   Integer hdl_a = s_a+GA_OFFSET;
   Integer hdl_b = s_b+GA_OFFSET;
   Integer hdl_c;
+  int local_sync_begin,local_sync_end;
   Integer bufsize;
   Integer elemsize;
   Integer idim, jdim;
@@ -2491,6 +2550,11 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
   Integer *row_nnz;
   Integer nnz;
   int64_t max_nnz;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(SPA[hdl_a].grp);
+
   /* Do some initial verification to see if matrix multiply is possible */
   if (SPA[hdl_a].type != SPA[hdl_b].type) {
     pnga_error("(ga_sprs_array_matmat_multiply) types of sparse matrices"
@@ -2612,6 +2676,7 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
   }
 
   /* create a new sparse array to hold product array */
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   s_c = pnga_sprs_array_create(idim,jdim,type,SPA[hdl_a].idx_size);
   hdl_c = GA_OFFSET + s_c;
   free(SPA[hdl_c].idx);
@@ -2704,6 +2769,7 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
     }
     pnga_set_pgroup(SPA[hdl_c].g_i,SPA[hdl_c].grp);
     pnga_set_irreg_distr(SPA[hdl_c].g_i,map,&nprocs);
+    pnga_mask_sync(local_sync_begin,local_sync_end);
     pnga_allocate(SPA[hdl_c].g_i);
     /* set up arrays to hold column indices and data. Evaluate offsets
      * for row blocks*/
@@ -2724,7 +2790,9 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
       if (i>0) offset[i] = offset[i-1]+tmp[i-1];
       map[i] = offset[i]+1; /* 1-based indexing for map array */
     }
+    pnga_mask_sync(local_sync_begin,local_sync_end);
     SPA[hdl_c].g_j = pnga_create_handle();
+    pnga_mask_sync(local_sync_begin,local_sync_end);
     SPA[hdl_c].g_data = pnga_create_handle();
     nnz = totalsize;
     if (longidx) {
@@ -2737,7 +2805,9 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
     pnga_set_irreg_distr(SPA[hdl_c].g_j,map,&nprocs);
     pnga_set_pgroup(SPA[hdl_c].g_data,SPA[hdl_c].grp);
     pnga_set_irreg_distr(SPA[hdl_c].g_data,map,&nprocs);
+    pnga_mask_sync(local_sync_begin,local_sync_end);
     pnga_allocate(SPA[hdl_c].g_j);
+    pnga_mask_sync(local_sync_begin,local_sync_end);
     pnga_allocate(SPA[hdl_c].g_data);
     free(map);
     free(tmp);
@@ -2937,10 +3007,12 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
      *            values for block
      *    blkend: last index  g_j and g_data for block
      */
+    pnga_mask_sync(local_sync_begin,local_sync_end);
     g_blk = pnga_create_handle();
     pnga_set_pgroup(g_blk,SPA[hdl_c].grp);
     pnga_set_data(g_blk,three,dims,C_LONG);
     pnga_set_chunk(g_blk,chunk);
+    pnga_mask_sync(local_sync_begin,local_sync_end);
     if (!pnga_allocate(g_blk)) {
       pnga_error("(pnga_sprs_matmat_multiply) Failure allocating g_blk",0);
     }
@@ -3042,6 +3114,7 @@ Integer pnga_sprs_array_get_column(Integer s_a, Integer icol)
 {
   Integer g_v;
   Integer handle = s_a + GA_OFFSET;
+  int local_sync_begin,local_sync_end;
   Integer type = SPA[handle].type;
   Integer one = 1;
   Integer idim = SPA[handle].idim;
@@ -3054,6 +3127,10 @@ Integer pnga_sprs_array_get_column(Integer s_a, Integer icol)
   char cplus[2];
   cplus[0] = '+';
   cplus[1] = '\0';
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(SPA[handle].grp);
 
   /* Create map array containing row offsets */
   hi = SPA[handle].ihi;
@@ -3071,11 +3148,14 @@ Integer pnga_sprs_array_get_column(Integer s_a, Integer icol)
   for (i=1; i<nprocs; i++) map[i] = map[i-1]+size[i-1];
 
   /* create column vector array and set it to zero */
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   g_v = pnga_create_handle();
   pnga_set_data(g_v,one,&idim,type);
   pnga_set_pgroup(g_v,SPA[handle].grp);
   pnga_set_irreg_distr(g_v,map,&nprocs);
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   pnga_allocate(g_v);
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   pnga_zero(g_v);
   if (hi >= lo) {
     Integer ilo = lo+1;
@@ -3135,7 +3215,7 @@ Integer pnga_sprs_array_get_column(Integer s_a, Integer icol)
   }
   free(map);
   free(size);
-  pnga_pgroup_sync(SPA[handle].grp);
+  if (local_sync_end) pnga_pgroup_sync(SPA[handle].grp);
   return g_v;
 }
 
@@ -3211,12 +3291,17 @@ Integer pnga_sprs_array_create_from_dense(Integer g_a, Integer idx_size,
     Integer trans)
 {
   Integer handle = g_a + GA_OFFSET, s_a;
+  int local_sync_begin,local_sync_end;
   Integer i, j, idx, jdx, lo[2], hi[2], ld;
   Integer idim, jdim;
   int grp = GA[handle].p_handle;
   int me = (int)pnga_pgroup_nodeid(grp);
   void *vptr;
   int type = GA[handle].type;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(grp);
 
   /* Check dimension */
   if (GA[handle].ndim != 2) {
@@ -3278,10 +3363,12 @@ Integer pnga_sprs_array_create_from_dense(Integer g_a, Integer idx_size,
           " encountered",type);
     }
   }
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   if (!pnga_sprs_array_assemble(s_a)) {
     pnga_error("(ga_sprs_array_create_from_dense) failed to create"
         " sparse array from dense array",0);
   }
+  if (local_sync_end) pnga_pgroup_sync(grp);
   return s_a;
 }
 #undef SPRS_REAL_FILTER_M
@@ -3371,6 +3458,7 @@ Integer pnga_sprs_array_sprsdns_multiply(Integer s_a, Integer g_b, Integer trans
   Integer hdl_a = s_a+GA_OFFSET;
   Integer hdl_b = g_b+GA_OFFSET;
   Integer hdl_c;
+  int local_sync_begin,local_sync_end;
   Integer elemsize;
   Integer idim, jdim;
   Integer i, j, k, l, m, n, nn;
@@ -3390,6 +3478,11 @@ Integer pnga_sprs_array_sprsdns_multiply(Integer s_a, Integer g_b, Integer trans
   Integer *row_nnz;
   int64_t max_nnz;
   Integer *map, *size;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(SPA[hdl_a].grp);
+
   /* Do some initial verification to see if matrix multiply is possible */
   if (SPA[hdl_a].type != GA[hdl_b].type) {
     pnga_error("(ga_sprs_array_sprsdns_multiply) types of sparse matrices"
@@ -3422,6 +3515,7 @@ Integer pnga_sprs_array_sprsdns_multiply(Integer s_a, Integer g_b, Integer trans
     jdim = GA[hdl_b].dims[1];
   }
   /* Construct product array C*/
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   g_c = pnga_create_handle();
   hdl_c = g_c + GA_OFFSET;
   if (trans) {
@@ -3460,10 +3554,12 @@ Integer pnga_sprs_array_sprsdns_multiply(Integer s_a, Integer g_b, Integer trans
   }
   pnga_set_irreg_distr(g_c,map,blocks);
   pnga_set_pgroup(g_c,SPA[hdl_a].grp);
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   if (!pnga_allocate(g_c)) {
     pnga_error("(ga_sprs_array_sprsdns_multiply) could not allocate"
       " product array C",0);
   }
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   pnga_zero(g_c);
   /* loop over processors in row to get target block and then loop over
    * processors to get all block pairs that contribute to target block.
@@ -3599,6 +3695,7 @@ Integer pnga_sprs_array_sprsdns_multiply(Integer s_a, Integer g_b, Integer trans
       free(buf_b);
     }
   }
+  if (local_sync_end) pnga_pgroup_sync(SPA[hdl_a].grp);
   return g_c;
 }
 #undef REAL_SPRSDNS_MULTIPLY_M
@@ -3710,6 +3807,7 @@ Integer pnga_sprs_array_dnssprs_multiply(Integer g_a, Integer s_b, Integer trans
   Integer hdl_a = g_a+GA_OFFSET;
   Integer hdl_b = s_b+GA_OFFSET;
   Integer hdl_c;
+  int local_sync_begin,local_sync_end;
   Integer elemsize;
   Integer idim, jdim;
   Integer i, j, k, l, m, n, nn;
@@ -3729,6 +3827,11 @@ Integer pnga_sprs_array_dnssprs_multiply(Integer g_a, Integer s_b, Integer trans
   Integer *row_nnz;
   int64_t max_nnz;
   Integer *map, *size;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(SPA[hdl_b].grp);
+
   /* Do some initial verification to see if matrix multiply is possible */
   if (GA[hdl_a].type != SPA[hdl_b].type) {
     pnga_error("(ga_sprs_array_dnssprs_multiply) types of sparse matrices"
@@ -3961,6 +4064,7 @@ Integer pnga_sprs_array_dnssprs_multiply(Integer g_a, Integer s_b, Integer trans
       free(buf_a);
     }
   }
+  if (local_sync_end) pnga_pgroup_sync(SPA[hdl_b].grp);
   return g_c;
 }
 #undef REAL_DNSSPRS_MULTIPLY_M
