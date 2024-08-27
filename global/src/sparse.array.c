@@ -2223,6 +2223,7 @@ void pnga_sprs_array_diag_right_multiply(Integer s_a, Integer g_d)
 {
   Integer hdl = GA_OFFSET + s_a;
   Integer d_hdl = GA_OFFSET + g_d;
+  int local_sync_begin,local_sync_end;
   Integer grp = SPA[hdl].grp;
   Integer me = pnga_pgroup_nodeid(grp);
   Integer nproc = pnga_pgroup_nnodes(grp);
@@ -2235,6 +2236,10 @@ void pnga_sprs_array_diag_right_multiply(Integer s_a, Integer g_d)
   Integer one = 1;
   void *vbuf;
   void *vptr;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(grp);
 
   /* check for basic compatibility */
   if (SPA[hdl].idim != GA[d_hdl].dims[0]) {
@@ -2336,7 +2341,7 @@ void pnga_sprs_array_diag_right_multiply(Integer s_a, Integer g_d)
 #undef SPRS_REAL_RIGHT_MULTIPLY_M
 #undef SPRS_COMPLEX_RIGHT_MULTIPLY_M
 
-  pnga_pgroup_sync(grp);
+  if (local_sync_end) pnga_pgroup_sync(grp);
 }
 
 /**
@@ -2523,12 +2528,15 @@ Integer pnga_sprs_array_duplicate(Integer s_a)
   pnga_distribution(SPA[new_hdl].g_i,me,&lo,&hi);
   pnga_copy_patch(p_trans,SPA[hdl].g_i,&lo,&hi,SPA[new_hdl].g_i,&lo,&hi);
   pnga_distribution(SPA[new_hdl].g_j,me,&lo,&hi);
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   pnga_copy_patch(p_trans,SPA[hdl].g_j,&lo,&hi,SPA[new_hdl].g_j,&lo,&hi);
   pnga_distribution(SPA[new_hdl].g_data,me,&lo,&hi);
+  pnga_mask_sync(local_sync_begin,local_sync_end);
   pnga_copy_patch(p_trans,SPA[hdl].g_data,&lo,&hi,SPA[new_hdl].g_data,&lo,&hi);
   {
     Integer tlo[3],thi[3];
     pnga_distribution(SPA[new_hdl].g_blk,me,tlo,thi);
+    pnga_mask_sync(local_sync_begin,local_sync_end);
     pnga_copy_patch(p_trans,SPA[hdl].g_blk,tlo,thi,SPA[new_hdl].g_blk,tlo,thi);
   }
   /* copy remaining data structures */
