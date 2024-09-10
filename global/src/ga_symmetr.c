@@ -86,11 +86,7 @@ void pnga_symmetrize(Integer g_a) {
       pnga_access_ptr(g_a, alo, ahi, &a_ptr, lda); 
 
       for(i=0; i<ndim; i++) nelem *= ahi[i]-alo[i] +1;
-#ifdef USE_GA_MALLOC
-      b_ptr = (void *) ga_malloc(nelem, MT_F_DBL, "v");
-#else
-      b_ptr = (void *)malloc(nelem*sizeof(DoublePrecision));
-#endif
+      b_ptr = (void *) pnga_malloc(nelem, MT_F_DBL, "v");
 
       for(i=0; i<ndim-2; i++) {bhi[i]=ahi[i]; blo[i]=alo[i]; }
 
@@ -109,11 +105,7 @@ void pnga_symmetrize(Integer g_a) {
     if(have_data) {
       gai_add(alo, ahi, a_ptr, b_ptr, alpha, type, nelem, ndim);
       pnga_release_update(g_a, alo, ahi);
-#ifdef USE_GA_MALLOC
-      ga_free(b_ptr);
-#else
-      free(b_ptr);
-#endif
+      pnga_free(b_ptr);
     }
   } else {
     /* For block-cyclic data, probably most efficient solution is to

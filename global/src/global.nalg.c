@@ -991,27 +991,7 @@ _iterator_hdl hdl;
       ptr_tmp = ARMCI_Malloc_local(bytes);
 }
 #else
-#ifdef USE_GA_MALLOC
-      ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
-#else
-      if (atype == C_INT) {
-        ptr_tmp = (char *)malloc(nelem*sizeof(int));
-      } else if (atype == C_LONG) {
-        ptr_tmp = (char *)malloc(nelem*sizeof(long));
-      } else if (atype == C_LONGLONG) {
-        ptr_tmp = (char *)malloc(nelem*sizeof(long long));
-      } else if (atype == C_FLOAT) {
-        ptr_tmp = (char *)malloc(nelem*sizeof(float));
-      } else if (atype == C_DBL) {
-        ptr_tmp = (char *)malloc(nelem*sizeof(double));
-      } else if (atype == C_SCPL) {
-        ptr_tmp = (char *)malloc(nelem*sizeof(SingleComplex));
-      } else if (atype == C_DCPL) {
-        ptr_tmp = (char *)malloc(nelem*sizeof(DoubleComplex));
-      } else {
-        pnga_error("(pnga_transpose) Unknown data type",atype);
-      }
-#endif
+      ptr_tmp = (char *) pnga_malloc(nelem, atype, "transpose_tmp");
 #endif
 
       nrow   = hi[0] -lo[0]+1;
@@ -1029,11 +1009,7 @@ _iterator_hdl hdl;
 #ifdef GA_TRANSPOSE_USE_ARMCI_MEM
       ARMCI_Free_local(ptr_tmp);
 #else
-#ifdef USE_GA_MALLOC
-      ga_free(ptr_tmp);
-#else
-      free(ptr_tmp);
-#endif
+      pnga_free(ptr_tmp);
 #endif
     }
 #else

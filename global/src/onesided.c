@@ -2691,11 +2691,7 @@ Integer subscrpt[2];
   
   GAstat.numsca++;
 
-#ifdef USE_GA_MALLOC
-  int_ptr = (Integer*) ga_malloc(nv, MT_F_INT, "ga_scatter_acc--p");
-#else
-  int_ptr = (Integer*)malloc(nv*sizeof(Integer));
-#endif
+  int_ptr = (Integer*) pnga_malloc(nv, MT_F_INT, "ga_scatter_acc--p");
 
   /* find proc that owns the (i,j) element; store it in temp: int_ptr */
   for(k=0; k< nv; k++) {
@@ -2738,11 +2734,7 @@ Integer subscrpt[2];
 
   }while (first< nv);
 
-#ifdef USE_GA_MALLOC
-  ga_free(int_ptr);
-#else
-  free(int_ptr);
-#endif
+  pnga_free(int_ptr);
 
 }
 
@@ -2774,11 +2766,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
     
     
 
-#ifdef USE_GA_MALLOC
-    proc=(Integer *)ga_malloc(nv, MT_F_INT, "ga_gat-p");
-#else
-    proc=(Integer*)malloc(nv*sizeof(Integer));
-#endif
+    proc=(Integer *)pnga_malloc(nv, MT_F_INT, "ga_gat-p");
 
     ndim = GA[handle].ndim;
     type = GA[handle].type;
@@ -3336,11 +3324,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
 
     free(buf2); free(buf1);
     
-#ifdef USE_GA_MALLOC
-    ga_free(proc);
-#else
-    free(proc);
-#endif
+    pnga_free(proc);
 }
 
 /**
@@ -3357,15 +3341,9 @@ void pnga_alloc_gatscat_buf(Integer nelems)
   if (GA_prealloc_gatscat)
     pnga_error("Gather/scatter buffers already allocated",nelems);
   GA_prealloc_gatscat = nelems;
-#ifdef USE_GA_MALLOC
-  GA_header =(Integer *)ga_malloc(nprocs, MT_F_INT, "ga_gat_header");
-  GA_list =(Integer *)ga_malloc(nelems, MT_F_INT, "ga_gat_list");
-  GA_elems =(Integer *)ga_malloc(nprocs, MT_F_INT, "ga_gat_nelems");
-#else
-  GA_header =(Integer*)malloc(nprocs*sizeof(Integer));
-  GA_list =(Integer*)malloc(nelems*sizeof(Integer));
-  GA_elems =(Integer*)malloc(nprocs*sizeof(Integer));
-#endif
+  GA_header =(Integer *)pnga_malloc(nprocs, MT_F_INT, "ga_gat_header");
+  GA_list =(Integer *)pnga_malloc(nelems, MT_F_INT, "ga_gat_list");
+  GA_elems =(Integer *)pnga_malloc(nprocs, MT_F_INT, "ga_gat_nelems");
 }
 
 /**
@@ -3379,15 +3357,9 @@ void pnga_free_gatscat_buf()
   if (!GA_prealloc_gatscat)
     pnga_error("Gather/scatter buffers not allocated",0);
   GA_prealloc_gatscat = 0;
-#ifdef USE_GA_MALLOC
-  ga_free(GA_elems);
-  ga_free(GA_list);
-  ga_free(GA_header);
-#else
-  free(GA_elems);
-  free(GA_list);
-  free(GA_header);
-#endif
+  pnga_free(GA_elems);
+  pnga_free(GA_list);
+  pnga_free(GA_header);
 }
 
 #define gam_c2f_index(index_c, index_f, ndim)        \
@@ -3436,15 +3408,9 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
     }
 
     if (!GA_prealloc_gatscat) {
-#ifdef USE_GA_MALLOC
-      header =(Integer *)ga_malloc(nprocs, MT_F_INT, "ga_gat_header");
-      list =(Integer *)ga_malloc(nv, MT_F_INT, "ga_gat_list");
-      nelems =(Integer *)ga_malloc(nprocs, MT_F_INT, "ga_gat_nelems");
-#else
-      header = (Integer*)malloc(nprocs*sizeof(Integer));
-      list = (Integer*)malloc(nv*sizeof(Integer));
-      nelems = (Integer*)malloc(nprocs*sizeof(Integer));
-#endif
+      header =(Integer *)pnga_malloc(nprocs, MT_F_INT, "ga_gat_header");
+      list =(Integer *)pnga_malloc(nv, MT_F_INT, "ga_gat_list");
+      nelems =(Integer *)pnga_malloc(nprocs, MT_F_INT, "ga_gat_nelems");
     } else {
       if (GA_prealloc_gatscat < nv)
         pnga_error("Gather/scatter vector exceeds allocation length ",
@@ -3615,15 +3581,9 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
     }
     free(buf);
     if (!GA_prealloc_gatscat) {
-#ifdef USE_GA_MALLOC
-      ga_free(nelems);
-      ga_free(list);
-      ga_free(header);
-#else
-      free(nelems);
-      free(list);
-      free(header);
-#endif
+      pnga_free(nelems);
+      pnga_free(list);
+      pnga_free(header);
     }
 
 }
