@@ -2,7 +2,9 @@
 #   include "config.h"
 #endif
 
+#if HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
 
 /**
  * Symmetrizes matrix A:  A := .5 * (A+A`)

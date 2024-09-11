@@ -725,14 +725,14 @@ C_Integer *map= (map_ij);\
 \
     candidate = (int)(scale*(elem));\
     found = 0;\
-    if(map[candidate] <= (elem)){ /* search downward */\
+    if(map[candidate] <= (elem)){ /* search upward */\
          b= candidate;\
          while(b<(n)-1){ \
             found = (map[b+1]>(elem));\
             if(found)break;\
             b++;\
          } \
-    }else{ /* search upward */\
+    }else{ /* search downward */\
          b= candidate-1;\
          while(b>=0){\
             found = (map[b]<=(elem));\

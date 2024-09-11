@@ -1495,7 +1495,7 @@ void pnga_matmul(transa, transb, alpha, beta,
 
 	  if(tmp == NULL) { /*if armci malloc fails again, then get from MA */
 	     tmp = a_ar[0] = a =(DoubleComplex*) pnga_malloc(elems,atype,
-							   "GA mulmat bufs");
+                                                      "GA mulmat bufs");
 	  }
 
 	  if(use_NB_matmul) tmp = a_ar[1] = a_ar[0] + (Ichunk*Kchunk)/factor+1;
