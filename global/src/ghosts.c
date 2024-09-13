@@ -1748,8 +1748,8 @@ logical pnga_update4_ghosts(Integer g_a)
 
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
-  snd_ptr_orig = snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
-  rcv_ptr_orig = rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
+  snd_ptr_orig = snd_ptr = pnga_malloc(buflen, GA[handle].type, send_name);
+  rcv_ptr_orig = rcv_ptr = pnga_malloc(buflen, GA[handle].type, rcv_name);
 
   /* loop over dimensions for sequential update using shift algorithm */
   for (idx=0; idx < ndim; idx++) {
@@ -1925,8 +1925,8 @@ logical pnga_update4_ghosts(Integer g_a)
     }
   }
 
-  ga_free(rcv_ptr_orig);
-  ga_free(snd_ptr_orig);
+  pnga_free(rcv_ptr_orig);
+  pnga_free(snd_ptr_orig);
   return TRUE;
 }
 
@@ -2060,8 +2060,8 @@ logical pnga_update44_ghosts(Integer g_a)
   bufsize = size*buflen;
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
-  snd_ptr_orig = snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
-  rcv_ptr_orig = rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
+  snd_ptr_orig = snd_ptr = pnga_malloc(buflen, GA[handle].type, send_name);
+  rcv_ptr_orig = rcv_ptr = pnga_malloc(buflen, GA[handle].type, rcv_name);
 
   /* loop over dimensions for sequential update using shift algorithm */
   for (idx=0; idx < ndim; idx++) {
@@ -2415,8 +2415,8 @@ logical pnga_update44_ghosts(Integer g_a)
       increment[idx] = 2*width[idx];
   }
 
-  ga_free(rcv_ptr_orig);
-  ga_free(snd_ptr_orig);
+  pnga_free(rcv_ptr_orig);
+  pnga_free(snd_ptr_orig);
   free(_ga_map);
   free(_ga_proclist);
   return TRUE;
@@ -3165,8 +3165,8 @@ logical pnga_update5_ghosts(Integer g_a)
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
 
-  snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
-  rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
+  snd_ptr = pnga_malloc(buflen, GA[handle].type, send_name);
+  rcv_ptr = pnga_malloc(buflen, GA[handle].type, rcv_name);
 #endif
  
   cache = (char *)GA[handle].cache;
@@ -3701,8 +3701,8 @@ logical pnga_update6_ghosts(Integer g_a)
   bufsize = size*buflen;
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
-  snd_ptr_orig = snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
-  rcv_ptr_orig = rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
+  snd_ptr_orig = snd_ptr = pnga_malloc(buflen, GA[handle].type, send_name);
+  rcv_ptr_orig = rcv_ptr = pnga_malloc(buflen, GA[handle].type, rcv_name);
 
   _ga_map = malloc((GAnproc*2*MAXDIM+1)*sizeof(Integer));
   if(!_ga_map) pnga_error("pnga_update6_ghosts:malloc failed (_ga_map)",0);
@@ -4103,8 +4103,8 @@ logical pnga_update6_ghosts(Integer g_a)
     increment[idx] = 2*width[idx];
   }
 
-  ga_free(rcv_ptr_orig);
-  ga_free(snd_ptr_orig);
+  pnga_free(rcv_ptr_orig);
+  pnga_free(snd_ptr_orig);
   /* set update flags to zero for next operation */
   for (idx=0; idx < 2*ndim; idx++) {
     GA_Update_Flags[GAme][idx] = 0;

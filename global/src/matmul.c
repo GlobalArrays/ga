@@ -1494,8 +1494,8 @@ void pnga_matmul(transa, transb, alpha, beta,
 	  }
 
 	  if(tmp == NULL) { /*if armci malloc fails again, then get from MA */
-	     tmp = a_ar[0] = a =(DoubleComplex*) ga_malloc(elems,atype,
-							   "GA mulmat bufs");
+	     tmp = a_ar[0] = a =(DoubleComplex*) pnga_malloc(elems,atype,
+                                                      "GA mulmat bufs");
 	  }
 
 	  if(use_NB_matmul) tmp = a_ar[1] = a_ar[0] + (Ichunk*Kchunk)/factor+1;
@@ -1558,7 +1558,9 @@ void pnga_matmul(transa, transb, alpha, beta,
 	     
        a = a_ar[0];
        if(use_armci_memory == SET) ARMCI_Free_local(a);
-       else ga_free(a);
+       else {
+         pnga_free(a);
+       }
        
 #if DEBUG_
        Integer grp_me;
@@ -1725,7 +1727,7 @@ Integer clo[2], chi[2];
      else /* "EXTRA" elems for safety - just in case */
        elems = 3*Ichunk*Jchunk + EXTRA*factor;
      
-     a = (DoubleComplex*) ga_malloc(elems, atype, "GA mulmat bufs");
+     a = (DoubleComplex*) pnga_malloc(elems, atype, "GA mulmat bufs");
      b = a + (Ichunk*Kchunk)/factor + 1; 
      c = b + (Kchunk*Jchunk)/factor + 1;
    }
@@ -1874,7 +1876,7 @@ Integer clo[2], chi[2];
    }
    
 #ifndef STATBUF
-   ga_free(a);
+   pnga_free(a);
 #endif
 
    if(local_sync_end)pnga_sync();
@@ -2221,7 +2223,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
      else /* "EXTRA" elems for safety - just in case */
        elems = 3*Ichunk*Jchunk + EXTRA*factor;
 
-     a = (DoubleComplex*) ga_malloc(elems, atype, "GA mulmat bufs");     
+     a = (DoubleComplex*) pnga_malloc(elems, atype, "GA mulmat bufs");     
      b = a + (Ichunk*Kchunk)/factor + 1; 
      c = b + (Kchunk*Jchunk)/factor + 1;
    }
@@ -2360,7 +2362,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    }
 
 #ifndef STATBUF
-   ga_free(a);
+   pnga_free(a);
 #endif
    
    if(local_sync_end)pnga_sync(); 

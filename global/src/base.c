@@ -213,8 +213,28 @@ Integer GAsizeof(Integer type)
      case C_FLOAT : return (sizeof(float));
      case C_LONG : return (sizeof(long));
      case C_LONGLONG : return (sizeof(long long));
+     case F_DBL : return (sizeof(DoublePrecision));
+     case F_INT  : return (sizeof(Integer));
           default   : return 0; 
   }
+}
+
+void* pnga_malloc(Integer nelem, int type, char *name)
+{
+#ifdef USE_GA_MALLOC
+  return ga_malloc(nelem, type, name);
+#else
+  return malloc(nelem*GAsizeof(type));
+#endif
+}
+
+void pnga_free(void *ptr)
+{
+#ifdef USE_GA_MALLOC
+  ga_free(ptr);
+#else
+  free(ptr);
+#endif
 }
 
 
