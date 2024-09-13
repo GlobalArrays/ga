@@ -675,4 +675,46 @@ c     --------------------------------------------------------------- c
       return
       end
 
+c     --------------------------------------------------------------- c
+c     --------------------------------------------------------------- c
+
+      logical function MA_count_heap (datatype, nelem)
+
+      implicit none
+
+      integer datatype
+      integer nelem
+
+#include "maf2c.fh"
+
+      if (f2c_count_heap(datatype, nelem) .eq. MA_TRUE) then
+          MA_count_heap = .true.
+      else
+          MA_count_heap = .false.
+      endif
+
+      return
+      end
+
+c     --------------------------------------------------------------- c
+c     --------------------------------------------------------------- c
+
+      logical function MA_uncount_heap (datatype, nelem)
+
+      implicit none
+
+      integer datatype
+      integer nelem
+
+#include "maf2c.fh"
+
+      if (f2c_uncount_heap(datatype, nelem) .eq. MA_TRUE) then
+          MA_uncount_heap = .true.
+      else
+          MA_uncount_heap = .false.
+      endif
+
+      return
+      end
+
 #undef MAF_INTERNAL
