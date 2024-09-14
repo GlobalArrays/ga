@@ -12,11 +12,7 @@
 #include "mp3.h"
 #include "xgemm.h"
 
-#if defined(FUJITSU) || defined(CRAY_YMP)
-#   define THRESH 1.0e-10
-#else
 #   define THRESH 1.0e-20
-#endif
 #define ABS(x) ((x) >= 0.0 ? (x) : -(x))
 #define MAX(x,y) ((x) >= (y) ? (x) : (y))
 #define MISMATCH(x,y) (ABS((x)-(y)) / MAX(1.0,ABS((x)))) > THRESH

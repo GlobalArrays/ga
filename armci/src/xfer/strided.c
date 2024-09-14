@@ -27,17 +27,9 @@
 #if defined(CLIENT_BUF_BYPASS)
 #define CAN_REQUEST_DIRECTLY _armci_bypass
 #else
-#  if defined(HITACHI)
-#    define CAN_REQUEST_DIRECTLY 0
-#  else
 #    define CAN_REQUEST_DIRECTLY 1
-#  endif
 #endif
 
-#if defined(BGML) || defined(ARMCIX)
-#define PREPROCESS_STRIDED(tmp_count)
-#define POSTPROCESS_STRIDED(tmp_count)
-#else
 #define BIGINT 2147483647
 #define PREPROCESS_STRIDED(tmp_count) {					\
     tmp_count=0;							\
@@ -54,7 +46,6 @@
     }									\
   }
 #define POSTPROCESS_STRIDED(tmp_count) if(tmp_count)seg_count[1]=tmp_count
-#endif
 
 #define SERVER_GET 1
 #define SERVER_NBGET 2
@@ -139,21 +130,7 @@ int armci_iwork[MAX_STRIDE_LEVEL];
 static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, 
                           int bytes, int count, int src_stride, int dst_stride)
 {
-#ifdef LAPI
-  int armci_th_idx = ARMCI_THREAD_IDX;
-#endif
-    
-#ifdef LAPI2__
-#  define COUNT 1
-#else
-#  define COUNT count
-#endif
-
-#ifdef __crayx1
-  int shmem = 1;
-#else
   int shmem = SAMECLUSNODE(proc);
-#endif
 
   if(shmem) {
         
@@ -166,23 +143,7 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
     }else {
             
       if(bytes < THRESH){ /* low-latency copy for small data segments */        
-#if defined(__crayx1)
-	if( !(bytes%sizeof(float)) ) {
-	  float *ps=(float*)src_ptr;
-	  float *pd=(float*)dst_ptr;
-	  long fsstride = src_stride/sizeof(float);
-	  long fdstride = dst_stride/sizeof(float);
-	  int j;
-                
-	  for (j = 0;  j < count;  j++){
-	    int i;
-#pragma _CRI concurrent
-	    for(i=0;i<bytes/sizeof(float);i++) pd[i] = ps[i];
-	    ps += fsstride;
-	    pd += fdstride;
-	  }
-	} else
-#endif
+
 	  {
 	    char *ps=(char*)src_ptr;
 	    char *pd=(char*)dst_ptr;
@@ -220,10 +181,7 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
         
     if(op==PUT){ 
             
-      UPDATE_FENCE_STATE(proc, PUT, COUNT);
-#ifdef LAPI
-      SET_COUNTER(ack_cntr[armci_th_idx],COUNT);
-#endif
+      UPDATE_FENCE_STATE(proc, PUT, count);
       if(count==1){
 	armci_put(src_ptr, dst_ptr, bytes, proc);
       }else{
@@ -233,9 +191,6 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
             
     }else{
             
-#ifdef LAPI
-      SET_COUNTER(get_cntr[armci_th_idx], COUNT);
-#endif
       if(count==1){
 	armci_get(src_ptr, dst_ptr, bytes, proc);
       }else{
@@ -245,34 +200,6 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
     }
   }
 }
-
-
-#if (defined(CRAY) && !defined(__crayx1)) || defined(FUJITSU)
-#ifdef CRAY
-#  define DAXPY  SAXPY
-#else
-#  define DAXPY  daxpy_
-#endif
-
-static int ONE=1;
-#define THRESH_ACC 32
-
-static void daxpy_2d_(void* alpha, int *rows, int *cols, void *a, int *ald,
-		      void* b, int *bld)
-{
-  int c,r;   
-  double *A = (double*)a;
-  double *B = (double*)b;
-  double Alpha = *(double*)alpha;
-
-  if(*rows < THRESH_ACC)
-    for(c=0;c<*cols;c++)
-      for(r=0;r<*rows;r++)
-	A[c* *ald+ r] += Alpha * B[c* *bld+r];
-  else for(c=0;c<*cols;c++)
-    DAXPY(rows, alpha, B + c* *bld, &ONE, A + c* *ald, &ONE);
-}
-#endif
 
 
 void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes, int lockit)
@@ -474,13 +401,8 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
   int total_of_2D;
   int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
 
-#   if defined(ACC_COPY)
-      
-#      ifdef ACC_SMP
-  if(ARMCI_ACC(op) && !(SAMECLUSNODE(proc)) )
-#      else
+#   if defined(ACC_COPY)      
     if ( ARMCI_ACC(op) && proc!=armci_me)
-#      endif
       /* copy remote data, accumulate, copy back*/
       return (armci_acc_copy_strided(op,scale, proc, src_ptr, src_stride_arr,
 				     dst_ptr, dst_stride_arr, count, stride_levels));
@@ -497,21 +419,6 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
 
   /*    if(proc!=armci_me) INTR_OFF;*/
 
-#  if defined(LAPI2) || defined(PORTALS) /*|| defined(DOELAN4) && !defined(NB_NONCONT)*/
-  /*even 1D armci_nbput has to use different origin counters for 1D */
-#   if defined(LAPI2)
-  if(!ARMCI_ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
-					 (!nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD))) 
-#   elif defined(DOELAN4) && !defined(NB_NONCONT)
-    /*if(!ARMCI_ACC(op) && !SAMECLUSNODE(proc) && nb_handle && stride_levels<2)*/
-    if(!ARMCI_ACC(op) && !SAMECLUSNODE(proc) && stride_levels<2)
-#   else
-      if(!SAMECLUSNODE(proc))
-#   endif
-	armci_network_strided(op,scale,proc,src_ptr,src_stride_arr,dst_ptr,
-			      dst_stride_arr,count,stride_levels,nb_handle);
-      else
-#  endif
 	switch (stride_levels) {
 	case 0: /* 1D copy */ 
 
@@ -574,22 +481,6 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
           
 	  }
 	}
-    
-  /* deal with non-blocking loads and stores */
-#if defined(LAPI) || defined(_ELAN_PUTGET_H) || defined(NB_NONCONT)
-#   if defined(LAPI)
-  if(!nb_handle)
-#   endif
-    {
-      if(!(SAMECLUSNODE(proc))){
-	if(op == GET){
-	  WAIT_FOR_GETS; /* wait for data arrival */
-	}else { 
-	  WAIT_FOR_PUTS; /* data must be copied out*/ 
-	}
-      }
-    }
-#endif
 
   /*    if(proc!=armci_me) INTR_ON;*/
 
@@ -636,17 +527,10 @@ static int _armci_puts(void *src_ptr,
   if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
   if(proc<0)return FAIL5;
 
-#ifdef __crayx1
-  if(!stride_levels) {
-    memcpy(dst_ptr, src_ptr,count[0]);
-    return 0;
-  }
-#endif
-
   PREPROCESS_STRIDED(tmp_count);
-#  if (!defined(QUADRICS) || defined(PACKPUT))
+#  if defined(PACKPUT)
   direct=SAMECLUSNODE(proc);
-#  endif /*(!QUADRICS||!PACKPUT)&&!PORTALS*/
+#  endif /*PACKPUT*/
 
   if(put_flag) dassert(1,nbh==NULL);
 
@@ -674,72 +558,7 @@ static int _armci_puts(void *src_ptr,
       nbh->bufid=NB_NONE;
     }
   }
-   
-#ifdef BGML
-  if(nbh) {
-    nbh->count = 1;
-    BGML_Callback_t cb_wait={wait_callback, &nbh->count};
-    BG1S_MemputS (&nbh->cmpl_info, proc,
-		  src_ptr, src_stride_arr,
-		  dst_ptr, dst_stride_arr,
-		  seg_count, stride_levels,
-		  0, &cb_wait, 1);
-  }
-  else if(!stride_levels) {
-    unsigned temp_count=1;
-    BGML_Callback_t cb_wait={wait_callback, &temp_count};
-    BG1S_t request;
-    BGML_CriticalSection_enter();
-    BG1S_Memput(&request, proc, src_ptr, 0, dst_ptr, count[0], &cb_wait, 1);
-    /*BGML_Wait(&count);*/
-    while (temp_count) BGML_Messager_advance();
-    BGML_CriticalSection_exit();
-  }
-  else {
-    armci_hdl_t nb_handle;
-    ARMCI_INIT_HANDLE(&nb_handle);
-    PARMCI_NbPutS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count,
-		 stride_levels, proc, &nb_handle);
-    PARMCI_Wait(&nb_handle);
-  }
-  if(put_flag) { /*=>!nbh*/
-    PARMCI_Fence(proc);
-    PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
-  }
-#elif ARMCIX
-  if(nbh) 
-    ARMCIX_NbPutS (src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, nbh);
-  else if(!stride_levels) {
-    ARMCIX_Put(src_ptr, dst_ptr, count[0], proc);
-  }
-  else {
-    ARMCIX_PutS (src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc);
-  }
-  if(put_flag) { /*=>!nbh*/
-    PARMCI_Fence(proc);
-    PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
-  }
-#else /*BGML*/
-
-  /* use direct protocol for remote access when performance is better */
-#  if defined(LAPI) || defined(DOELAN4)
-  if(!direct) {
-    switch(stride_levels) {
-    case 0:
-#      ifndef LAPI_RDMA
-       direct =1;
-#      endif
-       break;
-    case 1:  if((count[1]<PACKPUT)||count[0]>LONG_PUT_THRESHOLD) direct =1; break;
-    default: if(count[0]> LONG_PUT_THRESHOLD )direct=1; break;
-    }
-  }
-#  endif /*LAPI||DOELAN4*/
-#  ifdef PORTALS
-     if(stride_levels) direct=1;
-#  endif
   
-#  if !defined(LAPI2) || defined(LAPI_RDMA)
   if(!direct){
 #    ifdef ALLOW_PIN /*if we can pin, we do*/
     if(!stride_levels && 
@@ -817,9 +636,7 @@ static int _armci_puts(void *src_ptr,
 #      endif /*VAPI*/
 #    endif /*ALLOW_PIN*/
   }
-#endif /* !LAPI2||LAPI_RDMA */
   
-#  ifndef LAPI2
   if(!direct){
     if(nbh) { DO_FENCE(proc,SERVER_PUT); }
     else    { DO_FENCE(proc,SERVER_NBPUT); }
@@ -851,14 +668,10 @@ static int _armci_puts(void *src_ptr,
       }
   }
   else
-#  endif /*!LAPI*/
     {
       if(!nbh && stride_levels == 0) {
 	armci_copy_2D(PUT, proc, src_ptr, dst_ptr, count[0], 1, count[0],
 		      count[0]);
-#  if defined(LAPI) || defined(_ELAN_PUTGET_H)
-	if(proc != armci_me) { WAIT_FOR_PUTS; }
-#  endif /*LAPI||_ELAN_PUTGET_H*/
       }
       else {
 	rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
@@ -870,7 +683,6 @@ static int _armci_puts(void *src_ptr,
 	PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
       }
     }
-#endif /*BGML*/
   POSTPROCESS_STRIDED(tmp_count);
   if(rc) return FAIL6;
   else return 0;
@@ -978,80 +790,22 @@ static int _armci_accs( int  optype,    void *scale,
   }
 
   PREPROCESS_STRIDED(tmp_count);
-#ifdef BGML
-  armci_ihdl_t inbh;
-  armci_hdl_t tmp_hdl;
-  if(nbh) inbh = nbh;
-  else {
-    ARMCI_INIT_HANDLE(&tmp_hdl);
-    inbh = (armci_ihdl_t)&tmp_hdl;
-  }
-  inbh->count=1;
-  BGML_Callback_t cb_wait={wait_callback, &inbh->count};
-    
-  BGML_Op oper1=BGML_PROD;
-  BGML_Op oper2=BGML_SUM;
-  BGML_Dt dt;
-  switch(optype) {
-  case ARMCI_ACC_INT:
-  case ARMCI_ACC_LNG:
-    dt=BGML_SIGNED_INT;
-    break;
-#if 0
-  case ARMCI_ACC_LNG:
-    dt=BGML_SIGNED_LONG;
-    break;
-#endif
-  case ARMCI_ACC_DBL:
-    dt=BGML_DOUBLE;
-    break;
-  case ARMCI_ACC_CPL:
-    dt=BGML_SINGLE_COMPLEX;
-    break;
-  case ARMCI_ACC_DCP:
-    dt=BGML_DOUBLE_COMPLEX;
-    break;
-  case ARMCI_ACC_FLT:
-    dt=BGML_FLOAT;
-    break;
-  default:
-    assert(0);
-  }
-    
-  BG1S_AccumulateS (&inbh->cmpl_info, proc,
-		    src_ptr, src_stride_arr,
-		    dst_ptr, dst_stride_arr,
-		    seg_count, stride_levels,
-		    scale, 0,
-		    dt, oper1, oper2,
-		    &cb_wait, 1);
-
-  if(!nbh) PARMCI_Wait(&tmp_hdl);
-#elif ARMCIX
-  if(!nbh)
-    ARMCIX_AccS (optype, scale, src_ptr, src_stride_arr, dst_ptr,
-		 dst_stride_arr, count, stride_levels, proc);
-  else
-    ARMCIX_NbAccS (optype, scale, src_ptr, src_stride_arr, dst_ptr,
-		   dst_stride_arr, count, stride_levels, proc, nbh);
-#else 
 
   direct=SAMECLUSNODE(proc);
 
-#   if defined(ACC_COPY) && !defined(ACC_SMP)
+#if defined(ACC_COPY)
   if(armci_me != proc) direct=0;
-#   endif /*ACC_COPY && !ACC_SMP*/
-       
-  if(direct)
+#endif /*ACC_COPY*/
+
+  if(direct) {
     rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,
 			  dst_stride_arr, count, stride_levels,1,NULL);
-  else{
+  } else {
     if(nbh) { DO_FENCE(proc,SERVER_NBPUT); }
     else { DO_FENCE(proc,SERVER_PUT); }
     rc = armci_pack_strided(optype,scale,proc,src_ptr, src_stride_arr,dst_ptr,
 			    dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,nbh);
   }
-#endif /*BGML*/
   POSTPROCESS_STRIDED(tmp_count);
   if(rc) return FAIL6;
   else return 0;  
@@ -1096,12 +850,8 @@ int PARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc) {
 int PARMCI_Get(void *src, void* dst, int bytes, int proc) {
   int rc=0;
   
-#ifdef __crayx1
-  memcpy(dst,src,bytes);   
-#else
   rc = PARMCI_GetS(src, NULL, dst, NULL, &bytes, 0, proc);
-#endif
-  
+
   dassert(1,rc==0);
   return rc;
 }
@@ -1341,22 +1091,7 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
   if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
   if(proc<0)return FAIL5;
 
-#ifdef BGML
-  armci_ihdl_t nbh;
-  set_nbhandle(&nbh, usr_hdl, PUT, proc);
-  nbh->count=1;
-  BGML_Callback_t cb_wait={wait_callback, &nbh->count};
-
-  BG1S_MemgetS (&nbh->cmpl_info, proc,
-		src_ptr, src_stride_arr,
-		dst_ptr, dst_stride_arr,
-		seg_count, stride_levels,
-		0, &cb_wait, 1);
-#else
-
-#if !defined(QUADRICS)
   direct=SAMECLUSNODE(proc);
-#endif
   PREPROCESS_STRIDED(tmp_count);
 
   /* aggregate get */
@@ -1384,17 +1119,6 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
       nb_handle = (armci_ihdl_t)armci_set_implicit_handle(GET, proc);
   }
 
-#ifdef LAPI_RDMA
-  if(stride_levels == 0 || count[0] > LONG_GET_THRESHOLD) 
-      direct=0;
-#endif
-
-#ifdef PORTALS
-  if(stride_levels) 
-      direct=1;
-#endif
-  
-#if !defined(LAPI2) || defined(LAPI_RDMA)
   if(!direct){
 #     ifdef ALLOW_PIN
     if(!stride_levels && 
@@ -1406,54 +1130,30 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     }
 #     endif
   }
-#endif /*!LAPI||LAPI_RDMA */
   
-#ifndef LAPI2
   if(!direct){
     DO_FENCE(proc,SERVER_NBGET);
 #if defined(DATA_SERVER) && (defined(SOCKETS) || defined(CLIENT_BUF_BYPASS) )
     /* for larger strided or 1D reqests buffering can be avoided to send data
      * we can try to bypass the packetization step and send request directly
      */
-    /* JAD 4/17/18
-     * This code was never executed, shown by gcc -Werror=type-limits
-     * 'comparison is always false due to limited range of data type'.
-     * count[0] is an int, LONG_GET_THRESHOLD is 2147483648 (int max).
-     * So this is always false. */
-#if 0
-    if(CAN_REQUEST_DIRECTLY && ((count[0]> LONG_GET_THRESHOLD) ||
-				(stride_levels && count[0]>LONG_GET_THRESHOLD_STRIDED) ) ) {
-
-      int nobuf =1; /* tells the sending routine not to buffer */
-      rc = armci_rem_strided(GET, NULL, proc,src_ptr,src_stride_arr,dst_ptr,
-			     dst_stride_arr, count, stride_levels,
-			     (ext_header_t*)0,nobuf,nb_handle);
-      if(rc) goto DefaultPath; /* attempt to avoid buffering failed */ 
-
-    }else
-    DefaultPath: /* standard buffered path */
-#endif
-#endif
-#ifdef ARMCIX
-      rc = ARMCIX_NbGetS (src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, nb_handle);
-#else
     rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
 			    dst_ptr,dst_stride_arr,count,stride_levels,
 			    NULL,-1,-1,-1,nb_handle);
-#endif
-  }else
+  } else
 #else
     /* avoid LAPI_GetV */
-    if(stride_levels==1 && count[0]>320 && !direct) 
+    if(stride_levels==1 && count[0]>320 && !direct) {
       ARMCI_REM_GET(proc,src_ptr,src_stride_arr,dst_ptr,
 		    dst_stride_arr, count, stride_levels, nb_handle);
-    else
+    } else
 #endif
+    {
       rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, dst_ptr,
 			    dst_stride_arr,count, stride_levels,0,nb_handle);
+    }
 
   POSTPROCESS_STRIDED(tmp_count);
-#endif /*bgml*/
 
   if(rc) return FAIL6;
   else return 0;
@@ -1478,7 +1178,7 @@ int PARMCI_NbAccS( int  optype,            /* operation */
 }
 
 
-#if !defined(ACC_COPY)&&!defined(CRAY_YMP)&&!defined(CYGNUS)&&!defined(CYGWIN) &&!defined(BGML)&&!defined(DCMF)
+#if !defined(ACC_COPY)&&!defined(CYGNUS)&&!defined(CYGWIN)
 #   define REMOTE_OP
 #endif
 
@@ -1510,9 +1210,6 @@ int PARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 static void _armci_op_value(int op, void *src, void *dst, int proc, 
 			    int bytes, armci_hdl_t *usr_hdl) {
   int rc=0,pv=0;
-#ifdef LAPI
-  int armci_th_idx = ARMCI_THREAD_IDX;
-#endif
   armci_ihdl_t nbh = (armci_ihdl_t)usr_hdl;
 
   if(!nbh) {
@@ -1533,50 +1230,18 @@ static void _armci_op_value(int op, void *src, void *dst, int proc,
       nbh->bufid=NB_NONE;
     }
   }
-#if defined(REMOTE_OP) && !defined(QUADRICS)
+#if defined(REMOTE_OP)
   rc = armci_rem_strided(op, NULL, proc, src, NULL, dst, NULL,
 			 &bytes, 0, NULL, 0, nbh);
   if(rc) armci_die("ARMCI_Value: armci_rem_strided incomplete", FAIL6);
 #else
   if(op==PUT) {
     UPDATE_FENCE_STATE(proc, PUT, 1);
-#  ifdef LAPI
-    SET_COUNTER(ack_cntr[armci_th_idx], 1);
-#  endif
-#  if defined(BGML) || defined(ARMCIX)
-    if(usr_hdl) PARMCI_NbPut(src,dst,bytes,proc,usr_hdl);
-    else PARMCI_Put(src,dst,bytes,proc);
-#  else
     armci_put(src, dst, bytes, proc);
-#  endif
   }
   else {
-#  ifdef LAPI
-    SET_COUNTER(get_cntr[armci_th_idx], 1);
-#  endif
-#  if defined(BGML) || defined(ARMCIX)
-    if(usr_hdl) PARMCI_NbGet(src,dst,bytes,proc,usr_hdl);
-    else PARMCI_Get(src,dst,bytes,proc);
-#  else
     armci_get(src, dst, bytes, proc);
-#  endif
   }
-    
-  /* deal with non-blocking loads and stores */
-#  if defined(LAPI) || defined(_ELAN_PUTGET_H)
-#    ifdef LAPI
-  if(!nbh)
-#    endif
-    {
-      if(proc != armci_me){
-	if(op == GET){
-	  WAIT_FOR_GETS; /* wait for data arrival */
-	}else {
-	  WAIT_FOR_PUTS; /* data must be copied out*/
-	}
-      }
-    }
-#  endif
 #endif
 }
 

@@ -62,6 +62,9 @@ install (FILES
   DESTINATION include/ga
 )
 
+list (APPEND GA_HEADER_PATHS ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+set (GA_HEADER_PATHS ${GA_HEADER_PATHS} PARENT_SCOPE)
+
 # -------------------------------------------------------------
 # MA library installation
 # -------------------------------------------------------------
@@ -88,7 +91,7 @@ endif()
 
 if(ENABLE_TESTS)
   if (ENABLE_FORTRAN)
-    ga_add_parallel_test(ma/testf testf.F)
+    ga_add_parallel_test(ma/testf testf.F Fortran)
     set_tests_properties(ma/testf PROPERTIES WILL_FAIL TRUE)
   endif()
   ga_add_parallel_test(ma/test-coalesce test-coalesce.c)

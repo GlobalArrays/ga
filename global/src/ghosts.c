@@ -64,8 +64,6 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 #define INVALID_MA_HANDLE -1 
 #define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
 
-#define BYTE_ADDRESSABLE_MEMORY
-
 /*uncomment line below to verify consistency of MA in every sync */
 /*#define CHECK_MA yes */
 
@@ -175,7 +173,6 @@ Integer me = pnga_nodeid();
         break;        
    }
 
-#ifdef BYTE_ADDRESSABLE_MEMORY
    /* check the allignment */
    lptr = (unsigned long)ptr;
    if( lptr%elemsize != lref%elemsize ){ 
@@ -184,7 +181,6 @@ Integer me = pnga_nodeid();
        pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
-#endif
 
    /* adjust index for Fortran addressing */
    (*index) ++ ;
@@ -268,7 +264,6 @@ unsigned long    lref=0, lptr=0;
 
    }
 
-#ifdef BYTE_ADDRESSABLE_MEMORY
    /* check the allignment */
    lptr = (unsigned long)ptr;
    if( lptr%elemsize != lref%elemsize ){ 
@@ -277,7 +272,6 @@ unsigned long    lref=0, lptr=0;
        pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
-#endif
 
    /* adjust index for Fortran addressing */
    (*index) ++ ;
@@ -1754,8 +1748,8 @@ logical pnga_update4_ghosts(Integer g_a)
 
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
-  snd_ptr_orig = snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
-  rcv_ptr_orig = rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
+  snd_ptr_orig = snd_ptr = pnga_malloc(buflen, GA[handle].type, send_name);
+  rcv_ptr_orig = rcv_ptr = pnga_malloc(buflen, GA[handle].type, rcv_name);
 
   /* loop over dimensions for sequential update using shift algorithm */
   for (idx=0; idx < ndim; idx++) {
@@ -1931,8 +1925,8 @@ logical pnga_update4_ghosts(Integer g_a)
     }
   }
 
-  ga_free(rcv_ptr_orig);
-  ga_free(snd_ptr_orig);
+  pnga_free(rcv_ptr_orig);
+  pnga_free(snd_ptr_orig);
   return TRUE;
 }
 
@@ -2066,8 +2060,8 @@ logical pnga_update44_ghosts(Integer g_a)
   bufsize = size*buflen;
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
-  snd_ptr_orig = snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
-  rcv_ptr_orig = rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
+  snd_ptr_orig = snd_ptr = pnga_malloc(buflen, GA[handle].type, send_name);
+  rcv_ptr_orig = rcv_ptr = pnga_malloc(buflen, GA[handle].type, rcv_name);
 
   /* loop over dimensions for sequential update using shift algorithm */
   for (idx=0; idx < ndim; idx++) {
@@ -2421,8 +2415,8 @@ logical pnga_update44_ghosts(Integer g_a)
       increment[idx] = 2*width[idx];
   }
 
-  ga_free(rcv_ptr_orig);
-  ga_free(snd_ptr_orig);
+  pnga_free(rcv_ptr_orig);
+  pnga_free(snd_ptr_orig);
   free(_ga_map);
   free(_ga_proclist);
   return TRUE;
@@ -3171,8 +3165,8 @@ logical pnga_update5_ghosts(Integer g_a)
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
 
-  snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
-  rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
+  snd_ptr = pnga_malloc(buflen, GA[handle].type, send_name);
+  rcv_ptr = pnga_malloc(buflen, GA[handle].type, rcv_name);
 #endif
  
   cache = (char *)GA[handle].cache;
@@ -3545,11 +3539,7 @@ void pnga_update_ghosts(Integer g_a)
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if(local_sync_begin)pnga_pgroup_sync(GA[handle].p_handle);
 
-#ifdef CRAY_T3D
-   if (!pnga_update5_ghosts(g_a))
-#else
    if (!pnga_update4_ghosts(g_a))
-#endif
    {
      pnga_update1_ghosts(g_a);
    }
@@ -3711,8 +3701,8 @@ logical pnga_update6_ghosts(Integer g_a)
   bufsize = size*buflen;
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
-  snd_ptr_orig = snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
-  rcv_ptr_orig = rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
+  snd_ptr_orig = snd_ptr = pnga_malloc(buflen, GA[handle].type, send_name);
+  rcv_ptr_orig = rcv_ptr = pnga_malloc(buflen, GA[handle].type, rcv_name);
 
   _ga_map = malloc((GAnproc*2*MAXDIM+1)*sizeof(Integer));
   if(!_ga_map) pnga_error("pnga_update6_ghosts:malloc failed (_ga_map)",0);
@@ -4113,8 +4103,8 @@ logical pnga_update6_ghosts(Integer g_a)
     increment[idx] = 2*width[idx];
   }
 
-  ga_free(rcv_ptr_orig);
-  ga_free(snd_ptr_orig);
+  pnga_free(rcv_ptr_orig);
+  pnga_free(snd_ptr_orig);
   /* set update flags to zero for next operation */
   for (idx=0; idx < 2*ndim; idx++) {
     GA_Update_Flags[GAme][idx] = 0;
@@ -4381,11 +4371,7 @@ logical pnga_set_ghost_info(Integer g_a)
     free(GA[handle].cache);
   GA[handle].cache = NULL;
   if (GA[handle].actv == 1) {
-#ifdef CRAY_T3D
-    return pnga_set_update5_info(g_a);
-#else
     return pnga_set_update4_info(g_a);
-#endif
   }
   return TRUE;
 }

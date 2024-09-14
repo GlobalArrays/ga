@@ -38,6 +38,9 @@
 #if HAVE_STRING_H
 #   include <string.h>
 #endif
+#if HAVE_STRINGS_H
+#   include <strings.h>
+#endif
 #if HAVE_STDLIB_H
 #   include <stdlib.h>
 #endif
@@ -77,7 +80,7 @@ static int calc_maplen(int handle);
 /*#define CHECK_MA yes */
 
 /*uncomment line below to verify if MA base address is alligned wrt datatype*/
-#if !(defined(LINUX) || defined(CRAY) || defined(CYGWIN))
+#if !(defined(LINUX) || defined(CYGWIN))
 #define CHECK_MA_ALGN 1
 #endif
 
@@ -173,7 +176,6 @@ int ga_spare_procs;
 #define ga_ComputeIndexM(_index, _ndim, _subscript, _dims)                     \
 {                                                                              \
   Integer  _i, _factor=1;                                                      \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0,*(_index)=0; _i<_ndim; _i++){                                       \
       *(_index) += _subscript[_i]*_factor;                                     \
       if(_i<_ndim-1)_factor *= _dims[_i];                                      \
@@ -186,7 +188,6 @@ int ga_spare_procs;
 #define ga_UpdateSubscriptM(_ndim, _subscript, _lo, _hi, _dims)\
 {                                                                              \
   Integer  _i;                                                                 \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0; _i<_ndim; _i++){                                                   \
        if(_subscript[_i] < _hi[_i]) { _subscript[_i]++; break;}                \
        _subscript[_i] = _lo[_i];                                               \
@@ -200,7 +201,6 @@ int ga_spare_procs;
 {                                                                              \
   Integer  _i;                                                                 \
   *_elems = 1;                                                                 \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0; _i<_ndim; _i++){                                                   \
        *_elems *= _hi[_i]-_lo[_i] +1;                                          \
        _subscript[_i] = _lo[_i];                                               \
@@ -218,8 +218,28 @@ Integer GAsizeof(Integer type)
      case C_FLOAT : return (sizeof(float));
      case C_LONG : return (sizeof(long));
      case C_LONGLONG : return (sizeof(long long));
+     case F_DBL : return (sizeof(DoublePrecision));
+     case F_INT  : return (sizeof(Integer));
           default   : return 0; 
   }
+}
+
+void* pnga_malloc(Integer nelem, int type, char *name)
+{
+#ifdef USE_GA_MALLOC
+  return ga_malloc(nelem, type, name);
+#else
+  return malloc(nelem*GAsizeof(type));
+#endif
+}
+
+void pnga_free(void *ptr)
+{
+#ifdef USE_GA_MALLOC
+  ga_free(ptr);
+#else
+  free(ptr);
+#endif
 }
 
 
@@ -675,7 +695,6 @@ void pnga_initialize_ltd(Integer mem_limit)
 {\
 int _d;\
     if(ndim<1||ndim>MAXDIM) pnga_error("unsupported number of dimensions",ndim);\
-  __CRAYX1_PRAGMA("_CRI novector");                                         \
     for(_d=0; _d<ndim; _d++)\
          if(dims[_d]<1)pnga_error("wrong dimension specified",dims[_d]);\
 }
@@ -4259,7 +4278,7 @@ void pnga_randomize(Integer g_a, void* val)
         for(i=0; i<elems;i++)((int*)ptr)[i]=*(int*) val * ((int)rand())/RAND_MAX;
         break;
       case C_FLOAT:
-        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*) val * ((float)rand())/RAND_MAX;
+        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*) val * ((float)rand())/(size_t)RAND_MAX;
         break;     
       case C_LONG:
         for(i=0; i<elems;i++)((long*)ptr)[i]=*(long*) val * ((long)rand())/RAND_MAX;
@@ -4290,7 +4309,7 @@ void pnga_randomize(Integer g_a, void* val)
         for(i=0; i<elems;i++)((int*)ptr)[i]=*(int*)val * ((int)rand())/RAND_MAX;
         break;
       case C_FLOAT:
-        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*)val * ((float)rand())/RAND_MAX;
+        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*)val * ((float)rand())/(size_t)RAND_MAX;
         break;     
       case C_LONG:
         for(i=0; i<elems;i++)((long*)ptr)[i]=*(long*)val * ((long)rand())/RAND_MAX;
@@ -4552,9 +4571,7 @@ logical pnga_locate_nnodes( Integer g_a,
   ga_check_handleM(g_a, "nga_locate_nnodes");
 
   ga_handle = GA_OFFSET + g_a;
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
   for(d = 0; d< GA[ga_handle].ndim; d++)
     if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))return FALSE;
 
@@ -4563,9 +4580,7 @@ logical pnga_locate_nnodes( Integer g_a,
   if (GA[ga_handle].distr_type == REGULAR) {
     /* find "processor coordinates" for the top left corner and store them
      * in ProcT */
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
     for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
           GA[ga_handle].scale[d], lo[d], &procT[d]);
@@ -4574,9 +4589,7 @@ logical pnga_locate_nnodes( Integer g_a,
 
     /* find "processor coordinates" for the right bottom corner and store
      * them in procB */
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
     for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
           GA[ga_handle].scale[d], hi[d], &procB[d]);
@@ -4634,10 +4647,6 @@ logical pnga_locate_nnodes( Integer g_a,
   }
   return(TRUE);
 }
-#ifdef __crayx1
-#pragma _CRI inline nga_locate_nnodes_
-#endif
-
 
 /**
  *  Locate individual patches and their owner of specified patch of a
@@ -4684,9 +4693,7 @@ logical pnga_locate_region( Integer g_a,
   ga_check_handleM(g_a, "nga_locate_region");
 
   ga_handle = GA_OFFSET + g_a;
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
   for(d = 0; d< GA[ga_handle].ndim; d++)
     if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))return FALSE;
 
@@ -4695,9 +4702,7 @@ logical pnga_locate_region( Integer g_a,
   if (GA[ga_handle].distr_type == REGULAR) {
     /* find "processor coordinates" for the top left corner and store them
      * in ProcT */
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
     for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
           GA[ga_handle].scale[d], lo[d], &procT[d]);
@@ -4706,9 +4711,7 @@ logical pnga_locate_region( Integer g_a,
 
     /* find "processor coordinates" for the right bottom corner and store
      * them in procB */
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
     for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
           GA[ga_handle].scale[d], hi[d], &procB[d]);
@@ -4736,14 +4739,9 @@ logical pnga_locate_region( Integer g_a,
 
       offset = *np *(ndim*2); /* location in map to put patch range */
 
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
       for(d = 0; d< ndim; d++)
         map[d + offset ] = lo[d] < _lo[d] ? _lo[d] : lo[d];
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
       for(d = 0; d< ndim; d++)
         map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
 
@@ -4770,9 +4768,7 @@ logical pnga_locate_region( Integer g_a,
 
     /* find "processor coordinates" for the right bottom corner and store
      * them in procB */
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
     for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].num_blocks[d], 
           GA[ga_handle].scale[d], hi[d], &procB[d]);
@@ -4801,14 +4797,10 @@ logical pnga_locate_region( Integer g_a,
 
       offset = *np *(ndim*2); /* location in map to put patch range */
 
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
       for(d = 0; d< ndim; d++)
         map[d + offset ] = lo[d] < _lo[d] ? _lo[d] : lo[d];
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
       for(d = 0; d< ndim; d++)
         map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
 
@@ -4905,9 +4897,6 @@ logical pnga_locate_region( Integer g_a,
   }
   return(TRUE);
 }
-#ifdef __crayx1
-#pragma _CRI inline pnga_locate_region
-#endif
 
 /**
  *  Returns the processor grid for the global array
@@ -5656,7 +5645,7 @@ Integer pnga_total_blocks(Integer g_a)
 }
 
 /**
- *  Return true if GA uses SCALPACK data distribution
+ *  Return true if GA uses SCALPACK or TILED data distribution
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_uses_proc_grid =  pnga_uses_proc_grid
@@ -5668,6 +5657,19 @@ logical pnga_uses_proc_grid(Integer g_a)
   return (logical)(GA[ga_handle].distr_type == SCALAPACK
       || GA[ga_handle].distr_type == TILED ||
       GA[ga_handle].distr_type == TILED_IRREG);
+}
+
+/**
+ *  Return true if GA uses IRREGULAR TILED data distribution
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_uses_irreg_proc_grid =  pnga_uses_irreg_proc_grid
+#endif
+
+logical pnga_uses_irreg_proc_grid(Integer g_a)
+{
+  Integer ga_handle = GA_OFFSET + g_a;
+  return (GA[ga_handle].distr_type == TILED_IRREG);
 }
 
 /**
@@ -5736,6 +5738,25 @@ void pnga_get_block_info(Integer g_a, Integer *num_blocks, Integer *block_dims)
   }
   return;
 }
+
+/**
+ *  Return pointers to map array and block dims for irregular
+ *  tiled distributions
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get_map_info =  pnga_get_map_info
+#endif
+
+void pnga_get_map_info(Integer g_a, Integer *num_blocks, Integer **map)
+{
+  Integer ga_handle = GA_OFFSET + g_a;
+  Integer i;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    num_blocks[i] = GA[ga_handle].num_blocks[i];
+  }
+  *map = GA[ga_handle].mapc;
+}
+
 
 /**
  *  Set the value of internal debug flag

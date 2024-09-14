@@ -55,6 +55,7 @@ extern logical pnga_destroy_mutexes();
 extern void pnga_distribution(Integer g_a, Integer proc, Integer *lo, Integer *hi);
 extern logical pnga_duplicate(Integer g_a, Integer *g_b, char *array_name);
 extern void pnga_fill(Integer g_a, void* val);
+extern void pnga_free(void* ptr);
 extern void pnga_get_block_info(Integer g_a, Integer *num_blocks,
                                 Integer *block_dims);
 extern logical pnga_get_debug();
@@ -79,7 +80,7 @@ extern logical pnga_locate_nnodes(Integer g_a, Integer *lo, Integer *hi, Integer
 extern logical pnga_locate_region(Integer g_a, Integer *lo, Integer *hi,
                                   Integer *map, Integer *proclist, Integer *np);
 extern void pnga_lock(Integer mutex);
-extern Integer pnga_ndim(Integer g_a);
+extern void* pnga_malloc(Integer nelem, int type, char *name);
 extern void pnga_mask_sync(Integer begin, Integer end);
 extern Integer pnga_memory_avail();
 extern logical pnga_memory_limited();
@@ -88,6 +89,7 @@ extern void pnga_merge_distr_patch(Integer g_a, Integer *alo, Integer *ahi,
 extern void pnga_merge_mirrored(Integer g_a);
 extern void pnga_nblock(Integer g_a, Integer *nblock);
 
+extern Integer pnga_ndim(Integer g_a);
 extern Integer pnga_nnodes();
 extern Integer pnga_nodeid();
 extern logical pnga_overlay(Integer g_a, Integer g_p);
@@ -132,6 +134,8 @@ extern Integer pnga_total_blocks(Integer g_a);
 extern void pnga_unlock(Integer mutex);
 extern logical pnga_uses_ma();
 extern logical pnga_uses_proc_grid(Integer g_a);
+extern logical pnga_uses_irreg_proc_grid(Integer g_a);
+extern void pnga_get_map_info(Integer g_a, Integer *num_blocks, Integer **map);
 extern logical pnga_valid_handle(Integer g_a);
 extern Integer pnga_verify_handle(Integer g_a);
 extern void pnga_check_handle(Integer g_a, char *string);

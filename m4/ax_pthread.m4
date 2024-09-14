@@ -120,7 +120,7 @@ fi
 
 # We must check for the threads library under a number of different
 # names; the ordering is very important because some systems
-# (e.g. DEC) have both -lpthread and -lpthreads, where one of the
+# have both -lpthread and -lpthreads, where one of the
 # libraries is broken (non-POSIX).
 
 # Create a list of thread flags to try.  Items starting with a "-" are
@@ -158,14 +158,6 @@ case $host_os in
         # lthread: LinuxThreads port on FreeBSD (also preferred to -pthread)
 
         ax_pthread_flags="-kthread lthread $ax_pthread_flags"
-        ;;
-
-        hpux*)
-
-        # From the cc(1) man page: "[-mt] Sets various -D flags to enable
-        # multi-threading and also sets -lpthread."
-
-        ax_pthread_flags="-mt -pthread pthread $ax_pthread_flags"
         ;;
 
         openedition*)
@@ -208,7 +200,7 @@ AS_IF([test "x$GCC" = "xyes"],
 # correctly enabled
 
 case $host_os in
-        darwin* | hpux* | linux* | osf* | solaris*)
+        darwin* | linux* | osf* | solaris*)
         ax_pthread_check_macro="_REENTRANT"
         ;;
 

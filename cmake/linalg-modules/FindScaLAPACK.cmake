@@ -44,7 +44,7 @@ include( ${CMAKE_CURRENT_LIST_DIR}/LinAlgModulesMacros.cmake     )
 
 # SANITY CHECK
 if( "ilp64" IN_LIST ScaLAPACK_FIND_COMPONENTS AND "lp64" IN_LIST ScaLAPACK_FIND_COMPONENTS )
-  message( FATAL_ERROR "ScaLAPACK cannot link to both ILP64 and LP64 iterfaces" )
+  message( FATAL_ERROR "ScaLAPACK cannot link to both ILP64 and LP64 interfaces" )
 endif()
 
 
@@ -82,7 +82,7 @@ if( NOT ScaLAPACK_LIBRARIES )
   set( ScaLAPACK_INCLUDE_DIR         ${LAPACK_INCLUDE_DIR}         )
   set( ScaLAPACK_COMPILE_DEFINITIONS ${LAPACK_COMPILE_DEFINITIONS} )
   check_pdpotrf_exists( ScaLAPACK_LIBRARIES 
-    LAPACK_HAS_ScaLAPACK ScaLAPACK_FORTRAN_LOWER ScaLAPACK_FORTRAN_UNDERSCORE
+    LAPACK_HAS_ScaLAPACK ScaLAPACK_Fortran_LOWER ScaLAPACK_Fortran_UNDERSCORE
   )
 
   # If LAPACK has a full ScaLAPACK Linker, propagate vars
@@ -143,7 +143,7 @@ if( LAPACK_HAS_ScaLAPACK )
   set( ScaLAPACK_LINK_OK TRUE )
 else()
   check_pdpotrf_exists( ScaLAPACK_LIBRARIES 
-    ScaLAPACK_LINK_OK ScaLAPACK_FORTRAN_LOWER ScaLAPACK_FORTRAN_UNDERSCORE
+    ScaLAPACK_LINK_OK ScaLAPACK_Fortran_LOWER ScaLAPACK_Fortran_UNDERSCORE
   )
 endif()
 
@@ -152,10 +152,10 @@ if( ScaLAPACK_LINK_OK )
 
   # TODO: This requires running an MPI program, pretty dangerous
   #set( _pdpotrf_name "pdpotrf" )
-  #if( NOT ScaLAPACK_FORTRAN_LOWER )
+  #if( NOT ScaLAPACK_Fortran_LOWER )
   #  string( TOUPPER "${_pdpotrf_name}" _pdpotrf_name )
   #endif()
-  #if( ScaLAPACK_FORTRAN_UNDERSCORE )
+  #if( ScaLAPACK_Fortran_UNDERSCORE )
   #  set( _pdpotrf_name "${_pdpotrf_name}_" )
   #endif()
 
@@ -174,6 +174,11 @@ if( ScaLAPACK_LINK_OK )
     set( ScaLAPACK_ilp64_FOUND TRUE  )
     find_dependency( ILP64 )
     list( APPEND ScaLAPACK_COMPILE_OPTIONS "${ILP64_COMPILE_OPTIONS}" )
+    foreach ( lang C CXX Fortran )
+        if ( DEFINED ILP64_${lang}_COMPILE_OPTIONS )
+            list( APPEND ScaLAPACK_${lang}_COMPILE_OPTIONS "${ILP64_${lang}_COMPILE_OPTIONS}" )
+        endif()
+    endforeach()
   endif()
 
 else()

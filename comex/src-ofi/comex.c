@@ -49,7 +49,7 @@
 do {                                         \
     while ((_request)->state != rs_complete) \
     {                                        \
-        poll(0);                             \
+        myofi_poll(0);                             \
         PAUSE();                             \
     }                                        \
     reset_request((_request));               \
@@ -98,7 +98,7 @@ static uint32_t reply_tag = 0;
 static fastlock_t mutex_lock;
 static fastlock_t acc_lock;
 static fastlock_t poll_lock;
-static int poll(int* items_processed);
+static int myofi_poll(int* items_processed);
 static pthread_t tid = 0;
 
 static  int comex_acc_native(
@@ -644,7 +644,7 @@ static void* progress_thread_func(void* __data)
 {
     while (!progress_thread_complete)
     {
-        poll(0);
+        myofi_poll(0);
         PAUSE();
     }
     return 0;
@@ -1137,7 +1137,7 @@ do                                                                           \
       }                                                             \
   } while (0)
 
-static int poll(int* items_processed)
+static int myofi_poll(int* items_processed)
 {
     ssize_t ret = 0;
     int locked = 0;
@@ -1765,7 +1765,7 @@ int comex_wait_proc(int proc, comex_group_t group)
                       request->proc == proc && request->group == group &&
                       request->state == rs_progress)
                 {
-                    COMEX_CHKANDJUMP(poll(0), "failed to poll");
+                    COMEX_CHKANDJUMP(myofi_poll(0), "failed to poll");
                     PAUSE();
                 }
             }
@@ -1778,7 +1778,7 @@ int comex_wait_proc(int proc, comex_group_t group)
                 request_t* request = cache->request + i;
                 while (request->proc == proc && request->state == rs_progress)
                 {
-                    COMEX_CHKANDJUMP(poll(0), "failed to poll");
+                    COMEX_CHKANDJUMP(myofi_poll(0), "failed to poll");
                     PAUSE();
                 }
             }
@@ -1808,7 +1808,7 @@ static inline int wait_request(request_t* request)
 
     while (request->state == rs_progress)
     {
-        COMEX_CHKANDJUMP(poll(0), "failed to poll");
+        COMEX_CHKANDJUMP(myofi_poll(0), "failed to poll");
         PAUSE();
     }
 
@@ -1856,7 +1856,7 @@ int comex_test(comex_request_t* handle, int* status)
     /* process all CQ items in queue till request in 'progress' state
      * or queue is not empty (items_processed is not 0) */
     while (request->state == rs_progress && items_processed)
-        COMEX_CHKANDJUMP(poll(&items_processed), "failed to poll");
+        COMEX_CHKANDJUMP(myofi_poll(&items_processed), "failed to poll");
 
     *status = (request->state == rs_progress);
 
@@ -1881,7 +1881,7 @@ int comex_wait_all(comex_group_t group)
                 while (!(request->flags & rf_no_group_wait) &&
                       request->group == group && request->state == rs_progress)
                 {
-                    COMEX_CHKANDJUMP(poll(0), "failed to poll");
+                    COMEX_CHKANDJUMP(myofi_poll(0), "failed to poll");
                     PAUSE();
                 }
             }
@@ -1895,7 +1895,7 @@ int comex_wait_all(comex_group_t group)
                 while (!(request->flags & rf_no_group_wait) &&
                       request->state == rs_progress)
                 {
-                    COMEX_CHKANDJUMP(poll(0), "failed to poll");
+                    COMEX_CHKANDJUMP(myofi_poll(0), "failed to poll");
                     PAUSE();
                 }
             }

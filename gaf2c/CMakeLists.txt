@@ -44,6 +44,9 @@ install (FILES
   DESTINATION include/ga
 )
 
+list (APPEND GA_HEADER_PATHS ${CMAKE_CURRENT_BINARY_DIR})
+set (GA_HEADER_PATHS ${GA_HEADER_PATHS} PARENT_SCOPE)
+
 # -------------------------------------------------------------
 # GAF2C library installation
 # -------------------------------------------------------------
@@ -67,5 +70,5 @@ target_include_directories(gaf2c BEFORE PRIVATE
 )
 
 if (ENABLE_FORTRAN)
-  add_dependencies(gaf2c GenerateConfigFH)
+  add_dependencies(gaf2c GenerateConfigFH GenerateF2C_CH)
 endif()

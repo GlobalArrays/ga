@@ -10,7 +10,6 @@
 #  -funderscoring         GNU
 #  -fno-second-underscore GNU
 #  -f                     absoft compiler (OSX?)
-#  +ppu                   HPUX some compiler?
 #
 AC_DEFUN([GA_F77_UNDERSCORE],
 [AC_CACHE_CHECK([for $F77 flag to add single underscore to external names],

@@ -55,6 +55,10 @@ else
 fi
 case "$os" in
     Darwin)
+	xcode_v=$(clang --version 2>&1 |head -1 |cut -d ' ' -f 4 |cut -d . -f 1)
+	if [[ $( [ $xcode_v -ge 15 ] && echo 1) ]] ; then
+	    export LDFLAGS=" -ld_classic "
+	fi
         echo "Mac CFLAGS" $CFLAGS
         ;;
     Linux)
@@ -116,8 +120,11 @@ case "x$PORT" in
 	if [[ "$MPI_IMPL" = "intel" ]] ; then
 	    export I_MPI_F90="$F77"
 	    export I_MPI_F77="$F77"
+	    export I_MPI_CC="$CC"
 	    #hack to get scalapack going
-	    ./configure --with-${PORT} ${CONFIG_OPTS} LIBS=" -L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -ldl" CC=icc FFLAGS=-fPIC
+	    export CONFIG_OPTS2=--with-blas="-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl"
+	    export CONFIG_OPTS3=--with-scalapack="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -ldl"
+	    ./configure --with-${PORT} ${CONFIG_OPTS} "$CONFIG_OPTS2" "$CONFIG_OPTS3" FFLAGS=-fPIC
 	else
             ./configure --with-${PORT} ${CONFIG_OPTS}
 	fi

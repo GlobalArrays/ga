@@ -33,7 +33,6 @@
 #cmakedefine01 HAVE_SYS_WEAK_ALIAS_PRAGMA
 
 #cmakedefine NDEBUG
-#cmakedefine __CRAYXE
 
 #cmakedefine01 ENABLE_SYSV
 

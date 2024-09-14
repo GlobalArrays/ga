@@ -20,7 +20,7 @@ sudo apt-get install -qq libhwloc-dev libomp5 libomp-dev libnuma-dev libpfm4-dev
 TRAVIS_ROOT="$1"
 export PATH=$TRAVIS_ROOT/bin:$PATH
 #install jemalloc
-git clone https://github.com/jemalloc/jemalloc
+git clone -b 5.3.0 https://github.com/jemalloc/jemalloc
 cd jemalloc
 export JEPATH="${TRAVIS_ROOT}/jemalloc"
 sh autogen.sh

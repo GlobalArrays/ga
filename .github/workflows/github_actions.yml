@@ -16,7 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-11]
+        os: [ubuntu-latest, macos-latest]
         experimental: [false]
         mpi_impl:
           - openmpi
@@ -28,7 +28,7 @@ jobs:
           - armci
           - mpi-pr
         f77:
-          - gfortran
+          - gfortran-12
         cc:
           - clang
           - gcc
@@ -50,9 +50,10 @@ jobs:
             experimental: true
             mpi_impl: intel
             armci_network: sockets
-            config_opts: --enable-i4 --with-blas=-lmkl_rt --with-scalapack=-lmkl_scalapack_lp64
+            config_opts: --enable-i4
             f77: ifort
-            cc: gcc
+            cc: icx
+            oneapi: /opt/intel/oneapi
           - os: ubuntu-latest
             experimental: true
             mpi_impl: openmpi
@@ -60,12 +61,14 @@ jobs:
             config_opts: --enable-i4 --without-blas --enable-cxx --disable-f77
             f77: gfortran
             cc: gcc
-          - os: macos-11
+          - os: macos-13
             experimental: true
             mpi_impl: mpich
             armci_network: mpi-pr
             f77: ifort
             cc: icc
+            config_opts: LIBS=-lifcore
+            oneapi: /Users/runner/apps/oneapi
           - os: ubuntu-20.04
             experimental: true 
             mpi_impl: mpich
@@ -80,19 +83,19 @@ jobs:
             config_opts: "--disable-f77 --enable-cxx"
             f77: gfortran-10
             cc: gcc-10
-          - os: macos-12
+          - os: macos-13
             experimental: true 
             mpi_impl: mpich
             armci_network: mpi-ts
             config_opts: "--disable-static --enable-shared"
-            f77: gfortran
+            f77: gfortran-13
             cc: clang
-          - os: macos-12
+          - os: macos-13
             experimental: true
             use_cmake: "Y"
             mpi_impl: mpich
             armci_network: mpi-pr
-            f77: gfortran
+            f77: gfortran-13
             cc: clang
           - os: ubuntu-20.04
             experimental: true
@@ -114,7 +117,10 @@ jobs:
             armci_network: mpi-ts
             f77: ifort
             cc: gcc
+            oneapi: /opt/intel/oneapi
         exclude:
+          - armci_network: ofi
+            os: macos-latest
           - armci_network: mpi-pr
             mpi_impl: openmpi
           - armci_network: mpi3
@@ -134,12 +140,12 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     steps: 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 40
       - name: Cache install steps
         id: ga-cache-install
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         env:
           cache-name: cache-install-steps
         with:
@@ -153,15 +159,24 @@ jobs:
           case "${{ matrix.os }}" in
           ubuntu*|jessie|stretch|buster)
           sudo apt-get update -q -y
-          if [[ "$F77" == "gfortran-11" ]] || [[ "$CC" == "gcc-11" ]]; then sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && sudo apt-get -y install gcc-11 gfortran-11 g++-11; fi
+          echo F77 is "$F77"
+          if [[ "$F77" =~ gfortran-[0-9][0-9] ]] || [[ "$CC" =~ gcc-[0-9][0-9] ]]; then
+          if [[ "$CC" =~ gcc-[0-9][0-9] ]]; then
+          version=$(echo "$CC" | cut -d - -f 2 )
+          fi
+          if [[ "$F77" =~ gfortran-[0-9][0-9] ]]; then
+          version=$(echo "$F77" | cut -d - -f 2 )
+          fi
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && sudo apt-get -y install gcc-$version gfortran-$version g++-$version
+          fi
           sudo apt-get install -q -y gfortran
           ;;
           macos*)
           brew update
-          brew install gcc coreutils automake || true
+          brew install coreutils automake || true
           ;;
           esac
-          if [[ "$F77" == "ifort" ]] || [[ "$CC" == "icc" ]] ; then ./travis/install-intel.sh; else true;  fi
+          if [[ "$F77" == "ifort" ]] || [[ "$CC" == "icc" ]] || [[ "$CC" == "icx" ]]; then ./travis/install-intel.sh; source ${{ matrix.oneapi }}/setvars.sh --force;  fi
           echo F77 is `which "$F77"`
           echo F77 compiler version `"$F77" -v`
       - name: before_install
@@ -170,10 +185,13 @@ jobs:
           pwd
           ls -lart
           mkdir -p $GITHUB_WORKSPACE/apps
-          sh ./travis/install-autotools.sh $GITHUB_WORKSPACE/apps
+          AUTO_CC="$CC"
+          if [[ "$F77" == "ifort" ]] || [[ "$CC" == "icc" ]] || [[ "$CC" == "icx" ]]; then source ${{ matrix.oneapi }}/setvars.sh --force; AUTO_CC=cc;  fi
+          CC="$AUTO_CC" sh ./travis/install-autotools.sh $GITHUB_WORKSPACE/apps
       - name: install
         run: |
           export CI_ROOT=$GITHUB_WORKSPACE/apps
+          if [[ "$F77" == "ifort" ]] || [[ "$CC" == "icc" ]] || [[ "$CC" == "icx" ]]; then source ${{ matrix.oneapi }}/setvars.sh --force;  fi
           ./travis/install-mpi.sh $CI_ROOT $MPI_IMPL
           if [[ "$PORT" == "ofi" ]]; then ./travis/install-libfabric.sh $CI_ROOT; else true;  fi
           if [[ "$PORT" == "armci" ]]; then ./travis/install-armci-mpi.sh $CI_ROOT; else true; fi
@@ -181,6 +199,7 @@ jobs:
       - name: compile and test global arrays
         if: ${{ success() }}
         run: |
+          if [[ "$F77" == "ifort" ]] || [[ "$CC" == "icc" ]] || [[ "$CC" == "icx" ]] ; then  source ${{ matrix.oneapi }}/setvars.sh --force;  fi
           ./travis/build-run.sh $GITHUB_WORKSPACE/apps $PORT $MPI_IMPL $USE_CMAKE $F77
       - name: after_failure
         if: ${{ failure() }}

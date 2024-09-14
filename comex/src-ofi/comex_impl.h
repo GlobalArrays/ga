@@ -155,7 +155,7 @@
             if (likely(_ret == 0)) break;          \
             if (_ret != -FI_EAGAIN)                \
                 OFI_CHKANDJUMP(_ret, __VA_ARGS__); \
-            poll(0);                               \
+            myofi_poll(0);                               \
         } while (_ret == -FI_EAGAIN);              \
     } while (0)
 

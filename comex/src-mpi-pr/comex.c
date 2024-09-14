@@ -11,6 +11,9 @@
 #include <semaphore.h>
 #include <signal.h>
 #include <stdio.h>
+#if HAVE_ERRNO_H
+#   include <errno.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -44,7 +47,7 @@ sicm_device_list nill;
 #include "reg_cache.h"
 #include "acc.h"
 
-#define ENABLE_FTOK 0
+#define ENABLE_FTOK 1
 
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
@@ -60,6 +63,11 @@ sicm_device_list nill;
 
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
+#define MIN(a, b) (((b) < (a)) ? (b) : (a))
+
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 256
+#endif
 
 /* data structures */
 
@@ -117,7 +125,7 @@ typedef struct {
 typedef struct lock_link {
     struct lock_link *next;
     int rank;
-} lock_t;
+} comex_lock_t;
 
 
 typedef struct {
@@ -159,7 +167,7 @@ typedef struct {
 /* static state */
 static int *num_mutexes = NULL;     /**< (all) how many mutexes on each process */
 static int **mutexes = NULL;        /**< (masters) value is rank of lock holder */
-static lock_t ***lq_heads = NULL;   /**< array of lock queues */
+static comex_lock_t ***lq_heads = NULL;   /**< array of lock queues */
 static char *sem_name = NULL;       /* local semaphore name */
 static sem_t **semaphores = NULL;   /* semaphores for locking within SMP node */
 static int initialized = 0;         /* for comex_initialized(), 0=false */
@@ -179,7 +187,9 @@ static char *static_server_buffer = NULL;
 static int static_server_buffer_size = 0;
 static int eager_threshold = -1;
 static int max_message_size = -1;
+#if ENABLE_SYSV
 static int use_dev_shm = 1;
+#endif
 static int token_counter = 0;
 static int init_from_comm = 0;
 
@@ -351,7 +361,7 @@ STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup);
 STATIC void _malloc_semaphore(void);
 STATIC void _free_semaphore(void);
 #if ENABLE_SYSV
-STATIC void* _shm_create(const char *name, key_t *key, size_t size);
+STATIC void* _shm_create(char *name, key_t *key, size_t size);
 STATIC void* _shm_attach(const char *name, size_t size, key_t key);
 #else
 STATIC void* _shm_create(const char *name, size_t size);
@@ -375,6 +385,8 @@ STATIC void check_devshm(int fd, size_t size);
 static int devshm_initialized = 0;
 static long devshm_fs_left = 0;
 static long devshm_fs_initial = 0;
+static long counter_open_fds = 0;
+STATIC void count_open_fds(void);
 
 int _comex_init(MPI_Comm comm)
 {
@@ -667,7 +679,7 @@ int _comex_init(MPI_Comm comm)
         mutexes = (int**)malloc(sizeof(int*) * g_state.size);
         COMEX_ASSERT(mutexes);
         /* create one lock queue for each proc for each mutex */
-        lq_heads = (lock_t***)malloc(sizeof(lock_t**) * g_state.size);
+        lq_heads = (comex_lock_t***)malloc(sizeof(comex_lock_t**) * g_state.size);
         COMEX_ASSERT(lq_heads);
         /* start the server */
         _progress_server();
@@ -4507,7 +4519,7 @@ STATIC void _mutex_create_handler(header_t *header, int proc)
 #endif
 
     mutexes[proc] = (int*)malloc(sizeof(int) * num);
-    lq_heads[proc] = (lock_t**)malloc(sizeof(lock_t*) * num);
+    lq_heads[proc] = (comex_lock_t**)malloc(sizeof(comex_lock_t*) * num);
     for (i=0; i<num; ++i) {
         mutexes[proc][i] = UNLOCKED;
         lq_heads[proc][i] = NULL;
@@ -4555,18 +4567,18 @@ STATIC void _lock_handler(header_t *header, int proc)
         server_send(&id, sizeof(int), proc);
     }
     else {
-        lock_t *lock = NULL;
+        comex_lock_t *lock = NULL;
 #if DEBUG
         fprintf(stderr, "[%d] _lq_push rank=%d req_by=%d id=%d\n",
                 g_state.rank, rank, proc, id);
 #endif
-        lock = malloc(sizeof(lock_t));
+        lock = malloc(sizeof(comex_lock_t));
         lock->next = NULL;
         lock->rank = proc;
 
         if (lq_heads[rank][id]) {
             /* insert at tail */
-            lock_t *lq = lq_heads[rank][id];
+            comex_lock_t *lq = lq_heads[rank][id];
             while (lq->next) {
                 lq = lq->next;
             }
@@ -4595,7 +4607,7 @@ STATIC void _unlock_handler(header_t *header, int proc)
     if (lq_heads[rank][id]) {
         /* a lock requester was queued */
         /* find the next lock request and update queue */
-        lock_t *lock = lq_heads[rank][id];
+        comex_lock_t *lock = lq_heads[rank][id];
         lq_heads[rank][id] = lq_heads[rank][id]->next;
         /* update lock */
         mutexes[rank][id] = lock->rank;
@@ -4950,11 +4962,11 @@ STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup)
     return largest;
 }
 
-STATIC void* _shm_create(const char *name,
 #if ENABLE_SYSV
-    key_t *key,
+STATIC void* _shm_create(char *name, key_t *key, size_t size)
+#else
+STATIC void* _shm_create(const char *name, size_t size)
 #endif
-    size_t size)
 {
 #if ENABLE_SYSV
   FILE *fp;
@@ -4963,6 +4975,8 @@ STATIC void* _shm_create(const char *name,
   char ebuf[128];
   void *mapped = NULL;
   char token = (char)(token_counter%256);
+  int try_next = 1;
+  int try_cnt = 0;
   token_counter ++;
   if (use_dev_shm) {
     sprintf(file,"/dev/shm/%s",name);
@@ -4970,15 +4984,35 @@ STATIC void* _shm_create(const char *name,
     sprintf(file,"/tmp/%s",name);
   }
 #if ENABLE_FTOK
-  fp = fopen(file,"w");
-  fprintf(fp,"0\n");
-  fclose(fp);
-  *key = ftok(file,token);
-  /* printf("p[%d] CREATE SHM name: %s key: %d id: %d\n",g_state.rank,name,*key,(int)token); */
+  while (try_next && try_cnt < 100) {
+    fp = fopen(file,"w");
+    fprintf(fp,"0\n");
+    fclose(fp);
+    *key = ftok(file,token);
+    sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|0600, key: %d, name: %s id: %d\n",
+        g_state.rank,*key,name,(int)token);
+    shm_id = shmget(*key,size,IPC_CREAT| IPC_EXCL |0600);
+    if (shm_id != -1) {
+      try_next = 0;
+    } else {
+      free(name);
+      name = _generate_shm_name(g_state.rank);
+      if (use_dev_shm) {
+        sprintf(file,"/dev/shm/%s",name);
+      } else {
+        sprintf(file,"/tmp/%s",name);
+      }
+      /* printf("p[%d] shm_create failed on try %d\n",g_state.rank,try_cnt); */
+      try_cnt++;
+    }
+  }
+  _shmget_err(shm_id, ebuf);
+  if (shm_id == -1) {
+    comex_error("_shm_create: shmget failed", shm_id);
+  }
 #else
   *key = (key_t)token_counter;
   token_counter += g_state.size;
-#endif
   sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|0600, key: %d, name: %s id: %d\n",
       g_state.rank,*key,name,(int)token);
   shm_id = shmget(*key,size,IPC_CREAT| IPC_EXCL |0600);
@@ -4986,6 +5020,7 @@ STATIC void* _shm_create(const char *name,
   if (shm_id == -1) {
     comex_error("_shm_create: shmget failed", shm_id);
   }
+#endif
   mapped = shmat(shm_id, NULL, 0);
   /* printf("p[%d] ATTACH SHM name: %s key: %d\n",g_state.rank,name,*key); */
   _shmat_err(mapped);
@@ -5022,7 +5057,7 @@ STATIC void* _shm_create(const char *name,
       if (errno == EMFILE) {
         printf("The per process limit on the number of open file"
             " descriptors has been reached (relevant to PR runtime)\n");
-      } else if (errno = ENFILE) {
+      } else if ( errno == ENFILE) {
         printf("The system-wide limit on the total number of open files"
             " has been reached (relevant to PR runtime)\n");
       }
@@ -5032,6 +5067,7 @@ STATIC void* _shm_create(const char *name,
 
     /* set the size of my shared memory object */
     check_devshm(fd, size);
+    count_open_fds();
     retval = ftruncate(fd, size);
     if (-1 == retval) {
       if (errno == EFAULT) {
@@ -5151,7 +5187,7 @@ STATIC void* _shm_attach(const char *name, size_t size)
       if (errno == EMFILE) {
         printf("The per process limit on the number of open file"
             " descriptors has been reached (relevant to PR runtime)\n");
-      } else if (errno = ENFILE) {
+      } else if (errno == ENFILE) {
         printf("The system-wide limit on the total number of open files"
             " has been reached (relevant to PR runtime)\n");
       }
@@ -7538,13 +7574,8 @@ STATIC void check_devshm(int fd, size_t size){
 	    g_state.rank, g_state.node_size, devshm_fs_initial/CONVERT_TO_M, (long) ufs_statfs.f_bsize, (long)  g_state.node_size);
 #endif
   }
-  //  if (size > 0) {
     newspace = (long) ( size*(g_state.node_size -1));
-    //  }else{
-    //    newspace = (long) ( size);
-    //  }
     if(newspace>0){
-      // noo fd for space<0
     fstatfs(fd, &ufs_statfs);
 #ifdef DEBUGSHM
     fprintf(stderr, "[%d] /dev/shm filesize %ld filesize*np %ld initial devshm space %ld current /dev/shm space %ld \n",
@@ -7552,9 +7583,11 @@ STATIC void check_devshm(int fd, size_t size){
 #endif
     }
   if ( newspace > devshm_fs_left )  {
-    fprintf(stderr, "[%d] /dev/shm fs has size %ld new shm area has size %ld need to increase /dev/shm by %ld Mbytes\n",
-	    g_state.rank, devshm_fs_left/CONVERT_TO_M, newspace/CONVERT_TO_M, (newspace - devshm_fs_left)/CONVERT_TO_M);
-        perror("check_devshm: /dev/shm out of space");
+    char hostname[HOST_NAME_MAX+1];
+    gethostname(hostname, HOST_NAME_MAX+1);
+    fprintf(stderr, "hostname: %s, [%d] /dev/shm fs has size %ld bytes left, new shm area has size %ld need to increase /dev/shm by %ld Mbytes\n", hostname, g_state.rank, devshm_fs_left/CONVERT_TO_M, newspace/CONVERT_TO_M, (newspace - devshm_fs_left)/CONVERT_TO_M);
+
+    perror("check_devshm: /dev/shm out of space");
     //    _free_semaphore();
     comex_error("check_devshm: /dev/shm out of space", -1);
     
@@ -7569,5 +7602,31 @@ STATIC void check_devshm(int fd, size_t size){
   fprintf(stderr, "[%d] /dev/shm filesize %ld space left %ld \n",
 	  g_state.rank, newspace/CONVERT_TO_M, devshm_fs_left/CONVERT_TO_M);
 #endif
+#endif
+}
+
+STATIC void count_open_fds(void) {
+#ifdef __linux__
+  /* check only every 100 ops && rank == 1 */
+  counter_open_fds += 1;
+  if (counter_open_fds % 100 == 0 && g_state.rank == MIN(1,g_state.node_size)) {
+    FILE *f = fopen("/proc/sys/fs/file-nr", "r");
+
+    long nfiles, unused, maxfiles;
+    fscanf(f, "%ld %ld %ld", &nfiles, &unused, &maxfiles);
+#ifdef DEBUGSHM
+    if(nfiles % 1000 == 0) fprintf(stderr," %d: no. open files = %ld maxfiles = %ld\n", g_state.rank, nfiles, maxfiles);
+#endif
+    if(nfiles > (maxfiles/100)*80) {
+      printf(" %d: running out of files; files = %ld  maxfiles = %ld \n", g_state.rank, nfiles, maxfiles);
+#if PAUSE_ON_ERROR
+      fprintf(stderr,"%d(%d): too many open files\n",
+	      g_state.rank,  getpid());
+      pause();
+#endif
+      comex_error("count_open_fds: too many open files", -1);
+  }
+    fclose(f);
+  }
 #endif
 }

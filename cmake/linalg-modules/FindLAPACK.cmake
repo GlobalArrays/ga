@@ -13,7 +13,7 @@ include( ${CMAKE_CURRENT_LIST_DIR}/LinAlgModulesMacros.cmake  )
 
 # SANITY CHECK
 if( "ilp64" IN_LIST LAPACK_FIND_COMPONENTS AND "lp64" IN_LIST LAPACK_FIND_COMPONENTS )
-  message( FATAL_ERROR "LAPACK cannot link to both ILP64 and LP64 iterfaces" )
+  message( FATAL_ERROR "LAPACK cannot link to both ILP64 and LP64 interfaces" )
 endif()
 
 
@@ -37,23 +37,26 @@ if( NOT LAPACK_LIBRARIES )
 
   # Find BLAS
   if( NOT TARGET BLAS::BLAS )
-    copy_meta_data( LAPACK BLAS )	  
-    find_dependency( BLAS 
-      COMPONENTS          ${LAPACK_REQUIRED_COMPONENTS} 
-      OPTIONAL_COMPONENTS ${LAPACK_OPTIONAL_COMPONENTS} 
+    copy_meta_data( LAPACK BLAS )
+    find_dependency( BLAS
+      COMPONENTS          ${LAPACK_REQUIRED_COMPONENTS}
+      OPTIONAL_COMPONENTS ${LAPACK_OPTIONAL_COMPONENTS}
     )
   endif()
-  
+
   # Check if BLAS contains a LAPACK linker
   message( STATUS "LAPACK_LIBRARIES Not Given: Checking for LAPACK in BLAS" )
   set( LAPACK_LIBRARIES           ${BLAS_LIBRARIES}           )
   set( LAPACK_INCLUDE_DIRS        ${BLAS_INCLUDE_DIRS}        )
   set( LAPACK_COMPILE_DEFINITIONS ${BLAS_COMPILE_DEFINITIONS} )
-  check_dpstrf_exists( LAPACK_LIBRARIES 
-    BLAS_HAS_LAPACK LAPACK_FORTRAN_LOWER LAPACK_FORTRAN_UNDERSCORE
-  )
-  
-  
+
+  # use dpstrf to check for full LAPACK API ... some implementations are incomplete (e.g. older OpenBLAS)
+  # also need to handle several corner cases:
+  # - OpenBLAS needs libgfortran only for some functions, dpstrf is not one of them, so check for dgesvd
+  check_fortran_functions_exist( "dpstrf;dgesvd" LAPACK LAPACK_LIBRARIES
+          BLAS_HAS_LAPACK LAPACK_Fortran_LOWER LAPACK_Fortran_UNDERSCORE
+          )
+
   # If BLAS has a full LAPACK Linker, propagate vars
   if( BLAS_HAS_LAPACK )
 
@@ -79,9 +82,9 @@ if( NOT LAPACK_LIBRARIES )
 
       copy_meta_data( LAPACK ${lapack_type} )
 
-      find_package( ${lapack_type} 
-        COMPONENTS          ${LAPACK_REQUIRED_COMPONENTS} 
-        OPTIONAL_COMPONENTS ${LAPACK_OPTIONAL_COMPONENTS} 
+      find_package( ${lapack_type}
+        COMPONENTS          ${LAPACK_REQUIRED_COMPONENTS}
+        OPTIONAL_COMPONENTS ${LAPACK_OPTIONAL_COMPONENTS}
       )
 
       if( ${lapack_type}_FOUND )
@@ -120,19 +123,20 @@ endif()
 if( BLAS_HAS_LAPACK )
   set( LAPACK_LINK_OK TRUE )
 else()
-  check_dpstrf_exists( LAPACK_LIBRARIES 
-    LAPACK_LINK_OK LAPACK_FORTRAN_LOWER LAPACK_FORTRAN_UNDERSCORE
-  )
+  # see notes above the first invocation of check_fortran_functions_exist
+  check_fortran_functions_exist( "dpstrf;dgesvd" LAPACK LAPACK_LIBRARIES
+          LAPACK_LINK_OK LAPACK_Fortran_LOWER LAPACK_Fortran_UNDERSCORE
+          )
 endif()
 
-# If LAPACK linkage sucessful, check if it is ILP64/LP64
+# If LAPACK linkage successful, check if it is ILP64/LP64
 if( LAPACK_LINK_OK )
 
   set( _dsyev_name "dsyev" )
-  if( NOT LAPACK_FORTRAN_LOWER )
+  if( NOT LAPACK_Fortran_LOWER )
     string( TOUPPER "${_dsyev_name}" _dsyev_name )
   endif()
-  if( LAPACK_FORTRAN_UNDERSCORE )
+  if( LAPACK_Fortran_UNDERSCORE )
     set( _dsyev_name "${_dsyev_name}_" )
   endif()
 
@@ -145,6 +149,11 @@ if( LAPACK_LINK_OK )
     set( LAPACK_ilp64_FOUND TRUE  )
     find_dependency( ILP64 )
     list( APPEND LAPACK_COMPILE_OPTIONS "${ILP64_COMPILE_OPTIONS}" )
+    foreach ( lang C CXX Fortran )
+        if ( DEFINED ILP64_${lang}_COMPILE_OPTIONS )
+            list( APPEND LAPACK_${lang}_COMPILE_OPTIONS "${ILP64_${lang}_COMPILE_OPTIONS}" )
+        endif()
+    endforeach()
   endif()
 
 else()
@@ -171,10 +180,15 @@ if( LAPACK_FOUND )
   set( LAPACK_COMPILE_DEFINITIONS "${LAPACK_COMPILE_DEFINITIONS}" CACHE STRING "LAPACK Compile Definitions" FORCE )
   set( LAPACK_INCLUDE_DIRS        "${LAPACK_INCLUDE_DIRS}"        CACHE STRING "LAPACK Include Directories" FORCE )
   set( LAPACK_COMPILE_OPTIONS     "${LAPACK_COMPILE_OPTIONS}"     CACHE STRING "LAPACK Compile Options"     FORCE )
+  foreach ( lang C CXX Fortran )
+      if ( DEFINED LAPACK_${lang}_COMPILE_OPTIONS )
+          set( LAPACK_${lang}_COMPILE_OPTIONS     "${LAPACK_${lang}_COMPILE_OPTIONS}"     CACHE STRING "LAPACK Compile Options for Language ${lang}"     FORCE )
+      endif()
+  endforeach()
 endif()
 
 if( LAPACK_FOUND AND NOT TARGET LAPACK::LAPACK )
-  
+
   add_library( LAPACK::LAPACK INTERFACE IMPORTED )
   set_target_properties( LAPACK::LAPACK PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${LAPACK_INCLUDE_DIRS}"
