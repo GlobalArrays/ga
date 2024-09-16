@@ -353,7 +353,7 @@ extern void          NGA_Set_tiled_irreg_proc_grid(int g_a, int mapc[], int nblo
 extern void          NGA_Unset_property(int g_a);
 extern void          NGA_Set_memory_dev(int g_a, char *device);
 extern void          NGA_Sprs_array_access_col_block(int s_a, int icol, int **idx, int **jdx, void **val);
-extern void          NGA_Sprs_array_access_col_block64(int s_a, int icol, long **idx, long **jdx, void **val);
+extern void          NGA_Sprs_array_access_col_block64(int s_a, int icol, int64_t **idx, int64_t **jdx, void **val);
 extern void          NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void *val);
 extern int           NGA_Sprs_array_assemble(int s_a);
 extern int           NGA_Sprs_array_create(int idim, int jdim, int type);
