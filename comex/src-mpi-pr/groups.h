@@ -46,8 +46,9 @@ extern comex_igroup_t* comex_get_igroup_from_group(comex_group_t group);
 /* verify that proc is part of group */
 #define CHECK_GROUP(GROUP,PROC) do {                                \
     int size;                                                       \
+    int ierr = comex_group_size(GROUP,&size);                       \
     COMEX_ASSERT(GROUP >= 0);                                       \
-    COMEX_ASSERT(COMEX_SUCCESS == comex_group_size(GROUP,&size));   \
+    COMEX_ASSERT(COMEX_SUCCESS == ierr);                            \
     COMEX_ASSERT(PROC >= 0);                                        \
     COMEX_ASSERT(PROC < size);                                      \
 } while(0)
@@ -100,53 +101,47 @@ static int get_my_master_rank_with_same_hostid(int rank, int split_group_size,
         int smallest_rank_with_same_hostid, int largest_rank_with_same_hostid,
         int num_progress_ranks_per_node, int is_node_ranks_packed)
 {
-   int my_master;
+    int my_master;
 
 #if MASTER_IS_SMALLEST_SMP_RANK
     if(is_node_ranks_packed) {
-      /* Contiguous packing of ranks on a node */
-      my_master = smallest_rank_with_same_hostid
-           + split_group_size *
-         ((rank - smallest_rank_with_same_hostid)/split_group_size);
+        /* Contiguous packing of ranks on a node */
+        my_master = smallest_rank_with_same_hostid
+             + split_group_size *
+           ((rank - smallest_rank_with_same_hostid)/split_group_size);
     }
     else {
       if(num_progress_ranks_per_node == 1) { 
-        my_master = 2 * (split_group_size *
-           ( ((rank - smallest_rank_with_same_hostid)/2) / split_group_size));
+          my_master = smallest_rank_with_same_hostid
+               + split_group_size *
+             ((rank - smallest_rank_with_same_hostid)/split_group_size);
       } else {
-        /* Cyclic packing of ranks on a node between two sockets
-         * with even and odd numbering  */
-        if(rank % 2 == 0) {
-          my_master = 2 * (split_group_size *
-             ( ((rank - smallest_rank_with_same_hostid)/2) / split_group_size));
-        } else {
-          my_master = 1 + 2 * (split_group_size *
-             ( ((rank - smallest_rank_with_same_hostid)/2) / split_group_size));
-        }
+          /* Cyclic packing of ranks on a node between different split groups,
+           * progress ranks are smallest ranks obtained via modulo operator  */
+          my_master = smallest_rank_with_same_hostid + 
+             (rank - smallest_rank_with_same_hostid) % num_progress_ranks_per_node; 
       }
     }
 #else
     /* By default creates largest SMP rank as Master */
     if(is_node_ranks_packed) {
-      /* Contiguous packing of ranks on a node */
-      my_master = largest_rank_with_same_hostid
-           - split_group_size *
-         ((largest_rank_with_same_hostid - rank)/split_group_size);
+        /* Contiguous packing of ranks on a node */
+        my_master = largest_rank_with_same_hostid
+             - split_group_size *
+           ((largest_rank_with_same_hostid - rank)/split_group_size);
     }
     else {
       if(num_progress_ranks_per_node == 1) { 
-        my_master = largest_rank_with_same_hostid - 2 * (split_group_size *
-           ( ((largest_rank_with_same_hostid - rank)/2) / split_group_size));
+          my_master = largest_rank_with_same_hostid
+               - split_group_size *
+             ((largest_rank_with_same_hostid - rank)/split_group_size);
+          // my_master = largest_rank_with_same_hostid - 2 * (split_group_size *
+          //    ( ((largest_rank_with_same_hostid - rank)/2) / split_group_size));
       } else {
-        /* Cyclic packing of ranks on a node between two sockets
-         * with even and odd numbering  */
-        if(rank % 2 == 0) {
-          my_master = largest_rank_with_same_hostid - 1 - 2 * (split_group_size *
-             ( ((largest_rank_with_same_hostid - rank)/2) / split_group_size));
-        } else {
-          my_master = largest_rank_with_same_hostid - 2 * (split_group_size *
-             ( ((largest_rank_with_same_hostid - rank)/2) / split_group_size));
-        }
+          /* Cyclic packing of ranks on a node between different split groups,
+           * progress ranks are highest ranks obtained via modulo operator  */
+          my_master = largest_rank_with_same_hostid - num_progress_ranks_per_node + 1 
+             + (rank - smallest_rank_with_same_hostid) % num_progress_ranks_per_node;
       }
     }
 #endif
@@ -162,48 +157,38 @@ static int get_my_rank_to_free(int rank, int split_group_size,
 #if MASTER_IS_SMALLEST_SMP_RANK
     /* By default creates largest SMP rank as Master */
     if(is_node_ranks_packed) {
-      /* Contiguous packing of ranks on a node */
-      my_rank_to_free = largest_rank_with_same_hostid
-           - split_group_size *
-         ((largest_rank_with_same_hostid - rank)/split_group_size);
+        /* Contiguous packing of ranks on a node */
+        my_rank_to_free = largest_rank_with_same_hostid
+             - split_group_size *
+           ((largest_rank_with_same_hostid - rank)/split_group_size);
     }
     else {
       if(num_progress_ranks_per_node == 1) { 
           my_rank_to_free = largest_rank_with_same_hostid - 2 * (split_group_size *
              ( ((largest_rank_with_same_hostid - rank)/2) / split_group_size));
       } else {
-          /* Cyclic packing of ranks on a node between two sockets
-           * with even and odd numbering  */
-          if(rank % 2 == 0) {
-            my_rank_to_free = largest_rank_with_same_hostid - 1 - 2 * (split_group_size *
-               ( ((largest_rank_with_same_hostid - rank)/2) / split_group_size));
-          } else {
-            my_rank_to_free = largest_rank_with_same_hostid - 2 * (split_group_size *
-               ( ((largest_rank_with_same_hostid - rank)/2) / split_group_size));
-          }
+          /* Cyclic packing of ranks on a node between different split groups,
+           * progress ranks are smallest ranks obtained via modulo operator  */
+          my_rank_to_free = smallest_rank_with_same_hostid + 
+             (rank - smallest_rank_with_same_hostid) % num_progress_ranks_per_node; 
       }
     }
 #else
     if(is_node_ranks_packed) {
-      /* Contiguous packing of ranks on a node */
-      my_rank_to_free = smallest_rank_with_same_hostid
-           + split_group_size *
-         ((rank - smallest_rank_with_same_hostid)/split_group_size);
+        /* Contiguous packing of ranks on a node */
+        my_rank_to_free = smallest_rank_with_same_hostid
+             + split_group_size *
+           ((rank - smallest_rank_with_same_hostid)/split_group_size);
     }
     else {
       if(num_progress_ranks_per_node == 1) { 
           my_rank_to_free = 2 * (split_group_size *
              ( ((rank - smallest_rank_with_same_hostid)/2) / split_group_size));
       } else {
-        /* Cyclic packing of ranks on a node between two sockets
-         * with even and odd numbering  */
-        if(rank % 2 == 0) {
-          my_rank_to_free = 2 * (split_group_size *
-             ( ((rank - smallest_rank_with_same_hostid)/2) / split_group_size));
-        } else {
-          my_rank_to_free = 1 + 2 * (split_group_size *
-             ( ((rank - smallest_rank_with_same_hostid)/2) / split_group_size));
-        }
+          /* Cyclic packing of ranks on a node between different split groups,
+           * progress ranks are highest ranks obtained via modulo operator  */
+          my_rank_to_free = largest_rank_with_same_hostid - num_progress_ranks_per_node + 1 
+             + (rank - smallest_rank_with_same_hostid) % num_progress_ranks_per_node;
       }
     }
 #endif

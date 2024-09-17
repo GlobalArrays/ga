@@ -57,13 +57,6 @@ TEST PROGRAM NOTES
 
   or under control of your favorite debugger. 
 
-  On MPP like T3D, IBM SP, and Intel machines, use appropriate system
-  command to specify the number of processors, load and run the
-  programs. For example, to run on four processors of the Cray T3D
-  use::
-
-    mppexec testing/test.x -npes 4
-
 DOCUMENTATION
 =============
 The documentation is located in doc/ and on the web at:

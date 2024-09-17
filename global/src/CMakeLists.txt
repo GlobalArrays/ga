@@ -100,6 +100,10 @@ set(GA_FILES
   sclstubs.c
   select.c
   sparse.c
+  sparse.array.c
+  sketch.c
+  mtwister.c
+  
   ${GA_FORTRAN_INTERFACE_C_FILES}
   ${GA_FORTRAN_INTERFACE_F_FILES}
 )
@@ -161,3 +165,7 @@ install(FILES
   ${GA_FORTRAN_INTERFACE_H_FILES}
   DESTINATION include/ga
 )
+
+list (APPEND GA_HEADER_PATHS ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+set (GA_HEADER_PATHS ${GA_HEADER_PATHS} PARENT_SCOPE)
+

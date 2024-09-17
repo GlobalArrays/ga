@@ -26,6 +26,14 @@
 # distribute to other US Government contractors.
 #
 
+function(ga_is_numeric value)
+    if ("${value}" MATCHES "^[0-9]+$")
+        set(GA_TEST_IS_ARGV2_NUMERIC TRUE PARENT_SCOPE)
+    else()
+        set(GA_TEST_IS_ARGV2_NUMERIC FALSE PARENT_SCOPE)
+    endif()
+endfunction()
+
 # -------------------------------------------------------------
 # ga_add_parallel_test
 # -------------------------------------------------------------
@@ -35,10 +43,20 @@ function(ga_add_parallel_test test_name test_srcs)
   if(MPI_PR)
     set(GA_TEST_NPROCS 5)
   endif()
-  if(DEFINED ARGV2)
-    set(GA_TEST_NPROCS ${ARGV2})
-  endif()
 
+  set(ga_test_ll C)
+  if(DEFINED ARGV2)
+    ga_is_numeric(${ARGV2})
+    if (GA_TEST_IS_ARGV2_NUMERIC)
+      set(GA_TEST_NPROCS ${ARGV2})
+    else()
+      set(ga_test_ll Fortran)
+    endif()
+  endif()
+  if(DEFINED ARGV3)
+    set(ga_test_ll Fortran)
+  endif()
+  
   set(__ga_mpiexec ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${GA_TEST_NPROCS})
   if(GA_JOB_LAUNCH_CMD)
     set(__ga_mpiexec ${GA_JOB_LAUNCH_CMD})
@@ -54,6 +72,7 @@ function(ga_add_parallel_test test_name test_srcs)
   set(__ga_test_exe "${_test_name_only}.x")
   add_executable (${__ga_test_exe} ${test_srcs})
   target_link_libraries(${__ga_test_exe} ga)
+  set_property(TARGET ${__ga_test_exe} PROPERTY LINKER_LANGUAGE ${ga_test_ll})
 
   add_test(NAME ${test_name} COMMAND ${__ga_mpiexec} ${CMAKE_CURRENT_BINARY_DIR}/${__ga_test_exe})
 

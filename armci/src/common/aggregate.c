@@ -307,40 +307,22 @@ void armci_agg_complete(armci_ihdl_t nb_handle, int condition) {
 	   armci_me, nb_handle->proc, index, aggr[index]->request_len);
 #endif
 
-    /* complete the data transfer. NOTE: in LAPI, Non-blocking calls 
-       (followed by wait) performs better than blocking put/get */
-    if(aggr[index]->request_len) {
-      switch(nb_handle->op) {
-#ifdef LAPI
-	armci_hdl_t usr_hdl;
+  /* complete the data transfer. NOTE: in some APIs, Non-blocking calls 
+     (followed by wait) performs better than blocking put/get */
+  if(aggr[index]->request_len) {
+    switch(nb_handle->op) {
       case PUT:
-	ARMCI_INIT_HANDLE(&usr_hdl);       
-	if((rc=PARMCI_NbPutV(aggr[index]->darr, aggr[index]->request_len, 
-			    nb_handle->proc, (armci_hdl_t*)&usr_hdl)))
-	  ARMCI_Error("armci_agg_complete: nbputv failed",rc);
-	PARMCI_Wait((armci_hdl_t*)&usr_hdl);
-	break;
+        if((rc=PARMCI_PutV(aggr[index]->darr, aggr[index]->request_len, 
+              nb_handle->proc)))
+          ARMCI_Error("armci_agg_complete: putv failed",rc);
+        break;
       case GET:
-	ARMCI_INIT_HANDLE(&usr_hdl);       
-	if((rc=PARMCI_NbGetV(aggr[index]->darr, aggr[index]->request_len, 
-			    nb_handle->proc, (armci_hdl_t*)&usr_hdl)))
-	  ARMCI_Error("armci_agg_complete: nbgetv failed",rc);  
-	PARMCI_Wait((armci_hdl_t*)&usr_hdl);
-	break;
-#else
-      case PUT:
-	if((rc=PARMCI_PutV(aggr[index]->darr, aggr[index]->request_len, 
-			  nb_handle->proc)))
-	  ARMCI_Error("armci_agg_complete: putv failed",rc);
-	break;
-      case GET:
-	if((rc=PARMCI_GetV(aggr[index]->darr, aggr[index]->request_len, 
-			  nb_handle->proc)))
-	  ARMCI_Error("armci_agg_complete: getv failed",rc);  
-	break;
-#endif
-      }
+        if((rc=PARMCI_GetV(aggr[index]->darr, aggr[index]->request_len, 
+              nb_handle->proc)))
+          ARMCI_Error("armci_agg_complete: getv failed",rc);  
+        break;
     }
+  }
     
     /* setting request length to zero, as the requests are completed */
     aggr[index]->request_len   = 0;

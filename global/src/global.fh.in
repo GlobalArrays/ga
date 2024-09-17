@@ -43,6 +43,8 @@
       logical          ga_overlay
       integer          ga_pgroup_absolute_id
       integer          ga_pgroup_create
+      integer          ga_pgroup_duplicate
+      integer          ga_pgroup_self
       logical          ga_pgroup_destroy
       integer          ga_pgroup_get_default
       integer          ga_pgroup_get_mirror
@@ -123,6 +125,8 @@
       logical          nga_overlay
       integer          nga_pgroup_absolute_id
       integer          nga_pgroup_create
+      integer          nga_pgroup_duplicate
+      integer          nga_pgroup_self
       logical          nga_pgroup_destroy
       integer          nga_pgroup_get_default
       integer          nga_pgroup_get_mirror
@@ -204,6 +208,8 @@
       external ga_overlay
       external ga_pgroup_absolute_id
       external ga_pgroup_create
+      external ga_pgroup_duplicate
+      external ga_pgroup_self
       external ga_pgroup_destroy
       external ga_pgroup_get_default
       external ga_pgroup_get_mirror
@@ -286,6 +292,8 @@
       external nga_overlay
       external nga_pgroup_absolute_id
       external nga_pgroup_create
+      external nga_pgroup_duplicate
+      external nga_pgroup_self
       external nga_pgroup_destroy
       external nga_pgroup_get_default
       external nga_pgroup_get_mirror

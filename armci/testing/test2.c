@@ -74,11 +74,7 @@
 #define MAXPROC 1024
 #define TIMES 100
 
-#ifdef CRAY
-# define ELEMS 800
-#else
 # define ELEMS 200
-#endif
 
 typedef struct {
   float real;
@@ -99,54 +95,6 @@ typedef struct {
 /***************************** global data *******************/
 int me, nproc;
 void *work[MAXPROC]; /* work array for propagating addresses */
-
-
-
-#ifdef PVM
-void pvm_init(int argc, char *argv[])
-{
-  int mytid, mygid, ctid[MAXPROC];
-  int np, i;
-
-  mytid = pvm_mytid();
-  if ((argc != 2) && (argc != 1)) {
-    goto usage;
-  }
-  if (argc == 1) {
-    np = 1;
-  }
-  if (argc == 2)
-    if ((np = atoi(argv[1])) < 1) {
-      goto usage;
-    }
-  if (np > MAXPROC) {
-    goto usage;
-  }
-
-  mygid = pvm_joingroup(MPGROUP);
-
-  if (np > 1)
-    if (mygid == 0) {
-      i = pvm_spawn(argv[0], argv + 1, 0, "", np - 1, ctid);
-    }
-
-  while (pvm_gsize(MPGROUP) < np) {
-    sleep(1);
-  }
-
-  /* sync */
-  pvm_barrier(MPGROUP, np);
-
-  printf("PVM initialization done!\n");
-
-  return;
-
-usage:
-  fprintf(stderr, "usage: %s <nproc>\n", argv[0]);
-  pvm_exit();
-  exit(-1);
-}
-#endif
 
 void create_array(void *a[], int elem_size, int ndim, int dims[])
 {

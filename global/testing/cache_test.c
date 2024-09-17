@@ -228,6 +228,12 @@ int main(int argc, char **argv) {
         if (hiC[0] >= xdim) hiC[0] = xdim - 1;
         if (hiC[0] >= ydim) hiC[0] = ydim - 1;
 
+	// stop to avoid FPE
+	if ( hiC[0] < loC[0] ){
+	  fprintf(stderr,"%d: bad values for HiC LoC: %d  %d\n", rank, hiC[0], loC[0]);
+	  fprintf(stderr,"%dL xcnt xbl: %d  %d\n", rank, xcnt, xbl);
+	  GA_Error("cache_test: div by zero", 0);
+	}
         // Calculating number of blocks for inner dimension
         num_blocks = dimsize/(hiC[0]-loC[0]+1);
         if (num_blocks*(hiC[0]-loC[0]+1) < dimsize) num_blocks++;
