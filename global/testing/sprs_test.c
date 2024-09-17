@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
@@ -9,7 +12,7 @@
 
 #define WRITE_VTK
 #define CG_SOLVE 1
-#define NDIM 2048
+#define NDIM 1024
 #define ISEED 228103
 
 /**
@@ -1859,6 +1862,7 @@ void matrix_test(int type)
 
 int main(int argc, char **argv) {
   int me,nproc;
+  int eight = 8;
 
   /**
    * Initialize GA
@@ -2504,38 +2508,43 @@ int main(int argc, char **argv) {
   matrix_test(C_INT);
 #if 1
 
-  if (me == 0) {
-    printf("\nTesting matrices of type long\n");
-  }
-  matrix_test(C_LONG);
+    if (me == 0) {
+      printf("\nTesting matrices of type long\n");
+    }
+    matrix_test(C_LONG);
 
-  if (me == 0) {
-    printf("\nTesting matrices of type long long\n");
-  }
-  matrix_test(C_LONGLONG);
+    if (me == 0) {
+      printf("\nTesting matrices of type long long\n");
+    }
+    matrix_test(C_LONGLONG);
 
-  if (me == 0) {
-    printf("\nTesting matrices of type float\n");
-  }
-  matrix_test(C_FLOAT);
+    if (me == 0) {
+      printf("\nTesting matrices of type float\n");
+    }
+    matrix_test(C_FLOAT);
 
-  if (me == 0) {
-    printf("\nTesting matrices of type double\n");
-  }
-  matrix_test(C_DBL);
+    if (me == 0) {
+      printf("\nTesting matrices of type double\n");
+    }
+    matrix_test(C_DBL);
 
 #endif
-  if (me == 0) {
-    printf("\nTesting matrices of type single complex\n");
-  }
-  matrix_test(C_SCPL);
+    if (me == 0) {
+      printf("\nTesting matrices of type single complex\n");
+    }
+    matrix_test(C_SCPL);
 
-  if (me == 0) {
-    printf("\nTesting matrices of type double complex\n");
-  }
-  matrix_test(C_DCPL);
-  if (me == 0) {
-    printf("\nSparse matrix tests complete\n\n");
+    if (me == 0) {
+      printf("\nTesting matrices of type double complex\n");
+    }
+    matrix_test(C_DCPL);
+    if (me == 0) {
+      printf("\nSparse matrix tests complete\n\n");
+    }
+  } else {
+    if (me == 0) {
+      printf("Test only runs if built with 8-byte integers\n");
+    }
   }
 
   NGA_Terminate();
