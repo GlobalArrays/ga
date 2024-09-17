@@ -10,7 +10,7 @@
 
 #define WRITE_VTK
 #define NDIM 64
-#define MAX_ITERATIONS 10000
+#define MAX_ITERATIONS 500
 
 #define NUM_BINS 40
 
