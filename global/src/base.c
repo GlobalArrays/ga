@@ -61,6 +61,7 @@
 #include "ga-papi.h"
 #include "ga-wapi.h"
 #include "thread-safe.h"
+#include "mtwister.h"
 
 static int calc_maplen(int handle);
 
@@ -114,6 +115,8 @@ int GA_Default_Proc_Group = -1;
 int ga_armci_world_group=0;
 int GA_Init_Proc_Group = -2;
 Integer GA_Debug_flag = 0;
+static Integer GA_Rand_seed = -1;
+static MTRand GA_Rand;
 
 /* MA addressing */
 DoubleComplex   *DCPL_MB;           /* double precision complex base address */
@@ -156,6 +159,8 @@ int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
                int grp_id);
 int gai_get_devmem(char *name, char **ptr_arr, C_Long bytes, int type, long *adj,
 		  int grp_id, int dev_flag, const char *device);
+extern void sai_init_sparse_arrays();
+extern void sai_terminate_sparse_arrays();
 #ifdef ENABLE_CHECKPOINT
 static int ga_group_is_for_ft=0;
 int ga_spare_procs;
@@ -517,6 +522,7 @@ void pnga_initialize()
     comm =  GA_MPI_Comm_pgroup(-1);
     MPI_Comm_dup(comm, &GA_MPI_World_comm_dup);
 #endif
+    sai_init_sparse_arrays();
     GA_Internal_Threadsafe_Unlock();
 }
 
@@ -724,6 +730,7 @@ int candidate, found, b; \
 C_Integer *map= (map_ij);\
 \
     candidate = (int)(scale*(elem));\
+    if (candidate == (n)) candidate = (n)-1; \
     found = 0;\
     if(map[candidate] <= (elem)){ /* search upward */\
          b= candidate;\
@@ -1737,7 +1744,7 @@ void pnga_set_irreg_distr(Integer g_a, Integer *mapc, Integer *nblock)
   maplen = 0;
   for (i=0; i<GA[ga_handle].ndim; i++) {
     ichk = mapc[maplen];
-    if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+    if (ichk < 1 || ichk > GA[ga_handle].dims[i]+1)
       pnga_error("Mapc entry outside array dimension limits",ichk);
     maplen++;
     for (j=1; j<nblock[i]; j++) {
@@ -1745,7 +1752,7 @@ void pnga_set_irreg_distr(Integer g_a, Integer *mapc, Integer *nblock)
         pnga_error("Mapc entries are not properly monotonic",ichk);
       }
       ichk = mapc[maplen];
-      if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+      if (ichk < 1 || ichk > GA[ga_handle].dims[i]+1)
         pnga_error("Mapc entry outside array dimension limits",ichk);
       maplen++;
     }
@@ -1923,7 +1930,7 @@ void pnga_set_tiled_irreg_proc_grid(Integer g_a, Integer *mapc, Integer *nblocks
   maplen = 0;
   for (i=0; i<GA[ga_handle].ndim; i++) {
     ichk = mapc[maplen];
-    if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+    if (ichk < 1 || ichk > GA[ga_handle].dims[i]+1)
       pnga_error("Mapc entry outside array dimension limits",ichk);
     maplen++;
     for (j=1; j<nblocks[i]; j++) {
@@ -1931,7 +1938,7 @@ void pnga_set_tiled_irreg_proc_grid(Integer g_a, Integer *mapc, Integer *nblocks
         pnga_error("Mapc entries are not properly monotonic",ichk);
       }
       ichk = mapc[maplen];
-      if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+      if (ichk < 1 || ichk > GA[ga_handle].dims[i]+1)
         pnga_error("Mapc entry outside array dimension limits",ichk);
       maplen++;
     }
@@ -4166,6 +4173,7 @@ Integer i, handle;
         return;
     }
 
+    sai_terminate_sparse_arrays();
 #ifdef PROFILE_OLD 
     ga_profile_terminate();
 #endif
@@ -5901,4 +5909,24 @@ void pnga_version(Integer *major_version, Integer *minor_version, Integer *patch
   *major_version = GA_VERSION_MAJOR;
   *minor_version = GA_VERSION_MINOR;
   *patch         = GA_VERSION_PATCH;
+}
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_rand = pnga_rand
+#endif
+double pnga_rand(Integer iseed)
+{
+  double ret;
+  if (GA_Rand_seed == -1) {
+    unsigned long lseed;
+    /* Choose a value for iseed if it has not already been set */
+    if (iseed == 0) {
+      iseed = 121238;
+    }
+    lseed = (unsigned long)(abs(iseed));
+    GA_Rand = seedRand(lseed);
+    GA_Rand_seed = 0;
+  }
+  ret = genRand(&GA_Rand); 
+  return ret;
 }
