@@ -71,6 +71,11 @@ sicm_device_list nill;
 
 /* data structures */
 
+int64_t send_cnt;
+int64_t recv_cnt;
+int64_t wait_cnt;
+int64_t req_cnt;
+
 typedef enum {
     OP_PUT = 0,
     OP_PUT_PACKED,
@@ -393,6 +398,11 @@ int _comex_init(MPI_Comm comm)
     int status = 0;
     int init_flag = 0;
     int i = 0;
+
+    send_cnt = 0;
+    recv_cnt = 0;
+    wait_cnt = 0;
+    req_cnt = 0;
     
     if (initialized) {
         return 0;
@@ -3382,6 +3392,7 @@ STATIC void _progress_server()
     char *static_header_buffer = NULL;
     int static_header_buffer_size = 0;
     int extra_size = 0;
+    int64_t iloop = 0;
 
 #if DEBUG
     fprintf(stderr, "[%d] _progress_server()\n", g_state.rank);
@@ -3520,6 +3531,12 @@ STATIC void _progress_server()
                 fprintf(stderr, "[%d] header operation not recognized: %d\n",
                         g_state.rank, header->operation);
                 COMEX_ASSERT(0);
+        }
+        iloop++;
+        if (iloop%100000 == 0) {
+          int me = g_state.rank;
+          printf("p[%d] send_cnt: %ld recv_cnt: %ld wait_cnt: %ld net_req: %ld\n",
+              send_cnt,recv_cnt,wait_cnt,req_cnt);
         }
     }
 
@@ -5445,6 +5462,8 @@ STATIC void nb_send_common(void *buf, int count, int dest, nb_t *nb, int need_fr
 
     retval = MPI_Isend(buf, count, MPI_CHAR, dest, COMEX_TAG, g_state.comm,
             &(message->request));
+    send_cnt++;
+    req_cnt++;
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -5478,6 +5497,8 @@ STATIC void nb_send_datatype(void *buf, MPI_Datatype dt, int dest, nb_t *nb)
 
     retval = MPI_Isend(buf, 1, dt, dest, COMEX_TAG, g_state.comm,
             &(message->request));
+    send_cnt++;
+    req_cnt++;
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -5530,6 +5551,8 @@ STATIC void nb_recv_packed(void *buf, int count, int source, nb_t *nb, stride_t 
 
     retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG, g_state.comm,
             &(message->request));
+    recv_cnt++;
+    req_cnt++;
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -5569,6 +5592,8 @@ STATIC void nb_recv_datatype(void *buf, MPI_Datatype dt, int source, nb_t *nb)
 
     retval = MPI_Irecv(buf, 1, dt, source, COMEX_TAG, g_state.comm,
             &(message->request));
+    recv_cnt++;
+    req_cnt++;
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -5608,6 +5633,8 @@ STATIC void nb_recv_iov(void *buf, int count, int source, nb_t *nb, comex_giov_t
 
     retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG, g_state.comm,
             &(message->request));
+    recv_cnt++;
+    req_cnt++;
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -5646,6 +5673,8 @@ STATIC void nb_recv(void *buf, int count, int source, nb_t *nb)
 
     retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG, g_state.comm,
             &(message->request));
+    recv_cnt++;
+    req_cnt++;
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -5741,6 +5770,8 @@ STATIC void nb_wait_for_send1(nb_t *nb)
         message_t *message_to_free = NULL;
 
         retval = MPI_Wait(&(nb->send_head->request), &status);
+        wait_cnt++;
+        req_cnt--;
         CHECK_MPI_RETVAL(retval);
 
         if (nb->send_head->need_free) {
@@ -5837,6 +5868,8 @@ STATIC void nb_wait_for_recv1(nb_t *nb)
         message_t *message_to_free = NULL;
 
         retval = MPI_Wait(&(nb->recv_head->request), &status);
+        wait_cnt++;
+        req_cnt--;
         CHECK_MPI_RETVAL(retval);
 
         if (NULL != nb->recv_head->stride) {
@@ -7629,4 +7662,13 @@ STATIC void count_open_fds(void) {
     fclose(f);
   }
 #endif
+}
+
+STATIC void _check_requests(int64_t *send, int64_t *recv, int64_t *wait,
+    int64_t *req)
+{
+  *send = send_cnt;
+  *recv = recv_cnt;
+  *wait = wait_cnt;
+  *req = req_cnt;
 }
