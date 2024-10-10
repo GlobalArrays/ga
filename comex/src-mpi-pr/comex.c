@@ -69,12 +69,17 @@ sicm_device_list nill;
 #define HOST_NAME_MAX 256
 #endif
 
-/* data structures */
-
 int64_t send_cnt;
 int64_t recv_cnt;
 int64_t wait_cnt;
 int64_t req_cnt;
+void _check_requests(const char* string)
+{
+  printf("p[%d] (%s) send_cnt: %ld recv_cnt: %ld wait_cnt: %ld net_req: %ld\n",
+              g_state.rank,string,send_cnt,recv_cnt,wait_cnt,req_cnt);
+}
+
+/* data structures */
 
 typedef enum {
     OP_PUT = 0,
@@ -3534,9 +3539,7 @@ STATIC void _progress_server()
         }
         iloop++;
         if (iloop%100000 == 0) {
-          int me = g_state.rank;
-          printf("p[%d] send_cnt: %ld recv_cnt: %ld wait_cnt: %ld net_req: %ld\n",
-              send_cnt,recv_cnt,wait_cnt,req_cnt);
+          _check_requests("progress server");
         }
     }
 
@@ -7662,13 +7665,4 @@ STATIC void count_open_fds(void) {
     fclose(f);
   }
 #endif
-}
-
-STATIC void _check_requests(int64_t *send, int64_t *recv, int64_t *wait,
-    int64_t *req)
-{
-  *send = send_cnt;
-  *recv = recv_cnt;
-  *wait = wait_cnt;
-  *req = req_cnt;
 }
