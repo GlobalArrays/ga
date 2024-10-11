@@ -5418,6 +5418,9 @@ STATIC void server_recv(void *buf, int count, int source)
 
     retval = MPI_Get_count(&status, MPI_CHAR, &recv_count);
     CHECK_MPI_RETVAL(retval);
+    if (recv_count != count) {
+      printf("p[%d] SRC: %d COUNT: %d RECV_COUNT: %d\n",g_state.rank,source,count,recv_count);
+    }
     COMEX_ASSERT(recv_count == count);
 }
 
