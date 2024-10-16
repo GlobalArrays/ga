@@ -6,6 +6,10 @@
 
 #include <mpi.h>
 
+#if defined(__CRAYXE)
+#  include <pmi.h>
+#endif
+
 #include "cmx.h"
 #include "cmx_impl.h"
 #include "groups.h"
@@ -589,6 +593,12 @@ void cmx_group_finalize()
 
 static long xgethostid()
 {
+#if defined(__CRAYXE)
+#warning CRAY
+    int nodeid;
+    PMI_Get_nid(g_state.rank, &nodeid);
+#else
     long nodeid = gethostid();
+#endif
     return nodeid;
 }
