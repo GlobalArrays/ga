@@ -182,6 +182,7 @@ check_PROGRAMS += testing/perf_contig
 check_PROGRAMS += testing/perf_strided
 check_PROGRAMS += testing/shift
 check_PROGRAMS += testing/test
+check_PROGRAMS += src-mpi-pr/mpi_put_test
 
 COMEX_SERIAL_TESTS =
 COMEX_SERIAL_TESTS_XFAIL =
@@ -195,6 +196,7 @@ COMEX_TESTS_XFAIL = $(COMEX_SERIAL_TESTS_XFAIL) $(COMEX_DUAL_TESTS_XFAIL) $(COME
 COMEX_DUAL_TESTS += testing/perf$(EXEEXT)
 COMEX_DUAL_TESTS += testing/perf_contig$(EXEEXT)
 COMEX_DUAL_TESTS += testing/perf_strided$(EXEEXT)
+COMEX_DUAL_TESTS += src-mpi-pr/mpi_put_test$(EXEEXT)
 COMEX_PARALLEL_TESTS += testing/perf_amo$(EXEEXT)
 COMEX_PARALLEL_TESTS += testing/shift$(EXEEXT)
 COMEX_PARALLEL_TESTS += testing/test$(EXEEXT)
@@ -203,6 +205,7 @@ testing_perf_SOURCES         = testing/perf.c
 testing_perf_amo_SOURCES     = testing/perf_amo.c
 testing_perf_contig_SOURCES  = testing/perf_contig.c
 testing_perf_strided_SOURCES = testing/perf_strided.c
+testing_mpi_put_test_SOURCES = src-mpi-pr/mpi_put_test.c
 testing_shift_SOURCES        = testing/shift.c
 testing_test_SOURCES         = testing/test.c
 
