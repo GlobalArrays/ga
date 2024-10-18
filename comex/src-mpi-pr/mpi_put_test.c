@@ -13,7 +13,7 @@
 /* number of processors in a progress rank block. The last processor in the block
  * is the progress rank. This block must evenly divide the number of processors
  * on an SMP node */
-#define NPROC_BLOCK 5
+#define NPROC_BLOCK 7
 #define SEGMENT_SIZE 4194304
 #define NLOOP 10000
 
@@ -74,6 +74,9 @@ int main(int argc, char **argv)
     printf("p[%d] SMP size %d is not evenly divided by NPROC_BLOCK %d\n",
         rank,smp_size,NPROC_BLOCK);
     MPI_Abort(comm,-1);
+  }
+  if (rank == 0) {
+    printf("Number of progress ranks per SMP node: %d\n",smp_size/NPROC_BLOCK);
   }
   /* Find progress ranks for all processors */
   pr_world = (int*)malloc(nprocs*sizeof(int));
@@ -261,7 +264,7 @@ int main(int argc, char **argv)
   tok = 1;
   if (pr_world[rank] != -1) {
     for (i=0; i<nints; i++) {
-      if (((int*)ptrs)[rank]  != i+vrank*nints) {
+      if (((int*)my_shm_buf)[i]  != i+vrank*nints) {
         tok = 0;
       }
     }
@@ -278,7 +281,7 @@ int main(int argc, char **argv)
   /* Clean up shared memory segments */
   if (pr_world[rank] != -1) {
     int retval = 0;
-    retval = munmap(ptrs[rank], SEGMENT_SIZE);
+    retval = munmap(my_shm_buf, SEGMENT_SIZE);
     if (-1 == retval) {
       perror("munmap fails");
       MPI_Abort(comm,-1);
@@ -291,7 +294,7 @@ int main(int argc, char **argv)
   } else {
     for (i=rank-1; i>=rank-NPROC_BLOCK+1;i--) {
       int retval = 0;
-      retval = munmap(ptrs[rank], SEGMENT_SIZE);
+      retval = munmap(ptrs[i], SEGMENT_SIZE);
       if (-1 == retval) {
         perror("munmap fails");
         MPI_Abort(comm,-1);
