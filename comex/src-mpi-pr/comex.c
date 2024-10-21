@@ -55,8 +55,6 @@ sicm_device_list nill;
 #define HOST_NAME_MAX 256
 #endif
 
-#include "comex_structs.h"
-
 #ifdef ENABLE_DEVICE
 #include "dev_utils.h"
 #endif
@@ -1955,11 +1953,6 @@ int comex_free_local(void *ptr)
         perror("comex_free_local: shm_unlink");
         comex_error("comex_free_local: shm_unlink", retval);
     }
-#ifdef ENABLE_DEVICE
-    else {
-      setDevice(reg_entry->dev_id);
-      freeDevice(ptr);
-    }
 #endif
 
     /* delete the reg_cache entry */
@@ -2830,6 +2823,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
                 reg_entries[i].key);
 #else
             void *memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
+#endif
 #ifdef ENABLE_DEVICE
             devMemHandle_t handle;
 #endif

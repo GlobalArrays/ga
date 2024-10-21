@@ -526,13 +526,13 @@ reg_cache_find_intersection(int rank, void *buf, size_t len, int dev_id)
  * @return pointer to new node
  */
 reg_entry_t*
-reg_cache_insert(int rank, void *buf, size_t len, const char *name,
+reg_cache_insert(int rank, void *buf, size_t len, const char *name
 #if ENABLE_SYSV
-    key_t key,
+    ,key_t key
 #endif
-    void *mapped,
-    int use_dev
-    int dev_id,
+    ,void *mapped
+    ,int use_dev
+    ,int dev_id
 #if USE_SICM
 #if SICM_OLD
     ,sicm_device *device

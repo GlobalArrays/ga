@@ -144,6 +144,9 @@ if(ENABLE_HIP)
   target_link_libraries(armci_comex PRIVATE roc::rocblas hip::device)
 elseif(ENABLE_CUDA)
   target_link_libraries(armci_comex PRIVATE CUDA::cublas)
+  if (ENABLE_NVTX)
+    target_link_libraries(armci_comex PUBLIC CUDA::nvtx3)
+  endif()
 endif()
 
 add_library(armci
@@ -161,6 +164,9 @@ if(ENABLE_HIP)
   target_link_libraries(armci PUBLIC roc::rocblas hip::device)
 elseif(ENABLE_CUDA)
   target_link_libraries(armci PUBLIC CUDA::cudart CUDA::cublas)
+  if (ENABLE_NVTX)
+    target_link_libraries(armci PUBLIC CUDA::nvtx3)
+  endif()
 endif()
 
 install(TARGETS armci
@@ -182,6 +188,9 @@ if(ENABLE_HIP)
   target_link_libraries(comex PUBLIC roc::rocblas hip::device)
 elseif(ENABLE_CUDA)
   target_link_libraries(comex PUBLIC CUDA::cudart CUDA::cublas)
+  if (ENABLE_NVTX)
+    target_link_libraries(comex PUBLIC CUDA::nvtx3)
+  endif()
 endif()
 
 install(TARGETS comex

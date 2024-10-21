@@ -3356,14 +3356,10 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
 
     free(buf2); free(buf1);
     
-<<<<<<< HEAD
     pnga_free(proc);
-=======
-    ga_free(proc);
 #ifdef ENABLE_DEVICE
   if (GA[handle].dev_set) ARMCI_Set_local_dev();
 #endif
->>>>>>> 5a5c5e3... Added a set local device call at the end of all one-sided operations
 }
 
 /**

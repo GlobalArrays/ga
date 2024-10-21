@@ -59,11 +59,11 @@ typedef struct _reg_entry_t {
 reg_return_t reg_cache_init(int nprocs);
 reg_return_t reg_cache_destroy();
 reg_entry_t *reg_cache_find(int rank, void *buf, size_t len, int dev_id);
-reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len, const char *name,
+reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len, const char *name
 #if ENABLE_SYSV
-    key_t key,
+    ,key_t key
 #endif
-    void *mapped, int use_dev, int dev_id,
+    ,void *mapped, int use_dev, int dev_id
 #if USE_SICM
 #if SICM_OLD
     ,sicm_device *device
