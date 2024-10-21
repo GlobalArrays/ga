@@ -157,15 +157,10 @@ add_library(GlobalArrays::armci ALIAS armci)
 target_include_directories(armci PRIVATE ${MPI_C_INCLUDE_DIRS})
 
 target_include_directories(armci PRIVATE ${MPI_C_INCLUDE_DIRS})
-if(ENABLE_CUDA)
-  cuda_add_cublas_to_target(armci)
-else()
-  target_link_libraries(armci PUBLIC ${CUDA_LIBRARIES})
-endif()
 if(ENABLE_HIP)
   target_link_libraries(armci PUBLIC roc::rocblas hip::device)
 elseif(ENABLE_CUDA)
-  target_link_libraries(armci PUBLIC CUDA::cublas)
+  target_link_libraries(armci PUBLIC CUDA::cudart CUDA::cublas)
 endif()
 
 install(TARGETS armci
@@ -183,15 +178,10 @@ add_library(GlobalArrays::comex ALIAS comex)
 target_include_directories(comex PRIVATE ${MPI_C_INCLUDE_DIRS})
 
 target_include_directories(comex PRIVATE ${MPI_C_INCLUDE_DIRS})
-if(ENABLE_CUDA)
-  cuda_add_cublas_to_target(comex)
-else()
-  target_link_libraries(comex PUBLIC ${CUDA_LIBRARIES})
-endif()
 if(ENABLE_HIP)
   target_link_libraries(comex PUBLIC roc::rocblas hip::device)
 elseif(ENABLE_CUDA)
-  target_link_libraries(comex PUBLIC CUDA::cublas)
+  target_link_libraries(comex PUBLIC CUDA::cudart CUDA::cublas)
 endif()
 
 install(TARGETS comex
