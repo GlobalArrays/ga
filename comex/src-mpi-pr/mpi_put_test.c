@@ -40,7 +40,8 @@ int main(int argc, char **argv)
   MPI_Request request;
   int loopinc = NLOOP/100;
   int tok, ok;
-  int nints;
+  int nints, nproc_blocks, my_proc_block;
+  int *offset;
 
   MPI_Init(&argc, &argv);
   ierr = MPI_Comm_size(comm,&nprocs);
@@ -56,6 +57,8 @@ int main(int argc, char **argv)
     printf("Number of visible processors in test: %d\n",nvprocs);
     printf("Size of process block: %d\n",NPROC_BLOCK);
   }
+  nproc_blocks = nprocs/NPROC_BLOCK;
+  my_proc_block = (rank-rank%NPROC_BLOCK)/NPROC_BLOCK;
 
   /* Find host IDs */
   tmpids = (long*)malloc(nprocs*sizeof(long));
@@ -86,6 +89,20 @@ int main(int argc, char **argv)
     } else {
       pr_world[i] = -1;
     }
+  }
+
+  /* set up offsets for each rank within a processor block */
+  offset = (int*)malloc((NPROC_BLOCK-1)*sizeof(int));
+  iloop = 0;
+  i=0;
+  while (iloop < NPROC_BLOCK-1) {
+    /* find offset that will send data to another SMP node */
+    int nblk_per_node = smp_size/NPROC_BLOCK;
+    if ((i*nblk_per_node)%nproc_blocks != 0) {
+      offset[iloop] = (i*nblk_per_node*NPROC_BLOCK)%nprocs;
+      iloop++;
+    }
+    i++;
   }
   /* create unique name for shared memory segment (this is not used on
    * progress ranks) */
@@ -210,19 +227,20 @@ int main(int argc, char **argv)
     /* Initialize data and send it to progress rank (if not a progress rank) */
     if (pr_world[rank] != -1) {
       int numi = SEGMENT_SIZE/sizeof(int);
-      int skip = nvprocs/2;
-      int node, inc;
+      int inc;
       int dest_pr;
       MPI_Request request_d, request_h;
       int ierr;
       /* header contains 3 entries: source rank, destination rank, message length */
       int header[3];
       /* find destination process */
-      vdest = (vrank+skip)%nvprocs;
-      inc = vdest%(NPROC_BLOCK-1);
-      node = (vdest-inc)/(NPROC_BLOCK-1);
-      dest = node*NPROC_BLOCK + inc;
+      inc = rank%NPROC_BLOCK;
+      dest = (rank+offset[inc])%nprocs;
       dest_pr = pr_world[dest];
+      vdest = ((dest-inc)/NPROC_BLOCK)*(NPROC_BLOCK-1)+inc;
+      if (iloop == 0) {
+        printf("Process %d sending to process %d\n",rank,dest_pr);
+      }
       header[0] = rank;
       header[1] = dest;
       header[2] = SEGMENT_SIZE;
