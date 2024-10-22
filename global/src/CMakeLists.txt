@@ -100,6 +100,10 @@ set(GA_FILES
   sclstubs.c
   select.c
   sparse.c
+  sparse.array.c
+  sketch.c
+  mtwister.c
+  
   ${GA_FORTRAN_INTERFACE_C_FILES}
   ${GA_FORTRAN_INTERFACE_F_FILES}
 )
