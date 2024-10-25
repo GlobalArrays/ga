@@ -7,6 +7,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <math.h>
+#include <ctype.h>
 
 #include <mpi.h>
 
@@ -40,6 +42,7 @@ comex_igroup_t *group_list = NULL;
 static void _create_group_and_igroup(comex_group_t *id, comex_igroup_t **igroup);
 static void _igroup_free(comex_igroup_t *igroup);
 static long xgethostid();
+static long host2ascii();
 
 
 /**
@@ -617,13 +620,55 @@ void comex_group_finalize()
 
 static long xgethostid()
 {
-#if defined(__CRAYXE)
-#warning CRAY
-    int nodeid;
-    PMI_Get_nid(g_state.rank, &nodeid);
-#else
+#if 0  
     long nodeid = gethostid();
+#else
+    long nodeid = host2ascii();
 #endif
 
     return nodeid;
 }
+
+long host2ascii(){
+    /* char by char assignment
+    /* characters 0...9 return 0..9 */    
+    /* characters a..z return 10..35 */    
+    /* character    -  returns 36 */    
+    char *ptr;
+    /* 2^63-1 */
+#define HUGELONG 9223372036854775807 
+#define ASCII0     48
+#define ASCIIBASE 37
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+    int maxexp= (int) (log10(HUGELONG)/log10(ASCIIBASE));
+
+    char name[256];
+    gethostname(name, 256);
+    
+    ptr = strchr( name, '.' );
+    int loop_len=strlen(name);
+    if (ptr != NULL) {
+      int dot_position = (int) (ptr - name);
+      loop_len=dot_position;
+    }
+    int i;
+    long myval = 0;
+    int myexp;
+    int my_ascii;
+    int i0 = 0;
+    if (loop_len > maxexp) i0 = loop_len - maxexp ;
+    for (i=loop_len-1; i >= i0; i--) {
+      my_ascii=(int) toupper(name[i])-ASCII0;
+    /* skip ascii 58-64 */    
+      if (my_ascii > 9) my_ascii -= 7;
+      /* dash */
+      if (my_ascii == -3) my_ascii=37;
+      if (my_ascii < 0) {
+	printf(" character %c resulted in my_ascii %d < 0 for hostname %s\n", name[i], my_ascii, name);
+	assert(my_ascii > -1);
+      }
+      myexp=loop_len-1-i;
+      myval += ((my_ascii)*( (long )pow(ASCIIBASE,myexp) ));
+    }
+    return myval;
+  }
