@@ -3427,7 +3427,7 @@ STATIC void _progress_server()
         MPI_Status recv_status;
 
         MPI_Recv(static_header_buffer, static_header_buffer_size, MPI_CHAR,
-                MPI_ANY_SOURCE, COMEX_TAG, g_state.comm, &recv_status);
+                MPI_ANY_SOURCE, COMEX_TAG+g_state.rank, g_state.comm, &recv_status);
         MPI_Get_count(&recv_status, MPI_CHAR, &length);
         source = recv_status.MPI_SOURCE;
 #   if DEBUG
@@ -5362,7 +5362,7 @@ STATIC void server_send(void *buf, int count, int dest)
 #endif
 
     retval = MPI_Send(buf, count, MPI_CHAR, dest,
-            COMEX_TAG, g_state.comm);
+            COMEX_TAG+dest, g_state.comm);
 
     CHECK_MPI_RETVAL(retval);
 }
@@ -5377,7 +5377,7 @@ STATIC void server_send_datatype(void *buf, MPI_Datatype dt, int dest)
             g_state.rank, buf, dest);
 #endif
 
-    retval = MPI_Send(buf, 1, dt, dest, COMEX_TAG, g_state.comm);
+    retval = MPI_Send(buf, 1, dt, dest, COMEX_TAG+dest, g_state.comm);
 
     CHECK_MPI_RETVAL(retval);
 }
@@ -5390,11 +5390,11 @@ STATIC void server_recv(void *buf, int count, int source)
     int recv_count = 0;
 
     retval = MPI_Recv(buf, count, MPI_CHAR, source,
-            COMEX_TAG, g_state.comm, &status);
+            COMEX_TAG+g_state.rank, g_state.comm, &status);
 
     CHECK_MPI_RETVAL(retval);
     COMEX_ASSERT(status.MPI_SOURCE == source);
-    COMEX_ASSERT(status.MPI_TAG == COMEX_TAG);
+    COMEX_ASSERT(status.MPI_TAG == COMEX_TAG+g_state.rank);
 
     retval = MPI_Get_count(&status, MPI_CHAR, &recv_count);
     CHECK_MPI_RETVAL(retval);
@@ -5408,11 +5408,11 @@ STATIC void server_recv_datatype(void *buf, MPI_Datatype dt, int source)
     MPI_Status status;
 
     retval = MPI_Recv(buf, 1, dt, source,
-            COMEX_TAG, g_state.comm, &status);
+            COMEX_TAG+g_state.rank, g_state.comm, &status);
 
     CHECK_MPI_RETVAL(retval);
     COMEX_ASSERT(status.MPI_SOURCE == source);
-    COMEX_ASSERT(status.MPI_TAG == COMEX_TAG);
+    COMEX_ASSERT(status.MPI_TAG == COMEX_TAG+g_state.rank);
 }
 
 
@@ -5443,7 +5443,7 @@ STATIC void nb_send_common(void *buf, int count, int dest, nb_t *nb, int need_fr
     }
     nb->send_tail = message;
 
-    retval = MPI_Isend(buf, count, MPI_CHAR, dest, COMEX_TAG, g_state.comm,
+    retval = MPI_Isend(buf, count, MPI_CHAR, dest, COMEX_TAG+dest, g_state.comm,
             &(message->request));
     CHECK_MPI_RETVAL(retval);
 }
@@ -5476,7 +5476,7 @@ STATIC void nb_send_datatype(void *buf, MPI_Datatype dt, int dest, nb_t *nb)
     }
     nb->send_tail = message;
 
-    retval = MPI_Isend(buf, 1, dt, dest, COMEX_TAG, g_state.comm,
+    retval = MPI_Isend(buf, 1, dt, dest, COMEX_TAG+dest, g_state.comm,
             &(message->request));
     CHECK_MPI_RETVAL(retval);
 }
@@ -5528,8 +5528,8 @@ STATIC void nb_recv_packed(void *buf, int count, int source, nb_t *nb, stride_t 
     }
     nb->recv_tail = message;
 
-    retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG, g_state.comm,
-            &(message->request));
+    retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG+g_state.rank,
+        g_state.comm, &(message->request));
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -5567,8 +5567,8 @@ STATIC void nb_recv_datatype(void *buf, MPI_Datatype dt, int source, nb_t *nb)
     }
     nb->recv_tail = message;
 
-    retval = MPI_Irecv(buf, 1, dt, source, COMEX_TAG, g_state.comm,
-            &(message->request));
+    retval = MPI_Irecv(buf, 1, dt, source, COMEX_TAG+g_state.rank,
+        g_state.comm, &(message->request));
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -5606,8 +5606,8 @@ STATIC void nb_recv_iov(void *buf, int count, int source, nb_t *nb, comex_giov_t
     }
     nb->recv_tail = message;
 
-    retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG, g_state.comm,
-            &(message->request));
+    retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG+g_state.rank,
+        g_state.comm, &(message->request));
     CHECK_MPI_RETVAL(retval);
 }
 
@@ -5644,8 +5644,8 @@ STATIC void nb_recv(void *buf, int count, int source, nb_t *nb)
     }
     nb->recv_tail = message;
 
-    retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG, g_state.comm,
-            &(message->request));
+    retval = MPI_Irecv(buf, count, MPI_CHAR, source, COMEX_TAG+g_state.rank,
+        g_state.comm, &(message->request));
     CHECK_MPI_RETVAL(retval);
 }
 
