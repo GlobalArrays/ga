@@ -2722,8 +2722,8 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
                 reg_entries_local[reg_entries_local_count++] = reg_entries[i];
             }
         }
-        else if (g_state.hostid[reg_entries[i].rank]
-                == g_state.hostid[my_world_rank]) {
+        else if (!strcmp(g_state.host[reg_entries[i].rank].name,
+                g_state.host[my_world_rank].name)) {
             /* same SMP node, need to mmap */
             /* open remote shared memory object */
             void *memory = _shm_attach_memdev(reg_entries[i].name,
@@ -2880,7 +2880,7 @@ void _malloc_semaphore()
         if (g_state.rank == i) {
             continue; /* skip my own rank */
         }
-        else if (g_state.hostid[g_state.rank] == g_state.hostid[i]) {
+        else if (!strcmp(g_state.host[g_state.rank].name,g_state.host[i].name)) {
             /* same SMP node */
 #if ENABLE_UNNAMED_SEM
             semaphores[i] = _shm_attach(
@@ -2949,7 +2949,7 @@ void _free_semaphore()
             }
 #endif
         }
-        else if (g_state.hostid[g_state.rank] == g_state.hostid[i]) {
+        else if (!strcmp(g_state.host[g_state.rank].name,g_state.host[i].name)) {
             /* same SMP node */
 #if ENABLE_UNNAMED_SEM
             retval = munmap(semaphores[i], sizeof(sem_t));
@@ -4648,8 +4648,8 @@ STATIC void _malloc_handler(
             fprintf(stderr, "[%d] _malloc_handler found NULL at %d\n", g_state.rank, i);
 #endif
         }
-        else if (g_state.hostid[reg_entries[i].rank]
-                == g_state.hostid[g_state.rank]) {
+        else if (!strcmp(g_state.host[reg_entries[i].rank].name,
+                g_state.host[g_state.rank].name)) {
             /* same SMP node, need to mmap */
             /* attach to remote shared memory object */
           void *memory;
@@ -4741,8 +4741,8 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
             fprintf(stderr, "[%d] _free_handler found NULL at %d\n", g_state.rank, i);
 #endif
         }
-        else if (g_state.hostid[rank_ptrs[i].rank]
-                == g_state.hostid[g_state.rank]) {
+        else if (!strcmp(g_state.host[rank_ptrs[i].rank].name,
+                g_state.host[g_state.rank].name)) {
             /* same SMP node */
             reg_entry_t *reg_entry = NULL;
             int retval = 0;
@@ -4926,7 +4926,7 @@ STATIC int _smallest_world_rank_with_same_hostid(comex_igroup_t *igroup)
     int *world_ranks = _get_world_ranks(igroup);
 
     for (i=0; i<igroup->size; ++i) {
-        if (g_state.hostid[world_ranks[i]] == g_state.hostid[g_state.rank]) {
+        if (!strcmp(g_state.host[world_ranks[i]].name,g_state.host[g_state.rank].name)) {
             /* found same host as me */
             if (world_ranks[i] < smallest) {
                 smallest = world_ranks[i];
@@ -4949,7 +4949,7 @@ STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup)
     int *world_ranks = _get_world_ranks(igroup);
 
     for (i=0; i<igroup->size; ++i) {
-        if (g_state.hostid[world_ranks[i]] == g_state.hostid[g_state.rank]) {
+        if (!strcmp(g_state.host[world_ranks[i]].name,g_state.host[g_state.rank].name)) {
             /* found same host as me */
             if (world_ranks[i] > largest) {
                 largest = world_ranks[i];
@@ -6365,7 +6365,7 @@ STATIC void nb_puts(
     if (COMEX_ENABLE_PUT_DATATYPE
             && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_PUT_SMP
-                || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+                || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))
             && (_packed_size(src_stride, count, stride_levels) > COMEX_PUT_DATATYPE_THRESHOLD)) {
         nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
@@ -6375,7 +6375,7 @@ STATIC void nb_puts(
     if (COMEX_ENABLE_PUT_PACKED
             && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_PUT_SMP
-                || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+                || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))) {
         nb_puts_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
@@ -6634,7 +6634,7 @@ STATIC void nb_gets(
     if (COMEX_ENABLE_GET_DATATYPE
             && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_GET_SMP
-                || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+                || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))
             && (_packed_size(src_stride, count, stride_levels) > COMEX_GET_DATATYPE_THRESHOLD)) {
         nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
@@ -6644,7 +6644,7 @@ STATIC void nb_gets(
     if (COMEX_ENABLE_GET_PACKED
             && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_GET_SMP
-                || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+                || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))) {
         nb_gets_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
@@ -6910,7 +6910,7 @@ STATIC void nb_accs(
     if (COMEX_ENABLE_ACC_PACKED
             && (!COMEX_ENABLE_ACC_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_ACC_SMP
-                || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+                || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))) {
         nb_accs_packed(datatype, scale, src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
@@ -7120,7 +7120,7 @@ STATIC void nb_putv(
         if (COMEX_ENABLE_PUT_IOV
                 && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
                 && (!COMEX_ENABLE_PUT_SMP
-                    || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+                    || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))) {
             nb_putv_packed(&iov[i], proc, nb);
         }
         else {
@@ -7224,7 +7224,7 @@ STATIC void nb_getv(
         if (COMEX_ENABLE_GET_IOV
                 && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
                 && (!COMEX_ENABLE_GET_SMP
-                    || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+                    || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))) {
             nb_getv_packed(&iov[i], proc, nb);
         }
         else {
@@ -7336,7 +7336,7 @@ STATIC void nb_accv(
         if (COMEX_ENABLE_ACC_IOV
                 && (!COMEX_ENABLE_ACC_SELF || g_state.rank != proc)
                 && (!COMEX_ENABLE_ACC_SMP
-                    || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+                    || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))) {
             nb_accv_packed(datatype, scale, &iov[i], proc, nb);
         }
         else {

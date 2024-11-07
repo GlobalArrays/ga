@@ -8,9 +8,15 @@
 #ifndef _COMEX_GROUPS_H_
 #define _COMEX_GROUPS_H_
 
+#define COMEX_MAX_HOST_NAME_LEN 256
+
 #include <mpi.h>
 
 #include "comex.h"
+
+typedef struct {
+  char name[COMEX_MAX_HOST_NAME_LEN];
+} host_name_t;
 
 typedef struct {
     MPI_Comm comm;  /**< whole comm; all ranks */
@@ -18,7 +24,7 @@ typedef struct {
     int size;       /**< comm size */
     int rank;       /**< comm rank */
     int *master;    /**< master[size] rank of a given rank's master */
-    long *hostid;   /**< hostid[size] hostid of SMP node for a given rank */
+    host_name_t *host;   /**< host[size] host name of SMP node for a given rank */
     MPI_Comm node_comm;  /**< node comm; SMP ranks */
     int node_size;       /**< node comm size */
     int node_rank;       /**< node comm rank */
