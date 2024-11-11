@@ -5,7 +5,7 @@
 #include <cuda_runtime.h>
 #include "dev_mem_handle.h"
 
-#include "comex.h"
+#include "comex_defs.h"
 
 #define cudaErrCheck(stat)                                                                                             \
   {                                                                                                                    \
@@ -32,7 +32,12 @@ int numDevices()
   /*cuDeviceGetCount(&ngpus); */
   if (ierr != cudaSuccess) {
     int rank = MPI_Wrapper_world_rank();
-    printf("p[%d] Error encountered by cudaGetDeviceCount\n",rank);
+    printf("p[%d] Error encountered by cudaGetDeviceCount count: %d\n",
+      rank,ngpus);
+    if (ierr == cudaErrorNoDevice) {
+       printf("p[%d] cudaGetDeviceCount no devices found\n",rank);
+       ngpus = 0;
+    }
   }
   return ngpus;
 }
@@ -59,8 +64,6 @@ void setDevice(int id)
 void mallocDevice(void **buf, size_t size)
 {
   cudaError_t ierr = cudaMalloc(buf, (int)size);
-  printf("p[%d] mallocDevice: %p end: %p size: %d\n",
-      MPI_Wrapper_world_rank(),*buf,((char*)(*buf)+size),size);
   if (ierr != cudaSuccess) {
     int err=0;
     int rank = MPI_Wrapper_world_rank();

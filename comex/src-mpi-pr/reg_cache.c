@@ -444,18 +444,12 @@ reg_cache_find(int rank, void *buf, size_t len, int dev_id)
 #endif
 
     if (entry == NULL && dev_id >= 0) {
-      printf("p[%d] dbg rank: %d buf: %p  len: %d dev_id: %d\n",
-          g_state.rank,rank,buf,len,dev_id);
       runner = reg_cache[rank];
 
       while (runner && NULL == entry) {
         if (RR_SUCCESS == reg_entry_contains(runner, buf, len, dev_id)) {
           entry = runner;
         }
-          printf("[%d] dbg reg_entry\n"
-              "rank: %d buf: %p len: %zu mapped: %p\n",
-              g_state.rank, runner->rank, runner->buf, runner->len,
-              runner->mapped);
         runner = runner->next;
       }
     }

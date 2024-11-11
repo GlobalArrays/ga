@@ -77,7 +77,7 @@ sicm_device_list nill;
 #define XSTR(x) #x
 #define TR(x) XSTR(x)
 
-#define ENABLE_GPU_AWARE_MPI
+//#define ENABLE_GPU_AWARE_MPI
 #define ENABLE_STRIDED_KERNELS
 
 #ifdef ENABLE_NVTX
@@ -3189,8 +3189,6 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
         /* allocate memory on device mapped to this process */
         my_reg = *_comex_malloc_local_memdev(sizeof(char)*size, _comex_dev_id);
     }
-    printf("p[%d] my_reg.buf: %p my_reg.len: %d my_reg.dev_id: %d is_notifier: %d\n",
-        g_state.rank, my_reg.buf, my_reg.len, my_reg.dev_id, is_notifier);
 
     /* exchange buffer address via reg entries */
     reg_entries[igroup->rank] = my_reg;
@@ -3209,11 +3207,6 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
                 /* does this need to be a memcpy?? */
                 reg_entries_local[reg_entries_local_count++] = reg_entries[i];
             }
-          printf("p[%d] at 1 reg_entries[i].rank: %d master1: %d master2: %d\n",g_state.rank,
-              reg_entries[i].rank,g_state.master[reg_entries[i].rank],
-              g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
-                g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
-                num_progress_ranks_per_node, is_node_ranks_packed)]);
         }
         /* my master is the same as the master of the notifier */
         else if (g_state.master[reg_entries[i].rank] == 
@@ -3221,11 +3214,6 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
            g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
            num_progress_ranks_per_node, is_node_ranks_packed)] )
             {
-          printf("p[%d] reg_entries[i].rank: %d master1: %d master2: %d\n",g_state.rank,
-              reg_entries[i].rank,g_state.master[reg_entries[i].rank],
-              g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
-                g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
-                num_progress_ranks_per_node, is_node_ranks_packed)]);
             /* same SMP node, need to mmap */
             /* open remote shared memory object */
             void *memory;
@@ -3246,9 +3234,6 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
 #else
             memory = reg_entries[i].buf;
 #endif
-            printf("p[%d] insert rank: %d buf: %p len: %d dev: %d\n",
-                g_state.rank,reg_entries[i].rank,reg_entries[i].buf,
-                reg_entries[i].len,reg_entries[i].dev_id);
             (void)reg_cache_insert(
                     reg_entries[i].rank,
                     reg_entries[i].buf,
@@ -5978,8 +5963,6 @@ STATIC void _malloc_handler(
 #if ENABLE_SYSV
             memory = _shm_attach(reg_entries[i].name, reg_entries[i].len,
                 reg_entries[i].key);
-#else
-            memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
 #endif
 #ifdef ENABLE_DEVICE
         if (!reg_entries[i].use_dev) {
@@ -6010,7 +5993,6 @@ STATIC void _malloc_handler(
                     reg_entries[i].name,
                     memory);
 #endif
-            printf("p[%d] reg_entries[%d].dev_id: %d\n",g_state.rank,i,reg_entries[i].dev_id);
             (void)reg_cache_insert(
                     reg_entries[i].rank,
                     reg_entries[i].buf,
@@ -6115,19 +6097,21 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
             /* printf("p[%d] DETACH SHM name: %s key: %d\n",g_state.rank,reg_entry->name, reg_entry->key); */
             _shmdt_err(shmdt(reg_entry->mapped));
             retval = 0;
-#else
-            retval = munmap(reg_entry->mapped, reg_entry->len);
-            check_devshm(0, -(reg_entry->len));
-#endif
-            if (!reg_entry->use_dev) {
-              retval = munmap(reg_entry->mapped, reg_entry->len);
-            }
-#endif
             if (-1 == retval) {
                 perror("_free_handler: munmap");
                 comex_error("_free_handler: munmap", retval);
             }
-
+#else
+            if (!reg_entry->use_dev) {
+              retval = munmap(reg_entry->mapped, reg_entry->len);
+              check_devshm(0, -(reg_entry->len));
+              if (-1 == retval) {
+                perror("_free_handler: munmap");
+                comex_error("_free_handler: munmap", retval);
+              }
+            }
+#endif
+#endif
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] _free_handler unmapped mapped memory in reg entry\n",
                     g_state.rank);
@@ -6350,7 +6334,7 @@ STATIC void* _shm_create(const char *name, size_t size)
     if (shm_id != -1) {
       try_next = 0;
     } else {
-      free(name);
+      if (name) free(name);
       name = _generate_shm_name(g_state.rank);
       if (use_dev_shm) {
         sprintf(file,"/dev/shm/%s",name);
@@ -6547,6 +6531,7 @@ STATIC void* _shm_attach(const char *name, size_t size)
             " has been reached (relevant to PR runtime)\n");
       }
         perror("_shm_attach: shm_open");
+        printf("p[%d] _shm_attach name: (%s)\n",g_state.rank,name);
         comex_error("_shm_attach: shm_open", -1);
     }
 
@@ -7674,20 +7659,20 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
                 /* copy from device to host */
                 comex_set_local_dev();
                 PROFILE_BEG()
-                  printf("p[%d] self get::copyToHost\n",g_state.rank);
+//                  printf("p[%d] self get::copyToHost\n",g_state.rank);
                 copyToHost(dst, src, bytes);
                 PROFILE_END(t_cpy_to_host)
               } else if (reg_entry->use_dev && !on_host) {
                 /* copy from device to device */
-                  printf("p[%d] self get::copyDevToDev\n",g_state.rank);
+//                  printf("p[%d] self get::copyDevToDev\n",g_state.rank);
                 copyDevToDev(dst, src, bytes);
               } else if (!reg_entry->use_dev && !on_host) {
                 /* copy from host to device */
                 comex_set_local_dev();
-                  printf("p[%d] self get::copyToDevice\n",g_state.rank);
+//                  printf("p[%d] self get::copyToDevice\n",g_state.rank);
                 copyToDevice(dst, src, bytes);
               } else {
-                  printf("p[%d] same get::copyHostToHost\n",g_state.rank);
+//                  printf("p[%d] same get::copyHostToHost\n",g_state.rank);
                 (void)memcpy(dst, src, bytes);
               }
             }
@@ -7723,14 +7708,12 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #ifdef ENABLE_DEVICE
             if (reg_entry->use_dev && on_host) {
               PROFILE_BEG()
-                  printf("p[%d] same node get::copyToHost\n",g_state.rank);
               copyToHost(dst, mapped_offset, bytes);
               PROFILE_END(t_cpy_to_host)
               PROFILE_BEG()
               deviceCloseMemHandle(reg_entry->mapped);
               PROFILE_END(t_close_ipc)
             } else if (reg_entry->use_dev && !on_host) {
-                  printf("p[%d] same node get::PeerToPeer\n",g_state.rank);
               copyPeerToPeer(dst, _device_map[g_state.rank],
                   mapped_offset, _device_map[proc], bytes);
               PROFILE_BEG()
@@ -7739,11 +7722,9 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
             } else if (!reg_entry->use_dev && !on_host) {
               comex_set_local_dev();
               PROFILE_BEG()
-                  printf("p[%d] same node get::copyToDevice\n",g_state.rank);
               copyToDevice(dst, mapped_offset, bytes);
               PROFILE_END(t_cpy_to_dev)
             } else {
-                  printf("p[%d] same node get::HostToHost\n",g_state.rank);
               (void)memcpy(dst, mapped_offset, bytes);
             }
 #else
