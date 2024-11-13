@@ -84,6 +84,13 @@ int **_mutex_buf;
 int *_mutex_num;
 int _mutex_total;
 
+int64_t put_cnt;
+int64_t get_cnt;
+int64_t acc_cnt;
+int64_t wait_cnt;
+int64_t test_cnt;
+int64_t req_cnt;
+
 /* Maximum number of outstanding non-blocking requests */
 static int nb_max_outstanding = COMEX_MAX_NB_OUTSTANDING;
 
@@ -184,6 +191,13 @@ int _comex_init(MPI_Comm comm)
         return 0;
     }
     initialized = 1;
+
+    put_cnt=0;
+    get_cnt=0;
+    acc_cnt=0;
+    wait_cnt=0;
+    test_cnt=0;
+    req_cnt=0;
 
     /* Assert MPI has been initialized */
     status = MPI_Initialized(&init_flag);
@@ -439,6 +453,8 @@ int comex_put(
     ierr = MPI_Rput(src, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_put:MPI_Rput");
+    put_cnt++;
+    req_cnt++;
     /**
      * A call to MPI_WAIT returns when the operation identified by the request
      * is complete. If the request is an active persistent request, it is marked
@@ -447,6 +463,8 @@ int comex_put(
      */
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_put:MPI_Wait");
+    wait_cnt++;
+    req_cnt--;
 #ifdef USE_POST_MPI_WIN_FLUSH
     ierr = MPI_Win_flush(lproc,reg_win->win);
     translate_mpi_error(ierr,"comex_put:MPI_Win_flush");
@@ -506,8 +524,12 @@ int comex_get(
     ierr = MPI_Rget(dst, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_get:MPI_Rget");
+    get_cnt++;
+    req_cnt++;
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_get:MPI_Wait");
+    wait_cnt++;
+    req_cnt--;
 #ifdef USE_POST_MPI_WIN_FLUSH
     ierr = MPI_Win_flush(lproc,reg_win->win);
     translate_mpi_error(ierr,"comex_get:MPI_Win_flush");
@@ -647,8 +669,12 @@ int comex_acc(
     ierr = MPI_Raccumulate(tbuf,count,mpi_type,lproc,displ,count,
         mpi_type,MPI_SUM,reg_win->win,&request);
     translate_mpi_error(ierr,"comex_acc:MPI_Raccumulate");
+    acc_cnt++;
+    req_cnt++;
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_acc:MPI_Wait");
+    wait_cnt++;
+    req_cnt--;
 #ifdef USE_POST_MPI_WIN_FLUSH
     ierr = MPI_Win_flush(lproc,reg_win->win);
     translate_mpi_error(ierr,"comex_acc:MPI_Win_flush");
@@ -845,8 +871,12 @@ int comex_puts(
     ierr = MPI_Rput(src_ptr, 1, src_type, lproc, displ, 1, dst_type,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_puts:MPI_Rput");
+    put_cnt++;
+    req_cnt--;
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_puts:MPI_Wait");
+    wait_cnt++;
+    req_cnt--;
 #ifdef USE_POST_MPI_WIN_FLUSH
     ierr = MPI_Win_flush(lproc,reg_win->win);
     translate_mpi_error(ierr,"comex_puts:MPI_Win_flush");
@@ -988,8 +1018,12 @@ int comex_gets(
     ierr = MPI_Rget(dst_ptr, 1, dst_type, lproc, displ, 1, src_type,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_gets:MPI_Rget");
+    get_cnt++;
+    req_cnt++;
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_gets:MPI_Wait");
+    wait_cnt++;
+    req_cnt--;
 #ifdef USE_POST_MPI_WIN_FLUSH
     ierr = MPI_Win_flush(lproc,reg_win->win);
     translate_mpi_error(ierr,"comex_gets:MPI_Win_flush");
@@ -1327,8 +1361,12 @@ int comex_accs(
     ierr = MPI_Raccumulate(packbuf,1,src_type,lproc,displ,1,dst_type,
         MPI_SUM,reg_win->win,&request);
     translate_mpi_error(ierr,"comex_accs:MPI_Raccumulate");
+    acc_cnt++;
+    req_cnt++;
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_accs:MPI_Wait");
+    wait_cnt++;
+    req_cnt--;
 #ifdef USE_POST_MPI_WIN_FLUSH
     ierr = MPI_Win_flush(lproc,reg_win->win);
     translate_mpi_error(ierr,"comex_accs:MPI_Win_flush");
@@ -1497,8 +1535,12 @@ int comex_putv(
     ierr = MPI_Rput(src_ptr, 1, src_type, lproc, displ, 1, dst_type,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_putv:MPI_Rput");
+    put_cnt++;
+    req_cnt++;
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_putv:MPI_Wait");
+    wait_cnt++;
+    req_cnt--;
 #ifdef USE_POST_MPI_WIN_FLUSH
     ierr = MPI_Win_flush(lproc,reg_win->win);
     translate_mpi_error(ierr,"comex_putv:MPI_Win_flush");
@@ -1582,8 +1624,12 @@ int comex_getv(
     ierr = MPI_Rget(dst_ptr, 1, dst_type, lproc, displ, 1, src_type,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_getv:MPI_Rget");
+    get_cnt++;
+    req_cnt++;
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_getv:MPI_Wait");
+    wait_cnt++;
+    req_cnt--;
 #ifdef USE_POST_MPI_WIN_FLUSH
     ierr = MPI_Win_flush(lproc,reg_win->win);
     translate_mpi_error(ierr,"comex_getv:MPI_Win_flush");
@@ -1900,8 +1946,12 @@ int comex_accv(
     ierr = MPI_Raccumulate(src_ptr,1,src_type,lproc,displ,1,dst_type,
         MPI_SUM,reg_win->win,&request);
     translate_mpi_error(ierr,"comex_accv:MPI_Raccumulate");
+    acc_cnt++;
+    req_cnt++;
     ierr = MPI_Wait(&request, &status);
     translate_mpi_error(ierr,"comex_accv:MPI_Wait");
+    wait_cnt++;
+    req_cnt--;
 #ifdef USE_POST_MPI_WIN_FLUSH
     ierr = MPI_Win_flush(lproc,reg_win->win);
     translate_mpi_error(ierr,"comex_accv:MPI_Win_flush");
@@ -2082,6 +2132,8 @@ int comex_wait(comex_request_t* hdl)
   MPI_Status status;
   ierr = MPI_Wait(&(nb_list[*hdl]->request),&status);
   translate_mpi_error(ierr,"comex_wait:MPI_Wait");
+  wait_cnt++;
+  req_cnt--;
 #ifdef USE_POST_MPI_WIN_FLUSH
   ierr = MPI_Win_flush(nb_list[*hdl]->remote_proc,nb_list[*hdl]->win);
   translate_mpi_error(ierr,"comex_wait:MPI_Win_flush_local");
@@ -2119,12 +2171,14 @@ int comex_test(comex_request_t* hdl, int *status)
     int ierr;
     MPI_Status stat;
     ierr = MPI_Test(&(nb_list[*hdl]->request),&flag,&stat);
+    test_cnt++;
     translate_mpi_error(ierr,"comex_test:MPI_Test");
     if (nb_list[*hdl]->active == 0) {
       printf("comex_test Error: handle not active\n");
     }
     if (flag) {
       /* operation is complete */
+      req_cnt--;
       *status = 0;
       nb_list[*hdl]->active = 0;
       if (nb_list[*hdl]->use_type) {
@@ -2169,6 +2223,12 @@ int comex_wait_all(comex_group_t group)
 }
 
 
+void comex_chk_req()
+{
+  printf("p[%d] get: %ld put: %ld acc: %ld wait: %ld net: %ld\n",
+      l_state.rank,get_cnt,put_cnt,acc_cnt,wait_cnt,req_cnt);
+}
+
 int comex_nbput(
         void *src, void *dst, int bytes,
         int proc, comex_group_t group,
@@ -2209,6 +2269,8 @@ int comex_nbput(
     ierr = MPI_Rput(src, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_nbput:MPI_Rput");
+    put_cnt++;
+    req_cnt++;
 #endif
     req->request = request;
     req->use_type = 0;
@@ -2260,6 +2322,8 @@ int comex_nbget(
     ierr = MPI_Rget(dst, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_nbget:MPI_Rget");
+    get_cnt++;
+    req_cnt++;
 #endif
     req->request = request;
     req->use_type = 0;
@@ -2324,6 +2388,8 @@ int comex_nbacc(
       ierr = MPI_Raccumulate(buf,count,MPI_INT,lproc,displ,count,
           MPI_INT,MPI_SUM,reg_win->win,&request);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Raccumulate");
+      acc_cnt++;
+      req_cnt++;
 #endif
       req->request = request;
       req->use_type = 0;
@@ -2348,6 +2414,8 @@ int comex_nbacc(
       ierr = MPI_Raccumulate(buf,count,MPI_LONG,lproc,displ,count,
           MPI_LONG,MPI_SUM,reg_win->win,&request);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Raccumulate");
+      acc_cnt++;
+      req_cnt++;
 #endif
       req->request = request;
       req->use_type = 0;
@@ -2372,6 +2440,8 @@ int comex_nbacc(
       ierr = MPI_Raccumulate(buf,count,MPI_FLOAT,lproc,displ,count,
           MPI_FLOAT,MPI_SUM,reg_win->win,&request);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Raccumulate");
+      acc_cnt++;
+      req_cnt++;
 #endif
       req->request = request;
       req->use_type = 0;
@@ -2396,6 +2466,8 @@ int comex_nbacc(
       ierr = MPI_Raccumulate(buf,count,MPI_DOUBLE,lproc,displ,count,
           MPI_DOUBLE,MPI_SUM,reg_win->win,&request);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Raccumulate");
+      acc_cnt++;
+      req_cnt++;
 #endif
       req->request = request;
       req->use_type = 0;
@@ -2424,6 +2496,8 @@ int comex_nbacc(
       ierr = MPI_Raccumulate(buf,count,MPI_FLOAT,lproc,displ,count,
           MPI_FLOAT,MPI_SUM,reg_win->win,&request);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Raccumulate");
+      acc_cnt++;
+      req_cnt++;
 #endif
       req->request = request;
       req->use_type = 0;
@@ -2452,6 +2526,8 @@ int comex_nbacc(
       ierr = MPI_Raccumulate(buf,count,MPI_DOUBLE,lproc,displ,count,
           MPI_DOUBLE,MPI_SUM,reg_win->win,&request);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Raccumulate");
+      acc_cnt++;
+      req_cnt++;
 #endif
       req->request = request;
       req->use_type = 0;
@@ -2524,6 +2600,8 @@ int comex_nbputs(
     ierr = MPI_Rput(src, 1, src_type, lproc, displ, 1, dst_type,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_nbputs:MPI_Rput");
+    put_cnt++;
+    req_cnt++;
 #endif
     req->request = request;
     req->use_type = 1;
@@ -2597,6 +2675,8 @@ int comex_nbgets(
     ierr = MPI_Rget(dst, 1, dst_type, lproc, displ, 1, src_type,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_nbgets:MPI_Rget");
+    get_cnt++;
+    req_cnt++;
 #endif
     req->request = request;
     req->use_type = 1;
@@ -2756,7 +2836,9 @@ int comex_nbaccs(
 #else
     ierr = MPI_Raccumulate(packbuf,1,src_type,lproc,displ,1,dst_type,
         MPI_SUM,reg_win->win,&request);
-    translate_mpi_error(ierr,"comex_nbaccs:MPI_Rget");
+    translate_mpi_error(ierr,"comex_nbaccs:MPI_Racc");
+    acc_cnt++;
+    req_cnt++;
 #endif
     req->request = request;
     req->use_type = 1;
@@ -2827,6 +2909,7 @@ int comex_nbputv(
     ierr = MPI_Rput(src_ptr, 1, src_type, lproc, displ, 1, dst_type,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_nbputv:MPI_Rput");
+    put_cnt++;
 #endif
     req->request = request;
     req->use_type = 1;
@@ -2893,6 +2976,8 @@ int comex_nbgetv(
     ierr = MPI_Rget(dst_ptr, 1, dst_type, lproc, displ, 1, src_type,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_nbgetv:MPI_Rget");
+    get_cnt++;
+    req_cnt++;
 #endif
     req->request = request;
     req->use_type = 1;
@@ -2979,6 +3064,8 @@ int comex_nbaccv(
     ierr = MPI_Raccumulate(src_ptr,1,src_type,lproc,displ,1,dst_type,
         MPI_SUM,reg_win->win,&request);
     translate_mpi_error(ierr,"comex_nbaccv:MPI_Raccumulate");
+    acc_cnt++;
+    req_cnt++;
 #endif
     req->request = request;
     req->use_type = 1;
