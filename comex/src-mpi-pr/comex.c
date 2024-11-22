@@ -68,6 +68,7 @@ sicm_device_list nill;
 #define PAUSE_ON_ERROR 0
 #define STATIC static inline
 
+#define USE_MEMSET_AFTER_MALLOC 1
 #if USE_MEMSET_AFTER_MALLOC
 #define MAYBE_MEMSET(a,b,c) (void)memset(a,b,c)
 #else
@@ -894,6 +895,7 @@ int comex_finalize()
     if (!initialized) {
         return COMEX_SUCCESS;
     }
+//    printf("p[%d] Begin comex_finalize\n",g_state.rank);
 
     comex_barrier(COMEX_GROUP_WORLD);
 
@@ -978,6 +980,7 @@ int comex_finalize()
 #endif
 
     PROFILE_PRINT(g_state.rank);
+//    printf("p[%d] End comex_finalize\n",g_state.rank);
     return COMEX_SUCCESS;
 }
 
@@ -1005,6 +1008,7 @@ int comex_put(
     nb_t *nb = NULL;
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
+//    printf("p[%d] (comex_put) Got to 1\n",g_state.rank);
     PROFILE_BEG()
 
     nb = nb_wait_for_handle();
@@ -1884,6 +1888,8 @@ STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, int device_id)
     PROFILE_END(t_malloc_buf)
     deviceGetMemHandle(&handle, memory);
 
+//    printf("p[%d] allocate memory on dev: %d location: %p\n",g_state.rank,
+//        device_id,memory);
     /* register the memory locally */
     reg_entry = reg_cache_insert(
             g_state.rank, memory, size, name, memory, 1, device_id, handle);
@@ -2145,6 +2151,7 @@ int comex_nbput(
     int world_proc = -1;
     comex_igroup_t *igroup = NULL;
     comex_request_t _hdl = 0;
+//    printf("p[%d] (comex_nbput) Got to 1\n",g_state.rank);
     PROFILE_BEG()
 
     nb = nb_wait_for_handle();
@@ -4366,6 +4373,7 @@ STATIC void _progress_server()
     if (!init_from_comm) {
       // assume this is the end of a user's application if initialized from
       // world communicator
+//      printf("p[%d] Quitting on progress rank\n",g_state.rank);
       MPI_Finalize();
       exit(EXIT_SUCCESS);
     }
@@ -7446,6 +7454,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
     on_host = isHostPointer(src);
 #endif
 
+//    printf("p[%d] (nb_put) Got to 1\n",g_state.rank);
     if (COMEX_ENABLE_PUT_SELF) {
         /* put to self */
         if (g_state.rank == proc) {
@@ -7455,23 +7464,29 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #if ENABLE_DEVICE
             {
               reg_entry_t *reg_entry = NULL;
+//    printf("p[%d] (nb_put) Got to 2\n",g_state.rank);
               reg_entry = reg_cache_find(proc, dst, bytes, -1);
               if (!reg_entry) {
                 reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
               }
+//    printf("p[%d] (nb_put) Got to 3\n",g_state.rank);
               COMEX_ASSERT(reg_entry);
               if (reg_entry->use_dev && on_host) {
+//    printf("p[%d] (nb_put) Got to 4\n",g_state.rank);
                 comex_set_local_dev();
                 PROFILE_BEG()
                 copyToDevice(dst, src, bytes);
                 PROFILE_END(t_cpy_to_dev)
               } else if (reg_entry->use_dev && !on_host) {
+//    printf("p[%d] (nb_put) Got to 5\n",g_state.rank);
                 comex_set_local_dev();
                 copyDevToDev(dst, src, bytes);
               } else if (!reg_entry->use_dev && !on_host) {
+//    printf("p[%d] (nb_put) Got to 6\n",g_state.rank);
                 comex_set_local_dev();
                 copyToHost(dst, src, bytes);
               } else {
+//    printf("p[%d] (nb_put) Got to 7\n",g_state.rank);
                 (void)memcpy(dst, src, bytes);
               }
             }
@@ -7492,20 +7507,24 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
             reg_entry_t *reg_entry = NULL;
             void *mapped_offset = NULL;
 
+//    printf("p[%d] (nb_put) Got to 8\n",g_state.rank);
             if (fence_array[g_state.master[proc]]) {
                 _fence_master(g_state.master[proc]);
             }
+//    printf("p[%d] (nb_put) Got to 9\n",g_state.rank);
 
             reg_entry = reg_cache_find(proc, dst, bytes, -1);
 #ifdef ENABLE_DEVICE
             if (!reg_entry) {
               reg_entry = reg_cache_find(proc, dst, bytes, _device_map[proc]);
             }
+//    printf("p[%d] (nb_put) Got to 10\n",g_state.rank);
 #endif
             COMEX_ASSERT(reg_entry);
             mapped_offset = _get_offset_memory(reg_entry, dst);
 #ifdef ENABLE_DEVICE
             if (reg_entry->use_dev && on_host) {
+//    printf("p[%d] (nb_put) Got to 11\n",g_state.rank);
               PROFILE_BEG()
               copyToDevice(mapped_offset, src, bytes);
               PROFILE_END(t_cpy_to_dev)
@@ -7513,6 +7532,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
               deviceCloseMemHandle(reg_entry->mapped);
               PROFILE_END(t_close_ipc)
             } else if (reg_entry->use_dev && !on_host) {
+//    printf("p[%d] (nb_put) Got to 12\n",g_state.rank);
               comex_set_local_dev();
               copyPeerToPeer(mapped_offset,_device_map[proc], src,
                   _device_map[g_state.rank],bytes);
@@ -7520,11 +7540,13 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
               deviceCloseMemHandle(reg_entry->mapped);
               PROFILE_END(t_close_ipc)
             } else if (!reg_entry->use_dev && !on_host) {
+//    printf("p[%d] (nb_put) Got to 13\n",g_state.rank);
               comex_set_local_dev();
               PROFILE_BEG()
               copyToHost(mapped_offset, src, bytes);
               PROFILE_END(t_cpy_to_host)
             } else {
+//    printf("p[%d] (nb_put) Got to 14\n",g_state.rank);
               (void)memcpy(mapped_offset, src, bytes);
             }
 #else
@@ -7564,8 +7586,10 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
         if (use_eager) {
 #ifdef ENABLE_DEVICE
             if (on_host) {
+//    printf("p[%d] (nb_put) Got to 15\n",g_state.rank);
               (void)memcpy(message+sizeof(header_t), src, bytes);
             } else {
+//    printf("p[%d] (nb_put) Got to 16\n",g_state.rank);
               comex_set_local_dev();
               PROFILE_BEG()
               copyToHost(message+sizeof(header_t), src, bytes);
@@ -7582,10 +7606,12 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 #if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
             void *tsrc;
             if (on_host) {
+//    printf("p[%d] (nb_put) Got to 17\n",g_state.rank);
 #endif
               buf = (char*)src;
 #if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
             } else {
+//    printf("p[%d] (nb_put) Got to 18\n",g_state.rank);
               buf = (char*)malloc(max_message_size*sizeof(char));
               tsrc = src;
             }
@@ -7596,6 +7622,7 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
                     max_message_size : bytes_remaining;
 #if (defined(ENABLE_DEVICE) && !defined(ENABLE_GPU_AWARE_MPI))
                 if (!on_host) {
+//    printf("p[%d] (nb_put) Got to 19\n",g_state.rank);
                   comex_set_local_dev();
                   copyToHost((void*)buf,tsrc,size);
                 }
@@ -9558,7 +9585,8 @@ STATIC void nb_putv(
               }
 #endif
         } else if (COMEX_ENABLE_PUT_SMP &&
-          g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+//          g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+          g_state.master[proc] == g_state.master[g_state.rank]) {
           /* put to process on same SMP node */
           int j;
           void **src;
@@ -9890,7 +9918,8 @@ STATIC void nb_getv(
 #endif
         }
         else if (COMEX_ENABLE_GET_SMP && 
-                   g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+//                   g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+                   g_state.master[proc] == g_state.master[g_state.rank]) {
             int j;
             void **src;
             void **dst;
@@ -10208,7 +10237,8 @@ STATIC void nb_accv(
 #endif
         }
         else if (COMEX_ENABLE_PUT_SMP &&
-                   g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+//                   g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+                   g_state.master[proc] == g_state.master[g_state.rank]) {
             if (fence_array[g_state.master[proc]]) {
                 _fence_master(g_state.master[proc]);
             }

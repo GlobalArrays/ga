@@ -397,6 +397,9 @@ reg_cache_find(int rank, void *buf, size_t len, int dev_id)
     if (dev_id == -2) {
       printf("p[%d] (reg_cache_find) Invalid device specified\n",g_state.rank);
     }
+//    printf("p[%d] Look for device memory buf: %p dev: %d"
+//        " len: %d on proc: %d\n",
+//        g_state.rank,buf,dev_id,(int)len,rank);
 
     if (buf == NULL) return entry;
 #if DEBUG

@@ -1856,7 +1856,6 @@ int main(int argc, char **argv) {
       " local buffer on host\n");
   test_dbl_array(0,0);
   print_bw();
-#endif
 
   if (rank == 0) printf("  Testing double precision array on host,"
       " local buffer on device\n");
@@ -1909,6 +1908,7 @@ int main(int argc, char **argv) {
   test_dbl_1d_array(0,local_buf_on_device);
   print_bw();
 
+#endif
   if (rank == 0) printf("  Testing scatter/gather operations for double"
       " array\n  on device, local buffer on host\n");
   test_dbl_scatter(1,0);
