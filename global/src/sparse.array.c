@@ -3826,6 +3826,146 @@ Integer pnga_sprs_array_create_from_dense(Integer g_a, Integer idx_size,
 #undef SPRS_REAL_FILTER_M
 #undef SPRS_COMPLEX_FILTER_M
 
+/**
+ * Create dense array from sparse array
+ * @param s_a sparse array handle
+ * @param trans flag used for C-interface
+ * @return handle of dense array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_create_from_sparse = pnga_sprs_array_create_from_sparse
+#endif
+Integer pnga_sprs_array_create_from_sparse(Integer s_a,
+    Integer trans)
+{
+  Integer *map;
+  Integer handle = GA_OFFSET + s_a;
+  int local_sync_begin,local_sync_end;
+  Integer nprocs = pnga_pgroup_nnodes(SPA[handle].grp);
+  Integer me = pnga_pgroup_nodeid(SPA[handle].grp);
+  Integer g_a;
+  Integer dims[2];
+  Integer two = 2;
+  Integer nblock[2];
+  Integer idx_size = SPA[handle].idx_size;
+  Integer ilo, ihi;
+  Integer lo[2], hi[2], ld;
+  Integer i, j, iblock;
+  Integer elemsize = SPA[handle].size;
+  void *g_data;
+  void *s_data;
+  char plus[2];
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(SPA[handle].grp);
+
+  /* allocate and fill map array to create new GA */
+  map = (Integer*)malloc((nprocs+1)*sizeof(Integer));
+  for (i=0; i<nprocs+1; i++) map[i] = 0;
+  if (trans) {
+    map[me+1] = SPA[handle].ilo+1;
+  } else {
+    map[me+1] = SPA[handle].ilo+1;
+  }
+  plus[0] = '+';
+  plus[1] = '\0';
+  if (sizeof(Integer) == 4) {
+    pnga_pgroup_gop(SPA[handle].grp, C_INT, map, nprocs+1, plus);
+  } else {
+    pnga_pgroup_gop(SPA[handle].grp, C_LONG, map, nprocs+1, plus);
+  }
+  if (trans) {
+    map[0] = 1;
+  } else {
+    map[nprocs] = 1;
+  }
+  g_a = pnga_create_handle();
+  dims[0] = SPA[handle].idim;
+  dims[1] = SPA[handle].jdim;
+  pnga_set_data(g_a,two,dims,SPA[handle].type);
+  if (trans) {
+    nblock[0] = 1;
+    nblock[1] = nprocs;
+  } else {
+    nblock[0] = nprocs;
+    nblock[1] = 1;
+  }
+  pnga_set_irreg_distr(g_a, map, nblock);
+  if (!pnga_allocate(g_a)) {
+    pnga_error("(ga_sprs_array_create_from_sparse) failed to create"
+        " dense array",0);
+  }
+  free(map);
+  /* Initialize global array to zero */
+  pnga_zero(g_a);
+  /* get limits of locally held row block */
+  ilo = SPA[handle].ilo;
+  ihi = SPA[handle].ihi;
+  if (trans) {
+    lo[0] = 1;
+    hi[0] = SPA[handle].idim;
+    lo[1] = ilo+1;
+    hi[1] = ihi+1;
+  } else {
+    lo[0] = ilo+1;
+    hi[0] = ihi+1;
+    lo[1] = 1;
+    hi[1] = SPA[handle].jdim;
+  }
+  pnga_access_ptr(g_a,lo,hi,&g_data,&ld);
+  /* loop over all column blocks in row block and assign values to dense matrix */
+  for (iblock=0; iblock<SPA[handle].nblocks; iblock++) {
+    void *iptr, *jptr;
+    int64_t *lidx, *ljdx;
+    int *sidx, *sjdx;
+    Integer idx, jdx, n;
+    Integer jlo, jhi;
+    n = SPA[handle].blkidx[iblock];
+    pnga_sprs_array_column_distribution(s_a,n,&jlo,&jhi);
+    pnga_sprs_array_access_col_block(s_a,n,&iptr,&jptr,&s_data);
+    for (i=ilo; i<=ihi; i++) {
+      Integer ncols;
+      if (idx_size == 4) {
+        sidx = (int*)iptr;
+        sjdx = (int*)jptr;
+        ncols =  (Integer)(sidx[i+1-ilo]-sidx[i-ilo]);
+        for (j=0; j<ncols; j++) {
+          jdx = sjdx[sidx[i-ilo]+j];
+          if (trans) {
+            memcpy(((char*)g_data+elemsize*((i-lo[1]+1)*ld+jdx-lo[0]+1)),
+                ((char*)s_data+elemsize*(sidx[i-ilo]+j)),
+                (size_t)elemsize);
+          }  else {
+            memcpy(((char*)g_data+elemsize*(i-lo[0]+1+ld*(jdx-lo[1]+1))),
+                ((char*)s_data+elemsize*(sidx[i-ilo]+j)),
+                (size_t)elemsize);
+          }
+        }
+      } else {
+        lidx = (int64_t*)iptr;
+        ljdx = (int64_t*)jptr;
+        ncols =  (Integer)(lidx[i+1-ilo]-lidx[i-ilo]);
+        for (j=0; j<ncols; j++) {
+          jdx = ljdx[lidx[i-ilo]+j];
+          if (trans) {
+            memcpy(((char*)g_data+elemsize*((i-lo[1]+1)*ld+jdx-lo[0]+1)),
+                ((char*)s_data+elemsize*(lidx[i-ilo]+j)),
+                (size_t)elemsize);
+          }  else {
+            memcpy(((char*)g_data+elemsize*(i-lo[0]+1+ld*(jdx-lo[1]+1))),
+                ((char*)s_data+elemsize*(lidx[i-ilo]+j)),
+                (size_t)elemsize);
+          }
+        }
+      }
+    }
+  }
+  pnga_release(g_a,lo,hi); 
+  if (local_sync_end) pnga_pgroup_sync(SPA[handle].grp);
+  return g_a;
+}
+
 #define REAL_SPRSDNS_MULTIPLY_M(_type,_ilo_a,_ihi_a,_jlo_a,_jhi_a,   \
     _lo_b,_hi_b,_iptr_a,_jptr_a,_ptr_a,_ptr_b,_ptr_c,_ld_c)          \
 {                                                                    \

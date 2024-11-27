@@ -5378,6 +5378,12 @@ int NGA_Sprs_array_create_from_dense64(int g_a)
   return (int)wnga_sprs_array_create_from_dense(ga,sizeof(int64_t),1);
 }
 
+int NGA_Sprs_array_create_from_sparse(int s_a)
+{
+  Integer sa = (Integer)s_a;
+  return (int)wnga_sprs_array_create_from_sparse(sa,1);
+}
+
 void NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void *val)
 {
   Integer sa = (Integer)s_a;

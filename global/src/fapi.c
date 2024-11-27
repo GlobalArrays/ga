@@ -3773,6 +3773,11 @@ Integer nga_sprs_array_create_from_dense_(Integer *g_a)
   return wnga_sprs_array_create_from_dense(*g_a,sizeof(Integer),0);
 }
 
+Integer nga_sprs_array_create_from_sparse_(Integer *s_a)
+{
+  return wnga_sprs_array_create_from_sparse(*s_a,0);
+}
+
 void nga_sprs_array_add_element_(Integer *s_a, Integer *idx, Integer *jdx, void *val)
 {
   wnga_sprs_array_add_element(*s_a,*idx,*jdx,val);

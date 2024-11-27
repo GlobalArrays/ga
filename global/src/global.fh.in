@@ -147,6 +147,7 @@
       logical          nga_sprs_array_assemble
       integer          nga_sprs_array_create
       integer          nga_sprs_array_create_from_dense
+      integer          nga_sprs_array_create_from_sparse
       integer          nga_sprs_array_duplicate
       logical          nga_sprs_array_destroy
       integer          nga_sprs_array_dnssprs_multiply
@@ -315,6 +316,7 @@
       external nga_sprs_array_assemble
       external nga_sprs_array_create
       external nga_sprs_array_create_from_dense
+      external nga_sprs_array_create_from_sparse
       external nga_sprs_array_duplicate
       external nga_sprs_array_destroy
       external nga_sprs_array_dnssprs_multiply
