@@ -1856,6 +1856,87 @@ void matrix_test(int type)
       printf("    **Sparse create from dense array operation FAILS**\n");
     }
   }
+
+  /* create an ordinary global array with sparse non-zeros */
+  setup_dense_matrix(&g_a, &a, dim, type);
+  /* copy dense matrix g_a to sparse matrix s_a */
+  s_a = NGA_Sprs_array_create_from_dense64(g_a);
+  /* now copy sparse matrix back to dense matrix g_b */
+  tbeg = GA_Wtime();
+  g_b = NGA_Sprs_array_create_from_sparse(s_a);
+  time = GA_Wtime()-tbeg;
+  g_c = GA_Duplicate(g_a,"new copy");
+  NGA_Zero(g_c);
+  /* check to see if answer is correct by subtracting g_a from g_b */
+  ok = 1;
+  {
+    int lo[2], hi[2];
+    double diff;
+    lo[0] = 0;
+    hi[0] = dim-1;
+    lo[1] = 0;
+    hi[1] = dim-1;
+    if (type == C_INT) {
+      int tone = 1;
+      int tmone = -1;
+      NGA_Add_patch(&tone,g_a,lo,hi,&tmone,g_b,lo,hi,g_c,lo,hi);
+      diff = (double)GA_Idot(g_c,g_c);
+    } else if (type == C_LONG) {
+      long tone = 1;
+      long tmone = -1;
+      NGA_Add_patch(&tone,g_a,lo,hi,&tmone,g_b,lo,hi,g_c,lo,hi);
+      diff = (double)GA_Ldot(g_c,g_c);
+    } else if (type == C_LONGLONG) {
+      long long tone = 1;
+      long long tmone = -1;
+      NGA_Add_patch(&tone,g_a,lo,hi,&tmone,g_b,lo,hi,g_c,lo,hi);
+      diff = (double)GA_Lldot(g_c,g_c);
+    } else if (type == C_FLOAT) {
+      float tone = 1.0;
+      float tmone = -1.0;
+      NGA_Add_patch(&tone,g_a,lo,hi,&tmone,g_b,lo,hi,g_c,lo,hi);
+      diff = (double)GA_Fdot(g_c,g_c);
+    } else if (type == C_DBL) {
+      double tone = 1.0;
+      double tmone = -1.0;
+      NGA_Add_patch(&tone,g_a,lo,hi,&tmone,g_b,lo,hi,g_c,lo,hi);
+      diff = (double)GA_Ddot(g_c,g_c);
+    } else if (type == C_SCPL) {
+      float tone[2] = {1.0,0.0};
+      float tmone[2] = {-1.0,0.0};
+      float *cdiff;
+      SingleComplex zdiff;
+      NGA_Add_patch(&tone,g_a,lo,hi,&tmone,g_b,lo,hi,g_c,lo,hi);
+      zdiff = GA_Cdot(g_c,g_c);
+      cdiff = (float*)&zdiff;
+      diff = (double)cdiff[0];
+    } else if (type == C_DCPL) {
+      double tone[2] = {1.0,0.0};
+      double tmone[2] = {-1.0,0.0};
+      double *cdiff;
+      DoubleComplex zdiff;
+      NGA_Add_patch(&tone,g_a,lo,hi,&tmone,g_b,lo,hi,g_c,lo,hi);
+      zdiff = GA_Zdot(g_c,g_c);
+      cdiff = (double*)&zdiff;
+      diff = (double)cdiff[0];
+    }
+    if (diff > 1.0e-8) ok = 0;
+  }
+  GA_Destroy(g_a);
+  GA_Destroy(g_b);
+  GA_Destroy(g_c);
+  NGA_Sprs_array_destroy(s_a);
+  free(a);
+  GA_Dgop(&time,1,plus);
+  time /= (double)nprocs;
+  if (me == 0) {
+    if (ok) {
+      printf("    **Create from sparse array operation PASSES**\n");
+      printf("    Time for create from sparse array operation: %16.8f\n",time);
+    } else {
+      printf("    **Sparse create from sparse array operation FAILS**\n");
+    }
+  }
 }
 
 int main(int argc, char **argv) {

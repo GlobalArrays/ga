@@ -406,6 +406,7 @@ extern void pnga_put_field(Integer g_a, Integer *lo, Integer *hi, Integer foff, 
 
 extern Integer pnga_sprs_array_create(Integer idim, Integer jdim, Integer type, Integer trans);
 extern Integer pnga_sprs_array_create_from_dense(Integer g_a, Integer idxsize, Integer flag);
+extern Integer pnga_sprs_array_create_from_sparse(Integer s_a, Integer flag);
 extern void pnga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *val);
 extern logical pnga_sprs_array_assemble(Integer s_a);
 extern void pnga_sprs_array_row_distribution(Integer s_a, Integer iproc, Integer *lo, Integer *hi);

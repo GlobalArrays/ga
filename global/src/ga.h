@@ -358,6 +358,7 @@ extern void          NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void 
 extern int           NGA_Sprs_array_assemble(int s_a);
 extern int           NGA_Sprs_array_create(int idim, int jdim, int type);
 extern int           NGA_Sprs_array_create_from_dense(int g_a);
+extern int           NGA_Sprs_array_create_from_sparse(int s_a);
 extern void          NGA_Sprs_array_column_distribution(int s_a, int iproc, int *lo, int *hi);
 extern void          NGA_Sprs_array_col_block_list(int s_a, int **idx, int *n);
 extern int           NGA_Sprs_array_count_sketch(int s_a, int size_k, int *g_k, int* g_w);
