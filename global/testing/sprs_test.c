@@ -1668,7 +1668,7 @@ void matrix_test(int type)
     for (i=0; i<2*dim*dim; i++) ((double*)cp)[i] = 0.0;
   }
   /* Compare results from regular matrix-matrix multiply with
-   * sparse-dense matrix-matrix multiply */
+   * dense-sparse matrix-matrix multiply */
   ok = 1;
   lo[0] = 0;
   hi[0] = dim-1;
@@ -1941,6 +1941,7 @@ void matrix_test(int type)
 
 int main(int argc, char **argv) {
   int me,nproc;
+  int eight = 8;
 
   /**
    * Initialize GA
@@ -1952,15 +1953,16 @@ int main(int argc, char **argv) {
 
   me = GA_Nodeid();
   nproc = GA_Nnodes();
-  if (me == 0) {
-    printf("\nTesting sparse matrices of size %d x %d on %d processors\n\n",
-        NDIM,NDIM,nproc);
-  }
+  if (eight == SIZEOF_F77_INTEGER) {
+    if (me == 0) {
+      printf("\nTesting sparse matrices of size %d x %d on %d processors\n\n",
+          NDIM,NDIM,nproc);
+    }
 
-  if (sizeof(Integer) == 8) {
     /**
      * Test different data types
      */
+#if 1
     if (me == 0) {
       printf("\nTesting matrices of type int\n");
     }
@@ -1986,6 +1988,7 @@ int main(int argc, char **argv) {
     }
     matrix_test(C_DBL);
 
+#endif
     if (me == 0) {
       printf("\nTesting matrices of type single complex\n");
     }

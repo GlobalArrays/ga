@@ -2432,7 +2432,7 @@ void update_map(Integer **top, Integer **list, Integer **idx, Integer **jdx,
       _type val_a = ((_type*)data_a)[_idxa[i-ilo_a]+k];            \
       for (j=0; j<jcols; j++) {                                    \
         Integer jj = _jdxb[_idxb[kdx-ilo_b]+j]+1;                  \
-        /* _type val_b = ((_type*)data_b[jj-jlo_b]; */             \
+        /* _type val_b = ((_type*)data_b)[jj-jlo_b]; */            \
         _type val_b = ((_type*)data_b)[_idxb[kdx-ilo_b]+j];        \
         /* Check to see if c_ij already exists */                  \
         Integer ldx = ((i-1)*jdim+jj-1)%bufsize;                   \
