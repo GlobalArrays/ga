@@ -123,30 +123,6 @@ void sai_terminate_sparse_arrays()
 }
 
 /**
- * Internal function to finalize sparse array data structures. This needs to
- * be called somewhere inside ga_terminate
- */
-void sai_terminate_sparse_arrays()
-{
-  Integer i;
-  for (i=0; i<MAX_ARRAYS; i++) {
-    Integer ga = SPA[i].g_data + GA_OFFSET;
-    if (GA[ga].actv==1) pnga_destroy(SPA[i].g_data);
-    ga = SPA[i].g_i + GA_OFFSET;
-    if (GA[ga].actv==1) pnga_destroy(SPA[i].g_i);
-    ga = SPA[i].g_j + GA_OFFSET;
-    if (GA[ga].actv==1) pnga_destroy(SPA[i].g_j);
-    if (SPA[i].blkidx) free(SPA[i].blkidx);
-    if (SPA[i].blksize) free(SPA[i].blksize);
-    if (SPA[i].offset) free(SPA[i].offset);
-    if (SPA[i].idx) free(SPA[i].idx);
-    if (SPA[i].jdx) free(SPA[i].jdx);
-    if (SPA[i].val) free(SPA[i].val);
-  }
-  free(SPA);
-}
-
-/**
  * Create a new sparse array
  * @param idim,jdim I (row) and J (column) dimensions of sparse array
  * @param type type of data stored in sparse array
@@ -411,9 +387,6 @@ logical pnga_sprs_array_assemble(Integer s_a)
        * but do guarantee that a space is available to hold data going to each
        * processor */
       offset[iproc-1] = (int64_t)pnga_read_inc(g_offset,&iproc,count[iproc-1]);
-    }
-    printf("p[%d] (assemble) Got to 1a count[%d]: %d offset[%d]: %d\n",
-        me,iproc-1,count[iproc-1],iproc-1,offset[iproc-1]);
     }
   }
   pnga_pgroup_sync(SPA[hdl].grp);
@@ -771,12 +744,6 @@ logical pnga_sprs_array_assemble(Integer s_a)
         } else {
           printf("\n");
         }
-        /*
-        if ((ildx+i*(nrows+1))[j] == (int64_t)icnt) {
-          printf("p[%ld] ilo: %ld ihi: %ld icol: %ld row: %ld has no elements\n",
-              me,SPA[hdl].ilo,SPA[hdl].ihi,SPA[hdl].blkidx[i],j+SPA[hdl].ilo);
-        }
-        */
       }
      */
     } else {
@@ -1006,8 +973,6 @@ void pnga_sprs_array_col_block_list(Integer s_a, Integer **idx, Integer *n)
   for (i=0; i<SPA[hdl].nblocks; i++) {
     (*idx)[i] = SPA[hdl].blkidx[i];
   }
-  (*lo)++;
-  (*hi)++;
 }
 
 
@@ -1099,71 +1064,6 @@ void pnga_sprs_array_access_col_block(Integer s_a, Integer icol,
     pnga_release(SPA[hdl].g_i,&lo,&hi);
     pnga_release(SPA[hdl].g_j,&lo,&hi);
   }
-}
-
-/**
- * Function to support fortran interface for access column block functionality.
- * Return indices to the compressed sparse row formatted data corresponding to
- * the column block icol. If the column block has no non-zero values, the
- * function returns zero.
- * @param s_a sparse array handle
- * @param icol index indicating column block (corresponds to a processor
- *             location)
- * @param idx index for starting location of offsets for column indices
- * @param jdx index for starting location of column indices of non-zero zero
- * @param vdx index for starting location of non-zero matrix values
- * @return 0 if no values for this column block
- */
-#if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak wnga_sprs_array_access_col_block_idx =  pnga_sprs_array_access_col_block_idx
-#endif
-int pnga_sprs_array_access_col_block_idx(Integer s_a, Integer icol,
-    AccessIndex *idx, AccessIndex *jdx, AccessIndex *vdx)
-{
-  Integer s_hdl = GA_OFFSET + s_a;
-  void *vptr;
-  Integer *iptr, *jptr;
-  unsigned long lref=0, lptr;
-  pnga_sprs_array_access_col_block(s_a, icol, &iptr, &jptr, &vptr);
-  /* iproc corresponds to a block with no data */
-  if (iptr == NULL && jptr == NULL && vptr == NULL) {
-    *idx = 0;
-    *jdx = 0;
-    *vdx = 0;
-    return 0;
-  }
-  *idx = (AccessIndex) ((Integer*)iptr - INT_MB);
-  *jdx = (AccessIndex) ((Integer*)jptr - INT_MB);
-  lref = (unsigned long)INT_MB;
-  /* if that array data is a fortran integer then it will be set to either the
-   * C int or long data type */
-  if (SPA[s_hdl].type == C_INT || SPA[s_hdl].type == C_LONG) {
-    *vdx = (AccessIndex) ((Integer*)vptr - INT_MB);
-  } else if (SPA[s_hdl].type == C_FLOAT) {
-    *vdx = (AccessIndex) ((float*)vptr - FLT_MB);
-  } else if (SPA[s_hdl].type == C_DBL) {
-    *vdx = (AccessIndex) ((double*)vptr - DBL_MB);
-  } else if (SPA[s_hdl].type == C_SCPL) {
-    *vdx = (AccessIndex) ((SingleComplex*)vptr - SCPL_MB);
-  } else if (SPA[s_hdl].type == C_DCPL) {
-    *vdx = (AccessIndex) ((DoubleComplex*)vptr - DCPL_MB);
-  }
-
-#ifdef BYTE_ADDRESSABLE_MEMORY
-    /* check the allignment */
-    lptr = (unsigned long)vptr;
-    if( lptr%elemsize != lref%elemsize ){
-      printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
-          lref,lref%elemsize);
-      pnga_error("sprs_array_access_col_block: MA addressing problem: base address misallignment",
-          handle);
-    }
-#endif
-
-    /* adjust index for Fortran addressing */
-    (*idx) ++ ;
-    FLUSH_CACHE;
-    return 1;
 }
 
 /**
@@ -1405,172 +1305,6 @@ void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
 }
 
 /**
- * Multiply a sparse matrix by a sparse vector
- * @param s_a handle for sparse matrix
- * @param g_a handle for vector
- * @param g_v handle for product vector
- */
-#if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak wnga_sprs_array_matvec_multiply =  pnga_sprs_array_matvec_multiply
-#endif
-void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v)
-{
-  Integer s_hdl = GA_OFFSET + s_a;
-  int local_sync_begin,local_sync_end;
-  Integer s_grp = SPA[s_hdl].grp;
-  Integer me = pnga_pgroup_nodeid(s_grp);
-  Integer nproc = pnga_pgroup_nnodes(s_grp);
-
-  Integer ilo, ihi, jlo, jhi, klo, khi;
-  void  *vsum, *vptr;
-  int idx_size = SPA[s_hdl].idx_size;
-  int64_t *ilptr = NULL, *jlptr = NULL;
-  int *iptr = NULL, *jptr = NULL;
-  Integer i, j, iproc, ncols;
-  double one_r = 1.0;
-  Integer one = 1;
-  Integer adim, vdim, arank, vrank, dims[GA_MAX_DIM];
-  Integer atype, vtype;
-  Integer zflag;
-
-  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  /* Check that g_hdl and v_hdl are both vectors and that sizes
-   * match */
-  if (local_sync_begin) pnga_sync();
-  pnga_inquire(g_a, &atype, &arank, dims);
-  adim = dims[0];
-  pnga_inquire(g_v, &vtype, &vrank, dims);
-  vdim = dims[0];
-  if (arank != 1) pnga_error("rank of A must be 1 (vector)",arank);
-  if (vrank != 1) pnga_error("rank of V must be 1 (vector)",vrank);
-  if (adim != SPA[s_hdl].jdim) {
-    pnga_error("length of A must equal second dimension of sparse matrix",adim);
-  }
-  if (vdim != SPA[s_hdl].jdim) {
-    pnga_error("length of V must equal second dimension of sparse matrix",vdim);
-  }
-  if (atype != SPA[s_hdl].type || vtype != SPA[s_hdl].type) {
-    pnga_error("Data type of sparse matrix and A and V vectors must match",
-        SPA[s_hdl].type);
-  }
-
-#define SPRS_REAL_MULTIPLY_M(_type,_iptr,_jptr)              \
-  {                                                          \
-    _type *_buf = (_type*)malloc((jhi-jlo+1)*sizeof(_type)); \
-    _type *_sum = (_type*)vsum;                              \
-    _type *_ptr = (_type*)vptr;                              \
-    if (zflag) {                                             \
-      for (i=ilo; i<=ihi; i++) {                             \
-        _sum[i-ilo] = (_type)0;                              \
-      }                                                      \
-      zflag = 0;                                             \
-    }                                                        \
-    klo = jlo+1;                                             \
-    khi = jhi+1;                                             \
-    pnga_get(g_a,&klo,&khi,_buf,&one);                       \
-    for (i=ilo; i<=ihi; i++) {                               \
-      ncols = _iptr[i+1-ilo]-_iptr[i-ilo];                   \
-      for (j=0; j<ncols; j++) {                              \
-        _sum[i-ilo] += _ptr[_iptr[i-ilo]+j]                  \
-                     * _buf[_jptr[_iptr[i-ilo]+j]-jlo];      \
-      }                                                      \
-    }                                                        \
-    free(_buf);                                              \
-  }
-  
-#define SPRS_COMPLEX_MULTIPLY_M(_type,_iptr,_jptr)             \
-  {                                                            \
-    _type *_buf = (_type*)malloc((jhi-jlo+1)*2*sizeof(_type)); \
-    _type *_sum = (_type*)vsum;                                \
-    _type *_ptr = (_type*)vptr;                                \
-    _type rbuf,ibuf,rval,ival;                                 \
-    if (zflag) {                                               \
-      for (i=ilo; i<=ihi; i++) {                               \
-        _sum[2*(i-ilo)] = 0.0;                                 \
-        _sum[2*(i-ilo)+1] = 0.0;                               \
-      }                                                        \
-      zflag = 0;                                               \
-    }                                                          \
-    klo = jlo+1;                                               \
-    khi = jhi+1;                                               \
-    pnga_get(g_a,&klo,&khi,_buf,&one);                         \
-    for (i=ilo; i<=ihi; i++) {                                 \
-      ncols = _iptr[i+1-ilo]-_iptr[i-ilo];                     \
-      for (j=0; j<ncols; j++) {                                \
-            rbuf = _buf[2*(_jptr[_iptr[i-ilo]+j]-jlo)];        \
-            ibuf = _buf[2*(_jptr[_iptr[i-ilo]+j]-jlo)+1];      \
-            rval = _buf[2*(_iptr[i-ilo]+j)];                   \
-            ival = _buf[2*(_iptr[i-ilo]+j)+1];                 \
-            _sum[2*(i-ilo)] = rval*rbuf-ival*ibuf;             \
-            _sum[2*(i-ilo)+1] = rval*ibuf+ival*rbuf;           \
-      }                                                        \
-    }                                                          \
-    free(_buf);                                                \
-  }
-  
-  /* Make sure product vector is zero */
-  pnga_mask_sync(local_sync_begin,local_sync_end);
-  pnga_zero(g_v);
-  /* multiply sparse matrix by sparse vector */
-  pnga_sprs_array_row_distribution(s_a,me,&ilo,&ihi);
-  vsum = (void*)malloc((ihi-ilo+1)*SPA[s_hdl].size);
-  zflag = 1;
-  for (iproc=0; iproc<nproc; iproc++) {
-    pnga_sprs_array_column_distribution(s_a,iproc,&jlo,&jhi);
-    if (idx_size == 4) {
-      pnga_sprs_array_access_col_block(s_a,iproc,&iptr,&jptr,&vptr);
-      if (vptr != NULL) {
-        if (SPA[s_hdl].type == C_INT) {
-          SPRS_REAL_MULTIPLY_M(int,iptr,jptr);
-        } else if (SPA[s_hdl].type == C_LONG) {
-          SPRS_REAL_MULTIPLY_M(long,iptr,jptr);
-        } else if (SPA[s_hdl].type == C_LONGLONG) {
-          SPRS_REAL_MULTIPLY_M(long long,iptr,jptr);
-        } else if (SPA[s_hdl].type == C_FLOAT) {
-          SPRS_REAL_MULTIPLY_M(float,iptr,jptr);
-        } else if (SPA[s_hdl].type == C_DBL) {
-          SPRS_REAL_MULTIPLY_M(double,iptr,jptr);
-        } else if (SPA[s_hdl].type == C_SCPL) {
-          SPRS_COMPLEX_MULTIPLY_M(float,iptr,jptr);
-        } else if (SPA[s_hdl].type == C_DCPL) {
-          SPRS_COMPLEX_MULTIPLY_M(double,iptr,jptr);
-        }
-      }
-    } else {
-      pnga_sprs_array_access_col_block(s_a,iproc,&ilptr,&jlptr,&vptr);
-      if (vptr != NULL) {
-        if (SPA[s_hdl].type == C_INT) {
-          SPRS_REAL_MULTIPLY_M(int,ilptr,jlptr);
-        } else if (SPA[s_hdl].type == C_LONG) {
-          SPRS_REAL_MULTIPLY_M(long,ilptr,jlptr);
-        } else if (SPA[s_hdl].type == C_LONGLONG) {
-          SPRS_REAL_MULTIPLY_M(long long,ilptr,jlptr);
-        } else if (SPA[s_hdl].type == C_FLOAT) {
-          SPRS_REAL_MULTIPLY_M(float,ilptr,jlptr);
-        } else if (SPA[s_hdl].type == C_DBL) {
-          SPRS_REAL_MULTIPLY_M(double,ilptr,jlptr);
-        } else if (SPA[s_hdl].type == C_SCPL) {
-          SPRS_COMPLEX_MULTIPLY_M(float,ilptr,jlptr);
-        } else if (SPA[s_hdl].type == C_DCPL) {
-          SPRS_COMPLEX_MULTIPLY_M(double,ilptr,jlptr);
-        }
-      }
-    }
-  }
-#undef SPRS_REAL_MULTIPLY_M
-#undef SPRS_COMPLEX_MULTIPLY_M
-
-  if (ihi>=ilo) {
-    klo = ilo + 1;
-    khi = ihi + 1;
-    pnga_acc(g_v,&klo,&khi,vsum,&one,&one_r);
-  }
-  if (local_sync_end)  pnga_sync();
-  free(vsum);
-}
-
-/**
  * Delete a sparse array and free any resources it may be using
  * @param s_a sparse array handle
  */
@@ -1748,6 +1482,21 @@ void pnga_sprs_array_export(Integer s_a, const char* file)
       /* Copy data from global arrays to local buffers */
       Integer iilo, iihi, istride, ioffset, itop;
       int ibl;
+      ld = 1;
+      pnga_distribution(SPA[hdl].g_data, iproc, &lo, &hi);
+      nlen_data = hi-lo+1;
+      vptr = malloc(nlen_data*size);
+      pnga_get(SPA[hdl].g_data,&lo,&hi,vptr,&ld);
+
+      pnga_distribution(SPA[hdl].g_i, iproc, &lo, &hi);
+      nlen_i = hi-lo+1;
+      iptr = malloc(nlen_i*idx_size);
+      pnga_get(SPA[hdl].g_i,&lo,&hi,iptr,&ld);
+
+      pnga_distribution(SPA[hdl].g_j, iproc, &lo, &hi);
+      nlen_j = hi-lo+1;
+      jptr = malloc(nlen_j*idx_size);
+      pnga_get(SPA[hdl].g_j,&lo,&hi,jptr,&ld);
 
       nblocks = nblock[iproc];
       /* loop over rows. Not the most efficient way of printing out information
@@ -2212,139 +1961,6 @@ void pnga_sprs_array_diag_right_multiply(Integer s_a, Integer g_d)
 }
 
 /**
- * Right multiply sparse matrix by vector representing a diagonal matrix
- * @param s_a handle of sparse matrix
- * @param g_d handle of vector representing diagonal matrix
- */
-#if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak wnga_sprs_array_diag_right_multiply =  pnga_sprs_array_diag_right_multiply
-#endif
-void pnga_sprs_array_diag_right_multiply(Integer s_a, Integer g_d)
-{
-  Integer hdl = GA_OFFSET + s_a;
-  Integer d_hdl = GA_OFFSET + g_d;
-  int local_sync_begin,local_sync_end;
-  Integer grp = SPA[hdl].grp;
-  Integer me = pnga_pgroup_nodeid(grp);
-  Integer nproc = pnga_pgroup_nnodes(grp);
-  Integer ilo, ihi, jlo, jhi, klo, khi;
-  Integer i, j, iproc, ncols;
-  Integer type = SPA[hdl].type;
-  int idx_size = SPA[hdl].idx_size;
-  int *iptr = NULL, *jptr = NULL;
-  int64_t *ilptr = NULL, *jlptr = NULL;
-  Integer one = 1;
-  void *vbuf;
-  void *vptr;
-
-  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  if (local_sync_begin) pnga_pgroup_sync(grp);
-
-  /* check for basic compatibility */
-  if (SPA[hdl].idim != GA[d_hdl].dims[0]) {
-    pnga_error("(pnga_sprs_array_diag_right_multiply) dimensions don't match",0);
-  }
-  if (type != GA[d_hdl].type) {
-    pnga_error("(pnga_sprs_array_diag_right_multiply) data types don't match",0);
-  }
-  if (GA[d_hdl].ndim != 1) {
-    pnga_error("(pnga_sprs_array_diag_right_multiply) vector not of dimension 1",0);
-  }
-
-#define SPRS_REAL_RIGHT_MULTIPLY_M(_type,_iptr,_jptr)                  \
-  {                                                                    \
-    _type *_buf = (_type*)vbuf;                                        \
-    _type *_ptr = (_type*)vptr;                                        \
-    for (i=ilo; i<=ihi; i++) {                                         \
-      ncols = _iptr[i+1-ilo]-_iptr[i-ilo];                             \
-      for (j=0; j<ncols; j++) {                                        \
-        _ptr[_iptr[i-ilo]+j] = _ptr[_iptr[i-ilo]+j]                    \
-        * _buf[_jptr[i-ilo]-jlo];                                      \
-      }                                                                \
-    }                                                                  \
-  }
-
-#define SPRS_COMPLEX_RIGHT_MULTIPLY_M(_type,_iptr,_jptr)               \
-  {                                                                    \
-    _type *_buf = (_type*)vbuf;                                        \
-    _type *_ptr = (_type*)vptr;                                        \
-    _type rval, ival, rbuf, ibuf;                                      \
-    for (i=ilo; i<=ihi; i++) {                                         \
-      ncols = _iptr[i+1-ilo]-_iptr[i-ilo];                             \
-      for (j=0; j<ncols; j++) {                                        \
-        rbuf = _buf[2*(_jptr[i-ilo]-jlo)];                             \
-        ibuf = _buf[2*(_jptr[i-ilo]-jlo)+1];                           \
-        rval = _ptr[2*(_iptr[i-ilo]+j)];                               \
-        ival = _ptr[2*(_iptr[i-ilo]+j)+1];                             \
-        _ptr[2*(_iptr[i-ilo]+j)] = rbuf*rval-ibuf*ival;                \
-        _ptr[2*(_iptr[i-ilo]+j)+1] = rbuf*ival+ibuf*rval;              \
-      }                                                                \
-    }                                                                  \
-  }
-  /* get block from diagonal array corresponding to this row block (there is
-   * only one) */
-  pnga_sprs_array_row_distribution(s_a,me,&ilo,&ihi);
-  /* loop over blocks in sparse array */
-  for (iproc=0; iproc<nproc; iproc++) {
-    pnga_sprs_array_column_distribution(s_a,iproc,&jlo,&jhi);
-    if (idx_size == 4) {
-      pnga_sprs_array_access_col_block(s_a,iproc,&iptr,&jptr,&vptr);
-      vbuf = malloc((jhi-jlo+1)*SPA[hdl].size);
-      klo = jlo+1;
-      khi = jhi+1;
-      pnga_get(g_d,&klo,&khi,vbuf,&one);
-      if (vptr != NULL) {
-        if (type == C_INT) {
-          SPRS_REAL_RIGHT_MULTIPLY_M(int,iptr,jptr);
-        } else if (type == C_LONG) {
-          SPRS_REAL_RIGHT_MULTIPLY_M(long,iptr,jptr);
-        } else if (type == C_LONGLONG) {
-          SPRS_REAL_RIGHT_MULTIPLY_M(long long,iptr,jptr);
-        } else if (type == C_FLOAT) {
-          SPRS_REAL_RIGHT_MULTIPLY_M(float,iptr,jptr);
-        } else if (type == C_DBL) {
-          SPRS_REAL_RIGHT_MULTIPLY_M(double,iptr,jptr);
-        } else if (type == C_SCPL) {
-          SPRS_COMPLEX_RIGHT_MULTIPLY_M(float,iptr,jptr);
-        } else if (type == C_DCPL) {
-          SPRS_COMPLEX_RIGHT_MULTIPLY_M(double,iptr,jptr);
-        }
-      }
-    } else {
-      pnga_sprs_array_access_col_block(s_a,iproc,&ilptr,&jlptr,&vptr);
-      vbuf = malloc((jhi-jlo+1)*SPA[hdl].size);
-      klo = jlo+1;
-      khi = jhi+1;
-      pnga_get(g_d,&klo,&khi,vbuf,&one);
-      if (vptr != NULL) {
-        if (type == C_INT) {
-          SPRS_REAL_RIGHT_MULTIPLY_M(int,ilptr,jlptr);
-        } else if (type == C_LONG) {
-          SPRS_REAL_RIGHT_MULTIPLY_M(long,ilptr,jlptr);
-        } else if (type == C_LONGLONG) {
-          SPRS_REAL_RIGHT_MULTIPLY_M(long long,ilptr,jlptr);
-        } else if (type == C_FLOAT) {
-          SPRS_REAL_RIGHT_MULTIPLY_M(float,ilptr,jlptr);
-        } else if (type == C_DBL) {
-          SPRS_REAL_RIGHT_MULTIPLY_M(double,ilptr,jlptr);
-        } else if (type == C_SCPL) {
-          SPRS_COMPLEX_RIGHT_MULTIPLY_M(float,ilptr,jlptr);
-        } else if (type == C_DCPL) {
-          SPRS_COMPLEX_RIGHT_MULTIPLY_M(double,ilptr,jlptr);
-        }
-      }
-    }
-    free(vbuf);
-  }
-
-#undef SPRS_REAL_RIGHT_MULTIPLY_M
-#undef SPRS_COMPLEX_RIGHT_MULTIPLY_M
-
-  if (local_sync_end) pnga_pgroup_sync(grp);
-}
-
-/**
  * Shift diagonal values of sparse matrix by adding a constant to all diagonal
  * values
  * @param s_a handle of sparse matrix
@@ -2508,24 +2124,6 @@ Integer pnga_sprs_array_duplicate(Integer s_a)
   p_trans[1]='\0';
   pnga_distribution(SPA[new_hdl].g_i,me,&lo,&hi);
   pnga_mask_sync(local_sync_begin,local_sync_end);
-  pnga_copy_patch(p_trans,SPA[hdl].g_i,&lo,&hi,SPA[new_hdl].g_i,&lo,&hi);
-  pnga_distribution(SPA[new_hdl].g_j,me,&lo,&hi);
-  pnga_mask_sync(local_sync_begin,local_sync_end);
-  pnga_copy_patch(p_trans,SPA[hdl].g_j,&lo,&hi,SPA[new_hdl].g_j,&lo,&hi);
-  pnga_distribution(SPA[new_hdl].g_data,me,&lo,&hi);
-  pnga_mask_sync(local_sync_begin,local_sync_end);
-  pnga_copy_patch(p_trans,SPA[hdl].g_data,&lo,&hi,SPA[new_hdl].g_data,&lo,&hi);
-  {
-    Integer tlo[3],thi[3];
-    pnga_distribution(SPA[new_hdl].g_blk,me,tlo,thi);
-    pnga_mask_sync(local_sync_begin,local_sync_end);
-    pnga_copy_patch(p_trans,SPA[hdl].g_blk,tlo,thi,SPA[new_hdl].g_blk,tlo,thi);
-  }
-
-  /* Copy data from old array to new array */
-  p_trans[0]='N';
-  p_trans[1]='\0';
-  pnga_distribution(SPA[new_hdl].g_i,me,&lo,&hi);
   pnga_copy_patch(p_trans,SPA[hdl].g_i,&lo,&hi,SPA[new_hdl].g_i,&lo,&hi);
   pnga_distribution(SPA[new_hdl].g_j,me,&lo,&hi);
   pnga_mask_sync(local_sync_begin,local_sync_end);
@@ -2830,99 +2428,11 @@ void update_map(Integer **top, Integer **list, Integer **idx, Integer **jdx,
     for (k=0; k<kcols; k++) {                                      \
       Integer kdx = _jdxa[_idxa[i-ilo_a]+k]+1;                     \
       Integer jcols = _idxb[kdx+1-ilo_b]-_idxb[kdx-ilo_b];         \
-      _type val_a = ((_type*)data_a)[_idxa[i-ilo_a]+k];            \
-      for (j=0; j<jcols; j++) {                                    \
-        Integer jj = _jdxb[_idxb[kdx-ilo_b]+j]+1;                  \
-        _type val_b = ((_type*)data_b)[_idxb[kdx-ilo_b]+j];        \
-        /* Check to see if c_ij already exists */                  \
-        Integer ldx = ((i-1)*jdim+jj-1)%bufsize;                   \
-        ldx = top[ldx];                                            \
-        while(ldx >= 0) {                                          \
-          if (i == idx[ldx] && jj == jdx[ldx]) break;              \
-          ldx = list[ldx];                                         \
-        }                                                          \
-        if (ldx >= 0) {                                            \
-          /* add product to existing value*/                       \
-          ((_type*)data)[ldx] += val_a*val_b;                      \
-        } else {                                                   \
-          /* add new value to list */                              \
-          if (lcnt == bufsize)                                     \
-            update_map(&top, &list, &idx, &jdx, &data, idim,       \
-                jdim, elemsize, &bufsize, &lcnt);                  \
-          ((_type*)data)[lcnt] = val_a*val_b;                      \
-          idx[lcnt] = i;                                           \
-          jdx[lcnt] = jj;                                          \
-          ldx = ((i-1)*jdim+jj-1)%bufsize;                         \
-          list[lcnt] = top[ldx];                                   \
-          top[ldx] = lcnt;                                         \
-          lcnt++;                                                  \
-        }                                                          \
-      }                                                            \
-    }                                                              \
-  }                                                                \
-}
-
-#define SPRS_COMPLEX_MATMAT_MULTIPLY_M(_type,_idxa,_jdxa,_idxb,_jdxb) \
-{                                                                     \
-  for (i=ilo_a; i<=ihi_a; i++) {                                      \
-    Integer kcols = _idxa[i+1-ilo_a]-_idxa[i-ilo_a];                  \
-    for (k=0; k<kcols; k++) {                                         \
-      Integer kdx = _jdxa[_idxa[i-ilo_a]+k]+1;                        \
-      Integer jcols = _idxb[kdx+1-ilo_b]-_idxb[kdx-ilo_b];            \
-      /*_type rval_a = ((_type*)data_a)[2*(kdx-jlo_a)];    */         \
-      /*_type ival_a = ((_type*)data_a)[2*(kdx-jlo_a)+1];  */         \
-      _type rval_a = ((_type*)data_a)[2*(idx_a[i-ilo_a]+k)];          \
-      _type ival_a = ((_type*)data_a)[2*(idx_a[i-ilo_a]+k)+1];        \
-      for (j=0; j<jcols; j++) {                                       \
-        Integer jj = _jdxb[_idxb[kdx-ilo_b]+j]+1;                     \
-        /*_type rval_b = ((_type*)data_b)[2*(jj-jlo_b)];    */        \
-        /*_type ival_b = ((_type*)data_b)[2*(jj-jlo_b)+1];  */        \
-        _type rval_b = ((_type*)data_b)[2*(idx_b[kdx-ilo_b]+j)];      \
-        _type ival_b = ((_type*)data_b)[2*(idx_b[kdx-ilo_b]+j)+1];    \
-        /* Check to see if c_ij already exists */                     \
-        Integer ldx = ((i-1)*jdim+jj-1)%bufsize;                      \
-        ldx = top[ldx];                                               \
-        while(ldx >= 0) {                                             \
-          if (i == idx[ldx] && jj == jdx[ldx]) break;                 \
-          ldx = list[ldx];                                            \
-        }                                                             \
-        if (ldx >= 0) {                                               \
-          /* add product to existing value*/                          \
-          ((_type*)data)[2*ldx] += rval_a*rval_b-ival_a*ival_b;       \
-          ((_type*)data)[2*ldx+1] += rval_a*ival_b+ival_a*rval_b;     \
-        } else {                                                      \
-          /* add new value to list */                                 \
-          ((_type*)data)[2*lcnt] = rval_a*rval_b-ival_a*ival_b;       \
-          ((_type*)data)[2*lcnt+1] = rval_a*ival_b+ival_a*rval_b;     \
-          idx[lcnt] = i;                                              \
-          jdx[lcnt] = jj;                                             \
-          ldx = ((i-1)*jdim+jj-1)%bufsize;                            \
-          list[lcnt] = top[ldx];                                      \
-          top[ldx] = lcnt;                                            \
-          lcnt++;                                                     \
-        }                                                             \
-      }                                                               \
-    }                                                                 \
-  }                                                                   \
-}
-#else
-/**
- * Macros for sparse block matrix-matrix multiply. Note that bounds
- * ilo_a, ihi_a, jlo_b, jhi_b are unit based, so any index that has
- * these values subtracted from it must also be unit based.
- */
-#define SPRS_REAL_MATMAT_MULTIPLY_M(_type,_idxa,_jdxa,_idxb,_jdxb) \
-{                                                                  \
-  for (i=ilo_a; i<=ihi_a; i++) {                                   \
-    Integer kcols = _idxa[i+1-ilo_a]-_idxa[i-ilo_a];               \
-    for (k=0; k<kcols; k++) {                                      \
-      Integer kdx = _jdxa[_idxa[i-ilo_a]+k]+1;                     \
-      Integer jcols = _idxb[kdx+1-ilo_b]-_idxb[kdx-ilo_b];         \
       /*_type val_a = ((_type*)data_a)[kdx-jlo_a]; */              \
       _type val_a = ((_type*)data_a)[_idxa[i-ilo_a]+k];            \
       for (j=0; j<jcols; j++) {                                    \
         Integer jj = _jdxb[_idxb[kdx-ilo_b]+j]+1;                  \
-        /* _type val_b = ((_type*)data_b)[jj-jlo_b]; */            \
+        /* _type val_b = ((_type*)data_b[jj-jlo_b]; */             \
         _type val_b = ((_type*)data_b)[_idxb[kdx-ilo_b]+j];        \
         /* Check to see if c_ij already exists */                  \
         Integer ldx = ((i-1)*jdim+jj-1)%bufsize;                   \
@@ -3084,6 +2594,19 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
 #else
   bufsize = INIT_BUF_SIZE;
 #endif
+  elemsize = SPA[hdl_a].size;
+  idim = SPA[hdl_a].idim;
+  jdim = SPA[hdl_b].jdim;
+  top = (Integer*)malloc(bufsize*sizeof(Integer));
+  list = (Integer*)malloc(bufsize*sizeof(Integer));
+  idx = (Integer*)malloc(bufsize*sizeof(Integer));
+  jdx = (Integer*)malloc(bufsize*sizeof(Integer));
+  data = malloc(bufsize*elemsize);
+  for (i=0; i<bufsize; i++) top[i] = -1;
+  for (i=0; i<bufsize; i++) list[i] = -1;
+  lcnt = 0;
+  /* loop over processors in row and then loop over processor in column.
+   * Multiply block pairs */
   for (l=0; l<nprocs; l++) {
     for (n=0; n<nprocs; n++) {
       Integer *idx_a, *jdx_a, *idx_b, *jdx_b;
@@ -3179,6 +2702,14 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
     SPA[hdl_c].offset[i] = SPA[hdl_c].offset[i-1]+SPA[hdl_c].blksize[i-1];
   }
 
+  SPA[hdl_c].nblocks = nblocks;
+  SPA[hdl_c].ilo = ilo;
+  SPA[hdl_c].ihi = ihi;
+  SPA[hdl_c].type = type;
+  SPA[hdl_c].nprocs = SPA[hdl_a].nprocs;
+  SPA[hdl_c].idx = NULL;
+  SPA[hdl_c].jdx = NULL;
+  SPA[hdl_c].val = NULL;
   SPA[hdl_c].nval = lcnt;
   SPA[hdl_c].maxval = bufsize;
   SPA[hdl_c].size = SPA[hdl_a].size;
@@ -3495,6 +3026,23 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
       /* find offset for row block on this processor
        * in g_j (should be the same for g_data */
       pnga_distribution(SPA[hdl_c].g_j,me,&jbot,&jtop);
+
+      /* calculate column limits for processor i */
+      jlo = (SPA[hdl_c].jdim*i)/nprocs;
+      while ((jlo*nprocs)/jdim < i) {
+        jlo++;
+      }
+      while ((jlo*nprocs)/jdim > i) {
+        jlo--;
+      }
+      if (i < nprocs-1) {
+        jhi = (SPA[hdl_c].jdim*(i+1))/nprocs;
+        while ((jhi*nprocs)/jdim < i+1) {
+          jhi++;
+        }
+        while ((jhi*nprocs)/jdim > i+1) {
+          jhi--;
+        }
         jhi--;
       } else {
         jhi = SPA[hdl_c].jdim-1;
