@@ -885,6 +885,16 @@ void FATR nga_proc_topology_(Integer* g_a, Integer* proc, Integer* subscript)
   wnga_proc_topology(*g_a, *proc, subscript);
 }
 
+DoublePrecision FATR ga_rand(Integer *iseed)
+{
+  return wnga_rand(*iseed);
+}
+
+DoublePrecision FATR nga_rand(Integer *iseed)
+{
+  return wnga_rand(*iseed);
+}
+
 void FATR ga_randomize_(Integer *g_a, void* val)
 {
   wnga_randomize(*g_a, val);
@@ -3735,4 +3745,147 @@ void ga_version_(Integer *major, Integer *minor, Integer *patch)
 void nga_version_(Integer *major, Integer *minor, Integer *patch)
 {
   wnga_version(major,minor,patch);
+}
+
+Integer nga_sprs_array_create_(Integer *idim, Integer *jdim, Integer *type)
+{
+  int ctype;
+  if (*type == MT_F_INT) {
+    if (sizeof(Integer) == 4) {
+      ctype = C_INT;
+    } else {
+      ctype = C_LONG;
+    }
+  } else if (*type == MT_F_REAL) {
+    ctype = C_FLOAT;
+  } else if (*type == MT_F_DBL) {
+    ctype = C_DBL;
+  } else if (*type == MT_F_SCPL) {
+    ctype = C_SCPL;
+  } else if (*type == MT_F_DCPL) {
+    ctype = C_DCPL;
+  }
+  return wnga_sprs_array_create(*idim,*jdim,ctype,sizeof(Integer));
+}
+
+Integer nga_sprs_array_create_from_dense_(Integer *g_a)
+{
+  return wnga_sprs_array_create_from_dense(*g_a,sizeof(Integer),0);
+}
+
+Integer nga_sprs_array_create_from_sparse_(Integer *s_a)
+{
+  return wnga_sprs_array_create_from_sparse(*s_a,0);
+}
+
+void nga_sprs_array_add_element_(Integer *s_a, Integer *idx, Integer *jdx, void *val)
+{
+  wnga_sprs_array_add_element(*s_a,*idx,*jdx,val);
+}
+
+logical nga_sprs_array_assemble_(Integer *s_a)
+{
+  return wnga_sprs_array_assemble(*s_a);
+}
+
+void nga_sprs_array_row_distribution_(Integer *s_a, Integer *iproc, Integer *lo,
+    Integer *hi)
+{
+  wnga_sprs_array_row_distribution(*s_a, *iproc, lo, hi);
+}
+
+void nga_sprs_array_column_distribution_(Integer *s_a, Integer *iproc, Integer *lo,
+    Integer *hi)
+{
+  wnga_sprs_array_column_distribution(*s_a, *iproc, lo, hi);
+}
+
+void nga_sprs_array_access_col_block_(Integer *s_a, Integer *icol,
+        AccessIndex *idx, AccessIndex *jdx, AccessIndex *vdx)
+{
+  wnga_sprs_array_access_col_block_idx(*s_a, *icol, idx, jdx, vdx);
+}
+
+void nga_sprs_array_col_block_list_(Integer *s_a, Integer *idx, Integer *n)
+{
+  /* This function assumes that idx has already been allocated by calling
+   * program and that nn is the length of idx on input. On output, nn is
+   * changed to the actual number of blocks found by the
+   * wnga_sprs_array_col_block_list function
+   */
+  Integer nn;
+  Integer *blocks;
+  wnga_sprs_array_col_block_list(*s_a, &blocks, &nn);
+  if (*n < nn) {
+    wnga_error("nga_sprs_array_col_block_list: allocated array is too small for"
+        " number of blocks found: ",nn);
+  } else {
+    int i;
+    for (i=0; i<nn; i++) idx[i] = blocks[i];
+    free(blocks);
+    *n = nn;
+  }
+}
+
+void nga_sprs_array_matvec_multiply_(Integer *s_a, Integer *g_a, Integer *g_v)
+{
+  wnga_sprs_array_matvec_multiply(*s_a, *g_a, *g_v);
+}
+
+logical nga_sprs_array_destroy_(Integer *s_a)
+{
+  return wnga_sprs_array_destroy(*s_a);
+}
+
+void nga_sprs_array_export_(Integer *s_a, char* file, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(file ,slen, buf, FNAM);
+  wnga_sprs_array_export(*s_a, buf);
+}
+
+void nga_sprs_array_get_diag_(Integer *s_a, Integer *g_d)
+{
+  wnga_sprs_array_get_diag(*s_a, g_d);
+}
+
+void nga_sprs_array_diag_right_multiply_(Integer *s_a, Integer *g_d)
+{
+  wnga_sprs_array_diag_right_multiply(*s_a, *g_d);
+}
+
+void nga_sprs_array_diag_left_multiply_(Integer *s_a, Integer *g_d)
+{
+  wnga_sprs_array_diag_left_multiply(*s_a, *g_d);
+}
+
+void nga_sprs_array_shift_diag_(Integer *s_a, void *shift)
+{
+  wnga_sprs_array_shift_diag(*s_a, shift);
+}
+
+Integer nga_sprs_array_duplicate_(Integer *s_a)
+{
+  return wnga_sprs_array_duplicate(*s_a);
+}
+
+Integer nga_sprs_array_matmat_multiply_(Integer *s_a, Integer *s_b)
+{
+  return wnga_sprs_array_matmat_multiply(*s_a, *s_b);
+}
+
+Integer nga_sprs_array_sprsdns_multiply_(Integer *s_a, Integer *g_b)
+{
+  return wnga_sprs_array_sprsdns_multiply(*s_a, *g_b, 0);
+}
+
+Integer nga_sprs_array_dnssprs_multiply_(Integer *g_a, Integer *s_b)
+{
+  return wnga_sprs_array_dnssprs_multiply(*g_a, *s_b, 0);
+}
+
+Integer nga_sprs_array_count_sketch_(Integer *s_a, Integer *size_k, Integer *g_k,
+    Integer *g_w)
+{
+  return wnga_sprs_array_count_sketch(*s_a, *size_k, g_k, g_w, 0);
 }
