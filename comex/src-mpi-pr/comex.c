@@ -2804,13 +2804,13 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
                 reg_entries_local[reg_entries_local_count++] = reg_entries[i];
             }
         }
-        // else if (g_state.hostid[reg_entries[i].rank]
-        //         == g_state.hostid[my_world_rank]) 
+        else if (g_state.hostid[reg_entries[i].rank]
+                 == g_state.hostid[my_world_rank]) 
 
-        else if (g_state.master[reg_entries[i].rank] == 
-           g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
-           g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
-           num_progress_ranks_per_node, is_node_ranks_packed)] )
+//        else if (g_state.master[reg_entries[i].rank] == 
+//           g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
+//           g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
+//           num_progress_ranks_per_node, is_node_ranks_packed)] )
 #if 0
 #if MASTER_IS_SMALLEST_SMP_RANK
         else if (g_state.master[reg_entries[i].rank] ==
@@ -3215,6 +3215,9 @@ int comex_malloc_dev(void *ptrs[], size_t size, comex_group_t group)
                 reg_entries_local[reg_entries_local_count++] = reg_entries[i];
             }
         }
+//        else if (g_state.hostid[reg_entries[i].rank]
+//                 == g_state.hostid[my_world_rank]) 
+
         /* my master is the same as the master of the notifier */
         else if (g_state.master[reg_entries[i].rank] == 
            g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
@@ -7501,8 +7504,8 @@ STATIC void nb_put(void *src, void *dst, int bytes, int proc, nb_t *nb)
 
     if (COMEX_ENABLE_PUT_SMP) {
         /* put to SMP node */
-        // if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) 
-        if (g_state.master[proc] == g_state.master[g_state.rank]) 
+        if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) 
+//        if (g_state.master[proc] == g_state.master[g_state.rank]) 
         {
             reg_entry_t *reg_entry = NULL;
             void *mapped_offset = NULL;
@@ -7714,8 +7717,8 @@ STATIC void nb_get(void *src, void *dst, int bytes, int proc, nb_t *nb)
 
     if (COMEX_ENABLE_GET_SMP) {
         /* get from SMP node */
-        // if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) 
-        if (g_state.master[proc] == g_state.master[g_state.rank]) 
+        if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) 
+//        if (g_state.master[proc] == g_state.master[g_state.rank]) 
         {
             reg_entry_t *reg_entry = NULL;
             void *mapped_offset = NULL;
@@ -7905,8 +7908,8 @@ STATIC void nb_acc(int datatype, void *scale,
 
     if (COMEX_ENABLE_ACC_SMP) {
         /* acc to same SMP node */
-        // if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) 
-        if (g_state.master[proc] == g_state.master[g_state.rank]) 
+        if (g_state.hostid[proc] == g_state.hostid[g_state.rank]) 
+//        if (g_state.master[proc] == g_state.master[g_state.rank]) 
         {
             reg_entry_t *reg_entry = NULL;
             void *mapped_offset = NULL;
@@ -9585,8 +9588,8 @@ STATIC void nb_putv(
               }
 #endif
         } else if (COMEX_ENABLE_PUT_SMP &&
-//          g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
-          g_state.master[proc] == g_state.master[g_state.rank]) {
+          g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+//          g_state.master[proc] == g_state.master[g_state.rank]) {
           /* put to process on same SMP node */
           int j;
           void **src;
@@ -9918,8 +9921,8 @@ STATIC void nb_getv(
 #endif
         }
         else if (COMEX_ENABLE_GET_SMP && 
-//                   g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
-                   g_state.master[proc] == g_state.master[g_state.rank]) {
+                   g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+//                   g_state.master[proc] == g_state.master[g_state.rank]) {
             int j;
             void **src;
             void **dst;
@@ -10237,8 +10240,8 @@ STATIC void nb_accv(
 #endif
         }
         else if (COMEX_ENABLE_PUT_SMP &&
-//                   g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
-                   g_state.master[proc] == g_state.master[g_state.rank]) {
+                   g_state.hostid[proc] == g_state.hostid[g_state.rank]) {
+//                   g_state.master[proc] == g_state.master[g_state.rank]) {
             if (fence_array[g_state.master[proc]]) {
                 _fence_master(g_state.master[proc]);
             }
