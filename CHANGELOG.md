@@ -8,17 +8,41 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 
 ## [Unreleased]
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
+
+## [5.9]
+The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 - Known Bugs
 - Added
   - Setting ARMCI_VERBOSE=1 at runtime will also dump configuration details for
     ComEx runtime
+  - GA can be initialized from an MPI communicator. This enables instances of GA
+    to be created from non-GA programs and run independently on a subset of
+    processors
+  - An option to use System V memory instead of POSIX shared memory was added to
+    the MPI progress ranks runtime. This option was added to get around a memory
+    limitation with POSIX shared memory only allows a maximum of about half the
+    available memory to used as shared memory. System V memory does not have
+    this limit, but this implementation does not appear to be reliable and
+    should be avoided if large memory usage is not needed
+  - Substantial support for sparse 2D arrays. This includes operations such as
+    matrix-vector and matrix-matrix multiplies, sparse-dense conversion and
+    operations on the diagonals
 - Changed
   - Updated compiler settings in CMake build if Fujitsu compilers are detected
+  - Removed all instances of ga_malloc from GA source code. This frees GA from
+    needing to initialize MA before using GA library calls.
 - Fixed
   - Fixed gcc toolchain checks in CMake for clang build
   - Fixed tiled arrays so that they work with restricted arrays and fixed some
     additional bugs in block cyclic distributions
   - Removed several memory leaks
+  - Older TCGMSG implementations removed from build and documentation.
+    TCGMSG-MPI is still retained
+  - A substantial amount of code and documentation for discontinued or
+    deprecated systems was removed. Examples include Blue Gene P/L/Q, LAPI,
+    PVM, CCA, VIA, Quadrics, Elan-3/4, Myrinet GM, Mellanox, Hitachi, DEC, etc.
+  - Number of outstanding  non-blocking messages in MPI RMA runtime modified so
+    that non-blocking test passes
 
 ## [5.8.2]
 - Known Bugs
