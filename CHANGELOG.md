@@ -10,11 +10,10 @@ This project follows the [Gitflow Workflow model](https://www.atlassian.com/git/
 The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 
 ## [5.9]
-The Unreleased section will be empty for tagged releases. Unreleased functionality appears in the develop branch.
 - Known Bugs
+  - The MPI RMA port still does poorly with older releases of MPI. Currently,
+    OpenMPI 5.0.x and MPICH 4.2.x appear to do well.
 - Added
-  - Setting ARMCI_VERBOSE=1 at runtime will also dump configuration details for
-    ComEx runtime
   - GA can be initialized from an MPI communicator. This enables instances of GA
     to be created from non-GA programs and run independently on a subset of
     processors
@@ -28,9 +27,12 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
     matrix-vector and matrix-matrix multiplies, sparse-dense conversion and
     operations on the diagonals
 - Changed
-  - Updated compiler settings in CMake build if Fujitsu compilers are detected
+  - Updated compiler settings in CMake build if Fujitsu compilers are detected.
+    Other general improvements have also been made in CMake build.
   - Removed all instances of ga_malloc from GA source code. This frees GA from
     needing to initialize MA before using GA library calls.
+  - Modified progress ranks runtime to use hostnames instead of host IDs to
+    identify ranks on same SMP node. This is a more robust implementation.
 - Fixed
   - Fixed gcc toolchain checks in CMake for clang build
   - Fixed tiled arrays so that they work with restricted arrays and fixed some
