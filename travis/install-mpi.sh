@@ -92,9 +92,9 @@ case "$MPI_IMPL" in
 		;;
 	    Linux)
                 if [ ! -d "$TRAVIS_ROOT/open-mpi" ] || [ ! -x "$TRAVIS_ROOT/open-mpi/bin/mpicc" ] ; then
-                    wget --no-check-certificate https://www.open-mpi.org/software/ompi/v2.0/downloads/openmpi-2.0.2.tar.bz2
-                    tar -xjf openmpi-2.0.2.tar.bz2
-                    cd openmpi-2.0.2
+                    wget --no-check-certificate https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.6.tar.bz2
+                    tar -xjf openmpi-5.0.6.tar.bz2
+                    cd openmpi-5.0.6
                     mkdir -p build && cd build
 		    if [ $(${CC} -dM -E - </dev/null 2> /dev/null |grep __clang__|head -1|cut -c19) ] ; then
 			CFLAGS_in="-w -fPIC"

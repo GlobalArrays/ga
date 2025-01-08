@@ -223,8 +223,7 @@ if [ -f ${TOP}/bin/automake.patched ] ; then
 else
     awk 'NR==4159 {$0="  $text =~ s/\\$\\{([^ \\t=:+{}]+)}/&substitute_ac_subst_variables_worker ($1)/ge;"} 1' ${TOP}/bin/automake > ${TOP}/bin/automake.patched
 fi
-
-if [ diff ${TOP}/bin/automake.patched ${TOP}/bin/automake >/dev/null ] ; then
+if diff -q ${TOP}/bin/automake.patched ${TOP}/bin/automake >/dev/null ; then
     echo  ${TOP}/bin/automake is already patched!
 else
     cp ${TOP}/bin/automake.patched ${TOP}/bin/automake
