@@ -2812,6 +2812,8 @@ STATIC nb_t* nb_wait_for_handle()
 {
     nb_t *nb = NULL;
     int in_use_count = 0;
+    int loop_index = nb_index;
+    int found = 0;
 
 #if DEBUG
     printf("[%d] nb_wait_for_handle()\n", g_state.rank);
@@ -2820,6 +2822,7 @@ STATIC nb_t* nb_wait_for_handle()
     /* find first handle that isn't associated with a user-level handle */
     /* make sure the handle we find has processed all events */
     /* the user can accidentally exhaust the available handles */
+#if 0
     do {
         ++in_use_count;
         if (in_use_count > nb_max_outstanding) {
@@ -2833,6 +2836,32 @@ STATIC nb_t* nb_wait_for_handle()
         nb_index %= nb_max_outstanding; /* wrap around if needed */
         nb_wait_for_all(nb);
     } while (nb->in_use);
+#else
+    /* look through list for unused handle */
+    do {
+        ++in_use_count;
+        if (in_use_count > nb_max_outstanding) {
+          break;
+        }
+        nb = &nb_state[loop_index];
+        if (!nb->in_use) {
+          nb_index = loop_index;
+          found = 1;
+          break;
+        }
+        loop_index++;
+        loop_index %= nb_max_outstanding; /* wrap around if needed */
+    } while (nb->in_use);
+    if (!found) {
+      nb = &nb_state[nb_index];
+      nb_wait_for_all(nb);
+    }
+    //nb->hdl = nb_index;
+    nb_index++;
+    nb_index %= nb_max_outstanding; /* wrap around if needed */
+    /* make sure in_use flag is set to 1 */
+    nb->in_use = 1;
+#endif
 
     return nb;
 }
