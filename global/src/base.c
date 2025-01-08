@@ -308,7 +308,7 @@ extern int _ga_initialize_f;
 /**
  *  Initialize library structures in Global Arrays.
  *  either ga_initialize_ltd or ga_initialize must be the first 
- *         GA routine called (except ga_uses_ma or ga_set_memory_limit)
+ *  GA routine called (except ga_uses_ma or ga_set_memory_limit)
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_initialize = pnga_initialize
@@ -502,9 +502,8 @@ void pnga_initialize()
 
 /**
  *  Initialize library structures in Global Arrays over a communicator that is
- *  supplied by an external program.
- *  either ga_initialize_ltd or ga_initialize must be the first 
- *         GA routine called (except ga_uses_ma or ga_set_memory_limit)
+ *  supplied by an external program. Some version of ga_initialize must be
+ *  the first GA routine called (except ga_uses_ma or ga_set_memory_limit)
  */
 #ifdef MSG_COMMS_MPI
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
