@@ -144,10 +144,10 @@ else
     make V=0 checkprogs -j ${MAKE_JNUM}
 fi
 # run one test
-MAYBE_OVERSUBSCRIBE=
+MAYBE_OVERSUBSCRIBE=" --map-by :OVERSUBSCRIBE "
 if test "x$os" = "xDarwin" && test "x$MPI_IMPL" = "xopenmpi"
 then
-    MAYBE_OVERSUBSCRIBE=-oversubscribe
+    MAYBE_OVERSUBSCRIBE=" --map-by :OVERSUBSCRIBE "
 fi
 
 # Determine test name based on whether fortran was supported.
