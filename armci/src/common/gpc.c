@@ -263,12 +263,6 @@ int example_func(int to, int from, void *hdr,   int hlen,
 		 int rtype);
 
 
-#ifdef LAPI
-void armci_gpc_set_serverpid(){
-}
-#endif
-     
-     
 /*\
  *  Translate pointer to memory on processor "proc"
  *  to be used in a callback function send by processor "from"
@@ -283,7 +277,7 @@ return ptr;
 \*/
 void ARMCI_Gpc_lock(int proc)
 {
-#if defined(CLUSTER) && !defined(SGIALTIX)
+#if defined(CLUSTER)
     int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
     int lock = 0;
@@ -306,7 +300,7 @@ return 0;
 \*/
 void ARMCI_Gpc_unlock(int proc)
 {
-#if defined(CLUSTER) && !defined(SGIALTIX)
+#if defined(CLUSTER)
     int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
     int lock = 0;

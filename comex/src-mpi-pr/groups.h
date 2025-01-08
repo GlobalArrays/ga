@@ -8,9 +8,15 @@
 #ifndef _COMEX_GROUPS_H_
 #define _COMEX_GROUPS_H_
 
+#define COMEX_MAX_HOST_NAME_LEN 256
+
 #include <mpi.h>
 
 #include "comex.h"
+
+typedef struct {
+  char name[COMEX_MAX_HOST_NAME_LEN];
+} host_name_t;
 
 typedef struct {
     MPI_Comm comm;  /**< whole comm; all ranks */
@@ -18,7 +24,7 @@ typedef struct {
     int size;       /**< comm size */
     int rank;       /**< comm rank */
     int *master;    /**< master[size] rank of a given rank's master */
-    long *hostid;   /**< hostid[size] hostid of SMP node for a given rank */
+    host_name_t *host;   /**< host[size] host name of SMP node for a given rank */
     MPI_Comm node_comm;  /**< node comm; SMP ranks */
     int node_size;       /**< node comm size */
     int node_rank;       /**< node comm rank */
@@ -46,8 +52,9 @@ extern comex_igroup_t* comex_get_igroup_from_group(comex_group_t group);
 /* verify that proc is part of group */
 #define CHECK_GROUP(GROUP,PROC) do {                                \
     int size;                                                       \
+    int ierr = comex_group_size(GROUP,&size);                       \
     COMEX_ASSERT(GROUP >= 0);                                       \
-    COMEX_ASSERT(COMEX_SUCCESS == comex_group_size(GROUP,&size));   \
+    COMEX_ASSERT(COMEX_SUCCESS == ierr);                            \
     COMEX_ASSERT(PROC >= 0);                                        \
     COMEX_ASSERT(PROC < size);                                      \
 } while(0)

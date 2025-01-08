@@ -1,8 +1,9 @@
 /** @file
  *  This is a dummy header file that is used if no Fortran compiler
  *  is specified. These symbols are needed by the GA build even if
- *  the Fortran interface is not being used
+ *  the Fortran interface is not being used.
  */
+
 #ifndef F77_FUNC_HEADER_INCLUDED
 #define F77_FUNC_HEADER_INCLUDED
 
@@ -12,4 +13,4 @@
 /* Mangling for Fortran global symbols with underscores. */
 #define F77_FUNC_GLOBAL_(name,NAME) name##_
 
-#endif /* f2c_cmake.h  */
+#endif

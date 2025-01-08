@@ -70,5 +70,5 @@ target_include_directories(gaf2c BEFORE PRIVATE
 )
 
 if (ENABLE_FORTRAN)
-  add_dependencies(gaf2c GenerateConfigFH)
+  add_dependencies(gaf2c GenerateConfigFH GenerateF2C_CH)
 endif()

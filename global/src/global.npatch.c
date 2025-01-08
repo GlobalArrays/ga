@@ -2,6 +2,10 @@
 #   include "config.h"
 #endif
 
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+
 /* 
  * module: global.npatch.c
  * author: Jialin Ju
@@ -301,9 +305,9 @@ void pnga_copy_patch(char *trans,
         /*** due to generality of this transformation scatter is required ***/
       } else{
         if (use_put) {
-          tmp_ptr = ga_malloc(nelem, atype, "v");
-          src_idx_ptr = (Integer*) ga_malloc((andim*nelem), MT_F_INT, "si");
-          dst_idx_ptr = (Integer*) ga_malloc((bndim*nelem), MT_F_INT, "di");
+          tmp_ptr = pnga_malloc(nelem, atype, "v");
+          src_idx_ptr = (Integer*) pnga_malloc((andim*nelem), MT_F_INT, "si");
+          dst_idx_ptr = (Integer*) pnga_malloc((bndim*nelem), MT_F_INT, "di");
 
           /* calculate the destination indices */
 
@@ -407,13 +411,13 @@ void pnga_copy_patch(char *trans,
           }
           pnga_release(g_a, los, his);
           pnga_scatter(g_b, tmp_ptr, dst_idx_ptr, 0, nelem);
-          ga_free(dst_idx_ptr);
-          ga_free(src_idx_ptr);
-          ga_free(tmp_ptr);
+          pnga_free(dst_idx_ptr);
+          pnga_free(src_idx_ptr);
+          pnga_free(tmp_ptr);
         } else {
-          tmp_ptr = ga_malloc(nelem, atype, "v");
-          src_idx_ptr = (Integer*) ga_malloc((bndim*nelem), MT_F_INT, "si");
-          dst_idx_ptr = (Integer*) ga_malloc((andim*nelem), MT_F_INT, "di");
+          tmp_ptr = pnga_malloc(nelem, atype, "v");
+          src_idx_ptr = (Integer*) pnga_malloc((andim*nelem), MT_F_INT, "si");
+          dst_idx_ptr = (Integer*) pnga_malloc((bndim*nelem), MT_F_INT, "di");
 
           /* calculate the destination indices */
 
@@ -517,9 +521,9 @@ void pnga_copy_patch(char *trans,
           }
           pnga_release(g_b, los, his);
           pnga_gather(g_a, tmp_ptr, dst_idx_ptr, 0, nelem);
-          ga_free(dst_idx_ptr);
-          ga_free(src_idx_ptr);
-          ga_free(tmp_ptr);
+          pnga_free(dst_idx_ptr);
+          pnga_free(src_idx_ptr);
+          pnga_free(tmp_ptr);
         }
       }
     }

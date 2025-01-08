@@ -290,8 +290,6 @@ if (WIN32 AND MSVC)
   # for each prefix path, add ia32/64\${COMPILER_PREFIX}\lib to the lib search path
   foreach (dir IN LISTS TBB_PREFIX_PATH)
     if (CMAKE_CL_64)
-      list(APPEND TBB_LIB_SEARCH_PATH ${dir}/ia64/${COMPILER_PREFIX}/lib)
-      list(APPEND TBB_LIB_SEARCH_PATH ${dir}/lib/ia64/${COMPILER_PREFIX})
       list(APPEND TBB_LIB_SEARCH_PATH ${dir}/intel64/${COMPILER_PREFIX}/lib)
       list(APPEND TBB_LIB_SEARCH_PATH ${dir}/lib/intel64/${COMPILER_PREFIX})
     else ()

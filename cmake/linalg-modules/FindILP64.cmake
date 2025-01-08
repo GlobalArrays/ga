@@ -4,7 +4,7 @@ set( ILP64_COMPILE_OPTIONS
         $<$<AND:$<COMPILE_LANGUAGE:CXX,C,Fortran>,$<C_COMPILER_ID:GNU>>:-m64>
         # Make default integers 64-bit for Fortran
         $<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<C_COMPILER_ID:Intel,PGI>>:-i8>
-        $<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<C_COMPILER_ID:GNU,Flang>>:-fdefault-integer-8>
+        $<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<C_COMPILER_ID:GNU,Flang,LLVMFlang>>:-fdefault-integer-8>
         )
 set( ILP64_COMPILE_OPTIONS "${ILP64_COMPILE_OPTIONS}" CACHE STRING "ILP64 compile options" FORCE )
 
@@ -19,7 +19,7 @@ foreach (lang C CXX Fortran)
         if ( CMAKE_Fortran_COMPILER_ID STREQUAL Intel OR CMAKE_Fortran_COMPILER_ID STREQUAL PGI )
             list( APPEND ILP64_${lang}_COMPILE_OPTIONS -i8 )
         endif()
-        if ( CMAKE_Fortran_COMPILER_ID STREQUAL GNU OR CMAKE_Fortran_COMPILER_ID STREQUAL Flang )
+        if ( CMAKE_Fortran_COMPILER_ID STREQUAL GNU OR CMAKE_Fortran_COMPILER_ID STREQUAL Flang OR          CMAKE_Fortran_COMPILER_ID STREQUAL LLVMFlang )
             list( APPEND ILP64_${lang}_COMPILE_OPTIONS -fdefault-integer-8 )
         endif()
     endif()

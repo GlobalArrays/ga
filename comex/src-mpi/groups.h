@@ -29,7 +29,8 @@ extern comex_igroup_t* comex_get_igroup_from_group(comex_group_t group);
  * change group to world group */
 #define CHECK_GROUP(GROUP,PROC) do {                            \
     int size;                                                   \
-    assert(COMEX_SUCCESS == comex_group_size(GROUP,&size));     \
+    int ierr = comex_group_size(GROUP,&size);                   \
+    assert(COMEX_SUCCESS == ierr);                              \
     assert(PROC >= 0);                                          \
     assert(PROC < size);                                        \
     if (COMEX_GROUP_WORLD != GROUP) {                           \

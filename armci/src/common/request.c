@@ -45,7 +45,7 @@ extern void armci_sock_send(int to, void *data, int len);
 #endif
 
 
-#if !defined(GM) && !defined(VIA) && !defined(LAPI) &&!defined(VAPI)
+#if !defined(VAPI)
   double _armci_rcv_buf[MSG_BUFLEN_DBL];
   double _armci_snd_buf[MSG_BUFLEN_DBL]; 
   char* MessageSndBuffer = (char*)_armci_snd_buf;
@@ -121,7 +121,7 @@ request_header_t *msginfo = (request_header_t*) buffer;
          }
        }
 
-#if defined(ALLOW_PIN) || defined(LAPI2)
+#if defined(ALLOW_PIN) 
        if(msginfo->pinned && msginfo->bypass){
          armci_rcv_strided_data_bypass_both(msginfo->to,msginfo,loc_ptr,count,
 	                                    stride_levels);
@@ -408,9 +408,7 @@ request_header_t *msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize,REGISTER,
     msginfo->datalen = sizeof(ARMCI_MEMHDL_T);
     msginfo->operation =  REGISTER;
     msginfo->bytes = msginfo->dscrlen+ msginfo->datalen;
-#ifndef LAPI    
     msginfo->tag.ack = 0;
-#endif    
     buf = (char *)(msginfo+1);
     ADDBUF(buf,void*,ptr);
     ADDBUF(buf,long,sz);
@@ -864,9 +862,6 @@ int armci_rem_strided(int op, void* scale, int proc,
 #endif
 
     if(nb_handle)
-#ifdef ACC_SMP
-	 if(!ARMCI_ACC(op))
-#endif
     {
 /*    INIT_SENDBUF_INFO(nb_handle,buf,op,proc); same as _armci_buf_set_tag, why here? */
      _armci_buf_set_tag(buf,nb_handle->tag,0);
@@ -909,10 +904,6 @@ int armci_rem_strided(int op, void* scale, int proc,
          msginfo->pinned=0;
       }
 #   endif
-#ifdef LAPI2
-         msginfo->bypass=0;
-         msginfo->pinned=0;
-#endif
 
     /* align buf for doubles (8-bytes) before copying data */
     ALLIGN8(buf);
@@ -1011,9 +1002,7 @@ int armci_rem_strided(int op, void* scale, int proc,
           armci_send_req(proc, msginfo, bufsize);
        }
 #if !defined(MPI_SPAWN) && !defined(MPI_MT)
-#ifdef ACC_SMP
-       if(!ARMCI_ACC(op))
-#endif
+
        armci_save_strided_dscr(&buf0,dst_ptr,dst_stride_arr,count,
                                  stride_levels,1);
 #endif
@@ -1232,7 +1221,7 @@ extern void armci_wait_for_blocking_scatter();
 #endif
 
 
-#if (defined(ALLOW_PIN) || defined(LAPI2)) && !defined(HAS_RDMA_GET)
+#if defined(ALLOW_PIN) && !defined(HAS_RDMA_GET)
 /*\ client version of remote strided get
 \*/
 int armci_rem_get(int proc,
@@ -1307,14 +1296,10 @@ int armci_rem_get(int proc,
     msginfo->bytes = msginfo->dscrlen;
 
 
-#if defined(GM) || defined(VAPI) || defined(QUADRICS)
+#if defined(VAPI)
     /* prepare for  set the stamp at the end of the user buffer */
     if(count[0]<sizeof(int))armci_die("armci_rem_get: wrong protocol",count[0]);
-#  ifdef GM
-    *(int*)(((char*)(dst_ptr)) + (count[0] -sizeof(int))) = ARMCI_GM_COMPLETE;
-#  else
     *(int*)(((char*)(dst_ptr)) + (count[0] -sizeof(int))) = ARMCI_STAMP;
-#  endif
 #endif
 
     armci_send_req(proc,msginfo,bufsize);
@@ -1356,7 +1341,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
     void *scale;
     char *dscr_save = dscr;
     int  rc, i,proc;
-#   if defined(CLIENT_BUF_BYPASS) || defined(LAPI2) 
+#   if defined(CLIENT_BUF_BYPASS)
       int  *client_stride_arr=0; 
       void *client_ptr=0;
 #   endif
@@ -1379,7 +1364,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
     for(i=0; i< stride_levels; i++)
         buf_stride_arr[i+1]= buf_stride_arr[i]*count[i+1];
 
-#   if defined(CLIENT_BUF_BYPASS) || defined(LAPI2) 
+#   if defined(CLIENT_BUF_BYPASS)
        if(msginfo->bypass){
           dscr += (1+stride_levels)*sizeof(int); /* move past count */
           GETBUF(dscr,void*,client_ptr);
@@ -1412,7 +1397,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 
     if(msginfo->operation == GET){
     
-#      if defined(CLIENT_BUF_BYPASS) || defined(LAPI2) || defined(VAPI)
+#      if defined(CLIENT_BUF_BYPASS) || defined(VAPI)
 /* This path was not updated */
          if(msginfo->bypass){
              armci_send_strided_data_bypass(proc, msginfo, buf, buflen, loc_ptr, loc_stride_arr, 
@@ -1467,7 +1452,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
          armci_process_extheader(msginfo, dscr_save, buf, buflen);
 }
 
-#if ARMCI_ENABLE_GPC_CALLS && (defined(LAPI) || defined(GM) || defined(VAPI) || defined(DOELAN4) || defined(SOCKETS))
+#if ARMCI_ENABLE_GPC_CALLS && (defined(VAPI) || defined(SOCKETS))
 static int gpc_call_process( request_header_t *msginfo, int len,
                           char *dscr, char* buf, int buflen, char *sbuf);
 #endif
@@ -1503,7 +1488,7 @@ void armci_server_vector( request_header_t *msginfo,
     case GET:
 /*        fprintf(stderr, "%d:: Got a vector message!!\n", armci_me); */
       if(msginfo->ehlen) {
-#if ARMCI_ENABLE_GPC_CALLS && (defined(LAPI) || defined(GM) || defined(VAPI) || defined(DOELAN4))
+#if ARMCI_ENABLE_GPC_CALLS && defined(VAPI)
 	gpc_call_process(msginfo, len, dscr, buf, buflen, sbuf);
 #else
 	armci_die("Unexpected vector message with non-zero ehlen. GPC call?",
@@ -1582,21 +1567,14 @@ void armci_server_vector( request_header_t *msginfo,
 /**Server side routine to handle a GPC call request**/
 /*===============Register this memory=====================*/
 #if ARMCI_ENABLE_GPC_CALLS
-#if defined(LAPI) || defined(GM) || defined(VAPI) || defined(QUADRICS)
+#if defined(VAPI)
 gpc_buf_t *gpc_req;
-/*VT: I made the change below because DATA_SERVER is not defined for elan4
- *VT: This will only be invoked in case of GPC call and should not intefere
- *VT: with any other call
- */
-#if (defined(DOELAN4) || defined(DATA_SERVER)) && defined(SERVER_THREAD) 
+#if defined(DATA_SERVER) && defined(SERVER_THREAD) 
 #  ifdef PTHREADS
 pthread_t data_server;
 #  else
 #    error Threading other than pthreads not yet implemented
 #  endif
-#endif
-#if defined(LAPI)
-pthread_t data_server;
 #endif
 
 void block_thread_signal(int signo) {

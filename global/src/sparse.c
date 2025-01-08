@@ -125,7 +125,7 @@ void pnga_scan_copy(Integer g_src, Integer g_dst, Integer g_msk,
     pnga_distribution(g_msk, me, &lop, &hip);
 
     /* create arrays to hold last bit set on a given process */
-    lim = (long *) ga_malloc(nproc, MT_C_LONGINT, "ga scan buf");
+    lim = (long *) pnga_malloc(nproc, MT_C_LONGINT, "ga scan buf");
     bzero(lim,sizeof(long)*nproc);
     lim[me] = -1;
 
@@ -217,7 +217,7 @@ void pnga_scan_copy(Integer g_src, Integer g_dst, Integer g_msk,
     }
 
     pnga_sync();
-    ga_free(lim);
+    pnga_free(lim);
 }
 
 
@@ -262,7 +262,7 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
     pnga_distribution(g_msk, me, &lop, &hip);
 
     /* create arrays to hold last bit set on a given process */
-    lim = (long *) ga_malloc(nproc, MT_C_LONGINT, "ga scan buf");
+    lim = (long *) pnga_malloc(nproc, MT_C_LONGINT, "ga scan buf");
     bzero(lim,sizeof(long)*nproc);
     lim[me] = -1;
 
@@ -337,6 +337,12 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
         } else {
             stop = hip-lop+1;
         }
+#define MALLOC_CASE(_np, _type)                                   \
+        map = pnga_malloc(4*_np, MT_F_INT, "ga scan add locate");   \
+        v = pnga_malloc(_np, _type, "ga scan add gather values");
+#define FREE_CASE()                                               \
+        pnga_free(map);                                             \
+        pnga_free(v);
 
         /* first, perform local scan add */
         pnga_access_ptr(g_src, &lop, &hip, &ptr_src, &ld);
@@ -405,8 +411,7 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
                         T *v, sum;                                          \
                         rmt_hi = lop-1;                                     \
                         pnga_locate_nnodes(g_dst, &rmt_idx, &rmt_hi, &np);  \
-                        map = ga_malloc(4*np, MT_F_INT, "ga scan add locate");\
-                        v = ga_malloc(np, MT, "ga scan add gather values"); \
+                        MALLOC_CASE(np,MT);                                 \
                         proclist = map+(2*np);                              \
                         subs = map+(3*np);                                  \
                         pnga_locate_region(g_dst, &rmt_idx, &rmt_hi, map, proclist, &np);\
@@ -426,8 +431,7 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
                                 break;                                      \
                             }                                               \
                         }                                                   \
-                        ga_free(v);                                         \
-                        ga_free(map);                                       \
+                        FREE_CASE();                                        \
                     } else {                                                \
                         pnga_sync();                                        \
                     }                                                       \
@@ -435,6 +439,8 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
                 }
 #include "types2.xh"
 #undef TYPE_CASE
+#undef MALLOC_CASE
+#undef FREE_CASE
             default: pnga_error("ga_scan_add:wrong data type",combined_type);
         }
         /* release local access to arrays */
@@ -444,7 +450,7 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
     }
 
     pnga_sync();
-    ga_free(lim);
+    pnga_free(lim);
 }
 
 
@@ -596,7 +602,7 @@ static void sga_pack_unpack(Integer g_src, Integer g_dst, Integer g_msk,
 
     pnga_sync();
 
-    lim = (long*) ga_malloc(nproc, MT_C_LONGINT, "ga_pack lim buf");
+    lim = (long*) pnga_malloc(nproc, MT_C_LONGINT, "ga_pack lim buf");
     bzero(lim,sizeof(long)*nproc);
     pnga_distribution(g_msk, me, &lop, &hip);
 
@@ -642,7 +648,7 @@ static void sga_pack_unpack(Integer g_src, Integer g_dst, Integer g_msk,
     else{
         Integer ignore;
         void *buf=NULL, *msk=NULL;
-        buf = ga_malloc(lim[np], type_dst, "ga pack buf");
+        buf = pnga_malloc(lim[np], type_dst, "ga pack buf");
         pnga_access_ptr(g_msk, &lop, &hip, &msk, &ignore);
         if (1 == pack) {
             void *src=NULL;
@@ -661,9 +667,9 @@ static void sga_pack_unpack(Integer g_src, Integer g_dst, Integer g_msk,
                        type_src, type_msk, buf, dst, msk);
             pnga_release_update(g_dst, &lop, &hip);
         }
-        ga_free(buf);
+        pnga_free(buf);
     }
-    ga_free(lim);
+    pnga_free(lim);
     pnga_sync();
 }
 

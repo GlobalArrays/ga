@@ -1817,6 +1817,17 @@ float GA_Fdot(int g_a, int g_b)
     return sum;
 }    
 
+double GA_Rand(int iseed)
+{
+    Integer seed = (Integer)iseed;
+    return wnga_rand(seed);
+}
+
+double NGA_Rand(int iseed)
+{
+    Integer seed = (Integer)iseed;
+    return wnga_rand(seed);
+}
 
 void GA_Randomize(int g_a, void *value)
 {
@@ -5339,5 +5350,271 @@ void NGA_Version(int *major, int *minor, int *patch)
   *major = (int)maj;
   *minor = (int)min;
   *patch = (int)ptch;
+} 
+
+int NGA_Sprs_array_create(int idim, int jdim, int type)
+{
+  Integer i = (Integer)idim;
+  Integer j = (Integer)jdim;
+  return (int)wnga_sprs_array_create(i,j,type,sizeof(int));
 }
 
+int NGA_Sprs_array_create64(int64_t idim, int64_t jdim, int type)
+{
+  Integer i = (Integer)idim;
+  Integer j = (Integer)jdim;
+  return (int)wnga_sprs_array_create(i,j,type,sizeof(int64_t));
+}
+
+int NGA_Sprs_array_create_from_dense(int g_a)
+{
+  Integer ga = (Integer)g_a;
+  return (int)wnga_sprs_array_create_from_dense(ga,sizeof(int),1);
+}
+
+int NGA_Sprs_array_create_from_dense64(int g_a)
+{
+  Integer ga = (Integer)g_a;
+  return (int)wnga_sprs_array_create_from_dense(ga,sizeof(int64_t),1);
+}
+
+int NGA_Sprs_array_create_from_sparse(int s_a)
+{
+  Integer sa = (Integer)s_a;
+  return (int)wnga_sprs_array_create_from_sparse(sa,1);
+}
+
+void NGA_Sprs_array_add_element(int s_a, int idx, int jdx, void *val)
+{
+  Integer sa = (Integer)s_a;
+  Integer i = (Integer)idx;
+  Integer j = (Integer)jdx;
+  wnga_sprs_array_add_element(sa,i,j,val);
+}
+
+void NGA_Sprs_array_add_element64(int s_a, int64_t idx, int64_t jdx, void *val)
+{
+  Integer sa = (Integer)s_a;
+  Integer i = (Integer)idx;
+  Integer j = (Integer)jdx;
+  wnga_sprs_array_add_element(sa,i,j,val);
+}
+
+int NGA_Sprs_array_assemble(int s_a)
+{
+  Integer sa = (Integer)s_a;
+  return wnga_sprs_array_assemble(sa);
+}
+
+void NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo, int *hi)
+{
+  Integer sa = (Integer)s_a;
+  Integer ip = (Integer)iproc;
+  Integer ilo, ihi;
+  wnga_sprs_array_row_distribution(sa,ip,&ilo,&ihi);
+  *lo = (int)ilo;
+  *hi = (int)ihi;
+}
+
+void NGA_Sprs_array_row_distribution64(int s_a, int iproc, int64_t *lo, int64_t *hi)
+{
+  Integer sa = (Integer)s_a;
+  Integer ip = (Integer)iproc;
+  Integer ilo, ihi;
+  wnga_sprs_array_row_distribution(sa,ip,&ilo,&ihi);
+  *lo = (int64_t)ilo;
+  *hi = (int64_t)ihi;
+}
+
+void NGA_Sprs_array_column_distribution(int s_a, int iproc, int *lo, int *hi)
+{
+  Integer sa = (Integer)s_a;
+  Integer ip = (Integer)iproc;
+  Integer ilo, ihi;
+  wnga_sprs_array_column_distribution(sa,ip,&ilo,&ihi);
+  *lo = (int)ilo;
+  *hi = (int)ihi;
+}
+
+void NGA_Sprs_array_column_distribution64(int s_a, int iproc, int64_t *lo, int64_t *hi)
+{
+  Integer sa = (Integer)s_a;
+  Integer ip = (Integer)iproc;
+  Integer ilo, ihi;
+  wnga_sprs_array_column_distribution(sa,ip,&ilo,&ihi);
+  *lo = (int64_t)ilo;
+  *hi = (int64_t)ihi;
+}
+
+int NGA_Sprs_array_get_block(int s_a, int irow, int icol, int **idx,
+    int **jdx, void **data, int *ilo, int *ihi, int *jlo, int *jhi)
+{
+  Integer sa = (Integer)s_a;
+  Integer ir = (Integer)irow;
+  Integer ic = (Integer)icol;
+  Integer il, ih, jl, jh;
+  void *id, *jd;
+  int ret = wnga_sprs_array_get_block(sa, ir, ic, &id, &jd, data,
+      &il, &ih, &jl, &jh);
+  *ilo = (int)il-1;
+  *ihi = (int)ih-1;
+  *jlo = (int)jl-1;
+  *jhi = (int)jh-1;
+  *idx = (int*)id;
+  *jdx = (int*)jd;
+  return ret;
+}
+
+int NGA_Sprs_array_get_block64(int s_a, int64_t irow, int64_t icol,
+    int64_t **idx, int64_t **jdx, void **data, int64_t *ilo,
+    int64_t *ihi, int64_t *jlo, int64_t *jhi)
+{
+  Integer sa = (Integer)s_a;
+  Integer ir = (Integer)irow;
+  Integer ic = (Integer)icol;
+  Integer il, ih, jl, jh;
+  void *id, *jd;
+  int ret = wnga_sprs_array_get_block(sa, ir, ic, &id, &jd, data,
+      &il, &ih, &jl, &jh);
+  *ilo = (int64_t)il-1;
+  *ihi = (int64_t)ih-1;
+  *jlo = (int64_t)jl-1;
+  *jhi = (int64_t)jh-1;
+  *idx = (int64_t*)id;
+  *jdx = (int64_t*)jd;
+  return ret;
+}
+
+void NGA_Sprs_array_access_col_block(int s_a, int icol, int **idx, int **jdx,
+    void **val)
+{
+  Integer sa = (Integer)s_a;
+  Integer ic = (Integer)icol;
+  wnga_sprs_array_access_col_block(sa,ic,idx,jdx,val);
+}
+
+void NGA_Sprs_array_access_col_block64(int s_a, int icol, int64_t **idx,
+    int64_t **jdx, void **val)
+{
+  Integer sa = (Integer)s_a;
+  Integer ic = (Integer)icol;
+  wnga_sprs_array_access_col_block(sa,ic,idx,jdx,val);
+}
+
+void NGA_Sprs_array_col_block_list(int s_a, int **idx, int *n)
+{
+  Integer *Idx;
+  Integer i,N;
+  Integer sa = s_a;
+  wnga_sprs_array_col_block_list(sa, &Idx, &N);
+  *n = N;
+  *idx = (int*)malloc(N*sizeof(int));
+  for (i=0; i<N; i++) {
+    (*idx)[i] = (int)(Idx[i]);
+  }
+  free(Idx);
+}
+
+void NGA_Sprs_array_matvec_multiply(int s_a, int g_a, int g_v)
+{
+  Integer sa = (Integer)s_a;
+  Integer ga = (Integer)g_a;
+  Integer gv = (Integer)g_v;
+  wnga_sprs_array_matvec_multiply(sa, ga, gv);
+}
+
+int NGA_Sprs_array_destroy(int s_a)
+{
+  Integer sa = (Integer)s_a;
+  return wnga_sprs_array_destroy(sa);
+}
+
+void NGA_Sprs_array_export(int s_a, const char* file)
+{
+  Integer sa = (Integer)s_a;
+  wnga_sprs_array_export(sa, file);
+}
+
+void NGA_Sprs_array_get_diag(int s_a, int *g_d)
+{
+  Integer sa = (Integer)s_a;
+  Integer gd;
+  wnga_sprs_array_get_diag(sa, &gd);
+  *g_d = (int)gd;
+}
+
+void NGA_Sprs_array_diag_right_multiply(int s_a, int g_d)
+{
+  Integer sa = (Integer)s_a;
+  Integer gd = (Integer)g_d;
+  wnga_sprs_array_diag_right_multiply(sa, gd);
+}
+
+void NGA_Sprs_array_diag_left_multiply(int s_a, int g_d)
+{
+  Integer sa = (Integer)s_a;
+  Integer gd = (Integer)g_d;
+  wnga_sprs_array_diag_left_multiply(sa, gd);
+}
+
+void NGA_Sprs_array_shift_diag(int s_a, void *shift)
+{
+  Integer sa = (Integer)s_a;
+  wnga_sprs_array_shift_diag(sa, shift);
+}
+
+int NGA_Sprs_array_duplicate(int s_a)
+{
+  Integer sa = (Integer)s_a;
+  return (int)wnga_sprs_array_duplicate(sa);
+}
+
+int NGA_Sprs_array_matmat_multiply(int s_a, int s_b)
+{
+  int s_c;
+  Integer sa = (Integer)s_a;
+  Integer sb = (Integer)s_b;
+  return (int)wnga_sprs_array_matmat_multiply(sa, sb);
+}
+
+int NGA_Sprs_array_sprsdns_multiply(int s_a, int g_b)
+{
+  int g_c;
+  Integer sa = (Integer)s_a;
+  Integer gb = (Integer)g_b;
+  return (int)wnga_sprs_array_sprsdns_multiply(sa, gb, 1);
+}
+
+int NGA_Sprs_array_dnssprs_multiply(int g_a, int s_b)
+{
+  int g_c;
+  Integer ga = (Integer)g_a;
+  Integer sb = (Integer)s_b;
+  return (int)wnga_sprs_array_dnssprs_multiply(ga, sb, 1);
+}
+
+int NGA_Sprs_array_count_sketch(int s_a, int size_k, int *g_k, int *g_w)
+{
+  Integer sa = (Integer)s_a;
+  Integer size = (Integer)size_k;
+  Integer gk;
+  Integer gw;
+  int ret = (int)wnga_sprs_array_count_sketch(sa, size, &gk, &gw, 1);
+  *g_k = (int)gk;
+  *g_w = (int)gw;
+  return ret;
+}
+
+int NGA_Sprs_array_get_column(int s_a, int icol)
+{
+  Integer sa = (Integer)s_a;
+  Integer ic = (Integer)icol;
+  return (int)wnga_sprs_array_get_column(sa, ic);
+}
+
+int NGA_Sprs_array_get_column64(int s_a, int64_t icol)
+{
+  Integer sa = (Integer)s_a;
+  Integer ic = (Integer)icol;
+  return (int)wnga_sprs_array_get_column(sa, ic);
+}

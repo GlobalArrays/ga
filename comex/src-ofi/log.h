@@ -13,6 +13,12 @@
 #include <stdlib.h>
 #include <sys/syscall.h>
 #include <time.h>
+#ifndef __USE_MISC
+#define __USE_MISC
+#endif
+#ifndef __USE_XOPEN2K
+#define __USE_XOPEN2K
+#endif
 #include <unistd.h>
 
 #include "env.h"

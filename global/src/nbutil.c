@@ -226,7 +226,7 @@ int nga_wait_internal(Integer *nbhandle){
   if (tag == ga_ihdl_array[index].ga_nbtag) {
     if (ga_ihdl_array[index].active == 0) {
       printf("p[%ld] nga_wait_internal: GA NB handle %d inactive slot: %d tag: %d\n",
-          GAme,*nbhandle,index,tag);
+          GAme,*((int*)inbhandle),index,tag);
     }
     ga_armcihdl_t* next = ga_ihdl_array[index].ahandle;
     /* Loop over linked list and complete all remaining armci non-blocking calls */

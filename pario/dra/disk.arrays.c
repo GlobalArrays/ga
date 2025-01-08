@@ -86,11 +86,7 @@
 
 /* #define DRA_DBLE_BUFFER */
 
-#if defined(SP1)|| defined(SP) || defined(LAPI)
-#   define DRA_NUM_IOPROCS 8 
-#else
 #   define DRA_NUM_IOPROCS 1
-#endif
 
 #ifndef DRA_NUM_FILE_MGR
 #  define DRA_NUM_FILE_MGR DRA_NUM_IOPROCS
@@ -401,13 +397,7 @@ Integer dai_io_procs(Integer d_a)
     Integer num;
 
     /* this one of many possibilities -- depends on the system */
-    /*
-#ifdef _CRAYMPP
-num = DRA_NUM_IOPROCS;
-#else
-num = (INDEPFILES(d_a)) ? INFINITE_NUM_PROCS: DRA_NUM_IOPROCS; 
-#endif
-*/
+    /* num = (INDEPFILES(d_a)) ? INFINITE_NUM_PROCS: DRA_NUM_IOPROCS; */
     if (INDEPFILES(d_a)) {
         num = pnga_cluster_nnodes();
     } else {

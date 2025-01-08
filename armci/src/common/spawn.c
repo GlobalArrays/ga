@@ -76,7 +76,7 @@ int rc;
     if(pthread_attr_init(&attr))
        armci_die("armci_create_server_thread: attr init failed",0);
 
-#if defined(AIX) || defined(SOLARIS)
+#if defined(AIX)
     pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 #endif
 
