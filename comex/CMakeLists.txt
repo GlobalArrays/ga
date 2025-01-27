@@ -38,6 +38,7 @@ option (COMEX_NETWORK_MPI_PT "use MPI progress threads protocol for communicatio
 
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR} src-common)
 if (MPI_TS)
+  message(STATUS "Configuring MPI_TS")
   set(COMEX_DEVICE
     src-mpi/comex.c
     src-mpi/groups.c
@@ -45,6 +46,7 @@ if (MPI_TS)
   set (COMEX_NETWORK_MPI_TS ON)
   include_directories(AFTER src-mpi)
 elseif (MPI_PR)
+  message(STATUS "Configuring MPI_PR")
   set(COMEX_DEVICE
     src-mpi-pr/comex.c
     src-mpi-pr/groups.c
@@ -53,6 +55,7 @@ elseif (MPI_PR)
   set (COMEX_NETWORK_MPI_PR ON)
   include_directories(AFTER src-mpi-pr)
 elseif (MPI3)
+  message(STATUS "Configuring MPI_RMA")
   set(COMEX_DEVICE
     src-mpi3/comex.c
     src-mpi3/groups.c
@@ -61,6 +64,7 @@ elseif (MPI3)
   set (COMEX_NETWORK_MPI3 ON)
   include_directories(AFTER src-mpi3)
 elseif (MPI_MT)
+  message(STATUS "Configuring MPI_MT")
   set(COMEX_DEVICE
     src-mpi-mt/comex.c
     src-mpi-mt/groups.c
@@ -68,6 +72,7 @@ elseif (MPI_MT)
   set (COMEX_NETWORK_MPI_MT ON)
   include_directories(AFTER src-mpi-mt)
 elseif (MPI_PT)
+  message(STATUS "Configuring MPI_PT")
   set(COMEX_DEVICE
     src-mpi-pt/comex.c
     src-mpi-pt/groups.c
@@ -115,6 +120,11 @@ set(ARMCI_FILES
   src-armci/message.c
 )
 
+# -------------------------------------------------------------
+#  Check for RT library
+# -------------------------------------------------------------
+find_library(LIBRT rt PATHS /lib /usr/lib /usr/local/lib)
+
 add_library(armci_comex OBJECT
   ${ARMCI_FILES}
   ${COMEX_DEVICE}
@@ -129,7 +139,7 @@ target_compile_definitions(armci PRIVATE HAVE_CONFIG_H)
 
 add_library(GlobalArrays::armci ALIAS armci)
 
-target_link_libraries(armci)
+target_link_libraries(armci ${LIBRT})
 
 install(TARGETS armci
     EXPORT globalarrays-targets
@@ -143,10 +153,16 @@ add_library(comex
 
 add_library(GlobalArrays::comex ALIAS comex)
 
-target_link_libraries(comex)
+target_link_libraries(comex ${LIBRT})
 
 install(TARGETS comex
     EXPORT globalarrays-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
+
+# -------------------------------------------------------------
+# COMEX test programs
+# -------------------------------------------------------------
+add_executable(unit_contig_putc.x testing/unit_contig_putc.c)
+target_link_libraries(unit_contig_putc.x armci)

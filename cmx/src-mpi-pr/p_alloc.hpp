@@ -89,17 +89,16 @@ int put(void *src, void *dst, int64_t bytes, int proc);
  * Strided Put.
  *
  * @param[in] src pointer to 1st segment at source
- * @param[in] src_stride array of strides at source
- * @param[in] dst_offset offset from start of data allocation on remote
- *            process
- * @param[in] dst_stride array of strides at destination
+ * @param[in] src_stride [stride_levels] array of strides at source
+ * @param[in] dst pointer to 1st segment at destination
+ * @param[in] dst_stride [stride_levels] array of strides at destination
  * @param[in] count number of units at each stride level count[0]=bytes
  * @param[in] stride_levels number of stride levels
  * @param[in] proc remote process(or) id. This processor must be in the same
  *            group as the allocation.
  * @return CMX_SUCCESS on success
  */
-int puts(void *src, int64_t *src_stride, int64_t dst_offset, int64_t *dst_stride,
+int puts(void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
         int64_t *count, int stride_levels, int proc);
 
 /**
@@ -117,24 +116,22 @@ int putv(_cmx_giov_t *darr, int64_t len, int proc);
  * Nonblocking Contiguous Put.
  *
  * @param[in] src pointer to 1st segment at source
- * @param[in] dst_offset offset from start of data allocation on remote
- *            process
+ * @param[in] dst pointer to 1st segment at destination
  * @param[in] bytes number of bytes to transfer
  * @param[in] proc remote process(or) id. This processor must be in the same
  *            group as the allocation.
  * @param[out] req nonblocking request object
  * @return CMX_SUCCESS on success
  */
-int nbput(void *src, int64_t dst_offset, int64_t bytes, int proc, _cmx_request* req);
+int nbput(void *src, void *dst, int64_t bytes, int proc, _cmx_request* req);
 
 /**
  * Nonblocking Strided Put.
  *
  * @param[in] src pointer to 1st segment at source
- * @param[in] src_stride array of strides at source
- * @param[in] dst_offset offset from start of data allocation on remote
- *            process
- * @param[in] dst_stride array of strides at destination
+ * @param[in] src_stride [stride_levels] array of strides at source
+ * @param[in] dst pointer to 1st segment at destination
+ * @param[in] dst_stride [stride_levels] array of strides at destination
  * @param[in] count number of units at each stride level count[0]=bytes
  * @param[in] stride_levels number of stride levels
  * @param[in] proc remote process(or) id. This processor must be in the same
@@ -142,7 +139,7 @@ int nbput(void *src, int64_t dst_offset, int64_t bytes, int proc, _cmx_request* 
  * @param[out] req nonblocking request object
  * @return CMX_SUCCESS on success
  */
-int nbputs(void *src, int64_t *src_stride, int64_t dst_offset, int64_t *dst_stride,
+int nbputs(void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
         int64_t *count, int stride_levels, int proc, _cmx_request* req);
 
 /**
@@ -163,14 +160,13 @@ int nbputv(_cmx_giov_t *darr, int64_t len, int proc, _cmx_request* req);
  * @param[in] op operation
  * @param[in] scale factor x += scale*y
  * @param[in] src pointer to 1st segment at source
- * @param[in] dst_offset offset from start of data allocation on remote
- *            process
+ * @param[in] dst pointer to 1st segment at destination
  * @param[in] bytes number of bytes to transfer
  * @param[in] proc remote process(or) id. This processor must be in the same
  *            group as the allocation.
  * @return CMX_SUCCESS on success
  */
-int acc(int op, void *scale, void *src, int64_t dst_offset, int64_t bytes, int proc);
+int acc(int op, void *scale, void *src, void *dst, int64_t bytes, int proc);
 
 /**
  * Strided Atomic Accumulate.
@@ -179,8 +175,7 @@ int acc(int op, void *scale, void *src, int64_t dst_offset, int64_t bytes, int p
  * @param[in] scale factor x += scale*y
  * @param[in] src pointer to 1st segment at source
  * @param[in] src_stride [stride_levels] array of strides at source
- * @param[in] dst_offset offset from start of data allocation on remote
- *            process
+ * @param[in] dst pointer to 1st segment at destination
  * @param[in] dst_stride [stride_levels] array of strides at destination
  * @param[in] count [stride_levels+1] number of units at each stride level
  *            count[0]=bytes
@@ -189,7 +184,7 @@ int acc(int op, void *scale, void *src, int64_t dst_offset, int64_t bytes, int p
  *            group as the allocation.
  * @return CMX_SUCCESS on success
  */
-int accs(int op, void *scale, void *src, int64_t *src_stride, int64_t dst_offset,
+int accs(int op, void *scale, void *src, int64_t *src_stride, void *dst,
     int64_t *dst_stride, int64_t *count, int stride_levels, int proc);
 
 /**
@@ -211,27 +206,25 @@ int accv(int op, void *scale, _cmx_giov_t *darr, int64_t len, int proc);
  * @param[in] op operation
  * @param[in] scale factor x += scale*y
  * @param[in] src pointer to 1st segment at source
- * @param[in] dst_offset offset from start of data allocation on remote
- *            process
+ * @param[in] dst pointer to 1st segment at destination
  * @param[in] bytes number of bytes to transfer
  * @param[in] proc remote process(or) id. This processor must be in the same
  *            group as the allocation.
  * @param[out] req nonblocking request object
  * @return CMX_SUCCESS on success
  */
-int nbacc(int op, void *scale, void *src, int64_t dst_offset,
+int nbacc(int op, void *scale, void *src, void *dst,
     int64_t bytes, int proc, _cmx_request *req);
 
 /**
- * Strided Atomic Accumulate.
+ * Nonblocking Strided Atomic Accumulate.
  *
  * @param[in] op operation
  * @param[in] scale factor x += scale*y
  * @param[in] src pointer to 1st segment at source
- * @param[in] src_stride array of strides at source
- * @param[in] dst_offset offset from start of data allocation on remote
- *            process
- * @param[in] dst_stride array of strides at destination
+ * @param[in] src_stride [stride_levels] array of strides at source
+ * @param[in] dst pointer to 1st segment at destination
+ * @param[in] dst_stride [stride_levels] array of strides at destination
  * @param[in] count number of units at each stride level count[0]=bytes
  * @param[in] stride_levels number of stride levels
  * @param[in] proc remote process(or) id. This processor must be in the same
@@ -240,11 +233,11 @@ int nbacc(int op, void *scale, void *src, int64_t dst_offset,
  * @return CMX_SUCCESS on success
  */
 int nbaccs(int op, void *scale, void *src, int64_t *src_stride,
-    int64_t dst_offset, int64_t *dst_stride, int64_t *count,
+    void *dst, int64_t *dst_stride, int64_t *count,
     int stride_levels, int proc, _cmx_request *req);
 
 /**
- * Vector Atomic Accumulate.
+ * Nonblocking Vector Atomic Accumulate.
  *
  * @param[in] op operation
  * @param[in] scale factor x += scale*y
@@ -260,31 +253,29 @@ int nbaccv(int op, void *scale, _cmx_giov_t *darr, int64_t len, int proc, _cmx_r
 /**
  * Contiguous Get.
  *
+ * @param[in] src pointer to 1st segment at source
  * @param[in] dst pointer to 1st segment at destination
- * @param[in] src_offset offset from start of data allocation on remote
- *            process
  * @param[in] bytes number of bytes to transfer
  * @param[in] proc remote process(or) id. This processor must be in the same
  *            group as the allocation.
  * @return CMX_SUCCESS on success
  */
-int get(void *dst, int64_t src_offset, int64_t bytes, int proc);
+int get(void *src, void *dst, int64_t bytes, int proc);
 
 /**
  * Strided Get.
  *
+ * @param[in] src pointer to 1st segment at source
+ * @param[in] src_stride [stride_levels] array of strides at source
  * @param[in] dst pointer to 1st segment at destination
- * @param[in] dst_stride array of strides at destination
- * @param[in] src_offset offset from start of data allocation on remote
- *            process
- * @param[in] src_stride array of strides at source
+ * @param[in] dst_stride [stride_levels] array of strides at destination
  * @param[in] count number of units at each stride level count[0]=bytes
  * @param[in] stride_levels number of stride levels
  * @param[in] proc remote process(or) id. This processor must be in the same
  *            group as the allocation.
  * @return CMX_SUCCESS on success
  */
-int gets(void *dst, int64_t *dst_stride, int64_t src_offset, int64_t *src_stride,
+int gets(void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
     int64_t *count, int stride_levels, int proc);
 
 /**
@@ -301,25 +292,23 @@ int getv(_cmx_giov_t *darr, int64_t len, int proc);
 /**
  * Nonblocking Contiguous Get.
  *
+ * @param[in] src pointer to 1st segment at source
  * @param[in] dst pointer to 1st segment at destination
- * @param[in] src_offset offset from start of data allocation on remote
- *            process
  * @param[in] bytes number of bytes to transfer
  * @param[in] proc remote process(or) id. This processor must be in the same
  *            group as the allocation.
  * @param[out] req nonblocking request object
  * @return CMX_SUCCESS on success
  */
-int nbget(void *dst, int64_t src_offset, int64_t bytes, int proc, _cmx_request *req);
+int nbget(void *src, void *dst, int64_t bytes, int proc, _cmx_request *req);
 
 /**
  * Nonblocking Strided Get.
  *
+ * @param[in] src pointer to 1st segment at source
+ * @param[in] src_stride [stride_levels] array of strides at source
  * @param[in] dst pointer to 1st segment at destination
- * @param[in] dst_stride array of strides at destination
- * @param[in] src_offset offset from start of data allocation on remote
- *            process
- * @param[in] src_stride array of strides at source
+ * @param[in] dst_stride [stride_levels] array of strides at destination
  * @param[in] count number of units at each stride level count[0]=bytes
  * @param[in] stride_levels number of stride levels
  * @param[in] proc remote process(or) id. This processor must be in the same
@@ -327,7 +316,7 @@ int nbget(void *dst, int64_t src_offset, int64_t bytes, int proc, _cmx_request *
  * @param[out] req nonblocking request object
  * @return CMX_SUCCESS on success
  */
-int nbgets(void *dst, int64_t *dst_stride, int64_t src_offset, int64_t *src_stride,
+int nbgets(void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
     int64_t *count, int stride_levels, int proc, _cmx_request *req);
 
 /**
@@ -432,6 +421,8 @@ private:
   void *p_buf; // pointer to allocation on rank p_rank
 
   size_t p_bytes; // size of allocation
+
+  p_NodeConfig *p_config; // copy of the node configuration object
 };
 
 }; // CMX namespace

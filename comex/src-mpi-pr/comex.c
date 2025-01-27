@@ -2146,7 +2146,6 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 
     /* preconditions */
     COMEX_ASSERT(ptrs);
-    printf("p[%d] Calling comex_malloc\n",g_state.rank);
    
 #if DEBUG
     fprintf(stderr, "[%d] comex_malloc(ptrs=%p, size=%lu, group=%d)\n",
@@ -2170,14 +2169,6 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     is_node_ranks_packed = get_progress_rank_distribution_on_node();
     smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
     largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
-    printf("p[%d] my_master: %d\n",g_state.rank,
-        get_my_master_rank_with_same_hostid(g_state.rank,
-          g_state.node_size, smallest_rank_with_same_hostid,
-          largest_rank_with_same_hostid,
-          num_progress_ranks_per_node, is_node_ranks_packed));
-    printf("p[%d] node_size: %d smallest rank: %d largest rank: %d ranks_per_node: %d\n",
-        g_state.rank,g_state.node_size,smallest_rank_with_same_hostid,
-        largest_rank_with_same_hostid,num_progress_ranks_per_node);
     is_notifier = g_state.rank == get_my_master_rank_with_same_hostid(g_state.rank,
         g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
         num_progress_ranks_per_node, is_node_ranks_packed);
@@ -4638,8 +4629,6 @@ STATIC int* _get_world_ranks(comex_igroup_t *igroup)
     int *world_ranks = (int*)malloc(sizeof(int)*size);
     for (i=0; i<size; ++i) {
       world_ranks[i] = igroup->world_ranks[i];
-      printf("p[%d] rank: %d world_rank: %d\n",g_state.rank,
-          i,world_ranks[i]);
     }
     return world_ranks;
 #endif

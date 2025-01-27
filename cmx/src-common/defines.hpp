@@ -35,7 +35,7 @@ typedef int cmxInt;
 
 typedef struct {
     void **src; /**< array of local starting addresses */
-    void **dst; /**< array of remote offsets */
+    void **dst; /**< array of remote starting addresses */
     cmxInt count; /**< size of address arrays (src[count],dst[count]) */
     cmxInt bytes; /**< length in bytes for each src[i]/dst[i] pair */
 } cmx_giov_t;

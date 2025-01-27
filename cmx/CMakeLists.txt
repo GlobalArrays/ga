@@ -42,6 +42,8 @@ option (CMX_NETWORK_MPI_PR "use MPI progress ranks protocol for communication" O
 #option (CMX_NETWORK_MPI_RMA "use MPI RMA protocols for communication" OFF)
 
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR} src-common)
+option (MPI_PR "use MPI progress ranks protocol for communication" OFF)
+message(STATUS "MPI_PR: ${MPI_PR}")
 if (MPI_PR)
   message(STATUS "Setting parameters for Progress Ranks runtime")
   set(CMX_DEVICE
@@ -95,8 +97,6 @@ install (FILES
   ${CMX_DEVICE_HEADERS}
   DESTINATION include
 )
-
-find_library(LIBRT rt PATHS /lib /usr/lib /usr/local/lib)
 
 # -------------------------------------------------------------
 # CMX library installation

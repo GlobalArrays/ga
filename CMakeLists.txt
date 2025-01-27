@@ -330,6 +330,7 @@ add_library(ga
   # $<TARGET_OBJECTS:sf>
   $<TARGET_OBJECTS:gaf2c>
   $<TARGET_OBJECTS:armci_comex>
+  $<TARGET_OBJECTS:cmx>
   $<TARGET_OBJECTS:ga_src>
   ${ga_ref_blas}
   ${ga_profiler}
@@ -367,6 +368,7 @@ endif()
 # -------------------------------------------------------------
 add_subdirectory(global/src)
 add_subdirectory(comex)
+add_subdirectory(cmx)
 add_subdirectory(ga++/src)
 add_subdirectory(ma)
 # add_subdirectory(pario)

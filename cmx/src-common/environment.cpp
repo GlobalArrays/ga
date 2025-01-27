@@ -85,6 +85,15 @@ bool Environment::test(cmx_request *hdl)
 }
 
 /**
+ * Fence on all processes in group
+ * @param group fence all process in group
+ */
+void Environment::fence(Group *group)
+{
+  p_Impl->fence(group);
+}
+
+/**
  * Get world group
  * @return pointer to world group
  */
@@ -100,6 +109,40 @@ Group* Environment::getWorldGroup()
  */
 void Environment::error(char *msg, int code)
 {
+}
+
+/**
+ * Translates the ranks of processes in one group to those in another group.  The
+ * group making the call is the "from" group, the group in the argument list is
+ * the "to" group.
+ *
+ * @param[in] n the number of ranks in the ranks_from and ranks_to arrays
+ * @param[in] group_from the group to translate ranks from 
+ * @param[in] ranks_from array of zero or more valid ranks in group_from
+ * @param[in] group_to the group to translate ranks to 
+ * @param[out] ranks_to array of corresponding ranks in group_to
+ * @return CMX_SUCCESS on success
+ */
+int Environment::translateRanks(int n, Group *group_from,
+    int *ranks_from, Group *group_to, int *ranks_to)
+{
+  return p_Impl->translateRanks(n,group_from,ranks_from,group_to,ranks_to);
+}
+
+/**
+ * Translate the given rank from its group to its corresponding rank in the
+ * world group. Convenience function for common case.
+ *
+ * @param[in] n the number of ranks in the group_ranks and world_ranks arrays
+ * @param[in] group the group to translate ranks from 
+ * @param[in] group_ranks the ranks to translate from
+ * @param[out] world_ranks the corresponding world rank
+ * @return CMX_SUCCESS on success
+ */
+int Environment::translateWorld(int n, Group *group, int *group_ranks,
+    int *world_ranks)
+{
+  return p_Impl->translateWorld(n,group,group_ranks,world_ranks);
 }
 
 #if 0
