@@ -15,7 +15,7 @@
 #
 # An example invocation of armci_cpp is as follows:
 #
-# armci_cpp __ia64 LINUX64 LINUX SYSV PTHREADS DATA_SERVER \
+# armci_cpp LINUX64 LINUX SYSV PTHREADS DATA_SERVER \
 # SERVER_THREAD _REENTRANT VAPI ALLOW_PIN PEND_BUFS REF_THREAD_SAFE \
 # MPI OPENIB
 #

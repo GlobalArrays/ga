@@ -102,13 +102,6 @@ include $(top_srcdir)/src-portals4/Makefile.inc
 endif
 
 ##############################################################################
-# src-dmapp
-#
-if COMEX_NETWORK_DMAPP
-include $(top_srcdir)/src-dmapp/Makefile.inc
-endif
-
-##############################################################################
 # src-ofa
 #
 if COMEX_NETWORK_OFA

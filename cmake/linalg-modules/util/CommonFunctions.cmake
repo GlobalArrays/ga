@@ -169,7 +169,7 @@ function( append_possibly_missing_libs _linker_test __compile_output _orig_libs 
 
   set( _tmp_libs )
   # Check for missing Fortran symbols
-  if( ${__compile_output} MATCHES "fortran" OR ${__compile_output} MATCHES "f90_" )
+  if( ${__compile_output} MATCHES "fortran" OR ${__compile_output} MATCHES "Fortran" OR ${__compile_output} MATCHES "f90_" )
     message( STATUS 
       "  * Missing Standard Fortran Libs - Adding to ${_linker_test} linker" )
     # Check for Standard Fortran Libraries

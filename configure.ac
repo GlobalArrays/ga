@@ -300,7 +300,6 @@ AC_MSG_NOTICE
 AC_MSG_NOTICE([Assembler])
 AC_MSG_NOTICE
 
-GA_AS
 AM_PROG_AS
 
 #########################################
@@ -529,7 +528,6 @@ ARMCI_SETUP
 
 # Set up MA.
 MA_ENABLE_CUDA_MEM
-MA_ENABLE_ARMCI_MEM_OPTION
 MA_LONG_DOUBLE_TYPEDEF
 MA_STATS
 MA_VERIFY
@@ -577,8 +575,6 @@ AC_SUBST([NPROCS])
 AC_ARG_VAR([MPIEXEC],
            [how to run parallel tests if built with MPI e.g. "mpiexec -np %NP%"])
 AS_CASE([$ga_msg_comms],
-    [TCGMSG],  [TCGEXEC="`pwd`/armci/parallel.x"],
-    [TCGMSG5], [TCGEXEC=],
     [MPI|TCGMSGMPI],
         [AS_IF([test "x$MPIEXEC" = x],
             [AC_PATH_PROGS([MPIEXEC], [mpirun mpiexec])

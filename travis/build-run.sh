@@ -55,6 +55,10 @@ else
 fi
 case "$os" in
     Darwin)
+	xcode_v=$(clang --version 2>&1 |head -1 |cut -d ' ' -f 4 |cut -d . -f 1)
+	if [[ $( [ $xcode_v -ge 15 ] && echo 1) ]] ; then
+	    export LDFLAGS=" -ld_classic "
+	fi
         echo "Mac CFLAGS" $CFLAGS
         ;;
     Linux)
@@ -140,10 +144,10 @@ else
     make V=0 checkprogs -j ${MAKE_JNUM}
 fi
 # run one test
-MAYBE_OVERSUBSCRIBE=
+MAYBE_OVERSUBSCRIBE=" --map-by :OVERSUBSCRIBE "
 if test "x$os" = "xDarwin" && test "x$MPI_IMPL" = "xopenmpi"
 then
-    MAYBE_OVERSUBSCRIBE=-oversubscribe
+    MAYBE_OVERSUBSCRIBE=" --map-by :OVERSUBSCRIBE "
 fi
 
 # Determine test name based on whether fortran was supported.

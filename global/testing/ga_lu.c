@@ -17,7 +17,7 @@
 
 #define BLOCK_CYCLIC
 #define BLOCK_SIZE 500
-/*#define USE_SCALAPACK_DISTR*/
+#define USE_SCALAPACK_DISTR
 
 #define DEBUG 0
 
@@ -310,7 +310,6 @@ void ga_lu(double *A, int matrix_size)
     block_size[0] = BLOCK_SIZE;
     block_size[1] = BLOCK_SIZE;
 #ifdef USE_SCALAPACK_DISTR
-    int proc_grid[2];
     proc_grid[0] = 2;
     proc_grid[1] = nprocs/2;
     if(nprocs%2) GA_Error("For ScaLAPACK stle distribution, nprocs must be "

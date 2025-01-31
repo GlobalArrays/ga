@@ -51,10 +51,6 @@
 
 #define ARMCI 1
 
-#if defined(SUN)
-  void fflush();
-#endif
-
 /*\ PRINT g_a[ilo:ihi, jlo:jhi]
 \*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -274,11 +270,7 @@ void pnga_print_stats()
 {
 int i;
      GAstat_arr = (long*)&GAstat;
-#ifdef __crayx1
-#ifdef NO_GA_STATS
-     printf("\tNOTE:GA stats have been disabled on x1 for some GA calls, to enable them comment the line LIB_DEFINES += -DNO_GA_STATS in global/src/GNUmakefile under the GA directory");
-#endif
-#endif
+
      printf("\n                         GA Statistics for process %4d\n",(int)pnga_nodeid());
      printf("                         ------------------------------\n\n");
      printf("       create   destroy   get      put      acc     scatter   gather  read&inc\n");
@@ -335,11 +327,7 @@ void pnga_error(char *string, Integer icode)
 extern void Error();
 #endif
 
-#ifdef CRAY_T3D 
-#  define FOUT stdout
-#else
-#  define FOUT stderr
-#endif
+#define FOUT stderr
 #define ERR_LEN 400
     int level;
     char error_buffer[ERR_LEN];

@@ -34,10 +34,6 @@ ifdef LARGE_FILES
     AIO_LARGE_FILES = $(shell /usr/bin/oslevel | awk -F. \
                '{ if ($$1 == 4 && $$2 == 2 && $$3 <= 0 ) \
                print  "NO"}')
-  endif
-  ifeq ($(TARGET), SOLARIS)
-    LIB_DEFINES += -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-    CC += $(shell getconf LFS_CFLAGS)
   endif  
 #
 # LINUX: kernel 2.4 is needed
@@ -47,31 +43,6 @@ ifdef LARGE_FILES
     LIB_DEFINES += $(shell getconf LFS_CFLAGS)
   endif  
 
-  ifeq ($(TARGET), BGL)
-      LIB_DEFINES += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
-  endif
-
-  ifeq ($(TARGET), BGP)
-      LIB_DEFINES += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
-  endif
-
-  ifeq ($(TARGET), BGQ)
-      LIB_DEFINES += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
-  endif
-
-#
-# HP targets tested on HPUX 11.0
-#
-  ifeq ($(TARGET), HPUX)
-    LIB_DEFINES += -D_LARGEFILE64_SOURCE 
-    LIB_DEFINES += $(shell getconf XBS5_ILP32_OFFBIG_CFLAGS)
-  endif  
-
-  ifeq ($(TARGET), HPUX64)
-    LIB_DEFINES +=  -D_LARGEFILE64_SOURCE 
-    LIB_DEFINES += $(shell getconf XBS5_LP64_OFF64_CFLAGS)
-  endif  
-
   LIB_DEFINES += -DLARGE_FILES
 endif
 
@@ -79,9 +50,6 @@ ifdef LIB_TARGETS
 # HPIODIR is used as a filename prefix in test programs
 ifdef HPIODIR
  LIB_DEFINES += -DHPIODIR=\'$(HPIODIR)/\'
-endif
-ifeq ($(TARGET), DECOSF)
-  LOC_LIBS += -laio -lpthreads
 endif
 endif
 

@@ -8,10 +8,8 @@
 #             -fixed: Intel compiler (ifort), Sun compiler (f95)
 #            -qfixed: IBM compiler (xlf*)
 #            -Mfixed: Portland Group compiler
-#         -fixedform: SGI compiler
 #           -f fixed: Absoft Fortran
 #      +source=fixed: HP Fortran
-#              -fix: Lahey/Fujitsu Fortran
 #
 AC_DEFUN([GA_F77_FIXED], [
 AC_CACHE_CHECK([whether $F77 needs a flag to compile fixed format source],

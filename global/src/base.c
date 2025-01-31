@@ -38,6 +38,9 @@
 #if HAVE_STRING_H
 #   include <string.h>
 #endif
+#if HAVE_STRINGS_H
+#   include <strings.h>
+#endif
 #if HAVE_STDLIB_H
 #   include <stdlib.h>
 #endif
@@ -58,6 +61,7 @@
 #include "ga-papi.h"
 #include "ga-wapi.h"
 #include "thread-safe.h"
+#include "mtwister.h"
 
 static int calc_maplen(int handle);
 
@@ -76,7 +80,7 @@ static int calc_maplen(int handle);
 /*#define CHECK_MA yes */
 
 /*uncomment line below to verify if MA base address is alligned wrt datatype*/
-#if !(defined(LINUX) || defined(CRAY) || defined(CYGWIN))
+#if !(defined(LINUX) || defined(CYGWIN))
 #define CHECK_MA_ALGN 1
 #endif
 
@@ -111,6 +115,8 @@ int GA_Default_Proc_Group = -1;
 int ga_armci_world_group=0;
 int GA_Init_Proc_Group = -2;
 Integer GA_Debug_flag = 0;
+static Integer GA_Rand_seed = -1;
+static MTRand GA_Rand;
 
 /* MA addressing */
 DoubleComplex   *DCPL_MB;           /* double precision complex base address */
@@ -153,6 +159,8 @@ int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
                int grp_id);
 int gai_get_devmem(char *name, char **ptr_arr, C_Long bytes, int type, long *adj,
 		  int grp_id, int dev_flag, const char *device);
+extern void sai_init_sparse_arrays();
+extern void sai_terminate_sparse_arrays();
 #ifdef ENABLE_CHECKPOINT
 static int ga_group_is_for_ft=0;
 int ga_spare_procs;
@@ -168,7 +176,6 @@ int ga_spare_procs;
 #define ga_ComputeIndexM(_index, _ndim, _subscript, _dims)                     \
 {                                                                              \
   Integer  _i, _factor=1;                                                      \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0,*(_index)=0; _i<_ndim; _i++){                                       \
       *(_index) += _subscript[_i]*_factor;                                     \
       if(_i<_ndim-1)_factor *= _dims[_i];                                      \
@@ -181,7 +188,6 @@ int ga_spare_procs;
 #define ga_UpdateSubscriptM(_ndim, _subscript, _lo, _hi, _dims)\
 {                                                                              \
   Integer  _i;                                                                 \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0; _i<_ndim; _i++){                                                   \
        if(_subscript[_i] < _hi[_i]) { _subscript[_i]++; break;}                \
        _subscript[_i] = _lo[_i];                                               \
@@ -195,7 +201,6 @@ int ga_spare_procs;
 {                                                                              \
   Integer  _i;                                                                 \
   *_elems = 1;                                                                 \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0; _i<_ndim; _i++){                                                   \
        *_elems *= _hi[_i]-_lo[_i] +1;                                          \
        _subscript[_i] = _lo[_i];                                               \
@@ -213,8 +218,28 @@ Integer GAsizeof(Integer type)
      case C_FLOAT : return (sizeof(float));
      case C_LONG : return (sizeof(long));
      case C_LONGLONG : return (sizeof(long long));
+     case F_DBL : return (sizeof(DoublePrecision));
+     case F_INT  : return (sizeof(Integer));
           default   : return 0; 
   }
+}
+
+void* pnga_malloc(Integer nelem, int type, char *name)
+{
+#ifdef USE_GA_MALLOC
+  return ga_malloc(nelem, type, name);
+#else
+  return malloc(nelem*GAsizeof(type));
+#endif
+}
+
+void pnga_free(void *ptr)
+{
+#ifdef USE_GA_MALLOC
+  ga_free(ptr);
+#else
+  free(ptr);
+#endif
 }
 
 
@@ -308,7 +333,7 @@ extern int _ga_initialize_f;
 /**
  *  Initialize library structures in Global Arrays.
  *  either ga_initialize_ltd or ga_initialize must be the first 
- *         GA routine called (except ga_uses_ma or ga_set_memory_limit)
+ *  GA routine called (except ga_uses_ma or ga_set_memory_limit)
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_initialize = pnga_initialize
@@ -497,14 +522,14 @@ void pnga_initialize()
     comm =  GA_MPI_Comm_pgroup(-1);
     MPI_Comm_dup(comm, &GA_MPI_World_comm_dup);
 #endif
+    sai_init_sparse_arrays();
     GA_Internal_Threadsafe_Unlock();
 }
 
 /**
  *  Initialize library structures in Global Arrays over a communicator that is
- *  supplied by an external program.
- *  either ga_initialize_ltd or ga_initialize must be the first 
- *         GA routine called (except ga_uses_ma or ga_set_memory_limit)
+ *  supplied by an external program. Some version of ga_initialize must be
+ *  the first GA routine called (except ga_uses_ma or ga_set_memory_limit)
  */
 #ifdef MSG_COMMS_MPI
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -669,7 +694,6 @@ void pnga_initialize_ltd(Integer mem_limit)
 {\
 int _d;\
     if(ndim<1||ndim>MAXDIM) pnga_error("unsupported number of dimensions",ndim);\
-  __CRAYX1_PRAGMA("_CRI novector");                                         \
     for(_d=0; _d<ndim; _d++)\
          if(dims[_d]<1)pnga_error("wrong dimension specified",dims[_d]);\
 }
@@ -705,15 +729,16 @@ int candidate, found, b; \
 C_Integer *map= (map_ij);\
 \
     candidate = (int)(scale*(elem));\
+    if (candidate == (n)) candidate = (n)-1; \
     found = 0;\
-    if(map[candidate] <= (elem)){ /* search downward */\
+    if(map[candidate] <= (elem)){ /* search upward */\
          b= candidate;\
          while(b<(n)-1){ \
             found = (map[b+1]>(elem));\
             if(found)break;\
             b++;\
          } \
-    }else{ /* search upward */\
+    }else{ /* search downward */\
          b= candidate-1;\
          while(b>=0){\
             found = (map[b]<=(elem));\
@@ -1718,7 +1743,7 @@ void pnga_set_irreg_distr(Integer g_a, Integer *mapc, Integer *nblock)
   maplen = 0;
   for (i=0; i<GA[ga_handle].ndim; i++) {
     ichk = mapc[maplen];
-    if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+    if (ichk < 1 || ichk > GA[ga_handle].dims[i]+1)
       pnga_error("Mapc entry outside array dimension limits",ichk);
     maplen++;
     for (j=1; j<nblock[i]; j++) {
@@ -1726,7 +1751,7 @@ void pnga_set_irreg_distr(Integer g_a, Integer *mapc, Integer *nblock)
         pnga_error("Mapc entries are not properly monotonic",ichk);
       }
       ichk = mapc[maplen];
-      if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+      if (ichk < 1 || ichk > GA[ga_handle].dims[i]+1)
         pnga_error("Mapc entry outside array dimension limits",ichk);
       maplen++;
     }
@@ -1904,7 +1929,7 @@ void pnga_set_tiled_irreg_proc_grid(Integer g_a, Integer *mapc, Integer *nblocks
   maplen = 0;
   for (i=0; i<GA[ga_handle].ndim; i++) {
     ichk = mapc[maplen];
-    if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+    if (ichk < 1 || ichk > GA[ga_handle].dims[i]+1)
       pnga_error("Mapc entry outside array dimension limits",ichk);
     maplen++;
     for (j=1; j<nblocks[i]; j++) {
@@ -1912,7 +1937,7 @@ void pnga_set_tiled_irreg_proc_grid(Integer g_a, Integer *mapc, Integer *nblocks
         pnga_error("Mapc entries are not properly monotonic",ichk);
       }
       ichk = mapc[maplen];
-      if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+      if (ichk < 1 || ichk > GA[ga_handle].dims[i]+1)
         pnga_error("Mapc entry outside array dimension limits",ichk);
       maplen++;
     }
@@ -4147,6 +4172,7 @@ Integer i, handle;
         return;
     }
 
+    sai_terminate_sparse_arrays();
 #ifdef PROFILE_OLD 
     ga_profile_terminate();
 #endif
@@ -4544,9 +4570,7 @@ logical pnga_locate_nnodes( Integer g_a,
   ga_check_handleM(g_a, "nga_locate_nnodes");
 
   ga_handle = GA_OFFSET + g_a;
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
   for(d = 0; d< GA[ga_handle].ndim; d++)
     if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))return FALSE;
 
@@ -4555,9 +4579,7 @@ logical pnga_locate_nnodes( Integer g_a,
   if (GA[ga_handle].distr_type == REGULAR) {
     /* find "processor coordinates" for the top left corner and store them
      * in ProcT */
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
     for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
           GA[ga_handle].scale[d], lo[d], &procT[d]);
@@ -4566,9 +4588,7 @@ logical pnga_locate_nnodes( Integer g_a,
 
     /* find "processor coordinates" for the right bottom corner and store
      * them in procB */
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
     for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
           GA[ga_handle].scale[d], hi[d], &procB[d]);
@@ -4626,10 +4646,6 @@ logical pnga_locate_nnodes( Integer g_a,
   }
   return(TRUE);
 }
-#ifdef __crayx1
-#pragma _CRI inline nga_locate_nnodes_
-#endif
-
 
 /**
  *  Locate individual patches and their owner of specified patch of a
@@ -4676,9 +4692,7 @@ logical pnga_locate_region( Integer g_a,
   ga_check_handleM(g_a, "nga_locate_region");
 
   ga_handle = GA_OFFSET + g_a;
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
   for(d = 0; d< GA[ga_handle].ndim; d++)
     if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))return FALSE;
 
@@ -4687,9 +4701,7 @@ logical pnga_locate_region( Integer g_a,
   if (GA[ga_handle].distr_type == REGULAR) {
     /* find "processor coordinates" for the top left corner and store them
      * in ProcT */
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
     for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
           GA[ga_handle].scale[d], lo[d], &procT[d]);
@@ -4698,9 +4710,7 @@ logical pnga_locate_region( Integer g_a,
 
     /* find "processor coordinates" for the right bottom corner and store
      * them in procB */
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
     for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
           GA[ga_handle].scale[d], hi[d], &procB[d]);
@@ -4728,14 +4738,9 @@ logical pnga_locate_region( Integer g_a,
 
       offset = *np *(ndim*2); /* location in map to put patch range */
 
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
       for(d = 0; d< ndim; d++)
         map[d + offset ] = lo[d] < _lo[d] ? _lo[d] : lo[d];
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
       for(d = 0; d< ndim; d++)
         map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
 
@@ -4762,9 +4767,7 @@ logical pnga_locate_region( Integer g_a,
 
     /* find "processor coordinates" for the right bottom corner and store
      * them in procB */
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
     for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].num_blocks[d], 
           GA[ga_handle].scale[d], hi[d], &procB[d]);
@@ -4793,14 +4796,10 @@ logical pnga_locate_region( Integer g_a,
 
       offset = *np *(ndim*2); /* location in map to put patch range */
 
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
       for(d = 0; d< ndim; d++)
         map[d + offset ] = lo[d] < _lo[d] ? _lo[d] : lo[d];
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
+
       for(d = 0; d< ndim; d++)
         map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
 
@@ -4897,9 +4896,6 @@ logical pnga_locate_region( Integer g_a,
   }
   return(TRUE);
 }
-#ifdef __crayx1
-#pragma _CRI inline pnga_locate_region
-#endif
 
 /**
  *  Returns the processor grid for the global array
@@ -5912,4 +5908,24 @@ void pnga_version(Integer *major_version, Integer *minor_version, Integer *patch
   *major_version = GA_VERSION_MAJOR;
   *minor_version = GA_VERSION_MINOR;
   *patch         = GA_VERSION_PATCH;
+}
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_rand = pnga_rand
+#endif
+double pnga_rand(Integer iseed)
+{
+  double ret;
+  if (GA_Rand_seed == -1) {
+    unsigned long lseed;
+    /* Choose a value for iseed if it has not already been set */
+    if (iseed == 0) {
+      iseed = 121238;
+    }
+    lseed = (unsigned long)(abs(iseed));
+    GA_Rand = seedRand(lseed);
+    GA_Rand_seed = 0;
+  }
+  ret = genRand(&GA_Rand); 
+  return ret;
 }

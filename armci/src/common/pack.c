@@ -8,7 +8,7 @@
 #   include <stdio.h>
 #endif
 
-#if !defined(ACC_COPY) &&!defined(CRAY_YMP) &&!defined(CYGNUS)&&!defined(CYGWIN) &&!defined(BGML) &&!defined(DCMF)
+#if !defined(ACC_COPY) &&!defined(CYGNUS)&&!defined(CYGWIN)
 #   define REMOTE_OP 
 #endif
 
@@ -97,13 +97,9 @@ int armci_pack_strided(int op, void* scale, int proc,
 
 #ifdef STRIDED_GET_BUFLEN
     if(op==GET)bufsize=STRIDED_GET_BUFLEN;
-#  ifdef HITACHI
-    else 
-	if(stride_levels || ARMCI_ACC(op))bufsize=MSG_BUFLEN_SMALL-PAGE_SIZE;
-#  endif
 #endif
 
-#if (defined(GM_) || defined(VIA_) || defined(VAPI_))
+#if (defined(GM_) || defined(VAPI_))
     /*we cant assume that the entire available buffer will be used for data, 
       fact that the header and descriptor also go in the same buffer should be
       considered while packing.

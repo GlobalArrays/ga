@@ -431,9 +431,6 @@ static void armci_mpi2_spawn()
        size_arr     = (int*)      malloc(armci_nserver * sizeof(int));
        info_arr     = (MPI_Info*) malloc(armci_nserver * sizeof(MPI_Info));
        hostname_arr = (char**)    malloc(armci_nserver * sizeof(char*));
-#ifdef SPAWN_CRAY_XT
-       nid_arr      = (char**)    malloc(armci_nserver * sizeof(char*));;
-#endif
        for(i=0; i<armci_nserver; i++) 
        {
           hostname_arr[i] = (char*)malloc(MPI_MAX_PROCESSOR_NAME*sizeof(char));
@@ -461,12 +458,7 @@ static void armci_mpi2_spawn()
           command_arr[i] = (*_armci_argv)[0];  /*CHECK: path needs fix */
           size_arr[i]    = 1;                /* 1 data server in each node */
           MPI_Info_create(&info_arr[i]);
-#ifdef SPAWN_CRAY_XT
-          asprintf(&nid_arr[i], "%d", atoi((hostname_arr[i] + 3)));
-          MPI_Info_set(info_arr[i], "host", nid_arr[i]); /*portability? */
-#else
           MPI_Info_set(info_arr[i], "host", hostname_arr[i]); /*portability? */
-#endif
        }
     }
 
@@ -489,9 +481,6 @@ static void armci_mpi2_spawn()
        free(size_arr);
        free(info_arr);
        free(hostname_arr);
-#ifdef SPAWN_CRAY_XT
-       free(nid_arr);
-#endif
     }
 }
        

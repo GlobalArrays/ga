@@ -32,14 +32,6 @@
  * Must define NO_SHMMAX_SEARCH in shmem.c to prevent depleting shared memory
  * due to a gready shmem request by the master process on cluster node 0.
  */ 
-#if defined(DECOSF) && defined(QUADRICS)
-#  if !defined(REGION_ALLOC)
-#    define NO_SHMEM
-     extern int armci_enable_alpha_hack();
-#  endif
-#else
-#  define armci_enable_alpha_hack() 1
-#endif
 
 #define DEBUG  0
 #define MAX_HOSTNAME 80
@@ -68,41 +60,7 @@
 /*** stores cluster configuration. Initialized before user threads are created and then read-only ***/
 armci_clus_t *armci_clus_info;
 
-#ifdef HITACHI
-#include <hmpp/nalloc.h>
-# define GETHOSTNAME sr_gethostname
-ndes_t _armci_group;
-
-static int sr_gethostname(char *name, int len)
-{
-int no;
-pid_t ppid;
-
-   if(hmpp_nself (&_armci_group,&no,&ppid,0,NULL) <0)
-     return -1;
-
-   if(len<6)armci_die("len too small",len);
-   if(no>1024)armci_die("expected node id <1024",no);
-   sprintf(name,"n%d",no);
-   return 0;
-}
-#elif defined(SGIALTIX)
-# define GETHOSTNAME altix_gethostname
-static int altix_gethostname(char *name, int len) {
-    sprintf(name,"altix");
-    return 0;
-}
-#elif defined(CRAY_XT) /* && !defined(PORTALS) */
-#define GETHOSTNAME cnos_gethostname
-static int cnos_gethostname(char *name, int len)
-{
-    int size,rank;
-    size=PMI_Get_rank(&rank);
-    sprintf(name,"%d",rank);
-}
-#else
 # define GETHOSTNAME gethostname
-#endif
 
 static char* merge_names(char *name)
 {
@@ -304,7 +262,7 @@ static void print_clus_info()
     int i;
 
     if(PRINT_CLUSTER_INFO && armci_nclus > 1 && armci_me ==0){
-#if defined(DATA_SERVER) || defined(SERVER_THREAD) || defined(PORTALS)
+#if defined(DATA_SERVER) || defined(SERVER_THREAD)
         printf("ARMCI configured for %d cluster nodes. Network protocol is '%s'.\n",
                 armci_nclus, network_protocol);
 #else
@@ -372,11 +330,9 @@ void armci_init_clusinfo()
 #endif
 
 #ifdef NO_SHMEM
-  if(armci_enable_alpha_hack()) {
     name[len]='0'+armci_me;
     name[len+1]='\0';
     len++;
-  }
 #endif
   
   if(DEBUG)
@@ -390,20 +346,18 @@ void armci_init_clusinfo()
   process_hostlist(name);        /* compute cluster info */
 #endif
 
-#if (defined(SYSV) || defined(WIN32)  || defined(MMAP)) && !defined(HITACHI)
+#if (defined(SYSV) || defined(WIN32)  || defined(MMAP))
   armci_set_shmem_limit_per_node(armci_clus_info[0].nslave);
 #endif
   armci_master = armci_clus_info[armci_clus_me].master;
 
 #ifdef NO_SHMEM
-  if(armci_enable_alpha_hack()) {
      int i;
      for(i=0;i<armci_nclus;i++){
         int len=strlen(armci_clus_info[i].hostname);
         /*     fprintf(stderr,"----hostlen=%d\n",len);*/
         armci_clus_info[i].hostname[len-1]='\0';
      }
-  }
 #endif
 
   print_clus_info();

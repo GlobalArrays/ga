@@ -175,35 +175,6 @@ AS_IF([test "x$happy" = xyes],
     [$2])
 ])dnl
 
-# _COMEX_NETWORK_DMAPP([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
-# ------------------------------------------------------------------
-# TODO when dmapp headers and libraries become available, fix this
-AC_DEFUN([_COMEX_NETWORK_DMAPP], [
-AC_MSG_NOTICE([searching for DMAPP...])
-happy=yes
-AS_IF([test "x$happy" = xyes],
-    [AC_CHECK_HEADER([dmapp.h], [], [happy=no])])
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([gethugepagesize], [hugetlbfs],
-        [AC_DEFINE([HAVE_LIBHUGETLBFS], [1],
-               [Define to 1 if you have the `hugetlbfs' library.])],
-        [AC_DEFINE([HAVE_LIBHUGETLBFS], [0],
-               [Define to 1 if you have the `hugetlbfs' library.])])
-     AS_CASE([$ac_cv_search_gethugepagesize],
-            ["none required"], [],
-            [no], [],
-            [# add missing lib to COMEX_NETWORK_LIBS if not there
-             AS_CASE([$COMEX_NETWORK_LIBS],
-                     [*$ac_cv_search_gethugepagesize*], [],
-                     [COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $ac_cv_search_gethugepagesize"])])
-     AC_CHECK_TYPES([dmapp_lock_desc_t], [], [], [[#include <dmapp.h>]])
-     AC_CHECK_TYPES([dmapp_lock_handle_t], [], [], [[#include <dmapp.h>]])
-    ])
-AS_IF([test "x$happy" = xyes],
-    [comex_network=DMAPP; with_dmapp=yes; $1],
-    [$2])
-])dnl
-
 # _COMEX_NETWORK_OFI([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 # -------------------------------------------------------------------
 AC_DEFUN([_COMEX_NETWORK_OFI], [
@@ -259,7 +230,6 @@ _COMEX_NETWORK_WITH([mpi-pr],    [MPI-1 two-sided with progress rank])
 _COMEX_NETWORK_WITH([mpi3],      [MPI-3 one-sided])
 _COMEX_NETWORK_WITH([ofa],       [Infiniband OpenIB])
 _COMEX_NETWORK_WITH([portals4],  [Portals4])
-_COMEX_NETWORK_WITH([dmapp],     [Cray DMAPP])
 _COMEX_NETWORK_WITH([ofi],       [OFI])
 # Temporarily add COMEX_NETWORK_CPPFLAGS to CPPFLAGS.
 comex_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $COMEX_NETWORK_CPPFLAGS"
@@ -273,8 +243,6 @@ AS_IF([test "x$enable_autodetect" = xyes],
         [_COMEX_NETWORK_OFA()])
      AS_IF([test "x$comex_network" = x && test "x$with_portals4" != xno],
         [_COMEX_NETWORK_PORTALS4()])
-     AS_IF([test "x$comex_network" = x && test "x$with_dmapp" != xno],
-        [_COMEX_NETWORK_DMAPP()])
      AS_IF([test "x$comex_network" = x && test "x$with_ofi" != xno],
         [_COMEX_NETWORK_OFI()])
      AS_IF([test "x$comex_network" = x],
@@ -308,9 +276,6 @@ AS_IF([test "x$enable_autodetect" = xyes],
               AS_IF([test "x$comex_network" = xPORTALS4],
                  [_COMEX_NETWORK_PORTALS4([],
                     [AC_MSG_ERROR([test for COMEX_NETWORK=PORTALS4 failed])])])
-              AS_IF([test "x$comex_network" = xDMAPP],
-                 [_COMEX_NETWORK_DMAPP([],
-                    [AC_MSG_ERROR([test for COMEX_NETWORK=DMAPP failed])])])
               AS_IF([test "x$comex_network" = xOFI],
                  [_COMEX_NETWORK_OFI([],
                     [AC_MSG_ERROR([test for COMEX_NETWORK=OFI failed])])])
@@ -324,7 +289,6 @@ AS_IF([test "x$enable_autodetect" = xyes],
          _COMEX_NETWORK_WARN([mpi3])
          _COMEX_NETWORK_WARN([ofa])
          _COMEX_NETWORK_WARN([portals4])
-         _COMEX_NETWORK_WARN([dmapp])
          _COMEX_NETWORK_WARN([ofi])
          AC_MSG_ERROR([please select only one comex network])])])
 # Remove COMEX_NETWORK_CPPFLAGS from CPPFLAGS.
@@ -340,7 +304,6 @@ _COMEX_NETWORK_AM_CONDITIONAL([mpi-pr])
 _COMEX_NETWORK_AM_CONDITIONAL([mpi3])
 _COMEX_NETWORK_AM_CONDITIONAL([ofa])
 _COMEX_NETWORK_AM_CONDITIONAL([portals4])
-_COMEX_NETWORK_AM_CONDITIONAL([dmapp])
 _COMEX_NETWORK_AM_CONDITIONAL([ofi])
 _COMEX_NETWORK_AC_DEFINE([mpi-ts])
 _COMEX_NETWORK_AC_DEFINE([mpi-mt])
@@ -349,7 +312,6 @@ _COMEX_NETWORK_AC_DEFINE([mpi-pr])
 _COMEX_NETWORK_AC_DEFINE([mpi3])
 _COMEX_NETWORK_AC_DEFINE([ofa])
 _COMEX_NETWORK_AC_DEFINE([portals4])
-_COMEX_NETWORK_AC_DEFINE([dmapp])
 _COMEX_NETWORK_AC_DEFINE([ofi])
 AC_SUBST([COMEX_NETWORK_LDFLAGS])
 AC_SUBST([COMEX_NETWORK_LIBS])

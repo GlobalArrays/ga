@@ -62,7 +62,7 @@ AS_CASE([$enable_mpi_tests],
 
 AM_CONDITIONAL([CROSS_COMPILING], [test "x$cross_compiling" = xyes])
 
-# Establish the underlying network infrastructure (MPI, OFA, DMAPP, etc)
+# Establish the underlying network infrastructure (MPI, OFA, etc)
 COMEX_NETWORK_SETUP
 
 # Checks for C header files.

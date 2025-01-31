@@ -12,8 +12,6 @@
 #include "armci.h"
 #include "message.h"
 
-#define armci_msg_brdcst__ armci_msg_bcast_lapi
-
 int me, nproc;
 
 #define LOOP 20

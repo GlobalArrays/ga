@@ -11,6 +11,9 @@
 #include <semaphore.h>
 #include <signal.h>
 #include <stdio.h>
+#if HAVE_ERRNO_H
+#   include <errno.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -60,6 +63,11 @@ sicm_device_list nill;
 
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
+#define MIN(a, b) (((b) < (a)) ? (b) : (a))
+
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 256
+#endif
 
 /* data structures */
 
@@ -117,7 +125,7 @@ typedef struct {
 typedef struct lock_link {
     struct lock_link *next;
     int rank;
-} lock_t;
+} comex_lock_t;
 
 
 typedef struct {
@@ -159,7 +167,7 @@ typedef struct {
 /* static state */
 static int *num_mutexes = NULL;     /**< (all) how many mutexes on each process */
 static int **mutexes = NULL;        /**< (masters) value is rank of lock holder */
-static lock_t ***lq_heads = NULL;   /**< array of lock queues */
+static comex_lock_t ***lq_heads = NULL;   /**< array of lock queues */
 static char *sem_name = NULL;       /* local semaphore name */
 static sem_t **semaphores = NULL;   /* semaphores for locking within SMP node */
 static int initialized = 0;         /* for comex_initialized(), 0=false */
@@ -377,6 +385,7 @@ STATIC void check_devshm(int fd, size_t size);
 static int devshm_initialized = 0;
 static long devshm_fs_left = 0;
 static long devshm_fs_initial = 0;
+static long counter_open_fds = 0;
 STATIC void count_open_fds(void);
 
 int _comex_init(MPI_Comm comm)
@@ -670,7 +679,7 @@ int _comex_init(MPI_Comm comm)
         mutexes = (int**)malloc(sizeof(int*) * g_state.size);
         COMEX_ASSERT(mutexes);
         /* create one lock queue for each proc for each mutex */
-        lq_heads = (lock_t***)malloc(sizeof(lock_t**) * g_state.size);
+        lq_heads = (comex_lock_t***)malloc(sizeof(comex_lock_t**) * g_state.size);
         COMEX_ASSERT(lq_heads);
         /* start the server */
         _progress_server();
@@ -2713,8 +2722,8 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
                 reg_entries_local[reg_entries_local_count++] = reg_entries[i];
             }
         }
-        else if (g_state.hostid[reg_entries[i].rank]
-                == g_state.hostid[my_world_rank]) {
+        else if (!strcmp(g_state.host[reg_entries[i].rank].name,
+                g_state.host[my_world_rank].name)) {
             /* same SMP node, need to mmap */
             /* open remote shared memory object */
             void *memory = _shm_attach_memdev(reg_entries[i].name,
@@ -2871,7 +2880,7 @@ void _malloc_semaphore()
         if (g_state.rank == i) {
             continue; /* skip my own rank */
         }
-        else if (g_state.hostid[g_state.rank] == g_state.hostid[i]) {
+        else if (!strcmp(g_state.host[g_state.rank].name,g_state.host[i].name)) {
             /* same SMP node */
 #if ENABLE_UNNAMED_SEM
             semaphores[i] = _shm_attach(
@@ -2940,7 +2949,7 @@ void _free_semaphore()
             }
 #endif
         }
-        else if (g_state.hostid[g_state.rank] == g_state.hostid[i]) {
+        else if (!strcmp(g_state.host[g_state.rank].name,g_state.host[i].name)) {
             /* same SMP node */
 #if ENABLE_UNNAMED_SEM
             retval = munmap(semaphores[i], sizeof(sem_t));
@@ -4510,7 +4519,7 @@ STATIC void _mutex_create_handler(header_t *header, int proc)
 #endif
 
     mutexes[proc] = (int*)malloc(sizeof(int) * num);
-    lq_heads[proc] = (lock_t**)malloc(sizeof(lock_t*) * num);
+    lq_heads[proc] = (comex_lock_t**)malloc(sizeof(comex_lock_t*) * num);
     for (i=0; i<num; ++i) {
         mutexes[proc][i] = UNLOCKED;
         lq_heads[proc][i] = NULL;
@@ -4558,18 +4567,18 @@ STATIC void _lock_handler(header_t *header, int proc)
         server_send(&id, sizeof(int), proc);
     }
     else {
-        lock_t *lock = NULL;
+        comex_lock_t *lock = NULL;
 #if DEBUG
         fprintf(stderr, "[%d] _lq_push rank=%d req_by=%d id=%d\n",
                 g_state.rank, rank, proc, id);
 #endif
-        lock = malloc(sizeof(lock_t));
+        lock = malloc(sizeof(comex_lock_t));
         lock->next = NULL;
         lock->rank = proc;
 
         if (lq_heads[rank][id]) {
             /* insert at tail */
-            lock_t *lq = lq_heads[rank][id];
+            comex_lock_t *lq = lq_heads[rank][id];
             while (lq->next) {
                 lq = lq->next;
             }
@@ -4598,7 +4607,7 @@ STATIC void _unlock_handler(header_t *header, int proc)
     if (lq_heads[rank][id]) {
         /* a lock requester was queued */
         /* find the next lock request and update queue */
-        lock_t *lock = lq_heads[rank][id];
+        comex_lock_t *lock = lq_heads[rank][id];
         lq_heads[rank][id] = lq_heads[rank][id]->next;
         /* update lock */
         mutexes[rank][id] = lock->rank;
@@ -4639,8 +4648,8 @@ STATIC void _malloc_handler(
             fprintf(stderr, "[%d] _malloc_handler found NULL at %d\n", g_state.rank, i);
 #endif
         }
-        else if (g_state.hostid[reg_entries[i].rank]
-                == g_state.hostid[g_state.rank]) {
+        else if (!strcmp(g_state.host[reg_entries[i].rank].name,
+                g_state.host[g_state.rank].name)) {
             /* same SMP node, need to mmap */
             /* attach to remote shared memory object */
           void *memory;
@@ -4732,8 +4741,8 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
             fprintf(stderr, "[%d] _free_handler found NULL at %d\n", g_state.rank, i);
 #endif
         }
-        else if (g_state.hostid[rank_ptrs[i].rank]
-                == g_state.hostid[g_state.rank]) {
+        else if (!strcmp(g_state.host[rank_ptrs[i].rank].name,
+                g_state.host[g_state.rank].name)) {
             /* same SMP node */
             reg_entry_t *reg_entry = NULL;
             int retval = 0;
@@ -4917,7 +4926,7 @@ STATIC int _smallest_world_rank_with_same_hostid(comex_igroup_t *igroup)
     int *world_ranks = _get_world_ranks(igroup);
 
     for (i=0; i<igroup->size; ++i) {
-        if (g_state.hostid[world_ranks[i]] == g_state.hostid[g_state.rank]) {
+        if (!strcmp(g_state.host[world_ranks[i]].name,g_state.host[g_state.rank].name)) {
             /* found same host as me */
             if (world_ranks[i] < smallest) {
                 smallest = world_ranks[i];
@@ -4940,7 +4949,7 @@ STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup)
     int *world_ranks = _get_world_ranks(igroup);
 
     for (i=0; i<igroup->size; ++i) {
-        if (g_state.hostid[world_ranks[i]] == g_state.hostid[g_state.rank]) {
+        if (!strcmp(g_state.host[world_ranks[i]].name,g_state.host[g_state.rank].name)) {
             /* found same host as me */
             if (world_ranks[i] > largest) {
                 largest = world_ranks[i];
@@ -5058,6 +5067,7 @@ STATIC void* _shm_create(const char *name, size_t size)
 
     /* set the size of my shared memory object */
     check_devshm(fd, size);
+    count_open_fds();
     retval = ftruncate(fd, size);
     if (-1 == retval) {
       if (errno == EFAULT) {
@@ -6355,7 +6365,7 @@ STATIC void nb_puts(
     if (COMEX_ENABLE_PUT_DATATYPE
             && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_PUT_SMP
-                || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+                || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))
             && (_packed_size(src_stride, count, stride_levels) > COMEX_PUT_DATATYPE_THRESHOLD)) {
         nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
@@ -6365,7 +6375,7 @@ STATIC void nb_puts(
     if (COMEX_ENABLE_PUT_PACKED
             && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_PUT_SMP
-                || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+                || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))) {
         nb_puts_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
@@ -6624,7 +6634,7 @@ STATIC void nb_gets(
     if (COMEX_ENABLE_GET_DATATYPE
             && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_GET_SMP
-                || g_state.hostid[proc] != g_state.hostid[g_state.rank])
+                || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))
             && (_packed_size(src_stride, count, stride_levels) > COMEX_GET_DATATYPE_THRESHOLD)) {
         nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
@@ -6634,7 +6644,7 @@ STATIC void nb_gets(
     if (COMEX_ENABLE_GET_PACKED
             && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_GET_SMP
-                || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+                || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))) {
         nb_gets_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
@@ -6900,7 +6910,7 @@ STATIC void nb_accs(
     if (COMEX_ENABLE_ACC_PACKED
             && (!COMEX_ENABLE_ACC_SELF || g_state.rank != proc)
             && (!COMEX_ENABLE_ACC_SMP
-                || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+                || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))) {
         nb_accs_packed(datatype, scale, src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
         return;
     }
@@ -7110,7 +7120,7 @@ STATIC void nb_putv(
         if (COMEX_ENABLE_PUT_IOV
                 && (!COMEX_ENABLE_PUT_SELF || g_state.rank != proc)
                 && (!COMEX_ENABLE_PUT_SMP
-                    || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+                    || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))) {
             nb_putv_packed(&iov[i], proc, nb);
         }
         else {
@@ -7214,7 +7224,7 @@ STATIC void nb_getv(
         if (COMEX_ENABLE_GET_IOV
                 && (!COMEX_ENABLE_GET_SELF || g_state.rank != proc)
                 && (!COMEX_ENABLE_GET_SMP
-                    || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+                    || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))) {
             nb_getv_packed(&iov[i], proc, nb);
         }
         else {
@@ -7326,7 +7336,7 @@ STATIC void nb_accv(
         if (COMEX_ENABLE_ACC_IOV
                 && (!COMEX_ENABLE_ACC_SELF || g_state.rank != proc)
                 && (!COMEX_ENABLE_ACC_SMP
-                    || g_state.hostid[proc] != g_state.hostid[g_state.rank])) {
+                    || strcmp(g_state.host[proc].name,g_state.host[g_state.rank].name))) {
             nb_accv_packed(datatype, scale, &iov[i], proc, nb);
         }
         else {
@@ -7564,7 +7574,6 @@ STATIC void check_devshm(int fd, size_t size){
 	    g_state.rank, g_state.node_size, devshm_fs_initial/CONVERT_TO_M, (long) ufs_statfs.f_bsize, (long)  g_state.node_size);
 #endif
   }
-  count_open_fds();
     newspace = (long) ( size*(g_state.node_size -1));
     if(newspace>0){
     fstatfs(fd, &ufs_statfs);
@@ -7574,9 +7583,11 @@ STATIC void check_devshm(int fd, size_t size){
 #endif
     }
   if ( newspace > devshm_fs_left )  {
-    fprintf(stderr, "[%d] /dev/shm fs has size %ld new shm area has size %ld need to increase /dev/shm by %ld Mbytes\n",
-	    g_state.rank, devshm_fs_left/CONVERT_TO_M, newspace/CONVERT_TO_M, (newspace - devshm_fs_left)/CONVERT_TO_M);
-        perror("check_devshm: /dev/shm out of space");
+    char hostname[HOST_NAME_MAX+1];
+    gethostname(hostname, HOST_NAME_MAX+1);
+    fprintf(stderr, "hostname: %s, [%d] /dev/shm fs has size %ld bytes left, new shm area has size %ld need to increase /dev/shm by %ld Mbytes\n", hostname, g_state.rank, devshm_fs_left/CONVERT_TO_M, newspace/CONVERT_TO_M, (newspace - devshm_fs_left)/CONVERT_TO_M);
+
+    perror("check_devshm: /dev/shm out of space");
     //    _free_semaphore();
     comex_error("check_devshm: /dev/shm out of space", -1);
     
@@ -7595,21 +7606,27 @@ STATIC void check_devshm(int fd, size_t size){
 }
 
 STATIC void count_open_fds(void) {
-  FILE *f = fopen("/proc/sys/fs/file-nr", "r");
+#ifdef __linux__
+  /* check only every 100 ops && rank == 1 */
+  counter_open_fds += 1;
+  if (counter_open_fds % 100 == 0 && g_state.rank == MIN(1,g_state.node_size)) {
+    FILE *f = fopen("/proc/sys/fs/file-nr", "r");
 
-  long nfiles, unused, maxfiles;
-  fscanf(f, "%ld %ld %ld", &nfiles, &unused, &maxfiles);
+    long nfiles, unused, maxfiles;
+    fscanf(f, "%ld %ld %ld", &nfiles, &unused, &maxfiles);
 #ifdef DEBUGSHM
-  if(nfiles % 1000 == 0) fprintf(stderr," %d: no. open files = %ld maxfiles = %ld\n", g_state.rank, nfiles, maxfiles);
+    if(nfiles % 1000 == 0) fprintf(stderr," %d: no. open files = %ld maxfiles = %ld\n", g_state.rank, nfiles, maxfiles);
 #endif
-    if(nfiles > (maxfiles/100)*60) {
-      printf(" %d: running out of files; files = %ld  maxfiles = %ld\n", g_state.rank, nfiles, maxfiles);
+    if(nfiles > (maxfiles/100)*80) {
+      printf(" %d: running out of files; files = %ld  maxfiles = %ld \n", g_state.rank, nfiles, maxfiles);
 #if PAUSE_ON_ERROR
-    fprintf(stderr,"%d(%d): too many open files\n",
-            g_state.rank,  getpid());
-    pause();
+      fprintf(stderr,"%d(%d): too many open files\n",
+	      g_state.rank,  getpid());
+      pause();
 #endif
-    comex_error("count_open_fds: too many open files", -1);
+      comex_error("count_open_fds: too many open files", -1);
   }
-  fclose(f);
+    fclose(f);
+  }
+#endif
 }

@@ -48,6 +48,8 @@ add_library(ga_tools OBJECT
   ga-wprof.c
 )
 
+list (APPEND GA_HEADER_PATHS ${CMAKE_CURRENT_LIST_DIR})
+set (GA_HEADER_PATHS ${GA_HEADER_PATHS} PARENT_SCOPE)
 
 target_include_directories(ga_tools BEFORE PRIVATE
                     ${PROJECT_SOURCE_DIR}/ma

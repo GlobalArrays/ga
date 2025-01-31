@@ -365,7 +365,8 @@ CLEANFILES += global/src/ga-wapidefs.h
 libga_la_SOURCES += global/src/abstract_ops.h
 libga_la_SOURCES += global/src/base.c
 libga_la_SOURCES += global/src/base.h
-libga_la_SOURCES += global/src/iterator.h
+libga_la_SOURCES += global/src/ga_iterator.h
+libga_la_SOURCES += global/src/ga_sparse.array.h
 libga_la_SOURCES += global/src/capi.c
 libga_la_SOURCES += global/src/cnames.h
 libga_la_SOURCES += global/src/collect.c
@@ -392,6 +393,10 @@ libga_la_SOURCES += global/src/globalp.h
 libga_la_SOURCES += global/src/global.util.c
 libga_la_SOURCES += global/src/hsort.scat.c
 libga_la_SOURCES += global/src/iterator.c
+libga_la_SOURCES += global/src/sparse.array.c
+libga_la_SOURCES += global/src/sketch.c
+libga_la_SOURCES += global/src/mtwister.h
+libga_la_SOURCES += global/src/mtwister.c
 libga_la_SOURCES += global/src/matmul.c
 libga_la_SOURCES += global/src/matmul.h
 libga_la_SOURCES += global/src/matrix.c
@@ -412,9 +417,6 @@ libga_la_SOURCES += global/src/ga_diag_seq.F
 if ENABLE_EISPACK
 libga_la_SOURCES += global/src/rsg.F
 endif
-if CRAY_XT_NETWORKS
-libga_la_SOURCES += global/src/ga_dgemmf.F
-endif # CRAY_XT_NETWORKS
 if ENABLE_PEIGS
 libga_la_SOURCES += global/src/ga_diag.F
 endif # ENABLE_PEIGS
@@ -445,6 +447,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/global/src
 AM_CPPFLAGS += -I$(top_srcdir)/global/testing
 
 check_PROGRAMS += global/testing/big
+check_PROGRAMS += global/testing/rand
 check_PROGRAMS += global/testing/elempatch
 check_PROGRAMS += global/testing/tiled_irreg_test
 check_PROGRAMS += global/testing/gatscat
@@ -465,6 +468,12 @@ check_PROGRAMS += global/testing/scan_addc
 check_PROGRAMS += global/testing/scan_copyc
 check_PROGRAMS += global/testing/sprsmatvec
 check_PROGRAMS += global/testing/testabstract_ops
+check_PROGRAMS += global/testing/testsparse
+check_PROGRAMS += global/testing/laplace
+check_PROGRAMS += global/testing/sprs_test
+check_PROGRAMS += global/testing/kaczmarz
+check_PROGRAMS += global/testing/j_iter
+#check_PROGRAMS += global/testing/gs_ran
 check_PROGRAMS += global/testing/testc
 check_PROGRAMS += global/testing/testmatmultc
 check_PROGRAMS += global/testing/testmult
@@ -643,6 +652,7 @@ GLOBAL_PARALLEL_TESTS += global/testing/tiled_irreg_test$(EXEEXT)
 #GLOBAL_PARALLEL_TESTS += global/testing/gatscat$(EXEEXT) # broken
 GLOBAL_PARALLEL_TESTS += global/testing/comm_init$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/getmem$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/rand$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/mtest$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/mulmatpatchc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/normc$(EXEEXT)
@@ -656,6 +666,11 @@ GLOBAL_PARALLEL_TESTS += global/testing/print$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/scan_addc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/scan_copyc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testc$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/laplace$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/sprs_test$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/kaczmarz$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/j_iter$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/gs_ran$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmatmultc$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmult$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmultrect$(EXEEXT)
@@ -930,9 +945,16 @@ global_testing_pgtestmatmult_SOURCES       = global/testing/pgtestmatmult.F $(gt
 global_testing_print_SOURCES               = global/testing/print.c
 global_testing_random_SOURCES              = global/testing/random.F $(gtsrcf)
 global_testing_scan_SOURCES                = global/testing/scan.F $(gtsrcf)
+global_testing_rand_SOURCES                = global/testing/rand.c
 global_testing_scan_addc_SOURCES           = global/testing/scan_addc.c
 global_testing_scan_copyc_SOURCES          = global/testing/scan_copyc.c
 global_testing_sprsmatvec_SOURCES          = global/testing/sprsmatvec.c
+global_testing_testsparse_SOURCES          = global/testing/testsparse.c
+global_testing_laplace_SOURCES             = global/testing/laplace.c
+global_testing_sprs_test_SOURCES           = global/testing/sprs_test.c
+global_testing_kaczmarz_SOURCES            = global/testing/kaczmarz.c
+global_testing_j_iter_SOURCES              = global/testing/j_iter.c
+#global_testing_gs_ran_SOURCES              = global/testing/gs_ran.c
 global_testing_simple_groups_SOURCES       = global/testing/simple_groups.F $(gtsrcf)
 global_testing_simple_groups_comm_SOURCES  = global/testing/simple_groups_comm.F $(gtsrcf)
 global_testing_simple_groups_commc_SOURCES = global/testing/simple_groups_commc.c
@@ -1609,19 +1631,6 @@ EXTRA_DIST += tcgmsg/tcgmsg-mpi/README
 
 ##############################################################################
 # armci
-# if TCGMSG is coming from ARMCI
-if ARMCI_NETWORK_ARMCI
-else
-if MSG_COMMS_TCGMSG4
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-endif
-if MSG_COMMS_TCGMSG5
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-endif
-endif
-
-##############################################################################
-# armci
 if ARMCI_NETWORK_ARMCI
 else
 if ARMCI_SRC_DIR_COMEX
@@ -1650,18 +1659,7 @@ else
 
 if ARMCI_NETWORK_ARMCI
 else
-if ARMCI_NETWORK_PORTALS
-AM_CPPFLAGS += -I$(top_srcdir)/armci/src-portals
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-else
-if ARMCI_NETWORK_GEMINI
-AM_CPPFLAGS += -I$(top_srcdir)/armci/src-gemini
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-else
 AM_CPPFLAGS += -I$(top_srcdir)/armci/src/include
-AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
-endif
-endif
 endif
 endif
 
@@ -1750,17 +1748,6 @@ CP__v_ = $(CP__v_$(AM_DEFAULT_VERBOSITY))
 CP__v_0 = @echo "  CP    " $@;
 
 .PHONY: pfiles clean-pfiles
-if MSG_COMMS_TCGMSG4
-pfiles: $(check_PROGRAMS)
-	for p in $(check_PROGRAMS); do \
-		echo "`whoami` `hostname` $(NPROCS) `pwd`/$$p /tmp" > $$p.p; \
-	done
-check: pfiles
-clean-pfiles:
-	find . -name '*.p' -exec rm {} \; ;
-clean-local: clean-pfiles
-MAYBE_PFILES = pfiles
-endif # MSG_COMMS_TCGMSG4
 
 ##############################################################################
 # test suite
@@ -1805,13 +1792,6 @@ XFAIL_TESTS =
 XFAIL_TESTS += $(SERIAL_TESTS_XFAIL)
 XFAIL_TESTS += $(PARALLEL_TESTS_XFAIL)
 
-if MSG_COMMS_TCGMSG4
-LOG_COMPILER = \
-maybe_tcgexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(TCGEXEC)"; fi`; eval $$maybe_tcgexec
-else
-if MSG_COMMS_TCGMSG5
-LOG_COMPILER = tst="$$dir$$f -np $(NPROCS)"; eval
-else
 if CROSS_COMPILING
 LOG_COMPILER = \
 maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; eval $$maybe_mpiexec
@@ -1825,8 +1805,6 @@ LOG_COMPILER = \
 maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; eval $$maybe_mpiexec
 endif # COMEX_NETWORK_MPI_PR
 endif # CROSS_COMPILING
-endif # MSG_COMMS_TCGMSG5
-endif # MSG_COMMS_TCGMSG4
 
 .PHONY: check-travis
 check-travis: $(all-am) $(check_LTLIBRARIES) $(TRAVIS_TESTS) $(MAYBE_PFILES)

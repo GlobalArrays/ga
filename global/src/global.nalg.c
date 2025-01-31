@@ -991,7 +991,7 @@ _iterator_hdl hdl;
       ptr_tmp = ARMCI_Malloc_local(bytes);
 }
 #else
-      ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
+      ptr_tmp = (char *) pnga_malloc(nelem, atype, "transpose_tmp");
 #endif
 
       nrow   = hi[0] -lo[0]+1;
@@ -1009,7 +1009,7 @@ _iterator_hdl hdl;
 #ifdef GA_TRANSPOSE_USE_ARMCI_MEM
       ARMCI_Free_local(ptr_tmp);
 #else
-      ga_free(ptr_tmp);
+      pnga_free(ptr_tmp);
 #endif
     }
 #else

@@ -5,6 +5,10 @@ set -x
 
 TRAVIS_ROOT="$1"
 os=`uname`
+if [ "x$os" = "xDarwin" ] ; then
+    brew install libtool
+    which libtool
+fi
 case "$MPI_IMPL" in
     mpich)
 	export PATH=$TRAVIS_ROOT/mpich/bin:$PATH

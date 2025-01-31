@@ -117,20 +117,6 @@ void loc_matmul(double *a_mat, int *jvec, int *ivec,
     cvec[i] = cvec[i] + tempc;
   }
 }
-/**
- *   Random number generator
- */
-double ran3(int *idum) {
-  static int iff = 0;
-  double randnum;
-  if (idum < 0 || iff == 0) {
-    iff = 1;
-    srand((unsigned int)abs(*idum));
-    *idum = 1;
-  }
-  randnum = ((double)rand())/((double)RAND_MAX);
-  return randnum;
-}
 
 /**
  *  create a sparse matrix in compressed row form corresponding to a Laplacian
@@ -184,8 +170,8 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
 
   me = GA_Nodeid();
   nprocs = GA_Nnodes();
-  idum = -(12345+me);
-  x = ran3(&idum);
+  idum = 12345+me;
+  x = NGA_Rand(idum);
   one = 1;
 
   if (me == 0) {
@@ -912,7 +898,7 @@ int main(int argc, char **argv) {
   vector = (double*)malloc(ld*sizeof(double));
   for (i=0; i<ld; i++) {
     idum  = 0;
-    p_b[i] = ran3(&idum);
+    p_b[i] = NGA_Rand(idum);
     vector[i] = p_b[i];
   }
   NGA_Release(g_b,blo,bhi);

@@ -55,6 +55,7 @@ extern logical pnga_destroy_mutexes();
 extern void pnga_distribution(Integer g_a, Integer proc, Integer *lo, Integer *hi);
 extern logical pnga_duplicate(Integer g_a, Integer *g_b, char *array_name);
 extern void pnga_fill(Integer g_a, void* val);
+extern void pnga_free(void* ptr);
 extern void pnga_get_block_info(Integer g_a, Integer *num_blocks,
                                 Integer *block_dims);
 extern logical pnga_get_debug();
@@ -79,7 +80,7 @@ extern logical pnga_locate_nnodes(Integer g_a, Integer *lo, Integer *hi, Integer
 extern logical pnga_locate_region(Integer g_a, Integer *lo, Integer *hi,
                                   Integer *map, Integer *proclist, Integer *np);
 extern void pnga_lock(Integer mutex);
-extern Integer pnga_ndim(Integer g_a);
+extern void* pnga_malloc(Integer nelem, int type, char *name);
 extern void pnga_mask_sync(Integer begin, Integer end);
 extern Integer pnga_memory_avail();
 extern logical pnga_memory_limited();
@@ -88,6 +89,7 @@ extern void pnga_merge_distr_patch(Integer g_a, Integer *alo, Integer *ahi,
 extern void pnga_merge_mirrored(Integer g_a);
 extern void pnga_nblock(Integer g_a, Integer *nblock);
 
+extern Integer pnga_ndim(Integer g_a);
 extern Integer pnga_nnodes();
 extern Integer pnga_nodeid();
 extern logical pnga_overlay(Integer g_a, Integer g_p);
@@ -204,6 +206,7 @@ extern void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *ski
                              void *buf, Integer *ld);
 extern void pnga_sync();
 extern DoublePrecision pnga_wtime();
+extern DoublePrecision pnga_rand(Integer idum);
 
 /* Routines from datatypes.c */
 extern Integer pnga_type_f2c(Integer type);
@@ -398,4 +401,34 @@ extern void pnga_nbget_field(Integer g_a, Integer *lo, Integer *hi, Integer foff
 extern void pnga_nbput_field(Integer g_a, Integer *lo, Integer *hi, Integer foff, Integer fsize,void *buf, Integer *ld, Integer *nbhandle);
 extern void pnga_put_field(Integer g_a, Integer *lo, Integer *hi, Integer foff, Integer fsize,void *buf, Integer *ld);
 
+
+/* Routines for sparse matrices */
+
+extern Integer pnga_sprs_array_create(Integer idim, Integer jdim, Integer type, Integer trans);
+extern Integer pnga_sprs_array_create_from_dense(Integer g_a, Integer idxsize, Integer flag);
+extern Integer pnga_sprs_array_create_from_sparse(Integer s_a, Integer flag);
+extern void pnga_sprs_array_add_element(Integer s_a, Integer idx, Integer jdx, void *val);
+extern logical pnga_sprs_array_assemble(Integer s_a);
+extern void pnga_sprs_array_row_distribution(Integer s_a, Integer iproc, Integer *lo, Integer *hi);
+extern void pnga_sprs_array_column_distribution(Integer s_a, Integer iproc, Integer *lo, Integer *hi);
+extern void pnga_sprs_array_access_col_block(Integer s_a, Integer icol, void *idx, void *jdx, void *val);
+extern int pnga_sprs_array_access_col_block_idx(Integer s_a, Integer icol, AccessIndex *idx, AccessIndex *jdx, AccessIndex *vdx);
+extern void pnga_sprs_array_col_block_list(Integer s_a, Integer **idx, Integer *n);
+extern Integer pnga_sprs_array_duplicate(Integer s_a);
+extern Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b);
+extern Integer pnga_sprs_array_sprsdns_multiply(Integer s_a, Integer g_b, Integer trans);
+extern Integer pnga_sprs_array_dnssprs_multiply(Integer g_a, Integer s_b, Integer trans);
+extern Integer pnga_sprs_array_count_sketch(Integer s_a, Integer size_k,
+    Integer *g_k, Integer *g_w, Integer trans);
+extern void pnga_sprs_array_matvec_multiply(Integer s_a, Integer g_a, Integer g_v);
+extern logical pnga_sprs_array_destroy(Integer s_a);
+extern void pnga_sprs_array_export(Integer s_a, const char* file);
+extern void pnga_sprs_array_get_diag(Integer s_a, Integer *g_d);
+extern void pnga_sprs_array_diag_right_multiply(Integer s_a, Integer g_d);
+extern void pnga_sprs_array_diag_left_multiply(Integer s_a, Integer g_d);
+extern void pnga_sprs_array_shift_diag(Integer s_a, void *shift);
+extern logical pnga_sprs_array_get_block(Integer s_a, Integer irow, Integer icol,
+    void **idx, void **jdx, void **data, Integer *ilo, Integer *ihi,
+    Integer *jlo, Integer *jhi);
+extern Integer pnga_sprs_array_get_column(Integer g_v, Integer irow);
 #endif /* PAPI_H_ */

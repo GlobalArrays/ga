@@ -424,8 +424,10 @@ set(CMX_DEVICE_HEADERS
 
 install (FILES
   ${CMX_DEVICE_HEADERS}
-  DESTINATION include
+  DESTINATION include/ga
 )
+
+list (APPEND GA_HEADER_PATHS ${CMAKE_CURRENT_LIST_DIR}/src-common)
 
 # -------------------------------------------------------------
 # CMX library installation
@@ -455,8 +457,12 @@ set(ARMCI_DEVICE_HEADERS
 
 install (FILES
   ${ARMCI_DEVICE_HEADERS}
-  DESTINATION include
+  DESTINATION include/ga
 )
+
+list (APPEND GA_HEADER_PATHS ${CMAKE_CURRENT_LIST_DIR}/src-armci)
+
+set (GA_HEADER_PATHS ${GA_HEADER_PATHS} PARENT_SCOPE)
 
 # -------------------------------------------------------------
 # ARMCI library installation

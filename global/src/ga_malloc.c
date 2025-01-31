@@ -25,6 +25,7 @@ void GA_Register_stack_memory(
     ga_ext_alloc = ext_alloc; ga_ext_free  = ext_free; ga_usesMA=0;
 }
 
+#if 1
 void* ga_malloc(Integer nelem, int type, char *name)
 {
     void *ptr;  
@@ -77,6 +78,7 @@ void ga_free(void *ptr)
     else /*make sure to free original(before address alignment) pointer*/
       (*ga_ext_free)((char *)ptr - handle);
 }
+#endif
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_memory_avail_type = pnga_memory_avail_type

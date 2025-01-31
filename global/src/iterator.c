@@ -115,7 +115,6 @@
   ga_ownsM(g_handle, proc, _lo, _hi);                                      \
   gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               \
   if(_last==0) ld[0]=_hi[0]- _lo[0]+1+2*(Integer)GA[g_handle].width[0];    \
-  __CRAYX1_PRAGMA("_CRI shortloop");                                       \
   for(_d=0; _d < _last; _d++)            {                                 \
     _w = (Integer)GA[g_handle].width[_d];                                  \
     _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                       \
@@ -147,7 +146,6 @@ void gam_LocationF(int proc, Integer g_handle,  Integer subscript[],
   ga_ownsM(g_handle, proc, _lo, _hi);                                      
   gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               
   if(_last==0) ld[0]=_hi[0]- _lo[0]+1+2*(Integer)GA[g_handle].width[0];   
-  __CRAYX1_PRAGMA("_CRI shortloop");                                      
   for(_d=0; _d < _last; _d++)            {                                 
     _w = (Integer)GA[g_handle].width[_d];                                  
     _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                       
