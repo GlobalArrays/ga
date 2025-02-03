@@ -45,7 +45,7 @@ GA++ is a C++ binding for global arrays.
 ## WHERE IS THE DOCUMENTATION?
 
 The [GA manual](https://globalarrays.readthedocs.io) contains all the documentation.  
-The API reference can be found [here](https://hpc.pnl.gov/globalarrays/userinterface.shtml)
+The API reference can be found [here](https://globalarrays.github.io/userinterface.html)
 
 ## QUESTIONS/HELP/SUPPORT/BUG-REPORT
 
