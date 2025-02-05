@@ -5557,6 +5557,12 @@ void NGA_Sprs_array_diag_left_multiply(int s_a, int g_d)
   wnga_sprs_array_diag_left_multiply(sa, gd);
 }
 
+void NGA_Sprs_array_scale(int s_a, void *scale)
+{
+  Integer sa = (Integer)s_a;
+  wnga_sprs_array_scale(sa, scale);
+}
+
 void NGA_Sprs_array_shift_diag(int s_a, void *shift)
 {
   Integer sa = (Integer)s_a;

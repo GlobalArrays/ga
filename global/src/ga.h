@@ -377,6 +377,7 @@ extern void          NGA_Sprs_array_get_diag(int s_a, int *g_d);
 extern int           NGA_Sprs_array_matmat_multiply(int s_a, int s_b);
 extern void          NGA_Sprs_array_matvec_multiply(int s_a, int g_a, int g_v);
 extern void          NGA_Sprs_array_row_distribution(int s_a, int iproc, int *lo, int *hi);
+extern void          NGA_Sprs_array_scale(int s_a, void *scale);
 extern void          NGA_Sprs_array_shift_diag(int s_a, void *shift);
 extern int           NGA_Sprs_array_sprsdns_multiply(int s_a, int g_b);
 extern void          NGA_Strided_acc(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[], void *alpha); 

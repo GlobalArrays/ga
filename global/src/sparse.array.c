@@ -2738,7 +2738,7 @@ Integer pnga_sprs_array_matmat_multiply(Integer s_a, Integer s_b)
   /* Set up global arrays to hold distributed indices and non-zero values */
   {
     int64_t isize = (rowdim+1)*nblocks;
-    int64_t totalsize = 0;
+    Integer totalsize = 0;
     Integer ndim = 1;
     Integer *offset = (Integer*)malloc(nprocs*sizeof(Integer));
     Integer *tmp = (Integer*)malloc(nprocs*sizeof(Integer));
@@ -4209,3 +4209,70 @@ Integer pnga_sprs_array_dnssprs_multiply(Integer g_a, Integer s_b, Integer trans
 }
 #undef REAL_DNSSPRS_MULTIPLY_M
 #undef COMPLEX_DNSSPRS_MULTIPLY_M
+#define SPRS_REAL_SCALE_M(_type, _vptr, _lo, _hi, _scale)    \
+{                                                            \
+  _type *_ptr = (_type*)_vptr;                               \
+  _type _sval = *((_type*)_scale);                           \
+  Integer _i;                                                \
+  for  (_i=_lo; _i<=_hi; _i++) {                             \
+     _ptr[_i-_lo] = _ptr[_i-_lo]*_sval;                      \
+  }                                                          \
+}
+
+#define SPRS_COMPLEX_SCALE_M(_type, _vptr, _lo, _hi, _scale) \
+{                                                            \
+  _type *_ptr = (_type*)_vptr;                               \
+  _type _rval = ((_type*)_scale)[0];                         \
+  _type _ival = ((_type*)_scale)[1];                         \
+  _type _rp, _ip;                                            \
+  Integer _i;                                                \
+  for  (_i=_lo; _i<=_hi; _i++) {                             \
+    _rp = _ptr[2*(_i-_lo)];                                  \
+    _ip = _ptr[2*(_i-_lo)+1];                                \
+     _ptr[2*(_i-_lo)] = _rval*_rp-_ival*_ip;                 \
+     _ptr[2*(_i-_lo)+1] = _rval*_ip+_ival*_rp;               \
+  }                                                          \
+}
+
+/**
+ * Scale all element in sparse array by the same value
+ * @param s_a sparse array
+ * @param scale value to scale all elements
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_sprs_array_scale =  pnga_sprs_array_scale
+#endif
+void pnga_sprs_array_scale(Integer s_a, void *scale)
+{
+  Integer hdl_a = s_a+GA_OFFSET;
+  int local_sync_begin,local_sync_end;
+  Integer s_lo, s_hi;
+  Integer ld;
+  Integer me = pnga_pgroup_nodeid(SPA[hdl_a].grp);
+  void *vptr;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if (local_sync_begin) pnga_pgroup_sync(SPA[hdl_a].grp);
+  pnga_distribution(SPA[hdl_a].g_data,me,&s_lo,&s_hi);
+  pnga_access_ptr(SPA[hdl_a].g_data,&s_lo,&s_hi,&vptr,&ld);
+  if (SPA[hdl_a].type == C_INT) {
+    SPRS_REAL_SCALE_M(int,vptr,s_lo,s_hi,scale);
+  } else if (SPA[hdl_a].type == C_LONG) {
+    SPRS_REAL_SCALE_M(long,vptr,s_lo,s_hi,scale);
+  } else if (SPA[hdl_a].type == C_LONGLONG) {
+    SPRS_REAL_SCALE_M(long long,vptr,s_lo,s_hi,scale);
+  } else if (SPA[hdl_a].type == C_FLOAT) {
+    SPRS_REAL_SCALE_M(float,vptr,s_lo,s_hi,scale);
+  } else if (SPA[hdl_a].type == C_DBL) {
+    SPRS_REAL_SCALE_M(double,vptr,s_lo,s_hi,scale);
+  } else if (SPA[hdl_a].type == C_SCPL) {
+    SPRS_COMPLEX_SCALE_M(float,vptr,s_lo,s_hi,scale);
+  } else if (SPA[hdl_a].type == C_DCPL) {
+    SPRS_COMPLEX_SCALE_M(double,vptr,s_lo,s_hi,scale);
+  }
+
+  if (local_sync_end) pnga_pgroup_sync(SPA[hdl_a].grp);
+}
+#undef SPRS_REAL_SCALE_M
+#undef SPRS_COMPLEX_SCALE_M
