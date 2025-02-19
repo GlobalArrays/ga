@@ -288,7 +288,7 @@ endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   if(CMAKE_C_COMPILER_VERSION VERSION_GREATER "14.0")
-     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu17")
+    add_compile_options(-std=gnu17)
   endif()
   if(ENABLE_CXX) 
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
