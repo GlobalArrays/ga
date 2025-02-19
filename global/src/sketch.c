@@ -196,7 +196,7 @@ Integer pnga_sprs_array_count_sketch(Integer s_a, Integer size_k,
   pnga_put(*g_k,lo,hi,kbuf,&ld);
   free(kbuf);
   pnga_put(*g_w,lo,hi,kweights,&ld);
-  pnga_sync(SPA[hdl].grp);
+  pnga_pgroup_sync(SPA[hdl].grp);
   /* Create an output matrix of size_k by jdim */
   g_a = pnga_create_handle();
   if (trans) {
