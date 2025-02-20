@@ -85,7 +85,7 @@ extern int cmx_finalize();
  * @param[in] msg the message to print
  * @param[in] code the code to exit with
  */
-extern void cmx_error(char *msg, int code);
+extern void cmx_error(const char *msg, int code);
 
 /**
  * Create a new group from the given group and process ID list.

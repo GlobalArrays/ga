@@ -762,7 +762,7 @@ int cmx_finalize()
 }
 
 
-void cmx_error(char *msg, int code)
+void cmx_error(const char *msg, int code)
 {
 #if DEBUG
     fprintf(stderr, "[%d] Received an Error in Communication: (%d) %s\n",
