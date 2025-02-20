@@ -39,7 +39,7 @@ jobs:
             armci_network: mpi-ts
             f77: gfortran-11
             cc: gcc-11
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             experimental: true
             mpi_impl: mpich
             armci_network: mpi-pr
@@ -69,7 +69,7 @@ jobs:
             cc: icc
             config_opts: LIBS=-lifcore
             oneapi: /Users/runner/apps/oneapi
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             experimental: true 
             mpi_impl: mpich
             armci_network: mpi-pr
@@ -97,21 +97,28 @@ jobs:
             armci_network: mpi-pr
             f77: gfortran-13
             cc: clang
-          - os: ubuntu-20.04
+          - os: macos-latest
+            experimental: true
+            use_cmake: "N"
+            mpi_impl: mpich
+            armci_network: mpi-pr
+            f77: gfortran-14
+            cc: gcc-14
+          - os: ubuntu-22.04
             experimental: true
             use_cmake: "Y"
             mpi_impl: openmpi
             armci_network: mpi-pr
             f77: gfortran
             cc: gcc
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             experimental: true
             use_cmake: "Y"
             mpi_impl: openmpi
             armci_network: mpi-ts
             f77: gfortran
             cc: gcc
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             experimental: true
             mpi_impl: intel
             armci_network: mpi-ts

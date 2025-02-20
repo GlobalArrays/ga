@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
   double val;
   double *vptr;
   double *vbuf, *vsum;
-  long *iptr = NULL, *jptr = NULL;
+  int64_t *iptr = NULL, *jptr = NULL;
   int ok;
   double r_one = 1.0;
   double ir, jr, ldr;
@@ -178,7 +178,9 @@ int main(int argc, char **argv) {
   ncnt = 0;
   for (iproc=0; iproc<nproc; iproc++) {
     NGA_Sprs_array_column_distribution64(s_a,iproc,&jlo,&jhi);
-    NGA_Sprs_array_access_col_block64(s_a,iproc,&iptr,&jptr,&vptr);
+    void *tptr;
+    NGA_Sprs_array_access_col_block64(s_a,iproc,&iptr,&jptr,&tptr);
+    vptr = (double*)tptr;
     if (vptr != NULL) {
       for (i=ilo; i<=ihi; i++) {
         ncols = iptr[i+1-ilo]-iptr[i-ilo];
@@ -211,7 +213,9 @@ int main(int argc, char **argv) {
   }
   for (iproc=0; iproc<nproc; iproc++) {
     NGA_Sprs_array_column_distribution64(s_a,iproc,&jlo,&jhi);
-    NGA_Sprs_array_access_col_block64(s_a,iproc,&iptr,&jptr,&vptr);
+    void *tptr;
+    NGA_Sprs_array_access_col_block64(s_a,iproc,&iptr,&jptr,&tptr);
+    vptr = (double*)tptr;
     if (vptr != NULL) {
       vbuf = (double*)malloc((jhi-jlo+1)*sizeof(double));
       NGA_Get64(g_v,&jlo,&jhi,vbuf,&one_64);
