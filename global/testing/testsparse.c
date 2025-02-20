@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
   double val;
   double *vptr;
   double *vbuf, *vsum;
-  long *iptr = NULL, *jptr = NULL;
+  int64_t *iptr = NULL, *jptr = NULL;
   int ok;
   double r_one = 1.0;
   double ir, jr, ldr;
