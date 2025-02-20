@@ -187,7 +187,7 @@ void j_solve(int s_a, int g_b, int g_ref, int *g_x)
   int64_t *my_jdx;
   int64_t *m_idx;
   int64_t *m_jdx;
-  int64_t maxlen;
+  long maxlen;
   void *ptr;
   double r_one = 1.0;
   double mr_one = -1.0;
@@ -532,8 +532,9 @@ void cg_solve(int s_a, int g_b, int *g_x)
 }
 
 int idim, jdim, kdim;
-int64_t *sizes, *offsets;
-int64_t *_ilo, *_ihi, *_jlo, *_jhi, *_klo, *_khi;
+long *sizes;
+int64_t *offsets;
+long *_ilo, *_ihi, *_jlo, *_jhi, *_klo, *_khi;
 int64_t ilo, ihi, jlo, jhi, klo, khi;
 int64_t xdim, ydim, zdim;
 int ipx, ipy, ipz, idx, idy, idz;
@@ -678,14 +679,14 @@ int main(int argc, char **argv) {
   idim = ihi-ilo+1;
   jdim = jhi-jlo+1;
   kdim = khi-klo+1;
-  sizes = (int64_t*)malloc(nproc*sizeof(int64_t));
+  sizes = malloc(nproc*sizeof(int64_t));
   offsets = (int64_t*)malloc(nproc*sizeof(int64_t));
-  _ilo = (int64_t*)malloc(nproc*sizeof(int64_t));
-  _ihi = (int64_t*)malloc(nproc*sizeof(int64_t));
-  _jlo = (int64_t*)malloc(nproc*sizeof(int64_t));
-  _jhi = (int64_t*)malloc(nproc*sizeof(int64_t));
-  _klo = (int64_t*)malloc(nproc*sizeof(int64_t));
-  _khi = (int64_t*)malloc(nproc*sizeof(int64_t));
+  _ilo = malloc(nproc*sizeof(int64_t));
+  _ihi = malloc(nproc*sizeof(int64_t));
+  _jlo = malloc(nproc*sizeof(int64_t));
+  _jhi = malloc(nproc*sizeof(int64_t));
+  _klo = malloc(nproc*sizeof(int64_t));
+  _khi = malloc(nproc*sizeof(int64_t));
 
   for (i=0; i<nproc; i++) {
     sizes[i] = 0;
