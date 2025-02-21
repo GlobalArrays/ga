@@ -17,7 +17,7 @@
 
 #include "sndrcv.h"
 
-extern void Error();
+extern void Error(char *, long int);
 
 /**
  * close and open stdin and stdout to append to a local logfile

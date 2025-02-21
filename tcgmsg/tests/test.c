@@ -26,7 +26,7 @@
 #include "msgtypesc.h"
 #include "tcgmsg.h"
 
-extern unsigned char CheckByte();
+unsigned char CheckByte(unsigned char *, long );
 extern void Error(const char *, Integer);
 
 

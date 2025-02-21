@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-extern void   tcg_alt_pbegin();
+extern void   tcg_alt_pbegin(int *argc, char **argv[]);
 extern void   tcg_brdcst(long type, void *buf, long lenbuf, long originator);
 extern void   tcg_dgop(long type, double *x, long n, char *op);
 extern double tcg_drand48();

@@ -100,7 +100,7 @@ extern Integer MA_sizeof_overhead(Integer datatype);
 extern void MA_summarize_allocated_blocks();
 extern void MA_trace(Boolean value);
 extern Boolean MA_verify_allocator_stuff();
-extern void MA_set_error_callback(void(*func)());
+  extern void MA_set_error_callback(void(*func)(const char*, int));
 
 extern void ma_set_error_callback();
 

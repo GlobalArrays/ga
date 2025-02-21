@@ -169,10 +169,10 @@ private Boolean guard_check(AD *ad);
 private void guard_set(AD *ad);
 private void list_coalesce(AD *list);
 private AD *list_delete(AD *ad, AD **list);
-private int list_delete_many(AD **list, Boolean (*pred)(), Pointer closure, void (*action)());
-private AD *list_delete_one(AD **list, Boolean (*pred)(), Pointer closure);
+private int list_delete_many(AD **list, Boolean (*pred)(AD *, char *), Pointer closure, void (*action)(AD *));
+private AD *list_delete_one(AD **list, Boolean (*pred)(AD *, char *), Pointer closure);
 private void list_insert(AD *ad, AD **list);
-private void list_insert_ordered(AD *ad, AD **list, Boolean (*pred)());
+private void list_insert_ordered(AD *ad, AD **list, Boolean (*pred)(AD *, Pointer));
 private Boolean list_member(AD *ad, AD *list);
 private int list_print(AD *list, char *block_type, int index_base);
 private void list_verify(AD *list, char *block_type, char *preamble, int *blocks, int *bad_blocks, int *bad_checksums, int *bad_lguards, int *bad_rguards);
@@ -860,11 +860,13 @@ private void block_free_heap(ad)
         ma_hp = (Pointer)max_ad + max_ad->nbytes;
 
         /* delete any free list blocks that are no longer in heap region */
+	void (*action)(AD *);
+	action= NULL;
         (void)list_delete_many(
             &ma_hfree,
             ad_gt,
             (Pointer)max_ad,
-            (void (*)())NULL);
+            action);
 
         /* if ad is in the heap region, add it to free list */
         if (ad < max_ad)
@@ -1134,9 +1136,9 @@ private AD *list_delete(ad, list)
 
 private int list_delete_many(list, pred, closure, action)
     AD        **list;        /* the list to search */
-    Boolean    (*pred)();    /* predicate */
+    Boolean    (*pred)(AD *, Pointer);    /* predicate */
     Pointer    closure;    /* for pred */
-    void    (*action)();    /* to apply before deletion */
+    void    (*action)(AD *);    /* to apply before deletion */
 {
     AD        *ad1;        /* lead traversal pointer */
     AD        *ad2;        /* trailing traversal pointer */
@@ -1184,7 +1186,7 @@ private int list_delete_many(list, pred, closure, action)
 
 private AD *list_delete_one(list, pred, closure)
     AD        **list;        /* the list to search */
-    Boolean    (*pred)();    /* predicate */
+    Boolean    (*pred)(AD *, Pointer);    /* predicate */
     Pointer    closure;    /* for pred */
 {
     AD        *ad1;        /* lead traversal pointer */
@@ -1242,7 +1244,7 @@ private void list_insert(ad, list)
 private void list_insert_ordered(ad, list, pred)
     AD        *ad;        /* the AD to insert */
     AD        **list;        /* the list to insert into */
-    Boolean    (*pred)();    /* predicate */
+    Boolean    (*pred)(AD *, AD *);    /* predicate */
 {
     AD        *ad1;        /* lead traversal pointer */
     AD        *ad2;        /* trailing traversal pointer */
