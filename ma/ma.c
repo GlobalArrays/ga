@@ -153,7 +153,7 @@ private Boolean ad_big_enough(AD *ad, Pointer ar);
 private Boolean ad_eq(AD *ad, Pointer ad_target);
 private Boolean ad_gt(AD *ad, Pointer ad_target);
 private Boolean ad_le(AD *ad, Pointer ad_target);
-private Boolean ad_lt(AD *ad, Pointer ad_target);
+private Boolean ad_lt(AD *ad, AD *ad_target);
 private void ad_print(AD *ad, char *block_type);
 private void balloc_after(AR *ar, Pointer address, Pointer *client_space, ulongi *nbytes);
 private void balloc_before(AR *ar, Pointer address, Pointer *client_space, ulongi *nbytes);
@@ -574,7 +574,7 @@ private Boolean ad_le(ad, ad_target)
 
 private Boolean ad_lt(ad, ad_target)
     AD        *ad;        /* the AD to test */
-    Pointer    ad_target;    /* the AD to match */
+    AD *ad_target;    /* the AD to match */
 {
     return (ad < (AD *)ad_target) ? MA_TRUE : MA_FALSE;
 }
