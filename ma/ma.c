@@ -172,7 +172,7 @@ private AD *list_delete(AD *ad, AD **list);
 private int list_delete_many(AD **list, Boolean (*pred)(AD *, char *), Pointer closure, void (*action)(AD *));
 private AD *list_delete_one(AD **list, Boolean (*pred)(AD *, char *), Pointer closure);
 private void list_insert(AD *ad, AD **list);
-private void list_insert_ordered(AD *ad, AD **list, Boolean (*pred)(AD *, Pointer));
+private void list_insert_ordered(AD *ad, AD **list, Boolean (*pred)(AD *, AD *));
 private Boolean list_member(AD *ad, AD *list);
 private int list_print(AD *list, char *block_type, int index_base);
 private void list_verify(AD *list, char *block_type, char *preamble, int *blocks, int *bad_blocks, int *bad_checksums, int *bad_lguards, int *bad_rguards);
