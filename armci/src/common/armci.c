@@ -149,7 +149,7 @@ void armci_abort(int code)
 
 /*For now, until no code requires a function pointer to ARMCI_Error
   (used by GA now).*/
-void ARMCI_Error(char *msg, int code)
+void ARMCI_Error(const char *msg, int code)
 {
     armci_die(msg,code);
 }

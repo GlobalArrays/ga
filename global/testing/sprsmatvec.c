@@ -166,7 +166,7 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
   int *xld, *yld, *zld, *tmapc;
   int *ecnt, *total_distr;
   int total_max;
-  FILE *fp, *fopen();
+  FILE *fp;
 
   me = GA_Nodeid();
   nprocs = GA_Nnodes();

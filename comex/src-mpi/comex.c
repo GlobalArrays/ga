@@ -1327,7 +1327,7 @@ int comex_barrier(comex_group_t comex_group)
 }
 
 
-void comex_error(char *msg, int code)
+void comex_error(const char *msg, int code)
 {
     fprintf(stderr, "%s", msg);
     fprintf(stderr,"Received an Error in Communication\n");

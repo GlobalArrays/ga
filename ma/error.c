@@ -24,10 +24,10 @@ public Boolean ma_error_print = MA_TRUE;
 /** terminate execution upon any error? */
 public Boolean ma_hard_fail = MA_FALSE;
 
-void (*ma_func_terminate)() = 0;
+void (*ma_func_terminate)(const char*, int) = 0;
 
 
-void MA_set_error_callback(void (*func)())
+void MA_set_error_callback(void (*func)(const char*, int))
 {
     ma_func_terminate = func;
 }

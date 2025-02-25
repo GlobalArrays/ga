@@ -17,7 +17,7 @@
 #include "evlog.h"
 #include "tcgmsg.h"
 
-extern unsigned char CheckByte();
+unsigned char CheckByte(unsigned char *, long );
 
 
 /**

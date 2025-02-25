@@ -32,7 +32,7 @@ static long sc_page_size=-1;    /* from sysconf, in bytes */
 static void *_comex_malloc_local(size_t size, void **rinfo);
 
 
-void comex_error(char *msg, int code)
+void comex_error(const char *msg, int code)
 {
     if (0 == l_state.rank) {
         fprintf(stderr,"Received an Error in Communication\n");

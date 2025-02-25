@@ -1272,7 +1272,7 @@ int comex_initialized()
     return initialized;
 }
 
-void comex_error(char *msg, int code)
+void comex_error(const char *msg, int code)
 {
     COMEX_OFI_LOG(ERROR, "[%d] Received an Error in Communication: (%d) %s",
                   l_state.proc, code, msg);

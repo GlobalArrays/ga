@@ -1179,7 +1179,7 @@ int armci_domain_same_id(armci_domain_t domain, int proc)
 }
 
 
-void ARMCI_Error(char *msg, int code)
+void ARMCI_Error(const char *msg, int code)
 {
     cmx_error(msg, code);
 }
