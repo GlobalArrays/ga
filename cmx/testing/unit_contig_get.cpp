@@ -3,7 +3,7 @@
 #include "alloc.hpp"
 #include <iostream>
 
-/* Test contiguous put operation */
+/* Test contiguous get operation */
 
 #define TEST_SIZE 1048576
 int main(int argc, char **argv)

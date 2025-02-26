@@ -1,4 +1,5 @@
 #include <vector>
+#include <set>
 #include "p_environment.hpp"
 
 /* This needs to be filled in */
@@ -465,11 +466,13 @@ void p_Environment::finalize()
   {
     int my_master = -1;
     header_t *header = NULL;
+    char *message = NULL;
     _cmx_request nb;
     nb_handle_init(&nb);
 
     my_master = p_config.master(p_config.rank());
-    header = new header_t;
+    message = new char[sizeof(header_t)];
+    header = reinterpret_cast<header_t*>(message);
     CMX_ASSERT(header);
     MAYBE_MEMSET(header, 0, sizeof(header_t));
     header->operation = OP_QUIT;
@@ -477,7 +480,7 @@ void p_Environment::finalize()
     header->local_address = NULL;
     header->rank = 0;
     header->length = 0;
-    nb_send_header(header, sizeof(header_t), my_master, &nb);
+    nb_send_header(message, sizeof(header_t), my_master, &nb);
     /* this call will free up the header allocation */
     nb_wait_for_all(&nb);
   }
@@ -599,18 +602,32 @@ p_Environment::~p_Environment()
  */
 void p_Environment::fence(Group *group)
 {
-  int p = 0;
+  int p, ip;
   int count_before = 0;
   int count_after = 0;
   _cmx_request nb;
   /* NOTE: We always fence on the world group */
 
   /* count how many fence messagse to send */
-  int size = p_config.world_size();
-  for (p=0; p<size; ++p) {
+  int size = group->size();
+  /* find all processes and their masters in group */
+  std::set<int> fenced_procs;
+  std::set<int>::iterator it;
+  for (ip=0; ip<size; ip++) {
+    p = p_config.get_world_rank(group, ip);
+    int master = p_config.master(p);
+    if (fenced_procs.find(p) == fenced_procs.end()) fenced_procs.insert(p);
+    if (fenced_procs.find(master) == fenced_procs.end())
+      fenced_procs.insert(master);
+
+  }
+  it = fenced_procs.begin();
+  while (it != fenced_procs.end()) {
+    p = *it;
     if (fence_array[p]) {
       ++count_before;
     }
+    it++;
   }
 
   /* check for no outstanding put/get requests */
@@ -628,9 +645,12 @@ void p_Environment::fence(Group *group)
 
   /* optimize by only sending to procs which we have outstanding messages */
   init_request(&nb);
-  for (p=0; p<size; ++p) {
+  it = fenced_procs.begin();
+  while (it != fenced_procs.end()) {
+    p = *it;
     if (fence_array[p]) {
       int p_master = p_config.master(p);
+      char *message = NULL;
       header_t *header = NULL;
 
       /* because we only fence to masters */
@@ -640,7 +660,8 @@ void p_Environment::fence(Group *group)
       nb_recv(NULL, 0, p_master, &nb);
 
       /* post send of fence request */
-      header = new header_t;
+      message = new char[sizeof(header_t)];
+      header = reinterpret_cast<header_t*>(message);
       CMX_ASSERT(header);
       MAYBE_MEMSET(header, 0, sizeof(header_t));
       header->operation = OP_FENCE;
@@ -650,15 +671,19 @@ void p_Environment::fence(Group *group)
       header->rank = 0;
       nb_send_header(header, sizeof(header_t), p_master, &nb);
     }
+    it++;
   }
 
   nb_wait_for_all(&nb);
 
-  for (p=0; p<size; ++p) {
+  it = fenced_procs.begin();
+  while (it != fenced_procs.end()) {
+    p = *it;
     if (fence_array[p]) {
       fence_array[p] = 0;
       ++count_after;
     }
+    it++;
   }
 
   CMX_ASSERT(count_before == count_after);
@@ -704,14 +729,18 @@ void p_Environment::_fence_master(int master_rank)
 
   if (fence_array[master_rank]) {
     header_t *header = NULL;
+    char *message = NULL;
     _cmx_request nb;
     nb_handle_init(&nb);
+    printf("p[%d] (fence_master) fencing proc: %d\n",p_config.rank(),
+        master_rank);
 
     /* prepost recv for acknowledgment */
     nb_recv(NULL, 0, master_rank, &nb);
 
     /* post send of fence request */
-    header = (header_t*)malloc(sizeof(header_t));
+    message = new char[sizeof(header_t)];
+    header = reinterpret_cast<header_t*>(message);
     CMX_ASSERT(header);
     MAYBE_MEMSET(header, 0, sizeof(header_t));
     header->operation = OP_FENCE;
@@ -724,6 +753,7 @@ void p_Environment::_fence_master(int master_rank)
     /* this call will free up the header allocation */
     nb_wait_for_all(&nb);
     fence_array[master_rank] = 0;
+    delete [] message;
   }
 }
 
@@ -1289,7 +1319,7 @@ void p_Environment::nb_handle_init(_cmx_request *nb)
   nb->in_use = 1;
 }
 
-/* one unnamed semaphore per world process */
+/* one semaphore per world process */
 void p_Environment::_malloc_semaphore()
 {
   char *name;
@@ -1310,7 +1340,6 @@ void p_Environment::_malloc_semaphore()
   _translate_mpi_error(status, "_malloc_semaphore:MPI_Type_commmit");
   CMX_ASSERT(MPI_SUCCESS == status);
 
-  //semaphores = (sem_t**)malloc(sizeof(sem_t*) * p_config.world_size());
   semaphores = new sem_t*[p_config.world_size()];
   CMX_ASSERT(semaphores);
 
@@ -1386,7 +1415,7 @@ void p_Environment::_malloc_semaphore()
 
   sem_name = name;
 
-  delete [] name;
+  delete []name;
   delete [] names;
 
   status = MPI_Type_free(&shm_name_type);
@@ -2177,7 +2206,6 @@ void p_Environment::_acc_handler(header_t *header, char *scale, int proc)
     else {
       acc_buffer = static_server_buffer;
     }
-
     {
       char *buf = (char*)acc_buffer;
       int bytes_remaining = header->length;
@@ -2193,7 +2221,20 @@ void p_Environment::_acc_handler(header_t *header, char *scale, int proc)
   }
 
   if (CMX_ENABLE_ACC_SELF || CMX_ENABLE_ACC_SMP) {
-    sem_wait(semaphores[header->rank]);
+    //    sem_wait(semaphores[header->rank]);
+    if (sem_wait(semaphores[header->rank]) != 0) {
+      if (errno == EAGAIN) {
+        printf("p[%d] SEM_WAIT ERROR Operation could not be performed"
+            " without blocking\n", p_config.rank());
+      } else if (errno == EINTR) {
+        printf("p[%d] SEM_WAIT ERROR Call interrupted\n",p_config.rank());
+      } else if (errno == EINVAL) {
+        printf("p[%d] SEM_WAIT ERROR Not a valid semiphore\n",p_config.rank());
+      } else if (errno == ETIMEDOUT) {
+        printf("p[%d] SEM_WAIT ERROR Call timed out\n",p_config.rank());
+      }
+      CMX_ASSERT(0);
+    }
     _acc(acc_type, header->length, mapped_offset, acc_buffer, scale);
     sem_post(semaphores[header->rank]);
   }
@@ -3414,7 +3455,6 @@ void p_Environment::nb_recv(void *buf, int count, int source, _cmx_request *nb)
   message->datatype = MPI_DATATYPE_NULL;
 
   if (NULL == nb->recv_head) {
-
     nb->recv_head = message;
   }
   if (NULL != nb->recv_tail) {
@@ -3465,7 +3505,7 @@ void p_Environment::nb_wait_for_send1(_cmx_request *nb)
     CHECK_MPI_RETVAL(retval);
 
     if (nb->send_head->need_free) {
-      delete nb->send_head->message;
+      delete [] nb->send_head->message;
     }
 
     if (MPI_DATATYPE_NULL != nb->send_head->datatype) {
@@ -3513,7 +3553,7 @@ int p_Environment::nb_test_for_send1(_cmx_request *nb, message_t **save_send_hea
 
     if (flag) {
       if (nb->send_head->need_free) {
-        delete nb->send_head->message;
+        delete [] nb->send_head->message;
       }
 
       if (MPI_DATATYPE_NULL != nb->send_head->datatype) {
@@ -3572,14 +3612,15 @@ void p_Environment::nb_wait_for_recv1(_cmx_request *nb)
       CMX_ASSERT(stride->stride);
       CMX_ASSERT(stride->count);
       CMX_ASSERT(stride->stride_levels);
-      unpack((char*)nb->recv_head->message, (char*)stride->ptr,
+      unpack(static_cast<char*>(nb->recv_head->message),
+          static_cast<char*>(stride->ptr),
           stride->stride, stride->count, stride->stride_levels);
       delete stride;
     }
 
     if (NULL != nb->recv_head->iov) {
       int i = 0;
-      char *message = (char*)nb->recv_head->message;
+      char *message = static_cast<char*>(nb->recv_head->message);
       int off = 0;
       _cmx_giov_t *iov = nb->recv_head->iov;
       for (i=0; i<iov->count; ++i) {
@@ -3718,7 +3759,7 @@ void p_Environment::init_message(message_t *message)
  */
 void p_Environment::init_request(_cmx_request *nb)
 {
-  nb->in_use = 0;
+  nb->in_use = 1;
   nb->send_size = 0;
   nb->send_head = NULL;
   nb->send_tail = NULL;
@@ -3749,6 +3790,8 @@ void p_Environment::nb_wait_for_all(_cmx_request *nb)
       nb_wait_for_recv1(nb);
     }
   }
+  if (nb->send_tail != NULL) printf("p[%d] (nb_wait_for_all) send_tail not deleted\n",p_config.rank());
+  if (nb->recv_tail != NULL) printf("p[%d] (nb_wait_for_all) recv_tail not deleted\n",p_config.rank());
   nb->in_use = 0;
 }
 
@@ -3897,14 +3940,15 @@ void p_Environment::nb_get(void *src, void *dst, int bytes, int proc, _cmx_reque
   CMX_ASSERT(NULL != dst);
   CMX_ASSERT(bytes > 0);
   CMX_ASSERT(proc >= 0);
-  CMX_ASSERT(proc < g_state.size);
+  CMX_ASSERT(proc < p_config.size());
   CMX_ASSERT(NULL != nb);
+  init_request(nb);
 
   if (CMX_ENABLE_GET_SELF) {
     /* get from self */
     if (p_config.rank() == proc) {
-      if (fence_array[g_state.master[proc]]) {
-        _fence_master(g_state.master[proc]);
+      if (fence_array[p_config.master(proc)]) {
+        _fence_master(p_config.master(proc));
       }
       (void)memcpy(dst, src, bytes);
       return;
@@ -3914,13 +3958,13 @@ void p_Environment::nb_get(void *src, void *dst, int bytes, int proc, _cmx_reque
   if (CMX_ENABLE_GET_SMP) {
     /* get from SMP node */
     // if (g_state.hostid[proc] == g_state.hostid[p_config.rank()]) 
-    if (g_state.master[proc] == g_state.master[p_config.rank()]) 
+    if (p_config.master(proc) == p_config.master(p_config.rank())) 
     {
       reg_entry_t *reg_entry = NULL;
       void *mapped_offset = NULL;
 
-      if (fence_array[g_state.master[proc]]) {
-        _fence_master(g_state.master[proc]);
+      if (fence_array[p_config.master(proc)]) {
+        _fence_master(p_config.master(proc));
       }
 
       reg_entry = p_register.find(proc, src, bytes);
@@ -3935,8 +3979,9 @@ void p_Environment::nb_get(void *src, void *dst, int bytes, int proc, _cmx_reque
     header_t *header = NULL;
     int master_rank = -1;
 
-    master_rank = g_state.master[proc];
-    header = new header_t;
+    master_rank = p_config.master(proc);
+    char *message = new char[sizeof(header_t)];
+    header = reinterpret_cast<header_t*>(message);
     CMX_ASSERT(header);
     MAYBE_MEMSET(header, 0, sizeof(header_t));
     header->operation = OP_GET;
@@ -3956,7 +4001,7 @@ void p_Environment::nb_get(void *src, void *dst, int bytes, int proc, _cmx_reque
         bytes_remaining -= size;
       } while (bytes_remaining > 0);
     }
-    nb_send_header(header, sizeof(header_t), master_rank, nb);
+    nb_send_header(message, sizeof(header_t), master_rank, nb);
   }
   nb->in_use = 1;
 }
@@ -3969,14 +4014,15 @@ void p_Environment::nb_acc(int datatype, void *scale,
   CMX_ASSERT(NULL != dst);
   CMX_ASSERT(bytes > 0);
   CMX_ASSERT(proc >= 0);
-  CMX_ASSERT(proc < g_state.size);
+  CMX_ASSERT(proc < p_config.size());
   CMX_ASSERT(NULL != nb);
 
+  init_request(nb);
   if (CMX_ENABLE_ACC_SELF) {
     /* acc to self */
     if (p_config.rank() == proc) {
-      if (fence_array[g_state.master[proc]]) {
-        _fence_master(g_state.master[proc]);
+      if (fence_array[p_config.master(proc)]) {
+        _fence_master(p_config.master(proc));
       }
       sem_wait(semaphores[proc]);
       _acc(datatype, bytes, dst, src, scale);
@@ -3988,19 +4034,31 @@ void p_Environment::nb_acc(int datatype, void *scale,
   if (CMX_ENABLE_ACC_SMP) {
     /* acc to same SMP node */
     // if (g_state.hostid[proc] == g_state.hostid[p_config.rank()]) 
-    if (g_state.master[proc] == g_state.master[p_config.rank()]) 
+    if (p_config.master(proc) == p_config.master(p_config.rank())) 
     {
       reg_entry_t *reg_entry = NULL;
       void *mapped_offset = NULL;
 
-      if (fence_array[g_state.master[proc]]) {
-        _fence_master(g_state.master[proc]);
+      if (fence_array[p_config.master(proc)]) {
+        _fence_master(p_config.master(proc));
       }
 
       reg_entry = p_register.find(proc, dst, bytes);
       CMX_ASSERT(reg_entry);
       mapped_offset = _get_offset_memory(reg_entry, dst);
-      sem_wait(semaphores[proc]);
+      if (sem_wait(semaphores[proc]) != 0) {
+        if (errno == EAGAIN) {
+          printf("p[%d] Operation could not be performed without blocking\n",
+              p_config.rank());
+        } else if (errno == EINTR) {
+          printf("p[%d] Call interrupted\n",p_config.rank());
+        } else if (errno == EINVAL) {
+          printf("p[%d] Not a valid semiphore\n",p_config.rank());
+        } else if (errno == ETIMEDOUT) {
+          printf("p[%d] Call timed out\n",p_config.rank());
+        }
+        CMX_ASSERT(0);
+      }
       _acc(datatype, bytes, mapped_offset, src, scale);
       sem_post(semaphores[proc]);
       return;
@@ -4045,7 +4103,7 @@ void p_Environment::nb_acc(int datatype, void *scale,
     }
     use_eager = _eager_check(scale_size+bytes);
 
-    master_rank = g_state.master[proc];
+    master_rank = p_config.master(proc);
 
     /* only fence on the master */
     fence_array[master_rank] = 1;
@@ -4058,7 +4116,7 @@ void p_Environment::nb_acc(int datatype, void *scale,
     }
     message = new char[message_size];
     CMX_ASSERT(message);
-    header = (header_t*)message;
+    header = reinterpret_cast<header_t*>(message);
     header->operation = operation;
     header->remote_address = static_cast<char*>(dst);
     header->local_address = static_cast<char*>(src);
@@ -4071,7 +4129,7 @@ void p_Environment::nb_acc(int datatype, void *scale,
       nb_send_header(message, message_size, master_rank, nb);
     }
     else {
-      char *buf = (char*)src;
+      char *buf = static_cast<char*>(src);
       int bytes_remaining = bytes;
       nb_send_header(message, message_size, master_rank, nb);
       do {
@@ -4096,6 +4154,7 @@ void p_Environment::nb_puts(
   int n1dim;  /* number of 1 dim block */
   int src_bvalue[7], src_bunit[7];
   int dst_bvalue[7], dst_bunit[7];
+  init_request(nb);
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_puts(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -4373,6 +4432,7 @@ void p_Environment::nb_gets(
   int n1dim;  /* number of 1 dim block */
   int src_bvalue[7], src_bunit[7];
   int dst_bvalue[7], dst_bunit[7];
+  init_request(nb);
 
   /* if not actually a strided get */
   if (0 == stride_levels) {
@@ -4651,6 +4711,7 @@ void p_Environment::nb_accs(
   int n1dim;  /* number of 1 dim block */
   int src_bvalue[7], src_bunit[7];
   int dst_bvalue[7], dst_bunit[7];
+  init_request(nb);
 
   /* if not actually a strided acc */
   if (0 == stride_levels) {
@@ -4867,6 +4928,7 @@ void p_Environment::nb_putv(
     int proc, _cmx_request *nb)
 {
   int i = 0;
+  init_request(nb);
 
   for (i=0; i<iov_len; ++i) {
     /* if not a vector put to self, use packed algorithm */
@@ -4971,6 +5033,7 @@ void p_Environment::nb_getv(
     int proc, _cmx_request *nb)
 {
   int i = 0;
+  init_request(nb);
 
   for (i=0; i<iov_len; ++i) {
     /* if not a vector get from self, use packed algorithm */
@@ -5082,6 +5145,7 @@ void p_Environment::nb_accv(
     int proc, _cmx_request *nb)
 {
   int i = 0;
+  init_request(nb);
 
   for (i=0; i<iov_len; ++i) {
     /* if not a vector acc to self, use packed algorithm */

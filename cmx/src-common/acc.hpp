@@ -90,19 +90,19 @@ static inline void _acc(
         const void * const src,
         const void * const scale)
 {
-#define ACC_BLAS(CMX_TYPE, C_TYPE, LETTER)                                \
-    if (op == CMX_TYPE) {                                                 \
+#define ACC_BLAS(CMX_TYPE, C_TYPE, LETTER)                                  \
+    if (op == CMX_TYPE) {                                                   \
         const BLAS_INT ONE = 1;                                             \
         const BLAS_INT N = bytes/sizeof(C_TYPE);                            \
         BLAS_##LETTER##AXPY(&N, scale, src, &ONE, dst, &ONE);               \
     } else                                                                 
-#define ACC(WHICH, CMX_TYPE, C_TYPE)                                      \
-    if (op == CMX_TYPE) {                                                 \
+#define ACC(WHICH, CMX_TYPE, C_TYPE)                                        \
+    if (op == CMX_TYPE) {                                                   \
         int m;                                                              \
         const int m_lim = bytes/sizeof(C_TYPE);                             \
-        C_TYPE * const iterator = (C_TYPE * const )dst;    \
-        const C_TYPE * const value = (const C_TYPE * const )src;\
-        const C_TYPE calc_scale = *(const C_TYPE * const )scale;    \
+        C_TYPE * const iterator = (C_TYPE * const )dst;                     \
+        const C_TYPE * const value = (const C_TYPE * const )src;            \
+        const C_TYPE calc_scale = *(const C_TYPE * const )scale;            \
         for (m = 0 ; m < m_lim; ++m) {                                      \
             IADD_SCALE_##WHICH(iterator[m], value[m], calc_scale);          \
         }                                                                   \

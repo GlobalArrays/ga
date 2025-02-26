@@ -24,7 +24,7 @@ int main(int argc, char **argv)
     std::vector<void*> ptrs;
 
     CMX::Allocation alloc;
-    int64_t bytes = sizeof(long)*TEST_SIZE;
+    long bytes = sizeof(long)*TEST_SIZE;
     alloc.malloc(bytes,world);
     if (rank == 0) {
       std::cout <<"Distributed malloc completed"<<std::endl;
@@ -46,9 +46,9 @@ int main(int argc, char **argv)
     long* ptr = static_cast<long*>(alloc.access());
     bool ok = true;
     for (i=0; i<TEST_SIZE; i++) {
-      if (ptr[i] != (long)(i+rank*TEST_SIZE)) {
-        printf("p[%d] ptr[%d]: %ld expected: %d\n",wrank,
-            i,ptr[i],i+rank*TEST_SIZE);
+      if (ptr[i] != (long)(i+rank*TEST_SIZE) && ok) {
+        printf("p[%d] ptr[%d]: %ld expected: %ld\n",wrank,
+            i,ptr[i],(long)(i+rank*TEST_SIZE));
         ok = false;
       }
     }
@@ -71,8 +71,8 @@ int main(int argc, char **argv)
     ok = true;
     for (i=0; i<TEST_SIZE; i++) {
       if (ptr[i] != (long)(i+rank*TEST_SIZE) && ok) {
-        printf("p[%d] ptr[%d]: %ld expected: %d\n",wrank,
-            i,ptr[i],i+rank*TEST_SIZE);
+        printf("p[%d] ptr[%d]: %ld expected: %ld\n",wrank,
+            i,ptr[i],(long)(i+rank*TEST_SIZE));
         ok = false;
       }
     }

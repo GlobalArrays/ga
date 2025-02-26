@@ -253,8 +253,8 @@ int nbaccv(int op, void *scale, _cmx_giov_t *darr, int64_t len, int proc, _cmx_r
 /**
  * Contiguous Get.
  *
- * @param[in] src pointer to 1st segment at source
- * @param[in] dst pointer to 1st segment at destination
+ * @param[in] src pointer to source buffer
+ * @param[in] dst pointer to destination buffer
  * @param[in] bytes number of bytes to transfer
  * @param[in] proc remote process(or) id. This processor must be in the same
  *            group as the allocation.
@@ -292,8 +292,8 @@ int getv(_cmx_giov_t *darr, int64_t len, int proc);
 /**
  * Nonblocking Contiguous Get.
  *
- * @param[in] src pointer to 1st segment at source
- * @param[in] dst pointer to 1st segment at destination
+ * @param[in] src pointer to source buffer
+ * @param[in] dst pointer to destination buffer
  * @param[in] bytes number of bytes to transfer
  * @param[in] proc remote process(or) id. This processor must be in the same
  *            group as the allocation.

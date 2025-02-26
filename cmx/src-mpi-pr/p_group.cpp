@@ -208,6 +208,8 @@ int p_Group::size()
 int p_Group::barrier()
 {
   int status = MPI_Barrier(p_comm);
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
   if (status == MPI_SUCCESS) {
     return CMX_SUCCESS;
   }

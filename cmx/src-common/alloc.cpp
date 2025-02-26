@@ -208,7 +208,9 @@ int Allocation::nbputv(cmx_giov_t *darr, int64_t len, int proc, cmx_request* req
 int Allocation::acc(int op, void *scale, void *src, void *dst,
     int64_t bytes, int proc)
 {
-  return CMX_SUCCESS;
+  int wrank;
+  MPI_Comm_rank(MPI_COMM_WORLD,&wrank);
+  return p_allocation->acc(op,scale,src,dst,bytes,proc);
 }
 
 /**
@@ -266,7 +268,7 @@ int Allocation::accv(int op, void *scale, cmx_giov_t *darr, int64_t len, int pro
 int Allocation::nbacc(int op, void *scale, void *src, void *dst,
     int64_t bytes, int proc, cmx_request *req)
 {
-  return CMX_SUCCESS;
+  return p_allocation->nbacc(op,scale,src,dst,bytes,proc,req);
 }
 
 /**
@@ -313,8 +315,8 @@ int Allocation::nbaccv(int op, void *scale, cmx_giov_t *darr, int64_t len,
 /**
  * Contiguous Get.
  *
- * @param[in] src pointer to 1st segment at src
- * @param[in] dst pointer to 1st segment at destination
+ * @param[in] src pointer to source buffer
+ * @param[in] dst pointer to destination buffer
  * @param[in] bytes number of bytes to transfer
  * @param[in] proc remote process(or) id. This processor must be in the same
  *            group as the allocation.
@@ -322,7 +324,7 @@ int Allocation::nbaccv(int op, void *scale, cmx_giov_t *darr, int64_t len,
  */
 int Allocation::get(void *src, void *dst, int64_t bytes, int proc)
 {
-  return CMX_SUCCESS;
+  return p_allocation->get(src,dst,bytes,proc);
 }
 
 /**
@@ -361,8 +363,8 @@ int Allocation::getv(cmx_giov_t *darr, int64_t len, int proc)
 /**
  * Nonblocking Contiguous Get.
  *
- * @param[in] src pointer to 1st segment at source
- * @param[in] dst pointer to 1st segment at destination
+ * @param[in] src pointer to source buffer
+ * @param[in] dst pointer to destination buffer
  * @param[in] bytes number of bytes to transfer
  * @param[in] proc remote process(or) id. This processor must be in the same
  *            group as the allocation.
@@ -372,7 +374,7 @@ int Allocation::getv(cmx_giov_t *darr, int64_t len, int proc)
 int Allocation::nbget(void *src, void *dst, int64_t bytes,
     int proc, cmx_request *req)
 {
-  return CMX_SUCCESS;
+  return p_allocation->nbget(src,dst,bytes,proc,req);
 }
 
 /**

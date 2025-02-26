@@ -166,3 +166,5 @@ install(TARGETS comex
 # -------------------------------------------------------------
 add_executable(unit_contig_putc.x testing/unit_contig_putc.c)
 target_link_libraries(unit_contig_putc.x armci)
+add_executable(unit_contig_accc.x testing/unit_contig_accc.c)
+target_link_libraries(unit_contig_accc.x armci)

@@ -233,6 +233,13 @@ int p_Allocation::nbputv(_cmx_giov_t *darr, int64_t len, int proc, _cmx_request*
 int p_Allocation::acc(int op, void *scale, void *src, void *dst,
     int64_t bytes, int proc)
 {
+  cmx_request request;
+  int wrank;
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_acc(op,scale,src,dst,bytes,wrank,&request);
+  p_impl_environment->nb_wait_for_all(&request);
   return CMX_SUCCESS;
 }
 
@@ -291,6 +298,9 @@ int p_Allocation::accv(int op, void *scale, _cmx_giov_t *darr, int64_t len, int 
 int p_Allocation::nbacc(int op, void *scale, void *src, void *dst,
     int64_t bytes, int proc, _cmx_request *req)
 {
+  int wrank;
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_acc(op,scale,src,dst,bytes,wrank,req);
   return CMX_SUCCESS;
 }
 
@@ -340,8 +350,8 @@ int p_Allocation::nbaccv(int op, void *scale, _cmx_giov_t *darr, int64_t len,
 /**
  * Contiguous Get.
  *
- * @param[in] src pointer to 1st segment at source
- * @param[in] dst pointer to 1st segment at destination
+ * @param[in] src pointer to source buffer
+ * @param[in] dst pointer to destination buffer
  * @param[in] bytes number of bytes to transfer
  * @param[in] proc remote process(or) id. This processor must be in the same
  *            group as the allocation.
@@ -349,6 +359,13 @@ int p_Allocation::nbaccv(int op, void *scale, _cmx_giov_t *darr, int64_t len,
  */
 int p_Allocation::get(void *src, void *dst, int64_t bytes, int proc)
 {
+  cmx_request request;
+  int wrank;
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_get(src,dst,bytes,wrank,&request);
+  p_impl_environment->nb_wait_for_all(&request);
   return CMX_SUCCESS;
 }
 
@@ -388,8 +405,8 @@ int p_Allocation::getv(_cmx_giov_t *darr, int64_t len, int proc)
 /**
  * Nonblocking Contiguous Get.
  *
- * @param[in] src pointer to 1st segment at source
- * @param[in] dst pointer to 1st segment at destination
+ * @param[in] src pointer to source buffer
+ * @param[in] dst pointer to destination buffer
  * @param[in] bytes number of bytes to transfer
  * @param[in] proc remote process(or) id. This processor must be in the same
  *            group as the allocation.
@@ -399,6 +416,9 @@ int p_Allocation::getv(_cmx_giov_t *darr, int64_t len, int proc)
 int p_Allocation::nbget(void *src, void *dst, int64_t bytes,
     int proc, _cmx_request *req)
 {
+  int wrank;
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_get(src,dst,bytes,wrank,req);
   return CMX_SUCCESS;
 }
 

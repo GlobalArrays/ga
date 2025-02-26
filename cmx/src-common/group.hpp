@@ -106,6 +106,8 @@ private:
 friend class p_Environment;
 
 p_Group* p_group;
+ 
+bool p_new_group; // Check to see if p_group needs to be deleted in destructor
 
 static Group *p_world_group;
 };

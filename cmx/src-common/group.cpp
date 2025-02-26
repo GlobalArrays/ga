@@ -14,6 +14,7 @@ Group* Group::p_world_group = NULL;
  */
 Group::Group(int n, int *pid_list, MPI_Comm comm)
 {
+  p_new_group = true;
   p_group = new p_Group(n, pid_list, comm);
 }
 
@@ -24,6 +25,7 @@ Group::Group(int n, int *pid_list, MPI_Comm comm)
  */
 Group::Group(p_Group* group)
 {
+  p_new_group = false;
   p_group = group;
 }
 
@@ -35,6 +37,7 @@ Group::Group(p_Group* group)
  */
 Group::Group(int n, int *pid_list, Group *group)
 {
+  p_new_group = true;
   p_group = new p_Group(n, pid_list, group->p_group);
 }
 
@@ -43,6 +46,7 @@ Group::Group(int n, int *pid_list, Group *group)
  */
 Group::~Group()
 {
+  if (p_new_group) delete p_group;
 }
 
 /**
