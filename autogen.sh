@@ -1,7 +1,12 @@
-#! /bin/sh
+#!/bin/sh
 
-set -e
+#set -e
 set -x
+
+command -v autoreconf 2 > /dev/null;exitcode=$?
+echo exitcode is $exitcode
+if [ $exitcode = 0 ]; then autoreconf -vif; exitcode=$? ;fi
+if [ $exitcode = 0 ]; then exit ; fi
 
 if [ -z "$1" ]; then
     AUTOTOOLS_DIR="`pwd`/autotools"
