@@ -468,7 +468,7 @@ void p_Environment::finalize()
     header_t *header = NULL;
     char *message = NULL;
     _cmx_request nb;
-    nb_handle_init(&nb);
+    nb_register_request(&nb);
 
     my_master = p_config.master(p_config.rank());
     message = new char[sizeof(header_t)];
@@ -565,7 +565,7 @@ p_Environment::~p_Environment()
     int my_master = -1;
     header_t *header = NULL;
     _cmx_request nb;
-    nb_handle_init(&nb);
+    nb_request_init(&nb);
 
     my_master = g_state.master[p_config.rank()];
     header = (header_t*)malloc(sizeof(header_t));
@@ -644,7 +644,7 @@ void p_Environment::fence(Group *group)
 #endif
 
   /* optimize by only sending to procs which we have outstanding messages */
-  init_request(&nb);
+  nb_request_init(&nb);
   it = fenced_procs.begin();
   while (it != fenced_procs.end()) {
     p = *it;
@@ -731,7 +731,7 @@ void p_Environment::_fence_master(int master_rank)
     header_t *header = NULL;
     char *message = NULL;
     _cmx_request nb;
-    nb_handle_init(&nb);
+    nb_request_init(&nb);
     printf("p[%d] (fence_master) fencing proc: %d\n",p_config.rank(),
         master_rank);
 
@@ -757,11 +757,11 @@ void p_Environment::_fence_master(int master_rank)
   }
 }
 
-int p_Environment::_packed_size(int *src_stride, int *count, int stride_levels)
+int64_t p_Environment::_packed_size(int64_t *src_stride, int64_t *count, int stride_levels)
 {
-  int size;
-  int i;
-  int n1dim;  /* number of 1 dim block */
+  int64_t size;
+  int64_t i;
+  int64_t n1dim;  /* number of 1 dim block */
 
   CMX_ASSERT(stride_levels >= 0);
   CMX_ASSERT(stride_levels < CMX_MAX_STRIDE_LEVEL);
@@ -789,13 +789,13 @@ int p_Environment::_packed_size(int *src_stride, int *count, int stride_levels)
 }
 
 char* p_Environment::pack(
-    char *src, int *src_stride, int *count, int stride_levels, int *size)
+    char *src, int64_t *src_stride, int64_t *count, int stride_levels, int64_t *size)
 {
-  int i, j;
-  long src_idx;  /* index offset of current block position to ptr */
-  int n1dim;  /* number of 1 dim block */
-  int src_bvalue[7], src_bunit[7];
-  int packed_index = 0;
+  int64_t i, j;
+  int64_t src_idx;  /* index offset of current block position to ptr */
+  int64_t n1dim;  /* number of 1 dim block */
+  int64_t src_bvalue[7], src_bunit[7];
+  int64_t packed_index = 0;
   char *packed_buffer = NULL;
 
   CMX_ASSERT(stride_levels >= 0);
@@ -832,7 +832,7 @@ char* p_Environment::pack(
   for(i=0; i<n1dim; i++) {
     src_idx = 0;
     for(j=1; j<=stride_levels; j++) {
-      src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+      src_idx += (int64_t) src_bvalue[j] * (int64_t) src_stride[j-1];
       if((i+1) % src_bunit[j] == 0) {
         src_bvalue[j]++;
       }
@@ -853,13 +853,13 @@ char* p_Environment::pack(
 
 
 void p_Environment::unpack(char *packed_buffer,
-    char *dst, int *dst_stride, int *count, int stride_levels)
+    char *dst, int64_t *dst_stride, int64_t *count, int stride_levels)
 {
-  int i, j;
-  long dst_idx;  /* index offset of current block position to ptr */
-  int n1dim;  /* number of 1 dim block */
-  int dst_bvalue[7], dst_bunit[7];
-  int packed_index = 0;
+  int64_t i, j;
+  int64_t dst_idx;  /* index offset of current block position to ptr */
+  int64_t n1dim;  /* number of 1 dim block */
+  int64_t dst_bvalue[7], dst_bunit[7];
+  int64_t packed_index = 0;
 
   CMX_ASSERT(stride_levels >= 0);
   CMX_ASSERT(stride_levels < CMX_MAX_STRIDE_LEVEL);
@@ -891,7 +891,7 @@ void p_Environment::unpack(char *packed_buffer,
   for(i=0; i<n1dim; i++) {
     dst_idx = 0;
     for(j=1; j<=stride_levels; j++) {
-      dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+      dst_idx += (int64_t) dst_bvalue[j] * (int64_t) dst_stride[j-1];
       if((i+1) % dst_bunit[j] == 0) {
         dst_bvalue[j]++;
       }
@@ -1054,7 +1054,7 @@ int p_Environment::dist_malloc(void **ptrs, int64_t bytes, Group *group)
     char *message = NULL;
     header_t *header = NULL;
 
-    nb_handle_init(&nb);
+    nb_request_init(&nb);
     reg_entries_local_size = sizeof(reg_entry_t)*reg_entries_local_count;
     message_size = sizeof(header_t) + reg_entries_local_size;
     message = new char[message_size];
@@ -1161,7 +1161,7 @@ int p_Environment::dist_free(void *ptr, Group *group)
     char *message = NULL;
     header_t *header = NULL;
 
-    nb_handle_init(&nb);
+    nb_request_init(&nb);
     rank_ptrs_local_size = sizeof(rank_ptr_t) * reg_entries_local_count;
     message_size = sizeof(header_t) + rank_ptrs_local_size;
     message = new char[message_size];
@@ -1274,13 +1274,13 @@ void p_Environment::waitAll(Group *group)
   }
 }
 
-/* The register and unregister functions are used limit to the number of
+/* The register and unregister functions are used to limit the number of
  * outstanding non-blocking handles*/
 void p_Environment::nb_register_request(_cmx_request *nb)
 {
   int ival = -1;
   int i;
-  return;
+  /* look for unused handle */
   for (i=nb_last_request; i<nb_last_request+nb_max_outstanding; i++) {
     int idx = i%nb_max_outstanding;
     if (nb_list[idx] == NULL) {
@@ -1293,6 +1293,7 @@ void p_Environment::nb_register_request(_cmx_request *nb)
     nb_wait_for_all(nb_list[ival]);
     nb_list[ival] == NULL;
   }
+  nb_request_init(nb);
   nb_list[ival] = nb;
   nb_last_request++;
   nb_last_request = nb_last_request%nb_max_outstanding;
@@ -1301,13 +1302,12 @@ void p_Environment::nb_register_request(_cmx_request *nb)
 void p_Environment::nb_unregister_request(_cmx_request *nb)
 {
   int i;
-  return;
   for (i=0; i<nb_max_outstanding; i++) {
     if (nb = nb_list[i]) nb_list[i] = NULL;
   }
 }
 
-void p_Environment::nb_handle_init(_cmx_request *nb)
+void p_Environment::nb_request_init(_cmx_request *nb)
 {
   nb->send_size = 0;
   nb->send_head = NULL;
@@ -1966,7 +1966,7 @@ void p_Environment::_get_packed_handler(header_t *header, char *payload, int pro
   reg_entry_t *reg_entry = NULL;
   void *mapped_offset = NULL;
   char *packed_buffer = NULL;
-  int packed_index = 0;
+  int64_t packed_index = 0;
   stride_t *stride_src = (stride_t*)payload;
 
 #if DEBUG
@@ -2335,14 +2335,14 @@ void p_Environment::_acc_packed_handler(header_t *header, char *payload, int pro
   {
     char *packed_buffer = acc_buffer;
     char *dst = (char*)mapped_offset;
-    int *dst_stride = stride->stride;
-    int *count = stride->count;
+    int64_t *dst_stride = stride->stride;
+    int64_t *count = stride->count;
     int stride_levels = stride->stride_levels;
-    int i, j;
-    long dst_idx;  /* index offset of current block position to ptr */
-    int n1dim;  /* number of 1 dim block */
-    int dst_bvalue[7], dst_bunit[7];
-    int packed_index = 0;
+    int64_t i, j;
+    int64_t dst_idx;  /* index offset of current block position to ptr */
+    int64_t n1dim;  /* number of 1 dim block */
+    int64_t dst_bvalue[7], dst_bunit[7];
+    int64_t packed_index = 0;
 
     CMX_ASSERT(stride_levels >= 0);
     CMX_ASSERT(stride_levels < CMX_MAX_STRIDE_LEVEL);
@@ -2374,7 +2374,7 @@ void p_Environment::_acc_packed_handler(header_t *header, char *payload, int pro
     for(i=0; i<n1dim; i++) {
       dst_idx = 0;
       for(j=1; j<=stride_levels; j++) {
-        dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+        dst_idx += (int64_t) dst_bvalue[j] * (int64_t) dst_stride[j-1];
         if((i+1) % dst_bunit[j] == 0) {
           dst_bvalue[j]++;
         }
@@ -3219,7 +3219,7 @@ void p_Environment::server_recv_datatype(void *buf, MPI_Datatype dt, int source)
   MPI_Status status;
 
   retval = MPI_Recv(buf, 1, dt, source,
-      CMX_TAG, g_state.comm, &status);
+      CMX_TAG, p_config.global_comm(), &status);
   _translate_mpi_error(retval,"server_recv_datatype:MPI_Recv");
 
   CHECK_MPI_RETVAL(retval);
@@ -3343,8 +3343,8 @@ void p_Environment::nb_recv_packed(void *buf, int count, int source, _cmx_reques
   }
   nb->recv_tail = message;
 
-  retval = MPI_Irecv(buf, count, MPI_CHAR, source, CMX_TAG, g_state.comm,
-      &(message->request));
+  retval = MPI_Irecv(buf, count, MPI_CHAR, source, CMX_TAG,
+      p_config.global_comm(), &(message->request));
   _translate_mpi_error(retval,"nb_recv_packed:MPI_Irecv");
   CHECK_MPI_RETVAL(retval);
 }
@@ -3383,7 +3383,7 @@ void p_Environment::nb_recv_datatype(void *buf, MPI_Datatype dt, int source, _cm
   }
   nb->recv_tail = message;
 
-  retval = MPI_Irecv(buf, 1, dt, source, CMX_TAG, g_state.comm,
+  retval = MPI_Irecv(buf, 1, dt, source, CMX_TAG, p_config.global_comm(),
       &(message->request));
   _translate_mpi_error(retval,"nb_recv_datatype:MPI_Irecv");
   CHECK_MPI_RETVAL(retval);
@@ -3423,8 +3423,8 @@ void p_Environment::nb_recv_iov(void *buf, int count, int source, _cmx_request *
   }
   nb->recv_tail = message;
 
-  retval = MPI_Irecv(buf, count, MPI_CHAR, source, CMX_TAG, g_state.comm,
-      &(message->request));
+  retval = MPI_Irecv(buf, count, MPI_CHAR, source, CMX_TAG,
+      p_config.global_comm(), &(message->request));
   _translate_mpi_error(retval,"nb_recv_iov:MPI_Irecv");
   CHECK_MPI_RETVAL(retval);
 }
@@ -3633,7 +3633,7 @@ void p_Environment::nb_wait_for_recv1(_cmx_request *nb)
     }
 
     if (nb->recv_head->need_free) {
-      delete nb->recv_head->message;
+      delete [] nb->recv_head->message;
     }
 
     if (MPI_DATATYPE_NULL != nb->recv_head->datatype) {
@@ -3708,7 +3708,7 @@ int p_Environment::nb_test_for_recv1(_cmx_request *nb, message_t **save_recv_hea
       }
 
       if (nb->recv_head->need_free) {
-        free(nb->recv_head->message);
+        delete [] nb->recv_head->message;
       }
 
       if (MPI_DATATYPE_NULL != nb->recv_head->datatype) {
@@ -3753,23 +3753,6 @@ void p_Environment::init_message(message_t *message)
   message->iov = NULL;
 }
 
-/**
- * Initialize request struct before using
- * @param message struct to be initialized
- */
-void p_Environment::init_request(_cmx_request *nb)
-{
-  nb->in_use = 1;
-  nb->send_size = 0;
-  nb->send_head = NULL;
-  nb->send_tail = NULL;
-  nb->recv_size = 0;
-  nb->recv_head = NULL;
-  nb->recv_tail = NULL;
-  nb->group = NULL;
-}
-
-
 void p_Environment::nb_wait_for_all(_cmx_request *nb)
 {
 #if DEBUG
@@ -3793,6 +3776,7 @@ void p_Environment::nb_wait_for_all(_cmx_request *nb)
   if (nb->send_tail != NULL) printf("p[%d] (nb_wait_for_all) send_tail not deleted\n",p_config.rank());
   if (nb->recv_tail != NULL) printf("p[%d] (nb_wait_for_all) recv_tail not deleted\n",p_config.rank());
   nb->in_use = 0;
+  nb_unregister_request(nb);
 }
 
 /* Returns 0 if no outstanding requests */
@@ -3844,7 +3828,8 @@ int p_Environment::nb_test_for_all(_cmx_request *nb)
 }
 
 
-void p_Environment::nb_put(void *src, void *dst, int bytes, int proc, _cmx_request *nb)
+void p_Environment::nb_put(void *src, void *dst, int64_t bytes, int proc,
+    _cmx_request *nb)
 {
   CMX_ASSERT(NULL != src);
   CMX_ASSERT(NULL != dst);
@@ -3852,7 +3837,6 @@ void p_Environment::nb_put(void *src, void *dst, int bytes, int proc, _cmx_reque
   CMX_ASSERT(proc >= 0);
   CMX_ASSERT(proc < p_config.size());
   CMX_ASSERT(NULL != nb);
-  init_request(nb);
 
 #if DEBUG
   printf("[%d] nb_put(src=%p, dst=%p, bytes=%d, proc=%d, nb=%p)\n",
@@ -3891,7 +3875,7 @@ void p_Environment::nb_put(void *src, void *dst, int bytes, int proc, _cmx_reque
 
   {
     char *message = NULL;
-    int message_size = 0;
+    size_t message_size = 0;
     header_t *header = NULL;
     int master_rank = -1;
     int use_eager = _eager_check(bytes);
@@ -3919,10 +3903,10 @@ void p_Environment::nb_put(void *src, void *dst, int bytes, int proc, _cmx_reque
     }
     else {
       char *buf = (char*)src;
-      int bytes_remaining = bytes;
+      size_t bytes_remaining = bytes;
       nb_send_header(header, sizeof(header_t), master_rank, nb);
       do {
-        int size = bytes_remaining>max_message_size ?
+        size_t size = bytes_remaining>max_message_size ?
           max_message_size : bytes_remaining;
         nb_send_buffer(buf, size, master_rank, nb);
         buf += size;
@@ -3934,7 +3918,7 @@ void p_Environment::nb_put(void *src, void *dst, int bytes, int proc, _cmx_reque
 }
 
 
-void p_Environment::nb_get(void *src, void *dst, int bytes, int proc, _cmx_request *nb)
+void p_Environment::nb_get(void *src, void *dst, int64_t bytes, int proc, _cmx_request *nb)
 {
   CMX_ASSERT(NULL != src);
   CMX_ASSERT(NULL != dst);
@@ -3942,7 +3926,6 @@ void p_Environment::nb_get(void *src, void *dst, int bytes, int proc, _cmx_reque
   CMX_ASSERT(proc >= 0);
   CMX_ASSERT(proc < p_config.size());
   CMX_ASSERT(NULL != nb);
-  init_request(nb);
 
   if (CMX_ENABLE_GET_SELF) {
     /* get from self */
@@ -3992,9 +3975,9 @@ void p_Environment::nb_get(void *src, void *dst, int bytes, int proc, _cmx_reque
     {
       /* prepost all receives */
       char *buf = (char*)dst;
-      int bytes_remaining = bytes;
+      size_t bytes_remaining = bytes;
       do {
-        int size = bytes_remaining>max_message_size ?
+        size_t size = bytes_remaining>max_message_size ?
           max_message_size : bytes_remaining;
         nb_recv(buf, size, master_rank, nb);
         buf += size;
@@ -4008,7 +3991,7 @@ void p_Environment::nb_get(void *src, void *dst, int bytes, int proc, _cmx_reque
 
 
 void p_Environment::nb_acc(int datatype, void *scale,
-    void *src, void *dst, int bytes, int proc, _cmx_request *nb)
+    void *src, void *dst, int64_t bytes, int proc, _cmx_request *nb)
 {
   CMX_ASSERT(NULL != src);
   CMX_ASSERT(NULL != dst);
@@ -4017,7 +4000,6 @@ void p_Environment::nb_acc(int datatype, void *scale,
   CMX_ASSERT(proc < p_config.size());
   CMX_ASSERT(NULL != nb);
 
-  init_request(nb);
   if (CMX_ENABLE_ACC_SELF) {
     /* acc to self */
     if (p_config.rank() == proc) {
@@ -4069,7 +4051,7 @@ void p_Environment::nb_acc(int datatype, void *scale,
     header_t *header = NULL;
     char *message = NULL;
     int master_rank = -1;
-    int message_size = 0;
+    size_t message_size = 0;
     int scale_size = 0;
     op_t operation = OP_NULL;
     int use_eager = 0;
@@ -4130,10 +4112,10 @@ void p_Environment::nb_acc(int datatype, void *scale,
     }
     else {
       char *buf = static_cast<char*>(src);
-      int bytes_remaining = bytes;
+      size_t bytes_remaining = bytes;
       nb_send_header(message, message_size, master_rank, nb);
       do {
-        int size = bytes_remaining>max_message_size ?
+        size_t size = bytes_remaining>max_message_size ?
           max_message_size : bytes_remaining;
         nb_send_buffer(buf, size, master_rank, nb);
         buf += size;
@@ -4146,15 +4128,14 @@ void p_Environment::nb_acc(int datatype, void *scale,
 
 
 void p_Environment::nb_puts(
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb)
+    void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
+    int64_t *count, int stride_levels, int proc, _cmx_request *nb)
 {
   int i, j;
-  long src_idx, dst_idx;  /* index offset of current block position to ptr */
-  int n1dim;  /* number of 1 dim block */
-  int src_bvalue[7], src_bunit[7];
-  int dst_bvalue[7], dst_bunit[7];
-  init_request(nb);
+  int64_t src_idx, dst_idx;  /* index offset of current block position to ptr */
+  int64_t n1dim;  /* number of 1 dim block */
+  int64_t src_bvalue[7], src_bunit[7];
+  int64_t dst_bvalue[7], dst_bunit[7];
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_puts(src=%p, src_stride=%p, dst=%p, dst_stride=%p, count[0]=%d, stride_levels=%d, proc=%d, nb=%p)\n",
@@ -4172,7 +4153,7 @@ void p_Environment::nb_puts(
   if (CMX_ENABLE_PUT_DATATYPE
       && (!CMX_ENABLE_PUT_SELF || p_config.rank() != proc)
       && (!CMX_ENABLE_PUT_SMP
-        || g_state.hostid[proc] != g_state.hostid[p_config.rank()])
+        || p_config.hostid(proc) != p_config.hostid(p_config.rank()))
       && (_packed_size(src_stride, count, stride_levels) > CMX_PUT_DATATYPE_THRESHOLD)) {
     nb_puts_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
     return;
@@ -4182,7 +4163,7 @@ void p_Environment::nb_puts(
   if (CMX_ENABLE_PUT_PACKED
       && (!CMX_ENABLE_PUT_SELF || p_config.rank() != proc)
       && (!CMX_ENABLE_PUT_SMP
-        || g_state.hostid[proc] != g_state.hostid[p_config.rank()])) {
+        || p_config.hostid(proc) != p_config.hostid(p_config.rank()))) {
     nb_puts_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
     return;
   }
@@ -4209,7 +4190,7 @@ void p_Environment::nb_puts(
     src_idx = 0;
     dst_idx = 0;
     for(j=1; j<=stride_levels; j++) {
-      src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+      src_idx += (int64_t) src_bvalue[j] * (int64_t) src_stride[j-1];
       if((i+1) % src_bunit[j] == 0) {
         src_bvalue[j]++;
       }
@@ -4219,7 +4200,7 @@ void p_Environment::nb_puts(
     }
 
     for(j=1; j<=stride_levels; j++) {
-      dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+      dst_idx += (int64_t) dst_bvalue[j] * (int64_t) dst_stride[j-1];
       if((i+1) % dst_bunit[j] == 0) {
         dst_bvalue[j]++;
       }
@@ -4235,11 +4216,11 @@ void p_Environment::nb_puts(
 
 
 void p_Environment::nb_puts_packed(
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb)
+    void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
+    int64_t *count, int stride_levels, int proc, _cmx_request *nb)
 {
-  int i;
-  int packed_index = 0;
+  int64_t i;
+  int64_t packed_index = 0;
   char *packed_buffer = NULL;
   stride_t stride;
 
@@ -4250,7 +4231,7 @@ void p_Environment::nb_puts_packed(
 #endif
 
   CMX_ASSERT(proc >= 0);
-  CMX_ASSERT(proc < g_state.size);
+  CMX_ASSERT(proc < p_config.size());
   CMX_ASSERT(NULL != src);
   CMX_ASSERT(NULL != dst);
   CMX_ASSERT(NULL != count);
@@ -4289,12 +4270,12 @@ void p_Environment::nb_puts_packed(
 
   {
     char *message = NULL;
-    int message_size = 0;
+    size_t message_size = 0;
     header_t *header = NULL;
     int master_rank = -1;
     int use_eager = _eager_check(sizeof(stride_t)+packed_index);
 
-    master_rank = g_state.master[proc];
+    master_rank = p_config.master(proc);
     /* only fence on the master */
     fence_array[master_rank] = 1;
     if (use_eager) {
@@ -4320,10 +4301,10 @@ void p_Environment::nb_puts_packed(
     else {
       /* we send the buffer backwards */
       char *buf = packed_buffer + packed_index;;
-      int bytes_remaining = packed_index;
+      size_t bytes_remaining = packed_index;
       nb_send_header(message, message_size, master_rank, nb);
       do {
-        int size = bytes_remaining>max_message_size ?
+        size_t size = bytes_remaining>max_message_size ?
           max_message_size : bytes_remaining;
         buf -= size;
         if (size == bytes_remaining) {
@@ -4342,14 +4323,14 @@ void p_Environment::nb_puts_packed(
 
 
 void p_Environment::nb_puts_datatype(
-    void *src_ptr, int *src_stride_ar,
-    void *dst_ptr, int *dst_stride_ar,
-    int *count, int stride_levels,
+    void *src_ptr, int64_t *src_stride_ar,
+    void *dst_ptr, int64_t *dst_stride_ar,
+    int64_t *count, int stride_levels,
     int proc, _cmx_request *nb)
 {
   MPI_Datatype src_type;
   int ierr;
-  int i;
+  int64_t i;
   stride_t stride;
 
 #if DEBUG
@@ -4359,7 +4340,7 @@ void p_Environment::nb_puts_datatype(
 #endif
 
   CMX_ASSERT(proc >= 0);
-  CMX_ASSERT(proc < g_state.size);
+  CMX_ASSERT(proc < p_config.size());
   CMX_ASSERT(NULL != src_ptr);
   CMX_ASSERT(NULL != dst_ptr);
   CMX_ASSERT(NULL != count);
@@ -4399,11 +4380,11 @@ void p_Environment::nb_puts_datatype(
 
   {
     char *message = NULL;
-    int message_size = 0;
+    size_t message_size = 0;
     header_t *header = NULL;
     int master_rank = -1;
 
-    master_rank = g_state.master[proc];
+    master_rank = p_config.master(proc);
     /* only fence on the master */
     fence_array[master_rank] = 1;
     message_size = sizeof(header_t) + sizeof(stride_t);
@@ -4424,15 +4405,14 @@ void p_Environment::nb_puts_datatype(
 
 
 void p_Environment::nb_gets(
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb)
+    void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
+    int64_t *count, int stride_levels, int proc, _cmx_request *nb)
 {
   int i, j;
-  long src_idx, dst_idx;  /* index offset of current block position to ptr */
-  int n1dim;  /* number of 1 dim block */
-  int src_bvalue[7], src_bunit[7];
-  int dst_bvalue[7], dst_bunit[7];
-  init_request(nb);
+  int64_t src_idx, dst_idx;  /* index offset of current block position to ptr */
+  int64_t n1dim;  /* number of 1 dim block */
+  int64_t src_bvalue[7], src_bunit[7];
+  int64_t dst_bvalue[7], dst_bunit[7];
 
   /* if not actually a strided get */
   if (0 == stride_levels) {
@@ -4444,7 +4424,7 @@ void p_Environment::nb_gets(
   if (CMX_ENABLE_GET_DATATYPE
       && (!CMX_ENABLE_GET_SELF || p_config.rank() != proc)
       && (!CMX_ENABLE_GET_SMP
-        || g_state.hostid[proc] != g_state.hostid[p_config.rank()])
+        || p_config.hostid(proc) != p_config.hostid(p_config.rank()))
       && (_packed_size(src_stride, count, stride_levels) > CMX_GET_DATATYPE_THRESHOLD)) {
     nb_gets_datatype(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
     return;
@@ -4454,7 +4434,7 @@ void p_Environment::nb_gets(
   if (CMX_ENABLE_GET_PACKED
       && (!CMX_ENABLE_GET_SELF || p_config.rank() != proc)
       && (!CMX_ENABLE_GET_SMP
-        || g_state.hostid[proc] != g_state.hostid[p_config.rank()])) {
+        || p_config.hostid(proc) != p_config.hostid(p_config.rank()))) {
     nb_gets_packed(src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
     return;
   }
@@ -4479,7 +4459,7 @@ void p_Environment::nb_gets(
   for(i=0; i<n1dim; i++) {
     src_idx = 0;
     for(j=1; j<=stride_levels; j++) {
-      src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+      src_idx += (int64_t) src_bvalue[j] * (int64_t) src_stride[j-1];
       if((i+1) % src_bunit[j] == 0) {
         src_bvalue[j]++;
       }
@@ -4491,7 +4471,7 @@ void p_Environment::nb_gets(
     dst_idx = 0;
 
     for(j=1; j<=stride_levels; j++) {
-      dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+      dst_idx += (int64_t) dst_bvalue[j] * (int64_t) dst_stride[j-1];
       if((i+1) % dst_bunit[j] == 0) {
         dst_bvalue[j]++;
       }
@@ -4507,10 +4487,10 @@ void p_Environment::nb_gets(
 
 
 void p_Environment::nb_gets_packed(
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb)
+    void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
+    int64_t *count, int stride_levels, int proc, _cmx_request *nb)
 {
-  int i;
+  int64_t i;
   stride_t stride_src;
   stride_t *stride_dst = NULL;
 
@@ -4521,7 +4501,7 @@ void p_Environment::nb_gets_packed(
 #endif
 
   CMX_ASSERT(proc >= 0);
-  CMX_ASSERT(proc < g_state.size);
+  CMX_ASSERT(proc < p_config.size());
   CMX_ASSERT(NULL != src);
   CMX_ASSERT(NULL != dst);
   CMX_ASSERT(NULL != count);
@@ -4566,8 +4546,8 @@ void p_Environment::nb_gets_packed(
 
   {
     char *message = NULL;
-    int message_size = 0;
-    int recv_size = 0;
+    size_t message_size = 0;
+    size_t recv_size = 0;
     char *packed_buffer = NULL;
     header_t *header = NULL;
     int master_rank = -1;
@@ -4593,9 +4573,9 @@ void p_Environment::nb_gets_packed(
     {
       /* prepost all receives backward */
       char *buf = (char*)packed_buffer + recv_size;
-      int bytes_remaining = recv_size;
+      size_t bytes_remaining = recv_size;
       do {
-        int size = bytes_remaining>max_message_size ?
+        size_t size = bytes_remaining>max_message_size ?
           max_message_size : bytes_remaining;
         buf -= size;
         if (size == bytes_remaining) {
@@ -4616,11 +4596,11 @@ void p_Environment::nb_gets_packed(
 
 
 void p_Environment::nb_gets_datatype(
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb)
+    void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
+    int64_t *count, int stride_levels, int proc, _cmx_request *nb)
 {
   MPI_Datatype dst_type;
-  int i;
+  int64_t i;
   stride_t stride_src;
 
 #if DEBUG
@@ -4641,7 +4621,7 @@ void p_Environment::nb_gets_datatype(
 #endif
 
   CMX_ASSERT(proc >= 0);
-  CMX_ASSERT(proc < g_state.size);
+  CMX_ASSERT(proc < p_config.size());
   CMX_ASSERT(NULL != src);
   CMX_ASSERT(NULL != dst);
   CMX_ASSERT(NULL != count);
@@ -4669,7 +4649,7 @@ void p_Environment::nb_gets_datatype(
 
   {
     char *message = NULL;
-    int message_size = 0;
+    int64_t message_size = 0;
     header_t *header = NULL;
     int master_rank = -1;
     int ierr;
@@ -4701,17 +4681,16 @@ void p_Environment::nb_gets_datatype(
 
 void p_Environment::nb_accs(
     int datatype, void *scale,
-    void *src, int *src_stride,
-    void *dst, int *dst_stride,
-    int *count, int stride_levels,
+    void *src, int64_t *src_stride,
+    void *dst, int64_t *dst_stride,
+    int64_t *count, int stride_levels,
     int proc, _cmx_request *nb)
 {
-  int i, j;
-  long src_idx, dst_idx;  /* index offset of current block position to ptr */
-  int n1dim;  /* number of 1 dim block */
-  int src_bvalue[7], src_bunit[7];
-  int dst_bvalue[7], dst_bunit[7];
-  init_request(nb);
+  int64_t i, j;
+  int64_t src_idx, dst_idx;  /* index offset of current block position to ptr */
+  int64_t n1dim;  /* number of 1 dim block */
+  int64_t src_bvalue[7], src_bunit[7];
+  int64_t dst_bvalue[7], dst_bunit[7];
 
   /* if not actually a strided acc */
   if (0 == stride_levels) {
@@ -4723,7 +4702,7 @@ void p_Environment::nb_accs(
   if (CMX_ENABLE_ACC_PACKED
       && (!CMX_ENABLE_ACC_SELF || p_config.rank() != proc)
       && (!CMX_ENABLE_ACC_SMP
-        || g_state.hostid[proc] != g_state.hostid[p_config.rank()])) {
+        || p_config.hostid(proc) != p_config.hostid(p_config.rank()))) {
     nb_accs_packed(datatype, scale, src, src_stride, dst, dst_stride, count, stride_levels, proc, nb);
     return;
   }
@@ -4750,7 +4729,7 @@ void p_Environment::nb_accs(
     src_idx = 0;
     dst_idx = 0;
     for(j=1; j<=stride_levels; j++) {
-      src_idx += (long) src_bvalue[j] * (long) src_stride[j-1];
+      src_idx += (int64_t) src_bvalue[j] * (int64_t) src_stride[j-1];
       if((i+1) % src_bunit[j] == 0) {
         src_bvalue[j]++;
       }
@@ -4760,7 +4739,7 @@ void p_Environment::nb_accs(
     }
 
     for(j=1; j<=stride_levels; j++) {
-      dst_idx += (long) dst_bvalue[j] * (long) dst_stride[j-1];
+      dst_idx += (int64_t) dst_bvalue[j] * (int64_t) dst_stride[j-1];
       if((i+1) % dst_bunit[j] == 0) {
         dst_bvalue[j]++;
       }
@@ -4777,13 +4756,13 @@ void p_Environment::nb_accs(
 
 void p_Environment::nb_accs_packed(
     int datatype, void *scale,
-    void *src, int *src_stride,
-    void *dst, int *dst_stride,
-    int *count, int stride_levels,
+    void *src, int64_t *src_stride,
+    void *dst, int64_t *dst_stride,
+    int64_t *count, int stride_levels,
     int proc, _cmx_request *nb)
 {
-  int i;
-  int packed_index = 0;
+  int64_t i;
+  int64_t packed_index = 0;
   char *packed_buffer = NULL;
   stride_t stride;
 
@@ -4794,7 +4773,7 @@ void p_Environment::nb_accs_packed(
 #endif
 
   CMX_ASSERT(proc >= 0);
-  CMX_ASSERT(proc < g_state.size);
+  CMX_ASSERT(proc < p_config.size());
   CMX_ASSERT(NULL != scale);
   CMX_ASSERT(NULL != src);
   CMX_ASSERT(NULL != dst);
@@ -4838,7 +4817,7 @@ void p_Environment::nb_accs_packed(
   {
     header_t *header = NULL;
     char *message = NULL;
-    int message_size = 0;
+    size_t message_size = 0;
     int scale_size = 0;
     op_t operation = OP_NULL;
     int master_rank = -1;
@@ -4873,7 +4852,7 @@ void p_Environment::nb_accs_packed(
     }
     use_eager = _eager_check(scale_size+sizeof(stride_t)+packed_index);
 
-    master_rank = g_state.master[proc];
+    master_rank = p_config.master(proc);
 
     /* only fence on the master */
     fence_array[master_rank] = 1;
@@ -4903,10 +4882,10 @@ void p_Environment::nb_accs_packed(
     else {
       /* we send the buffer backwards */
       char *buf = packed_buffer + packed_index;
-      int bytes_remaining = packed_index;
+      size_t bytes_remaining = packed_index;
       nb_send_header(message, message_size, master_rank, nb);
       do {
-        int size = bytes_remaining>max_message_size ?
+        size_t size = bytes_remaining>max_message_size ?
           max_message_size : bytes_remaining;
         buf -= size;
         if (size == bytes_remaining) {
@@ -4924,26 +4903,25 @@ void p_Environment::nb_accs_packed(
 
 
 void p_Environment::nb_putv(
-    _cmx_giov_t *iov, int iov_len,
+    _cmx_giov_t *iov, int64_t iov_len,
     int proc, _cmx_request *nb)
 {
   int i = 0;
-  init_request(nb);
 
   for (i=0; i<iov_len; ++i) {
     /* if not a vector put to self, use packed algorithm */
     if (CMX_ENABLE_PUT_IOV
         && (!CMX_ENABLE_PUT_SELF || p_config.rank() != proc)
         && (!CMX_ENABLE_PUT_SMP
-          || g_state.hostid[proc] != g_state.hostid[p_config.rank()])) {
+          || p_config.hostid(proc) != p_config.hostid(p_config.rank()))) {
       nb_putv_packed(&iov[i], proc, nb);
     }
     else {
-      int j;
+      int64_t j;
       void **src = iov[i].src;
       void **dst = iov[i].dst;
-      int bytes = iov[i].bytes;
-      int limit = iov[i].count;
+      int64_t bytes = iov[i].bytes;
+      int64_t limit = iov[i].count;
       for (j=0; j<limit; ++j) {
         nb_put(src[j], dst[j], bytes, proc, nb);
       }
@@ -4954,17 +4932,17 @@ void p_Environment::nb_putv(
 
 void p_Environment::nb_putv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 {
-  int i = 0;
+  int64_t i = 0;
   void **src = NULL;
   void **dst = NULL;
-  int bytes = 0;
-  int limit = 0;
+  int64_t bytes = 0;
+  int64_t limit = 0;
   char *iov_buf = NULL;
-  int iov_off = 0;
-  int iov_size = 0;
+  int64_t iov_off = 0;
+  int64_t iov_size = 0;
   char *packed_buffer = NULL;
-  int packed_size = 0;
-  int packed_index = 0;
+  int64_t packed_size = 0;
+  int64_t packed_index = 0;
 
   src = iov->src;
   dst = iov->dst;
@@ -4977,16 +4955,16 @@ void p_Environment::nb_putv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 #endif
 
   /* allocate compressed iov */
-  iov_size = 2*limit*sizeof(void*) + 2*sizeof(int);
+  iov_size = 2*limit*sizeof(void*) + 2*sizeof(int64_t);
   iov_buf = (char*)malloc(iov_size);
   CMX_ASSERT(iov_buf);
   iov_off = 0;
   /* copy limit */
-  (void)memcpy(&iov_buf[iov_off], &limit, sizeof(int));
-  iov_off += sizeof(int);
+  (void)memcpy(&iov_buf[iov_off], &limit, sizeof(int64_t));
+  iov_off += sizeof(int64_t);
   /* copy bytes */
-  (void)memcpy(&iov_buf[iov_off], &bytes, sizeof(int));
-  iov_off += sizeof(int);
+  (void)memcpy(&iov_buf[iov_off], &bytes, sizeof(int64_t));
+  iov_off += sizeof(int64_t);
   /* copy src pointers */
   (void)memcpy(&iov_buf[iov_off], src, limit*sizeof(void*));
   iov_off += limit*sizeof(void*);
@@ -5008,7 +4986,7 @@ void p_Environment::nb_putv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 
   {
     header_t *header = NULL;
-    int master_rank = g_state.master[proc];
+    int master_rank = p_config.master(proc);
 
     /* only fence on the master */
     fence_array[master_rank] = 1;
@@ -5029,26 +5007,25 @@ void p_Environment::nb_putv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 
 
 void p_Environment::nb_getv(
-    _cmx_giov_t *iov, int iov_len,
+    _cmx_giov_t *iov, int64_t iov_len,
     int proc, _cmx_request *nb)
 {
-  int i = 0;
-  init_request(nb);
+  int64_t i = 0;
 
   for (i=0; i<iov_len; ++i) {
     /* if not a vector get from self, use packed algorithm */
     if (CMX_ENABLE_GET_IOV
         && (!CMX_ENABLE_GET_SELF || p_config.rank() != proc)
         && (!CMX_ENABLE_GET_SMP
-          || g_state.hostid[proc] != g_state.hostid[p_config.rank()])) {
+          || p_config.hostid(proc) != p_config.hostid(p_config.rank()))) {
       nb_getv_packed(&iov[i], proc, nb);
     }
     else {
-      int j;
+      int64_t j;
       void **src = iov[i].src;
       void **dst = iov[i].dst;
-      int bytes = iov[i].bytes;
-      int limit = iov[i].count;
+      int64_t bytes = iov[i].bytes;
+      int64_t limit = iov[i].count;
       for (j=0; j<limit; ++j) {
         nb_get(src[j], dst[j], bytes, proc, nb);
       }
@@ -5061,14 +5038,14 @@ void p_Environment::nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 {
   void **src = NULL;
   void **dst = NULL;
-  int bytes = 0;
-  int limit = 0;
+  int64_t bytes = 0;
+  int64_t limit = 0;
   char *iov_buf = NULL;
-  int iov_off = 0;
-  int iov_size = 0;
+  int64_t iov_off = 0;
+  int64_t iov_size = 0;
   _cmx_giov_t *iov_copy = NULL;
   char *packed_buffer = NULL;
-  int packed_size = 0;
+  int64_t packed_size = 0;
 
   src = iov->src;
   dst = iov->dst;
@@ -5081,16 +5058,16 @@ void p_Environment::nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 #endif
 
   /* allocate compressed iov */
-  iov_size = 2*limit*sizeof(void*) + 2*sizeof(int);
+  iov_size = 2*limit*sizeof(void*) + 2*sizeof(int64_t);
   iov_buf = (char*)malloc(iov_size);
   iov_off = 0;
   CMX_ASSERT(iov_buf);
   /* copy limit */
-  (void)memcpy(&iov_buf[iov_off], &limit, sizeof(int));
-  iov_off += sizeof(int);
+  (void)memcpy(&iov_buf[iov_off], &limit, sizeof(int64_t));
+  iov_off += sizeof(int64_t);
   /* copy bytes */
-  (void)memcpy(&iov_buf[iov_off], &bytes, sizeof(int));
-  iov_off += sizeof(int);
+  (void)memcpy(&iov_buf[iov_off], &bytes, sizeof(int64_t));
+  iov_off += sizeof(int64_t);
   /* copy src pointers */
   (void)memcpy(&iov_buf[iov_off], src, limit*sizeof(void*));
   iov_off += limit*sizeof(void*);
@@ -5123,7 +5100,7 @@ void p_Environment::nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 
   {
     header_t *header = NULL;
-    int master_rank = g_state.master[proc];
+    int master_rank = p_config.master(proc);
 
     header = (header_t*)malloc(sizeof(header_t));
     CMX_ASSERT(header);
@@ -5141,26 +5118,25 @@ void p_Environment::nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 
 void p_Environment::nb_accv(
     int datatype, void *scale,
-    _cmx_giov_t *iov, int iov_len,
+    _cmx_giov_t *iov, int64_t iov_len,
     int proc, _cmx_request *nb)
 {
-  int i = 0;
-  init_request(nb);
+  int64_t i = 0;
 
   for (i=0; i<iov_len; ++i) {
     /* if not a vector acc to self, use packed algorithm */
     if (CMX_ENABLE_ACC_IOV
         && (!CMX_ENABLE_ACC_SELF || p_config.rank() != proc)
         && (!CMX_ENABLE_ACC_SMP
-          || g_state.hostid[proc] != g_state.hostid[p_config.rank()])) {
+          || p_config.hostid(proc) != p_config.hostid(p_config.rank()))) {
       nb_accv_packed(datatype, scale, &iov[i], proc, nb);
     }
     else {
-      int j;
+      int64_t j;
       void **src = iov[i].src;
       void **dst = iov[i].dst;
-      int bytes = iov[i].bytes;
-      int limit = iov[i].count;
+      int64_t bytes = iov[i].bytes;
+      int64_t limit = iov[i].count;
       for (j=0; j<limit; ++j) {
         nb_acc(datatype, scale, src[j], dst[j], bytes, proc, nb);
       }
@@ -5173,17 +5149,17 @@ void p_Environment::nb_accv_packed(
     _cmx_giov_t *iov,
     int proc, _cmx_request *nb)
 {
-  int i = 0;
+  int64_t i = 0;
   void **src = NULL;
   void **dst = NULL;
-  int bytes = 0;
-  int limit = 0;
+  int64_t bytes = 0;
+  int64_t limit = 0;
   char *iov_buf = NULL;
-  int iov_off = 0;
-  int iov_size = 0;
+  int64_t iov_off = 0;
+  int64_t iov_size = 0;
   char *packed_buffer = NULL;
-  int packed_size = 0;
-  int packed_index = 0;
+  int64_t packed_size = 0;
+  int64_t packed_index = 0;
 
   src = iov->src;
   dst = iov->dst;
@@ -5196,16 +5172,16 @@ void p_Environment::nb_accv_packed(
 #endif
 
   /* allocate compressed iov */
-  iov_size = 2*limit*sizeof(void*) + 2*sizeof(int);
+  iov_size = 2*limit*sizeof(void*) + 2*sizeof(int64_t);
   iov_buf = (char*)malloc(iov_size);
   iov_off = 0;
   CMX_ASSERT(iov_buf);
   /* copy limit */
-  (void)memcpy(&iov_buf[iov_off], &limit, sizeof(int));
-  iov_off += sizeof(int);
+  (void)memcpy(&iov_buf[iov_off], &limit, sizeof(int64_t));
+  iov_off += sizeof(int64_t);
   /* copy bytes */
-  (void)memcpy(&iov_buf[iov_off], &bytes, sizeof(int));
-  iov_off += sizeof(int);
+  (void)memcpy(&iov_buf[iov_off], &bytes, sizeof(int64_t));
+  iov_off += sizeof(int64_t);
   /* copy src pointers */
   (void)memcpy(&iov_buf[iov_off], src, limit*sizeof(void*));
   iov_off += limit*sizeof(void*);
@@ -5230,10 +5206,10 @@ void p_Environment::nb_accv_packed(
   {
     header_t *header = NULL;
     char *message = NULL;
-    int message_size = 0;
+    int64_t message_size = 0;
     int scale_size = 0;
     op_t operation = OP_NULL;
-    int master_rank = g_state.master[proc];
+    int master_rank = p_config.master(proc);
 
     switch (datatype) {
       case CMX_ACC_INT:
@@ -5306,7 +5282,7 @@ void p_Environment::_translate_mpi_error(int ierr, const char* location)
  * levels: number of stride levels (should be one less than array dimension)
  * type: MPI_Datatype returned to calling program
  */
-void p_Environment::strided_to_subarray_dtype(int *stride_array, int *count,
+void p_Environment::strided_to_subarray_dtype(int64_t *stride_array, int64_t *count,
     int levels, MPI_Datatype base_type, MPI_Datatype *type)
 {
   int ndims = levels+1;
@@ -5324,13 +5300,13 @@ void p_Environment::strided_to_subarray_dtype(int *stride_array, int *count,
    * in data exchange, not the origin of the local array, so all starts
    * should be zero */
   for (i=0; i<levels; i++) {
-    array_of_sizes[i] = stride_array[i]/stride;
-    array_of_starts[i] = 0;
-    array_of_subsizes[i] = count[i];
+    array_of_sizes[i] = static_cast<int>(stride_array[i]/stride);
+    array_of_starts[i] = static_cast<int>(0);
+    array_of_subsizes[i] = static_cast<int>(count[i]);
     if (array_of_sizes[i] < array_of_subsizes[i]) {
       fprintf(stderr, "p[%d] ERROR [strided_to_subarray_dtype]\n"
           "stride: %d\n"
-          "stride_array[%d]: %d\n"
+          "stride_array[%d]: %ld\n"
           "array_of_sizes[%d]: %d\n"
           "array_of_subsizes[%d]: %d\n",
           p_config.rank(),
@@ -5341,9 +5317,9 @@ void p_Environment::strided_to_subarray_dtype(int *stride_array, int *count,
     }
     stride = stride_array[i];
   }
-  array_of_sizes[levels] = count[levels];
-  array_of_starts[levels] = 0;
-  array_of_subsizes[levels] = count[levels];
+  array_of_sizes[levels] = static_cast<int>(count[levels]);
+  array_of_starts[levels] = static_cast<int>(0);
+  array_of_subsizes[levels] = static_cast<int>(count[levels]);
 #if DEBUG
   for (i=0; i<ndims; i++) {
     fprintf(stderr, "p[%d] ndims: %d sizes[%d]: %d subsizes[%d]: %d starts[%d]: %d\n",

@@ -123,6 +123,7 @@ int p_Allocation::put(void *src, void *dst, int64_t bytes, int proc)
   cmx_request request;
   int wrank;
   p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(&request);
   p_impl_environment->nb_put(src,dst,bytes,wrank,&request);
   p_impl_environment->nb_wait_for_all(&request);
   return CMX_SUCCESS;
@@ -145,6 +146,13 @@ int p_Allocation::puts(void *src, int64_t *src_stride, void *dst,
     int64_t *dst_stride, int64_t *count, int stride_levels, int proc)
 
 {
+  cmx_request request;
+  int wrank;
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(&request);
+  p_impl_environment->nb_puts(src,src_stride,dst,dst_stride,count,
+      stride_levels,wrank,&request);
+  p_impl_environment->nb_wait_for_all(&request);
   return CMX_SUCCESS;
 }
 
@@ -178,6 +186,7 @@ int p_Allocation::nbput(void *src, void *dst, int64_t bytes, int proc,
 {
   int wrank;
   p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(req);
   p_impl_environment->nb_put(src,dst,bytes,wrank,req);
   return CMX_SUCCESS;
 }
@@ -200,6 +209,11 @@ int p_Allocation::nbputs(void *src, int64_t *src_stride, void *dst,
     int64_t *dst_stride, int64_t *count, int stride_levels, int proc,
     _cmx_request* req)
 {
+  int wrank;
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(req);
+  p_impl_environment->nb_puts(src,src_stride,dst,dst_stride,count,
+      stride_levels,wrank,req);
   return CMX_SUCCESS;
 }
 
@@ -238,6 +252,7 @@ int p_Allocation::acc(int op, void *scale, void *src, void *dst,
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
   p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(&request);
   p_impl_environment->nb_acc(op,scale,src,dst,bytes,wrank,&request);
   p_impl_environment->nb_wait_for_all(&request);
   return CMX_SUCCESS;
@@ -300,6 +315,7 @@ int p_Allocation::nbacc(int op, void *scale, void *src, void *dst,
 {
   int wrank;
   p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(req);
   p_impl_environment->nb_acc(op,scale,src,dst,bytes,wrank,req);
   return CMX_SUCCESS;
 }
@@ -364,6 +380,7 @@ int p_Allocation::get(void *src, void *dst, int64_t bytes, int proc)
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
   p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(&request);
   p_impl_environment->nb_get(src,dst,bytes,wrank,&request);
   p_impl_environment->nb_wait_for_all(&request);
   return CMX_SUCCESS;
@@ -418,6 +435,7 @@ int p_Allocation::nbget(void *src, void *dst, int64_t bytes,
 {
   int wrank;
   p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(req);
   p_impl_environment->nb_get(src,dst,bytes,wrank,req);
   return CMX_SUCCESS;
 }

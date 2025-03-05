@@ -50,8 +50,8 @@ typedef enum {
 typedef struct {
   char *ptr;
   int stride_levels;
-  cmxInt stride[CMX_MAX_STRIDE_LEVEL];
-  cmxInt count[CMX_MAX_STRIDE_LEVEL+1];
+  int64_t stride[CMX_MAX_STRIDE_LEVEL];
+  int64_t count[CMX_MAX_STRIDE_LEVEL+1];
 } stride_t;
 
 typedef cmx_giov_t _cmx_giov_t;
@@ -71,7 +71,7 @@ typedef struct alloc_link {
   struct alloc_link *next;
   int rank;
   char *buf;
-  cmxInt size;
+  int64_t size;
 } cmx_alloc_t;
 
 typedef struct {
@@ -100,7 +100,7 @@ typedef struct {
   char *remote_address;
   char *local_address;
   int rank; /**< rank of target (rank of sender is iprobe_status.MPI_SOURCE */
-  int length; /**< length of message/payload not including header */
+  int64_t length; /**< length of message/payload not including header */
   int elemsize; /**< size of individual elements */
 } header_t;
 

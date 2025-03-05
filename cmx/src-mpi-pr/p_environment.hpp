@@ -171,29 +171,31 @@ protected:
 /* worker functions. Invoked by global arrays to send messages to progress rank */
 void nb_wait_for_all(_cmx_request *nb);
 int nb_test_for_all(_cmx_request *nb);
-void nb_put(void *src, void *dst, int bytes, int proc, _cmx_request *nb);
-void nb_get(void *src, void *dst, int bytes, int proc, _cmx_request *nb);
-void nb_acc(int datatype, void *scale, void *src, void *dst, int bytes, int proc, _cmx_request *nb);
+void nb_put(void *src, void *dst, int64_t bytes, int proc, _cmx_request *nb);
+void nb_get(void *src, void *dst, int64_t bytes, int proc, _cmx_request *nb);
+void nb_acc(int datatype, void *scale, void *src, void *dst, int64_t bytes, int proc, _cmx_request *nb);
 void nb_puts(
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb);
+    void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
+    int64_t *count, int stride_levels, int proc, _cmx_request *nb);
 void nb_gets(
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb);
+    void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
+    int64_t *count, int stride_levels, int proc, _cmx_request *nb);
 void nb_accs(
     int datatype, void *scale,
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb);
-void nb_putv(_cmx_giov_t *iov, int iov_len, int proc, _cmx_request *nb);
-void nb_getv(_cmx_giov_t *iov, int iov_len, int proc, _cmx_request *nb);
+    void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
+    int64_t *count, int stride_levels, int proc, _cmx_request *nb);
+void nb_putv(_cmx_giov_t *iov, int64_t iov_len, int proc, _cmx_request *nb);
+void nb_getv(_cmx_giov_t *iov, int64_t iov_len, int proc, _cmx_request *nb);
 void nb_accv(int datatype, void *scale,
-    _cmx_giov_t *iov, int iov_len, int proc, _cmx_request *nb);
+    _cmx_giov_t *iov, int64_t iov_len, int proc, _cmx_request *nb);
 void _fence_master(int master_rank);
 
 /* allocate/free functions */
 int dist_malloc(void **ptrs, int64_t bytes, Group *group);
 int dist_free(void *ptr, Group *group);
 
+/* non-blocking handle initialization */
+void nb_register_request(_cmx_request *nb);
 private:
 
 /**
@@ -219,23 +221,23 @@ void nb_recv(void *buf, int count, int source, _cmx_request *nb);
 void nb_wait_for_send1(_cmx_request *nb);
 void nb_wait_for_recv1(_cmx_request *nb);
 void nb_puts_packed(
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb);
+    void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
+    int64_t *count, int stride_levels, int proc, _cmx_request *nb);
 void nb_puts_datatype(
-    void *src_ptr, int *src_stride_ar,
-    void *dst_ptr, int *dst_stride_ar,
-    int *count, int stride_levels,
+    void *src_ptr, int64_t *src_stride_ar,
+    void *dst_ptr, int64_t *dst_stride_ar,
+    int64_t *count, int stride_levels,
     int proc, _cmx_request *nb);
 void nb_gets_packed(
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb);
+    void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
+    int64_t *count, int stride_levels, int proc, _cmx_request *nb);
 void nb_gets_datatype(
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb);
+    void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
+    int64_t *count, int stride_levels, int proc, _cmx_request *nb);
 void nb_accs_packed(
     int datatype, void *scale,
-    void *src, int *src_stride, void *dst, int *dst_stride,
-    int *count, int stride_levels, int proc, _cmx_request *nb);
+    void *src, int64_t *src_stride, void *dst, int64_t *dst_stride,
+    int64_t *count, int stride_levels, int proc, _cmx_request *nb);
 void nb_putv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb);
 void nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb);
 void nb_accv_packed(int datatype, void *scale,
@@ -243,15 +245,13 @@ void nb_accv_packed(int datatype, void *scale,
 int _eager_check(int extra_bytes);
 
 /* non-blocking handle implementations */
-void nb_register_request(_cmx_request *nb);
 void nb_unregister_request(_cmx_request *nb);
-void nb_handle_init(_cmx_request *nb);
+void nb_request_init(_cmx_request *nb);
 int nb_test_for_send1(_cmx_request *nb, message_t **save_send_head,
         message_t **prev);
 int nb_test_for_recv1(_cmx_request *nb, message_t **save_recv_head,
         message_t **prev);
 void init_message(message_t *message);
-void init_request(_cmx_request *message);
 
 /* server functions */
 void _progress_server();
@@ -299,12 +299,12 @@ int get_my_rank_to_free(int rank, int split_group_size,
     int num_progress_ranks_per_node, int is_node_ranks_packed);
 
 /* pack/unpack data */
-int _packed_size(int *src_stride, int *count, int stride_levels);
-char* pack(char *src, int *src_stride,
-    int *count, int stride_levels, int *size);
+int64_t _packed_size(int64_t *src_stride, int64_t *count, int stride_levels);
+char* pack(char *src, int64_t *src_stride,
+    int64_t *count, int stride_levels, int64_t *size);
 void unpack(char *packed_buffer,
-    char *dst, int *dst_stride, int *count, int stride_levels);
-void strided_to_subarray_dtype(int *stride_array, int *count, int levels,
+    char *dst, int64_t *dst_stride, int64_t *count, int stride_levels);
+void strided_to_subarray_dtype(int64_t *stride_array, int64_t *count, int levels,
     MPI_Datatype base_type, MPI_Datatype *type);
 
 /* other functions */

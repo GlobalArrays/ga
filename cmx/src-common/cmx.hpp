@@ -34,7 +34,7 @@ public:
    * @param[in] group home group for allocation
    * @param[in] size size of allocation, in bytes
    */
-  CMX(Group *group, cmxInt size)
+  CMX(Group *group, int64_t size)
   {
     /* Assign p_datatype parameter */
     if constexpr(std::is_same_v<_type,int>) {
