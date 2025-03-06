@@ -399,9 +399,16 @@ int p_Allocation::get(void *src, void *dst, int64_t bytes, int proc)
  *            group as the allocation.
  * @return CMX_SUCCESS on success
  */
-int p_Allocation::gets(void *dst, int64_t *dst_stride, void *src,
-    int64_t *src_stride, int64_t *count, int stride_levels, int proc)
+int p_Allocation::gets(void *src, int64_t *src_stride, void *dst,
+    int64_t *dst_stride, int64_t *count, int stride_levels, int proc)
 {
+  cmx_request request;
+  int wrank;
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(&request);
+  p_impl_environment->nb_gets(src,src_stride,dst,dst_stride,count,
+      stride_levels,wrank,&request);
+  p_impl_environment->nb_wait_for_all(&request);
   return CMX_SUCCESS;
 }
 
@@ -454,10 +461,15 @@ int p_Allocation::nbget(void *src, void *dst, int64_t bytes,
  * @param[out] req nonblocking request object
  * @return CMX_SUCCESS on success
  */
-int p_Allocation::nbgets( void *dst, int64_t *dst_stride, void *src,
-    int64_t *src_stride, int64_t *count, int stride_levels, int proc,
+int p_Allocation::nbgets( void *src, int64_t *src_stride, void *dst,
+    int64_t *dst_stride, int64_t *count, int stride_levels, int proc,
     _cmx_request *req)
 {
+  int wrank;
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(req);
+  p_impl_environment->nb_gets(src,src_stride,dst,dst_stride,count,
+      stride_levels,wrank,req);
   return CMX_SUCCESS;
 }
 

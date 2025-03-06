@@ -712,7 +712,7 @@ void p_Environment::p_error(const std::string msg, int code)
   fprintf(stderr,"[%d] Received an Error in Communication: (%d) %s\n",
       p_config.rank(), code, msg.c_str());
 
-  MPI_Abort(g_state.comm, code);
+  MPI_Abort(p_config.global_comm(), code);
 }
 
 int p_Environment::_eager_check(int extra_bytes)
@@ -3118,7 +3118,7 @@ void p_Environment::check_mpi_retval(int retval, const char *file, int line)
     const char *msg = str_mpi_retval(retval);
     fprintf(stderr, "{%d} MPI Error: %s: line %d: %s\n",
         p_config.rank(), file, line, msg);
-    MPI_Abort(g_state.comm, retval);
+    MPI_Abort(p_config.global_comm(), retval);
   }
 }
 
@@ -3182,7 +3182,7 @@ void p_Environment::server_send_datatype(void *buf, MPI_Datatype dt, int dest)
       p_config.rank(), buf, dest);
 #endif
 
-  retval = MPI_Send(buf, 1, dt, dest, CMX_TAG, g_state.comm);
+  retval = MPI_Send(buf, 1, dt, dest, CMX_TAG, p_config.global_comm());
   _translate_mpi_error(retval,"server_send_datatype:MPI_Send");
 
   CHECK_MPI_RETVAL(retval);
@@ -6096,7 +6096,7 @@ long p_Environment::xgethostid()
 
 int p_Environment::get_num_progress_ranks_per_node()
 {
-  int num_progress_ranks_per_node;
+  int num_progress_ranks_per_node = 1;
   const char* num_progress_ranks_env_var = getenv("GA_NUM_PROGRESS_RANKS_PER_NODE");
   if (num_progress_ranks_env_var != NULL && num_progress_ranks_env_var[0] != '\0') {
     int env_number = atoi(getenv("GA_NUM_PROGRESS_RANKS_PER_NODE"));

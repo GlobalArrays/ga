@@ -345,7 +345,7 @@ int Allocation::get(void *src, void *dst, int64_t bytes, int proc)
 int Allocation::gets(void *src, int64_t *src_stride, void *dst,
     int64_t *dst_stride, int64_t *count, int stride_levels, int proc)
 {
-  return CMX_SUCCESS;
+  return p_allocation->gets(src,src_stride,dst,dst_stride,count,stride_levels,proc);
 }
 
 /**
@@ -397,7 +397,8 @@ int Allocation::nbgets(void *src, int64_t *src_stride, void *dst,
     int64_t *dst_stride, int64_t *count, int stride_levels, int proc,
     cmx_request *req)
 {
-  return CMX_SUCCESS;
+  return p_allocation->nbgets(src,src_stride,dst,dst_stride,
+      count,stride_levels,proc,req);
 }
 
 /**
