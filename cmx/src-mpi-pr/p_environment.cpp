@@ -732,8 +732,6 @@ void p_Environment::_fence_master(int master_rank)
     char *message = NULL;
     _cmx_request nb;
     nb_request_init(&nb);
-    printf("p[%d] (fence_master) fencing proc: %d\n",p_config.rank(),
-        master_rank);
 
     /* prepost recv for acknowledgment */
     nb_recv(NULL, 0, master_rank, &nb);
@@ -748,7 +746,6 @@ void p_Environment::_fence_master(int master_rank)
     header->local_address = NULL;
     header->length = 0;
     header->rank = 0;
-    printf("p[%d] (fence_master) master_rank: %d\n",p_config.rank(),master_rank);
     nb_send_header(header, sizeof(header_t), master_rank, &nb);
     /* this call will free up the header allocation */
     nb_wait_for_all(&nb);
@@ -3289,7 +3286,6 @@ void p_Environment::nb_send_datatype(void *buf, MPI_Datatype dt, int dest, _cmx_
   }
   nb->send_tail = message;
 
-  printf("p[%d] (nb_send_datatype) request: %p\n",p_config.rank(),&(message->request));
   retval = MPI_Isend(buf, 1, dt, dest, CMX_TAG, p_config.global_comm(),
       &(message->request));
   _translate_mpi_error(retval,"nb_send_datatype:MPI_Isend");
