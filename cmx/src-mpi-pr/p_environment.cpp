@@ -1696,9 +1696,9 @@ void p_Environment::_put_handler(header_t *header, char *payload, int proc)
   }
   else {
     char *buf = (char*)mapped_offset;
-    int bytes_remaining = header->length;
+    int64_t bytes_remaining = header->length;
     do {
-      int size = bytes_remaining>max_message_size ?
+      int64_t size = bytes_remaining>max_message_size ?
         max_message_size : bytes_remaining;
       server_recv(buf, size, proc);
       buf += size;
@@ -1764,9 +1764,9 @@ void p_Environment::_put_packed_handler(header_t *header, char *payload, int pro
     {
       /* we receive the buffer backwards */
       char *buf = packed_buffer + header->length;
-      int bytes_remaining = header->length;
+      int64_t bytes_remaining = header->length;
       do {
-        int size = bytes_remaining>max_message_size ?
+        int64_t size = bytes_remaining>max_message_size ?
           max_message_size : bytes_remaining;
         buf -= size;
         server_recv(buf, size, proc);
@@ -1845,8 +1845,8 @@ void p_Environment::_put_iov_handler(header_t *header, int proc)
   int packed_index = 0;
   char *iov_buf = NULL;
   int iov_off = 0;
-  int limit = 0;
-  int bytes = 0;
+  int64_t limit = 0;
+  int64_t bytes = 0;
   void **src = NULL;
   void **dst = NULL;
 
@@ -1868,12 +1868,12 @@ void p_Environment::_put_iov_handler(header_t *header, int proc)
   CMX_ASSERT(iov_buf);
   server_recv(iov_buf, header->length, proc);
 
-  limit = *((int*)(&iov_buf[iov_off]));
-  iov_off += sizeof(int);
+  limit = *((int64_t*)(&iov_buf[iov_off]));
+  iov_off += sizeof(int64_t);
   CMX_ASSERT(limit > 0);
 
-  bytes = *((int*)(&iov_buf[iov_off]));
-  iov_off += sizeof(int);
+  bytes = *((int64_t*)(&iov_buf[iov_off]));
+  iov_off += sizeof(int64_t);
   CMX_ASSERT(bytes > 0);
 
   src = (void**)&iov_buf[iov_off];
@@ -1946,9 +1946,9 @@ void p_Environment::_get_handler(header_t *header, int proc)
 
   {
     char *buf = (char*)mapped_offset;
-    int bytes_remaining = header->length;
+    int64_t bytes_remaining = header->length;
     do {
-      int size = bytes_remaining>max_message_size ?
+      int64_t size = bytes_remaining>max_message_size ?
         max_message_size : bytes_remaining;
       server_send(buf, size, proc);
       buf += size;
@@ -1995,9 +1995,9 @@ void p_Environment::_get_packed_handler(header_t *header, char *payload, int pro
   {
     /* we send the buffer backwards */
     char *buf = packed_buffer + packed_index;
-    int bytes_remaining = packed_index;
+    int64_t bytes_remaining = packed_index;
     do {
-      int size = bytes_remaining>max_message_size ?
+      int64_t size = bytes_remaining>max_message_size ?
         max_message_size : bytes_remaining;
       buf -= size;
       server_send(buf, size, proc);
@@ -2069,11 +2069,11 @@ void p_Environment::_get_iov_handler(header_t *header, int proc)
   void *mapped_offset = NULL;
   int i = 0;
   char *packed_buffer = NULL;
-  int packed_index = 0;
+  int64_t packed_index = 0;
   char *iov_buf = NULL;
   int iov_off = 0;
-  int limit = 0;
-  int bytes = 0;
+  int64_t limit = 0;
+  int64_t bytes = 0;
   void **src = NULL;
   void **dst = NULL;
 
@@ -2095,12 +2095,12 @@ void p_Environment::_get_iov_handler(header_t *header, int proc)
   CMX_ASSERT(iov_buf);
   server_recv(iov_buf, header->length, proc);
 
-  limit = *((int*)(&iov_buf[iov_off]));
-  iov_off += sizeof(int);
+  limit = *((int64_t*)(&iov_buf[iov_off]));
+  iov_off += sizeof(int64_t);
   CMX_ASSERT(limit > 0);
 
-  bytes = *((int*)(&iov_buf[iov_off]));
-  iov_off += sizeof(int);
+  bytes = *((int64_t*)(&iov_buf[iov_off]));
+  iov_off += sizeof(int64_t);
   CMX_ASSERT(bytes > 0);
 
   src = (void**)&iov_buf[iov_off];
@@ -2205,10 +2205,10 @@ void p_Environment::_acc_handler(header_t *header, char *scale, int proc)
     }
     {
       char *buf = (char*)acc_buffer;
-      int bytes_remaining = header->length;
+      int64_t bytes_remaining = header->length;
 
       do {
-        int size = bytes_remaining>max_message_size ?
+        int64_t size = bytes_remaining>max_message_size ?
           max_message_size : bytes_remaining;
         server_recv(buf, size, proc);
         buf += size;
@@ -2310,9 +2310,9 @@ void p_Environment::_acc_packed_handler(header_t *header, char *payload, int pro
     {
       /* we receive the buffer backwards */
       char *buf = acc_buffer + header->length;
-      int bytes_remaining = header->length;
+      int64_t bytes_remaining = header->length;
       do {
-        int size = bytes_remaining>max_message_size ?
+        int64_t size = bytes_remaining>max_message_size ?
           max_message_size : bytes_remaining;
         buf -= size;
         server_recv(buf, size, proc);
@@ -2409,8 +2409,8 @@ void p_Environment::_acc_iov_handler(header_t *header, char *scale, int proc)
   int packed_index = 0;
   char *iov_buf = NULL;
   int iov_off = 0;
-  int limit = 0;
-  int bytes = 0;
+  int64_t limit = 0;
+  int64_t bytes = 0;
   void **src = NULL;
   void **dst = NULL;
   int sizeof_scale = 0;
@@ -2465,12 +2465,12 @@ void p_Environment::_acc_iov_handler(header_t *header, char *scale, int proc)
   CMX_ASSERT(iov_buf);
   server_recv(iov_buf, header->length, proc);
 
-  limit = *((int*)(&iov_buf[iov_off]));
-  iov_off += sizeof(int);
+  limit = *((int64_t*)(&iov_buf[iov_off]));
+  iov_off += sizeof(int64_t);
   CMX_ASSERT(limit > 0);
 
-  bytes = *((int*)(&iov_buf[iov_off]));
-  iov_off += sizeof(int);
+  bytes = *((int64_t*)(&iov_buf[iov_off]));
+  iov_off += sizeof(int64_t);
   CMX_ASSERT(bytes > 0);
 
   src = (void**)&iov_buf[iov_off];
@@ -3156,7 +3156,7 @@ const char *p_Environment::str_mpi_retval(int retval)
 }
 
 
-void p_Environment::server_send(void *buf, int count, int dest)
+void p_Environment::server_send(void *buf, int64_t count, int dest)
 {
   int retval = 0;
 
@@ -3165,7 +3165,7 @@ void p_Environment::server_send(void *buf, int count, int dest)
       p_config.rank(), buf, count, dest);
 #endif
 
-  retval = MPI_Send(buf, count, MPI_CHAR, dest,
+  retval = MPI_Send(buf, static_cast<int>(count), MPI_CHAR, dest,
       CMX_TAG, p_config.global_comm());
   _translate_mpi_error(retval,"server_send:MPI_Send");
 
@@ -3189,13 +3189,13 @@ void p_Environment::server_send_datatype(void *buf, MPI_Datatype dt, int dest)
 }
 
 
-void p_Environment::server_recv(void *buf, int count, int source)
+void p_Environment::server_recv(void *buf, int64_t count, int source)
 {
   int retval = 0;
   MPI_Status status;
   int recv_count = 0;
 
-  retval = MPI_Recv(buf, count, MPI_CHAR, source,
+  retval = MPI_Recv(buf, static_cast<int>(count), MPI_CHAR, source,
       CMX_TAG, p_config.global_comm(), &status);
   _translate_mpi_error(retval,"server_recv:MPI_Recv");
 
@@ -3215,8 +3215,10 @@ void p_Environment::server_recv_datatype(void *buf, MPI_Datatype dt, int source)
   int retval = 0;
   MPI_Status status;
 
+  printf("p[%d] (server_recv_datatype) Waiting for recv\n",p_config.rank());
   retval = MPI_Recv(buf, 1, dt, source,
       CMX_TAG, p_config.global_comm(), &status);
+  printf("p[%d] (server_recv_datatype) Completed recv\n",p_config.rank());
   _translate_mpi_error(retval,"server_recv_datatype:MPI_Recv");
 
   CHECK_MPI_RETVAL(retval);
@@ -3286,8 +3288,10 @@ void p_Environment::nb_send_datatype(void *buf, MPI_Datatype dt, int dest, _cmx_
   }
   nb->send_tail = message;
 
+  printf("p[%d] (nb_send_datatype) calling isend\n",p_config.rank());
   retval = MPI_Isend(buf, 1, dt, dest, CMX_TAG, p_config.global_comm(),
       &(message->request));
+  printf("p[%d] (nb_send_datatype) completed isend\n",p_config.rank());
   _translate_mpi_error(retval,"nb_send_datatype:MPI_Isend");
   CHECK_MPI_RETVAL(retval);
 }
@@ -4952,7 +4956,7 @@ void p_Environment::nb_putv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 
   /* allocate compressed iov */
   iov_size = 2*limit*sizeof(void*) + 2*sizeof(int64_t);
-  iov_buf = (char*)malloc(iov_size);
+  iov_buf =  new char[iov_size];
   CMX_ASSERT(iov_buf);
   iov_off = 0;
   /* copy limit */
@@ -4971,7 +4975,7 @@ void p_Environment::nb_putv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 
   /* allocate send buffer */
   packed_size = bytes * limit;
-  packed_buffer = (char*)malloc(packed_size);
+  packed_buffer = new char[packed_size];
   CMX_ASSERT(packed_buffer);
   packed_index = 0;
   for (i=0; i<limit; ++i) {
@@ -4982,12 +4986,14 @@ void p_Environment::nb_putv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 
   {
     header_t *header = NULL;
+    char *message;
     int master_rank = p_config.master(proc);
 
     /* only fence on the master */
     fence_array[master_rank] = 1;
 
-    header = (header_t*)malloc(sizeof(header_t));
+    message = new char[sizeof(header_t)];
+    header = reinterpret_cast<header_t*>(message);
     CMX_ASSERT(header);
     MAYBE_MEMSET(header, 0, sizeof(header_t));
     header->operation = OP_PUT_IOV;
@@ -4995,7 +5001,7 @@ void p_Environment::nb_putv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
     header->local_address = NULL;
     header->rank = proc;
     header->length = iov_size;
-    nb_send_header(header, sizeof(header_t), master_rank, nb);
+    nb_send_header(message, sizeof(header_t), master_rank, nb);
     nb_send_header(iov_buf, iov_size, master_rank, nb);
     nb_send_header(packed_buffer, packed_size, master_rank, nb);
   }

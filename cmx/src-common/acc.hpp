@@ -85,7 +85,7 @@ static inline void _scale(
 
 static inline void _acc(
         const int op,
-        const int bytes,
+        const int64_t bytes,
         void * const dst,
         const void * const src,
         const void * const scale)

@@ -138,7 +138,7 @@ int Allocation::puts(void *src, int64_t *src_stride, void *dst,
  */
 int Allocation::putv(cmx_giov_t *darr, int64_t len, int proc)
 {
-  return CMX_SUCCESS;
+  return p_allocation->putv(darr, len, proc);
 }
 
 /**
@@ -192,7 +192,7 @@ int Allocation::nbputs(void *src, int64_t *src_stride, void *dst,
  */
 int Allocation::nbputv(cmx_giov_t *darr, int64_t len, int proc, cmx_request* req)
 {
-  return CMX_SUCCESS;
+  return p_allocation->nbputv(darr, len, proc, req);
 }
 
 /**
@@ -235,7 +235,8 @@ int Allocation::accs(int op, void *scale, void *src, int64_t *src_stride,
     void *dst, int64_t *dst_stride, int64_t *count,
     int stride_levels, int proc)
 {
-  return CMX_SUCCESS;
+  return p_allocation->accs(op,scale,src,src_stride,dst,dst_stride,count,
+      stride_levels,proc);
 }
 
 /**
@@ -293,7 +294,8 @@ int Allocation::nbaccs(int op, void *scale, void *src, int64_t *src_stride,
     void *dst, int64_t *dst_stride, int64_t *count,
     int stride_levels, int proc, cmx_request *req)
 {
-  return CMX_SUCCESS;
+  return p_allocation->nbaccs(op,scale,src,src_stride,dst,dst_stride,count,
+      stride_levels,proc,req);
 }
 
 /**

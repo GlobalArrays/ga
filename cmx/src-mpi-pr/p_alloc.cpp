@@ -167,6 +167,14 @@ int p_Allocation::puts(void *src, int64_t *src_stride, void *dst,
  */
 int p_Allocation::putv(_cmx_giov_t *darr, int64_t len, int proc)
 {
+  cmx_request request;
+  int wrank;
+  int trank;
+  MPI_Comm_rank(MPI_COMM_WORLD,&trank);
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(&request);
+  p_impl_environment->nb_putv(darr, len, wrank, &request);
+  p_impl_environment->nb_wait_for_all(&request);
   return CMX_SUCCESS;
 }
 
@@ -229,6 +237,10 @@ int p_Allocation::nbputs(void *src, int64_t *src_stride, void *dst,
  */
 int p_Allocation::nbputv(_cmx_giov_t *darr, int64_t len, int proc, _cmx_request* req)
 {
+  int wrank;
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(req);
+  p_impl_environment->nb_putv(darr, len, wrank, req);
   return CMX_SUCCESS;
 }
 
@@ -278,6 +290,13 @@ int p_Allocation::accs(int op, void *scale, void *src, int64_t *src_stride,
     void *dst, int64_t *dst_stride, int64_t *count, int stride_levels,
     int proc)
 {
+  cmx_request request;
+  int wrank;
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(&request);
+  p_impl_environment->nb_accs(op,scale,src,src_stride,dst,dst_stride,count,
+      stride_levels,wrank,&request);
+  p_impl_environment->nb_wait_for_all(&request);
   return CMX_SUCCESS;
 }
 
@@ -342,6 +361,11 @@ int p_Allocation::nbaccs(int op, void *scale, void *src, int64_t *src_stride,
     void *dst, int64_t *dst_stride, int64_t *count,
     int stride_levels, int proc, _cmx_request *req)
 {
+  int wrank;
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(req);
+  p_impl_environment->nb_accs(op,scale,src,src_stride,dst,dst_stride,count,
+      stride_levels,wrank,req);
   return CMX_SUCCESS;
 }
 

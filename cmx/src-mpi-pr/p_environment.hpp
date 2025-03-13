@@ -255,9 +255,9 @@ void init_message(message_t *message);
 
 /* server functions */
 void _progress_server();
-void server_send(void *buf, int count, int dest);
+void server_send(void *buf, int64_t count, int dest);
 void server_send_datatype(void *buf, MPI_Datatype dt, int dest);
-void server_recv(void *buf, int count, int source);
+void server_recv(void *buf, int64_t count, int source);
 void server_recv_datatype(void *buf, MPI_Datatype dt, int source);
 void _put_handler(header_t *header, char *payload, int proc);
 void _put_packed_handler(header_t *header, char *payload, int proc);
