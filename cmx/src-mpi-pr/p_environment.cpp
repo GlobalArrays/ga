@@ -5177,7 +5177,7 @@ void p_Environment::nb_accv_packed(
 
   /* allocate compressed iov */
   iov_size = 2*limit*sizeof(void*) + 2*sizeof(int64_t);
-  iov_buf = (char*)malloc(iov_size);
+  iov_buf =  new char[iov_size];
   iov_off = 0;
   CMX_ASSERT(iov_buf);
   /* copy limit */
@@ -5197,7 +5197,7 @@ void p_Environment::nb_accv_packed(
 
   /* allocate send buffer */
   packed_size = bytes * limit;
-  packed_buffer = (char*)malloc(packed_size);
+  packed_buffer = new char[packed_size];
   CMX_ASSERT(packed_buffer);
   packed_index = 0;
   for (i=0; i<limit; ++i) {
@@ -5247,9 +5247,9 @@ void p_Environment::nb_accv_packed(
     fence_array[master_rank] = 1;
 
     message_size = sizeof(header_t) + scale_size;
-    message = (char*)malloc(message_size);
+    message = new char[message_size];
     CMX_ASSERT(message);
-    header = (header_t*)message;
+    header = reinterpret_cast<header_t*>(message);
     header->operation = operation;
     header->remote_address = NULL;
     header->local_address = NULL;

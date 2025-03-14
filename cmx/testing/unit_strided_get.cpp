@@ -3,7 +3,7 @@
 #include "alloc.hpp"
 #include <iostream>
 
-/* Test contiguous get operation */
+/* Test strided get operation */
 
 #define DIM 32  // DIM must be multiple of 2
 int main(int argc, char **argv)

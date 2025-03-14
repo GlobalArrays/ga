@@ -313,6 +313,14 @@ int p_Allocation::accs(int op, void *scale, void *src, int64_t *src_stride,
  */
 int p_Allocation::accv(int op, void *scale, _cmx_giov_t *darr, int64_t len, int proc)
 {
+  cmx_request request;
+  int wrank;
+  int trank;
+  MPI_Comm_rank(MPI_COMM_WORLD,&trank);
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(&request);
+  p_impl_environment->nb_accv(op, scale, darr, len, wrank, &request);
+  p_impl_environment->nb_wait_for_all(&request);
   return CMX_SUCCESS;
 }
 
@@ -384,6 +392,10 @@ int p_Allocation::nbaccs(int op, void *scale, void *src, int64_t *src_stride,
 int p_Allocation::nbaccv(int op, void *scale, _cmx_giov_t *darr, int64_t len,
     int proc, _cmx_request *req)
 {
+  int wrank;
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_register_request(req);
+  p_impl_environment->nb_accv(op, scale, darr, len, wrank, req);
   return CMX_SUCCESS;
 }
 

@@ -252,7 +252,7 @@ int Allocation::accs(int op, void *scale, void *src, int64_t *src_stride,
  */
 int Allocation::accv(int op, void *scale, cmx_giov_t *darr, int64_t len, int proc)
 {
-  return CMX_SUCCESS;
+  return p_allocation->accv(op,scale,darr,len,proc);
 }
 
 /**
@@ -313,7 +313,7 @@ int Allocation::nbaccs(int op, void *scale, void *src, int64_t *src_stride,
 int Allocation::nbaccv(int op, void *scale, cmx_giov_t *darr, int64_t len,
     int proc, cmx_request *req)
 {
-  return CMX_SUCCESS;
+  return p_allocation->nbaccv(op,scale,darr,len,proc,req);
 }
 
 /**
