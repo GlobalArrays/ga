@@ -451,7 +451,6 @@ void p_Environment::finalize()
       nb_wait_for_all(nb_list[i]);
     }
   }
-  delete [] nb_list;
 
   /* send quit message to thread */
   int my_rank_to_free;
@@ -485,6 +484,7 @@ void p_Environment::finalize()
     nb_wait_for_all(&nb);
   }
 
+  delete [] nb_list;
   delete [] fence_array;
 
   ierr = MPI_Barrier(p_config.global_comm());
@@ -3627,8 +3627,8 @@ void p_Environment::nb_wait_for_recv1(_cmx_request *nb)
         (void)memcpy(iov->dst[i], &message[off], iov->bytes);
         off += iov->bytes;
       }
-      delete iov->src;
-      delete iov->dst;
+      delete [] iov->src;
+      delete [] iov->dst;
       delete iov;
     }
 
@@ -5061,7 +5061,7 @@ void p_Environment::nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 
   /* allocate compressed iov */
   iov_size = 2*limit*sizeof(void*) + 2*sizeof(int64_t);
-  iov_buf = (char*)malloc(iov_size);
+  iov_buf =  new char[iov_size];
   iov_off = 0;
   CMX_ASSERT(iov_buf);
   /* copy limit */
@@ -5079,13 +5079,13 @@ void p_Environment::nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
   CMX_ASSERT(iov_off == iov_size);
 
   /* copy given iov for later */
-  iov_copy = (_cmx_giov_t*)malloc(sizeof(_cmx_giov_t));
+  iov_copy = new _cmx_giov_t;
   iov_copy->bytes = bytes;
   iov_copy->count = limit;
-  iov_copy->src = (void**)malloc(sizeof(void*)*iov->count);
+  iov_copy->src = new void*[sizeof(void*)*iov->count];
   CMX_ASSERT(iov_copy->src);
   (void)memcpy(iov_copy->src, iov->src, sizeof(void*)*iov->count);
-  iov_copy->dst = (void**)malloc(sizeof(void*)*iov->count);
+  iov_copy->dst = new void*[sizeof(void*)*iov->count];
   CMX_ASSERT(iov_copy->dst);
   (void)memcpy(iov_copy->dst, iov->dst, sizeof(void*)*iov->count);
 
@@ -5097,14 +5097,16 @@ void p_Environment::nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
 
   /* allocate recv buffer */
   packed_size = bytes * limit;
-  packed_buffer = (char*)malloc(packed_size);
+  packed_buffer = new char[packed_size];
   CMX_ASSERT(packed_buffer);
 
   {
     header_t *header = NULL;
+    char *message;
     int master_rank = p_config.master(proc);
 
-    header = (header_t*)malloc(sizeof(header_t));
+    message = new char[sizeof(header_t)];
+    header = reinterpret_cast<header_t*>(message);
     CMX_ASSERT(header);
     MAYBE_MEMSET(header, 0, sizeof(header_t));
     header->operation = OP_GET_IOV;
@@ -5113,7 +5115,7 @@ void p_Environment::nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
     header->rank = proc;
     header->length = iov_size;
     nb_recv_iov(packed_buffer, packed_size, master_rank, nb, iov_copy);
-    nb_send_header(header, sizeof(header_t), master_rank, nb);
+    nb_send_header(message, sizeof(header_t), master_rank, nb);
     nb_send_header(iov_buf, iov_size, master_rank, nb);
   }
 }

@@ -361,7 +361,7 @@ int Allocation::gets(void *src, int64_t *src_stride, void *dst,
  */
 int Allocation::getv(cmx_giov_t *darr, int64_t len, int proc)
 {
-  return CMX_SUCCESS;
+  return p_allocation->getv(darr, len, proc);
 }
 
 /**
@@ -415,7 +415,7 @@ int Allocation::nbgets(void *src, int64_t *src_stride, void *dst,
  */
 int Allocation::nbgetv(cmx_giov_t *darr, int64_t len, int proc, cmx_request *req)
 {
-  return CMX_SUCCESS;
+  return p_allocation->nbgetv(darr, len, proc, req);
 }
 
 /**
