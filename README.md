@@ -20,6 +20,9 @@ The most recent source of funding for development of GA is the [Exascale Computi
 
 ## ABOUT THIS SOFTWARE
 
+More information about Global Arrays can be found at the webpage
+[https://globalarrays.github.io](httpss://globalarrays.github.io).
+
 Global Arrays is a portable Non-Uniform Memory Access (NUMA) shared-memory programming environment for distributed and shared memory computers. It augments the message-passing model by providing a shared-memory like access to distributed dense arrays. This is also known as the Partitioned Global Address Space (PGAS) model.
 
 This library contains the Global Arrays (GA), Communications Runtime for Exascale (ComEx) run-time library, Aggregate Remote Memory Copy Interface (ARMCI) run-time library, Memory Allocator (MA), parallel I/O libraries (DRA,EAF,SF), TCGMSG, and TCGMSG-MPI packages bundled together. 
