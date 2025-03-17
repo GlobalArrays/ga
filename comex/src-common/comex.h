@@ -85,7 +85,7 @@ extern int comex_finalize();
  * @param[in] msg the message to print
  * @param[in] code the code to exit with
  */
-extern void comex_error(char *msg, int code);
+extern void comex_error(const char *msg, int code);
 
 /**
  * Create a new group from the given group and process ID list.

@@ -367,7 +367,7 @@ int comex_initialized()
 }
 
 
-void comex_error(char *msg, int code)
+void comex_error(const char *msg, int code)
 {
     fprintf(stderr,"[%d] Received an Error in Communication: (%d) %s\n",
             l_state.rank, code, msg);

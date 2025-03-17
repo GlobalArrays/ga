@@ -426,6 +426,7 @@ extern void pnga_sprs_array_export(Integer s_a, const char* file);
 extern void pnga_sprs_array_get_diag(Integer s_a, Integer *g_d);
 extern void pnga_sprs_array_diag_right_multiply(Integer s_a, Integer g_d);
 extern void pnga_sprs_array_diag_left_multiply(Integer s_a, Integer g_d);
+extern void pnga_sprs_array_scale(Integer s_a, void *scale);
 extern void pnga_sprs_array_shift_diag(Integer s_a, void *shift);
 extern logical pnga_sprs_array_get_block(Integer s_a, Integer irow, Integer icol,
     void **idx, void **jdx, void **data, Integer *ilo, Integer *ihi,

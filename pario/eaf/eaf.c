@@ -88,10 +88,10 @@ static struct {
     double t_awrite;  /**< Wall seconds asynchronous writing */
     double t_aread;   /**< Wall seconds asynchronous reading */
     double t_wait;    /**< Wall seconds waiting */
-    long size;        /**< size for MA hack */
-    long handle;      /**< handle for MA hack */
+    Integer size;     /**< size for MA hack */
+    Integer handle;   /**< handle for MA hack */
     char *pointer;    /**< pointer for MA */
-    long openma;      /**< open yes or no for MA to simulate file behavoir */
+    Integer openma;   /**< open yes or no for MA to simulate file behavoir */
 } file[EAF_MAX_FILES];
 
 
@@ -142,7 +142,8 @@ int EAF_Open(const char *fname, int type, int *fd)
 {
   int i=0, j=0, found=0;
   char *ptr;
-  long handle, index;
+  Integer handle;
+  MA_AccessIndex index;
     while ((i<EAF_MAX_FILES) && file[i].fname) /* Find first empty slot */
         i++;
     if (i == EAF_MAX_FILES) return EAF_ERR_MAX_OPEN;
@@ -164,7 +165,7 @@ int EAF_Open(const char *fname, int type, int *fd)
       printf(" fname %s type %d found %d \n", fname, type, found);
 #endif
       if(found == 0 ) {
-	file[i].size=type*1024*1024;
+	file[i].size=(Integer)type*1024*1024;
 #ifdef DEBUG
 	printf("  fname %s type %lf alloc_get size %lf \n", fname, type, file[i].size);
 #endif
@@ -257,7 +258,7 @@ int EAF_Write(int fd, eaf_off_t offset, const void *buf, size_t bytes)
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
     if (file[fd].size > 0) {
-      if((offset+bytes)>file[fd].size){
+      if((Integer)(offset+bytes)>file[fd].size){
 #if 1
 	printf("eaf_write failure: increase MA stack memory \n ");
  	return EAF_ERR_WRITE;
@@ -615,7 +616,7 @@ int EAF_Length(int fd, eaf_off_t *length)
     if (file[fd].size > 0) {
       // should be in MB???
       if(file[fd].openma == 0)  return EAF_ERR_INVALID_FD;
-      len=file[fd].size;
+      len=(Off_t)file[fd].size;
       rc=0;
     }else{
     rc = elio_length(file[fd].elio_fd, &len);
@@ -692,7 +693,7 @@ int eaf_flushbuf(int fd, eaf_off_t offset, const void *buf, size_t bytes)
       */
 {
   int rc, fd_new;
-  long masize, mahandle;
+  Integer masize, mahandle;
   char *mapointer, *oldfname;
   double start = wall_time();
   /* invalidate old FD but do not deallocate MA */

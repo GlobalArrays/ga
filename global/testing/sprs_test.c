@@ -353,7 +353,7 @@ void matrix_test(int type)
   void *w_buf;
   int ok;
   char op[2],plus[2];
-  void *shift_val;
+  void *shift_val, *scale_val;
   void *a, *b, *c, *d, *cp;
   int64_t lo[2], hi[2], tld[2];
   double tbeg, time;
@@ -589,6 +589,158 @@ void matrix_test(int type)
   NGA_Sprs_array_destroy(s_a);
   free(shift_val);
   free(a);
+
+  /* Create a fresh copy of sparse matrix */
+  setup_matrix(&s_a, &a, dim, type);
+
+  /* Scale matrix by 2 */
+  if (type == C_INT) {
+    scale_val = malloc(sizeof(int));
+    *((int*)scale_val) = 2;
+  } else if (type == C_LONG) {
+    scale_val = malloc(sizeof(long));
+    *((long*)scale_val) = 2;
+  } else if (type == C_LONGLONG) {
+    scale_val = malloc(sizeof(long long));
+    *((long long*)scale_val) = 2;
+  } else if (type == C_FLOAT) {
+    scale_val = malloc(sizeof(float));
+    *((float*)scale_val) = 2.0;
+  } else if (type == C_DBL) {
+    scale_val = malloc(sizeof(double));
+    *((double*)scale_val) = 2.0;
+  } else if (type == C_SCPL) {
+    scale_val = malloc(sizeof(SingleComplex));
+    ((float*)scale_val)[0] = 2.0;
+    ((float*)scale_val)[1] = 0.0;
+  } else if (type == C_DCPL) {
+    scale_val = malloc(sizeof(DoubleComplex));
+    ((double*)scale_val)[0] = 2.0;
+    ((double*)scale_val)[1] = 0.0;
+  }
+  tbeg = GA_Wtime();
+  NGA_Sprs_array_scale(s_a, scale_val);
+  time = GA_Wtime()-tbeg;
+  /* Scale a regular array */
+#define SCALE_REAL_M(_a, _scale, _i, _j, _type)        \
+  {                                                    \
+    _type _aij = ((_type*)_a)[_j+dim*_i];              \
+    _type _s  = *((_type*)_scale);                     \
+    ((_type*)_a)[_j+dim*_i] = _s*_aij;                 \
+  }
+
+#define SCALE_COMPLEX_M(_a, _scale, _i, _j, _type)            \
+  {                                                           \
+    _type _aij_r = ((_type*)_a)[2*(_j+dim*_i)];               \
+    _type _aij_i = ((_type*)_a)[2*(_j+dim*_i)+1];             \
+    _type _s_r  = ((_type*)_scale)[0];                        \
+    _type _s_i  = ((_type*)_scale)[1];                        \
+    ((_type*)_a)[2*(_j+dim*_i)] = _s_r*_aij_r-_s_i*_aij_i;    \
+    ((_type*)_a)[2*(_j+dim*_i)+1] = _s_i*_aij_r+_s_r*_aij_i;  \
+  }
+
+  for (i=0; i<dim; i++) {
+    for (j=0; j<dim; j++) {
+      if (type == C_INT) {
+        SCALE_REAL_M(a, scale_val, i, j, int);
+      } else if (type == C_LONG) {
+        SCALE_REAL_M(a, scale_val, i, j, long);
+      } else if (type == C_LONGLONG) {
+        SCALE_REAL_M(a, scale_val, i, j, long long);
+      } else if (type == C_FLOAT) {
+        SCALE_REAL_M(a, scale_val, i, j, float);
+      } else if (type == C_DBL) {
+        SCALE_REAL_M(a, scale_val, i, j, double);
+      } else if (type == C_SCPL) {
+        SCALE_COMPLEX_M(a, scale_val, i, j, float);
+      } else if (type == C_DCPL) {
+        SCALE_COMPLEX_M(a, scale_val, i, j, double);
+      }
+    }
+  }
+
+#undef SCALE_REAL_M
+#undef SCALE_COMPLEX_M
+  /* Compare matrix from sparse array operations with
+   * local scale. Start by getting row block owned by this
+   * process */
+  ok = 1;
+  NGA_Sprs_array_row_distribution64(s_a, me, &ilo, &ihi);
+  /* loop over column blocks */
+  for (iproc = 0; iproc<nprocs; iproc++) {
+    NGA_Sprs_array_column_distribution64(s_a, iproc, &jlo, &jhi);
+    if (jhi >= jlo) {
+      int64_t nrows = ihi-ilo+1;
+      /* column block corresponding to iproc has data. Get pointers
+       * to index and data arrays */
+      NGA_Sprs_array_access_col_block64(s_a, iproc, &idx, &jdx, &ptr);
+      if (idx != NULL) {
+        for (i=0; i<nrows; i++) {
+          int64_t nvals = idx[i+1]-idx[i];
+          for (j=0; j<nvals; j++) {
+            if (type == C_INT) {
+              if (((int*)ptr)[idx[i]+j] != ((int*)a)[(i+ilo)*dim
+                  + jdx[idx[i]+j]]) {
+                ok = 0;
+              }
+            } else if (type == C_LONG) {
+              if (((long*)ptr)[idx[i]+j] != ((long*)a)[(i+ilo)*dim
+                  + jdx[idx[i]+j]]) {
+                ok = 0;
+              }
+            } else if (type == C_LONGLONG) {
+              if (((long long*)ptr)[idx[i]+j] 
+                  != ((long long*)a)[(i+ilo)*dim + jdx[idx[i]+j]]) {
+                ok = 0;
+              }
+            } else if (type == C_FLOAT) {
+              if (((float*)ptr)[idx[i]+j] != ((float*)a)[(i+ilo)*dim
+                  + jdx[idx[i]+j]]) {
+                ok = 0;
+              }
+            } else if (type == C_DBL) {
+              if (((double*)ptr)[idx[i]+j] != ((double*)a)[(i+ilo)*dim
+                  + jdx[idx[i]+j]]) {
+                ok = 0;
+              }
+            } else if (type == C_SCPL) {
+              float rval = ((float*)ptr)[2*(idx[i]+j)];
+              float ival = ((float*)ptr)[2*(idx[i]+j)+1];
+              float ra = ((float*)a)[2*((i+ilo)*dim + jdx[idx[i]+j])];
+              float ia = ((float*)a)[2*((i+ilo)*dim + jdx[idx[i]+j])+1];
+              if (rval != ra || ival != ia) {
+                ok = 0;
+              }
+            } else if (type == C_DCPL) {
+              double rval = ((double*)ptr)[2*(idx[i]+j)];
+              double ival = ((double*)ptr)[2*(idx[i]+j)+1];
+              double ra = ((double*)a)[2*((i+ilo)*dim + jdx[idx[i]+j])];
+              double ia = ((double*)a)[2*((i+ilo)*dim + jdx[idx[i]+j])+1];
+              if (rval != ra || ival != ia) {
+                ok = 0;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  GA_Igop(&ok,1,op);
+  GA_Dgop(&time,1,plus);
+  time /= (double)nprocs;
+  if (me == 0) {
+    if (ok) {
+      printf("\n    **Sparse matrix scale operation PASSES**\n");
+      printf("    Time for matrix scale operation: %16.8f\n",time);
+    } else {
+      printf("\n    **Sparse matrix scale operation FAILS**\n");
+    }
+  }
+
+  NGA_Sprs_array_destroy(s_a);
+  free(a);
+  free(scale_val);
+
 
   /* Create a fresh copy of sparse matrix */
   setup_matrix(&s_a, &a, dim, type);

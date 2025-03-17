@@ -152,7 +152,7 @@ extern int ARMCI_Malloc_memdev(void* ptr_arr[], armci_size_t bytes,
 extern int ARMCI_Free_memdev(void *ptr);
 
 extern void ARMCI_Finalize();    /* terminate ARMCI */
-extern void ARMCI_Error(char *msg, int code);
+extern void ARMCI_Error(const char *msg, int code);
 extern void ARMCI_Fence(int proc);
 extern void ARMCI_AllFence();
 extern int  ARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc);
