@@ -46,7 +46,17 @@ GitHub automatically creates zip and tar.gz archives.  However, these do not con
 3. Run autogen.sh inside the new directory.  This creates the missing generated files, e.g., configure, Makefile.in.
 4. Remove the created autotools directory. We don't want to bundle the autotools with our releases.
 5. Tar the archive back up.
-6. Add the new archive as an artifact of the release.
+6. Got to the releases pages and select the Tags button on the left hand side of
+the page. Then go select the most recent tag (this should correspond to the
+release number).
+7. Select the 'Create release from tag' button. This will bring up a page that
+allows you to edit the release.
+8. Title the release. Use the format vX.X.X where X.X.X represents the major
+version, minor version and patch number.
+9. Copy the current CHANGELOG.md notes into the window 'Describe this release'.
+10. Click on the bar 'Attach binaries by dropping them here or selecting them'
+and upload the tar file created in step 5.
+11. Click on 'Publish release'.
 
 ### Miscellaneous
 
