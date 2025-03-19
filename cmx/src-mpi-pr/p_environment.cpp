@@ -1244,10 +1244,11 @@ bool p_Environment::test(_cmx_request* hdl)
   }
 #endif
 
-  if (!nb_test_for_all(hdl)) {
+  if (nb_test_for_all(hdl)) {
     /* Completed */
     CMX_ASSERT(0 == hdl->send_size);
     CMX_ASSERT(0 == hdl->recv_size);
+    nb_unregister_request(hdl);
     status = true;
   }
   else {
@@ -3215,10 +3216,8 @@ void p_Environment::server_recv_datatype(void *buf, MPI_Datatype dt, int source)
   int retval = 0;
   MPI_Status status;
 
-  printf("p[%d] (server_recv_datatype) Waiting for recv\n",p_config.rank());
   retval = MPI_Recv(buf, 1, dt, source,
       CMX_TAG, p_config.global_comm(), &status);
-  printf("p[%d] (server_recv_datatype) Completed recv\n",p_config.rank());
   _translate_mpi_error(retval,"server_recv_datatype:MPI_Recv");
 
   CHECK_MPI_RETVAL(retval);
@@ -3245,6 +3244,7 @@ void p_Environment::nb_send_common(void *buf, int count, int dest, _cmx_request 
   message->stride = NULL;
   message->iov = NULL;
   message->datatype = MPI_DATATYPE_NULL;
+  message->request = MPI_REQUEST_NULL;
 
   if (NULL == nb->send_head) {
     nb->send_head = message;
@@ -3279,6 +3279,7 @@ void p_Environment::nb_send_datatype(void *buf, MPI_Datatype dt, int dest, _cmx_
   message->stride = NULL;
   message->iov = NULL;
   message->datatype = dt;
+  message->request = MPI_REQUEST_NULL;
 
   if (NULL == nb->send_head) {
     nb->send_head = message;
@@ -3288,10 +3289,8 @@ void p_Environment::nb_send_datatype(void *buf, MPI_Datatype dt, int dest, _cmx_
   }
   nb->send_tail = message;
 
-  printf("p[%d] (nb_send_datatype) calling isend\n",p_config.rank());
   retval = MPI_Isend(buf, 1, dt, dest, CMX_TAG, p_config.global_comm(),
       &(message->request));
-  printf("p[%d] (nb_send_datatype) completed isend\n",p_config.rank());
   _translate_mpi_error(retval,"nb_send_datatype:MPI_Isend");
   CHECK_MPI_RETVAL(retval);
 }
@@ -3779,14 +3778,14 @@ void p_Environment::nb_wait_for_all(_cmx_request *nb)
   nb_unregister_request(nb);
 }
 
-/* Returns 0 if no outstanding requests */
+/* Returns true if no outstanding requests */
 
-int p_Environment::nb_test_for_all(_cmx_request *nb)
+bool p_Environment::nb_test_for_all(_cmx_request *nb)
 {
 #if DEBUG
   fprintf(stderr, "[%d] nb_test_for_all(nb=%p)\n", p_config.rank(), nb);
 #endif
-  int ret = 0;
+  int ret = true;
   message_t *save_send_head = NULL;
   message_t *save_recv_head = NULL;
   message_t *tmp_send_head;
@@ -3800,30 +3799,30 @@ int p_Environment::nb_test_for_all(_cmx_request *nb)
    * set of blocking operations.
    CMX_ASSERT(NULL != nb);
    */
-  if (nb == NULL) return 0;
+  if (nb == NULL) return true;
 
   /* check for outstanding requests */
   while (NULL != nb->send_head || NULL != nb->recv_head) {
     if (NULL != nb->send_head) {
       if (!nb_test_for_send1(nb, &tmp_send_head, &send_prev)) {
-        ret = 1; 
+        ret = false; 
       }
-      if ((NULL == save_send_head) && (ret == 1)) {
+      if ((NULL == save_send_head) && !ret) {
         save_send_head = tmp_send_head;
       }
     }
     if (NULL != nb->recv_head) {
       if (!nb_test_for_recv1(nb, &tmp_recv_head, &recv_prev)) {
-        ret = 1;
+        ret = false;
       }
-      if ((NULL == save_recv_head) && (ret == 1)) {
+      if ((NULL == save_recv_head) && !ret) {
         save_recv_head = tmp_recv_head;
       }
     }
   }
   nb->send_head = save_send_head;
   nb->recv_head = save_recv_head;
-  if (ret == 0) nb->in_use = 0;
+  if (ret) nb->in_use = 0;
   return ret;
 }
 

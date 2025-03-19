@@ -383,10 +383,9 @@ int wait(_cmx_request *req);
  * Checks completion status of non-blocking cmx operations with explicit
  * handles.
  * @param[in] req the request handle
- * @param[out] status true->completed, false->in progress
- * @return CMX_SUCCESS on success
+ * @return true operation completed
  */
-int test(_cmx_request *req, bool *status);
+bool  test(_cmx_request *req);
 
 /**
  * Wait for all outstanding implicit non-blocking operations to finish on the

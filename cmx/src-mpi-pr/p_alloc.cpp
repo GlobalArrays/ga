@@ -603,12 +603,11 @@ int p_Allocation::wait(_cmx_request *req)
  * Checks completion status of non-blocking cmx operations with explicit
  * handles.
  * @param[in] req the request handle
- * @param[out] status true->completed, false->in progress
- * @return CMX_SUCCESS on success
+ * @return true if operation completed
  */
-int p_Allocation::test(_cmx_request *req, bool *status)
+bool p_Allocation::test(_cmx_request *req)
 {
-  return CMX_SUCCESS;
+  return p_impl_environment->test(req);
 }
 
 /**

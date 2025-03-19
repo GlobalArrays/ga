@@ -170,7 +170,7 @@ protected:
 
 /* worker functions. Invoked by global arrays to send messages to progress rank */
 void nb_wait_for_all(_cmx_request *nb);
-int nb_test_for_all(_cmx_request *nb);
+bool nb_test_for_all(_cmx_request *nb);
 void nb_put(void *src, void *dst, int64_t bytes, int proc, _cmx_request *nb);
 void nb_get(void *src, void *dst, int64_t bytes, int proc, _cmx_request *nb);
 void nb_acc(int datatype, void *scale, void *src, void *dst, int64_t bytes, int proc, _cmx_request *nb);
