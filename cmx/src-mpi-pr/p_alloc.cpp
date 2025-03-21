@@ -575,17 +575,17 @@ int p_Allocation::fenceAll()
  *
  * @param[in] op the operation to perform (see list above)
  * @param[in] ploc the value to update locally
- * @param[in] rem_offset offset to remote value
+ * @param[in] prem pointer to remote value
  * @param[in] extra for CMX_FETCH_AND_ADD and CMX_FETCH_AND_ADD_LONG, the
  *            amount to increment the remote value by
  * @param[in] proc remote process(or) id
  * @param[in] cmx_hdl handle for data allocation
  * @return CMX_SUCCESS on success
  */
-int p_Allocation::readModifyWrite(int op, void *ploc, int64_t rem_offset,
+int p_Allocation::readModifyWrite(int op, void *ploc, void *prem,
     int extra, int proc)
 {
-  return CMX_SUCCESS;
+  return p_impl_environment->rmw(op,ploc,prem,extra,proc,p_group);
 }
 
 /**

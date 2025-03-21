@@ -196,6 +196,10 @@ int dist_free(void *ptr, Group *group);
 
 /* non-blocking handle initialization */
 void nb_register_request(_cmx_request *nb);
+
+/* read-modify-write */
+int rmw(int op, void *ploc, void *prem, int extra, int proc,  Group *group);
+
 private:
 
 /**

@@ -1179,9 +1179,11 @@ int p_Environment::dist_free(void *ptr, Group *group)
   delete [] ptrs;
 
   /* remove my ptr from reg cache and free ptr */
-  reg_entry = p_register.find(my_world_rank, ptr, 0);
-  p_shmem.free(reg_entry->name, reg_entry->mapped, reg_entry->len);
-  p_register.remove(my_world_rank, ptr);
+  if (ptr != NULL) {
+    reg_entry = p_register.find(my_world_rank, ptr, 0);
+    p_shmem.free(reg_entry->name, reg_entry->mapped, reg_entry->len);
+    p_register.remove(my_world_rank, ptr);
+  }
 
   /* Is this needed? */
   group->barrier();
@@ -1207,15 +1209,6 @@ void p_Environment::wait(_cmx_request* hdl)
   int index = 0;
 
   CMX_ASSERT(NULL != hdl);
-
-#if 0
-  /* this condition will likely be tripped if a blocking operation follows a
-   * non-blocking operation*/
-  if (0 == nb->in_use) {
-    fprintf(stderr, "p[%d] cmx_wait Error: invalid handle\n",
-        p_config.rank());
-  }
-#endif
 
   nb_wait_for_all(hdl);
   nb_unregister_request(hdl);
@@ -5259,6 +5252,86 @@ void p_Environment::nb_accv_packed(
     nb_send_header(iov_buf, iov_size, master_rank, nb);
     nb_send_header(packed_buffer, packed_size, master_rank, nb);
   }
+}
+
+/**
+ * Read-modify-write function
+ * @param op: operation to be performed
+ * @param ploc: pointer to local variable that stores result
+ * @param prem: pointer to remote data
+ * @param extra: increment to use in fetch and add operation
+ * @param proc: location of remote data
+ * @param group: group containing allocation that holds remote data
+ * @return success
+ */
+int p_Environment::rmw(int cmx_op, void *ploc, void *prem, int extra,
+    int proc,  Group *group)
+{
+  header_t *header = NULL;
+  char *message = NULL;
+  int payload_int = 0;
+  int64_t payload_long = 0;
+  int length = 0;
+  op_t op = OP_NULL;
+  int64_t extra_long = (long)extra;
+  int world_rank = 0;
+  int master_rank = 0;
+  _cmx_request nb;
+
+  world_rank = p_config.get_world_rank(group, proc);
+  master_rank = p_config.master(world_rank);
+  switch (cmx_op) {
+    case CMX_FETCH_AND_ADD:
+      op = OP_FETCH_AND_ADD;
+      length = sizeof(int);
+      payload_int = extra;
+      break;
+    case CMX_FETCH_AND_ADD_LONG:
+      op = OP_FETCH_AND_ADD;
+      length = sizeof(long);
+      payload_long = extra_long;
+      break;
+    case CMX_SWAP:
+      op = OP_SWAP;
+      length = sizeof(int);
+      payload_int = *((int*)ploc);
+      break;
+    case CMX_SWAP_LONG:
+      op = OP_SWAP;
+      length = sizeof(long);
+      payload_long = *((long*)ploc);
+      break;
+    default: CMX_ASSERT(0);
+  }
+
+  /* create and prepare the header */
+  message = new char[sizeof(header_t) + length];
+  CMX_ASSERT(message);
+  MAYBE_MEMSET(message, 0, sizeof(header_t) + length);
+  header = reinterpret_cast<header_t*>(message);
+  header->operation = op;
+  header->remote_address = reinterpret_cast<char*>(prem);
+  header->local_address = reinterpret_cast<char*>(ploc);
+  header->rank = world_rank;
+  header->length = length;
+  switch (cmx_op) {
+    case CMX_FETCH_AND_ADD:
+    case CMX_SWAP:
+      (void)memcpy(message+sizeof(header_t), &payload_int, length);
+      break;
+    case CMX_FETCH_AND_ADD_LONG:
+    case CMX_SWAP_LONG:
+      (void)memcpy(message+sizeof(header_t), &payload_long, length);
+      break;
+    default: CMX_ASSERT(0);
+  }
+
+  nb_register_request(&nb);
+  nb_recv(ploc, length, master_rank, &nb); /* prepost recv */
+  nb_send_header(message, sizeof(header_t)+length, master_rank, &nb);
+  nb_wait_for_all(&nb);
+
+  return CMX_SUCCESS;
 }
 
 /**
