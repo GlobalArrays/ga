@@ -690,6 +690,99 @@ void p_Environment::fence(Group *group)
 }
 
 /**
+ * Fence specific process in a group
+ * @param proc process to fence
+ * @param group group containing target process
+ */
+void p_Environment::fenceProc(int proc, Group *group)
+{
+  int p, ip;
+  int count_before = 0;
+  int count_after = 0;
+  _cmx_request nb;
+  /* NOTE: We always fence on the world group */
+
+  /* count how many fence messagse to send */
+  int size = group->size();
+  /* does process need to be fenced */
+  std::set<int> fenced_procs;
+  std::set<int>::iterator it;
+  p = p_config.get_world_rank(group, proc);
+  int master = p_config.master(p);
+  if (fenced_procs.find(p) == fenced_procs.end()) fenced_procs.insert(p);
+  if (fenced_procs.find(master) == fenced_procs.end())
+    fenced_procs.insert(master);
+
+  it = fenced_procs.begin();
+  while (it != fenced_procs.end()) {
+    p = *it;
+    if (fence_array[p]) {
+      ++count_before;
+    }
+    it++;
+  }
+
+  /* check for no outstanding put/get requests */
+  if (0 == count_before) {
+    return;
+  }
+
+#if NEED_ASM_VOLATILE_MEMORY
+#if DEBUG
+  fprintf(stderr, "[%d] comex_fence_all asm volatile (\"\" : : : \"memory\"); \n",
+      p_config.rank(), group);
+#endif
+  asm volatile ("" : : : "memory");
+#endif
+
+  /* optimize by only sending to procs which we have outstanding messages */
+  nb_request_init(&nb);
+  it = fenced_procs.begin();
+  while (it != fenced_procs.end()) {
+    p = *it;
+    if (fence_array[p]) {
+      int p_master = p_config.master(p);
+      char *message = NULL;
+      header_t *header = NULL;
+
+      /* because we only fence to masters */
+      CMX_ASSERT(p_master == p);
+
+      /* prepost recv for acknowledgment */
+      nb_recv(NULL, 0, p_master, &nb);
+
+      /* post send of fence request */
+      message = new char[sizeof(header_t)];
+      header = reinterpret_cast<header_t*>(message);
+      CMX_ASSERT(header);
+      MAYBE_MEMSET(header, 0, sizeof(header_t));
+      header->operation = OP_FENCE;
+      header->remote_address = NULL;
+      header->local_address = NULL;
+      header->length = 0;
+      header->rank = 0;
+      nb_send_header(header, sizeof(header_t), p_master, &nb);
+    }
+    it++;
+  }
+
+  nb_wait_for_all(&nb);
+
+  it = fenced_procs.begin();
+  while (it != fenced_procs.end()) {
+    p = *it;
+    if (fence_array[p]) {
+      fence_array[p] = 0;
+      ++count_after;
+    }
+    it++;
+  }
+
+  CMX_ASSERT(count_before == count_after);
+}
+
+
+/**
  * Return a pointer to struct containing global state. This is used by
  * allocations
  * @return global state

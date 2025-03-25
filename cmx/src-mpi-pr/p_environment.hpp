@@ -128,6 +128,13 @@ void p_error(const std::string msg, int code);
 void fence(Group *group);
 
 /**
+ * Fence specific process in a group
+ * @param proc process to fence
+ * @param group group containing target process
+ */
+void fenceProc(int proc, Group *group);
+
+/**
  * Get group corresponding to world group
  * @return pointer to world group
  */

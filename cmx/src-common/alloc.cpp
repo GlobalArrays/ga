@@ -426,6 +426,7 @@ int Allocation::nbgetv(cmx_giov_t *darr, int64_t len, int proc, cmx_request *req
  */
 int Allocation::fenceProc(int proc)
 {
+  return p_allocation->fenceProc(proc);
   return CMX_SUCCESS;
 }
 

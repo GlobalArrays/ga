@@ -544,6 +544,9 @@ int p_Allocation::nbgetv(_cmx_giov_t *darr, int64_t len, int proc, _cmx_request 
  */
 int p_Allocation::fenceProc(int proc)
 {
+  int wrank;
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->fenceProc(proc,p_group);
   return CMX_SUCCESS;
 }
 
