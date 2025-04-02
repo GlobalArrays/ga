@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 #include "defines.hpp"
-#include "group.hpp"
+#include "cmx_group.hpp"
 #include "p_environment.hpp"
 
 namespace CMX {

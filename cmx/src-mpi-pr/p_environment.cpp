@@ -782,17 +782,6 @@ void p_Environment::fenceProc(int proc, Group *group)
 }
 
 
-/**
- * Return a pointer to struct containing global state. This is used by
- * allocations
- * @return global state
- */
-cmx_group_world_t* p_Environment::getGlobalState()
-{
-  return &g_state;
-}
-
-
 void p_Environment::p_error(const std::string msg, int code)
 {
 #if DEBUG

@@ -43,6 +43,11 @@ p_Group(int n, int *pid_list, p_Group *group);
 static p_Group* getWorldGroup(MPI_Comm comm = MPI_COMM_NULL);
 
 /**
+ * Clean up world group
+ */
+static void removeWorldGroup();
+
+/**
  * Return the rank of process in group
  * @return rank of calling process in group
  */

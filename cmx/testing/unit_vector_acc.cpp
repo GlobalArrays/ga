@@ -1,6 +1,6 @@
-#include "group.hpp"
-#include "environment.hpp"
-#include "alloc.hpp"
+#include "cmx_group.hpp"
+#include "cmx_environment.hpp"
+#include "cmx_alloc.hpp"
 #include <iostream>
 
 /* Test vector acc operation */

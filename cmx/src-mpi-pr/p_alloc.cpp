@@ -1,7 +1,6 @@
-#include "group.hpp"
 #include "p_environment.hpp"
 #include "p_alloc.hpp"
-#include "environment.hpp"
+#include "cmx_environment.hpp"
 namespace CMX {
 
 /**

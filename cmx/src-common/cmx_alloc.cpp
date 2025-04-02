@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <vector>
 
-#include "group.hpp"
-#include "environment.hpp"
-#include "alloc.hpp"
+#include "cmx_group.hpp"
+#include "cmx_environment.hpp"
+#include "cmx_alloc.hpp"
 
 namespace CMX {
 

@@ -108,13 +108,6 @@ void waitAll(Group *group);
 bool test(_cmx_request *hdl);
 
 /**
- * Return a pointer to struct containing global state. This is used by
- * allocations
- * @return global state
- */
-cmx_group_world_t* getGlobalState();
-
-/**
  * Abort CMX, printing the msg, and exiting with code.
  * @param[in] msg the message to print
  * @param[in] code the code to exit with

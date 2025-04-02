@@ -22,11 +22,6 @@ public:
  */
 Group(int n, int *pid_list, Group *group);
 
-/** Construct Group from p_Group
- * @param[in] group pointer to p_Group object
- * @return pointer to Group object
- */
-
 /**
  * Destructor
  */
@@ -82,8 +77,6 @@ int getWorldRank(int rank);
  */
 std::vector<int> getWorldRanks();
 
-protected:
-
 /**
  * Constructor for new group derived from an MPI communicator. This
  * constructor assumes that all processes ranks refer to processes in
@@ -93,6 +86,8 @@ protected:
  * @param[in] comm MPI commuicator that defines ranks in pid_list
  */
 Group(int n, int *pid_list, MPI_Comm comm);
+
+protected:
 
 /**
  * Construct a group directly from existing p_Group. This is needed for the

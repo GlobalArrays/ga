@@ -68,9 +68,9 @@ endif()
 
 # CMX interface
 set(CMX_INTERFACE
-    src-common/group.cpp
-    src-common/environment.cpp
-    src-common/alloc.cpp
+    src-common/cmx_group.cpp
+    src-common/cmx_environment.cpp
+    src-common/cmx_alloc.cpp
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -90,7 +90,9 @@ find_library(LIBRT rt PATHS /lib /usr/lib /usr/local/lib)
 # -------------------------------------------------------------
 
 set(CMX_DEVICE_HEADERS
-  src-common/cmx.hpp
+  src-common/cmx_group.hpp
+  src-common/cmx_environment.hpp
+  src-common/cmx_alloc.hpp
 )
 
 install (FILES

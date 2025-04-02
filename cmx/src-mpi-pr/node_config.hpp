@@ -4,7 +4,7 @@
 
 #include <mpi.h>
 #include <vector>
-#include "group.hpp"
+#include "cmx_group.hpp"
 
 namespace CMX {
 

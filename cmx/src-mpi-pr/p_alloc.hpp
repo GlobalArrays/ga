@@ -10,8 +10,8 @@
 #include "p_structs.hpp"
 #include "node_config.hpp"
 #include "shmem.hpp"
-#include "group.hpp"
-#include "environment.hpp"
+#include "cmx_group.hpp"
+#include "cmx_environment.hpp"
 #include "p_environment.hpp"
 
 namespace CMX {

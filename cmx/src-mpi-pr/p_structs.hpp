@@ -2,7 +2,7 @@
 #define _P_STRUCTS_H
 
 #include "defines.hpp"
-#include "group.hpp"
+#include "cmx_group.hpp"
 
 /* data structures */
 

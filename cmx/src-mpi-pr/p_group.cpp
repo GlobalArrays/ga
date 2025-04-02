@@ -159,7 +159,9 @@ p_Group::~p_Group()
 }
 
 /**
- * Get world group
+ * Get world group. This function is used for converting an MPI communicator,
+ * provided by the environmental initialization, into a group
+ * @param[in] comm MPI communicator defining the world group
  * @return pointer to world group
  */
 p_Group* p_Group::getWorldGroup(MPI_Comm comm)
@@ -181,6 +183,14 @@ p_Group* p_Group::getWorldGroup(MPI_Comm comm)
     }
   }
   return p_world_group;
+}
+
+/**
+ * Clean up world group
+ */
+void p_Group::removeWorldGroup()
+{
+  if (p_world_group) delete p_world_group;
 }
 
 /**
