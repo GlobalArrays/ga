@@ -41,8 +41,8 @@
 #define USE_MPI_REQUESTS
 /*
 #define USE_MPI_FLUSH_LOCAL
-#define USE_MPI_WIN_ALLOC
 */
+#define USE_MPI_WIN_ALLOC
 
 #ifdef USE_MPI_FLUSH_LOCAL
 #define USE_MPI_REQUESTS
@@ -3336,9 +3336,9 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
         &reg_entries[comm_rank].win);
 #else
     MPI_Alloc_mem(tsize,MPI_INFO_NULL,&reg_entries[comm_rank].buf);
-#endif
     MPI_Win_create(reg_entries[comm_rank].buf,tsize,1,MPI_INFO_NULL,comm,
         &reg_entries[comm_rank].win);
+#endif
 
 #ifdef USE_MPI_REQUESTS
     MPI_Win_lock_all(0,reg_entries[comm_rank].win);
