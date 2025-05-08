@@ -479,6 +479,9 @@ int EAF_Delete(const char *fname)
 	 return EAF_ERR_UNLINK;
        }
        else
+	 if (file[j].fname != NULL) {
+	   free(file[j].fname);
+	 };
 	 file[j].fname= NULL;
            return EAF_OK;
        }else{
