@@ -885,12 +885,12 @@ void FATR nga_proc_topology_(Integer* g_a, Integer* proc, Integer* subscript)
   wnga_proc_topology(*g_a, *proc, subscript);
 }
 
-DoublePrecision FATR ga_rand(Integer *iseed)
+DoublePrecision FATR ga_rand_(Integer *iseed)
 {
   return wnga_rand(*iseed);
 }
 
-DoublePrecision FATR nga_rand(Integer *iseed)
+DoublePrecision FATR nga_rand_(Integer *iseed)
 {
   return wnga_rand(*iseed);
 }
