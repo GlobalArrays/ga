@@ -11,6 +11,13 @@ The Unreleased section will be empty for tagged releases. Unreleased functionali
 
 ## [5.9.1]
 - Changed
+  - Updated versions of blaspp, lapackpp
+- Fixed
+  - Fixed a bug in the fortran interface for the nga_rand function
+  - Removed minor memory leak from EAF_Delete function
+
+## [5.9.1]
+- Changed
   - Updated OS's for continuous integration
   - Converted ARMCI_Error to use const char* instead of char*
 - Fixed
