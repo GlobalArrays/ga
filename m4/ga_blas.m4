@@ -107,8 +107,8 @@ blas_size=4
 blas_size_hack=no
 AC_ARG_WITH([blas],
     [AS_HELP_STRING([--with-blas[[=ARG]]],
-        [use external BLAS library; attempt to detect sizeof(INTEGER)])],
-    [blas_size_hack=yes])
+        [use external BLAS library compiled with sizeof(INTEGER)==4])],
+    [blas_size=4])
 AC_ARG_WITH([blas4],
     [AS_HELP_STRING([--with-blas4[[=ARG]]],
         [use external BLAS library compiled with sizeof(INTEGER)==4])],
