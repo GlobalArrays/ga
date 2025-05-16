@@ -55,6 +55,10 @@ AC_ARG_WITH([scalapack],
     [AS_HELP_STRING([--with-scalapack=[[ARG]]],
         [use ScaLAPACK library compiled with sizeof(INTEGER)==4])],
     [scalapack_size=4])
+AC_ARG_WITH([scalapack4],
+    [AS_HELP_STRING([--with-scalapack4=[[ARG]]],
+        [use ScaLAPACK library compiled with sizeof(INTEGER)==4])],
+    [scalapack_size=4])
 AC_ARG_WITH([scalapack8],
     [AS_HELP_STRING([--with-scalapack8=[[ARG]]],
         [use ScaLAPACK library compiled with sizeof(INTEGER)==8])],
