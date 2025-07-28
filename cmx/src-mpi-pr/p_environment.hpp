@@ -112,7 +112,7 @@ bool test(_cmx_request *hdl);
  * @param[in] msg the message to print
  * @param[in] code the code to exit with
  */
-void p_error(const std::string msg, int code);
+void p_error(const char *msg, int code);
 
 /**
  * Fence on all processes in group

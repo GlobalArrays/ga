@@ -112,7 +112,10 @@ p_Group::p_Group(int n, int *pid_list, MPI_Comm mpi_comm)
   p_world_ranks = new int[n];
   if (p_world_group != NULL) {
     int i;
-    for (i=0; i<n; i++) p_world_ranks[i] = i;
+    for (i=0; i<n; i++) {
+      p_world_ranks[i] = i;
+      p_inv_map.insert(std::pair<int,int>(i,i));
+    }
   } else {
     CMX_ASSERT(0);
   }
@@ -140,6 +143,9 @@ p_Group::p_Group(int n, int *pid_list, p_Group *group)
             1,MPI_INT,p_comm);
   printf("p[%d] ranks: %d %d %d %d\n",p_rank,p_world_ranks[0],
       p_world_ranks[1],p_world_ranks[2],p_world_ranks[3]);
+  for (i=0; i<n; i++) {
+    p_inv_map.insert(std::pair<int,int>(w_me,i));
+  }
 }
 
 /**
@@ -257,6 +263,23 @@ int p_Group::getWorldRank(int rank)
   if (p_world_ranks) {
     return p_world_ranks[rank];
   } 
+  return -1;
+}
+
+/**
+ * Get local rank from world rank
+ * @param rank world rank of process
+ * @return rank of process in calling group
+ */
+int p_Group::getLocalRank(int rank)
+{
+  CMX_ASSERT(rank >= 0);
+  CMX_ASSERT(rank < p_world_group->size());
+  std::map<int,int>::iterator it;  
+  it = p_inv_map.find(rank);
+  if (it != p_inv_map.end()) {
+    return it->second;
+  }
   return -1;
 }
 

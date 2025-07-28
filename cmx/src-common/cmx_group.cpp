@@ -115,9 +115,19 @@ int Group::getWorldRank(int rank)
 }
 
 /**
- *  * Get  world ranks of all processors in the group
- *   * @return list of ranks in the world group
- *    */
+ * Get local rank from world rank
+ * @param rank world rank of process
+ * @return rank of process in calling group
+ */
+int Group::getLocalRank(int rank)
+{
+  return p_group->getLocalRank(rank);
+}
+
+/**
+ * Get  world ranks of all processors in the group
+ * @return list of ranks in the world group
+ */
 std::vector<int> Group::getWorldRanks()
 {
   return p_group->getWorldRanks();

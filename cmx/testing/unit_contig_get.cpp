@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     }
     std::cout<<"Process "<<rank<<" getting data from neighbor "
       <<world_nghbr<< " using non-blocking get"<<std::endl;
-    cmx_request req;
+    CMX::cmx_request req;
     alloc.nbget(ptrs[nghbr],buf,bytes,world_nghbr,&req);
     alloc.wait(&req);
     ok = true;

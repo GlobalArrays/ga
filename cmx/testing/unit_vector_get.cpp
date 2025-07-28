@@ -87,8 +87,8 @@ int main(int argc, char **argv)
     for (i=0; i<nsize; i++) {
       buf[i] = (long)0;
     }
-    cmx_request *req;
-    req = new cmx_request[size];
+    CMX::cmx_request *req;
+    req = new CMX::cmx_request[size];
     bool *rproc;
     rproc = new bool[size];
     for (i=0; i<size; i++) rproc[i] = false;

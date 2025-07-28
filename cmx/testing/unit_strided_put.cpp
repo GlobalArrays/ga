@@ -96,7 +96,7 @@ int main(int argc, char **argv)
     }
     printf("Process %d sending data to neighbor %d using"
         " non-blocking strided put\n",rank,world_nghbr);
-    cmx_request req[8];
+    CMX::cmx_request req[8];
     for (iblk = 0; iblk < 8; iblk++) {
       int64_t src_stride[2], dst_stride[2], count[3];
       int stride_levels = 2;

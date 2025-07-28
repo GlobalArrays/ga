@@ -18,9 +18,7 @@ Environment* Environment::instance()
     int flag;
     MPI_Initialized(&flag);
     if (!flag) {
-      int argc;
-      char **argv;
-      MPI_Init(&argc, &argv);
+      MPI_Init(NULL, NULL);
     }
     p_instance = new Environment();
   }
@@ -107,7 +105,7 @@ Group* Environment::getWorldGroup()
  * @param[in] msg the message to print
  * @param[in] code the code to exit with
  */
-void Environment::error(char *msg, int code)
+void Environment::error(const char *msg, int code)
 {
 }
 

@@ -114,7 +114,7 @@ Group* getWorldGroup();
  * @param[in] msg the message to print
  * @param[in] code the code to exit with
  */
-void error(char *msg, int code);
+void error(const char *msg, int code);
 
 protected:
 

@@ -72,6 +72,13 @@ MPI_Comm MPIComm();
 int getWorldRank(int rank);
 
 /**
+ * Get local rank from world rank
+ * @param rank world rank of process
+ * @return rank of process in calling group
+ */
+int getLocalRank(int rank);
+
+/**
  * Get  world ranks of all processors in the group
  * @return list of ranks in the world group
  */

@@ -30,11 +30,6 @@ cmx_group_world_t g_state = {
     -1
 };
 
-typedef struct {
-  int rank;
-  void *ptr;
-} rank_ptr_t;
-
 /* the HEAD of the group linked list */
 Group *group_list = NULL;
 
@@ -782,7 +777,7 @@ void p_Environment::fenceProc(int proc, Group *group)
 }
 
 
-void p_Environment::p_error(const std::string msg, int code)
+void p_Environment::p_error(const char *msg, int code)
 {
 #if DEBUG
   fprintf(stderr, "[%d] Received an Error in Communication: (%d) %s\n",
@@ -792,7 +787,7 @@ void p_Environment::p_error(const std::string msg, int code)
 #endif
 #endif
   fprintf(stderr,"[%d] Received an Error in Communication: (%d) %s\n",
-      p_config.rank(), code, msg.c_str());
+      p_config.rank(), code, msg);
 
   MPI_Abort(p_config.global_comm(), code);
 }

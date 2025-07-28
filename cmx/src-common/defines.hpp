@@ -1,3 +1,4 @@
+#include <cstdint>
 /* cmx defines header file */
 #ifndef _CMX_COMMON_DEFINES_H
 #define _CMX_COMMON_DEFINES_H

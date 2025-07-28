@@ -4,6 +4,7 @@
 #include "defines.hpp"
 #include "cmx_group.hpp"
 
+namespace CMX {
 /* data structures */
 
 typedef enum {
@@ -112,7 +113,8 @@ typedef struct lock_link {
 
 typedef struct {
   int rank;
-  char *ptr;
+  void *ptr;
 } rank_ptr_t;
 
+}
 #endif //_P_STRUCTS_H

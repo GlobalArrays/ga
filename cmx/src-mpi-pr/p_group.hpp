@@ -3,6 +3,7 @@
 #define _CMX_P_GROUP_H
 
 #include <vector>
+#include <map>
 #include <mpi.h>
 
 namespace CMX {
@@ -86,6 +87,13 @@ void setWorldRanks(const MPI_Comm &world);
 int getWorldRank(int rank);
 
 /**
+ * Get local rank from world rank
+ * @param rank world rank of process
+ * @return rank of process in calling group
+ */
+int getLocalRank(int rank);
+
+/**
  * Get a complete list of world ranks for processes in this group
  * @return list of world ranks
  */
@@ -112,6 +120,7 @@ MPI_Comm p_comm;
 int p_rank;
 int p_size;
 int *p_world_ranks;
+std::map<int,int> p_inv_map;
 
 static p_Group *p_world_group;
 };

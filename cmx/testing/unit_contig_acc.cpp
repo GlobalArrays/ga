@@ -66,7 +66,7 @@ int main(int argc, char **argv)
     }
     std::cout<<"Process "<<rank<<" sending data to neighbor "
       <<world_nghbr<< " using non-blocking accumulate"<<std::endl;
-    cmx_request req;
+    CMX::cmx_request req;
     alloc.nbacc(op,&scale,buf,ptrs[nghbr],bytes,world_nghbr,&req);
     alloc.wait(&req);
     alloc.fenceAll();
