@@ -164,12 +164,7 @@ void p_GA::allocate()
     p_mapc = new int64_t[maplen+1];
     for (i=0; i<maplen; i++) {
       p_mapc[i] = mapAll[i];
-      printf("p[%d] p_mapc[%d]: %ld\n",
-      p_group->rank(),i,p_mapc[i]);
     }
-//    printf("p[%d] (allocate) maplen: %d map[0]: %ld map[1]: %ld"
-//        " map[2]: %ld map[3]: %ld\n",p_group->rank(),maplen,
-//        p_mapc[0],p_mapc[1],p_mapc[2],p_mapc[3]);
     p_mapc[maplen] = -1;
     delete [] mapAll;
   } else if (p_distr == SCALAPACK) {
@@ -243,8 +238,6 @@ void p_GA::allocate()
       scale[i] = static_cast<double>(nblock[i])/static_cast<double>(p_dims[i]);
     }
     distribution(p_group->rank(),p_lo,hi);
-    printf("p[%d] (allocate) p_lo[0]: %ld hi[0]: %ld p_lo[1]: %ld"
-        " p_hi[1]: %ld\n",p_group->rank(),p_lo[0],hi[0],p_lo[1],hi[1]);
     int64_t nelem = 1;
     for (i=0; i<p_ndim; i++) {
       nelem *= (hi[i]-p_lo[i]+1);
@@ -278,11 +271,7 @@ void p_GA::allocate()
 void p_GA::distribution(const int proc, int64_t *lo, int64_t *hi)
 {
   int lproc = proc;
-  printf("p[%d] (distribution) Got to 1 dims[0]: %ld dims[1]: %ld\n",
-      p_group->rank(),p_dims[0],p_dims[1]);
   XGA_OWNS_M(lproc, lo, hi); 
-  printf("p[%d] (distribution) Got to 2 lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
-      p_group->rank(),lo[0],hi[0],lo[1],hi[1]);
 }
 
 /**
@@ -349,15 +338,10 @@ bool p_GA::locateRegion(const int64_t *lo, const int64_t *hi,
 {
   int d, dpos;
   int64_t i, nelems;
-    printf("p[%d] (locateRegion) Got to 1 lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
-        p_group->rank(),lo[0],hi[0],lo[1],hi[1]);
-    printf("p[%d] (locateRegion) Got to 1a ndim: %d dims[0]: %ld dims[1]: %ld\n",
-        p_group->rank(),p_ndim,p_dims[0],p_dims[1]);
   for (d = 0; d < p_ndim; d++) {
     if ((lo[d] < 0 || hi[d] >= p_dims[d]) || lo[d] > hi[d]) return false;
   }
   
-      printf("p[%d] (locateRegion) Got to 2\n",p_group->rank());
   if (p_distr == REGULAR) {
     /* find "processor coordinates" for the lower corner and store them
      * in ProcT */
@@ -372,8 +356,6 @@ bool p_GA::locateRegion(const int64_t *lo, const int64_t *hi,
       XGA_FINDBLOCK_M(p_mapc+dpos,nblock[d], scale[d], lo[d], &procB[d]);
       dpos += nblock[d];
     }
-    printf("p[%d] (locateRegion) Got to 3 B[0]: %d T[0]: %d B[1]: %d T[1]: %d\n",
-        p_group->rank(),procB[0],procT[0],procB[1],procT[1]);
 
     *np = 0;
 
@@ -383,7 +365,6 @@ bool p_GA::locateRegion(const int64_t *lo, const int64_t *hi,
      */
     XGA_INITLOOP_M(&nelems, p_ndim, proc_subscript, procT, procB,
         nblock);
-    printf("p[%d] (locateRegion) nelems: %d\n",p_group->rank(),nelems);
     proclist.resize(nelems);
     for (i=0; i<nelems; i++) {
       int64_t _lo[MAXDIM], _hi[MAXDIM];
@@ -393,13 +374,10 @@ bool p_GA::locateRegion(const int64_t *lo, const int64_t *hi,
       XGA_COMPUTEINDEX_M(&proc, p_ndim, proc_subscript, nblock);
       /* get range of global array indices that are owned by owner */
       XGA_OWNS_M(proc, _lo, _hi);
-      printf("p[%d] (locateRegion) Got to 4 lo[0]: %ld hi[0]: %ld lo[1]: %ld hi[1]: %ld\n",p_group->rank(),_lo[0],_hi[0],_lo[1],_hi[1]);
 
       _offset = *np *(p_ndim*2); /* location in map to put patch range */
 
       for(d = 0; d<p_ndim; d++) {
-      printf("p[%d] (locateRegion) Got to 5 d: %d d+offset: %d\n",
-          p_group->rank(),d,d+_offset);
 //        map[d + _offset ] = lo[d] < _lo[d] ? _lo[d] : lo[d];
         map.push_back(lo[d] < _lo[d] ? _lo[d] : lo[d]);
       }
@@ -465,17 +443,12 @@ bool p_GA::locateRegion(const int64_t *lo, const int64_t *hi,
 bool p_GA::locate(const int64_t *subscript, int *owner)
 {
   int d, proc, dpos, proc_s[MAXDIM];
-  printf("p[%d] (locate) Got to 1\n",p_group->rank());
   for(d=0, *owner=-1; d< p_ndim; d++)
     if(subscript[d]< 0 || subscript[d]>=p_dims[d]) return false;
-  printf("p[%d] mapc: %p\n",p_group->rank(),p_mapc);
   if (p_distr == REGULAR) {
     for(d = 0, dpos = 0; d< p_ndim; d++){
-  printf("p[%d] d: %d dpos: %d,subscript: %p\n",p_group->rank(),d,dpos,subscript);
       XGA_FINDBLOCK_M(p_mapc + dpos, nblock[d], scale[d],
           subscript[d], &proc_s[d]);
-  printf("p[%d] mapc: %p proc[%d]: %d\n",p_group->rank(),p_mapc+dpos,
-      d,proc_s[d]);
       dpos += nblock[d];
     }
 
@@ -489,7 +462,6 @@ bool p_GA::locate(const int64_t *subscript, int *owner)
     XGA_FIND_BLOCK_FROM_INDICES_M(i,index);
     *owner = i;
   }
-  printf("p[%d] (locate) Got to 2\n",p_group->rank());
   return true;
 }
 

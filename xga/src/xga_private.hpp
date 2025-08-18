@@ -109,6 +109,12 @@ public:
   void accessBlockGridPtr(int *index, void **rptr, int64_t *ld);
 
   /**
+   * Synchronize global array across all processor that are hosting
+   * the array
+   */
+  void sync();
+
+  /**
    * Copy data from local buffer to global array
    * @param[in] lo,hi bounding indices of block in global array
    * @param[in] buf pointer to first element in local buffer
@@ -204,7 +210,7 @@ private:
    * @param[out] req non-blocking request handle
    */
   void putCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
-      xga_request **req);
+      xga_request *req);
 
 private:
 

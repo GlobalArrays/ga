@@ -144,6 +144,15 @@ public:
   }
 
   /**
+   * Synchronize global array across all processor that are hosting
+   * the array
+   */
+  void sync()
+  {
+    p_Impl->sync();
+  }
+
+  /**
    * Copy data from local buffer to global array
    * @param[in] lo,hi bounding indices of block in global array
    * @param[in] buf pointer to first element in local buffer

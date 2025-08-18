@@ -3,7 +3,7 @@
 #include "xga_environment.hpp"
 #include <iostream>
 
-#define DIM  5
+#define DIM  10
 int main(int argc, char **argv)
 {
   XGA::Environment *env = XGA::Environment::instance(&argc,&argv);
@@ -18,19 +18,19 @@ int main(int argc, char **argv)
   dims[0] = DIM;
   dims[1] = 2*DIM;
   if (rank == 0) {
-    printf("Testing PUT on a  %d x %d matrix\n",dims[0],dims[1]);
+    printf("\nTesting PUT on a  %d x %d matrix",dims[0],dims[1]);
+    printf(" running on %d processors\n",size);
   }
   XGA::GlobalArray<double> ga(group, ndim, dims);
-  printf("p[%d] (main) Calling allocate\n",rank);
   ga.allocate();
-  printf("p[%d] (main) Completed allocate\n",rank);
 
   /* initialize global array using put */
   int64_t lo[2], hi[2], ld;
+  if (rank == 0) {
+    printf("\n Testing put on whole blocks\n");
+  }
   int nghbr = (rank+1)%size;
   ga.distribution(nghbr,lo,hi);
-  printf("p[%d] (main) lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
-      wrank,lo[0],hi[0],lo[1],hi[1]);
   int64_t nelems = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   double *buf = new double[nelems];
   /* initialize local buffer */
@@ -42,42 +42,109 @@ int main(int argc, char **argv)
       buf[j+jdim*i] = static_cast<double>(j+lo[1] + (i+lo[0])*dims[1]);
     }
   }
-  printf("p[%d] (main) Calling put\n",rank);
   ga.put(lo,hi,buf,&jdim);
-  printf("p[%d] (main) Completed put\n",rank);
+  ga.sync();
   ga.distribution(rank,lo,hi);
-  printf("p[%d] (main) Completed destribution lo[0]: %ld hi[0]: %ld"
-      " lo[1]: %ld hi[1]: %ld\n",
-      rank,lo[0],hi[0],lo[1],hi[1]);
   void *vptr;
   ga.accessPtr(lo, hi, &vptr, &ld);
-  printf("p[%d] (main) Completed accessPtr\n",rank);
   double *dptr = static_cast<double*>(vptr);
-  printf("p[%d] dptr: %p\n",rank,dptr);
   idim = hi[0]-lo[0]+1;
   jdim = hi[1]-lo[1]+1;
   int ok = 1;
   int chk;
   for (i=0; i<idim; i++) {
     for (j=0; j<jdim; j++) {
-      printf("p[%d] i: %ld j: %ld val: %f exp: %f\n",rank,i+lo[0],j+lo[1],
-          dptr[j+jdim*i],static_cast<double>(j+lo[1] + (i+lo[0])*dims[1]));
       if (dptr[j+jdim*i] != static_cast<double>(j+lo[1] + (i+lo[0])*dims[1])) {
+        printf("p[%d] Check fails for i: %d j: %d actual: %f expected: %f\n",
+            wrank,i+lo[0],j+lo[1],dptr[j+jdim*i],
+            static_cast<double>(j+lo[1] + (i+lo[0])*dims[1]));
         ok = 0;
       }
     }
   }
-  printf("p[%d] (main) Completed correctness check ok: %d\n",rank,ok);
-  ga.clear();
-  printf("p[%d] (main) Completed clear\n",rank);
 
   MPI_Comm comm = group->MPIComm();
   MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
   if (chk==1 && rank == 0) {
-    printf("\n Put test PASSES\n");
+    printf("\n Full block put test PASSES\n");
   } else if (chk == 0) {
-    printf("\n Put test FAILS\n");
+    printf("\n Full block put test FAILS\n");
   }
+  if (rank == 0) {
+    printf("\n Testing put on partial blocks\n");
+    printf("\n Zero values in array\n");
+  }
+  for (i=0; i<idim; i++) {
+    for (j=0; j<jdim; j++) {
+      dptr[j+jdim*i] = 0.0;
+    }
+  }
+  ga.sync();
+  int64_t plo[2], phi[2];
+  nghbr = (rank+1)%size;
+  ga.distribution(nghbr,lo,hi);
+  nelems = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+  /* initialize local buffer */
+  idim = hi[0]-lo[0]+1;
+  jdim = hi[1]-lo[1]+1;
+  int n;
+
+  /* divide each processor block into 4 sub-blocks */
+  for (n=0; n<4; n++) {
+    if (n==0) {
+      plo[0] = lo[0];
+      phi[0] = lo[0]+(hi[0]-lo[0])/2;
+      plo[1] = lo[1];
+      phi[1] = lo[1]+(hi[1]-lo[1])/2;
+    } else if (n==1) {
+      plo[0] = lo[0]+(hi[0]-lo[0])/2 + 1;
+      phi[0] = hi[0];
+      plo[1] = lo[1];
+      phi[1] = lo[1]+(hi[1]-lo[1])/2;
+    } else if (n==2) {
+      plo[0] = lo[0];
+      phi[0] = lo[0]+(hi[0]-lo[0])/2;
+      plo[1] = lo[1]+(hi[1]-lo[1])/2 + 1;
+      phi[1] = hi[1];
+    } else if (n==3) {
+      plo[0] = lo[0]+(hi[0]-lo[0])/2 + 1;
+      phi[0] = hi[0];
+      plo[1] = lo[1]+(hi[1]-lo[1])/2 + 1;
+      phi[1] = hi[1];
+    }
+    int64_t ii, jj;
+    for (i=plo[0]; i<=phi[0]; i++) {
+      ii = i-plo[0];
+      for (j=plo[1]; j<=phi[1]; j++) {
+        jj = j-plo[1];
+        buf[jj+jdim*ii] = static_cast<double>(j + i*dims[1]);
+      }
+    }
+    ga.put(plo,phi,buf,&jdim);
+  }
+  ga.sync();
+  ga.distribution(rank,lo,hi);
+  ga.accessPtr(lo, hi, &vptr, &ld);
+  dptr = static_cast<double*>(vptr);
+  ok = 1;
+  for (i=0; i<idim; i++) {
+    for (j=0; j<jdim; j++) {
+      if (dptr[j+jdim*i] != static_cast<double>(j+lo[1] + (i+lo[0])*dims[1])) {
+        printf("p[%d] Check fails for i: %d j: %d actual: %f expected: %f\n",
+            wrank,i+lo[0],j+lo[1], dptr[j+jdim*i],
+            static_cast<double>(j+lo[1] + (i+lo[0])*dims[1]));
+        ok = 0;
+      }
+    }
+  }
+
+  MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
+  if (chk==1 && rank == 0) {
+    printf("\n Partial block put test PASSES\n");
+  } else if (chk == 0) {
+    printf("\n Partial block put test FAILS\n");
+  }
+  ga.clear();
   delete [] buf;
   env->finalize();
   MPI_Finalize();

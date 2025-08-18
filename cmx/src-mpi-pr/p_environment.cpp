@@ -611,7 +611,6 @@ void p_Environment::fence(Group *group)
   for (ip=0; ip<size; ip++) {
     p = p_config.get_world_rank(group, ip);
     int master = p_config.master(p);
-    if (fenced_procs.find(p) == fenced_procs.end()) fenced_procs.insert(p);
     if (fenced_procs.find(master) == fenced_procs.end())
       fenced_procs.insert(master);
 
@@ -1275,8 +1274,6 @@ int p_Environment::wait_proc(int proc, Group *group)
 }
 #endif
 
-void wait(_cmx_request *hdl);
-
 /**
  * wait for completion of non-blocking handle
  * @param hdl non-blocking request handle
@@ -1287,8 +1284,7 @@ void p_Environment::wait(_cmx_request* hdl)
 
   CMX_ASSERT(NULL != hdl);
 
-  nb_wait_for_all(hdl);
-  nb_unregister_request(hdl);
+  nb_wait_for_all(hdl); nb_unregister_request(hdl);
 }
 
 

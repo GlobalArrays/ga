@@ -33,12 +33,8 @@ void p_GA::initIterator(const int64_t *lo, const int64_t *hi)
      * by a given processor, and np contains the total number of
      * processors that contain some portion of the patch.
      */
-    printf("p[%d] (initIterator) Got to 1 lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
-        p_group->rank(),lo[0],hi[0],lo[1],hi[1]);
     if(!locateRegion(lo, hi, map, proclist, &nproc))
       XGA_REGIONERROR_M(p_ndim, lo, hi, -1);
-    printf("p[%d] (initIterator) Got to 2 proclist.size: %d\n",
-        p_group->rank(),proclist.size());
   } else if (p_distr == SCALAPACK)  {
     /* XGA uses ScaLAPACK block cyclic data distribution */
     int j;
@@ -110,11 +106,6 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
   if (p_distr == REGULAR) {
     int64_t *blo, *bhi;
     int64_t nelems;
-    printf("p[%d] (nextBlock) Got to 1 map.size: %d\n",p_group->rank(),map.size());
-    for (i=0; i<p_ndim; i++) {
-      printf("p[%d] (nextbBlock) map lo[%d]: %ld hi[%d]: %ld\n",
-          p_group->rank(),i,map[i],i,map[i+p_ndim]);
-    }
     idx = count;
 
     /* Check to see if range is valid (it may not be valid if user has
@@ -124,23 +115,14 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
     ok = false;
     while(!ok) {
       /* no blocks left, so return */
-    printf("p[%d] (nextBlock) Got to 2 idx: %d count: %d nproc: %d\n",
-        p_group->rank(),idx,count,nproc);
       if (count>=nproc) return false;
-    printf("p[%d] (nextBlock) Got to 2a proclist.size %d\n",
-        p_group->rank(),proclist.size());
       *proc = (int)proclist[idx];
-    printf("p[%d] (nextBlock) Got to 2b proc: %d idx: %d\n",p_group->rank(),*proc,idx);
       *proc = (int)p_group->getLocalRank(*proc);
-    printf("p[%d] (nextBlock) Got to 2c proc: %d\n",p_group->rank(),*proc);
       /* Find  visible portion of patch held by processor p and
        * return the result in plo and phi. Also get actual processor
        * index corresponding to p and store the result in proc.
        */
       XGA_GETRANGEFROMMAP_M(count, p_ndim, plo, phi);
-    printf("p[%d] (nextBlock) Got to 3 proc: %d lo[0]: %d hi[0]: %d"
-        " lo[1]: %d hi[1]: %d\n",p_group->rank(),*proc,
-        (*plo)[0],(*phi)[0],(*plo)[1],(*phi)[1]);
       ok = true;
       for (i=0; i<p_ndim; i++) {
         if ((*phi)[i]<(*plo)[i]) {
@@ -148,7 +130,6 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
           break;
         }
       }
-    printf("p[%d] (nextBlock) Got to 4 plo: %p phi: %p\n",p_group->rank(),*plo,*phi);
       if (ok) {
         *proc = proclist[idx];
         blo = *plo;
@@ -158,12 +139,9 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
         *proc = proclist[idx];
         *proc = (int)p_group->getLocalRank(*proc);
       }
-    printf("p[%d] (nextBlock) Got to 5\n",p_group->rank());
       count++;
       idx = count;
     }
-    printf("p[%d] (nextBlock) Got to 6 proc: %d lo[0]: %d hi[0]: %d"
-        " lo[1]: %d hi[1]: %d\n",p_group->rank(),*proc,blo[0],bhi[0],blo[1],bhi[1]);
     return true;
   } else {
     int64_t offset, l_offset, last, pinv;

@@ -103,9 +103,15 @@ bool test(xga_request *hdl);
 
 /**
  * Fence on all processes in group
- * @param group fence all process in group
+ * @param group fence all processes in group
  */
 void fence(Group *group);
+
+/**
+ * Sync system across all processors in a group
+ * @param group sync all processes in group
+ */
+void sync(Group *group);
 
 /**
  * Translates the ranks of processes in one group to those in another group. The

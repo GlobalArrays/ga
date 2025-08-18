@@ -99,12 +99,23 @@ bool Environment::test(xga_request *hdl)
 
 /**
  * Fence on all processes in group
- * @param group fence all process in group
+ * @param group fence all processes in group
  */
 void Environment::fence(Group *group)
 {
   p_Impl->fence(group->getCMXGroup());
 }
+
+/**
+ * Sync system across all processors in a group
+ * @param group sync all processes in group
+ */
+void Environment::sync(Group *group)
+{
+  p_Impl->fence(group->getCMXGroup());
+  group->barrier();
+}
+
 
 /**
  * Get world group
@@ -270,7 +281,6 @@ CMX::cmx_request* Environment::getCMXRequest(xga_request *req)
   }
   cmx_ihdl_array[idx].active = true;
   cmx_ihdl_array[idx].previous = NULL;
-  printf("p[%d] INDEX: %d\n",p_world_group->rank(),idx);
   if (req->ahandle != NULL) {
     req->ahandle->previous = &cmx_ihdl_array[idx];
   }
