@@ -8,7 +8,7 @@
   int64_t _d, _factor;                                                  \
   *_pidx = _plo[_ndim-1] -_lo[_ndim-1];                                 \
   for(_d=_ndim-1,_factor=1; _d>0; _d--){                                \
-    _factor *= (_dims[_d]);                                             \
+    _factor *= (_dims[_d-1]);                                           \
     *_pidx += _factor * (_plo[_d-1]-_lo[_d-1]);                         \
   }                                                                     \
 }

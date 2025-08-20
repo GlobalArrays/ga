@@ -3,7 +3,7 @@
 #include "xga_environment.hpp"
 #include <iostream>
 
-#define DIM  10
+#define DIM  4
 int main(int argc, char **argv)
 {
   XGA::Environment *env = XGA::Environment::instance(&argc,&argv);
@@ -127,6 +127,8 @@ int main(int argc, char **argv)
   ga.accessPtr(lo, hi, &vptr, &ld);
   dptr = static_cast<double*>(vptr);
   ok = 1;
+  idim = hi[0]-lo[0]+1;
+  jdim = hi[1]-lo[1]+1;
   for (i=0; i<idim; i++) {
     for (j=0; j<jdim; j++) {
       if (dptr[j+jdim*i] != static_cast<double>(j+lo[1] + (i+lo[0])*dims[1])) {
@@ -143,6 +145,61 @@ int main(int argc, char **argv)
     printf("\n Partial block put test PASSES\n");
   } else if (chk == 0) {
     printf("\n Partial block put test FAILS\n");
+  }
+  if (rank == 0) {
+    printf("\n Testing single large put to whole array\n");
+    printf("\n Zero values in array\n");
+  }
+  for (i=0; i<idim; i++) {
+    for (j=0; j<jdim; j++) {
+      dptr[j+jdim*i] = 0.0;
+    }
+  }
+  ga.sync();
+  nghbr = (rank+1)%size;
+  idim = dims[0];
+  jdim = dims[1];
+  nelems = idim*jdim;
+  /* initialize local buffer with values for whole array*/
+  delete [] buf;
+  buf = new double[nelems];
+
+  if (rank == 0) {
+    for (i=0; i<idim; i++) {
+      for (j=0; j<jdim; j++) {
+        buf[j+jdim*i] = static_cast<double>(j+jdim*i);
+      }
+    }
+    /* copy buffer to full array */
+    plo[0] = 0;
+    phi[0] = idim-1;
+    plo[1] = 0;
+    phi[1] = jdim-1;
+    ga.put(plo,phi,buf,&jdim);
+  }
+  ga.sync();
+  ga.distribution(rank,lo,hi);
+  ga.accessPtr(lo, hi, &vptr, &ld);
+  dptr = static_cast<double*>(vptr);
+  ok = 1;
+  idim = (hi[0]-lo[0]+1);
+  jdim = (hi[1]-lo[1]+1);
+  for (i=0; i<idim; i++) {
+    for (j=0; j<jdim; j++) {
+      if (dptr[j+jdim*i] != static_cast<double>((j+lo[1]) + (i+lo[0])*dims[1])) {
+        printf("p[%d] Check fails for i: %d j: %d actual: %f expected: %f\n",
+            wrank,i,j, dptr[j+jdim*i],
+            static_cast<double>((j+lo[1]) + (i+lo[0])*dims[1]));
+        ok = 0;
+      }
+    }
+  }
+
+  MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
+  if (chk==1 && rank == 0) {
+    printf("\n Single large put test PASSES\n\n");
+  } else if (chk == 0) {
+    printf("\n Single large put test FAILS\n\n");
   }
   ga.clear();
   delete [] buf;

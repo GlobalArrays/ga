@@ -353,7 +353,7 @@ bool p_GA::locateRegion(const int64_t *lo, const int64_t *hi,
     /* find "processor coordinates" for the upper corner and store them
      * in procB */
     for (d=0, dpos=0; d<p_ndim; d++) {
-      XGA_FINDBLOCK_M(p_mapc+dpos,nblock[d], scale[d], lo[d], &procB[d]);
+      XGA_FINDBLOCK_M(p_mapc+dpos,nblock[d], scale[d], hi[d], &procB[d]);
       dpos += nblock[d];
     }
 
