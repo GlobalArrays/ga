@@ -122,6 +122,14 @@ public:
    */
   void put(int64_t *lo, int64_t *hi, void* buf, int64_t *ld);
 
+  /**
+   * Copy data from global array to local buffer
+   * @param[in] lo,hi bounding indices of block in global array
+   * @param[in] buf pointer to first element in local buffer
+   * @param[in] ld strides in local buffer
+   */
+  void get(int64_t *lo, int64_t *hi, void* buf, int64_t *ld);
+
 private:
 
   /**
@@ -210,6 +218,17 @@ private:
    * @param[out] req non-blocking request handle
    */
   void putCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
+      xga_request *req);
+
+  /**
+   * Internal implementation of get call that handles both blocking and
+   * non-blocking variants
+   * @param[in] lo,hi bounding indices of block in global array
+   * @param[in] buf pointer to first element in local buffer
+   * @param[in] ld strides in local buffer
+   * @param[out] req non-blocking request handle
+   */
+  void getCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
       xga_request *req);
 
 private:

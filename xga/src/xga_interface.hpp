@@ -164,6 +164,17 @@ public:
   }
 
   /**
+   * Copy data from global array to local buffer
+   * @param[in] lo,hi bounding indices of block in global array
+   * @param[in] buf pointer to first element in local buffer
+   * @param[in] ld strides in local buffer
+   */
+  void get(int64_t *lo, int64_t *hi, void* buf, int64_t *ld)
+  {
+    p_Impl->get(lo, hi, buf, ld);
+  }
+
+  /**
    * Clear internal data from allocation so code can exit cleanly
    */
   void clear()
