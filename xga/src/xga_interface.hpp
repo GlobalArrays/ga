@@ -23,8 +23,8 @@ public:
       p_datatype = XGA_INT;
     } else if constexpr(std::is_same_v<_type,long>) {
       p_datatype = XGA_LONG;
-    } else if constexpr(std::is_same_v<_type,long>) {
-      p_datatype = XGA_LONG;
+    } else if constexpr(std::is_same_v<_type,long long>) {
+      p_datatype = XGA_LONGLONG;
     } else if constexpr(std::is_same_v<_type,float>) {
       p_datatype = XGA_FLOAT;
     } else if constexpr(std::is_same_v<_type,double>) {
@@ -172,6 +172,19 @@ public:
   void get(int64_t *lo, int64_t *hi, void* buf, int64_t *ld)
   {
     p_Impl->get(lo, hi, buf, ld);
+  }
+
+  /**
+   * Accumulate data from local buffer to global array
+   * @param[in] lo,hi bounding indices of block in global array
+   * @param[in] buf pointer to first element in local buffer
+   * @param[in] ld strides in local buffer
+   * @param[in] alpha scale factor for adding contents of buffer
+   *            to global array
+   */
+  void acc(int64_t *lo, int64_t *hi, void* buf, int64_t *ld, void* alpha)
+  {
+    p_Impl->acc(lo, hi, buf, ld, alpha);
   }
 
   /**

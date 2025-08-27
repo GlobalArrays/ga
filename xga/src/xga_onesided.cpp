@@ -73,6 +73,22 @@ void p_GA::get(int64_t *lo, int64_t *hi, void* buf, int64_t *ld)
 }
 
 /**
+ * Accumulate data from local buffer to global array
+ * @param[in] lo,hi bounding indices of block in global array
+ * @param[in] buf pointer to first element in local buffer
+ * @param[in] ld strides in local buffer
+ * @param[in] alpha scale factor for adding contents of buffer
+ *            to global array
+ */
+void p_GA::acc(int64_t *lo, int64_t *hi, void* buf, int64_t *ld, void *alpha)
+{
+  xga_request *req;
+  p_env->getXGARequest(&req);
+  accCommon(lo, hi, buf, ld, alpha, req);
+  p_env->wait(req);
+}
+
+/**
  * Internal implementation of put call that handles both blocking and
  * non-blocking variants
  * @param[in] lo,hi bounding indices of block in global array
@@ -107,10 +123,10 @@ void p_GA::putCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
     XGA_SETSTRIDE_M(p_ndim, p_elemsize, ld, ldrem, stride_rem, stride_loc);
     if (req != NULL) {
       CMX::cmx_request *cmx_req = p_env->getCMXRequest(req);
-      p_alloc->nbputs(pbuf,stride_loc, prem, stride_rem,
+      p_alloc->nbputs(pbuf, stride_loc, prem, stride_rem,
           count, stride_levels, iproc, cmx_req);
     } else {
-      p_alloc->puts(pbuf,stride_loc, prem, stride_rem,
+      p_alloc->puts(pbuf, stride_loc, prem, stride_rem,
           count, stride_levels, iproc);
     }
   }
@@ -152,10 +168,78 @@ void p_GA::getCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
     XGA_SETSTRIDE_M(p_ndim, p_elemsize, ld, ldrem, stride_rem, stride_loc);
     if (req != NULL) {
       CMX::cmx_request *cmx_req = p_env->getCMXRequest(req);
-      p_alloc->nbgets(prem,stride_rem, pbuf, stride_loc,
+      p_alloc->nbgets(prem, stride_rem, pbuf, stride_loc,
           count, stride_levels, iproc, cmx_req);
     } else {
-      p_alloc->puts(prem,stride_rem, pbuf, stride_loc,
+      p_alloc->puts(prem, stride_rem, pbuf, stride_loc,
+          count, stride_levels, iproc);
+    }
+  }
+  destroyIterator();
+}
+
+/**
+ * Internal implementation of accumulate call that handles both blocking
+ * and non-blocking variants
+ * @param[in] lo,hi bounding indices of block in global array
+ * @param[in] buf pointer to first element in local buffer
+ * @param[in] ld strides in local buffer
+ * @param[in] alpha scale factor for adding contents of buffer
+ *            to global array
+ * @param[out] req non-blocking request handle
+ */
+void p_GA::accCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
+    void* alpha, xga_request *req)
+{
+  int counter = 0;
+  int64_t stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
+  int iproc;
+  int stride_levels = p_ndim-1;
+  int op;
+  void *scale =&alpha;
+
+  /* determine what operation is performed in CMX runtime */
+  if (p_datatype == XGA_INT) {
+    op = CMX_ACC_INT;
+  } else if (p_datatype == XGA_LONG) {
+    op = CMX_ACC_LNG;
+  } else if (p_datatype == XGA_FLOAT) {
+    op = CMX_ACC_FLT;
+  } else if (p_datatype == XGA_DOUBLE) {
+    op = CMX_ACC_DBL;
+  } else if (p_datatype == XGA_COMPLEX) {
+    op = CMX_ACC_CPL;
+  } else if (p_datatype == XGA_DCOMPLEX) {
+    op = CMX_ACC_DCP;
+  } else {
+    p_env->error("Accumulate operation not supported for this data type",
+        p_datatype);
+  }
+
+
+  /* initial stride portion */
+
+  initIterator(lo, hi);
+
+  int64_t ldrem[MAXDIM];
+  int64_t idx_buf, *plo, *phi;
+  char *pbuf, *prem;
+
+  while (nextBlock(&iproc, &plo, &phi, &prem, ldrem)) {
+    /* find the right spot in the user buffer */
+    XGA_COMPUTEPATCHINDEX_M(p_ndim, lo, plo, ld, &idx_buf);
+    pbuf = p_elemsize*idx_buf + static_cast<char*>(buf);
+
+    XGA_COMPUTECOUNT_M(p_ndim, plo, phi, count);
+
+    count[0] *= p_elemsize;
+    XGA_SETSTRIDE_M(p_ndim, p_elemsize, ld, ldrem, stride_rem, stride_loc);
+    if (req != NULL) {
+      CMX::cmx_request *cmx_req = p_env->getCMXRequest(req);
+      p_alloc->nbaccs(op, alpha, pbuf, stride_loc, prem, stride_rem,
+          count, stride_levels, iproc, cmx_req);
+    } else {
+      p_alloc->accs(op, alpha, pbuf, stride_loc, prem, stride_rem,
           count, stride_levels, iproc);
     }
   }

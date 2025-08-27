@@ -130,6 +130,15 @@ public:
    */
   void get(int64_t *lo, int64_t *hi, void* buf, int64_t *ld);
 
+  /**
+   * Accumulate data from local buffer to global array
+   * @param[in] lo,hi bounding indices of block in global array
+   * @param[in] buf pointer to first element in local buffer
+   * @param[in] ld strides in local buffer
+   * @param[in] alpha scale factor for adding contents of buffer
+   *            to global array
+   */
+    void acc(int64_t *lo, int64_t *hi, void* buf, int64_t *ld, void* alpha);
 private:
 
   /**
@@ -230,6 +239,18 @@ private:
    */
   void getCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
       xga_request *req);
+
+  /**
+   * Accumulate data from local buffer to global array
+   * @param[in] lo,hi bounding indices of block in global array
+   * @param[in] buf pointer to first element in local buffer
+   * @param[in] ld strides in local buffer
+   * @param[in] alpha scale factor for adding contents of buffer
+   *            to global array
+   * @param[out] req non-blocking request handle
+   */
+    void accCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
+        void* alpha, xga_request *req);
 
 private:
 
