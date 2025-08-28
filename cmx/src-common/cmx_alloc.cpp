@@ -123,6 +123,12 @@ int Allocation::put(void *src, void *dst, int64_t bytes, int proc)
 int Allocation::puts(void *src, int64_t *src_stride, void *dst,
     int64_t *dst_stride, int64_t *count, int stride_levels, int proc)
 {
+  if (checkContiguous(src_stride,dst_stride,count,stride_levels)) {
+    int i;
+    int64_t nbytes = 1;
+    for (i=0; i<=stride_levels; i++) nbytes *= count[i];
+    return p_allocation->put(src,dst,nbytes,proc);
+  }
   return p_allocation->puts(src,src_stride,dst,dst_stride,count,
       stride_levels,proc);
 }
@@ -176,6 +182,12 @@ int Allocation::nbputs(void *src, int64_t *src_stride, void *dst,
     int64_t *dst_stride, int64_t *count, int stride_levels, int proc,
     cmx_request* req)
 {
+  if (checkContiguous(src_stride,dst_stride,count,stride_levels)) {
+    int i;
+    int64_t nbytes = 1;
+    for (i=0; i<=stride_levels; i++) nbytes *= count[i];
+    return p_allocation->nbput(src,dst,nbytes,proc,req);
+  }
   return p_allocation->nbputs(src,src_stride,dst,dst_stride,count,
       stride_levels,proc,req);
 }
@@ -235,6 +247,12 @@ int Allocation::accs(int op, void *scale, void *src, int64_t *src_stride,
     void *dst, int64_t *dst_stride, int64_t *count,
     int stride_levels, int proc)
 {
+  if (checkContiguous(src_stride,dst_stride,count,stride_levels)) {
+    int i;
+    int64_t nbytes = 1;
+    for (i=0; i<=stride_levels; i++) nbytes *= count[i];
+    return p_allocation->acc(op,scale,src,dst,nbytes,proc);
+  }
   return p_allocation->accs(op,scale,src,src_stride,dst,dst_stride,count,
       stride_levels,proc);
 }
@@ -294,6 +312,12 @@ int Allocation::nbaccs(int op, void *scale, void *src, int64_t *src_stride,
     void *dst, int64_t *dst_stride, int64_t *count,
     int stride_levels, int proc, cmx_request *req)
 {
+  if (checkContiguous(src_stride,dst_stride,count,stride_levels)) {
+    int i;
+    int64_t nbytes = 1;
+    for (i=0; i<=stride_levels; i++) nbytes *= count[i];
+    return p_allocation->nbacc(op,scale,src,dst,nbytes,proc,req);
+  }
   return p_allocation->nbaccs(op,scale,src,src_stride,dst,dst_stride,count,
       stride_levels,proc,req);
 }
@@ -347,6 +371,12 @@ int Allocation::get(void *src, void *dst, int64_t bytes, int proc)
 int Allocation::gets(void *src, int64_t *src_stride, void *dst,
     int64_t *dst_stride, int64_t *count, int stride_levels, int proc)
 {
+  if (checkContiguous(src_stride,dst_stride,count,stride_levels)) {
+    int i;
+    int64_t nbytes = 1;
+    for (i=0; i<=stride_levels; i++) nbytes *= count[i];
+    return p_allocation->get(src,dst,nbytes,proc);
+  }
   return p_allocation->gets(src,src_stride,dst,dst_stride,count,stride_levels,proc);
 }
 
@@ -399,6 +429,12 @@ int Allocation::nbgets(void *src, int64_t *src_stride, void *dst,
     int64_t *dst_stride, int64_t *count, int stride_levels, int proc,
     cmx_request *req)
 {
+  if (checkContiguous(src_stride,dst_stride,count,stride_levels)) {
+    int i;
+    int64_t nbytes = 1;
+    for (i=0; i<=stride_levels; i++) nbytes *= count[i];
+    return p_allocation->nbget(src,dst,nbytes,proc,req);
+  }
   return p_allocation->nbgets(src,src_stride,dst,dst_stride,
       count,stride_levels,proc,req);
 }
@@ -512,6 +548,77 @@ int Allocation::waitAll()
 int Allocation::waitProc(int proc)
 {
   return CMX_SUCCESS;
+}
+
+/**
+ * This function checks to see if the data copy is contiguous for both the src
+ * and destination buffers. If it is, then a contiguous operation can be used
+ * instead of a strided operation. This function is intended for arrays of
+ * dimension greater than 1 (contiguous operations can always be used for 1
+ * dimensional arrays).
+ * 
+ * The current implementation tries to identify all contiguous cases by using
+ * all information from the stride and count arrays.
+ *
+ * src_stride: physical dimensions of source buffer
+ * dst_stride: physical dimensions of destination buffer
+ * count: number of elements being moved in each dimension
+ * n_stride: number of strides (array dimension minus one)
+ */
+bool Allocation::checkContiguous(int64_t *src_stride, int64_t *dst_stride,
+        int64_t *count, int n_stride)
+{
+  int i;
+  bool ret = true;
+  int64_t stridelen = 1;
+  bool gap = false;
+  int64_t src_ld[7], dst_ld[7];
+  /**
+   * Calculate physical dimensions of buffers from stride arrays
+   */
+  src_ld[0] = src_stride[0];
+  dst_ld[0] = dst_stride[0];
+  for (i=1; i<n_stride; i++) {
+    src_ld[i] = src_stride[i]/src_stride[i-1];
+    dst_ld[i] = dst_stride[i]/dst_stride[i-1];
+  }
+  /* NOTE: The count array contains the length of the final dimension and can
+   * be used to evaluate some corner cases
+   */
+  for (i=0; i<n_stride; i++) {
+    /* check for overflow */
+    int64_t tmp = stridelen * count[i];
+    if (stridelen != 0 && tmp / stridelen != count[i]) {
+      ret = false;
+      break;
+    }
+    stridelen = tmp;
+    if ((count[i] < src_ld[i] || count[i] < dst_ld[i])
+        && gap) {
+      /* Data is definitely strided in memory */
+      ret = false;
+      break;
+    } else if ((count[i] < src_ld[i] || count[i] < dst_ld[i]) &&
+        !gap) {
+      /* First dimension that doesn't match physical dimension */
+      gap = true;
+    } else if (count[i] != 1 && gap) {
+      /* Found a mismatch between requested block and physical dimensions
+       * indicating a possible stride in memory
+       */
+      ret = false;
+      break;
+    }
+  }
+  /**
+   * Everything looks good up to this point but need to verify that last
+   * dimension is 1 if a mismatch between requested block and physical
+   * array dimensions has been found previously
+   */
+  if (gap && ret && n_stride > 0) {
+    if (count[n_stride] != 1) ret = false;
+  }
+  return ret;
 }
 
 }; // CMX namespace

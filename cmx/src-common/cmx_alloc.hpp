@@ -405,6 +405,25 @@ int waitAll();
 int waitProc(int proc);
 
 private:
+
+/**
+ * This function checks to see if the data copy is contiguous for both the src
+ * and destination buffers. If it is, then a contiguous operation can be used
+ * instead of a strided operation. This function is intended for arrays of
+ * dimension greater than 1 (contiguous operations can always be used for 1
+ * dimensional arrays).
+ * 
+ * The current implementation tries to identify all contiguous cases by using
+ * all information from the stride and count arrays.
+ *
+ * src_stride: physical dimensions of source buffer
+ * dst_stride: physical dimensions of destination buffer
+ * count: number of elements being moved in each dimension
+ * n_stride: number of strides (array dimension minus one)
+ */
+bool checkContiguous(int64_t *src_stride, int64_t *dst_stride,
+        int64_t *count, int n_stride);
+
   Group *p_group; // Group associated with allocation
 
   Environment *p_environment;
