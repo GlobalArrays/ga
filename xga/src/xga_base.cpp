@@ -688,4 +688,23 @@ void p_GA::accessBlockGridPtr(int *l_index, void **rptr, int64_t *ld)
 
 }
 
+/**
+ * Utility function to print subscripts
+ * @param[in] pre character string before subscript
+ * @param[in] ndim dimension of subscript
+ * @param[in] subscript array containing subscript values
+ * @param[in] post character string after subscript
+ */
+void p_GA::printSubscript(const char *pre, const int ndim,
+    const int64_t *subscript, const char *post)
+{
+  int i;
+  printf("%s [",pre);
+  for (i=0; i<ndim; i++) {
+    printf("%ld",subscript[i]);
+    if (i==ndim-1) printf("] %s",post);
+    else printf(",");
+  }
+}
+
 }

@@ -21,6 +21,8 @@ class p_GA {
 
 public:
 
+  enum{XGA_GATHER, XGA_SCATTER, XGA_SCATTERACC};
+
   /**
    * Constructor
    * @param[in] group home group for global array
@@ -139,6 +141,51 @@ public:
    *            to global array
    */
     void acc(int64_t *lo, int64_t *hi, void* buf, int64_t *ld, void* alpha);
+
+    /**
+     * Scatter values to random locations in a global array
+     * @param[in] v array containing values to be scattered to array. The
+     *            type of values in v must match the type of values
+     *            in the global array
+     * @param[in] subscript array of indices representing locations of
+     *            values in global array. Each ndim locations represents
+     *            the index location of one value
+     * @param[in] nv number of values to scattered
+     * @param[in] idxtype flag indicating size of index type (0 for int,
+     *            1 for int64_t)
+     */
+    void scatter(void *v, void *subscript, int64_t nv, int idxtype);
+
+    /**
+     * Gather values from random locations in a global array
+     * @param[in] v array containing values gathered from array. The
+     *            type of values in v must match the type of values
+     *            in the global array
+     * @param[in] subscript array of indices representing locations of
+     *            values in global array. Each ndim locations represents
+     *            the index location of one value
+     * @param[in] nv number of values to gathered
+     * @param[in] idxtype flag indicating size of index type (0 for int,
+     *            1 for int64_t)
+     */
+    void gather(void *v, void *subscript, int64_t nv, int idxtype);
+
+    /**
+     * Accumulate values to random locations in a global array
+     * @param[in] v array containing values to be accumulated to array. The
+     *            type of values in v must match the type of values
+     *            in the global array
+     * @param[in] subscript array of indices representing locations of
+     *            values in global array. Each ndim locations represents
+     *            the index location of one value
+     * @param[in] nv number of values to accumulated
+     * @param[in] scale scale factor to multiply each value by before being
+     *            accumulated
+     * @param[in] idxtype flag indicating size of index type (0 for int,
+     *            1 for int64_t);
+     */
+    void scatterAcc(void *v, void *subscript, int64_t nv, void *alpha, int idxtype);
+
 private:
 
   /**
@@ -249,8 +296,32 @@ private:
    *            to global array
    * @param[out] req non-blocking request handle
    */
-    void accCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
-        void* alpha, xga_request *req);
+  void accCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
+      void* alpha, xga_request *req);
+
+  /**
+   * Generic routine for implementing gather, scatter and scatter-accumulate
+   * operations
+   * @param[in] op enum indicating which operation is being performed
+   * @param[in] v pointer to array containing values to be scattered
+   * @param[in] subscript array containing indices of values to be moved
+   * @param[in] idxtype flag indicating size of index (0 int, 1 int64_t)
+   * @param[in] nv number of values being moved
+   * @param[in] alpha scale factor that is used in scatter-accumulate operation
+   * @param[out] req non-blocking request handle
+   */
+  void gatscatCommon(int op, void *v, void *subscript, int idxtype,
+      int64_t nv, void *alpha, xga_request *req);
+
+  /**
+   * Utility function to print subscripts
+   * @param[in] pre character string before subscript
+   * @param[in] ndim dimension of subscript
+   * @param[in] subscript array containing subscript values
+   * @param[in] post character string after subscript
+   */
+  void printSubscript(const char *pre, const int ndim, const int64_t *subscript,
+      const char *post);
 
 private:
 

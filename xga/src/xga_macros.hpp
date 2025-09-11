@@ -238,6 +238,27 @@
   }                                                                 \
 }
 
+/**
+ * Find the pointer to the location in memory on process proc
+ * of the element indexed by subscript
+ */
+#define XGA_LOCATE_PTR_M(proc, _subscript, _ptr_loc)                \
+{                                                                   \
+  int64_t _offset=0, _d, _w, _factor=1, _last=p_ndim-1;             \
+  int64_t _lo[MAXDIM], _hi[MAXDIM], _iproc;                         \
+  _iproc = proc;                                                    \
+  XGA_OWNS_M(proc, _lo, _hi);                                       \
+  XGA_CHECKSUBSCRIPT_M(_subscript, _lo, _hi);                       \
+  for (_d=_last; _d>0;  _d--) {                                     \
+     _w = width[_d];                                                \
+    _offset += (_subscript[_d]-_lo[_d]+_w)*_factor;                 \
+    _factor *= _hi[_d] - _lo[_d] + 1 + 2*_w;                        \
+  }                                                                 \
+  _offset += (_subscript[0]-_lo[0]+width[0])*_factor;               \
+  *(_ptr_loc) = static_cast<void*>(static_cast<char*>(ptr[_iproc])  \
+      + _offset*p_elemsize);                                        \
+}
+
 #define XGA_REGIONERROR_M(_ndim, lo, hi, val){                      \
   int _d, _l;                                                       \
   const char *str= "cannot locate region: ";                        \

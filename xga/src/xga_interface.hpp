@@ -188,6 +188,53 @@ public:
   }
 
   /**
+   * Scatter values to random locations in a global array
+   * @param[in] v array containing values to be scattered to array. The
+   *            type of values in v must match the type of values
+   *            in the global array
+   * @param[in] subscript array of indices representing locations of
+   *            values in global array. Each ndim locations represents
+   *            the index location of one value
+   * @param[in] nv number of values to scattered
+   */
+  void scatter(void *v, int64_t *subscript, int64_t nv)
+  {
+    p_Impl->scatter(v, subscript, nv, 1);
+  }
+
+  /**
+   * Gather values from random locations in a global array
+   * @param[in] v array containing values gathered from array. The
+   *            type of values in v must match the type of values
+   *            in the global array
+   * @param[in] subscript array of indices representing locations of
+   *            values in global array. Each ndim locations represents
+   *            the index location of one value
+   * @param[in] nv number of values to gathered 
+   */
+  void gather(void *v, int64_t *subscript, int64_t nv)
+  {
+    p_Impl->gather(v, subscript, nv, 1);
+  }
+
+  /**
+   * Accumulate values to random locations in a global array
+   * @param[in] v array containing values to be accumulated to array. The
+   *            type of values in v must match the type of values
+   *            in the global array
+   * @param[in] subscript array of indices representing locations of
+   *            values in global array. Each ndim locations represents
+   *            the index location of one value
+   * @param[in] nv number of values to scattered
+   * @param[in] scale scale factor to multiply each value by before being
+   *            accumulated
+   */
+  void scatterAcc(void *v, int64_t *subscript, int64_t nv, void *alpha)
+  {
+    p_Impl->scatterAcc(v, subscript, nv, alpha, 1);
+  }
+
+  /**
    * Clear internal data from allocation so code can exit cleanly
    */
   void clear()

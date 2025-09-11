@@ -4971,7 +4971,7 @@ void p_Environment::nb_putv(
     _cmx_giov_t *iov, int64_t iov_len,
     int proc, _cmx_request *nb)
 {
-  int i = 0;
+  int64_t i = 0;
 
   for (i=0; i<iov_len; ++i) {
     /* if not a vector put to self, use packed algorithm */

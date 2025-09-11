@@ -3,7 +3,7 @@
 #include "xga_environment.hpp"
 #include <iostream>
 
-#define DIM  4
+#define DIM  2048
 int main(int argc, char **argv)
 {
   XGA::Environment *env = XGA::Environment::instance(&argc,&argv);
