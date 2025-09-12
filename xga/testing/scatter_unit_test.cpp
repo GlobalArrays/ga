@@ -53,7 +53,6 @@ int main(int argc, char **argv)
   delete [] subscripts;
   /* Check values */
   nelems = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1)*(hi[2]-lo[2]+1);
-  double *buf = new double[nelems];
   /* Access local data in array */
   int64_t idim = hi[0]-lo[0]+1;
   int64_t jdim = hi[1]-lo[1]+1;
