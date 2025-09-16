@@ -54,7 +54,7 @@ int main(int argc, char **argv)
       buf[j+jdim*i] = static_cast<double>(j+lo[1] + (i+lo[0])*dims[1]);
     }
   }
-  ga.acc(lo,hi,buf,&jdim,&r_one);
+  ga.acc(lo,hi,buf,&jdim,r_one);
   ga.sync();
   ga.distribution(rank,lo,hi);
   ga.accessPtr(lo, hi, &vptr, &ld);
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
         buf[jj+jdim*ii] = static_cast<double>(j + i*dims[1]);
       }
     }
-    ga.acc(plo,phi,buf,&jdim,&r_one);
+    ga.acc(plo,phi,buf,&jdim,r_one);
   }
   ga.sync();
   ga.distribution(rank,lo,hi);
@@ -175,7 +175,7 @@ int main(int argc, char **argv)
     phi[0] = idim-1;
     plo[1] = 0;
     phi[1] = jdim-1;
-    ga.acc(plo,phi,buf,&jdim,&r_one);
+    ga.acc(plo,phi,buf,&jdim,r_one);
   }
   ga.sync();
   ga.distribution(rank,lo,hi);

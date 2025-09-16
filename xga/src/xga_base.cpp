@@ -689,6 +689,107 @@ void p_GA::accessBlockGridPtr(int *l_index, void **rptr, int64_t *ld)
 }
 
 /**
+ * Set all values in the array to zero
+ */
+void p_GA::zero()
+{
+  int rank = p_group->rank();
+  size_t size = static_cast<size_t>(p_size);
+  memset(ptr[rank], 0, size);
+}
+
+/**
+ * Fill array with a single value
+ * @param value pointer to value being filled
+ */
+void p_GA::fill(void *value)
+{
+  int64_t lo[MAXDIM], hi[MAXDIM];
+  int me = p_group->rank();
+  distribution(me, lo, hi);
+  int64_t nelems = 1;
+  int64_t i;
+  for (i=0; i<p_ndim; i++) nelems *= hi[i]-lo[i]+1;
+  switch (static_cast<int>(p_datatype)) {
+    case XGA_INT: 
+      {
+        int *iptr = static_cast<int*>(ptr[me]);
+        int ival = *static_cast<int*>(value);
+        for (i=0; i<nelems; i++) {
+          iptr[i] = ival;
+        }
+      }
+      break;
+    case XGA_LONG:
+      {
+        long *lptr = static_cast<long*>(ptr[me]);
+        long lval = *static_cast<long*>(value);
+        for (i=0; i<nelems; i++) {
+          lptr[i] = lval;
+        }
+      }
+      break;
+    case XGA_LONGLONG:
+      {
+        long long *llptr = static_cast<long long*>(ptr[me]);
+        long long llval = *static_cast<long long*>(value);
+        for (i=0; i<nelems; i++) {
+          llptr[i] = llval;
+        }
+      }
+      break;
+    case XGA_FLOAT:
+      {
+        float *fptr = static_cast<float*>(ptr[me]);
+        float fval = *static_cast<float*>(value);
+        for (i=0; i<nelems; i++) {
+          fptr[i] = fval;
+        }
+      }
+      break;
+    case XGA_DOUBLE:
+      {
+        double *dptr = static_cast<double*>(ptr[me]);
+        double dval = *static_cast<double*>(value);
+        for (i=0; i<nelems; i++) {
+          dptr[i] = dval;
+        }
+      }
+      break;
+    case XGA_COMPLEX:
+      {
+        std::complex<float> *cptr = static_cast<std::complex<float>*>(ptr[me]);
+        std::complex<float> cval = *static_cast<std::complex<float>*>(value);
+        for (i=0; i<nelems; i++) {
+          cptr[i] = cval;
+        }
+      }
+      break;
+    case XGA_DCOMPLEX:
+      {
+        std::complex<double> *zptr = static_cast<std::complex<double>*>(ptr[me]);
+        std::complex<double> zval = *static_cast<std::complex<double>*>(value);
+        for (i=0; i<nelems; i++) {
+          zptr[i] = zval;
+        }
+      }
+      break;
+    case XGA_UNKNOWN:
+      {
+        char *uptr = static_cast<char*>(ptr[me]);
+        char *uval = static_cast<char*>(value);
+        for (i=0; i<nelems; i++) {
+          memcpy(uptr,uval,p_elemsize);
+          uptr += p_elemsize;
+        }
+      }
+      break;
+    default:
+      p_env->error("(fill) unknown data type",static_cast<int>(p_datatype));
+  }
+}
+
+/**
  * Utility function to print subscripts
  * @param[in] pre character string before subscript
  * @param[in] ndim dimension of subscript

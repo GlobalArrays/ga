@@ -184,7 +184,19 @@ public:
      * @param[in] idxtype flag indicating size of index type (0 for int,
      *            1 for int64_t);
      */
-    void scatterAcc(void *v, void *subscript, int64_t nv, void *alpha, int idxtype);
+    void scatterAcc(void *v, void *subscript, int64_t nv, void *alpha,
+        int idxtype);
+
+    /**
+     * Set all values in the array to zero
+     */
+    void zero();
+
+    /**
+     * Fill array with a single value
+     * @param value pointer to value being filled
+     */
+    void fill(void *value);
 
 private:
 

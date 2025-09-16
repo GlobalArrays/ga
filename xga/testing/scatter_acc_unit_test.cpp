@@ -67,7 +67,7 @@ int main(int argc, char **argv)
   }
   ga.distribution(rank,lo,hi);
   double one = 1.0;
-  ga.scatterAcc(values, subscripts, icnt, &one);
+  ga.scatterAcc(values, subscripts, icnt, one);
   ga.sync();
   delete [] values;
   delete [] subscripts;

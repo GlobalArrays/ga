@@ -182,9 +182,10 @@ public:
    * @param[in] alpha scale factor for adding contents of buffer
    *            to global array
    */
-  void acc(int64_t *lo, int64_t *hi, void* buf, int64_t *ld, void* alpha)
+  void acc(int64_t *lo, int64_t *hi, void* buf, int64_t *ld, _type alpha)
   {
-    p_Impl->acc(lo, hi, buf, ld, alpha);
+    _type talpha = alpha;
+    p_Impl->acc(lo, hi, buf, ld, &talpha);
   }
 
   /**
@@ -229,9 +230,28 @@ public:
    * @param[in] scale scale factor to multiply each value by before being
    *            accumulated
    */
-  void scatterAcc(void *v, int64_t *subscript, int64_t nv, void *alpha)
+  void scatterAcc(void *v, int64_t *subscript, int64_t nv, _type alpha)
   {
-    p_Impl->scatterAcc(v, subscript, nv, alpha, 1);
+    _type talpha = alpha;
+    p_Impl->scatterAcc(v, subscript, nv, &talpha, 1);
+  }
+
+  /**
+   * Set all values in the array to zero
+   */
+  void zero()
+  {
+    p_Impl->zero();
+  }
+
+  /**
+   * Fill array with a single value
+   * @param value pointer to value being filled
+   */
+  void fill(_type value)
+  {
+    _type tvalue = value;
+    p_Impl->fill(&tvalue);
   }
 
   /**
