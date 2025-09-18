@@ -116,8 +116,8 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
     while(!ok) {
       /* no blocks left, so return */
       if (count>=nproc) return false;
-      *proc = (int)proclist[idx];
-      *proc = (int)p_group->getLocalRank(*proc);
+      *proc = static_cast<int>(proclist[idx]);
+      *proc = static_cast<int>(p_group->getLocalRank(*proc));
       /* Find  visible portion of patch held by processor p and
        * return the result in plo and phi. Also get actual processor
        * index corresponding to p and store the result in proc.

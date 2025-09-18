@@ -19,6 +19,7 @@ public:
    */
   GlobalArray(Group *group, int ndim, int64_t *dims)
   {
+    p_ndim = ndim;
     if constexpr(std::is_same_v<_type,int>) {
       p_datatype = XGA_INT;
     } else if constexpr(std::is_same_v<_type,long>) {
@@ -35,8 +36,37 @@ public:
       p_datatype = XGA_DCOMPLEX;
     }
 
+    p_group = group;
+
     p_Impl = new p_GA(group, ndim, dims, p_datatype);
   };
+
+  GlobalArray(Group *group, int ndim, int *dims)
+  {
+    p_ndim = ndim;
+    int64_t tdims[MAXDIM];
+    int i;
+    for (i=0; i<ndim; i++) tdims[i] = static_cast<int64_t>(dims[i]);
+    if constexpr(std::is_same_v<_type,int>) {
+      p_datatype = XGA_INT;
+    } else if constexpr(std::is_same_v<_type,long>) {
+      p_datatype = XGA_LONG;
+    } else if constexpr(std::is_same_v<_type,long long>) {
+      p_datatype = XGA_LONGLONG;
+    } else if constexpr(std::is_same_v<_type,float>) {
+      p_datatype = XGA_FLOAT;
+    } else if constexpr(std::is_same_v<_type,double>) {
+      p_datatype = XGA_DOUBLE;
+    } else if constexpr(std::is_same_v<_type,std::complex<float> >) {
+      p_datatype = XGA_COMPLEX;
+    } else if constexpr(std::is_same_v<_type,std::complex<double> >) {
+      p_datatype = XGA_DCOMPLEX;
+    }
+
+    p_group = group;
+
+    p_Impl = new p_GA(group, ndim, tdims, p_datatype);
+  }
 
   /**
    * Basic destructor
@@ -63,6 +93,16 @@ public:
   {
     p_Impl->setIrregularDistribution(mapc, nblock);
   }
+  void setIrreglarDistribution(int *mapc, int *nblock)
+  {
+    int ntot = 0;
+    int i;
+    for (i=0;  i<p_ndim; i++) ntot += nblock[i];
+    int64_t *tmap = new int64_t[ntot];
+    for (i=0; i<ntot; i++) tmap[i] = static_cast<int64_t>(mapc[i]);
+    p_Impl->setIrregularDistribution(tmap, nblock);
+    delete [] tmap;
+  }
 
   /**
    * Allocate resources to create global array
@@ -82,16 +122,33 @@ public:
   {
     p_Impl->distribution(proc,lo,hi);
   }
+  void distribution(const int proc, int *lo, int *hi)
+  {
+    int i;
+    int64_t tlo[MAXDIM], thi[MAXDIM];
+    p_Impl->distribution(proc,tlo,thi);
+    for (i=0; i<p_ndim; i++) {
+      lo[i] = static_cast<int>(tlo[i]);
+      hi[i] = static_cast<int>(thi[i]);
+    }
+  }
 
   /**
    * Locate process that owns a particular array element
-   * @param subscript indices of element
-   * @param owner process that owns element indexed by subscript
+   * @param[in] subscript indices of element
+   * @param[out] owner process that owns element indexed by subscript
    * @return false if subscript is not located in array
    */
   bool locate(const int64_t *subscript, int *owner)
   {
     return p_Impl->locate(subscript, owner);
+  }
+  bool locate(const int *subscript, int *owner)
+  {
+    int64_t tsub[MAXDIM];
+    int i;
+    for (i=0; i<p_ndim; i++) tsub[i] = static_cast<int64_t>(subscript[i]);
+    return p_Impl->locate(tsub, owner);
   }
 
   /**
@@ -120,6 +177,22 @@ public:
   {
     return p_Impl->locateRegion(lo, hi, map, proclist, np);
   }
+  bool locateRegion(const int *lo, const int *hi,
+      std::vector<int> &map, std::vector<int> proclist, int *np)
+  {
+    int64_t tlo[MAXDIM], thi[MAXDIM];
+    std::vector<int64_t> tmap;
+    int i;
+    for (i=0; i<p_ndim; i++) {
+      tlo[i] = static_cast<int64_t>(lo[i]);
+      thi[i] = static_cast<int64_t>(hi[i]);
+    }
+    bool ret = p_Impl->locateRegion(tlo, thi, tmap, proclist, np);
+    map.clear();
+    size_t size = tmap.size();
+    for (i=0; i<size; i++) map.push_back(static_cast<int>(tmap[i]));
+    return ret;
+  }
 
   /**
    * Access data corresponding to a specific patch
@@ -131,6 +204,18 @@ public:
   {
     p_Impl->accessPtr(plo, phi, rptr, ld);
   }
+  void accessPtr(int *plo, int *phi, void **rptr, int *ld)
+  {
+    int i;
+    int64_t tlo[MAXDIM], thi[MAXDIM], tld[MAXDIM];
+    tld[0] = 1;
+    for (i=0; i<p_ndim; i++) {
+      tlo[i] = static_cast<int64_t>(plo[i]);
+      thi[i] = static_cast<int64_t>(phi[i]);
+      if (i<p_ndim-1) tld[i] = static_cast<int64_t>(ld[i]);
+    }
+    p_Impl->accessPtr(tlo, thi, rptr, tld);
+  }
 
   /**
    * Access data corresponding to a specific block
@@ -141,6 +226,14 @@ public:
   void accessBlockGridPtr(int *index, void **rptr, int64_t *ld)
   {
     p_Impl->accessBlockGridPtr(index, rptr, ld);
+  }
+  void accessBlockGridPtr(int *index, void **rptr, int *ld)
+  {
+    int i;
+    int64_t tld[MAXDIM];
+    tld[0] = 1;
+    for (i=0; i<p_ndim-1; i++) tld[i] = static_cast<int64_t>(ld[i]);
+    p_Impl->accessBlockGridPtr(index, rptr, tld);
   }
 
   /**
@@ -158,9 +251,21 @@ public:
    * @param[in] buf pointer to first element in local buffer
    * @param[in] ld strides in local buffer
    */
-  void put(int64_t *lo, int64_t *hi, void* buf, int64_t *ld)
+  void put(int64_t *lo, int64_t *hi, _type* buf, int64_t *ld)
   {
     p_Impl->put(lo, hi, buf, ld);
+  }
+  void put(int *lo, int *hi, _type* buf, int *ld)
+  {
+    int i;
+    int64_t tlo[MAXDIM], thi[MAXDIM], tld[MAXDIM];
+    tld[0] = 1;
+    for (i=0; i<p_ndim; i++) {
+      tlo[i] = static_cast<int64_t>(lo[i]);
+      thi[i] = static_cast<int64_t>(hi[i]);
+      if (i<p_ndim-1) tld[i] = static_cast<int64_t>(ld[i]);
+    }
+    p_Impl->put(tlo, thi, buf, tld);
   }
 
   /**
@@ -169,9 +274,21 @@ public:
    * @param[in] buf pointer to first element in local buffer
    * @param[in] ld strides in local buffer
    */
-  void get(int64_t *lo, int64_t *hi, void* buf, int64_t *ld)
+  void get(int64_t *lo, int64_t *hi, _type* buf, int64_t *ld)
   {
     p_Impl->get(lo, hi, buf, ld);
+  }
+  void get(int *lo, int *hi, _type* buf, int *ld)
+  {
+    int i;
+    int64_t tlo[MAXDIM], thi[MAXDIM], tld[MAXDIM];
+    tld[0] = 1;
+    for (i=0; i<p_ndim; i++) {
+      tlo[i] = static_cast<int64_t>(lo[i]);
+      thi[i] = static_cast<int64_t>(hi[i]);
+      if (i<p_ndim-1) tld[i] = static_cast<int64_t>(ld[i]);
+    }
+    p_Impl->get(tlo, thi, buf, tld);
   }
 
   /**
@@ -182,10 +299,23 @@ public:
    * @param[in] alpha scale factor for adding contents of buffer
    *            to global array
    */
-  void acc(int64_t *lo, int64_t *hi, void* buf, int64_t *ld, _type alpha)
+  void acc(int64_t *lo, int64_t *hi, _type* buf, int64_t *ld, _type alpha)
   {
     _type talpha = alpha;
     p_Impl->acc(lo, hi, buf, ld, &talpha);
+  }
+  void acc(int *lo, int *hi, _type* buf, int *ld, _type alpha)
+  {
+    _type talpha = alpha;
+    int i;
+    int64_t tlo[MAXDIM], thi[MAXDIM], tld[MAXDIM];
+    tld[0] = 1;
+    for (i=0; i<p_ndim; i++) {
+      tlo[i] = static_cast<int64_t>(lo[i]);
+      thi[i] = static_cast<int64_t>(hi[i]);
+      if (i<p_ndim-1) tld[i] = static_cast<int64_t>(ld[i]);
+    }
+    p_Impl->acc(tlo, thi, buf, tld, &talpha);
   }
 
   /**
@@ -198,9 +328,14 @@ public:
    *            the index location of one value
    * @param[in] nv number of values to scattered
    */
-  void scatter(void *v, int64_t *subscript, int64_t nv)
+  void scatter(_type *v, int64_t *subscript, int64_t nv)
   {
     p_Impl->scatter(v, subscript, nv, 1);
+  }
+  void scatter(_type *v, int *subscript, int nv)
+  {
+    int64_t tnv = static_cast<int64_t>(nv);
+    p_Impl->scatter(v, subscript, nv, 0);
   }
 
   /**
@@ -213,9 +348,14 @@ public:
    *            the index location of one value
    * @param[in] nv number of values to gathered 
    */
-  void gather(void *v, int64_t *subscript, int64_t nv)
+  void gather(_type *v, int64_t *subscript, int64_t nv)
   {
     p_Impl->gather(v, subscript, nv, 1);
+  }
+  void gather(_type *v, int *subscript, int nv)
+  {
+    int64_t tnv = static_cast<int64_t>(nv);
+    p_Impl->gather(v, subscript, tnv, 0);
   }
 
   /**
@@ -230,10 +370,16 @@ public:
    * @param[in] scale scale factor to multiply each value by before being
    *            accumulated
    */
-  void scatterAcc(void *v, int64_t *subscript, int64_t nv, _type alpha)
+  void scatterAcc(_type *v, int64_t *subscript, int64_t nv, _type alpha)
   {
     _type talpha = alpha;
     p_Impl->scatterAcc(v, subscript, nv, &talpha, 1);
+  }
+  void scatterAcc(_type *v, int *subscript, int nv, _type alpha)
+  {
+    _type talpha = alpha;
+    int64_t tnv = static_cast<int64_t>(nv);
+    p_Impl->scatterAcc(v, subscript, tnv, &talpha, 0);
   }
 
   /**
@@ -267,7 +413,11 @@ private:
 
   xga_types p_datatype = XGA_UNKNOWN;
 
+  int p_ndim;
+
   p_GA *p_Impl;
+
+  Group *p_group;
 };
 }
 #endif
