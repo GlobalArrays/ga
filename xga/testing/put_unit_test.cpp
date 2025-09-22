@@ -273,4 +273,5 @@ int main(int argc, char **argv)
   put_test<int,std::complex<double> >();
   env->finalize();
   MPI_Finalize();
+  return 0;
 }
