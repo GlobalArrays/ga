@@ -188,6 +188,16 @@ public:
         int idxtype);
 
     /**
+     * Read the value at location indicated by subscript and increment b
+     * the amount inc. This operation is atomic with respect to other read
+     * increment operations.
+     * @param[in] subscript locate of element to be read and incremented
+     * @param[in] inc amount to increment element
+     * @param[out] pointer to variable containing the current value of element
+     */
+    void readInc(int64_t *subscript, void *inc, void *result);
+
+    /**
      * Set all values in the array to zero
      */
     void zero();

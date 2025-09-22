@@ -383,6 +383,30 @@ public:
   }
 
   /**
+   * Read the value at location indicated by subscript and increment b
+   * the amount inc. This operation is atomic with respect to other read
+   * increment operations.
+   * @param[in] subscript locate of element to be read and incremented
+   * @param[in] inc amount to increment element
+   * @return current value of element
+   */
+  _type readInc(int64_t *subscript, _type inc)
+  {
+    _type result;
+    p_Impl->readInc(subscript, &inc, &result);
+    return result;
+  }
+  _type readInc(int *subscript, _type inc)
+  {
+    int i;
+    int64_t tsub[MAXDIM];
+    _type result;
+    for (i=0; i<p_ndim; i++) tsub[i] = static_cast<int64_t>(subscript[i]);
+    p_Impl->readInc(tsub, &inc, &result);
+    return result;
+  }
+
+  /**
    * Set all values in the array to zero
    */
   void zero()

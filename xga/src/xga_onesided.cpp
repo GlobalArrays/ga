@@ -485,4 +485,38 @@ void p_GA::gatscatCommon(int op, void *v, void *subscript, int idxtype,
   }
 }
 
+/**
+ * Read the value at location indicated by subscript and increment b
+ * the amount inc. This operation is atomic with respect to other read
+ * increment operations.
+ * @param[in] subscript locate of element to be read and incremented
+ * @param[in] inc amount to increment element
+ * @param[out] pointer to variable containing the current value of element
+ */
+void p_GA::readInc(int64_t *subscript, void *inc, void *result)
+{
+  int op;
+  int extra;
+  if (p_datatype == XGA_INT) {
+    op = CMX_FETCH_AND_ADD;
+    extra = *static_cast<int*>(inc);
+  } else if (p_datatype = XGA_LONG) {
+    op = CMX_FETCH_AND_ADD_LONG;
+    extra = static_cast<int>(*static_cast<long*>(inc));
+  } else {
+    p_env->error("readInc) unsupported data type",p_datatype);
+  }
+  int proc;
+  int64_t ld[MAXDIM];
+  char *ptr_rem;
+  locate(subscript, &proc);
+  if (p_distr == REGULAR) {
+      XGA_LOCATION_M(proc, subscript, &ptr_rem, ld);
+  } else {
+    p_env->error("readInc) unsupported data distribution",p_distr);
+  }
+  p_alloc->readModifyWrite(op, result, ptr_rem, extra, proc);
+}
+
+
 } // XGA namespace
