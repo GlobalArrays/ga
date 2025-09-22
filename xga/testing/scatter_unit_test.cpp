@@ -4,9 +4,10 @@
 #include <iostream>
 
 #define DIM 256
-int main(int argc, char **argv)
+template<typename idx_type, typename data_type>
+void scatter_test()
 {
-  XGA::Environment *env = XGA::Environment::instance(&argc,&argv);
+  XGA::Environment *env = XGA::Environment::instance();
   XGA::Group *group = env->getWorldGroup();
   int rank = group->rank();
   int size = group->size();
@@ -14,24 +15,20 @@ int main(int argc, char **argv)
   MPI_Comm_rank(MPI_COMM_WORLD,&wrank);
   /* Create global array */
   int ndim = 3;
-  int64_t dims[3];
+  idx_type dims[3];
   dims[0] = DIM;
   dims[1] = DIM;
   dims[2] = DIM;
-  if (rank == 0) {
-    printf("\nTesting SCATTER on a  %d x %d x %d array",dims[0],dims[1],dims[2]);
-    printf(" running on %d processors\n",size);
-  }
-  XGA::GlobalArray<double> ga(group, ndim, dims);
+  XGA::GlobalArray<data_type> ga(group, ndim, dims);
   ga.allocate();
 
   /* initialize global array using scatter */
-  int64_t nelems = static_cast<int64_t>(static_cast<double>(dims[0]*dims[1]*dims[2])
+  idx_type nelems = static_cast<idx_type>(static_cast<double>(dims[0]*dims[1]*dims[2])
     / static_cast<double>(size))+1;
-  int64_t total = dims[0]*dims[1]*dims[2];
-  double *values = new double[nelems];
-  int64_t *subscripts = new int64_t[nelems*ndim];
-  int64_t i, j, k, n, idx, icnt;
+  idx_type total = dims[0]*dims[1]*dims[2];
+  data_type *values = new data_type[nelems];
+  idx_type *subscripts = new idx_type[nelems*ndim];
+  idx_type i, j, k, n, idx, icnt;
   icnt = 0;
   for (n=rank; n<total; n+=size) {
     idx = n;
@@ -39,13 +36,13 @@ int main(int argc, char **argv)
     idx = (idx-k)/dims[2];
     j = idx%dims[1];
     i = (idx-j)/dims[1];
-    values[icnt] = static_cast<double>(n);
+    values[icnt] = static_cast<data_type>(n);
     subscripts[ndim*icnt] = i;
     subscripts[ndim*icnt+1] = j;
     subscripts[ndim*icnt+2] = k;
     icnt++;
   }
-  int64_t lo[3], hi[3], ld[2];
+  idx_type lo[3], hi[3], ld[2];
   ga.distribution(rank,lo,hi);
   ga.scatter(values, subscripts, icnt);
   ga.sync();
@@ -54,24 +51,24 @@ int main(int argc, char **argv)
   /* Check values */
   nelems = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1)*(hi[2]-lo[2]+1);
   /* Access local data in array */
-  int64_t idim = hi[0]-lo[0]+1;
-  int64_t jdim = hi[1]-lo[1]+1;
-  int64_t kdim = hi[2]-lo[2]+1;
+  idx_type idim = hi[0]-lo[0]+1;
+  idx_type jdim = hi[1]-lo[1]+1;
+  idx_type kdim = hi[2]-lo[2]+1;
   void *vptr;
   ga.accessPtr(lo, hi, &vptr, ld);
-  double *dptr = static_cast<double*>(vptr);
+  data_type *dptr = static_cast<data_type*>(vptr);
   int ok = 1;
   int chk;
   for (i=0; i<idim; i++) {
     for (j=0; j<jdim; j++) {
       for (k=0; k<kdim; k++) {
         if (dptr[k+kdim*j+kdim*jdim*i]
-            != static_cast<double>(k+lo[2] + (j+lo[1])*dims[2]
+            != static_cast<data_type>(k+lo[2] + (j+lo[1])*dims[2]
               + (i+lo[0])*dims[2]*dims[1])) {
           printf("p[%d] Check fails for i: %ld j: %ld k: %ld"
               " actual: %f expected: %f\n",
               wrank,i+lo[0],j+lo[1],k+lo[2],dptr[k+kdim*j+i*kdim*jdim],
-              static_cast<double>(k+lo[2] + (j+lo[1])*dims[2]
+              static_cast<data_type>(k+lo[2] + (j+lo[1])*dims[2]
                 + (i+lo[0])*dims[2]*dims[1]));
           ok = 0;
         }
@@ -87,6 +84,79 @@ int main(int argc, char **argv)
     printf("\n scatter test FAILS\n");
   }
   ga.clear();
+}
+int main(int argc, char **argv)
+{
+  XGA::Environment *env = XGA::Environment::instance(&argc,&argv);
+  XGA::Group *group = env->getWorldGroup();
+  int rank = group->rank();
+  int size = group->size();
+  /* Create global array */
+  if (rank == 0) {
+    int ndim = 3;
+    int64_t dims[3];
+    dims[0] = DIM;
+    dims[1] = DIM;
+    dims[2] = DIM;
+    printf("\nTesting SCATTER on a  %d x %d x %d array",dims[0],dims[1],dims[2]);
+    printf(" running on %d processors\n",size);
+  }
+  if (rank == 0) {
+   printf("\nTesting SCATTER for ints and int64_t indices\n");
+  }
+  scatter_test<int64_t,int>();
+  if (rank == 0) {
+   printf("\nTesting SCATTER for longs and int64_t indices\n");
+  }
+  scatter_test<int64_t,long>();
+  if (rank == 0) {
+   printf("\nTesting SCATTER for long longs and int64_t indices\n");
+  }
+  scatter_test<int64_t,long long>();
+  if (rank == 0) {
+   printf("\nTesting SCATTER for floats and int64_t indices\n");
+  }
+  scatter_test<int64_t,float>();
+  if (rank == 0) {
+   printf("\nTesting SCATTER for doubles and int64_t indices\n");
+  }
+  scatter_test<int64_t,double>();
+  if (rank == 0) {
+   printf("\nTesting SCATTER for complex floats and int64_t indices\n");
+  }
+  scatter_test<int64_t,std::complex<float> >();
+  if (rank == 0) {
+   printf("\nTesting SCATTER for complex doubles and int64_t indices\n");
+  }
+  scatter_test<int64_t,std::complex<double> >();
+  if (rank == 0) {
+   printf("\nTesting SCATTER for ints and int indices\n");
+  }
+  scatter_test<int,int>();
+  if (rank == 0) {
+   printf("\nTesting SCATTER for longs and int indices\n");
+  }
+  scatter_test<int,long>();
+  if (rank == 0) {
+   printf("\nTesting SCATTER for long longs and int indices\n");
+  }
+  scatter_test<int,long long>();
+  if (rank == 0) {
+   printf("\nTesting SCATTER for floats and int indices\n");
+  }
+  scatter_test<int,float>();
+  if (rank == 0) {
+   printf("\nTesting SCATTER for doubles and int indices\n");
+  }
+  scatter_test<int,double>();
+  if (rank == 0) {
+   printf("\nTesting SCATTER for complex floats and int indices\n");
+  }
+  scatter_test<int,std::complex<float> >();
+  if (rank == 0) {
+   printf("\nTesting SCATTER for complex doubles and int indices\n");
+  }
+  scatter_test<int,std::complex<double> >();
   env->finalize();
   MPI_Finalize();
   return 0;
