@@ -198,7 +198,6 @@ void put_test()
   } else if (chk == 0) {
     printf("\n Single large put test FAILS\n\n");
   }
-  ga.clear();
   delete [] buf;
 }
 

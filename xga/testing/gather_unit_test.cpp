@@ -91,7 +91,6 @@ void gather_test()
   } else if (chk == 0) {
     printf("\n gather test FAILS\n");
   }
-  ga.clear();
 }
 int main(int argc, char **argv)
 {

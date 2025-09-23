@@ -198,7 +198,6 @@ void acc_test()
   } else if (chk == 0) {
     printf("\n Single large acc test FAILS\n\n");
   }
-  ga.clear();
   delete [] buf;
 }
 int main(int argc, char **argv)

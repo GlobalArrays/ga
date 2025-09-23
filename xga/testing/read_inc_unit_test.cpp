@@ -94,7 +94,6 @@ void readinc_test()
   } else if (chk == 0) {
     printf("\n Read-increment test FAILS\n");
   }
-  ga.clear();
 }
 
 int main(int argc, char **argv)

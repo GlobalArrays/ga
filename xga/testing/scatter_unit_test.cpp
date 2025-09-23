@@ -83,7 +83,6 @@ void scatter_test()
   } else if (chk == 0) {
     printf("\n scatter test FAILS\n");
   }
-  ga.clear();
 }
 int main(int argc, char **argv)
 {

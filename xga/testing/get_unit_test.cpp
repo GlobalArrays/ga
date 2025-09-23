@@ -181,7 +181,6 @@ void get_test()
   } else if (chk == 0) {
     printf("\n Single large get test FAILS\n\n");
   }
-  ga.clear();
   delete [] buf;
 }
 int main(int argc, char **argv)

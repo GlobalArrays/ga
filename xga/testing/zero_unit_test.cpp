@@ -4,9 +4,10 @@
 #include <iostream>
 
 #define DIM  2048
-int main(int argc, char **argv)
+template<typename idx_type, typename data_type>
+void zero_test()
 {
-  XGA::Environment *env = XGA::Environment::instance(&argc,&argv);
+  XGA::Environment *env = XGA::Environment::instance();
   XGA::Group *group = env->getWorldGroup();
   int rank = group->rank();
   int size = group->size();
@@ -14,28 +15,24 @@ int main(int argc, char **argv)
   MPI_Comm_rank(MPI_COMM_WORLD,&wrank);
   /* Create global array */
   int ndim = 2;
-  int64_t dims[2];
+  idx_type dims[2];
   dims[0] = DIM;
   dims[1] = DIM;
-  if (rank == 0) {
-    printf("\nTesting ZERO on a  %d x %d matrix",dims[0],dims[1]);
-    printf(" running on %d processors\n",size);
-  }
-  XGA::GlobalArray<double> ga(group, ndim, dims);
+  XGA::GlobalArray<data_type> ga(group, ndim, dims);
   ga.allocate();
 
-  int64_t lo[2], hi[2], ld;
+  idx_type lo[2], hi[2], ld;
   ga.distribution(rank,lo,hi);
   void *vptr;
   ga.accessPtr(lo, hi, &vptr, &ld);
-  double *dptr = static_cast<double*>(vptr);
+  data_type *dptr = static_cast<data_type*>(vptr);
   /* initialize global array with non-zero values */
-  int64_t idim = hi[0]-lo[0]+1;
-  int64_t jdim = hi[1]-lo[1]+1;
-  int64_t i, j;
+  idx_type idim = hi[0]-lo[0]+1;
+  idx_type jdim = hi[1]-lo[1]+1;
+  idx_type i, j;
   for (i=0; i<idim; i++) {
     for (j=0; j<jdim; j++) {
-      dptr[j+jdim*i] = static_cast<double>(j+lo[1] + (i+lo[0])*dims[1]);
+      dptr[j+jdim*i] = static_cast<data_type>(j+lo[1] + (i+lo[0])*dims[1]);
     }
   }
   ga.sync();
@@ -44,7 +41,7 @@ int main(int argc, char **argv)
   int chk;
   for (i=0; i<idim; i++) {
     for (j=0; j<jdim; j++) {
-      if (dptr[j+jdim*i] != 0.0) {
+      if (dptr[j+jdim*i] != static_cast<data_type>(0)) {
         printf("p[%d] Check fails for i: %d j: %d actual: %f expected: 0.0\n",
             wrank,i+lo[0],j+lo[1],dptr[j+jdim*i]);
         ok = 0;
@@ -59,7 +56,77 @@ int main(int argc, char **argv)
   } else if (chk == 0) {
     printf("\n Zero test FAILS\n");
   }
-  ga.clear();
+}
+
+int main(int argc, char **argv)
+{
+  XGA::Environment *env = XGA::Environment::instance(&argc,&argv);
+  XGA::Group *group = env->getWorldGroup();
+  int rank = group->rank();
+  int size = group->size();
+  if (rank == 0) {
+    int64_t dims[2];
+    dims[0] = DIM;
+    dims[1] = DIM;
+    printf("\nTesting ZERO on a  %d x %d matrix",dims[0],dims[1]);
+    printf(" running on %d processors\n",size);
+  }
+  if (rank == 0) {
+    printf("\nTesting ZERO for ints and int64_t indices\n");
+  }
+  zero_test<int64_t,int>();
+  if (rank == 0) {
+    printf("\nTesting ZERO for longs and int64_t indices\n");
+  }
+  zero_test<int64_t,long>();
+  if (rank == 0) {
+    printf("\nTesting ZERO for long longs and int64_t indices\n");
+  }
+  zero_test<int64_t,long long>();
+  if (rank == 0) {
+    printf("\nTesting ZERO for floats and int64_t indices\n");
+  }
+  zero_test<int64_t,float>();
+  if (rank == 0) {
+    printf("\nTesting ZERO for doubles and int64_t indices\n");
+  }
+  zero_test<int64_t,double>();
+  if (rank == 0) {
+    printf("\nTesting ZERO for complex floats and int64_t indices\n");
+  }
+  zero_test<int64_t,std::complex<float> >();
+  if (rank == 0) {
+    printf("\nTesting ZERO for complex doubles and int64_t indices\n");
+  }
+  zero_test<int64_t,std::complex<double> >();
+  if (rank == 0) {
+    printf("\nTesting ZERO for ints and int indices\n");
+  }
+  zero_test<int,int>();
+  if (rank == 0) {
+    printf("\nTesting ZERO for longs and int indices\n");
+  }
+  zero_test<int,long>();
+  if (rank == 0) {
+    printf("\nTesting ZERO for long longs and int indices\n");
+  }
+  zero_test<int,long long>();
+  if (rank == 0) {
+    printf("\nTesting ZERO for floats and int indices\n");
+  }
+  zero_test<int,float>();
+  if (rank == 0) {
+    printf("\nTesting ZERO for doubles and int indices\n");
+  }
+  zero_test<int,double>();
+  if (rank == 0) {
+    printf("\nTesting ZERO for complex floats and int indices\n");
+  }
+  zero_test<int,std::complex<float> >();
+  if (rank == 0) {
+    printf("\nTesting ZERO for complex doubles and int indices\n");
+  }
+  zero_test<int,std::complex<double> >();
   env->finalize();
   MPI_Finalize();
   return 0;
