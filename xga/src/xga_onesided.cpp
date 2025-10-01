@@ -168,7 +168,6 @@ void p_GA::putCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
   int stride_levels = p_ndim-1;
 
   /* initial stride portion */
-
   initIterator(lo, hi);
 
   int64_t ldrem[MAXDIM];
