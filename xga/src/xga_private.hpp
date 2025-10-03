@@ -104,11 +104,23 @@ public:
 
   /**
    * Access data corresponding to a specific block
-   * @param[in] index indices of block in proc grid or block cyclic layout
+   * @param[in] index indices of block in proc grid
    * @param[out] rptr pointer to data
    * @param[out] ld array of strides for block
    */
   void accessBlockGridPtr(int *index, void **rptr, int64_t *ld);
+
+  /**
+   * Release data corresponding to a specific patch
+   * @param[in] plo,phi lower and upper indices of patch
+   */
+  void releasePtr(int64_t *plo, int64_t *phi);
+
+  /**
+   * Release data corresponding to a specific block
+   * @param[in] index indices of block in proc grid
+   */
+  void releaseBlockGridPtr(int *index);
 
   /**
    * Synchronize global array across all processor that are hosting

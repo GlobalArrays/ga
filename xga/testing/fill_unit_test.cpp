@@ -35,6 +35,7 @@ void fill_test()
       dptr[j+jdim*i] = static_cast<data_type>(0);
     }
   }
+  ga.releasePtr(lo, hi);
   ga.sync();
   data_type two = static_cast<data_type>(2);
   ga.fill(two);

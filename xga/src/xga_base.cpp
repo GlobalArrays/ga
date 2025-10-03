@@ -689,6 +689,24 @@ void p_GA::accessBlockGridPtr(int *l_index, void **rptr, int64_t *ld)
 }
 
 /**
+ * Release data corresponding to a specific patch
+ * @param[in] plo,phi lower and upper indices of patch
+ */
+void p_GA::releasePtr(int64_t *plo, int64_t *phi)
+{
+  /* Currently implemented as a no-o */
+}
+
+/**
+ * Release data corresponding to a specific block
+ * @param[in] index indices of block in proc grid
+ */
+void p_GA::releaseBlockGridPtr(int *index)
+{
+  /* Currently implemented as a no-o */
+}
+
+/**
  * Set all values in the array to zero
  */
 void p_GA::zero()

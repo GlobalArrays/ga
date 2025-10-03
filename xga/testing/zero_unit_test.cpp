@@ -48,6 +48,7 @@ void zero_test()
       }
     }
   }
+  ga.releasePtr(lo, hi);
 
   MPI_Comm comm = group->MPIComm();
   MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);

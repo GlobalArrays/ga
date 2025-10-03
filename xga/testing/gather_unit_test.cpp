@@ -41,6 +41,7 @@ void gather_test()
       }
     }
   }
+  ga.releasePtr(lo, hi);
   ga.sync();
 
   /* gather data from global array */

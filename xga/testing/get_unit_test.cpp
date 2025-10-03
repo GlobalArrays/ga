@@ -39,6 +39,7 @@ void get_test()
       dptr[j+jdim*i] = static_cast<data_type>(j+lo[1] + (i+lo[0])*dims[1]);
     }
   }
+  ga.releasePtr(lo, hi);
   ga.sync();
   int nghbr = (rank+1)%size;
   ga.distribution(nghbr,lo,hi);
@@ -132,6 +133,7 @@ void get_test()
       }
     }
   }
+  ga.releasePtr(lo, hi);
 
   MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
   if (chk==1 && rank == 0) {
@@ -219,6 +221,7 @@ void get_test()
       }
     }
   }
+  ga3d.releasePtr(lo3, hi3);
   ga3d.sync();
   ga3d.distribution(nghbr,lo3,hi3);
   /* divide each processor block into 8 sub-blocks */
@@ -309,6 +312,7 @@ void get_test()
       }
     }
   }
+  ga3d.releasePtr(lo3, hi3);
 
   MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
   if (chk==1 && rank == 0) {

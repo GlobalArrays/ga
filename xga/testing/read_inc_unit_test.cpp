@@ -35,6 +35,7 @@ void readinc_test()
     counter.accessPtr(lo, hi, &vptr, &ld);
     dptr = static_cast<data_type*>(vptr);
     dptr[0] = static_cast<data_type>(0);
+    counter.releasePtr(lo, hi);
   }
   ga.distribution(rank,lo,hi);
   ga.accessPtr(lo, hi, &vptr, &ld);
@@ -49,6 +50,7 @@ void readinc_test()
       dptr[j+jdim*i] = static_cast<data_type>(0);
     }
   }
+  ga.releasePtr(lo, hi);
 
   idx_type nelems = dims[0]*dims[1];
   /* Fill in array using read increment function */
@@ -87,6 +89,7 @@ void readinc_test()
       }
     }
   }
+  ga.releasePtr(lo, hi);
   MPI_Comm comm = group->MPIComm();
   MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
   if (chk==1 && rank == 0) {

@@ -212,14 +212,16 @@ public:
     for (i=0; i<p_ndim; i++) {
       tlo[i] = static_cast<int64_t>(plo[i]);
       thi[i] = static_cast<int64_t>(phi[i]);
-      if (i<p_ndim-1) tld[i] = static_cast<int64_t>(ld[i]);
     }
     p_Impl->accessPtr(tlo, thi, rptr, tld);
+    for (i=0; i<p_ndim-1; i++) {
+      ld[i] = static_cast<int>(tld[i]);
+    }
   }
 
   /**
    * Access data corresponding to a specific block
-   * @param[in] index indices of block in proc grid or block cyclic layout
+   * @param[in] index indices of block in proc grid
    * @param[out] rptr pointer to data
    * @param[out] ld array of strides for block
    */
@@ -231,9 +233,36 @@ public:
   {
     int i;
     int64_t tld[MAXDIM];
-    tld[0] = 1;
-    for (i=0; i<p_ndim-1; i++) tld[i] = static_cast<int64_t>(ld[i]);
     p_Impl->accessBlockGridPtr(index, rptr, tld);
+    for (i=0; i<p_ndim-1; i++) ld[i] = static_cast<int>(tld[i]);
+  }
+
+  /**
+   * Release data corresponding to a specific patch
+   * @param[in] plo,phi lower and upper indices of patch
+   */
+  void releasePtr(int64_t *plo, int64_t *phi)
+  {
+    p_Impl->releasePtr(plo, phi);
+  }
+  void releasePtr(int *plo, int *phi)
+  {
+    int i;
+    int64_t tlo[MAXDIM], thi[MAXDIM];
+    for (i=0; i<p_ndim; i++) {
+      tlo[i] = static_cast<int64_t>(plo[i]);
+      thi[i] = static_cast<int64_t>(phi[i]);
+    }
+    p_Impl->releasePtr(tlo, thi);
+  }
+
+  /**
+   * Release data corresponding to a specific block
+   * @param[in] index indices of block in proc grid
+   */
+  void releaseBlockGridPtr(int *index)
+  {
+    p_Impl->releaseBlockGridPtr(index);
   }
 
   /**

@@ -60,6 +60,7 @@ void put_test()
       }
     }
   }
+  ga.releasePtr(lo, hi);
 
   MPI_Comm comm = group->MPIComm();
   MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
@@ -137,6 +138,7 @@ void put_test()
       }
     }
   }
+  ga.releasePtr(lo, hi);
 
   MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
   if (chk==1 && rank == 0) {
@@ -192,6 +194,7 @@ void put_test()
       }
     }
   }
+  ga.releasePtr(lo, hi);
 
   MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
   if (chk==1 && rank == 0) {
@@ -227,6 +230,7 @@ void put_test()
       }
     }
   }
+  ga3d.releasePtr(lo3, hi3);
   ga3d.sync();
 
   ga3d.distribution(nghbr,lo3,hi3);
@@ -338,6 +342,7 @@ void put_test()
       }
     }
   }
+  ga3d.releasePtr(lo3, hi3);
 
   MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
   if (chk==1 && rank == 0) {

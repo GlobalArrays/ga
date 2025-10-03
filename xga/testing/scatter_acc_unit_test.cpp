@@ -41,6 +41,7 @@ void scatter_acc_test()
       }
     }
   }
+  ga.releasePtr(lo, hi);
   ga.sync();
 
   /* update global array using scatteracc */
