@@ -12,7 +12,7 @@ Assumptions
 
 - An OpenSHMEM implementation (headers & libraries) will be available at compile and run time.
 - Target platforms are 64-bit (pointer collectives use 64-bit collects). If 32-bit is required, adjust collects accordingly.
-- Group-level collectives (arbitrary subgroup collectives) are not provided by OpenSHMEM; group semantics will be emulated in software.
+- Group-level collectives (arbitrary subgroup collectives) are not provided by OpenSHMEM. This backend will not attempt to emulate arbitrary subgroup collectives; instead, only the world group (`COMEX_GROUP_WORLD`) is supported. Any attempt to create or use a subgroup (a group other than `COMEX_GROUP_WORLD`) will return `COMEX_FAILURE`.
 
 Success criteria
 
@@ -71,9 +71,8 @@ High-level mapping and notes for key operations:
   - Map `COMEX_SWAP`/`COMEX_SWAP_LONG` to `shmem_atomic_swap` or implement a CAS-loop fallback with `shmem_atomic_compare_swap`.
 
 - Memory allocation
-  - `comex_malloc(ptr_arr, bytes, group)`: use `shmem_malloc(bytes)` on each PE (symmetric allocation), then exchange local pointers among group members. Because SHMEM collectives are global, implement pointer exchange via:
-    - If the group == WORLD, use `shmem_fcollect64`/`shmem_allgather` equivalents to exchange pointers in symmetric memory.
-    - For subgroups, emulate with pairwise `shmem_putmem` into a symmetric gather buffer on a group leader or perform put/get in a loop using group member list.
+  - `comex_malloc(ptr_arr, bytes, group)`: only supported for `COMEX_GROUP_WORLD`. For the world group, use `shmem_malloc(bytes)` on each PE (symmetric allocation), then exchange local pointers using a world-level collective (e.g., `shmem_fcollect64`) into `ptr_arr`.
+  - If `group` is not `COMEX_GROUP_WORLD`, `comex_malloc` will return `COMEX_FAILURE`.
   - `comex_free`: `shmem_free(ptr)` locally and perform a barrier/synchronization as required.
   - `comex_malloc_local` / `comex_free_local`: implement via `shmem_malloc` for symmetric behavior (preferred) or `malloc` for strictly local buffers (document difference). Using `shmem_malloc` is safer for RMA.
 
@@ -86,8 +85,9 @@ High-level mapping and notes for key operations:
   - Provide exponential/backoff spin to reduce contention.
 
 - Group APIs
-  - Implement groups as local structs storing an array of world ranks (PE ids). Provide `translate_ranks`, `group_rank`, `group_size` by consulting the struct.
-  - Emulate group collectives where needed by using peer-to-peer put/get loops and leader-based aggregation. Document performance caveats.
+ - Group APIs
+  - This backend only supports `COMEX_GROUP_WORLD`. Calls to create a new group (for example, `comex_group_create`) for any subset of ranks will return `COMEX_FAILURE`. The implementation will provide `comex_group_rank` and `comex_group_size` only for the world group; for non-world groups these functions will return an error.
+  - No subgroup collectives or subgroup pointer-exchange will be implemented. All collective operations and global arrays are implemented only across the world group.
 
 ## Non-blocking semantics and limitations
 
@@ -96,11 +96,9 @@ High-level mapping and notes for key operations:
 
 ## Groups and collectives caveats
 
-- OpenSHMEM lacks arbitrary subgroup collectives. Emulating subgroup collectives is doable but slower; the options are:
-  1. Implement leader-based gather/scatter using symmetric buffers and peer `shmem_putmem` from group members to the leader's symmetric region.
-  2. Use world-level collectives and have non-members write sentinel values that members ignore (works for pointer exchanges but may be wasteful).
+- OpenSHMEM lacks arbitrary subgroup collectives. To keep the backend simple and robust, this implementation does not attempt to emulate arbitrary subgroup collectives. Any attempt to create or use a subgroup will fail. All collectives and global-memory operations are implemented for the world group only (`COMEX_GROUP_WORLD`).
 
-I recommend implementing option 1 (leader-based) for correctness and clarity.
+Rationale: supporting arbitrary subgroups requires substantial emulation (per-group symmetric buffers, leader-based gathers, or expensive filtering of world-level collectives). Those additions increase complexity and risk; they can be considered in a later phase if subgroup support becomes a requirement.
 
 ## Build & integration notes
 
@@ -124,6 +122,8 @@ Create tests under `comex/src-oshmem/testing` that exercise:
 - Basic RMA: `test_put_get.c` — simple put/get between two PEs, verify correctness.
 - Strided/Vector: `test_strided.c` — covers `comex_puts`/`comex_gets` and `putv`/`getv`.
 - Accumulate: `test_acc.c` — test integer/float/double/long accumulate and fallbacks.
+ - Strided/Vector: `test_strided.c` — covers `comex_puts`/`comex_gets` and `putv`/`getv` (world group only).
+ - Accumulate: `test_acc.c` — test integer/float/double/long accumulate (using get-modify-put under remote lock) and complex fallbacks.
 - NB operations: `test_nb.c` — issue `nbput`, `nbget`, `nbacc`, then `wait`/`test`.
 - Malloc/free: `test_malloc.c` — test `comex_malloc` pointer exchange and the ability to RMA to returned pointers.
 - Mutex: `test_mutex.c` — concurrent increments under a lock from multiple PEs.
@@ -133,7 +133,7 @@ Test runner: use the SHMEM launcher (e.g., `oshrun -n 4 <binary>` or vendor equi
 ## Edge cases and mitigation
 
  - Atomic support differences: accumulates will *not* rely on SHMEM atomic add primitives — they will always use the get-modify-put under remote lock strategy described above. This removes a build-time dependency for typed accumulate atomics. (We may still detect typed atomic availability for potential future optimizations and for RMW/mutex implementations.)
-- Group collectives: slower emulation is used; document this to users.
+ - Group collectives: subgroup collectives are not supported in this backend; any attempt to create or use a non-world group will fail. Document this limitation to users.
 - `comex_test` may behave as a progress call on some SHMEMs; document the limitation.
 - Pointer size assumptions: use 64-bit collects for pointers; if targeting 32-bit systems, adjust collects.
 
@@ -144,7 +144,7 @@ Test runner: use the SHMEM launcher (e.g., `oshrun -n 4 <binary>` or vendor equi
 3. Implement contiguous `comex_put` / `comex_get` and basic `comex_malloc` for WORLD group.
 4. Implement NB table & `nbput`/`nbget` with `shmem_put_nbi`/`shmem_get_nbi` and `comex_wait`/`comex_test` (best-effort).
 5. Implement atomics for supported datatypes and lock-based fallbacks for others.
-6. Implement mutexes and group emulation (including subgroup barriers and pointer-exchange).
+6. Implement mutexes. Note: subgroup emulation is out-of-scope; only world-group barriers and pointer-exchange are supported.
 7. Add tests and run validation under `oshrun`.
 8. Prepare `README.md` describing required `configure.ac`/Makefile changes to enable this backend and provide sample run commands.
 
