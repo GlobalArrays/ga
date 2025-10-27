@@ -55,10 +55,16 @@ High-level mapping and notes for key operations:
   - Maintain an `nb` table: store type, pointers, bytes, target PE, and active flag. `comex_wait(handle)` calls `shmem_quiet()` and marks the entry complete. `comex_test(handle)` will call `shmem_test` if available, else we use `shmem_quiet()` semantics and return completion (document limitation).
 
 - Atomic Accumulate (`comex_acc`, `comex_accs`, `comex_accv`)
-  - For integer and long types: prefer `shmem_int_atomic_add`/`shmem_long_atomic_add` when available.
-  - For floating-point types: use `shmem_float_atomic_add`/`shmem_double_atomic_add` if provided; otherwise fallback to a get/modify/put under a remote lock.
-  - For complex types (COMEX_ACC_CPL, COMEX_ACC_DCP): no native SHMEM atomics; always perform remote get into a local buffer, apply the accumulate locally, then put back under a remote lock.
-  - Use `skip_lock` /lock batching similar to MPI backend where multiple ops can be done under a single lock.
+  - All accumulate operations (integers, longs, floats, doubles, and complex types) will be implemented using a remote get -> local accumulate -> remote put sequence protected by a remote lock. In other words, for every accumulate:
+    1. Acquire the remote lock for the target PE (or use a batched lock region when multiple ops to the same PE are performed).
+    2. `shmem_getmem()` the target region into a local temporary buffer.
+    3. Apply the accumulate locally (respecting `scale` and the COMEX datatype semantics).
+    4. `shmem_putmem()` the updated buffer back to the remote target and `shmem_quiet()` as needed.
+    5. Release the remote lock.
+
+  - Rationale: this single, consistent approach avoids depending on SHMEM-provided typed atomic add operations and provides uniform semantics across all datatypes (including complex). It simplifies portability between SHMEM implementations and makes the behavior explicit.
+
+  - Implement `skip_lock` and lock-batching (as used in the MPI backend) to avoid repeated lock/unlock overhead when a backend API path can perform multiple accumulates under one hold of the remote lock.
 
 - Read-Modify-Write (`comex_rmw`)
   - Map `COMEX_FETCH_AND_ADD`/`COMEX_FETCH_AND_ADD_LONG` to `shmem_atomic_fetch_add` typed variants if available.
@@ -126,7 +132,7 @@ Test runner: use the SHMEM launcher (e.g., `oshrun -n 4 <binary>` or vendor equi
 
 ## Edge cases and mitigation
 
-- Atomic support differences: detect at build time and use lock-based fallback.
+ - Atomic support differences: accumulates will *not* rely on SHMEM atomic add primitives — they will always use the get-modify-put under remote lock strategy described above. This removes a build-time dependency for typed accumulate atomics. (We may still detect typed atomic availability for potential future optimizations and for RMW/mutex implementations.)
 - Group collectives: slower emulation is used; document this to users.
 - `comex_test` may behave as a progress call on some SHMEMs; document the limitation.
 - Pointer size assumptions: use 64-bit collects for pointers; if targeting 32-bit systems, adjust collects.
