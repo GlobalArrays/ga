@@ -129,4 +129,29 @@ If you'd like, I can also:
 - Add tests and a small standalone makefile to compile the backend/tests without changing the top-level build system.
 - Clean up `comex_finalize` to free `g_all_sizes` and `local_allocs`.
 
+---
+
+Recent update (2025-11-20)
+
+Since the earlier notes, I implemented and tested the OpenSHMEM backend further:
+
+- Accumulates: Implemented blocking and nonblocking accumulate families following the policy of remote-get → local modify → remote-put under a remote lock (no SHMEM atomic-accumulate primitives are used).
+- Locks: Added distributed mutex helpers that attempt to use SHMEM atomic compare-and-swap when available and fall back to a weaker get/put spin-lock when not. These helpers are currently implemented inline in `comex.c` (recommended follow-up: move to `locks.c`/`locks.h`).
+- Nonblocking accumulates: NB-acc issues a nonblocking `shmem_getmem_nbi` into a temporary buffer and stores aux metadata in the NB entry; `comex_wait`/`comex_test` call `shmem_quiet()` and then finalize the accumulate (local modify + remote put) for completed NB entries.
+- NB bookkeeping: `nb.h` was extended to include an `aux` pointer to hold per-NB-acc metadata. `comex_wait` only calls `shmem_quiet()` for active NB entries and then processes completions.
+- CMake integration: Broadened `find_library` names to include common OpenSHMEM library names (e.g., liboshmem) and added an `OSHMEM_ROOT` cache option; the detected SHMEM library is propagated into top-level link variables so targets link successfully.
+- Portability fixes: Replaced typed SHMEM NBI macros with byte-wise `shmem_putmem_nbi`/`shmem_getmem_nbi` to avoid _Generic void* compile issues across toolchains.
+- Tests: Added a small runtime test `comex/src-oshmem/testing/acc_test.c` that exercises blocking and nonblocking accumulates. I compiled it against OpenSHMEM installed at `/home/d3g293/MPI/openmpi-5.0.8/install` and ran it with `oshrun -n 2` — the test exercised accumulates and produced numeric results consistent with the get-modify-put semantics.
+
+Status and next steps:
+
+- Completed: Plan updates, scaffolding, init/finalize, put/get, world-only `comex_malloc` protocol, NB table, blocking and nonblocking accumulates, CMake detection fixes, and a passing 2-PE runtime test.
+- Remaining (recommended):
+	- Move lock helpers out of `comex.c` into `locks.c`/`locks.h` and add unit tests for the locking path.
+	- Expand tests to cover strided/vector accumulates, concurrent NB-acc stress tests, and additional edge cases.
+	- Optionally add a CMake check for required SHMEM atomic primitives (or document the fallback caveats) and decide whether to make atomics mandatory.
+	- Tidy and finalize this conversation transcript and any leftover failed patch fragments.
+
+If you want, I can proceed now with one of the recommended next steps — which should I do first? (move lock code, add more tests, or harden CMake checks)
+
 
