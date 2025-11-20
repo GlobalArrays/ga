@@ -33,6 +33,7 @@ typedef struct {
     void *dst;        /**< destination pointer */
     int bytes;        /**< size in bytes */
     int target_pe;    /**< target PE id */
+    void *aux;        /**< backend auxiliary data (opaque) */
 } comex_nb_entry_t;
 
 /**

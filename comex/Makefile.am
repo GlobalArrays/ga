@@ -144,6 +144,14 @@ include $(top_srcdir)/src-mpi3/Makefile.inc
 endif
 
 ##############################################################################
+# src-oshmem (OpenSHMEM runtime)
+# Included only when configure is invoked with --with-oshmem
+##############################################################################
+if COMEX_WITH_OSHMEM
+include $(top_srcdir)/src-oshmem/Makefile.inc
+endif
+
+##############################################################################
 # src-ofi
 #
 if COMEX_NETWORK_OFI

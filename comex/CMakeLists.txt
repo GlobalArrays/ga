@@ -36,8 +36,63 @@ option (COMEX_NETWORK_MPI3 "use MPI RMA protocols for communication" OFF)
 option (COMEX_NETWORK_MPI_MT "use MPI multi-threading protocol for communication" OFF)
 option (COMEX_NETWORK_MPI_PT "use MPI progress threads protocol for communication" OFF)
 
+# Allow selecting an alternate runtime. When GA_RUNTIME is set to OPEN_SHMEM
+# the src-oshmem backend will be used instead of the MPI-based runtime.
+set(GA_RUNTIME "MPI" CACHE STRING "Runtime to build: MPI (default) or OPEN_SHMEM")
+set_property(CACHE GA_RUNTIME PROPERTY STRINGS MPI OPEN_SHMEM)
+
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR} src-common)
-if (MPI_TS)
+if (GA_RUNTIME STREQUAL "OPEN_SHMEM")
+  set(COMEX_DEVICE
+    src-oshmem/comex.c
+    src-oshmem/groups.c
+    src-oshmem/nb.c
+  )
+  set (COMEX_NETWORK_OSHMEM ON)
+  include_directories(AFTER src-oshmem)
+  # Allow user to point to an OpenSHMEM installation root. If provided,
+  # we'll search under that prefix for headers and libraries.
+  option(OSHMEM_ROOT "Path to OpenSHMEM installation root" "")
+
+  # Find headers (shmem.h or openshmem.h) and library (libshmem / libopenshmem).
+  if (OSHMEM_ROOT)
+    set(_oshmem_hints ${OSHMEM_ROOT}/include ${OSHMEM_ROOT}/usr/include)
+    set(_oshmem_lib_hints ${OSHMEM_ROOT}/lib ${OSHMEM_ROOT}/lib64 ${OSHMEM_ROOT}/usr/lib ${OSHMEM_ROOT}/usr/lib64)
+  else()
+    set(_oshmem_hints /usr/include /usr/local/include)
+    set(_oshmem_lib_hints /usr/lib /usr/lib64 /usr/local/lib /usr/local/lib64 /opt/openmpi/lib)
+  endif()
+
+  find_path(SHMEM_INCLUDE
+    NAMES shmem.h openshmem.h
+    HINTS ${_oshmem_hints}
+  )
+
+  find_library(SHMEM_LIB
+    NAMES oshmem shmem openshmem liboshmem libshmem
+    HINTS ${_oshmem_lib_hints}
+  )
+
+  if (SHMEM_INCLUDE)
+    include_directories(AFTER ${SHMEM_INCLUDE})
+    message(STATUS "OpenSHMEM headers found: ${SHMEM_INCLUDE}")
+  else()
+    message(STATUS "OpenSHMEM headers NOT found; continuing but build may fail until OSHMEM_ROOT is set")
+  endif()
+
+  if (NOT SHMEM_LIB)
+    message(STATUS "OpenSHMEM library not found by CMake; will try linker name 'oshmem' then 'shmem' at link time")
+    # prefer 'oshmem' as the linker name for Open MPI's implementation
+    set(SHMEM_LIB oshmem)
+  else()
+    message(STATUS "OpenSHMEM library found: ${SHMEM_LIB}")
+  endif()
+  # Export the discovered library to the parent scope so top-level targets
+  # (e.g., the 'ga' library) can link against OpenSHMEM.
+  set(SHMEM_LIB ${SHMEM_LIB} CACHE STRING "OpenSHMEM library")
+  # Append to GA_EXTRA_LIBS in the parent scope so 'ga' picks it up
+  set(GA_EXTRA_LIBS ${GA_EXTRA_LIBS} ${SHMEM_LIB} PARENT_SCOPE)
+elseif (MPI_TS)
   set(COMEX_DEVICE
     src-mpi/comex.c
     src-mpi/groups.c
@@ -134,6 +189,19 @@ target_compile_definitions(armci PRIVATE HAVE_CONFIG_H)
 add_library(GlobalArrays::armci ALIAS armci)
 
 target_include_directories(armci PRIVATE ${MPI_C_INCLUDE_DIRS})
+if (GA_RUNTIME STREQUAL "OPEN_SHMEM")
+  # Link OpenSHMEM into armci & comex libraries
+  target_link_libraries(armci PRIVATE ${SHMEM_LIB})
+endif()
+
+if (GA_RUNTIME STREQUAL "OPEN_SHMEM")
+  # Also link the top-level 'ga' target if it exists so the final
+  # executable link commands get the SHMEM library. If 'ga' is not yet
+  # defined, we already appended SHMEM_LIB to GA_EXTRA_LIBS above.
+  if (TARGET ga)
+    target_link_libraries(ga PRIVATE ${SHMEM_LIB})
+  endif()
+endif()
 
 install(TARGETS armci
     EXPORT globalarrays-targets
@@ -148,6 +216,9 @@ add_library(comex
 add_library(GlobalArrays::comex ALIAS comex)
 
 target_include_directories(comex PRIVATE ${MPI_C_INCLUDE_DIRS})
+if (GA_RUNTIME STREQUAL "OPEN_SHMEM")
+  target_link_libraries(comex PRIVATE ${SHMEM_LIB})
+endif()
 
 install(TARGETS comex
     EXPORT globalarrays-targets

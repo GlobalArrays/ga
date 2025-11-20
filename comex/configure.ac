@@ -65,6 +65,18 @@ AM_CONDITIONAL([CROSS_COMPILING], [test "x$cross_compiling" = xyes])
 # Establish the underlying network infrastructure (MPI, OFA, etc)
 COMEX_NETWORK_SETUP
 
+# Optionally build with OpenSHMEM runtime
+AC_ARG_WITH([oshmem],
+    [AS_HELP_STRING([--with-oshmem],[Build COMEX with OpenSHMEM runtime (default=no)])],
+    [with_oshmem=$withval],
+    [with_oshmem=no])
+AS_IF([test "x$with_oshmem" = xyes],
+    [AC_MSG_NOTICE([Configuring with OpenSHMEM backend])
+     COMEX_WITH_OSHMEM=yes],
+    [COMEX_WITH_OSHMEM=no])
+AM_CONDITIONAL([COMEX_WITH_OSHMEM],[test "x$COMEX_WITH_OSHMEM" = xyes])
+AC_SUBST([COMEX_WITH_OSHMEM])
+
 # Checks for C header files.
 AC_HEADER_ASSERT
 AC_HEADER_DIRENT
