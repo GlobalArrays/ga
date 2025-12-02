@@ -1,0 +1,13 @@
+ma/f2c.lo: ma/f2c.c /usr/include/stdc-predef.h config.h gaf2c/farg.h \
+ gaf2c/typesf2c.h gaf2c/typesf2c.h ma/ma.h ma/macdecls.h ma/macommon.h \
+ ma/matypes.h ma/scope.h
+/usr/include/stdc-predef.h:
+config.h:
+gaf2c/farg.h:
+gaf2c/typesf2c.h:
+gaf2c/typesf2c.h:
+ma/ma.h:
+ma/macdecls.h:
+ma/macommon.h:
+ma/matypes.h:
+ma/scope.h:

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libga++.a CMakeFiles/ga++.dir/src/GAServices.cc.o CMakeFiles/ga++.dir/src/GlobalArray.cc.o CMakeFiles/ga++.dir/src/init_term.cc.o CMakeFiles/ga++.dir/src/overload.cc.o CMakeFiles/ga++.dir/src/PGroup.cc.o CMakeFiles/ga++.dir/src/services.cc.o
+/usr/bin/ranlib libga++.a

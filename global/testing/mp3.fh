@@ -3,9 +3,19 @@
 #   define MP_TIMER tcgtime
 #   define MP_FINALIZE() pend()
 #else
-#   include "mpif.h"
-#   define MP_TIMER mpi_wtime
-#   define MP_FINALIZE() mpi_finalize(ierr)
+#   if defined(OPENSHMEM_FORTRAN)
+#      ifdef HAVE_OPENSHMEM_FH
+#         include "openshmem.fh"
+#      else
+#         include "shmem.fh"
+#      endif
+#      define MP_TIMER shmem_wtime
+#      define MP_FINALIZE() call shmem_finalize()
+#   else
+#      include "mpif.h"
+#      define MP_TIMER mpi_wtime
+#      define MP_FINALIZE() mpi_finalize(ierr)
+#   endif
 #endif
 #ifndef MP_DEFINES_ONLY
 #   ifdef TCGMSG
@@ -17,7 +27,11 @@
       required=MPI_THREAD_MULTIPLE
       call mpi_init_thread(required, provided, ierr)
 #       else
-      call mpi_init(ierr)
+      if defined(OPENSHMEM_FORTRAN)
+         call shmem_init()
+      else
+         call mpi_init(ierr)
+      endif
 #       endif
 #   endif
 #endif

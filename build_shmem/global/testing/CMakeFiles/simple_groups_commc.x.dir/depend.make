@@ -1,0 +1,2 @@
+# Empty dependencies file for simple_groups_commc.x.
+# This may be replaced when dependencies are built.

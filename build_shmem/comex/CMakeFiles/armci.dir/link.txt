@@ -1,0 +1,2 @@
+/usr/bin/ar qc libarmci.a "CMakeFiles/armci.dir/src-armci/armci.c.o" "CMakeFiles/armci.dir/src-armci/capi.c.o" "CMakeFiles/armci.dir/src-armci/groups.c.o" "CMakeFiles/armci.dir/src-armci/iterator.c.o" "CMakeFiles/armci.dir/src-armci/message.c.o" "CMakeFiles/armci.dir/src-oshmem/comex.c.o" "CMakeFiles/armci.dir/src-oshmem/groups.c.o" "CMakeFiles/armci.dir/src-oshmem/nb.c.o" "CMakeFiles/armci.dir/src-oshmem/locks.c.o"
+/usr/bin/ranlib libarmci.a

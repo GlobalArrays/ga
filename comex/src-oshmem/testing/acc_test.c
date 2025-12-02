@@ -18,39 +18,48 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    /* create some mutexes */
-    comex_create_mutexes(64);
+    /* mutexes handled internally by comex_acc; no test-level mutex creation needed */
 
     /* allocate symmetric region: one double per PE (max size = 8 bytes) */
     void **ptrs = malloc(sizeof(void*) * npes);
     if (!ptrs) { fprintf(stderr, "[%d] malloc failed\n", me); comex_finalize(); return 1; }
 
-    if (comex_malloc(ptrs, sizeof(double), COMEX_GROUP_WORLD) != COMEX_SUCCESS) {
+    /* allocate (me+1) doubles on each PE so sizes vary by rank */
+    size_t my_elems = (size_t)(me + 1);
+    if (comex_malloc(ptrs, my_elems * sizeof(double), COMEX_GROUP_WORLD) != COMEX_SUCCESS) {
         fprintf(stderr, "[%d] comex_malloc failed\n", me);
         comex_finalize(); return 1;
     }
 
-    /* initialize local symmetric buffer to 0 */
+    /* initialize local symmetric buffer to 0 for all elements */
     double *mybuf = (double*)ptrs[me];
-    *mybuf = 0.0;
+    for (size_t i = 0; i < my_elems; ++i) mybuf[i] = 0.0;
     double scale = 1.0;
 
     comex_barrier(COMEX_GROUP_WORLD);
 
     if (me == 0) {
         double val = 3.5;
-        if (comex_acc(COMEX_ACC_DBL, &scale, &val, ptrs[1], sizeof(double), 1, COMEX_GROUP_WORLD) != COMEX_SUCCESS) {
+        int target = 1;
+        size_t target_elems = (size_t)(target + 1);
+        size_t bytes = target_elems * sizeof(double);
+        /* prepare a src buffer with target_elems copies of val */
+        double *src_buf = (double*)malloc(bytes);
+        for (size_t i = 0; i < target_elems; ++i) src_buf[i] = val;
+        if (comex_acc(COMEX_ACC_DBL, &scale, src_buf, ptrs[target], (int)bytes, 1, COMEX_GROUP_WORLD) != COMEX_SUCCESS) {
             fprintf(stderr, "[0] comex_acc failed\n");
         } else {
-            fprintf(stderr, "[0] issued blocking acc to PE 1\n");
+            fprintf(stderr, "[0] issued blocking acc to PE %d (bytes=%zu)\n", target, bytes);
         }
+        free(src_buf);
     }
 
     comex_barrier(COMEX_GROUP_WORLD);
 
     if (me == 1) {
-        double res = *mybuf;
-        printf("[1] after blocking acc, value = %f (expected 3.5)\n", res);
+        printf("[1] after blocking acc, buffer =");
+        for (size_t i = 0; i < my_elems; ++i) printf(" %f", mybuf[i]);
+        printf(" (expected all 3.5)\n");
     }
 
     comex_barrier(COMEX_GROUP_WORLD);
@@ -58,21 +67,28 @@ int main(int argc, char **argv) {
     /* Now test nonblocking accumulate from PE 0 to PE 1 */
     if (me == 0) {
         double val = 2.25;
+        int target = 1;
+        size_t target_elems = (size_t)(target + 1);
+        size_t bytes = target_elems * sizeof(double);
+        double *src_buf = (double*)malloc(bytes);
+        for (size_t i = 0; i < target_elems; ++i) src_buf[i] = val;
         comex_request_t h = -1;
-        if (comex_nbacc(COMEX_ACC_DBL, &scale, &val, ptrs[1], sizeof(double), 1, COMEX_GROUP_WORLD, &h) != COMEX_SUCCESS) {
+        if (comex_nbacc(COMEX_ACC_DBL, &scale, src_buf, ptrs[target], (int)bytes, 1, COMEX_GROUP_WORLD, &h) != COMEX_SUCCESS) {
             fprintf(stderr, "[0] comex_nbacc failed\n");
         } else {
             fprintf(stderr, "[0] issued nbacc handle=%d\n", h);
             comex_wait(&h);
             fprintf(stderr, "[0] wait returned for nbacc\n");
         }
+        free(src_buf);
     }
 
     comex_barrier(COMEX_GROUP_WORLD);
 
     if (me == 1) {
-        double res = *mybuf;
-        printf("[1] after nbacc, value = %f (expected 3.5 + 2.25 = 5.75)\n", res);
+        printf("[1] after nbacc, buffer =");
+        for (size_t i = 0; i < my_elems; ++i) printf(" %f", mybuf[i]);
+        printf(" (expected all 5.75)\n");
     }
 
     comex_barrier(COMEX_GROUP_WORLD);

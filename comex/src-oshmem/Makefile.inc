@@ -4,7 +4,8 @@
 libcomex_srcs = \
     comex.c \
     groups.c \
-    nb.c
+    nb.c \
+    locks.c
 
 AM_CPPFLAGS += -I$(top_srcdir)/comex/src-oshmem
 

@@ -1,0 +1,5 @@
+LinAlg/lapack+blas/xgemm.lo: LinAlg/lapack+blas/xgemm.c \
+ /usr/include/stdc-predef.h config.h LinAlg/lapack+blas/xgemm.h
+/usr/include/stdc-predef.h:
+config.h:
+LinAlg/lapack+blas/xgemm.h:

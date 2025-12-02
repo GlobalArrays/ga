@@ -38,11 +38,10 @@ typedef struct {
     void *scale;      /* local copy of scale */
     int scale_bytes;  /* size of scale */
     void *src_local;  /* local source pointer */
+    int needs_finalize; /* if 1: wait should perform acc->put; if 0: aux already did acc and issued put_nbi */
 } nbacc_aux_t;
 
-/* distributed locks (symmetric) */
-static long *g_locks = NULL; /* array of locks per PE (size = num_mutexes) */
-static int g_num_mutexes = 0;
+/* Lock storage and helpers live in locks.c; include locks.h for API. */
 
 int comex_init() {
     if (initialized) return COMEX_SUCCESS;
@@ -80,6 +79,15 @@ int comex_init() {
 
     /* barrier for sanity */
     shmem_barrier_all();
+
+    /* ensure lock array is allocated (reserve zero user mutexes by default)
+     * so internal code can use the reserved per-PE internal locks without
+     * requiring callers to create mutexes explicitly. We call the locks
+     * creation API which allocates symmetric lock storage. */
+    if (comex_create_mutexes(0) != COMEX_SUCCESS) {
+        fprintf(stderr, "[%d] comex: failed to create default mutexes\n", l_state.pe);
+        return COMEX_FAILURE;
+    }
 
     initialized = 1;
     return COMEX_SUCCESS;
@@ -121,13 +129,24 @@ int comex_finalize() {
     shmem_quiet();
     shmem_barrier_all();
 
-    /* free symmetric array */
+    /* free symmetric arrays */
     if (g_all_ptrs) shmem_free(g_all_ptrs);
     g_all_ptrs = NULL;
+    if (g_all_sizes) shmem_free(g_all_sizes);
+    g_all_sizes = NULL;
+    /* destroy symmetric locks if allocated (locks.c handles free/barrier) */
+    comex_destroy_mutexes();
 
     comex_group_finalize();
 
     shmem_finalize();
+
+    /* free local allocation registry */
+    if (local_allocs) {
+        free(local_allocs);
+        local_allocs = NULL;
+        local_alloc_count = 0;
+    }
 
     initialized = 0;
     return COMEX_SUCCESS;
@@ -214,11 +233,17 @@ int comex_wait(comex_request_t *nb_handle) {
                  * temporary buffer and write it back to the remote destination */
                 nbacc_aux_t *aux = (nbacc_aux_t*)ent->aux;
                 if (aux) {
-                    /* perform accumulation: tmp = tmp + scale*src_local */
-                    _acc(ent->op, ent->bytes, aux->tmp, aux->src_local, aux->scale);
-                    /* write back the updated buffer */
-                    shmem_putmem(ent->dst, aux->tmp, ent->bytes, ent->target_pe);
-                    shmem_quiet();
+                    if (aux->needs_finalize) {
+                        /* perform accumulation: tmp = tmp + scale*src_local */
+                        _acc(ent->op, ent->bytes, aux->tmp, aux->src_local, aux->scale);
+                        /* write back the updated buffer */
+                        shmem_putmem(ent->dst, aux->tmp, ent->bytes, ent->target_pe);
+                        shmem_quiet();
+                    } else {
+                        /* aux already performed local acc and issued a nonblocking put;
+                         * here we only need to free temporaries after quiet. */
+                        /* nothing to do */
+                    }
                     /* free temporaries */
                     free(aux->tmp);
                     free(aux->scale);
@@ -248,9 +273,13 @@ int comex_test(comex_request_t *nb_handle, int *status) {
         if (e->op >= COMEX_ACC_OFF) {
             nbacc_aux_t *aux = (nbacc_aux_t*)e->aux;
             if (aux) {
-                _acc(e->op, e->bytes, aux->tmp, aux->src_local, aux->scale);
-                shmem_putmem(e->dst, aux->tmp, e->bytes, e->target_pe);
-                shmem_quiet();
+                if (aux->needs_finalize) {
+                    _acc(e->op, e->bytes, aux->tmp, aux->src_local, aux->scale);
+                    shmem_putmem(e->dst, aux->tmp, e->bytes, e->target_pe);
+                    shmem_quiet();
+                } else {
+                    /* already performed acc and issued put_nbi; nothing to apply */
+                }
                 free(aux->tmp);
                 free(aux->scale);
                 free(aux);
@@ -264,7 +293,40 @@ int comex_test(comex_request_t *nb_handle, int *status) {
 
 int comex_wait_all(comex_group_t group) {
     (void)group; /* group ignored; world-only */
+    /* Ensure local completion of outstanding NBI operations, then scan
+     * the NB table and finalize any entries (e.g., nb-acc entries need
+     * post-processing: local accumulate on fetched tmp buffer and remote
+     * put back). */
     shmem_quiet();
+
+    for (int i = 0; i < COMEX_MAX_NB_OUTSTANDING; ++i) {
+        comex_nb_entry_t *ent = comex_nb_get_entry(i);
+        if (!ent || !ent->active) continue;
+
+        /* For accumulate entries (op values reserved at COMEX_ACC_OFF and
+         * above) perform the aux-based finalize; otherwise, simple puts/gets
+         * are already completed by shmem_quiet and we can release the entry. */
+        if (ent->op >= COMEX_ACC_OFF) {
+            nbacc_aux_t *aux = (nbacc_aux_t*)ent->aux;
+            if (aux) {
+                if (aux->needs_finalize) {
+                    /* apply local accumulate into tmp using stored scale/src */
+                    _acc(ent->op, ent->bytes, aux->tmp, aux->src_local, aux->scale);
+                    /* write back updated buffer to remote destination */
+                    shmem_putmem(ent->dst, aux->tmp, ent->bytes, ent->target_pe);
+                    shmem_quiet();
+                } else {
+                    /* already performed acc and issued put_nbi; nothing further */
+                }
+                free(aux->tmp);
+                free(aux->scale);
+                free(aux);
+            }
+        }
+        /* release the NB entry */
+        comex_nb_release(i);
+    }
+
     return COMEX_SUCCESS;
 }
 
@@ -410,87 +472,8 @@ int comex_free_local(void *ptr) {
     return COMEX_SUCCESS;
 }
 
-/* Minimal mutex stubs. Proper distributed mutexes using SHMEM atomics or
- * lock objects should be implemented later. For now these functions are
- * no-ops to allow upper layers (ARMCI) to build and run basic tests. */
-int comex_create_mutexes(int num) {
-    if (num <= 0) return COMEX_FAILURE;
-    g_num_mutexes = num;
-    /* allocate symmetric locks array (one array per PE) */
-    g_locks = (long*)shmem_malloc(sizeof(long) * (size_t)g_num_mutexes);
-    if (!g_locks) return COMEX_FAILURE;
-    /* initialize to -1 (unlocked) */
-    for (int i = 0; i < g_num_mutexes; ++i) g_locks[i] = -1;
-    /* ensure everyone has initialized their locks */
-    shmem_barrier_all();
-    return COMEX_SUCCESS;
-}
-
-int comex_destroy_mutexes() {
-    if (g_locks) {
-        shmem_free(g_locks);
-        g_locks = NULL;
-    }
-    g_num_mutexes = 0;
-    shmem_barrier_all();
-    return COMEX_SUCCESS;
-}
-
-/* choose a mutex index for the given remote address (simple hashing) */
-static int pick_mutex_for_addr(void *addr) {
-    if (g_num_mutexes <= 0) return 0;
-    uintptr_t a = (uintptr_t)addr;
-    /* coarse hash: shift then mod */
-    return (int)((a >> 3) % (uintptr_t)g_num_mutexes);
-}
-
-int comex_lock(int mutex, int proc) {
-    if (g_num_mutexes <= 0) return COMEX_SUCCESS; /* no-op if no mutexes */
-    if (mutex < 0 || mutex >= g_num_mutexes) return COMEX_FAILURE;
-    /* acquire remote lock on PE=proc at &g_locks[mutex] */
-    long expected = -1;
-    /* using OpenSHMEM atomic compare-and-swap: shmem_long_atomic_compare_swap
-     * signature: long shmem_long_atomic_compare_swap(long *dest, long cond, long value, int pe);
-     * it returns the original value at dest on remote PE. Loop until we observe -1 and set our PE id. */
-#if defined(shmem_long_atomic_compare_swap)
-    while (1) {
-        long prev = shmem_long_atomic_compare_swap(&g_locks[mutex], expected, (long)l_state.pe, proc);
-        if (prev == expected) break; /* acquired */
-        /* backoff */
-        shmem_quiet();
-    }
-#else
-    /* Fallback: spin by polling the remote value using shmem_long_g (get) if available
-     * We'll use shmem_getmem to read the remote lock and then attempt to set via shmem_long_put
-     * Note: this fallback is racy and not strictly atomic; it is a best-effort fallback for
-     * older SHMEM implementations. */
-    while (1) {
-        long remote_val = 0;
-        /* read remote lock into local variable */
-        shmem_getmem(&remote_val, &g_locks[mutex], sizeof(long), proc);
-        if (remote_val == -1) {
-            long mype = (long)l_state.pe;
-            shmem_long_put(&g_locks[mutex], &mype, 1, proc);
-            shmem_quiet();
-            /* verify we won the race */
-            long verify = 0;
-            shmem_getmem(&verify, &g_locks[mutex], sizeof(long), proc);
-            if (verify == mype) break;
-        }
-        shmem_quiet();
-    }
-#endif
-    return COMEX_SUCCESS;
-}
-
-int comex_unlock(int mutex, int proc) {
-    if (g_num_mutexes <= 0) return COMEX_SUCCESS;
-    if (mutex < 0 || mutex >= g_num_mutexes) return COMEX_FAILURE;
-    long unlocked = -1;
-    shmem_long_put(&g_locks[mutex], &unlocked, 1, proc);
-    shmem_quiet();
-    return COMEX_SUCCESS;
-}
+/* Locking helpers moved to locks.c/locks.h */
+#include "locks.h"
 
 /* Minimal (placeholder) accumulate implementations. These simply return
  * success without performing real atomic accumulation. They must be
@@ -507,15 +490,13 @@ int comex_acc(int op, void *scale, void *src, void *dst, int bytes,
         return COMEX_SUCCESS;
     }
 
-    /* pick a mutex for the destination address */
-    int mutex = pick_mutex_for_addr(dst);
-
-    /* acquire remote lock on target PE */
-    if (comex_lock(mutex, pe) != COMEX_SUCCESS) return COMEX_FAILURE;
+    /* acquire remote lock on target PE using reserved internal lock slot */
+    /* Use locks module to acquire the reserved per-PE internal lock. */
+    locks_set_internal(pe);
 
     /* temporary buffer to hold remote destination */
     void *tmp = malloc((size_t)bytes);
-    if (!tmp) { comex_unlock(mutex, pe); return COMEX_FAILURE; }
+    if (!tmp) { locks_clear_internal(pe); return COMEX_FAILURE; }
 
     /* remote-get the destination into tmp */
     shmem_getmem(tmp, dst, bytes, pe);
@@ -530,7 +511,7 @@ int comex_acc(int op, void *scale, void *src, void *dst, int bytes,
 
     free(tmp);
     /* release lock */
-    comex_unlock(mutex, pe);
+    locks_clear_internal(pe);
 
     return COMEX_SUCCESS;
 }
@@ -600,54 +581,225 @@ int comex_accv(int op, void *scale, comex_giov_t *darr, int len,
 
 int comex_puts(void *src, int *src_stride, void *dst, int *dst_stride,
                int *count, int stride_levels, int proc, comex_group_t group) {
-    (void)src; (void)src_stride; (void)dst; (void)dst_stride;
-    (void)count; (void)stride_levels; (void)proc; (void)group;
-    /* Not implemented: fall back to success to allow linking. */
+    /* Implement strided put by iterating over contiguous blocks.
+     * count[0] is the size in bytes of each contiguous block.
+     * count[1..stride_levels] specify repetition counts for higher dims. */
+    if (translate_group_rank_to_pe(proc, group, &proc) != COMEX_SUCCESS) return COMEX_FAILURE;
+    int n1dim = 1;
+    for (int i = 1; i <= stride_levels; ++i) n1dim *= count[i];
+
+    int src_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
+    int src_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+    int dst_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
+    int dst_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+
+    src_bvalue[0] = dst_bvalue[0] = 0;
+    src_bunit[0] = dst_bunit[0] = 1;
+    for (int i = 1; i <= stride_levels; ++i) {
+        src_bvalue[i] = 0; dst_bvalue[i] = 0;
+        src_bunit[i] = src_bunit[i-1] * count[i];
+        dst_bunit[i] = dst_bunit[i-1] * count[i];
+    }
+
+    for (int i = 0; i < n1dim; ++i) {
+        long src_idx = 0, dst_idx = 0;
+        for (int j = 1; j <= stride_levels; ++j) {
+            src_idx += (long)src_bvalue[j] * (long)src_stride[j-1];
+            if ((i+1) % src_bunit[j] == 0) src_bvalue[j]++;
+            if (src_bvalue[j] > (count[j]-1)) src_bvalue[j] = 0;
+        }
+        for (int j = 1; j <= stride_levels; ++j) {
+            dst_idx += (long)dst_bvalue[j] * (long)dst_stride[j-1];
+            if ((i+1) % dst_bunit[j] == 0) dst_bvalue[j]++;
+            if (dst_bvalue[j] > (count[j]-1)) dst_bvalue[j] = 0;
+        }
+        char *src_block = (char*)src + src_idx;
+        char *dst_block = (char*)dst + dst_idx;
+        int rc = comex_put(src_block, dst_block, count[0], proc, group);
+        if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+    }
     return COMEX_SUCCESS;
 }
 
 int comex_putv(comex_giov_t *darr, int len, int proc, comex_group_t group) {
-    (void)darr; (void)len; (void)proc; (void)group;
+    if (!darr || len <= 0) return COMEX_FAILURE;
+    for (int i = 0; i < len; ++i) {
+        int rc = comex_put(darr[i].src[0], darr[i].dst[0], darr[i].bytes, proc, group);
+        if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+    }
     return COMEX_SUCCESS;
 }
 
 int comex_gets(void *src, int *src_stride, void *dst, int *dst_stride,
                int *count, int stride_levels, int proc, comex_group_t group) {
-    (void)src; (void)src_stride; (void)dst; (void)dst_stride;
-    (void)count; (void)stride_levels; (void)proc; (void)group;
+    if (translate_group_rank_to_pe(proc, group, &proc) != COMEX_SUCCESS) return COMEX_FAILURE;
+    int n1dim = 1;
+    for (int i = 1; i <= stride_levels; ++i) n1dim *= count[i];
+
+    int src_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
+    int src_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+    int dst_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
+    int dst_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+
+    src_bvalue[0] = dst_bvalue[0] = 0;
+    src_bunit[0] = dst_bunit[0] = 1;
+    for (int i = 1; i <= stride_levels; ++i) {
+        src_bvalue[i] = 0; dst_bvalue[i] = 0;
+        src_bunit[i] = src_bunit[i-1] * count[i];
+        dst_bunit[i] = dst_bunit[i-1] * count[i];
+    }
+
+    for (int i = 0; i < n1dim; ++i) {
+        long src_idx = 0, dst_idx = 0;
+        for (int j = 1; j <= stride_levels; ++j) {
+            src_idx += (long)src_bvalue[j] * (long)src_stride[j-1];
+            if ((i+1) % src_bunit[j] == 0) src_bvalue[j]++;
+            if (src_bvalue[j] > (count[j]-1)) src_bvalue[j] = 0;
+        }
+        for (int j = 1; j <= stride_levels; ++j) {
+            dst_idx += (long)dst_bvalue[j] * (long)dst_stride[j-1];
+            if ((i+1) % dst_bunit[j] == 0) dst_bvalue[j]++;
+            if (dst_bvalue[j] > (count[j]-1)) dst_bvalue[j] = 0;
+        }
+        char *src_block = (char*)src + src_idx;
+        char *dst_block = (char*)dst + dst_idx;
+        int rc = comex_get(src_block, dst_block, count[0], proc, group);
+        if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+    }
     return COMEX_SUCCESS;
 }
 
 int comex_getv(comex_giov_t *darr, int len, int proc, comex_group_t group) {
-    (void)darr; (void)len; (void)proc; (void)group;
+    if (!darr || len <= 0) return COMEX_FAILURE;
+    for (int i = 0; i < len; ++i) {
+        int rc = comex_get(darr[i].src[0], darr[i].dst[0], darr[i].bytes, proc, group);
+        if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+    }
     return COMEX_SUCCESS;
 }
 
 int comex_nbputs(void *src, int *src_stride, void *dst, int *dst_stride,
                  int *count, int stride_levels, int proc, comex_group_t group,
                  comex_request_t* nb_handle) {
-    (void)src; (void)src_stride; (void)dst; (void)dst_stride;
-    (void)count; (void)stride_levels; (void)proc; (void)group; (void)nb_handle;
+    /* Non-blocking strided put: issue one NB put per contiguous block.
+     * If nb_handle is provided, return the last reserved handle. If not,
+     * we still issue NB puts but do not return a handle. */
+    int pe;
+    if (translate_group_rank_to_pe(proc, group, &pe) != COMEX_SUCCESS) return COMEX_FAILURE;
+
+    int n1dim = 1;
+    for (int i = 1; i <= stride_levels; ++i) n1dim *= count[i];
+
+    int src_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
+    int src_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+    int dst_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
+    int dst_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+
+    src_bvalue[0] = dst_bvalue[0] = 0;
+    src_bunit[0] = dst_bunit[0] = 1;
+    for (int i = 1; i <= stride_levels; ++i) {
+        src_bvalue[i] = 0; dst_bvalue[i] = 0;
+        src_bunit[i] = src_bunit[i-1] * count[i];
+        dst_bunit[i] = dst_bunit[i-1] * count[i];
+    }
+
+    comex_request_t last = -1;
+    for (int i = 0; i < n1dim; ++i) {
+        long src_idx = 0, dst_idx = 0;
+        for (int j = 1; j <= stride_levels; ++j) {
+            src_idx += (long)src_bvalue[j] * (long)src_stride[j-1];
+            if ((i+1) % src_bunit[j] == 0) src_bvalue[j]++;
+            if (src_bvalue[j] > (count[j]-1)) src_bvalue[j] = 0;
+        }
+        for (int j = 1; j <= stride_levels; ++j) {
+            dst_idx += (long)dst_bvalue[j] * (long)dst_stride[j-1];
+            if ((i+1) % dst_bunit[j] == 0) dst_bvalue[j]++;
+            if (dst_bvalue[j] > (count[j]-1)) dst_bvalue[j] = 0;
+        }
+        char *src_block = (char*)src + src_idx;
+        char *dst_block = (char*)dst + dst_idx;
+        comex_request_t h = -1;
+        int rc = comex_nbput(src_block, dst_block, count[0], pe, group, &h);
+        if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+        last = h;
+    }
+    if (nb_handle) *nb_handle = last;
     return COMEX_SUCCESS;
 }
 
 int comex_nbputv(comex_giov_t *darr, int len, int proc, comex_group_t group,
                  comex_request_t* nb_handle) {
-    (void)darr; (void)len; (void)proc; (void)group; (void)nb_handle;
+    if (!darr || len <= 0) return COMEX_FAILURE;
+    comex_request_t last = -1;
+    for (int i = 0; i < len; ++i) {
+        comex_request_t h = -1;
+        int rc = comex_nbput(darr[i].src[0], darr[i].dst[0], darr[i].bytes, proc, group, &h);
+        if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+        last = h;
+    }
+    if (nb_handle) *nb_handle = last;
     return COMEX_SUCCESS;
 }
 
 int comex_nbgets(void *src, int *src_stride, void *dst, int *dst_stride,
                  int *count, int stride_levels, int proc, comex_group_t group,
                  comex_request_t *nb_handle) {
-    (void)src; (void)src_stride; (void)dst; (void)dst_stride;
-    (void)count; (void)stride_levels; (void)proc; (void)group; (void)nb_handle;
+    /* Non-blocking strided get: issue one NB get per contiguous block.
+     * If nb_handle is provided, return the last reserved handle. */
+    int pe;
+    if (translate_group_rank_to_pe(proc, group, &pe) != COMEX_SUCCESS) return COMEX_FAILURE;
+
+    int n1dim = 1;
+    for (int i = 1; i <= stride_levels; ++i) n1dim *= count[i];
+
+    int src_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
+    int src_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+    int dst_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
+    int dst_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+
+    src_bvalue[0] = dst_bvalue[0] = 0;
+    src_bunit[0] = dst_bunit[0] = 1;
+    for (int i = 1; i <= stride_levels; ++i) {
+        src_bvalue[i] = 0; dst_bvalue[i] = 0;
+        src_bunit[i] = src_bunit[i-1] * count[i];
+        dst_bunit[i] = dst_bunit[i-1] * count[i];
+    }
+
+    comex_request_t last = -1;
+    for (int i = 0; i < n1dim; ++i) {
+        long src_idx = 0, dst_idx = 0;
+        for (int j = 1; j <= stride_levels; ++j) {
+            src_idx += (long)src_bvalue[j] * (long)src_stride[j-1];
+            if ((i+1) % src_bunit[j] == 0) src_bvalue[j]++;
+            if (src_bvalue[j] > (count[j]-1)) src_bvalue[j] = 0;
+        }
+        for (int j = 1; j <= stride_levels; ++j) {
+            dst_idx += (long)dst_bvalue[j] * (long)dst_stride[j-1];
+            if ((i+1) % dst_bunit[j] == 0) dst_bvalue[j]++;
+            if (dst_bvalue[j] > (count[j]-1)) dst_bvalue[j] = 0;
+        }
+        char *src_block = (char*)src + src_idx;
+        char *dst_block = (char*)dst + dst_idx;
+        comex_request_t h = -1;
+        int rc = comex_nbget(src_block, dst_block, count[0], pe, group, &h);
+        if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+        last = h;
+    }
+    if (nb_handle) *nb_handle = last;
     return COMEX_SUCCESS;
 }
 
 int comex_nbgetv(comex_giov_t *darr, int len, int proc, comex_group_t group,
                  comex_request_t* nb_handle) {
-    (void)darr; (void)len; (void)proc; (void)group; (void)nb_handle;
+    if (!darr || len <= 0) return COMEX_FAILURE;
+    comex_request_t last = -1;
+    for (int i = 0; i < len; ++i) {
+        comex_request_t h = -1;
+        int rc = comex_nbget(darr[i].src[0], darr[i].dst[0], darr[i].bytes, proc, group, &h);
+        if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+        last = h;
+    }
+    if (nb_handle) *nb_handle = last;
     return COMEX_SUCCESS;
 }
 
@@ -686,6 +838,9 @@ int comex_nbacc(int op, void *scale, void *src, void *dst, int bytes,
     aux->scale = malloc((size_t)scale_bytes);
     if (aux->scale && scale) memcpy(aux->scale, scale, (size_t)scale_bytes);
     aux->scale_bytes = scale_bytes;
+    /* default: aux requires finalization (apply acc and put) unless we
+     * perform the acc now and issue a nonblocking put immediately. */
+    aux->needs_finalize = 1;
 
     if (pe == l_state.pe) {
         /* local target: perform synchronous accumulate now and leave aux NULL
@@ -695,12 +850,24 @@ int comex_nbacc(int op, void *scale, void *src, void *dst, int bytes,
         free(aux);
         e->aux = NULL;
     } else {
-        /* remote target: allocate temporary buffer and issue nonblocking get */
+        /* remote target: perform blocking get of remote destination into tmp,
+         * perform local accumulate immediately, then issue a non-blocking put
+         * of the updated buffer back to the remote destination. The NB entry
+         * remains active until the non-blocking put completes (wait/test
+         * will call shmem_quiet and then free the aux). */
         aux->tmp = malloc((size_t)bytes);
         if (!aux->tmp) { free(aux->scale); free(aux); comex_nb_release(idx); return COMEX_FAILURE; }
         e->aux = aux;
-        /* fetch remote destination into tmp (non-blocking) */
-        shmem_getmem_nbi(aux->tmp, dst, bytes, pe);
+    /* blocking get the remote destination into tmp (shmem_getmem blocks
+     * until the data is available locally; an immediate shmem_quiet() is
+     * therefore unnecessary). */
+    shmem_getmem(aux->tmp, dst, bytes, pe);
+        /* perform local accumulate into tmp */
+        _acc(op, bytes, aux->tmp, src, aux->scale);
+        /* issue non-blocking put of updated tmp back to remote destination */
+        shmem_putmem_nbi(dst, aux->tmp, bytes, pe);
+        /* mark that finalization is NOT needed in wait/test (we already did acc & issued put) */
+        aux->needs_finalize = 0;
     }
 
     if (nb_handle) *nb_handle = idx;

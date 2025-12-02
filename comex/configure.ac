@@ -67,13 +67,43 @@ COMEX_NETWORK_SETUP
 
 # Optionally build with OpenSHMEM runtime
 AC_ARG_WITH([oshmem],
-    [AS_HELP_STRING([--with-oshmem],[Build COMEX with OpenSHMEM runtime (default=no)])],
-    [with_oshmem=$withval],
-    [with_oshmem=no])
+        [AS_HELP_STRING([--with-oshmem],[Build COMEX with OpenSHMEM runtime (default=no)])],
+        [with_oshmem=$withval],
+        [with_oshmem=no])
+
+# If the user requested OpenSHMEM, check for headers and libraries and
+# define a compile-time macro so source files can switch behavior.
 AS_IF([test "x$with_oshmem" = xyes],
     [AC_MSG_NOTICE([Configuring with OpenSHMEM backend])
-     COMEX_WITH_OSHMEM=yes],
+     # Check for common SHMEM headers
+     COMEX_CHECK_HEADERS([shmem.h openshmem.h])
+
+     # Temporarily add MPI libs to search path when probing for SHMEM symbols
+     comex_save_LIBS="$LIBS"; LIBS="$LIBS $MPI_LIBS"
+     comex_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $MPI_LDFLAGS"
+     comex_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $MPI_CPPFLAGS"
+
+     # Try common linker names for OpenSHMEM implementations
+     have_shmem=no
+     AC_CHECK_LIB([oshmem], [shmem_init], [have_shmem=yes; SHMEM_LIB=oshmem], [true])
+     if test "x$have_shmem" != xyes; then
+         AC_CHECK_LIB([shmem], [shmem_init], [have_shmem=yes; SHMEM_LIB=shmem], [true])
+     fi
+
+     # restore originals
+     LIBS="$comex_save_LIBS"
+     LDFLAGS="$comex_save_LDFLAGS"
+     CPPFLAGS="$comex_save_CPPFLAGS"
+
+     AS_IF([test "x$have_shmem" = xyes],
+         [AC_MSG_NOTICE([OpenSHMEM support enabled (library: $SHMEM_LIB)])
+            AC_DEFINE([_OPENSHMEM], [1], [Define when building with OpenSHMEM])
+            COMEX_WITH_OSHMEM=yes],
+         [AC_MSG_ERROR([Requested OpenSHMEM support but no suitable shmem/oshmem library was found. Try passing --with-oshmem=<path>])
+            COMEX_WITH_OSHMEM=no])
+    ],
     [COMEX_WITH_OSHMEM=no])
+
 AM_CONDITIONAL([COMEX_WITH_OSHMEM],[test "x$COMEX_WITH_OSHMEM" = xyes])
 AC_SUBST([COMEX_WITH_OSHMEM])
 

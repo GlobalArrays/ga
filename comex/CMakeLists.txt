@@ -46,7 +46,8 @@ if (GA_RUNTIME STREQUAL "OPEN_SHMEM")
   set(COMEX_DEVICE
     src-oshmem/comex.c
     src-oshmem/groups.c
-    src-oshmem/nb.c
+      src-oshmem/nb.c
+      src-oshmem/locks.c
   )
   set (COMEX_NETWORK_OSHMEM ON)
   include_directories(AFTER src-oshmem)
@@ -179,6 +180,10 @@ add_library(armci_comex OBJECT
 )
 target_compile_definitions(armci_comex PRIVATE HAVE_CONFIG_H)
 target_include_directories(armci_comex PRIVATE ${MPI_C_INCLUDE_DIRS})
+if (GA_RUNTIME STREQUAL "OPEN_SHMEM")
+  # Ensure C sources see the OpenSHMEM build mode
+  target_compile_definitions(armci_comex PRIVATE _OPENSHMEM)
+endif()
 
 add_library(armci
   ${ARMCI_FILES}
@@ -189,6 +194,9 @@ target_compile_definitions(armci PRIVATE HAVE_CONFIG_H)
 add_library(GlobalArrays::armci ALIAS armci)
 
 target_include_directories(armci PRIVATE ${MPI_C_INCLUDE_DIRS})
+if (GA_RUNTIME STREQUAL "OPEN_SHMEM")
+  target_compile_definitions(armci PRIVATE _OPENSHMEM)
+endif()
 if (GA_RUNTIME STREQUAL "OPEN_SHMEM")
   # Link OpenSHMEM into armci & comex libraries
   target_link_libraries(armci PRIVATE ${SHMEM_LIB})
@@ -218,6 +226,7 @@ add_library(GlobalArrays::comex ALIAS comex)
 target_include_directories(comex PRIVATE ${MPI_C_INCLUDE_DIRS})
 if (GA_RUNTIME STREQUAL "OPEN_SHMEM")
   target_link_libraries(comex PRIVATE ${SHMEM_LIB})
+  target_compile_definitions(comex PRIVATE _OPENSHMEM)
 endif()
 
 install(TARGETS comex
