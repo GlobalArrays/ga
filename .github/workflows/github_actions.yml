@@ -181,6 +181,15 @@ jobs:
           macos*)
           brew update
           brew install coreutils automake || true
+          if [[ "$F77" =~ gfortran-[0-9][0-9] ]] || [[ "$CC" =~ gcc-[0-9][0-9] ]]; then
+          if [[ "$CC" =~ gcc-[0-9][0-9] ]]; then
+          version=$(echo "$CC" | cut -d - -f 2 )
+          fi
+          if [[ "$F77" =~ gfortran-[0-9][0-9] ]]; then
+          version=$(echo "$F77" | cut -d - -f 2 )
+          fi
+          brew reinstall gcc@${version}
+          fi
           ;;
           esac
           if [[ "$F77" == "ifort" ]] || [[ "$CC" == "icc" ]] || [[ "$CC" == "icx" ]]; then ./travis/install-intel.sh; source ${{ matrix.oneapi }}/setvars.sh --force;  fi
