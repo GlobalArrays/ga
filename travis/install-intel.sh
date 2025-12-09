@@ -59,6 +59,9 @@ case "$os" in
 	my_id=`id -u`
 	sudo chown -R $my_id /opt/intel
 	sudo chgrp -R $my_gr /opt/intel
+	if [[ "$MPI_IMPL" == "mpich" ]]; then
+	    brew install hwloc
+	fi
         ;;
     Linux)
 	export APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
