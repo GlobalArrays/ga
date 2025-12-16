@@ -1,3 +1,32 @@
+# Ignore build directories and their contents
+build_shmem/
+build/
+bld*/
+
+# Ignore CMake build directories and files
+CMakeFiles/
+cmake_install.cmake
+CMakeCache.txt
+CTestTestfile.cmake
+Makefile
+compile_commands.json
+globalarrays-config.cmake
+globalarrays-config-version.cmake
+globalarrays-targets.cmake
+
+# Ignore all files in any CMakeFiles directory recursively
+**/CMakeFiles/
+**/CMakeFiles/**
+
+# Ignore test and object files
+*.x
+*.o
+*.log
+
+# Ignore any .o, .x, .log files in subdirectories
+**/*.o
+**/*.x
+**/*.log
 # Compiled Object files
 *.slo
 *.lo

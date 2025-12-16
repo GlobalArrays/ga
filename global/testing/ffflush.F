@@ -10,3 +10,18 @@ c
 #endif
 c
       end
+
+      subroutine imp_finalize()
+c     Centralized finalize used by MP_FINALIZE macro in mp3.fh
+c     Calls MPI_Finalize only if MPI is initialized and not yet finalized.
+      integer mp_i, mp_f, ierr
+      include 'mpif.h'
+      call MPI_Initialized(mp_i, ierr)
+      if (mp_i .ne. 0) then
+         call MPI_Finalized(mp_f, ierr)
+         if (mp_f .eq. 0) then
+            call mpi_finalize(ierr)
+         end if
+      end if
+      return
+      end

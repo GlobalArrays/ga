@@ -1,2 +1,0 @@
-/usr/bin/ar qc libcomex.a "CMakeFiles/comex.dir/src-oshmem/comex.c.o" "CMakeFiles/comex.dir/src-oshmem/groups.c.o" "CMakeFiles/comex.dir/src-oshmem/nb.c.o" "CMakeFiles/comex.dir/src-oshmem/locks.c.o"
-/usr/bin/ranlib libcomex.a

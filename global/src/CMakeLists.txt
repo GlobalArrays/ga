@@ -103,6 +103,7 @@ set(GA_FILES
   sparse.array.c
   sketch.c
   mtwister.c
+  imp_finalize.c
   
   ${GA_FORTRAN_INTERFACE_C_FILES}
   ${GA_FORTRAN_INTERFACE_F_FILES}

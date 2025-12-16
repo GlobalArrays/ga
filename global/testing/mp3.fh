@@ -14,7 +14,7 @@
 #   else
 #      include "mpif.h"
 #      define MP_TIMER mpi_wtime
-#      define MP_FINALIZE() mpi_finalize(ierr)
+#      define MP_FINALIZE() imp_finalize()
 #   endif
 #endif
 #ifndef MP_DEFINES_ONLY
@@ -27,11 +27,11 @@
       required=MPI_THREAD_MULTIPLE
       call mpi_init_thread(required, provided, ierr)
 #       else
-      if defined(OPENSHMEM_FORTRAN)
+#       if defined(OPENSHMEM_FORTRAN)
          call shmem_init()
-      else
+#       else
          call mpi_init(ierr)
-      endif
+#       endif
 #       endif
 #   endif
 #endif

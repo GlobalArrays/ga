@@ -14,10 +14,18 @@
 #include "nb.h"
 #include "acc.h"
 #include <mpi.h>
+#include <execinfo.h>
 
 local_state l_state;
 
 static int initialized = 0;
+
+/* Simple debug printing macro (safe if l_state.pe is uninitialized) */
+#define COMEX_DBG(fmt, ...) \
+    do { \
+        int _pe = l_state.pe; \
+        /* Debug print removed */ \
+    } while(0)
 
 /* symmetric array used for pointer exchange during comex_malloc (world-only) */
 static void **g_all_ptrs = NULL; /* symmetric heap allocation for pointers */
@@ -61,7 +69,7 @@ int comex_init() {
      */
     g_all_ptrs = (void**)shmem_malloc(sizeof(void*) * l_state.n_pes);
     if (!g_all_ptrs) {
-        fprintf(stderr,"[%d] comex: shmem_malloc failed for g_all_ptrs\n", l_state.pe);
+        /* Debug print removed */
         return COMEX_FAILURE;
     }
     /* initialize local copy to NULL */
@@ -70,7 +78,7 @@ int comex_init() {
     /* allocate symmetric array for size exchange (one long per PE) */
     g_all_sizes = (long*)shmem_malloc(sizeof(long) * l_state.n_pes);
     if (!g_all_sizes) {
-        fprintf(stderr,"[%d] comex: shmem_malloc failed for g_all_sizes\n", l_state.pe);
+        /* Debug print removed */
         return COMEX_FAILURE;
     }
     for (int i=0;i<l_state.n_pes;i++) g_all_sizes[i] = 0;
@@ -85,7 +93,7 @@ int comex_init() {
      * requiring callers to create mutexes explicitly. We call the locks
      * creation API which allocates symmetric lock storage. */
     if (comex_create_mutexes(0) != COMEX_SUCCESS) {
-        fprintf(stderr, "[%d] comex: failed to create default mutexes\n", l_state.pe);
+        /* Debug print removed */
         return COMEX_FAILURE;
     }
 
@@ -110,6 +118,7 @@ int comex_init_comm(MPI_Comm comm) {
         comex_error("comex_init_comm: only MPI_COMM_WORLD is supported by SHMEM backend", -1);
         return COMEX_FAILURE;
     }
+    COMEX_DBG("comex_init_comm: comm OK (cmp=%d)", cmp);
     return comex_init();
 }
 
@@ -118,8 +127,8 @@ int comex_initialized() {
 }
 
 void comex_error(const char *msg, int code) {
-    fprintf(stderr,"[%d] COMEX ERROR: %s (code=%d)\n", l_state.pe, msg, code);
-    shmem_global_exit(code);
+    /* Debug print removed */
+    abort();
 }
 
 int comex_finalize() {
@@ -164,19 +173,23 @@ int comex_put(void *src, void *dst, int bytes, int proc, comex_group_t group) {
     int pe;
     if (translate_group_rank_to_pe(proc, group, &pe) != COMEX_SUCCESS) return COMEX_FAILURE;
 
+    COMEX_DBG("comex_put: src=%p dst=%p bytes=%d proc=%d -> pe=%d", src, dst, bytes, proc, pe);
     /* SHMEM semantics: shmem_putmem(target, source, nelems, pe) */
     shmem_putmem(dst, src, bytes, pe);
     /* ensure local completion before returning (match COMEX semantics) */
     shmem_quiet();
+    COMEX_DBG("comex_put: completed");
     return COMEX_SUCCESS;
 }
 
 int comex_get(void *src, void *dst, int bytes, int proc, comex_group_t group) {
     int pe;
     if (translate_group_rank_to_pe(proc, group, &pe) != COMEX_SUCCESS) return COMEX_FAILURE;
-
+    COMEX_DBG("comex_get: src=%p dst=%p bytes=%d proc=%d -> pe=%d", src, dst, bytes, proc, pe);
+    /* Debug print removed */
     shmem_getmem(dst, src, bytes, pe);
     shmem_quiet();
+    COMEX_DBG("comex_get: completed");
     return COMEX_SUCCESS;
 }
 
@@ -188,6 +201,7 @@ int comex_nbput(void *src, void *dst, int bytes, int proc, comex_group_t group, 
     comex_nb_entry_t *e = comex_nb_get_entry(idx);
     e->op = 0; e->src = src; e->dst = dst; e->bytes = bytes; e->target_pe = pe;
 
+    COMEX_DBG("comex_nbput: src=%p dst=%p bytes=%d proc=%d idx=%d", src, dst, bytes, proc, idx);
     /* Use the byte-wise non-blocking put variant so void* is accepted */
     shmem_putmem_nbi(dst, src, bytes, pe);
     /* do NOT call shmem_quiet() here; leave it to wait/test */
@@ -204,6 +218,8 @@ int comex_nbget(void *src, void *dst, int bytes, int proc, comex_group_t group, 
     comex_nb_entry_t *e = comex_nb_get_entry(idx);
     e->op = 1; e->src = src; e->dst = dst; e->bytes = bytes; e->target_pe = pe;
 
+    COMEX_DBG("comex_nbget: src=%p dst=%p bytes=%d proc=%d idx=%d", src, dst, bytes, proc, idx);
+    /* Debug print removed */
     /* Use the byte-wise non-blocking get variant so void* is accepted */
     shmem_getmem_nbi(dst, src, bytes, pe);
 
@@ -374,8 +390,7 @@ int comex_malloc(void **ptr_arr, size_t bytes, comex_group_t group) {
     /* Step 5: record local allocation for future use */
     alloc_entry_t *tmp = (alloc_entry_t*)realloc(local_allocs, sizeof(alloc_entry_t)*(local_alloc_count+1));
     if (!tmp) {
-        /* allocation record failure is non-fatal for RMA but warn */
-        fprintf(stderr, "[%d] comex_malloc: warning: failed to record allocation info\n", l_state.pe);
+        /* Debug print removed */
     } else {
         local_allocs = tmp;
         local_allocs[local_alloc_count].ptr = local_ptr;
@@ -521,48 +536,75 @@ int comex_accs(int op, void *scale, void *src, int *src_stride,
                int proc, comex_group_t group) {
     int i, j;
     long src_idx, dst_idx;
-    int n1dim = 1;
-    if (translate_group_rank_to_pe(0, group, &i) != COMEX_SUCCESS) {
-        /* group must be world-only; we'll ignore translate here and use earlier helper later */
-    }
-    for (i = 1; i <= stride_levels; ++i) n1dim *= count[i];
+    int n1dim;
+    int src_bvalue[COMEX_MAX_STRIDE_LEVEL+1], src_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+    int dst_bvalue[COMEX_MAX_STRIDE_LEVEL+1], dst_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+    void *get_buf;
+    int pe;
+    if (translate_group_rank_to_pe(proc, group, &pe) != COMEX_SUCCESS) return COMEX_FAILURE;
 
-    int src_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
-    int src_bunit[COMEX_MAX_STRIDE_LEVEL+1];
-    int dst_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
-    int dst_bunit[COMEX_MAX_STRIDE_LEVEL+1];
-
-    src_bvalue[0] = dst_bvalue[0] = 0;
-    src_bunit[0] = dst_bunit[0] = 1;
-    for (i = 1; i <= stride_levels; ++i) {
-        src_bvalue[i] = 0; dst_bvalue[i] = 0;
-        src_bunit[i] = src_bunit[i-1] * count[i];
-        dst_bunit[i] = dst_bunit[i-1] * count[i];
+    n1dim = 1;
+    for(i=1; i<=stride_levels; i++) {
+        n1dim *= count[i];
     }
 
-    /* iterate over blocks and call contiguous acc */
-    for (i = 0; i < n1dim; ++i) {
-        src_idx = 0; dst_idx = 0;
-        for (j = 1; j <= stride_levels; ++j) {
-            src_idx += (long)src_bvalue[j] * (long)src_stride[j-1];
-            if ((i+1) % src_bunit[j] == 0) {
+    src_bvalue[0] = 0; src_bvalue[1] = 0; src_bunit[0] = 1; src_bunit[1] = 1;
+    dst_bvalue[0] = 0; dst_bvalue[1] = 0; dst_bunit[0] = 1; dst_bunit[1] = 1;
+
+    for(i=2; i<=stride_levels; i++) {
+        src_bvalue[i] = 0;
+        dst_bvalue[i] = 0;
+        src_bunit[i] = src_bunit[i-1] * count[i-1];
+        dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+    }
+
+    /* lock for atomicity if needed */
+    locks_set_internal(pe);
+
+    get_buf = malloc(count[0]);
+    if (!get_buf) return COMEX_FAILURE;
+
+    for(i=0; i<n1dim; i++) {
+        src_idx = 0;
+        for(j=1; j<=stride_levels; j++) {
+            src_idx += src_bvalue[j] * src_stride[j-1];
+            if((i+1) % src_bunit[j] == 0) {
                 src_bvalue[j]++;
             }
-            if (src_bvalue[j] > (count[j]-1)) src_bvalue[j] = 0;
-        }
-        for (j = 1; j <= stride_levels; ++j) {
-            dst_idx += (long)dst_bvalue[j] * (long)dst_stride[j-1];
-            if ((i+1) % dst_bunit[j] == 0) {
-                dst_bvalue[j]++;
+            if(src_bvalue[j] > (count[j]-1)) {
+                src_bvalue[j] = 0;
             }
-            if (dst_bvalue[j] > (count[j]-1)) dst_bvalue[j] = 0;
         }
 
-        /* operate on each contiguous block */
-        char *src_block = (char*)src + src_idx;
-        char *dst_block = (char*)dst + dst_idx;
-        comex_acc(op, scale, src_block, dst_block, count[0], proc, group);
+        dst_idx = 0;
+        for(j=1; j<=stride_levels; j++) {
+            dst_idx += dst_bvalue[j] * dst_stride[j-1];
+            if((i+1) % dst_bunit[j] == 0) {
+                dst_bvalue[j]++;
+            }
+            if(dst_bvalue[j] > (count[j]-1)) {
+                dst_bvalue[j] = 0;
+            }
+        }
+
+        /* get remote data */
+        if (comex_get((char*)dst + dst_idx, get_buf, count[0], pe, group) != COMEX_SUCCESS) {
+          free(get_buf);
+          locks_clear_internal(pe);
+          return COMEX_FAILURE;
+        }
+        /* local accumulate */
+        _acc(op, count[0], get_buf, (char*)src + src_idx, scale);
+        /* put back to remote */
+        if (comex_put(get_buf, (char*)dst + dst_idx, count[0], pe, group) != COMEX_SUCCESS) {
+            free(get_buf);
+            locks_clear_internal(pe);
+            return COMEX_FAILURE;
+        }
     }
+
+    free(get_buf);
+    locks_clear_internal(pe);
     return COMEX_SUCCESS;
 }
 
@@ -584,38 +626,51 @@ int comex_puts(void *src, int *src_stride, void *dst, int *dst_stride,
     /* Implement strided put by iterating over contiguous blocks.
      * count[0] is the size in bytes of each contiguous block.
      * count[1..stride_levels] specify repetition counts for higher dims. */
-    if (translate_group_rank_to_pe(proc, group, &proc) != COMEX_SUCCESS) return COMEX_FAILURE;
-    int n1dim = 1;
-    for (int i = 1; i <= stride_levels; ++i) n1dim *= count[i];
+    int i, j;
+    long src_idx, dst_idx;
+    int n1dim;
+    int src_bvalue[COMEX_MAX_STRIDE_LEVEL+1], src_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+    int dst_bvalue[COMEX_MAX_STRIDE_LEVEL+1], dst_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+    int pe;
+    if (translate_group_rank_to_pe(proc, group, &pe) != COMEX_SUCCESS) return COMEX_FAILURE;
 
-    int src_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
-    int src_bunit[COMEX_MAX_STRIDE_LEVEL+1];
-    int dst_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
-    int dst_bunit[COMEX_MAX_STRIDE_LEVEL+1];
-
-    src_bvalue[0] = dst_bvalue[0] = 0;
-    src_bunit[0] = dst_bunit[0] = 1;
-    for (int i = 1; i <= stride_levels; ++i) {
-        src_bvalue[i] = 0; dst_bvalue[i] = 0;
-        src_bunit[i] = src_bunit[i-1] * count[i];
-        dst_bunit[i] = dst_bunit[i-1] * count[i];
+    n1dim = 1;
+    for(i=1; i<=stride_levels; i++) {
+        n1dim *= count[i];
     }
 
-    for (int i = 0; i < n1dim; ++i) {
-        long src_idx = 0, dst_idx = 0;
-        for (int j = 1; j <= stride_levels; ++j) {
-            src_idx += (long)src_bvalue[j] * (long)src_stride[j-1];
-            if ((i+1) % src_bunit[j] == 0) src_bvalue[j]++;
-            if (src_bvalue[j] > (count[j]-1)) src_bvalue[j] = 0;
+    src_bvalue[0] = 0; src_bvalue[1] = 0; src_bunit[0] = 1; src_bunit[1] = 1;
+    dst_bvalue[0] = 0; dst_bvalue[1] = 0; dst_bunit[0] = 1; dst_bunit[1] = 1;
+
+    for(i=2; i<=stride_levels; i++) {
+        src_bvalue[i] = 0;
+        dst_bvalue[i] = 0;
+        src_bunit[i] = src_bunit[i-1] * count[i-1];
+        dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+    }
+
+    for(i=0; i<n1dim; i++) {
+        src_idx = 0;
+        dst_idx = 0;
+        for(j=1; j<=stride_levels; j++) {
+            src_idx += src_bvalue[j] * src_stride[j-1];
+            if((i+1) % src_bunit[j] == 0) {
+                src_bvalue[j]++;
+            }
+            if(src_bvalue[j] > (count[j]-1)) {
+                src_bvalue[j] = 0;
+            }
         }
-        for (int j = 1; j <= stride_levels; ++j) {
-            dst_idx += (long)dst_bvalue[j] * (long)dst_stride[j-1];
-            if ((i+1) % dst_bunit[j] == 0) dst_bvalue[j]++;
-            if (dst_bvalue[j] > (count[j]-1)) dst_bvalue[j] = 0;
+        for(j=1; j<=stride_levels; j++) {
+            dst_idx += dst_bvalue[j] * dst_stride[j-1];
+            if((i+1) % dst_bunit[j] == 0) {
+                dst_bvalue[j]++;
+            }
+            if(dst_bvalue[j] > (count[j]-1)) {
+                dst_bvalue[j] = 0;
+            }
         }
-        char *src_block = (char*)src + src_idx;
-        char *dst_block = (char*)dst + dst_idx;
-        int rc = comex_put(src_block, dst_block, count[0], proc, group);
+        int rc = comex_put((char*)src + src_idx, (char*)dst + dst_idx, count[0], pe, group);
         if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
     }
     return COMEX_SUCCESS;
@@ -684,42 +739,53 @@ int comex_nbputs(void *src, int *src_stride, void *dst, int *dst_stride,
     /* Non-blocking strided put: issue one NB put per contiguous block.
      * If nb_handle is provided, return the last reserved handle. If not,
      * we still issue NB puts but do not return a handle. */
+    int i, j;
+    long src_idx, dst_idx;
+    int n1dim;
+    int src_bvalue[COMEX_MAX_STRIDE_LEVEL+1], src_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+    int dst_bvalue[COMEX_MAX_STRIDE_LEVEL+1], dst_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+    comex_request_t last = -1;
     int pe;
     if (translate_group_rank_to_pe(proc, group, &pe) != COMEX_SUCCESS) return COMEX_FAILURE;
 
-    int n1dim = 1;
-    for (int i = 1; i <= stride_levels; ++i) n1dim *= count[i];
-
-    int src_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
-    int src_bunit[COMEX_MAX_STRIDE_LEVEL+1];
-    int dst_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
-    int dst_bunit[COMEX_MAX_STRIDE_LEVEL+1];
-
-    src_bvalue[0] = dst_bvalue[0] = 0;
-    src_bunit[0] = dst_bunit[0] = 1;
-    for (int i = 1; i <= stride_levels; ++i) {
-        src_bvalue[i] = 0; dst_bvalue[i] = 0;
-        src_bunit[i] = src_bunit[i-1] * count[i];
-        dst_bunit[i] = dst_bunit[i-1] * count[i];
+    n1dim = 1;
+    for(i=1; i<=stride_levels; i++) {
+        n1dim *= count[i];
     }
 
-    comex_request_t last = -1;
-    for (int i = 0; i < n1dim; ++i) {
-        long src_idx = 0, dst_idx = 0;
-        for (int j = 1; j <= stride_levels; ++j) {
-            src_idx += (long)src_bvalue[j] * (long)src_stride[j-1];
-            if ((i+1) % src_bunit[j] == 0) src_bvalue[j]++;
-            if (src_bvalue[j] > (count[j]-1)) src_bvalue[j] = 0;
+    src_bvalue[0] = 0; src_bvalue[1] = 0; src_bunit[0] = 1; src_bunit[1] = 1;
+    dst_bvalue[0] = 0; dst_bvalue[1] = 0; dst_bunit[0] = 1; dst_bunit[1] = 1;
+
+    for(i=2; i<=stride_levels; i++) {
+        src_bvalue[i] = 0;
+        dst_bvalue[i] = 0;
+        src_bunit[i] = src_bunit[i-1] * count[i-1];
+        dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+    }
+
+    for(i=0; i<n1dim; i++) {
+        src_idx = 0;
+        dst_idx = 0;
+        for(j=1; j<=stride_levels; j++) {
+            src_idx += src_bvalue[j] * src_stride[j-1];
+            if((i+1) % src_bunit[j] == 0) {
+                src_bvalue[j]++;
+            }
+            if(src_bvalue[j] > (count[j]-1)) {
+                src_bvalue[j] = 0;
+            }
         }
-        for (int j = 1; j <= stride_levels; ++j) {
-            dst_idx += (long)dst_bvalue[j] * (long)dst_stride[j-1];
-            if ((i+1) % dst_bunit[j] == 0) dst_bvalue[j]++;
-            if (dst_bvalue[j] > (count[j]-1)) dst_bvalue[j] = 0;
+        for(j=1; j<=stride_levels; j++) {
+            dst_idx += dst_bvalue[j] * dst_stride[j-1];
+            if((i+1) % dst_bunit[j] == 0) {
+                dst_bvalue[j]++;
+            }
+            if(dst_bvalue[j] > (count[j]-1)) {
+                dst_bvalue[j] = 0;
+            }
         }
-        char *src_block = (char*)src + src_idx;
-        char *dst_block = (char*)dst + dst_idx;
         comex_request_t h = -1;
-        int rc = comex_nbput(src_block, dst_block, count[0], pe, group, &h);
+        int rc = comex_nbput((char*)src + src_idx, (char*)dst + dst_idx, count[0], pe, group, &h);
         if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
         last = h;
     }
@@ -749,35 +815,51 @@ int comex_nbgets(void *src, int *src_stride, void *dst, int *dst_stride,
     int pe;
     if (translate_group_rank_to_pe(proc, group, &pe) != COMEX_SUCCESS) return COMEX_FAILURE;
 
-    int n1dim = 1;
-    for (int i = 1; i <= stride_levels; ++i) n1dim *= count[i];
+    int i, j;
+    long src_idx, dst_idx;
+    int n1dim;
+    int src_bvalue[COMEX_MAX_STRIDE_LEVEL+1], src_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+    int dst_bvalue[COMEX_MAX_STRIDE_LEVEL+1], dst_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+    comex_request_t last = -1;
 
-    int src_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
-    int src_bunit[COMEX_MAX_STRIDE_LEVEL+1];
-    int dst_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
-    int dst_bunit[COMEX_MAX_STRIDE_LEVEL+1];
-
-    src_bvalue[0] = dst_bvalue[0] = 0;
-    src_bunit[0] = dst_bunit[0] = 1;
-    for (int i = 1; i <= stride_levels; ++i) {
-        src_bvalue[i] = 0; dst_bvalue[i] = 0;
-        src_bunit[i] = src_bunit[i-1] * count[i];
-        dst_bunit[i] = dst_bunit[i-1] * count[i];
+    n1dim = 1;
+    for (i = 1; i <= stride_levels; i++) {
+        n1dim *= count[i];
     }
 
-    comex_request_t last = -1;
-    for (int i = 0; i < n1dim; ++i) {
-        long src_idx = 0, dst_idx = 0;
-        for (int j = 1; j <= stride_levels; ++j) {
-            src_idx += (long)src_bvalue[j] * (long)src_stride[j-1];
-            if ((i+1) % src_bunit[j] == 0) src_bvalue[j]++;
-            if (src_bvalue[j] > (count[j]-1)) src_bvalue[j] = 0;
+    src_bvalue[0] = 0; src_bvalue[1] = 0; src_bunit[0] = 1; src_bunit[1] = 1;
+    dst_bvalue[0] = 0; dst_bvalue[1] = 0; dst_bunit[0] = 1; dst_bunit[1] = 1;
+
+    for (i = 2; i <= stride_levels; i++) {
+        src_bvalue[i] = 0;
+        dst_bvalue[i] = 0;
+        src_bunit[i] = src_bunit[i-1] * count[i-1];
+        dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+    }
+
+    for (i = 0; i < n1dim; i++) {
+        src_idx = 0;
+        for (j = 1; j <= stride_levels; j++) {
+            src_idx += src_bvalue[j] * src_stride[j-1];
+            if ((i+1) % src_bunit[j] == 0) {
+                src_bvalue[j]++;
+            }
+            if (src_bvalue[j] > (count[j]-1)) {
+                src_bvalue[j] = 0;
+            }
         }
-        for (int j = 1; j <= stride_levels; ++j) {
-            dst_idx += (long)dst_bvalue[j] * (long)dst_stride[j-1];
-            if ((i+1) % dst_bunit[j] == 0) dst_bvalue[j]++;
-            if (dst_bvalue[j] > (count[j]-1)) dst_bvalue[j] = 0;
+
+        dst_idx = 0;
+        for (j = 1; j <= stride_levels; j++) {
+            dst_idx += dst_bvalue[j] * dst_stride[j-1];
+            if ((i+1) % dst_bunit[j] == 0) {
+                dst_bvalue[j]++;
+            }
+            if (dst_bvalue[j] > (count[j]-1)) {
+                dst_bvalue[j] = 0;
+            }
         }
+
         char *src_block = (char*)src + src_idx;
         char *dst_block = (char*)dst + dst_idx;
         comex_request_t h = -1;
@@ -879,71 +961,55 @@ int comex_nbaccs(int op, void *scale, void *src, int *src_stride,
                  int proc, comex_group_t group, comex_request_t* nb_handle) {
     int i, j;
     long src_idx, dst_idx;
-    int n1dim = 1;
-    for (i = 1; i <= stride_levels; ++i) n1dim *= count[i];
-
-    int src_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
-    int src_bunit[COMEX_MAX_STRIDE_LEVEL+1];
-    int dst_bvalue[COMEX_MAX_STRIDE_LEVEL+1];
-    int dst_bunit[COMEX_MAX_STRIDE_LEVEL+1];
-
-    src_bvalue[0] = dst_bvalue[0] = 0;
-    src_bunit[0] = dst_bunit[0] = 1;
-    for (i = 1; i <= stride_levels; ++i) {
-        src_bvalue[i] = 0; dst_bvalue[i] = 0;
-        src_bunit[i] = src_bunit[i-1] * count[i];
-        dst_bunit[i] = dst_bunit[i-1] * count[i];
-    }
-
-    /* For NB strided accumulates, we will issue one NB entry per contiguous block. */
-    /* If nb_handle is provided, it will be set to the last reserved handle; callers
-     * expecting to wait on a single handle for many blocks should already use
-     * higher-level grouping; otherwise they can track multiple handles. */
-    if (!nb_handle) {
-        /* caller didn't request a handle; fall back to synchronous behavior */
-        for (i = 0; i < n1dim; ++i) {
-            src_idx = 0; dst_idx = 0;
-            for (j = 1; j <= stride_levels; ++j) {
-                src_idx += (long)src_bvalue[j] * (long)src_stride[j-1];
-                if ((i+1) % src_bunit[j] == 0) src_bvalue[j]++;
-                if (src_bvalue[j] > (count[j]-1)) src_bvalue[j] = 0;
-            }
-            for (j = 1; j <= stride_levels; ++j) {
-                dst_idx += (long)dst_bvalue[j] * (long)dst_stride[j-1];
-                if ((i+1) % dst_bunit[j] == 0) dst_bvalue[j]++;
-                if (dst_bvalue[j] > (count[j]-1)) dst_bvalue[j] = 0;
-            }
-            char *src_block = (char*)src + src_idx;
-            char *dst_block = (char*)dst + dst_idx;
-            comex_nbacc(op, scale, src_block, dst_block, count[0], proc, group, NULL);
-        }
-        return COMEX_SUCCESS;
-    }
-
+    int n1dim;
+    int src_bvalue[COMEX_MAX_STRIDE_LEVEL+1], src_bunit[COMEX_MAX_STRIDE_LEVEL+1];
+    int dst_bvalue[COMEX_MAX_STRIDE_LEVEL+1], dst_bunit[COMEX_MAX_STRIDE_LEVEL+1];
     comex_request_t last_handle = -1;
-    for (i = 0; i < n1dim; ++i) {
-        src_idx = 0; dst_idx = 0;
-        for (j = 1; j <= stride_levels; ++j) {
-            src_idx += (long)src_bvalue[j] * (long)src_stride[j-1];
-            if ((i+1) % src_bunit[j] == 0) src_bvalue[j]++;
-            if (src_bvalue[j] > (count[j]-1)) src_bvalue[j] = 0;
+
+    n1dim = 1;
+    for(i=1; i<=stride_levels; i++) {
+        n1dim *= count[i];
+    }
+
+    src_bvalue[0] = 0; src_bvalue[1] = 0; src_bunit[0] = 1; src_bunit[1] = 1;
+    dst_bvalue[0] = 0; dst_bvalue[1] = 0; dst_bunit[0] = 1; dst_bunit[1] = 1;
+
+    for(i=2; i<=stride_levels; i++) {
+        src_bvalue[i] = 0;
+        dst_bvalue[i] = 0;
+        src_bunit[i] = src_bunit[i-1] * count[i-1];
+        dst_bunit[i] = dst_bunit[i-1] * count[i-1];
+    }
+
+    for(i=0; i<n1dim; i++) {
+        src_idx = 0;
+        dst_idx = 0;
+        for(j=1; j<=stride_levels; j++) {
+            src_idx += src_bvalue[j] * src_stride[j-1];
+            if((i+1) % src_bunit[j] == 0) {
+                src_bvalue[j]++;
+            }
+            if(src_bvalue[j] > (count[j]-1)) {
+                src_bvalue[j] = 0;
+            }
         }
-        for (j = 1; j <= stride_levels; ++j) {
-            dst_idx += (long)dst_bvalue[j] * (long)dst_stride[j-1];
-            if ((i+1) % dst_bunit[j] == 0) dst_bvalue[j]++;
-            if (dst_bvalue[j] > (count[j]-1)) dst_bvalue[j] = 0;
+        for(j=1; j<=stride_levels; j++) {
+            dst_idx += dst_bvalue[j] * dst_stride[j-1];
+            if((i+1) % dst_bunit[j] == 0) {
+                dst_bvalue[j]++;
+            }
+            if(dst_bvalue[j] > (count[j]-1)) {
+                dst_bvalue[j] = 0;
+            }
         }
-        char *src_block = (char*)src + src_idx;
-        char *dst_block = (char*)dst + dst_idx;
         comex_request_t h = -1;
-        int rc = comex_nbacc(op, scale, src_block, dst_block, count[0], proc, group, &h);
+        int rc = comex_nbacc(op, scale, (char*)src + src_idx, (char*)dst + dst_idx, count[0], proc, group, &h);
         if (rc != COMEX_SUCCESS) {
-            /* on failure, leave previously issued NB entries as-is */
             return COMEX_FAILURE;
         }
         last_handle = h;
     }
-    *nb_handle = last_handle;
+    if (nb_handle) *nb_handle = last_handle;
     return COMEX_SUCCESS;
 }
 

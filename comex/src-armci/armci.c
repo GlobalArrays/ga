@@ -335,15 +335,36 @@ int PARMCI_Get(void *src, void *dst, int bytes, int proc)
 int PARMCI_GetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc)
 {
   int iret;
+    /* Always print incoming count[] for diagnosis */
+    {
+        int _ii;
+        fprintf(stderr, "[PARMCI_GetS ENTRY] proc=%d stride_levels=%d counts:", proc, stride_levels);
+        for (_ii = 0; _ii <= stride_levels; _ii++) fprintf(stderr, " %d", count[_ii]);
+        fprintf(stderr, "\n");
+        fflush(stderr);
+    }
   /* check if data is contiguous */
-  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+    if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
     int i;
     int lcount = 1;
     for (i=0; i<=stride_levels; i++) lcount *= count[i];
+        /* Diagnostic: print stride counts and computed lcount to check units (bytes vs elements) */
+        {
+            int _ii;
+            fprintf(stderr, "[ARMCI_DIAG] PARMCI_GetS CONTIG proc=%d stride_levels=%d counts:", proc, stride_levels);
+            for (_ii = 0; _ii <= stride_levels; _ii++) fprintf(stderr, " %d", count[_ii]);
+            fprintf(stderr, " -> lcount=%d\n", lcount);
+            fflush(stderr);
+        }
     iret = comex_get(src_ptr, dst_ptr, lcount, proc, COMEX_GROUP_WORLD);
-  } else {
-    iret = comex_gets(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
-        count, stride_levels, proc, COMEX_GROUP_WORLD);
+    } else {
+                int _ii;
+                fprintf(stderr, "[ARMCI_DIAG] PARMCI_GetS NONCONTIG proc=%d stride_levels=%d counts:", proc, stride_levels);
+                for (_ii = 0; _ii <= stride_levels; _ii++) fprintf(stderr, " %d", count[_ii]);
+                fprintf(stderr, "\n");
+                fflush(stderr);
+        iret = comex_gets(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
+                count, stride_levels, proc, COMEX_GROUP_WORLD);
   }
   return iret;
 }
@@ -587,17 +608,17 @@ int PARMCI_NbGet(void *src, void *dst, int bytes, int proc, armci_hdl_t *nb_hand
 
 int PARMCI_NbGetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)
 {
-  int iret;
-  /* check if data is contiguous */
-  if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
-    int i;
-    int lcount = 1;
-    for (i=0; i<=stride_levels; i++) lcount *= count[i];
-    iret = comex_nbget(src_ptr, dst_ptr, lcount, proc,
-        COMEX_GROUP_WORLD, nb_handle);
-  } else {
-    iret = comex_nbgets(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
-        count, stride_levels, proc, COMEX_GROUP_WORLD, nb_handle);
+    int iret;
+    /* check if data is contiguous */
+      if (armci_check_contiguous(src_stride_arr, dst_stride_arr, count, stride_levels)) {
+        int i;
+        int lcount = 1;
+        for (i=0; i<=stride_levels; i++) lcount *= count[i];
+        iret = comex_nbget(src_ptr, dst_ptr, lcount, proc,
+            COMEX_GROUP_WORLD, nb_handle);
+      } else {
+        iret = comex_nbgets(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
+            count, stride_levels, proc, COMEX_GROUP_WORLD, nb_handle);
   }
   return iret;
 }
