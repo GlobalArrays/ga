@@ -4,20 +4,49 @@
 #include <stdlib.h>
 #include <shmem.h>
 
-/* Internal lock storage (symmetric) */
+
+/* Internal lock storage (regular memory, not symmetric) */
 static long *g_locks = NULL;
-static int g_num_mutexes = 0;
-static int g_total_per_pe = 0;
+static int g_locks_npes = 0;
+static int *g_locks_map = NULL;
 
 int comex_create_mutexes(int num) {
-    if (num < 0) return COMEX_FAILURE;
-    g_num_mutexes = num;
-    g_total_per_pe = l_state.n_pes + g_num_mutexes;
-    size_t total = (size_t)l_state.n_pes * (size_t)g_total_per_pe;
-    g_locks = (long*)shmem_malloc(sizeof(long) * total);
-    if (!g_locks) return COMEX_FAILURE;
-    for (size_t i = 0; i < total; ++i) g_locks[i] = (long)i;
-    shmem_barrier_all();
+    int npes = l_state.n_pes;
+    int pe = l_state.pe;
+    g_locks_npes = npes;
+    if (g_locks) {
+        shmem_free(g_locks);
+        g_locks = NULL;
+    }
+    if (g_locks_map) {
+        free(g_locks_map);
+        g_locks_map = NULL;
+    }
+    // Step 1: create and sum num_mutexes
+    int *num_mutexes = (int*)shmem_malloc(sizeof(int) * npes);
+    if (!num_mutexes) return COMEX_FAILURE;
+    for (int i = 0; i < npes; ++i) num_mutexes[i] = 0;
+    num_mutexes[pe] = num;
+    int *sum_mutexes = (int*)shmem_malloc(sizeof(int) * npes);
+    if (!sum_mutexes) { shmem_free(num_mutexes); return COMEX_FAILURE; }
+    shmem_int_sum_to_all(sum_mutexes, num_mutexes, npes, 0, 0, npes, NULL, NULL);
+    // Step 2: allocate g_locks_map and fill as described
+    g_locks_map = (int*)malloc(sizeof(int) * (npes + 1));
+    if (!g_locks_map) { shmem_free(num_mutexes); shmem_free(sum_mutexes); return COMEX_FAILURE; }
+    g_locks_map[0] = npes;
+    for (int i = 1; i <= npes; ++i) {
+        g_locks_map[i] = g_locks_map[i-1] + sum_mutexes[i-1];
+    }
+    shmem_free(num_mutexes);
+    shmem_free(sum_mutexes);
+    if (g_locks) {
+        shmem_free(g_locks);
+        g_locks = NULL;
+    }
+    size_t locks_len = g_locks_map[npes];
+    g_locks = (long*)shmem_malloc(sizeof(long) * locks_len);
+    if (!g_locks) { free(g_locks_map); g_locks_map = NULL; return COMEX_FAILURE; }
+    for (size_t i = 0; i < locks_len; ++i) g_locks[i] = (long)i;
     return COMEX_SUCCESS;
 }
 
@@ -26,27 +55,26 @@ int comex_destroy_mutexes(void) {
         shmem_free(g_locks);
         g_locks = NULL;
     }
-    g_num_mutexes = 0;
-    shmem_barrier_all();
+    if (g_locks_map) {
+        free(g_locks_map);
+        g_locks_map = NULL;
+    }
+    g_locks_npes = 0;
     return COMEX_SUCCESS;
 }
 
 int comex_lock(int mutex, int proc) {
-    if (g_total_per_pe <= 0) return COMEX_FAILURE;
     if (proc < 0 || proc >= l_state.n_pes) return COMEX_FAILURE;
-    if (mutex < 0 || mutex >= g_num_mutexes) return COMEX_FAILURE;
-    long imutex = (long)(proc + 1) * (long)l_state.n_pes + (long)mutex;
-    if ((size_t)imutex >= (size_t)g_total_per_pe) return COMEX_FAILURE;
+    if (mutex < 0 || mutex >= (g_locks_map[proc+1] - g_locks_map[proc])) return COMEX_FAILURE;
+    long imutex = g_locks_map[proc] + mutex;
     shmem_set_lock(&g_locks[imutex]);
     return COMEX_SUCCESS;
 }
 
 int comex_unlock(int mutex, int proc) {
-    if (g_total_per_pe <= 0) return COMEX_FAILURE;
     if (proc < 0 || proc >= l_state.n_pes) return COMEX_FAILURE;
-    if (mutex < 0 || mutex >= g_num_mutexes) return COMEX_FAILURE;
-    long imutex = (long)(proc + 1) * (long)l_state.n_pes + (long)mutex;
-    if ((size_t)imutex >= (size_t)g_total_per_pe) return COMEX_FAILURE;
+    if (mutex < 0 || mutex >= (g_locks_map[proc+1] - g_locks_map[proc])) return COMEX_FAILURE;
+    long imutex = g_locks_map[proc] + mutex;
     shmem_clear_lock(&g_locks[imutex]);
     return COMEX_SUCCESS;
 }
@@ -54,14 +82,11 @@ int comex_unlock(int mutex, int proc) {
 void locks_set_internal(int pe) {
     if (!g_locks) return;
     if (pe < 0 || pe >= l_state.n_pes) return;
-    /* reserved internal slot is the first slot for each PE */
-    size_t idx = (size_t)pe * (size_t)g_total_per_pe + 0;
-    shmem_set_lock(&g_locks[idx]);
+    shmem_set_lock(&g_locks[pe]);
 }
 
 void locks_clear_internal(int pe) {
     if (!g_locks) return;
     if (pe < 0 || pe >= l_state.n_pes) return;
-    size_t idx = (size_t)pe * (size_t)g_total_per_pe + 0;
-    shmem_clear_lock(&g_locks[idx]);
+    shmem_clear_lock(&g_locks[pe]);
 }

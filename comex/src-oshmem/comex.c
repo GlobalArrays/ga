@@ -501,7 +501,9 @@ int comex_acc(int op, void *scale, void *src, void *dst, int bytes,
 
     /* if target is local, perform local accumulate directly */
     if (pe == l_state.pe) {
+        locks_set_internal(pe);
         _acc(op, bytes, dst, src, scale);
+        locks_clear_internal(pe);
         return COMEX_SUCCESS;
     }
 
@@ -611,7 +613,13 @@ int comex_accs(int op, void *scale, void *src, int *src_stride,
 int comex_accv(int op, void *scale, comex_giov_t *darr, int len,
                int proc, comex_group_t group) {
     for (int i = 0; i < len; ++i) {
-        comex_acc(op, scale, darr[i].src[0], darr[i].dst[0], darr[i].bytes, proc, group);
+        void **src = darr[i].src;
+        void **dst = darr[i].dst;
+        int bytes = darr[i].bytes;
+        int limit = darr[i].count;
+        for (int j = 0; j < limit; ++j) {
+            comex_acc(op, scale, src[j], dst[j], bytes, proc, group);
+        }
     }
     return COMEX_SUCCESS;
 }
@@ -679,8 +687,14 @@ int comex_puts(void *src, int *src_stride, void *dst, int *dst_stride,
 int comex_putv(comex_giov_t *darr, int len, int proc, comex_group_t group) {
     if (!darr || len <= 0) return COMEX_FAILURE;
     for (int i = 0; i < len; ++i) {
-        int rc = comex_put(darr[i].src[0], darr[i].dst[0], darr[i].bytes, proc, group);
-        if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+        void **src = darr[i].src;
+        void **dst = darr[i].dst;
+        int bytes = darr[i].bytes;
+        int limit = darr[i].count;
+        for (int j = 0; j < limit; ++j) {
+            int rc = comex_put(src[j], dst[j], bytes, proc, group);
+            if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+        }
     }
     return COMEX_SUCCESS;
 }
@@ -727,8 +741,14 @@ int comex_gets(void *src, int *src_stride, void *dst, int *dst_stride,
 int comex_getv(comex_giov_t *darr, int len, int proc, comex_group_t group) {
     if (!darr || len <= 0) return COMEX_FAILURE;
     for (int i = 0; i < len; ++i) {
-        int rc = comex_get(darr[i].src[0], darr[i].dst[0], darr[i].bytes, proc, group);
-        if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+        void **src = darr[i].src;
+        void **dst = darr[i].dst;
+        int bytes = darr[i].bytes;
+        int limit = darr[i].count;
+        for (int j = 0; j < limit; ++j) {
+            int rc = comex_get(src[j], dst[j], bytes, proc, group);
+            if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+        }
     }
     return COMEX_SUCCESS;
 }
@@ -798,10 +818,16 @@ int comex_nbputv(comex_giov_t *darr, int len, int proc, comex_group_t group,
     if (!darr || len <= 0) return COMEX_FAILURE;
     comex_request_t last = -1;
     for (int i = 0; i < len; ++i) {
-        comex_request_t h = -1;
-        int rc = comex_nbput(darr[i].src[0], darr[i].dst[0], darr[i].bytes, proc, group, &h);
-        if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
-        last = h;
+        void **src = darr[i].src;
+        void **dst = darr[i].dst;
+        int bytes = darr[i].bytes;
+        int limit = darr[i].count;
+        for (int j = 0; j < limit; ++j) {
+            comex_request_t h = -1;
+            int rc = comex_nbput(src[j], dst[j], bytes, proc, group, &h);
+            if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+            last = h;
+        }
     }
     if (nb_handle) *nb_handle = last;
     return COMEX_SUCCESS;
@@ -876,10 +902,16 @@ int comex_nbgetv(comex_giov_t *darr, int len, int proc, comex_group_t group,
     if (!darr || len <= 0) return COMEX_FAILURE;
     comex_request_t last = -1;
     for (int i = 0; i < len; ++i) {
-        comex_request_t h = -1;
-        int rc = comex_nbget(darr[i].src[0], darr[i].dst[0], darr[i].bytes, proc, group, &h);
-        if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
-        last = h;
+        void **src = darr[i].src;
+        void **dst = darr[i].dst;
+        int bytes = darr[i].bytes;
+        int limit = darr[i].count;
+        for (int j = 0; j < limit; ++j) {
+            comex_request_t h = -1;
+            int rc = comex_nbget(src[j], dst[j], bytes, proc, group, &h);
+            if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+            last = h;
+        }
     }
     if (nb_handle) *nb_handle = last;
     return COMEX_SUCCESS;
@@ -927,7 +959,9 @@ int comex_nbacc(int op, void *scale, void *src, void *dst, int bytes,
     if (pe == l_state.pe) {
         /* local target: perform synchronous accumulate now and leave aux NULL
          * so comex_wait will simply release the NB entry. */
+        locks_set_internal(pe);
         _acc(op, bytes, dst, src, aux->scale);
+        locks_clear_internal(pe);
         free(aux->scale);
         free(aux);
         e->aux = NULL;
@@ -940,10 +974,10 @@ int comex_nbacc(int op, void *scale, void *src, void *dst, int bytes,
         aux->tmp = malloc((size_t)bytes);
         if (!aux->tmp) { free(aux->scale); free(aux); comex_nb_release(idx); return COMEX_FAILURE; }
         e->aux = aux;
-    /* blocking get the remote destination into tmp (shmem_getmem blocks
-     * until the data is available locally; an immediate shmem_quiet() is
-     * therefore unnecessary). */
-    shmem_getmem(aux->tmp, dst, bytes, pe);
+        /* blocking get the remote destination into tmp (shmem_getmem blocks
+         * until the data is available locally; an immediate shmem_quiet() is
+         * therefore unnecessary). */
+        shmem_getmem(aux->tmp, dst, bytes, pe);
         /* perform local accumulate into tmp */
         _acc(op, bytes, aux->tmp, src, aux->scale);
         /* issue non-blocking put of updated tmp back to remote destination */
@@ -1017,10 +1051,16 @@ int comex_nbaccv(int op, void *scale, comex_giov_t *darr, int len,
                  int proc, comex_group_t group, comex_request_t* nb_handle) {
     comex_request_t last = -1;
     for (int i = 0; i < len; ++i) {
-        comex_request_t h = -1;
-        int rc = comex_nbacc(op, scale, darr[i].src[0], darr[i].dst[0], darr[i].bytes, proc, group, &h);
-        if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
-        last = h;
+        void **src = darr[i].src;
+        void **dst = darr[i].dst;
+        int bytes = darr[i].bytes;
+        int limit = darr[i].count;
+        for (int j = 0; j < limit; ++j) {
+            comex_request_t h = -1;
+            int rc = comex_nbacc(op, scale, src[j], dst[j], bytes, proc, group, &h);
+            if (rc != COMEX_SUCCESS) return COMEX_FAILURE;
+            last = h;
+        }
     }
     if (nb_handle) *nb_handle = last;
     return COMEX_SUCCESS;
@@ -1032,7 +1072,29 @@ int comex_malloc_mem_dev(void **ptr_arr, size_t bytes, comex_group_t group, cons
 }
 
 int comex_rmw(int op, void *ploc, void *prem, int extra, int proc, comex_group_t group) {
-    (void)op; (void)ploc; (void)prem; (void)extra; (void)proc; (void)group;
+    int world_proc;
+    if (comex_group_translate_world(group, proc, &world_proc) != COMEX_SUCCESS) {
+        comex_error("comex_rmw: group translation failed", -1);
+        return COMEX_FAILURE;
+    }
+
+    switch (op) {
+        case COMEX_FETCH_AND_ADD:
+            *(int*)ploc = shmem_int_fadd((int*)prem, extra, world_proc);
+            break;
+        case COMEX_FETCH_AND_ADD_LONG:
+            *(long*)ploc = shmem_long_fadd((long*)prem, (long)extra, world_proc);
+            break;
+        case COMEX_SWAP:
+            *(int*)ploc = shmem_int_swap((int*)prem, *(int*)ploc, world_proc);
+            break;
+        case COMEX_SWAP_LONG:
+            *(long*)ploc = shmem_long_swap((long*)prem, *(long*)ploc, world_proc);
+            break;
+        default:
+            comex_error("comex_rmw: unknown op", op);
+            return COMEX_FAILURE;
+    }
     return COMEX_SUCCESS;
 }
 

@@ -836,7 +836,6 @@ int local_sync_begin,local_sync_end;
                   da = (double*)ptr_a;
                   db = (double*)ptr_b;
                   dc = (double*)ptr_c;
-                  printf("p[%d] (add) adding elements\n",pnga_nodeid());
                   for(i=0; i<elems; i++)
                       dc[i] = *(double*)alpha *da[i] +
                               *(double*)beta * db[i];
