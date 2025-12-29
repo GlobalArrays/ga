@@ -500,6 +500,14 @@ install(TARGETS ga
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
+if(ENABLE_CXX)
+  install(TARGETS ga++
+      EXPORT globalarrays-targets
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  )
+endif()
+
 #Export the targets to a script
 install(EXPORT globalarrays-targets
     FILE

@@ -77,12 +77,7 @@ set (_gapp_inc_dirs ${CMAKE_CURRENT_BINARY_DIR}
 
 target_include_directories(ga++ BEFORE PRIVATE ${_gapp_inc_dirs})
 
-target_link_libraries(ga++)
-
-install (TARGETS
-  ga++
-  DESTINATION lib
-)
+target_link_libraries(ga++ PUBLIC ga)
 
 function(gapp_add_parallel_test test_name test_srcs)
   get_filename_component(_test_name_only "${test_name}" NAME)
