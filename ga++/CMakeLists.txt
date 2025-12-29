@@ -77,7 +77,7 @@ set (_gapp_inc_dirs ${CMAKE_CURRENT_BINARY_DIR}
 
 target_include_directories(ga++ BEFORE PRIVATE ${_gapp_inc_dirs})
 
-target_link_libraries(ga++)
+target_link_libraries(ga++ PUBLIC ga)
 
 install (TARGETS
   ga++
