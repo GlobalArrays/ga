@@ -178,6 +178,7 @@ int comex_put(void *src, void *dst, int bytes, int proc, comex_group_t group) {
     shmem_putmem(dst, src, bytes, pe);
     /* ensure local completion before returning (match COMEX semantics) */
     shmem_quiet();
+    shmem_fence();
     COMEX_DBG("comex_put: completed");
     return COMEX_SUCCESS;
 }
@@ -273,6 +274,7 @@ int comex_wait(comex_request_t *nb_handle) {
         /* entry already inactive; simply release this handle if needed */
         comex_nb_release(idx);
     }
+    shmem_fence();
     return COMEX_SUCCESS;
 }
 
@@ -342,6 +344,7 @@ int comex_wait_all(comex_group_t group) {
         /* release the NB entry */
         comex_nb_release(i);
     }
+    shmem_fence();
 
     return COMEX_SUCCESS;
 }
@@ -440,12 +443,14 @@ int comex_free(void *ptr, comex_group_t group) {
 int comex_fence_all(comex_group_t group) {
     (void)group;
     shmem_quiet();
+    shmem_fence();
     return COMEX_SUCCESS;
 }
 
 int comex_fence_proc(int proc, comex_group_t group) {
     (void)group; (void)proc;
     shmem_quiet();
+    shmem_fence();
     return COMEX_SUCCESS;
 }
 
@@ -517,7 +522,7 @@ int comex_acc(int op, void *scale, void *src, void *dst, int bytes,
 
     /* remote-get the destination into tmp */
     shmem_getmem(tmp, dst, bytes, pe);
-    shmem_quiet();
+    //shmem_quiet();
 
     /* perform local accumulate: tmp += scale * src */
     _acc(op, bytes, tmp, src, scale);
