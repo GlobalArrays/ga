@@ -3127,6 +3127,7 @@ c---------------------------------------------------------------------
       real alpha, beta, x, sum1, sum2
       logical found
       integer lprocs, inode, iproc, lproc
+      real one 
 #ifdef USE_RESTRICTED
       integer num_rstrctd
       integer rstrctd_list(maxproc/2)
@@ -3466,7 +3467,8 @@ c     overlapping accumulate
       endif
 c
       call ga_zero(g_b)
-      call ga_acc(g_b, n/2, n/2, n/2, n/2, 1.0, 1, 1.0)
+      one = 1.0
+      call ga_acc(g_b, n/2, n/2, n/2, n/2, one, 1, one)
       call ga_sync()
       if (me.eq.0) then
          call ga_get(g_b, n/2, n/2, n/2, n/2, b(1,1), 1)
@@ -3477,7 +3479,7 @@ c
 #endif
          if(x.gt. 1e-10)then
 #ifndef MIRROR
-            write(6,*)'val=',b(1,1),' expected=',nproc, x
+            write(6,*)'val=',b(1,1),' expected=',nproc, x,' on proc ',me
 #else
             write(6,*)'val=',b(1,1),' expected=',lprocs, x
 #endif
@@ -3731,6 +3733,11 @@ c          generate unique i,j pairs
            iv(loop) = i
            jv(loop) = j
            v(loop) = 1.0 *(i+j)
+c      if (me.eq.0) write(6,'(a,2i4,f12.2)') 'Input: ',iv(loop),
+c     +     jv(loop),v(loop)
+c      if (i.eq.38.and.j.eq.2) then
+c        write(6,'(a,3i4,f12.2)') 'Found: ',me,i,j,v(loop)
+c      endif
 #ifndef MIRROR
            b(i,j) = b(i,j) + nproc*x*v(loop) ! update local ref. array
 #else

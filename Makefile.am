@@ -523,6 +523,7 @@ check_PROGRAMS += global/testing/testeig
 check_PROGRAMS += global/testing/testmatmult
 check_PROGRAMS += global/testing/testsolve
 check_PROGRAMS += global/testing/test
+check_PROGRAMS += global/testing/accTest
 check_PROGRAMS += global/testing/overlay
 check_PROGRAMS += global/testing/test_mirrored
 check_PROGRAMS += global/testing/types_test
@@ -721,6 +722,7 @@ GLOBAL_PARALLEL_TESTS += global/testing/testeig$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testmatmult$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/testsolve$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/test$(EXEEXT)
+GLOBAL_PARALLEL_TESTS += global/testing/accTest$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/overlay$(EXEEXT)
 if HAVE_SCALAPACK
 GLOBAL_PARALLEL_TESTS += global/testing/testspd$(EXEEXT)
@@ -967,6 +969,7 @@ global_testing_sprs_testf_SOURCES          = global/testing/sprs_testf.F $(gtsrc
 global_testing_stride_SOURCES              = global/testing/stride.F $(gtsrcf)
 global_testing_testabstract_ops_SOURCES    = global/testing/testabstract_ops.c
 global_testing_test_SOURCES                = global/testing/test.F $(gtsrcf)
+global_testing_accTest_SOURCES             = global/testing/accTest.F $(gtsrcf)
 global_testing_test_mirrored_SOURCES       = global/testing/test.F $(gtsrcf)
 global_testing_overlay_SOURCES             = global/testing/overlay.F $(gtsrcf)
 global_testing_testc_SOURCES               = global/testing/testc.c
@@ -1134,7 +1137,8 @@ global/examples/boltzmann/printdat.F      \
 global/examples/boltzmann/properties.F    \
 global/examples/boltzmann/setup.F         \
 global/examples/boltzmann/timestep.F      \
-global/examples/boltzmann/vorticity.F
+global/examples/boltzmann/vorticity.F     \
+global/testing/ffflush.F
 global_examples_boltzmann_boltz_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/global/examples/boltzmann
 
 global_examples_conjugate_gradient_ga_cg_SOURCES = \

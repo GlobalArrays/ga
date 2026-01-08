@@ -1,8 +1,0 @@
-tcgmsg/tcgmsg-mpi/sizeof.lo: tcgmsg/tcgmsg-mpi/sizeof.c \
- /usr/include/stdc-predef.h config.h tcgmsg/tcgmsg-mpi/sndrcv.h \
- tcgmsg/tcgmsg-mpi/msgtypesc.h tcgmsg/tcgmsg-mpi/srftoc.h
-/usr/include/stdc-predef.h:
-config.h:
-tcgmsg/tcgmsg-mpi/sndrcv.h:
-tcgmsg/tcgmsg-mpi/msgtypesc.h:
-tcgmsg/tcgmsg-mpi/srftoc.h:
