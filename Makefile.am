@@ -88,6 +88,12 @@ endif
 
 LDADD += libga.la
 
+# When using OpenSHMEM, add MPI libraries explicitly for test programs
+# that call MPI functions (like ffflush.F with mpi_finalize)
+if WITH_OSHMEM
+LDADD += -lmpi_mpifh -lmpi
+endif
+
 # Certain trickery when turning Fortran support on or off.
 if ENABLE_F77
 MAYBE_FLIBS = $(FLIBS)

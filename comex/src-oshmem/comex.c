@@ -63,6 +63,9 @@ int comex_init() {
 #endif
     l_state.pe = shmem_my_pe();
     l_state.n_pes = shmem_n_pes();
+    if (l_state.pe==0) {
+      printf("\nUsing Open SHMEM runtime\n\n");
+    }
 
     /* allocate symmetric array for pointer exchange (one pointer per PE)
      * allocate on symmetric heap so address is same on all PEs

@@ -10,7 +10,7 @@ AC_INIT([Communication Runtime for Extreme Scale (comex)],
         [comex],
         [https://hpc.pnl.gov/globalarrays/])
 AC_CONFIG_AUX_DIR([build-aux])
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src-common/comex.h])
 
@@ -49,10 +49,8 @@ COMEX_ENABLE_PROFILING_ARMCI
 AC_MSG_NOTICE
 AC_MSG_NOTICE([C compiler])
 AC_MSG_NOTICE
-
 COMEX_PROG_MPICC
 AC_USE_SYSTEM_EXTENSIONS
-
 AS_IF([test x$with_mpi_wrappers = xyes],
     [COMEX_MPI_UNWRAP],
     [COMEX_ARG_PARSE([with_mpi], [MPI_LIBS], [MPI_LDFLAGS], [MPI_CPPFLAGS])])
@@ -62,56 +60,21 @@ AS_CASE([$enable_mpi_tests],
 
 AM_CONDITIONAL([CROSS_COMPILING], [test "x$cross_compiling" = xyes])
 
-# Establish the underlying network infrastructure (MPI, OFA, etc)
+# Establish the underlying network infrastructure (MPI, OFA, OpenSHMEM, etc)
 COMEX_NETWORK_SETUP
 
-# Optionally build with OpenSHMEM runtime
-AC_ARG_WITH([oshmem],
-        [AS_HELP_STRING([--with-oshmem],[Build COMEX with OpenSHMEM runtime (default=no)])],
-        [with_oshmem=$withval],
-        [with_oshmem=no])
-
-# If the user requested OpenSHMEM, check for headers and libraries and
-# define a compile-time macro so source files can switch behavior.
+# If OpenSHMEM was selected, switch to using the OpenSHMEM compiler wrappers
 AS_IF([test "x$with_oshmem" = xyes],
-    [AC_MSG_NOTICE([Configuring with OpenSHMEM backend])
-     # Check for common SHMEM headers
-     COMEX_CHECK_HEADERS([shmem.h openshmem.h])
-
-     # Temporarily add MPI libs to search path when probing for SHMEM symbols
-     comex_save_LIBS="$LIBS"; LIBS="$LIBS $MPI_LIBS"
-     comex_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $MPI_LDFLAGS"
-     comex_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $MPI_CPPFLAGS"
-
-     # Try common linker names for OpenSHMEM implementations
-     have_shmem=no
-     AC_CHECK_LIB([oshmem], [shmem_init], [have_shmem=yes; SHMEM_LIB=oshmem], [true])
-     if test "x$have_shmem" != xyes; then
-         AC_CHECK_LIB([shmem], [shmem_init], [have_shmem=yes; SHMEM_LIB=shmem], [true])
-     fi
-
-     # restore originals
-     LIBS="$comex_save_LIBS"
-     LDFLAGS="$comex_save_LDFLAGS"
-     CPPFLAGS="$comex_save_CPPFLAGS"
-
-     AS_IF([test "x$have_shmem" = xyes],
-         [AC_MSG_NOTICE([OpenSHMEM support enabled (library: $SHMEM_LIB)])
-            AC_DEFINE([_OPENSHMEM], [1], [Define when building with OpenSHMEM])
-            COMEX_WITH_OSHMEM=yes],
-         [AC_MSG_ERROR([Requested OpenSHMEM support but no suitable shmem/oshmem library was found. Try passing --with-oshmem=<path>])
-            COMEX_WITH_OSHMEM=no])
-    ],
-    [COMEX_WITH_OSHMEM=no])
-
-AM_CONDITIONAL([COMEX_WITH_OSHMEM],[test "x$COMEX_WITH_OSHMEM" = xyes])
-AC_SUBST([COMEX_WITH_OSHMEM])
+    [AC_MSG_NOTICE([Switching to OpenSHMEM compiler wrappers])
+     AS_IF([test "x$OSHCC" != x], [CC="$OSHCC"])
+     AS_IF([test "x$OSHCXX" != x], [CXX="$OSHCXX"])
+     AS_IF([test "x$OSHFC" != x], [FC="$OSHFC"; F77="$OSHFC"])
+     AC_MSG_NOTICE([Using CC=$CC, CXX=$CXX, FC=$FC])])
 
 # Checks for C header files.
 AC_HEADER_ASSERT
 AC_HEADER_DIRENT
 AC_HEADER_STDBOOL
-AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 COMEX_CHECK_HEADERS([assert.h])
 COMEX_CHECK_HEADERS([errno.h])

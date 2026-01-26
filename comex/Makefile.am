@@ -35,10 +35,15 @@ AM_LDFLAGS =
 LDADD =
 
 lib_LTLIBRARIES += libcomex.la
-# later Makefile fragments append to this
-libcomex_la_SOURCES =
+if COMEX_NETWORK_OSHMEM
+libcomex_la_SOURCES = src-oshmem/comex.c src-oshmem/groups.c src-oshmem/locks.c src-oshmem/nb.c
+else
+libcomex_la_SOURCES = src-mpi/comex.c src-mpi/groups.c
+endif
 libcomex_la_LIBADD =
+if !COMEX_NETWORK_OSHMEM
 libcomex_la_LIBADD += $(MPI_LIBS)
+endif
 libcomex_la_LIBADD += $(COMEX_NETWORK_LIBS)
 libcomex_la_LIBADD += $(BLAS_LIBS)
 libcomex_la_LIBADD += $(LIBS)
@@ -47,12 +52,16 @@ libcomex_la_LIBADD += $(LIBADD_DLOPEN)
 endif
 include_HEADERS += $(top_srcdir)/src-common/comex.h
 
+if !COMEX_NETWORK_OSHMEM
 AM_CPPFLAGS += $(MPI_CPPFLAGS)
+endif
 AM_CPPFLAGS += $(COMEX_NETWORK_CPPFLAGS)
 AM_CPPFLAGS += $(BLAS_CPPFLAGS)
 AM_CPPFLAGS += -I$(top_srcdir)/src-common
 
+if !COMEX_NETWORK_OSHMEM
 AM_LDFLAGS += $(MPI_LDFLAGS)
+endif
 AM_LDFLAGS += $(COMEX_NETWORK_LDFLAGS)
 AM_LDFLAGS += $(BLAS_LDFLAGS)
 
@@ -62,7 +71,9 @@ LDADD += libcomex.la
 noinst_LTLIBRARIES += libcomexi.la
 libcomexi_la_SOURCES = $(libcomex_la_SOURCES)
 libcomexi_la_LIBADD =
+if !COMEX_NETWORK_OSHMEM
 libcomexi_la_LIBADD += $(MPI_LIBS)
+endif
 libcomexi_la_LIBADD += $(COMEX_NETWORK_LIBS)
 libcomexi_la_LIBADD += $(BLAS_LIBS)
 libcomexi_la_LIBADD += $(LIBS)
@@ -145,9 +156,8 @@ endif
 
 ##############################################################################
 # src-oshmem (OpenSHMEM runtime)
-# Included only when configure is invoked with --with-oshmem
 ##############################################################################
-if COMEX_WITH_OSHMEM
+if COMEX_NETWORK_OSHMEM
 include $(top_srcdir)/src-oshmem/Makefile.inc
 endif
 
@@ -213,6 +223,8 @@ testing_perf_contig_SOURCES  = testing/perf_contig.c
 testing_perf_strided_SOURCES = testing/perf_strided.c
 testing_shift_SOURCES        = testing/shift.c
 testing_test_SOURCES         = testing/test.c
+
+
 
 ##############################################################################
 # the end
