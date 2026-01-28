@@ -213,7 +213,7 @@ void test_int_array(int on_device, int local_buf_on_device)
 
   /* create a global array and initialize it to zero */
   tbeg = GA_Wtime();
-  printf("p[%d] Got to 1\n",wrank);
+//  printf("p[%d] Got to 1\n",wrank);
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a, ndim, dims, C_INT);
   if (!on_device) {
@@ -223,7 +223,7 @@ void test_int_array(int on_device, int local_buf_on_device)
   NGA_Allocate(g_a);
   t_create += (GA_Wtime()-tbeg);
 
-  printf("p[%d] Got to 2\n",wrank);
+//  printf("p[%d] Got to 2\n",wrank);
   /* allocate a local buffer and initialize it with values*/
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   if (local_buf_on_device) {
@@ -237,10 +237,10 @@ void test_int_array(int on_device, int local_buf_on_device)
 
   for (n=0; n<NLOOP; n++) {
     tbeg = GA_Wtime();
-  printf("p[%d] Got to 3\n",wrank);
+//  printf("p[%d] Got to 3\n",wrank);
     GA_Zero(g_a);
     GA_Fill(g_a,&zero);
-  printf("p[%d] Got to 4\n",wrank);
+//  printf("p[%d] Got to 4\n",wrank);
     ld = (hi[1]-lo[1]+1);
     if (local_buf_on_device) {
       if (lo[0]<=hi[0] && lo[1]<=hi[1]) {
@@ -270,9 +270,9 @@ void test_int_array(int on_device, int local_buf_on_device)
     t_chk += (GA_Wtime()-tbeg);
     /* copy data to global array */
     tbeg = GA_Wtime();
-  printf("p[%d] Got to 5\n",wrank);
+//  printf("p[%d] Got to 5\n",wrank);
     NGA_Put(g_a, lo, hi, buf, &ld);
-  printf("p[%d] Got to 6\n",wrank);
+//  printf("p[%d] Got to 6\n",wrank);
     tput += (GA_Wtime()-tbeg);
     t_put += (GA_Wtime()-tbeg);
     put_cnt += nsize;
@@ -281,7 +281,7 @@ void test_int_array(int on_device, int local_buf_on_device)
     t_sync += (GA_Wtime()-tbeg);
     tbeg = GA_Wtime();
     NGA_Distribution(g_a,me,tlo,thi);
-  printf("p[%d] Got to 7\n",wrank);
+//  printf("p[%d] Got to 7\n",wrank);
 #if 1
     if (me == 0 && n == 0) printf("Completed NGA_Distribution\n");
     if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
@@ -321,7 +321,7 @@ void test_int_array(int on_device, int local_buf_on_device)
     GA_Sync();
     t_sync += (GA_Wtime()-tbeg);
 #endif
-  printf("p[%d] Got to 8\n",wrank);
+//  printf("p[%d] Got to 8\n",wrank);
 
     /* zero out local buffer */
     if (local_buf_on_device) {
@@ -1842,7 +1842,7 @@ int main(int argc, char **argv) {
     printf("\n  1D arrays are of size %d\n",BLOCK1*nprocs);
     printf("\n  Number of loops in each test %d\n\n",NLOOP);
   }
-#if 0
+#if 1
   if (rank == 0) printf("  Testing integer array on device, local buffer on host\n");
   test_int_array(1,0);
   print_bw();
