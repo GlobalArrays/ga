@@ -61,14 +61,6 @@ jobs:
             config_opts: --enable-i4 --without-blas --enable-cxx --disable-f77
             f77: gfortran
             cc: gcc
-          - os: macos-13
-            experimental: true
-            mpi_impl: mpich
-            armci_network: mpi-pr
-            f77: ifort
-            cc: icc
-            config_opts: LIBS=-lifcore
-            oneapi: /Users/runner/apps/oneapi
           - os: ubuntu-22.04
             experimental: true 
             mpi_impl: mpich
@@ -83,14 +75,14 @@ jobs:
             config_opts: "--disable-f77 --enable-cxx"
             f77: gfortran-10
             cc: gcc-10
-          - os: macos-13
+          - os: macos-15
             experimental: true 
             mpi_impl: mpich
             armci_network: mpi-ts
             config_opts: "--disable-static --enable-shared"
             f77: gfortran-13
             cc: clang
-          - os: macos-13
+          - os: macos-15
             experimental: true
             use_cmake: "Y"
             mpi_impl: mpich
@@ -181,6 +173,15 @@ jobs:
           macos*)
           brew update
           brew install coreutils automake || true
+          if [[ "$F77" =~ gfortran-[0-9][0-9] ]] || [[ "$CC" =~ gcc-[0-9][0-9] ]]; then
+          if [[ "$CC" =~ gcc-[0-9][0-9] ]]; then
+          version=$(echo "$CC" | cut -d - -f 2 )
+          fi
+          if [[ "$F77" =~ gfortran-[0-9][0-9] ]]; then
+          version=$(echo "$F77" | cut -d - -f 2 )
+          fi
+          brew reinstall gcc@${version}
+          fi
           ;;
           esac
           if [[ "$F77" == "ifort" ]] || [[ "$CC" == "icc" ]] || [[ "$CC" == "icx" ]]; then ./travis/install-intel.sh; source ${{ matrix.oneapi }}/setvars.sh --force;  fi

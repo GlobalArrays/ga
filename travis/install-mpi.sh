@@ -21,11 +21,18 @@ if [[ -z "${F77}" ]]; then
     F77="${FC}"
 fi
 
-if [ "$F77" == "gfortran" ] && [ "$os" == "Darwin" ]; then
-    if [[ ! -x "$(command -v gfortran)" ]]; then
-	echo gfortran undefined
-	echo symbolic link gfortran-12
-	ln -sf /usr/local/bin/gfortran-12 /usr/local/bin/gfortran
+if [ "$os" == "Darwin" ]; then
+    if [[ ! -x "$(command -v ${FC})" ]]; then
+	if [[ "${FC}" == *"-"* ]]; then
+	    gccver=$(echo ${FC} | cut -d - -f 2)
+	    brew install gcc@"${gccver}"
+	elif [[ "${FC}" == "gfortran" ]]; then
+	    brew reinstall gcc
+	else
+	    echo "cannot install ${FC}"
+	    exit 10
+	fi
+	${FC} --version
     fi
 fi
 
