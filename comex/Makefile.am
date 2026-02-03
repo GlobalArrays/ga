@@ -38,7 +38,7 @@ lib_LTLIBRARIES += libcomex.la
 if COMEX_NETWORK_OSHMEM
 libcomex_la_SOURCES = src-oshmem/comex.c src-oshmem/groups.c src-oshmem/locks.c src-oshmem/nb.c
 else
-libcomex_la_SOURCES = src-mpi/comex.c src-mpi/groups.c
+libcomex_la_SOURCES =
 endif
 libcomex_la_LIBADD =
 if !COMEX_NETWORK_OSHMEM
