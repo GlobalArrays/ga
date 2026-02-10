@@ -172,7 +172,6 @@ void test_int_array(int on_device, int local_buf_on_device)
   me = GA_Nodeid();
   lprocs = GA_Nnodes();
   factor(lprocs,&lpdx,&lpdy);
-  printf("p[%d] lprocs: %d lpdx: %d lpdy: %d\n",wrank,lprocs,lpdx,lpdy);
   tput = 0.0;
   tget = 0.0;
   tacc = 0.0;
@@ -207,13 +206,12 @@ void test_int_array(int on_device, int local_buf_on_device)
   } else {
     hi[1] = DIMSIZE-1;
   }
-  printf("p[%d] lo[0]: %d hi[0]: %d lo[1]: %d hi[i]: %d\n",
-      wrank,lo[0],hi[0],lo[1],hi[1]);
+  //printf("p[%d] lo[0]: %d hi[0]: %d lo[1]: %d hi[i]: %d\n",
+  //    wrank,lo[0],hi[0],lo[1],hi[1]);
   nelem = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
 
   /* create a global array and initialize it to zero */
   tbeg = GA_Wtime();
-//  printf("p[%d] Got to 1\n",wrank);
   g_a = NGA_Create_handle();
   NGA_Set_data(g_a, ndim, dims, C_INT);
   if (!on_device) {
@@ -223,7 +221,6 @@ void test_int_array(int on_device, int local_buf_on_device)
   NGA_Allocate(g_a);
   t_create += (GA_Wtime()-tbeg);
 
-//  printf("p[%d] Got to 2\n",wrank);
   /* allocate a local buffer and initialize it with values*/
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   if (local_buf_on_device) {
@@ -237,10 +234,8 @@ void test_int_array(int on_device, int local_buf_on_device)
 
   for (n=0; n<NLOOP; n++) {
     tbeg = GA_Wtime();
-//  printf("p[%d] Got to 3\n",wrank);
     GA_Zero(g_a);
     GA_Fill(g_a,&zero);
-//  printf("p[%d] Got to 4\n",wrank);
     ld = (hi[1]-lo[1]+1);
     if (local_buf_on_device) {
       if (lo[0]<=hi[0] && lo[1]<=hi[1]) {
@@ -270,9 +265,7 @@ void test_int_array(int on_device, int local_buf_on_device)
     t_chk += (GA_Wtime()-tbeg);
     /* copy data to global array */
     tbeg = GA_Wtime();
-//  printf("p[%d] Got to 5\n",wrank);
     NGA_Put(g_a, lo, hi, buf, &ld);
-//  printf("p[%d] Got to 6\n",wrank);
     tput += (GA_Wtime()-tbeg);
     t_put += (GA_Wtime()-tbeg);
     put_cnt += nsize;
@@ -281,7 +274,6 @@ void test_int_array(int on_device, int local_buf_on_device)
     t_sync += (GA_Wtime()-tbeg);
     tbeg = GA_Wtime();
     NGA_Distribution(g_a,me,tlo,thi);
-//  printf("p[%d] Got to 7\n",wrank);
 #if 1
     if (me == 0 && n == 0) printf("Completed NGA_Distribution\n");
     if (tlo[0]<=thi[0] && tlo[1]<=thi[1]) {
@@ -321,7 +313,6 @@ void test_int_array(int on_device, int local_buf_on_device)
     GA_Sync();
     t_sync += (GA_Wtime()-tbeg);
 #endif
-//  printf("p[%d] Got to 8\n",wrank);
 
     /* zero out local buffer */
     if (local_buf_on_device) {
@@ -1953,9 +1944,11 @@ int main(int argc, char **argv) {
     int grp_size = nprocs/2;
     int grp, world;
     int *llist, *devIDs;
-    int ndev, icnt;
+    int icnt;
     int me;
+    fflush(stdout);
     if (rank == 0) printf("  Test  operations on subgroup\n");
+    fflush(stdout);
     free(list);
     list = (int*)malloc(grp_size*sizeof(int));
     for (i=0; i<grp_size; i++) {
@@ -1965,19 +1958,14 @@ int main(int argc, char **argv) {
         list[i] = i + grp_size;
       }
     }
+    GA_Sync();
     grp = GA_Pgroup_create(list, grp_size);
     world = GA_Pgroup_get_default();
     GA_Pgroup_set_default(grp);
     me = GA_Nodeid();
-    printf("p[%d] rank: %d me: %d\n",wrank,rank,me);
-    printf("p[%d] world: %d grp_size: %d\n",wrank,world,grp_size);
     llist = (int*)malloc(grp_size*sizeof(int));
     devIDs = (int*)malloc(grp_size*sizeof(int));
     GA_Device_host_list(llist, devIDs, &ndev, grp);
-    printf("p[%d] ndev: %d\n",wrank,ndev);
-    for (i=0; i<ndev; i++) {
-      printf("p[%d] list[%d]: %d devIDs[%d]: %d\n",wrank,i,llist[i],i,devIDs[i]);
-    }
     free(llist);
     free(devIDs);
     if (ndev == grp_size) {
@@ -1987,26 +1975,30 @@ int main(int argc, char **argv) {
 #if 1
       if (rank < grp_size) {
         if (me == 0) printf("  Testing operations on group 1\n");
-#if 0
         if (me == 0) printf("  Group 1: Testing integer array on"
             " device, local buffer on host\n");
+        fflush(stdout);
         test_int_array(1,0);
         print_bw();
 
+#if 1
         if (me == 0) printf("  Group 1: Testing integer array on"
             " device, local buffer on device\n");
+        fflush(stdout);
         test_int_array(1,local_buf_on_device);
         print_bw();
 
 #endif
         if (me == 0) printf("  Group 1: Testing integer array on"
             " host, local buffer on host\n");
+        fflush(stdout);
         test_int_array(0,0);
         print_bw();
-#if 0
+#if 1
 
         if (me == 0) printf("  Group 1: Testing integer array on"
             " host, local buffer on device\n");
+        fflush(stdout);
         test_int_array(0,local_buf_on_device);
         print_bw();
 #endif
@@ -2017,26 +2009,30 @@ int main(int argc, char **argv) {
 #if 1
       if (rank >= grp_size) {
         if (me == 0) printf("  Testing operations on group 2\n");
-#if 0
+#if 1
         if (me == 0) printf("  Group 2: Testing integer array on"
             " device, local buffer on host\n");
+        fflush(stdout);
         test_int_array(1,0);
         print_bw();
 
         if (me == 0) printf("  Group 2: Testing integer array on"
             " device, local buffer on device\n");
+        fflush(stdout);
         test_int_array(1,local_buf_on_device);
         print_bw();
 
 #endif
         if (me == 0) printf("  Group 2: Testing integer array on"
             " host, local buffer on host\n");
+        fflush(stdout);
         test_int_array(0,0);
         print_bw();
 
-#if 0
+#if 1
         if (me == 0) printf("  Group 2: Testing integer array on"
             " host, local buffer on device\n");
+        fflush(stdout);
         test_int_array(0,local_buf_on_device);
         print_bw();
 #endif
@@ -2046,11 +2042,13 @@ int main(int argc, char **argv) {
       printf("p[%d] Number of processors in group does not match"
           " number of devices. Ndev: %d Grp_size: %d\n",rank,ndev,grp_size);
     }
+    fflush(stdout);
     GA_Pgroup_set_default(world);
-    free(list);
   }
 #endif
 
+  fflush(stdout);
+  GA_Sync();
 
   t_tot = GA_Wtime()-tbeg;
   /* Print out timing stats */

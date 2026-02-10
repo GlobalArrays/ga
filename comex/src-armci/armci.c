@@ -325,6 +325,14 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
     return comex_free(ptr, *group);
 }
 
+int ARMCI_Free_group_memdev(void *ptr, ARMCI_Group *group)
+{
+#ifdef ENABLE_DEVICE
+    return comex_free_dev(ptr, *group);
+#else
+    return COMEX_FAILURE;
+#endif
+}
 
 int PARMCI_Free_local(void *ptr)
 {

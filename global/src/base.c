@@ -3894,6 +3894,16 @@ logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
       status = !gai_get_devmem(array_name, GA[ga_handle].ptr,mem_size,
           (int)GA[ga_handle].type, &GA[ga_handle].id,
           (int)grp_id,GA[ga_handle].mem_dev_set,GA[ga_handle].mem_dev);
+#ifdef ENABLE_DEVICE
+    } else if (GA[ga_handle].dev_set) {
+      if (grp_id > 0) {
+        ARMCI_Malloc_dev((void**)GA[ga_handle].ptr, mem_size, &PGRP_LIST[grp_id].group);
+      } else {
+        int zero = 0;
+        ARMCI_Malloc_dev((void**)GA[ga_handle].ptr, mem_size, &zero);
+      }
+      GA[ga_handle].id = 0;
+#endif
     } else {
       status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,
           (int)GA[ga_handle].type, &GA[ga_handle].id,
@@ -4099,8 +4109,13 @@ int local_sync_begin,local_sync_end;
             ARMCI_Free_group(GA[ga_handle].ptr[grp_me] - GA[ga_handle].id,
                 &PGRP_LIST[grp_id].group);
           } else {
-            ARMCI_Free_group(GA[ga_handle].ptr[grp_me],
-                &PGRP_LIST[grp_id].group);
+            if (GA[ga_handle].dev_set) {
+              ARMCI_Free_group_memdev(GA[ga_handle].ptr[grp_me],
+                  &PGRP_LIST[grp_id].group);
+            } else {
+              ARMCI_Free_group(GA[ga_handle].ptr[grp_me],
+                  &PGRP_LIST[grp_id].group);
+            }
           }
         }
         else

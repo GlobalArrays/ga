@@ -269,6 +269,7 @@ extern int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,ARMCI_Group *g
 extern int ARMCI_Malloc_group_memdev(void *ptr_arr[], armci_size_t bytes,
     ARMCI_Group *group, const char *device);
 extern int ARMCI_Free_group(void *ptr, ARMCI_Group *group);
+extern int ARMCI_Free_group_memdev(void *ptr, ARMCI_Group *group);
 
 extern int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* nb_handle);
 
