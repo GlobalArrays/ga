@@ -335,4 +335,5 @@ void comex_group_finalize()
         comex_igroup_finalize(previous_group_list_item);
         free(previous_group_list_item);
     }
+    group_list = NULL;
 }
