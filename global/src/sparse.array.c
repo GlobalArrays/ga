@@ -3466,7 +3466,7 @@ Integer pnga_sprs_array_create_from_sparse(Integer s_a,
   if (trans) {
     map[me+1] = SPA[handle].ilo+1;
   } else {
-    map[me+1] = SPA[handle].ilo+1;
+    map[me] = SPA[handle].ilo+1;
   }
   plus[0] = '+';
   plus[1] = '\0';
