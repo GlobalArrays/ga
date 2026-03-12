@@ -79,6 +79,41 @@ void p_GA::setDataDistribution(XGA::data_distribution distr)
 }
 
 /**
+ * Set block sizes and processor grid for ScaLAPACK-style data
+ * distribution. This is only strictly an ScaLAPACK distribution in
+ * 2 dimensions but the generalization to higher dimensions is
+ * straightforward
+ * @param[in] dims dimensions of individual blocks
+ * @param[in] prod_grid dimension of processor grid
+ */
+void p_GA::setBlockLayout(int64_t *dims, int *proc_grid)
+{
+  if (p_active) {
+    p_env->error("(setBlockLayout) array has already been allocated",-1);
+  }
+  int i;
+  for (i=0; i<p_ndim; i++) {
+    if (dims[i] < 0 || dims[i] > p_dims[i]) {
+      p_env->error("(setBlockLayout) illegal block dimension",dims[i]);
+    }
+  }
+  int ntot = 1;
+  for (i=0; i<p_ndim; i++) ntot *= proc_grid[i];
+  if (ntot != p_group->size()) {
+      p_env->error("(setBlockLayout) proc_grid incompatible"
+          " with group size",ntot);
+  }
+  for (i=0; i<p_ndim; i++) {
+    p_proc_grid[i] = proc_grid[i];
+    blk_dims[i] = dims[i];
+    int jsize = p_dims[i]/dims[i];
+    if (p_dims[i]%dims[i] != 0) jsize++;
+    num_blks[i] = jsize;
+  }
+  p_distr = SCALAPACK;
+}
+
+/**
  * @param[in] mapc array containing partitions along each axis
  * @param[in] nblock array containing processor decomposition
  */
@@ -98,7 +133,7 @@ void p_GA::setIrregularDistribution(int64_t *mapc, int *nblock)
   for (i=0; i<p_ndim; i++) ncnt += nblock[i];
   p_mapc = new int64_t[ncnt];
   for (i=0; i<ncnt; i++) p_mapc[i] = mapc[i];
-  for (i=0; i=p_ndim; i++) proc_grid[i] = nblock[i];
+  for (i=0; i=p_ndim; i++) p_proc_grid[i] = nblock[i];
 }
 
 /**
@@ -158,7 +193,7 @@ void p_GA::allocate()
     }
     int64_t maplen = 0;
     for (i=0; i<p_ndim; i++) {
-      nblock[i] = pe[i];
+      p_proc_grid[i] = pe[i];
       maplen += pe[i];
     }
     p_mapc = new int64_t[maplen+1];
@@ -175,14 +210,15 @@ void p_GA::allocate()
     XGA_FIND_PROC_INDICES_M(p_group->rank(),index);
     block_size = 1;
     for (i=0; i<p_ndim; i++) {
-      skip = nblock[i];
+      skip = p_proc_grid[i];
       jtot = 0;
-      for (j=index[i]; j<blk_num[i]; j += skip) {
-        imin = j*blk_size[i] + 1;
-        imax = (j+1)*blk_size[i];
+      for (j=index[i]; j<num_blks[i]; j += skip) {
+        imin = j*blk_dims[i];
+        imax = (j+1)*blk_dims[i]-1;
         if (imax >= p_dims[i]) imax = p_dims[i]-1;
         jtot += (imax-imin+1);
       }
+      blk_size[i] = jtot;
       block_size *= jtot;
     }
   } else if (p_distr == TILED) {
@@ -193,7 +229,7 @@ void p_GA::allocate()
     XGA_FIND_TILE_PROC_INDICES_M(p_group->rank(),index);
     block_size = 1;
     for (i=0; i<p_ndim; i++) {
-      skip = nblock[i];
+      skip = p_proc_grid[i];
       jtot = 0;
       for (j=index[i]; j<blk_num[i]; j += skip) {
         imin = j*blk_size[i] + 1;
@@ -212,7 +248,7 @@ void p_GA::allocate()
     XGA_FIND_TILE_PROC_INDICES_M(p_group->rank(),index);
     block_size = 1;
     for (i=0; i<p_ndim; i++) {
-      skip = nblock[i];
+      skip = p_proc_grid[i];
       jtot = 0;
       for (j=index[i]; j<blk_num[i]; j += skip) {
         imin = p_mapc[offset+j];
@@ -235,7 +271,8 @@ void p_GA::allocate()
   if (p_distr == REGULAR) {
     int64_t hi[MAXDIM];
     for (i=0; i<p_ndim; i++) {
-      scale[i] = static_cast<double>(nblock[i])/static_cast<double>(p_dims[i]);
+      scale[i] = static_cast<double>(p_proc_grid[i])
+        /static_cast<double>(p_dims[i]);
     }
     distribution(p_group->rank(),p_lo,hi);
     int64_t nelem = 1;
@@ -347,14 +384,14 @@ bool p_GA::locateRegion(const int64_t *lo, const int64_t *hi,
      * in ProcT */
     int procT[MAXDIM], procB[MAXDIM], proc_subscript[MAXDIM];
     for (d=0, dpos=0; d<p_ndim; d++) {
-      XGA_FINDBLOCK_M(p_mapc+dpos,nblock[d], scale[d], lo[d], &procT[d]);
-      dpos += nblock[d];
+      XGA_FINDBLOCK_M(p_mapc+dpos,p_proc_grid[d], scale[d], lo[d], &procT[d]);
+      dpos += p_proc_grid[d];
     }
     /* find "processor coordinates" for the upper corner and store them
      * in procB */
     for (d=0, dpos=0; d<p_ndim; d++) {
-      XGA_FINDBLOCK_M(p_mapc+dpos,nblock[d], scale[d], hi[d], &procB[d]);
-      dpos += nblock[d];
+      XGA_FINDBLOCK_M(p_mapc+dpos,p_proc_grid[d], scale[d], hi[d], &procB[d]);
+      dpos += p_proc_grid[d];
     }
 
     *np = 0;
@@ -364,14 +401,14 @@ bool p_GA::locateRegion(const int64_t *lo, const int64_t *hi,
      * processor block containing data and return these in proc_subscript.
      */
     XGA_INITLOOP_M(&nelems, p_ndim, proc_subscript, procT, procB,
-        nblock);
+        p_proc_grid);
     proclist.resize(nelems);
     for (i=0; i<nelems; i++) {
       int64_t _lo[MAXDIM], _hi[MAXDIM];
       int _offset, proc;
       /* convert i to owner processor id using the current values in
          proc_subscript */
-      XGA_COMPUTEINDEX_M(&proc, p_ndim, proc_subscript, nblock);
+      XGA_COMPUTEINDEX_M(&proc, p_ndim, proc_subscript, p_proc_grid);
       /* get range of global array indices that are owned by owner */
       XGA_OWNS_M(proc, _lo, _hi);
 
@@ -388,7 +425,7 @@ bool p_GA::locateRegion(const int64_t *lo, const int64_t *hi,
       proclist[i] = proc;
       /* Update to proc_subscript so that it corresponds to the next
        * processor in the block of processors containing the patch */
-      XGA_UPDATESUBSCRIPT_M(p_ndim,proc_subscript,procT,procB,nblock);
+      XGA_UPDATESUBSCRIPT_M(p_ndim,proc_subscript,procT,procB,p_proc_grid);
       (*np)++;
     }
   } else {
@@ -447,12 +484,12 @@ bool p_GA::locate(const int64_t *subscript, int *owner)
     if(subscript[d]< 0 || subscript[d]>=p_dims[d]) return false;
   if (p_distr == REGULAR) {
     for(d = 0, dpos = 0; d< p_ndim; d++){
-      XGA_FINDBLOCK_M(p_mapc + dpos, nblock[d], scale[d],
+      XGA_FINDBLOCK_M(p_mapc + dpos, p_proc_grid[d], scale[d],
           subscript[d], &proc_s[d]);
-      dpos += nblock[d];
+      dpos += p_proc_grid[d];
     }
 
-    XGA_COMPUTEINDEX_M(&proc, p_ndim, proc_s, nblock);
+    XGA_COMPUTEINDEX_M(&proc, p_ndim, proc_s, p_proc_grid);
 
     *owner = proc;
   } else {
@@ -531,8 +568,8 @@ void p_GA::accessBlockGridPtr(int *l_index, void **rptr, int64_t *ld)
     last = p_ndim-1;
 
     for (i=0; i<p_ndim; i++)  {
-      tlo = index[i]*blk_size[i]+1;
-      thi = (index[i]+1)*blk_size[i];
+      tlo = l_index[i]*blk_size[i]+1;
+      thi = (l_index[i]+1)*blk_size[i];
       if (thi >= p_dims[i]) thi = p_dims[i]-1;
       ldims[i] = (thi - tlo + 1);
       if (i<last) ld[i] = ldims[i];
@@ -550,15 +587,15 @@ void p_GA::accessBlockGridPtr(int *l_index, void **rptr, int64_t *ld)
         lld[i] = 0;
         ldidx[i] = 0;
         tlo = p_mapc[offset+l_index[i]];
-        if (l_index[i] < nblock[i]-1) {
+        if (l_index[i] < p_proc_grid[i]-1) {
           thi = p_mapc[offset+l_index[i]+1]-1;
         } else {
           thi = p_dims[i]-1;
         }
         ldims[i] = thi - tlo + 1;
-        for (j = proc_index[i]; j<nblock[i]; j += proc_grid[i]) {
+        for (j = proc_index[i]; j<p_proc_grid[i]; j += p_proc_grid[i]) {
           tlo = p_mapc[offset+j];
-          if (j < nblock[i]-1) {
+          if (j < p_proc_grid[i]-1) {
             thi = p_mapc[offset+j+1]-1;
           } else {
             thi = p_dims[i]-1;
@@ -569,35 +606,43 @@ void p_GA::accessBlockGridPtr(int *l_index, void **rptr, int64_t *ld)
           }
         }
         if (i<last) ld[i] = ldims[i];
-        offset += nblock[i];
+        offset += p_proc_grid[i];
       }
   } else if (p_distr == SCALAPACK) {
     /* find out what processor block is located on */
-    XGA_FIND_PROC_FROM_SL_INDICES_M(inode, index);
+    XGA_FIND_PROC_FROM_SL_INDICES_M(inode, l_index);
 
     /* get proc indices of processor that owns block */
     XGA_FIND_PROC_INDICES_M(inode, proc_index);
     last = p_ndim-1;
 
-    int64_t blk_jinc;
-    for (i=0; i<last; i++)  {
-      blk_dims[i] = blk_size[i]*proc_grid[i];
+    for (i=0; i<p_ndim; i++)  {
       blk_num[i] = p_dims[i]/blk_dims[i];
-      blk_inc[i] = p_dims[i] - blk_num[i]*blk_dims[i];
-      blk_ld[i] = blk_num[i]*blk_size[i];
-      hlf_blk[i] = blk_inc[i]/blk_size[i];
-      ld[i] = blk_ld[i];
-      blk_jinc = p_dims[i]%blk_size[i];
+      blk_inc[i] = p_dims[i]-blk_num[i]*blk_dims[i];
+      blk_size[i] = blk_dims[i]*p_proc_grid[i];
+      blk_ngrd[i] = p_dims[i]/blk_size[i];
+      hlf_blk[i] = (p_dims[i]-blk_ngrd[i]*blk_size[i])/blk_dims[i];
+    }
+    int64_t blk_jinc;
+    for (i=last; i>0; i--)  {
+      ld[i-1] = blk_ngrd[i]*blk_dims[i];
+      /* initialize this so that it works if first block is partial
+       * block */
+      blk_jinc = p_dims[i]%blk_dims[i];
       if (blk_inc[i] > 0) {
+        /* may need to add an extra block or a partial block to stride */
         if (proc_index[i]<hlf_blk[i]) {
-          blk_jinc = blk_size[i];
+          /* add a full block */
+          blk_jinc = blk_dims[i];
         } else if (proc_index[i] == hlf_blk[i]) {
-          blk_jinc = blk_inc[i]%blk_size[i];
+          /* add a partial block */
+          blk_jinc = blk_inc[i]%blk_dims[i];
         } else {
+          /* add nothing */
           blk_jinc = 0;
         }
       }
-      ld[i] += blk_jinc;
+      ld[i-1] += blk_jinc;
     }
   }
 
@@ -613,12 +658,12 @@ void p_GA::accessBlockGridPtr(int *l_index, void **rptr, int64_t *ld)
       lld[i] = 0;
       tlo = 0;
       thi = -1;
-      for (j=proc_index[i]; j<nblock[i]; j += proc_grid[i]) {
+      for (j=proc_index[i]; j<num_blks[i]; j += p_proc_grid[i]) {
         tlo = j*blk_size[i] + 1;
         thi = (j+1)*blk_size[i];
         if (thi > p_dims[i]) thi = p_dims[i]-1;
         lld[i] += (thi - tlo + 1);
-        if (j<index[i]) block_idx[i]++;
+        if (j<l_index[i]) block_idx[i]++;
         block_count[i]++;
       }
     }
@@ -678,9 +723,9 @@ void p_GA::accessBlockGridPtr(int *l_index, void **rptr, int64_t *ld)
     /* Evalauate offset for block */
     offset = 0;
     factor = 1;
-    for (i = 0; i<p_ndim; i++) {
-      offset += ((index[i]-proc_index[i])/proc_grid[i])*blk_size[i]*factor;
-      if (i<p_ndim-1) factor *= ld[i];
+    for (i = p_ndim-1; i>=0; i--) {
+      offset += ((l_index[i]-proc_index[i])/p_proc_grid[i])*blk_dims[i]*factor;
+      if (i>0) factor *= ld[i-1];
     }
   }
 

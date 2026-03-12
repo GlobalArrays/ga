@@ -44,6 +44,16 @@ public:
   void setDataDistribution(XGA::data_distribution distr);
 
   /**
+   * Set block sizes and processor grid for ScaLAPACK-style data
+   * distribution. This is only strictly an ScaLAPACK distribution in
+   * 2 dimensions but the generalization to higher dimensions is
+   * straightforward
+   * @param[in] dims dimensions of individual blocks
+   * @param[in] prod_grid dimension of processor grid
+   */
+  void setBlockLayout(int64_t *dims, int *proc_grid);
+
+  /**
    * @param[in] mapc array containing partitions along each axis
    * @param[in] nblock array containing processor decomposition
    */
@@ -364,12 +374,11 @@ private:
   int     p_ndim;               /* dimension of array */
   int64_t p_dims[MAXDIM];       /* dimensions of array */
   int64_t chunk[MAXDIM];        /* chunking array */
-  int     nblock[MAXDIM];       /* number of blocks per dimension */
   int64_t *p_mapc;              /* block distribution map */
   std::vector<int64_t> map;     /* distribution map for iterator */
   int     nproc;                /* number of processors */
   std::vector<int> proclist;    /* list of procs containing data */
-  int     proc_grid[MAXDIM];    /* processor array */
+  int     p_proc_grid[MAXDIM];  /* processor array */
   double  scale[MAXDIM];        /* nblock/dim (precomputed) */
   int64_t p_size;               /* size of local data, in bytes */
   int64_t p_elemsize;           /* size of data element */
@@ -384,16 +393,20 @@ private:
   int64_t it_lo[MAXDIM];        /* lower corner of block in array */
   int64_t it_hi[MAXDIM];        /* upper corner of block in array */
   int64_t count;                /* counter to keep track of blocks */
-  int64_t offset;               /* offset to start of block in data segment */
-  int     iblock;               /* counter tracking blocks on processor */
+  int64_t p_offset;             /* offset to start of block in data segment */
+  int     p_iblock;             /* counter tracking blocks on processor */
   int64_t lobuf[MAXDIM];        /* lower corner of sub-block */
   int64_t hibuf[MAXDIM];        /* upper corner of sub-block */
-  int64_t blk_num[MAXDIM];      /* number of blocks in each direction */
-  int64_t blk_size[MAXDIM];     /* maximum dimensions of block */
+  int64_t num_blks[MAXDIM];     /* number of blocks in each dimension */
+  int64_t blk_num[MAXDIM];      /* number of whole blocks in each direction */
+  int64_t blk_dims[MAXDIM];     /* maximum dimensions of block */
   int64_t blk_inc[MAXDIM];      /* dimensions of partial blocks */
   int64_t blk_ld[MAXDIM];       /* stride between blocks */
-  int64_t hlf_blk[MAXDIM];      /* ??? */
-  int64_t blk_dims[MAXDIM];     /* dimensions of total data on processor */
+  int64_t hlf_blk[MAXDIM];      /* flag indicating whether or not to add
+                                 * an extra block or partial block to
+                                 * process in this dimension */
+  int64_t blk_size[MAXDIM];     /* blk_dims*p_proc_grid */
+  int64_t blk_ngrd[MAXDIM];     /* number of whole blocks of size blk_size */
   int     proc_index[MAXDIM];   /* location of processor in proc grid */
   int     index[MAXDIM];        /* location of current sub-block */
   int64_t block_total;          /* total number of blocks in array */

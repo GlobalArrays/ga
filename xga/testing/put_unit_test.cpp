@@ -3,8 +3,10 @@
 #include "xga_environment.hpp"
 #include <iostream>
 
+#include "test_utilities.hpp"
 #define DIM  2048
 #define DIM3  128
+#define BLOCKDIM 31
 template <typename idx_type, typename data_type>
 void put_test()
 {
@@ -203,6 +205,7 @@ void put_test()
     printf("\n Single large put test FAILS\n");
   }
   delete [] buf;
+  ga.clear();
 
   if (rank == 0) {
     printf("\n Testing put to three dimensional array\n");
@@ -346,11 +349,137 @@ void put_test()
 
   MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
   if (chk==1 && rank == 0) {
-    printf("\n 3D put test PASSES\n\n");
+    printf("\n 3D put test PASSES\n");
   } else if (chk == 0) {
-    printf("\n 3D put test FAILS\n\n");
+    printf("\n 3D put test FAILS\n");
   }
   delete [] buf;
+  ga3d.clear();
+
+  /* Test lapack data layout */
+  int pdims[3];
+  factor(3, size, pdims);
+  if (rank == 0) {
+    printf("\n Testing put to three dimensional array\n");
+    printf(" with ScaLAPACK data layout and a %d x %d x %d"
+        " proc grid layout\n",pdims[0],pdims[1],pdims[2]);
+  }
+  XGA::GlobalArray<data_type> gala(group, three, dims3d);
+  idx_type block_dims[3];
+  block_dims[0] = BLOCKDIM;
+  block_dims[1] = BLOCKDIM;
+  block_dims[2] = BLOCKDIM;
+  gala.setBlockLayout(block_dims, pdims);
+  gala.allocate();
+  idim = static_cast<idx_type>(static_cast<double>(dims3d[0])
+      /static_cast<double>(pdims[0]));
+  jdim = static_cast<idx_type>(static_cast<double>(dims3d[1])
+      /static_cast<double>(pdims[1]));
+  kdim = static_cast<idx_type>(static_cast<double>(dims3d[2])
+      /static_cast<double>(pdims[2]));
+  buf = new data_type[idim*jdim*kdim];
+  /* find proc grid coordinates of this processor */
+  int ix, iy, iz;
+  n = rank;
+  iz = n%pdims[2];
+  n = (n-iz)/pdims[2];
+  iy = n%pdims[1];
+  ix = (n-iy)/pdims[1];
+  /* calculate bounds of block used to initialize global array */
+  lo3[0] = ix*idim;
+  lo3[1] = iy*jdim;
+  lo3[2] = iz*kdim;
+  if (ix < pdims[0]-1) {
+    hi3[0] = (ix+1)*idim-1;
+  } else {
+    hi3[0] = dims3d[0]-1;
+  }
+  if (iy < pdims[1]-1) {
+    hi3[1] = (iy+1)*jdim-1;
+  } else {
+    hi3[1] = dims3d[1]-1;
+  }
+  if (iz < pdims[2]-1) {
+    hi3[2] = (iz+1)*kdim-1;
+  } else {
+    hi3[2] = dims3d[2]-1;
+  }
+  /* initialize local buffer */
+  for (i=lo3[0]; i<=hi3[0]; i++) {
+    for (j=lo3[1]; j<=hi3[1]; j++) {
+      for (k=lo3[2]; k<=hi3[2]; k++) {
+        buf[k-lo3[2]+(j-lo3[1])*kdim+(i-lo3[0])*kdim*jdim]
+          = static_cast<data_type>(k+j*dims3d[2]+i*dims3d[2]*dims3d[1]);
+      }
+    }
+  }
+  ld3[0] = jdim;
+  ld3[1] = kdim;
+  gala.put(lo3, hi3, buf, ld3);
+  gala.sync();
+  /* check results. Start by finding number of blocks in each direction */
+  int nx, ny, nz;
+  nx = dims3d[0]/block_dims[0];
+  if (nx*block_dims[0] < dims3d[0]) nx++;
+  ny = dims3d[1]/block_dims[1];
+  if (ny*block_dims[1] < dims3d[1]) ny++;
+  nz = dims3d[2]/block_dims[2];
+  if (nz*block_dims[2] < dims3d[2]) nz++;
+  /* loop over all blocks held by this process */
+  int index[3];
+  ok = true;
+  int chkcnt = 0;
+  for (i=ix; i<nx; i+=pdims[0]) {
+    index[0] = i;
+    lo3[0] = i*block_dims[0];
+    hi3[0] = (i+1)*block_dims[0]-1;
+    if (hi3[0] >= dims3d[0]) hi3[0] = dims3d[0]-1;
+    for (j=iy; j<ny; j+=pdims[1]) {
+      index[1] = j;
+      lo3[1] = j*block_dims[1];
+      hi3[1] = (j+1)*block_dims[1]-1;
+      if (hi3[1] >= dims3d[1]) hi3[1] = dims3d[1]-1;
+      for (k=iz; k<nz; k+=pdims[2]) {
+        index[2] = k;
+        lo3[2] = k*block_dims[2];
+        hi3[2] = (k+1)*block_dims[2]-1;
+        if (hi3[2] >= dims3d[2]) hi3[2] = dims3d[2]-1;
+        gala.accessBlockGridPtr(index,&vptr,ld3);
+        dptr = static_cast<data_type*>(vptr);
+        int l, m;
+        for (l=lo3[0]; l<=hi3[0]; l++) {
+          for (m=lo3[1]; m<=hi3[1]; m++) {
+            for (n=lo3[2]; n<=hi3[2]; n++) {
+              if (dptr[n-lo3[2]+(m-lo3[1])*ld3[1]+(l-lo3[0])*ld3[0]*ld3[1]]
+                  != static_cast<data_type>(n+m*dims3d[2]
+                    +l*dims3d[2]*dims3d[1])) {
+                if (ok) printf("p[%d] Check fails for ijk: [%d:%d:%d]"
+                    " lmn: [%d:%d:%d] actual: %f expected: %f\n",
+                    rank,i,j,k,l,m,n,
+                    static_cast<data_type>(dptr[n-lo3[2]+(m-lo3[1])*ld3[1]
+                      +(l-lo3[0])*ld3[0]*ld3[1]]),
+                    static_cast<data_type>(n+m*dims3d[2]
+                      +l*dims3d[2]*dims3d[1]));
+                if (ok) printf("p[%d] number of successful checks: %d\n",
+                    rank,chkcnt);
+                ok = false;
+              }
+              else chkcnt++;
+            }
+          }
+        }
+        gala.releaseBlockGridPtr(index);
+      }
+    }
+  }
+  MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
+  if (chk==1 && rank == 0) {
+    printf("\n ScaLAPACK layout put test PASSES\n\n");
+  } else if (chk == 0) {
+    printf("\n ScaLAPACK layout put test FAILS\n\n");
+  }
+  delete [] buf;
+  gala.clear();
 }
 
 int main(int argc, char **argv)
@@ -374,6 +503,7 @@ int main(int argc, char **argv)
     printf("\nTesting PUT for ints and int64_t indices\n");
   }
   put_test<int64_t,int>();
+#if 1
   if (rank == 0) {
     printf("\nTesting PUT for longs and int64_t indices\n");
   }
@@ -426,6 +556,10 @@ int main(int argc, char **argv)
     printf("\nTesting PUT for complex doubles and int indices\n");
   }
   put_test<int,std::complex<double> >();
+#endif
+  if (rank == 0) {
+    printf("\nCompleted all tests\n");
+  }
   env->finalize();
   MPI_Finalize();
   return 0;

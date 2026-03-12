@@ -891,7 +891,7 @@ char* p_Environment::pack(
   }
 
   /* allocate packed buffer now that we know the size */
-  packed_buffer = (char*)malloc(n1dim * count[0]);
+  packed_buffer = new char[n1dim * count[0]];
   CMX_ASSERT(packed_buffer);
 
   /* calculate the destination indices */

@@ -86,6 +86,27 @@ public:
   }
 
   /**
+   * Set block sizes and processor grid for ScaLAPACK-style data
+   * distribution. This is only strictly an ScaLAPACK distribution in
+   * 2 dimensions but the generalization to higher dimensions is
+   * straightforward
+   * @param[in] dims dimensions of individual blocks
+   * @param[in] prod_grid dimension of processor grid
+   */
+  void setBlockLayout(int64_t *dims, int *proc_grid)
+  {
+    p_Impl->setBlockLayout(dims, proc_grid);
+  }
+  void setBlockLayout(int *dims, int *proc_grid)
+  {
+    int64_t *tdims = new int64_t[p_ndim];
+    int i;
+    for (i=0; i<p_ndim; i++) tdims[i] = static_cast<int64_t>(dims[i]);
+    p_Impl->setBlockLayout(tdims, proc_grid);
+    delete [] tdims;
+  }
+
+  /**
    * @param[in] mapc array containing partitions along each axis
    * @param[in] nblock array containing processor decomposition
    */

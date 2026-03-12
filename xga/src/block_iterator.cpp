@@ -39,24 +39,26 @@ void p_GA::initIterator(const int64_t *lo, const int64_t *hi)
     /* XGA uses ScaLAPACK block cyclic data distribution */
     int j;
     /* Calculate some properties associated with data distribution */
-    for (j=0; j<p_ndim; j++)  {
-      blk_dims[j] = blk_size[j]*nblock[j];
-      blk_num[j] = p_dims[j]/blk_dims[j];
-      blk_inc[j] = p_dims[j]-blk_num[j]*blk_dims[j];
-      blk_ld[j] = blk_num[j]*blk_size[j];
-      hlf_blk[j] = blk_inc[j]/blk_size[j];
+    for (i=0; i<p_ndim; i++)  {
+      blk_num[i] = p_dims[i]/blk_dims[i];
+      blk_inc[i] = p_dims[i]-blk_num[i]*blk_dims[i];
+      blk_size[i] = blk_dims[i]*p_proc_grid[i];
+      blk_ngrd[i] = p_dims[i]/blk_size[i];
+      hlf_blk[i] = (p_dims[i]-blk_ngrd[i]*blk_size[i])/blk_dims[i];
     }
-    iblock = 0;
-    offset = 0;
+    /* Need to check all remote processors so start at 0 */
+    p_iblock = 0;
+    p_offset = 0;
+    int64_t iproc = p_group->rank();
     /* Initialize proc_index and index arrays */
-    XGA_FIND_PROC_INDICES_M(iblock, proc_index);
-    XGA_FIND_PROC_INDICES_M(iblock, index);
+    XGA_FIND_PROC_INDICES_M(p_iblock, proc_index);
+    XGA_FIND_PROC_INDICES_M(p_iblock, index);
   } else if (p_distr == TILED || p_distr == TILED_IRREG)  {
-    iblock = 0;
-    offset = 0;
+    p_iblock = 0;
+    p_offset = 0;
     /* Initialize proc_index and index arrays */
-    XGA_FIND_TILE_PROC_INDICES_M(iblock, proc_index);
-    XGA_FIND_TILE_PROC_INDICES_M(iblock, index);
+    XGA_FIND_TILE_PROC_INDICES_M(p_iblock, proc_index);
+    XGA_FIND_TILE_PROC_INDICES_M(p_iblock, index);
   }
 }
 
@@ -69,17 +71,17 @@ void p_GA::resetIterator()
     /* Regular data distribution */
     count = 0;
   } else if (p_distr == SCALAPACK) {
-    iblock = 0;
-    offset = 0;
+    p_iblock = 0;
+    p_offset = 0;
     /* Initialize proc_index and index arrays */
-    XGA_FIND_PROC_INDICES_M(iblock, proc_index);
-    XGA_FIND_PROC_INDICES_M(iblock, index);
+    XGA_FIND_PROC_INDICES_M(p_iblock, proc_index);
+    XGA_FIND_PROC_INDICES_M(p_iblock, index);
   } else if (p_distr == TILED || p_distr == TILED_IRREG)  {
-    iblock = 0;
-    offset = 0;
+    p_iblock = 0;
+    p_offset = 0;
     /* Initialize proc_index and index arrays */
-    XGA_FIND_TILE_PROC_INDICES_M(iblock, proc_index);
-    XGA_FIND_TILE_PROC_INDICES_M(iblock, index);
+    XGA_FIND_TILE_PROC_INDICES_M(p_iblock, proc_index);
+    XGA_FIND_TILE_PROC_INDICES_M(p_iblock, index);
   }
 }
 
@@ -96,6 +98,7 @@ void p_GA::resetIterator()
  * @param plo indices for lower corner of remote block
  * @param phi indices for upper corner of remote block
  * @param prem pointer to remote buffer
+ * @param ldrem array of strides on remote buffer
  * @return returns false if there is no new block, true otherwise
  */
 bool p_GA::nextBlock(int *proc, int64_t *plo[],
@@ -144,7 +147,7 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
     }
     return true;
   } else {
-    int64_t offset, l_offset, last, pinv;
+    int64_t l_offset, last, pinv;
     int64_t blk_tot = block_total;
     int64_t blo[MAXDIM], bhi[MAXDIM];
     int64_t idx, j, jtot, iproc;
@@ -153,31 +156,29 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
         p_distr == TILED ||
         p_distr == TILED_IRREG) {
       /* Scalapack-type data distribution */
-      int64_t proc_index[MAXDIM], index[MAXDIM];
-      int64_t itmp;
       int64_t blk_jinc;
       /* Return false at the end of the iteration */
-      if (iblock >= nproc) return false;
+      if (p_iblock >= nproc) return false;
       chk = false;
       /* loop over blocks until a block with data is found */
       while (!chk) {
         /* get bounds for current block */
         if (p_distr == SCALAPACK || p_distr == TILED) {
           for (j = 0; j < p_ndim; j++) {
-            blo[j] = blk_size[j]*(index[j])+1;
-            bhi[j] = blk_size[j]*(index[j]+1);
-            if (bhi[j] > p_dims[j]) bhi[j] = p_dims[j];
+            blo[j] = blk_dims[j]*(index[j]);
+            bhi[j] = blk_dims[j]*(index[j]+1)-1;
+            if (bhi[j] >= p_dims[j]) bhi[j] = p_dims[j]-1;
           }
         } else {
-          offset = 0;
+          p_offset = 0;
           for (j = 0; j < p_ndim; j++) {
-            blo[j] = p_mapc[offset+index[j]];
+            blo[j] = p_mapc[p_offset+index[j]];
             if (index[j] == blk_num[j]-1) {
               bhi[j] = p_dims[j];
             } else {
-              bhi[j] = p_mapc[offset+index[j]+1]-1;
+              bhi[j] = p_mapc[p_offset+index[j]+1]-1;
             }
-            offset += nblock[j];
+            p_offset += p_proc_grid[j];
           }
         }
         /* check to see if this block overlaps with requested block
@@ -201,33 +202,34 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
         }
         
         if (!chk) {
-          /* update offset for block */
-          itmp = 1;
+          /* This block has no data that overlaps with the
+           * requested region */
+          int64_t itmp = 1;
           for (j=0; j<p_ndim; j++) {
             itmp *= bhi[j]-blo[j]+1;
           }
-          offset += itmp;
+          p_offset += itmp;
 
           /* increment to next block */
-          index[0] += nblock[0];
-          for (j=0; j<p_ndim; j++) {
-            if (index[j] >= blk_num[j] && j < p_ndim-1) {
+          index[p_ndim-1] += p_proc_grid[p_ndim-1];
+          for (j=p_ndim-1; j>=0; j--) {
+            if (index[j] >= num_blks[j] && j > 0) {
               index[j] = proc_index[j];
-              index[j+1] += nblock[j+1];
+              index[j-1] += p_proc_grid[j-1];
             }
           }
-          if (index[p_ndim-1] >= blk_num[p_ndim-1]) {
+          if (index[0] >= num_blks[0]) {
             /* last iteration has been completed on current processor. Go
              * to next processor */
-            iblock++;
-            if (iblock >= nproc) return false;
-            offset = 0;
+            p_iblock++;
+            if (p_iblock >= nproc) return false;
+            p_offset = 0;
             if (p_distr == TILED || p_distr == TILED_IRREG) {
-              XGA_FIND_TILE_PROC_INDICES_M(iblock, proc_index);
-              XGA_FIND_TILE_PROC_INDICES_M(iblock, index);
+              XGA_FIND_TILE_PROC_INDICES_M(p_iblock, proc_index);
+              XGA_FIND_TILE_PROC_INDICES_M(p_iblock, index);
             } else if (p_distr == SCALAPACK) {
-              XGA_FIND_PROC_INDICES_M(iblock, proc_index);
-              XGA_FIND_PROC_INDICES_M(iblock, index);
+              XGA_FIND_PROC_INDICES_M(p_iblock, proc_index);
+              XGA_FIND_PROC_INDICES_M(p_iblock, index);
             }
           }
         }
@@ -236,8 +238,8 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
         int64_t *clo, *chi;
         *plo = lobuf;
         *phi = hibuf;
-        clo = *plo;
-        chi = *phi;
+        clo = lobuf;
+        chi = hibuf;
         /* get the patch of block that overlaps requested region */
         XGA_GETBLOCKPATCH_M(blo,bhi,it_lo,it_hi,clo,chi,p_ndim);
 
@@ -253,59 +255,68 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
             jtot *= ldrem[j];
           }
           l_offset += (clo[last]-blo[last])*jtot;
-          l_offset += offset;
+          l_offset += p_offset;
         } else if (p_distr == SCALAPACK) {
           l_offset = 0;
           jtot = 1;
-          for (j=0; j<last; j++)  {
-            ldrem[j] = blk_ld[j];
-            blk_jinc = p_dims[j]%blk_size[j];
+          for (j=last; j>0; j--)  {
+            ldrem[j-1] = blk_ngrd[j]*blk_dims[j];
+            /* initialize this so that it works if first block is partial
+             * block */
+            blk_jinc = p_dims[j]%blk_dims[j];
             if (blk_inc[j] > 0) {
+              /* may need to add an extra block or a partial block to stride */
               if (proc_index[j]<hlf_blk[j]) {
-                blk_jinc = blk_size[j];
+                /* add a full block */
+                blk_jinc = blk_dims[j];
               } else if (proc_index[j] == hlf_blk[j]) {
-                blk_jinc = blk_inc[j]%blk_size[j];
+                /* add a partial block */
+                blk_jinc = blk_inc[j]%blk_dims[j];
               } else {
+                /* add nothing */
                 blk_jinc = 0;
               }
             }
-            ldrem[j] += blk_jinc;
+            ldrem[j-1] += blk_jinc;
             l_offset += (clo[j]-blo[j]
-                + ((blo[j]-1)/blk_dims[j])*blk_size[j])*jtot;
-            jtot *= ldrem[j];
+                + (blo[j]/blk_size[j])*blk_dims[j])*jtot;
+            jtot *= ldrem[j-1];
           }
-          l_offset += (clo[last]-blo[last]
-              + ((blo[last]-1)/blk_dims[j])*blk_size[last])*jtot;
+          l_offset += (clo[0]-blo[0]
+              + (blo[0]/blk_size[0])*blk_dims[0])*jtot;
         }
         /* get pointer to data on remote block */
-        pinv = (iblock)%nproc;
-        pinv = p_group->getLocalRank(pinv);
+        pinv = (p_iblock)%nproc;
+        //pinv = p_group->getLocalRank(pinv);
         *prem =  static_cast<char*>(ptr[pinv])+l_offset*p_elemsize;
         *proc = pinv;
 
         /* evaluate new offset for block */
-        itmp = 1;
+        int64_t itmp = 1;
         for (j=0; j<p_ndim; j++) {
           itmp *= bhi[j]-blo[j]+1;
         }
-        offset += itmp;
+        p_offset += itmp;
         /* increment to next block */
-        index[0] += nblock[0];
-        for (j=0; j<p_ndim; j++) {
-          if (index[j] >= blk_num[j] && j < p_ndim-1) {
+        index[p_ndim-1] += p_proc_grid[p_ndim-1];
+        for (j=p_ndim-1; j>=0; j--) {
+          if (index[j] >= num_blks[j] && j > 0) {
             index[j] = proc_index[j];
-            index[j+1] += nblock[j+1];
+            index[j-1] += p_proc_grid[j-1];
           }
         }
-        if (index[p_ndim-1] >= blk_num[p_ndim-1]) {
-          iblock++;
-          offset = 0;
+        if (index[0] >= num_blks[0]) {
+          /* last iteration has been completed on current processor. Go
+           * to next processor */
+          p_iblock++;
+//          if (p_iblock >= nproc) return false;
+          p_offset = 0;
           if (p_distr == TILED || p_distr == TILED_IRREG) {
-            XGA_FIND_TILE_PROC_INDICES_M(iblock, proc_index);
-            XGA_FIND_TILE_PROC_INDICES_M(iblock, index);
+            XGA_FIND_TILE_PROC_INDICES_M(p_iblock, proc_index);
+            XGA_FIND_TILE_PROC_INDICES_M(p_iblock, index);
           } else if (p_distr == SCALAPACK) {
-            XGA_FIND_PROC_INDICES_M(iblock, proc_index);
-            XGA_FIND_PROC_INDICES_M(iblock, index);
+            XGA_FIND_PROC_INDICES_M(p_iblock, proc_index);
+            XGA_FIND_PROC_INDICES_M(p_iblock, index);
           }
         }
       }
@@ -332,7 +343,7 @@ bool p_GA::lastBlock()
     if (p_distr == SCALAPACK ||
         p_distr == TILED ||
         p_distr == TILED_IRREG) {
-      if (iblock >= nproc) return true;
+      if (p_iblock >= nproc) return true;
     }
   }
   return false;
