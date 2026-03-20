@@ -1,5 +1,6 @@
 #include <vector>
 #include <set>
+#include <complex>
 #include "p_environment.hpp"
 
 /* This needs to be filled in */
@@ -1579,8 +1580,8 @@ void p_Environment::_progress_server()
   /* extra header info could be reg entries, one per local rank */
   extra_size = sizeof(reg_entry_t)*p_config.node_size();
   /* or, extra header info could be an acc scale plus stride */
-  if ((sizeof(stride_t)+sizeof(DoubleComplex)) > extra_size) {
-    extra_size = sizeof(stride_t)+sizeof(DoubleComplex);
+  if ((sizeof(stride_t)+sizeof(std::complex<double>)) > extra_size) {
+    extra_size = sizeof(stride_t)+sizeof(std::complex<double>);
   }
   static_header_buffer_size += extra_size;
   /* after all of the above, possibly grow the size based on user request */
@@ -2225,7 +2226,7 @@ void p_Environment::_acc_handler(header_t *header, char *scale, int proc)
 #if DEBUG
   fprintf(stderr, "[%d] _acc_handler\n", p_config.rank());
 #endif
-
+ 
   switch (header->operation) {
     case OP_ACC_INT:
       acc_type = CMX_ACC_INT;
@@ -2245,11 +2246,11 @@ void p_Environment::_acc_handler(header_t *header, char *scale, int proc)
       break;
     case OP_ACC_CPL:
       acc_type = CMX_ACC_CPL;
-      sizeof_scale = sizeof(SingleComplex);
+      sizeof_scale = sizeof(std::complex<float>);
       break;
     case OP_ACC_DCP:
       acc_type = CMX_ACC_DCP;
-      sizeof_scale = sizeof(DoubleComplex);
+      sizeof_scale = sizeof(std::complex<double>);
       break;
     default: CMX_ASSERT(0);
   }
@@ -2299,10 +2300,18 @@ void p_Environment::_acc_handler(header_t *header, char *scale, int proc)
       }
       CMX_ASSERT(0);
     }
+//    printf("p[%d] op at 1: %d scale: %ld\n",p_config.rank(),acc_type,*(long*)scale);
+//    printf("p[%d] (_acc_handler) ",p_config.rank());
+//    int length = header->length/sizeof(long);
+//    for (int i=0; i<length; i++) {
+//      printf(" %ld",((long*)acc_buffer)[i]);
+//    }
+//    printf("\n");
     _acc(acc_type, header->length, mapped_offset, acc_buffer, scale);
     sem_post(semaphores[header->rank]);
   }
   else {
+//    printf("p[%d] op at 2: %d\n",p_config.rank(),acc_type);
     _acc(acc_type, header->length, mapped_offset, acc_buffer, scale);
   }
 
@@ -2331,6 +2340,7 @@ void p_Environment::_acc_packed_handler(header_t *header, char *payload, int pro
   fprintf(stderr, "[%d] _acc_packed_handler\n", p_config.rank());
 #endif
 
+//  printf("p[%d] (_acc_packed_handler) op: %d\n",p_config.rank(),header->operation);
   switch (header->operation) {
     case OP_ACC_INT_PACKED:
       acc_type = CMX_ACC_INT;
@@ -2350,11 +2360,11 @@ void p_Environment::_acc_packed_handler(header_t *header, char *payload, int pro
       break;
     case OP_ACC_CPL_PACKED:
       acc_type = CMX_ACC_CPL;
-      sizeof_scale = sizeof(SingleComplex);
+      sizeof_scale = sizeof(std::complex<float>);
       break;
     case OP_ACC_DCP_PACKED:
       acc_type = CMX_ACC_DCP;
-      sizeof_scale = sizeof(DoubleComplex);
+      sizeof_scale = sizeof(std::complex<double>);
       break;
     default: CMX_ASSERT(0);
   }
@@ -2383,6 +2393,11 @@ void p_Environment::_acc_packed_handler(header_t *header, char *payload, int pro
           max_message_size : bytes_remaining;
         buf -= size;
         server_recv(buf, size, proc);
+//    printf("p[%d] (_acc_packed_handler) recv buf (%p): ",p_config.rank(),buf);
+//    for (int i=0; i<8; i++) {
+//      printf(" %ld",((long*)(buf))[i]);
+//    }
+//    printf("\n");
         bytes_remaining -= size;
       } while (bytes_remaining > 0);
     }
@@ -2394,6 +2409,7 @@ void p_Environment::_acc_packed_handler(header_t *header, char *payload, int pro
   mapped_offset = _get_offset_memory(reg_entry, header->remote_address);
 
   if (CMX_ENABLE_ACC_SELF || CMX_ENABLE_ACC_SMP) {
+//    printf("p[%d] (_acc_packed_handler) calling sem_wait\n",p_config.rank());
     sem_wait(semaphores[header->rank]);
   }
   {
@@ -2447,6 +2463,14 @@ void p_Environment::_acc_packed_handler(header_t *header, char *payload, int pro
         }
       }
 
+    int length = 8 < count[0]/sizeof(long) ? 8 : count[0]/sizeof(long);
+//    printf("p[%d] op at 3: %d scale: %ld length: %d source: %d\n",p_config.rank(),
+//        acc_type,*(long*)scale,length,proc);
+//    printf("p[%d] (_acc_packed_handler) ",p_config.rank());
+//    for (int i=0; i<length; i++) {
+//      printf(" %ld",((long*)(&packed_buffer[packed_index]))[i]);
+//    }
+//    printf("\n");
       _acc(acc_type, count[0], &dst[dst_idx], &packed_buffer[packed_index], scale);
       packed_index += count[0];
     }
@@ -2519,11 +2543,11 @@ void p_Environment::_acc_iov_handler(header_t *header, char *scale, int proc)
       break;
     case OP_ACC_CPL_IOV:
       acc_type = CMX_ACC_CPL;
-      sizeof_scale = sizeof(SingleComplex);
+      sizeof_scale = sizeof(std::complex<float>);
       break;
     case OP_ACC_DCP_IOV:
       acc_type = CMX_ACC_DCP;
-      sizeof_scale = sizeof(DoubleComplex);
+      sizeof_scale = sizeof(std::complex<double>);
       break;
     default: CMX_ASSERT(0);
   }
@@ -2567,6 +2591,7 @@ void p_Environment::_acc_iov_handler(header_t *header, char *scale, int proc)
     CMX_ASSERT(reg_entry);
     mapped_offset = _get_offset_memory(reg_entry, dst[i]);
 
+//    printf("p[%d] op at 4: %d\n",p_config.rank(),acc_type);
     _acc(acc_type, bytes, mapped_offset, &packed_buffer[packed_index], scale);
     packed_index += bytes;
   }
@@ -3264,6 +3289,11 @@ void p_Environment::server_recv(void *buf, int64_t count, int source)
 
   retval = MPI_Recv(buf, static_cast<int>(count), MPI_CHAR, source,
       CMX_TAG, p_config.global_comm(), &status);
+//    printf("p[%d] (server_recv) source: %d count: %ld",p_config.rank(),source,count);
+//    for (int i=0; i<8; i++) {
+//      printf(" %ld",((long*)(buf))[i]);
+//    }
+//    printf("\n");
   _translate_mpi_error(retval,"server_recv:MPI_Recv");
 
   CHECK_MPI_RETVAL(retval);
@@ -3320,6 +3350,14 @@ void p_Environment::nb_send_common(void *buf, int count, int dest, _cmx_request 
   }
   nb->send_tail = message;
 
+//    printf("p[%d] (nb_send_common) ",p_config.rank());
+//    if (count > 64) {
+//    for (int i=0; i<8; i++) {
+//      printf(" %ld",((long*)(buf))[i]);
+//    }
+//    printf("\n");
+//    }
+//    fflush(stdout);
   retval = MPI_Isend(buf, count, MPI_CHAR, dest, CMX_TAG,
       p_config.global_comm(), &(message->request));
   _translate_mpi_error(retval,"nb_send_common:MPI_Isend");
@@ -4065,6 +4103,41 @@ void p_Environment::nb_acc(int datatype, void *scale,
   CMX_ASSERT(proc < p_config.size());
   CMX_ASSERT(NULL != nb);
 
+  int local_op;
+  switch (datatype) {
+    case OP_ACC_INT:
+    case OP_ACC_INT_PACKED:
+    case OP_ACC_INT_IOV:
+      local_op = CMX_ACC_INT;
+      break;
+    case OP_ACC_DBL:
+    case OP_ACC_DBL_PACKED:
+    case OP_ACC_DBL_IOV:
+      local_op = CMX_ACC_DBL;
+      break;
+    case OP_ACC_FLT:
+    case OP_ACC_FLT_PACKED:
+    case OP_ACC_FLT_IOV:
+      local_op = CMX_ACC_FLT;
+      break;
+    case OP_ACC_CPL:
+    case OP_ACC_CPL_PACKED:
+    case OP_ACC_CPL_IOV:
+      local_op = CMX_ACC_CPL;
+      break;
+    case OP_ACC_DCP:
+    case OP_ACC_DCP_PACKED:
+    case OP_ACC_DCP_IOV:
+      local_op = CMX_ACC_DCP;
+      break;
+    case OP_ACC_LNG:
+    case OP_ACC_LNG_PACKED:
+    case OP_ACC_LNG_IOV:
+      local_op = CMX_ACC_LNG;
+      break;
+    default: CMX_ASSERT(0);
+  }
+
   if (CMX_ENABLE_ACC_SELF) {
     /* acc to self */
     if (p_config.rank() == proc) {
@@ -4072,7 +4145,8 @@ void p_Environment::nb_acc(int datatype, void *scale,
         _fence_master(p_config.master(proc));
       }
       sem_wait(semaphores[proc]);
-      _acc(datatype, bytes, dst, src, scale);
+//    printf("p[%d] op at 5: %d\n",p_config.rank(),local_op);
+      _acc(local_op, bytes, dst, src, scale);
       sem_post(semaphores[proc]);
       return;
     }
@@ -4106,7 +4180,8 @@ void p_Environment::nb_acc(int datatype, void *scale,
         }
         CMX_ASSERT(0);
       }
-      _acc(datatype, bytes, mapped_offset, src, scale);
+//    printf("p[%d] op at 6: %d\n",p_config.rank(),local_op);
+      _acc(local_op, bytes, mapped_offset, src, scale);
       sem_post(semaphores[proc]);
       return;
     }
@@ -4122,27 +4197,27 @@ void p_Environment::nb_acc(int datatype, void *scale,
     int use_eager = 0;
 
     switch (datatype) {
-      case CMX_ACC_INT:
+      case OP_ACC_INT:
         operation = OP_ACC_INT;
         scale_size = sizeof(int);
         break;
-      case CMX_ACC_DBL:
+      case OP_ACC_DBL:
         operation = OP_ACC_DBL;
         scale_size = sizeof(double);
         break;
-      case CMX_ACC_FLT:
+      case OP_ACC_FLT:
         operation = OP_ACC_FLT;
         scale_size = sizeof(float);
         break;
-      case CMX_ACC_CPL:
+      case OP_ACC_CPL:
         operation = OP_ACC_CPL;
-        scale_size = sizeof(SingleComplex);
+        scale_size = sizeof(std::complex<float>);
         break;
-      case CMX_ACC_DCP:
+      case OP_ACC_DCP:
         operation = OP_ACC_DCP;
-        scale_size = sizeof(DoubleComplex);
+        scale_size = sizeof(std::complex<double>);
         break;
-      case CMX_ACC_LNG:
+      case OP_ACC_LNG:
         operation = OP_ACC_LNG;
         scale_size = sizeof(long);
         break;
@@ -4633,7 +4708,7 @@ void p_Environment::nb_gets_packed(
     recv_size = _packed_size(stride_dst->stride,
         stride_dst->count, stride_dst->stride_levels);
     CMX_ASSERT(recv_size > 0);
-    packed_buffer = (char*)malloc(recv_size);
+    packed_buffer = new char[recv_size];
     CMX_ASSERT(packed_buffer);
     {
       /* prepost all receives backward */
@@ -4757,8 +4832,12 @@ void p_Environment::nb_accs(
   int64_t src_bvalue[7], src_bunit[7];
   int64_t dst_bvalue[7], dst_bunit[7];
 
+//  printf("p[%d] (nb_accs) entering nb_accs\n",p_config.rank());
+//  fflush(stdout);
   /* if not actually a strided acc */
   if (0 == stride_levels) {
+//  printf("p[%d] (nb_accs) stride_levels: %d\n",p_config.rank(),stride_levels);
+//  fflush(stdout);
     nb_acc(datatype, scale, src, dst, count[0], proc, nb);
     return;
   }
@@ -4772,6 +4851,8 @@ void p_Environment::nb_accs(
     return;
   }
 
+//  printf("p[%d] (nb_accs) use nb_acc\n",p_config.rank());
+//  fflush(stdout);
   /* number of n-element of the first dimension */
   n1dim = 1;
   for(i=1; i<=stride_levels; i++) {
@@ -4889,27 +4970,27 @@ void p_Environment::nb_accs_packed(
     int use_eager = 0;
 
     switch (datatype) {
-      case CMX_ACC_INT:
+      case OP_ACC_INT_PACKED:
         operation = OP_ACC_INT_PACKED;
         scale_size = sizeof(int);
         break;
-      case CMX_ACC_DBL:
+      case OP_ACC_DBL_PACKED:
         operation = OP_ACC_DBL_PACKED;
         scale_size = sizeof(double);
         break;
-      case CMX_ACC_FLT:
+      case OP_ACC_FLT_PACKED:
         operation = OP_ACC_FLT_PACKED;
         scale_size = sizeof(float);
         break;
-      case CMX_ACC_CPL:
+      case OP_ACC_CPL_PACKED:
         operation = OP_ACC_CPL_PACKED;
-        scale_size = sizeof(SingleComplex);
+        scale_size = sizeof(std::complex<float>);
         break;
-      case CMX_ACC_DCP:
+      case OP_ACC_DCP_PACKED:
         operation = OP_ACC_DCP_PACKED;
-        scale_size = sizeof(DoubleComplex);
+        scale_size = sizeof(std::complex<double>);
         break;
-      case CMX_ACC_LNG:
+      case OP_ACC_LNG_PACKED:
         operation = OP_ACC_LNG_PACKED;
         scale_size = sizeof(long);
         break;
@@ -4928,7 +5009,7 @@ void p_Environment::nb_accs_packed(
     else {
       message_size = sizeof(header_t) + scale_size + sizeof(stride_t);
     }
-    message = (char*)malloc(message_size);
+    message = new char[message_size];
     CMX_ASSERT(message);
     header = (header_t*)message;
     header->operation = operation;
@@ -4953,10 +5034,20 @@ void p_Environment::nb_accs_packed(
         size_t size = bytes_remaining>max_message_size ?
           max_message_size : bytes_remaining;
         buf -= size;
+//    printf("p[%d] (nb_accs_packed) ",p_config.rank());
+//    for (int i=0; i<8; i++) {
+//      printf(" %ld",((long*)(buf))[i]);
+//    }
+//    fflush(stdout);
+//    printf("\n");
         if (size == bytes_remaining) {
+//          printf("p[%d] (nb_accs_packed) send_header to %d size: %ld\n",p_config.rank(),master_rank,size);
+//    fflush(stdout);
           nb_send_header(buf, size, master_rank, nb);
         }
         else {
+//          printf("p[%d] (nb_accs_packed) send_buffer to %d\n",p_config.rank(),master_rank);
+//    fflush(stdout);
           nb_send_buffer(buf, size, master_rank, nb);
         }
         bytes_remaining -= size;
@@ -5281,27 +5372,27 @@ void p_Environment::nb_accv_packed(
     int master_rank = p_config.master(proc);
 
     switch (datatype) {
-      case CMX_ACC_INT:
+      case OP_ACC_INT_IOV:
         operation = OP_ACC_INT_IOV;
         scale_size = sizeof(int);
         break;
-      case CMX_ACC_DBL:
+      case OP_ACC_DBL_IOV:
         operation = OP_ACC_DBL_IOV;
         scale_size = sizeof(double);
         break;
-      case CMX_ACC_FLT:
+      case OP_ACC_FLT_IOV:
         operation = OP_ACC_FLT_IOV;
         scale_size = sizeof(float);
         break;
-      case CMX_ACC_CPL:
+      case OP_ACC_CPL_IOV:
         operation = OP_ACC_CPL_IOV;
-        scale_size = sizeof(SingleComplex);
+        scale_size = sizeof(std::complex<float>);
         break;
-      case CMX_ACC_DCP:
+      case OP_ACC_DCP_IOV:
         operation = OP_ACC_DCP_IOV;
-        scale_size = sizeof(DoubleComplex);
+        scale_size = sizeof(std::complex<double>);
         break;
-      case CMX_ACC_LNG:
+      case OP_ACC_LNG_IOV:
         operation = OP_ACC_LNG_IOV;
         scale_size = sizeof(long);
         break;

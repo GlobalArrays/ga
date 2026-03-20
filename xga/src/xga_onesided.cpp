@@ -84,8 +84,8 @@ void p_GA::acc(int64_t *lo, int64_t *hi, void* buf, int64_t *ld, void *alpha)
 {
   xga_request *req;
   p_env->getXGARequest(&req);
-  accCommon(lo, hi, buf, ld, alpha, req);
-  p_env->wait(req);
+  accCommon(lo, hi, buf, ld, alpha, NULL);
+//  p_env->wait(req);
 }
 
 /**

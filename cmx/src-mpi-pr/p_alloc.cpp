@@ -261,10 +261,32 @@ int p_Allocation::acc(int op, void *scale, void *src, void *dst,
   cmx_request request;
   int wrank;
   int rank;
+  int cmx_op;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  switch(op) {
+    case CMX_ACC_INT:
+      cmx_op = OP_ACC_INT;
+      break;
+    case CMX_ACC_LNG:
+      cmx_op = OP_ACC_LNG;
+      break;
+    case CMX_ACC_FLT:
+      cmx_op = OP_ACC_FLT;
+      break;
+    case CMX_ACC_DBL:
+      cmx_op = OP_ACC_DBL;
+      break;
+    case CMX_ACC_CPL:
+      cmx_op = OP_ACC_CPL;
+      break;
+    case CMX_ACC_DCP:
+      cmx_op = OP_ACC_DCP;
+      break;
+    default: p_impl_environment->p_error("Unknown data type in accumulate",op);
+  }
   p_environment->translateWorld(1,p_group,&proc,&wrank);
   p_impl_environment->nb_register_request(&request);
-  p_impl_environment->nb_acc(op,scale,src,dst,bytes,wrank,&request);
+  p_impl_environment->nb_acc(cmx_op,scale,src,dst,bytes,wrank,&request);
   p_impl_environment->nb_wait_for_all(&request);
   return CMX_SUCCESS;
 }
@@ -291,10 +313,37 @@ int p_Allocation::accs(int op, void *scale, void *src, int64_t *src_stride,
 {
   cmx_request request;
   int wrank;
+  MPI_Comm_rank(MPI_COMM_WORLD,&wrank);
+  int cmx_op;
+  switch(op) {
+    case CMX_ACC_INT:
+      cmx_op = OP_ACC_INT_PACKED;
+      break;
+    case CMX_ACC_LNG:
+      cmx_op = OP_ACC_LNG_PACKED;
+      break;
+    case CMX_ACC_FLT:
+      cmx_op = OP_ACC_FLT_PACKED;
+      break;
+    case CMX_ACC_DBL:
+      cmx_op = OP_ACC_DBL_PACKED;
+      break;
+    case CMX_ACC_CPL:
+      cmx_op = OP_ACC_CPL_PACKED;
+      break;
+    case CMX_ACC_DCP:
+      cmx_op = OP_ACC_DCP_PACKED;
+      break;
+    default: p_impl_environment->p_error("Unknown data type in accumulate",op);
+  }
   p_environment->translateWorld(1,p_group,&proc,&wrank);
   p_impl_environment->nb_register_request(&request);
-  p_impl_environment->nb_accs(op,scale,src,src_stride,dst,dst_stride,count,
+//  printf("p[%d] (accs) nb_accs\n",wrank);
+//  fflush(stdout);
+  p_impl_environment->nb_accs(cmx_op,scale,src,src_stride,dst,dst_stride,count,
       stride_levels,wrank,&request);
+//  printf("p[%d] (accs) nb_wait_for_all\n",wrank);
+//  fflush(stdout);
   p_impl_environment->nb_wait_for_all(&request);
   return CMX_SUCCESS;
 }
@@ -315,10 +364,32 @@ int p_Allocation::accv(int op, void *scale, _cmx_giov_t *darr, int64_t len, int 
   cmx_request request;
   int wrank;
   int trank;
+  int cmx_op;
   MPI_Comm_rank(MPI_COMM_WORLD,&trank);
+  switch(op) {
+    case CMX_ACC_INT:
+      cmx_op = OP_ACC_INT_IOV;
+      break;
+    case CMX_ACC_LNG:
+      cmx_op = OP_ACC_LNG_IOV;
+      break;
+    case CMX_ACC_FLT:
+      cmx_op = OP_ACC_FLT_IOV;
+      break;
+    case CMX_ACC_DBL:
+      cmx_op = OP_ACC_DBL_IOV;
+      break;
+    case CMX_ACC_CPL:
+      cmx_op = OP_ACC_CPL_IOV;
+      break;
+    case CMX_ACC_DCP:
+      cmx_op = OP_ACC_DCP_IOV;
+      break;
+    default: p_impl_environment->p_error("Unknown data type in accumulate",op);
+  }
   p_environment->translateWorld(1,p_group,&proc,&wrank);
   p_impl_environment->nb_register_request(&request);
-  p_impl_environment->nb_accv(op, scale, darr, len, wrank, &request);
+  p_impl_environment->nb_accv(cmx_op, scale, darr, len, wrank, &request);
   p_impl_environment->nb_wait_for_all(&request);
   return CMX_SUCCESS;
 }
@@ -340,9 +411,32 @@ int p_Allocation::nbacc(int op, void *scale, void *src, void *dst,
     int64_t bytes, int proc, _cmx_request *req)
 {
   int wrank;
+  int cmx_op;
+  MPI_Comm_rank(MPI_COMM_WORLD,&wrank);
+  switch(op) {
+    case CMX_ACC_INT:
+      cmx_op = OP_ACC_INT;
+      break;
+    case CMX_ACC_LNG:
+      cmx_op = OP_ACC_LNG;
+      break;
+    case CMX_ACC_FLT:
+      cmx_op = OP_ACC_FLT;
+      break;
+    case CMX_ACC_DBL:
+      cmx_op = OP_ACC_DBL;
+      break;
+    case CMX_ACC_CPL:
+      cmx_op = OP_ACC_CPL;
+      break;
+    case CMX_ACC_DCP:
+      cmx_op = OP_ACC_DCP;
+      break;
+    default: p_impl_environment->p_error("Unknown data type in accumulate",op);
+  }
   p_environment->translateWorld(1,p_group,&proc,&wrank);
   p_impl_environment->nb_register_request(req);
-  p_impl_environment->nb_acc(op,scale,src,dst,bytes,wrank,req);
+  p_impl_environment->nb_acc(cmx_op,scale,src,dst,bytes,wrank,req);
   return CMX_SUCCESS;
 }
 
@@ -369,10 +463,33 @@ int p_Allocation::nbaccs(int op, void *scale, void *src, int64_t *src_stride,
     int stride_levels, int proc, _cmx_request *req)
 {
   int wrank;
+  int cmx_op;
+  switch(op) {
+    case CMX_ACC_INT:
+      cmx_op = OP_ACC_INT_PACKED;
+      break;
+    case CMX_ACC_LNG:
+      cmx_op = OP_ACC_LNG_PACKED;
+      break;
+    case CMX_ACC_FLT:
+      cmx_op = OP_ACC_FLT_PACKED;
+      break;
+    case CMX_ACC_DBL:
+      cmx_op = OP_ACC_DBL_PACKED;
+      break;
+    case CMX_ACC_CPL:
+      cmx_op = OP_ACC_CPL_PACKED;
+      break;
+    case CMX_ACC_DCP:
+      cmx_op = OP_ACC_DCP_PACKED;
+      break;
+    default: p_impl_environment->p_error("Unknown data type in accumulate",op);
+  }
   p_environment->translateWorld(1,p_group,&proc,&wrank);
   p_impl_environment->nb_register_request(req);
-  p_impl_environment->nb_accs(op,scale,src,src_stride,dst,dst_stride,count,
+  p_impl_environment->nb_accs(cmx_op,scale,src,src_stride,dst,dst_stride,count,
       stride_levels,wrank,req);
+  printf("p[%d] (nbaccs) no wait\n",wrank);
   return CMX_SUCCESS;
 }
 
@@ -392,9 +509,31 @@ int p_Allocation::nbaccv(int op, void *scale, _cmx_giov_t *darr, int64_t len,
     int proc, _cmx_request *req)
 {
   int wrank;
+  int cmx_op;
+  switch(op) {
+    case CMX_ACC_INT:
+      cmx_op = OP_ACC_INT_IOV;
+      break;
+    case CMX_ACC_LNG:
+      cmx_op = OP_ACC_LNG_IOV;
+      break;
+    case CMX_ACC_FLT:
+      cmx_op = OP_ACC_FLT_IOV;
+      break;
+    case CMX_ACC_DBL:
+      cmx_op = OP_ACC_DBL_IOV;
+      break;
+    case CMX_ACC_CPL:
+      cmx_op = OP_ACC_CPL_IOV;
+      break;
+    case CMX_ACC_DCP:
+      cmx_op = OP_ACC_DCP_IOV;
+      break;
+    default: p_impl_environment->p_error("Unknown data type in accumulate",op);
+  }
   p_environment->translateWorld(1,p_group,&proc,&wrank);
   p_impl_environment->nb_register_request(req);
-  p_impl_environment->nb_accv(op, scale, darr, len, wrank, req);
+  p_impl_environment->nb_accv(cmx_op, scale, darr, len, wrank, req);
   return CMX_SUCCESS;
 }
 
