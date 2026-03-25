@@ -178,6 +178,7 @@ if (ENABLE_BLAS)
     endif()
     include(FetchContent)
     set( gpu_backend "none" CACHE STRING "GPU backend to use" FORCE)
+    find_package(blaspp QUIET)
     if(NOT TARGET blaspp)
       if(ENABLE_OFFLINE_BUILD)
       FetchContent_Declare(
@@ -195,6 +196,7 @@ if (ENABLE_BLAS)
       FetchContent_MakeAvailable( blaspp )
     endif()
 
+    find_package(lapackpp QUIET)
     if(NOT TARGET lapackpp)
     if(ENABLE_OFFLINE_BUILD)
       FetchContent_Declare(
