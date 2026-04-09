@@ -454,6 +454,7 @@ void comex_group_finalize()
         _igroup_free(previous_group_list_item);
     }
 
+    group_list = NULL;
     free(g_state.hostid);
     status = MPI_Comm_free(&(g_state.node_comm));
     COMEX_ASSERT(MPI_SUCCESS == status);

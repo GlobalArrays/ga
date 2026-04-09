@@ -3634,6 +3634,7 @@ c
       logical status
 c
       character*1 jobz, range, uplo
+      character*255 env_out
 c
       integer ha, adra          !A
       integer hb, adrb          !B
@@ -3685,6 +3686,7 @@ c mpi args should integer*4
       parameter(one4=1,zero4=0,two4=4,four4=4)
       integer info8,dblsize
       integer*4 n4
+      integer err8
 c     
 c     processor dependent; machine dependent
 c     
@@ -3866,7 +3868,6 @@ c
       call e%set("nblk", int(nb,kind=c_int), elpa_err) ! size of block-cylic distribution
       if(elpa_err.ne.0) call ga_error(
      A     'ga-evp_real: e%set local_ncols failed ',elpa_err)
-
       call e%set("mpi_comm_parent", int(elpa_comm,kind=c_int),elpa_err) ! global communicator for all processes which have parts of
       if(elpa_err.ne.0) call ga_error(
      A     'ga-evp_real: e%set mpi_comm failed ',elpa_err)
@@ -3900,8 +3901,20 @@ c
            if(elpa_err.ne.0) call ga_error(
      A     'ga-evp_real: get_elpa_row_col failed ',elpa_err)
 #endif
-
- 
+#if HAVE_ELPA_NVIDIA
+C checks for the following env. variable setting
+c ELPA_DEFAULT_real_kernel=ELPA_2STAGE_REAL_NVIDIA_GPU
+           call get_environment_variable(
+     A          "ELPA_DEFAULT_real_kernel", value=env_out, status=err8)
+           if(trim(env_out).eq."ELPA_2STAGE_REAL_NVIDIA_GPU") then
+              call e%set("nvidia-gpu", int(1,c_int), elpa_err)
+              if(elpa_err.ne.ELPA_OK) call ga_error(
+     A             'ga-evp_real: e%set nvidia-gpu failed ',elpa_err)
+              elpa_err = e%setup_gpu()
+              if(elpa_err.ne.ELPA_OK) call ga_error(
+     A             'ga-evp_real: e%set setup_gpu failed ',elpa_err)
+           endif
+#endif
 #if HAVE_ELPA_2017
 #if USE_ALLOCATE
          call e%eigenvectors(a, ev, b, elpa_err)
