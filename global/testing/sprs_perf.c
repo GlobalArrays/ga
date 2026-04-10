@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
@@ -785,6 +788,7 @@ void matrix_test(int type)
 int main(int argc, char **argv) {
   int me,nproc;
   int ok = 1;
+  int eight = 8;
 
   /**
    * Initialize MPI
@@ -796,56 +800,63 @@ int main(int argc, char **argv) {
 
   me = GA_Nodeid();
   nproc = GA_Nnodes();
-  if (me == 0) {
-    printf("\nTesting sparse matrices of size %d x %d\n"
-        " and dense matrices of size %d x %d on %d processors\n\n",
-        NDIM_SPRS,NDIM_SPRS,NDIM_DNS,NDIM_DNS,nproc);
-  }
+  if (eight == SIZEOF_F77_INTEGER) {
 
-  /**
-   * Test different data types
-   */
+    if (me == 0) {
+      printf("\nTesting sparse matrices of size %d x %d\n"
+          " and dense matrices of size %d x %d on %d processors\n\n",
+          NDIM_SPRS,NDIM_SPRS,NDIM_DNS,NDIM_DNS,nproc);
+    }
+
+    /**
+     * Test different data types
+     */
 #if 1
-  if (me == 0) {
-    printf("\nTesting matrices of type int\n");
-  }
-  matrix_test(C_INT);
+    if (me == 0) {
+      printf("\nTesting matrices of type int\n");
+    }
+    matrix_test(C_INT);
 #endif
 
 #if 1
-  if (me == 0) {
-    printf("\nTesting matrices of type long\n");
-  }
-  matrix_test(C_LONG);
+    if (me == 0) {
+      printf("\nTesting matrices of type long\n");
+    }
+    matrix_test(C_LONG);
 
-  if (me == 0) {
-    printf("\nTesting matrices of type long long\n");
-  }
-  matrix_test(C_LONGLONG);
+    if (me == 0) {
+      printf("\nTesting matrices of type long long\n");
+    }
+    matrix_test(C_LONGLONG);
 
-  if (me == 0) {
-    printf("\nTesting matrices of type float\n");
-  }
-  matrix_test(C_FLOAT);
+    if (me == 0) {
+      printf("\nTesting matrices of type float\n");
+    }
+    matrix_test(C_FLOAT);
 
-  if (me == 0) {
-    printf("\nTesting matrices of type double\n");
-  }
-  matrix_test(C_DBL);
+    if (me == 0) {
+      printf("\nTesting matrices of type double\n");
+    }
+    matrix_test(C_DBL);
 
-  if (me == 0) {
-    printf("\nTesting matrices of type single complex\n");
-  }
-  matrix_test(C_SCPL);
+    if (me == 0) {
+      printf("\nTesting matrices of type single complex\n");
+    }
+    matrix_test(C_SCPL);
 
 #endif
-  if (me == 0) {
-    printf("\nTesting matrices of type double complex\n");
-  }
-  matrix_test(C_DCPL);
+    if (me == 0) {
+      printf("\nTesting matrices of type double complex\n");
+    }
+    matrix_test(C_DCPL);
 
-  if (me == 0) {
-    printf("\nSparse matrix tests complete\n\n");
+    if (me == 0) {
+      printf("\nSparse matrix tests complete\n\n");
+    }
+  } else {
+    if (me == 0) {
+      printf("Test only runs if built with 8-byte integers\n");
+    }
   }
 
   NGA_Terminate();
