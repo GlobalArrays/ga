@@ -3729,8 +3729,6 @@ c***  initialize SL interface
 c     
       call SLinit2(n)
       oactive=iam.lt.maxproc
-      mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
-      nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
       if(g_a.ne.g_b) then
          if(.not.ga_deallocate(g_b))
      E        call ga_error(' ga_evp_real: ga_deallocate failed',0)
@@ -3903,10 +3901,10 @@ c
 #endif
 #if HAVE_ELPA_NVIDIA
 C checks for the following env. variable setting
-c ELPA_DEFAULT_real_kernel=ELPA_2STAGE_REAL_NVIDIA_GPU
+c     ELPA_DEFAULT_nvidia-gpu=1
            call get_environment_variable(
-     A          "ELPA_DEFAULT_real_kernel", value=env_out, status=err8)
-           if(trim(env_out).eq."ELPA_2STAGE_REAL_NVIDIA_GPU") then
+     A          "ELPA_DEFAULT_nvidia_gpu", value=env_out, status=err8)
+           if(trim(env_out).eq."1") then
               call e%set("nvidia-gpu", int(1,c_int), elpa_err)
               if(elpa_err.ne.ELPA_OK) call ga_error(
      A             'ga-evp_real: e%set nvidia-gpu failed ',elpa_err)

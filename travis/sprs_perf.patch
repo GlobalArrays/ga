@@ -1,0 +1,17 @@
+diff --git global/testing/sprs_perf.c global/testing/sprs_perf.c
+index 311222a6..97dc9808 100644
+--- global/testing/sprs_perf.c
++++ global/testing/sprs_perf.c
+@@ -9,8 +9,10 @@
+ 
+ #define WRITE_VTK
+ #define CG_SOLVE 1
+-#define NDIM_SPRS 1048576
+-#define NDIM_DNS 16384
++#define NDIM_SPRS_ 1048576
++#define NDIM_DNS_ 16384
++#define NDIM_SPRS 262144
++#define NDIM_DNS 8192
+ 
+ /**
+  *  Solve Laplace's equation on a cubic domain using the sparse matrix

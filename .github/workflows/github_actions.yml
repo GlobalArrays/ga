@@ -190,11 +190,15 @@ jobs:
           echo F77 compiler version `"$F77" -v`
       - name: patch source code if needed
         run: |
-          if [[ "$CC" == "icx" ]]; then
+          if [ $(uname -s) == "Linux" ]; then
           sudo apt-get install -q -y patch
+          fi
+          if [[ "$CC" == "icx" ]]; then
           echo patching g2test to prevent icx failures
           patch -p0  < ./travis/g2t.patch
           fi
+          echo patching sprs_perf.c
+          patch -p0  < ./travis/sprs_perf.patch
       - name: before_install
         if: steps.ga-cache-install.outputs.cache-hit != 'true'
         run: |
