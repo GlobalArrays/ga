@@ -551,8 +551,6 @@ int p_Allocation::get(void *src, void *dst, int64_t bytes, int proc)
 {
   cmx_request request;
   int wrank;
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
   p_environment->translateWorld(1,p_group,&proc,&wrank);
   p_impl_environment->nb_register_request(&request);
   p_impl_environment->nb_get(src,dst,bytes,wrank,&request);

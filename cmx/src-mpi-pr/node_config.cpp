@@ -220,7 +220,7 @@ int p_NodeConfig::smallest_world_rank_with_same_hostid(MPI_Comm comm, int world_
   int i = 0;
 
   long my_hostid = g_state.hostid[world_rank];
-  int smallest = my_hostid;
+  int smallest = g_state.rank;
   for (i=0; i<world_ranks.size(); ++i) {
     if (g_state.hostid[world_ranks[i]] == my_hostid) {
       /* found same host as me */
@@ -359,7 +359,7 @@ int p_NodeConfig::get_my_master_rank_with_same_hostid(int rank, int split_group_
     Group *group)
 {
   MPI_Comm comm = group->MPIComm();
-  int my_world_rank = group->getWorldRank(rank);
+  int my_world_rank = this->rank();
   std::vector<int> world_ranks = get_world_ranks(group);
   return get_my_master_rank_with_same_hostid(rank, split_group_size, comm,
       my_world_rank, world_ranks);
@@ -392,11 +392,11 @@ int p_NodeConfig::get_my_master_rank_with_same_hostid(int rank, int split_group_
     /* Contiguous packing of ranks on a node */
     my_master = smallest_rank_with_same_hostid
       + split_group_size *
-      ((rank - smallest_rank_with_same_hostid)/split_group_size);
+      ((world_rank - smallest_rank_with_same_hostid)/split_group_size);
   } else {
     if(num_progress_ranks_per_node == 1) {
       my_master = 2 * (split_group_size *
-          ( ((rank - smallest_rank_with_same_hostid)/2) / split_group_size));
+          ( ((world_rank - smallest_rank_with_same_hostid)/2) / split_group_size));
     } else {
       /* Cyclic packing of ranks on a
        * node between two sockets
@@ -404,10 +404,10 @@ int p_NodeConfig::get_my_master_rank_with_same_hostid(int rank, int split_group_
        *          numbering  */
       if(rank % 2 == 0) {
         my_master = 2 * (split_group_size *
-            ( ((rank - smallest_rank_with_same_hostid)/2) / split_group_size));
+            ( ((world_rank - smallest_rank_with_same_hostid)/2) / split_group_size));
       } else {
         my_master = 1 + 2 * (split_group_size *
-            ( ((rank - smallest_rank_with_same_hostid)/2) / split_group_size));
+            ( ((world_rank - smallest_rank_with_same_hostid)/2) / split_group_size));
       }
     }
   }
@@ -417,12 +417,12 @@ int p_NodeConfig::get_my_master_rank_with_same_hostid(int rank, int split_group_
     /* Contiguous packing of ranks on a node */
     my_master = largest_rank_with_same_hostid
       - split_group_size *
-      ((largest_rank_with_same_hostid - rank)/split_group_size);
+      ((largest_rank_with_same_hostid - world_rank)/split_group_size);
   }
   else {
     if(num_progress_ranks_per_node == 1) {
       my_master = largest_rank_with_same_hostid - 2 * (split_group_size *
-          ( ((largest_rank_with_same_hostid - rank)/2) / split_group_size));
+          ( ((largest_rank_with_same_hostid - world_rank)/2) / split_group_size));
     } else {
       /* Cyclic packing of ranks on a node
        * between two sockets
@@ -430,10 +430,10 @@ int p_NodeConfig::get_my_master_rank_with_same_hostid(int rank, int split_group_
        *          numbering  */
       if(rank % 2 == 0) {
         my_master = largest_rank_with_same_hostid - 1 - 2 * (split_group_size *
-            ( ((largest_rank_with_same_hostid - rank)/2) / split_group_size));
+            ( ((largest_rank_with_same_hostid - world_rank)/2) / split_group_size));
       } else {
         my_master = largest_rank_with_same_hostid - 2 * (split_group_size *
-            ( ((largest_rank_with_same_hostid - rank)/2) / split_group_size));
+            ( ((largest_rank_with_same_hostid - world_rank)/2) / split_group_size));
       }
     }
   }

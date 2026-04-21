@@ -110,7 +110,7 @@ p_Group::p_Group(int n, int *pid_list, MPI_Comm mpi_comm)
    * the world group */
   p_size = n;
   p_world_ranks = new int[n];
-  if (p_world_group != NULL) {
+  if (p_world_ranks != NULL) {
     int i;
     for (i=0; i<n; i++) {
       p_world_ranks[i] = i;
@@ -138,13 +138,10 @@ p_Group::p_Group(int n, int *pid_list, p_Group *group)
   int i, w_me;
   MPI_Comm world = p_world_group->MPIComm();
   int ierr = MPI_Comm_rank(world,&w_me);
-  printf("p[%d] world_rank: %d\n",p_rank,w_me);
   ierr = MPI_Allgather(&w_me,1,MPI_INT,p_world_ranks,
-            1,MPI_INT,p_comm);
-  printf("p[%d] ranks: %d %d %d %d\n",p_rank,p_world_ranks[0],
-      p_world_ranks[1],p_world_ranks[2],p_world_ranks[3]);
+            n,MPI_INT,p_comm);
   for (i=0; i<n; i++) {
-    p_inv_map.insert(std::pair<int,int>(w_me,i));
+    p_inv_map.insert(std::pair<int,int>(p_world_ranks[i],i));
   }
 }
 

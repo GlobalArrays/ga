@@ -638,7 +638,7 @@ void p_Environment::fence(Group *group)
   asm volatile ("" : : : "memory");
 #endif
 
-  /* optimize by only sending to procs which we have outstanding messages */
+  /* optimize by only sending to procs for which we have outstanding messages */
   nb_request_init(&nb);
   it = fenced_procs.begin();
   while (it != fenced_procs.end()) {
@@ -1041,12 +1041,9 @@ int p_Environment::dist_malloc(void **ptrs, int64_t bytes, Group *group)
   my_world_rank = p_config.get_world_rank(group, group->rank());
   my_master = p_config.master(my_world_rank);
 
-  std::vector<int> world_ranks = p_config.get_world_ranks(group);
   is_notifier 
     = p_config.rank() == p_config.get_my_master_rank_with_same_hostid(
-        group->rank(), p_config.node_size(),
-        group->MPIComm(), my_world_rank,
-        world_ranks);
+        group->rank(), p_config.node_size(), group);
   if (is_notifier) {
     reg_entries_local = new reg_entry_t[p_config.node_size()];
   }
@@ -1087,11 +1084,16 @@ int p_Environment::dist_malloc(void **ptrs, int64_t bytes, Group *group)
     // else if (g_state.hostid[reg_entries[i].rank]
     //         == g_state.hostid[my_world_rank]) 
 
+#if 0
     else if (p_config.master(reg_entries[i].rank) == 
         p_config.master(p_config.get_my_master_rank_with_same_hostid(
         group->rank(), p_config.node_size(),
         group->MPIComm(), my_world_rank,
         world_ranks)))
+#else
+    else if (p_config.master(reg_entries[i].rank) ==
+        p_config.master(my_world_rank))
+#endif
 
     {
       /* same SMP node, need to mmap */
@@ -1171,9 +1173,7 @@ int p_Environment::dist_free(void *ptr, Group *group)
   std::vector<int> world_ranks = p_config.get_world_ranks(group);
   is_notifier 
     = p_config.rank() == p_config.get_my_master_rank_with_same_hostid(
-        group->rank(), p_config.node_size(),
-        group->MPIComm(), my_world_rank,
-        world_ranks);
+        group->rank(), p_config.node_size(), group);
 
   if (is_notifier) {
     rank_ptrs = new rank_ptr_t[p_config.node_size()];
@@ -1202,8 +1202,7 @@ int p_Environment::dist_free(void *ptr, Group *group)
     } else if (NULL == ptrs[i].ptr) {
     } else if (p_config.master(world_ranks[i]) ==
        p_config.master(p_config.get_my_master_rank_with_same_hostid(
-           group->rank(), p_config.node_size(), group->MPIComm(),
-           my_world_rank, world_ranks))) {
+           group->rank(),p_config.node_size(),group))) {
         /* same SMP node */
         reg_entry = NULL;
         int retval = 0;
@@ -1211,7 +1210,6 @@ int p_Environment::dist_free(void *ptr, Group *group)
         /* find the registered memory */
         reg_entry = p_register.find(world_ranks[i], ptrs[i].ptr, 0);
         CMX_ASSERT(reg_entry);
-
 
         p_shmem.unmap(reg_entry->mapped, reg_entry->len);
         p_register.remove(world_ranks[i], ptrs[i].ptr);
@@ -3551,7 +3549,7 @@ void p_Environment::nb_recv(void *buf, int count, int source, _cmx_request *nb)
 
   message = new message_t;
   message->next = NULL;
-  message->message = NULL;
+  message->message = reinterpret_cast<char*>(buf);
   message->need_free = 0;
   message->stride = NULL;
   message->iov = NULL;
@@ -3876,8 +3874,17 @@ void p_Environment::nb_wait_for_all(_cmx_request *nb)
       nb_wait_for_recv1(nb);
     }
   }
-  if (nb->send_tail != NULL) printf("p[%d] (nb_wait_for_all) send_tail not deleted\n",p_config.rank());
-  if (nb->recv_tail != NULL) printf("p[%d] (nb_wait_for_all) recv_tail not deleted\n",p_config.rank());
+  if (nb->send_tail != NULL)
+    printf("p[%d] (nb_wait_for_all) send_tail not deleted\n",p_config.rank());
+  if (nb->recv_tail != NULL)
+    printf("p[%d] (nb_wait_for_all) recv_tail not deleted\n",p_config.rank());
+  if (nb->recv_size != 0)
+    printf("p[%d] (nb_wait_for_all) receive requests not completed: %d\n",
+        p_config.rank(),nb->recv_size);
+  if (nb->send_size != 0)
+    printf("p[%d] (nb_wait_for_all) send requests not completed: %d\n",
+        p_config.rank(),nb->send_size);
+
   nb->in_use = 0;
   nb_unregister_request(nb);
 }

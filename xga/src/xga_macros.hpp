@@ -160,7 +160,6 @@
 {                                                                          \
   int64_t _offset=0, _d, _w, _factor=1, _last=p_ndim-1;                    \
   std::vector<int64_t> _lo(p_ndim), _hi(p_ndim);                           \
-  int64_t _pinv, _p_handle;                                                \
                                                                            \
   XGA_OWNS_M(proc, _lo, _hi);                                              \
   XGA_CHECKSUBSCRIPT_M(subscript, _lo, _hi);                               \
@@ -173,8 +172,7 @@
   }                                                                        \
   _offset += (subscript[0]-_lo[0]                                          \
       + width[0]) * _factor;                                               \
-  _pinv=p_group->getLocalRank(proc);                                       \
-  *(ptr_loc) = static_cast<char*>(ptr[_pinv])+_offset*p_elemsize;          \
+  *(ptr_loc) = static_cast<char*>(ptr[proc])+_offset*p_elemsize;           \
 }
 
 /**
