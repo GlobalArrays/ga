@@ -42,16 +42,32 @@ include_directories(BEFORE
   ${PROJECT_SOURCE_DIR}/global/testing
   ${PROJECT_BINARY_DIR})
 
+if (ENABLE_NVSHMEM)
+  set (CMAKE_CUDA_SEPARABLE_COMPILATION  ON)
+  set (CMAKE_CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+endif()
 # -------------------------------------------------------------
 # Build test executables
 # -------------------------------------------------------------
 add_executable (big.x big.c util.c)
+#set_target_properties(big.x PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+#set_target_properties(big.x PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 add_executable (elempatch.x elempatch.c util.c)
+set_target_properties(elempatch.x PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(elempatch.x PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 add_executable (ga-mpi.x ga-mpi.c util.c)
+set_target_properties(ga-mpi.x PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(ga-mpi.x PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 add_executable (gatscat.x gatscat.c util.c)
+set_target_properties(gatscat.x PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(gatscat.x PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 add_executable (getmem.x getmem.c util.c)
+set_target_properties(getmem.x PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(getmem.x PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 #add_executable (ipc.clean.x ipc.clean.c util.c)
 add_executable (lock.x lock.c util.c)
+set_target_properties(lock.x PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(lock.x PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 add_executable (mtest.x mtest.c util.c)
 if (LAPACK_FOUND)
   add_executable (ga_lu.x ga_lu.c util.c)

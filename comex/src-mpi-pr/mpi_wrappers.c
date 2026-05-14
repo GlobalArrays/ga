@@ -13,6 +13,18 @@ int MPI_Wrapper_world_rank()
   return rank;
 }
 
+/**
+ * Return the rank of this processor on communicator comm
+ * @param comm communicator for which rank is desired
+ * @return rank of process on communicator comm
+ */
+int MPI_Wrapper_comm_rank(MPI_Comm comm)
+{
+  int rank;
+  MPI_Comm_rank(comm, &rank);
+  return rank;
+}
+
 /* Abort job with error code
  * err: error code
  */

@@ -58,6 +58,12 @@ elseif (MPI_PR)
       src-mpi-pr/dev_utils_hip.cpp
       src-mpi-pr/mpi_wrappers.c
     )
+  elseif (ENABLE_NVSHMEM)
+    message(STATUS "Setting Compiler for dev_utils_nvshmem.cu to NVSHMEM")
+    set(COMEX_GPU_DEVICE
+      src-mpi-pr/dev_utils_nvshmem.cu
+      src-mpi-pr/mpi_wrappers.c
+    )
   endif()
   set(COMEX_DEVICE
     src-mpi-pr/comex.c
@@ -140,6 +146,11 @@ if(ENABLE_HIP)
   target_link_libraries(armci_comex PRIVATE roc::rocblas hip::device)
 elseif(ENABLE_CUDA)
   target_link_libraries(armci_comex PRIVATE CUDA::cublas)
+elseif(ENABLE_NVSHMEM)
+  target_link_libraries(armci_comex PRIVATE CUDA::cublas)
+  target_link_libraries(armci_comex PRIVATE nvshmem::nvshmem_host nvshmem::nvshmem_device)
+  set_target_properties(armci_comex PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+  set_target_properties(armci_comex PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 endif()
 
 add_library(armci
@@ -155,6 +166,11 @@ if(ENABLE_HIP)
   target_link_libraries(armci PUBLIC roc::rocblas hip::device)
 elseif(ENABLE_CUDA)
   target_link_libraries(armci PUBLIC CUDA::cublas)
+elseif(ENABLE_NVSHMEM)
+  target_link_libraries(armci PUBLIC CUDA::cublas)
+  target_link_libraries(armci PRIVATE nvshmem::nvshmem_host nvshmem::nvshmem_device)
+  set_target_properties(armci PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+  set_target_properties(armci PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 endif()
 
 install(TARGETS armci
@@ -174,6 +190,11 @@ if(ENABLE_HIP)
   target_link_libraries(comex PUBLIC roc::rocblas hip::device)
 elseif(ENABLE_CUDA)
   target_link_libraries(comex PUBLIC CUDA::cublas)
+elseif(ENABLE_NVSHMEM)
+  target_link_libraries(comex PUBLIC CUDA::cublas)
+  target_link_libraries(comex PRIVATE nvshmem::nvshmem_host nvshmem::nvshmem_device)
+  set_target_properties(comex PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+  set_target_properties(comex PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 endif()
 
 install(TARGETS comex
