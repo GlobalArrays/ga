@@ -3512,7 +3512,7 @@ int comex_free(void *ptr, comex_group_t group)
 #endif
 
     /* allocate receive buffer for exchange of pointers */
-    allgather_ptrs = (long **)malloc(sizeof(void *) * comm_size);
+    allgather_ptrs = (void **)malloc(sizeof(void *) * comm_size);
     assert(allgather_ptrs);
 
     /* exchange of pointers */
