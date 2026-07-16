@@ -54,6 +54,7 @@ void acc_test()
     int world_nghbr = world->getWorldRank(nghbr);
     printf("Process %d sending data to neighbor %d using"
         " strided acc\n",rank,world_nghbr);
+    fflush(stdout);
     data_type scale = static_cast<data_type>(1);
     int op;
     if constexpr(std::is_same_v<data_type,int>) {
@@ -106,6 +107,7 @@ void acc_test()
             printf("p[%d] ptr[%d][%d][%d]: %d expected: %d\n",rank,
                 k,j,i,static_cast<int>(std::real(ptr[i+j*DIM+k*DIM*DIM])),
                 2*(i+j*DIM+k*DIM*DIM+rank*DIM*DIM*DIM));
+            fflush(stdout);
             ok = false;
           }
         }
@@ -118,6 +120,7 @@ void acc_test()
     }
     printf("Process %d sending data to neighbor %d using"
         " non-blocking strided acc\n",rank,world_nghbr);
+    fflush(stdout);
     CMX::cmx_request req[8];
     for (iblk = 0; iblk < 8; iblk++) {
       int64_t src_stride[2], dst_stride[2], count[3];
@@ -160,6 +163,7 @@ void acc_test()
             printf("p[%d] ptr[%d][%d][%d]: %ld expected: %ld\n",rank,
                 k,j,i,static_cast<int>(std::real(ptr[i+j*DIM+k*DIM*DIM])),
                 3*(i+j*DIM+k*DIM*DIM+rank*DIM*DIM*DIM));
+            fflush(stdout);
             ok = false;
           }
         }
@@ -173,6 +177,7 @@ void acc_test()
 
     printf("Process %d sending data to neighbor %d using"
         " non-blocking strided acc\n",rank,world_nghbr);
+    fflush(stdout);
     for (iblk = 0; iblk < 8; iblk++) {
       int64_t src_stride[2], dst_stride[2], count[3];
       int stride_levels = 2;
@@ -221,6 +226,7 @@ void acc_test()
             printf("p[%d] ptr[%d][%d][%d]: %d expected: %d\n",rank,
                 k,j,i,static_cast<int>(std::real(ptr[i+j*DIM+k*DIM*DIM])),
                 4*(i+j*DIM+k*DIM*DIM+rank*DIM*DIM*DIM));
+            fflush(stdout);
             ok = false;
           }
         }
@@ -231,8 +237,10 @@ void acc_test()
     } else if (rank == 0) {
       std::cout<<"Strided Non-blocking ACC operation using test is OK"<<std::endl;
     }
+    fflush(stdout);
 
     alloc.free();
+    delete [] buf;
     if (rank == 0) {
       std::cout <<"Allocation freed"<<std::endl;
     }

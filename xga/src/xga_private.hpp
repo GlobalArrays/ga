@@ -121,6 +121,13 @@ public:
   void accessBlockGridPtr(int *index, void **rptr, int64_t *ld);
 
   /**
+   * Return pointer to data owned by this processors
+   * @param[out] rptr pointer to local data
+   * @param[out] nelem number of elements owned by this processor
+   */
+  void accessSegmentPtr(void **rptr, int64_t *nelem);
+
+  /**
    * Release data corresponding to a specific patch
    * @param[in] plo,phi lower and upper indices of patch
    */
@@ -131,6 +138,11 @@ public:
    * @param[in] index indices of block in proc grid
    */
   void releaseBlockGridPtr(int *index);
+
+  /**
+   * Release data corresponding to a specific block
+   */
+  void releaseSegmentPtr();
 
   /**
    * Synchronize global array across all processor that are hosting

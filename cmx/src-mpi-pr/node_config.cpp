@@ -137,8 +137,6 @@ void p_NodeConfig::init(MPI_Comm comm)
  */
 p_NodeConfig::~p_NodeConfig()
 {
-  delete [] g_state.hostid;
-  delete [] g_state.master;
 }
 
 /**
@@ -599,6 +597,16 @@ MPI_Comm p_NodeConfig::global_comm()
 MPI_Comm p_NodeConfig::node_comm()
 {
   return g_state.node_comm;
+}
+
+/**
+ * Free up some resources
+ */
+void p_NodeConfig::clear()
+{
+  delete [] g_state.hostid;
+  delete [] g_state.master;
+  MPI_Comm_free(&g_state.comm);
 }
 
 } // namespace CMX

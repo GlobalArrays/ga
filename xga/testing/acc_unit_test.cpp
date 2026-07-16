@@ -64,13 +64,14 @@ void acc_test()
   jdim = hi[1]-lo[1]+1;
   int ok = 1;
   int chk;
+  dptr = static_cast<data_type*>(vptr);
   for (i=0; i<idim; i++) {
     for (j=0; j<jdim; j++) {
       if (dptr[j+jdim*i] != static_cast<data_type>(2*(j+lo[1]+(i+lo[0])*dims[1]))) {
         if (ok) {
-          printf("p[%d] Check fails for i: %d j: %d actual: %f expected: %f\n",
-              wrank,i+lo[0],j+lo[1],dptr[j+jdim*i],
-              static_cast<data_type>(2*(j+lo[1] + (i+lo[0])*dims[1])));
+          printf("p[%d] Check fails for i: %d j: %d actual: %d expected: %d\n",
+              rank,i+lo[0],j+lo[1],static_cast<int>(std::real(dptr[j+jdim*i])),
+              2*(j+lo[1] + (i+lo[0])*dims[1]));
           ok = 0;
         }
       }
@@ -142,9 +143,9 @@ void acc_test()
     for (j=0; j<jdim; j++) {
       if (dptr[j+jdim*i] != static_cast<data_type>(3*(j+lo[1]+(i+lo[0])*dims[1]))) {
         if (ok) {
-          printf("p[%d] Check fails for i: %d j: %d actual: %ld expected: %ld\n",
-              wrank,i+lo[0],j+lo[1], dptr[j+jdim*i],
-              static_cast<data_type>(3*(j+lo[1] + (i+lo[0])*dims[1])));
+          printf("p[%d] Check fails for i: %d j: %d actual: %d expected: %d\n",
+              rank,i+lo[0],j+lo[1], static_cast<int>(std::real(dptr[j+jdim*i])),
+              3*(j+lo[1] + (i+lo[0])*dims[1]));
           ok = 0;
         }
       }
@@ -196,9 +197,9 @@ void acc_test()
     for (j=0; j<jdim; j++) {
       if (dptr[j+jdim*i] != static_cast<data_type>(4*((j+lo[1])+(i+lo[0])*dims[1]))) {
         if (ok) {
-          printf("p[%d] Check fails for i: %d j: %d actual: %ld expected: %ld\n",
-              wrank,i,j, dptr[j+jdim*i],
-              static_cast<data_type>(4*((j+lo[1]) + (i+lo[0])*dims[1])));
+          printf("p[%d] Check fails for i: %d j: %d actual: %d expected: %d\n",
+              rank,i,j, static_cast<int>(std::real(dptr[j+jdim*i])),
+              4*((j+lo[1]) + (i+lo[0])*dims[1]));
           ok = 0;
         }
       }
@@ -341,14 +342,16 @@ void acc_test()
   for (i=0; i<idim; i++) {
     for (j=0; j<jdim; j++) {
       for (k=0; k<kdim; k++) {
-        if (dptr[k+j*kdim+i*kdim*jdim]
-            != static_cast<data_type>(2*(k+lo3[2]+(j+lo3[1])*dims3d[2]
-                + (i+lo3[0])*dims3d[2]*dims3d[1]))) {
+        if (static_cast<int>(std::real(dptr[k+j*kdim+i*kdim*jdim]))
+            != 2*(k+lo3[2]+(j+lo3[1])*dims3d[2]
+                + (i+lo3[0])*dims3d[2]*dims3d[1])) {
           if (ok) {
-            printf("p[%d] Check fails for i: %d j: %d k: %d actual: %f expected: %f\n",
-                wrank,i,j,k,dptr[k+j*kdim+i*kdim*jdim],
-                static_cast<data_type>(2*(k+lo3[2]+(j+lo3[1])*dims3d[2]
-                    + (i+lo3[0])*dims3d[2]*dims3d[1])));
+            printf("p[%d] Check fails for i: %d j: %d k: %d"
+                " actual: %d expected: %d\n",
+                rank,i,j,k,static_cast<int>(std::real(dptr[k+j*kdim
+                    +i*kdim*jdim])),
+                2*(k+lo3[2]+(j+lo3[1])*dims3d[2]
+                  + (i+lo3[0])*dims3d[2]*dims3d[1]));
             ok = 0;
           }
         }
@@ -381,13 +384,6 @@ void acc_test()
   block_dims[2] = BLOCKDIM;
   gala.setBlockLayout(block_dims, pdims);
   gala.allocate();
-  idim = static_cast<idx_type>(static_cast<double>(dims3d[0])
-      /static_cast<double>(pdims[0]));
-  jdim = static_cast<idx_type>(static_cast<double>(dims3d[1])
-      /static_cast<double>(pdims[1]));
-  kdim = static_cast<idx_type>(static_cast<double>(dims3d[2])
-      /static_cast<double>(pdims[2]));
-  buf = new data_type[idim*jdim*kdim];
   /* find proc grid coordinates of this processor */
   int ix, iy, iz;
   n = rank;
@@ -396,35 +392,37 @@ void acc_test()
   iy = n%pdims[1];
   ix = (n-iy)/pdims[1];
   /* calculate bounds of block used to initialize global array */
-  lo3[0] = ix*idim;
-  lo3[1] = iy*jdim;
-  lo3[2] = iz*kdim;
+  lo3[0] = (ix*dims3d[0])/pdims[0];
+  lo3[1] = (iy*dims3d[1])/pdims[1];
+  lo3[2] = (iz*dims3d[2])/pdims[2];
   if (ix < pdims[0]-1) {
-    hi3[0] = (ix+1)*idim-1;
+    hi3[0] = ((ix+1)*dims3d[0])/pdims[0]-1;
   } else {
     hi3[0] = dims3d[0]-1;
   }
   if (iy < pdims[1]-1) {
-    hi3[1] = (iy+1)*jdim-1;
+    hi3[1] = ((iy+1)*dims3d[1])/pdims[1]-1;
   } else {
     hi3[1] = dims3d[1]-1;
   }
   if (iz < pdims[2]-1) {
-    hi3[2] = (iz+1)*kdim-1;
+    hi3[2] = ((iz+1)*dims3d[2])/pdims[2]-1;
   } else {
     hi3[2] = dims3d[2]-1;
   }
+  ld3[0] = hi3[1]-lo3[1]+1;
+  ld3[1] = hi3[2]-lo3[2]+1;
+  nelems = (hi3[0]-lo3[0]+1)*(hi3[1]-lo3[1]+1)*(hi3[2]-lo3[2]+1);
+  buf = new data_type[nelems];
   /* initialize local buffer */
   for (i=lo3[0]; i<=hi3[0]; i++) {
     for (j=lo3[1]; j<=hi3[1]; j++) {
       for (k=lo3[2]; k<=hi3[2]; k++) {
-        buf[k-lo3[2]+(j-lo3[1])*kdim+(i-lo3[0])*kdim*jdim]
+        buf[k-lo3[2]+(j-lo3[1])*ld3[1]+(i-lo3[0])*ld3[1]*ld3[0]]
           = static_cast<data_type>(k+j*dims3d[2]+i*dims3d[2]*dims3d[1]);
       }
     }
   }
-  ld3[0] = jdim;
-  ld3[1] = kdim;
   gala.zero();
   gala.acc(lo3, hi3, buf, ld3, r_one);
   gala.acc(lo3, hi3, buf, ld3, r_one);
@@ -462,16 +460,15 @@ void acc_test()
         for (l=lo3[0]; l<=hi3[0]; l++) {
           for (m=lo3[1]; m<=hi3[1]; m++) {
             for (n=lo3[2]; n<=hi3[2]; n++) {
-              if (dptr[n-lo3[2]+(m-lo3[1])*ld3[1]+(l-lo3[0])*ld3[0]*ld3[1]]
-                  != static_cast<data_type>(2*(n+m*dims3d[2]
-                    +l*dims3d[2]*dims3d[1]))) {
+              if (static_cast<int>(std::real(dptr[n-lo3[2]
+                      +(m-lo3[1])*ld3[1]+(l-lo3[0])*ld3[0]*ld3[1]]))
+                  != 2*(n+m*dims3d[2] +l*dims3d[2]*dims3d[1])) {
                 if (ok) printf("p[%d] Check fails for ijk: [%d:%d:%d]"
-                    " lmn: [%d:%d:%d] actual: %f expected: %f\n",
+                    " lmn: [%d:%d:%d] actual: %d expected: %d\n",
                     rank,i,j,k,l,m,n,
-                    static_cast<data_type>(dptr[n-lo3[2]+(m-lo3[1])*ld3[1]
-                      +(l-lo3[0])*ld3[0]*ld3[1]]),
-                    static_cast<data_type>((n+m*dims3d[2]
-                      +l*dims3d[2]*dims3d[1])));
+                    static_cast<int>(std::real(dptr[n-lo3[2]+(m-lo3[1])*ld3[1]
+                      +(l-lo3[0])*ld3[0]*ld3[1]])), 2*(n+m*dims3d[2]
+                      +l*dims3d[2]*dims3d[1]));
                 ok = false;
               }
               else chkcnt++;

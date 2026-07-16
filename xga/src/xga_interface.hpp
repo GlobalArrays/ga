@@ -259,6 +259,22 @@ public:
   }
 
   /**
+   * Return pointer to data owned by this processors
+   * @param[out] rptr pointer to local data
+   * @param[out] nelem number of elements owned by this processor
+   */
+  void accessSegmentPtr(void **rptr, int64_t *nelem)
+  {
+    p_Impl->accessSegmentPtr(rptr,nelem);
+  }
+  void accessSegmentPtr(void **rptr, int *nelem)
+  {
+    int64_t telem;
+    p_Impl->accessSegmentPtr(rptr,&telem);
+    *nelem = static_cast<int>(telem);
+  }
+
+  /**
    * Release data corresponding to a specific patch
    * @param[in] plo,phi lower and upper indices of patch
    */

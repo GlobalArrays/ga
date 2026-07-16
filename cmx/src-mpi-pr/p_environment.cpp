@@ -490,6 +490,7 @@ void p_Environment::finalize()
   p_register.destroy();
 
   /* destroy the groups */
+  p_config.clear();
 }
 
 /**
@@ -1366,7 +1367,7 @@ void p_Environment::nb_unregister_request(_cmx_request *nb)
 {
   int i;
   for (i=0; i<nb_max_outstanding; i++) {
-    if (nb = nb_list[i]) nb_list[i] = NULL;
+    if (nb == nb_list[i]) nb_list[i] = NULL;
   }
 }
 
@@ -1730,6 +1731,7 @@ void p_Environment::_progress_server()
 #if DEBUG_TO_FILE
   fclose(cmx_trace_file);
 #endif
+  p_config.clear();
 
   // assume this is the end of a user's application
   MPI_Finalize();
@@ -2071,7 +2073,7 @@ void p_Environment::_get_packed_handler(header_t *header, char *payload, int pro
     } while (bytes_remaining > 0);
   }
 
-  free(packed_buffer);
+  delete [] packed_buffer;
 }
 
 
@@ -2221,6 +2223,7 @@ void p_Environment::_acc_handler(header_t *header, char *scale, int proc)
   char *acc_buffer = NULL;
   int use_eager = 0;
 
+  printf("p[%d] calling _acc_handler\n",p_config.rank());
 #if DEBUG
   fprintf(stderr, "[%d] _acc_handler\n", p_config.rank());
 #endif
@@ -2298,7 +2301,7 @@ void p_Environment::_acc_handler(header_t *header, char *scale, int proc)
       }
       CMX_ASSERT(0);
     }
-//    printf("p[%d] op at 1: %d scale: %ld\n",p_config.rank(),acc_type,*(long*)scale);
+//    printf("p[%d] (acc_handler) op at 1: %d scale: %ld\n",p_config.rank(),acc_type,*(long*)scale);
 //    printf("p[%d] (_acc_handler) ",p_config.rank());
 //    int length = header->length/sizeof(long);
 //    for (int i=0; i<length; i++) {
@@ -2461,9 +2464,9 @@ void p_Environment::_acc_packed_handler(header_t *header, char *payload, int pro
         }
       }
 
-    int length = 8 < count[0]/sizeof(long) ? 8 : count[0]/sizeof(long);
-//    printf("p[%d] op at 3: %d scale: %ld length: %d source: %d\n",p_config.rank(),
-//        acc_type,*(long*)scale,length,proc);
+//    int length = 8 < count[0]/sizeof(long) ? 8 : count[0]/sizeof(long);
+//    printf("p[%d] (acc_packed_handler) op at 3: %d length: %d source: %d\n",p_config.rank(),
+//        acc_type,length,proc);
 //    printf("p[%d] (_acc_packed_handler) ",p_config.rank());
 //    for (int i=0; i<length; i++) {
 //      printf(" %ld",((long*)(&packed_buffer[packed_index]))[i]);
@@ -4187,7 +4190,7 @@ void p_Environment::nb_acc(int datatype, void *scale,
         }
         CMX_ASSERT(0);
       }
-//    printf("p[%d] op at 6: %d\n",p_config.rank(),local_op);
+//    printf("p[%d] (nb_acc) op at 6: %d\n",p_config.rank(),local_op);
       _acc(local_op, bytes, mapped_offset, src, scale);
       sem_post(semaphores[proc]);
       return;
@@ -5048,7 +5051,7 @@ void p_Environment::nb_accs_packed(
 //    fflush(stdout);
 //    printf("\n");
         if (size == bytes_remaining) {
-//          printf("p[%d] (nb_accs_packed) send_header to %d size: %ld\n",p_config.rank(),master_rank,size);
+//         printf("p[%d] (nb_accs_packed) send_header to %d size: %ld\n",p_config.rank(),master_rank,size);
 //    fflush(stdout);
           nb_send_header(buf, size, master_rank, nb);
         }

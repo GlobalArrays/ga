@@ -212,6 +212,11 @@ MPI_Comm global_comm();
  */
 MPI_Comm node_comm();
 
+/**
+ * Free up some resources
+ */
+void clear();
+
 private:
 
 cmx_global_config_t g_state;

@@ -63,6 +63,7 @@ p_GA::~p_GA()
 {
   if (p_mapc) delete [] p_mapc;
   p_alloc->free();
+  delete p_alloc;
   delete [] ptr;
 }
 
@@ -543,11 +544,6 @@ void p_GA::accessBlockGridPtr(int *l_index, void **rptr, int64_t *ld)
   int64_t block_idx[MAXDIM], block_count[MAXDIM];
   int64_t ldidx[MAXDIM];
   int64_t tlo, thi, offset, factor;
-  for (i=0; i<p_ndim; i++) {
-    if (l_index[i] < 0 || l_index[i] >= blk_num[i])
-      p_env->error("(accessBlockGridPtr) block index is outside allowed values",
-          l_index[i]);
-  }
   if (p_distr == REGULAR) {
     int iproc;
     int64_t lo[MAXDIM], hi[MAXDIM];
@@ -609,23 +605,34 @@ void p_GA::accessBlockGridPtr(int *l_index, void **rptr, int64_t *ld)
         offset += p_proc_grid[i];
       }
   } else if (p_distr == SCALAPACK) {
+    for (i=0; i<p_ndim; i++) {
+      int nblocks = p_dims[i]/blk_dims[i];
+      if (l_index[i] < 0 || l_index[i] >= nblocks)
+        p_env->error("(accessBlockGridPtr) block index is outside allowed values",
+            l_index[i]);
+    }
     /* find out what processor block is located on */
     XGA_FIND_PROC_FROM_SL_INDICES_M(inode, l_index);
+    if (inode != p_group->rank()) {
+      p_env->error("(accessBlockGridPtr) cannot access block owned"
+          " by another process",inode);
+    }
+
 
     /* get proc indices of processor that owns block */
     XGA_FIND_PROC_INDICES_M(inode, proc_index);
     last = p_ndim-1;
 
     for (i=0; i<p_ndim; i++)  {
-      blk_num[i] = p_dims[i]/blk_dims[i];
-      blk_inc[i] = p_dims[i]-blk_num[i]*blk_dims[i];
       blk_size[i] = blk_dims[i]*p_proc_grid[i];
-      blk_ngrd[i] = p_dims[i]/blk_size[i];
-      hlf_blk[i] = (p_dims[i]-blk_ngrd[i]*blk_size[i])/blk_dims[i];
+      blk_num[i] = p_dims[i]/blk_size[i];
+      blk_inc[i] = p_dims[i]-blk_num[i]*blk_size[i];
+      blk_ld[i] = blk_num[i]*blk_dims[i];
+      hlf_blk[i] = blk_inc[i]/blk_dims[i];
     }
     int64_t blk_jinc;
     for (i=last; i>0; i--)  {
-      ld[i-1] = blk_ngrd[i]*blk_dims[i];
+      ld[i-1] = blk_ld[i];
       /* initialize this so that it works if first block is partial
        * block */
       blk_jinc = p_dims[i]%blk_dims[i];
@@ -727,10 +734,22 @@ void p_GA::accessBlockGridPtr(int *l_index, void **rptr, int64_t *ld)
       offset += ((l_index[i]-proc_index[i])/p_proc_grid[i])*blk_dims[i]*factor;
       if (i>0) factor *= ld[i-1];
     }
+//    printf("p[%d] (accessBlockGridPtr) offset: %ld\n",p_group->rank(),offset);
   }
 
   *rptr = static_cast<void*>(static_cast<char*>(ptr[inode])+offset*p_elemsize);
 
+}
+
+/**
+ * Return pointer to data owned by this processors
+ * @param[out] rptr pointer to local data
+ * @param[out] nelem number of elements owned by this processor
+ */
+void p_GA::accessSegmentPtr(void **rptr, int64_t *nelem)
+{
+  *rptr = ptr[p_group->rank()];
+  *nelem = p_size/p_elemsize;
 }
 
 /**
@@ -747,6 +766,14 @@ void p_GA::releasePtr(int64_t *plo, int64_t *phi)
  * @param[in] index indices of block in proc grid
  */
 void p_GA::releaseBlockGridPtr(int *index)
+{
+  /* Currently implemented as a no-o */
+}
+
+/**
+ * Release data corresponding to a specific block
+ */
+void p_GA::releaseSegmentPtr()
 {
   /* Currently implemented as a no-o */
 }

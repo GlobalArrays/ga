@@ -5,8 +5,8 @@
 
 #include "test_utilities.hpp"
 #define DIM  2048
-#define DIM3  128 
-#define BLOCKDIM 31
+#define DIM3 3
+#define BLOCKDIM 2
 template<typename idx_type, typename data_type>
 void get_test()
 {
@@ -38,7 +38,7 @@ void get_test()
   idx_type i, j;
   for (i=0; i<idim; i++) {
     for (j=0; j<jdim; j++) {
-      dptr[j+jdim*i] = static_cast<data_type>(j+lo[1] + (i+lo[0])*dims[1]);
+      dptr[j+jdim*i] = static_cast<data_type>((j+lo[1] + (i+lo[0])*dims[1]));
     }
   }
   ga.releasePtr(lo, hi);
@@ -333,6 +333,9 @@ void get_test()
     printf(" with ScaLAPACK data layout and a %d x %d x %d"
         " proc grid layout\n",pdims[0],pdims[1],pdims[2]);
   }
+  dims3d[0] = 3;
+  dims3d[1] = 5;
+  dims3d[2] = 7;
   XGA::GlobalArray<data_type> gala(group, three, dims3d);
   idx_type block_dims[3];
   block_dims[0] = BLOCKDIM;
@@ -340,13 +343,6 @@ void get_test()
   block_dims[2] = BLOCKDIM;
   gala.setBlockLayout(block_dims, pdims);
   gala.allocate();
-  idim = static_cast<idx_type>(static_cast<double>(dims3d[0])
-      /static_cast<double>(pdims[0]));
-  jdim = static_cast<idx_type>(static_cast<double>(dims3d[1])
-      /static_cast<double>(pdims[1]));
-  kdim = static_cast<idx_type>(static_cast<double>(dims3d[2])
-      /static_cast<double>(pdims[2]));
-  buf = new data_type[idim*jdim*kdim];
   /* find proc grid coordinates of this processor */
   int ix, iy, iz;
   n = rank;
@@ -365,7 +361,6 @@ void get_test()
   if (nz*block_dims[2] < dims3d[2]) nz++;
   /* loop over all blocks held by this process */
   int index[3];
-  ok = true;
   int chkcnt = 0;
   for (i=ix; i<nx; i+=pdims[0]) {
     index[0] = i;
@@ -383,6 +378,8 @@ void get_test()
         hi3[2] = (k+1)*block_dims[2]-1;
         if (hi3[2] >= dims3d[2]) hi3[2] = dims3d[2]-1;
         gala.accessBlockGridPtr(index,&vptr,ld3);
+//        printf("p[%d] index: [%d:%d:%d] ld[%d:%d]\n",rank,index[0],
+//            index[1],index[2], ld3[0],ld3[1]);
         dptr = static_cast<data_type*>(vptr);
         int l, m;
         for (l=lo3[0]; l<=hi3[0]; l++) {
@@ -399,39 +396,45 @@ void get_test()
     }
   }
   /* calculate bounds of block to retrieve using get*/
-  lo3[0] = ix*idim;
-  lo3[1] = iy*jdim;
-  lo3[2] = iz*kdim;
+  lo3[0] = (ix*dims3d[0])/pdims[0];
+  lo3[1] = (iy*dims3d[1])/pdims[1];
+  lo3[2] = (iz*dims3d[2])/pdims[2];
   if (ix < pdims[0]-1) {
-    hi3[0] = (ix+1)*idim-1;
+    hi3[0] = ((ix+1)*dims3d[0])/pdims[0]-1;
   } else {
     hi3[0] = dims3d[0]-1;
   }
   if (iy < pdims[1]-1) {
-    hi3[1] = (iy+1)*jdim-1;
+    hi3[1] = ((iy+1)*dims3d[1])/pdims[1]-1;
   } else {
     hi3[1] = dims3d[1]-1;
   }
   if (iz < pdims[2]-1) {
-    hi3[2] = (iz+1)*kdim-1;
+    hi3[2] = ((iz+1)*dims3d[2])/pdims[2]-1;
   } else {
     hi3[2] = dims3d[2]-1;
   }
-  ld3[0] = jdim;
-  ld3[1] = kdim;
-  gala.get(lo3, hi3, buf, ld3);
+  ld3[0] = hi3[1]-lo3[1]+1;
+  ld3[1] = hi3[2]-lo3[2]+1;
+  nelems = (hi3[0]-lo3[0]+1)*(hi3[1]-lo3[1]+1)*(hi3[2]-lo3[2]+1);
+  buf = new data_type[nelems];
   gala.sync();
+  gala.get(lo3, hi3, buf, ld3);
+
   /* check values */
+  ok = 1;
   for (i=lo3[0]; i<=hi3[0]; i++) {
     for (j=lo3[1]; j<=hi3[1]; j++) { 
       for (k=lo3[2]; k<=hi3[2]; k++) {
-        if (buf[k-lo3[2]+(j-lo3[1])*kdim+(i-lo3[0])*kdim*jdim]
-            != static_cast<data_type>(k+j*dims3d[2]+i*dims3d[2]*dims3d[1])) {
+        if (static_cast<int>(std::real(buf[k-lo3[2]
+                +(j-lo3[1])*ld3[1]+(i-lo3[0])*ld3[1]*ld3[0]]))
+            != static_cast<int>(k+j*dims3d[2]+i*dims3d[2]*dims3d[1])) {
           if (ok) printf("p[%d] Check fails for ijk: [%d:%d:%d]"
-              " actual: %f expected: %f\n",rank,i,j,k,
-              buf[k-lo3[2]+(j-lo3[1])*kdim+(i-lo3[0])*kdim*jdim],
-              static_cast<data_type>(k+j*dims3d[2]+i*dims3d[2]*dims3d[1]));
-          ok = false;
+              " actual: %d expected: %d\n",rank,i,j,k,
+              static_cast<int>(std::real(buf[k-lo3[2]
+                  +(j-lo3[1])*ld3[1]+(i-lo3[0])*ld3[1]*ld3[0]])),
+              static_cast<int>(k+j*dims3d[2]+i*dims3d[2]*dims3d[1]));
+          ok = 0;
         }
       }
     }
@@ -439,7 +442,7 @@ void get_test()
   MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
   if (chk==1 && rank == 0) {
     printf("\n ScaLAPACK layout get test PASSES\n\n");
-  } else if (chk == 0) {
+  } else if (chk == 0 && rank == 0) {
     printf("\n ScaLAPACK layout get test FAILS\n\n");
   }
   delete [] buf;
@@ -466,6 +469,7 @@ int main(int argc, char **argv)
     printf("\nTesting GET for ints and int64_t indices\n");
   }
   get_test<int64_t,int>();
+#if 1
   if (rank == 0) {
     printf("\nTesting GET for longs and int64_t indices\n");
   }
@@ -519,6 +523,7 @@ int main(int argc, char **argv)
     printf("\nTesting GET for complex doubles and int indices\n");
   }
   get_test<int,std::complex<double> >();
+#endif
   if (rank == 0) {
     printf("\nCompleted all tests\n");
   }

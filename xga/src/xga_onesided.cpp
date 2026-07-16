@@ -191,6 +191,7 @@ void p_GA::putCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
       p_alloc->puts(pbuf, stride_loc, prem, stride_rem,
           count, stride_levels, iproc);
     }
+    counter++;
   }
   destroyIterator();
 }
@@ -233,9 +234,10 @@ void p_GA::getCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
       p_alloc->nbgets(prem, stride_rem, pbuf, stride_loc,
           count, stride_levels, iproc, cmx_req);
     } else {
-      p_alloc->puts(prem, stride_rem, pbuf, stride_loc,
+      p_alloc->gets(prem, stride_rem, pbuf, stride_loc,
           count, stride_levels, iproc);
     }
+    counter++;
   }
   destroyIterator();
 }

@@ -416,6 +416,8 @@ void put_test()
   ld3[0] = jdim;
   ld3[1] = kdim;
   gala.put(lo3, hi3, buf, ld3);
+  gala.zero();
+  gala.put(lo3, hi3, buf, ld3);
   gala.sync();
   /* check results. Start by finding number of blocks in each direction */
   int nx, ny, nz;
@@ -475,7 +477,7 @@ void put_test()
   MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
   if (chk==1 && rank == 0) {
     printf("\n ScaLAPACK layout put test PASSES\n\n");
-  } else if (chk == 0) {
+  } else if (chk == 0 && rank == 0) {
     printf("\n ScaLAPACK layout put test FAILS\n\n");
   }
   delete [] buf;

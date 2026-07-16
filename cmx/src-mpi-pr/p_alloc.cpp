@@ -489,7 +489,7 @@ int p_Allocation::nbaccs(int op, void *scale, void *src, int64_t *src_stride,
   p_impl_environment->nb_register_request(req);
   p_impl_environment->nb_accs(cmx_op,scale,src,src_stride,dst,dst_stride,count,
       stride_levels,wrank,req);
-  printf("p[%d] (nbaccs) no wait\n",wrank);
+//  printf("p[%d] (nbaccs) no wait\n",wrank);
   return CMX_SUCCESS;
 }
 

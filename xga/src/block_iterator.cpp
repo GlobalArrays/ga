@@ -1,12 +1,12 @@
 #include "xga_private.hpp"
 
-#define XGA_GETBLOCKPATCH_M(plo,phi,lo,hi,blo,bhi,ndim) {                  \
+#define XGA_GETBLOCKPATCH_M(_plo,_phi,_lo,_hi,_blo,_bhi,ndim) {           \
   int _d;                                                                  \
   for (_d=0; _d<ndim; _d++) {                                              \
-    if (lo[_d] <= phi[_d] && lo[_d] >= plo[_d]) blo[_d] = lo[_d];          \
-    else blo[_d] = plo[_d];                                                \
-    if (hi[_d] <= phi[_d] && hi[_d] >= plo[_d]) bhi[_d] = hi[_d];          \
-    else bhi[_d] = phi[_d];                                                \
+    if (_lo[_d] <= _phi[_d] && _lo[_d] >= _plo[_d]) _blo[_d] = _lo[_d];    \
+    else _blo[_d] = _plo[_d];                                              \
+    if (_hi[_d] <= _phi[_d] && _hi[_d] >= _plo[_d]) _bhi[_d] = _hi[_d];    \
+    else _bhi[_d] = _phi[_d];                                              \
   }                                                                        \
 }
 
@@ -39,17 +39,18 @@ void p_GA::initIterator(const int64_t *lo, const int64_t *hi)
     /* XGA uses ScaLAPACK block cyclic data distribution */
     int j;
     /* Calculate some properties associated with data distribution */
+//  printf("p[%d] (initIterator) lo[%ld:%ld:%ld] hi[%ld:%ld:%ld]\n",
+//      p_group->rank(),lo[0],lo[1],lo[2],hi[0],hi[1],hi[2]);
     for (i=0; i<p_ndim; i++)  {
-      blk_num[i] = p_dims[i]/blk_dims[i];
-      blk_inc[i] = p_dims[i]-blk_num[i]*blk_dims[i];
       blk_size[i] = blk_dims[i]*p_proc_grid[i];
-      blk_ngrd[i] = p_dims[i]/blk_size[i];
-      hlf_blk[i] = (p_dims[i]-blk_ngrd[i]*blk_size[i])/blk_dims[i];
+      blk_num[i] = p_dims[i]/blk_size[i];
+      blk_inc[i] = p_dims[i]-blk_num[i]*blk_size[i];
+      blk_ld[i] = blk_num[i]*blk_dims[i];
+      hlf_blk[i] = blk_inc[i]/blk_dims[i];
     }
     /* Need to check all remote processors so start at 0 */
     p_iblock = 0;
     p_offset = 0;
-    int64_t iproc = p_group->rank();
     /* Initialize proc_index and index arrays */
     XGA_FIND_PROC_INDICES_M(p_iblock, proc_index);
     XGA_FIND_PROC_INDICES_M(p_iblock, index);
@@ -158,17 +159,25 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
       /* Scalapack-type data distribution */
       int64_t blk_jinc;
       /* Return false at the end of the iteration */
-      if (p_iblock >= nproc) return false;
+      if (p_iblock >= nproc) {
+        return false;
+      }
       chk = false;
       /* loop over blocks until a block with data is found */
+//          printf("p[%d] (nextBlock) index[%ld:%ld:%ld] prem: %d\n",
+//              p_group->rank(),index[0],index[1],index[2],p_iblock);
       while (!chk) {
         /* get bounds for current block */
         if (p_distr == SCALAPACK || p_distr == TILED) {
+//          printf("p[%d] (nextBlock) blk_dims[%ld:%ld:%ld]\n",p_group->rank(),
+//              blk_dims[0],blk_dims[1],blk_dims[2]);
           for (j = 0; j < p_ndim; j++) {
             blo[j] = blk_dims[j]*(index[j]);
             bhi[j] = blk_dims[j]*(index[j]+1)-1;
             if (bhi[j] >= p_dims[j]) bhi[j] = p_dims[j]-1;
           }
+//          printf("p[%d] (nextBlock) blo[%ld:%ld:%ld] bhi[%ld:%ld:%ld]\n",
+//              p_group->rank(),blo[0],blo[1],blo[2],bhi[0],bhi[1],bhi[2]);
         } else {
           p_offset = 0;
           for (j = 0; j < p_ndim; j++) {
@@ -181,6 +190,7 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
             p_offset += p_proc_grid[j];
           }
         }
+
         /* check to see if this block overlaps with requested block
          * defined by lo and hi */
         chk = true;
@@ -222,7 +232,9 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
             /* last iteration has been completed on current processor. Go
              * to next processor */
             p_iblock++;
-            if (p_iblock >= nproc) return false;
+            if (p_iblock >= nproc) {
+              return false;
+            }
             p_offset = 0;
             if (p_distr == TILED || p_distr == TILED_IRREG) {
               XGA_FIND_TILE_PROC_INDICES_M(p_iblock, proc_index);
@@ -235,13 +247,15 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
         }
       }
       if (chk) {
-        int64_t *clo, *chi;
+        int64_t clo[MAXDIM], chi[MAXDIM];
         *plo = lobuf;
         *phi = hibuf;
-        clo = lobuf;
-        chi = hibuf;
         /* get the patch of block that overlaps requested region */
         XGA_GETBLOCKPATCH_M(blo,bhi,it_lo,it_hi,clo,chi,p_ndim);
+        for (i=0; i<p_ndim; i++) {
+          (*plo)[i] = clo[i];
+          (*phi)[i] = chi[i];
+        }
 
         /* evaluate offset within block */
         last = p_ndim - 1;
@@ -260,10 +274,12 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
           l_offset = 0;
           jtot = 1;
           for (j=last; j>0; j--)  {
-            ldrem[j-1] = blk_ngrd[j]*blk_dims[j];
+            ldrem[j-1] = blk_ld[j];
             /* initialize this so that it works if first block is partial
              * block */
             blk_jinc = p_dims[j]%blk_dims[j];
+//            printf("p[%d] j: %ld blk_jinc: %ld ldrem: %ld\n",
+//                p_group->rank(),j,blk_jinc,ldrem[j-1]);
             if (blk_inc[j] > 0) {
               /* may need to add an extra block or a partial block to stride */
               if (proc_index[j]<hlf_blk[j]) {
@@ -277,19 +293,28 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
                 blk_jinc = 0;
               }
             }
+//            printf("p[%d] j: %ld blk_inc: %ld proc_index: %ld hlf_blk: %ld dims: %ld\n",
+//                p_group->rank(),j,blk_inc[j],proc_index[j],hlf_blk[j],blk_dims[j]);
+//            printf("p[%d] j: %ld blk_jinc: %ld\n",p_group->rank(),j,blk_jinc);
             ldrem[j-1] += blk_jinc;
             l_offset += (clo[j]-blo[j]
-                + (blo[j]/blk_size[j])*blk_dims[j])*jtot;
+                + ((blo[j])/blk_size[j])*blk_dims[j])*jtot;
+//            printf("p[%d]   j: %d clo: %ld blo: %ld size: %ld dims: %ld offset: %ld\n",
+//                p_group->rank(),j,clo[j],blo[j],blk_size[j],blk_dims[j],l_offset);
             jtot *= ldrem[j-1];
           }
           l_offset += (clo[0]-blo[0]
-              + (blo[0]/blk_size[0])*blk_dims[0])*jtot;
+              + ((blo[0])/blk_size[0])*blk_dims[0])*jtot;
+//            printf("p[%d]   j: 0 clo: %ld blo: %ld size: %ld dims: %ld offset: %ld\n",
+//                p_group->rank(),clo[0],blo[0],blk_size[0],blk_dims[0],l_offset);
         }
         /* get pointer to data on remote block */
         pinv = (p_iblock)%nproc;
         //pinv = p_group->getLocalRank(pinv);
         *prem =  static_cast<char*>(ptr[pinv])+l_offset*p_elemsize;
         *proc = pinv;
+//          printf("p[%d] (nextBlock) ldrem: [%ld:%ld] proc: %d\n",p_group->rank(),
+//              ldrem[0],ldrem[1],pinv);
 
         /* evaluate new offset for block */
         int64_t itmp = 1;
@@ -320,6 +345,9 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
           }
         }
       }
+//      printf("p[%d] (nextBlock) plo[%ld:%ld:%ld] phi[%ld:%ld:%ld] prem: %d offset: %ld\n",
+//          p_group->rank(),lobuf[0],lobuf[1],lobuf[2],
+//          hibuf[0],hibuf[1],hibuf[2],*proc,l_offset);
     }
     return true;
   }
@@ -354,8 +382,10 @@ bool p_GA::lastBlock()
  */
 void p_GA::destroyIterator()
 {
+  if (p_distr == REGULAR) {
     map.clear();
     proclist.clear();
+  }
 }
 
 /**
