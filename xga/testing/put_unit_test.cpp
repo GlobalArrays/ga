@@ -456,11 +456,11 @@ void put_test()
                   != static_cast<data_type>(n+m*dims3d[2]
                     +l*dims3d[2]*dims3d[1])) {
                 if (ok) printf("p[%d] Check fails for ijk: [%d:%d:%d]"
-                    " lmn: [%d:%d:%d] actual: %f expected: %f\n",
+                    " lmn: [%d:%d:%d] actual: %d expected: %d\n",
                     rank,i,j,k,l,m,n,
-                    static_cast<data_type>(dptr[n-lo3[2]+(m-lo3[1])*ld3[1]
-                      +(l-lo3[0])*ld3[0]*ld3[1]]),
-                    static_cast<data_type>(n+m*dims3d[2]
+                    static_cast<int>(std::real(dptr[n-lo3[2]+(m-lo3[1])*ld3[1]
+                      +(l-lo3[0])*ld3[0]*ld3[1]])),
+                    static_cast<int>(n+m*dims3d[2]
                       +l*dims3d[2]*dims3d[1]));
                 if (ok) printf("p[%d] number of successful checks: %d\n",
                     rank,chkcnt);

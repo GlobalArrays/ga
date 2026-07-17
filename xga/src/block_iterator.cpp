@@ -334,7 +334,7 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
           /* last iteration has been completed on current processor. Go
            * to next processor */
           p_iblock++;
-//          if (p_iblock >= nproc) return false;
+          if (p_iblock >= nproc) return false;
           p_offset = 0;
           if (p_distr == TILED || p_distr == TILED_IRREG) {
             XGA_FIND_TILE_PROC_INDICES_M(p_iblock, proc_index);
