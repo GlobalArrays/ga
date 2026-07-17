@@ -3296,7 +3296,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     int i, ierr;
     int comm_rank = -1;
     int comm_size = -1;
-    int tsize;
+    MPI_Aint tsize;
     reg_entry_t src;
 
     igroup = comex_get_igroup_from_group(group);

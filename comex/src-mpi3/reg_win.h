@@ -31,8 +31,8 @@ typedef struct _reg_entry_t {
 
 reg_return_t reg_win_init(int nprocs);
 reg_return_t reg_win_destroy();
-reg_entry_t *reg_win_find(int rank, void *buf, int len);
-reg_entry_t *reg_win_insert(int rank, void *buf, int len, MPI_Win win,
+reg_entry_t *reg_win_find(int rank, void *buf, size_t len);
+reg_entry_t *reg_win_insert(int rank, void *buf, size_t len, MPI_Win win,
     comex_igroup_t *group);
 reg_return_t reg_win_delete(int rank, void *buf);
 
