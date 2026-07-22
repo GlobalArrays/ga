@@ -13,8 +13,6 @@
 
 #define MAXDIM 7
 
-#define MAX_NUM_NB_HDLS 256
-
 namespace XGA {
 
 class p_GA {
@@ -251,7 +249,7 @@ private:
    *            with fewer dimensions than the data array
    * @param[in] dims extents of the each dimension of the data array. This
    *            array is of size ndim and is destroyed by the routine
-   * @param[in] nproc number of processors onto which the distribution takes
+   * @param[in] nprocs number of processors onto which the distribution takes
    *            place
    * @param[in] threshold minimum acceptable value of the load balance ratio
    * @param[in] bias when set to a positive value, the rightmost axes of the
@@ -264,7 +262,7 @@ private:
    * @param[out] pedims number of processors along each dimension of the data
    *            array
    */
-  void ddb_h2(int ndim, int64_t *dims, int nproc, double threshold, int bias,
+  void ddb_h2(int ndim, int64_t *dims, int nprocs, double threshold, int bias,
       int64_t *blk, int *pedims);
 
   /* Routines to set up internal iterator of data blocks */
@@ -417,6 +415,7 @@ private:
   int64_t hlf_blk[MAXDIM];      /* flag indicating whether or not to add
                                  * an extra block or partial block to
                                  * process in this dimension */
+  int     p_np;                 /* number of processors with data */
   int64_t blk_size[MAXDIM];     /* blk_dims*p_proc_grid */
   int64_t blk_ngrd[MAXDIM];     /* number of whole blocks of size blk_size */
   int     proc_index[MAXDIM];   /* location of processor in proc grid */

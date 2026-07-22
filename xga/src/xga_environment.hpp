@@ -189,7 +189,9 @@ CMX::cmx_request* getCMXRequest(xga_request *req);
 
 private:
 
-static const int nb_max_outstanding = 256;
+#define MAX_NUM_NB_HDLS 128
+
+static const int nb_max_outstanding = MAX_NUM_NB_HDLS;
 
 CMX::Environment *p_Impl;
 
@@ -198,8 +200,6 @@ static Environment *p_instance;
 Group *p_world_group;
 
 std::vector<bool> p_fence_array;
-
-#define MAX_NUM_NB_HDLS 256
 
 /**
  * Array of headers for non-blocking XGA calls. Then cmxhdl_t elements in

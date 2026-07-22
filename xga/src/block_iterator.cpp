@@ -33,7 +33,7 @@ void p_GA::initIterator(const int64_t *lo, const int64_t *hi)
      * by a given processor, and np contains the total number of
      * processors that contain some portion of the patch.
      */
-    if(!locateRegion(lo, hi, map, proclist, &nproc))
+    if(!locateRegion(lo, hi, map, proclist, &p_np))
       XGA_REGIONERROR_M(p_ndim, lo, hi, -1);
   } else if (p_distr == SCALAPACK)  {
     /* XGA uses ScaLAPACK block cyclic data distribution */
@@ -41,6 +41,7 @@ void p_GA::initIterator(const int64_t *lo, const int64_t *hi)
     /* Calculate some properties associated with data distribution */
 //  printf("p[%d] (initIterator) lo[%ld:%ld:%ld] hi[%ld:%ld:%ld]\n",
 //      p_group->rank(),lo[0],lo[1],lo[2],hi[0],hi[1],hi[2]);
+    printf("p[%d] (initIterator) nproc: %d\n",p_group->rank(),nproc);
     for (i=0; i<p_ndim; i++)  {
       blk_size[i] = blk_dims[i]*p_proc_grid[i];
       blk_num[i] = p_dims[i]/blk_size[i];
@@ -119,7 +120,7 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
     ok = false;
     while(!ok) {
       /* no blocks left, so return */
-      if (count>=nproc) return false;
+      if (count>=p_np) return false;
       *proc = static_cast<int>(proclist[idx]);
       *proc = static_cast<int>(p_group->getLocalRank(*proc));
       /* Find  visible portion of patch held by processor p and
@@ -158,6 +159,10 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
         p_distr == TILED_IRREG) {
       /* Scalapack-type data distribution */
       int64_t blk_jinc;
+      int64_t *sizes = new int64_t[nproc];
+      sizes[p_group->rank()] = p_size;
+      MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, sizes, 1, MPI_LONG,
+          p_group->MPIComm());
       /* Return false at the end of the iteration */
       if (p_iblock >= nproc) {
         return false;
@@ -179,15 +184,15 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
 //          printf("p[%d] (nextBlock) blo[%ld:%ld:%ld] bhi[%ld:%ld:%ld]\n",
 //              p_group->rank(),blo[0],blo[1],blo[2],bhi[0],bhi[1],bhi[2]);
         } else {
-          p_offset = 0;
+          int64_t offset = 0;
           for (j = 0; j < p_ndim; j++) {
-            blo[j] = p_mapc[p_offset+index[j]];
+            blo[j] = p_mapc[offset+index[j]];
             if (index[j] == blk_num[j]-1) {
               bhi[j] = p_dims[j];
             } else {
-              bhi[j] = p_mapc[p_offset+index[j]+1]-1;
+              bhi[j] = p_mapc[offset+index[j]+1]-1;
             }
-            p_offset += p_proc_grid[j];
+            offset += p_proc_grid[j];
           }
         }
 
@@ -310,12 +315,18 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
         }
         /* get pointer to data on remote block */
         pinv = (p_iblock)%nproc;
+        if (l_offset*p_elemsize > sizes[pinv]) {
+          printf("p[%d] (nextBlock)  proc: %d size: %ld offset: %ld\n",
+              p_group->rank(),pinv,sizes[pinv],l_offset*p_elemsize);
+        }
         //pinv = p_group->getLocalRank(pinv);
         *prem =  static_cast<char*>(ptr[pinv])+l_offset*p_elemsize;
         *proc = pinv;
 //          printf("p[%d] (nextBlock) ldrem: [%ld:%ld] proc: %d\n",p_group->rank(),
 //              ldrem[0],ldrem[1],pinv);
 
+        printf("p[%d] (nextBlock) p_iblock: %d index: [%d:%d:%d] l_offset: %d\n",
+            p_group->rank(),p_iblock,index[0],index[1],index[2],l_offset);
         /* evaluate new offset for block */
         int64_t itmp = 1;
         for (j=0; j<p_ndim; j++) {

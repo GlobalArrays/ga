@@ -31,7 +31,7 @@
 #include "shmem.hpp"
 #include "reg_cache.hpp"
 
-#define CMX_MAX_NB_OUTSTANDING 256
+#define CMX_MAX_NB_OUTSTANDING 128
 #define CMX_MAX_STRIDE_LEVEL 8
 #define CMX_TAG 27624
 #define CMX_STATIC_BUFFER_SIZE (2u*1048576u)
