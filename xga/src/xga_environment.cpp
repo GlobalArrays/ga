@@ -114,6 +114,8 @@ void Environment::sync(Group *group)
 {
   p_Impl->fence(group->getCMXGroup());
   group->barrier();
+  p_Impl->fence(group->getCMXGroup());
+  group->barrier();
 }
 
 
