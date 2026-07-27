@@ -603,7 +603,7 @@ void p_Environment::fence(Group *group)
   int count_before = 0;
   int count_after = 0;
   _cmx_request nb;
-  /* NOTE: We always fence on the world group */
+  /* NOTE: We always fence world group ranks */
 
   /* count how many fence messagse to send */
   int size = group->size();
@@ -613,7 +613,7 @@ void p_Environment::fence(Group *group)
   for (ip=0; ip<size; ip++) {
     p = p_config.get_world_rank(group, ip);
     int master = p_config.master(p);
-    if (fence_array[p]) {
+    if (fence_array[master]) {
       if (fenced_procs.find(master) == fenced_procs.end())
         fenced_procs.insert(master);
     }
@@ -647,6 +647,8 @@ void p_Environment::fence(Group *group)
     p = *it;
     if (fence_array[p]) {
       int p_master = p_config.master(p);
+//      if (p != p_master)
+//        printf("p[%d] (fence) p: %d p_master: %d\n",p_config.rank(),p,p_master);
       char *message = NULL;
       header_t *header = NULL;
 
@@ -712,12 +714,15 @@ void p_Environment::fenceProc(int proc, Group *group)
   asm volatile ("" : : : "memory");
 #endif
 
+#if 1
+  _fence_master(master);
+#else
   /* optimize by only sending to procs which we have outstanding messages */
-  nb_request_init(&nb);
   if (fence_array[master]) {
     int p_master = p_config.master(p);
     char *message = NULL;
     header_t *header = NULL;
+    nb_request_init(&nb);
 
     /* because we only fence to masters */
     CMX_ASSERT(p_master == p);
@@ -736,8 +741,11 @@ void p_Environment::fenceProc(int proc, Group *group)
     header->length = 0;
     header->rank = 0;
     nb_send_header(header, sizeof(header_t), p_master, &nb);
+    nb_wait_for_all(&nb);
+    fence_array[master] = 0;
+    delete [] message;
   }
-  nb_wait_for_all(&nb);
+#endif
 
 }
 
@@ -2187,7 +2195,6 @@ void p_Environment::_acc_handler(header_t *header, char *scale, int proc)
   char *acc_buffer = NULL;
   int use_eager = 0;
 
-  printf("p[%d] calling _acc_handler\n",p_config.rank());
 #if DEBUG
   fprintf(stderr, "[%d] _acc_handler\n", p_config.rank());
 #endif

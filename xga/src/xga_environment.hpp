@@ -189,7 +189,7 @@ CMX::cmx_request* getCMXRequest(xga_request *req);
 
 private:
 
-#define MAX_NUM_NB_HDLS 128
+#define MAX_NUM_NB_HDLS 256
 
 static const int nb_max_outstanding = MAX_NUM_NB_HDLS;
 

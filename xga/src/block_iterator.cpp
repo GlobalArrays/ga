@@ -19,6 +19,7 @@ void p_GA::initIterator(const int64_t *lo, const int64_t *hi)
 {
   int i;
   count = 0;
+  nproc = p_group->size();
   for (i=0; i<p_ndim; i++) {
     it_lo[i] = lo[i];
     it_hi[i] = hi[i];
@@ -41,7 +42,7 @@ void p_GA::initIterator(const int64_t *lo, const int64_t *hi)
     /* Calculate some properties associated with data distribution */
 //  printf("p[%d] (initIterator) lo[%ld:%ld:%ld] hi[%ld:%ld:%ld]\n",
 //      p_group->rank(),lo[0],lo[1],lo[2],hi[0],hi[1],hi[2]);
-    printf("p[%d] (initIterator) nproc: %d\n",p_group->rank(),nproc);
+//    printf("p[%d] (initIterator) nproc: %d\n",p_group->rank(),nproc);
     for (i=0; i<p_ndim; i++)  {
       blk_size[i] = blk_dims[i]*p_proc_grid[i];
       blk_num[i] = p_dims[i]/blk_size[i];
@@ -159,10 +160,13 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
         p_distr == TILED_IRREG) {
       /* Scalapack-type data distribution */
       int64_t blk_jinc;
+#if 0
       int64_t *sizes = new int64_t[nproc];
       sizes[p_group->rank()] = p_size;
       MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, sizes, 1, MPI_LONG,
           p_group->MPIComm());
+#endif
+      //MPI_Barrier(p_group->MPIComm());
       /* Return false at the end of the iteration */
       if (p_iblock >= nproc) {
         return false;
@@ -315,18 +319,18 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
         }
         /* get pointer to data on remote block */
         pinv = (p_iblock)%nproc;
-        if (l_offset*p_elemsize > sizes[pinv]) {
-          printf("p[%d] (nextBlock)  proc: %d size: %ld offset: %ld\n",
-              p_group->rank(),pinv,sizes[pinv],l_offset*p_elemsize);
-        }
+//        if (l_offset*p_elemsize > sizes[pinv]) {
+//          printf("p[%d] (nextBlock)  proc: %d size: %ld offset: %ld\n",
+//              p_group->rank(),pinv,sizes[pinv],l_offset*p_elemsize);
+//        }
         //pinv = p_group->getLocalRank(pinv);
         *prem =  static_cast<char*>(ptr[pinv])+l_offset*p_elemsize;
         *proc = pinv;
 //          printf("p[%d] (nextBlock) ldrem: [%ld:%ld] proc: %d\n",p_group->rank(),
 //              ldrem[0],ldrem[1],pinv);
 
-        printf("p[%d] (nextBlock) p_iblock: %d index: [%d:%d:%d] l_offset: %d\n",
-            p_group->rank(),p_iblock,index[0],index[1],index[2],l_offset);
+//        printf("p[%d] (nextBlock) p_iblock: %d index: [%d:%d:%d] l_offset: %d\n",
+//            p_group->rank(),p_iblock,index[0],index[1],index[2],l_offset);
         /* evaluate new offset for block */
         int64_t itmp = 1;
         for (j=0; j<p_ndim; j++) {
