@@ -275,7 +275,6 @@ CMX::cmx_request* Environment::getCMXRequest(xga_request *req)
       }
     } else {
       /* link is first in linked list */
-      req->ahandle = cmx_ihdl_array[idx].next;
       if (cmx_ihdl_array[idx].next != NULL) {
         cmx_ihdl_array[idx].next->previous = NULL;
       }
@@ -283,10 +282,10 @@ CMX::cmx_request* Environment::getCMXRequest(xga_request *req)
   }
   cmx_ihdl_array[idx].active = true;
   cmx_ihdl_array[idx].previous = NULL;
+  cmx_ihdl_array[idx].next = req->ahandle;
   if (req->ahandle != NULL) {
     req->ahandle->previous = &cmx_ihdl_array[idx];
   }
-  cmx_ihdl_array[idx].next = req->ahandle;
   req->ahandle = &cmx_ihdl_array[idx];
   cmx_ihdl_array[idx].index = idx;
   lastCMXhandle = idx;

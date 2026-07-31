@@ -1256,7 +1256,8 @@ void p_Environment::wait(_cmx_request* hdl)
 
   CMX_ASSERT(NULL != hdl);
 
-  nb_wait_for_all(hdl); nb_unregister_request(hdl);
+  nb_wait_for_all(hdl);
+  nb_unregister_request(hdl);
 }
 
 
