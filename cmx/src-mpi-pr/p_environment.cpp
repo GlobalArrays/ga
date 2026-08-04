@@ -93,6 +93,10 @@ p_Environment::p_Environment()
   nb_count_recv = 0;
   nb_count_recv_processed = 0;
 
+
+  request_count = 0;
+  wait_count = 0;
+
   static_server_buffer = NULL;
   static_server_buffer_size = 0;
   eager_threshold = -1;
@@ -488,6 +492,8 @@ void p_Environment::finalize()
 
   /* reg_cache */
   p_register.destroy();
+  printf("p[%d] Total requests: %ld\n",p_config.rank(),request_count);
+  printf("p[%d] Total waits:    %ld\n",p_config.rank(),wait_count);
 
   /* destroy the groups */
   p_config.clear();
@@ -3333,6 +3339,7 @@ void p_Environment::nb_send_common(void *buf, int count, int dest, _cmx_request 
 //    fflush(stdout);
   retval = MPI_Isend(buf, count, MPI_CHAR, dest, CMX_TAG,
       p_config.global_comm(), &(message->request));
+  request_count++;
   _translate_mpi_error(retval,"nb_send_common:MPI_Isend");
   CHECK_MPI_RETVAL(retval);
 }
@@ -3368,6 +3375,7 @@ void p_Environment::nb_send_datatype(void *buf, MPI_Datatype dt, int dest, _cmx_
 
   retval = MPI_Isend(buf, 1, dt, dest, CMX_TAG, p_config.global_comm(),
       &(message->request));
+  request_count++;
   _translate_mpi_error(retval,"nb_send_datatype:MPI_Isend");
   CHECK_MPI_RETVAL(retval);
 }
@@ -3421,6 +3429,7 @@ void p_Environment::nb_recv_packed(void *buf, int count, int source, _cmx_reques
 
   retval = MPI_Irecv(buf, count, MPI_CHAR, source, CMX_TAG,
       p_config.global_comm(), &(message->request));
+  request_count++;
   _translate_mpi_error(retval,"nb_recv_packed:MPI_Irecv");
   CHECK_MPI_RETVAL(retval);
 }
@@ -3461,6 +3470,7 @@ void p_Environment::nb_recv_datatype(void *buf, MPI_Datatype dt, int source, _cm
 
   retval = MPI_Irecv(buf, 1, dt, source, CMX_TAG, p_config.global_comm(),
       &(message->request));
+  request_count++;
   _translate_mpi_error(retval,"nb_recv_datatype:MPI_Irecv");
   CHECK_MPI_RETVAL(retval);
 }
@@ -3501,6 +3511,7 @@ void p_Environment::nb_recv_iov(void *buf, int count, int source, _cmx_request *
 
   retval = MPI_Irecv(buf, count, MPI_CHAR, source, CMX_TAG,
       p_config.global_comm(), &(message->request));
+  request_count++;
   _translate_mpi_error(retval,"nb_recv_iov:MPI_Irecv");
   CHECK_MPI_RETVAL(retval);
 }
@@ -3540,6 +3551,7 @@ void p_Environment::nb_recv(void *buf, int count, int source, _cmx_request *nb)
 
   retval = MPI_Irecv(buf, count, MPI_CHAR, source, CMX_TAG, p_config.global_comm(),
       &(message->request));
+  request_count++;
   _translate_mpi_error(retval,"nb_recv:MPI_Irecv");
   CHECK_MPI_RETVAL(retval);
 }
@@ -3577,6 +3589,7 @@ void p_Environment::nb_wait_for_send1(_cmx_request *nb)
     message_t *message_to_free = NULL;
 
     retval = MPI_Wait(&(nb->send_head->request), &status);
+    wait_count++;
     _translate_mpi_error(retval,"nb_wait_for_send1:MPI_Wait");
     CHECK_MPI_RETVAL(retval);
 
@@ -3677,6 +3690,7 @@ void p_Environment::nb_wait_for_recv1(_cmx_request *nb)
     message_t *message_to_free = NULL;
 
     retval = MPI_Wait(&(nb->recv_head->request), &status);
+    wait_count++;
     _translate_mpi_error(retval,"nb_wait_for_recv1:MPI_Wait");
     CHECK_MPI_RETVAL(retval);
 

@@ -387,6 +387,9 @@ p_NodeConfig p_config;
 p_Shmem p_shmem;
 p_Register p_register;
 
+int64_t request_count;
+int64_t wait_count;
+
 };
 }
 
