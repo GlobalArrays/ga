@@ -425,6 +425,8 @@ private:
   Environment *p_env;
   Group *p_group;
   CMX::Allocation *p_alloc;
+
+  int64_t block_count;
 };
 }
 #endif

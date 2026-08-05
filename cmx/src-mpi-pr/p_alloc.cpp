@@ -119,12 +119,18 @@ int p_Allocation::barrier()
  */
 int p_Allocation::put(void *src, void *dst, int64_t bytes, int proc)
 {
+#if 1
   cmx_request request;
   int wrank;
   p_environment->translateWorld(1,p_group,&proc,&wrank);
   p_impl_environment->nb_register_request(&request);
   p_impl_environment->nb_put(src,dst,bytes,wrank,&request);
   p_impl_environment->nb_wait_for_all(&request);
+#else
+  int wrank;
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_put(src,dst,bytes,wrank,NULL);
+#endif
   return CMX_SUCCESS;
 }
 
@@ -145,6 +151,7 @@ int p_Allocation::puts(void *src, int64_t *src_stride, void *dst,
     int64_t *dst_stride, int64_t *count, int stride_levels, int proc)
 
 {
+#if 1
   cmx_request request;
   int wrank;
   p_environment->translateWorld(1,p_group,&proc,&wrank);
@@ -152,6 +159,12 @@ int p_Allocation::puts(void *src, int64_t *src_stride, void *dst,
   p_impl_environment->nb_puts(src,src_stride,dst,dst_stride,count,
       stride_levels,wrank,&request);
   p_impl_environment->nb_wait_for_all(&request);
+#else
+  int wrank;
+  p_environment->translateWorld(1,p_group,&proc,&wrank);
+  p_impl_environment->nb_puts(src,src_stride,dst,dst_stride,count,
+      stride_levels,wrank,NULL);
+#endif
   return CMX_SUCCESS;
 }
 

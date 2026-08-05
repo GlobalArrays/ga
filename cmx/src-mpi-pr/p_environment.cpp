@@ -895,6 +895,7 @@ char* p_Environment::pack(
     }
 
     (void)memcpy(&packed_buffer[packed_index], &src[src_idx], count[0]);
+    __sync_synchronize();
     packed_index += count[0];
   }
 
@@ -954,6 +955,7 @@ void p_Environment::unpack(char *packed_buffer,
     }
 
     (void)memcpy(&dst[dst_idx], &packed_buffer[packed_index], count[0]);
+    __sync_synchronize();
     packed_index += count[0];
   }
 
@@ -1121,6 +1123,7 @@ int p_Environment::dist_malloc(void **ptrs, int64_t bytes, Group *group)
     header->rank = 0;
     header->length = reg_entries_local_count;
     (void)memcpy(message+sizeof(header_t), reg_entries_local, reg_entries_local_size);
+    __sync_synchronize();
     nb_recv(NULL, 0, my_master, &nb); /* prepost ack */
     nb_send_header(message, message_size, my_master, &nb);
     nb_wait_for_all(&nb);
@@ -1224,6 +1227,7 @@ int p_Environment::dist_free(void *ptr, Group *group)
     header->rank = 0;
     header->length = reg_entries_local_count;
     (void)memcpy(message+sizeof(header_t), rank_ptrs, rank_ptrs_local_size);
+    __sync_synchronize();
     nb_recv(NULL, 0, my_master, &nb); /* prepost ack */
     nb_send_header(message, message_size, my_master, &nb);
     nb_wait_for_all(&nb);
@@ -1428,6 +1432,7 @@ void p_Environment::_malloc_semaphore()
 
   /* exchange names */
   (void)memcpy(&names[SHM_NAME_SIZE*p_config.rank()], name, SHM_NAME_SIZE);
+  __sync_synchronize();
   status = MPI_Allgather(MPI_IN_PLACE, 1, shm_name_type,
       names, 1, shm_name_type, p_config.global_comm());
   _translate_mpi_error(status, "_malloc_semaphore:MPI_Allgather");
@@ -1740,6 +1745,7 @@ void p_Environment::_put_handler(header_t *header, char *payload, int proc)
       reg_entry, header->remote_address);
   if (use_eager) {
     (void)memcpy(mapped_offset, payload, header->length);
+    __sync_synchronize();
   }
   else {
     char *buf = (char*)mapped_offset;
@@ -1955,6 +1961,7 @@ void p_Environment::_put_iov_handler(header_t *header, int proc)
         reg_entry, dst[i]);
 
     (void)memcpy(mapped_offset, &packed_buffer[packed_index], bytes);
+    __sync_synchronize();
     packed_index += bytes;
   }
   CMX_ASSERT(packed_index == bytes*limit);
@@ -2179,6 +2186,7 @@ void p_Environment::_get_iov_handler(header_t *header, int proc)
     mapped_offset = _get_offset_memory(reg_entry, src[i]);
 
     (void)memcpy(&packed_buffer[packed_index], mapped_offset, bytes);
+    __sync_synchronize();
     packed_index += bytes;
   }
   CMX_ASSERT(packed_index == bytes*limit);
@@ -3715,6 +3723,7 @@ void p_Environment::nb_wait_for_recv1(_cmx_request *nb)
       _cmx_giov_t *iov = nb->recv_head->iov;
       for (i=0; i<iov->count; ++i) {
         (void)memcpy(iov->dst[i], &message[off], iov->bytes);
+        __sync_synchronize();
         off += iov->bytes;
       }
       delete [] iov->src;
@@ -3790,6 +3799,7 @@ int p_Environment::nb_test_for_recv1(_cmx_request *nb, message_t **save_recv_hea
         _cmx_giov_t *iov = nb->recv_head->iov;
         for (i=0; i<iov->count; ++i) {
           (void)memcpy(iov->dst[i], &message[off], iov->bytes);
+          __sync_synchronize();
           off += iov->bytes;
         }
         delete iov->src;
@@ -3949,6 +3959,7 @@ void p_Environment::nb_put(void *src, void *dst, int64_t bytes, int proc,
         _fence_master(p_config.master(proc));
       }
       (void)memcpy(dst, src, bytes);
+      __sync_synchronize();
       return;
     }
   }
@@ -3968,6 +3979,7 @@ void p_Environment::nb_put(void *src, void *dst, int64_t bytes, int proc,
       CMX_ASSERT(reg_entry);
       mapped_offset = _get_offset_memory(reg_entry, dst);
       (void)memcpy(mapped_offset, src, bytes);
+      __sync_synchronize();
       return;
     }
   }
@@ -3998,6 +4010,7 @@ void p_Environment::nb_put(void *src, void *dst, int64_t bytes, int proc,
     header->length = bytes;
     if (use_eager) {
       (void)memcpy(message+sizeof(header_t), src, bytes);
+      __sync_synchronize();
       nb_send_header(message, message_size, master_rank, nb);
     }
     else {
@@ -4033,6 +4046,7 @@ void p_Environment::nb_get(void *src, void *dst, int64_t bytes, int proc, _cmx_r
         _fence_master(p_config.master(proc));
       }
       (void)memcpy(dst, src, bytes);
+      __sync_synchronize();
       return;
     }
   }
@@ -4053,6 +4067,7 @@ void p_Environment::nb_get(void *src, void *dst, int64_t bytes, int proc, _cmx_r
       CMX_ASSERT(reg_entry);
       mapped_offset = _get_offset_memory(reg_entry, src);
       (void)memcpy(dst, mapped_offset, bytes);
+      __sync_synchronize();
       return;
     }
   }
@@ -4241,9 +4256,11 @@ void p_Environment::nb_acc(int datatype, void *scale,
     header->rank = proc;
     header->length = bytes;
     (void)memcpy(message+sizeof(header_t), scale, scale_size);
+    __sync_synchronize();
     if (use_eager) {
       (void)memcpy(message+sizeof(header_t)+scale_size,
           src, bytes);
+      __sync_synchronize();
       nb_send_header(message, message_size, master_rank, nb);
     }
     else {
@@ -4428,9 +4445,11 @@ void p_Environment::nb_puts_packed(
     header->rank = proc;
     header->length = packed_index;
     (void)memcpy(message+sizeof(header_t), &stride, sizeof(stride_t));
+    __sync_synchronize();
     if (use_eager) {
       (void)memcpy(message+sizeof(header_t)+sizeof(stride_t),
           packed_buffer, packed_index);
+      __sync_synchronize();
       nb_send_header(message, message_size, master_rank, nb);
       delete [] packed_buffer;
     }
@@ -4533,6 +4552,7 @@ void p_Environment::nb_puts_datatype(
     header->rank = proc;
     header->length = 0;
     (void)memcpy(message+sizeof(header_t), &stride, sizeof(stride_t));
+    __sync_synchronize();
     nb_send_header(message, message_size, master_rank, nb);
     nb_send_datatype(src_ptr, src_type, master_rank, nb);
   }
@@ -4725,6 +4745,7 @@ void p_Environment::nb_gets_packed(
       } while (bytes_remaining > 0);
     }
     (void)memcpy(message+sizeof(header_t), &stride_src, sizeof(stride_t));
+    __sync_synchronize();
     nb_send_header(message, message_size, master_rank, nb);
   }
   nb->in_use = 1;
@@ -4809,6 +4830,7 @@ void p_Environment::nb_gets_datatype(
 
     nb_recv_datatype(dst, dst_type, master_rank, nb);
     (void)memcpy(message+sizeof(header_t), &stride_src, sizeof(stride_t));
+    __sync_synchronize();
     nb_send_header(message, message_size, master_rank, nb);
   }
   nb->in_use = 1;
@@ -5014,10 +5036,13 @@ void p_Environment::nb_accs_packed(
     header->rank = proc;
     header->length = packed_index;
     (void)memcpy(message+sizeof(header_t), scale, scale_size);
+    __sync_synchronize();
     (void)memcpy(message+sizeof(header_t)+scale_size, &stride, sizeof(stride_t));
+    __sync_synchronize();
     if (use_eager) {
       (void)memcpy(message+sizeof(header_t)+scale_size+sizeof(stride_t),
           packed_buffer, packed_index);
+      __sync_synchronize();
       nb_send_header(message, message_size, master_rank, nb);
       free(packed_buffer);
     }
@@ -5113,15 +5138,19 @@ void p_Environment::nb_putv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
   iov_off = 0;
   /* copy limit */
   (void)memcpy(&iov_buf[iov_off], &limit, sizeof(int64_t));
+  __sync_synchronize();
   iov_off += sizeof(int64_t);
   /* copy bytes */
   (void)memcpy(&iov_buf[iov_off], &bytes, sizeof(int64_t));
+  __sync_synchronize();
   iov_off += sizeof(int64_t);
   /* copy src pointers */
   (void)memcpy(&iov_buf[iov_off], src, limit*sizeof(void*));
+  __sync_synchronize();
   iov_off += limit*sizeof(void*);
   /* copy dst pointers */
   (void)memcpy(&iov_buf[iov_off], dst, limit*sizeof(void*));
+  __sync_synchronize();
   iov_off += limit*sizeof(void*);
   CMX_ASSERT(iov_off == iov_size);
 
@@ -5132,6 +5161,7 @@ void p_Environment::nb_putv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
   packed_index = 0;
   for (i=0; i<limit; ++i) {
     (void)memcpy(&packed_buffer[packed_index], src[i], bytes);
+    __sync_synchronize();
     packed_index += bytes;
   }
   CMX_ASSERT(packed_index == bytes*limit);
@@ -5218,15 +5248,19 @@ void p_Environment::nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
   CMX_ASSERT(iov_buf);
   /* copy limit */
   (void)memcpy(&iov_buf[iov_off], &limit, sizeof(int64_t));
+  __sync_synchronize();
   iov_off += sizeof(int64_t);
   /* copy bytes */
   (void)memcpy(&iov_buf[iov_off], &bytes, sizeof(int64_t));
+  __sync_synchronize();
   iov_off += sizeof(int64_t);
   /* copy src pointers */
   (void)memcpy(&iov_buf[iov_off], src, limit*sizeof(void*));
+  __sync_synchronize();
   iov_off += limit*sizeof(void*);
   /* copy dst pointers */
   (void)memcpy(&iov_buf[iov_off], dst, limit*sizeof(void*));
+  __sync_synchronize();
   iov_off += limit*sizeof(void*);
   CMX_ASSERT(iov_off == iov_size);
 
@@ -5237,9 +5271,11 @@ void p_Environment::nb_getv_packed(_cmx_giov_t *iov, int proc, _cmx_request *nb)
   iov_copy->src = new void*[sizeof(void*)*iov->count];
   CMX_ASSERT(iov_copy->src);
   (void)memcpy(iov_copy->src, iov->src, sizeof(void*)*iov->count);
+  __sync_synchronize();
   iov_copy->dst = new void*[sizeof(void*)*iov->count];
   CMX_ASSERT(iov_copy->dst);
   (void)memcpy(iov_copy->dst, iov->dst, sizeof(void*)*iov->count);
+  __sync_synchronize();
 
 #if DEBUG
   fprintf(stderr, "[%d] nb_getv_packed limit=%d bytes=%d src[0]=%p dst[0]=%p copy\n",
@@ -5334,15 +5370,19 @@ void p_Environment::nb_accv_packed(
   CMX_ASSERT(iov_buf);
   /* copy limit */
   (void)memcpy(&iov_buf[iov_off], &limit, sizeof(int64_t));
+  __sync_synchronize();
   iov_off += sizeof(int64_t);
   /* copy bytes */
   (void)memcpy(&iov_buf[iov_off], &bytes, sizeof(int64_t));
+  __sync_synchronize();
   iov_off += sizeof(int64_t);
   /* copy src pointers */
   (void)memcpy(&iov_buf[iov_off], src, limit*sizeof(void*));
+  __sync_synchronize();
   iov_off += limit*sizeof(void*);
   /* copy dst pointers */
   (void)memcpy(&iov_buf[iov_off], dst, limit*sizeof(void*));
+  __sync_synchronize();
   iov_off += limit*sizeof(void*);
   CMX_ASSERT(iov_off == iov_size);
 
@@ -5354,6 +5394,7 @@ void p_Environment::nb_accv_packed(
   packed_index = 0;
   for (i=0; i<limit; ++i) {
     (void)memcpy(&packed_buffer[packed_index], src[i], bytes);
+    __sync_synchronize();
     packed_index += bytes;
   }
   CMX_ASSERT(packed_index == bytes*limit);
@@ -5408,6 +5449,7 @@ void p_Environment::nb_accv_packed(
     header->rank = proc;
     header->length = iov_size;
     (void)memcpy(message+sizeof(header_t), scale, scale_size);
+    __sync_synchronize();
     nb_send_header(message, message_size, master_rank, nb);
     nb_send_header(iov_buf, iov_size, master_rank, nb);
     nb_send_header(packed_buffer, packed_size, master_rank, nb);
@@ -5478,10 +5520,12 @@ int p_Environment::rmw(int cmx_op, void *ploc, void *prem, int extra,
     case CMX_FETCH_AND_ADD:
     case CMX_SWAP:
       (void)memcpy(message+sizeof(header_t), &payload_int, length);
+      __sync_synchronize();
       break;
     case CMX_FETCH_AND_ADD_LONG:
     case CMX_SWAP_LONG:
       (void)memcpy(message+sizeof(header_t), &payload_long, length);
+      __sync_synchronize();
       break;
     default: CMX_ASSERT(0);
   }

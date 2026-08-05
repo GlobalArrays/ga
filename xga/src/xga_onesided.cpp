@@ -173,6 +173,7 @@ void p_GA::putCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
   int64_t ldrem[MAXDIM];
   int64_t idx_buf, *plo, *phi;
   char *pbuf, *prem;
+  block_count = 0;
 
   while (nextBlock(&iproc, &plo, &phi, &prem, ldrem)) {
     /* find the right spot in the user buffer */
@@ -194,6 +195,7 @@ void p_GA::putCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
     counter++;
   }
   destroyIterator();
+  printf("p[%d] (putCommon) block_count: %ld\n",p_group->rank(),block_count);
 }
 
 /**

@@ -56,6 +56,9 @@ void p_GA::initIterator(const int64_t *lo, const int64_t *hi)
     /* Initialize proc_index and index arrays */
     XGA_FIND_PROC_INDICES_M(p_iblock, proc_index);
     XGA_FIND_PROC_INDICES_M(p_iblock, index);
+    printf("p[%d] (initIterator) proc_index: [%d:%d:%d] index: [%d:%d:%d]\n"
+        ,p_group->rank(),
+        proc_index[0],proc_index[1],proc_index[2],index[0],index[1],index[2]);
   } else if (p_distr == TILED || p_distr == TILED_IRREG)  {
     p_iblock = 0;
     p_offset = 0;
@@ -109,6 +112,7 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
 {
   int64_t idx, i, p;
   bool ok;
+  block_count++;
   if (p_distr == REGULAR) {
     int64_t *blo, *bhi;
     int64_t nelems;
@@ -169,6 +173,7 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
       //MPI_Barrier(p_group->MPIComm());
       /* Return false at the end of the iteration */
       if (p_iblock >= nproc) {
+        printf("p[%d] (nextBlock) p_iblock: %d\n",p_group->rank(),p_iblock);
         return false;
       }
       chk = false;
@@ -242,6 +247,7 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
              * to next processor */
             p_iblock++;
             if (p_iblock >= nproc) {
+        printf("p[%d] (nextBlock) p_iblock: %d\n",p_group->rank(),p_iblock);
               return false;
             }
             p_offset = 0;
@@ -366,6 +372,7 @@ bool p_GA::nextBlock(int *proc, int64_t *plo[],
     }
     return true;
   }
+        printf("p[%d] (nextBlock) p_iblock: %d\n",p_group->rank(),p_iblock);
   return false;
 }
 
