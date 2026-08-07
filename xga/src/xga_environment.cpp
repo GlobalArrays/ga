@@ -58,6 +58,8 @@ void Environment::wait(xga_request *hdl)
     cmx_hdl = cmx_hdl->next;
     tmp->next = NULL;
   }
+  hdl->ahandle=NULL;
+  hdl->active = false;
 }
 
 /**
@@ -93,6 +95,10 @@ bool Environment::test(xga_request *hdl)
       cmx_hdl = cmx_hdl->next;
     }
     ret = ret && ttest;
+  }
+  if (ret) {
+    hdl->ahandle=NULL;
+    hdl->active = false;
   }
   return ret;
 }

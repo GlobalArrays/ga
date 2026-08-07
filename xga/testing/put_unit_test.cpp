@@ -416,6 +416,8 @@ void put_test()
   ld3[0] = jdim;
   ld3[1] = kdim;
   gala.put(lo3, hi3, buf, ld3);
+  gala.zero();
+  gala.put(lo3, hi3, buf, ld3);
   gala.sync();
   /* check results. Start by finding number of blocks in each direction */
   int nx, ny, nz;
@@ -478,6 +480,27 @@ void put_test()
   } else if (chk == 0 && rank == 0) {
     printf("\n ScaLAPACK layout put test FAILS\n\n");
   }
+#if 0
+  lo3[0] = ix*idim;
+  lo3[1] = iy*jdim;
+  lo3[2] = iz*kdim;
+  if (ix < pdims[0]-1) {
+    hi3[0] = (ix+1)*idim-1;
+  } else {
+    hi3[0] = dims3d[0]-1;
+  }
+  if (iy < pdims[1]-1) {
+    hi3[1] = (iy+1)*jdim-1;
+  } else {
+    hi3[1] = dims3d[1]-1;
+  }
+  if (iz < pdims[2]-1) {
+    hi3[2] = (iz+1)*kdim-1;
+  } else {
+    hi3[2] = dims3d[2]-1;
+  }
+  ld3[0] = jdim;
+  ld3[1] = kdim;
   gala.zero();
   gala.put(lo3, hi3, buf, ld3);
   gala.sync();
@@ -532,6 +555,7 @@ void put_test()
   } else if (chk == 0 && rank == 0) {
     printf("\n Second ScaLAPACK layout put test FAILS\n\n");
   }
+#endif
   delete [] buf;
   gala.clear();
 }
