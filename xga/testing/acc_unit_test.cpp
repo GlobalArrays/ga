@@ -424,6 +424,7 @@ void acc_test()
     }
   }
   gala.zero();
+  gala.sync();
   gala.acc(lo3, hi3, buf, ld3, r_one);
   gala.acc(lo3, hi3, buf, ld3, r_one);
   gala.sync();

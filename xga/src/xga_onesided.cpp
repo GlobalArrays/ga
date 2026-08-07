@@ -195,7 +195,6 @@ void p_GA::putCommon(int64_t *lo, int64_t *hi, void* buf, int64_t *ld,
     counter++;
   }
   destroyIterator();
-  printf("p[%d] (putCommon) block_count: %ld\n",p_group->rank(),block_count);
 }
 
 /**
