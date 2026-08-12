@@ -168,8 +168,8 @@ if (ENABLE_BLAS)
     endif()
 
   if(ENABLE_CXX)
-    set(BPP_GIT_TAG v2025.05.28)
-    set(LPP_GIT_TAG v2025.05.28)
+    set(BPP_GIT_TAG 148c4f8cae6e7eb1d2118039d564db10bdc25659) # Aug 7, 2026
+    set(LPP_GIT_TAG 40b9d0daf29b6f1f3fa58bc3f22bd6cfb2c67fe4) # Aug 6, 2026
     set(SPP_GIT_TAG 6397f52cf11c0dfd82a79698ee198a2fce515d81)
     if(ENABLE_DEV_MODE)
       set(BPP_GIT_TAG master)
