@@ -1339,7 +1339,11 @@ void *comex_malloc_local(size_t size)
 {
     void *ptr = NULL;
 
-    ptr = _my_malloc(size);
+    if (size > 0) {
+      ptr = _my_malloc(size);
+    }else{
+      ptr = NULL;
+    }
 
     return ptr;
 }
