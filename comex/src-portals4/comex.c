@@ -601,11 +601,15 @@ void *comex_malloc_local(size_t size)
     int retval = 0;
     void *memptr = NULL;
 
-    retval = posix_memalign(&memptr, sizeof(void*), size);
-    if (0 != retval) {
+    if (size > 0) {
+      retval = posix_memalign(&memptr, sizeof(void*), size);
+      if (0 != retval) {
         errno = retval;
         perror("comex_malloc_local: posix_memalign");
         MPI_Abort(l_state.world_comm, retval);
+      }
+    }else{
+      memptr=NULL;
     }
 
     return memptr;

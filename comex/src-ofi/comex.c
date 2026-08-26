@@ -1614,7 +1614,11 @@ fn_fail:
 
 void* comex_malloc_local(size_t size)
 {
-    return malloc(size);
+    if (size > 0) {
+      return malloc(size);
+    }else{
+      return NULL;
+    }
 }
 
 int comex_free_local(void* ptr)
@@ -2066,7 +2070,7 @@ static int iov_acc(int datatype, void*  scale,
                 SCALE(float complex);
                 break;
             default:
-                COMEX_OFI_LOG(WARN, "iov_acc: incorrect data type: %d", datatype);
+                COMEX_OFI_LOG(WARN, "iov_acc: az2incorrect data type: %d", datatype);
                 return 1;
         }
     }

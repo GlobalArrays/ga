@@ -182,6 +182,7 @@ int comex_free_dev(void *ptr, comex_group_t group)
 static void *_comex_malloc_local(size_t size, void **rinfo)
 {
     void *ptr = NULL;
+    if (size > 0) {
     int rc = 0;
 
     /* allocate the user level buffer */
@@ -191,7 +192,9 @@ static void *_comex_malloc_local(size_t size, void **rinfo)
 
     /* register the buffer and check the return info */
     *rinfo = COMEXD_register_memory(ptr, size);
-
+    }else{
+      ptr = NULL;
+    }
     return ptr;
 }
 
