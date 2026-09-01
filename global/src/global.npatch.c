@@ -2666,6 +2666,7 @@ void *alpha, *beta;
   if(local_sync_begin)pnga_sync();
 
 
+  printf("p[%d] (add patch) Got to 1\n",pnga_nodeid());
   pnga_inquire(g_a, &atype, &andim, adims);
   pnga_inquire(g_b, &btype, &bndim, bdims);
   pnga_inquire(g_c, &ctype, &cndim, cdims);
@@ -2682,6 +2683,7 @@ void *alpha, *beta;
   for(i=0; i<cndim; i++)
     if(clo[i] <= 0 || chi[i] > cdims[i])
       pnga_error("g_c indices out of range ", g_c);
+  printf("p[%d] (add patch) Got to 2\n",pnga_nodeid());
 
   /* check if numbers of elements in patches match each other */
   n1dim = 1; for(i=0; i<cndim; i++) n1dim *= (chi[i] - clo[i] + 1);
@@ -2695,8 +2697,11 @@ void *alpha, *beta;
   num_blocks_b = pnga_total_blocks(g_b);
   num_blocks_c = pnga_total_blocks(g_c);
 
+  printf("p[%d] (add patch) Got to 3 numblocks a: %d b: %d c: %d\n",
+      pnga_nodeid(),num_blocks_a,num_blocks_b,num_blocks_c);
   if (num_blocks_a < 0 && num_blocks_b < 0 && num_blocks_c < 0) {
     /* find out coordinates of patches of g_a, g_b and g_c that I own */
+  printf("p[%d] (add patch) Got to 4\n",pnga_nodeid());
     pnga_distribution( g_A, me, loA, hiA);
     pnga_distribution( g_B, me, loB, hiB);
     pnga_distribution( g_c, me, loC, hiC);
@@ -2712,7 +2717,9 @@ void *alpha, *beta;
     else compatible_b = 0;
     /* pnga_gop(pnga_type_f2c(MT_F_INT), &compatible_b, 1, "*"); */
     pnga_gop(pnga_type_f2c(MT_F_INT), &compatible_b, 1, "&&");
+  printf("p[%d] (add patch) Got to 5\n",pnga_nodeid());
     if (compatible_a && compatible_b) {
+  printf("p[%d] (add patch) Got to 6\n",pnga_nodeid());
       if(andim > bndim) cndim = bndim;
       if(andim < bndim) cndim = andim;
 
@@ -2740,6 +2747,7 @@ void *alpha, *beta;
        *        - create a temp array that matches distribution of g_c
        *        - do C<= A
        */
+  printf("p[%d] (add patch) Got to 7\n",pnga_nodeid());
       if(g_b != g_c) {
         pnga_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
         andim = cndim;
@@ -2775,7 +2783,9 @@ void *alpha, *beta;
         pnga_release       (g_B, loC, hiC); 
         pnga_release_update(g_c, loC, hiC); 
       }
+  printf("p[%d] (add patch) Got to 8\n",pnga_nodeid());
     } else if (compatible_a && !compatible_b) {
+  printf("p[%d] (add patch) Got to 9\n",pnga_nodeid());
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_c
        *        - copy & reshape patch of g_b into g_B
@@ -2795,6 +2805,7 @@ void *alpha, *beta;
       if(!pnga_comp_patch(bndim, loB, hiB, cndim, loC, hiC))
         pnga_error(" B patch mismatch ", g_B);
 
+  printf("p[%d] (add patch) Got to 10\n",pnga_nodeid());
       /*  determine subsets of my patches to access  */
       if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)){
         pnga_access_ptr(g_A, loC, hiC, &A_ptr, ldA);
@@ -2810,6 +2821,7 @@ void *alpha, *beta;
         pnga_release_update(g_c, loC, hiC); 
       }
     } else if (!compatible_a && !compatible_b) {
+  printf("p[%d] (add patch) Got to 11\n",pnga_nodeid());
       /* there is no match between any of the global arrays */
       if (!pnga_duplicate(g_c, &g_B, tempname))
         pnga_error("ga_dadd_patch: dup failed", 0L);
@@ -2833,7 +2845,9 @@ void *alpha, *beta;
         pnga_release_update(g_c, loC, hiC); 
       }
     }
+  printf("p[%d] (add patch) Got to 12\n",pnga_nodeid());
   } else {
+  printf("p[%d] (add patch) Got to 13\n",pnga_nodeid());
     _iterator_hdl hdl_a, hdl_b, hdl_c;
     /* create copies of arrays A and B that are identically distributed
        as C*/
@@ -2853,6 +2867,7 @@ void *alpha, *beta;
     pnga_local_iterator_init(g_A, &hdl_a);
     pnga_local_iterator_init(g_B, &hdl_b);
     pnga_local_iterator_init(g_c, &hdl_c);
+  printf("p[%d] (add patch) Got to 14\n",pnga_nodeid());
     while (pnga_local_iterator_next(&hdl_c,loC,hiC,&C_ptr,ldC)) {
       Integer idx, lod[MAXDIM]/*, hid[MAXDIM]*/;
       Integer offset, jtot, last;
@@ -2919,6 +2934,7 @@ void *alpha, *beta;
             loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
       }
     }
+  printf("p[%d] (add patch) Got to 15\n",pnga_nodeid());
 #else
     /* C is normally distributed so just add copies together for regular
        arrays */
@@ -3116,6 +3132,7 @@ void *alpha, *beta;
     }
 #endif
   }
+  printf("p[%d] (add patch) Got to 16\n",pnga_nodeid());
 
   if(A_created) pnga_destroy(g_A);
   if(B_created) pnga_destroy(g_B);

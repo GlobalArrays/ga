@@ -9,6 +9,11 @@
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "c" {
 #endif
+/* (OpenSHMEM-safe MPI wrappers were previously placed here during debugging
+ * but have been removed to restore the original behavior. If a runtime-
+ * specific mitigation is needed, prefer targeted guards in finalize paths
+ * or a small wrapper used only in the affected finalizers.)
+ */
 
 typedef struct {
     void **src; /**< array of source starting addresses */

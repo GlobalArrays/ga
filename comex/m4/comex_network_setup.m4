@@ -208,6 +208,27 @@ AS_IF([test "x$happy" = xyes],
     [$2])
 ])dnl
 
+# _COMEX_NETWORK_OSHMEM([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+# ------------------------------------------------------------------
+AC_DEFUN([_COMEX_NETWORK_OSHMEM], [
+AC_MSG_NOTICE([searching for OpenSHMEM...])
+happy=yes
+# Check for OpenSHMEM compiler wrappers  
+AC_PATH_PROGS([OSHCC], [oshcc], [], [$PATH])
+AC_PATH_PROGS([OSHCXX], [oshcxx oshc++ oshCC], [], [$PATH])
+AC_PATH_PROGS([OSHFC], [oshfort oshfc], [], [$PATH])
+AS_IF([test "x$OSHCC" = x], [happy=no])
+AS_IF([test "x$happy" = xyes],
+    [# Found OpenSHMEM compiler wrappers
+     AC_MSG_NOTICE([found oshcc: $OSHCC])
+     AC_SUBST([OSHCC])
+     AC_SUBST([OSHCXX])
+     AC_SUBST([OSHFC])
+     comex_network=OSHMEM; with_oshmem=yes; $1],
+    [AC_MSG_NOTICE([oshcc not found])
+     $2])
+])dnl
+
 # COMEX_NETWORK_SETUP
 # -------------------
 # This macro allows user to choose the comex network but also allows the
@@ -231,6 +252,7 @@ _COMEX_NETWORK_WITH([mpi3],      [MPI-3 one-sided])
 _COMEX_NETWORK_WITH([ofa],       [Infiniband OpenIB])
 _COMEX_NETWORK_WITH([portals4],  [Portals4])
 _COMEX_NETWORK_WITH([ofi],       [OFI])
+_COMEX_NETWORK_WITH([oshmem],    [OpenSHMEM])
 # Temporarily add COMEX_NETWORK_CPPFLAGS to CPPFLAGS.
 comex_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $COMEX_NETWORK_CPPFLAGS"
 # Temporarily add COMEX_NETWORK_LDFLAGS to LDFLAGS.
@@ -279,6 +301,9 @@ AS_IF([test "x$enable_autodetect" = xyes],
               AS_IF([test "x$comex_network" = xOFI],
                  [_COMEX_NETWORK_OFI([],
                     [AC_MSG_ERROR([test for COMEX_NETWORK=OFI failed])])])
+              AS_IF([test "x$comex_network" = xOSHMEM],
+                 [_COMEX_NETWORK_OSHMEM([],
+                    [AC_MSG_ERROR([test for COMEX_NETWORK=OSHMEM failed])])])
              ],
         [AC_MSG_WARN([too many comex networks specified: $comex_network_count])
          AC_MSG_WARN([the following were specified:])
@@ -290,6 +315,7 @@ AS_IF([test "x$enable_autodetect" = xyes],
          _COMEX_NETWORK_WARN([ofa])
          _COMEX_NETWORK_WARN([portals4])
          _COMEX_NETWORK_WARN([ofi])
+         _COMEX_NETWORK_WARN([oshmem])
          AC_MSG_ERROR([please select only one comex network])])])
 # Remove COMEX_NETWORK_CPPFLAGS from CPPFLAGS.
 CPPFLAGS="$comex_save_CPPFLAGS"
@@ -305,6 +331,7 @@ _COMEX_NETWORK_AM_CONDITIONAL([mpi3])
 _COMEX_NETWORK_AM_CONDITIONAL([ofa])
 _COMEX_NETWORK_AM_CONDITIONAL([portals4])
 _COMEX_NETWORK_AM_CONDITIONAL([ofi])
+_COMEX_NETWORK_AM_CONDITIONAL([oshmem])
 _COMEX_NETWORK_AC_DEFINE([mpi-ts])
 _COMEX_NETWORK_AC_DEFINE([mpi-mt])
 _COMEX_NETWORK_AC_DEFINE([mpi-pt])
@@ -313,6 +340,7 @@ _COMEX_NETWORK_AC_DEFINE([mpi3])
 _COMEX_NETWORK_AC_DEFINE([ofa])
 _COMEX_NETWORK_AC_DEFINE([portals4])
 _COMEX_NETWORK_AC_DEFINE([ofi])
+_COMEX_NETWORK_AC_DEFINE([oshmem])
 AC_SUBST([COMEX_NETWORK_LDFLAGS])
 AC_SUBST([COMEX_NETWORK_LIBS])
 AC_SUBST([COMEX_NETWORK_CPPFLAGS])
