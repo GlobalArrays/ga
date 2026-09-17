@@ -2,6 +2,9 @@
 #   include "config.h"
 #endif
 
+#if HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
 
 /**
  * Symmetrizes matrix A:  A := .5 * (A+A`)
@@ -85,7 +88,7 @@ void pnga_symmetrize(Integer g_a) {
       pnga_access_ptr(g_a, alo, ahi, &a_ptr, lda); 
 
       for(i=0; i<ndim; i++) nelem *= ahi[i]-alo[i] +1;
-      b_ptr = (void *) ga_malloc(nelem, MT_F_DBL, "v");
+      b_ptr = (void *) pnga_malloc(nelem, MT_F_DBL, "v");
 
       for(i=0; i<ndim-2; i++) {bhi[i]=ahi[i]; blo[i]=alo[i]; }
 
@@ -104,7 +107,7 @@ void pnga_symmetrize(Integer g_a) {
     if(have_data) {
       gai_add(alo, ahi, a_ptr, b_ptr, alpha, type, nelem, ndim);
       pnga_release_update(g_a, alo, ahi);
-      ga_free(b_ptr);
+      pnga_free(b_ptr);
     }
   } else {
     /* For block-cyclic data, probably most efficient solution is to

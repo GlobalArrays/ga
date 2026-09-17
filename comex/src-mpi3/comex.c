@@ -175,7 +175,7 @@ int get_local_rank_from_win(MPI_Win win, int world_rank, int *local_rank)
   return COMEX_SUCCESS;
 }
 
-int comex_init()
+int _comex_init(MPI_Comm comm)
 {
     int i, status;
     int init_flag;
@@ -189,10 +189,9 @@ int comex_init()
     status = MPI_Initialized(&init_flag);
     assert(MPI_SUCCESS == status);
     assert(init_flag);
-    status = MPI_Comm_size(MPI_COMM_WORLD, &status);
     
     /* Duplicate the World Communicator */
-    status = MPI_Comm_dup(MPI_COMM_WORLD, &(l_state.world_comm));
+    status = MPI_Comm_dup(comm, &(l_state.world_comm));
     translate_mpi_error(status,"comex_init:MPI_Comm_dup");
     assert(MPI_SUCCESS == status);
     assert(l_state.world_comm); 
@@ -207,6 +206,9 @@ int comex_init()
 
     /* Pick up environment variables */
     {
+      int armci_verbose;
+      int me;
+
       char *value = NULL;
       nb_max_outstanding = COMEX_MAX_NB_OUTSTANDING; /* default */
       value = getenv("COMEX_MAX_NB_OUTSTANDING");
@@ -214,6 +216,22 @@ int comex_init()
         nb_max_outstanding = atoi(value);
       }
       COMEX_ASSERT(nb_max_outstanding > 0);
+
+#if DEBUG
+      armci_verbose = 1;
+#else
+      armci_verbose = 0;
+#endif
+      value = getenv("ARMCI_VERBOSE");
+      if (NULL != value) {
+          armci_verbose = atoi(value);
+      }
+
+      if (armci_verbose && 0 == l_state.rank) {
+            printf("COMEX_MAX_NB_OUTSTANDING=%d\n", nb_max_outstanding);
+            fflush(stdout);
+      }
+
     }
 
     
@@ -287,6 +305,18 @@ int comex_init()
     MPI_Barrier(l_state.world_comm);
 
     return COMEX_SUCCESS;
+}
+
+
+int comex_init()
+{
+  return _comex_init(MPI_COMM_WORLD);
+}
+
+
+int comex_init_comm(MPI_Comm comm)
+{
+  return _comex_init(comm);
 }
 
 
@@ -3193,7 +3223,7 @@ int comex_lock(int mutex, int proc)
 
   /* Wait until some one else frees the lock */
   if (!ok) {
-    ierr = MPI_Recv(NULL, 0, MPI_INT, MPI_ANY_SOURCE, idx, MPI_COMM_WORLD,
+    ierr = MPI_Recv(NULL, 0, MPI_INT, MPI_ANY_SOURCE, idx, l_state.world_comm,
         MPI_STATUS_IGNORE);
     translate_mpi_error(ierr,"comex_lock:MPI_Recv");
   }
@@ -3241,7 +3271,7 @@ int comex_unlock(int mutex, int proc)
   }
 
   if (!ok) {
-    MPI_Send(&lock, 0, MPI_INT, nextlock, idx, MPI_COMM_WORLD);
+    MPI_Send(&lock, 0, MPI_INT, nextlock, idx, l_state.world_comm);
   }
 
   free(waitlistcopy);

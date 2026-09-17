@@ -633,13 +633,14 @@ C                                  THE UNSORTED ARRAY
       K=K-1
       IF (T .LT. X(K)) GO TO 270
       X(K+1)=T
-       Y(K+1)=TY
+      Y(K+1)=TY
       GO TO 265
 C
 C CLEAN UP
 C
   300 IF (KFLAG.GE.1) RETURN
-      DO 310 I=1,NN
-  310 X(I) = -X(I)
+      DO I=1,NN
+        X(I) = -X(I)
+      END DO
       RETURN
       END

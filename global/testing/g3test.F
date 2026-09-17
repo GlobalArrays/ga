@@ -2,15 +2,8 @@
 #   include "config.fh"
 #endif
 c vector boxes lack arithmetic precision 
-#ifdef CRAY_YMP
-# define THRESH 1d-10
-#elif defined(FUJITSU)
-# define THRESH 1d-12
-# define THRESHF 1e-5
-#else
 # define THRESH 1d-13
 # define THRESHF 1e-5
-#endif
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF
 

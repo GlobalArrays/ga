@@ -1357,7 +1357,7 @@ int comex_free_local(void *ptr)
 }
 
 
-int comex_init()
+int _comex_init(MPI_Comm comm)
 {
     int status;
     int init_flag;
@@ -1373,7 +1373,7 @@ int comex_init()
     assert(init_flag);
     
     /* Duplicate the World Communicator */
-    status = MPI_Comm_dup(MPI_COMM_WORLD, &(l_state.world_comm));
+    status = MPI_Comm_dup(comm, &(l_state.world_comm));
     assert(MPI_SUCCESS == status);
     assert(l_state.world_comm); 
 
@@ -1413,6 +1413,18 @@ int comex_init()
     comex_barrier(COMEX_GROUP_WORLD);
 
     return COMEX_SUCCESS;
+}
+
+
+int comex_init()
+{
+  return _comex_init(MPI_COMM_WORLD);
+}
+
+
+int comex_init_comm(MPI_Comm comm)
+{
+  return _comex_init(comm);
 }
 
 
@@ -1897,13 +1909,13 @@ static void _unlock_request_handler(header_t *header, int proc)
 
 static void _lq_push(int rank, int id, char *notify)
 {
-    lock_t *lock = NULL;
+    comex_lock_t *lock = NULL;
 
 #if DEBUG
     printf("[%d] _lq_push rank=%d id=%d\n", l_state.rank, rank, id);
 #endif
 
-    lock = _my_malloc(sizeof(lock_t));
+    lock = _my_malloc(sizeof(comex_lock_t));
     lock->next = NULL;
     lock->rank = rank;
     lock->id = id;
@@ -1931,9 +1943,9 @@ static void _lq_push(int rank, int id, char *notify)
 static int _lq_progress(void)
 {
     int needs_progress = 0;
-    lock_t *lock = NULL;
-    lock_t *new_lock_head = NULL;
-    lock_t *new_lock_tail = NULL;
+    comex_lock_t *lock = NULL;
+    comex_lock_t *new_lock_head = NULL;
+    comex_lock_t *new_lock_tail = NULL;
 
 #if DEBUG
     if (l_state.num_mutexes > 0) {
@@ -1948,7 +1960,7 @@ static int _lq_progress(void)
     lock = l_state.lq_head;
     while (lock) {
         if (l_state.mutexes[lock->id] < 0) {
-            lock_t *last = NULL;
+            comex_lock_t *last = NULL;
             header_t *header = NULL;
 
             l_state.mutexes[lock->id] = lock->rank;

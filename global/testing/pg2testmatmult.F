@@ -1,13 +1,9 @@
 #if HAVE_CONFIG_H
 #   include "config.fh"
 #endif
-#if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
-#   define xgemm SGEMM
-#   define ygemm CGEMM
-#else
-#   define xgemm TEST_DGEMM
-#   define ygemm TEST_ZGEMM
-#endif
+
+#define xgemm TEST_DGEMM
+#define ygemm TEST_ZGEMM
 
       program ga_test
 c $Id: pg2testmatmult.F,v 1.3.6.1 2007-04-25 21:49:59 manoj Exp $

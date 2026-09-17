@@ -10,16 +10,6 @@
 
 #include <mpi.h>
 
-#if defined(__bgp__)
-#include <spi/kernel_interface.h>
-#include <common/bgp_personality.h>
-#include <common/bgp_personality_inlines.h>
-#elif defined(__bgq__)
-#  include <mpix.h>
-#elif defined(__CRAYXT) || defined(__CRAYXE)
-#  include <pmi.h> 
-#endif
-
 #include "comex.h"
 #include "comex_impl.h"
 #include "groups.h"
@@ -505,7 +495,7 @@ static int cmplong(const void *p1, const void *p2)
 /**
  * Initialize group linked list. Prepopulate with world group.
  */
-void comex_group_init() 
+void comex_group_init(MPI_Comm comm) 
 {
     int status = 0;
     int i = 0;
@@ -519,13 +509,13 @@ void comex_group_init()
 #ifdef ENABLE_DEVICE
     int num_dev = 0; 
     _comex_dev_flag = 0;
-    _comex_dev_id = -1;
+    _comex_dev_id = -2;
 #endif
     
     /* populate g_state */
 
     /* dup MPI_COMM_WORLD and get group, rank, and size */
-    status = MPI_Comm_dup(MPI_COMM_WORLD, &(g_state.comm));
+    status = MPI_Comm_dup(comm, &(g_state.comm));
     COMEX_ASSERT(MPI_SUCCESS == status);
     status = MPI_Comm_group(g_state.comm, &(g_state.group));
     COMEX_ASSERT(MPI_SUCCESS == status);
@@ -552,7 +542,7 @@ void comex_group_init()
             g_state.hostid, 1, MPI_LONG, g_state.comm);
     COMEX_ASSERT(MPI_SUCCESS == status);
      /* First create a temporary node communicator and then
-      * split further into number of gruoups within the node */
+      * split further into number of groups within the node */
      MPI_Comm temp_node_comm;
      int temp_node_size;
     /* create node comm */
@@ -561,6 +551,8 @@ void comex_group_init()
     sorted = (long*)malloc(sizeof(long) * g_state.size);
     (void)memcpy(sorted, g_state.hostid, sizeof(long)*g_state.size);
     qsort(sorted, g_state.size, sizeof(long), cmplong);
+    /* count is number of distinct host IDs that are lower than
+     * the host ID of this rank */
     for (i=0; i<g_state.size-1; ++i) {
         if (sorted[i] == g_state.hostid[g_state.rank]) 
         {
@@ -574,7 +566,8 @@ void comex_group_init()
 #if DEBUG
     printf("count: %d\n", count);
 #endif
-    status = MPI_Comm_split(MPI_COMM_WORLD, count,
+    /* split based on the value of count */
+    status = MPI_Comm_split(comm, count,
             g_state.rank, &temp_node_comm);
     int node_group_size, node_group_rank;
     MPI_Comm_size(temp_node_comm, &node_group_size);
@@ -615,22 +608,6 @@ void comex_group_init()
     g_state.master[g_state.rank] = get_my_master_rank_with_same_hostid(g_state.rank, 
         split_group_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
         num_progress_ranks_per_node, is_node_ranks_packed);
-#ifdef ENABLE_DEVICE
-    /* find out if this process is bound to a device */
-    if (g_state.master[g_state.rank] == smallest_rank_with_same_hostid) {
-      int inc = g_state.rank - smallest_rank_with_same_hostid - 1;
-      if (inc < numDevices() && inc >= 0) {
-        _comex_dev_flag = 1;
-        _comex_dev_id = inc;
-      }
-    } else {
-      int inc = g_state.rank - smallest_rank_with_same_hostid;
-      if (inc < numDevices() && inc >= 0) {
-        _comex_dev_flag = 1;
-        _comex_dev_id = inc;
-      }
-    }
-#endif
 #if DEBUG
     printf("[%d] rank; split_group_size: %d\n", g_state.rank, split_group_size);
     printf("[%d] rank; largest_rank_with_same_hostid[%d]; my master is:[%d]\n",
@@ -699,15 +676,11 @@ void comex_group_init()
         COMEX_ASSERT(MPI_SUCCESS == status);
         _igroup_set_world_ranks(igroup);
         COMEX_ASSERT(igroup->world_ranks != NULL);
-#ifdef ENABLE_DEVICE
-        igroup->dev_id = _comex_dev_id;
-        igroup->is_dev_group = _comex_dev_flag;
-#endif
 #if DEBUG
         printf("Creating comm: I AM WORKER[%ld]\n", g_state.rank);
 #endif
     }
-    status = MPI_Comm_split(MPI_COMM_WORLD, proc_split_group_stamp,
+    status = MPI_Comm_split(comm, proc_split_group_stamp,
             g_state.rank, &(g_state.node_comm));
     COMEX_ASSERT(MPI_SUCCESS == status);
     /* node rank */
@@ -717,6 +690,34 @@ void comex_group_init()
     status = MPI_Comm_size(g_state.node_comm, &(g_state.node_size));
     COMEX_ASSERT(MPI_SUCCESS == status);
 
+#ifdef ENABLE_DEVICE
+    /* find out if this process is bound to a device */
+    {
+      int num_dev = numDevices();
+      int ncnt = 0;
+      int node_rank = g_state.rank - smallest_rank_with_same_hostid;
+      int world_rank;
+      for (i=0; i<size_node; i++) {
+        if (i == node_rank && ncnt < num_dev &&
+            g_state.master[g_state.rank] != g_state.rank) {
+          _comex_dev_flag = 1;
+          _comex_dev_id = ncnt;
+          break;
+        }
+        world_rank = i + smallest_rank_with_same_hostid;
+        /* rank is not a progress rank */
+        if (g_state.master[world_rank] != world_rank) {
+          ncnt++;
+        }
+      }
+    }
+    if (g_state.master[g_state.rank] != g_state.rank) {
+      igroup->dev_id = _comex_dev_id;
+      igroup->is_dev_group = _comex_dev_flag;
+    }
+//    printf("p[%d] master: %d dev_id: %d dev_flag: %d\n",g_state.rank,
+//        g_state.master[g_state.rank],_comex_dev_id,_comex_dev_flag);
+#endif
 #if DEBUG
     printf("node_rank[%d]/ size[%d]\n", g_state.node_rank, g_state.node_size);
     if (g_state.master[g_state.rank] == g_state.rank) {
@@ -760,68 +761,6 @@ void comex_group_finalize()
 
 static long xgethostid()
 {
-#if defined(__bgp__)
-#warning BGP
-    long nodeid;
-    int matched,midplane,nodecard,computecard;
-    char rack_row,rack_col;
-    char location[128];
-    char location_clean[128];
-    (void) memset(location, '\0', 128);
-    (void) memset(location_clean, '\0', 128);
-    _BGP_Personality_t personality;
-    Kernel_GetPersonality(&personality, sizeof(personality));
-    BGP_Personality_getLocationString(&personality, location);
-    matched = sscanf(location, "R%c%c-M%1d-N%2d-J%2d",
-            &rack_row, &rack_col, &midplane, &nodecard, &computecard);
-    assert(matched == 5);
-    sprintf(location_clean, "%2d%02d%1d%02d%02d",
-            (int)rack_row, (int)rack_col, midplane, nodecard, computecard);
-    nodeid = atol(location_clean);
-#elif defined(__bgq__)
-#warning BGQ
-    int nodeid;
-    MPIX_Hardware_t hw;
-    MPIX_Hardware(&hw);
-
-    nodeid = hw.Coords[0] * hw.Size[1] * hw.Size[2] * hw.Size[3] * hw.Size[4]
-        + hw.Coords[1] * hw.Size[2] * hw.Size[3] * hw.Size[4]
-        + hw.Coords[2] * hw.Size[3] * hw.Size[4]
-        + hw.Coords[3] * hw.Size[4]
-        + hw.Coords[4];
-#elif defined(__CRAYXT) || defined(__CRAYXE)
-#warning CRAY
-    int nodeid;
-#  if defined(__CRAYXT)
-    PMI_Portals_get_nid(g_state.rank, &nodeid);
-#  elif defined(__CRAYXE)
-    PMI_Get_nid(g_state.rank, &nodeid);
-#  endif
-#else
     long nodeid = gethostid();
-#endif
-
-#if 0
-    char name[256];
-    gethostname(name, 128);
-    int i;
-    long newid=0;
-    int a0 = (int)'a';
-    int z0 = (int)'z';
-    long factor = 1;
-    for (i=11; i>=0; i--) {
-	    if (name[i] >= a0 && name[i] <= z0) {
-		    newid += ((int)name[i]-a0)*factor;
-	    } else if (name[i] >= (int)'0' && name[i] <= '9') {
-		    newid += ((int)name[i]-(int)'0')*factor;
-	    } else {
-		    printf("Incorrect character encountered\n");
-		    MPI_Abort(MPI_COMM_WORLD,1);
-	    } 
-
-	    factor *= 36;
-    }
-    nodeid = newid;
-#endif
     return nodeid;
 }

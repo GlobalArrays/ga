@@ -122,10 +122,7 @@ void LJ_Setup(int natoms, double **x_i, double **x_j, double **grad) {
   i = gBlockSize * NDIM * 2; /* for gX_i and gX_j used in computeFG() */
   j = natoms * NDIM;         /* for gGrad in computeFG() */
   n = i + j + SAFELIMIT;                 /* total memory required */
-  if(MA_push_get(C_DBL, n, "GA LJ bufs", (void *)&gMemHandle, &maindex))
-    MA_get_pointer(gMemHandle, x_i);
-  else GA_Error("ma_alloc_get failed",n);
-  
+  *x_i = (double *) malloc(sizeof(double) * n);
   *x_j  = *x_i + i/2 + 1;
   *grad = *x_j + i/2 + 1;
 }
@@ -395,8 +392,8 @@ void LJ_Initialize(int natoms) {
     printf("    System Volume            =   %f\n\n\n", pow(L, 3.0));
   }
 #endif
-  
-  if(gMe == 0) {
+  GA_Sync();
+  //  if(gMe == 0) {
     
     int c, i, j, k, m, n, p;
     double b, xSum[3] = {0.0, 0.0, 0.0};
@@ -408,9 +405,7 @@ void LJ_Initialize(int natoms) {
     MA_AccessIndex maindex;
     
     n = NDIM * natoms + 1;
-    if(MA_push_get(C_DBL, n, "GA LJ_Init bufs", (void *)&handle, &maindex))
-      MA_get_pointer(handle, &x);
-    else GA_Error("ma_alloc_get failed",n);
+    x = (double *) malloc(sizeof(double) * n);
     
     /* Use face centered cubic (FCC) lattice for initial positions.
        Find number of unit cells (c) needed to place all atoms */
@@ -438,7 +433,7 @@ void LJ_Initialize(int natoms) {
     
     lo = 0;
     hi = natoms*NDIM-1; 
-    NGA_Put (g_X, &lo, &hi, x, &hi);
+    if(gMe == 0) NGA_Put (g_X, &lo, &hi, x, &hi);
 
     /* Random Gaussian distribution of initial velocities */ 
     for(i=0; i<natoms; i++) 
@@ -450,11 +445,10 @@ void LJ_Initialize(int natoms) {
       for(j=0; j<NDIM; j++) 
     x[i*NDIM + j] -= xSum[j]/natoms;
 
-    NGA_Put (g_V, &lo, &hi, x, &hi); /* velocity array */
-    
-    if(!MA_pop_stack(handle)) GA_Error("LJ_Init:MA_pop_stack failed",0);  
-  }
-    
+      if(gMe == 0) NGA_Put (g_V, &lo, &hi, x, &hi); /* velocity array */
+      free(x);
+    //  }
+  GA_Sync();
   /* rescale to desired temperature */
   rescaleVelocities(natoms);
 
@@ -705,7 +699,7 @@ void LJ_Solve(int natoms) {
        100*(execTime-gComputeTime)/execTime);
   }
 #endif
-  if(!MA_pop_stack(gMemHandle)) GA_Error("LJ_Init:MA_pop_stack failed",0); 
+  free(x_i);
 }
 
 

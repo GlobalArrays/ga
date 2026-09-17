@@ -5,6 +5,8 @@
 /* for size_t */
 #include <stdlib.h>
 
+#include <mpi.h>
+
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif
@@ -23,6 +25,7 @@ extern int armci_notify(int proc);
 extern int armci_notify_wait(int proc,int *pval);
 extern int ARMCI_Init();    /* initialize ARMCI */
 extern int ARMCI_Init_args(int *argc, char ***argv); /* initialize ARMCI */
+extern int ARMCI_Init_mpi_comm(MPI_Comm comm); /* initialize ARMCI with external communicator */
 extern int ARMCI_Initialized();
 extern void ARMCI_Barrier();    /* ARMCI Barrier*/
 
@@ -238,15 +241,6 @@ extern int armci_domain_my_id(armci_domain_t domain);
 extern int armci_domain_count(armci_domain_t domain);
 extern int armci_domain_same_id(armci_domain_t domain, int proc);
 
-
-/* PVM group
- * On CrayT3E: the default group is the global group which is (char *)NULL
- *             It is the only working group.
- * On Workstations: the default group is "mp_working_group". User can set
- *                  the group name by calling the ARMCI_PVM_init (defined
- *                  in message.c) and passing the group name to the library.
- */
-
 extern char *mp_group_name;
 
 /*********************stuff for non-blocking API******************************/
@@ -275,6 +269,7 @@ extern int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,ARMCI_Group *g
 extern int ARMCI_Malloc_group_memdev(void *ptr_arr[], armci_size_t bytes,
     ARMCI_Group *group, const char *device);
 extern int ARMCI_Free_group(void *ptr, ARMCI_Group *group);
+extern int ARMCI_Free_group_memdev(void *ptr, ARMCI_Group *group);
 
 extern int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* nb_handle);
 

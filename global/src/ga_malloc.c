@@ -8,7 +8,7 @@
 #include "globalp.h"
 #include "ga-papi.h"
 #include "ga-wapi.h"
-#define GA_MAXMEM_AVAIL ( ( (long)1 << (8*sizeof(Integer)-2) ) -1)
+#define GA_MAXMEM_AVAIL ( ( (size_t)1 << (8*sizeof(Integer)-2) ) -1)
 #define CHECK           0
 #define ALIGNMENT       sizeof(DoubleComplex)
 
@@ -25,10 +25,11 @@ void GA_Register_stack_memory(
     ga_ext_alloc = ext_alloc; ga_ext_free  = ext_free; ga_usesMA=0;
 }
 
+#if 1
 void* ga_malloc(Integer nelem, int type, char *name)
 {
     void *ptr;  
-    unsigned long addr;
+    size_t addr;
     Integer handle, adjust=0, bytes, item_size=GAsizeofM(pnga_type_f2c(type));
     Integer extra;
 
@@ -45,11 +46,11 @@ void* ga_malloc(Integer nelem, int type, char *name)
     if(ga_usesMA) { /* Uses Memory Allocator (MA) */
        if(MA_push_stack(type,nelem,name,&handle))  MA_get_pointer(handle,&ptr);
        else pnga_error("ga_malloc: MA_push_stack failed",0);
-       addr = (unsigned long)ptr;
+       addr = (size_t)ptr;
     }
     else { /* else, using external memory allocator */
        bytes = nelem*item_size;
-       addr  = (unsigned long)(*ga_ext_alloc)(
+       addr  = (size_t)(*ga_ext_alloc)(
                (size_t)bytes, (int)item_size, name);
     }
 
@@ -77,6 +78,7 @@ void ga_free(void *ptr)
     else /*make sure to free original(before address alignment) pointer*/
       (*ga_ext_free)((char *)ptr - handle);
 }
+#endif
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_memory_avail_type = pnga_memory_avail_type

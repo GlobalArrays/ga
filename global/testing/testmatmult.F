@@ -3,6 +3,7 @@
 #endif
       
 c#define BLOCK_CYCLIC
+c#define IRREG_DISTRIB
       
       program ga_test
 c $Id: testmatmult.F,v 1.6 2005-11-23 10:25:18 manoj Exp $
@@ -31,6 +32,8 @@ c
       real *8 tmpa(nummax,nummax), tmpb(nummax,nummax)
       real *8 tmpc(nummax,nummax)
       integer ndim, dims(2), block_size(2), proc_grid(2)
+      integer mapa(10),mapb(10),nblocka,nblockb
+      integer ilo,ihi,jlo,jhi
       logical verify
       data transa/'n','t','n','t'/
       data transb/'n','n','t','t'/
@@ -78,20 +81,7 @@ c      verify = .FALSE.           ! to verify ga_dgemm
          endif
 c     
 c
-#ifndef BLOCK_CYCLIC
-         if (.not.ga_create(MT_DBL,num_m,num_n,'g_c',
-     &        0,0,g_c)) then
-            call ga_error('failed: create g_c',20)
-         endif
-         if (.not.ga_create(MT_DBL,num_k,num_n,'g_b',
-     &        0,0,g_b)) then
-            call ga_error('failed: create g_b',30)
-         endif
-         if (.not.ga_create(MT_DBL,num_m,num_k,'g_a',
-     &        0,0,g_a)) then
-            call ga_error('failed: create g_a',40)
-         endif
-#else
+#ifdef BLOCK_CYCLIC
          ndim = 2
          block_size(1) = 128
          block_size(2) = 128
@@ -123,6 +113,47 @@ c
          call ga_set_array_name(g_a,'g_a')
          call ga_set_block_cyclic(g_a,block_size)
          if(.not.ga_allocate(g_a)) then
+            call ga_error('failed: create g_a',40)
+         endif
+#elif defined(IRREG_DISTRIB)
+         mapa(1)=1
+         mapb(1)=1
+         nblocka=nint(sqrt(ga_nnodes()*1d0))
+         nblockb=ga_nnodes()/nblocka
+         do i=2,nblocka
+            mapa(i)=(num_m/nblocka-2)*(i-1)+1
+         enddo
+         do i=2,nblockb
+            mapb(i)=(num_n/nblockb-2)*(i-1)+1
+         enddo
+         if (.not.ga_create_irreg(MT_DBL,num_m,num_n,'g_c',
+     &       mapa,nblocka,mapb,nblockb,g_c)) then
+            call ga_error('failed: create g_c',20)
+         endif
+         call ga_distribution(g_c,
+     .     ga_nodeid(), ilo, ihi, jlo, jhi)
+         write(6,*) ga_nodeid(), ' ilo ihi jlo jhi ',
+     .        ilo,ihi,jlo,jhi
+
+         if (.not.ga_create_irreg(MT_DBL,num_k,num_n,'g_b',
+     &        mapa,nblocka,mapb,nblockb,g_b)) then
+            call ga_error('failed: create g_b',30)
+         endif
+         if (.not.ga_create_irreg(MT_DBL,num_m,num_k,'g_a',
+     &        mapa,nblocka,mapb,nblockb,g_a)) then
+            call ga_error('failed: create g_a',40)
+         endif
+#else
+         if (.not.ga_create(MT_DBL,num_m,num_n,'g_c',
+     &        0,0,g_c)) then
+            call ga_error('failed: create g_c',20)
+         endif
+         if (.not.ga_create(MT_DBL,num_k,num_n,'g_b',
+     &        0,0,g_b)) then
+            call ga_error('failed: create g_b',30)
+         endif
+         if (.not.ga_create(MT_DBL,num_m,num_k,'g_a',
+     &        0,0,g_a)) then
             call ga_error('failed: create g_a',40)
          endif
 #endif         

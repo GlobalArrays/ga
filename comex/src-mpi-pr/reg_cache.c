@@ -88,8 +88,8 @@ seg_cmp(void *reg_addr, size_t reg_len, int reg_id, void *oth_addr, size_t oth_l
 
     switch (op) {
         case TEST_FOR_INTERSECTION:
-            result = ((reg_beg >= oth_beg && reg_beg <  oth_end) ||
-                     (reg_end >  oth_beg && reg_end <= oth_end)
+            result = (((reg_beg >= oth_beg && reg_beg <  oth_end) ||
+                     (reg_end >  oth_beg && reg_end <= oth_end))
                      && reg_id == oth_id);
 #if DEBUG
             printf("[%d] TEST_FOR_INTERSECTION "
@@ -394,6 +394,12 @@ reg_cache_find(int rank, void *buf, size_t len, int dev_id)
 {
     reg_entry_t *entry = NULL;
     reg_entry_t *runner = NULL;
+    if (dev_id == -2) {
+      printf("p[%d] (reg_cache_find) Invalid device specified\n",g_state.rank);
+    }
+//    printf("p[%d] Look for device memory buf: %p dev: %d"
+//        " len: %d on proc: %d\n",
+//        g_state.rank,buf,dev_id,(int)len,rank);
 
     if (buf == NULL) return entry;
 #if DEBUG
@@ -440,6 +446,16 @@ reg_cache_find(int rank, void *buf, size_t len, int dev_id)
     }
 #endif
 
+    if (entry == NULL && dev_id >= 0) {
+      runner = reg_cache[rank];
+
+      while (runner && NULL == entry) {
+        if (RR_SUCCESS == reg_entry_contains(runner, buf, len, dev_id)) {
+          entry = runner;
+        }
+        runner = runner->next;
+      }
+    }
     return entry;
 }
 
@@ -507,8 +523,13 @@ reg_cache_find_intersection(int rank, void *buf, size_t len, int dev_id)
  * @return pointer to new node
  */
 reg_entry_t*
-reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped,
-    int use_dev, int dev_id
+reg_cache_insert(int rank, void *buf, size_t len, const char *name
+#if ENABLE_SYSV
+    ,key_t key
+#endif
+    ,void *mapped
+    ,int use_dev
+    ,int dev_id
 #if USE_SICM
 #if SICM_OLD
     ,sicm_device *device
@@ -550,6 +571,9 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
     node->use_dev = use_dev;
     node->dev_id = dev_id;
     if (name != NULL) (void)memcpy(node->name, name, SHM_NAME_SIZE);
+#if ENABLE_SYSV
+    node->key = key;
+#endif
     node->mapped = mapped;
     node->next = NULL;
 #ifdef ENABLE_DEVICE
@@ -573,7 +597,6 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name, void *mapped
 
     return node;
 }
-
 
 /**
  * Removes the reg cache entry associated with the given rank and buffer.

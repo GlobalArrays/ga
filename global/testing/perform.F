@@ -2,11 +2,6 @@
 #   include "config.fh"
 #endif
 c $Id: perform.F,v 1.9 2000-05-25 01:09:20 d3h325 Exp $
-#if defined(__xlc__) || defined(__xlC__) || defined(__IBMC__)
-#define SLEEP sleep_
-#else
-#define SLEEP sleep
-#endif
       program perform
 c***
 c***  Last modification: Fri Jan 13 12:13:27 PST 1995
@@ -127,25 +122,22 @@ c       everybody touches own data
         call ga_fill_patch(g_a, 1, n, 1, n , 1d0*me*loop)
         if (me .eq. 0) then
           tg= time_get(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count)
-        else
-          call SLEEP(2)
         endif
+        call ga_sync()
 c
 c       everybody touches own data
         call ga_fill_patch(g_a, 1, n, 1, n , 1d0*me*loop)
         if (me .eq. 0) then
           tp= time_put(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count)
-        else
-          call SLEEP(2)
         endif
+        call ga_sync()
 c
 c       everybody touches own data
         call ga_fill_patch(g_a, 1, n, 1, n , 1d0*me*loop)
         if (me .eq. 0) then
           ta= time_acc(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count)
-        else
-          call SLEEP(2)
         endif
+        call ga_sync()
 c
         if (me .eq. 0) then
           write(6,77)bytes, count, tg, 1d-6*bytes/tg,

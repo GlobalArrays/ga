@@ -2,15 +2,8 @@
 #   include "config.fh"
 #endif
 c vector boxes lack arithmetic precision 
-#ifdef CRAY_YMP
-# define THRESH 1d-10
-#elif defined(FUJITSU)
-# define THRESH 1d-12
-# define THRESHF 1e-5
-#else
 # define THRESH 1d-13
 # define THRESHF 1e-5
-#endif
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF
 
@@ -248,7 +241,8 @@ c      end do
       t2 = 0.0d00
       t3 = 0.0d00
       do i = 1, nloop
-        call zero_ghosts(int_mb(index3),ld3,a,hi(1)-lo(1)+1,width,dims3)
+        call zero_ghosts(int_mb(index3),ld3(1),a,hi(1)-lo(1)+1,
+     +                   width,dims3)
         start = util_timer()
         call ga_ghost_barrier
         t1 = t1 + util_timer() - start
@@ -266,7 +260,7 @@ c      end do
       if (maxval.lt.10000)
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
-      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3(1),b,
      +           nmax+2*width(1),has_data,width,corner_flag,1)
       call ga_sync
 #endif
@@ -281,7 +275,8 @@ c      end do
       t5 = 0.0d00
       t6 = 0.0d00
       do i = 1, nloop
-        call zero_ghosts(int_mb(index3),ld3,a,hi(1)-lo(1)+1,width,dims3)
+        call zero_ghosts(int_mb(index3),ld3(1),a,hi(1)-lo(1)+1,
+     +                   width,dims3)
         start = util_timer()
         call ga_ghost_barrier
         t4 = t4 + util_timer() - start
@@ -299,7 +294,7 @@ c      end do
       if (maxval.lt.10000)
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
-      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3(1),b,
      +           nmax+2*width(1),has_data,width,corner_flag,2)
       call ga_sync
 #endif
@@ -314,7 +309,8 @@ c      end do
       t8 = 0.0d00
       t9 = 0.0d00
       do i = 1, nloop
-        call zero_ghosts(int_mb(index3),ld3,a,hi(1)-lo(1)+1,width,dims3)
+        call zero_ghosts(int_mb(index3),ld3(1),a,hi(1)-lo(1)+1,
+     +                   width,dims3)
         start = util_timer()
         call ga_ghost_barrier
         t7 = t7 + util_timer() - start
@@ -332,7 +328,7 @@ c      end do
       if (maxval.lt.10000)
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
-      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3(1),b,
      +           nmax+2*width(1),has_data,width,corner_flag,3)
       call ga_sync
 #endif
@@ -351,7 +347,8 @@ c      end do
 c
       status = ga_set_update4_info(g_a)
       do i = 1, nloop
-        call zero_ghosts(int_mb(index3),ld3,a,hi(1)-lo(1)+1,width,dims3)
+        call zero_ghosts(int_mb(index3),ld3(1),a,hi(1)-lo(1)+1,
+     +                   width,dims3)
         start = util_timer()
         call ga_ghost_barrier
         t10 = t10 + util_timer() - start
@@ -369,7 +366,7 @@ c
       if (maxval.lt.10000)
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
-      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3(1),b,
      +           nmax+2*width(1),has_data,width,corner_flag,4)
       call ga_sync
 #endif
@@ -388,7 +385,8 @@ c
 c
       status = ga_set_update5_info(g_a)
       do i = 1, nloop
-        call zero_ghosts(int_mb(index3),ld3,a,hi(1)-lo(1)+1,width,dims3)
+        call zero_ghosts(int_mb(index3),ld3(1),a,hi(1)-lo(1)+1,
+     +                   width,dims3)
         start = util_timer()
         call ga_ghost_barrier
         t13 = t13 + util_timer() - start
@@ -408,7 +406,7 @@ c     write(6,*) 'completed ga_update5_ghosts'
       if (maxval.lt.10000)
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
-      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3(1),b,
      +           nmax+2*width(1),has_data,width,corner_flag,5)
       call ga_sync
 #endif
@@ -424,7 +422,8 @@ c     write(6,*) 'completed ga_update5_ghosts'
       t18 = 0.0d00
       call ga_sync
       do i = 1, nloop
-        call zero_ghosts(int_mb(index3),ld3,a,hi(1)-lo(1)+1,width,dims3)
+        call zero_ghosts(int_mb(index3),ld3(1),a,hi(1)-lo(1)+1,
+     +                   width,dims3)
         start = util_timer()
         call ga_ghost_barrier
         t16 = t16 + util_timer() - start
@@ -442,7 +441,7 @@ c     write(6,*) 'completed ga_update5_ghosts'
       if (maxval.lt.10000)
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
-      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3(1),b,
      +           nmax+2*width(1),has_data,width,corner_flag,6)
       call ga_sync
 #endif
@@ -458,7 +457,8 @@ c     write(6,*) 'completed ga_update5_ghosts'
       t24 = 0.0d00
       call ga_sync
       do i = 1, nloop
-        call zero_ghosts(int_mb(index3),ld3,a,hi(1)-lo(1)+1,width,dims3)
+        call zero_ghosts(int_mb(index3),ld3(1),a,hi(1)-lo(1)+1,
+     +                   width,dims3)
         start = util_timer()
         call ga_ghost_barrier
         t22 = t22 + util_timer() - start
@@ -476,7 +476,7 @@ c     write(6,*) 'completed ga_update5_ghosts'
       if (maxval.lt.10000)
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
-      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3(1),b,
      +           nmax+2*width(1),has_data,width,corner_flag,7)
       call ga_sync
 #endif
@@ -492,7 +492,8 @@ c     write(6,*) 'completed ga_update5_ghosts'
       t27 = 0.0d00
       call ga_sync
       do i = 1, nloop
-        call zero_ghosts(int_mb(index3),ld3,a,hi(1)-lo(1)+1,width,dims3)
+        call zero_ghosts(int_mb(index3),ld3(1),a,hi(1)-lo(1)+1,
+     +                   width,dims3)
         start = util_timer()
         call ga_ghost_barrier
         t25 = t25 + util_timer() - start
@@ -511,7 +512,7 @@ c     write(6,*) 'completed ga_update5_ghosts'
       if (maxval.lt.10000)
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
-      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3(1),b,
      +           nmax+2*width(1),has_data,width,corner_flag,8)
       call ga_sync
 #endif

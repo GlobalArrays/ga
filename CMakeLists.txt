@@ -41,6 +41,7 @@ include(ga-utils)
 
 ga_option(ENABLE_CXX ON)
 ga_option(ENABLE_FORTRAN ON)
+ga_option(ENABLE_COVERAGE OFF)
 ga_option(CMAKE_CXX_EXTENSIONS OFF)
 ga_option(ENABLE_CUDA OFF)
 ga_option(ENABLE_NVSHMEM OFF)
@@ -54,8 +55,12 @@ if(ENABLE_CXX)
   enable_language(CXX)
 endif()
 
-if (ENABLE_CUDA OR ENABLE_HIP OR ENABLE_NVSHMEM)
-  if(${CMAKE_MINOR_VERSION} LESS "19") 
+if (ENABLE_NVSHMEM)
+  set(ENABLE_CUDA ON)
+endif()
+
+if (ENABLE_CUDA OR ENABLE_HIP)
+  if(${CMAKE_MINOR_VERSION} LESS "22" AND ${CMAKE_MAJOR_VERSION} LESS "4") 
     message(FATAL_ERROR "GPU build requires CMake versions >= 3.22.0")
   endif()
 endif()
@@ -64,18 +69,16 @@ if (NOT ENABLE_CUDA)
   set(ENABLE_NVTX OFF)
 endif()
 
-if (ENABLE_CUDA OR ENABLE_NVSHMEM)
+if (ENABLE_CUDA)
   ga_option(CMAKE_CUDA_ARCHITECTURES 70)
   enable_language(CUDA)
-  set(CMAKE_CUDA_STANDARD 14)
+  set(CMAKE_CUDA_STANDARD 11)
   set(CMAKE_CUDA_EXTENSIONS OFF)
   set(CMAKE_CUDA_STANDARD_REQUIRED ON)
   # set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
   # set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
   find_package(CUDAToolkit REQUIRED COMPONENTS cublas)
-  if (ENABLE_NVSHMEM)
-    find_package(NVSHMEM REQUIRED HINTS ${NVSHMEM_PREFIX}/lib/cmake/nvshmem)
-  endif()
+  find_package(NVSHMEM)
 elseif(ENABLE_HIP)
   if (NOT DEFINED ROCM_PATH)
     if (DEFINED ENV{ROCM_PATH})
@@ -100,6 +103,7 @@ ga_option(CMAKE_BUILD_TYPE Release)
 ga_option(LINALG_VENDOR BLIS)
 ga_option(ENABLE_TESTS ON)
 ga_option(ENABLE_PROFILING OFF)
+ga_option(ENABLE_SYSV OFF)
 #Options for user provided LinAlg libraries
 ga_option(ENABLE_BLAS OFF)
 ga_option(ENABLE_SCALAPACK OFF)
@@ -120,8 +124,15 @@ if(ENABLE_BLAS)
   endif()  
 endif()
 
-if(MSVC AND ENABLE_FORTRAN)
-  message(FATAL_ERROR "MSVC build needs ENABLE_FORTRAN=OFF")
+if(ENABLE_FORTRAN)
+  if(MSVC)
+    message(FATAL_ERROR "MSVC build needs ENABLE_FORTRAN=OFF")
+  endif()
+
+  find_program(ga_m4_cmd NAMES gm4 m4)
+  if(NOT ga_m4_cmd)
+    message(FATAL_ERROR "m4 command not found. GNU M4 is required.")
+  endif()
 endif()
 
 if(ENABLE_PROFILING)
@@ -155,7 +166,23 @@ option (F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS "Fortran/C interface property" ON)
 message(STATUS "Checking MPI ...")
 find_package (MPI REQUIRED)
 set(GA_EXTRA_LIBS ${GA_EXTRA_LIBS} MPI::MPI_C)
+
+if(ENABLE_COVERAGE)
+  add_compile_options(--coverage)
+  list(APPEND GA_EXTRA_LIBS --coverage)
+endif()
+
 if(ENABLE_FORTRAN)
+  #macos fix for clang+gfortran build
+  #linking MPI::MPI_Fortran adds the flag to clang compile line
+  if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+    get_target_property(_mpif_ico MPI::MPI_Fortran INTERFACE_COMPILE_OPTIONS)
+    if(_mpif_ico)
+      string(REPLACE "-fallow-argument-mismatch" "" _mpif_ico ${_mpif_ico})
+      separate_arguments(_mpif_ico)
+      set_target_properties(MPI::MPI_Fortran PROPERTIES INTERFACE_COMPILE_OPTIONS "${_mpif_ico}")
+    endif()
+  endif()
   list(APPEND GA_EXTRA_LIBS MPI::MPI_Fortran)
 endif()
 
@@ -163,7 +190,20 @@ include(${PROJECT_SOURCE_DIR}/cmake/ga-checks.cmake)
 
 if (ENABLE_FORTRAN)
   include( FortranCInterface )
-  FortranCInterface_HEADER(${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h MACRO_NAMESPACE F77_FUNC_)
+  FortranCInterface_HEADER(${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.ignore MACRO_NAMESPACE F77_FUNC_)
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h
+    COMMAND ${CMAKE_COMMAND} -D INPUT:PATH="${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.ignore" -D OUTPUT:PATH="${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h" -P ${PROJECT_SOURCE_DIR}/tools/config_fh_from_h.cmake 
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.ignore
+  )
+  add_custom_target(
+    GenerateF2C_CH ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h
+  )
+  set_source_files_properties(
+    ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h
+    PROPERTIES GENERATED TRUE
+  )
 else()
   CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/f2c_dummy.h.in
                   ${CMAKE_CURRENT_BINARY_DIR}/f2c_cmake.h )
@@ -177,7 +217,6 @@ endif()
 # hardwire various GA configuration parameters. Use convention that parameters
 # are defined and set to 0 if not used
 set (CYGWIN 0)
-set (DECOSF 0)
 
 if (CMAKE_SYSTEM_NAME STREQUAL Linux)
   set(LINUX 1)
@@ -208,10 +247,6 @@ set (USE_MALLOC 0)
 if(ENABLE_PROFILING)
   set (GA_PROFILING 1)
 endif()
-if(USE_CRAYSHASTA)
-  set(__CRAYXE 1)
-  # list(APPEND GA_EXTRA_LIBS pmi2)
-endif()
 
 # hardwire ARMCI configuration options
 set (HAVE_ARMCI_GROUP_COMM 1)
@@ -239,7 +274,7 @@ if (ENABLE_FORTRAN)
      set (FORTRAN_I8_FLAG -fdefault-integer-8)
      set (FORTRAN_I4_FLAG "")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Flang")
-     message(STATUS "Using Flang compiler settings")
+     message(STATUS "Using Flang compiler settings for flang, flang-new, armflang")
      set (F77_GETARG_DECLS "external GETARG")
      set (FORTRAN_I8_FLAG -fdefault-integer-8)
      set (FORTRAN_I4_FLAG "")
@@ -256,7 +291,15 @@ if (ENABLE_FORTRAN)
      message(STATUS "Using IBM XL Fortran compiler settings")
      set (FORTRAN_I8_FLAG -qintsize=8)
      set (FORTRAN_I4_FLAG -qintsize=4)
-  endif()
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Fujitsu")
+     message(STATUS "Fujitsu Fortran compiler settings")
+     set (FORTRAN_I8_FLAG "-CcdII8 -CcdLL8")
+     set (FORTRAN_I4_FLAG "")
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Cray")
+     message(STATUS "Cray Fortran compiler settings")
+     set (FORTRAN_I8_FLAG "-default64")
+     set (FORTRAN_I4_FLAG "")     
+  endif() 
 else()
 # need to set these variable even if only compiling C/C++
    set (F77_GETARG GETARG)
@@ -272,8 +315,25 @@ endif()
 # if(_fam_flag_exists)
 #   set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
 # endif()
-if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU" AND CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL "10.1")
-  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  if(CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL "10.1")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
+  endif()
+  if(CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL "11.1")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-tree-slp-vectorize")
+  endif()
+endif()
+
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  if(ENABLE_CXX) 
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      add_compile_options(-fno-aggressive-loop-optimizations)
+    endif()
+  else()
+    add_compile_options(-fno-aggressive-loop-optimizations)
+  endif()  
+elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-aggressive-loop-optimizations")
 endif()
 
 # Hardwire these settings. No way to check for Fortran integer size in CMake
@@ -296,9 +356,9 @@ if (CMAKE_SIZEOF_VOID_P EQUAL 8)
   if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(NOUSE_MMAP 1)
   endif()
-  set(GA_FORTRAN_ACCESS_INDEX integer*8)
+  set(GA_ACCESS_INDEX_TYPE integer*8)
 else()
-  set(GA_FORTRAN_ACCESS_INDEX integer*4)
+  set(GA_ACCESS_INDEX_TYPE integer*4)
 endif()
 # set (CM_BLAS_SIZE ${CM_SIZEOF_F77_INTEGER})
 
@@ -315,7 +375,7 @@ CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/matypes.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/ma/matypes.h )
 CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/mafdecls.fh.in
                 ${CMAKE_CURRENT_BINARY_DIR}/ma/mafdecls.fh )
-CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/global.fh.in
+CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/global/src/global.fh.in
                 ${CMAKE_CURRENT_BINARY_DIR}/global/src/global.fh )
 
 if (ENABLE_FORTRAN)
@@ -352,8 +412,11 @@ if(NOT "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Darwin")
   endif()
 endif()
 
-if (ENABLE_CUDA OR ENABLE_NVSHMEM)
+if (ENABLE_CUDA)
   add_compile_definitions(ENABLE_DEVICE ENABLE_CUDA)
+  if (ENABLE_NVSHMEM)
+    add_compile_definitions(ENABLE_NVSHMEM)
+  endif()
   if (ENABLE_NVTX)
     add_compile_definitions(ENABLE_NVTX)
   endif()
@@ -372,13 +435,18 @@ if(ENABLE_BLAS)
   #include_directories(${BLAS_INCLUDE_DIRS})
 endif()
 
+if(ENABLE_FORTRAN)
+  set(_CHK_FORTRAN_COMPILERS "GNU" "Intel" "LLVMFlang" "Flang")
+  list(FIND _CHK_FORTRAN_COMPILERS ${CMAKE_Fortran_COMPILER_ID} index)
+  if(index GREATER -1)
+    find_package( StandardFortran )
+    list(APPEND GA_EXTRA_LIBS ${STANDARDFORTRAN_LIBRARIES})
+  endif()
+endif()
 if(ENABLE_HIP)
   list(APPEND GA_EXTRA_LIBS roc::rocblas hip::device)
 elseif(ENABLE_CUDA)
-  list(APPEND GA_EXTRA_LIBS  CUDA::cublas)
-elseif(ENABLE_NVSHMEM)
-  list(APPEND GA_EXTRA_LIBS  CUDA::cublas nvshmem::nvshmem_host
-       nvshmem::nvshmem_device)
+  list(APPEND GA_EXTRA_LIBS  CUDA::cublas nvshmem::nvshmem_host nvshmem::nvshmem_device)
 endif()
 
 if(ENABLE_PROFILING)
@@ -406,16 +474,13 @@ add_library(ga
 add_library(GlobalArrays::ga ALIAS ga)
 
 set (CMAKE_REQUIRED_LIBRARIES lapack blas)
-#if (ENABLE_NVSHMEM)
-#  set_target_properties(ga PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-#  set_target_properties(ga PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
-#endif()
 target_link_libraries(ga PUBLIC ${GA_EXTRA_LIBS})
 target_include_directories(ga
   INTERFACE
     $<INSTALL_INTERFACE:include>
     $<INSTALL_INTERFACE:include/ga>
 )
+
 if(ENABLE_BLAS)
   target_include_directories(ga
     INTERFACE
@@ -435,13 +500,18 @@ if(DEFINED GA_GCC_TOOLCHAIN_FLAG)
   target_compile_options(ga PUBLIC $<$<COMPILE_LANGUAGE:C,CXX>:${GA_GCC_TOOLCHAIN_FLAG}>)
 endif()
 
+if(ENABLE_TESTS)
+  # turn testing on
+  enable_testing()
+endif()
+
 # -------------------------------------------------------------
 # Subdirectories
 # -------------------------------------------------------------
 add_subdirectory(global/src)
 add_subdirectory(comex)
 if(ENABLE_CXX)
-add_subdirectory(ga++/src)
+add_subdirectory(ga++)
 endif()
 add_subdirectory(ma)
 add_subdirectory(pario)
@@ -455,14 +525,16 @@ if(ENABLE_PROFILING)
 endif()
 
 if(ENABLE_TESTS)
-  if (NOT GA_TEST_NPROCS)
-    set(GA_TEST_NPROCS ${MPIEXEC_MAX_NUMPROCS})
-  endif()
-  # turn testing on
-  enable_testing()
   add_subdirectory(global/testing)
+  add_subdirectory(global/examples)
 endif()
 
+foreach (bip ${GA_HEADER_PATHS})
+  target_include_directories(ga
+    INTERFACE
+      $<BUILD_INTERFACE:${bip}>
+  )
+endforeach()
 
 # --------------------------------------
 # Global Arrays installation
@@ -523,18 +595,12 @@ if(ENABLE_BLAS)
     ${CMAKE_CURRENT_LIST_DIR}/cmake/linalg-modules/FindStandardFortran.cmake
     DESTINATION ${INSTALL_CONFIGDIR}/linalg-cmake-modules
   )
-  if(ENABLE_DPCPP)
-    install(FILES
-      ${CMAKE_CURRENT_LIST_DIR}/cmake/FindIntelSYCL.cmake
-      DESTINATION ${INSTALL_CONFIGDIR}
-    )
-  endif()
 endif()
 
 list(REMOVE_AT CMAKE_MODULE_PATH 0)
 list(REMOVE_AT CMAKE_MODULE_PATH 0)
 
-# export(EXPORT globalarrays-targets
-#     FILE ${CMAKE_CURRENT_BINARY_DIR}/globalarrays-targets.cmake
-#     NAMESPACE GlobalArrays::)
-
+# Export build tree
+export(EXPORT globalarrays-targets
+      NAMESPACE GlobalArrays::
+      FILE "${PROJECT_BINARY_DIR}/globalarrays-targets.cmake")

@@ -7,6 +7,10 @@
 #   include "config.h"
 #endif
 
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+
 #if HAVE_MATH_H
 #   include <math.h>
 #endif
@@ -521,9 +525,9 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
     Integer one=1; 
 
     /** allocate a,b, and work and ipiv arrays */
-    adra = (DoublePrecision*) ga_malloc(dimA1*dimA2, F_DBL, "a");
-    adrb = (DoublePrecision*) ga_malloc(dimB1*dimB2, F_DBL, "b");
-    adri = (Integer*) ga_malloc(GA_MIN(dimA1,dimA2), F_INT, "ipiv");
+    adra = (DoublePrecision*) pnga_malloc(dimA1*dimA2, F_DBL, "a");
+    adrb = (DoublePrecision*) pnga_malloc(dimB1*dimB2, F_DBL, "b");
+    adri = (Integer*) pnga_malloc(GA_MIN(dimA1,dimA2), F_INT, "ipiv");
 
     /** Fill local arrays from global arrays */   
     lo[0] = one;
@@ -581,9 +585,9 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
       pnga_error(" ga_lu_solve: LP_dgefa failed ", -info);
 
     /** deallocate work arrays */
-    ga_free(adri);
-    ga_free(adrb);
-    ga_free(adra);
+    pnga_free(adri);
+    pnga_free(adrb);
+    pnga_free(adra);
   }
 
   pnga_sync();
