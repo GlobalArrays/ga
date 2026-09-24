@@ -1400,6 +1400,7 @@ void vector_to_struct_dtype(void* src_ptr, void *dst_ptr, comex_giov_t *iov,
   for (i=0; i<iov_len; i++) {
     nelems += iov[i].count;
   }
+  if (nelems <= 0) {    return;  }
   int *blocklengths;
   MPI_Aint *displacements;
   MPI_Datatype *types;
@@ -3366,6 +3367,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
           reg_entries[i].win, igroup);
     }
     comex_igroup_add_win(group,reg_entries[comm_rank].win);
+    free(reg_entries);
 
     comex_wait_all(group);
     /* MPI_Win_fence(0,reg_entries[comm_rank].win); */
@@ -3468,6 +3470,7 @@ int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
           reg_entries[i].win, igroup);
     }
     comex_igroup_add_win(group,reg_entries[comm_rank].win);
+    free(reg_entries);
 
     comex_wait_all(group);
     /* MPI_Win_fence(0,reg_entries[comm_rank].win); */
