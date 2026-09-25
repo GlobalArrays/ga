@@ -506,8 +506,6 @@ int _comex_init(MPI_Comm comm)
 #ifdef ENABLE_DEVICE
     int mype_node;
     int ngpus = 0;
-    devShmemAttr attr;
-    deviceShmemInitAttr(&attr);
 #endif
     
     if (initialized) {
@@ -812,7 +810,7 @@ int _comex_init(MPI_Comm comm)
         }
         return status;
     }
-#ifdef ENABLE_DEVICE
+#ifdef ENABLE_NVSHMEM
     /* Initialize shmem libraries */
     {
       MPI_Comm world_comm;
@@ -835,7 +833,8 @@ int _comex_init(MPI_Comm comm)
         comex_error("init error: number of devices does not"
             " match number of ranks",0);
       } 
-      deviceShmemInit(&attr, world_comm);
+      free(has_dev);
+      deviceShmemInit(&world_comm);
     }
 #endif
 
@@ -1007,7 +1006,7 @@ int comex_finalize()
 #if USE_SICM
     sicm_fini();
 #endif
-#ifdef ENABLE_DEVICE
+#ifdef ENABLE_NVSHMEM
     deviceShmemFinalize();
 #endif
 

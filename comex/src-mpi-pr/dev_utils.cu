@@ -4,6 +4,10 @@
 
 #include <cuda_runtime.h>
 #include "dev_mem_handle.h"
+#if defined(ENABLE_NVSHMEM)
+#include <nvshmem.h>
+#include <nvshmemx.h>
+#endif
 
 #include "comex_defs.h"
 
@@ -276,25 +280,20 @@ void deviceMemset(void *ptr, int val, size_t bytes)
   }
 }
 
-/**
- * Initialize attribute struct used to initialize shmem library
- * @param attr attribute struct containing initialization parameters
- */
-void deviceShmemInitAttr(devMemAttr_t *attr)
-{
-  attr->attr = NVSHMEMX_INIT_ATTR_INITIALIZER;
-  attr->nv_id = NVSHMEMX_UNIQUEID_INITIALIZER;
-}
-
+#if defined(ENABLE_NVSHMEM)
 /**
  * Initialize device shmem library
- * @param attr attributes used to initialize library
- * @param comm communicator defining shared memory region
+ * @param mpi_comm pointer to MPI_Comm defining shared memory region
  */
-void deviceShmemInit(devShmemAttr_t *attr, MPI_Comm comm)
+void deviceShmemInit(void *mpi_comm)
 {
-  attr->mpi_comm = comm;
-  *attr = nvshmemx_init_attr(NVSHMEMX_INIT_WITH_MPI_COMM, attr);
+  nvshmemx_init_attr_t attr = NVSHMEMX_INIT_ATTR_INITIALIZER;
+  attr.mpi_comm = mpi_comm;
+  if (nvshmemx_init_attr(NVSHMEMX_INIT_WITH_MPI_COMM, &attr) != 0) {
+    int rank = MPI_Wrapper_world_rank();
+    printf("p[%d] nvshmemx_init_attr failed\n",rank);
+    MPI_Wrapper_abort(0);
+  }
 }
 
 /**
@@ -304,6 +303,8 @@ void deviceShmemFinalize()
 {
   nvshmem_finalize();
 }
+#endif
+
 __global__ void iaxpy_kernel(int *dst, const int *src, int scale, int n)
 {
   int index = blockIdx.x*blockDim.x+threadIdx.x;

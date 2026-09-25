@@ -24,9 +24,10 @@ extern int deviceOpenMemHandle(void **memory, devMemHandle_t handle);
 extern int deviceCloseMemHandle(void *memory);
 extern void deviceSynchronize();
 
-extern void deviceShmemInitAttr(devShmemAttr_t *attr);
-extern void deviceShmemInit(devShmemAttr_t *attr, MPI_Comm comm);
+#if defined(ENABLE_NVSHMEM)
+extern void deviceShmemInit(void *mpi_comm);
 extern void deviceShmemFinalize();
+#endif
 
 extern void deviceIaxpy(int *dst, const int *src, const int *scale, int n);
 extern void deviceLaxpy(long *dst, const long *src, const long *scale, int n);

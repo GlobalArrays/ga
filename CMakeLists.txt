@@ -72,13 +72,15 @@ endif()
 if (ENABLE_CUDA)
   ga_option(CMAKE_CUDA_ARCHITECTURES 70)
   enable_language(CUDA)
-  set(CMAKE_CUDA_STANDARD 11)
+  set(CMAKE_CUDA_STANDARD 17)
   set(CMAKE_CUDA_EXTENSIONS OFF)
   set(CMAKE_CUDA_STANDARD_REQUIRED ON)
   # set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
   # set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
   find_package(CUDAToolkit REQUIRED COMPONENTS cublas)
-  find_package(NVSHMEM)
+  if (ENABLE_NVSHMEM)
+    find_package(NVSHMEM REQUIRED)
+  endif()
 elseif(ENABLE_HIP)
   if (NOT DEFINED ROCM_PATH)
     if (DEFINED ENV{ROCM_PATH})
@@ -446,7 +448,10 @@ endif()
 if(ENABLE_HIP)
   list(APPEND GA_EXTRA_LIBS roc::rocblas hip::device)
 elseif(ENABLE_CUDA)
-  list(APPEND GA_EXTRA_LIBS  CUDA::cublas nvshmem::nvshmem_host nvshmem::nvshmem_device)
+  list(APPEND GA_EXTRA_LIBS  CUDA::cublas)
+  if (ENABLE_NVSHMEM)
+    list(APPEND GA_EXTRA_LIBS nvshmem::nvshmem_host nvshmem::nvshmem_device)
+  endif()
 endif()
 
 if(ENABLE_PROFILING)
@@ -475,6 +480,12 @@ add_library(GlobalArrays::ga ALIAS ga)
 
 set (CMAKE_REQUIRED_LIBRARIES lapack blas)
 target_link_libraries(ga PUBLIC ${GA_EXTRA_LIBS})
+if (ENABLE_NVSHMEM)
+  # armci_comex is an OBJECT library, so device linking of its relocatable
+  # CUDA code (and libnvshmem_device) has to happen on the ga archive
+  set_target_properties(ga PROPERTIES CUDA_SEPARABLE_COMPILATION ON
+    CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+endif()
 target_include_directories(ga
   INTERFACE
     $<INSTALL_INTERFACE:include>
