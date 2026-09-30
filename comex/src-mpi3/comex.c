@@ -28,10 +28,7 @@
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
 
-/*
-#define USE_PRIOR_MPI_WIN_FLUSH
 #define USE_POST_MPI_WIN_FLUSH
-*/
 
 /*
 */
