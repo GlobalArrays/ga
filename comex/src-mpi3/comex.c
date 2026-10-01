@@ -2200,14 +2200,14 @@ int comex_nbput(
     ierr = MPI_Put(src, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
         reg_win->win);
     translate_mpi_error(ierr,"comex_nbput:MPI_Put");
-    req->remote_proc = lproc;
-    req->win = reg_win->win;
 #else
     ierr = MPI_Rput(src, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_nbput:MPI_Rput");
 #endif
     req->request = request;
+    req->remote_proc = lproc;
+    req->win = reg_win->win;
     req->use_type = 0;
     req->active = 1;
     return COMEX_SUCCESS;
@@ -2251,14 +2251,14 @@ int comex_nbget(
     ierr = MPI_Get(dst, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
         reg_win->win);
     translate_mpi_error(ierr,"comex_nbget:MPI_Get");
-    req->remote_proc = lproc;
-    req->win = reg_win->win;
 #else
     ierr = MPI_Rget(dst, bytes, MPI_CHAR, lproc, displ, bytes, MPI_CHAR,
         reg_win->win, &request);
     translate_mpi_error(ierr,"comex_nbget:MPI_Rget");
 #endif
     req->request = request;
+    req->remote_proc = lproc;
+    req->win = reg_win->win;
     req->use_type = 0;
     req->active = 1;
     return COMEX_SUCCESS;
@@ -2315,14 +2315,14 @@ int comex_nbacc(
       ierr = MPI_Accumulate(buf,count,MPI_INT,lproc,displ,count,
           MPI_INT,MPI_SUM,reg_win->win);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Accumulate");
-      req->remote_proc = lproc;
-      req->win = reg_win->win;
 #else
       ierr = MPI_Raccumulate(buf,count,MPI_INT,lproc,displ,count,
           MPI_INT,MPI_SUM,reg_win->win,&request);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Raccumulate");
 #endif
       req->request = request;
+      req->remote_proc = lproc;
+      req->win = reg_win->win;
       req->use_type = 0;
       req->active = 1;
       free(buf);
@@ -2339,14 +2339,14 @@ int comex_nbacc(
       ierr = MPI_Accumulate(buf,count,MPI_LONG,lproc,displ,count,
           MPI_LONG,MPI_SUM,reg_win->win);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Accumulate");
-      req->remote_proc = lproc;
-      req->win = reg_win->win;
 #else
       ierr = MPI_Raccumulate(buf,count,MPI_LONG,lproc,displ,count,
           MPI_LONG,MPI_SUM,reg_win->win,&request);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Raccumulate");
 #endif
       req->request = request;
+      req->remote_proc = lproc;
+      req->win = reg_win->win;
       req->use_type = 0;
       req->active = 1;
       free(buf);
@@ -2363,14 +2363,14 @@ int comex_nbacc(
       ierr = MPI_Accumulate(buf,count,MPI_FLOAT,lproc,displ,count,
           MPI_FLOAT,MPI_SUM,reg_win->win);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Accumulate");
-      req->remote_proc = lproc;
-      req->win = reg_win->win;
 #else
       ierr = MPI_Raccumulate(buf,count,MPI_FLOAT,lproc,displ,count,
           MPI_FLOAT,MPI_SUM,reg_win->win,&request);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Raccumulate");
 #endif
       req->request = request;
+      req->remote_proc = lproc;
+      req->win = reg_win->win;
       req->use_type = 0;
       req->active = 1;
       free(buf);
@@ -2387,14 +2387,14 @@ int comex_nbacc(
       ierr = MPI_Accumulate(buf,count,MPI_DOUBLE,lproc,displ,count,
           MPI_DOUBLE,MPI_SUM,reg_win->win);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Accumulate");
-      req->remote_proc = lproc;
-      req->win = reg_win->win;
 #else
       ierr = MPI_Raccumulate(buf,count,MPI_DOUBLE,lproc,displ,count,
           MPI_DOUBLE,MPI_SUM,reg_win->win,&request);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Raccumulate");
 #endif
       req->request = request;
+      req->remote_proc = lproc;
+      req->win = reg_win->win;
       req->use_type = 0;
       req->active = 1;
       free(buf);
@@ -2415,14 +2415,14 @@ int comex_nbacc(
       ierr = MPI_Accumulate(buf,count,MPI_FLOAT,lproc,displ,count,
           MPI_FLOAT,MPI_SUM,reg_win->win);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Accumulate");
-      req->remote_proc = lproc;
-      req->win = reg_win->win;
 #else
       ierr = MPI_Raccumulate(buf,count,MPI_FLOAT,lproc,displ,count,
           MPI_FLOAT,MPI_SUM,reg_win->win,&request);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Raccumulate");
 #endif
       req->request = request;
+      req->remote_proc = lproc;
+      req->win = reg_win->win;
       req->use_type = 0;
       req->active = 1;
       free(buf);
@@ -2443,14 +2443,14 @@ int comex_nbacc(
       ierr = MPI_Accumulate(buf,count,MPI_DOUBLE,lproc,displ,count,
           MPI_DOUBLE,MPI_SUM,reg_win->win);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Accumulate");
-      req->remote_proc = lproc;
-      req->win = reg_win->win;
 #else
       ierr = MPI_Raccumulate(buf,count,MPI_DOUBLE,lproc,displ,count,
           MPI_DOUBLE,MPI_SUM,reg_win->win,&request);
       translate_mpi_error(ierr,"comex_nbacc:MPI_Raccumulate");
 #endif
       req->request = request;
+      req->remote_proc = lproc;
+      req->win = reg_win->win;
       req->use_type = 0;
       req->active = 1;
       free(buf);
