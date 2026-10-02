@@ -3,6 +3,7 @@
 
 #include "cmx_group.hpp"
 #include "xga_environment.hpp"
+#include <complex>
 
 #define MAX_HOST_NAME_LEN 256
 
@@ -87,6 +88,119 @@ int getLocalRank(int rank);
  * @return list of ranks in the world group
  */
 std::vector<int> getWorldRanks();
+
+/**
+ * Global reductions on the group. Supported operations
+ * are sum, product, max and min
+ * @param x array of values. On output, contains values from reduction
+ * @param n number of values
+ */
+template <typename _type> void sum(_type *x, int num)
+{
+  MPI_Comm comm = MPIComm();
+  _type *result = new _type[num];
+  MPI_Datatype mpi_type;
+  int n = num;
+  int rc;
+  if constexpr(std::is_same_v<_type,int>) {
+    mpi_type = MPI_INT;
+  } else if constexpr(std::is_same_v<_type,long>) {
+    mpi_type = MPI_LONG;
+  } else if constexpr(std::is_same_v<_type,long long>) {
+    mpi_type = MPI_LONG_LONG;
+  } else if constexpr(std::is_same_v<_type,float>) {
+    mpi_type = MPI_FLOAT;
+  } else if constexpr(std::is_same_v<_type,double>) {
+    mpi_type = MPI_DOUBLE;
+  } else if constexpr(std::is_same_v<_type,std::complex<float> >) {
+    n = 2*num;
+    mpi_type = MPI_FLOAT;
+  } else if constexpr(std::is_same_v<_type,std::complex<double> >) {
+    n = 2*num;
+    mpi_type = MPI_DOUBLE;
+  }
+  rc = MPI_Allreduce(x, result, num, mpi_type, MPI_SUM, comm);
+  for (int i=0; i<num; i++) x[i] = result[i];
+  delete [] result;
+}
+
+template <typename _type> void prod(_type *x, int num)
+{
+  MPI_Comm comm = MPIComm();
+  _type *result = new _type[num];
+  MPI_Datatype mpi_type;
+  int n = num;
+  int rc;
+  if constexpr(std::is_same_v<_type,int>) {
+    mpi_type = MPI_INT;
+  } else if constexpr(std::is_same_v<_type,long>) {
+    mpi_type = MPI_LONG;
+  } else if constexpr(std::is_same_v<_type,long long>) {
+    mpi_type = MPI_LONG_LONG;
+  } else if constexpr(std::is_same_v<_type,float>) {
+    mpi_type = MPI_FLOAT;
+  } else if constexpr(std::is_same_v<_type,double>) {
+    mpi_type = MPI_DOUBLE;
+  } else {
+    printf("Data type not supported for product\n");
+    assert(0);
+  }
+  rc = MPI_Allreduce(x, result, num, mpi_type, MPI_PROD, comm);
+  for (int i=0; i<num; i++) x[i] = result[i];
+  delete [] result;
+}
+
+template <typename _type> void max(_type *x, int num)
+{
+  MPI_Comm comm = MPIComm();
+  _type *result = new _type[num];
+  MPI_Datatype mpi_type;
+  int n = num;
+  int rc;
+  if constexpr(std::is_same_v<_type,int>) {
+    mpi_type = MPI_INT;
+  } else if constexpr(std::is_same_v<_type,long>) {
+    mpi_type = MPI_LONG;
+  } else if constexpr(std::is_same_v<_type,long long>) {
+    mpi_type = MPI_LONG_LONG;
+  } else if constexpr(std::is_same_v<_type,float>) {
+    mpi_type = MPI_FLOAT;
+  } else if constexpr(std::is_same_v<_type,double>) {
+    mpi_type = MPI_DOUBLE;
+  } else {
+    printf("Data type not supported for max\n");
+    assert(0);
+  }
+  rc = MPI_Allreduce(x, result, num, mpi_type, MPI_MAX, comm);
+  for (int i=0; i<num; i++) x[i] = result[i];
+  delete [] result;
+}
+
+template <typename _type> void min(_type *x, int num)
+{
+  MPI_Comm comm = MPIComm();
+  _type *result = new _type[num];
+  MPI_Datatype mpi_type;
+  int n = num;
+  int rc;
+  if constexpr(std::is_same_v<_type,int>) {
+    mpi_type = MPI_INT;
+  } else if constexpr(std::is_same_v<_type,long>) {
+    mpi_type = MPI_LONG;
+  } else if constexpr(std::is_same_v<_type,long long>) {
+    mpi_type = MPI_LONG_LONG;
+  } else if constexpr(std::is_same_v<_type,float>) {
+    mpi_type = MPI_FLOAT;
+  } else if constexpr(std::is_same_v<_type,double>) {
+    mpi_type = MPI_DOUBLE;
+  } else {
+    printf("Data type not supported for min\n");
+    assert(0);
+  }
+  rc = MPI_Allreduce(x, result, num, mpi_type, MPI_MIN, comm);
+  for (int i=0; i<num; i++) x[i] = result[i];
+  delete [] result;
+}
 
 friend class p_GA;
 

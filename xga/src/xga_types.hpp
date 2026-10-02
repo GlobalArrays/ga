@@ -1,6 +1,8 @@
 /* Define some enumerations used throughout XGA */
 #ifndef _XGA_TYPES_H
 #define _XGA_TYPES_H
+
+#include <complex>
 namespace XGA {
 
   enum xga_types{XGA_UNKNOWN = 0,

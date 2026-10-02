@@ -422,7 +422,7 @@ bool p_GA::nextLocalBlock(int64_t plo[], int64_t phi[],
   if (p_distr == REGULAR) {
     int64_t nelems;
     /* no blocks left, so return */
-    if (count>0) return 0;
+    if (count>0) return false;
 
     /* Find  visible portion of patch held by this processor and
      * return the result in plo and phi. Return pointer to local
@@ -432,7 +432,7 @@ bool p_GA::nextLocalBlock(int64_t plo[], int64_t phi[],
     /* Check to see if this process has any data. Return 0 if
      * it does not */
     for (i=0; i<p_ndim; i++) {
-      if (phi[i]<plo[i]) return 0;
+      if (phi[i]<plo[i]) return false;
     }
     void *vptr;
     accessPtr(plo,phi,&vptr,ld);
@@ -450,11 +450,11 @@ bool p_GA::nextLocalBlock(int64_t plo[], int64_t phi[],
     void *vptr;
     accessBlockGridPtr(index,&vptr,ld);
     *ptr = static_cast<char*>(vptr);
-    index[0] += blk_inc[0];
-    for (i=0; i<p_ndim; i++) {
-      if (index[i] >= blk_num[i] && i<p_ndim-1) {
+    index[p_ndim-1] += blk_inc[p_ndim-1];
+    for (i=p_ndim-1; i<=0; i--) {
+      if (index[i] >= blk_num[i] && i>0) {
         index[i] = proc_index[i];
-        index[i+1] += blk_inc[i+1];
+        index[i-1] += blk_inc[i-1];
       }
     }
   } else if (p_distr == TILED_IRREG) {
@@ -482,6 +482,6 @@ bool p_GA::nextLocalBlock(int64_t plo[], int64_t phi[],
       }
     }
   }
-  return 1;
+  return true;
 }
 }

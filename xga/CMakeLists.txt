@@ -57,6 +57,7 @@ if (MPI_PR)
     src/xga_base.cpp
     src/xga_onesided.cpp
     src/decomp.cpp
+    src/xga_matops.cpp
   )
 endif()
 
@@ -133,3 +134,5 @@ add_executable(fill_unit_test.x testing/fill_unit_test.cpp)
 target_link_libraries(fill_unit_test.x xga cmx)
 add_executable(read_inc_unit_test.x testing/read_inc_unit_test.cpp)
 target_link_libraries(read_inc_unit_test.x xga cmx)
+add_executable(copy_unit_test.x testing/copy_unit_test.cpp)
+target_link_libraries(copy_unit_test.x xga cmx)

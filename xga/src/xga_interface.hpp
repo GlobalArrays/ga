@@ -9,6 +9,35 @@ namespace XGA {
 template<typename _type>
 class GlobalArray {
 
+private:
+
+  bool prior_sync_flag, post_sync_flag;
+
+  /**
+   * synchronize group before collective operation if prior_sync_flag
+   * is set;
+   */
+  void priorSync()
+  {
+    if (prior_sync_flag) {
+      p_Impl->sync();
+    }
+    prior_sync_flag = true;
+  }
+
+  /**
+   * synchronize group after collective operatin if post_sync_flag
+   * is set;
+   */
+  void postSync()
+  {
+    if (post_sync_flag) {
+      p_Impl->sync();
+    }
+    post_sync_flag = true;
+  }
+
+
 public:
 
   /**
@@ -34,9 +63,14 @@ public:
       p_datatype = XGA_COMPLEX;
     } else if constexpr(std::is_same_v<_type,std::complex<double> >) {
       p_datatype = XGA_DCOMPLEX;
+    } else {
+      p_Impl->error("(GlobalArray) Unknown datatype",0);
     }
 
     p_group = group;
+    
+    prior_sync_flag = true;
+    post_sync_flag = true;
 
     p_Impl = new p_GA(group, ndim, dims, p_datatype);
   };
@@ -61,9 +95,14 @@ public:
       p_datatype = XGA_COMPLEX;
     } else if constexpr(std::is_same_v<_type,std::complex<double> >) {
       p_datatype = XGA_DCOMPLEX;
+    } else {
+      p_Impl->error("(GlobalArray) Unknown datatype",0);
     }
 
     p_group = group;
+
+    prior_sync_flag = true;
+    post_sync_flag = true;
 
     p_Impl = new p_GA(group, ndim, tdims, p_datatype);
   }
@@ -110,11 +149,11 @@ public:
    * @param[in] mapc array containing partitions along each axis
    * @param[in] nblock array containing processor decomposition
    */
-  void setIrreglarDistribution(int64_t *mapc, int *nblock)
+  void setIrregularDistribution(int64_t *mapc, int *nblock)
   {
     p_Impl->setIrregularDistribution(mapc, nblock);
   }
-  void setIrreglarDistribution(int *mapc, int *nblock)
+  void setIrregularDistribution(int *mapc, int *nblock)
   {
     int ntot = 0;
     int i;
@@ -130,7 +169,103 @@ public:
    */
   void allocate()
   {
+    priorSync();
     p_Impl->allocate();
+    postSync();
+  }
+
+  /**
+   * Duplicate a new global array from an existing global array. This function
+   * replicates the type, size and data layout of the old array but does not
+   * initialize the data
+   * @return pointer to new global array
+   */
+  GlobalArray* duplicate()
+  {
+    p_datatype = this->p_datatype;
+    GlobalArray *g_ret;
+    p_GA *old_impl = this->p_Impl;
+    if (p_datatype == XGA_INT) {
+      g_ret = new GlobalArray<int>(old_impl->p_group, old_impl->p_ndim,
+          old_impl->p_dims);
+    } else if (p_datatype == XGA_LONG) {
+      g_ret = new GlobalArray<long>(old_impl->p_group, old_impl->p_ndim,
+          old_impl->p_dims);
+    } else if (p_datatype == XGA_LONGLONG) {
+      g_ret = new GlobalArray<long long>(old_impl->p_group, old_impl->p_ndim,
+          old_impl->p_dims);
+    } else if (p_datatype == XGA_FLOAT) {
+      g_ret = new GlobalArray<float>(old_impl->p_group, old_impl->p_ndim,
+          old_impl->p_dims);
+    } else if (p_datatype == XGA_DOUBLE) {
+      g_ret = new GlobalArray<double>(old_impl->p_group, old_impl->p_ndim,
+          old_impl->p_dims);
+    } else if (p_datatype == XGA_COMPLEX) {
+      g_ret = new GlobalArray<std::complex<float> >(old_impl->p_group,
+          old_impl->p_ndim, old_impl->p_dims);
+    } else if (p_datatype == XGA_DCOMPLEX) {
+      g_ret = new GlobalArray<std::complex<double> >(old_impl->p_group,
+          old_impl->p_ndim, old_impl->p_dims);
+    } else {
+      p_Impl->error("(duplicate) Unknown datatype",p_datatype);
+    }
+
+    g_ret->p_Impl = old_impl->duplicate();
+    return g_ret;
+  }
+
+  /**
+   * Copy contents of array B into calling array. Arrays must be same size and
+   * datatype
+   * @param g_b source array
+   */
+  void copy(GlobalArray *g_b)
+  {
+    priorSync();
+    p_Impl->copy(g_b->p_Impl);
+    postSync();
+  }
+
+  /**
+   * Copy a patch of array B to a patch in the calling array. Array must be the
+   * same datatype.
+   * @param alo, ahi bounding indices of target patch
+   * @param g_b source array
+   * @param blo, bhi bounding indices of source patch
+   * @param trans flag signifying whether to transpose data when copying
+   */
+  void copyPatch(int64_t *alo, int64_t *ahi,
+      GlobalArray *g_b, int64_t *blo, int64_t *bhi, bool trans=false)
+  {
+    char ttrans;
+    if (trans) {
+      ttrans = 'Y';
+    } else {
+      ttrans = 'N';
+    }
+    priorSync();
+    p_Impl->copyPatch(ttrans, alo, ahi, g_b->p_Impl, blo, bhi);
+    postSync();
+  }
+  void copyPatch(int *alo, int *ahi,
+      GlobalArray *g_b, int *blo, int *bhi, bool trans=false)
+  {
+    int64_t talo[MAXDIM], tahi[MAXDIM], tblo[MAXDIM], tbhi[MAXDIM];
+    char ttrans;
+    if (trans) {
+      ttrans = 'Y';
+    } else {
+      ttrans = 'N';
+    }
+    priorSync();
+    for (int i=0; i<p_ndim; i++) {
+      talo[i] = static_cast<int64_t>(alo[i]);
+      tahi[i] = static_cast<int64_t>(ahi[i]);
+      tblo[i] = static_cast<int64_t>(blo[i]);
+      tbhi[i] = static_cast<int64_t>(bhi[i]);
+    }
+    p_Impl->copyPatch(ttrans, talo, tahi, g_b->p_Impl, tblo, tbhi);
+    postSync();
   }
 
   /**
@@ -259,6 +394,25 @@ public:
   }
 
   /**
+   * Return pointer to data corresponding to block indexed by idx.
+   * Assume C-style ordering
+   * @param[in] idx index of block
+   * @param[out] rptr pointer to data
+   * @param[out] ld array of strides for block
+   */
+  void accessBlockPtr(int idx, void **rptr, int64_t *ld)
+  {
+    p_Impl->accessBlockPtr(idx, rptr, ld);
+  }
+  void accessBlockPtr(int idx, void **rptr, int *ld)
+  {
+    int i;
+    int64_t tld[MAXDIM];
+    p_Impl->accessBlockPtr(idx, rptr, tld);
+    for (i=0; i<p_ndim-1; i++) ld[i] = static_cast<int>(tld[i]);
+  }
+
+  /**
    * Return pointer to data owned by this processors
    * @param[out] rptr pointer to local data
    * @param[out] nelem number of elements owned by this processor
@@ -292,14 +446,59 @@ public:
     }
     p_Impl->releasePtr(tlo, thi);
   }
+  void releaseUpdatePtr(int64_t *plo, int64_t *phi)
+  {
+    p_Impl->releaseUpdatePtr(plo, phi);
+  }
+  void releaseUpdatePtr(int *plo, int *phi)
+  {
+    int i;
+    int64_t tlo[MAXDIM], thi[MAXDIM];
+    for (i=0; i<p_ndim; i++) {
+      tlo[i] = static_cast<int64_t>(plo[i]);
+      thi[i] = static_cast<int64_t>(phi[i]);
+    }
+    p_Impl->releaseUpdatePtr(tlo, thi);
+  }
 
   /**
    * Release data corresponding to a specific block
+   * in the proc grid array
    * @param[in] index indices of block in proc grid
    */
   void releaseBlockGridPtr(int *index)
   {
     p_Impl->releaseBlockGridPtr(index);
+  }
+  void releaseUpdateBlockGridPtr(int *index)
+  {
+    p_Impl->releaseUpdateBlockGridPtr(index);
+  }
+
+  /**
+   * Release data corresponding to a specific block indexed
+   * using a C-style indexing convention
+   * @param[in] index index of block
+   */
+  void releaseBlockPtr(int index)
+  {
+    p_Impl->releaseBlockPtr(index);
+  }
+  void releaseUpdateBlockPtr(int index)
+  {
+    p_Impl->releaseUpdateBlockPtr(index);
+  }
+
+  /**
+   * Release data corresponding to this process
+   */
+  void releaseSegmentPtr()
+  {
+    p_Impl->releaseSegmentPtr();
+  }
+  void releaseUpdateSegmentPtr()
+  {
+    p_Impl->releaseUpdateSegmentPtr();
   }
 
   /**
@@ -477,7 +676,9 @@ public:
    */
   void zero()
   {
+    priorSync();
     p_Impl->zero();
+    postSync();
   }
 
   /**
@@ -487,7 +688,46 @@ public:
   void fill(_type value)
   {
     _type tvalue = value;
+    priorSync();
     p_Impl->fill(&tvalue);
+    postSync();
+  }
+
+  /**
+   * Scale all elements of array
+   * @param value scale factor for all elements
+   */
+  void scale(_type value)
+  {
+    _type tvalue = value;
+    priorSync();
+    p_Impl->scale(&tvalue);
+    postSync();
+  }
+
+  /**
+   * Scale all elements in a patch of an array
+   * @param lo, hi bounding indices of patch
+   * @param value scale factor for elements in patch
+   */
+  void scalePatch(int64_t *lo, int64_t *hi, _type value)
+  {
+    _type tvalue = value;
+    priorSync();
+    p_Impl->scalePatch(lo, hi, &tvalue);
+    postSync();
+  }
+  void scalePatch(int *lo, int *hi, _type value)
+  {
+    _type tvalue = value;
+    int64_t tlo[MAXDIM], thi[MAXDIM];
+    for (int i=0; i<p_ndim; i++) {
+      tlo[i] = static_cast<int64_t>(lo[i]);
+      thi[i] = static_cast<int64_t>(hi[i]);
+    }
+    priorSync();
+    p_Impl->scalePatch(tlo, thi, &tvalue);
+    postSync();
   }
 
   /**
@@ -499,8 +739,39 @@ public:
     p_Impl = NULL;
   }
 
-private:
+  /**
+   * remove either prior or post sync operations on next
+   * collective operation
+   * @param prior_sync if false, do not synchronize before collective
+   * @param post_sync if false, do not synchronize after collective
+   */
+  void setMask(bool prior_sync, bool post_sync)
+  {
+    prior_sync_flag = prior_sync;
+    post_sync_flag = post_sync;
+  }
 
+  /**
+   * Add two global arrays to get a third array. The calling array must be the
+   * same size and dimension of the two arrays in the argument list, all three
+   * arrays must also be the same data type. The calling array can also be the
+   * same as one of the two arrays in the argument list. The parameters alpha
+   * and beta can be used to scale the arrays before performing the sum.
+   *   C = alpha*A + beta*B
+   * If alpha or beta are NULL, assume that the are set to 1
+   * @param alpha parameter to scale array A
+   * @param g_a first array in sum
+   * @param beta parameter to scale array B
+   * @param g_b second array in sum
+   */
+  void add(void *alpha, GlobalArray *g_a, void *beta, GlobalArray *g_b)
+  {
+    priorSync();
+    p_Impl->add(alpha, g_a->p_Impl, beta, g_b->p_Impl);
+    postSync();
+  }
+
+private:
   xga_types p_datatype = XGA_UNKNOWN;
 
   int p_ndim;
@@ -508,6 +779,7 @@ private:
   p_GA *p_Impl;
 
   Group *p_group;
+
 };
 }
 #endif

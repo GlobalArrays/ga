@@ -416,9 +416,7 @@ void put_test()
   ld3[0] = jdim;
   ld3[1] = kdim;
   gala.put(lo3, hi3, buf, ld3);
-  gala.sync();
   gala.zero();
-  gala.sync();
   gala.put(lo3, hi3, buf, ld3);
   gala.sync();
   /* check results. Start by finding number of blocks in each direction */

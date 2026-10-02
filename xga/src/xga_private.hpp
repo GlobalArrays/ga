@@ -63,6 +63,31 @@ public:
   void allocate();
 
   /**
+   * Duplicate a global array. New array has same datatype, size and
+   * data partition but individual values are not initialized.
+   * @return pointer to new global array
+   */
+  p_GA* duplicate();
+
+  /**
+   * Copy contents of array B into calling array. Arrays must be same size and
+   * datatype
+   * @param g_b source array
+   */
+  void copy(p_GA *g_b);
+
+  /**
+   * Copy a patch of array B to a patch in the calling array. Array must be the
+   * same datatype.
+   * @param trans flag signifying whether to transpose data when copying
+   * @param alo, ahi bounding indices of target patch
+   * @param g_b source array
+   * @param blo, bhi bounding indices of source patch
+   */
+  void copyPatch(char trans, int64_t *alo, int64_t *ahi,
+      p_GA *g_b, int64_t *blo, int64_t *bhi);
+
+  /**
    * Find block owned by processor proc
    * @param[in] proc processor being queried
    * @param[out] lo,hi lower and upper bounding indices of block
@@ -119,6 +144,15 @@ public:
   void accessBlockGridPtr(int *index, void **rptr, int64_t *ld);
 
   /**
+   * Return pointer to data corresponding to block indexed by idx.
+   * Assume C-style ordering
+   * @param[in] idx index of block
+   * @param[out] rptr pointer to data
+   * @param[out] ld array of strides for block
+   */
+  void accessBlockPtr(int idx, void **rptr, int64_t *ld);
+
+  /**
    * Return pointer to data owned by this processors
    * @param[out] rptr pointer to local data
    * @param[out] nelem number of elements owned by this processor
@@ -130,17 +164,29 @@ public:
    * @param[in] plo,phi lower and upper indices of patch
    */
   void releasePtr(int64_t *plo, int64_t *phi);
+  void releaseUpdatePtr(int64_t *plo, int64_t *phi);
 
   /**
    * Release data corresponding to a specific block
+   * in the proc grid array
    * @param[in] index indices of block in proc grid
    */
   void releaseBlockGridPtr(int *index);
+  void releaseUpdateBlockGridPtr(int *index);
 
   /**
-   * Release data corresponding to a specific block
+   * Release data corresponding to a specific block indexed
+   * using a C-style indexing convention
+   * @param[in] index index of block
+   */
+  void releaseBlockPtr(int index);
+  void releaseUpdateBlockPtr(int index);
+
+  /**
+   * Release data corresponding to this process
    */
   void releaseSegmentPtr();
+  void releaseUpdateSegmentPtr();
 
   /**
    * Synchronize global array across all processor that are hosting
@@ -239,6 +285,55 @@ public:
      * @param value pointer to value being filled
      */
     void fill(void *value);
+
+    /**
+     * Scale all elements of array
+     * @param value scale factor for all elements
+     */
+    void scale(void *value);
+
+    /**
+     * Scale all elements in a patch of an array
+     * @param lo, hi bounding indices of patch
+     * @param value scale factor for elements in patch
+     */
+    void scalePatch(int64_t *lo, int64_t *hi, void *value);
+
+    /**
+     * Add two global arrays to get a third array. The calling array must be the
+     * same size and dimension of the two arrays in the argument list, all three
+     * arrays must also be the same data type. The calling array can also be the
+     * same as one of the two arrays in the argument list. The parameters alpha
+     * and beta can be used to scale the arrays before performing the sum.
+     *   C = alpha*A + beta*B
+     * If alpha or beta are NULL, assume that the are set to 1
+     * @param alpha parameter to scale array A
+     * @param g_a first array (A) in sum
+     * @param beta parameter to scale array B
+     * @param g_b second array (B) in sum
+     */
+    void add(void *alpha, p_GA *g_a, void *beta, p_GA *g_b);
+
+    /**
+     * Add patches of two global arrays to get a new patch in a third array.
+     * The calling array must be the same type as the other two arrays and
+     * the dimensions of the patches must be compatible. The calling array
+     * can also be the same as one of the two arrays in the argument list.
+     * The parameters alpha and beta can be used to scale the patches before
+     * performing the sum.
+     *   C = alpha*A + beta*B
+     * If alpha or beta are NULL, assume that the are set to 1
+     * @param alpha parameter to scale array A
+     * @param g_a first array (A) in sum
+     * @param alo, ahi bounding indices of patch in array A
+     * @param beta parameter to scale array B
+     * @param g_b second array (B) in sum
+     * @param blo, bhi bounding indices of patch in array B
+     * @param clo, chi bounding indices of patch in array C
+     */
+    void addPatch(void* alpha, p_GA *g_a, int64_t *alo, int64_t *ahi,
+        void* beta,  p_GA *g_b, int64_t *blo, int64_t *bhi,
+        int64_t *clo, int64_t *chi);
 
 private:
 
@@ -377,26 +472,272 @@ private:
   void printSubscript(const char *pre, const int ndim, const int64_t *subscript,
       const char *post);
 
+  /**
+   * count number of elements in map array
+   * @return sum of number of partitions in each dimension
+   */
+  int calc_maplen();
+
+  /**
+   * compare data distribution of two arrays
+   * @param[i] g_a comparision array
+   * @return true if arrays have the same data distribution, false otherwise
+   */
+  bool compare_distr(p_GA *g_a);
+
+  /**
+   * Compare two patches to see if they are identical
+   * @param andim dimension of patch A
+   * @param alo, ahi lower and upper dimensions of patch A
+   * @param andim dimension of patch B
+   * @param alo, ahi lower and upper dimensions of patch B
+   * @return true if patches match
+   */
+  bool comp_patch(int andim, int64_t *alo, int64_t *ahi,
+                  int bndim, int64_t *blo, int64_t *bhi);
+
+  /**
+   * Check if two patches intersect and return the intersection
+   * in second patch
+   * @param lo, hi bounding indices for first block
+   * @param lop, hip bounding indices for second block
+   * @param ndim number of dimensions for both blocks
+   */
+  bool patch_intersect(int64_t *lo, int64_t *hi,
+      int64_t *lop, int64_t *hip, int ndim);
+
+  /**
+   * compute index from subscript and convert it back to subscript
+   * in another array
+   * @param ndims number of dimensions in index of source block
+   * @param los lower index of current block
+   * @param blos lower index of source block
+   * @param dimss array of strides for source block
+   * @param ndimsd number of dimensions in index of destination block
+   * @param blos lower index of destination block
+   * @param dimss array of strides for destination block
+   */
+  void dest_indices(int ndims, int64_t *los, int64_t *blos, int64_t *dimss,
+      int ndimd, int64_t *lod, int64_t *blod, int64_t *dimsd);
+
+  /**
+   * Utility function to add patch values together
+   * @param alpha, beta parameters multiplying individual arrays
+   * @param ndim dimension of array
+   * @param loC, hiC lower and upper bounding indices of patch
+   * @param ldC array of strides for patch
+   * @param A_ptr, B_ptr, C_ptr pointer to individual chunks of data
+   */
+  template <typename _type>
+    void add_patch_values(void *alpha, void *beta, int64_t *loC, int64_t *hiC,
+        int64_t *ldC, void *A_ptr, void *B_ptr, void *C_ptr)
+    {
+      int64_t bvalue[MAXDIM], bunit[MAXDIM], baseldC[MAXDIM];
+      int64_t idx, n1dim;
+      int64_t i, j;
+      int ndim = p_ndim;
+      _type talpha = *(reinterpret_cast<_type*>(alpha));
+      _type tbeta = *(reinterpret_cast<_type*>(beta));
+      _type *aptr = reinterpret_cast<_type*>(A_ptr);
+      _type *bptr = reinterpret_cast<_type*>(B_ptr);
+      _type *cptr = reinterpret_cast<_type*>(C_ptr);
+      /* compute "local" add */
+
+      /* number of n-element of the first dimension */
+      n1dim = 1; for(i=p_ndim-2; i>=0; i--) n1dim *= (hiC[i] - loC[i] + 1);
+
+      /* calculate the destination indices */
+      bvalue[ndim-1] = 0;
+      bunit[ndim-1] = 1;
+      if (ndim > 1) {
+        bvalue[ndim-2] = 0;
+        bunit[ndim-2] = 1;
+      }
+      /* baseld[ndim-2] = ld[ndim-1]
+       * baseld[ndim-3] = ld[ndim-1] * ld[ndim-2]
+       * baseld[ndim-4] = ld[ndim-1] * ld[ndim-2] * ld[ndim-3] .....
+       */
+      baseldC[ndim-1] = ldC[ndim-1]; 
+      if (ndim > 1) {
+        baseldC[ndim-2] = baseldC[ndim-1] *ldC[ndim-2];
+      }
+      for(i=ndim-3; i>=0; i--) {
+        bvalue[i] = 0;
+        bunit[i] = bunit[i+1] * (hiC[i+1] - loC[i+1] + 1);
+        baseldC[i] = baseldC[i+1] * ldC[i];
+      }
+      for (i=0; i<n1dim; i++) {
+        idx = 0;
+        for (j=ndim-2; j>=0; j--) {
+          idx += bvalue[j]*baseldC[j+1];
+          if (((i+1)%bunit[j]) == 0) bvalue[j]++;
+          if (bvalue[j] > (hiC[j]-loC[j])) bvalue[j] = 0;
+        }
+        for (j=0; j<(hiC[ndim-1]-loC[ndim-1]+1); j++) {
+          cptr[idx+j] = talpha*aptr[idx+j]+tbeta*bptr[idx+j];
+        }
+      }
+    }
+
+  /**
+   * Utility function to accumulate one patch into another
+   * @param alpha scale factor for patch
+   * @param ndim dimension of array
+   * @param loC, hiC lower and upper bounding indices of patch
+   * @param ldC array of strides for patch
+   * @param A_ptr, C_ptr pointer to individual chunks of data
+   */
+  template <typename _type>
+    void acc_patch_values(void *alpha, int64_t *loC, int64_t *hiC,
+        int64_t *ldC, void *A_ptr, void *C_ptr)
+    {
+      int64_t bvalue[MAXDIM], bunit[MAXDIM], baseldC[MAXDIM];
+      int64_t idx, n1dim;
+      int64_t i, j;
+      int ndim = p_ndim;
+      _type talpha = *(reinterpret_cast<_type*>(alpha));
+      _type *aptr = reinterpret_cast<_type*>(A_ptr);
+      _type *cptr = reinterpret_cast<_type*>(C_ptr);
+      /* compute "local" add */
+
+      /* number of n-element of the first dimension */
+      n1dim = 1; for(i=ndim-2; i>=0; i--) n1dim *= (hiC[i] - loC[i] + 1);
+
+      /* calculate the destination indices */
+      bvalue[ndim-1] = 0;
+      bunit[ndim-1] = 1;
+      if (ndim > 1) {
+        bvalue[ndim-2] = 0;
+        bunit[ndim-2] = 1;
+      }
+      /* baseld[ndim-2] = ld[ndim-1]
+       * baseld[ndim-3] = ld[ndim-1] * ld[ndim-2]
+       * baseld[ndim-4] = ld[ndim-1] * ld[ndim-2] * ld[ndim-3] .....
+       */
+      baseldC[ndim-1] = ldC[ndim-1]; 
+      if (ndim > 1) {
+        baseldC[ndim-2] = baseldC[ndim-1] *ldC[ndim-2];
+      }
+      for(i=ndim-3; i>=0; i--) {
+        bvalue[i] = 0;
+        bunit[i] = bunit[i+1] * (hiC[i+1] - loC[i+1] + 1);
+        baseldC[i] = baseldC[i+1] * ldC[i];
+      }
+      for (i=0; i<n1dim; i++) {
+        idx = 0;
+        for (j=ndim-2; j>=0; j--) {
+          idx += bvalue[j]*baseldC[j+1];
+          if (((i+1)%bunit[j]) == 0) bvalue[j]++;
+          if (bvalue[j] > (hiC[j]-loC[j])) bvalue[j] = 0;
+        }
+        for (j=0; j<(hiC[ndim-1]-loC[ndim-1]+1); j++) {
+          cptr[idx+j] += talpha*aptr[idx+j];
+        }
+      }
+    }
+
+  /**
+   * Utility function to scale values of a patch
+   * @param value scale factor for patch
+   * @param lo, hi lower and upper bounding indices of patch
+   * @param ld array of strides for patch
+   * @param ptr pointer to individual chunks of data
+   */
+  template <typename _type> void scale_patch_values(void *value,
+      int64_t *lo, int64_t *hi, int64_t *ld, void *ptr)
+  {
+    int64_t n1dim, i, j, idx;
+    int64_t bvalue[MAXDIM], bunit[MAXDIM], baseld[MAXDIM];
+    int ndim = p_ndim;
+    /* number of n-element of the first dimension */
+    n1dim = 1; for(i=ndim-2; i>=0; i--) n1dim *= (hi[i] - lo[i] + 1);
+
+    bvalue[ndim-1] = 0;
+    bunit[ndim-1] = 1;
+    if (ndim > 1) {
+      bvalue[ndim-2] = 0;
+      bunit[ndim-2] = 1;
+    }
+    /* baseld[ndim-2] = ld[ndim-1]
+     * baseld[ndim-3] = ld[ndim-1] * ld[ndim-2]
+     * baseld[ndim-4] = ld[ndim-1] * ld[ndim-2] * ld[ndim-3] .....
+     */
+    baseld[ndim-1] = ld[ndim-1]; 
+    if (ndim > 1) {
+      baseld[ndim-2] = baseld[ndim-1] *ld[ndim-2];
+    }
+    for(i=ndim-3; i>=0; i--) {
+      bvalue[i] = 0;
+      bunit[i] = bunit[i+1] * (hi[i+1] - lo[i+1] + 1);
+      baseld[i] = baseld[i+1] * ld[i];
+    }
+
+    /* scale local part of array */
+    for(i=0; i<n1dim; i++) {
+      idx = 0;
+      for(j=1; j<ndim; j++) {
+        idx += bvalue[j] * baseld[j-1];
+        if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+        if(bvalue[j] > (hi[j]-lo[j])) bvalue[j] = 0;
+      }
+
+      for(j=0; j<(hi[0]-lo[0]+1); j++)
+        (reinterpret_cast<_type*>(ptr))[idx+j]  *=
+          *reinterpret_cast<_type*>(value);
+    }
+  }
+
+  /**
+   * Wrapper for error function in environment class
+   * @param msg message to print with error
+   * @param code error code to exit with
+   */
+  void error(const char *msg, int code);
+
+  /**
+   * Utility function to convert XGA datatype into an actual size
+   * @param type XGA datatype
+   */
+  int xga_sizeof(int type);
+
+  /**
+   * Utility function to allocate n XGA datatype elements
+   * @param n number of elements
+   * @param type XGA datatype
+   * @return pointer to allocated data
+   */
+  void* xga_malloc(int64_t n, int type);
+
+  /**
+   * Utility function to free memory allocated by xga_malloc
+   * @param ptr void pointer allocated by xga_malloc
+   * @param type XGA datatype
+   */
+  void xga_free(void *ptr, int type);
+
+  template <typename _type>
+  friend class GlobalArray;
+
 private:
 
-  int p_datatype = XGA_UNKNOWN; /* data type */
-  data_distribution p_distr;    /* data distribution */
-  int     p_ndim;               /* dimension of array */
-  int64_t p_dims[MAXDIM];       /* dimensions of array */
-  int64_t chunk[MAXDIM];        /* chunking array */
-  int64_t *p_mapc;              /* block distribution map */
-  std::vector<int64_t> map;     /* distribution map for iterator */
-  int     nproc;                /* number of processors */
-  std::vector<int> proclist;    /* list of procs containing data */
-  int     p_proc_grid[MAXDIM];  /* processor array */
-  double  scale[MAXDIM];        /* nblock/dim (precomputed) */
-  int64_t p_size;               /* size of local data, in bytes */
-  int64_t p_elemsize;           /* size of data element */
-  bool    ghosts;               /* flag indicate ghost cells */
-  int64_t width[MAXDIM];        /* boundary cells per dimension */
-  int64_t p_lo[MAXDIM];         /* lower indices of local block */
-  void    **ptr;                /* array of pointers to remoted data */
-  bool    p_active;             /* data has been allocated to array */
+  xga_types p_datatype = XGA_UNKNOWN; /* data type */
+  data_distribution p_distr;          /* data distribution */
+  int     p_ndim;                     /* dimension of array */
+  int64_t p_dims[MAXDIM];             /* dimensions of array */
+  int64_t chunk[MAXDIM];              /* chunking array */
+  int64_t *p_mapc;                    /* block distribution map */
+  std::vector<int64_t> map;           /* distribution map for iterator */
+  int     nproc;                      /* number of processors */
+  std::vector<int> proclist;          /* list of procs containing data */
+  int     p_proc_grid[MAXDIM];        /* processor array */
+  double  p_scale[MAXDIM];            /* nblock/dim (precomputed) */
+  int64_t p_size;                     /* size of local data, in bytes */
+  int64_t p_elemsize;                 /* size of data element */
+  bool    ghosts;                     /* flag indicate ghost cells */
+  int64_t width[MAXDIM];              /* boundary cells per dimension */
+  int64_t p_lo[MAXDIM];               /* lower indices of local block */
+  void    **ptr;                      /* array of pointers to remoted data */
+  bool    p_active;                   /* data has been allocated to array */
 
 
   /* iterator parameters */

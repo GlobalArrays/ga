@@ -221,13 +221,13 @@
   if (_type == REGULAR) {                                           \
     for (_i=0, _offset=0; _i<p_ndim; _i++) {                        \
       XGA_FINDBLOCK_M(p_mapc+_offset,p_proc_grid[_i],               \
-          scale[_i],subscript[_i],&index[_i]);                      \
+          p_scale[_i],subscript[_i],&index[_i]);                    \
       _offset += p_proc_grid[_i];                                   \
     }                                                               \
   } else if (_type == TILED_IRREG) {                                \
     for (_i=0, _offset=0; _i<p_ndim; _i++) {                        \
       XGA_FINDBLOCK_M(p_mapc+_offset, blk_num[_i],                  \
-          scale[_i],subscript[_i],&index[_i]);                      \
+          p_scale[_i],subscript[_i],&index[_i]);                    \
       _offset += blk_num[_i];                                       \
     }                                                               \
   } else {                                                          \
@@ -276,3 +276,10 @@
   p_env->error(err_string, val);                                    \
 }
 #endif
+
+/**
+ * Some utility macros
+ */
+#define XGA_MAX_M(a,b) (((a) >= (b)) ? (a) : (b))
+#define XGA_MIN_M(a,b) (((a) <= (b)) ? (a) : (b))
+#define XGA_ABS_M(a)   (((a) >= 0) ? (a) : (-(a)))

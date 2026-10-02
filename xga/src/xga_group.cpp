@@ -1,3 +1,6 @@
+#include <cassert>
+#include <complex>
+
 #include "xga_group.hpp"
 
 namespace XGA {
