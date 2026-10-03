@@ -503,7 +503,7 @@ void p_GA::copyPatch(char trans, int64_t *alo, int64_t *ahi,
         if (use_put) {
           dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
           dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
-          g_b->get(lod, hid, src_data_ptr, ld);
+          g_b->put(lod, hid, src_data_ptr, ld);
           this->releasePtr(los, his);
         } else {
           dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);

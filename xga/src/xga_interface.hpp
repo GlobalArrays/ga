@@ -64,7 +64,8 @@ public:
     } else if constexpr(std::is_same_v<_type,std::complex<double> >) {
       p_datatype = XGA_DCOMPLEX;
     } else {
-      p_Impl->error("(GlobalArray) Unknown datatype",0);
+      //TODO: Add proper error
+      //p_Impl->error("(GlobalArray) Unknown datatype",0);
     }
 
     p_group = group;
@@ -96,7 +97,8 @@ public:
     } else if constexpr(std::is_same_v<_type,std::complex<double> >) {
       p_datatype = XGA_DCOMPLEX;
     } else {
-      p_Impl->error("(GlobalArray) Unknown datatype",0);
+      //TODO: Add proper error
+      //p_Impl->error("(GlobalArray) Unknown datatype",0);
     }
 
     p_group = group;
@@ -162,6 +164,34 @@ public:
     for (i=0; i<ntot; i++) tmap[i] = static_cast<int64_t>(mapc[i]);
     p_Impl->setIrregularDistribution(tmap, nblock);
     delete [] tmap;
+  }
+
+  /**
+   * Set dimensions of array. This can be call by an existing array if clear()
+   * has been called on it.
+   * @param[in] ndim dimension of global array
+   * @param[in] dims dimensions of global array
+   */
+  void setDimensions(int ndim, int64_t *dims)
+  {
+    //if (p_Impl != NULL) {
+     //TODO: error
+    //}
+    prior_sync_flag = true;
+    post_sync_flag = true;
+    p_Impl = new p_GA(p_group, ndim, dims, p_datatype);
+  }
+  void setDimensions(int ndim, int *dims)
+  {
+    //if (p_Impl != NULL) {
+     //TODO: error
+    //}
+    int64_t tdims[MAXDIM];
+    int i;
+    for (i=0; i<ndim; i++) tdims[i] = static_cast<int64_t>(dims[i]);
+    prior_sync_flag = true;
+    post_sync_flag = true;
+    p_Impl = new p_GA(p_group, ndim, tdims, p_datatype);
   }
 
   /**

@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "test_utilities.hpp"
-#define DIM  2048
+#define DIM 2048
 #define DIM3 3
 #define BLOCKDIM 2
 template<typename idx_type, typename data_type>
@@ -92,15 +92,16 @@ void copy_test()
       tot++;
     }
   }
-  XGA::GlobalArray<data_type> gc(group,ndim,dims);
-  gc.setIrregularDistribution(&map[0], &part[0]);
-  gc.allocate();
-  ga.copy(&gc);
-  gc.distribution(rank,lo,hi);
+  gb.setDimensions(ndim, dims);
+  gb.setIrregularDistribution(&map[0], &part[0]);
+  gb.allocate();
+  ga.copy(&gb);
+  gb.distribution(rank,lo,hi);
   idim = hi[0]-lo[0]+1;
   jdim = hi[1]-lo[1]+1;
-  gc.accessPtr(lo, hi, &vptr, &ld);
+  gb.accessPtr(lo, hi, &vptr, &ld);
   dptr = static_cast<data_type*>(vptr);
+  ok = 1;
   for (i=0; i<idim; i++) {
     for (j=0; j<jdim; j++) {
       if (ok && dptr[j+jdim*i] != static_cast<data_type>((j+lo[1]
@@ -112,15 +113,59 @@ void copy_test()
       }
     }
   }
-  gc.releasePtr(lo, hi);
+  gb.releasePtr(lo, hi);
   MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
   if (chk==1 && rank == 0) {
     printf("\n Full block copy with mismatched distribution test PASSES\n");
   } else if (chk == 0 && rank == 0) {
     printf("\n Full block copy with mismatched distribution test FAILS\n");
   }
+  /* test copy patch function */
+  gb.zero();
+  idx_type plo[2], phi[2];
+  plo[0] = dims[0]/4;
+  plo[1] = dims[1]/4;
+  phi[0] = plo[0] + dims[0]/2;
+  phi[1] = plo[1] + dims[1]/2;
+  ga.copyPatch(plo, phi, &gb, plo, phi);
+  /* check values in patch */
+  gb.distribution(rank,lo,hi);
+  bool ovrlp = true;
+  for (i=0; i<ndim; i++) {
+    if (hi[i] < plo[i] || lo[i] > phi[i]) ovrlp = false;
+  }
+  ok = 1;
+  if (ovrlp) {
+    for (i=0; i<ndim; i++) {
+      if (plo[i] > lo[i]) lo[i] = plo[i];
+      if (phi[i] < hi[i]) hi[i] = phi[i];
+    }
+    idim = hi[0]-lo[0]+1;
+    jdim = hi[1]-lo[1]+1;
+    gb.accessPtr(lo, hi, &vptr, &ld);
+    dptr = static_cast<data_type*>(vptr);
+    for (i=0; i<idim; i++) {
+      for (j=0; j<jdim; j++) {
+        if (ok && dptr[j+ld*i] != static_cast<data_type>((j+lo[1]
+                + (i+lo[0])*dims[1]))) {
+          printf("p[%d] Check fails for i: %d j: %d actual: %d expected: %d\n",
+              wrank,i+lo[0],j+lo[1],static_cast<int>(std::real(dptr[j+ld*i])),
+              static_cast<data_type>(j+lo[1] + (i+lo[0])*dims[1]));
+          ok = 0;
+        }
+      }
+    }
+    gb.releasePtr(lo, hi);
+  }
+  MPI_Allreduce(&ok, &chk, 1, MPI_INT, MPI_PROD, comm);
+  if (chk==1 && rank == 0) {
+    printf("\n Patch copy test PASSES\n");
+  } else if (chk == 0 && rank == 0) {
+    printf("\n Patch copy test FAILS\n");
+  }
+
   ga.clear();
-  gc.clear();
+  gb.clear();
 
 
 #if 0
