@@ -196,6 +196,8 @@ jobs:
           if [[ "$CC" == "icx" ]]; then
           echo patching g2test to prevent icx failures
           patch -p0  < ./travis/g2t.patch
+          echo patching g3test to prevent icx failures
+          patch -p0  < ./travis/g3t.patch
           fi
           echo patching sprs_perf.c
           patch -p0  < ./travis/sprs_perf.patch

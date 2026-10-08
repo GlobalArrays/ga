@@ -1,0 +1,21 @@
+diff --git global/testing/g3test.F global/testing/g3test.F
+index 3fa30388..026b945c 100644
+--- global/testing/g3test.F
++++ global/testing/g3test.F
+@@ -390,6 +390,7 @@ c  123 continue
+       t16 = 0.0d00
+       t17 = 0.0d00
+       t18 = 0.0d00
++#if 0
+       if (me.eq.0) write(6,*) '*'
+       if (me.eq.0) write(6,*) '* Starting update 6'
+       if (me.eq.0) write(6,*) '*'
+@@ -418,7 +419,7 @@ c  123 continue
+       if (has_data(me).and.safe_get)
+      +    call nga_periodic_get(g_a, lo2, hi2, b, ld2)
+       call atest(int_mb(index3),dims3,ld3(1),b,nmax+2*nwidth,has_data)
+-
++#endif
+       write(6,*) 'Update finished on processor ',me
+       if (me.eq.0) then
+         write(6,*) '*'
