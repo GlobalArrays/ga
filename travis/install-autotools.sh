@@ -28,11 +28,11 @@ if [ "x${download}" = x ] ; then
 fi
 
 MAKE_JNUM=4
-# we need m4 at least version 1.4.19
-M4_VERSION=1.4.19
-LIBTOOL_VERSION=2.4.6
-AUTOCONF_VERSION=2.71
-AUTOMAKE_VERSION=1.11.6
+# we need m4 at least version 1.4.21
+M4_VERSION=1.4.21
+LIBTOOL_VERSION=2.6.2
+AUTOCONF_VERSION=2.73
+AUTOMAKE_VERSION=1.16.5
 
 # check whether we can reach ftp.gnu.org
 TIMEOUT=timeout
