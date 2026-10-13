@@ -1434,6 +1434,9 @@ void vector_to_struct_dtype(void* src_ptr, void *dst_ptr, comex_giov_t *iov,
   ierr = MPI_Type_create_struct(nelems, blocklengths, displacements, types,
       dst_type);
   translate_mpi_error(ierr,"vector_to_struct_dtype:MPI_Type_create_struct");
+  free(blocklengths);
+  free(displacements);
+  free(types);
 #endif
 }
 
@@ -1818,6 +1821,9 @@ void* create_vector_buf_and_dtypes(void *dst_ptr,
   ierr = MPI_Type_create_struct(nelems, blocklengths, displacements, types,
       dst_type);
   translate_mpi_error(ierr,"create_vector_buf_and_dtypes:MPI_Type_create_struct");
+  free(blocklengths);
+  free(displacements);
+  free(types);
   return src_buf;
 }
 
