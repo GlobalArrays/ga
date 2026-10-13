@@ -28,10 +28,10 @@ if [ "x${download}" = x ] ; then
 fi
 
 MAKE_JNUM=4
-# we need m4 at least version 1.4.19
-M4_VERSION=1.4.19
-LIBTOOL_VERSION=2.4.6
-AUTOCONF_VERSION=2.71
+# we need m4 at least version 1.4.21
+M4_VERSION=1.4.21
+LIBTOOL_VERSION=2.6.2
+AUTOCONF_VERSION=2.73
 AUTOMAKE_VERSION=1.11.6
 
 # check whether we can reach ftp.gnu.org
@@ -64,7 +64,7 @@ if [ -f config.guess ] ; then
     echo "config.guess already exists! Using existing copy."
 else
     if ! ${download} config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD' ; then
-	${download} config.guess 'https://web.archive.org/web/20240816170413/http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
+	${download} config.guess 'https://raw.githubusercontent.com/GlobalArrays/autotools/refs/heads/master/config.guess'
     fi
 fi
 
@@ -76,7 +76,7 @@ if [ -f config.sub ] ; then
     echo "config.sub already exists! Using existing copy."
 else
     if ! ${download} config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD' ; then
-	${download} config.sub 'https://web.archive.org/web/20240816170413/http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
+	${download} config.sub 'https://raw.githubusercontent.com/GlobalArrays/autotools/refs/heads/master/config.sub'
     fi
 fi
 
