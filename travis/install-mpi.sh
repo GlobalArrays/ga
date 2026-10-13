@@ -44,7 +44,7 @@ case "$MPI_IMPL" in
             brew install mpich || brew upgrade mpich || true
 	else
         if [ ! -d "$TRAVIS_ROOT/mpich" ] || [  ! -x "$TRAVIS_ROOT/mpich/bin/mpicc" ]; then
-	    MPI_VER=4.3.2
+	    MPI_VER=5.0.2
             wget --no-check-certificate http://www.mpich.org/static/downloads/"$MPI_VER"/mpich-"$MPI_VER".tar.gz
             tar -xzf mpich-"$MPI_VER".tar.gz
             cd mpich-"$MPI_VER"
@@ -75,7 +75,7 @@ case "$MPI_IMPL" in
 	    fi
 	    CFLAGS_in="-O1 -w -fPIC"
 # --disable-opencl since opencl detection generates -framework opencl on macos that confuses opencl	    
-            ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich --with-device=ch3:nemesis --disable-shared --enable-static --disable-opencl pac_cv_have_float16=no
+            ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich --disable-shared --enable-static --disable-opencl pac_cv_have_float16=no
             make -j ${MAKE_JNUM}
             make -j ${MAKE_JNUM} install
 	    ls -Rlta $TRAVIS_ROOT/mpich/lib
