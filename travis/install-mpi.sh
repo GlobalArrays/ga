@@ -8,7 +8,9 @@ set -x
 os=`uname`
 TRAVIS_ROOT="$1"
 MPI_IMPL="$2"
-
+if [ -n "$3" ]; then
+    OFIYN="$3"
+fi
 MAKE_JNUM=2
 #check if FC,F77 and CC are defined
 if [[ -z "${CC}" ]]; then
@@ -74,8 +76,9 @@ case "$MPI_IMPL" in
 		icc -V
 	    fi
 	    CFLAGS_in="-O1 -w -fPIC"
+	    if [[ $OFIYN == 'Y' ]]; then device_options="--with-device=ch3:nemesis" ; fi
 # --disable-opencl since opencl detection generates -framework opencl on macos that confuses opencl	    
-            ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich --disable-shared --enable-static --disable-opencl pac_cv_have_float16=no
+            ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich --disable-shared --enable-static --disable-opencl pac_cv_have_float16=no $device_options
             make -j ${MAKE_JNUM}
             make -j ${MAKE_JNUM} install
 	    ls -Rlta $TRAVIS_ROOT/mpich/lib
