@@ -77,6 +77,7 @@ case "$MPI_IMPL" in
 	    fi
 	    CFLAGS_in="-O1 -w -fPIC"
 	    if [[ $OFIYN == 'Y' ]]; then device_options="--with-device=ch3:nemesis" ; fi
+	    if [[ $os == 'Darwin' ]]; then device_options="--with-device=ch3:nemesis" ; fi
 # --disable-opencl since opencl detection generates -framework opencl on macos that confuses opencl	    
             ../configure CC="$CC" FC="$F77" F77="$F77" CFLAGS="$CFLAGS_in" FFLAGS="$FFLAGS_IN" --prefix=$TRAVIS_ROOT/mpich --disable-shared --enable-static --disable-opencl pac_cv_have_float16=no $device_options
             make -j ${MAKE_JNUM}
