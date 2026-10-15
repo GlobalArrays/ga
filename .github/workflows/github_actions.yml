@@ -273,6 +273,7 @@ jobs:
           if [[ $MPI_IMPL == "openmpi" ]]; then
           make F77=$F77 check-ga  MPIEXEC="timeout 20m mpirun --allow-run-as-root -mca mpi_yield_when_idle 0 --oversubscribe -np $NPROCS" || true
           else
+          export MPIR_CVAR_NOLOCAL=1
           make F77=$F77 check-ga  MPIEXEC="timeout 20m mpirun -np $NPROCS"
           fi
           fi
