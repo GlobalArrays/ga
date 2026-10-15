@@ -159,7 +159,7 @@ then
 fi
 
 # Determine test name based on whether fortran was supported.
-TEST_NAME=./global/testing/test.x
+TEST_NAME=./global/testing/thread_perf_strided.x
 if test -x $TEST_NAME
 then
     echo "Running fortran-based test"
@@ -178,7 +178,7 @@ if test "x$PORT" = "xmpi-pr"
 then
     mpirun -n 5 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
 else
-    mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
+    MPIR_CVAR_NOLOCAL=1 mpirun -n 4 ${MAYBE_OVERSUBSCRIBE} ${TEST_NAME}
 fi
 if [ "$USE_CMAKE" = "Y" ] ; then
     echo "skipping dra test when using cmake"
