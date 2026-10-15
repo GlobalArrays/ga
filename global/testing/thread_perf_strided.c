@@ -435,10 +435,8 @@ int main(int argc, char * argv[])
                   offset = (m-tlo[0])*lld + (n-tlo[1]);
                   if (buf[offset] != m*dims[1]+n) {
                     arr_ok[id] = 0;
-                    /*
                     printf("Read mismatch for [%d,%d] expected: %d actual: %d\n",
-                        m,n,m*dims[1]+n,lld);
-                        */
+                        m,n,m*dims[1]+n,buf[offset]);
                   }
                 }
               }
