@@ -26,6 +26,12 @@ export AUTOMAKE="${AUTOTOOLS_DIR}/bin/automake"
 export ACLOCAL="${AUTOTOOLS_DIR}/bin/aclocal"
 
 autoreconf -vif
+if [ -f build-aux/ltmain.sh ]; then
+    sed 's|/usr/bin/file|file|g' build-aux/ltmain.sh > build-aux/ltmain.sh.tmp && mv build-aux/ltmain.sh.tmp build-aux/ltmain.sh
+fi
+sed  's|/bin/file|file|g' configure > configure.tmp && mv configure.tmp configure
+sed  's|/bin/file|file|g' armci/configure > armci/configure.tmp && mv armci/configure.tmp armci/configure
+sed  's|/bin/file|file|g' comex/configure > comex/configure.tmp && mv comex/configure.tmp comex/configure
 
 # patch to configure script for PGF90 and -lnuma
 for conffile in configure comex/configure armci/configure
