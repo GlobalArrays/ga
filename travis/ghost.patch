@@ -1,0 +1,13 @@
+--- global/testing/ghosts.F.org	2026-10-22 18:00:05.375926577 -0700
++++ global/testing/ghosts.F	2026-10-22 18:00:14.482988812 -0700
+@@ -21,8 +21,8 @@
+ #define TEST_3
+ #define TEST_4
+ c#define TEST_5
+-#define TEST_6
+-#define TEST_7
++c#define TEST_6
++c#define TEST_7
+ 
+ 
+       program main

@@ -205,6 +205,8 @@ jobs:
           patch -p0  < ./travis/g2t.patch
           echo patching g3test to prevent icx failures
           patch -p0  < ./travis/g3t.patch
+          echo patching ghosts to prevent icx failures
+          patch -p0  < ./travis/ghost.patch
           fi
           echo patching sprs_perf.c
           patch -p0  < ./travis/sprs_perf.patch
