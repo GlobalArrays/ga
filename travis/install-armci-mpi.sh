@@ -33,7 +33,11 @@ fi
 
 ARMCI_MPI_DIR=${TRAVIS_ROOT}/armci-mpi
 /bin/rm -rf ${ARMCI_MPI_DIR}
-git clone -b master --depth 10 https://github.com/jeffhammond/armci-mpi.git ${ARMCI_MPI_DIR}
+#git clone -b master --depth 10 https://github.com/pmodels/armci-mpi.git ${ARMCI_MPI_DIR}
+git clone -b master https://github.com/jeffhammond/armci-mpi.git ${ARMCI_MPI_DIR}
+cd ${ARMCI_MPI_DIR}
+git checkout 981fefd5b778287dd578d02e4ca70c24fcade9e1
+cd ..
 
 if ! [ -f ${ARMCI_MPI_DIR}/configure ] ; then
   cd ${ARMCI_MPI_DIR}
