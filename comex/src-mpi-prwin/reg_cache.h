@@ -29,19 +29,7 @@ typedef struct _reg_entry_t {
     void *mapped;               /**< starting address of mmap'd region */
     int rank;                   /**< rank where this region lives */
     int use_dev;                /**< memory is on a device */
-#if ENABLE_SYSV
-    char name[2*SHM_NAME_SIZE];   /**< name of region */
-    key_t key;
-#else
-    char name[SHM_NAME_SIZE];   /**< name of region */
-#endif
-#if USE_SICM
-#if SICM_OLD
-    sicm_device *device;         /**< pointer to SICM device */
-#else
-    sicm_device_list device;         /**< pointer to SICM device */
-#endif
-#endif
+    MPI_Win win;               /**< MPI window used for allocation */
 } reg_entry_t;
 
 /* functions
@@ -52,7 +40,7 @@ typedef struct _reg_entry_t {
 reg_return_t reg_cache_init(int nprocs);
 reg_return_t reg_cache_destroy();
 reg_entry_t *reg_cache_find(int rank, void *buf, size_t len);
-reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len, const char *name,
+reg_entry_t *reg_cache_insert(int rank, void *buf, size_t len, MPI_Win win,
 #if ENABLE_SYSV
     key_t key,
 #endif

@@ -24,21 +24,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-/* System V headers */
-// #define ENABLE_SYSV
-#if ENABLE_SYSV
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#endif
-
 /* 3rd party headers */
 #include <mpi.h>
-#if USE_SICM
-#include <sicm_low.h>
-//#include <sicm_impl.h>
-sicm_device_list nill;
-
-#endif
 
 /* our headers */
 #include "comex.h"
@@ -107,6 +94,7 @@ typedef enum {
     OP_UNLOCK,
     OP_QUIT,
     OP_MALLOC,
+    OP_CREATE_WIN,
     OP_FREE,
     OP_NULL
 } op_t;
@@ -187,11 +175,11 @@ static char *static_server_buffer = NULL;
 static int static_server_buffer_size = 0;
 static int eager_threshold = -1;
 static int max_message_size = -1;
-#if ENABLE_SYSV
-static int use_dev_shm = 1;
-#endif
 static int token_counter = 0;
 static int init_from_comm = 0;
+/* This variable allows window to be passed between calls to two separate
+ * handlers when allocating a memory segment using comex_malloc */
+static MPI_Win global_node_win;
 
 static int COMEX_ENABLE_PUT_SELF = ENABLE_PUT_SELF;
 static int COMEX_ENABLE_GET_SELF = ENABLE_GET_SELF;
@@ -209,19 +197,6 @@ static int COMEX_GET_DATATYPE_THRESHOLD = 8192;
 static int COMEX_ENABLE_PUT_IOV = ENABLE_PUT_IOV;
 static int COMEX_ENABLE_GET_IOV = ENABLE_GET_IOV;
 static int COMEX_ENABLE_ACC_IOV = ENABLE_ACC_IOV;
-
-#if USE_SICM
-static sicm_device_list devices = {0};
-#if SICM_OLD
-static sicm_device *device_dram = NULL;
-static sicm_device *device_knl_hbm = NULL;
-static sicm_device *device_ppc_hbm = NULL;
-#else
-static sicm_device_list device_dram = {0};
-static sicm_device_list device_knl_hbm = {0};
-static sicm_device_list device_ppc_hbm = {0};
-#endif
-#endif
 
 #if PAUSE_ON_ERROR
 static int AR_caught_sig=0;
@@ -276,6 +251,7 @@ STATIC void _mutex_destroy_handler(header_t *header, int proc);
 STATIC void _lock_handler(header_t *header, int proc);
 STATIC void _unlock_handler(header_t *header, int proc);
 STATIC void _malloc_handler(header_t *header, char *payload, int proc);
+STATIC void _create_win_handler(header_t *header, char *payload, int proc);
 STATIC void _free_handler(header_t *header, char *payload, int proc);
 
 /* worker functions */
@@ -343,15 +319,6 @@ STATIC char* pack(char *src, int *src_stride,
 STATIC void unpack(char *packed_buffer,
                 char *dst, int *dst_stride, int *count, int stride_levels);
 STATIC char* _generate_shm_name(int rank);
-STATIC reg_entry_t* _comex_malloc_local(size_t size);
-#if USE_SICM
-#if SICM_OLD
-STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device *device);
-#else
-STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device_list device);
-#endif
-int _comex_free_local_memdev(void *ptr);
-#endif
 STATIC void* _get_offset_memory(reg_entry_t *reg_entry, void *memory);
 STATIC int _is_master(void);
 STATIC int _get_world_rank(comex_igroup_t *igroup, int rank);
@@ -360,24 +327,9 @@ STATIC int _smallest_world_rank_with_same_hostid(comex_igroup_t *group);
 STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup);
 STATIC void _malloc_semaphore(void);
 STATIC void _free_semaphore(void);
-#if ENABLE_SYSV
-STATIC void* _shm_create(char *name, key_t *key, size_t size);
-STATIC void* _shm_attach(const char *name, size_t size, key_t key);
-#else
 STATIC void* _shm_create(const char *name, size_t size);
 STATIC void* _shm_attach(const char *name, size_t size);
-#endif
 STATIC void* _shm_map(int fd, size_t size);
-#if USE_SICM
-#if SICM_OLD
-STATIC void* _shm_create_memdev(const char *name, size_t size, sicm_device *device);
-STATIC void* _shm_attach_memdev(const char *name, size_t size, sicm_device *device);
-#else
-STATIC void* _shm_create_memdev(const char *name, size_t size, sicm_device_list device);
-STATIC void* _shm_attach_memdev(const char *name, size_t size, sicm_device_list device);
-#endif
-STATIC void* _shm_map_arena(int fd, size_t size, sicm_arena arena);
-#endif
 STATIC int _set_affinity(int cpu);
 STATIC void translate_mpi_error(int ierr, const char* location);
 STATIC void strided_to_subarray_dtype(int *stride_array, int *count, int levels, MPI_Datatype base_type, MPI_Datatype *type);
@@ -597,63 +549,6 @@ int _comex_init(MPI_Comm comm)
     nb_count_recv = 0;
     nb_count_recv_processed = 0;
 
-#if USE_SICM
-    devices = sicm_init();
-#if SICM_OLD
-    for(i = 0; i < devices.count; i++) {
-        if (devices.devices[i].tag == SICM_DRAM) {
-            device_dram = &devices.devices[i];
-        }
-        if (devices.devices[i].tag == SICM_KNL_HBM) {
-            device_knl_hbm = &devices.devices[i];
-        }
-        if (devices.devices[i].tag == SICM_POWERPC_HBM) {
-            device_ppc_hbm = &devices.devices[i];
-        }
-    }
-    if (!device_dram) {
-      printf("Device DRAM not found\n");
-      exit(18);
-    }
-#else
-   for(i =0; i < devices.count; ++i){
-      sicm_device *curr = devices.devices[i];
-      if(curr->tag == SICM_DRAM){
-         device_dram.count = 1;
-         device_dram.devices = &devices.devices[i];
-      }
-      if (curr->tag == SICM_KNL_HBM) {
-         device_knl_hbm.count = 1;
-         device_knl_hbm.devices = &devices.devices[i];
-      }
-      if (curr->tag == SICM_POWERPC_HBM) {
-         device_ppc_hbm.count = 1;
-         device_ppc_hbm.devices = &devices.devices[i];
-      }
-   }
-   if(device_dram.devices == NULL){
-      printf("Device DRAM not found\n");
-      exit(18);
-   }
-#endif
-#endif
-
-#if ENABLE_SYSV
-   /* if using SYSTEM V instead of POSIX SHM, check if /dev/shm exist */
-   {
-     struct stat sb;
-     if (stat("/dev/shm", &sb) == 0 && S_ISDIR(sb.st_mode)) {
-       use_dev_shm = 1;
-     } else if (stat("/tmp", &sb) == 0 && S_ISDIR(sb.st_mode)) {
-       use_dev_shm = 0;
-     } else {
-       comex_error("No directory available for System V memory\n",-1);
-     }
-   }
-   token_counter = g_state.rank;
-#endif
-
-
     /* reg_cache */
     /* note: every process needs a reg cache and it's always based on the
      * world rank and size */
@@ -844,10 +739,6 @@ int comex_finalize()
     fprintf(stderr, "[%d] after comex_group_finalize()\n", g_state.rank);
 
 #endif
-#if USE_SICM
-    sicm_fini();
-#endif
-
 #if DEBUG_TO_FILE
     fclose(comex_trace_file);
 #endif
@@ -1414,11 +1305,7 @@ STATIC char* _generate_shm_name(int rank)
       counter[5] = n%limit;
     }
     snprintf_retval = snprintf(name, SHM_NAME_SIZE,
-#if ENABLE_SYSV
-            "/cmx%010u%010u%c%c%c%c%c%c", getuid()+token_counter, getpid(),
-#else
             "/cmx%010u%010u%c%c%c%c%c%c", getuid(), getpid(),
-#endif
             letters[counter[5]],
             letters[counter[4]],
             letters[counter[3]],
@@ -1447,125 +1334,8 @@ STATIC char* _generate_shm_name(int rank)
 
 void* comex_malloc_local(size_t size)
 {
-    reg_entry_t *reg_entry;
-    void *memory = NULL;
-
-    if (size > 0) {
-        reg_entry = _comex_malloc_local(size);
-        memory = reg_entry->mapped;
-    }
-    else {
-        memory = NULL;
-    }
-
-    return memory;
 }
 
-
-STATIC reg_entry_t* _comex_malloc_local(size_t size)
-{
-    char *name = NULL;
-    void *memory = NULL;
-    reg_entry_t *reg_entry = NULL;
-#if ENABLE_SYSV
-    key_t key;
-    char file[SHM_NAME_SIZE+10];
-#endif
-
-#if DEBUG
-    fprintf(stderr, "[%d] _comex_malloc_local(size=%lu)\n",
-            g_state.rank, (long unsigned)size);
-#endif
-
-    if (0 == size) {
-        return NULL;
-    }
-
-    /* create my shared memory object */
-    name = _generate_shm_name(g_state.rank);
-#if ENABLE_SYSV
-    memory = _shm_create(name, &key, size);
-#else
-    memory = _shm_create(name, size);
-#endif
-#if DEBUG && DEBUG_VERBOSE
-    fprintf(stderr, "[%d] _comex_malloc_local registering "
-            "rank=%d mem=%p size=%lu name=%s mapped=%p\n",
-            g_state.rank, g_state.rank, memory,
-            (long unsigned)size, name, memory);
-#endif
-
-    /* register the memory locally */
-#if USE_SICM
-#if SICM_OLD 
-    reg_entry = reg_cache_insert(
-            g_state.rank, memory, size, name, memory, 0, NULL);
-#else
-    reg_entry = reg_cache_insert(
-            g_state.rank, memory, size, name, memory, 0, nill);
-#endif
-#else
-#if ENABLE_SYSV
-    reg_entry = reg_cache_insert(
-            g_state.rank, memory, size, name, key, memory, 0);
-#else
-    reg_entry = reg_cache_insert(
-            g_state.rank, memory, size, name, memory, 0);
-#endif
-#endif
-
-    if (NULL == reg_entry) {
-        comex_error("_comex_malloc_local: reg_cache_insert", -1);
-    }
-
-    free(name);
-
-    return reg_entry;
-}
-
-#if USE_SICM
-#if SICM_OLD
-STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device *device)
-#else
-STATIC reg_entry_t* _comex_malloc_local_memdev(size_t size, sicm_device_list device)
-#endif
-{
-    char *name = NULL;
-    void *memory = NULL;
-    reg_entry_t *reg_entry = NULL;
-
-#if DEBUG
-    fprintf(stderr, "[%d] _comex_malloc_local(size=%lu)\n",
-            g_state.rank, (long unsigned)size);
-#endif
-
-    if (0 == size) {
-        return NULL;
-    }
-
-    /* create my shared memory object */
-    name = _generate_shm_name(g_state.rank);
-    memory = _shm_create_memdev(name, size, device);
-#if DEBUG && DEBUG_VERBOSE
-    fprintf(stderr, "[%d] _comex_malloc_local registering "
-            "rank=%d mem=%p size=%lu name=%s mapped=%p\n",
-            g_state.rank, g_state.rank, memory,
-            (long unsigned)size, name, memory);
-#endif
-
-    /* register the memory locally */
-    reg_entry = reg_cache_insert(
-            g_state.rank, memory, size, name, memory, 1, device);
-
-    if (NULL == reg_entry) {
-        comex_error("_comex_malloc_local: reg_cache_insert", -1);
-    }
-
-    free(name);
-
-    return reg_entry;
-}
-#endif
 
 /* Utility function to translate errors from shmget */
 void _shmget_err(int shm_id, const char* buf)
@@ -1664,12 +1434,6 @@ void _shmctl_err(int flag)
 
 int comex_free_local(void *ptr)
 {
-#if ENABLE_SYSV
-    key_t key;
-    int shm_id;
-    char file[SHM_NAME_SIZE+10];
-    char ebuf[128];
-#endif
     int retval = 0;
     reg_entry_t *reg_entry = NULL;
 
@@ -1684,25 +1448,7 @@ int comex_free_local(void *ptr)
     /* find the registered memory */
     reg_entry = reg_cache_find(g_state.rank, ptr, 0);
 
-#if ENABLE_SYSV
-    shm_id = shmget(reg_entry->key,reg_entry->len,0600);
-    sprintf(ebuf,"p[%d] (shmget in comex_free_local) flags: 0600, key: %d, name: %s\n",
-      g_state.rank,reg_entry->key,reg_entry->name);
-    _shmget_err(shm_id,ebuf);
-    /* printf("p[%d] DETACH SHM name: %s key: %d\n",g_state.rank,reg_entry->name, reg_entry->key); */
-    _shmdt_err(shmdt(reg_entry->mapped));
-    /* printf("p[%d] DESTROY SHM name: %s key: %d\n",g_state.rank,reg_entry->name,
-        reg_entry->key); */
-    _shmctl_err(shmctl(shm_id, IPC_RMID, NULL));
-    if (use_dev_shm) {
-      sprintf(file,"/dev/shm/%s",reg_entry->name);
-    } else {
-      sprintf(file,"/tmp/%s",reg_entry->name);
-    }
-#if ENABLE_FTOK
-    remove(file);
-#endif
-#else
+#if 0
     /* unmap the memory */
     retval = munmap(ptr, reg_entry->len);
     check_devshm(0, -(reg_entry->len));
@@ -1725,47 +1471,6 @@ int comex_free_local(void *ptr)
 
     return COMEX_SUCCESS;
 }
-
-#if USE_SICM
-int _comex_free_local_memdev(void *ptr)
-{
-    int retval = 0;
-    reg_entry_t *reg_entry = NULL;
-
-#if DEBUG
-    fprintf(stderr, "[%d] _comex_free_local_memdev(ptr=%p)\n", g_state.rank, ptr);
-#endif
-
-    if (NULL == ptr) {
-        return COMEX_SUCCESS;
-    }
-
-    /* find the registered memory */
-    reg_entry = reg_cache_find(g_state.rank, ptr, 0);
-
-    /* unmap the memory */
-    sicm_free(ptr);
-    retval = 0;
-    if (-1 == retval) {
-        perror("_comex_free_local_memdev: munmap");
-        comex_error("_comex_free_local_memdev: munmap", retval);
-    }
-
-    /* remove the shared memory object */
-    retval = shm_unlink(reg_entry->name);
-    if (-1 == retval) {
-        perror("_comex_free_local_memdev: shm_unlink");
-        comex_error("_comex_free_local_memdev: shm_unlink", retval);
-    }
-
-    /* delete the reg_cache entry */
-    retval = reg_cache_delete(g_state.rank, ptr);
-    COMEX_ASSERT(RR_SUCCESS == retval);
-
-    return COMEX_SUCCESS;
-}
-#endif
-
 
 int comex_wait_proc(int proc, comex_group_t group)
 {
@@ -2358,15 +2063,6 @@ int comex_unlock(int mutex, int proc)
 
 int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 {
-#if USE_SICM && TEST_SICM
-    char cdevice[32];
-#  ifdef TEST_SICM_DEV
-    strcpy(cdevice,STR(TEST_SICM_DEV));
-#  else
-    strcpy(cdevice,"dram");
-#  endif
-    return comex_malloc_mem_dev(ptrs, size, group, cdevice);
-#else
     comex_igroup_t *igroup = NULL;
     reg_entry_t *reg_entries = NULL;
     reg_entry_t my_reg;
@@ -2378,6 +2074,15 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     int reg_entries_local_count = 0;
     reg_entry_t *reg_entries_local = NULL;
     int status = 0;
+    int *masters, *all_masters;
+    int lowest_rank_on_node;
+    int node_count;
+    int *node_list;
+    void *buf;
+    MPI_Aint tsize;
+    MPI_Group node_group;
+    MPI_Comm node_comm;
+    MPI_Win node_win;
 
     /* preconditions */
     COMEX_ASSERT(ptrs);
@@ -2394,6 +2099,78 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     my_world_rank = _get_world_rank(igroup, igroup->rank);
     my_master = g_state.master[my_world_rank];
 
+    /* Create a window containing just processors in this group that are
+     * on the same SMP node. Include the progress rank. Start by finding
+     * all processors on this group with the same master. These must also
+     * be (by virtue of having the same master) on the same SMP node. */
+    masters = (int*)malloc(sizeof(int)*g_state.size);
+    all_masters = (int*)malloc(sizeof(int)*g_state.size);
+    for (i=0; i<g_state.size; i++) {
+      masters[i] = -1;
+      all_masters[i] = -1;
+    }
+    masters[g_state.rank] = my_master;
+    masters[my_master] = my_master;
+    MPI_Allreduce(masters, all_masters, igroup->size, MPI_INT, MPI_MAX,
+        igroup->comm);
+    free(masters);
+    lowest_rank_on_node = g_state.size;
+    node_count = 0;
+    for (i=0; i<g_state.size; i++) {
+      if (all_masters[i] >= 0 && all_masters[i] == my_master) {
+        node_count++;
+        if (i<lowest_rank_on_node) lowest_rank_on_node = i;
+      }
+    }
+    node_list = (int*)malloc(sizeof(int)*node_count);
+    node_count = 0;
+    for (i=0; i<g_state.size; i++) {
+      if (all_masters[i] >= 0 && all_masters[i] == my_master) {
+        node_list[node_count] = i;
+        node_count++;
+      }
+    }
+    /* We now have a list of all processes that are on the same SMP node
+     * and the rank of a process that can be used to notify the progress
+     * rank about participating in the formation of a communicator and an
+     * MPI window. Notify master with all information needed to complete
+     * the allocation */
+    if (g_state.rank == lowest_rank_on_node) {
+      nb_t *nb = NULL;
+      int message_size = 0;
+      char *message = NULL;
+      header_t *header = NULL;
+
+      message_size = sizeof(header_t) + sizeof(int)*(node_count+1);
+      message = malloc(message_size);
+      COMEX_ASSERT(message);
+      header = (header_t*)message;
+      header->operation = OP_CREATE_WIN;
+      header->remote_address = NULL;
+      header->local_address = NULL;
+      header->rank = 0;
+      header->length = sizeof(int)*(node_count+1);
+      (void)memcpy(message+sizeof(header_t), &node_count, sizeof(int));
+      (void)memcpy(message+sizeof(header_t)+sizeof(int), node_list, 
+          sizeof(int)*node_count);
+      nb = nb_wait_for_handle();
+      nb_recv(NULL, 0, my_master, nb); /* prepost ack */
+      nb_send_header(message, message_size, my_master, nb);
+      nb_wait_for_all(nb);
+    }
+    MPI_Group_incl(g_state.group, node_count, node_list, &node_group);
+    MPI_Comm_create_group(g_state.comm, node_group, COMEX_TAG, &node_comm);
+    tsize = (MPI_Aint)size;
+    if (tsize == 0) tsize = 8;
+    MPI_Win_allocate_shared(tsize,1,MPI_INFO_NULL,node_comm,
+        &buf, &node_win);
+    MPI_Win_lock_all(0,node_win);
+    MPI_Comm_free(&node_comm);
+    MPI_Group_free(&node_group);
+
+
+
+
 #if DEBUG && DEBUG_VERBOSE
     fprintf(stderr, "[%d] comex_malloc my_master=%d\n", g_state.rank, my_master);
 #endif
@@ -2407,19 +2184,6 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     is_notifier = g_state.rank == get_my_master_rank_with_same_hostid(g_state.rank,
         g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
         num_progress_ranks_per_node, is_node_ranks_packed);
-#if 0
-#if MASTER_IS_SMALLEST_SMP_RANK
-    // is_notifier = _smallest_world_rank_with_same_hostid(igroup) == g_state.rank;
-    int smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
-    is_notifier = g_state.rank == smallest_rank_with_same_hostid + g_state.node_size*
-      ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size);
-#else
-    // is_notifier = _largest_world_rank_with_same_hostid(igroup) == g_state.rank;
-    int largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
-    is_notifier = g_state.rank == (largest_rank_with_same_hostid - g_state.node_size *
-       ((largest_rank_with_same_hostid - g_state.rank)/g_state.node_size));
-#endif
-#endif
     if (is_notifier) {
         reg_entries_local = malloc(sizeof(reg_entry_t)*g_state.node_size);
     }
@@ -2448,7 +2212,12 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
         reg_cache_nullify(&my_reg);
     }
     else {
-        my_reg = *_comex_malloc_local(sizeof(char)*size);
+      my_reg.buf = buf;
+      my_reg.len = size;
+      my_reg.mapped = buf;
+      my_reg.rank = g_state.rank;
+      my_reg.use_dev = 0;
+      my_reg.win = node_win;
     }
 
 #if DEBUG && DEBUG_VERBOSE
@@ -2510,40 +2279,28 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
 #endif
 #endif
             {
-            /* same SMP node, need to mmap */
-            /* open remote shared memory object */
-#if ENABLE_SYSV
-            void *memory = _shm_attach(reg_entries[i].name, reg_entries[i].len,
-                reg_entries[i].key);
-#else
-            void *memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
-#endif
+            /* same MPI window */
+            void *memory;
+            int wrank = reg_entries[i].rank-lowest_rank_on_node;
+            MPI_Aint tsize;
+            int disp_unit;
+            MPI_Win_shared_query(node_win, wrank, &tsize, &disp_unit,
+                &memory);
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] comex_malloc registering "
-                    "rank=%d buf=%p len=%lu name=%s map=%p\n",
+                    "rank=%d buf=%p len=%lu map=%p\n",
                     g_state.rank,
                     reg_entries[i].rank,
                     reg_entries[i].buf,
                     reg_entries[i].len,
-                    reg_entries[i].name,
                     memory);
 #endif
             (void)reg_cache_insert(
                     reg_entries[i].rank,
                     reg_entries[i].buf,
                     reg_entries[i].len,
-                    reg_entries[i].name,
-#if ENABLE_SYSV
-                    reg_entries[i].key,
-#endif
+                    node_win,
                     memory,0
-#if USE_SICM
-#if SICM_OLD
-                    ,NULL
-#else
-                    ,nill
-#endif
-#endif
                   );
             if (is_notifier) {
                 /* does this need to be a memcpy?? */
@@ -2586,7 +2343,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
         header->operation = OP_MALLOC;
         header->remote_address = NULL;
         header->local_address = NULL;
-        header->rank = 0;
+        header->rank = lowest_rank_on_node;
         header->length = reg_entries_local_count;
         (void)memcpy(message+sizeof(header_t), reg_entries_local, reg_entries_local_size);
         nb = nb_wait_for_handle();
@@ -2601,210 +2358,12 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     comex_barrier(group);
 
     return COMEX_SUCCESS;
-#endif
 }
 
 int comex_malloc_mem_dev(void *ptrs[], size_t size, comex_group_t group,
         const char* device)
 {
-#if (!defined(USE_SICM) || !USE_SICM)
     return comex_malloc(ptrs,size,group);
-#else
-    comex_igroup_t *igroup = NULL;
-    reg_entry_t *reg_entries = NULL;
-    reg_entry_t my_reg;
-    size_t size_entries = 0;
-    int my_master = -1;
-    int my_world_rank = -1;
-    int i = 0;
-    int is_notifier = 0;
-    int reg_entries_local_count = 0;
-    reg_entry_t *reg_entries_local = NULL;
-    int status = 0;
-#if SICM_OLD
-    sicm_device *idevice = NULL;
-#else
-    sicm_device_list idevice;
-    idevice.count = 0;
-    idevice.devices = NULL;
-#endif
-
-    printf("p[%d] calling comex_malloc_mem_dev\n",g_state.rank);
-    /* preconditions */
-    COMEX_ASSERT(ptrs);
-
-#if DEBUG
-    fprintf(stderr, "[%d] comex_malloc(ptrs=%p, size=%lu, group=%d)\n",
-            g_state.rank, ptrs, (long unsigned)size, group);
-#endif
-
-    /* is this needed? */
-    comex_barrier(group);
-
-    igroup = comex_get_igroup_from_group(group);
-    my_world_rank = _get_world_rank(igroup, igroup->rank);
-    my_master = g_state.master[my_world_rank];
-
-#if DEBUG && DEBUG_VERBOSE
-    fprintf(stderr, "[%d] comex_malloc my_master=%d\n", g_state.rank, my_master);
-#endif
-
-#if MASTER_IS_SMALLEST_SMP_RANK
-    is_notifier = _smallest_world_rank_with_same_hostid(igroup) == g_state.rank;
-#else
-    is_notifier = _largest_world_rank_with_same_hostid(igroup) == g_state.rank;
-#endif
-    if (is_notifier) {
-        reg_entries_local = malloc(sizeof(reg_entry_t)*g_state.node_size);
-    }
-
-    /* allocate space for registration cache entries */
-    size_entries = sizeof(reg_entry_t) * igroup->size;
-    reg_entries = malloc(size_entries);
-    MAYBE_MEMSET(reg_entries, 0, sizeof(reg_entry_t)*igroup->size);
-
-#if DEBUG && DEBUG_VERBOSE
-    fprintf(stderr, "[%d] comex_malloc allocated reg entries\n",
-            g_state.rank);
-#endif
-
-    /* allocate and register segment */
-    MAYBE_MEMSET(&my_reg, 0, sizeof(reg_entry_t));
-    if (0 == size) {
-        reg_cache_nullify(&my_reg);
-    }
-    else {
-      idevice = device_dram;
-
-      if (!strncmp(device,"dram",4)) {
-        idevice = device_dram;
-      } else if (!strncmp(device,"knl_hbm",7)) {
-        idevice = device_knl_hbm;
-      } else if (!strncmp(device,"ppc_hbm",7)) {
-        idevice = device_ppc_hbm;
-      }
-      my_reg = *_comex_malloc_local_memdev(sizeof(char)*size, idevice);
-    }
-
-#if DEBUG && DEBUG_VERBOSE
-    fprintf(stderr, "[%d] comex_malloc allocated and registered local shmem\n",
-            g_state.rank);
-#endif
-
-    /* exchange buffer address via reg entries */
-    reg_entries[igroup->rank] = my_reg;
-    status = MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
-            reg_entries, sizeof(reg_entry_t), MPI_BYTE, igroup->comm);
-    COMEX_ASSERT(MPI_SUCCESS == status);
-
-#if DEBUG && DEBUG_VERBOSE
-    fprintf(stderr, "[%d] comex_malloc allgather reg entries\n",
-            g_state.rank);
-#endif
-
-    /* insert reg entries into local registration cache */
-    for (i=0; i<igroup->size; ++i) {
-        if (NULL == reg_entries[i].buf) {
-            /* a proc did not allocate (size==0) */
-#if DEBUG && DEBUG_VERBOSE
-            fprintf(stderr, "[%d] comex_malloc found NULL buf at %d\n",
-                    g_state.rank, i);
-#endif
-        }
-        else if (g_state.rank == reg_entries[i].rank) {
-            /* we already registered our own memory, but PR hasn't */
-#if DEBUG && DEBUG_VERBOSE
-            fprintf(stderr, "[%d] comex_malloc found self at %d\n",
-                    g_state.rank, i);
-#endif
-            if (is_notifier) {
-                /* does this need to be a memcpy?? */
-                reg_entries_local[reg_entries_local_count++] = reg_entries[i];
-            }
-        }
-        else if (!strcmp(g_state.host[reg_entries[i].rank].name,
-                g_state.host[my_world_rank].name)) {
-            /* same SMP node, need to mmap */
-            /* open remote shared memory object */
-            void *memory = _shm_attach_memdev(reg_entries[i].name,
-                reg_entries[i].len, idevice);
-#if DEBUG && DEBUG_VERBOSE
-            fprintf(stderr, "[%d] comex_malloc registering "
-                    "rank=%d buf=%p len=%lu name=%s map=%p\n",
-                    g_state.rank,
-                    reg_entries[i].rank,
-                    reg_entries[i].buf,
-                    reg_entries[i].len,
-                    reg_entries[i].name,
-                    memory);
-#endif
-            (void)reg_cache_insert(
-                    reg_entries[i].rank,
-                    reg_entries[i].buf,
-                    reg_entries[i].len,
-                    reg_entries[i].name,
-                    memory, 1, idevice);
-            if (is_notifier) {
-                /* does this need to be a memcpy?? */
-                reg_entries_local[reg_entries_local_count++] = reg_entries[i];
-            }
-        }
-        else {
-#if 0
-            /* remote SMP node */
-            /* i.e. we know about the mem but don't have local shared access */
-            (void)reg_cache_insert(
-                    reg_entries[i].rank,
-                    reg_entries[i].buf,
-                    reg_entries[i].len,
-                    reg_entries[i].name,
-                    NULL);
-#endif
-        }
-    }
-
-    /* assign the ptr array to return to caller */
-    for (i=0; i<igroup->size; ++i) {
-        ptrs[i] = reg_entries[i].buf;
-    }
-
-    /* send reg entries to my master */
-    /* first non-master rank in an SMP node sends the message to master */
-    if (is_notifier) {
-        nb_t *nb = NULL;
-        int reg_entries_local_size = 0;
-        int message_size = 0;
-        char *message = NULL;
-        header_t *header = NULL;
-
-        reg_entries_local_size = sizeof(reg_entry_t)*reg_entries_local_count;
-#if DEBUG
-        fprintf(stderr, "[%d] comex_malloc, reg_entries_local_count[%d]\n",
-           g_state.rank, reg_entries_local_count); 
-#endif 
-        message_size = sizeof(header_t) + reg_entries_local_size;
-        message = malloc(message_size);
-        COMEX_ASSERT(message);
-        header = (header_t*)message;
-        header->operation = OP_MALLOC;
-        header->remote_address = NULL;
-        header->local_address = NULL;
-        header->rank = 0;
-        header->length = reg_entries_local_count;
-        (void)memcpy(message+sizeof(header_t), reg_entries_local, reg_entries_local_size);
-        nb = nb_wait_for_handle();
-        nb_recv(NULL, 0, my_master, nb); /* prepost ack */
-        nb_send_header(message, message_size, my_master, nb);
-        nb_wait_for_all(nb);
-        free(reg_entries_local);
-    }
-
-    free(reg_entries);
-
-    comex_barrier(group);
-
-    return COMEX_SUCCESS;
-#endif
 }
 
 
@@ -2977,9 +2536,6 @@ void _free_semaphore()
 
 int comex_free(void *ptr, comex_group_t group)
 {
-#if (USE_SICM && TEST_SICM)
-    return comex_free_dev(ptr, group);
-#else
     comex_igroup_t *igroup = NULL;
     int my_world_rank = -1;
     int *world_ranks = NULL;
@@ -2990,6 +2546,7 @@ int comex_free(void *ptr, comex_group_t group)
     int reg_entries_local_count = 0;
     rank_ptr_t *rank_ptrs = NULL;
     int status = 0;
+    MPI_Win win;
 
     comex_barrier(group);
 
@@ -3052,6 +2609,8 @@ int comex_free(void *ptr, comex_group_t group)
     /* remove all pointers from registration cache */
     for (i=0; i<igroup->size; ++i) {
         if (i == igroup->rank) {
+            reg_entry_t *reg_entry = reg_cache_find(world_ranks[i], ptrs[i], 0);
+            win = reg_entry->win;
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] comex_free found self at %d\n", g_state.rank, i);
 #endif
@@ -3099,20 +2658,6 @@ int comex_free(void *ptr, comex_group_t group)
 
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] comex_free found reg entry\n", g_state.rank);
-#endif
-
-            /* unmap the memory */
-#if ENABLE_SYSV
-            /* printf("p[%d] DETACH SHM name: %s key: %d\n",g_state.rank,reg_entry->name,
-                reg_entry->key); */
-            _shmdt_err(shmdt(reg_entry->mapped));
-#else
-            retval = munmap(reg_entry->mapped, reg_entry->len);
-            check_devshm(0, -(reg_entry->len));
-            if (-1 == retval) {
-              perror("comex_free: munmap");
-              comex_error("comex_free: munmap", retval);
-            }
 #endif
 
 #if DEBUG && DEBUG_VERBOSE
@@ -3177,202 +2722,17 @@ int comex_free(void *ptr, comex_group_t group)
 
     /* remove my ptr from reg cache and free ptr */
     comex_free_local(ptr);
+    MPI_Win_free(&win);
 
     /* Is this needed? */
     comex_barrier(group);
 
     return COMEX_SUCCESS;
-#endif
 }
 
 int comex_free_dev(void *ptr, comex_group_t group)
 {
-#if USE_SICM
-    comex_igroup_t *igroup = NULL;
-    int my_world_rank = -1;
-    int *world_ranks = NULL;
-    int my_master = -1;
-    void **ptrs = NULL;
-    int i = 0;
-    int is_notifier = 0;
-    int reg_entries_local_count = 0;
-    rank_ptr_t *rank_ptrs = NULL;
-    int status = 0;
-
-    comex_barrier(group);
-
-#if DEBUG
-    fprintf(stderr, "[%d] comex_free_dev(ptr=%p, group=%d)\n", g_state.rank, ptr, group);
-#endif
-
-    igroup = comex_get_igroup_from_group(group);
-    world_ranks = _get_world_ranks(igroup);
-    my_world_rank = world_ranks[igroup->rank];
-    my_master = g_state.master[my_world_rank];
-
-#if DEBUG && DEBUG_VERBOSE
-    fprintf(stderr, "[%d] comex_free_dev my_master=%d\n", g_state.rank, my_master);
-#endif
-
-    int num_progress_ranks_per_node = get_num_progress_ranks_per_node();
-    int is_node_ranks_packed = get_progress_rank_distribution_on_node();
-    int smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
-    int largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
-    is_notifier = g_state.rank == get_my_master_rank_with_same_hostid(g_state.rank,
-        g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
-        num_progress_ranks_per_node, is_node_ranks_packed);
-#if 0
-#if MASTER_IS_SMALLEST_SMP_RANK
-    // is_notifier = _smallest_world_rank_with_same_hostid(igroup) == g_state.rank;
-    int smallest_rank_with_same_hostid = _smallest_world_rank_with_same_hostid(igroup);
-    is_notifier = g_state.rank == smallest_rank_with_same_hostid + g_state.node_size*
-      ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size);
-#else
-    // is_notifier = _largest_world_rank_with_same_hostid(igroup) == g_state.rank;
-    int largest_rank_with_same_hostid = _largest_world_rank_with_same_hostid(igroup);
-    is_notifier = g_state.rank == (largest_rank_with_same_hostid - g_state.node_size *
-       ((largest_rank_with_same_hostid - g_state.rank)/g_state.node_size));
-#endif
-#endif
-    if (is_notifier) {
-        rank_ptrs = malloc(sizeof(rank_ptr_t)*g_state.node_size);
-    }
-
-    /* allocate receive buffer for exchange of pointers */
-    ptrs = (void **)malloc(sizeof(void *) * igroup->size);
-    COMEX_ASSERT(ptrs);
-    ptrs[igroup->rank] = ptr;
-
-#if DEBUG && DEBUG_VERBOSE
-    fprintf(stderr, "[%d] comex_free_dev ptrs allocated and assigned\n",
-            g_state.rank);
-#endif
-
-    /* exchange of pointers */
-    status = MPI_Allgather(MPI_IN_PLACE, sizeof(void *), MPI_BYTE,
-            ptrs, sizeof(void *), MPI_BYTE, igroup->comm);
-    COMEX_ASSERT(MPI_SUCCESS == status);
-
-#if DEBUG && DEBUG_VERBOSE
-    fprintf(stderr, "[%d] comex_free_dev ptrs exchanged\n", g_state.rank);
-#endif
-
-    /* remove all pointers from registration cache */
-    for (i=0; i<igroup->size; ++i) {
-        if (i == igroup->rank) {
-#if DEBUG && DEBUG_VERBOSE
-            fprintf(stderr, "[%d] comex_free_dev found self at %d\n", g_state.rank, i);
-#endif
-            if (is_notifier) {
-                /* does this need to be a memcpy? */
-                rank_ptrs[reg_entries_local_count].rank = world_ranks[i];
-                rank_ptrs[reg_entries_local_count].ptr = ptrs[i];
-                reg_entries_local_count++;
-            }
-        }
-        else if (NULL == ptrs[i]) {
-#if DEBUG && DEBUG_VERBOSE
-            fprintf(stderr, "[%d] comex_free_dev found NULL at %d\n", g_state.rank, i);
-#endif
-        }
-        // else if (g_state.hostid[world_ranks[i]]
-        //         == g_state.hostid[g_state.rank]) 
-        else if (g_state.master[world_ranks[i]] == 
-           g_state.master[get_my_master_rank_with_same_hostid(g_state.rank,
-           g_state.node_size, smallest_rank_with_same_hostid, largest_rank_with_same_hostid,
-           num_progress_ranks_per_node, is_node_ranks_packed)] )
-#if 0
-#if MASTER_IS_SMALLEST_SMP_RANK
-        else if (g_state.master[world_ranks[i]] ==
-                g_state.master[(smallest_rank_with_same_hostid + g_state.node_size *
-       ((g_state.rank - smallest_rank_with_same_hostid)/g_state.node_size))]) 
-#else
-        else if (g_state.master[world_ranks[i]] ==
-                g_state.master[(largest_rank_with_same_hostid - g_state.node_size *
-       ((largest_rank_with_same_hostid - g_state.rank)/g_state.node_size))]) 
-#endif
-#endif
-        {
-            /* same SMP node */
-            reg_entry_t *reg_entry = NULL;
-            int retval = 0;
-
-#if DEBUG && DEBUG_VERBOSE
-            fprintf(stderr, "[%d] comex_free_dev same hostid at %d\n", g_state.rank, i);
-#endif
-
-            /* find the registered memory */
-            reg_entry = reg_cache_find(world_ranks[i], ptrs[i], 0);
-            COMEX_ASSERT(reg_entry);
-
-#if DEBUG && DEBUG_VERBOSE
-            fprintf(stderr, "[%d] comex_free_dev found reg entry\n", g_state.rank);
-#endif
-
-            /* free the memory */
-            sicm_free(reg_entry->mapped);
-
-#if DEBUG && DEBUG_VERBOSE
-            fprintf(stderr, "[%d] comex_free_dev unmapped mapped memory in reg entry\n",
-                    g_state.rank);
-#endif
-
-            reg_cache_delete(world_ranks[i], ptrs[i]);
-
-#if DEBUG && DEBUG_VERBOSE
-            fprintf(stderr, "[%d] comex_free_dev deleted reg cache entry\n", g_state.rank);
-#endif
-
-            if (is_notifier) {
-                /* does this need to be a memcpy? */
-                rank_ptrs[reg_entries_local_count].rank = world_ranks[i];
-                rank_ptrs[reg_entries_local_count].ptr = ptrs[i];
-                reg_entries_local_count++;
-            }
-        }
-    }
-
-    /* send ptrs to my master */
-    /* first non-master rank in an SMP node sends the message to master */
-    if (is_notifier) {
-        nb_t *nb = NULL;
-        int rank_ptrs_local_size = 0;
-        int message_size = 0;
-        char *message = NULL;
-        header_t *header = NULL;
-
-        rank_ptrs_local_size = sizeof(rank_ptr_t) * reg_entries_local_count;
-        message_size = sizeof(header_t) + rank_ptrs_local_size;
-        message = malloc(message_size);
-        COMEX_ASSERT(message);
-        header = (header_t*)message;
-        header->operation = OP_FREE;
-        header->remote_address = NULL;
-        header->local_address = NULL;
-        header->rank = 0;
-        header->length = reg_entries_local_count;
-        (void)memcpy(message+sizeof(header_t), rank_ptrs, rank_ptrs_local_size);
-        nb = nb_wait_for_handle();
-        nb_recv(NULL, 0, my_master, nb); /* prepost ack */
-        nb_send_header(message, message_size, my_master, nb);
-        nb_wait_for_all(nb);
-        free(rank_ptrs);
-    }
-
-    /* free ptrs array */
-    free(ptrs);
-    free(world_ranks);
-
-    /* remove my ptr from reg cache and free ptr */
-    _comex_free_local_memdev(ptr);
-
-    /* Is this needed? */
-    comex_barrier(group);
-
-    return COMEX_SUCCESS;
-#else
   return comex_free(ptr, group);
-#endif
 }
 
 
@@ -3406,6 +2766,8 @@ STATIC void _progress_server()
     if ((sizeof(stride_t)+sizeof(DoubleComplex)) > extra_size) {
         extra_size = sizeof(stride_t)+sizeof(DoubleComplex);
     }
+    if (extra_size < sizeof(int)*(g_state.size+1))
+      extra_size = sizeof(int)*(g_state.size+1);
     static_header_buffer_size += extra_size;
     /* after all of the above, possibly grow the size based on user request */
     if (static_header_buffer_size < eager_threshold) {
@@ -3512,6 +2874,9 @@ STATIC void _progress_server()
                 break;
             case OP_MALLOC:
                 _malloc_handler(header, payload, source);
+                break;
+            case OP_CREATE_WIN:
+                _create_win_handler(header, payload, source);
                 break;
             case OP_FREE:
                 _free_handler(header, payload, source);
@@ -4626,6 +3991,7 @@ STATIC void _malloc_handler(
         header_t *header, char *payload, int proc)
 {
     int i;
+    size_t size;
     int n;
     reg_entry_t *reg_entries = (reg_entry_t*)payload;
 
@@ -4653,22 +4019,12 @@ STATIC void _malloc_handler(
             /* same SMP node, need to mmap */
             /* attach to remote shared memory object */
           void *memory;
-#if USE_SICM
-          if (reg_entries[i].use_dev) {
-            printf("p[%d] attaching data in malloc_handler\n",g_state.rank);
-            memory = _shm_attach_memdev(reg_entries[i].name, reg_entries[i].len,
-                reg_entries[i].device);
-          } else {
-#endif
-#if ENABLE_SYSV
-            memory = _shm_attach(reg_entries[i].name, reg_entries[i].len,
-                reg_entries[i].key);
-#else
-            memory = _shm_attach(reg_entries[i].name, reg_entries[i].len);
-#endif
-#if USE_SICM
-          }
-#endif
+          MPI_Aint size;
+          int lowest_rank_on_node = header->rank;
+          int wrank = reg_entries[i].rank-lowest_rank_on_node;
+          int disp_unit;
+          MPI_Win_shared_query(global_node_win, wrank, &size, &disp_unit,
+              &memory);
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] _malloc_handler registering "
                     "rank=%d buf=%p len=%lu name=%s, mapped=%p\n",
@@ -4683,15 +4039,9 @@ STATIC void _malloc_handler(
                     reg_entries[i].rank,
                     reg_entries[i].buf,
                     reg_entries[i].len,
-                    reg_entries[i].name,
-#if ENABLE_SYSV
-                    reg_entries[i].key,
-#endif
+                    global_node_win,
                     memory
                     ,reg_entries[i].use_dev
-#if USE_SICM
-                    ,reg_entries[i].device
-#endif
 );
         }
         else {
@@ -4715,15 +4065,32 @@ STATIC void _malloc_handler(
     server_send(NULL, 0, proc); /* ack */
 }
 
+STATIC void _create_win_handler(
+        header_t *header, char *payload, int proc)
+{
+  int i = 0;
+  int node_count = header->length;
+  int *node_list = (int*)payload;
+  void *buf = NULL;
+  MPI_Aint size = 0;
+  MPI_Group node_group;
+  MPI_Comm node_comm;
+
+  MPI_Group_incl(g_state.group, node_count, node_list, &node_group);
+  MPI_Comm_create_group(g_state.comm, node_group, COMEX_TAG, &node_comm);
+  MPI_Win_allocate_shared(size,1,MPI_INFO_NULL,node_comm,
+      &buf, &global_node_win);
+  MPI_Win_lock_all(0,global_node_win);
+  MPI_Comm_free(&node_comm);
+  MPI_Group_free(&node_group);
+}
 
 STATIC void _free_handler(header_t *header, char *payload, int proc)
 {
     int i = 0;
     int n = header->length;
     rank_ptr_t *rank_ptrs = (rank_ptr_t*)payload;
-#if ENABLE_SYSV
-    int shm_id;
-#endif
+    MPI_Win win;
 
 #if DEBUG
     fprintf(stderr, "[%d] _free_handler proc=%d\n", g_state.rank, proc);
@@ -4735,6 +4102,9 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] comex_free found self at %d\n", g_state.rank, i);
 #endif
+            reg_entry_t *reg_entry = reg_cache_find(rank_ptrs[i].rank,
+                rank_ptrs[i].ptr, 0);
+            win = reg_entry->win;
         }
         else if (NULL == rank_ptrs[i].ptr) {
 #if DEBUG && DEBUG_VERBOSE
@@ -4759,33 +4129,6 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
             fprintf(stderr, "[%d] _free_handler found reg entry\n", g_state.rank);
 #endif
 
-            /* unmap the memory */
-#if USE_SICM
-            if (reg_entry->use_dev) {
-              sicm_free(reg_entry->mapped);
-              retval = 0;
-            } else {
-              retval = munmap(reg_entry->mapped, reg_entry->len);
-            }
-#else
-#if ENABLE_SYSV
-            /*
-            shm_id = shmget(reg_entry->key,reg_entry->len,0600);
-            _shmget_err(shm_id);
-            */
-            /* printf("p[%d] DETACH SHM name: %s key: %d\n",g_state.rank,reg_entry->name, reg_entry->key); */
-            _shmdt_err(shmdt(reg_entry->mapped));
-            retval = 0;
-#else
-            retval = munmap(reg_entry->mapped, reg_entry->len);
-            check_devshm(0, -(reg_entry->len));
-#endif
-#endif
-            if (-1 == retval) {
-                perror("_free_handler: munmap");
-                comex_error("_free_handler: munmap", retval);
-            }
-
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] _free_handler unmapped mapped memory in reg entry\n",
                     g_state.rank);
@@ -4800,16 +4143,9 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
 
         }
         else {
-#if 0
-            reg_cache_delete(rank_ptrs[i].rank, rank_ptrs[i].ptr);
-
-#if DEBUG && DEBUG_VERBOSE
-            fprintf(stderr, "[%d] _free_handler deleted reg cache entry\n",
-                    g_state.rank);
-#endif
-#endif
         }
     }
+    MPI_Win_free(&win);
 
     server_send(NULL, 0, proc); /* ack */
 }
@@ -4962,70 +4298,8 @@ STATIC int _largest_world_rank_with_same_hostid(comex_igroup_t *igroup)
     return largest;
 }
 
-#if ENABLE_SYSV
-STATIC void* _shm_create(char *name, key_t *key, size_t size)
-#else
 STATIC void* _shm_create(const char *name, size_t size)
-#endif
 {
-#if ENABLE_SYSV
-  FILE *fp;
-  int shm_id;
-  char file[SHM_NAME_SIZE+10];
-  char ebuf[128];
-  void *mapped = NULL;
-  char token = (char)(token_counter%256);
-  int try_next = 1;
-  int try_cnt = 0;
-  token_counter ++;
-  if (use_dev_shm) {
-    sprintf(file,"/dev/shm/%s",name);
-  } else {
-    sprintf(file,"/tmp/%s",name);
-  }
-#if ENABLE_FTOK
-  while (try_next && try_cnt < 100) {
-    fp = fopen(file,"w");
-    fprintf(fp,"0\n");
-    fclose(fp);
-    *key = ftok(file,token);
-    sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|0600, key: %d, name: %s id: %d\n",
-        g_state.rank,*key,name,(int)token);
-    shm_id = shmget(*key,size,IPC_CREAT| IPC_EXCL |0600);
-    if (shm_id != -1) {
-      try_next = 0;
-    } else {
-      free(name);
-      name = _generate_shm_name(g_state.rank);
-      if (use_dev_shm) {
-        sprintf(file,"/dev/shm/%s",name);
-      } else {
-        sprintf(file,"/tmp/%s",name);
-      }
-      /* printf("p[%d] shm_create failed on try %d\n",g_state.rank,try_cnt); */
-      try_cnt++;
-    }
-  }
-  _shmget_err(shm_id, ebuf);
-  if (shm_id == -1) {
-    comex_error("_shm_create: shmget failed", shm_id);
-  }
-#else
-  *key = (key_t)token_counter;
-  token_counter += g_state.size;
-  sprintf(ebuf,"p[%d] (shmget in _shm_create) flags: IPC_CREAT|0600, key: %d, name: %s id: %d\n",
-      g_state.rank,*key,name,(int)token);
-  shm_id = shmget(*key,size,IPC_CREAT| IPC_EXCL |0600);
-  _shmget_err(shm_id, ebuf);
-  if (shm_id == -1) {
-    comex_error("_shm_create: shmget failed", shm_id);
-  }
-#endif
-  mapped = shmat(shm_id, NULL, 0);
-  /* printf("p[%d] ATTACH SHM name: %s key: %d\n",g_state.rank,name,*key); */
-  _shmat_err(mapped);
-  return mapped;
-#else
 #include <unistd.h>
 #include <sys/types.h>
     void *mapped = NULL;
@@ -5090,86 +4364,8 @@ STATIC void* _shm_create(const char *name, size_t size)
     }
 
     return mapped;
-#endif
 }
 
-#if USE_SICM
-#if SICM_OLD
-STATIC void* _shm_create_memdev(const char *name, size_t size, sicm_device* device)
-#else
-STATIC void* _shm_create_memdev(const char *name, size_t size, sicm_device_list device)
-#endif
-{
-    void *mapped = NULL;
-    int fd = 0;
-    int retval = 0;
-
-#if DEBUG
-    fprintf(stderr, "[%d] _shm_create_memdev(%s, %lu)\n",
-            g_state.rank, name, (unsigned long)size);
-#endif
-
-    /* create shared memory segment */
-    fd = shm_open(name, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
-    if (-1 == fd && EEXIST == errno) {
-        retval = shm_unlink(name);
-        if (-1 == retval) {
-            perror("_shm_create_memdev: shm_unlink");
-            comex_error("_shm_create_memdev: shm_unlink", retval);
-        }
-    }
-
-    /* try a second time */
-    if (-1 == fd) {
-        fd = shm_open(name, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
-    }
-
-    /* finally report error if needed */
-    if (-1 == fd) {
-        perror("_shm_create_memdev: shm_open");
-        comex_error("_shm_create_memdev: shm_open", fd);
-    }
-
-    /* the file will be used for arena allocation,
-     * so it should not be truncated here */
-#if SICM_OLD
-    sicm_arena arena = sicm_arena_create_mmapped(0, device, fd, 0, -1, 0);
-#else
-    sicm_arena arena = sicm_arena_create_mmapped(0, 0, &device, fd, 0, -1, 0);
-#endif
-    /* map into local address space */
-    mapped = _shm_map_arena(fd, size, arena);
-
-    /* close file descriptor */
-    retval = close(fd);
-    if (-1 == retval) {
-        perror("_shm_create_memdev: close");
-        comex_error("_shm_create_memdev: close", -1);
-    }
-
-    return mapped;
-}
-#endif
-
-#if ENABLE_SYSV
-STATIC void* _shm_attach(const char *name, size_t size, key_t key)
-{
-  int shm_id;
-  void *mapped = NULL;
-  char ebuf[128];
-  sprintf(ebuf,"p[%d] (shmget in shm_attach) flags: 0600, key: %d, name: %s\n",
-      g_state.rank,key,name);
-  shm_id = shmget(key,size,0600);
-  _shmget_err(shm_id, ebuf);
-  if (shm_id == -1) {
-    comex_error("_shm_attach: shmget failed", shm_id);
-  }
-  mapped = shmat(shm_id, NULL, 0);
-  /* printf("p[%d] ATTACH SHM name: %s key: %d\n",g_state.rank,name,key); */
-  _shmat_err(mapped);
-  return mapped;
-}
-#else
 STATIC void* _shm_attach(const char *name, size_t size)
 {
     void *mapped = NULL;
@@ -5207,61 +4403,7 @@ STATIC void* _shm_attach(const char *name, size_t size)
 
     return mapped;
 }
-#endif
 
-#if USE_SICM
-#if SICM_OLD
-STATIC void* _shm_attach_memdev(const char *name, size_t size, sicm_device *device)
-#else
-STATIC void* _shm_attach_memdev(const char *name, size_t size, sicm_device_list device)
-#endif
-{
-    void *mapped = NULL;
-    int fd = 0;
-    int retval = 0;
-
-#if DEBUG
-    fprintf(stderr, "[%d] _shm_attach_memdev(%s, %lu)\n",
-            g_state.rank, name, (unsigned long)size);
-#endif
-
-    /* attach to shared memory segment */
-    fd = shm_open(name, O_RDWR, S_IRUSR|S_IWUSR);
-    if (-1 == fd) {
-        perror("_shm_attach_memdev: shm_open");
-        comex_error("_shm_attach_memdev: shm_open", -1);
-    }
-#if SICM_OLD
-    sicm_arena arena = sicm_arena_create_mmapped(0, device, fd, 0, -1, 0);
-#else
-    sicm_arena arena = sicm_arena_create_mmapped(0, 0, &device, fd, 0, -1, 0);
-#endif
-
-    /* map into local address space */
-    mapped = _shm_map_arena(fd, size, arena);
-    /* close file descriptor */
-    retval = close(fd);
-    if (-1 == retval) {
-        perror("_shm_attach_memdev: close");
-        comex_error("_shm_attach_memdev: close", -1);
-    }
-
-    return mapped;
-}
-#endif
-
-#if USE_SICM
-STATIC void* _shm_map_arena(int fd, size_t size, sicm_arena arena)
-{
-    void *memory = sicm_arena_alloc(arena, size);
-    if (NULL == memory) {
-        perror("_shm_map_arena: mmap");
-        comex_error("_shm_map_arena: mmap", -1);
-    }
-
-    return memory;
-}
-#endif
 STATIC void* _shm_map(int fd, size_t size)
 {
     void *memory  = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);

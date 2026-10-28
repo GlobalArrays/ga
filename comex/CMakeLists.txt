@@ -35,6 +35,7 @@ option (COMEX_NETWORK_MPI_PR "use MPI progress ranks protocol for communication"
 option (COMEX_NETWORK_MPI3 "use MPI RMA protocols for communication" OFF)
 option (COMEX_NETWORK_MPI_MT "use MPI multi-threading protocol for communication" OFF)
 option (COMEX_NETWORK_MPI_PT "use MPI progress threads protocol for communication" OFF)
+option (COMEX_NETWORK_MPI_PRWIN "use MPI progress ranks plus MPI windows protocol for communication" OFF)
 
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR} src-common)
 if (MPI_TS)
@@ -46,12 +47,12 @@ if (MPI_TS)
   include_directories(AFTER src-mpi)
 elseif (MPI_PR)
   set(COMEX_DEVICE
-    src-mpi-pr/comex.c
-    src-mpi-pr/groups.c
-    src-mpi-pr/reg_cache.c
+    src-mpi-prwin/comex.c
+    src-mpi-prwin/groups.c
+    src-mpi-prwin/reg_cache.c
   )
   set (COMEX_NETWORK_MPI_PR ON)
-  include_directories(AFTER src-mpi-pr)
+  include_directories(AFTER src-mpi-prwin)
 elseif (MPI3)
   set(COMEX_DEVICE
     src-mpi3/comex.c

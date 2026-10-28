@@ -255,10 +255,10 @@ reg_entry_destroy(int rank, reg_entry_t *reg_entry)
 {
 #if DEBUG
     printf("[%d] reg_entry_destroy(rank=%d, reg_entry=%p)\n"
-            "buf=%p len=%zu name=%s mapped=%p\n",
+            "buf=%p len=%zu mapped=%p\n",
             g_state.rank, rank, reg_entry,
             reg_entry->buf, reg_entry->len,
-            reg_entry->name, reg_entry->mapped);
+            reg_entry->mapped);
 #endif
 
     /* preconditions */
@@ -399,10 +399,10 @@ reg_cache_find(int rank, void *buf, size_t len)
 #if DEBUG
             printf("[%d] reg_cache_find entry found\n"
                     "reg_entry=%p buf=%p len=%d\n"
-                    "rank=%d buf=%p len=%zu name=%s mapped=%p\n",
+                    "rank=%d buf=%p len=%zu mapped=%p\n",
                     g_state.rank, runner, buf, len,
                     runner->rank, runner->buf, runner->len,
-                    runner->name, runner->mapped);
+                    runner->mapped);
 #endif
         }
         runner = runner->next;
@@ -415,10 +415,10 @@ reg_cache_find(int rank, void *buf, size_t len)
 #if DEBUG
             printf("[%d] reg_cache_find duplicate found\n"
                     "reg_entry=%p buf=%p len=%d\n"
-                    "rank=%d buf=%p len=%zu name=%s mapped=%p\n",
+                    "rank=%d buf=%p len=%zu mapped=%p\n",
                     g_state.rank, runner, buf, len,
                     runner->rank, runner->buf, runner->len,
-                    runner->name, runner->mapped);
+                    runner->mapped);
 #endif
             COMEX_ASSERT(0);
         }
@@ -491,7 +491,7 @@ reg_cache_find_intersection(int rank, void *buf, size_t len)
  * @return RR_SUCCESS on success
  */
 reg_entry_t*
-reg_cache_insert(int rank, void *buf, size_t len, const char *name,
+reg_cache_insert(int rank, void *buf, size_t len, MPI_Win win,
 #if ENABLE_SYSV
     key_t key,
 #endif
@@ -509,8 +509,8 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name,
     reg_entry_t *node = NULL;
 
 #if DEBUG
-    printf("[%d] reg_cache_insert(rank=%d, buf=%p, len=%ld, name=%s, mapped=%p)\n",
-            g_state.rank, rank, buf, len, name, mapped);
+    printf("[%d] reg_cache_insert(rank=%d, buf=%p, len=%ld, mapped=%p)\n",
+            g_state.rank, rank, buf, len, mapped);
 #endif
 
     /* preconditions */
@@ -530,7 +530,7 @@ reg_cache_insert(int rank, void *buf, size_t len, const char *name,
     node->buf = buf;
     node->len = len;
     node->use_dev = use_dev;
-    (void)memcpy(node->name, name, SHM_NAME_SIZE);
+    node->win = win;
 #if ENABLE_SYSV
     node->key = key;
 #endif
@@ -632,7 +632,6 @@ reg_return_t reg_cache_nullify(reg_entry_t *node)
     node->mapped = NULL;
     node->rank = -1;
     node->use_dev = 0;
-    (void)memset(node->name, 0, SHM_NAME_SIZE);
 
     return RR_SUCCESS;
 }
