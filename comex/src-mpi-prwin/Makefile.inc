@@ -1,11 +1,11 @@
-libcomex_la_SOURCES += src-mpi-pr/comex.c
-libcomex_la_SOURCES += src-mpi-pr/comex_impl.h
-libcomex_la_SOURCES += src-mpi-pr/groups.c
-libcomex_la_SOURCES += src-mpi-pr/groups.h
-libcomex_la_SOURCES += src-mpi-pr/reg_cache.c
-libcomex_la_SOURCES += src-mpi-pr/reg_cache.h
+libcomex_la_SOURCES += src-mpi-prwin/comex.c
+libcomex_la_SOURCES += src-mpi-prwin/comex_impl.h
+libcomex_la_SOURCES += src-mpi-prwin/groups.c
+libcomex_la_SOURCES += src-mpi-prwin/groups.h
+libcomex_la_SOURCES += src-mpi-prwin/reg_cache.c
+libcomex_la_SOURCES += src-mpi-prwin/reg_cache.h
 
-AM_CPPFLAGS += -I$(top_srcdir)/src-mpi-pr
+AM_CPPFLAGS += -I$(top_srcdir)/src-mpi-prwin
 
-check_PROGRAMS += src-mpi-pr/hello
-src_mpi_pr_hello_SOURCES = src-mpi-pr/hello.c
+check_PROGRAMS += src-mpi-prwin/hello
+src_mpi_pr_hello_SOURCES = src-mpi-prwin/hello.c

@@ -2111,7 +2111,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     }
     masters[g_state.rank] = my_master;
     masters[my_master] = my_master;
-    MPI_Allreduce(masters, all_masters, igroup->size, MPI_INT, MPI_MAX,
+    MPI_Allreduce(masters, all_masters, g_state.size, MPI_INT, MPI_MAX,
         igroup->comm);
     free(masters);
     lowest_rank_on_node = g_state.size;
@@ -4069,13 +4069,14 @@ STATIC void _create_win_handler(
         header_t *header, char *payload, int proc)
 {
   int i = 0;
-  int node_count = header->length;
-  int *node_list = (int*)payload;
+  int node_count = *((int*)payload);
+  int *node_list = (int*)(payload+sizeof(int));
   void *buf = NULL;
   MPI_Aint size = 0;
   MPI_Group node_group;
   MPI_Comm node_comm;
 
+  server_send(NULL, 0, proc); /* ack */
   MPI_Group_incl(g_state.group, node_count, node_list, &node_group);
   MPI_Comm_create_group(g_state.comm, node_group, COMEX_TAG, &node_comm);
   MPI_Win_allocate_shared(size,1,MPI_INFO_NULL,node_comm,
