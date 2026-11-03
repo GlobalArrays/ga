@@ -11,6 +11,7 @@
 #if HAVE_STDLIB_H
 #   include <stdlib.h>
 #endif
+#include <pthread.h>
 #define DEBUG 0
 
 /* WARNING: The maximum value MAX_NUM_NB_HDLS can assume is 256. If it is any larger,
@@ -100,6 +101,18 @@ static ga_nbhdl_array_t ga_ihdl_array[MAX_NUM_NB_HDLS];
  */
 static ga_armcihdl_t armci_ihdl_array[MAX_NUM_NB_HDLS];
 
+/* The handle pools above and the bookkeeping variables below are shared by all
+ * threads in a process. GA calls such as NGA_Get/NGA_Put are implemented with
+ * non-blocking ARMCI calls, so concurrent GA calls from multiple threads
+ * (MPI_THREAD_MULTIPLE + OpenMP/pthreads) update these structures at the same
+ * time. Without serialization, two threads can be handed the same slot, which
+ * leads to ARMCI_Wait on inactive/reinitialized handles and, with request-based
+ * ARMCI implementations, to double frees of the request array and segfaults.
+ * All access to the pools is serialized with this mutex. */
+static pthread_mutex_t nb_pool_lock = PTHREAD_MUTEX_INITIALIZER;
+#define NB_POOL_LOCK()   pthread_mutex_lock(&nb_pool_lock)
+#define NB_POOL_UNLOCK() pthread_mutex_unlock(&nb_pool_lock)
+
 static int lastGAhandle = -1; /* last assigned ga handle */
 static int lastARMCIhandle = -1; /* last assigned armci handle */
 
@@ -158,8 +171,8 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
   int i, top, idx, iloc;
   gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
   int index = inbhandle->ihdl_index;
-  ga_armcihdl_t* next = ga_ihdl_array[index].ahandle;
 
+  NB_POOL_LOCK();
   lastARMCIhandle++;
   lastARMCIhandle = lastARMCIhandle%nb_max_outstanding;
   top = lastARMCIhandle+nb_max_outstanding;
@@ -208,6 +221,7 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
   /* reset lastARMCIhandle to iloc */
   lastARMCIhandle = iloc;
 
+  NB_POOL_UNLOCK();
   return &armci_ihdl_array[iloc].handle;
 }
 
@@ -215,7 +229,7 @@ armci_hdl_t* get_armci_nbhandle(Integer *nbhandle)
  * the wait routine which is called inside pnga_nbwait. This always returns
  * zero. The return value is not checked in the code.
  */ 
-int nga_wait_internal(Integer *nbhandle){
+static int nga_wait_internal_nolock(Integer *nbhandle){
   gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
   int index = inbhandle->ihdl_index;
   int retval = 0;
@@ -250,6 +264,15 @@ int nga_wait_internal(Integer *nbhandle){
 }
 
 
+int nga_wait_internal(Integer *nbhandle){
+  int retval;
+  NB_POOL_LOCK();
+  retval = nga_wait_internal_nolock(nbhandle);
+  NB_POOL_UNLOCK();
+  return retval;
+}
+
+
 /**
  * the test routine which is called inside nga_nbtest. Return 0 if operation is
  * completed
@@ -260,6 +283,8 @@ int nga_test_internal(Integer *nbhandle)
   int index = inbhandle->ihdl_index;
   int retval = 0;
   int tag = inbhandle->ga_nbtag;
+
+  NB_POOL_LOCK();
 
   /* check if tags match. If they don't then this request was already completed
    * so the handle can be used for another GA non-blocking call. Just return in
@@ -299,6 +324,7 @@ int nga_test_internal(Integer *nbhandle)
     if (ga_ihdl_array[index].count > 0) retval = 1;
   }
 
+  NB_POOL_UNLOCK();
   return(retval);
 }
 
@@ -309,6 +335,7 @@ void ga_init_nbhandle(Integer *nbhandle)
 {
   int i, top, idx, iloc;
   gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
+  NB_POOL_LOCK();
   lastGAhandle++;
   lastGAhandle = lastGAhandle%nb_max_outstanding;
   top = lastGAhandle+nb_max_outstanding;
@@ -316,7 +343,10 @@ void ga_init_nbhandle(Integer *nbhandle)
   idx = lastGAhandle;
   for (i=lastGAhandle; i<top; i++) {
     iloc = i%nb_max_outstanding;
-    if (ga_ihdl_array[iloc].ahandle == NULL) {
+    /* A slot that has been claimed by ga_init_nbhandle but does not yet have
+     * any ARMCI operation attached (active == 1, ahandle == NULL) is in use by
+     * another thread and must not be handed out again. */
+    if (ga_ihdl_array[iloc].ahandle == NULL && ga_ihdl_array[iloc].active == 0) {
       idx = iloc;
       break;
     }
@@ -328,7 +358,7 @@ void ga_init_nbhandle(Integer *nbhandle)
     gai_nbhdl_t *oldhdl = (gai_nbhdl_t*)&itmp;
     oldhdl->ihdl_index = idx;
     oldhdl->ga_nbtag = ga_ihdl_array[idx].ga_nbtag;
-    nga_wait_internal(&itmp);
+    nga_wait_internal_nolock(&itmp);
   }
   inbhandle->ihdl_index = idx;
   inbhandle->ga_nbtag = get_next_tag();
@@ -339,5 +369,6 @@ void ga_init_nbhandle(Integer *nbhandle)
 
   /* reset lastGAhandle to idx */
   lastGAhandle = idx;
+  NB_POOL_UNLOCK();
   return;
 }

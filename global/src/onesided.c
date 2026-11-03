@@ -1340,7 +1340,10 @@ void ngai_acc_common(Integer g_a,
                    Integer *nbhandle)
 {
   Integer  p, np=0, handle=GA_OFFSET + g_a;
-  Integer  idx, elems, size, type, p_handle, ga_nbhandle;
+  Integer  idx, elems, size, type, p_handle;
+#if !defined(DISABLE_NBOPT)
+  Integer ga_nbhandle;
+#endif
   int optype=-1, loop, ndim, cond;
   int proc;
   int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
@@ -1376,8 +1379,13 @@ void ngai_acc_common(Integer g_a,
   GAstat.numacc_procs += np;
 #endif
 
+  /* A blocking accumulate only needs an internal non-blocking handle when
+   * NBOPT is enabled; otherwise nothing waits on it and the handle slot would
+   * never be released. */
   if(nbhandle)ga_init_nbhandle(nbhandle);
+#if !defined(DISABLE_NBOPT)
   else ga_init_nbhandle(&ga_nbhandle);
+#endif
 
 #ifdef PROFILE_OLD
   ga_profile_start((int)handle, (long)size*elems, ndim, lo, hi,
