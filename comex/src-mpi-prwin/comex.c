@@ -180,6 +180,7 @@ static int init_from_comm = 0;
 /* This variable allows window to be passed between calls to two separate
  * handlers when allocating a memory segment using comex_malloc */
 static MPI_Win global_node_win;
+static int win_counter;
 
 static int COMEX_ENABLE_PUT_SELF = ENABLE_PUT_SELF;
 static int COMEX_ENABLE_GET_SELF = ENABLE_GET_SELF;
@@ -350,6 +351,7 @@ int _comex_init(MPI_Comm comm)
         return 0;
     }
     initialized = 1;
+    win_counter = 100*getpid();
 
     /* Assert MPI has been initialized */
     status = MPI_Initialized(&init_flag);
@@ -2229,6 +2231,10 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     reg_entries[igroup->rank] = my_reg;
     status = MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
             reg_entries, sizeof(reg_entry_t), MPI_BYTE, igroup->comm);
+    /* Use the same MPI window for all entries */
+    for (i=0; i<igroup->size; i++) {
+      reg_entries[i].win = node_win;
+    }
 #if DEBUG
     fprintf(stderr, "[%d] comex_malloc allgather status [%d]\n",
             g_state.rank, status);
@@ -2610,7 +2616,7 @@ int comex_free(void *ptr, comex_group_t group)
     for (i=0; i<igroup->size; ++i) {
         if (i == igroup->rank) {
             reg_entry_t *reg_entry = reg_cache_find(world_ranks[i], ptrs[i], 0);
-            win = reg_entry->win;
+            if (reg_entry) win = reg_entry->win;
 #if DEBUG && DEBUG_VERBOSE
             fprintf(stderr, "[%d] comex_free found self at %d\n", g_state.rank, i);
 #endif
@@ -2654,6 +2660,7 @@ int comex_free(void *ptr, comex_group_t group)
 
             /* find the registered memory */
             reg_entry = reg_cache_find(world_ranks[i], ptrs[i], 0);
+            if (reg_entry) win = reg_entry->win;
             COMEX_ASSERT(reg_entry);
 
 #if DEBUG && DEBUG_VERBOSE
@@ -2722,6 +2729,7 @@ int comex_free(void *ptr, comex_group_t group)
 
     /* remove my ptr from reg cache and free ptr */
     comex_free_local(ptr);
+    MPI_Win_unlock_all(win);
     MPI_Win_free(&win);
 
     /* Is this needed? */
@@ -4042,7 +4050,7 @@ STATIC void _malloc_handler(
                     global_node_win,
                     memory
                     ,reg_entries[i].use_dev
-);
+            );
         }
         else {
 #if 0
@@ -4124,6 +4132,7 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
 
             /* find the registered memory */
             reg_entry = reg_cache_find(rank_ptrs[i].rank, rank_ptrs[i].ptr, 0);
+            win = reg_entry->win;
             COMEX_ASSERT(reg_entry);
 
 #if DEBUG && DEBUG_VERBOSE
@@ -4146,9 +4155,10 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
         else {
         }
     }
+    server_send(NULL, 0, proc); /* ack */
+    MPI_Win_unlock_all(win);
     MPI_Win_free(&win);
 
-    server_send(NULL, 0, proc); /* ack */
 }
 
 
