@@ -1336,6 +1336,7 @@ STATIC char* _generate_shm_name(int rank)
 
 void* comex_malloc_local(size_t size)
 {
+  return malloc(size);
 }
 
 
@@ -1436,6 +1437,7 @@ void _shmctl_err(int flag)
 
 int comex_free_local(void *ptr)
 {
+#if 0
     int retval = 0;
     reg_entry_t *reg_entry = NULL;
 
@@ -1470,6 +1472,9 @@ int comex_free_local(void *ptr)
     /* delete the reg_cache entry */
     retval = reg_cache_delete(g_state.rank, ptr);
     COMEX_ASSERT(RR_SUCCESS == retval);
+#else
+    free(ptr);
+#endif
 
     return COMEX_SUCCESS;
 }
@@ -2728,7 +2733,7 @@ int comex_free(void *ptr, comex_group_t group)
     free(world_ranks);
 
     /* remove my ptr from reg cache and free ptr */
-    comex_free_local(ptr);
+//    comex_free_local(ptr);
     MPI_Win_unlock_all(win);
     MPI_Win_free(&win);
 
