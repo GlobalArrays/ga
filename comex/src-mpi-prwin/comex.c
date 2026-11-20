@@ -2171,7 +2171,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     if (tsize == 0) tsize = 8;
     MPI_Win_allocate_shared(tsize,1,MPI_INFO_NULL,node_comm,
         &buf, &node_win);
-    MPI_Win_lock_all(0,node_win);
+//    MPI_Win_lock_all(0,node_win);
     MPI_Comm_free(&node_comm);
     MPI_Group_free(&node_group);
 
@@ -2365,6 +2365,8 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     }
 
     free(reg_entries);
+    free(all_masters);
+    free(node_list);
 
     comex_barrier(group);
 
@@ -2734,7 +2736,7 @@ int comex_free(void *ptr, comex_group_t group)
 
     /* remove my ptr from reg cache and free ptr */
 //    comex_free_local(ptr);
-    MPI_Win_unlock_all(win);
+//    MPI_Win_unlock_all(win);
     MPI_Win_free(&win);
 
     /* Is this needed? */
@@ -4094,7 +4096,7 @@ STATIC void _create_win_handler(
   MPI_Comm_create_group(g_state.comm, node_group, COMEX_TAG, &node_comm);
   MPI_Win_allocate_shared(size,1,MPI_INFO_NULL,node_comm,
       &buf, &global_node_win);
-  MPI_Win_lock_all(0,global_node_win);
+//  MPI_Win_lock_all(0,global_node_win);
   MPI_Comm_free(&node_comm);
   MPI_Group_free(&node_group);
 }
@@ -4161,7 +4163,7 @@ STATIC void _free_handler(header_t *header, char *payload, int proc)
         }
     }
     server_send(NULL, 0, proc); /* ack */
-    MPI_Win_unlock_all(win);
+//    MPI_Win_unlock_all(win);
     MPI_Win_free(&win);
 
 }
