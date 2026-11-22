@@ -10,7 +10,7 @@ AC_INIT([Global Arrays (GA)],
         [ga],
         [http://hpc.pnl.gov/globalarrays/])
 AC_CONFIG_AUX_DIR([build-aux])
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([global/src/ga.h])
 ###############################################################################
@@ -67,6 +67,41 @@ AS_IF([test "$GA_TOP_BUILDDIR" != "$GA_TOP_SRCDIR"],
 # MPI compiler wrappers instead of the standard compilers.
 GA_MSG_COMMS
 
+# Check for OpenSHMEM option (for COMEX backend)
+AC_ARG_WITH([oshmem],
+    [AS_HELP_STRING([--with-oshmem],
+        [use OpenSHMEM for COMEX communication layer])],
+    [],
+    [with_oshmem=no])
+
+# If OpenSHMEM is requested, find the compiler wrappers
+AS_IF([test "x$with_oshmem" != xno], [
+    AC_MSG_NOTICE([searching for OpenSHMEM compiler wrappers...])
+    AC_PATH_PROGS([OSHCC], [oshcc])
+    AC_PATH_PROGS([OSHCXX], [oshcxx])
+    AC_PATH_PROGS([OSHFC], [oshfort oshfc])
+    AS_IF([test "x$OSHCC" = x], [
+        AC_MSG_ERROR([--with-oshmem was given but oshcc not found])
+    ])
+    AC_MSG_NOTICE([found oshcc: $OSHCC])
+    AC_MSG_NOTICE([Switching to OpenSHMEM compiler wrappers for GA])
+    # Set both CC/CXX/F77 and MPICC/MPICXX/MPIF77 so GA_PROG_MPICC works correctly
+    CC="$OSHCC"
+    MPICC="$OSHCC"
+    AS_IF([test "x$OSHCXX" != x], [
+        CXX="$OSHCXX"
+        MPICXX="$OSHCXX"
+    ])
+    AS_IF([test "x$OSHFC" != x], [
+        F77="$OSHFC"
+        MPIF77="$OSHFC"
+    ])
+    # Treat OpenSHMEM wrappers like MPI wrappers
+    with_mpi_wrappers=yes
+    AC_MSG_NOTICE([Using CC=$CC (MPICC=$MPICC), CXX=$CXX (MPICXX=$MPICXX), F77=$F77 (MPIF77=$MPIF77)])
+])
+AM_CONDITIONAL([WITH_OSHMEM], [test "x$with_oshmem" != xno])
+
 # Whether to disable/enable Fortran 77 or C++ bindings.
 # Note that compiling the Fortran 77 source is enabled by default.
 GA_F77_DISABLE
@@ -99,15 +134,21 @@ GA_WARN_FLAGS
 ga_save_CFLAGS="$CFLAGS"
 CFLAGS="$ga_cv_c_warning_flags $CFLAGS"
 
-AS_IF([test x$with_mpi_wrappers = xyes],
-    [GA_MPI_UNWRAP],
-    [GA_ARG_PARSE([with_mpi], [GA_MP_LIBS], [GA_MP_LDFLAGS], [GA_MP_CPPFLAGS])])
-# If F77 is enabled, only perform a simple compilation test.
-AS_IF([test "x$with_mpi" != xno], [
-    AS_CASE([$enable_f77:$enable_mpi_tests],
-        [yes:*], [GA_MPICC_TEST_COMPILE],
-        [no:yes],[GA_MPICC_TEST_LINK],
-        [no:no], [GA_MPICC_TEST_COMPILE])])
+AS_IF([test "x$with_oshmem" = xno], [
+    AS_IF([test x$with_mpi_wrappers = xyes],
+        [GA_MPI_UNWRAP],
+        [GA_ARG_PARSE([with_mpi], [GA_MP_LIBS], [GA_MP_LDFLAGS], [GA_MP_CPPFLAGS])])
+    # If F77 is enabled, only perform a simple compilation test.
+    AS_IF([test "x$with_mpi" != xno], [
+        AS_CASE([$enable_f77:$enable_mpi_tests],
+            [yes:*], [GA_MPICC_TEST_COMPILE],
+            [no:yes],[GA_MPICC_TEST_LINK],
+            [no:no], [GA_MPICC_TEST_COMPILE])])
+], [
+    # When using OpenSHMEM, still unwrap to get MPI libs for compatibility
+    AC_MSG_NOTICE([Unwrapping OpenSHMEM compiler to get MPI libraries])
+    GA_MPI_UNWRAP
+])
 # Hack to append .x to executables.
 AC_SUBST([EXEEXT], [.x$EXEEXT])
 
@@ -120,7 +161,6 @@ GA_ARMCI_NETWORK
 AC_HEADER_ASSERT
 AC_HEADER_DIRENT
 AC_HEADER_STDBOOL
-AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 GA_CHECK_HEADERS([assert.h])
 GA_CHECK_HEADERS([errno.h])
@@ -167,7 +207,6 @@ AC_TYPE_INT64_T
 AC_TYPE_LONG_DOUBLE
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
-AC_TYPE_SIGNAL
 AC_TYPE_SIZE_T
 AC_SYS_LARGEFILE
 AC_FUNC_FSEEKO
@@ -262,7 +301,9 @@ AC_LANG_PUSH([C++])
 ga_save_CXXFLAGS="$CXXFLAGS"
 GA_PROG_MPICXX
 CXXFLAGS="$ga_save_CXXFLAGS"
-AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
+AS_IF([test "x$with_oshmem" = xno], [
+    AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
+])
 
 AS_IF([test "x$enable_cxx" = xyes], [
 
@@ -271,7 +312,9 @@ GA_WARN_FLAGS
 ga_save_CXXFLAGS="$CXXFLAGS"
 CXXFLAGS="$ga_cv_cxx_warning_flags $CXXFLAGS"
 
-AS_IF([test "x$with_mpi" != xno], [GA_MPICXX_TEST])
+AS_IF([test "x$with_oshmem" = xno], [
+    AS_IF([test "x$with_mpi" != xno], [GA_MPICXX_TEST])
+])
 
 # Checks for C++ header files.
 
@@ -332,7 +375,9 @@ GA_F77_DISABLE_RESULTS
 # Perform Fortran 77 tests only if enabled.
 if test "x$enable_f77" = xyes; then :
 
-AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
+AS_IF([test "x$with_oshmem" = xno], [
+    AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
+])
 
 GA_COMPILER_VENDOR
 GA_WARN_FLAGS
@@ -340,10 +385,12 @@ ga_save_FFLAGS="$FFLAGS"
 FFLAGS="$ga_cv_f77_warning_flags $FFLAGS"
 
 # If F77 is enabled, perform a simple link test for MPI.
-AS_IF([test "x$with_mpi" != xno],
-    [AS_IF([test "x$enable_mpi_tests" = xyes],
-        [GA_MPIF77_TEST_LINK],
-        [GA_MPIF77_TEST_COMPILE])])
+AS_IF([test "x$with_oshmem" = xno], [
+    AS_IF([test "x$with_mpi" != xno],
+        [AS_IF([test "x$enable_mpi_tests" = xyes],
+            [GA_MPIF77_TEST_LINK],
+            [GA_MPIF77_TEST_COMPILE])])
+])
 
 GA_SUPPRESS_MESSAGE
 GA_F77_LIBRARY_LDFLAGS

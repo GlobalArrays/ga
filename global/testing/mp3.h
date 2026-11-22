@@ -1,3 +1,23 @@
+#ifdef USE_OPENSHMEM
+# if defined(__has_include)
+#  if __has_include(<openshmem.h>)
+#   include <openshmem.h>
+#  elif __has_include(<shmem.h>)
+#   include <shmem.h>
+#  else
+#   include <shmem.h>
+#  endif
+# else
+#  include <shmem.h>
+# endif
+#endif
+
+/* Note: when running on an OpenSHMEM-based runtime the SHMEM
+ * library may finalize MPI internally. MP_FINALIZE below checks the
+ * MPI initialization/finalization state and only calls MPI_Finalize
+ * when MPI is initialized and not yet finalized. This avoids double-
+ * finalization regardless of runtime. */
+
 #if defined(MSG_COMMS_TCGMSGMPI)
 #   include <tcgmsg.h>
 #   define MP_BARRIER()         tcg_synch(30000)
@@ -10,7 +30,14 @@
 #else
 #   include <mpi.h>
 #   define MP_BARRIER()         MPI_Barrier(MPI_COMM_WORLD)
-#   define MP_FINALIZE()        MPI_Finalize()
+#   define MP_FINALIZE() do { \
+        int _mp3_mpi_init = 0, _mp3_mpi_fini = 0; \
+        MPI_Initialized(&_mp3_mpi_init); \
+        if (_mp3_mpi_init) { \
+            MPI_Finalized(&_mp3_mpi_fini); \
+            if (!_mp3_mpi_fini) MPI_Finalize(); \
+        } \
+    } while (0)
 #   if defined(MPI_MT) || defined(MPI_PT)
     static inline int MPI_INIT_THREAD(int *argc, char ***argv) {
         int status;

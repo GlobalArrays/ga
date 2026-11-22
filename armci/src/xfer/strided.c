@@ -746,6 +746,14 @@ int PARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
   
   ORDER(GET,proc);
   ARMCI_INIT_HANDLE(&nbh);
+  /* Diagnostic: print seg_count and stride_levels to check units (bytes vs elements) */
+  {
+    int _i;
+    fprintf(stderr, "[ARMCI PARMCI_GetS] proc=%d stride_levels=%d seg_count:", proc, stride_levels);
+    for (_i = 0; _i <= stride_levels; _i++) fprintf(stderr, " %d", seg_count[_i]);
+    fprintf(stderr, "\n");
+    fflush(stderr);
+  }
   PARMCI_NbGetS(src_ptr,src_stride_arr,dst_ptr,dst_stride_arr,seg_count,stride_levels,proc,&nbh);
   PARMCI_Wait(&nbh);
   return 0;

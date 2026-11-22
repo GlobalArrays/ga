@@ -4199,10 +4199,10 @@ Integer i, handle;
     ARMCI_Free_local(GA_Update_Signal);
 
     pnga_sync();
-    ARMCI_Finalize();
 #ifdef MSG_COMMS_MPI
     MPI_Comm_free(&GA_MPI_World_comm_dup);
 #endif
+    ARMCI_Finalize();
     ARMCIinitialized = 0;
     GAinitialized = 0;
     //GA_Internal_Threadsafe_Unlock();

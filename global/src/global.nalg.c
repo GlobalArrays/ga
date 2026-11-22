@@ -779,6 +779,7 @@ int local_sync_begin,local_sync_end;
        pnga_inquire(g_b, &type, &bndim, bdims);
        pnga_inquire(g_b, &type, &cndim, cdims);
 
+       printf("p[%d] (add) Calling add patch\n",pnga_nodeid());
        pnga_add_patch(alpha, g_a, one_arr, adims, beta, g_b, one_arr, bdims,
                       g_c, one_arr, cdims);
        
