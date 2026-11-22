@@ -335,3 +335,17 @@ public Boolean FATR f2c_verify_allocator_stuff_()
 {
     return MA_verify_allocator_stuff();
 }
+
+public Boolean FATR f2c_count_heap_(datatype, nelem)
+    Integer *datatype;
+    Integer *nelem;
+{
+    return MA_count_heap(*datatype, *nelem);
+}
+
+public Boolean FATR f2c_uncount_heap_(datatype, nelem)
+    Integer *datatype;
+    Integer *nelem;
+{
+    return MA_uncount_heap(*datatype, *nelem);
+}

@@ -56,6 +56,8 @@ c     void f2c_print_stats
 c     void f2c_summarize_allocated_blocks
 c     void f2c_trace
       integer f2c_verify_allocator_stuff
+      integer f2c_count_heap
+      integer f2c_uncount_heap
 
       external f2c_alloc_get
       external f2c_allocate_heap
@@ -89,3 +91,5 @@ c     void f2c_trace
       external f2c_summarize_allocated_blocks
       external f2c_trace
       external f2c_verify_allocator_stuff
+      external f2c_count_heap
+      external f2c_uncount_heap
