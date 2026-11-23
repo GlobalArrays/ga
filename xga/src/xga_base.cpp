@@ -431,10 +431,10 @@ void p_GA::copyPatch(char trans, int64_t *alo, int64_t *ahi,
 
   /* check if patch indices and dims match */
   for(i=0; i<andim; i++)
-    if(alo[i] <= 0 || ahi[i] > adims[i])
+    if(alo[i] < 0 || ahi[i] >= adims[i])
       p_env->error("g_a indices out of range ", 0);
   for(i=0; i<bndim; i++)
-    if(blo[i] <= 0 || bhi[i] > bdims[i])
+    if(blo[i] < 0 || bhi[i] >= bdims[i])
       p_env->error("g_b indices out of range ", 0);
 
   /* check if numbers of elements in two patches match each other */
