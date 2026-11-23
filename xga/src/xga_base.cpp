@@ -401,14 +401,8 @@ void p_GA::copyPatch(char trans, int64_t *alo, int64_t *ahi,
   Group *a_grp, *b_grp;
   int anproc, bnproc;
   int64_t num_blocks_a, num_blocks_b;
-  bool use_put, has_intersection;
+  bool has_intersection;
   
-  if (anproc <= bnproc) {
-    use_put = true;
-  } else {
-    use_put = false;
-  }
-
   a_grp = this->p_group;
   b_grp = g_b->p_group;
   me_a = a_grp->rank();
@@ -465,24 +459,12 @@ void p_GA::copyPatch(char trans, int64_t *alo, int64_t *ahi,
 
   if (num_blocks_a < 0 && num_blocks_b <0) {
     /* now find out cordinates of a patch that I own */
-    if (use_put) {
-      this->distribution(me_a, los, his);
-    } else {
-      g_b->distribution(me_b, los, his);
-    }
+    this->distribution(me_a, los, his);
 
     /* copy my share of data */
-    if (use_put) {
-      has_intersection = patch_intersect(alo, ahi, los, his, bndim);
-    } else {
-      has_intersection = patch_intersect(blo, bhi, los, his, bndim);
-    }
+    has_intersection = patch_intersect(alo, ahi, los, his, bndim);
     if(has_intersection){
-      if (use_put) {
-        this->accessPtr(los, his, &src_data_ptr, ld); 
-      } else {
-        g_b->accessPtr(los, his, &src_data_ptr, ld); 
-      }
+      this->accessPtr(los, his, &src_data_ptr, ld); 
 
       /* calculate the number of elements in the patch that I own */
       nelem = 1; for(i=0; i<andim; i++) nelem *= (his[i] - los[i] + 1);
@@ -500,17 +482,10 @@ void p_GA::copyPatch(char trans, int64_t *alo, int64_t *ahi,
       if((trans == 'n' || trans == 'N') &&
           test_shape(alo, ahi, blo, bhi, andim, bndim)) { 
         /* find source[lo:hi] --> destination[lo:hi] */
-        if (use_put) {
-          dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
-          dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
-          g_b->put(lod, hid, src_data_ptr, ld);
-          this->releasePtr(los, his);
-        } else {
-          dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
-          dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
-          this->get(lod, hid, src_data_ptr, ld);
-          g_b->releasePtr(los, his);
-        }
+        dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
+        dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
+        g_b->put(lod, hid, src_data_ptr, ld);
+        this->releasePtr(los, his);
         /*** due to generality of this transformation scatter is required ***/
       } else{
         tmp_ptr = xga_malloc(nelem, atype);
@@ -530,197 +505,100 @@ void p_GA::copyPatch(char trans, int64_t *alo, int64_t *ahi,
           else bunit[i] = bunit[i+1] * (his[i+1] - los[i+1] + 1);
         }
 
-        if (use_put) {
-          /* source indices */
-          for (i=0; i<nelem; i++) {
-            for (j=andim-1; j>=0; j--){
-              src_idx_ptr[i*andim+j] = bvalue[j];
-              /* if the next element is the first element in
-               * one dimension, increment the index by 1
-               */
-              if (((i+1) % bunit[j]) == 0) bvalue[j]++;
-              /* if the index becomes larger than the upper
-               * bound in one dimension, reset it.
-               */
-              if(bvalue[j] > his[j]) bvalue[j] = los[j];
-            }
-          }
-
-          /* index factor: reshaping without transpose */
-          factor_idx1[andim-1] = 1;
-          for (j=andim-2; j>=0; j--)
-            factor_idx1[j] = factor_idx1[j+1] * ald[j+1];
-
-          /* index factor: reshaping with transpose */
-          factor_idx2[0] = 1;
-          for (j=1; j<andim; j++)
-            factor_idx2[j] = factor_idx2[j-1] * ald[j-1];
-
-          /* data factor */
-          factor_data[andim-1] = 1;
-          for (j=bndim-2; j>=0; j--)
-            factor_data[j] = factor_data[j+1] * ld[j];
-
-          /* destination indices */
-          for(i=0; i<nelem; i++) {
-            /* linearize the n-dimensional indices to one dimension */
-            idx = 0;
-            if (trans == 'n' || trans == 'N')
-              for (j=0; j<andim; j++)
-                idx += (src_idx_ptr[i*andim+j] - alo[j]) *
-                  factor_idx1[j];
-            else
-              /* if the patch needs to be transposed, reverse
-               * the indices: (i, j, ...) -> (..., j, i)
-               */
-              for (j=(andim-1); j>=0; j--)
-                idx += (src_idx_ptr[i*bndim+j] - alo[j]) *
-                  factor_idx2[j];
-
-            /* convert the one dimensional index to n-dimensional
-             * indices of destination
+        /* source indices */
+        for (i=0; i<nelem; i++) {
+          for (j=andim-1; j>=0; j--){
+            src_idx_ptr[i*andim+j] = bvalue[j];
+            /* if the next element is the first element in
+             * one dimension, increment the index by 1
              */
-            for (j=bndim-1; j>=0; j--) {
-              dst_idx_ptr[i*bndim+j] = idx % bld[j] + blo[j];
-              idx /= bld[j];
-            }
-
-            /* move the data block to create a new block */
-            /* linearize the data indices */
-            idx = 0;
-            for (j=0; j<andim; j++)
-              idx += (src_idx_ptr[i*andim+j]) * factor_data[j];
-
-            /* adjust the position
-             * base: starting address of the first element */
-            idx -= base;
-            /* move the element to the temporary location */
-#define ASSIGN_M(_type, _dst, _src, _i, _idx)                         \
-            reinterpret_cast<_type*>(_dst)[i]                         \
-            = reinterpret_cast<_type*>(_src)[_idx]
-
-            switch(atype) {
-              case XGA_DOUBLE:
-                ASSIGN_M(double, tmp_ptr, src_data_ptr, i, idx);
-                break;
-              case XGA_INT:
-                ASSIGN_M(int, tmp_ptr, src_data_ptr, i, idx);
-                break;
-              case XGA_DCOMPLEX:
-                ASSIGN_M(std::complex<double>, tmp_ptr, src_data_ptr, i, idx);
-                break;
-              case XGA_COMPLEX:
-                ASSIGN_M(std::complex<float>, tmp_ptr, src_data_ptr, i, idx);
-                break;
-              case XGA_FLOAT:
-                ASSIGN_M(float, tmp_ptr, src_data_ptr, i, idx);
-                break;
-              case XGA_LONG:
-                ASSIGN_M(long, tmp_ptr, src_data_ptr, i, idx);
-                break;
-              case XGA_LONGLONG:
-                ASSIGN_M(long long, tmp_ptr, src_data_ptr, i, idx);
-            }
-#undef ASSIGN_M
-          }
-          g_b->scatter(tmp_ptr, dst_idx_ptr, 0, nelem);
-          this->releasePtr(los, his);
-        } else {
-          /* destination indices */
-          for (i=0; i<nelem; i++) {
-            for (j=bndim-1; j>=0; j--){
-              src_idx_ptr[i*bndim+j] = bvalue[j];
-              /* if the next element is the first element in
-               * one dimension, increment the index by 1
-               */
-              if (((i+1) % bunit[j]) == 0) bvalue[j]++;
-              /* if the index becomes larger than the upper
-               * bound in one dimension, reset it.
-               */
-              if(bvalue[j] > his[j]) bvalue[j] = los[j];
-            }
-          }
-
-          /* index factor: reshaping without transpose */
-          factor_idx1[bndim-1] = 1;
-          for (j=bndim-2; j>=0; j--) 
-            factor_idx1[j] = factor_idx1[j+1] * bld[j+1];
-
-          /* index factor: reshaping with transpose */
-          factor_idx2[0] = 1;
-          for (j=1; j<bndim; j++)
-            factor_idx2[j] = factor_idx2[j-1] * bld[j-1];
-
-          /* data factor */
-          factor_data[bndim-1] = 1;
-          for (j=bndim-2; j>=0; j--) 
-            factor_data[j] = factor_data[j+1] * ld[j];
-
-          /* destination indices */
-          for(i=0; i<nelem; i++) {
-            /* linearize the n-dimensional indices to one dimension */
-            idx = 0;
-            if (trans == 'n' || trans == 'N')
-              for (j=0; j<andim; j++) 
-                idx += (src_idx_ptr[i*bndim+j] - blo[j]) *
-                  factor_idx1[j];
-            else
-              /* if the patch needs to be transposed, reverse
-               * the indices: (i, j, ...) -> (..., j, i)
-               */
-              for (j=(andim-1); j>=0; j--) 
-                idx += (src_idx_ptr[i*bndim+j] - blo[j]) *
-                  factor_idx2[j];
-
-            /* convert the one dimensional index to n-dimensional
-             * indices of destination
+            if (((i+1) % bunit[j]) == 0) bvalue[j]++;
+            /* if the index becomes larger than the upper
+             * bound in one dimension, reset it.
              */
-            for (j=andim-1; j>=0; j--) {
-              dst_idx_ptr[i*bndim+j] = idx % ald[j] + alo[j]; 
-              idx /= ald[j];
-            }
-
-            /* move the data block to create a new block */
-            /* linearize the data indices */
-            idx = 0;
-            for (j=0; j<bndim; j++) 
-              idx += (src_idx_ptr[i*bndim+j]) * factor_data[j];
-
-            /* adjust the position
-             * base: starting address of the first element */
-            idx -= base;
-
-            /* move the element to the temporary location */
-#define ASSIGN_M(_type, _dst, _src, _i, _idx)                         \
-            reinterpret_cast<_type*>(_dst)[i]                         \
-            = reinterpret_cast<_type*>(_src)[_idx]
-            switch(atype) {
-              case XGA_DOUBLE:
-                ASSIGN_M(double, tmp_ptr, src_data_ptr, i, idx);
-                break;
-              case XGA_INT:
-                ASSIGN_M(int, tmp_ptr, src_data_ptr, i, idx);
-                break;
-              case XGA_DCOMPLEX:
-                ASSIGN_M(std::complex<double>, tmp_ptr, src_data_ptr, i, idx);
-                break;
-              case XGA_COMPLEX:
-                ASSIGN_M(std::complex<float>, tmp_ptr, src_data_ptr, i, idx);
-                break;
-              case XGA_FLOAT:
-                ASSIGN_M(float, tmp_ptr, src_data_ptr, i, idx);
-                break;
-              case XGA_LONG:
-                ASSIGN_M(long, tmp_ptr, src_data_ptr, i, idx);
-                break;
-              case XGA_LONGLONG:
-                ASSIGN_M(long long, tmp_ptr, src_data_ptr, i, idx);
-            }
-#undef ASSIGN_M
+            if(bvalue[j] > his[j]) bvalue[j] = los[j];
           }
-          this->gather(tmp_ptr, dst_idx_ptr, 0, nelem);
-          g_b->releasePtr(los, his);
         }
+
+        /* index factor: reshaping without transpose */
+        factor_idx1[andim-1] = 1;
+        for (j=andim-2; j>=0; j--)
+          factor_idx1[j] = factor_idx1[j+1] * ald[j+1];
+
+        /* index factor: reshaping with transpose */
+        factor_idx2[0] = 1;
+        for (j=1; j<andim; j++)
+          factor_idx2[j] = factor_idx2[j-1] * ald[j-1];
+
+        /* data factor */
+        factor_data[andim-1] = 1;
+        for (j=bndim-2; j>=0; j--)
+          factor_data[j] = factor_data[j+1] * ld[j];
+
+        /* destination indices */
+        for(i=0; i<nelem; i++) {
+          /* linearize the n-dimensional indices to one dimension */
+          idx = 0;
+          if (trans == 'n' || trans == 'N')
+            for (j=0; j<andim; j++)
+              idx += (src_idx_ptr[i*andim+j] - alo[j]) *
+                factor_idx1[j];
+          else
+            /* if the patch needs to be transposed, reverse
+             * the indices: (i, j, ...) -> (..., j, i)
+             */
+            for (j=(andim-1); j>=0; j--)
+              idx += (src_idx_ptr[i*bndim+j] - alo[j]) *
+                factor_idx2[j];
+
+          /* convert the one dimensional index to n-dimensional
+           * indices of destination
+           */
+          for (j=bndim-1; j>=0; j--) {
+            dst_idx_ptr[i*bndim+j] = idx % bld[j] + blo[j];
+            idx /= bld[j];
+          }
+
+          /* move the data block to create a new block */
+          /* linearize the data indices */
+          idx = 0;
+          for (j=0; j<andim; j++)
+            idx += (src_idx_ptr[i*andim+j]) * factor_data[j];
+
+          /* adjust the position
+           * base: starting address of the first element */
+          idx -= base;
+          /* move the element to the temporary location */
+#define ASSIGN_M(_type, _dst, _src, _i, _idx)                         \
+          reinterpret_cast<_type*>(_dst)[i]                         \
+          = reinterpret_cast<_type*>(_src)[_idx]
+
+          switch(atype) {
+            case XGA_DOUBLE:
+              ASSIGN_M(double, tmp_ptr, src_data_ptr, i, idx);
+              break;
+            case XGA_INT:
+              ASSIGN_M(int, tmp_ptr, src_data_ptr, i, idx);
+              break;
+            case XGA_DCOMPLEX:
+              ASSIGN_M(std::complex<double>, tmp_ptr, src_data_ptr, i, idx);
+              break;
+            case XGA_COMPLEX:
+              ASSIGN_M(std::complex<float>, tmp_ptr, src_data_ptr, i, idx);
+              break;
+            case XGA_FLOAT:
+              ASSIGN_M(float, tmp_ptr, src_data_ptr, i, idx);
+              break;
+            case XGA_LONG:
+              ASSIGN_M(long, tmp_ptr, src_data_ptr, i, idx);
+              break;
+            case XGA_LONGLONG:
+              ASSIGN_M(long long, tmp_ptr, src_data_ptr, i, idx);
+          }
+#undef ASSIGN_M
+        }
+        g_b->scatter(tmp_ptr, dst_idx_ptr, 0, nelem);
+        this->releasePtr(los, his);
         delete [] dst_idx_ptr;
         delete [] src_idx_ptr;
         xga_free(tmp_ptr, atype);
@@ -737,129 +615,65 @@ void p_GA::copyPatch(char trans, int64_t *alo, int64_t *ahi,
     for (i=0; i<bndim; i++) {
       bld[i] = bhi[i] - blo[i] + 1;
     }
-    if (use_put) {
-      /* Array a is block-cyclic distributed */
-      if (num_blocks_a >= 0) {
-        char *block_ptr;
-        this->localInit();
-        while (this->nextLocalBlock(los, his, &block_ptr, ld)) {
-            /* Copy limits since patch intersect modifies los array */
-            for (j=0; j < andim; j++) {
-              lod[j] = los[j];
-              hid[j] = his[j];
-            }
-            if (patch_intersect(alo,ahi,los,his,andim)) {
-              offset = 0;
-              last = andim - 1;
-              jtot = 1;
-              for (j=last; j>0; j--) {
-                offset += (los[j]-lod[j])*jtot;
-                jtot *= ld[j-1];
-              }
-              offset += (los[0]-lod[0])*jtot;
-              switch(atype) {
-                case XGA_DOUBLE:
-                  SET_PTR_M(double,block_ptr,offset);
-                  break;
-                case XGA_INT:
-                  SET_PTR_M(int,block_ptr,offset);
-                  break;
-                case XGA_DCOMPLEX:
-                  SET_PTR_M(std::complex<double>,block_ptr,offset);
-                  break;
-                case XGA_COMPLEX:
-                  SET_PTR_M(std::complex<float>,block_ptr,offset);
-                  break;
-                case XGA_FLOAT:
-                  SET_PTR_M(float,block_ptr,offset);
-                  break;     
-                case XGA_LONG:
-                  SET_PTR_M(long,block_ptr,offset);
-                  break;
-                case XGA_LONGLONG:
-                  SET_PTR_M(long long,block_ptr,offset);
-                  break;
-                default:
-                  break;
-              }
-              dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
-              dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
-              g_b->put(lod, hid, block_ptr, ld);
-            //  g_a->releaseBlock(i);
-            }
-          }
-      } else {
-        /* Only array b is block-cyclic distributed */
-        this->distribution(me_a, los, his); 
+    /* Array a is block-cyclic distributed */
+    if (num_blocks_a >= 0) {
+      char *block_ptr;
+      this->localInit();
+      while (this->nextLocalBlock(los, his, &block_ptr, ld)) {
+        /* Copy limits since patch intersect modifies los array */
+        for (j=0; j < andim; j++) {
+          lod[j] = los[j];
+          hid[j] = his[j];
+        }
         if (patch_intersect(alo,ahi,los,his,andim)) {
-          this->accessPtr(los, his, &src_data_ptr, ld); 
+          offset = 0;
+          last = andim - 1;
+          jtot = 1;
+          for (j=last; j>0; j--) {
+            offset += (los[j]-lod[j])*jtot;
+            jtot *= ld[j-1];
+          }
+          offset += (los[0]-lod[0])*jtot;
+          switch(atype) {
+            case XGA_DOUBLE:
+              SET_PTR_M(double,block_ptr,offset);
+              break;
+            case XGA_INT:
+              SET_PTR_M(int,block_ptr,offset);
+              break;
+            case XGA_DCOMPLEX:
+              SET_PTR_M(std::complex<double>,block_ptr,offset);
+              break;
+            case XGA_COMPLEX:
+              SET_PTR_M(std::complex<float>,block_ptr,offset);
+              break;
+            case XGA_FLOAT:
+              SET_PTR_M(float,block_ptr,offset);
+              break;     
+            case XGA_LONG:
+              SET_PTR_M(long,block_ptr,offset);
+              break;
+            case XGA_LONGLONG:
+              SET_PTR_M(long long,block_ptr,offset);
+              break;
+            default:
+              break;
+          }
           dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
           dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
-          g_b->put(lod, hid, src_data_ptr, ld);
-          this->releasePtr(los, his);
+          g_b->put(lod, hid, block_ptr, ld);
+          //  g_a->releaseBlock(i);
         }
       }
     } else {
-      /* Array b is block-cyclic distributed */
-      if (num_blocks_b >= 0) {
-        char *block_ptr;
-        g_b->localInit();
-        while (g_b->nextLocalBlock(los, his, &block_ptr, ld)) {
-            /* Copy limits since patch intersect modifies los array */
-            for (j=0; j < andim; j++) {
-              lod[j] = los[j];
-              hid[j] = his[j];
-            }
-            if (patch_intersect(blo,bhi,los,his,andim)) {
-              offset = 0;
-              last = andim - 1;
-              jtot = 1;
-              offset = (los[last]-lod[last])*jtot;
-              for (j=last-1; j>=0; j++) {
-                jtot *= ld[j];
-                offset += (los[j]-lod[j])*jtot;
-              }
-              switch(atype) {
-                case XGA_DOUBLE:
-                  SET_PTR_M(double,block_ptr,offset);
-                  break;
-                case XGA_INT:
-                  SET_PTR_M(int,block_ptr,offset);
-                  break;
-                case XGA_DCOMPLEX:
-                  SET_PTR_M(std::complex<double>,block_ptr,offset);
-                  break;
-                case XGA_COMPLEX:
-                  SET_PTR_M(std::complex<float>,block_ptr,offset);
-                  break;
-                case XGA_FLOAT:
-                  SET_PTR_M(float,block_ptr,offset);
-                  break;     
-                case XGA_LONG:
-                  SET_PTR_M(long,block_ptr,offset);
-                  break;
-                case XGA_LONGLONG:
-                  SET_PTR_M(long long,block_ptr,offset);
-                  break;
-                default:
-                  break;
-              }
-              dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
-              dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
-              this->get(lod, hid, block_ptr, ld);
-              //g_b->releaseBlock(i);
-            }
-          }
-      } else {
-        /* Array a is block-cyclic distributed */
-        g_b->distribution(me_b, los, his); 
-        if (patch_intersect(blo,bhi,los,his,bndim)) {
-          g_b->accessPtr(los, his, &src_data_ptr, ld); 
-          dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
-          dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
-          this->get(lod, hid, src_data_ptr, ld);
-          g_b->releasePtr(los, his);
-        }
+      /* Only array b is block-cyclic distributed */
+      this->distribution(me_a, los, his); 
+      if (patch_intersect(alo,ahi,los,his,andim)) {
+        this->accessPtr(los, his, &src_data_ptr, ld); 
+        dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
+        dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
+        g_b->put(lod, hid, src_data_ptr, ld);
+        this->releasePtr(los, his);
       }
     }
 #undef SET_PTR_M
