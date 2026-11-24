@@ -39,8 +39,8 @@ endfunction()
 # -------------------------------------------------------------
 function(ga_add_parallel_test test_name test_srcs)
   get_filename_component(_test_name_only "${test_name}" NAME)
-  set(GA_TEST_NPROCS 4)
-  if(MPI_PR)
+  ga_option(GA_TEST_NPROCS 4)
+  if(MPI_PR AND GA_TEST_NPROCS EQUAL 4)
     set(GA_TEST_NPROCS 5)
   endif()
 

@@ -130,6 +130,13 @@ include $(top_srcdir)/src-mpi-pt/Makefile.inc
 endif
 
 ##############################################################################
+# src-mpi-pr
+#
+if COMEX_NETWORK_MPI_PR
+include $(top_srcdir)/src-mpi-pr/Makefile.inc
+endif
+
+##############################################################################
 # src-mpi-prwin
 #
 if COMEX_NETWORK_MPI_PR
