@@ -2090,6 +2090,7 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     MPI_Group node_group;
     MPI_Comm node_comm;
     MPI_Win node_win;
+    int ierr;
 
     /* preconditions */
     COMEX_ASSERT(ptrs);
@@ -2169,8 +2170,16 @@ int comex_malloc(void *ptrs[], size_t size, comex_group_t group)
     MPI_Comm_create_group(g_state.comm, node_group, COMEX_TAG, &node_comm);
     tsize = (MPI_Aint)size;
     if (tsize == 0) tsize = 8;
-    MPI_Win_allocate_shared(tsize,1,MPI_INFO_NULL,node_comm,
+    ierr = MPI_Win_allocate_shared(tsize,1,MPI_INFO_NULL,node_comm,
         &buf, &node_win);
+    if (ierr != MPI_SUCCESS) {
+      if (ierr == MPI_ERR_OTHER) {
+        char msg[MPI_MAX_ERROR_STRING];
+        int len;
+        MPI_Error_string(ierr, msg, &len);
+        printf("MPI_Error: %s\n",msg);
+      }
+    }
 //    MPI_Win_lock_all(0,node_win);
     MPI_Comm_free(&node_comm);
     MPI_Group_free(&node_group);
@@ -4090,12 +4099,21 @@ STATIC void _create_win_handler(
   MPI_Aint size = 0;
   MPI_Group node_group;
   MPI_Comm node_comm;
+  int ierr;
 
   server_send(NULL, 0, proc); /* ack */
   MPI_Group_incl(g_state.group, node_count, node_list, &node_group);
   MPI_Comm_create_group(g_state.comm, node_group, COMEX_TAG, &node_comm);
-  MPI_Win_allocate_shared(size,1,MPI_INFO_NULL,node_comm,
+  ierr = MPI_Win_allocate_shared(size,1,MPI_INFO_NULL,node_comm,
       &buf, &global_node_win);
+  if (ierr != MPI_SUCCESS) {
+    if (ierr == MPI_ERR_OTHER) {
+      char msg[MPI_MAX_ERROR_STRING];
+      int len;
+      MPI_Error_string(ierr, msg, &len);
+      printf("MPI_Error: %s\n",msg);
+    }
+  }
 //  MPI_Win_lock_all(0,global_node_win);
   MPI_Comm_free(&node_comm);
   MPI_Group_free(&node_group);
